@@ -17,9 +17,13 @@
 package api_v2
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 type refreshResult struct {
@@ -36,28 +40,39 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if !ok || converter.StrToInt64(claims.Wallet) == 0 {
 		return errorAPI(w, `invalid token`, http.StatusBadRequest)
 	}
-	/*
-		refresh := data.params[`refresh`].(string)
+	token, err := jwt.ParseWithClaims(data.params[`token`].(string), &JWTClaims{},
+		func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(jwtSecret), nil
+		})
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
+	if token == nil || !token.Valid {
+		return errorAPI(w, `invalid refresh token`, http.StatusBadRequest)
+	}
+	refClaims, ok := token.Claims.(*JWTClaims)
+	if !ok || refClaims.Wallet != claims.Wallet || refClaims.State != claims.State {
+		return errorAPI(w, `invalid refresh token`, http.StatusBadRequest)
+	}
+	var result refreshResult
+	data.result = &result
 
-		result := loginResult{State: converter.Int64ToStr(state), Wallet: converter.Int64ToStr(wallet),
-			Address: address}
-		data.result = &result
-		claims := JWTClaims{
-			Wallet: result.Wallet,
-			State:  result.State,
-			StandardClaims: jwt.StandardClaims{
-				ExpiresAt: time.Now().Add(time.Second * jwtExpire).Unix(),
-			},
-		}
-		result.Token, err = jwtGenerateToken(w, claims)
-		if err != nil {
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
-		}
-		claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
-		result.Refresh, err = jwtGenerateToken(w, claims)
-		if err != nil {
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
-		}
-	*/
+	expire := data.params[`expire`].(int64)
+	if expire == 0 {
+		expire = jwtExpire
+	}
+	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Second * time.Duration(expire)).Unix()
+	result.Token, err = jwtGenerateToken(w, *claims)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
+	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
+	result.Refresh, err = jwtGenerateToken(w, *claims)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
 	return nil
 }

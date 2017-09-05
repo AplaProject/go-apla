@@ -79,11 +79,15 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	result := loginResult{State: converter.Int64ToStr(state), Wallet: converter.Int64ToStr(wallet),
 		Address: address}
 	data.result = &result
+	expire := data.params[`expire`].(int64)
+	if expire == 0 {
+		expire = jwtExpire
+	}
 	claims := JWTClaims{
 		Wallet: result.Wallet,
 		State:  result.State,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Second * jwtExpire).Unix(),
+			ExpiresAt: time.Now().Add(time.Second * time.Duration(expire)).Unix(),
 		},
 	}
 	result.Token, err = jwtGenerateToken(w, claims)

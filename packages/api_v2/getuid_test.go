@@ -63,6 +63,13 @@ func TestGetUID(t *testing.T) {
 			return
 		}
 		gAuth = lret.Token
-		fmt.Println(gAuth, "\r\nRefresh\r\n", lret.Refresh)
+		var ref refreshResult
+		err = sendPost(`refresh`, &url.Values{"token": {lret.Refresh}}, &ref)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		gAuth = ref.Token
+		fmt.Println(ref)
 	}
 }
