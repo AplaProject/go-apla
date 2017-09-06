@@ -53,9 +53,8 @@ func Route(route *hr.Router) {
 	//	get(`smartcontract/:name`, ``, authState, getSmartContract)
 	get(`test/:name`, ``, getTest)
 
-	post(`install`, `?dir ?tcp_host ?first_block_dir ?http_port ?first_load_blockchain_url ?first_load 
-	db_type log_level type host port db_name password username:string,?generate_first_block:int64`,
-		install)
+	post(`install`, `?first_load_blockchain_url ?first_block_dir log_level type host port 
+	db_name password username:string,?generate_first_block:int64`, install)
 	post(`login`, `pubkey signature:hex,?state ?expire:int64`, login)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
 	//	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
@@ -85,6 +84,7 @@ func processParams(input string) (params map[string]int) {
 		}
 		vars := strings.Split(types[0], ` `)
 		for _, v := range vars {
+			v = strings.TrimSpace(v)
 			if len(v) == 0 {
 				continue
 			}

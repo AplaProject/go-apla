@@ -18,6 +18,8 @@ package apiv2
 
 var (
 	errors = map[string]string{
+		`E_DBNIL`:         `DB is nil`,
+		`E_INSTALLED`:     `Apla is already installed`,
 		`E_INVALIDWALLET`: `Wallet %s is not valid`,
 		`E_RECOVERED`:     `API recovered`,
 		`E_REFRESHTOKEN`:  `Refresh token is not valid`,

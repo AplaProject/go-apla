@@ -21,9 +21,9 @@ import (
 	"net/http"
 	"time"
 
-	//	"github.com/EGaaS/go-egaas-mvp/packages/config"
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -41,9 +41,6 @@ type getUIDResult struct {
 	Address string `json:"address,omitempty"`
 }
 
-// If State == 0 then APLA has not been installed
-// If Wallet == 0 then login is required
-
 func getUID(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	var result getUIDResult
 
@@ -57,12 +54,12 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 			return nil
 		}
 	}
-	/*	if !installed {
+	if !installed {
 		if model.DBConn == nil && !config.IsExist() {
 			return nil
 		}
 		installed = true
-	}*/
+	}
 	result.UID = converter.Int64ToStr(rand.New(rand.NewSource(time.Now().Unix())).Int63())
 	claims := JWTClaims{
 		UID: result.UID,

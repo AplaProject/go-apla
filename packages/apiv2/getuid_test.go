@@ -32,42 +32,39 @@ func TestGetUID(t *testing.T) {
 		return
 	}
 	gAuth = ret.Token
-	/*	if ret.State == 0 {
-		var instRes installResult
-		err := sendPost(`install`, &url.Values{`port`: {`5432`}, `host`: {`3330000`}}, &instRes)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		fmt.Println(`INSTALL`, instRes)
-	}*/
 	if len(ret.UID) == 0 {
-		t.Errorf(`getuid has returned empty uid`)
-	} else {
-		priv, pub, err := crypto.GenHexKeys()
+		var instRes installResult
+		err := sendPost(`install`, &url.Values{`port`: {`5432`}, `host`: {`localhost`},
+			`type`: {`Private-net`}, `db_name`: {`v2`}, `log_level`: {`ERROR`},
+			`password`: {`postgres`}, `username`: {`postgres`}}, &instRes)
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		sign, err := crypto.Sign(priv, ret.UID)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)}}
-		var lret loginResult
-		err = sendPost(`login`, &form, &lret)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		gAuth = lret.Token
-		var ref refreshResult
-		err = sendPost(`refresh`, &url.Values{"token": {lret.Refresh}}, &ref)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		gAuth = ref.Token
 	}
+	priv, pub, err := crypto.GenHexKeys()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	sign, err := crypto.Sign(priv, ret.UID)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)}}
+	var lret loginResult
+	err = sendPost(`login`, &form, &lret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	gAuth = lret.Token
+	var ref refreshResult
+	err = sendPost(`refresh`, &url.Values{"token": {lret.Refresh}}, &ref)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	gAuth = ref.Token
 }
