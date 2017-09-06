@@ -672,7 +672,7 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 	} else {
 		length, err := converter.DecodeLength(&signs)
 		if err != nil {
-			log.Fatal(err)
+			return false, err
 		}
 		if length > 0 {
 			signsSlice = append(signsSlice, converter.BytesShift(&signs, length))

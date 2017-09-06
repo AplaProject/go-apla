@@ -103,7 +103,7 @@ func DecodeLenInt64Buf(buf *bytes.Buffer) (int64, error) {
 		return 0, err
 	}
 
-	length := int(val) + 1
+	length := int(val)
 	if buf.Len() < length {
 		return 0, fmt.Errorf(`length of data %d < %d`, buf.Len(), length)
 	}
@@ -155,7 +155,7 @@ func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
 	}
 
 	length &= 0x7F
-	if buf.Len() < int(length+1) {
+	if buf.Len() < int(length) {
 		return 0, fmt.Errorf(`input slice has small size`)
 	}
 	return int(binary.BigEndian.Uint64(append(make([]byte, 8-length), buf.Next(int(length))...))), nil

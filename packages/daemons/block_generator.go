@@ -35,9 +35,6 @@ import (
 func BlockGenerator(d *daemon, ctx context.Context) error {
 	d.sleepTime = time.Second
 
-	DBLock()
-	defer DBUnlock()
-
 	config := &model.Config{}
 	if err := config.GetConfig(); err != nil {
 		return err
@@ -62,6 +59,9 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		log.Infof("we are not full node, sleep for 10 seconds")
 		return nil
 	}
+
+	DBLock()
+	defer DBUnlock()
 
 	prevBlock := &model.InfoBlock{}
 	err = prevBlock.GetInfoBlock()
@@ -142,6 +142,8 @@ func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key 
 
 	forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s",
 		newBlockID, prevBlock.Hash, blockTime, c.DltWalletID, c.StateID, mrklRoot)
+
+	log.Debugf("!!! for sign with str: %x\n%s\n", []byte(forSign), forSign)
 
 	signed, err := crypto.Sign(key, forSign)
 	if err != nil {

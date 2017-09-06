@@ -109,6 +109,7 @@ func ProcessBlock(data []byte) (*Block, error) {
 		return nil, err
 	}
 
+	log.Debugf("prevHeader: %+v", block.PrevHeader)
 	return block, nil
 }
 
@@ -192,15 +193,16 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 func parseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	var block utils.BlockData
 	var err error
-
 	block.BlockID = converter.BinToDec(binaryBlock.Next(4))
 	block.Time = converter.BinToDec(binaryBlock.Next(4))
-	block.WalletID, err = converter.DecodeLenInt64Buf(binaryBlock) //BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
+
+	block.WalletID, err = converter.DecodeLenInt64Buf(binaryBlock)
 	if err != nil {
 		return utils.BlockData{}, err
 	}
 
 	block.StateID = converter.BinToDec(binaryBlock.Next(1))
+
 	if block.BlockID > 1 {
 		signSize, err := converter.DecodeLengthBuf(binaryBlock)
 		if err != nil {
@@ -219,6 +221,8 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 		return nil, fmt.Errorf("empty transaction buffer")
 	}
 
+	log.Debugf("parse transaction: %x", buffer.Bytes())
+
 	hash, err := crypto.DoubleHash(buffer.Bytes())
 	if err != nil {
 		return nil, err
@@ -226,23 +230,35 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 
 	p := new(Parser)
 	p.TxHash = hash
-	p.TxBinaryData = buffer.Bytes()
 	p.TxUsedCost = decimal.New(0, 0)
 
-	txType := converter.BinToDec(buffer.Next(1))
+	txType := int64(buffer.Bytes()[0])
+	p.dataType = int(txType)
+
 	// smart contract transaction
 	if IsContractTransaction(int(txType)) {
+		// skip byte with transaction type
+		buffer.Next(1)
+		p.TxBinaryData = buffer.Bytes()
 		if err := parseContractTransaction(p, buffer); err != nil {
 			return nil, err
 		}
+		if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
+			return nil, err
+		}
+
 		// struct transaction (only first block transaction for now)
 	} else if consts.IsStruct(int(txType)) {
+		p.TxBinaryData = buffer.Bytes()
 		if err := parseStructTransaction(p, buffer, txType); err != nil {
 			return nil, err
 		}
 
 		// all other transactions
 	} else {
+		// skip byte with transaction type
+		buffer.Next(1)
+		p.TxBinaryData = buffer.Bytes()
 		if err := parseRegularTransaction(p, buffer, txType); err != nil {
 			return p, err
 		}
@@ -367,6 +383,12 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 }
 
 func parseStructTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
+	trParser, err := GetParser(p, consts.TxTypes[int(txType)])
+	if err != nil {
+		return err
+	}
+	p.txParser = trParser
+
 	p.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
 	input := buf.Bytes()
 	if err := converter.BinUnmarshal(&input, p.TxPtr); err != nil {
@@ -388,6 +410,8 @@ func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	if err != nil {
 		return err
 	}
+	p.txParser = trParser
+
 	err = trParser.Init()
 	if err != nil {
 		return err
@@ -402,10 +426,16 @@ func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	p.TxType = txType
 	p.TxStateID = uint32(header.StateID)
 	p.TxUserID = header.UserID
+
+	err = trParser.Validate()
+	if _, ok := err.(error); ok {
+		return utils.ErrInfo(err.(error))
+	}
+
 	return nil
 }
 
-func initAndCheckTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
+func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 	err := CheckLogTx(p.TxBinaryData, checkForDupTr, false)
 	if err != nil {
 		return utils.ErrInfo(err)
@@ -421,28 +451,11 @@ func initAndCheckTransaction(p *Parser, checkTime int64, checkForDupTr bool) err
 		return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
 	}
 
-	if p.TxUserID == 0 {
-		return utils.ErrInfo(fmt.Errorf("emtpy user id"))
-	}
-
-	if p.TxContract != nil {
-		if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
-			return utils.ErrInfo(err)
-		}
-	} else {
-		MethodName := consts.TxTypes[p.dataType]
-		txParser, err := GetParser(p, MethodName)
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-
-		err = txParser.Init()
-		if _, ok := err.(error); ok {
-			return utils.ErrInfo(err.(error))
-		}
-		err = txParser.Validate()
-		if _, ok := err.(error); ok {
-			return utils.ErrInfo(err.(error))
+	if p.TxContract == nil {
+		if p.BlockData.BlockID != 1 {
+			if p.TxUserID == 0 {
+				return utils.ErrInfo(fmt.Errorf("emtpy user id"))
+			}
 		}
 	}
 
@@ -456,7 +469,7 @@ func CheckTransaction(data []byte) (*tx.Header, error) {
 		return nil, err
 	}
 
-	err = initAndCheckTransaction(p, time.Now().Unix(), true)
+	err = checkTransaction(p, time.Now().Unix(), true)
 	if err != nil {
 		return nil, err
 	}
@@ -465,12 +478,15 @@ func CheckTransaction(data []byte) (*tx.Header, error) {
 }
 
 func (block *Block) readPreviousBlock() error {
-	if block.Header.BlockID != 1 {
-		var err error
-		block.PrevHeader, err = GetBlockDataFromBlockChain(block.Header.BlockID - 1)
-		if err != nil {
-			return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
-		}
+	if block.Header.BlockID == 1 {
+		block.PrevHeader = &utils.BlockData{}
+		return nil
+	}
+
+	var err error
+	block.PrevHeader, err = GetBlockDataFromBlockChain(block.Header.BlockID - 1)
+	if err != nil {
+		return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
 	}
 
 	return nil
@@ -496,13 +512,11 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			}
 
 		} else {
-			MethodName := consts.TxTypes[int(p.TxType)]
-			txParser, err := GetParser(p, MethodName)
-			if err != nil {
-				return utils.ErrInfo(err)
+			if p.txParser == nil {
+				return utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
 			}
 
-			err = txParser.Action()
+			err := p.txParser.Action()
 			if _, ok := err.(error); ok {
 				return utils.ErrInfo(err.(error))
 			}
@@ -567,10 +581,14 @@ func (block *Block) checkBlock() error {
 			return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
 		}
 
-		if err := initAndCheckTransaction(p, block.Header.Time, false); err != nil {
+		if err := checkTransaction(p, block.Header.Time, false); err != nil {
 			return utils.ErrInfo(err)
 		}
 
+	}
+
+	if block.Header.BlockID == 1 {
+		return nil
 	}
 
 	// check block signature
@@ -585,6 +603,9 @@ func (block *Block) checkBlock() error {
 		// check the signature
 		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
 			block.Header.Time, block.Header.WalletID, block.Header.StateID, block.MrklRoot)
+
+		log.Debugf("!!! for sign: %x\n%s\n", []byte(forSign), forSign)
+
 		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, block.Header.Sign, true)
 		if err != nil {
 			return utils.ErrInfo(fmt.Errorf("err: %v / p.PrevBlock.BlockId: %d", err, block.PrevHeader.BlockID))
