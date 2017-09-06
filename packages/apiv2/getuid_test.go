@@ -18,6 +18,7 @@ package apiv2
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"net/url"
 	"testing"
 
@@ -28,20 +29,23 @@ func TestGetUID(t *testing.T) {
 	var ret getUIDResult
 	err := sendGet(`getuid`, nil, &ret)
 	if err != nil {
-		t.Error(err)
-		return
-	}
-	gAuth = ret.Token
-	if len(ret.UID) == 0 {
-		var instRes installResult
-		err := sendPost(`install`, &url.Values{`port`: {`5432`}, `host`: {`localhost`},
-			`type`: {`Private-net`}, `db_name`: {`v2`}, `log_level`: {`ERROR`},
-			`password`: {`postgres`}, `username`: {`postgres`}}, &instRes)
-		if err != nil {
+		var v map[string]string
+		json.Unmarshal([]byte(err.Error()[4:]), &v)
+		if v[`error`] == `E_NOTINSTALLED` {
+			var instRes installResult
+			err := sendPost(`install`, &url.Values{`port`: {`5432`}, `host`: {`localhost`},
+				`type`: {`Private-net`}, `db_name`: {`v2`}, `log_level`: {`ERROR`},
+				`password`: {`postgres`}, `username`: {`postgres`}}, &instRes)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+		} else {
 			t.Error(err)
 			return
 		}
 	}
+	gAuth = ret.Token
 	priv, pub, err := crypto.GenHexKeys()
 	if err != nil {
 		t.Error(err)

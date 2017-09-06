@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -71,7 +72,8 @@ const (
 type apiHandle func(http.ResponseWriter, *http.Request, *apiData) error
 
 var (
-	log = logging.MustGetLogger("api")
+	installed bool
+	log       = logging.MustGetLogger("api")
 )
 
 func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
@@ -164,6 +166,13 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}()
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		if !installed && r.URL.Path != `/api/v2/install` {
+			if model.DBConn == nil && !config.IsExist() {
+				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
+				return
+			}
+			installed = true
+		}
 		token, err := jwtToken(r)
 		if err != nil {
 			errorAPI(w, err, http.StatusBadRequest)

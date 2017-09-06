@@ -21,15 +21,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
 
 	"github.com/dgrijalva/jwt-go"
-)
-
-var (
-	installed bool
 )
 
 type getUIDResult struct {
@@ -53,12 +47,6 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 			result.Wallet = claims.Wallet
 			return nil
 		}
-	}
-	if !installed {
-		if model.DBConn == nil && !config.IsExist() {
-			return nil
-		}
-		installed = true
 	}
 	result.UID = converter.Int64ToStr(rand.New(rand.NewSource(time.Now().Unix())).Int63())
 	claims := JWTClaims{
