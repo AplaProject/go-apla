@@ -199,7 +199,8 @@ func valueToBool(v interface{}) bool {
 	case bool:
 		return val
 	default:
-		return val.(decimal.Decimal).Cmp(decimal.New(0, 0)) != 0
+		dec, _ := decimal.NewFromString(val.(string))
+		return dec.Cmp(decimal.New(0, 0)) != 0
 	}
 	return false
 }
