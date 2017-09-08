@@ -680,9 +680,6 @@ func (s *DB) AddError(err error) error {
 			if len(errors) > 1 {
 				err = errors
 			}
-
-			// TODO: for debug only, delete it
-			panic(err)
 		}
 
 		s.Error = err

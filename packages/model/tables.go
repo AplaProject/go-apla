@@ -171,7 +171,7 @@ func GetColumnsAndPermissionsAndRbIDWhereTable(table, tableName string) (map[str
 		return nil, err
 	}
 	result := make(map[string]string, 0)
-	result["table"] = temp.ColumnsAndPermissions
+	result["columns_and_permissions"] = temp.ColumnsAndPermissions
 	result["rb_id"] = strconv.FormatInt(temp.RbID, 10)
 	return result, nil
 }
@@ -187,7 +187,7 @@ func GetTableWhereUpdatePermissionAndTableName(table, columnName, tableName stri
 		return nil, err
 	}
 	result := make(map[string]string, 0)
-	result["table"] = temp.ColumnsAndPermissions
+	result["columns_and_permissions"] = temp.ColumnsAndPermissions
 	result["rb_id"] = strconv.FormatInt(temp.RbID, 10)
 	return result, nil
 }

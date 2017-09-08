@@ -146,7 +146,7 @@ func GetCurrentSeqID(id, tblname string) (int64, error) {
 
 func GetRollbackID(tblname, where, ordering string) (int64, error) {
 	var result int64
-	query := "SELECT rb_id FROM " + tblname + " " + where + " order by rb_id " + ordering
+	query := `SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering
 	err := DBConn.Raw(query).Row().Scan(&result)
 	if err != nil {
 		log.Errorf("can't get rollback_id: %s for query %s", err, query)
