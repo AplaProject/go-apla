@@ -22,10 +22,13 @@ package daylight
 import (
 	"syscall"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 )
 
 func KillPid(pid string) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	err := syscall.Kill(converter.StrToInt(pid), syscall.SIGTERM)
 	if err != nil {
 		return err

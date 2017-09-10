@@ -20,23 +20,19 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 // Stop stops the program
 func Stop() {
-	log.Debug("Stop()")
-	IosLog("Stop()")
-	log.Debug("DayLight Stop : %v", model.DBConn)
-	IosLog("utils.DB:" + fmt.Sprintf("%v", model.DBConn))
-
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("Apla Stop : %v", model.DBConn))
 	stopDaemons := &model.StopDaemon{StopTime: time.Now().Unix()}
 	err := stopDaemons.Create()
 	if err != nil {
-		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
-		log.Error("%v", utils.ErrInfo(err))
+		logger.LogError(consts.SystemError, err)
 	}
-	log.Debug("DayLight Stop")
-	IosLog("DayLight Stop")
+	logger.LogDebug(consts.DebugMessage, "Apla stop")
 }

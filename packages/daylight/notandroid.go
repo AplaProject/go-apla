@@ -19,17 +19,13 @@
 package daylight
 
 import (
-	//"fmt"
-	//"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"net"
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	//"os"
-	//"regexp"
-	//	"time"
 
 	"fmt"
 
@@ -74,7 +70,7 @@ func (l *boundConn) Close() error {
 }
 */
 func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Handler) {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	i := 0
 	host := ListenHTTPHost
 	var l net.Listener
@@ -82,36 +78,34 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Han
 	for {
 		i++
 		if i > 7 {
-			log.Error("Error listening %d", host)
+			logger.LogError(consts.SystemError, fmt.Sprintf("error listening %s", host))
 			panic("Error listening ")
 		}
 		if i > 1 {
 			host = ":7" + converter.IntToStr(i) + "79"
 			*BrowserHTTPHost = "http://" + host
 		}
-		log.Debug("host", host)
+		logger.LogDebug(consts.DebugMessage, fmt.Sprintf("host: %s", host))
 		l, err = net.Listen("tcp4", host)
-		log.Debug("l", l)
+		logger.LogDebug(consts.DebugMessage, fmt.Sprintf("l: %s", l))
 		if err == nil {
 			// Если это повторный запуск и он не из консоли, то открываем окно браузера, т.к. скорее всего юзер тыкнул по иконке
 			// If this is a restart and it is made not from the console, then open the browser window, because user most likely pressed the icon
 			/*if *utils.Console == 0 {
 				openBrowser(browser)
 			}*/
-			fmt.Println("BrowserHTTPHost", host)
+			logger.LogDebug(consts.DebugMessage, fmt.Sprintf("BrowserHTTPHost: %s", host))
 			break
 		} else {
-			log.Error(utils.ErrInfo(err).Error())
+			logger.LogError(consts.SystemError, err)
 		}
 	}
 
 	go func() {
-		srv := &http.Server{Handler: route} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
-		//		srv.SetKeepAlivesEnabled(false)
+		srv := &http.Server{Handler: route}
 		err = srv.Serve(l)
-		//		err = http.Serve( NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
 		if err != nil {
-			log.Error("Error listening:", err, ListenHTTPHost)
+			logger.LogError(consts.SystemError, fmt.Sprintf("Error listening host %s. %s", ListenHTTPHost, err))
 			panic(err)
 			//os.Exit(1)
 		}
@@ -120,13 +114,14 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Han
 
 // For ipv6 on the server
 func httpListenerV6(route http.Handler) {
+	logger.LogDebug(consts.FuncStarted, "")
 	i := 0
 	port := *utils.ListenHTTPPort
 	var l net.Listener
 	var err error
 	for {
 		if i > 7 {
-			log.Error("Error listening ipv6 %d", port)
+			logger.LogError(consts.SystemError, fmt.Sprintf("Error listening ipv6 %s", port))
 			panic("Error listening ")
 		}
 		if i > 0 {
@@ -137,41 +132,37 @@ func httpListenerV6(route http.Handler) {
 		if err == nil {
 			break
 		} else {
-			log.Error(utils.ErrInfo(err).Error())
+			logger.LogError(consts.SystemError, err)
 		}
 	}
 
 	go func() {
-		srv := &http.Server{Handler: route} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
-		//		srv.SetKeepAlivesEnabled(false)
+		srv := &http.Server{Handler: route}
 		err = srv.Serve(l)
-		//		err = http.Serve(NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
 		if err != nil {
-			log.Error("Error listening:", err)
+			logger.LogError(consts.SystemError, fmt.Sprintf("error listening: %v", err))
 			panic(err)
-			//os.Exit(1)
 		}
 	}()
 }
 
 func tcpListener() {
-	log.Debug("tcp")
+	logger.LogDebug(consts.FuncStarted, "tcp")
 	go func() {
-		log.Debug("*utils.tcpHost: %v", *utils.TCPHost+":"+consts.TCP_PORT)
+		logger.LogDebug(consts.DebugMessage, fmt.Sprintf("*utils.tcpHost: %s:%s", *utils.TCPHost, consts.TCP_PORT))
 		//if len(*utils.TCPHost) > 0 {
 		// включаем листинг TCP-сервером и обработку входящих запросов
 		// switch on the listing by TCP-server and the processing of incoming requests
 		l, err := net.Listen("tcp4", *utils.TCPHost+":"+consts.TCP_PORT)
 		if err != nil {
-			log.Error("Error listening:", err)
-			//panic(err)
+			logger.LogError(consts.SystemError, fmt.Sprintf("error listening %s", err))
 		} else {
 			//defer l.Close()
 			go func() {
 				for {
 					conn, err := l.Accept()
 					if err != nil {
-						log.Error("Error accepting:", err)
+						logger.LogError(consts.SystemError, fmt.Sprintf("error accepting: %s", err))
 						time.Sleep(time.Second)
 					} else {
 						go func(conn net.Conn) {
@@ -182,6 +173,5 @@ func tcpListener() {
 				}
 			}()
 		}
-		//}
 	}()
 }

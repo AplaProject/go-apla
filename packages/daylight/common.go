@@ -18,22 +18,18 @@ package daylight
 
 import (
 	"fmt"
-	//	_ "image/png"
+
 	"os/exec"
 	"runtime"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/op/go-logging"
-)
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
-var (
-	log = logging.MustGetLogger("daylight")
-	//	format = logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{color:reset} %{message}[" + consts.VERSION + "]" + string(byte(0)))
-	format = logging.MustStringFormatter("%{shortfile} %{shortfunc} [%{level:.4s}] %{message}")
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func openBrowser(BrowserHTTPHost string) {
-	log.Debug("runtime.GOOS: %v", runtime.GOOS)
+	logger.LogDebug(consts.FuncStarted, fmt.Sprintf("runtime.GOOS: %v", runtime.GOOS))
 	var err error
 	switch runtime.GOOS {
 	case "linux":
@@ -47,12 +43,13 @@ func openBrowser(BrowserHTTPHost string) {
 		err = fmt.Errorf("unsupported platform")
 	}
 	if err != nil {
-		log.Error("%v", err)
+		logger.LogError(consts.CommandError, err)
 	}
 }
 
 // GetHTTPHost returns program's hosts
 func GetHTTPHost() (string, string, string) {
+	logger.LogDebug(consts.FuncStarted, "")
 	BrowserHTTPHost := "http://localhost:" + *utils.ListenHTTPPort
 	HandleHTTPHost := ""
 	ListenHTTPHost := ":" + *utils.ListenHTTPPort

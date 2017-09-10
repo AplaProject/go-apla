@@ -24,29 +24,32 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 // KillPid kills the process with the specified pid
 func KillPid(pid string) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	if model.DBConn != nil {
 		sd := &model.StopDaemon{StopTime: time.Now().Unix()}
 		err := sd.Create()
 		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
+			logger.LogError(consts.DBError, err)
 			return err
 		}
 	}
 	rez, err := exec.Command("tasklist", "/fi", "PID eq "+pid).Output()
 	if err != nil {
+		logger.LogError(consts.CommandError, err)
 		return err
 	}
 	if string(rez) == "" {
 		return fmt.Errorf("null")
 	}
-	log.Debug("%rez s", string(rez))
-	fmt.Println("rez", string(rez))
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("rez %s", string(rez)))
 	if ok, _ := regexp.MatchString(`(?i)PID`, string(rez)); !ok {
 		return fmt.Errorf("null")
 	}

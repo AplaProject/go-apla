@@ -27,6 +27,12 @@ const (
 	IOError                          = iota
 	DaemonError                      = iota
 	ConverterError                   = iota
+	CommandError                     = iota
+	JSONError                        = iota
+	ContractError                    = iota
+	RollbackError                    = iota
+	SystemParamsError                = iota
+	SystemError                      = iota
 )
 
 var LogEventsMap = map[LogEventType]string{
@@ -50,6 +56,12 @@ var LogEventsMap = map[LogEventType]string{
 	IOError:             "io error",
 	DaemonError:         "daemon error",
 	ConverterError:      "converter error",
+	CommandError:        "Command error",
+	JSONError:           "JSON error",
+	ContractError:       "Contract error",
+	RollbackError:       "Rollback error",
+	SystemParamsError:   "system params error",
+	SystemError:         "System error",
 
 	FuncStarted:  "function started",
 	JustWaiting:  "just waiting",

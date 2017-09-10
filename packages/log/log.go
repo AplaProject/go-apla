@@ -1,17 +1,50 @@
 package log
 
 import (
+	"fmt"
+	"os"
 	"runtime"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/sirupsen/logrus"
 )
 
+type LogLevel uint32
+
+const (
+	Debug LogLevel = iota
+	Info           = iota
+	Warn           = iota
+	Error          = iota
+	Fatal          = iota
+)
+
 var (
 	logger = logrus.New()
 )
 
-//logrus levels: debug, info, warn, error, fatal
+func WriteToFile(fileName string) error {
+	openMode := os.O_APPEND
+	if _, err := os.Stat(fileName); os.IsNotExist(err) {
+		openMode = os.O_CREATE
+	}
+
+	f, err := os.OpenFile(fileName, os.O_WRONLY|openMode, 0755)
+	if err != nil {
+		fmt.Println("Can't open log file ", fileName)
+		return err
+	}
+	logrus.SetOutput(f)
+	return nil
+}
+
+func SetLevel(level LogLevel) {
+	logrus.SetLevel(logrus.Level(level))
+}
+
+func WriteToConsole() {
+	logrus.SetOutput(os.Stdout)
+}
 
 func LogDebug(errorType consts.LogEventType, logData interface{}) {
 	if logrus.GetLevel() < logrus.DebugLevel {
