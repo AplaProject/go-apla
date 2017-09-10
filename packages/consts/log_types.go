@@ -37,6 +37,7 @@ const (
 	APIParamsError                      = iota
 	IncompatibleTypesError              = iota
 	RequestConditionError               = iota
+	InnerError                          = iota
 )
 
 var LogEventsMap = map[LogEventType]string{
@@ -70,6 +71,7 @@ var LogEventsMap = map[LogEventType]string{
 	APIParamsError:         "API params error",
 	IncompatibleTypesError: "Incompatible types error",
 	RequestConditionError:  "Request conditions error",
+	InnerError:             "error in inner function",
 
 	FuncStarted:  "function started",
 	JustWaiting:  "just waiting",

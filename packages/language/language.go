@@ -21,8 +21,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"strconv"
 
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
@@ -38,6 +41,7 @@ var (
 
 // IsLang checks if there is a language with code name
 func IsLang(code string) bool {
+	logger.LogDebug(consts.FuncStarted, "")
 	if LangList == nil {
 		return true
 	}
@@ -51,6 +55,7 @@ func IsLang(code string) bool {
 
 // DefLang returns the default language
 func DefLang() string {
+	logger.LogDebug(consts.FuncStarted, "")
 	if LangList == nil {
 		return `en`
 	}
@@ -59,11 +64,15 @@ func DefLang() string {
 
 // UpdateLang updates language sources for the specified state
 func UpdateLang(state int, name, value string) {
+	logger.LogDebug(consts.FuncStarted, "")
 	if _, ok := lang[state]; !ok {
 		return
 	}
 	var ires map[string]string
-	json.Unmarshal([]byte(value), &ires)
+	err := json.Unmarshal([]byte(value), &ires)
+	if err != nil {
+		logger.LogError(consts.JSONError, err)
+	}
 	if len(ires) > 0 {
 		(*lang[state]).res[name] = &ires
 	}
@@ -71,9 +80,11 @@ func UpdateLang(state int, name, value string) {
 
 // loadLang download the language sources from database for the state
 func loadLang(state int) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	language := &model.Language{}
 	languages, err := language.GetAll(strconv.FormatInt(int64(state), 10))
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	list := make([]map[string]string, 0)
@@ -83,7 +94,10 @@ func loadLang(state int) error {
 	res := &cacheLang{make(map[string]*map[string]string)}
 	for _, ilist := range list {
 		var ires map[string]string
-		json.Unmarshal([]byte(ilist[`res`]), &ires)
+		err := json.Unmarshal([]byte(ilist[`res`]), &ires)
+		if err != nil {
+			logger.LogError(consts.JSONError, err)
+		}
 		(*res).res[ilist[`name`]] = &ires
 	}
 	lang[state] = res
@@ -93,11 +107,13 @@ func loadLang(state int) error {
 // LangText looks for the specified word through language sources and returns the meaning of the source
 // if it is found. Search goes according to the languages specified in 'accept'
 func LangText(in string, state int, accept string) (string, bool) {
+	logger.LogDebug(consts.FuncStarted, "")
 	if strings.IndexByte(in, ' ') >= 0 {
 		return in, false
 	}
 	if _, ok := lang[state]; !ok {
 		if err := loadLang(state); err != nil {
+			logger.LogError(consts.InnerError, err)
 			return err.Error(), false
 		}
 	}
@@ -124,6 +140,7 @@ func LangText(in string, state int, accept string) (string, bool) {
 // LangMacro replaces all inclusions of $resname$ in the incoming text with the corresponding language resources,
 // if they exist
 func LangMacro(input string, state int, accept string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	if len(input) == 0 {
 		return input
 	}
@@ -171,6 +188,7 @@ func LangMacro(input string, state int, accept string) string {
 
 // GetLang returns the first language from accept-language
 func GetLang(state int, accept string) (lng string) {
+	logger.LogDebug(consts.FuncStarted, "")
 	lng = DefLang()
 	for _, val := range strings.Split(accept, `,`) {
 		if len(val) < 2 {
