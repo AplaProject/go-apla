@@ -19,12 +19,14 @@ package daemons
 import (
 	"context"
 	"flag"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/op/go-logging"
 )
@@ -86,13 +88,13 @@ var rollbackList = []string{
 func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon, context.Context) error, retCh chan string) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("daemon Recovered", r)
 			panic(r)
 		}
 	}()
 
 	err := WaitDB(ctx)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return
 	}
 
@@ -103,7 +105,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 
 	err = handler(d, ctx)
 	if err != nil {
-		log.Errorf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(1))
+		logger.LogError(consts.DaemonError, fmt.Sprintf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(1)))
 	}
 
 	for {
@@ -118,7 +120,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 
 			err = handler(d, ctx)
 			if err != nil {
-				log.Errorf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(2))
+				logger.LogError(consts.DaemonError, fmt.Sprintf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(1)))
 			}
 
 		}
@@ -154,8 +156,7 @@ func StartDaemons() {
 			continue
 		}
 
-		log.Errorf("unknown daemon name: %s", name)
-
+		logger.LogError(consts.DaemonError, fmt.Sprintf("unknown daemon name: %s", name))
 	}
 }
 

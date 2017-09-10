@@ -17,6 +17,9 @@
 package daemons
 
 import (
+	"fmt"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -27,6 +30,7 @@ import (
 	"sync"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 )
 
 const (
@@ -38,24 +42,25 @@ const (
 // if we are full node(miner): sends blocks and transactions hashes
 // else send the full transactions
 func Disseminator(d *daemon, ctx context.Context) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	config := &model.Config{}
 	err := config.GetConfig()
 	if err != nil {
-		log.Errorf("can't get config: %s", err)
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 
 	systemState := &model.SystemRecognizedState{}
 	delegated, err := systemState.IsDelegated(config.StateID)
 	if err != nil {
-		log.Errorf("can't get delegated status: %s", err)
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 
 	node := &model.FullNode{}
 	err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
 	if err != nil {
-		log.Errorf("can't get full_node: %s", err)
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	fullNodeID := node.ID
@@ -74,24 +79,27 @@ func Disseminator(d *daemon, ctx context.Context) error {
 
 	if isFullNode {
 		// send blocks and transactions hashes
-		log.Debugf("we are full_node")
+		logger.LogDebug(consts.DebugMessage, "we are full_node")
 		return sendHashes(fullNodeID)
 	} else {
+		logger.LogDebug(consts.DebugMessage, "we are not full_node")
 		// we are not full node for this StateID and WalletID, so just send transactions
-		log.Debugf("we are not full_node")
 		return sendTransactions()
 	}
 }
 
 func sendTransactions() error {
+	logger.LogDebug(consts.FuncStarted, "")
 	// get unsent transactions
 	trs, err := model.GetAllUnsentTransactions()
 
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 
 	if trs == nil {
+		logger.LogError(consts.DBError, "transactions not found")
 		return nil
 	}
 
@@ -104,6 +112,7 @@ func sendTransactions() error {
 	if buf.Len() > 0 {
 		err := sendPacketToAll(TRANSACTIONS_REQUEST, buf.Bytes(), nil)
 		if err != nil {
+			logger.LogError(consts.ConnectionError, err)
 			return err
 		}
 	}
@@ -112,7 +121,7 @@ func sendTransactions() error {
 	for _, tr := range *trs {
 		_, err := model.MarkTransactionSent(tr.Hash)
 		if err != nil {
-			log.Errorf("failed to set transaction as sent: %s", err)
+			logger.LogError(consts.DBError, err)
 		}
 	}
 
@@ -123,17 +132,19 @@ func sendTransactions() error {
 func sendHashes(fullNodeID int32) error {
 	block, err := model.BlockGetUnsent()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 
 	trs, err := model.GetAllUnsentTransactions()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 
 	if (trs == nil || len(*trs) == 0) && block == nil {
-		// it's nothing to send
-		log.Debugf("it's nothing to send")
+		// it's nothing to send'
+		logger.LogDebug(consts.DebugMessage, "it's nothing to send")
 		return nil
 	}
 
@@ -141,6 +152,7 @@ func sendHashes(fullNodeID int32) error {
 	if buf != nil || len(buf) > 0 {
 		err := sendPacketToAll(FULL_REQUEST, buf, sendHashesResp)
 		if err != nil {
+			logger.LogError(consts.ConnectionError, err)
 			return err
 		}
 	}
@@ -149,6 +161,7 @@ func sendHashes(fullNodeID int32) error {
 	if block != nil {
 		err = block.MarkSent()
 		if err != nil {
+			logger.LogError(consts.DBError, err)
 			return err
 		}
 	}
@@ -157,7 +170,7 @@ func sendHashes(fullNodeID int32) error {
 		for _, tr := range *trs {
 			_, err := model.MarkTransactionSent(tr.Hash)
 			if err != nil {
-				log.Errorf("error set transaction %+v as sent: %s", tr, err)
+				logger.LogDebug(consts.DBError, fmt.Sprintf("error set transaction %+v as sent: %s", tr, err))
 			}
 		}
 	}
@@ -166,6 +179,7 @@ func sendHashes(fullNodeID int32) error {
 }
 
 func sendHashesResp(resp []byte, w io.Writer) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	var buf bytes.Buffer
 	for len(resp) > 16 {
 		// Parse the list of requested transactions
@@ -173,6 +187,7 @@ func sendHashesResp(resp []byte, w io.Writer) error {
 		tr := &model.Transaction{}
 		err := tr.Read(txHash)
 		if err != nil {
+			logger.LogError(consts.DBError, err)
 			return err
 		}
 		if len(tr.Data) > 0 {
@@ -182,13 +197,18 @@ func sendHashesResp(resp []byte, w io.Writer) error {
 	// write out the requested transactions
 	_, err := w.Write(converter.DecToBin(buf.Len(), 4))
 	if err != nil {
+		logger.LogError(consts.IOError, err)
 		return err
 	}
 	_, err = w.Write(buf.Bytes())
+	if err != nil {
+		logger.LogError(consts.IOError, err)
+	}
 	return err
 }
 
 func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int32) []byte {
+	logger.LogDebug(consts.FuncStarted, "")
 	var noBlockFlag byte
 	if block != nil {
 		noBlockFlag = 1
@@ -227,8 +247,10 @@ func MarshallTrHash(tr model.Transaction) []byte {
 }
 
 func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer) error) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	hosts, err := model.GetFullNodesHosts()
 	if err != nil {
+		logger.LogDebug(consts.DBError, err)
 		return err
 	}
 
@@ -239,7 +261,7 @@ func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Wr
 		go func(h string) {
 			err := sendDRequest(h, reqType, buf, respHand)
 			if err != nil {
-				log.Infof("failed to send transaction to %s (%s)", h, err)
+				logger.LogInfo(consts.ConnectionError, fmt.Sprintf("failed to send transaction to %s (%s)", h, err))
 			}
 			wg.Done()
 		}(GetHostPort(host))
@@ -257,8 +279,10 @@ data  len bytes
 */
 
 func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte, io.Writer) error) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	conn, err := utils.TCPConn(host)
 	if err != nil {
+		logger.LogError(consts.ConnectionError, err)
 		return err
 	}
 	defer conn.Close()
@@ -266,6 +290,7 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 	// type
 	_, err = conn.Write(converter.DecToBin(reqType, 2))
 	if err != nil {
+		logger.LogError(consts.ConnectionError, err)
 		return err
 	}
 
@@ -273,12 +298,14 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 	size := converter.DecToBin(len(buf), 4)
 	_, err = conn.Write(size)
 	if err != nil {
+		logger.LogError(consts.ConnectionError, err)
 		return err
 	}
 
 	// data
 	_, err = conn.Write(buf)
 	if err != nil {
+		logger.LogError(consts.ConnectionError, err)
 		return err
 	}
 
@@ -296,10 +323,12 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 		resp := make([]byte, respSize)
 		_, err = io.ReadFull(conn, resp)
 		if err != nil {
+			logger.LogError(consts.IOError, err)
 			return err
 		}
 		err = respHandler(resp, conn)
 		if err != nil {
+			logger.LogError(consts.IOError, err)
 			return err
 		}
 	}

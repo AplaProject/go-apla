@@ -82,6 +82,7 @@ var (
 func SysUpdate() error {
 	systemParameters, err := model.GetAllSystemParameters()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	mutex.Lock()

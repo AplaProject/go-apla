@@ -2,6 +2,9 @@ package crypto
 
 import (
 	"crypto/sha256"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 )
 
 type hashProvider int
@@ -12,7 +15,7 @@ const (
 
 func Hash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.Debug(HashingEmpty.Error())
+		logger.LogDebug(consts.CryptoError, HashingEmpty.Error())
 	}
 	switch hashProv {
 	case _SHA256:
@@ -24,7 +27,7 @@ func Hash(msg []byte) ([]byte, error) {
 
 func DoubleHash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.Debug(HashingEmpty.Error())
+		logger.LogDebug(consts.CryptoError, HashingEmpty.Error())
 	}
 	switch hashProv {
 	case _SHA256:

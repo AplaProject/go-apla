@@ -18,6 +18,7 @@ package daemons
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -40,9 +41,11 @@ import (
 
 // QueueParserBlocks parses blocks from the queue
 func QueueParserBlocks(d *daemon, ctx context.Context) error {
+	logger.LogDebug(consts.FuncStarted, "")
 
 	locked, err := DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	defer DbUnlock(d.goRoutineName)
@@ -50,26 +53,35 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	infoBlock := &model.InfoBlock{}
 	err = infoBlock.GetInfoBlock()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	queueBlock := &model.QueueBlock{}
 	err = queueBlock.GetQueueBlock()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	if len(queueBlock.Hash) == 0 {
+		logger.LogError(consts.RecordNotFoundError, "")
 		return err
 	}
 
 	// check if the block gets in the rollback_blocks_1 limit
 	if queueBlock.BlockID > infoBlock.BlockID+consts.RB_BLOCKS_1 {
-		queueBlock.Delete()
+		err = queueBlock.Delete()
+		if err != nil {
+			logger.LogError(consts.DBError, err)
+		}
 		return utils.ErrInfo("rollback_blocks_1")
 	}
 
 	// is it old block in queue ?
 	if queueBlock.BlockID <= infoBlock.BlockID {
-		queueBlock.Delete()
+		err = queueBlock.Delete()
+		if err != nil {
+			logger.LogError(consts.DBError, err)
+		}
 		return utils.ErrInfo("old block")
 	}
 
@@ -78,7 +90,10 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 
 	err = fullNode.FindNodeByID(queueBlock.FullNodeID)
 	if err != nil {
-		queueBlock.Delete()
+		err = queueBlock.Delete()
+		if err != nil {
+			logger.LogError(consts.DBError, err)
+		}
 		return utils.ErrInfo(err)
 	}
 
@@ -90,8 +105,11 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	host := GetHostPort(fullNode.Host)
 	err = p.GetBlocks(blockID, host, "rollback_blocks_1", d.goRoutineName, 7)
 	if err != nil {
-		log.Error("v", err)
-		queueBlock.Delete()
+		logger.LogError(consts.DBError, err)
+		err = queueBlock.Delete()
+		if err != nil {
+			logger.LogError(consts.DBError, err)
+		}
 		return utils.ErrInfo(err)
 	}
 	return nil

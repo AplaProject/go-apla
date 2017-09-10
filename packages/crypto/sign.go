@@ -9,7 +9,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 )
 
 type signProvider int
@@ -20,7 +23,7 @@ const (
 
 func Sign(privateKey string, data string) ([]byte, error) {
 	if len(data) == 0 {
-		log.Debug(SigningEmpty.Error())
+		logger.LogDebug(consts.CryptoError, SigningEmpty.Error())
 	}
 	switch signProv {
 	case _ECDSA:
@@ -32,7 +35,7 @@ func Sign(privateKey string, data string) ([]byte, error) {
 
 func CheckSign(public []byte, data string, signature []byte) (bool, error) {
 	if len(public) == 0 {
-		log.Debug(CheckingSignEmpty.Error())
+		logger.LogDebug(consts.CryptoError, CheckingSignEmpty.Error())
 	}
 	switch signProv {
 	case _ECDSA:
@@ -58,7 +61,7 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 	case elliptic256:
 		pubkeyCurve = elliptic.P256()
 	default:
-		log.Fatal(UnsupportedCurveSize.Error())
+		logger.LogFatal(consts.CryptoError, UnsupportedCurveSize.Error())
 	}
 
 	b, err := hex.DecodeString(privateKey)
@@ -73,7 +76,7 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 
 	signhash, err := Hash([]byte(data))
 	if err != nil {
-		log.Fatal(HashingError)
+		logger.LogFatal(consts.CryptoError, HashingError.Error())
 	}
 	r, s, err := ecdsa.Sign(crand.Reader, priv, signhash)
 	if err != nil {
@@ -101,12 +104,12 @@ func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
 	case elliptic256:
 		pubkeyCurve = elliptic.P256()
 	default:
-		log.Fatal(UnsupportedCurveSize)
+		logger.LogFatal(consts.CryptoError, UnsupportedCurveSize.Error())
 	}
 
 	hash, err := Hash([]byte(data))
 	if err != nil {
-		log.Fatal(HashingError)
+		logger.LogFatal(consts.CryptoError, HashingError.Error())
 	}
 
 	pubkey := new(ecdsa.PublicKey)

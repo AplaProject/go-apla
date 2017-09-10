@@ -21,26 +21,32 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"context"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func BlockGenerator(d *daemon, ctx context.Context) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	d.sleepTime = time.Second
 
 	locked, err := DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	defer DbUnlock(d.goRoutineName)
 
 	config := &model.Config{}
 	if err = config.GetConfig(); err != nil {
+		logger.LogError(consts.ConfigError, err)
 		return err
 	}
 
@@ -49,7 +55,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		delegated, err := systemState.IsDelegated(config.StateID)
 		if err == nil && delegated {
 			// we are the state and we have delegated the node maintenance to another user or state
-			log.Infof("we delegated block generation, sleep for hour")
+			logger.LogWarn(consts.JustWaiting, "we delegated block generation, sleep for hour")
 			d.sleepTime = 3600 * time.Second
 			return nil
 		}
@@ -60,26 +66,26 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	if err != nil || fullNodes.ID == 0 {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
-		log.Infof("we are not full node, sleep for 10 seconds")
+		logger.LogWarn(consts.JustWaiting, "we are not full node, sleep for 10 seconds")
 		return nil
 	}
 
 	prevBlock := &model.InfoBlock{}
 	err = prevBlock.GetInfoBlock()
 	if err != nil {
-		log.Errorf("can't get block: %s", err)
+		logger.LogError(consts.BlockError, err)
 		return err
 	}
 
 	// calculate the next block generation time
 	sleepTime, err := model.GetSleepTime(config.DltWalletID, config.StateID, config.StateID, config.DltWalletID)
 	if err != nil {
-		log.Errorf("can't get sleep time: %s", err)
+		logger.LogError(consts.DBError, fmt.Sprintf("can't get sleep time: %s", err))
 		return err
 	}
 	toSleep := int64(sleepTime) - (time.Now().Unix() - int64(prevBlock.Time))
 	if toSleep > 0 {
-		log.Debugf("we need to sleep %d seconds to generate new block", toSleep)
+		logger.LogInfo(consts.JustWaiting, toSleep)
 		d.sleepTime = time.Duration(toSleep) * time.Second
 		return nil
 	}
@@ -87,7 +93,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	nodeKey := &model.MyNodeKey{}
 	err = nodeKey.GetNodeWithMaxBlockID()
 	if err != nil || len(nodeKey.PrivateKey) < 1 {
-		log.Errorf("bad node private key: %s", err)
+		logger.LogError(consts.PrivateKeyError, err)
 		return err
 	}
 
@@ -96,7 +102,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	// verify transactions
 	err = p.AllTxParser()
 	if err != nil {
-		log.Errorf("transactions parser error: %s", err)
+		logger.LogError(consts.ParserError, err)
 		return err
 	}
 
@@ -104,19 +110,19 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	if err != nil || trs == nil {
 		return err
 	}
-	log.Debugf("transactions to put in new block: %+v", trs)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("transactions to put in new block: %+v", trs))
 
 	blockBin, err := generateNextBlock(prevBlock, *trs, string(nodeKey.PrivateKey), config, time.Now().Unix())
 	if err != nil {
-		log.Errorf("can't generate block: %s", err)
+		logger.LogError(consts.BlockError, err)
 		return err
 	}
 
 	p.BinaryData = blockBin
-	log.Debugf("try to parse new transactions")
+	logger.LogDebug(consts.DebugMessage, "try to parse new transactions")
 	err = p.ParseDataFull(true)
 	if err != nil {
-		log.Errorf("parser block error: %s", err)
+		logger.LogError(consts.BlockError, err)
 		p.BlockError(err)
 		return err
 	}
@@ -125,6 +131,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 }
 
 func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key string, c *model.Config, blockTime int64) ([]byte, error) {
+	logger.LogDebug(consts.FuncStarted, "")
 	newBlockID := prevBlock.BlockID + 1
 
 	var mrklArray [][]byte
@@ -132,6 +139,7 @@ func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key 
 	for _, tr := range trs {
 		doubleHash, err := crypto.DoubleHash(tr.Data)
 		if err != nil {
+			logger.LogError(consts.CryptoError, err)
 			return nil, err
 		}
 		mrklArray = append(mrklArray, converter.BinToHex(doubleHash))
@@ -148,6 +156,7 @@ func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key 
 
 	signed, err := crypto.Sign(key, forSign)
 	if err != nil {
+		logger.LogError(consts.CryptoError, err)
 		return nil, err
 	}
 

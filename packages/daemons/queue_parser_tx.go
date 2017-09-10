@@ -19,7 +19,10 @@ package daemons
 import (
 	"context"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
@@ -27,9 +30,10 @@ import (
 
 // QueueParserTx parses transaction from the queue
 func QueueParserTx(d *daemon, ctx context.Context) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	lock, err := DbLock(ctx, d.goRoutineName)
 	if !lock || err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	defer DbUnlock(d.goRoutineName)
@@ -37,10 +41,11 @@ func QueueParserTx(d *daemon, ctx context.Context) error {
 	infoBlock := &model.InfoBlock{}
 	err = infoBlock.GetInfoBlock()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	if infoBlock.BlockID == 0 {
-		log.Debugf("there are now blocks for parse")
+		logger.LogDebug(consts.DebugMessage, "there are now blocks for parse")
 		return nil
 	}
 
@@ -49,6 +54,7 @@ func QueueParserTx(d *daemon, ctx context.Context) error {
 	affect, err := model.DeleteLoopedTransactions()
 	if err != nil {
 		logging.WriteSelectiveLog(err)
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
@@ -56,6 +62,7 @@ func QueueParserTx(d *daemon, ctx context.Context) error {
 	p := new(parser.Parser)
 	err = p.AllTxParser()
 	if err != nil {
+		logger.LogError(consts.ParserError, err)
 		return err
 	}
 
