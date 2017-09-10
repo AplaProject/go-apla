@@ -19,7 +19,10 @@ package exchangeapi
 import (
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
@@ -31,6 +34,7 @@ type Balance struct {
 }
 
 func balance(r *http.Request) interface{} {
+	logger.LogDebug(consts.FuncStarted, "")
 	var result Balance
 
 	wallet := converter.StringToAddress(r.FormValue(`wallet`))
@@ -40,6 +44,7 @@ func balance(r *http.Request) interface{} {
 	}
 	total, err := model.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		result.Error = err.Error()
 		return result
 	}

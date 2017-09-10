@@ -30,7 +30,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 
 	"github.com/go-yaml/yaml"
@@ -53,21 +56,25 @@ var (
 )
 
 func logOut(format string, params ...interface{}) {
+	logger.LogDebug(consts.FuncStarted, "")
 	if !gSettings.Log {
 		return
 	}
-	log.Printf(format, params...)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf(format, params...))
 }
 
 func saveSetting() {
+	logger.LogDebug(consts.FuncStarted, "")
 	out, err := json.Marshal(gSettings)
 	if err != nil {
+		logger.LogError(consts.JSONError, err)
 		logOut(`saveSetting`, err)
 	}
 	ioutil.WriteFile(`settings.json`, out, 0600)
 }
 
 func checkKey() bool {
+	logger.LogDebug(consts.FuncStarted, "")
 	var privKey, pass []byte
 	var err error
 	// Reads the hex private key from the file
@@ -78,25 +85,30 @@ func checkKey() bool {
 		fmt.Println(`Enter the filename with the private key:`)
 		n, err := fmt.Scanln(&filename)
 		if err != nil || n == 0 {
+			logger.LogError(consts.InputError, err)
 			fmt.Println(err)
 			continue
 		}
 		if privKey, err = ioutil.ReadFile(filename); err != nil {
+			logger.LogError(consts.IOError, err)
 			fmt.Println(err)
 			continue
 		}
 		privKey, err = hex.DecodeString(strings.TrimSpace(string(privKey)))
 		if err != nil {
+			logger.LogError(consts.CryptoError, err)
 			fmt.Println(err)
 			continue
 		}
 		if len(privKey) != 32 {
+			logger.LogError(consts.CryptoError, fmt.Sprintf(`Wrong the length of private key: %d`, len(privKey)))
 			fmt.Println(`Wrong the length of private key`, len(privKey))
 			continue
 		}
 		fmt.Println(`Enter a new password:`)
 		n, err = fmt.Scanln(&pass)
 		if err != nil || n == 0 {
+			logger.LogError(consts.InputError, err)
 			fmt.Println(err)
 			continue
 		}

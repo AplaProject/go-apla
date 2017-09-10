@@ -23,9 +23,12 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/boltdb/bolt"
@@ -38,6 +41,7 @@ type Send struct {
 }
 
 func send(r *http.Request) interface{} {
+	logger.LogDebug(consts.FuncStarted, "")
 	var (
 		result Send
 		priv   []byte
@@ -45,22 +49,26 @@ func send(r *http.Request) interface{} {
 
 	sender := converter.StringToAddress(r.FormValue(`sender`))
 	if sender == 0 {
+		logger.LogInfo(consts.APIParamsError, "sender is invalid")
 		result.Error = `Sender is invalid`
 		return result
 	}
 	recipient := converter.StringToAddress(r.FormValue(`recipient`))
 	if recipient == 0 {
+		logger.LogInfo(consts.APIParamsError, "Recepient is invalid")
 		result.Error = `Recipient is invalid`
 		return result
 	}
 	money := r.FormValue(`amount`)
 	re := regexp.MustCompile(`^\d+$`)
 	if !re.Match([]byte(money)) {
+		logger.LogInfo(consts.APIParamsError, fmt.Sprintf(`The value of money %s is not valid`, money))
 		result.Error = fmt.Sprintf(`The value of money %s is not valid`, money)
 		return result
 	}
 	amount, err := decimal.NewFromString(money)
 	if err != nil {
+		logger.LogError(consts.APIParamsError, err)
 		result.Error = err.Error()
 		return result
 	}
@@ -86,13 +94,16 @@ func send(r *http.Request) interface{} {
 	systemParam := &model.SystemParameter{}
 	err = systemParam.Get("fuel_rate")
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		log.Fatal(err)
 	}
 	fuelRate, err := decimal.NewFromString(systemParam.Value)
 	if err != nil {
+		logger.LogError(consts.SystemParamsError, err)
 		return err
 	}
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
+		logger.LogInfo(consts.SystemParamsError, `fuel rate must be greater than 0`)
 		result.Error = `fuel rate must be greater than 0`
 		return result
 	}
@@ -101,15 +112,18 @@ func send(r *http.Request) interface{} {
 
 	total, err := model.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, sender).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		result.Error = err.Error()
 		return result
 	}
 	totalAmount, err := decimal.NewFromString(total)
 	if err != nil {
+		logger.LogError(consts.IncompatibleTypesError, err)
 		result.Error = err.Error()
 		return result
 	}
 	if totalAmount.Cmp(amount.Add(commission)) < 0 {
+		logger.LogInfo(consts.RequestConditionError, fmt.Sprintf(`There is not enough money. %v is less than %v`, totalAmount, amount.Add(commission)))
 		result.Error = fmt.Sprintf(`There is not enough money. %v is less than %v`, totalAmount, amount.Add(commission))
 		return result
 	}
@@ -120,6 +134,7 @@ func send(r *http.Request) interface{} {
 		wallet, amount.String(), commission.String(), `api`)
 	signature, err := crypto.Sign(hex.EncodeToString(priv), forSign)
 	if err != nil {
+		logger.LogError(consts.CryptoError, err)
 		result.Error = err.Error()
 		return result
 	}
@@ -138,12 +153,15 @@ func send(r *http.Request) interface{} {
 	data = append(data, converter.EncodeLengthPlusData([]byte(`api`))...)
 	pub, err := crypto.PrivateToPublic(priv)
 	if err != nil {
-		log.Fatal(err)
+		logger.LogError(consts.CryptoError, err)
+		result.Error = "Cryptographic error"
+		return result
 	}
 	data = append(data, converter.EncodeLengthPlusData(pub)...)
 	data = append(data, binsign...)
 	_, err = model.SendTx(txType, sender, data)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		result.Error = err.Error()
 		return result
 	}

@@ -3,65 +3,73 @@ package consts
 type LogEventType int
 
 const (
-	StrToIntError       LogEventType = iota
-	StrToFloatError                  = iota
-	PanicRecoveredError              = iota
-	RouteError                       = iota
-	SessionError                     = iota
-	FuncStarted                      = iota
-	DBError                          = iota
-	RecordNotFoundError              = iota
-	CryptoError                      = iota
-	GetHeaderError                   = iota
-	SendEmbeddedTxError              = iota
-	ConfigError                      = iota
-	JustWaiting                      = iota
-	BlockError                       = iota
-	PrivateKeyError                  = iota
-	ParserError                      = iota
-	DebugMessage                     = iota
-	BlockchainLoadError              = iota
-	ContextError                     = iota
-	ConnectionError                  = iota
-	NodeBan                          = iota
-	IOError                          = iota
-	DaemonError                      = iota
-	ConverterError                   = iota
-	CommandError                     = iota
-	JSONError                        = iota
-	ContractError                    = iota
-	RollbackError                    = iota
-	SystemParamsError                = iota
-	SystemError                      = iota
+	StrToIntError          LogEventType = iota
+	StrToFloatError                     = iota
+	PanicRecoveredError                 = iota
+	RouteError                          = iota
+	SessionError                        = iota
+	FuncStarted                         = iota
+	DBError                             = iota
+	RecordNotFoundError                 = iota
+	CryptoError                         = iota
+	GetHeaderError                      = iota
+	SendEmbeddedTxError                 = iota
+	ConfigError                         = iota
+	JustWaiting                         = iota
+	BlockError                          = iota
+	PrivateKeyError                     = iota
+	ParserError                         = iota
+	DebugMessage                        = iota
+	BlockchainLoadError                 = iota
+	ContextError                        = iota
+	ConnectionError                     = iota
+	NodeBan                             = iota
+	IOError                             = iota
+	DaemonError                         = iota
+	ConverterError                      = iota
+	CommandError                        = iota
+	JSONError                           = iota
+	ContractError                       = iota
+	RollbackError                       = iota
+	SystemParamsError                   = iota
+	SystemError                         = iota
+	InputError                          = iota
+	APIParamsError                      = iota
+	IncompatibleTypesError              = iota
+	RequestConditionError               = iota
 )
 
 var LogEventsMap = map[LogEventType]string{
-	StrToIntError:       "can't convert to int",
-	StrToFloatError:     "can't convert to float",
-	PanicRecoveredError: "recovered after panic",
-	RouteError:          "incorrect route parameters",
-	SessionError:        "session is undefined",
-	DBError:             "database error",
-	RecordNotFoundError: "record not found",
-	CryptoError:         "crypto error",
-	GetHeaderError:      "can't get request header",
-	SendEmbeddedTxError: "send embedded tx error",
-	ConfigError:         "config error",
-	BlockError:          "block error",
-	PrivateKeyError:     "private key error",
-	ParserError:         "parser error",
-	BlockchainLoadError: "blockchain load error",
-	ContextError:        "context error",
-	ConnectionError:     "connection error",
-	IOError:             "io error",
-	DaemonError:         "daemon error",
-	ConverterError:      "converter error",
-	CommandError:        "Command error",
-	JSONError:           "JSON error",
-	ContractError:       "Contract error",
-	RollbackError:       "Rollback error",
-	SystemParamsError:   "system params error",
-	SystemError:         "System error",
+	StrToIntError:          "can't convert to int",
+	StrToFloatError:        "can't convert to float",
+	PanicRecoveredError:    "recovered after panic",
+	RouteError:             "incorrect route parameters",
+	SessionError:           "session is undefined",
+	DBError:                "database error",
+	RecordNotFoundError:    "record not found",
+	CryptoError:            "crypto error",
+	GetHeaderError:         "can't get request header",
+	SendEmbeddedTxError:    "send embedded tx error",
+	ConfigError:            "config error",
+	BlockError:             "block error",
+	PrivateKeyError:        "private key error",
+	ParserError:            "parser error",
+	BlockchainLoadError:    "blockchain load error",
+	ContextError:           "context error",
+	ConnectionError:        "connection error",
+	IOError:                "io error",
+	DaemonError:            "daemon error",
+	ConverterError:         "converter error",
+	CommandError:           "Command error",
+	JSONError:              "JSON error",
+	ContractError:          "Contract error",
+	RollbackError:          "Rollback error",
+	SystemParamsError:      "system params error",
+	SystemError:            "System error",
+	InputError:             "Input error",
+	APIParamsError:         "API params error",
+	IncompatibleTypesError: "Incompatible types error",
+	RequestConditionError:  "Request conditions error",
 
 	FuncStarted:  "function started",
 	JustWaiting:  "just waiting",

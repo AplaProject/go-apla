@@ -20,8 +20,10 @@ import (
 	"encoding/hex"
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 )
 
 // NewKey is an answer structure for newKey request
@@ -33,10 +35,12 @@ type NewKey struct {
 }
 
 func newKey(r *http.Request) interface{} {
+	logger.LogDebug(consts.FuncStarted, "")
 	var result NewKey
 
 	pub, err := genNewKey()
 	if err != nil {
+		logger.LogError(consts.CryptoError, err)
 		result.Error = err.Error()
 		return result
 	}

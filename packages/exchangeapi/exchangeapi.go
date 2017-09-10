@@ -21,8 +21,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/boltdb/bolt"
 	"github.com/op/go-logging"
@@ -46,6 +48,7 @@ type DefaultAPI struct {
 
 // InitAPI initialize BoltDB database
 func InitAPI() {
+	logger.LogDebug(consts.FuncStarted, "")
 	var err error
 	boltDB, err = bolt.Open(*utils.BoltDir+"/exchangeapi.db", 0600, nil)
 	if err != nil {
@@ -57,6 +60,7 @@ func InitAPI() {
 		return err
 	})
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		log.Fatal(err)
 	}
 	boltDB.View(func(tx *bolt.Tx) error {
@@ -75,7 +79,7 @@ func InitAPI() {
 		})
 	}
 	if err != nil {
-		log.Fatal(fmt.Errorf(`BoltDB put/get token: %v`, err))
+		logger.LogError(consts.DBError, fmt.Errorf(`BoltDB put/get token: %v`, err))
 	}
 	getPassword := func() {
 		for *utils.BoltPsw == `console` || len(*utils.BoltPsw) == 0 {
@@ -88,7 +92,7 @@ func InitAPI() {
 		for true {
 			decrypted, err = decryptBytes(encTest)
 			if err != nil {
-				log.Fatal(fmt.Errorf(`Check BoltPsw: %v`, err))
+				logger.LogFatal(consts.DBError, fmt.Errorf(`Check BoltPsw: %v`, err))
 			}
 			if string(decrypted) != forpsw {
 				log.Error(`Password (boltPsw) is invalid.`)
@@ -115,14 +119,14 @@ func InitAPI() {
 				return err
 			})
 			if err != nil {
-				log.Fatal(fmt.Errorf(`BoltDB init: %v`, err))
+				logger.LogFatal(consts.DBError, fmt.Errorf(`BoltDB init: %v`, err))
 			}
 		} else {
 			checkPassword()
 		}
 	} else {
 		if len(encTest) > 0 {
-			log.Error(`-boltPsw parameter must be specified`)
+			logger.LogError(consts.DBError, `-boltPsw parameter must be specified`)
 			getPassword()
 			checkPassword()
 		}
@@ -130,21 +134,26 @@ func InitAPI() {
 }
 
 func encryptBytes(input []byte) (output []byte, err error) {
+	logger.LogDebug(consts.FuncStarted, "")
 	hash, err := crypto.Hash([]byte(*utils.BoltPsw))
 	if err != nil {
+		logger.LogError(consts.CryptoError, err)
 		log.Fatal(err)
 	}
 	output, err = crypto.Encrypt(input, hash, make([]byte, 16))
 	output = output[16:]
 	if err != nil {
+		logger.LogError(consts.CryptoError, err)
 		return
 	}
 	return
 }
 
 func decryptBytes(input []byte) (output []byte, err error) {
+	logger.LogDebug(consts.FuncStarted, "")
 	hash, err := crypto.Hash([]byte(*utils.BoltPsw))
 	if err != nil {
+		logger.LogFatal(consts.CryptoError, err)
 		log.Fatal(err)
 	}
 	output, err = crypto.Decrypt(make([]byte, 16), input, hash)
@@ -152,11 +161,14 @@ func decryptBytes(input []byte) (output []byte, err error) {
 }
 
 func genNewKey() ([]byte, error) {
+	logger.LogDebug(consts.FuncStarted, "")
 	if len(*utils.BoltPsw) == 0 {
+		logger.LogError(consts.InputError, `-boltPsw password is not defined`)
 		return nil, fmt.Errorf(`-boltPsw password is not defined`)
 	}
 	privKey, pubKey, err := crypto.GenBytesKeys()
 	if err != nil {
+		logger.LogError(consts.CryptoError, err)
 		return nil, err
 	}
 	address := int64(crypto.Address(pubKey))
@@ -164,18 +176,22 @@ func genNewKey() ([]byte, error) {
 	err = boltDB.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists(bucket)
 		if err != nil {
+			logger.LogError(consts.DBError, fmt.Sprintf("create bucket: %s", err))
 			return fmt.Errorf("create bucket: %s", err)
 		}
 		input, err := encryptBytes(privKey)
 		if err != nil {
+			logger.LogError(consts.CryptoError, err)
 			return err
 		}
 		if err := b.Put([]byte(converter.Int64ToStr(address)), input); err != nil {
+			logger.LogError(consts.DBError, fmt.Sprintf("put in bucket: %s", err))
 			return fmt.Errorf("put in bucket: %s", err)
 		}
 		return nil
 	})
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return nil, err
 	}
 	return pubKey, nil
@@ -183,10 +199,10 @@ func genNewKey() ([]byte, error) {
 
 // API is a handle function for exchangeapi requests
 func API(w http.ResponseWriter, r *http.Request) {
+	logger.LogDebug(consts.FuncStarted, "")
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("exchangeapi Recovered", r)
-			fmt.Println("exchangeapi Recovered", r)
+			logger.LogError(consts.PanicRecoveredError, r)
 		}
 	}()
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -216,6 +232,7 @@ func API(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonData, err := json.Marshal(ret)
 	if err != nil {
+		logger.LogError(consts.JSONError, err)
 		ret = DefaultAPI{err.Error()}
 	}
 	w.Write(jsonData)

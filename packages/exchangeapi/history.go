@@ -46,12 +46,14 @@ type History struct {
 }
 
 func history(r *http.Request) interface{} {
+	logger.LogDebug(consts.DebugMessage, "")
 	var (
 		result History
 	)
 
 	wallet := converter.StringToAddress(r.FormValue(`wallet`))
 	if wallet == 0 {
+		logger.LogInfo(consts.APIParamsError, `Wallet is invalid`)
 		result.Error = `Wallet is invalid`
 		return result
 	}
@@ -69,6 +71,7 @@ func history(r *http.Request) interface{} {
 	list := make([]histOper, 0)
 	current, err := model.GetOneRow(`select amount, rb_id from dlt_wallets where wallet_id=?`, wallet).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		result.Error = err.Error()
 		return result
 	}
@@ -84,10 +87,12 @@ func history(r *http.Request) interface{} {
 			left join block_chain as b on b.id=r.block_id
 			where r.rb_id=?`, rb).String()
 			if err != nil {
+				logger.LogError(consts.DBError, err)
 				result.Error = err.Error()
 				return result
 			}
 			if err = json.Unmarshal([]byte(prev[`data`]), &data); err != nil {
+				logger.LogError(consts.JSONError, err)
 				result.Error = err.Error()
 				return result
 			}
@@ -124,6 +129,7 @@ func history(r *http.Request) interface{} {
 	if rb == 0 {
 		first, err := model.GetOneRow(`select * from dlt_transactions where recipient_wallet_id=? order by id`, wallet).String()
 		if err != nil {
+			logger.LogError(consts.DBError, err)
 			result.Error = err.Error()
 			return result
 		}
