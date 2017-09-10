@@ -20,19 +20,17 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/log"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/op/go-logging"
-)
-
-var (
-	log = logging.MustGetLogger("daemons")
 )
 
 func Migration() {
+	logger.LogDebug(consts.FuncStarted, "")
 	oldDbVersion, err := model.Single(`SELECT version FROM migration_history ORDER BY id DESC LIMIT 1`).String()
 	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
+		logger.LogError(consts.DBError, err)
 	}
 	if len(*utils.OldVersion) == 0 && consts.VERSION != oldDbVersion {
 		*utils.OldVersion = oldDbVersion
@@ -42,7 +40,7 @@ func Migration() {
 	if len(*utils.OldVersion) > 0 {
 		err = model.InsertIntoMigration(consts.VERSION, time.Now().Unix())
 		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
+			logger.LogDebug(consts.DBError, err)
 		}
 	}
 }

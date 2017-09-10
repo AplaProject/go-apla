@@ -50,6 +50,18 @@ import (
 
 var log = logging.MustGetLogger("daemons")
 
+/*const (
+	UpdPublicKey = `fd7f6ccf79ec35a7cf18640e83f0bbc62a5ae9ea7e9260e3a93072dd088d3c7acf5bcb95a7b44fcfceff8de4b16591d146bb3dc6e79f93f900e59a847d2684c3`
+)*/
+
+// Update contains version info parameters
+type Update struct {
+	Version string
+	Hash    string
+	Sign    string
+	URL     string
+}
+
 // BlockData is a structure of the block's header
 type BlockData struct {
 	BlockID  int64
