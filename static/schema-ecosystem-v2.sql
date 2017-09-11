@@ -1,43 +1,67 @@
-DROP TABLE IF EXISTS "%d_keys"; CREATE TABLE "%[1]d_keys" (
-"id" bigint  NOT NULL DEFAULT '0',
+DROP SEQUENCE IF EXISTS "%d_keys_id_seq" CASCADE;
+CREATE SEQUENCE "%[1]d_keys_id_seq" START WITH 1;
+DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
+"id" bigint  NOT NULL default nextval('%[1]d_keys_id_seq'),
 "pub" bytea  NOT NULL DEFAULT '',
 "amount" decimal(30) NOT NULL DEFAULT '0',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
+ALTER SEQUENCE "%[1]d_keys_id_seq" owned by "%[1]d_keys".id;
 
-DROP TABLE IF EXISTS "%d_languages"; CREATE TABLE "%[1]d_languages" (
+
+DROP SEQUENCE IF EXISTS "%[1]d_languages_id_seq" CASCADE;
+CREATE SEQUENCE "%[1]d_languages_id_seq" START WITH 1;
+DROP TABLE IF EXISTS "%[1]d_languages"; CREATE TABLE "%[1]d_languages" (
+  "id" bigint  NOT NULL default nextval('%[1]d_languages_id_seq'),
   "name" character varying(100) NOT NULL DEFAULT '',
   "res" jsonb,
   "conditions" text NOT NULL DEFAULT '',
   "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER TABLE ONLY "%[1]d_languages" ADD CONSTRAINT "%[1]d_languages_pkey" PRIMARY KEY (name);
+ALTER TABLE ONLY "%[1]d_languages" ADD CONSTRAINT "%[1]d_languages_pkey" PRIMARY KEY (id);
+ALTER SEQUENCE "%[1]d_languages_id_seq" owned by "%[1]d_languages".id;
+CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
 
-DROP TABLE IF EXISTS "%d_menu"; CREATE TABLE "%[1]d_menu" (
+
+DROP SEQUENCE IF EXISTS "%[1]d_menu_id_seq" CASCADE;
+CREATE SEQUENCE "%[1]d_menu_id_seq" START WITH 1;
+DROP TABLE IF EXISTS "%[1]d_menu"; CREATE TABLE "%[1]d_menu" (
+    "id" bigint  NOT NULL default nextval('%[1]d_menu_id_seq'),
     "name" character varying(255) NOT NULL DEFAULT '',
     "value" text NOT NULL DEFAULT '',
     "conditions" text NOT NULL DEFAULT '',
     "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (name);
+ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
+ALTER SEQUENCE "%[1]d_menu_id_seq" owned by "%[1]d_menu".id;
+CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
 
+DROP SEQUENCE IF EXISTS "%[1]d_pages_id_seq" CASCADE;
+CREATE SEQUENCE "%[1]d_pages_id_seq" START WITH 1;
 DROP TABLE IF EXISTS "%d_pages"; CREATE TABLE "%[1]d_pages" (
+    "id" bigint  NOT NULL default nextval('%[1]d_pages_id_seq'),
     "name" character varying(255) NOT NULL DEFAULT '',
     "value" text NOT NULL DEFAULT '',
     "menu" character varying(255) NOT NULL DEFAULT '',
     "conditions" text NOT NULL DEFAULT '',
     "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (name);
+ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
+ALTER SEQUENCE "%[1]d_pages_id_seq" owned by "%[1]d_pages".id;
+CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
 
+DROP SEQUENCE IF EXISTS "%[1]d_signatures_id_seq" CASCADE;
+CREATE SEQUENCE "%[1]d_signatures_id_seq" START WITH 1;
 DROP TABLE IF EXISTS "%d_signatures"; CREATE TABLE "%[1]d_signatures" (
+    "id" bigint  NOT NULL default nextval('%[1]d_signatures_id_seq'),
     "name" character varying(100) NOT NULL DEFAULT '',
     "value" jsonb,
     "conditions" text NOT NULL DEFAULT '',
     "rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
+ALTER SEQUENCE "%[1]d_signatures_id_seq" owned by "%[1]d_signatures".id;
 
 DROP SEQUENCE IF EXISTS "%[1]d_contracts_id_seq" CASCADE;
 CREATE SEQUENCE "%[1]d_contracts_id_seq" START WITH 1;
