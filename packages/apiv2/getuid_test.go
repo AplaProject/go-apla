@@ -34,7 +34,7 @@ func TestGetUID(t *testing.T) {
 		if v[`error`] == `E_NOTINSTALLED` {
 			var instRes installResult
 			err := sendPost(`install`, &url.Values{`port`: {`5432`}, `host`: {`localhost`},
-				`type`: {`Private-net`}, `db_name`: {`v2`}, `log_level`: {`ERROR`},
+				`type`: {`PRIVATE_NET`}, `db_name`: {`v2`}, `log_level`: {`ERROR`},
 				`password`: {`postgres`}, `username`: {`postgres`}}, &instRes)
 			if err != nil {
 				t.Error(err)

@@ -58,7 +58,7 @@ func installCommon(data *installParams) (err error) {
 	if data.logLevel != "DEBUG" {
 		data.logLevel = "ERROR"
 	}
-	if data.installType == `Private-net` {
+	if data.installType == `PRIVATE_NET` {
 		*utils.FirstBlockDir = *utils.Dir
 		if len(data.firstBlockDir) > 0 {
 			*utils.FirstBlockDir = data.firstBlockDir
