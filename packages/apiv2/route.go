@@ -34,21 +34,31 @@ func Route(route *hr.Router) {
 	post := func(pattern, params string, handler ...apiHandle) {
 		methodRoute(route, `POST`, pattern, params, handler...)
 	}
-	/*	anyTx := func(method, pattern, pars string, preHandle, handle apiHandle) {
-			methodRoute(route, method, `prepare/`+pattern, pars, authState, preHandle)
-			if len(pars) > 0 {
-				pars = `,` + pars
-			}
-			methodRoute(route, method, pattern, `?pubkey signature:hex, time:string`+pars, authState, handle)
+	anyTx := func(method, pattern, pars string, preHandle, handle apiHandle) {
+		methodRoute(route, method, `prepare/`+pattern, pars, authState, preHandle)
+		if len(pars) > 0 {
+			pars = `,` + pars
 		}
-			postTx := func(url string, params string, preHandle, handle apiHandle) {
-			anyTx(`POST`, url, params, preHandle, handle)
-		}*/
+		methodRoute(route, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, authState, handle)
+	}
+	postTx := func(url string, params string, preHandle, handle apiHandle) {
+		anyTx(`POST`, url, params, preHandle, handle)
+	}
 
 	route.Handle(`OPTIONS`, `/api/v2/*name`, optionsHandler())
 
 	get(`balance/:wallet`, `?state:int64`, authWallet, balance)
+	get(`contract/:name`, ``, getContract)
+	get(`content/page/:name`, ``, getPage)
+	get(`content/menu/:name`, ``, getMenu)
+	get(`ecosystemparam/:name`, `?idstate:int64`, ecosystemParam)
+	get(`ecosystemparams`, `?idstate:int64,?names:string`, ecosystemParams)
+	get(`ecosystems`, ``, ecosystems)
 	get(`getuid`, ``, getUID)
+	get(`list/:name`, `?limit ?offset:int64,?columns:string`, list)
+	get(`row/:name/:id`, `?columns:string`, row)
+	get(`table/:name`, ``, table)
+	get(`tables`, `?limit ?offset:int64`, tables)
 	get(`txstatus/:hash`, ``, authWallet, txstatus)
 	//	get(`smartcontract/:name`, ``, authState, getSmartContract)
 	get(`test/:name`, ``, getTest)
@@ -56,6 +66,7 @@ func Route(route *hr.Router) {
 	post(`install`, `?first_load_blockchain_url ?first_block_dir log_level type host port 
 	db_name password username:string,?generate_first_block:int64`, install)
 	post(`login`, `pubkey signature:hex,?state ?expire:int64`, login)
+	postTx(`:name`, ``, prepareContract, contract)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
 	//	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
 	post(`signtest/`, `forsign private:string`, signTest)

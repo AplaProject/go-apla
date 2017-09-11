@@ -29,8 +29,12 @@ type txstatusResult struct {
 }
 
 func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	/*	var status txstatusResult
-		if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
+	var status txstatusResult
+
+	status = txstatusResult{
+		BlockID: "56234",
+	}
+	/*	if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
 			return errorAPI(w, `hash is incorrect`, http.StatusBadRequest)
 		}
 		ts := &model.TransactionStatus{}
@@ -44,7 +48,7 @@ func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		if ts.BlockID > 0 {
 			status.BlockID = converter.Int64ToStr(ts.BlockID)
 		}
-		status.Message = ts.Error
-		data.result = &status*/
+		status.Message = ts.Error*/
+	data.result = &status
 	return nil
 }
