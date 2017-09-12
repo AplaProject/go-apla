@@ -38,6 +38,9 @@ const (
 	IncompatibleTypesError              = iota
 	RequestConditionError               = iota
 	InnerError                          = iota
+	TCPCserverError                     = iota
+	TransactionError                    = iota
+	TemplateError                       = iota
 )
 
 var LogEventsMap = map[LogEventType]string{
@@ -72,6 +75,9 @@ var LogEventsMap = map[LogEventType]string{
 	IncompatibleTypesError: "Incompatible types error",
 	RequestConditionError:  "Request conditions error",
 	InnerError:             "error in inner function",
+	TCPCserverError:        "tcp server error",
+	TransactionError:       "transaction error",
+	TemplateError:          "template error",
 
 	FuncStarted:  "function started",
 	JustWaiting:  "just waiting",

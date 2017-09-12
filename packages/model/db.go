@@ -638,3 +638,86 @@ func handleError(err error) error {
 	}
 	return err
 }
+
+// Now returns the current time of postgresql
+func Now(vars *map[string]string, pars ...string) string {
+	var (
+		cut             int
+		query, interval string
+	)
+	if len(pars) > 1 && len(pars[1]) > 0 {
+		interval = converter.SanitizeNumber(pars[1])
+		if interval[0] != '-' && interval[0] != '+' {
+			interval = `+` + interval
+		}
+		interval = fmt.Sprintf(` %s interval '%s'`, interval[:1], strings.TrimSpace(interval[1:]))
+	}
+	if pars[0] == `` {
+		query = `select round(extract(epoch from now()` + interval + `))::integer`
+		cut = 10
+	} else {
+		query = `select now()` + interval
+		format := converter.Sanitize(pars[0], `+-: /.`)
+		switch format {
+		case `datetime`:
+			cut = 19
+		default:
+			if strings.Index(format, `HH`) >= 0 && strings.Index(format, `HH24`) < 0 {
+				format = strings.Replace(format, `HH`, `HH24`, -1)
+			}
+			query = fmt.Sprintf(`select to_char(now()%s, '%s')`, interval, format)
+		}
+	}
+	ret, err := Single(query).String()
+	if err != nil {
+		return err.Error()
+	}
+	if cut > 0 {
+		ret = strings.Replace(ret[:cut], `T`, ` `, -1)
+	}
+	return ret
+}
+
+func GetRowVars(vars *map[string]string, pars ...string) string {
+	if len(pars) != 4 && len(pars) != 3 {
+		return ``
+	}
+	where := ``
+	if len(pars) == 4 {
+		where = ` where ` + converter.EscapeName(pars[2]) + `='` + converter.Escape(pars[3]) + `'`
+	} else if len(pars) == 3 {
+		where = ` where ` + converter.Escape(pars[2])
+	}
+	fmt.Println(`select * from ` + converter.EscapeName(pars[1]) + where)
+	value, err := GetOneRow(`select * from ` + converter.EscapeName(pars[1]) + where).String()
+	if err != nil {
+		return err.Error()
+	}
+	for key, val := range value {
+		if val == `NULL` {
+			val = ``
+		}
+		(*vars)[pars[0]+`_`+key] = converter.StripTags(val)
+	}
+	return ``
+}
+
+func GetOne(vars *map[string]string, pars ...string) string {
+	if len(pars) < 2 {
+		return ``
+	}
+	where := ``
+	if len(pars) == 4 {
+		where = ` where ` + converter.EscapeName(pars[2]) + `='` + converter.Escape(pars[3]) + `'`
+	} else if len(pars) == 3 {
+		where = ` where ` + converter.Escape(pars[2])
+	}
+	value, err := Single(`select ` + converter.Escape(pars[0]) + ` from ` + converter.EscapeName(pars[1]) + where).String()
+	if err != nil {
+		return err.Error()
+	}
+	if value == `NULL` {
+		value = ``
+	}
+	return strings.Replace(converter.StripTags(value), "\n", "\n<br>", -1)
+}

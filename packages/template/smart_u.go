@@ -38,12 +38,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/op/go-logging"
 	"github.com/russross/blackfriday"
 	"github.com/shopspring/decimal"
 )
-
-var log = logging.MustGetLogger("daemons")
 
 // FieldInfo contains the information of contract data field
 type FieldInfo struct {
@@ -140,6 +137,7 @@ type SelInfo struct {
 }
 
 func init() {
+	logger.LogDebug(consts.FuncStarted, "")
 	smart.Extend(&script.ExtendData{Objects: map[string]interface{}{
 		"Balance":    Balance,
 		"StateParam": StateParam,
@@ -173,10 +171,12 @@ func init() {
 
 // LoadContracts reads and compiles contracts from smart_contracts tables
 func LoadContracts() (err error) {
+	logger.LogDebug(consts.FuncStarted, "")
 	var states []map[string]string
 	prefix := []string{`global`}
 	states, err = model.GetAll(`select id from system_states order by id`, -1)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	for _, istate := range states {
@@ -185,6 +185,7 @@ func LoadContracts() (err error) {
 	LoadContract(`global`)
 	for _, ipref := range prefix {
 		if err = LoadContract(ipref); err != nil {
+			logger.LogError(consts.ContractError, err)
 			break
 		}
 	}
@@ -194,9 +195,11 @@ func LoadContracts() (err error) {
 
 // LoadContract reads and compiles contract of new state
 func LoadContract(prefix string) (err error) {
+	logger.LogDebug(consts.FuncStarted, "")
 	var contracts []map[string]string
 	contracts, err = model.GetAll(`select * from "`+prefix+`_smart_contracts" order by id`, -1)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err
 	}
 	for _, item := range contracts {
@@ -205,11 +208,9 @@ func LoadContract(prefix string) (err error) {
 			logger.LogInfo(consts.StrToIntError, item["id"])
 		}
 		if err = smart.Compile(item[`value`], prefix, item[`active`] == `1`, id); err != nil {
-			log.Error("Load Contract", item[`name`], err)
-			fmt.Println("Error Load Contract", item[`name`], err)
-			//return
+			logger.LogError(consts.ContractError, fmt.Sprintf("contract %s loading error: %s", item["name"], err))
 		} else {
-			fmt.Println("OK Load Contract", item[`name`], item[`id`], item[`active`] == `1`)
+			logger.LogDebug(consts.DebugMessage, fmt.Sprintf("OK Load contract name: %s, id: %s, active: %t", item[`name`], item[`id`], item[`active`] == `1`))
 		}
 	}
 	return
@@ -217,21 +218,40 @@ func LoadContract(prefix string) (err error) {
 
 // Balance returns the balance of the wallet
 func Balance(walletID int64) (decimal.Decimal, error) {
-	balance, err := model.Single("SELECT amount FROM dlt_wallets WHERE wallet_id = ?", walletID).String()
+	logger.LogDebug(consts.FuncStarted, "")
+	wallet := &model.DltWallet{}
+	err := wallet.GetWallet(walletID)
 	if err != nil {
+		logger.LogDebug(consts.DBError, err)
 		return decimal.New(0, 0), err
 	}
-	return decimal.NewFromString(balance)
+	return decimal.NewFromString(wallet.Amount)
 }
 
 // EGSRate returns egs_rate of the state
 func EGSRate(idstate int64) (float64, error) {
-	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, `egs_rate`).Float64()
+	logger.LogDebug(consts.FuncStarted, "")
+	stateParams := &model.StateParameter{}
+	stateParams.SetTablePrefix(converter.Int64ToStr(idstate))
+	err := stateParams.GetByName("egs_rate")
+	if err != nil {
+		logger.LogError(consts.DBError, err)
+		return 0, err
+	}
+	return strconv.ParseFloat(stateParams.Value, 64)
 }
 
 // StateParam returns the value of state parameters
 func StateParam(idstate int64, name string) (string, error) {
-	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
+	logger.LogDebug(consts.FuncStarted, "")
+	stateParams := &model.StateParameter{}
+	stateParams.SetTablePrefix(converter.Int64ToStr(idstate))
+	err := stateParams.GetByName(name)
+	if err != nil {
+		logger.LogError(consts.DBError, err)
+		return "0", err
+	}
+	return stateParams.Value, nil
 }
 
 // Param returns the value of the specified varaible
@@ -244,6 +264,7 @@ func Param(vars *map[string]string, pars ...string) string {
 
 // LangRes returns the corresponding language resource of the specified parameter
 func LangRes(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	stateID, err := strconv.ParseInt((*vars)["state_id"], 10, 64)
 	if err != nil {
 		logger.LogInfo(consts.StrToIntError, (*vars)["state_id"])
@@ -258,6 +279,7 @@ func LangJS(vars *map[string]string, pars ...string) string {
 }
 
 func ifValue(val string) bool {
+	logger.LogDebug(consts.FuncStarted, "")
 	var sep string
 	if strings.Index(val, `;base64`) < 0 {
 		for _, item := range []string{`==`, `!=`, `<=`, `>=`, `<`, `>`} {
@@ -300,6 +322,7 @@ func ifValue(val string) bool {
 
 // Money returns the formated value of the specified money amount
 func Money(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	var cents int
 	var err error
 	if len(pars) > 1 {
@@ -437,45 +460,12 @@ func IfEnd(vars *map[string]string, pars ...string) string {
 
 // Now returns the current time of postgresql
 func Now(vars *map[string]string, pars ...string) string {
-	var (
-		cut             int
-		query, interval string
-	)
-	if len(pars) > 1 && len(pars[1]) > 0 {
-		interval = converter.SanitizeNumber(pars[1])
-		if interval[0] != '-' && interval[0] != '+' {
-			interval = `+` + interval
-		}
-		interval = fmt.Sprintf(` %s interval '%s'`, interval[:1], strings.TrimSpace(interval[1:]))
-	}
-	if pars[0] == `` {
-		query = `select round(extract(epoch from now()` + interval + `))::integer`
-		cut = 10
-	} else {
-		query = `select now()` + interval
-		format := converter.Sanitize(pars[0], `+-: /.`)
-		switch format {
-		case `datetime`:
-			cut = 19
-		default:
-			if strings.Index(format, `HH`) >= 0 && strings.Index(format, `HH24`) < 0 {
-				format = strings.Replace(format, `HH`, `HH24`, -1)
-			}
-			query = fmt.Sprintf(`select to_char(now()%s, '%s')`, interval, format)
-		}
-	}
-	ret, err := model.Single(query).String()
-	if err != nil {
-		return err.Error()
-	}
-	if cut > 0 {
-		ret = strings.Replace(ret[:cut], `T`, ` `, -1)
-	}
-	return ret
+	return model.Now(vars, pars...)
 }
 
 // Textarea returns textarea HTML tag
 func Textarea(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	var (
 		class, value, more string
 	)
@@ -491,6 +481,7 @@ func Textarea(vars *map[string]string, pars ...string) string {
 
 // Input returns input HTML tag
 func Input(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	var (
 		class, value, more, placeholder string
 	)
@@ -513,6 +504,7 @@ func Input(vars *map[string]string, pars ...string) string {
 
 // InputDate returns input HTML tag with datepicker
 func InputDate(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	var (
 		class, value, more string
 	)
@@ -529,6 +521,7 @@ func InputDate(vars *map[string]string, pars ...string) string {
 
 // InputMoney returns input HTML tag with a special money mask
 func InputMoney(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	var (
 		class, value string
 		digit        int
@@ -559,6 +552,7 @@ func InputMoney(vars *map[string]string, pars ...string) string {
 
 // InputAddress returns input HTML tag for entering wallet address
 func InputAddress(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	var (
 		class, value string
 	)
@@ -577,6 +571,7 @@ func InputAddress(vars *map[string]string, pars ...string) string {
 
 // Trim trims spaces at the beginning and at the end of the text
 func Trim(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	if len(pars) == 0 {
 		return ``
 	}
@@ -585,6 +580,7 @@ func Trim(vars *map[string]string, pars ...string) string {
 
 // Back returns back button
 func Back(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	if len(pars[0]) == 0 || len(pars) < 2 || len(pars[1]) == 0 {
 		return ``
 	}
@@ -599,6 +595,7 @@ hist_push(['load_%s', '%s', {%s}]);</script>`,
 
 // JSONScript returns json object
 func JSONScript(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	if len(pars) == 0 {
 		return ``
 	}
@@ -622,6 +619,7 @@ func FullScreen(vars *map[string]string, pars ...string) string {
 
 // WhiteMobileBg switches flatPageMobile class
 func WhiteMobileBg(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	wide := `add`
 	if len(pars) > 0 && pars[0] == `0` {
 		wide = `remove`
@@ -633,6 +631,7 @@ func WhiteMobileBg(vars *map[string]string, pars ...string) string {
 
 // Bin2Hex converts interface to hex string
 func Bin2Hex(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	if len(pars) == 0 {
 		return ``
 	}
@@ -641,6 +640,7 @@ func Bin2Hex(vars *map[string]string, pars ...string) string {
 
 // WhiteBg switches flatPageMobile class
 func WhiteBg(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	wide := `add`
 	if len(pars) > 0 && pars[0] == `0` {
 		wide = `remove`
@@ -652,8 +652,10 @@ func WhiteBg(vars *map[string]string, pars ...string) string {
 
 // MessageBoard returns HTML source for displaying messages
 func MessageBoard(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	messages, err := model.GetAll(`select * from "global_messages" order by id`, 100)
 	if err != nil {
+		logger.LogDebug(consts.DBError, err)
 		return ``
 	}
 	ret := ``
@@ -707,6 +709,7 @@ func MessageBoard(vars *map[string]string, pars ...string) string {
 
 // GetList assigns the result of sql request to the variables
 func GetList(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	// name, table, fields, where, order, limit
 	if len(pars) < 3 {
 		return ``
@@ -732,6 +735,7 @@ func GetList(vars *map[string]string, pars ...string) string {
 
 	value, err := model.GetAll(`select `+fields+` from `+converter.EscapeName(pars[1])+where+order, limit)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err.Error()
 	}
 	list := make([]string, 0)
@@ -764,6 +768,7 @@ func GetList(vars *map[string]string, pars ...string) string {
 
 // AutoUpdate reloads inner commands each pars[0] seconds
 func AutoUpdate(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	time, err := strconv.Atoi(pars[0])
 	if err != nil {
 		logger.LogInfo(consts.StrToIntError, pars[0])
@@ -788,6 +793,7 @@ func AutoUpdate(vars *map[string]string, pars ...string) string {
 
 // AutoUpdateEnd must be used with AutoUpdate for text processing
 func AutoUpdateEnd(vars *map[string]string, pars ...string) (out string) {
+	logger.LogDebug(consts.FuncStarted, "")
 	out = fmt.Sprintf(`</div><div id="auto%sbody" style="display:none;">%s</div>
 <script language="JavaScript" type="text/javascript">
 setTimeout( function(){ autoUpdate(%[1]s, %[3]s); }, %[3]s000 );
@@ -797,6 +803,7 @@ setTimeout( function(){ autoUpdate(%[1]s, %[3]s); }, %[3]s000 );
 
 // Include returns the another template page
 func Include(vars *map[string]string, pars ...string) string {
+	logger.LogDebug(consts.FuncStarted, "")
 	params := make(map[string]string)
 	for i, val := range pars {
 		if i > 0 {
@@ -860,51 +867,16 @@ func ListVal(vars *map[string]string, pars ...string) string {
 
 // GetRowVars assignes the value of row result to the variables
 func GetRowVars(vars *map[string]string, pars ...string) string {
-	if len(pars) != 4 && len(pars) != 3 {
-		return ``
-	}
-	where := ``
-	if len(pars) == 4 {
-		where = ` where ` + converter.EscapeName(pars[2]) + `='` + converter.Escape(pars[3]) + `'`
-	} else if len(pars) == 3 {
-		where = ` where ` + converter.Escape(pars[2])
-	}
-	fmt.Println(`select * from ` + converter.EscapeName(pars[1]) + where)
-	value, err := model.GetOneRow(`select * from ` + converter.EscapeName(pars[1]) + where).String()
-	if err != nil {
-		return err.Error()
-	}
-	for key, val := range value {
-		if val == `NULL` {
-			val = ``
-		}
-		(*vars)[pars[0]+`_`+key] = converter.StripTags(val)
-	}
-	return ``
+	return model.GetRowVars(vars, pars...)
 }
 
 // GetOne returns the single value of sql query.
 func GetOne(vars *map[string]string, pars ...string) string {
-	if len(pars) < 2 {
-		return ``
-	}
-	where := ``
-	if len(pars) == 4 {
-		where = ` where ` + converter.EscapeName(pars[2]) + `='` + converter.Escape(pars[3]) + `'`
-	} else if len(pars) == 3 {
-		where = ` where ` + converter.Escape(pars[2])
-	}
-	value, err := model.Single(`select ` + converter.Escape(pars[0]) + ` from ` + converter.EscapeName(pars[1]) + where).String()
-	if err != nil {
-		return err.Error()
-	}
-	if value == `NULL` {
-		value = ``
-	}
-	return strings.Replace(converter.StripTags(value), "\n", "\n<br>", -1)
+	return model.GetOne(vars, pars...)
 }
 
 func getClass(class string) (string, string) {
+	logger.LogDebug(consts.FuncStarted, "")
 	special := map[string]string{
 		`copyclipboard`: `onClick="CopyToClipboard('#clipboard')"`,
 	}
@@ -954,6 +926,7 @@ func getClass(class string) (string, string) {
 }
 
 func getTag(tag string, pars ...string) (out string) {
+	logger.LogDebug(consts.FuncStarted, "")
 	if len(pars) == 0 {
 		return
 	}
@@ -967,6 +940,7 @@ func getTag(tag string, pars ...string) (out string) {
 
 // Tag returns the specified HTML tag
 func Tag(vars *map[string]string, pars ...string) (out string) {
+	logger.LogDebug(consts.FuncStarted, "")
 	var valid bool
 	for _, itag := range []string{`h1`, `h2`, `h3`, `h4`, `h5`, `div`, `button`, `table`, `thead`, `tbody`, `tr`, `td`} {
 		if pars[0] == itag {
@@ -1348,6 +1322,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	list, err := model.GetAll(fmt.Sprintf(`select %s from %s %s %s%s`, fields,
 		converter.EscapeName((*pars)[`Table`]), where, order, limit), -1)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err.Error()
 	}
 	columns := textproc.Split((*pars)[`Columns`])
@@ -1659,6 +1634,7 @@ func ValueByID(vars *map[string]string, pars ...string) string {
 	}
 	value, err := model.GetOneRow(`select * from ` + converter.EscapeName(pars[0]) + ` where id='` + converter.Escape(pars[1]) + `'`).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err.Error()
 	}
 	keys := make(map[string]string)
@@ -1721,6 +1697,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	}
 	contract := smart.GetContract(name, uint32(stateID))
 	if contract == nil /*|| contract.Block.Info.(*script.ContractInfo).Tx == nil*/ {
+		logger.LogError(consts.ContractError, fmt.Sprintf(`there is not %s contract`, name))
 		return fmt.Sprintf(`there is not %s contract`, name)
 	}
 	funcMap := template.FuncMap{
@@ -1735,12 +1712,14 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 
 	sign, err := static.Asset("static/signatures_new.html")
 	if err != nil {
+		logger.LogError(consts.IOError, err)
 		return fmt.Sprint(err.Error())
 	}
 
 	t := template.New("template").Funcs(funcMap)
 	t, err = t.Parse(string(data))
 	if err != nil {
+		logger.LogError(consts.TemplateError, err)
 		return fmt.Sprintf("Error: %v", err)
 	}
 	t = template.Must(t.Parse(string(sign)))
@@ -1818,6 +1797,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 		}
 	}
 	if err = t.Execute(b, finfo); err != nil {
+		logger.LogError(consts.TemplateError, err)
 		return fmt.Sprintf("Error: %v", err)
 	}
 	lines := strings.Split(b.String(), "\n")
@@ -1841,11 +1821,15 @@ func getSelect(linklist string) (data []map[string]string, id string, name strin
 	}
 	count, err = model.Single(`select count(*) from ` + tblname).Int64()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return
 	}
 	if count > 0 && count <= 50 {
 		data, err = model.GetAll(fmt.Sprintf(`select %s, %s from %s order by %s`, id,
 			converter.EscapeName(name), tblname, converter.EscapeName(name)), -1)
+		if err != nil {
+			logger.LogError(consts.DBError, err)
+		}
 	}
 	return
 }
@@ -1885,12 +1869,14 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 
 	sign, err := static.Asset("static/signatures_new.html")
 	if err != nil {
+		logger.LogError(consts.IOError, err)
 		return fmt.Sprint(err.Error())
 	}
 
 	t := template.New("template").Funcs(funcMap)
 	t, err = t.Parse(string(data))
 	if err != nil {
+		logger.LogError(consts.TemplateError, err)
 		return fmt.Sprintf("Error: %v", err)
 	}
 	t = template.Must(t.Parse(string(sign)))
@@ -1962,6 +1948,7 @@ txlist:
 			sellist := SelList{val, make(map[int]string)}
 			if strings.IndexByte(linklist, '.') >= 0 {
 				if data, id, name, err := getSelect(linklist); err != nil {
+					logger.LogError(consts.DBError, err)
 					return err.Error()
 				} else if len(data) > 0 {
 					for _, item := range data {
@@ -2002,6 +1989,7 @@ txlist:
 		}
 	}
 	if err = t.Execute(b, finfo); err != nil {
+		logger.LogError(consts.TemplateError, err)
 		return fmt.Sprintf("Error: %v", err)
 	}
 	lines := strings.Split(b.String(), "\n")
@@ -2277,6 +2265,7 @@ func Select(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		if strings.IndexByte(pars[1], '.') >= 0 {
 			if data, id, name, err := getSelect(pars[1]); err != nil {
+				logger.LogError(consts.DBError, err)
 				return err.Error()
 			} else if len(data) > 0 {
 				for _, item := range data {
@@ -2455,6 +2444,7 @@ func ChartBar(vars *map[string]string, pars *map[string]string) string {
 	list, err := model.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, converter.EscapeName(value), converter.EscapeName(label),
 		converter.EscapeName((*pars)[`Table`]), where, order, limit), -1)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return err.Error()
 	}
 	for _, item := range list {
@@ -2556,6 +2546,7 @@ func ChartPie(vars *map[string]string, pars *map[string]string) string {
 		list, err := model.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, converter.EscapeName(value), converter.EscapeName(label),
 			converter.EscapeName((*pars)[`Table`]), where, order, limit), -1)
 		if err != nil {
+			logger.LogError(consts.DBError, err)
 			return err.Error()
 		}
 		for ind, item := range list {
@@ -2621,12 +2612,12 @@ func ProceedTemplate(html string, data interface{}) (string, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("proceedTemplate Recovered", r)
-			fmt.Println(r)
+			logger.LogError(consts.PanicRecoveredError, r)
 		}
 	}()
 	pattern, err := static.Asset("static/" + html + ".html")
 	if err != nil {
+		logger.LogError(consts.IOError, err)
 		return "", err
 	}
 	/*	funcMap := template.FuncMap{
@@ -2761,6 +2752,7 @@ func ProceedTemplate(html string, data interface{}) (string, error) {
 	}
 	sign, err := static.Asset("static/signatures_new.html")
 	if err != nil {
+		logger.LogError(consts.IOError, err)
 		return "", err
 	}
 
@@ -2771,6 +2763,7 @@ func ProceedTemplate(html string, data interface{}) (string, error) {
 	err = t.Execute(b, data)
 	//fmt.Println(`PROC`, err, b.String())
 	if err != nil {
+		logger.LogError(consts.TemplateError, err)
 		return "", err
 	}
 	return b.String(), nil
@@ -2789,6 +2782,7 @@ func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[s
 	} else {
 		data, err = model.Single(query, page).String()
 		if err != nil {
+			logger.LogError(consts.DBError, err)
 			return "", err
 		}
 	}
@@ -2925,15 +2919,18 @@ func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[s
 			}
 			data, err := static.Asset("static/tx_btncont.html")
 			if err != nil {
+				logger.LogError(consts.IOError, err)
 				return ``, err
 			}
 			sign, err := static.Asset("static/signatures_new.html")
 			if err != nil {
+				logger.LogError(consts.IOError, err)
 				return ``, err
 			}
 
 			t := template.New("template").Funcs(funcMap)
 			if t, err = t.Parse(string(data)); err != nil {
+				logger.LogError(consts.TemplateError, err)
 				return ``, err
 			}
 			t = template.Must(t.Parse(string(sign)))
@@ -2941,6 +2938,7 @@ func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[s
 
 			finfo := TxBtnCont{Unique: template.JS((*params)[`tx_unique`])}
 			if err = t.Execute(b, finfo); err != nil {
+				logger.LogError(consts.TemplateError, err)
 				return ``, err
 			}
 			templ += b.String()

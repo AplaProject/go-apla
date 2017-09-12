@@ -19,11 +19,13 @@ package tcpserver
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -32,7 +34,7 @@ import (
 // do not load the blocks here because here could be the chain of blocks that are loaded for a long time
 // download the transactions here, because they are small and definitely will be downloaded in 60 sec
 func Type1(r *DisRequest, rw io.ReadWriter) error {
-
+	logger.LogDebug(consts.DebugMessage, "")
 	buf := bytes.NewBuffer(r.Data)
 
 	/*
@@ -59,6 +61,7 @@ func Type1(r *DisRequest, rw io.ReadWriter) error {
 	if newDataType == 0 {
 		err := processBlock(buf, fullNodeID)
 		if err != nil {
+			logger.LogError(consts.BlockError, err)
 			return err
 		}
 	}
@@ -66,12 +69,14 @@ func Type1(r *DisRequest, rw io.ReadWriter) error {
 	// get unknown transactions from received packet
 	needTx, err := getUnknownTransactions(buf)
 	if err != nil {
+		logger.LogError(consts.TransactionError, err)
 		return err
 	}
 
 	// send the list of transactions which we want to get
 	err = SendRequest(&DisHashResponse{Data: needTx}, rw)
 	if err != nil {
+		logger.LogError(consts.IOError, err)
 		return err
 	}
 
@@ -83,6 +88,7 @@ func Type1(r *DisRequest, rw io.ReadWriter) error {
 	trs := &DisRequest{}
 	err = ReadRequest(trs, rw)
 	if err != nil {
+		logger.LogError(consts.IOError, err)
 		return err
 	}
 
@@ -91,15 +97,16 @@ func Type1(r *DisRequest, rw io.ReadWriter) error {
 }
 
 func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
-
+	logger.LogDebug(consts.DebugMessage, "")
 	blockID, err := model.GetCurBlockID()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return utils.ErrInfo(err)
 	}
 
 	// get block ID
 	newBlockID := converter.BinToDec(buf.Next(3))
-	log.Debug("newDataBlockID: %d / blockID: %d", newBlockID, blockID)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("newDataBlockID: %d / blockID: %d", newBlockID, blockID))
 
 	// get block hash
 	blockHash := buf.Next(32)
@@ -109,6 +116,7 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 		queueBlock := &model.QueueBlock{Hash: blockHash, FullNodeID: fullNodeID, BlockID: newBlockID}
 		err = queueBlock.Create()
 		if err != nil {
+			logger.LogError(consts.DBError, err)
 			return utils.ErrInfo(err)
 		}
 	}
@@ -117,11 +125,12 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 }
 
 func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	var needTx []byte
 	for buf.Len() > 0 {
 		newDataTxHash := buf.Next(16)
 		if len(newDataTxHash) == 0 {
+			logger.LogError(consts.TransactionError, "wrong transactions hash size")
 			return nil, errors.New("wrong transactions hash size")
 		}
 
@@ -129,29 +138,32 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 		// check log_transaction
 		exists, err := model.GetLogTransactionsCount(newDataTxHash)
 		if err != nil {
+			logger.LogError(consts.DBError, err)
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.Debug("exists")
+			logger.LogDebug(consts.DebugMessage, "exists")
 			continue
 		}
 
 		exists, err = model.GetTransactionsCount(newDataTxHash)
 		if err != nil {
+			logger.LogError(consts.DBError, err)
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.Debug("exists")
+			logger.LogDebug(consts.DebugMessage, "exists")
 			continue
 		}
 
 		// check transaction queue
 		exists, err = model.GetQueuedTransactionsCount(newDataTxHash)
 		if err != nil {
+			logger.LogError(consts.DBError, err)
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.Debug("exists")
+			logger.LogDebug(consts.DebugMessage, "exists")
 			continue
 		}
 		needTx = append(needTx, newDataTxHash...)
@@ -161,36 +173,41 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 }
 
 func saveNewTransactions(r *DisRequest) error {
-
+	logger.LogDebug(consts.DebugMessage, "")
 	binaryTxs := r.Data
-	log.Debug("binaryTxs %x", binaryTxs)
+	logger.LogError(consts.DebugMessage, fmt.Sprintf("binaryTxs %x", binaryTxs))
 
 	for len(binaryTxs) > 0 {
 		txSize, err := converter.DecodeLength(&binaryTxs)
 		if err != nil {
+			logger.LogError(consts.TransactionError, err)
 			return err
 		}
 		if int64(len(binaryTxs)) < txSize {
+			logger.LogError(consts.TransactionError, "bad transactions packet")
 			return utils.ErrInfo(errors.New("bad transactions packet"))
 		}
 
 		txBinData := converter.BytesShift(&binaryTxs, txSize)
 		if len(txBinData) == 0 {
+			logger.LogError(consts.TransactionError, "len(txBinData) == 0")
 			return utils.ErrInfo(errors.New("len(txBinData) == 0"))
 		}
 
 		if int64(len(txBinData)) > consts.MAX_TX_SIZE {
+			logger.LogError(consts.TransactionError, "len(txBinData) > max_tx_size")
 			return utils.ErrInfo("len(txBinData) > max_tx_size")
 		}
 
 		hash, err := crypto.Hash(txBinData)
 		if err != nil {
-			log.Fatal(err)
+			logger.LogFatal(consts.CryptoError, err)
 		}
 
 		queueTx := &model.QueueTx{Hash: hash, Data: txBinData, FromGate: 1}
 		err = queueTx.Create()
 		if err != nil {
+			logger.LogError(consts.DBError, err)
 			return err
 		}
 	}

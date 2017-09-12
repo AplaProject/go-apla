@@ -27,6 +27,8 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -63,6 +65,7 @@ var (
 
 // GetTx gets information about new transactions
 func GetTx() {
+	logger.LogDebug(consts.FuncStarted, "")
 	txList = &TxInfo{}
 	txTop = txList
 	prev := txList
@@ -118,8 +121,6 @@ func GetTx() {
 						} else {
 							break
 						}
-						//wallet, _ = utils.DecodeLenInt64(&input)
-						//state, _ = utils.DecodeLenInt64(&input)
 					} else {
 						itype -= 128
 						tmp := make([]byte, 4)
@@ -182,21 +183,24 @@ func GetTx() {
 							if val, ok := txStates[state]; ok {
 								txTop.State = val
 							} else {
-								stateName, _ := utils.DB.Single(`select state_name from global_states_list where gstate_id=?`, state).String()
+								stateName, err := model.Single(`select state_name from global_states_list where gstate_id=?`, state).String()
+								if err != nil {
+									logger.LogError(consts.DBError, err)
+								}
 								if len(stateName) > 0 {
 									txStates[state] = stateName
 									txTop.State = stateName
 								}
 							}
-							//					txTop.State = utils.Int64ToStr(state)
 						} else {
 							txTop.State = ``
 						}
 					}
-					//					fmt.Println(`NAME`, *txTop)
 					block = block[size:]
 				}
 			}
+		} else {
+			logger.LogError(consts.DBError, err)
 		}
 		time.Sleep(1 * time.Second)
 	}

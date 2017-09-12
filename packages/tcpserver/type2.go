@@ -21,47 +21,53 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 // Type2 serves requests from disseminator
 func Type2(r *DisRequest) (*DisTrResponse, error) {
+	logger.LogDebug(consts.FuncStarted, "")
 	binaryData := r.Data
 	// take the transactions from usual users but not nodes.
 	_, _, decryptedBinData, err := DecryptData(&binaryData)
 	if err != nil {
+		logger.LogError(consts.CryptoError, err)
 		return nil, utils.ErrInfo(err)
 	}
 
 	if int64(len(binaryData)) > consts.MAX_TX_SIZE {
+		logger.LogError(consts.TransactionError, "len(txBinData) > max_tx_size")
 		return nil, utils.ErrInfo("len(txBinData) > max_tx_size")
 	}
 
 	if len(binaryData) < 5 {
+		logger.LogError(consts.TransactionError, "len(binaryData) < 5")
 		return nil, utils.ErrInfo("len(binaryData) < 5")
 	}
 
 	decryptedBinDataFull := decryptedBinData
 	hash, err := crypto.Hash(decryptedBinDataFull)
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatal(consts.TransactionError, err)
 	}
 
 	err = model.DeleteQueuedTransaction(hash)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return nil, utils.ErrInfo(err)
 	}
 
-	//hexBinData := converter.BinToHex(decryptedBinDataFull)
-	log.Debug("INSERT INTO queue_tx (hash, data) (%s, %s)", hash, decryptedBinData)
 	queueTx := &model.QueueTx{Hash: hash, Data: decryptedBinData, FromGate: 0}
 	err = queueTx.Create()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return nil, utils.ErrInfo(err)
 	}
 
@@ -69,45 +75,52 @@ func Type2(r *DisRequest) (*DisTrResponse, error) {
 }
 
 func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
+	logger.LogDebug(consts.FuncStarted, "")
 	if len(*binaryTx) == 0 {
+		logger.LogError(consts.TransactionError, "len(binaryTx) == 0")
 		return nil, nil, nil, utils.ErrInfo("len(binaryTx) == 0")
 	}
 
 	myUserID := converter.BinToDecBytesShift(&*binaryTx, 5)
-	log.Debug("myUserId: %d", myUserID)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("myUserId: %d", myUserID))
 
 	// remove the encrypted key, and all that stay in $binary_tx will be encrypted keys of the transactions/blocks
 	length, err := converter.DecodeLength(&*binaryTx)
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatal(consts.TransactionError, err)
 	}
 	encryptedKey := converter.BytesShift(&*binaryTx, length)
-	log.Debug("encryptedKey: %x", encryptedKey)
-	log.Debug("encryptedKey: %s", encryptedKey)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("encryptedKey: %s", encryptedKey))
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("encryptedKey: %x", encryptedKey))
 
 	iv := converter.BytesShift(&*binaryTx, 16)
-	log.Debug("iv: %s", iv)
-	log.Debug("iv: %x", iv)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("iv: %s", iv))
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("iv: %x", iv))
 
 	if len(encryptedKey) == 0 {
+		logger.LogError(consts.CryptoError, "len(encryptedKey) == 0")
 		return nil, nil, nil, utils.ErrInfo("len(encryptedKey) == 0")
 	}
 
 	if len(*binaryTx) == 0 {
+		logger.LogError(consts.TransactionError, "len(*binaryTx) == 0")
 		return nil, nil, nil, utils.ErrInfo("len(*binaryTx) == 0")
 	}
 
 	nodeKey := &model.MyNodeKey{}
 	err = nodeKey.GetNodeWithMaxBlockID()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
 	if len(nodeKey.PrivateKey) == 0 {
+		logger.LogError(consts.RecordNotFoundError, err)
 		return nil, nil, nil, utils.ErrInfo("len(nodePrivateKey) == 0")
 	}
 
 	block, _ := pem.Decode([]byte(nodeKey.PrivateKey))
 	if block == nil || block.Type != "RSA PRIVATE KEY" {
+		logger.LogError(consts.CryptoError, "No valid PEM data found")
 		return nil, nil, nil, utils.ErrInfo("No valid PEM data found")
 	}
 
@@ -118,17 +131,20 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 
 	decKey, err := rsa.DecryptPKCS1v15(crand.Reader, privateKey, encryptedKey)
 	if err != nil {
+		logger.LogError(consts.CryptoError, err)
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
-	log.Debug("decrypted Key: %s", decKey)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("decrypted Key: %s", decKey))
 	if len(decKey) == 0 {
+		logger.LogError(consts.CryptoError, "len(decKey) == 0")
 		return nil, nil, nil, utils.ErrInfo("len(decKey)")
 	}
 
-	log.Debug("binaryTx %x", *binaryTx)
-	log.Debug("iv %s", iv)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("binaryTx %x", *binaryTx))
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("iv %s", iv))
 	decrypted, err := crypto.Decrypt(iv, *binaryTx, decKey)
 	if err != nil {
+		logger.LogError(consts.CryptoError, err)
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
 

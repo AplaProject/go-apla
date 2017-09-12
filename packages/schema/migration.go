@@ -17,10 +17,10 @@
 package schema
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/log"
 	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -36,7 +36,7 @@ func Migration() {
 		*utils.OldVersion = oldDbVersion
 	}
 
-	log.Debug("*utils.OldVersion %v", *utils.OldVersion)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("*utils.OldVersion %v", *utils.OldVersion))
 	if len(*utils.OldVersion) > 0 {
 		err = model.InsertIntoMigration(consts.VERSION, time.Now().Unix())
 		if err != nil {

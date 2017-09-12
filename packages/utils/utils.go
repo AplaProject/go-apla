@@ -41,7 +41,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/kardianos/osext"
 	"github.com/mcuadros/go-version"
@@ -1088,12 +1087,12 @@ func DaylightRestart() error {
 }*/
 
 // GetUpdVerAndURL downloads the information about the version
-func GetUpdVerAndURL(host string) (updinfo *lib.Update, err error) {
+func GetUpdVerAndURL(host string) (updinfo *Update, err error) {
 
 	update, err := GetHTTPTextAnswer(host + "/update.json")
 	//update, err := ioutil.ReadFile(`c:\egaas\update.json`)
 	if len(update) > 0 {
-		updateData := make(map[string]lib.Update)
+		updateData := make(map[string]Update)
 		err = json.Unmarshal([]byte(update), &updateData)
 		if err != nil {
 			return
