@@ -44,10 +44,10 @@ import (
 	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/kardianos/osext"
 	"github.com/mcuadros/go-version"
-	"github.com/op/go-logging"
+	//"github.com/op/go-logging"
 )
 
-var log = logging.MustGetLogger("daemons")
+//var log = logging.MustGetLogger("daemons")
 
 /*const (
 	UpdPublicKey = `fd7f6ccf79ec35a7cf18640e83f0bbc62a5ae9ea7e9260e3a93072dd088d3c7acf5bcb95a7b44fcfceff8de4b16591d146bb3dc6e79f93f900e59a847d2684c3`
@@ -201,13 +201,13 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	if result.BlockID > 1 {
 		signSize, err := converter.DecodeLength(binaryBlock)
 		if err != nil {
-			log.Fatal(err)
+			logger.LogFatal(consts.BlockError, err)
 		}
 		result.Sign = converter.BytesShift(binaryBlock, signSize)
 	} else {
 		*binaryBlock = (*binaryBlock)[1:]
 	}
-	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.StateID: %v / result.Sign: %v", result.BlockID, result.Time, result.WalletID, result.StateID, result.Sign)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.StateID: %v / result.Sign: %v", result.BlockID, result.Time, result.WalletID, result.StateID, result.Sign))
 	return result
 }
 
@@ -226,8 +226,8 @@ func CheckInputData(idata interface{}, dataType string) bool {
 	case []byte:
 		data = string(idata.([]byte))
 	}
-	log.Debug("CheckInputData:" + data)
-	log.Debug("dataType:" + dataType)
+	logger.LogDebug(consts.DebugMessage, "CheckInputData:"+data)
+	logger.LogDebug(consts.DebugMessage, "dataType:"+dataType)
 	switch dataType {
 	case "arbitration_trust_list":
 		if ok, _ := regexp.MatchString(`^\[[0-9]{1,10}(,[0-9]{1,10}){0,100}\]$`, data); ok {
@@ -703,7 +703,7 @@ func CopyFileContents(src, dst string) error {
 func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("Panic CheckECDSA %v", r)
+			logger.LogError(consts.PanicRecoveredError, r)
 		}
 	}()
 
@@ -724,7 +724,7 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 	} else {
 		length, err := converter.DecodeLength(&signs)
 		if err != nil {
-			log.Fatal(err)
+			logger.LogFatal(consts.SignError, err)
 		}
 		if length > 0 {
 			signsSlice = append(signsSlice, converter.BytesShift(&signs, length))
@@ -738,12 +738,12 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 
 // MerkleTreeRoot rertun Merkle value
 func MerkleTreeRoot(dataArray [][]byte) []byte {
-	log.Debug("dataArray: %s", dataArray)
+	logger.LogDebug(consts.FuncStarted, fmt.Sprintf("dataArray: %s", dataArray))
 	result := make(map[int32][][]byte)
 	for _, v := range dataArray {
 		hash, err := crypto.DoubleHash(v)
 		if err != nil {
-			log.Fatal(err)
+			logger.LogFatal(consts.CryptoError, err)
 		}
 		hash = converter.BinToHex(hash)
 		result[0] = append(result[0], hash)
@@ -761,14 +761,14 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 				if _, ok := result[j+1]; !ok {
 					hash, err := crypto.DoubleHash(append(result[j][i], result[j][i+1]...))
 					if err != nil {
-						log.Fatal(err)
+						logger.LogFatal(consts.CryptoError, err)
 					}
 					hash = converter.BinToHex(hash)
 					result[j+1] = [][]byte{hash}
 				} else {
 					hash, err := crypto.DoubleHash([]byte(append(result[j][i], result[j][i+1]...)))
 					if err != nil {
-						log.Fatal(err)
+						logger.LogFatal(consts.CryptoError, err)
 					}
 					hash = converter.BinToHex(hash)
 					result[j+1] = append(result[j+1], hash)
@@ -778,9 +778,9 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 		j++
 	}
 
-	log.Debug("result: %s", result)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("result: %v", result))
 	ret := result[int32(len(result)-1)]
-	log.Debug("result_: %s", ret)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("result_: %s", ret))
 	return []byte(ret[0])
 }
 
@@ -810,7 +810,7 @@ func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int)
 				transactionBinaryData := converter.BytesShift(&binaryData, txSize)
 				dSha256Hash, err := crypto.DoubleHash(transactionBinaryData)
 				if err != nil {
-					log.Fatal(err)
+					logger.LogFatal(consts.CryptoError, err)
 				}
 				dSha256Hash = converter.BinToHex(dSha256Hash)
 				mrklSlice = append(mrklSlice, dSha256Hash)
@@ -833,11 +833,11 @@ func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int)
 	} else {
 		mrklSlice = append(mrklSlice, []byte("0"))
 	}
-	log.Debug("mrklSlice: %s", mrklSlice)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("mrklSlice: %s", mrklSlice))
 	if len(mrklSlice) == 0 {
 		mrklSlice = append(mrklSlice, []byte("0"))
 	}
-	log.Debug("mrklSlice: %s", mrklSlice)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("mrklSlice: %s", mrklSlice))
 	return MerkleTreeRoot(mrklSlice), nil
 }
 
@@ -988,7 +988,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	}
 	defer conn.Close()
 
-	log.Debug("dataTypeBlockBody: %v", dataTypeBlockBody)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("dataTypeBlockBody: %v", dataTypeBlockBody))
 	// шлем тип данных
 	// send the type of data
 	_, err = conn.Write(converter.DecToBin(dataTypeBlockBody, 2))
@@ -996,7 +996,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 		return nil, ErrInfo(err)
 	}
 
-	log.Debug("blockID: %v", blockID)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("blockID: %v", blockID))
 
 	// шлем номер блока
 	// send the number of a block
@@ -1012,13 +1012,13 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
-	log.Debug("dataSize buf: %x / get: %v", buf, n)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("dataSize buf: %x / get: %v", buf, n))
 
 	// и если данных менее 10мб, то получаем их
 	// if the data size is less than 10mb, we will receive them
 	dataSize := converter.BinToDec(buf)
 	var binaryBlock []byte
-	log.Debug("dataSize: %v", dataSize)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("dataSize: %v", dataSize))
 	if dataSize < 10485760 && dataSize > 0 {
 		binaryBlock = make([]byte, dataSize)
 		/*n, err := conn.Read(binaryBlock)
@@ -1119,25 +1119,25 @@ func ShellExecute(cmdline string) {
 
 // FirstBlock generates the first block
 func FirstBlock() {
-	log.Debug("FirstBlock")
+	logger.LogDebug(consts.FuncStarted, "FirstBlock")
 
 	if len(*FirstBlockPublicKey) == 0 {
-		log.Debug("len(*FirstBlockPublicKey) == 0")
+		logger.LogDebug(consts.DebugMessage, "len(*FirstBlockPublicKey) == 0")
 		priv, pub, _ := crypto.GenHexKeys()
 		err := ioutil.WriteFile(*Dir+"/PrivateKey", []byte(priv), 0644)
 		if err != nil {
-			log.Error("write publick key failed: %v", ErrInfo(err))
+			logger.LogError(consts.IOError, fmt.Sprintf("write publick key failed: %v", err))
 			return
 		}
-		log.Debugf("public key: %s", pub)
+		logger.LogDebug(consts.DebugMessage, fmt.Sprintf("public key: %s", pub))
 		*FirstBlockPublicKey = pub
 	}
 	if len(*FirstBlockNodePublicKey) == 0 {
-		log.Debug("len(*FirstBlockNodePublicKey) == 0")
+		logger.LogDebug(consts.DebugMessage, "len(*FirstBlockNodePublicKey) == 0")
 		priv, pub, _ := crypto.GenHexKeys()
 		err := ioutil.WriteFile(*Dir+"/NodePrivateKey", []byte(priv), 0644)
 		if err != nil {
-			log.Error("write private kery failed: %v", ErrInfo(err))
+			logger.LogError(consts.IOError, fmt.Sprintf("write private kery failed: %v", err))
 			return
 		}
 		*FirstBlockNodePublicKey = pub
@@ -1147,7 +1147,7 @@ func FirstBlock() {
 	//		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
 	PublicKeyBytes, err := hex.DecodeString(string(PublicKey))
 	if err != nil {
-		log.Errorf("can't generate key, decode string failed: %s", err)
+		logger.LogError(consts.CryptoError, fmt.Sprintf("can't generate key, decode string failed: %s", err))
 		return
 	}
 
@@ -1155,7 +1155,7 @@ func FirstBlock() {
 	//		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
 	NodePublicKeyBytes, err := hex.DecodeString(string(NodePublicKey))
 	if err != nil {
-		log.Errorf("can't generate key, decode string failed: %s", err)
+		logger.LogError(consts.CryptoError, fmt.Sprintf("can't generate key, decode string failed: %s", err))
 		return
 	}
 
@@ -1168,19 +1168,19 @@ func FirstBlock() {
 	iAddress := int64(crypto.Address(PublicKeyBytes))
 	now := uint32(time.Now().Unix())
 
-	log.Debugf("wallet_id: %+v\n", iAddress)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("wallet_id: %+v\n", iAddress))
 	_, err = converter.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
 	if err != nil {
-		log.Errorf("first block header marshall error: %v", ErrInfo(err))
+		logger.LogError(consts.BlockError, fmt.Sprintf("first block header marshall error: %v", err))
 		return
 	}
 
-	log.Debugf("len(PublicKeyBytes) = %d, len(NodePublicKeyBytes) = %d", len(PublicKeyBytes), len(NodePublicKeyBytes))
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("len(PublicKeyBytes) = %d, len(NodePublicKeyBytes) = %d", len(PublicKeyBytes), len(NodePublicKeyBytes)))
 	_, err = converter.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
 		Time: now, WalletID: iAddress, CitizenID: 0},
 		PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
 	if err != nil {
-		log.Errorf("first block body marshal error: %v", ErrInfo(err))
+		logger.LogError(consts.BlockError, fmt.Sprintf("first block body marshal error: %v", err))
 		return
 	}
 	converter.EncodeLenByte(&block, tx)
@@ -1192,12 +1192,12 @@ func FirstBlock() {
 		firstBlockDir = filepath.Join("", *FirstBlockDir)
 		if _, err := os.Stat(firstBlockDir); os.IsNotExist(err) {
 			if err = os.Mkdir(firstBlockDir, 0755); err != nil {
-				log.Error("can't create directory for 1block: %v", ErrInfo(err))
+				logger.LogError(consts.IOError, fmt.Sprintf("can't create directory for 1block: %v", err))
 				return
 			}
 		}
 	}
-	log.Debugf("write first block to: %s/1block", firstBlockDir)
+	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("write first block to: %s/1block", firstBlockDir))
 	ioutil.WriteFile(filepath.Join(firstBlockDir, "1block"), block, 0644)
 }
 

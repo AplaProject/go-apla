@@ -41,6 +41,7 @@ const (
 	TCPCserverError                     = iota
 	TransactionError                    = iota
 	TemplateError                       = iota
+	SignError                           = iota
 )
 
 var LogEventsMap = map[LogEventType]string{
@@ -78,6 +79,7 @@ var LogEventsMap = map[LogEventType]string{
 	TCPCserverError:        "tcp server error",
 	TransactionError:       "transaction error",
 	TemplateError:          "template error",
+	SignError:              "sign error",
 
 	FuncStarted:  "function started",
 	JustWaiting:  "just waiting",
