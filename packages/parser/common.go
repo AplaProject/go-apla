@@ -589,7 +589,7 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 	prefix := table[:strings.IndexByte(table, '_')]
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	columnsAndPermissions, err := tables.GetPermissions(table, "update")
+	columnsAndPermissions, err := tables.GetColumns(table, "")
 	if err != nil {
 		return err
 	}

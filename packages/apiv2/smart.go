@@ -17,22 +17,23 @@
 package apiv2
 
 import (
-/*	"encoding/hex"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
-	"gopkg.in/vmihailenco/msgpack.v2"*/
-)
+	/*
+		"time"
+
+		"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+		"gopkg.in/vmihailenco/msgpack.v2"*/)
 
 type smartField struct {
 	Name string `json:"name"`
@@ -61,15 +62,6 @@ type TxSignJSON struct {
 	Params  []SignRes `json:"params"`
 }
 
-// PrepareTxJSON is a structure for the answer of ajax_prepare_tx ajax request
-type PrepareTxJSON struct {
-	ForSign string            `json:"forsign"`
-	Signs   []TxSignJSON      `json:"signs"`
-	Values  map[string]string `json:"values"`
-	Time    string            `json:"time"`
-	//	Error   string            `json:"error"`
-}
-
 // EncryptKey is a structure for the answer of ajax_encrypt_key ajax request
 type EncryptKey struct {
 	Encrypted string `json:"encrypted"` //hex
@@ -79,48 +71,7 @@ type EncryptKey struct {
 	Error     string `json:"error"`
 }
 
-/*
-func getSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
-	cntname := data.params[`name`].(string)
-	contract := smart.GetContract(cntname, uint32(data.state))
-	if contract == nil {
-		return errorAPI(w, fmt.Sprintf(`there is not %s contract`, cntname), http.StatusBadRequest)
-	}
-	info := (*contract).Block.Info.(*script.ContractInfo)
-	fields := make([]smartField, 0)
-	result := smartFieldsResult{Name: info.Name, Active: info.Active}
-
-	if info.Tx != nil {
-		for _, fitem := range *info.Tx {
-			field := smartField{Name: fitem.Name, Type: fitem.Type.String(), Tags: fitem.Tags}
-
-			if strings.Contains(fitem.Tags, `hidden`) || strings.Contains(fitem.Tags, `signature`) {
-				field.HTML = `hidden`
-			} else {
-				for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
-					if strings.Contains(fitem.Tags, tag) {
-						field.HTML = tag
-						break
-					}
-				}
-				if len(field.HTML) == 0 {
-					if fitem.Type.String() == script.Decimal {
-						field.HTML = `money`
-					} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` {
-						field.HTML = `textinput`
-					}
-				}
-			}
-			fields = append(fields, field)
-		}
-	}
-	result.Fields = fields
-	data.result = result
-	return nil
-}
-
-func validateSmartContract(r *http.Request, data *apiData, result *PrepareTxJSON) (contract *smart.Contract, err error) {
+func validateSmartContract(r *http.Request, data *apiData, result *prepareResult) (contract *smart.Contract, err error) {
 	cntname := data.params[`name`].(string)
 	contract = smart.GetContract(cntname, uint32(data.state))
 	if contract == nil {
@@ -149,7 +100,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *PrepareTxJSON
 					if err != nil {
 						break
 					}
-					sign.ForSign = fmt.Sprintf(`%d,%d`, (*result).Time, uint64(data.wallet))
+					sign.ForSign = fmt.Sprintf(`%s,%d`, (*result).Time, uint64(data.wallet))
 					for _, isign := range sign.Params {
 						sign.ForSign += fmt.Sprintf(`,%v`, strings.TrimSpace(r.FormValue(isign.Param)))
 					}
@@ -234,68 +185,7 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 	return
 }
 
-func txPreSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	var (
-		result  PrepareTxJSON
-		timeNow int64
-		smartTx tx.SmartContract
-	)
-
-	timeNow = time.Now().Unix()
-	result.Time = converter.Int64ToStr(timeNow)
-	result.Values = make(map[string]string)
-	contract, err := validateSmartContract(r, data, &result)
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusBadRequest)
-	}
-	info := (*contract).Block.Info.(*script.ContractInfo)
-	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, UserID: data.wallet, StateID: data.state}
-	forsign := smartTx.ForSign()
-	if info.Tx != nil {
-		for _, fitem := range *info.Tx {
-			if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `signature`) {
-				continue
-			}
-			var val string
-			if strings.Contains(fitem.Tags, `crypt`) {
-				var wallet string
-				if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-					wallet = r.FormValue(ret[1])
-				} else {
-					wallet = converter.Int64ToStr(data.wallet)
-				}
-				key := EncryptNewKey(wallet)
-				if len(key.Error) != 0 {
-					return errorAPI(w, key.Error, http.StatusBadRequest)
-				}
-				result.Values[fitem.Name] = key.Encrypted
-				val = key.Encrypted
-			} else if fitem.Type.String() == `[]interface {}` {
-				for key, values := range r.Form {
-					if key == fitem.Name+`[]` {
-						var list []string
-						for _, value := range values {
-							list = append(list, value)
-						}
-						val = strings.Join(list, `,`)
-					}
-				}
-			} else {
-				val = strings.TrimSpace(r.FormValue(fitem.Name))
-				if strings.Contains(fitem.Tags, `address`) {
-					val = converter.Int64ToStr(converter.StringToAddress(val))
-				} else if fitem.Type.String() == script.Decimal {
-					val = strings.TrimLeft(val, `0`)
-				}
-			}
-			forsign += fmt.Sprintf(",%v", val)
-		}
-	}
-	result.ForSign = forsign
-	data.result = result
-	return nil
-}
-
+/*
 func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var (
 		isPublic, hash, publicKey []byte

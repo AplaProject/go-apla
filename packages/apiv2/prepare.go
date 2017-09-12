@@ -17,7 +17,15 @@
 package apiv2
 
 import (
+	"fmt"
 	"net/http"
+	"regexp"
+	"strings"
+	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
 type prepareResult struct {
@@ -28,13 +36,63 @@ type prepareResult struct {
 }
 
 func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	var result prepareResult
+	var (
+		result  prepareResult
+		timeNow int64
+		smartTx tx.SmartContract
+	)
 
-	result = prepareResult{
-		ForSign: `1,Test`,
-		Time:    `432093732`,
+	timeNow = time.Now().Unix()
+	result.Time = converter.Int64ToStr(timeNow)
+	result.Values = make(map[string]string)
+	contract, err := validateSmartContract(r, data, &result)
+	if err != nil {
+		return errorAPI(w, err, http.StatusBadRequest)
 	}
-
+	info := (*contract).Block.Info.(*script.ContractInfo)
+	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, UserID: data.wallet, StateID: data.state}
+	forsign := smartTx.ForSign()
+	if info.Tx != nil {
+		for _, fitem := range *info.Tx {
+			if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `signature`) {
+				continue
+			}
+			var val string
+			if strings.Contains(fitem.Tags, `crypt`) {
+				var wallet string
+				if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
+					wallet = r.FormValue(ret[1])
+				} else {
+					wallet = converter.Int64ToStr(data.wallet)
+				}
+				key := EncryptNewKey(wallet)
+				if len(key.Error) != 0 {
+					return errorAPI(w, key.Error, http.StatusBadRequest)
+				}
+				result.Values[fitem.Name] = key.Encrypted
+				val = key.Encrypted
+			} else if fitem.Type.String() == `[]interface {}` {
+				for key, values := range r.Form {
+					if key == fitem.Name+`[]` {
+						var list []string
+						for _, value := range values {
+							list = append(list, value)
+						}
+						val = strings.Join(list, `,`)
+					}
+				}
+			} else {
+				val = strings.TrimSpace(r.FormValue(fitem.Name))
+				if strings.Contains(fitem.Tags, `address`) {
+					val = converter.Int64ToStr(converter.StringToAddress(val))
+				} else if fitem.Type.String() == script.Decimal {
+					val = strings.TrimLeft(val, `0`)
+				}
+			}
+			forsign += fmt.Sprintf(",%v", val)
+		}
+	}
+	result.ForSign = forsign
 	data.result = result
 	return nil
 }

@@ -19,6 +19,10 @@ package apiv2
 var (
 	errors = map[string]string{
 		`E_DBNIL`:         `DB is nil`,
+		`E_EMPTYPUBLIC`:   `Public key is undefined`,
+		`E_EMPTYSIGN`:     `Signature is undefined`,
+		`E_HASHWRONG`:     `Hash is incorrect`,
+		`E_HASHNOTFOUND`:  `Hash has not been found`,
 		`E_INSTALLED`:     `Apla is already installed`,
 		`E_INVALIDWALLET`: `Wallet %s is not valid`,
 		`E_NOTINSTALLED`:  `Apla is not installed`,

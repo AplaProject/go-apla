@@ -392,7 +392,7 @@ func (c *Controller) ExportTpl() (string, error) {
 				table.SetTablePrefix(state)
 				table.Get(itable)
 				var jperm map[string]interface{}
-				json.Unmarshal([]byte(table.ColumnsAndPermissions), &jperm)
+				json.Unmarshal([]byte(table.Permissions), &jperm)
 				var toedit bool
 				vals := make(map[string]string)
 				re, _ := regexp.Compile(`^\$citizen\s*==\s*-?\d+$`)

@@ -17,10 +17,10 @@
 package apiv2
 
 import (
-	//	"encoding/hex"
+	"encoding/hex"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"net/http"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 type txstatusResult struct {
@@ -31,24 +31,21 @@ type txstatusResult struct {
 func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var status txstatusResult
 
-	status = txstatusResult{
-		BlockID: "56234",
+	if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
+		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
 	}
-	/*	if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
-			return errorAPI(w, `hash is incorrect`, http.StatusBadRequest)
-		}
-		ts := &model.TransactionStatus{}
-		notFound, err := ts.Get([]byte(data.params["hash"].(string)))
-		if err != nil {
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
-		}
-		if notFound {
-			return errorAPI(w, `hash has not been found`, http.StatusBadRequest)
-		}
-		if ts.BlockID > 0 {
-			status.BlockID = converter.Int64ToStr(ts.BlockID)
-		}
-		status.Message = ts.Error*/
+	ts := &model.TransactionStatus{}
+	notFound, err := ts.Get([]byte(data.params["hash"].(string)))
+	if err != nil {
+		return errorAPI(w, err, http.StatusInternalServerError)
+	}
+	if notFound {
+		return errorAPI(w, `E_HASHNOTFOUND`, http.StatusBadRequest)
+	}
+	if ts.BlockID > 0 {
+		status.BlockID = converter.Int64ToStr(ts.BlockID)
+	}
+	status.Message = ts.Error
 	data.result = &status
 	return nil
 }

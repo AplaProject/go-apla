@@ -123,15 +123,15 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-
-	err = model.CreateStateTablesTable(id)
-	if err != nil {
-		return
-	}
+	/*
+		err = model.CreateStateTablesTable(id)
+		if err != nil {
+			return
+		}*/
 	t := &model.Table{
-		Name: id + "_citizens",
-		ColumnsAndPermissions: `{"general_update":"` + sid + `", "update": {"public_key_0": "` + sid + `"}, "insert": "` + sid + `", "new_column":"` + sid + `"}`,
-		Conditions:            psid,
+		Name:        id + "_citizens",
+		Permissions: `{"general_update":"` + sid + `", "update": {"public_key_0": "` + sid + `"}, "insert": "` + sid + `", "new_column":"` + sid + `"}`,
+		Conditions:  psid,
 	}
 	t.SetTablePrefix(id)
 	err = t.Create()

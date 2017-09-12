@@ -31,7 +31,7 @@ var (
 )
 
 type JWTClaims struct {
-	UID    string `json:"uid"`
+	UID    string `json:"uid,omitempty"`
 	State  string `json:"state,omitempty"`
 	Wallet string `json:"wallet,omitempty"`
 	jwt.StandardClaims

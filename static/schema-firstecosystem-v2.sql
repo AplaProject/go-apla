@@ -10,7 +10,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id","active", "conditions") VALUES
     conditions {
         $recipient = AddressToId($Recipient)
         if $recipient == 0 {
-            error Sprintf("Recipient %s is invalid", $Recipient)
+            error Sprintf("Recipient %%s is invalid", $Recipient)
         }
         var total money
         $amount = Money($Amount) 
@@ -19,7 +19,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id","active", "conditions") VALUES
         }
         total = Money(DBString(Table(`keys`), `amount`, $wallet))
         if $amount >= total {
-            error Sprintf("Money is not enough %v < %v",total, $amount)
+            error Sprintf("Money is not enough %%v < %%v",total, $amount)
         }
     }
     action {

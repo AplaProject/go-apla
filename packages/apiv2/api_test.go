@@ -28,7 +28,7 @@ import (
 	//	"testing"
 	"time"
 
-	//	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	//	"github.com/shopspring/decimal"
 )
@@ -94,49 +94,51 @@ func sendPost(url string, form *url.Values, v interface{}) error {
 }*/
 
 func keyLogin(state int64) (err error) {
-	/*	var (
-			key, sign []byte
-			uid       interface{}
-			ok        bool
-		)
+	var (
+		key, sign []byte
+	)
 
-		key, err = ioutil.ReadFile(`key`)
-		if err != nil {
-			return
-		}
-		if len(key) > 64 {
-			key = key[:64]
-		}
-		ret, err := sendGet(`getuid`, nil)
-		if err != nil {
-			return
-		}
-		if uid, ok = ret[`uid`]; !ok {
-			return fmt.Errorf(`getuid has returned empty uid`)
-		}
+	key, err = ioutil.ReadFile(`key`)
+	if err != nil {
+		return
+	}
+	if len(key) > 64 {
+		key = key[:64]
+	}
+	var ret getUIDResult
+	err = sendGet(`getuid`, nil, &ret)
+	if err != nil {
+		return
+	}
+	gAuth = ret.Token
+	if len(ret.UID) == 0 {
+		return fmt.Errorf(`getuid has returned empty uid`)
+	}
 
-		var pub string
+	var pub string
 
-		sign, err = crypto.Sign(string(key), uid.(string))
-		if err != nil {
-			return
-		}
-		pub, err = crypto.PrivateToPublicHex(string(key))
-		if err != nil {
-			return
-		}
-		form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
-			`state`: {converter.Int64ToStr(state)}}
-		ret, err = sendPost(`login`, &form)
-		if err != nil {
-			return
-		}
-		gAddress = ret[`address`].(string)
-		gPrivate = string(key)
-		gPublic, err = crypto.PrivateToPublicHex(gPrivate)
-		if err != nil {
-			return
-		}*/
+	sign, err = crypto.Sign(string(key), ret.UID)
+	if err != nil {
+		return
+	}
+	pub, err = crypto.PrivateToPublicHex(string(key))
+	if err != nil {
+		return
+	}
+	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
+		`state`: {converter.Int64ToStr(state)}}
+	var logret loginResult
+	err = sendPost(`login`, &form, &logret)
+	if err != nil {
+		return
+	}
+	gAddress = logret.Address
+	gPrivate = string(key)
+	gPublic, err = crypto.PrivateToPublicHex(gPrivate)
+	gAuth = logret.Token
+	if err != nil {
+		return
+	}
 	return
 }
 
@@ -158,24 +160,25 @@ func appendSign(ret map[string]interface{}, form *url.Values) error {
 	return nil
 }
 
-/*
 func waitTx(hash string) (int64, error) {
 	for i := 0; i < 15; i++ {
-		ret, err := sendGet(`txstatus/`+hash, nil)
+		var ret txstatusResult
+		err := sendGet(`txstatus/`+hash, nil, &ret)
 		if err != nil {
 			return 0, err
 		}
-		if len(ret[`blockid`].(string)) > 0 {
-			return converter.StrToInt64(ret[`blockid`].(string)), nil
+		fmt.Println(`STATUS`, err, ret)
+		if len(ret.BlockID) > 0 {
+			return converter.StrToInt64(ret.BlockID), nil
 		}
-		if len(ret[`errmsg`].(string)) > 0 {
-			return 0, fmt.Errorf(ret[`errmsg`].(string))
+		if len(ret.Message) > 0 {
+			return 0, fmt.Errorf(ret.Message)
 		}
 		time.Sleep(time.Second)
 	}
 	return 0, fmt.Errorf(`TxStatus timeout`)
 }
-*/
+
 /*func getBalance(wallet string) (decimal.Decimal, error) {
 	ret, err := sendGet(`balance/`+wallet, nil)
 	if err != nil {
@@ -195,15 +198,17 @@ func randName(prefix string) string {
 	return fmt.Sprintf(`%s%d`, prefix, time.Now().Unix())
 }
 
-/*func postTx(txname string, form *url.Values) error {
-	ret, err := sendPost(`prepare/`+txname, form)
+func postTx(txname string, form *url.Values) error {
+	ret := make(map[string]interface{})
+	err := sendPost(`prepare/`+txname, form, &ret)
 	if err != nil {
 		return err
 	}
 	if err = appendSign(ret, form); err != nil {
 		return err
 	}
-	ret, err = sendPost(txname, form)
+	ret = map[string]interface{}{}
+	err = sendPost(`contract/`+txname, form, &ret)
 	if err != nil {
 		return err
 	}
@@ -213,6 +218,7 @@ func randName(prefix string) string {
 	return nil
 }
 
+/*
 func putTx(txname string, form *url.Values) error {
 	ret, err := sendPut(`prepare/`+txname, form)
 	if err != nil {

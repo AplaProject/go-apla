@@ -35,11 +35,11 @@ func Route(route *hr.Router) {
 		methodRoute(route, `POST`, pattern, params, handler...)
 	}
 	anyTx := func(method, pattern, pars string, preHandle, handle apiHandle) {
-		methodRoute(route, method, `prepare/`+pattern, pars, authState, preHandle)
+		methodRoute(route, method, `prepare/`+pattern, pars, authWallet, preHandle)
 		if len(pars) > 0 {
 			pars = `,` + pars
 		}
-		methodRoute(route, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, authState, handle)
+		methodRoute(route, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, authWallet, handle)
 	}
 	postTx := func(url string, params string, preHandle, handle apiHandle) {
 		anyTx(`POST`, url, params, preHandle, handle)

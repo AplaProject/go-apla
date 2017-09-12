@@ -16,13 +16,12 @@
 
 package apiv2
 
-/*
 import (
 	"fmt"
 	"net/url"
-	"strings"
+	//	"strings"
 	"testing"
-)*/
+)
 
 type smartParams struct {
 	Params  map[string]string
@@ -35,27 +34,27 @@ type smartContract struct {
 	Params []smartParams
 }
 
-/*
 func TestSmartFields(t *testing.T) {
 
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
-	ret, err := sendGet(`smartcontract/MainCondition`, nil)
+	var cntResult getContractResult
+	err := sendGet(`contract/MainCondition`, nil, &cntResult)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if len(ret[`fields`].([]interface{})) != 0 {
+	if len(cntResult.Fields) != 0 {
 		t.Error(`MainCondition fields must be empty`)
 		return
 	}
-	if ret[`name`].(string) != `@1MainCondition` {
-		t.Error(fmt.Sprintf(`MainCondition name is wrong: %s`, ret[`name`].(string)))
+	if cntResult.Name != `@1MainCondition` {
+		t.Error(fmt.Sprintf(`MainCondition name is wrong: %s`, cntResult.Name))
 		return
 	}
-	if err := postTx(`smartcontract/MainCondition`, &url.Values{}); err != nil {
+	if err := postTx(`MainCondition`, &url.Values{}); err != nil {
 		t.Error(err)
 		return
 	}
@@ -67,13 +66,19 @@ func TestMoneyTransfer(t *testing.T) {
 		return
 	}
 
-	form := url.Values{`Amount`: {`53330000`}, `Recipient`: {`3330000`}}
-	if err := postTx(`smartcontract/MoneyTransfer`, &form); err != nil {
+	form := url.Values{`Amount`: {`53330000`}, `Recipient`: {`0005-2070-2000-0006-0200`}}
+	if err := postTx(`MoneyTransfer`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Amount`: {`53330000`}, `Recipient`: {`0005207000`}}
+	if err := postTx(`MoneyTransfer`, &form); err != nil {
 		t.Error(err)
 		return
 	}
 }
-func TestSmartContracts(t *testing.T) {
+
+/*func TestSmartContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {
 		ret, err := sendGet(`test/`+name, nil)

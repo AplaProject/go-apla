@@ -189,6 +189,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 					p.PublicKeys = append(p.PublicKeys, node.Public)
 				} else {
 					wallet := &model.Key{}
+					wallet.SetTablePrefix(p.TxSmart.StateID)
 					err := wallet.Get(p.TxSmart.UserID)
 					if err != nil {
 						return err
@@ -267,7 +268,6 @@ func (p *Parser) CallContract(flags int) (err error) {
 			}
 			p.TxContract.Called = 1 << i
 			_, err = smart.Run(cfunc, nil, p.TxContract.Extend)
-
 			if err != nil {
 				break
 			}
