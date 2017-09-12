@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -88,7 +89,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-	sid := "ContractConditions(`MainCondition`)" //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
+	sid := `ContractConditions("MainCondition")` //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
 	psid := sid                                  //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
 	err = model.CreateStateConditions(id, sid, psid, currency, country, p.TxWalletID)
 	if err != nil {
@@ -128,9 +129,21 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
+	mainCondition := `ContractConditions("MainCondition")`
+	updateConditions := map[string]string{"public_key_0": mainCondition}
+	perm := Permissions{
+		GeneralUpdate: mainCondition,
+		Update:        updateConditions,
+		Insert:        mainCondition,
+		NewColumn:     mainCondition,
+	}
+	jsonPermissions, err := json.Marshal(perm)
+	if err != nil {
+		return
+	}
 	t := &model.Table{
 		Name: id + "_citizens",
-		ColumnsAndPermissions: `{"general_update":"` + sid + `", "update": {"public_key_0": "` + sid + `"}, "insert": "` + sid + `", "new_column":"` + sid + `"}`,
+		ColumnsAndPermissions: string(jsonPermissions),
 		Conditions:            psid,
 	}
 	t.SetTablePrefix(id)

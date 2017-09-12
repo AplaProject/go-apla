@@ -387,44 +387,45 @@ func IsTable(tblname string) bool {
 }
 
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
-
-	var dataType string
-	var characterMaximumLength string
-
-	rows, err := DBConn.
-		Table("information_schema.columns").
-		Where("table_name = '?' AND column_name = '?'", tableName, columnName).
-		Select("data_type", "character_maximum_length").Rows()
+	var dataType, characterMaximumLength *string
+	err := DBConn.Raw(`SELECT data_type, character_maximum_length 
+				 FROM information_schema.columns 
+				 WHERE table_name = ? AND column_name = ?`, tableName, columnName).Row().Scan(&dataType, &characterMaximumLength)
 	if err != nil {
 		return nil, err
 	}
-	for rows.Next() {
-		rows.Scan(&dataType)
-		rows.Scan(&characterMaximumLength)
-	}
-
 	result := make(map[string]string, 0)
-	result["data_type"] = dataType
-	result["character_maximum_length"] = characterMaximumLength
+	if dataType != nil {
+		result["data_type"] = *dataType
+	}
+	if characterMaximumLength != nil {
+		result["character_maximum_length"] = *characterMaximumLength
+	}
 	return result, nil
 }
 
-func GetColumnType(tblname, column string) (itype string) {
-	coltype, _ := GetColumnDataTypeCharMaxLength(tblname, column)
-	if len(coltype) > 0 {
+func GetColumnType(tblname, column string) (itype string, err error) {
+	coltype, err := GetColumnDataTypeCharMaxLength(tblname, column)
+	if err != nil {
+		return
+	}
+	if _, ok := coltype["data_type"]; ok {
+		dataType := coltype["data_type"]
 		switch {
-		case coltype[`data_type`] == "character varying":
+		case dataType == "character varying":
 			itype = `text`
-		case coltype[`data_type`] == "bytea":
+		case dataType == "bytea":
 			itype = "varchar"
-		case coltype[`data_type`] == `bigint`:
+		case dataType == `bigint`:
 			itype = "numbers"
-		case strings.HasPrefix(coltype[`data_type`], `timestamp`):
+		case strings.HasPrefix(dataType, `timestamp`):
 			itype = "date_time"
-		case strings.HasPrefix(coltype[`data_type`], `numeric`):
+		case strings.HasPrefix(dataType, `numeric`):
 			itype = "money"
-		case strings.HasPrefix(coltype[`data_type`], `double`):
+		case strings.HasPrefix(dataType, `double`):
 			itype = "double"
+		default:
+			err = fmt.Errorf("Unknown column type")
 		}
 	}
 	return

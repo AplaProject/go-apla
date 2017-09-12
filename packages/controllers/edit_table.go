@@ -88,7 +88,11 @@ func (c *Controller) EditTable() (string, error) {
 	}
 	list := make([]map[string]string, 0)
 	for key, value := range columnsAndPermissions {
-		list = append(list, map[string]string{`name`: key, `perm`: value, `type`: model.GetColumnType(tableName, key)})
+		columnType, err := model.GetColumnType(tableName, key)
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
+		list = append(list, map[string]string{`name`: key, `perm`: value, `type`: columnType})
 	}
 
 	count, err := model.GetColumnsCount(tableName)

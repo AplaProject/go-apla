@@ -145,7 +145,7 @@ func (p *NewTableParser) Action() error {
 	json.Unmarshal([]byte(p.NewTable.Columns), &cols)
 
 	indexes := make([]string, 0)
-	mainCondition := "ContractConditions(`MainCondition`)"
+	mainCondition := `ContractConditions("MainCondition")`
 	updateConditions := map[string]string{}
 
 	colsSQL := ""
