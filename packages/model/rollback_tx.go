@@ -30,11 +30,7 @@ func (rt *RollbackTx) DeleteByHashAndTableName() error {
 }
 
 func (rt *RollbackTx) Create(transaction *DbTransaction) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	return db.Create(rt).Error
+	return getDB(transaction).Create(rt).Error
 }
 
 func (rt *RollbackTx) Get(transactionHash []byte, tableName string) error {

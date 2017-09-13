@@ -64,7 +64,7 @@ func (p *NewStateParser) Validate() error {
 		return p.ErrInfo("incorrect sign")
 	}
 	country := string(p.NewState.StateName)
-	if exist, err := IsState(country); err != nil {
+	if exist, err := IsState(p.DbTransaction, country); err != nil {
 		return p.ErrInfo(err)
 	} else if exist > 0 {
 		return fmt.Errorf(`State %s already exists`, country)
@@ -75,7 +75,7 @@ func (p *NewStateParser) Validate() error {
 
 func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	systemState := &model.SystemState{RbID: 0}
-	err = systemState.Create()
+	err = systemState.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
@@ -278,7 +278,7 @@ MenuBack(Welcome)`,
 	}
 
 	dltWallet := &model.DltWallet{}
-	err = dltWallet.GetWallet(p.TxWalletID)
+	err = dltWallet.GetWalletTransaction(p.DbTransaction, p.TxWalletID)
 	if err != nil {
 		return
 	}
@@ -325,7 +325,7 @@ func (p *NewStateParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	dltWallet := &model.DltWallet{}
-	err = dltWallet.GetWallet(p.TxWalletID)
+	err = dltWallet.GetWalletTransaction(p.DbTransaction, p.TxWalletID)
 	if err != nil {
 		return p.ErrInfo(err)
 	} else if len(p.NewState.Header.PublicKey) > 30 && len(dltWallet.PublicKey) == 0 {

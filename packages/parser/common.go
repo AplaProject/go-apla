@@ -126,7 +126,7 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 	return false, nil
 }
 
-func IsState(country string) (int64, error) {
+func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 	ids, err := model.GetAllSystemStatesIDs()
 	if err != nil {
 		return 0, err
@@ -134,7 +134,7 @@ func IsState(country string) (int64, error) {
 	for _, id := range ids {
 		sp := &model.StateParameter{}
 		sp.SetTablePrefix(converter.Int64ToStr(id))
-		err = sp.GetByName("state_name")
+		err = sp.GetByNameTransaction(transaction,"state_name")
 		if err != nil {
 			return 0, err
 		}
@@ -252,14 +252,14 @@ type txMapsType struct {
 type Parser struct {
 	BlockData      *utils.BlockData
 	PrevBlock      *utils.BlockData
-	BinaryData     []byte
 	dataType       int
 	blockData      []byte
 	CurrentVersion string
 	MrklRoot       []byte
 	PublicKeys     [][]byte
 
-	TxBinaryData  []byte
+	TxBinaryData  []byte // transaction binary data
+	TxFullData    []byte // full transaction, with type and data
 	TxHash        []byte
 	TxSlice       [][]byte
 	TxMap         map[string][]byte
@@ -294,11 +294,6 @@ func ClearTmp(blocks map[int64]string) {
 // GetBlockInfo returns BlockData structure
 func (p *Parser) GetBlockInfo() *utils.BlockData {
 	return &utils.BlockData{Hash: p.BlockData.Hash, Time: p.BlockData.Time, WalletID: p.BlockData.WalletID, StateID: p.BlockData.StateID, BlockID: p.BlockData.BlockID}
-}
-
-func (p *Parser) dataPre() {
-	p.blockData = p.BinaryData
-	p.dataType = int(converter.BinToDec(converter.BytesShift(&p.BinaryData, 1)))
 }
 
 // CheckLogTx checks if this transaction exists
@@ -464,7 +459,7 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	}
 
 	wallet := &model.DltWallet{}
-	err := wallet.GetWallet(walletID)
+	err := wallet.GetWalletTransaction(p.DbTransaction, walletID)
 	if err != nil {
 		return err
 	}
@@ -498,7 +493,7 @@ func (p *Parser) BlockError(err error) {
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(p.TxStateIDStr)
-	err := sp.GetByName(condition)
+	err := sp.GetByNameTransaction(p.DbTransaction, condition)
 	if err != nil {
 		return err
 	}

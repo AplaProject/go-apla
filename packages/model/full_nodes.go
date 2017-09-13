@@ -32,9 +32,9 @@ func (fn *FullNode) FindNodeByID(nodeID int64) error {
 	return handleError(DBConn.Where("id = ?", nodeID).First(fn).Error)
 }
 
-func (fn *FullNode) GetAllFullNodesHasWalletID() ([]FullNode, error) {
+func (fn *FullNode) GetAllFullNodesHasWalletID(transaction *DbTransaction) ([]FullNode, error) {
 	result := make([]FullNode, 0)
-	err := DBConn.Where("wallet_id != 0").Find(&result).Error
+	err := getDB(transaction).Where("wallet_id != 0").Find(&result).Error
 	return result, err
 }
 
@@ -51,11 +51,7 @@ func (fn *FullNode) FindNodeById(nodeid int64) error {
 }
 
 func (fn *FullNode) Create(transaction *DbTransaction) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	return db.Create(fn).Error
+	return getDB(transaction).Create(fn).Error
 }
 
 func FullNodeCreateTable() error {

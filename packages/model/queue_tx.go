@@ -19,11 +19,7 @@ func (qt *QueueTx) DeleteTx() error {
 }
 
 func (qt *QueueTx) Save(transaction *DbTransaction) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	return db.Save(qt).Error
+	return getDB(transaction).Save(qt).Error
 }
 
 func (qt *QueueTx) Create() error {
@@ -39,11 +35,7 @@ func (qt *QueueTx) GetByHash(hash []byte) (bool, error) {
 }
 
 func DeleteQueueTxByHash(transaction *DbTransaction, hash []byte) (int64, error) {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	query := db.Exec("DELETE FROM queue_tx WHERE hash = ?", hash)
+	query := getDB(transaction).Exec("DELETE FROM queue_tx WHERE hash = ?", hash)
 	return query.RowsAffected, query.Error
 }
 

@@ -34,19 +34,11 @@ func (lt *LogTransaction) GetByHash(hash []byte) (bool, error) {
 }
 
 func (lt *LogTransaction) Create(transaction *DbTransaction) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	return db.Create(lt).Error
+	return getDB(transaction).Create(lt).Error
 }
 
 func DeleteLogTransactionsByHash(transaction *DbTransaction, hash []byte) (int64, error) {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	query := db.Exec("DELETE FROM log_transactions WHERE hash = ?", hash)
+	query := getDB(transaction).Exec("DELETE FROM log_transactions WHERE hash = ?", hash)
 	return query.RowsAffected, query.Error
 }
 

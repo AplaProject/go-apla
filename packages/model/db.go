@@ -69,6 +69,13 @@ func (tr *DbTransaction) Commit() error {
 	return tr.conn.Commit().Error
 }
 
+func getDB(tr *DbTransaction) *gorm.DB {
+	if tr != nil && tr.conn != nil {
+		return tr.conn
+	}
+	return DBConn
+}
+
 func DropTables() error {
 	return DBConn.Exec(`
 	DO $$ DECLARE
@@ -114,11 +121,7 @@ func GetTables() ([]string, error) {
 }
 
 func Update(transaction *DbTransaction, tblname, set, where string) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	return db.Exec(`UPDATE "` + tblname + `" SET ` + set + " " + where).Error
+	return getDB(transaction).Exec(`UPDATE "` + tblname + `" SET ` + set + " " + where).Error
 }
 
 func Delete(tblname, where string) error {
@@ -133,11 +136,7 @@ func InsertReturningLastID(transaction *DbTransaction, table, columns, values st
 	}
 	insertQuery := `INSERT INTO "` + table + `" (` + columns + `) VALUES (` + values + `) RETURNING ` + returning
 
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	err = db.Raw(insertQuery).Row().Scan(&result)
+	err = getDB(transaction).Raw(insertQuery).Row().Scan(&result)
 	if err != nil {
 		return "", err
 	}
@@ -398,12 +397,7 @@ func GetMyWalletID() (int64, error) {
 }
 
 func AlterTableAddColumn(transaction *DbTransaction, tableName, columnName, columnType string) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-
-	return db.Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
+	return getDB(transaction).Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
 }
 
 func AlterTableDropColumn(tableName, columnName string) error {
@@ -411,11 +405,7 @@ func AlterTableDropColumn(tableName, columnName string) error {
 }
 
 func CreateIndex(transaction *DbTransaction, indexName, tableName, onColumn string) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	return db.Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
+	return getDB(transaction).Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
 }
 
 func IsTable(tblname string) bool {

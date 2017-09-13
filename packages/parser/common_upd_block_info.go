@@ -41,6 +41,7 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 		log.Fatal(err)
 	}
 
+	block.Header.Hash = hash
 	if block.Header.BlockID == 1 {
 		ib := &model.InfoBlock{
 			Hash:           hash,

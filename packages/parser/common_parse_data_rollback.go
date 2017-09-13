@@ -90,7 +90,7 @@ func doBlockRollback(transaction *model.DbTransaction, block *Block) error {
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		queueTx := &model.QueueTx{Hash: p.TxHash, Data: p.TxBinaryData}
+		queueTx := &model.QueueTx{Hash: p.TxHash, Data: p.TxFullData}
 		err = queueTx.Save(transaction)
 		if err != nil {
 			return p.ErrInfo(err)

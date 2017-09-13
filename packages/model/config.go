@@ -37,11 +37,7 @@ func (c *Config) ChangeBlockID(oldBlockID int64, newBlockID int64) error {
 }
 
 func (c *Config) ChangeBlockIDBatch(transaction *DbTransaction, oldBlockID int64, newBlockID int64) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	return db.Model(c).Where("my_block_id < ?", oldBlockID).Update("my_block_id", newBlockID).Error
+	return getDB(transaction).Model(c).Where("my_block_id < ?", oldBlockID).Update("my_block_id", newBlockID).Error
 }
 
 func ConfigCreateTable() error {

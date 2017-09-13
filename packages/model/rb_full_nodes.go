@@ -7,8 +7,8 @@ type RbFullNode struct {
 	PrevRbID            int64  `gorm:"not null"`
 }
 
-func (r *RbFullNode) Create() error {
-	return DBConn.Create(r).Error
+func (r *RbFullNode) Create(transaction *DbTransaction) error {
+	return getDB(transaction).Create(r).Error
 }
 
 func (r *RbFullNode) GetByRbID(id int64) error {

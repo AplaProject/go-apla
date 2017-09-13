@@ -24,6 +24,10 @@ func (DltWallet) TableName() string {
 	return "dlt_wallets"
 }
 
+func (w *DltWallet) GetWalletTransaction(transaction *DbTransaction, walletID int64) error {
+	return handleError(getDB(transaction).Where("wallet_id = ?", walletID).First(&w).Error)
+}
+
 func (w *DltWallet) GetWallet(walletID int64) error {
 	return handleError(DBConn.Where("wallet_id = ?", walletID).First(&w).Error)
 }
@@ -54,11 +58,7 @@ func (w *DltWallet) IsExists() (bool, error) {
 }
 
 func (w *DltWallet) Create(transaction *DbTransaction) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	return db.Create(w).Error
+	return getDB(transaction).Create(w).Error
 }
 
 func (w *DltWallet) GetVotes(limit int) ([]map[string]string, error) {

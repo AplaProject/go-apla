@@ -41,7 +41,7 @@ func (p *ChangeNodeKeyParser) Init() error {
 
 func (p *ChangeNodeKeyParser) Validate() error {
 	wallet := &model.DltWallet{}
-	err := wallet.GetWallet(p.ChangeNodeKey.Header.UserID)
+	err := wallet.GetWalletTransaction(p.DbTransaction, p.ChangeNodeKey.Header.UserID)
 	if err != nil || len(wallet.PublicKey) == 0 {
 		return p.ErrInfo("incorrect user_id")
 	}

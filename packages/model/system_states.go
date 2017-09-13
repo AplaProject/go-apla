@@ -53,6 +53,6 @@ func (ss *SystemState) IsExists(stateID int64) (bool, error) {
 	return !query.RecordNotFound(), query.Error
 }
 
-func (ss *SystemState) Create() error {
-	return DBConn.Create(ss).Error
+func (ss *SystemState) Create(transaction *DbTransaction) error {
+	return getDB(transaction).Create(ss).Error
 }

@@ -172,7 +172,7 @@ func delPidFile() {
 }
 
 func rollbackToBlock(blockID int64) error {
-	if err := template.LoadContracts(); err != nil {
+	if err := template.LoadContracts(nil); err != nil {
 		log.Errorf(`Load Contracts`, err)
 		return err
 	}
@@ -390,7 +390,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		// signals for daemons to exit
 		go stopdaemons.WaitStopTime()
 
-		if err := template.LoadContracts(); err != nil {
+		if err := template.LoadContracts(nil); err != nil {
 			log.Errorf("Load Contracts error: %s", err)
 			Exit(1)
 		}

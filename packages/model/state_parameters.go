@@ -23,6 +23,9 @@ func (sp *StateParameter) SetTablePrefix(tablePrefix string) {
 	sp.tableName = tablePrefix + "_state_parameters"
 }
 
+func (sp *StateParameter) GetByNameTransaction(transaction *DbTransaction, name string) error {
+	return handleError(getDB(transaction).Where("name = ?", name).First(sp).Error)
+}
 func (sp *StateParameter) GetByName(name string) error {
 	return handleError(DBConn.Where("name = ?", name).First(sp).Error)
 }
@@ -51,11 +54,7 @@ func (sp *StateParameter) ToMap() map[string]string {
 }
 
 func CreateStateTable(transaction *DbTransaction, stateID string) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	return db.Exec(`CREATE TABLE "` + stateID + `_state_parameters" (
+	return getDB(transaction).Exec(`CREATE TABLE "` + stateID + `_state_parameters" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
 				"bytecode" bytea  NOT NULL DEFAULT '',
@@ -67,11 +66,7 @@ func CreateStateTable(transaction *DbTransaction, stateID string) error {
 }
 
 func CreateStateConditions(transaction *DbTransaction, stateID string, sid string, psid string, currency string, country string, walletID int64) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	return db.Exec(`INSERT INTO "`+stateID+`_state_parameters" (name, value, bytecode, conditions) VALUES
+	return getDB(transaction).Exec(`INSERT INTO "`+stateID+`_state_parameters" (name, value, bytecode, conditions) VALUES
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
@@ -113,11 +108,7 @@ func CreateStateConditions(transaction *DbTransaction, stateID string, sid strin
 }
 
 func CreateStateAnonymsTable(transaction *DbTransaction, stateID string) error {
-	db := DBConn
-	if transaction != nil {
-		db = transaction.conn
-	}
-	return db.Exec(`CREATE TABLE "` + stateID + `_anonyms" (
+	return getDB(transaction).Exec(`CREATE TABLE "` + stateID + `_anonyms" (
 				"id_citizen" bigint NOT NULL DEFAULT '0',
 				"id_anonym" bigint NOT NULL DEFAULT '0',
 				"encrypted" bytea  NOT NULL DEFAULT ''

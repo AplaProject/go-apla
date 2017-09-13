@@ -63,7 +63,7 @@ func (p *EditStateParametersParser) Validate() error {
 		}
 	}
 	if p.EditStateParameters.Name == `state_name` {
-		if exist, err := IsState(p.EditStateParameters.Value); err != nil {
+		if exist, err := IsState(p.DbTransaction, p.EditStateParameters.Value); err != nil {
 			return p.ErrInfo(err)
 		} else if exist > 0 && exist != int64(p.EditStateParameters.Header.StateID) {
 			return fmt.Errorf(`State %s already exists`, p.EditStateParameters.Header.StateID)

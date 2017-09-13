@@ -169,8 +169,8 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 		parsers = append(parsers, p)
 
 		// build merkle tree
-		if len(p.TxBinaryData) > 0 {
-			dSha256Hash, err := crypto.DoubleHash(p.TxBinaryData)
+		if len(p.TxFullData) > 0 {
+			dSha256Hash, err := crypto.DoubleHash(p.TxFullData)
 			if err != nil {
 				return nil, err
 			}
@@ -231,6 +231,7 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 	p := new(Parser)
 	p.TxHash = hash
 	p.TxUsedCost = decimal.New(0, 0)
+	p.TxFullData = buffer.Bytes()
 
 	txType := int64(buffer.Bytes()[0])
 	p.dataType = int(txType)
@@ -436,7 +437,7 @@ func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 }
 
 func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
-	err := CheckLogTx(p.TxBinaryData, checkForDupTr, false)
+	err := CheckLogTx(p.TxFullData, checkForDupTr, false)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -452,7 +453,7 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 	}
 
 	if p.TxContract == nil {
-		if p.BlockData.BlockID != 1 {
+		if p.BlockData != nil && p.BlockData.BlockID != 1 {
 			if p.TxUserID == 0 {
 				return utils.ErrInfo(fmt.Errorf("emtpy user id"))
 			}
@@ -492,6 +493,36 @@ func (block *Block) readPreviousBlock() error {
 	return nil
 }
 
+func playTransaction(p *Parser) error {
+	// smart-contract
+	if p.TxContract != nil {
+		// check that there are enough money in CallContract
+		if err := p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err != nil {
+			return utils.ErrInfo(err)
+		}
+		// pay for CPU resources
+		if err := p.payFPrice(); err != nil {
+			return utils.ErrInfo(err)
+		}
+
+	} else {
+		if p.txParser == nil {
+			return utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
+		}
+
+		err := p.txParser.Action()
+		if _, ok := err.(error); ok {
+			return utils.ErrInfo(err.(error))
+		}
+
+		// pay for CPU resources
+		if err := p.payFPrice(); err != nil {
+			return utils.ErrInfo(err)
+		}
+	}
+	return nil
+}
+
 func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 
 	if _, err := model.DeleteUsedTransactions(dbTransaction); err != nil {
@@ -500,31 +531,12 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 
 	for _, p := range block.Parsers {
 		p.DbTransaction = dbTransaction
-		// smart-contract
-		if p.TxContract != nil {
-			// check that there are enough money in CallContract
-			if err := p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err != nil {
-				return utils.ErrInfo(err)
-			}
-			// pay for CPU resources
-			if err := p.payFPrice(); err != nil {
-				return utils.ErrInfo(err)
-			}
 
-		} else {
-			if p.txParser == nil {
-				return utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
-			}
-
-			err := p.txParser.Action()
-			if _, ok := err.(error); ok {
-				return utils.ErrInfo(err.(error))
-			}
-
-			// pay for CPU resources
-			if err := p.payFPrice(); err != nil {
-				return utils.ErrInfo(err)
-			}
+		if err := playTransaction(p); err != nil {
+			// skip this transaction
+			model.MarkTransactionUsed(nil, p.TxHash)
+			p.processBadTransaction(p.TxHash, err.Error())
+			continue
 		}
 
 		if _, err := model.MarkTransactionUsed(p.DbTransaction, p.TxHash); err != nil {
@@ -536,7 +548,7 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		if err := ts.UpdateBlockID(p.DbTransaction, block.Header.BlockID, p.TxHash); err != nil {
 			return err
 		}
-		if err := InsertInLogTx(p.DbTransaction, p.TxBinaryData, p.TxTime); err != nil {
+		if err := InsertInLogTx(p.DbTransaction, p.TxFullData, p.TxTime); err != nil {
 			return utils.ErrInfo(err)
 		}
 	}

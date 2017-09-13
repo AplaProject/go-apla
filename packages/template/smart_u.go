@@ -169,7 +169,7 @@ func init() {
 }
 
 // LoadContracts reads and compiles contracts from smart_contracts tables
-func LoadContracts() (err error) {
+func LoadContracts(transaction *model.DbTransaction) (err error) {
 	var states []map[string]string
 	prefix := []string{`global`}
 	states, err = model.GetAll(`select id from system_states order by id`, -1)
