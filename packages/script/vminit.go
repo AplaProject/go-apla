@@ -22,6 +22,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 )
 
 // ByteCode stores a command and an additional parameter.
@@ -137,10 +140,15 @@ type ExtendData struct {
 
 // ParseContract gets a state identifier and the name of the contract from the full name like @[id]name
 func ParseContract(in string) (id uint64, name string) {
+	logger.LogDebug(consts.FuncStarted, "")
+	var err error
 	re := regexp.MustCompile(`(?is)^@(\d+)(\w[_\w\d]*)$`)
 	ret := re.FindStringSubmatch(in)
 	if len(ret) == 3 {
-		id, _ = strconv.ParseUint(ret[1], 10, 32)
+		id, err = strconv.ParseUint(ret[1], 10, 32)
+		if err != nil {
+			logger.LogInfo(consts.StrToIntError, err)
+		}
 		name = ret[2]
 	}
 	return
@@ -150,27 +158,31 @@ func ParseContract(in string) (id uint64, name string) {
 // params are the values of parameters
 func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	//fmt.Println(`ExecContract`, rt, name, txs, params)
-
+	logger.LogDebug(consts.FuncStarted, "")
 	contract, ok := rt.vm.Objects[name]
 	if !ok {
+		logger.LogError(consts.ContractError, fmt.Sprintf(`unknown contract %s`, name))
 		return fmt.Errorf(`unknown contract %s`, name)
 	}
 	cblock := contract.Value.(*Block)
 	parnames := make(map[string]bool)
 	pars := strings.Split(txs, `,`)
 	if len(pars) != len(params) {
+		logger.LogError(consts.ContractError, fmt.Sprintf("wrong contract parameters pars: %v, params: %v", pars, params))
 		return fmt.Errorf(`wrong contract parameters`)
 	}
 	for _, ipar := range pars {
 		parnames[ipar] = true
 	}
 	if !cblock.Info.(*ContractInfo).Active {
+		logger.LogError(consts.ContractError, fmt.Sprintf(`Contract %s is not active`, name))
 		return fmt.Errorf(`Contract %s is not active`, name)
 	}
 	var isSignature bool
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			if !parnames[tx.Name] {
+				logger.LogError(consts.ContractError, fmt.Sprintf(`%s is not defined`, tx.Name))
 				return fmt.Errorf(`%s is not defined`, tx.Name)
 			}
 			if tx.Name == `Signature` {
@@ -179,6 +191,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		}
 	}
 	if _, ok := (*rt.extend)[`loop_`+name]; ok {
+		logger.LogError(consts.ContractError, fmt.Sprintf(`%s is not defined`, name))
 		return fmt.Errorf(`there is loop in %s contract`, name)
 	}
 	(*rt.extend)[`loop_`+name] = true
@@ -215,6 +228,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		obj := rt.vm.Objects[`check_signature`]
 		finfo := obj.Value.(ExtFuncInfo)
 		if err := finfo.Func.(func(*map[string]interface{}, string) error)(rt.extend, name); err != nil {
+			logger.LogError(consts.VMError, err)
 			return err
 		}
 	}
@@ -225,6 +239,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 			_, err := rtemp.Run(block.Value.(*Block), nil, rt.extend)
 			rt.cost = rtemp.cost
 			if err != nil {
+				logger.LogError(consts.VMError, err)
 				return err
 			}
 		}
@@ -313,6 +328,7 @@ func (vm *VM) getInParams(ret *ObjInfo) int {
 
 // Call executes the name object with the specified params and extended variables and functions
 func (vm *VM) Call(name string, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
+	logger.LogDebug(consts.FuncStarted, "")
 	var obj *ObjInfo
 	if state, ok := (*extend)[`rt_state`]; ok {
 		obj = vm.getObjByNameExt(name, state.(uint32))
@@ -320,6 +336,7 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 		obj = vm.getObjByName(name)
 	}
 	if obj == nil {
+		logger.LogError(consts.VMError, fmt.Sprintf(`unknown function %s`, name))
 		return nil, fmt.Errorf(`unknown function %s`, name)
 	}
 	switch obj.Type {
@@ -347,17 +364,22 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 			ret = append(ret, iret.Interface())
 		}
 	default:
+		logger.LogError(consts.VMError, fmt.Sprintf(`unknown function %s`, name))
 		return nil, fmt.Errorf(`unknown function %s`, name)
+	}
+	if err != nil {
+		logger.LogError(consts.VMError, err)
 	}
 	return ret, err
 }
 
 // ExContract executes the name contract in the state with spoecified parameters
 func ExContract(rt *RunTime, state uint32, name string, params map[string]interface{}) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	name = StateName(state, name)
 	contract, ok := rt.vm.Objects[name]
 	if !ok {
+		logger.LogError(consts.ContractError, fmt.Sprintf(`unknown contract %s`, name))
 		return fmt.Errorf(`unknown contract %s`, name)
 	}
 	if params == nil {
@@ -370,6 +392,7 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			val, ok := params[tx.Name]
 			if !ok {
+				logger.LogError(consts.ContractError, fmt.Sprintf(`%s is not defined`, tx.Name))
 				return fmt.Errorf(`%s is not defined`, tx.Name)
 			}
 			names = append(names, tx.Name)

@@ -17,7 +17,8 @@
 package script
 
 import (
-	"log"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 )
@@ -33,16 +34,19 @@ var (
 
 // CompileEval compiles conditional exppression
 func (vm *VM) CompileEval(input string, state uint32) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	source := `func eval bool { return ` + input + `}`
 	block, err := vm.CompileBlock([]rune(source), state, false, 0)
-	//	fmt.Println(`Compile Eval`, err, input)
 	if err == nil {
 		crc, err := crypto.CalcChecksum([]byte(input))
 		if err != nil {
-			log.Fatal(err)
+			logger.LogFatal(consts.CryptoError, err)
 		}
 		evals[crc] = &evalCode{Source: input, Code: block}
 		return nil
+	}
+	if err != nil {
+		logger.LogError(consts.VMError, err)
 	}
 	return err
 
@@ -50,15 +54,17 @@ func (vm *VM) CompileEval(input string, state uint32) error {
 
 // EvalIf runs the conditional expression. It compiles the source code before that if that's necessary.
 func (vm *VM) EvalIf(input string, state uint32, vars *map[string]interface{}) (bool, error) {
+	logger.LogDebug(consts.FuncStarted, "")
 	if len(input) == 0 {
 		return true, nil
 	}
 	crc, err := crypto.CalcChecksum([]byte(input))
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatal(consts.CryptoError, err)
 	}
 	if eval, ok := evals[crc]; !ok || eval.Source != input {
 		if err := vm.CompileEval(input, state); err != nil {
+			logger.LogError(consts.VMError, err)
 			return false, err
 		}
 	}
@@ -67,5 +73,6 @@ func (vm *VM) EvalIf(input string, state uint32, vars *map[string]interface{}) (
 	if err == nil {
 		return valueToBool(ret[0]), nil
 	}
+	logger.LogError(consts.VMError, err)
 	return false, err
 }

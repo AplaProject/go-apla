@@ -19,6 +19,9 @@ package script
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 )
 
 // operPrior contains command and its priority
@@ -383,9 +386,9 @@ func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 	} else {
 		objInfo, tobj := findVar(lexem.Value.(string), buf)
 		if objInfo == nil || objInfo.Type != ObjVar {
+			logger.LogError(consts.VMError, fmt.Sprintf(`unknown variable %s`, lexem.Value.(string)))
 			return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 		}
-		//		fmt.Println(`Assign Var`, lexem.Value.(string), objInfo, objInfo.Type, reflect.TypeOf(objInfo.Value), tobj)
 		ivar = VarInfo{objInfo, tobj}
 	}
 	if len(block.Code) > 0 {
@@ -410,6 +413,7 @@ func fAssign(buf *[]*Block, state int, lexem *Lexem) error {
 func fTx(buf *[]*Block, state int, lexem *Lexem) error {
 	contract := (*buf)[len(*buf)-1]
 	if contract.Type != ObjContract {
+		logger.LogError(consts.VMError, `data can only be in contract`)
 		return fmt.Errorf(`data can only be in contract`)
 	}
 	(*contract).Info.(*ContractInfo).Tx = new([]*FieldInfo)
@@ -446,6 +450,7 @@ func fFieldTag(buf *[]*Block, state int, lexem *Lexem) error {
 func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 	code := (*(*buf)[len(*buf)-2]).Code
 	if code[len(code)-1].Cmd != cmdIf {
+		logger.LogError(consts.VMError, fmt.Sprintf(`there is not if before %v [Ln:%d Col:%d]`, lexem.Type, lexem.Line, lexem.Column))
 		return fmt.Errorf(`there is not if before %v [Ln:%d Col:%d]`, lexem.Type, lexem.Line, lexem.Column)
 	}
 	(*(*buf)[len(*buf)-2]).Code = append(code, &ByteCode{cmdElse, (*buf)[len(*buf)-1]})
@@ -487,6 +492,7 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 	root := &Block{Info: idstate, Active: active, TableID: tblid}
 	lexems, err := lexParser(input)
 	if err != nil {
+		logger.LogError(consts.VMError, err)
 		return nil, err
 	}
 	if len(lexems) == 0 {
@@ -531,13 +537,14 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 			}
 			curlen := len((*blockstack[len(blockstack)-1]).Code)
 			if err := vm.compileEval(&lexems, &i, &blockstack); err != nil {
+				logger.LogError(consts.VMError, err)
 				return nil, err
 			}
 			if (newState.NewState&stateMustEval) > 0 && curlen == len((*blockstack[len(blockstack)-1]).Code) {
+				logger.LogError(consts.VMError, "there is not eval expression")
 				return nil, fmt.Errorf("there is not eval expression")
 			}
 			nextState = curState
-			//			fmt.Println(`Block`, *blockstack[len(blockstack)-1], len(blockstack)-1)
 		}
 		if (newState.NewState & statePush) > 0 {
 			stack = append(stack, curState)
@@ -551,7 +558,9 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 		}
 		if (newState.NewState & statePop) > 0 {
 			if len(stack) == 0 {
-				return nil, fError(&blockstack, errMustLCurly, lexem)
+				err := fError(&blockstack, errMustLCurly, lexem)
+				logger.LogError(consts.VMError, err)
+				return nil, err
 			}
 			nextState = stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
@@ -572,25 +581,25 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 		if (newState.NewState & stateToBody) > 0 {
 			nextState = stateBody
 		}
-		//fmt.Println(`LEX`, curState, lexem, stack)
 		if newState.Func > 0 {
 			if err := funcs[newState.Func](&blockstack, nextState, lexem); err != nil {
+				logger.LogError(consts.VMError, err)
 				return nil, err
 			}
 		}
 		curState = nextState
 	}
 	if len(stack) > 0 {
-		return nil, fError(&blockstack, errMustRCurly, lexems[len(lexems)-1])
+		err := fError(&blockstack, errMustRCurly, lexems[len(lexems)-1])
+		logger.LogError(consts.VMError, err)
+		return nil, err
 	}
-	//	shift := len(vm.Children)
-	//	fmt.Println(`Root`, blockstack[0])
-	//	fmt.Println(`VM`, vm)
 	return root, nil
 }
 
 // FlushBlock loads the compiled Block into the virtual machine
 func (vm *VM) FlushBlock(root *Block) {
+	logger.LogDebug(consts.FuncStarted, "")
 	shift := len(vm.Children)
 	for key, item := range root.Objects {
 		if cur, ok := vm.Objects[key]; ok && item.Type == ObjContract {
@@ -615,6 +624,7 @@ func (vm *VM) FlushBlock(root *Block) {
 
 // FlushExtern switches off the extern mode of the compilation
 func (vm *VM) FlushExtern() {
+	logger.LogDebug(consts.FuncStarted, "")
 	/*	if !vm.Extern {
 		return
 	}*/
@@ -624,9 +634,12 @@ func (vm *VM) FlushExtern() {
 
 // Compile compiles a source code and loads the byte-code into the virtual machine
 func (vm *VM) Compile(input []rune, state uint32, active bool, tblid int64) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	root, err := vm.CompileBlock(input, state, active, tblid)
 	if err == nil {
 		vm.FlushBlock(root)
+	} else {
+		logger.LogError(consts.VMError, err)
 	}
 	return err
 }
@@ -710,6 +723,7 @@ main:
 		case isRPar:
 			for {
 				if len(buffer) == 0 {
+					logger.LogError(consts.VMError, "there is not pair")
 					return fmt.Errorf(`there is not pair`)
 				}
 				prev := buffer[len(buffer)-1]
@@ -734,6 +748,7 @@ main:
 		case isRBrack:
 			for {
 				if len(buffer) == 0 {
+					logger.LogError(consts.VMError, "there is not pair")
 					return fmt.Errorf(`there is not pair`)
 				}
 				prev := buffer[len(buffer)-1]
@@ -788,6 +803,7 @@ main:
 					}
 				}
 			} else {
+				logger.LogError(consts.VMError, fmt.Sprintf(`unknown operator %d`, lexem.Value.(uint32)))
 				return fmt.Errorf(`unknown operator %d`, lexem.Value.(uint32))
 			}
 		case lexNumber, lexString:
@@ -813,6 +829,7 @@ main:
 		case lexIdent:
 			objInfo, tobj := vm.findObj(lexem.Value.(string), block)
 			if objInfo == nil && (!vm.Extern || i >= len(*lexems)-2 || (*lexems)[i+1].Type != isLPar) {
+				logger.LogError(consts.VMError, fmt.Sprintf(`unknown identifier %s`, lexem.Value.(string)))
 				return fmt.Errorf(`unknown identifier %s`, lexem.Value.(string))
 			}
 			if i < len(*lexems)-2 {
@@ -823,6 +840,7 @@ main:
 					}
 					if objInfo == nil || (objInfo.Type != ObjExtFunc && objInfo.Type != ObjFunc &&
 						objInfo.Type != ObjContract) {
+						logger.LogError(consts.VMError, fmt.Sprintf(`unknown function %s`, lexem.Value.(string)))
 						return fmt.Errorf(`unknown function %s`, lexem.Value.(string))
 					}
 					if objInfo.Type == ObjContract {
@@ -866,6 +884,7 @@ main:
 				}
 				if (*lexems)[i+1].Type == isLBrack {
 					if objInfo == nil || objInfo.Type != ObjVar {
+						logger.LogError(consts.VMError, fmt.Sprintf(`unknown variable %s`, lexem.Value.(string)))
 						return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 					}
 					buffer = append(buffer, &ByteCode{cmdIndex, 0})
@@ -882,6 +901,7 @@ main:
 	*ind = i
 	for i := len(buffer) - 1; i >= 0; i-- {
 		if buffer[i].Cmd == cmdSys {
+			logger.LogError(consts.VMError, "there is not pair")
 			return fmt.Errorf(`there is not pair`)
 		}
 		bytecode = append(bytecode, buffer[i])

@@ -5,6 +5,7 @@ type LogEventType int
 const (
 	StrToIntError          LogEventType = iota
 	StrToFloatError                     = iota
+	StrToDecimalError                   = iota
 	PanicRecoveredError                 = iota
 	RouteError                          = iota
 	SessionError                        = iota
@@ -42,11 +43,14 @@ const (
 	TransactionError                    = iota
 	TemplateError                       = iota
 	SignError                           = iota
+	VMEvent                             = iota
+	VMError                             = iota
 )
 
 var LogEventsMap = map[LogEventType]string{
 	StrToIntError:          "can't convert to int",
 	StrToFloatError:        "can't convert to float",
+	StrToDecimalError:      "str to decimal error",
 	PanicRecoveredError:    "recovered after panic",
 	RouteError:             "incorrect route parameters",
 	SessionError:           "session is undefined",
@@ -80,6 +84,8 @@ var LogEventsMap = map[LogEventType]string{
 	TransactionError:       "transaction error",
 	TemplateError:          "template error",
 	SignError:              "sign error",
+	VMEvent:                "VM event",
+	VMError:                "VMError",
 
 	FuncStarted:  "function started",
 	JustWaiting:  "just waiting",
