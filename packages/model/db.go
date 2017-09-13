@@ -370,7 +370,7 @@ func AlterTableAddColumn(tableName, columnName, columnType string) error {
 }
 
 func AlterTableDropColumn(tableName, columnName string) error {
-	return DBConn.Exec(`ALTER TABLE '` + tableName + `' DROP COLUMN ` + columnName).Error
+	return DBConn.Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN ` + columnName).Error
 }
 
 func CreateIndex(indexName, tableName, onColumn string) error {

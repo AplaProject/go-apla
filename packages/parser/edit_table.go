@@ -137,9 +137,8 @@ func (p *EditTableParser) Action() error {
 		if err := smart.CompileEval(actions[action], uint32(p.EditTable.Header.StateID)); err != nil {
 			return err
 		}
-		actions[action] = strings.Replace(actions[action], `"`, `\"`, -1)
 		t := &model.Table{}
-		_, err = t.SetActionByName(tableName, tblname, action, `"`+actions[action]+`"`, rollback.RbID)
+		_, err = t.SetActionByName(tableName, tblname, action, actions[action], rollback.RbID)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
