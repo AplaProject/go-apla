@@ -616,8 +616,6 @@ func (block *Block) checkBlock() error {
 		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
 			block.Header.Time, block.Header.WalletID, block.Header.StateID, block.MrklRoot)
 
-		log.Debugf("!!! for sign: %x\n%s\n", []byte(forSign), forSign)
-
 		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, block.Header.Sign, true)
 		if err != nil {
 			return utils.ErrInfo(fmt.Errorf("err: %v / p.PrevBlock.BlockId: %d", err, block.PrevHeader.BlockID))

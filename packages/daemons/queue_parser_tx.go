@@ -36,7 +36,7 @@ func QueueParserTx(d *daemon, ctx context.Context) error {
 		return err
 	}
 	if infoBlock.BlockID == 0 {
-		log.Debugf("there are now blocks for parse")
+		log.Debugf("there are no blocks for parse")
 		return nil
 	}
 

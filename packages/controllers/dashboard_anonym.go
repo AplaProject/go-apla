@@ -35,8 +35,6 @@ func (c *Controller) DashboardAnonym() (string, error) {
 		wallet := &model.DltWallet{}
 		err := wallet.GetWallet(c.SessWalletID)
 
-		log.Debugf("wallet_id = %d\n\n!!!!wallet!!!! = %+v", c.SessWalletID, wallet)
-
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}

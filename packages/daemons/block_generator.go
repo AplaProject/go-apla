@@ -143,8 +143,6 @@ func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key 
 	forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s",
 		newBlockID, prevBlock.Hash, blockTime, c.DltWalletID, c.StateID, mrklRoot)
 
-	log.Debugf("!!! for sign with str: %x\n%s\n", []byte(forSign), forSign)
-
 	signed, err := crypto.Sign(key, forSign)
 	if err != nil {
 		return nil, err

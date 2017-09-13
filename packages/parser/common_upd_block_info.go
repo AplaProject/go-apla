@@ -35,7 +35,7 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 	}
 	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
 		block.Header.Time, block.Header.WalletID, block.Header.StateID)
-	log.Debug("forSha", forSha)
+
 	hash, err := crypto.DoubleHash([]byte(forSha))
 	if err != nil {
 		log.Fatal(err)

@@ -134,7 +134,7 @@ func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 	for _, id := range ids {
 		sp := &model.StateParameter{}
 		sp.SetTablePrefix(converter.Int64ToStr(id))
-		err = sp.GetByNameTransaction(transaction,"state_name")
+		err = sp.GetByNameTransaction(transaction, "state_name")
 		if err != nil {
 			return 0, err
 		}
@@ -385,7 +385,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	}
 	err = b.Create(transaction)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("can't create block: %s", err)
 		return err
 	}
 	return nil
