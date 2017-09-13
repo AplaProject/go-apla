@@ -74,21 +74,10 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 }
 
 func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
-	var err error
 	if walletID != 0 {
-		if *utils.Version2 {
-			node := syspar.GetNode(walletID)
-			if node != nil {
-				return node.Public, nil
-			}
-		} else {
-			log.Debug("wallet_id %v state_id %v", walletID, stateID)
-			wallet := &model.DltWallet{}
-			err = wallet.GetWallet(walletID)
-			if err != nil {
-				return []byte(""), err
-			}
-			return []byte(wallet.NodePublicKey), nil
+		node := syspar.GetNode(walletID)
+		if node != nil {
+			return node.Public, nil
 		}
 	}
 	return nil, fmt.Errorf(`unknown node %d`, walletID)

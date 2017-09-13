@@ -24,7 +24,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
@@ -47,43 +46,26 @@ func (p *FirstBlockParser) Action() error {
 	//	myAddress := b58.Encode(lib.Address(data.PublicKey)) //utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]);
 	myAddress := crypto.Address(data.PublicKey)
 
-	if *utils.Version2 {
-		err := model.ExecSchemaEcosystem(1, myAddress)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-		key := &model.Key{
-			ID:        myAddress,
-			PublicKey: data.PublicKey,
-			Amount:    decimal.NewFromFloat(consts.FIRST_QDLT).String(),
-		}
-		if err = key.SetTablePrefix(consts.MainEco).Create(); err != nil {
-			return p.ErrInfo(err)
-		}
-		node := &model.SystemParameterV2{Name: `full_nodes`}
-		if err = node.SaveArray([][]string{{data.Host, converter.Int64ToStr(myAddress),
-			hex.EncodeToString(data.NodePublicKey)}}); err != nil {
-			return p.ErrInfo(err)
-		}
-		syspar.SysUpdate()
-	} else {
-		dltWallet := &model.DltWallet{
-			WalletID:      myAddress,
-			Host:          data.Host,
-			AddressVote:   converter.AddressToString(myAddress),
-			PublicKey:     data.PublicKey,
-			NodePublicKey: data.NodePublicKey,
-			Amount:        decimal.NewFromFloat(consts.FIRST_QDLT).String(),
-		}
-
-		log.Debugf("wallet = %+v", dltWallet)
-		err := dltWallet.Create()
-		if err != nil {
-			return p.ErrInfo(err)
-		}
+	err := model.ExecSchemaEcosystem(1, myAddress)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
+	key := &model.Key{
+		ID:        myAddress,
+		PublicKey: data.PublicKey,
+		Amount:    decimal.NewFromFloat(consts.FIRST_QDLT).String(),
+	}
+	if err = key.SetTablePrefix(consts.MainEco).Create(); err != nil {
+		return p.ErrInfo(err)
+	}
+	node := &model.SystemParameterV2{Name: `full_nodes`}
+	if err = node.SaveArray([][]string{{data.Host, converter.Int64ToStr(myAddress),
+		hex.EncodeToString(data.NodePublicKey)}}); err != nil {
+		return p.ErrInfo(err)
+	}
+	syspar.SysUpdate()
 	fullNode := &model.FullNode{WalletID: myAddress, Host: data.Host}
-	err := fullNode.Create()
+	err = fullNode.Create()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

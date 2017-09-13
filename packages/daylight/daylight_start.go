@@ -30,7 +30,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/api"
 	"github.com/EGaaS/go-egaas-mvp/packages/apiv2"
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
@@ -244,11 +243,7 @@ func initRoutes(listenHost, browserHost string) string {
 	setRoute(route, `/ajax`, controllers.Ajax, `GET`, `POST`)
 	setRoute(route, `/wschain`, controllers.WsBlockchain, `GET`)
 	setRoute(route, `/exchangeapi/:name`, exchangeapi.API, `GET`, `POST`)
-	if *utils.Version2 {
-		apiv2.Route(route)
-	} else {
-		api.Route(route)
-	}
+	apiv2.Route(route)
 	route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
 	if len(*utils.TLS) > 0 {
@@ -450,9 +445,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				thrustWindow.Show()
 				thrustWindow.Focus()
 			} else {
-				if !*utils.Version2 {
-					openBrowser(BrowserHTTPHost)
-				}
+				//				openBrowser(BrowserHTTPHost)
 			}
 		}
 	}()

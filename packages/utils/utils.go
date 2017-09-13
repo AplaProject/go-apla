@@ -103,7 +103,6 @@ var (
 	BoltPsw = flag.String("boltPsw", "", "Bolt password")
 	// APIToken is an api token for exchange api
 	APIToken = flag.String("apiToken", "", "API Token")
-	Version2 = flag.Bool("v2", false, "Version 2")
 	// OneCountry is the country which is supported
 	OneCountry int64
 	// PrivCountry is protect system from registering
@@ -124,7 +123,6 @@ var (
 
 func init() {
 	flag.Parse()
-	fmt.Println(`Version2=`, *Version2)
 }
 
 // IOS checks if the app runs on iOS

@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"fmt"
 	"errors"
 	"time"
 
@@ -107,6 +108,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 	// Operative transactions
 	if p.TxContract != nil {
 		if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
+			fmt.Println(`GATE`, err)
 			return nil, utils.ErrInfo(err)
 		}
 	} else {

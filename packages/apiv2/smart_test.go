@@ -54,10 +54,12 @@ func TestSmartFields(t *testing.T) {
 		t.Error(fmt.Sprintf(`MainCondition name is wrong: %s`, cntResult.Name))
 		return
 	}
+	fmt.Println(`MainCondition 01`)
 	if err := postTx(`MainCondition`, &url.Values{}); err != nil {
 		t.Error(err)
 		return
 	}
+	fmt.Println(`MainCondition 02`)
 }
 
 func TestMoneyTransfer(t *testing.T) {

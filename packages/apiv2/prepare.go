@@ -50,6 +50,9 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
+	smartTx.TokenEcosystem = data.params[`token_ecosystem`].(int64)
+	smartTx.MaxSum = data.params[`max_sum`].(string)
+	smartTx.PayOver = data.params[`payover`].(string)
 	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, UserID: data.wallet, StateID: data.state}
 	forsign := smartTx.ForSign()
 	if info.Tx != nil {

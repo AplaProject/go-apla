@@ -84,11 +84,7 @@ func ExecSchemaEcosystem(id int, wallet int64) error {
 }
 
 func ExecSchema() error {
-	schemaFile := "schema.sql"
-	if *utils.Version2 {
-		schemaFile = "schema-v2.sql"
-	}
-	schema, err := static.Asset("static/" + schemaFile)
+	schema, err := static.Asset("static/schema-v2.sql")
 	if err != nil {
 		os.Remove(*utils.Dir + "/config.ini")
 		return err

@@ -172,11 +172,7 @@ func init() {
 func LoadContracts() (err error) {
 	var states []map[string]string
 	var prefix []string
-	if *utils.Version2 {
-		prefix = []string{`system`}
-	} else {
-		prefix = []string{`global`}
-	}
+	prefix = []string{`system`}
 	states, err = model.GetAll(`select id from system_states order by id`, -1)
 	if err != nil {
 		return err
@@ -224,12 +220,12 @@ func Balance(walletID int64) (decimal.Decimal, error) {
 
 // EGSRate returns egs_rate of the state
 func EGSRate(idstate int64) (float64, error) {
-	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, `egs_rate`).Float64()
+	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_parameters" WHERE name = ?`, `egs_rate`).Float64()
 }
 
 // StateParam returns the value of state parameters
 func StateParam(idstate int64, name string) (string, error) {
-	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
+	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_parameters" WHERE name = ?`, name).String()
 }
 
 // Param returns the value of the specified varaible

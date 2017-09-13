@@ -111,7 +111,10 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		Header: tx.Header{Type: int(info.ID), Time: converter.StrToInt64(data.params[`time`].(string)),
 			UserID: data.wallet, StateID: data.state, PublicKey: publicKey,
 			BinSignatures: converter.EncodeLengthPlusData(signature)},
-		Data: idata,
+		TokenEcosystem: data.params[`token_ecosystem`].(int64),
+		MaxSum:         data.params[`max_sum`].(string),
+		PayOver:        data.params[`payover`].(string),
+		Data:           idata,
 	}
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {

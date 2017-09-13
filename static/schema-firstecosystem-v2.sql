@@ -26,4 +26,4 @@ INSERT INTO "1_contracts" ("value", "wallet_id","active", "conditions") VALUES
         DBUpdate(Table(`keys`), $wallet,`-amount`, $amount)
         DBUpdate(Table(`keys`), $recipient,`+amount`, $amount)
     }
-}', '%[1]d', '1', 'ContractConditions(`MainCondition`)');
+}', '%[1]d', '0', 'ContractConditions(`MainCondition`)');

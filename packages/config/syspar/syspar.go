@@ -23,7 +23,6 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const (
@@ -89,26 +88,14 @@ var (
 // SysUpdate reloads/updates values of system parameters
 func SysUpdate() error {
 	var err error
-	if *utils.Version2 {
-		systemParameters, err := model.GetAllSystemParametersV2()
-		if err != nil {
-			return err
-		}
-		mutex.Lock()
-		defer mutex.Unlock()
-		for _, param := range systemParameters {
-			cache[param.Name] = param.Value
-		}
-	} else {
-		systemParameters, err := model.GetAllSystemParameters()
-		if err != nil {
-			return err
-		}
-		mutex.Lock()
-		defer mutex.Unlock()
-		for _, param := range systemParameters {
-			cache[param.Name] = param.Value
-		}
+	systemParameters, err := model.GetAllSystemParametersV2()
+	if err != nil {
+		return err
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+	for _, param := range systemParameters {
+		cache[param.Name] = param.Value
 	}
 
 	cost = make(map[string]int64)

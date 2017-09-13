@@ -180,33 +180,16 @@ func (p *Parser) CallContract(flags int) (err error) {
 			public = p.TxSmart.PublicKey
 		}
 		if len(p.PublicKeys) == 0 {
-			if *utils.Version2 {
-				if p.TxSmart.Type == 258 { // UpdFullNodes
-					node := syspar.GetNode(p.TxSmart.UserID)
-					if node == nil {
-						return fmt.Errorf("unknown node id")
-					}
-					p.PublicKeys = append(p.PublicKeys, node.Public)
-				} else {
-					wallet := &model.Key{}
-					wallet.SetTablePrefix(p.TxSmart.StateID)
-					err := wallet.Get(p.TxSmart.UserID)
-					if err != nil {
-						return err
-					}
-					if len(wallet.PublicKey) == 0 {
-						if len(public) > 0 {
-							p.PublicKeys = append(p.PublicKeys, public)
-						} else {
-							return fmt.Errorf("unknown wallet id")
-						}
-					} else {
-						p.PublicKeys = append(p.PublicKeys, []byte(wallet.PublicKey))
-					}
+			if p.TxSmart.Type == 258 { // UpdFullNodes
+				node := syspar.GetNode(p.TxSmart.UserID)
+				if node == nil {
+					return fmt.Errorf("unknown node id")
 				}
+				p.PublicKeys = append(p.PublicKeys, node.Public)
 			} else {
-				wallet := &model.DltWallet{}
-				err := wallet.GetWallet(p.TxSmart.UserID)
+				wallet := &model.Key{}
+				wallet.SetTablePrefix(p.TxSmart.StateID)
+				err := wallet.Get(p.TxSmart.UserID)
 				if err != nil {
 					return err
 				}
@@ -669,6 +652,7 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 // StateVal returns the value of the specified parameter for the state
 func StateVal(p *Parser, name string) string {
 	val, _ := template.StateParam(int64(p.TxStateID), name)
+	fmt.Println(`STATE VAL`, p.TxStateID, name, `=`, val)
 	return val
 }
 

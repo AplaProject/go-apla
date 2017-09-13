@@ -29,12 +29,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	/*
-		"time"
+)
 
-		"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
-		"gopkg.in/vmihailenco/msgpack.v2"*/)
-
+/*
 type smartField struct {
 	Name string `json:"name"`
 	HTML string `json:"htmltype"`
@@ -46,7 +43,7 @@ type smartFieldsResult struct {
 	Fields []smartField `json:"fields"`
 	Name   string       `json:"name"`
 	Active bool         `json:"active"`
-}
+}*/
 
 //SignRes contains the data of the signature
 type SignRes struct {
@@ -184,97 +181,3 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 
 	return
 }
-
-/*
-func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	var (
-		isPublic, hash, publicKey []byte
-		toSerialize               interface{}
-	)
-	contract, err := validateSmartContract(r, data, nil)
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusBadRequest)
-	}
-	info := (*contract).Block.Info.(*script.ContractInfo)
-
-	isPublic, err = model.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, data.wallet).Bytes()
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
-	}
-	if len(isPublic) == 0 {
-		if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
-			publicKey = data.params[`pubkey`].([]byte)
-			lenpub := len(publicKey)
-			if lenpub > 64 {
-				publicKey = publicKey[lenpub-64:]
-			}
-		}
-		if len(publicKey) == 0 {
-			return errorAPI(w, `empty public key`, http.StatusBadRequest)
-		}
-	} else {
-		publicKey = []byte("null")
-	}
-	signature := data.params[`signature`].([]byte)
-	if len(signature) == 0 {
-		return errorAPI(w, `signature is empty`, http.StatusBadRequest)
-	}
-	idata := make([]byte, 0)
-	if info.Tx != nil {
-	fields:
-		for _, fitem := range *info.Tx {
-			val := strings.TrimSpace(r.FormValue(fitem.Name))
-			if strings.Contains(fitem.Tags, `address`) {
-				val = converter.Int64ToStr(converter.StringToAddress(val))
-			}
-			switch fitem.Type.String() {
-			case `[]interface {}`:
-				var list []string
-				for key, values := range r.Form {
-					if key == fitem.Name+`[]` {
-						for _, value := range values {
-							list = append(list, value)
-						}
-					}
-				}
-				idata = append(idata, converter.EncodeLength(int64(len(list)))...)
-				for _, ilist := range list {
-					blist := []byte(ilist)
-					idata = append(append(idata, converter.EncodeLength(int64(len(blist)))...), blist...)
-				}
-			case `uint64`:
-				converter.BinMarshal(&idata, converter.StrToUint64(val))
-			case `int64`:
-				converter.EncodeLenInt64(&idata, converter.StrToInt64(val))
-			case `float64`:
-				converter.BinMarshal(&idata, converter.StrToFloat64(val))
-			case `string`, script.Decimal:
-				idata = append(append(idata, converter.EncodeLength(int64(len(val)))...), []byte(val)...)
-			case `[]uint8`:
-				var bytes []byte
-				bytes, err = hex.DecodeString(val)
-				if err != nil {
-					break fields
-				}
-				idata = append(append(idata, converter.EncodeLength(int64(len(bytes)))...), bytes...)
-			}
-		}
-	}
-	toSerialize = tx.SmartContract{
-		Header: tx.Header{Type: int(info.ID), Time: converter.StrToInt64(data.params[`time`].(string)),
-			UserID: data.wallet, StateID: data.state, PublicKey: publicKey,
-			BinSignatures: converter.EncodeLengthPlusData(signature)},
-		Data: idata,
-	}
-	serializedData, err := msgpack.Marshal(toSerialize)
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
-	}
-	if hash, err = model.SendTx(int64(info.ID), data.wallet,
-		append([]byte{128}, serializedData...)); err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
-	}
-	data.result = &hashTx{Hash: string(hash)}
-	return nil
-}
-*/
