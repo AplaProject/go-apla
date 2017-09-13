@@ -91,10 +91,10 @@ func (c *Controller) EditContract() (string, error) {
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}
-			data := smartContract.ToMap()
+			data = smartContract.ToMap()
 			data[`wallet`] = converter.AddressToString(smartContract.WalletID)
 			if len(smartContract.Conditions) == 0 {
-				data[`conditions`] = "ContractConditions(`MainCondition`)"
+				data[`conditions`] = `ContractConditions("MainCondition")`
 			}
 			rbID = smartContract.RbID
 		} else {
