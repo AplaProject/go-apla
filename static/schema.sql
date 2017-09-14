@@ -449,3 +449,10 @@ DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (
 );
 ALTER SEQUENCE rollback_tx_id_seq owned by rollback_tx.id;
 ALTER TABLE ONLY "rollback_tx" ADD CONSTRAINT rollback_tx_pkey PRIMARY KEY (id);
+
+DROP TABLE IF EXISTS "global_apps"; CREATE TABLE "global_apps" (
+"name" varchar(100)  NOT NULL DEFAULT '',
+"done" integer NOT NULL DEFAULT '0',
+"blocks" text  NOT NULL DEFAULT ''
+);
+ALTER TABLE ONLY "global_apps" ADD CONSTRAINT "global_apps_pkey" PRIMARY KEY (name);
