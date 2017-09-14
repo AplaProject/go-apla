@@ -106,8 +106,6 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 }
 
 func (p *Parser) processBadTransaction(hash []byte, errText string) error {
-	p.DeleteQueueTx(hash)
-
 	if len(errText) > 255 {
 		errText = errText[:255]
 	}
@@ -127,6 +125,7 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 			return utils.ErrInfo(err)
 		}
 	}
+	p.DeleteQueueTx(hash)
 	return nil
 }
 
