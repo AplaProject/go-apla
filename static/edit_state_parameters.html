@@ -81,7 +81,7 @@
 			   <label class="lang" lang-id="value"></label>
 
 			   {{if .StateParameters.name}}
-				   {{if eq .StateParameters.name "state_flag"}}<p><img id="flag" src="{{.StateParameters.value}}">
+				   {{if eq .StateParameters.name "state_flag"}}<p><img id="flag" src="{{.StateParameters.value}}" style="display: block; width: 100%; max-width: 300px;">
 					<script>
 						document.getElementById('flag').setAttribute( 'src', '{{.StateParameters.value}}' );
 					</script></p>
