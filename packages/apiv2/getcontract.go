@@ -33,10 +33,11 @@ type contractField struct {
 }
 
 type getContractResult struct {
-	Fields  []contractField `json:"fields"`
-	Name    string          `json:"name"`
-	Active  bool            `json:"active"`
-	TableID int64           `json:"tableid"`
+	Fields   []contractField `json:"fields"`
+	Name     string          `json:"name"`
+	Active   bool            `json:"active"`
+	TableID  int64           `json:"tableid"`
+	WalletID int64           `json:"walletid"`
 }
 
 func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
@@ -49,7 +50,8 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
 	fields := make([]contractField, 0)
-	result = getContractResult{Name: info.Name, Active: info.Active, TableID: info.TableID}
+	result = getContractResult{Name: info.Name, Active: info.Active, TableID: info.TableID,
+		WalletID: info.WalletID}
 
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {

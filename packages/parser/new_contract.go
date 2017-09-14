@@ -102,7 +102,7 @@ func (p *NewContractParser) Action() error {
 	if p.walletContract == 0 {
 		p.walletContract = p.NewContract.UserID
 	}
-	root, err := smart.CompileBlock(p.NewContract.Value, prefix, false, 0)
+	root, err := smart.CompileBlock(p.NewContract.Value, prefix, false, 0, 0)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -116,6 +116,7 @@ func (p *NewContractParser) Action() error {
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
 			root.Children[i].Info.(*script.ContractInfo).TableID = converter.StrToInt64(tblid)
+			root.Children[i].Info.(*script.ContractInfo).WalletID = p.walletContract
 		}
 	}
 

@@ -95,13 +95,13 @@ func ExternOff() {
 }
 
 // Compile compiles contract source code in smartVM
-func Compile(src, prefix string, active bool, tblid int64) error {
-	return smartVM.Compile([]rune(src), pref2state(prefix), active, tblid)
+func Compile(src, prefix string, active bool, tblid, wallet int64) error {
+	return smartVM.Compile([]rune(src), pref2state(prefix), active, tblid, wallet)
 }
 
 // CompileBlock calls CompileBlock for smartVM
-func CompileBlock(src, prefix string, active bool, tblid int64) (*script.Block, error) {
-	return smartVM.CompileBlock([]rune(src), pref2state(prefix), active, tblid)
+func CompileBlock(src, prefix string, active bool, tblid, wallet int64) (*script.Block, error) {
+	return smartVM.CompileBlock([]rune(src), pref2state(prefix), active, tblid, wallet)
 }
 
 // CompileEval calls CompileEval for smartVM

@@ -736,7 +736,7 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 	if len(fields) == 0 {
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	root, err := smart.CompileBlock(value, prefix, false, sc.ID)
+	root, err := smart.CompileBlock(value, prefix, false, sc.ID, sc.WalletID)
 	if err != nil {
 		return 0, err
 	}

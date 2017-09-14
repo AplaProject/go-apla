@@ -96,7 +96,8 @@ func (p *EditContractParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	active := sc.Active == `1`
-	root, err := smart.CompileBlock(p.EditContract.Value, prefix, false, converter.StrToInt64(p.EditContract.Id))
+	root, err := smart.CompileBlock(p.EditContract.Value, prefix, false,
+		converter.StrToInt64(p.EditContract.Id), sc.WalletID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

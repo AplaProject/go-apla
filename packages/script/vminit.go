@@ -78,12 +78,13 @@ type FieldInfo struct {
 
 // ContractInfo contains the contract information
 type ContractInfo struct {
-	ID      uint32
-	Name    string
-	Active  bool
-	TableID int64
-	Used    map[string]bool // Called contracts
-	Tx      *[]*FieldInfo
+	ID       uint32
+	Name     string
+	Active   bool
+	TableID  int64
+	WalletID int64
+	Used     map[string]bool // Called contracts
+	Tx       *[]*FieldInfo
 }
 
 // FuncInfo contains the function information
@@ -111,6 +112,7 @@ type Block struct {
 	Type     int
 	Active   bool
 	TableID  int64
+	WalletID int64
 	Info     interface{}
 	Parent   *Block
 	Vars     []reflect.Type
