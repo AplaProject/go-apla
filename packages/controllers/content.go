@@ -212,9 +212,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	c.Parameters, err = c.GetParameters()
-	log.Debug("parameters=", c.Parameters)
 
-	log.Debug("tpl_name=", tplName)
 	// if the language has come in parameters, install it
 	newLang := converter.StrToInt(c.Parameters["lang"])
 	if newLang > 0 {
@@ -252,15 +250,11 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	} else {
 		tplName = "installStep0" // the very first launch
 	}
-	log.Debug("dbInit", dbInit, "installProgress", install.Progress, "configExists", configExists)
-	log.Debug("tplName>>>>>>>>>>>>>>>>>>>>>>", tplName)
 
 	// blockchain is loading
 	wTime := int64(2)
 	if config.ConfigIni != nil && config.ConfigIni["test_mode"] == "1" {
 		wTime = 2 * 365 * 86400
-		log.Debug("%v", wTime)
-		log.Debug("%v", lastBlockTime)
 	}
 	now := time.Now().Unix()
 	if dbInit && tplName != "installStep0" && (now-lastBlockTime > 3600*wTime) && len(configExists) > 0 {
@@ -277,15 +271,12 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Debug("tplName2=", tplName)
-
 	if tplName == "" {
 		tplName = "login"
 	}
 
 	log.Debug("tplName::", tplName, sessCitizenID, sessWalletID, install.Progress)
 
-	fmt.Println("tplName::", tplName, sessCitizenID, sessWalletID, sessAddress)
 	controller := r.FormValue("controllerHTML")
 	if val, ok := config.ConfigIni[`psw`]; ok && ((tplName != `login` && tplName != `loginECDSA`) || len(controller) > 0) {
 		if psw, err := r.Cookie(`psw`); err != nil || !IsPassValid(val, psw.Value) {
@@ -356,8 +347,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write([]byte("<input type='hidden' id='tpl_name' value='" + tplName + "'>"))
 
-		log.Debug("tplName==", tplName)
-
 		// We highlight the block number in red if the update process is in progress
 		var blockJs string
 		ib := &model.InfoBlock{}
@@ -399,7 +388,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			tplName = "LoginECDSA"
 		}
 
-		log.Debug("tplName", tplName)
 		html := ""
 		// if session has been resetted during the navigation of the admin area, instead of login we'll send to / to clear the menu
 		if len(r.FormValue("tpl_name")) > 0 && tplName == "login" {

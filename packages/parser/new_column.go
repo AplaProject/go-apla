@@ -105,7 +105,7 @@ func (p *NewColumnParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	table := prefix + `_tables`
-	logData, err := model.GetColumnsAndPermissionsAndRbIDWhereTable(table, tblname)
+	logData, err := model.GetColumnsAndPermissionsAndRbIDWhereTable(p.DbTransaction, table, tblname)
 	if err != nil {
 		return err
 	}

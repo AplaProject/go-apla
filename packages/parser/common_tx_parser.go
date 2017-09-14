@@ -19,9 +19,6 @@ package parser
 import (
 	"errors"
 
-	"fmt"
-	"time"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
@@ -149,17 +146,7 @@ func (p *Parser) AllTxParser() error {
 	for _, data := range all {
 		err = p.TxParser(data.Hash, data.Data, false)
 		if err != nil {
-			log.Errorf("transaction parser error: %s", err)
-			itx := &model.IncorrectTx{
-				Time: time.Now().Unix(),
-				Hash: data.Hash,
-				Err:  fmt.Sprintf("%s", err),
-			}
-			err0 := itx.Create()
-			if err0 != nil {
-				log.Error("can't insert incorrect transaction: %v", utils.ErrInfo(err0))
-			}
-
+			log.Errorf("transaction parser error: %s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
 		}
 		log.Debugf("transaction %x parsed successfully", data.Hash)

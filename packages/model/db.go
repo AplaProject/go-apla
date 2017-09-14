@@ -533,8 +533,8 @@ func GetNameList(tableName string, count int) ([]map[string]string, error) {
 	return result, nil
 }
 
-func DropTable(tableName string) error {
-	return DBConn.DropTable(tableName).Error
+func DropTable(transaction *DbTransaction, tableName string) error {
+	return getDB(transaction).DropTable(tableName).Error
 }
 
 func GetConditionsAndValue(tableName, name string) (map[string]string, error) {

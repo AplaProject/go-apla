@@ -29,6 +29,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"encoding/hex"
 )
 
 // Type2 serves requests from disseminator

@@ -136,7 +136,6 @@ func (c *Controller) AjaxSendTx() interface{} {
 					result.Hash = string(converter.BinToHex(hash))
 				}
 			}
-			fmt.Printf("Data error: %v lendata: %d hash: %s", err, len(data), result.Hash)
 		}
 	}
 	if err != nil {

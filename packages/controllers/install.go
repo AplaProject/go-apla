@@ -182,7 +182,12 @@ func (c *Controller) Install() (string, error) {
 		log.Errorf("can't decode private key")
 		return "", err
 	}
+
 	npubkey, err := crypto.PrivateToPublic(nodePrivateKey)
+	if err != nil {
+		log.Errorf("can't read NodePrivateKey file: %s", err)
+		return "", err
+	}
 
 	nodeKeys := &model.MyNodeKey{PrivateKey: nodePrivateKey, PublicKey: npubkey, BlockID: 1}
 	err = nodeKeys.Create()

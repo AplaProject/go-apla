@@ -70,11 +70,11 @@ func (p *UpdFullNodesParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	nodePublicKey := []byte(wallet.PublicKey)
+	nodePublicKey := []byte(wallet.NodePublicKey)
 	if len(nodePublicKey) == 0 {
 		return utils.ErrInfoFmt("len(nodePublicKey) = 0")
 	}
-	CheckSignResult, err := utils.CheckSign([][]byte{nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, false)
+	CheckSignResult, err := utils.CheckSign([][]byte{nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -120,17 +120,7 @@ func (p *UpdFullNodesParser) Action() error {
 	}
 
 	fn := &model.FullNode{}
-	err = fn.DeleteNodesWithWallets()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	maxID, err := fn.GetMaxID()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	// update the AI
-	err = model.SetAI("full_nodes", int64(maxID+1))
+	err = fn.DeleteNodesWithWallets(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -160,7 +150,7 @@ func (p *UpdFullNodesParser) Action() error {
 		if err == gorm.ErrRecordNotFound {
 			return nil
 		}
-		return p.ErrInfo(err)
+		return err
 	}
 	newRate := strconv.FormatInt(w.FuelRate, 10)
 	if len(newRate) > 0 {
@@ -197,12 +187,12 @@ func (p *UpdFullNodesParser) Rollback() error {
 
 	// delete new data
 	fn := &model.FullNode{}
-	err = fn.DeleteNodesWithWallets()
+	err = fn.DeleteNodesWithWallets(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	maxID, err := fn.GetMaxID()
+	maxID, err := fn.GetMaxID(nil)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

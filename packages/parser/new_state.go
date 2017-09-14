@@ -154,6 +154,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 
 	err = model.CreateStatePagesTable(p.DbTransaction, id)
 	if err != nil {
+		log.Errorf("can't create state tables: %s", err)
 		return
 	}
 	dashboardValue := `FullScreen(1)
@@ -313,7 +314,7 @@ MenuBack(Welcome)`,
 		return
 	}
 
-	err = template.LoadContract(id)
+	err = template.LoadContract(p.DbTransaction, id)
 	return
 }
 
@@ -337,7 +338,7 @@ func (p *NewStateParser) Action() error {
 
 func (p *NewStateParser) Rollback() error {
 	rollbackTx := &model.RollbackTx{}
-	err := rollbackTx.Get(p.TxHash, "system_states")
+	err := rollbackTx.Get(p.DbTransaction, p.TxHash, "system_states")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -348,14 +349,14 @@ func (p *NewStateParser) Rollback() error {
 
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
 		`smart_contracts`, `state_parameters`, `apps`, `anonyms`} {
-		err = model.DropTable(fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
+		err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	}
 
 	rollbackTxToDel := &model.RollbackTx{TxHash: p.TxHash, NameTable: "system_states"}
-	err = rollbackTxToDel.DeleteByHashAndTableName()
+	err = rollbackTxToDel.DeleteByHashAndTableName(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -371,7 +372,7 @@ func (p *NewStateParser) Rollback() error {
 		return p.ErrInfo(err)
 	}
 	ssToDel := &model.SystemState{ID: ID}
-	err = ssToDel.Delete()
+	err = ssToDel.Delete(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

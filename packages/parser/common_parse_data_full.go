@@ -50,10 +50,12 @@ type Block struct {
 func InsertBlock(data []byte) error {
 	block, err := ProcessBlock(data)
 	if err != nil {
+		log.Errorf("process block error: %s", err)
 		return err
 	}
 
 	if err := block.checkBlock(); err != nil {
+		log.Errorf("check block error: %s", err)
 		return err
 	}
 
@@ -65,6 +67,7 @@ func InsertBlock(data []byte) error {
 
 	err = block.playBlock(dbTransaction)
 	if err != nil {
+		log.Errorf("play block error: %s (start rollback)", err)
 		dbTransaction.Rollback()
 		return err
 	}
@@ -80,6 +83,7 @@ func InsertBlock(data []byte) error {
 	}
 
 	dbTransaction.Commit()
+	log.Debugf("block %d was inserted successfully", block.Header.BlockID)
 
 	return nil
 }
@@ -109,7 +113,6 @@ func ProcessBlock(data []byte) (*Block, error) {
 		return nil, err
 	}
 
-	log.Debugf("prevHeader: %+v", block.PrevHeader)
 	return block, nil
 }
 
@@ -221,9 +224,8 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 		return nil, fmt.Errorf("empty transaction buffer")
 	}
 
-	log.Debugf("parse transaction: %x", buffer.Bytes())
-
-	hash, err := crypto.DoubleHash(buffer.Bytes())
+	hash, err := crypto.Hash(buffer.Bytes())
+	// or DoubleHash ?
 	if err != nil {
 		return nil, err
 	}
@@ -235,6 +237,8 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 
 	txType := int64(buffer.Bytes()[0])
 	p.dataType = int(txType)
+
+	log.Debugf("parse transaction %s", consts.TxTypes[int(txType)])
 
 	// smart contract transaction
 	if IsContractTransaction(int(txType)) {
@@ -413,8 +417,10 @@ func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	}
 	p.txParser = trParser
 
+	log.Debugf("parse regular transaction: %s", consts.TxTypes[int(txType)])
 	err = trParser.Init()
 	if err != nil {
+		log.Errorf("parser init failed: %s", err)
 		return err
 	}
 	header := trParser.Header()
@@ -428,8 +434,11 @@ func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	p.TxStateID = uint32(header.StateID)
 	p.TxUserID = header.UserID
 
+	log.Debugf("transaction header: %+v", header)
+
 	err = trParser.Validate()
 	if _, ok := err.(error); ok {
+		log.Errorf("transaction validate failed: %s", err)
 		return utils.ErrInfo(err.(error))
 	}
 
@@ -494,6 +503,7 @@ func (block *Block) readPreviousBlock() error {
 }
 
 func playTransaction(p *Parser) error {
+	log.Debugf("play transaction: %s", consts.TxTypes[int(p.TxType)])
 	// smart-contract
 	if p.TxContract != nil {
 		// check that there are enough money in CallContract
@@ -520,11 +530,13 @@ func playTransaction(p *Parser) error {
 			return utils.ErrInfo(err)
 		}
 	}
+	log.Debugf("play transaction %s - ok", consts.TxTypes[int(p.TxType)])
 	return nil
 }
 
 func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 
+	log.Debugf("start play block")
 	if _, err := model.DeleteUsedTransactions(dbTransaction); err != nil {
 		return err
 	}
@@ -534,6 +546,7 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 
 		if err := playTransaction(p); err != nil {
 			// skip this transaction
+			log.Errorf("play transaction error: %s", err)
 			model.MarkTransactionUsed(nil, p.TxHash)
 			p.processBadTransaction(p.TxHash, err.Error())
 			continue

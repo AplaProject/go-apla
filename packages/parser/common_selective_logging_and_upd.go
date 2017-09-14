@@ -105,7 +105,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	if err != nil {
 		return 0, tableID, err
 	}
-	logData, err := model.GetOneRow(selectQuery).String()
+	logData, err := model.GetOneRowTransaction(p.DbTransaction, selectQuery).String()
 	if err != nil {
 		return 0, tableID, err
 	}

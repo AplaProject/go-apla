@@ -33,12 +33,12 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	bconf "github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/session"
 	"github.com/op/go-logging"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 var log = logging.MustGetLogger("controllers")
@@ -188,7 +188,6 @@ func GetSessWalletID(sess session.SessionStore) int64 {
 // GetSessCitizenID returns session's citizen id
 func GetSessCitizenID(sess session.SessionStore) int64 {
 	sessUserID := sess.Get("citizen_id")
-	log.Debug("sessUserId: %v", sessUserID)
 	switch sessUserID.(type) {
 	case int64:
 		return sessUserID.(int64)

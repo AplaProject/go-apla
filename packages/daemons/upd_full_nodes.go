@@ -109,17 +109,6 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 	tr.Header.BinSignatures = binSign
 
-	tr := tx.UpdFullNodes{
-		Header: tx.Header{
-			Type:          int(utils.TypeInt("UpdFullNodes")),
-			Time:          curTime,
-			UserID:        myWalletID,
-			StateID:       0,
-			PublicKey:     []byte("null"),
-			BinSignatures: binSign,
-		},
-	}
-
 	data, err := msgpack.Marshal(tr)
 	if err != nil {
 		return err
@@ -139,6 +128,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 
 	queueTx.Data = data
+	queueTx.Hash = hash
 	err = queueTx.Save(nil)
 	if err != nil {
 		return nil

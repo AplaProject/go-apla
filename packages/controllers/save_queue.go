@@ -37,7 +37,7 @@ func (c *Controller) SaveQueue() (string, error) {
 	citizenID := c.SessCitizenID
 	walletID := c.SessWalletID
 
-	log.Debug("citizenID %d / walletID %d ", citizenID, walletID)
+	log.Debug("add transaction with citizenID %d / walletID %d ", citizenID, walletID)
 
 	if citizenID <= 0 && walletID == 0 {
 		return `{"result":"incorrect citizenID || walletID"}`, nil
@@ -59,8 +59,10 @@ func (c *Controller) SaveQueue() (string, error) {
 	} else if lenpub == 0 {
 		publicKey = []byte("null")
 	}
-	//	fmt.Printf("PublicKey %d %x\r\n", lenpub, publicKey)
 	txType := utils.TypeInt(itxType)
+
+	log.Debugf("transaction type %s", itxType)
+
 	sign := make([]byte, 0)
 	signature, err := crypto.JSSignToBytes(c.r.FormValue("signature1"))
 	if err != nil {
@@ -72,9 +74,6 @@ func (c *Controller) SaveQueue() (string, error) {
 	if len(sign) == 0 {
 		return `{"result":"signature is empty"}`, nil
 	}
-	fmt.Printf("Len sign %d\r\n", len(sign))
-	log.Debug("txType_", itxType)
-	log.Debug("txType", itxType)
 
 	userID := walletID
 	stateID := converter.StrToInt64(c.r.FormValue("stateId"))

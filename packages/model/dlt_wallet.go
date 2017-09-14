@@ -102,7 +102,7 @@ func (w *DltWallet) ToMap() map[string]string {
 }
 
 func (w *DltWallet) GetNewFuelRate() error {
-	return DBConn.Where("fuel_rate !=0").Select("fuel_rate").Group("fuel_rate").Order("sum(amount)").Limit(1).Find(w).Error
+	return DBConn.Table("dlt_wallets").Where("fuel_rate !=0").Select("fuel_rate").Group("fuel_rate").Order("sum(amount)").Limit(1).Find(w).Error
 }
 
 func (w *DltWallet) GetAddressVotes() ([]string, error) {

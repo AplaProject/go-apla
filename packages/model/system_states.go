@@ -41,8 +41,8 @@ func (ss *SystemState) GetLast() (bool, error) {
 	return false, last.Error
 }
 
-func (ss *SystemState) Delete() error {
-	return DBConn.Delete(ss).Error
+func (ss *SystemState) Delete(transaction *DbTransaction) error {
+	return getDB(transaction).Delete(ss).Error
 }
 
 func (ss *SystemState) IsExists(stateID int64) (bool, error) {

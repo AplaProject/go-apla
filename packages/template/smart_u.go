@@ -179,9 +179,9 @@ func LoadContracts(transaction *model.DbTransaction) (err error) {
 	for _, istate := range states {
 		prefix = append(prefix, istate[`id`])
 	}
-	LoadContract(`global`)
+	LoadContract(transaction, `global`)
 	for _, ipref := range prefix {
-		if err = LoadContract(ipref); err != nil {
+		if err = LoadContract(transaction, ipref); err != nil {
 			break
 		}
 	}
@@ -190,9 +190,9 @@ func LoadContracts(transaction *model.DbTransaction) (err error) {
 }
 
 // LoadContract reads and compiles contract of new state
-func LoadContract(prefix string) (err error) {
+func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
-	contracts, err = model.GetAll(`select * from "`+prefix+`_smart_contracts" order by id`, -1)
+	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_smart_contracts" order by id`, -1)
 	if err != nil {
 		return err
 	}

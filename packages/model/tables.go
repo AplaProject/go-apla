@@ -157,13 +157,13 @@ func CreateTable(transaction *DbTransaction, tableName, colsSQL string) error {
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`).Error
 }
 
-func GetColumnsAndPermissionsAndRbIDWhereTable(table, tableName string) (map[string]string, error) {
+func GetColumnsAndPermissionsAndRbIDWhereTable(transaction *DbTransaction, table, tableName string) (map[string]string, error) {
 	type proxy struct {
 		ColumnsAndPermissions string
 		RbID                  int64
 	}
 	temp := &proxy{}
-	err := DBConn.Table(table).Where("name = ?", tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
+	err := getDB(transaction).Table(table).Where("name = ?", tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
 	if err != nil {
 		return nil, err
 	}
