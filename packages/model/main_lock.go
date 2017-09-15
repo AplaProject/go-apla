@@ -36,8 +36,15 @@ func MainLockUpdate() error {
 	return DBConn.Model(&MainLock{}).Update("LockTime", int32(time.Now().Unix())).Error
 }
 
-func (ml *MainLock) Get() error {
-	return DBConn.First(ml).Error
+func (ml *MainLock) Get() (bool, error) {
+	query := DBConn.First(ml)
+	if query.RecordNotFound() {
+		return false, nil
+	}
+	if query.Error != nil {
+		return false, query.Error
+	}
+	return true, nil
 }
 
 func (ml *MainLock) Create() error {

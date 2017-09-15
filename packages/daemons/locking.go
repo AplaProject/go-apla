@@ -89,10 +89,21 @@ func tryLock(goRoutineName string) (bool, error) {
 	defer mutex.Unlock()
 
 	ml := model.MainLock{}
-	err := ml.Get()
+	found, err := ml.Get()
 
 	// check for lock record and lock period
-	if ml.LockTime == 0 {
+	if found {
+		lockPeriod := time.Now().Unix() - int64(ml.LockTime)
+		if lockPeriod > MaxLockTime {
+			log.Error("%d %s %d", ml.LockTime, ml.ScriptName, lockPeriod)
+			if utils.Mobile() {
+				err = model.MainLockDelete(ml.ScriptName)
+				if err != nil {
+					return false, err
+				}
+			}
+		}
+	} else {
 		ml.LockTime = int32(time.Now().Unix())
 		ml.ScriptName = goRoutineName
 		ml.Info = utils.Caller(2)
@@ -100,17 +111,7 @@ func tryLock(goRoutineName string) (bool, error) {
 			return false, err
 		}
 		return true, nil
-
-	} else {
-		lockPeriod := time.Now().Unix() - int64(ml.LockTime)
-		if lockPeriod > MaxLockTime {
-			log.Error("%d %s %d", ml.LockTime, ml.ScriptName, lockPeriod)
-			if utils.Mobile() {
-				err = model.MainLockDelete(ml.ScriptName)
-			}
-		}
 	}
-
 	return false, err
 }
 

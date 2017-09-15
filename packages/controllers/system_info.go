@@ -54,11 +54,13 @@ func (c *Controller) SystemInfo() (string, error) {
 	}
 
 	mainLock := &model.MainLock{}
-	err = mainLock.Get()
-	if err != nil && err != model.RecordNotFound {
+	found, err := mainLock.Get()
+	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	pageData.MainLock = append(pageData.MainLock, mainLock.ToMap())
+	if found {
+		pageData.MainLock = append(pageData.MainLock, mainLock.ToMap())
+	}
 
 	rollback := &model.Rollback{}
 	rollbacks, err := rollback.GetRollbacks(100)
