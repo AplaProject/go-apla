@@ -88,10 +88,7 @@ func installCommon(data *installParams) (err error) {
 		return err
 	}
 	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
-	if err != nil {
-		return err
-	}
-	if model.DBConn == nil {
+	if err != nil || model.DBConn == nil {
 		return fmt.Errorf(`E_DBNIL`)
 	}
 	if err = model.DropTables(); err != nil {
@@ -176,11 +173,11 @@ func install(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	params := installParams{installType: data.params["type"].(string),
 		logLevel:               data.params["log_level"].(string),
 		firstLoadBlockchainURL: data.params["first_load_blockchain_url"].(string),
-		dbHost:                 data.params["host"].(string),
-		dbPort:                 data.params["port"].(string),
+		dbHost:                 data.params["db_host"].(string),
+		dbPort:                 data.params["db_port"].(string),
 		dbName:                 data.params["db_name"].(string),
-		dbUsername:             data.params["username"].(string),
-		dbPassword:             data.params["password"].(string),
+		dbUsername:             data.params["db_user"].(string),
+		dbPassword:             data.params["db_pass"].(string),
 		firstBlockDir:          data.params["first_block_dir"].(string),
 	}
 	if val := data.params["generate_first_block"]; val.(int64) == 1 {
