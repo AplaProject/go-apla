@@ -78,13 +78,11 @@ type FieldInfo struct {
 
 // ContractInfo contains the contract information
 type ContractInfo struct {
-	ID       uint32
-	Name     string
-	Active   bool
-	TableID  int64
-	WalletID int64
-	Used     map[string]bool // Called contracts
-	Tx       *[]*FieldInfo
+	ID    uint32
+	Name  string
+	Owner *OwnerInfo
+	Used  map[string]bool // Called contracts
+	Tx    *[]*FieldInfo
 }
 
 // FuncInfo contains the function information
@@ -106,13 +104,19 @@ type ObjInfo struct {
 	Value interface{}
 }
 
+type OwnerInfo struct {
+	StateID  uint32 `json:"state"`
+	Active   bool   `json:"active"`
+	TableID  int64  `json:"tableid"`
+	WalletID int64  `json:"walletid"`
+	TokenID  int64  `json:"tokenid"`
+}
+
 // Block contains all information about compiled block {...} and its children
 type Block struct {
 	Objects  map[string]*ObjInfo
 	Type     int
-	Active   bool
-	TableID  int64
-	WalletID int64
+	Owner    *OwnerInfo
 	Info     interface{}
 	Parent   *Block
 	Vars     []reflect.Type
@@ -166,7 +170,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	for _, ipar := range pars {
 		parnames[ipar] = true
 	}
-	if !cblock.Info.(*ContractInfo).Active {
+	if !cblock.Info.(*ContractInfo).Owner.Active {
 		return fmt.Errorf(`Contract %s is not active`, name)
 	}
 	var isSignature bool

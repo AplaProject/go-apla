@@ -80,14 +80,14 @@ func init() {
 	}})
 }
 
-func pref2state(prefix string) (state uint32) {
+/*func pref2state(prefix string) (state uint32) {
 	if prefix != `global` {
 		if val, err := strconv.ParseUint(prefix, 10, 32); err == nil {
 			state = uint32(val)
 		}
 	}
 	return
-}
+}*/
 
 // ExternOff switches off the extern compiling mode in smartVM
 func ExternOff() {
@@ -95,13 +95,13 @@ func ExternOff() {
 }
 
 // Compile compiles contract source code in smartVM
-func Compile(src, prefix string, active bool, tblid, wallet int64) error {
-	return smartVM.Compile([]rune(src), pref2state(prefix), active, tblid, wallet)
+func Compile(src string, owner *script.OwnerInfo) error {
+	return smartVM.Compile([]rune(src), owner)
 }
 
 // CompileBlock calls CompileBlock for smartVM
-func CompileBlock(src, prefix string, active bool, tblid, wallet int64) (*script.Block, error) {
-	return smartVM.CompileBlock([]rune(src), pref2state(prefix), active, tblid, wallet)
+func CompileBlock(src string, owner *script.OwnerInfo) (*script.Block, error) {
+	return smartVM.CompileBlock([]rune(src), owner)
 }
 
 // CompileEval calls CompileEval for smartVM
@@ -110,8 +110,8 @@ func CompileEval(src string, prefix uint32) error {
 }
 
 // EvalIf calls EvalIf for smartVM
-func EvalIf(src, prefix string, extend *map[string]interface{}) (bool, error) {
-	return smartVM.EvalIf(src, pref2state(prefix), extend)
+func EvalIf(src string, state uint32, extend *map[string]interface{}) (bool, error) {
+	return smartVM.EvalIf(src, state, extend)
 }
 
 // FlushBlock calls FlushBlock for smartVM
@@ -150,7 +150,7 @@ func Run(block *script.Block, params []interface{}, extend *map[string]interface
 }
 
 // ActivateContract sets Active status of the contract in smartVM
-func ActivateContract(tblid int64, prefix string, active bool) {
+/*func ActivateContract(tblid int64, prefix string, active bool) {
 	if prefix == `global` {
 		prefix = `0`
 	}
@@ -163,7 +163,7 @@ func ActivateContract(tblid int64, prefix string, active bool) {
 			}
 		}
 	}
-}
+}*/
 
 // GetContract returns true if the contract exists in smartVM
 func GetContract(name string, state uint32) *Contract {

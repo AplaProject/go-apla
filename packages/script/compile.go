@@ -473,7 +473,7 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 		itype = ObjContract
 		name = StateName((*buf)[0].Info.(uint32), name)
 		fblock.Info = &ContractInfo{ID: uint32(len(prev.Children) - 1), Name: name,
-			Active: (*buf)[0].Active, TableID: (*buf)[0].TableID, WalletID: (*buf)[0].WalletID} //lexem.Value.(string)}
+			Owner: (*buf)[0].Owner} //lexem.Value.(string)}
 	default:
 		itype = ObjFunc
 		fblock.Info = &FuncInfo{}
@@ -484,8 +484,8 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 // CompileBlock compile the source code into the Block structure with a byte-code
-func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid, wallet int64) (*Block, error) {
-	root := &Block{Info: idstate, Active: active, TableID: tblid, WalletID: wallet}
+func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
+	root := &Block{Info: owner.StateID, Owner: owner}
 	lexems, err := lexParser(input)
 	if err != nil {
 		return nil, err
@@ -624,8 +624,8 @@ func (vm *VM) FlushExtern() {
 }
 
 // Compile compiles a source code and loads the byte-code into the virtual machine
-func (vm *VM) Compile(input []rune, state uint32, active bool, tblid, wallet int64) error {
-	root, err := vm.CompileBlock(input, state, active, tblid, wallet)
+func (vm *VM) Compile(input []rune, owner *OwnerInfo) error {
+	root, err := vm.CompileBlock(input, owner)
 	if err == nil {
 		vm.FlushBlock(root)
 	}

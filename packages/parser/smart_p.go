@@ -297,7 +297,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 				return fmt.Errorf(`Fuel rate must be greater than 0`)
 			}
 			fromID := p.TxSmart.UserID
-			if p.TxContract.Block.Info.(*script.ContractInfo).Active {
+			if p.TxContract.Block.Info.(*script.ContractInfo).Owner.Active {
 				//		return fmt.Errorf(`Contract %s is not active`, p.TxContract.Name)
 			}
 			payWallet := &model.Key{}
@@ -737,7 +737,7 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 		blockTime = p.BlockData.Time
 	}
 
-	return smart.EvalIf(conditions, converter.Int64ToStr(int64(p.TxStateID)), &map[string]interface{}{`state`: p.TxStateID,
+	return smart.EvalIf(conditions, p.TxStateID, &map[string]interface{}{`state`: p.TxStateID,
 		`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p,
 		`block_time`: blockTime, `time`: time})
 }
@@ -829,7 +829,8 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 	if len(fields) == 0 {
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	root, err := smart.CompileBlock(value, prefix, false, sc.ID, sc.WalletID)
+	root, err := smart.CompileBlock(value, &script.OwnerInfo{StateID: uint32(converter.StrToInt64(prefix)),
+		Active: false, TableID: sc.ID, WalletID: sc.WalletID, TokenID: 0})
 	if err != nil {
 		return 0, err
 	}
@@ -840,8 +841,8 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
-			root.Children[i].Info.(*script.ContractInfo).TableID = sc.ID
-			root.Children[i].Info.(*script.ContractInfo).Active = sc.Active == "1"
+			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = sc.ID
+			root.Children[i].Info.(*script.ContractInfo).Owner.Active = sc.Active == "1"
 		}
 	}
 	smart.FlushBlock(root)

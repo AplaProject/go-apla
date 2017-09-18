@@ -196,10 +196,17 @@ func LoadContract(prefix string) (err error) {
 	if err != nil {
 		return err
 	}
+	state := uint32(converter.StrToInt64(prefix))
 	for _, item := range contracts {
 		names := strings.Join(smart.ContractsList(item[`value`]), `,`)
-		if err = smart.Compile(item[`value`], prefix, item[`active`] == `1`,
-			converter.StrToInt64(item[`id`]), converter.StrToInt64(item[`wallet_id`])); err != nil {
+		owner := script.OwnerInfo{
+			StateID:  state,
+			Active:   item[`active`] == `1`,
+			TableID:  converter.StrToInt64(item[`id`]),
+			WalletID: converter.StrToInt64(item[`wallet_id`]),
+			TokenID:  converter.StrToInt64(item[`token_id`]),
+		}
+		if err = smart.Compile(item[`value`], &owner); err != nil {
 			log.Error("Load Contract", names, err)
 			fmt.Println("Error Load Contract", names, err)
 			//return

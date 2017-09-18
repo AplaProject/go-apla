@@ -180,10 +180,6 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 		return &EditPageParser{p, nil}, nil
 	case "EditMenu":
 		return &EditMenuParser{p, nil}, nil
-	case "EditContract":
-		return &EditContractParser{p, nil}, nil
-	case "NewContract":
-		return &NewContractParser{p, nil, 0}, nil
 	case "EditColumn":
 		return &EditColumnParser{p, nil}, nil
 	case "EditTable":
@@ -220,8 +216,6 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 		return &EditSignParser{p, nil}, nil
 	case "EditWallet":
 		return &EditWalletParser{p, nil}, nil
-	case "ActivateContract":
-		return &ActivateContractParser{p, nil, ""}, nil
 	case "NewAccount":
 		return &NewAccountParser{p, nil}, nil
 	}
