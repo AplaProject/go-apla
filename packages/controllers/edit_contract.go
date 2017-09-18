@@ -92,6 +92,7 @@ func (c *Controller) EditContract() (string, error) {
 				return "", utils.ErrInfo(err)
 			}
 			data = smartContract.ToMap()
+			contWallet = smartContract.WalletID
 			data[`wallet`] = converter.AddressToString(smartContract.WalletID)
 			if len(smartContract.Conditions) == 0 {
 				data[`conditions`] = `ContractConditions("MainCondition")`
@@ -114,6 +115,7 @@ func (c *Controller) EditContract() (string, error) {
 			break
 		}
 	}
+
 	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{
 		Alert:               c.Alert,
 		Lang:                c.Lang,
