@@ -30,7 +30,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -678,13 +677,6 @@ func (p *Parser) checkPrice(name string) error {
 		return err
 	}
 	return nil
-}
-
-// GetContractLimit returns the default maximal cost of contract
-func (p *Parser) GetContractLimit() (ret int64) {
-	// default maximum cost of F
-	p.TxCost = script.CostDefault // ret * fuel
-	return p.TxCost
 }
 
 func (p *Parser) payFPrice() error {

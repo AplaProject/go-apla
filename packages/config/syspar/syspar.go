@@ -66,18 +66,6 @@ type FullNode struct {
 var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
-		// For compatible of develop versions
-		// Remove later
-		GapsBetweenBlocks:  `3`,
-		MaxBlockSize:       `67108864`,
-		MaxTxSize:          `33554432`,
-		MaxTxCount:         `100000`,
-		MaxColumns:         `50`,
-		MaxIndexes:         `10`,
-		MaxBlockUserTx:     `100`,
-		UpdFullNodesPeriod: `3600`, // 3600 is for the test time, then we have to put 86400`
-		RecoveryAddress:    `8275283526439353759`,
-		CommissionWallet:   `8275283526439353759`,
 	}
 	cost  = make(map[string]int64)
 	nodes = make(map[int64]*FullNode)

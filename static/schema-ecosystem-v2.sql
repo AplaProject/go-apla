@@ -79,7 +79,7 @@ ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY
 INSERT INTO "%[1]d_contracts" ("value", "wallet_id","active", "conditions") VALUES 
 ('contract MainCondition {
   conditions {
-    if(StateVal("gov_account")!=$citizen)
+    if(StateVal("founder_account")!=$citizen)
     {
       warning "Sorry, you don`t have access to this action."
     }
@@ -96,7 +96,7 @@ CREATE TABLE "%[1]d_parameters" (
 ALTER TABLE ONLY "%[1]d_parameters" ADD CONSTRAINT "%[1]d_parameters_pkey" PRIMARY KEY ("name");
 
 INSERT INTO "%[1]d_parameters" ("name", "value", "conditions") VALUES 
-('gov_account', '%[2]d', 'ContractConditions(`MainCondition`)'),
+('founder_account', '%[2]d', 'ContractConditions(`MainCondition`)'),
 ('restore_access_condition', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
 ('new_table', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
 ('new_column', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
@@ -107,6 +107,7 @@ INSERT INTO "%[1]d_parameters" ("name", "value", "conditions") VALUES
 ('changing_menu', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
 ('changing_contracts', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
 ('ecosystem_name', '%[1]d', 'ContractConditions(`MainCondition`)'),
+('max_sum', '100000000000', 'ContractConditions(`MainCondition`)'),
 ('money_digit', '2', 'ContractConditions(`MainCondition`)');
 
 CREATE TABLE "%[1]d_tables" (

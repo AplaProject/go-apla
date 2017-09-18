@@ -209,9 +209,8 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				// check that there are enough money in CallContract
 				err := p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
 				fmt.Println(`FULL`, err)
-
 				// pay for CPU resources
-				p.payFPrice()
+				//				errpay := p.payContract()
 				if err != nil {
 					if p.TxContract.Called == smart.CallCondition || p.TxContract.Called == smart.CallAction {
 						err0 := p.RollbackTo(txForRollbackTo, false)
