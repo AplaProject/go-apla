@@ -61,11 +61,11 @@ func (p *ChangeNodeKeyParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	key := &model.MyNodeKey{}
-	err = key.GetZeroBlock(p.ChangeNodeKey.NewNodePublicKey)
+	found, err := key.GetZeroBlock(p.ChangeNodeKey.NewNodePublicKey)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if key.ID > 0 {
+	if found {
 		_, _, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(int64(key.ID))}, true)
 		if err != nil {
 			return p.ErrInfo(err)
