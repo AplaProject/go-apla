@@ -133,7 +133,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 				if err == nil {
 					hash, err = model.SendTx(int64(info.ID), c.SessWalletID,
 						append([]byte{128}, serializedData...))
-					result.Hash = string(hash)
+					result.Hash = string(converter.BinToHex(hash))
 				}
 			}
 			fmt.Printf("Data error: %v lendata: %d hash: %s", err, len(data), result.Hash)

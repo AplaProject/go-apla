@@ -18,8 +18,9 @@ package daemons
 
 import (
 	"context"
-	"fmt"
 	"time"
+
+	"encoding/hex"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -27,6 +28,8 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // UpdFullNodes sends UpdFullNodes transactions
@@ -46,7 +49,8 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 
 	if infoBlock.BlockID == 0 {
-		return utils.ErrInfo("blockID == 0")
+		d.sleepTime = 10 * time.Second
+		return nil
 	}
 
 	nodeConfig := &model.Config{}
@@ -57,8 +61,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 	myStateID := nodeConfig.StateID
 	myWalletID := nodeConfig.DltWalletID
-	log.Debug("%v", myWalletID)
-	// Есть ли мы в списке тех, кто может генерить блоки
+
 	// If we are in the list of those who are able to generate the blocks
 	fullNode := &model.FullNode{}
 	err = fullNode.FindNode(myStateID, myWalletID, myStateID, myWalletID)
@@ -75,7 +78,6 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 
 	curTime := time.Now().Unix()
 
-	// проверим, прошло ли время с момента последнего обновления
 	// check if the time of the last updating passed
 	updFn := &model.UpdFullNode{}
 	err = updFn.Read()
@@ -85,30 +87,42 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 
 	updFullNodes := int64(updFn.Time)
 	if curTime-updFullNodes <= syspar.GetUpdFullNodesPeriod() {
-		return utils.ErrInfo("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO")
+		log.Debugf("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO")
+		return nil
 	}
 
-	forSign := fmt.Sprintf("%v,%v,%v,%v", utils.TypeInt("UpdFullNodes"), curTime, myWalletID, 0)
 	myNodeKey := &model.MyNodeKey{}
 	err = myNodeKey.GetNodeWithMaxBlockID()
 	if err != nil {
 		return err
 	}
 
-	binSign, err := crypto.Sign(string(myNodeKey.PrivateKey), forSign)
+	tr := tx.UpdFullNodes{
+		Header: tx.Header{
+			Type:      int(utils.TypeInt("UpdFullNodes")),
+			Time:      curTime,
+			UserID:    myWalletID,
+			StateID:   0,
+			PublicKey: myNodeKey.PublicKey,
+		},
+	}
+
+	binSign, err := crypto.Sign(hex.EncodeToString(myNodeKey.PrivateKey), tr.ForSign())
 	if err != nil {
 		return err
 	}
+	tr.Header.BinSignatures = binSign
 
-	data := converter.DecToBin(utils.TypeInt("UpdFullNodes"), 1)
-	data = append(data, converter.DecToBin(curTime, 4)...)
-	data = append(data, converter.EncodeLengthPlusData(myWalletID)...)
-	data = append(data, converter.EncodeLengthPlusData(0)...)
-	data = append(data, converter.EncodeLengthPlusData([]byte(binSign))...)
+	data, err := msgpack.Marshal(tr)
+	if err != nil {
+		return err
+	}
+	data = append(converter.DecToBin(int64(tr.Type), 1), data...)
 
 	hash, err := crypto.Hash(data)
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("hash error %s", err)
+		return err
 	}
 
 	queueTx := &model.QueueTx{Hash: hash}
@@ -118,17 +132,13 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 
 	queueTx.Data = data
+	queueTx.Hash = hash
 	err = queueTx.Save()
 	if err != nil {
 		return nil
 	}
 
 	p := new(parser.Parser)
-	hash, err = crypto.Hash(data)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	err = p.TxParser(hash, data, true)
 	if err != nil {
 		return err

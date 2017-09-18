@@ -38,6 +38,7 @@ func (p *DLTChangeHostVoteParser) Init() error {
 	if err := msgpack.Unmarshal(p.TxBinaryData, dltChangeHostVote); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.DLTChangeHostVote = dltChangeHostVote
 	p.DLTChangeHostVote.PublicKey = converter.BinToHex(p.DLTChangeHostVote.Header.PublicKey)
 	return nil
 }

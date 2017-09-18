@@ -1,6 +1,10 @@
 package model
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/jinzhu/gorm"
+)
 
 type FullNode struct {
 	ID                    int32  `gorm:"primary_key;not_null"`
@@ -93,10 +97,14 @@ func (fn *FullNode) ToMap() map[string]string {
 }
 
 func (fn *FullNode) GetMaxID() (int32, error) {
-	result := int32(-1)
-	err := DBConn.Raw("SELECT max(id) FROM full_nodes").Row().Scan(&result)
+	err := DBConn.Last(fn).Error
+
 	if err != nil {
-		return 0, err
+		if err == gorm.ErrRecordNotFound {
+			return 0, nil
+		}
+		return -1, err
 	}
-	return result, nil
+
+	return fn.ID, nil
 }

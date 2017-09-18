@@ -60,7 +60,7 @@ func (c *Controller) AjaxHistory() interface{} {
 			if err != nil {
 				log.Error("get transactions error: %s", err)
 			}
-			history := make([]map[string]string, 0)
+			history = make([]map[string]string, 0)
 
 			for _, transaction := range transactions {
 				block := &model.Block{}

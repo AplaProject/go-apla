@@ -28,7 +28,7 @@ DROP TABLE IF EXISTS "my_keys"; CREATE TABLE "my_keys" (
 "add_time" int NOT NULL DEFAULT '0',
 "notification" smallint NOT NULL DEFAULT '0',
 "public_key" bytea  NOT NULL DEFAULT '',
-"private_key" varchar(3096) NOT NULL DEFAULT '',
+"private_key" bytea NOT NULL DEFAULT '',
 "password_hash" varchar(64) NOT NULL DEFAULT '',
 "status" my_keys_enum_status  NOT NULL DEFAULT 'my_pending',
 "my_time" int  NOT NULL DEFAULT '0',
@@ -49,7 +49,7 @@ DROP TABLE IF EXISTS "my_node_keys"; CREATE TABLE "my_node_keys" (
 "id" int NOT NULL  default nextval('my_node_keys_id_seq'),
 "add_time" int NOT NULL DEFAULT '0',
 "public_key" bytea  NOT NULL DEFAULT '',
-"private_key" varchar(3096) NOT NULL DEFAULT '',
+"private_key" bytea NOT NULL DEFAULT '',
 "status" my_node_keys_enum_status  NOT NULL DEFAULT 'my_pending',
 "my_time" int NOT NULL DEFAULT '0',
 "time" bigint NOT NULL DEFAULT '0',
@@ -400,7 +400,7 @@ CREATE SEQUENCE rb_full_nodes_rb_id_seq START WITH 1;
 DROP TABLE IF EXISTS "rb_full_nodes"; CREATE TABLE "rb_full_nodes" (
 "rb_id" bigint  NOT NULL  default nextval('rb_full_nodes_rb_id_seq'),
 "full_nodes_wallet_json" bytea  NOT NULL DEFAULT '',
-"block_id" int REFERENCES block_chain(id) NOT NULL DEFAULT '0',
+"block_id" int NOT NULL DEFAULT '0',
 "prev_rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE rb_full_nodes_rb_id_seq owned by rb_full_nodes.rb_id;

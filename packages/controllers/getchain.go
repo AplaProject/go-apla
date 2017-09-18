@@ -19,6 +19,8 @@ package controllers
 import (
 	"time"
 
+	"strconv"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
@@ -84,8 +86,8 @@ func GetChain() {
 						address = converter.AddressToString(item.WalletID)
 					}
 
-					chainList[chainOff] = ChainInfo{ID: item.WalletID,
-						Address: address, Time: string(item.Time), Tx: string(item.Tx)}
+					chainList[chainOff] = ChainInfo{ID: item.ID,
+						Address: address, Time: strconv.FormatInt(item.Time, 10), Tx: strconv.FormatInt(int64(item.Tx), 10)}
 					chainOff++
 				}
 			}

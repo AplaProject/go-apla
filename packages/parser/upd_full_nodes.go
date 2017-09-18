@@ -24,7 +24,10 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
+	"strconv"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
+	"github.com/jinzhu/gorm"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -67,11 +70,12 @@ func (p *UpdFullNodesParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	p.nodePublicKey = []byte(wallet.PublicKey)
+	p.nodePublicKey = []byte(wallet.NodePublicKey)
 	if len(p.nodePublicKey) == 0 {
 		return utils.ErrInfoFmt("len(nodePublicKey) = 0")
 	}
-	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, false)
+
+	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -129,7 +133,6 @@ func (p *UpdFullNodesParser) Action() error {
 		return p.ErrInfo(err)
 	}
 
-	// обновляем AI
 	// update the AI
 	err = model.SetAI("full_nodes", int64(maxID+1))
 	if err != nil {
@@ -160,9 +163,12 @@ func (p *UpdFullNodesParser) Action() error {
 
 	w := &model.DltWallet{}
 	if err := w.GetNewFuelRate(); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
 		return p.ErrInfo(err)
 	}
-	newRate := string(w.FuelRate)
+	newRate := strconv.FormatInt(w.FuelRate, 10)
 	if len(newRate) > 0 {
 		_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{newRate}, "system_parameters", []string{"name"}, []string{"fuel_rate"}, true)
 		if err != nil {
