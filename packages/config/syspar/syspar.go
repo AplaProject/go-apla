@@ -50,6 +50,8 @@ const (
 	MaxIndexes = `max_indexes`
 	// MaxBlockUserTx is the maximum number of user's transactions in one block
 	MaxBlockUserTx = `max_block_user_tx`
+	// SizeFuel is the fuel cost of 1024 bytes of the transaction data
+	SizeFuel = `size_fuel`
 	// UpdFullNodesPeriod is the maximum number of user's transactions in one block
 	UpdFullNodesPeriod = `upd_full_nodes_period`
 	// RecoveryAddress is the recovery address
@@ -67,10 +69,11 @@ var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
 	}
-	cost  = make(map[string]int64)
-	nodes = make(map[int64]*FullNode)
-	fuels = make(map[int64]string)
-	mutex = &sync.RWMutex{}
+	cost    = make(map[string]int64)
+	nodes   = make(map[int64]*FullNode)
+	fuels   = make(map[int64]string)
+	wallets = make(map[int64]string)
+	mutex   = &sync.RWMutex{}
 )
 
 // SysUpdate reloads/updates values of system parameters
@@ -107,20 +110,25 @@ func SysUpdate() error {
 			nodes[converter.StrToInt64(item[1])] = &FullNode{Host: item[0], Public: pub}
 		}
 	}
-	fuels = make(map[int64]string)
-	if len(cache[FuelRate]) > 0 {
-		ifuels := make([][]string, 0)
-		err = json.Unmarshal([]byte(cache[FuelRate]), &ifuels)
-		if err != nil {
-			return err
-		}
-		for _, item := range ifuels {
-			if len(item) < 2 {
-				continue
+	getParams := func(name string) (map[int64]string, error) {
+		res := make(map[int64]string)
+		if len(cache[name]) > 0 {
+			ifuels := make([][]string, 0)
+			err = json.Unmarshal([]byte(cache[name]), &ifuels)
+			if err != nil {
+				return res, err
 			}
-			fuels[converter.StrToInt64(item[0])] = item[1]
+			for _, item := range ifuels {
+				if len(item) < 2 {
+					continue
+				}
+				res[converter.StrToInt64(item[0])] = item[1]
+			}
 		}
+		return res, nil
 	}
+	fuels, err = getParams(FuelRate)
+	wallets, err = getParams(CommissionWallet)
 
 	return err
 }
@@ -138,6 +146,10 @@ func SysInt64(name string) int64 {
 	return converter.StrToInt64(SysString(name))
 }
 
+func GetSizeFuel() int64 {
+	return SysInt64(SizeFuel)
+}
+
 func GetBlockchainURL() string {
 	return SysString(BlockchainURL)
 }
@@ -149,6 +161,15 @@ func GetFuelRate(ecosystem int64) string {
 		return ret
 	}
 	return `0`
+}
+
+func GetCommissionWallet(ecosystem int64) string {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if ret, ok := wallets[ecosystem]; ok {
+		return ret
+	}
+	return wallets[1]
 }
 
 func GetUpdFullNodesPeriod() int64 {
@@ -165,10 +186,6 @@ func GetMaxTxSize() int64 {
 
 func GetRecoveryAddress() int64 {
 	return converter.StrToInt64(SysString(RecoveryAddress))
-}
-
-func GetCommissionWallet() int64 {
-	return converter.StrToInt64(SysString(CommissionWallet))
 }
 
 func GetGapsBetweenBlocks() int {

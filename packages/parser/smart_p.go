@@ -207,14 +207,7 @@ func StackCont(p interface{}, name string) {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 
-		if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
-			//fromID = p.TxContract.TxGovAccount
-			fromID = converter.StrToInt64(StateVal(p, `gov_account`))
-		} else {
-			// списываем напрямую с dlt_wallets у юзера
-			// write directly from dlt_wallets of user
-			fromID = p.TxWalletID
-		}
+
 	egs := p.TxUsedCost.Mul(fuel)
 	fmt.Printf("Pay fuel=%v fromID=%d toID=%d cost=%v egs=%v", fuel, fromID, toID, p.TxUsedCost, egs)
 	if egs.Cmp(decimal.New(0, 0)) == 0 { // Is it possible to pay nothing?
@@ -251,8 +244,15 @@ func StackCont(p interface{}, name string) {
 
 // CallContract calls the contract functions according to the specified flags
 func (p *Parser) CallContract(flags int) (err error) {
-	var public []byte
-	if flags&smart.CallRollback == 0 {
+	var (
+		public                 []byte
+		sizeFuel, toID, fromID int64
+		fuelRate               decimal.Decimal
+	)
+	payWallet := &model.Key{}
+	if flags&smart.CallRollback == 0 && (flags&smart.CallAction) != 0 {
+		toID = p.BlockData.WalletID
+		fromID = p.TxSmart.UserID
 		if len(p.TxSmart.PublicKey) > 0 && string(p.TxSmart.PublicKey) != `null` {
 			public = p.TxSmart.PublicKey
 		}
@@ -283,24 +283,28 @@ func (p *Parser) CallContract(flags int) (err error) {
 		if !CheckSignResult {
 			return fmt.Errorf("incorrect sign")
 		}
-
 		if p.TxSmart.StateID > 0 {
 			if p.TxSmart.TokenEcosystem == 0 {
 				p.TxSmart.TokenEcosystem = p.TxSmart.StateID
 			}
-			fuelRate, err := decimal.NewFromString(syspar.GetFuelRate(p.TxSmart.TokenEcosystem))
+			fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(p.TxSmart.TokenEcosystem))
 			if err != nil {
 				return err
 			}
-			fmt.Println(`FUEL`, p.TxSmart.Type, p.TxSmart.StateID, p.TxSmart.UserID, p.TxSmart.TokenEcosystem, fuelRate)
 			if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 				return fmt.Errorf(`Fuel rate must be greater than 0`)
 			}
-			fromID := p.TxSmart.UserID
-			if p.TxContract.Block.Info.(*script.ContractInfo).Owner.Active {
-				//		return fmt.Errorf(`Contract %s is not active`, p.TxContract.Name)
+			if len(p.TxSmart.PayOver) > 0 {
+				payOver, err := decimal.NewFromString(p.TxSmart.PayOver)
+				if err != nil {
+					return err
+				}
+				fuelRate = fuelRate.Add(payOver)
 			}
-			payWallet := &model.Key{}
+			if p.TxContract.Block.Info.(*script.ContractInfo).Owner.Active {
+				fromID = p.TxContract.Block.Info.(*script.ContractInfo).Owner.WalletID
+				p.TxSmart.TokenEcosystem = p.TxContract.Block.Info.(*script.ContractInfo).Owner.TokenID
+			}
 			payWallet.SetTablePrefix(p.TxSmart.TokenEcosystem)
 			if err = payWallet.Get(fromID); err != nil {
 				return err
@@ -308,8 +312,14 @@ func (p *Parser) CallContract(flags int) (err error) {
 			if !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(p.TxSmart.PublicKey, payWallet.PublicKey) {
 				return fmt.Errorf(`Token and user public keys are different`)
 			}
-
-			//		apl := .Mul(fuel)
+			amount, err := decimal.NewFromString(payWallet.Amount)
+			if err != nil {
+				return err
+			}
+			sizeFuel = syspar.GetSizeFuel() * int64(len(p.TxSmart.Data)) / 1024
+			if amount.Cmp(decimal.New(sizeFuel, 0).Mul(fuelRate)) <= 0 {
+				return fmt.Errorf(`current balance is not enough`)
+			}
 		}
 	}
 
@@ -318,6 +328,10 @@ func (p *Parser) CallContract(flags int) (err error) {
 	p.TxContract.StackCont = []string{p.TxContract.Name}
 	(*p.TxContract.Extend)[`stack_cont`] = StackCont
 	before := (*p.TxContract.Extend)[`txcost`].(int64)
+
+	// Payment for the size
+	(*p.TxContract.Extend)[`txcost`] = (*p.TxContract.Extend)[`txcost`].(int64) - sizeFuel
+
 	var price int64 = -1
 	if cprice := p.TxContract.GetFunc(`price`); cprice != nil {
 		var ret []interface{}
@@ -349,7 +363,31 @@ func (p *Parser) CallContract(flags int) (err error) {
 	p.TxUsedCost = decimal.New(before-(*p.TxContract.Extend)[`txcost`].(int64), 0)
 	p.TxContract.TxPrice = price
 	if (flags&smart.CallAction) != 0 && p.TxSmart.StateID > 0 {
-
+		apl := p.TxUsedCost.Mul(fuelRate)
+		fmt.Printf("Pay fuel=%v fromID=%d toID=%d cost=%v apl=%v", fuelRate, fromID, toID, p.TxUsedCost, apl)
+		wltAmount, err := decimal.NewFromString(payWallet.Amount)
+		if err != nil {
+			return err
+		}
+		if wltAmount.Cmp(apl) < 0 {
+			apl = wltAmount
+		}
+		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
+		walletTable := fmt.Sprintf(`%d_keys`, p.TxSmart.TokenEcosystem)
+		fmt.Println(`TokenEcosystem`, p.TxSmart.TokenEcosystem, p.TxSmart.StateID)
+		if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
+			[]string{converter.Int64ToStr(fromID)}, true); err != nil {
+			return err
+		}
+		if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
+			[]string{converter.Int64ToStr(toID)}, true); err != nil {
+			return err
+		}
+		if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
+			[]string{syspar.GetCommissionWallet(p.TxSmart.TokenEcosystem)}, true); err != nil {
+			return err
+		}
+		fmt.Printf(" Paid commission %v\r\n", commission)
 	}
 	return
 }
@@ -745,7 +783,6 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 // StateVal returns the value of the specified parameter for the state
 func StateVal(p *Parser, name string) string {
 	val, _ := template.StateParam(int64(p.TxStateID), name)
-	fmt.Println(`STATE VAL`, p.TxStateID, name, `=`, val)
 	return val
 }
 

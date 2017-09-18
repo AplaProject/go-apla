@@ -85,7 +85,7 @@ INSERT INTO "%[1]d_contracts" ("value", "wallet_id","active", "conditions") VALU
       warning "Sorry, you don`t have access to this action."
     }
   }
-}', '%[2]d', '1', 'ContractConditions(`MainCondition`)');
+}', '%[2]d', '0', 'ContractConditions(`MainCondition`)');
 
 DROP TABLE IF EXISTS "%[1]d_parameters";
 CREATE TABLE "%[1]d_parameters" (
@@ -108,7 +108,7 @@ INSERT INTO "%[1]d_parameters" ("name", "value", "conditions") VALUES
 ('changing_menu', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
 ('changing_contracts', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
 ('ecosystem_name', '%[1]d', 'ContractConditions(`MainCondition`)'),
-('max_sum', '100000000000', 'ContractConditions(`MainCondition`)'),
+('max_sum', '1000000', 'ContractConditions(`MainCondition`)'),
 ('money_digit', '2', 'ContractConditions(`MainCondition`)');
 
 CREATE TABLE "%[1]d_tables" (

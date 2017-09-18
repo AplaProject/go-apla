@@ -673,7 +673,7 @@ func (p *Parser) checkPrice(name string) error {
 	return nil
 }
 
-func (p *Parser) payFPrice() error {
+/*func (p *Parser) payFPrice() error {
 	var (
 		fromID int64
 		err    error
@@ -740,7 +740,7 @@ func (p *Parser) payFPrice() error {
 	}
 	fmt.Printf(" Paid commission %v\r\n", commission)
 	return nil
-}
+}*/
 
 func (p *Parser) UpdDaemonTime(goroutineName string) {
 	// TODO:

@@ -119,11 +119,12 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('max_fuel_block', '100000', 'ContractAccess("@0UpdSysParam")'),
 ('upd_full_nodes_period', '3600', 'ContractAccess("@0UpdSysParam")'),
 ('last_upd_full_nodes', '23672372', 'ContractAccess("@0UpdSysParam")'),
+('size_price', '100', 'ContractAccess("@0UpdSysParam")'),
 ('commission_size', '3', 'ContractAccess("@0UpdSysParam")'),
-('commission_wallet', '[1,8275283526439353759]', 'ContractAccess("@0UpdSysParam")'),
+('commission_wallet', '[["1","8275283526439353759"]]', 'ContractAccess("@0UpdSysParam")'),
 ('sys_currencies', '[1]', 'ContractAccess("@0UpdSysParam")'),
 ('fuel_rate', '[["1","1000000000000000"]]', 'ContractAccess("@0UpdSysParam")'),
-('recovery_address', '[[1,8275283526439353759]]', 'ContractAccess("@0UpdSysParam")');
+('recovery_address', '[["1","8275283526439353759"]]', 'ContractAccess("@0UpdSysParam")');
 
 DROP SEQUENCE IF EXISTS system_contracts_id_seq CASCADE;
 CREATE SEQUENCE system_contracts_id_seq START WITH 1;
@@ -147,7 +148,7 @@ INSERT INTO system_contracts ("value", "active", "conditions") VALUES
     }
     action {
     }
-}', '1','ContractAccess("@0UpdSysContract")'),
+}', '0','ContractAccess("@0UpdSysContract")'),
 ('contract UpdSysContract {
     data {
     }
@@ -155,7 +156,7 @@ INSERT INTO system_contracts ("value", "active", "conditions") VALUES
     }
     action {
     }
-}', '1','ContractAccess("@0UpdSysContract")'),
+}', '0','ContractAccess("@0UpdSysContract")'),
 ('contract UpdFullNodes {
     data {
     }
@@ -165,7 +166,7 @@ INSERT INTO system_contracts ("value", "active", "conditions") VALUES
     action {
       Println(`UpdFullNodes action`)
     }
-}', '1','ContractAccess("@0UpdSysContract")');
+}', '0','ContractAccess("@0UpdSysContract")');
 
 DROP SEQUENCE IF EXISTS upd_contracts_id_seq CASCADE;
 CREATE SEQUENCE upd_contracts_id_seq START WITH 1;

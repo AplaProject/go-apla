@@ -247,7 +247,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				log.Debug("MethodName", MethodName)
 				err = parser.Action()
 				// pay for CPU resources
-				p.payFPrice()
+				//				p.payFPrice()
 				if _, ok := err.(error); ok {
 					log.Error("error: %v", err)
 					err0 := p.RollbackTo(txForRollbackTo, false)
