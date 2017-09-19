@@ -90,12 +90,15 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 					val = converter.Int64ToStr(converter.StringToAddress(val))
 				} else if fitem.Type.String() == script.Decimal {
 					val = strings.TrimLeft(val, `0`)
+				} else if fitem.Type.String() == `int64` && len(val) == 0 {
+					val = `0`
 				}
 			}
 			forsign += fmt.Sprintf(",%v", val)
 		}
 	}
 	result.ForSign = forsign
+	fmt.Println(`PREPARE`, forsign)
 	data.result = result
 	return nil
 }

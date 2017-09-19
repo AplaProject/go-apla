@@ -83,6 +83,7 @@ type ContractInfo struct {
 	Owner *OwnerInfo
 	Used  map[string]bool // Called contracts
 	Tx    *[]*FieldInfo
+	Settings map[string]interface{}
 }
 
 // FuncInfo contains the function information
@@ -249,7 +250,8 @@ func NewVM() *VM {
 	vm.Objects = make(map[string]*ObjInfo)
 	// Reserved 256 indexes for system purposes
 	vm.Children = make(Blocks, 256, 1024)
-	vm.Extend(&ExtendData{map[string]interface{}{"ExecContract": ExecContract, "CallContract": ExContract},
+	vm.Extend(&ExtendData{map[string]interface{}{"ExecContract": ExecContract, "CallContract": ExContract,
+		"Settings": GetSettings},
 		map[string]string{
 			`*script.RunTime`: `rt`,
 		}})
@@ -387,4 +389,19 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 	}
 	//	fmt.Println(`ExContract`, name, params, names, vals)
 	return ExecContract(rt, name, strings.Join(names, `,`), vals...)
+}
+
+// GetSettings returns the value of the parameter
+func GetSettings(rt *RunTime, cntname, name string) (interface{}, error) {
+	contract, ok := rt.vm.Objects[cntname]
+	if !ok {
+		return nil, fmt.Errorf(`unknown contract %s`, cntname)
+	}
+	cblock := contract.Value.(*Block)
+	if cblock.Info.(*ContractInfo).Settings != nil {
+		if val, ok := cblock.Info.(*ContractInfo).Settings[name]; ok {
+			return val, nil
+		}
+	}
+	return ``, nil
 }

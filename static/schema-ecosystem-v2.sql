@@ -69,7 +69,7 @@ CREATE TABLE "%[1]d_contracts" (
 "id" bigint NOT NULL  default nextval('%[1]d_contracts_id_seq'),
 "value" text  NOT NULL DEFAULT '',
 "wallet_id" bigint NOT NULL DEFAULT '0',
-"token_id" bigint NOT NULL DEFAULT '0',
+"token_id" bigint NOT NULL DEFAULT '1',
 "active" character(1) NOT NULL DEFAULT '0',
 "conditions" text  NOT NULL DEFAULT '',
 "rb_id" bigint NOT NULL DEFAULT '0'

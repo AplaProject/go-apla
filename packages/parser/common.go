@@ -531,7 +531,7 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
-	govAccount, _ := template.StateParam(int64(p.TxStateID), `gov_account`)
+	govAccount, _ := template.StateParam(int64(p.TxStateID), `founder_account`)
 	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
 		return nil
 	}

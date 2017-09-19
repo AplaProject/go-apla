@@ -74,6 +74,17 @@ func getArray() []interface{} {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
+		{`contract sets {
+			settings {
+				val = 1.56
+				rate = 100000000000
+				name="Name parameter"
+			}
+			func getset string {
+				return Settings("@22sets","name")
+			}
+		}`, `sets.getset`, `Name parameter`},
+
 		{`func proc(par string) string {
 					return par + "proc"
 					}

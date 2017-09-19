@@ -150,20 +150,16 @@ func Run(block *script.Block, params []interface{}, extend *map[string]interface
 }
 
 // ActivateContract sets Active status of the contract in smartVM
-/*func ActivateContract(tblid int64, prefix string, active bool) {
-	if prefix == `global` {
-		prefix = `0`
-	}
+func ActivateContract(tblid, state int64, active bool) {
 	for i, item := range smartVM.Block.Children {
 		if item != nil && item.Type == script.ObjContract {
 			cinfo := item.Info.(*script.ContractInfo)
-			if cinfo.TableID == tblid && strings.HasPrefix(cinfo.Name, `@`+prefix) &&
-				(len(cinfo.Name) > len(prefix)+1 && cinfo.Name[len(prefix)+1] > '9') {
-				smartVM.Children[i].Info.(*script.ContractInfo).Active = active
+			if cinfo.Owner.TableID == tblid && cinfo.Owner.StateID == uint32(state) {
+				smartVM.Children[i].Info.(*script.ContractInfo).Owner.Active = active
 			}
 		}
 	}
-}*/
+}
 
 // GetContract returns true if the contract exists in smartVM
 func GetContract(name string, state uint32) *Contract {

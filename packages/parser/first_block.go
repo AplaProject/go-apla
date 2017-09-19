@@ -24,6 +24,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
@@ -56,6 +57,10 @@ func (p *FirstBlockParser) Action() error {
 		Amount:    decimal.NewFromFloat(consts.FIRST_QDLT).String(),
 	}
 	if err = key.SetTablePrefix(consts.MainEco).Create(); err != nil {
+		return p.ErrInfo(err)
+	}
+	err = template.LoadContract(`1`)
+	if err != nil {
 		return p.ErrInfo(err)
 	}
 	node := &model.SystemParameterV2{Name: `full_nodes`}
