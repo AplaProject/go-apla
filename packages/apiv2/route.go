@@ -70,6 +70,8 @@ func Route(route *hr.Router) {
 	post(`refresh`, `token:string,?expire:int64`, refresh)
 	//	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
 	post(`signtest/`, `forsign private:string`, signTest)
+	post(`test/:name`, ``, getTest)
+
 }
 
 func processParams(input string) (params map[string]int) {

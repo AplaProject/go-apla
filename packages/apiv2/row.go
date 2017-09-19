@@ -18,6 +18,9 @@ package apiv2
 
 import (
 	"net/http"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 type rowResult struct {
@@ -25,10 +28,12 @@ type rowResult struct {
 }
 
 func row(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
-	var result rowResult
+	row, err := model.GetOneRow(`SELECT * FROM "`+converter.Int64ToStr(data.state)+`_`+
+		data.params[`name`].(string)+`" WHERE id = ?`, data.params[`id`].(string)).String()
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
 
-	result = rowResult{Value: map[string]string{`id`: `1`, `name`: `name 1`, `param`: `param 1`}}
-
-	data.result = &result
+	data.result = &rowResult{Value: row}
 	return
 }

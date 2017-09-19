@@ -77,7 +77,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
     conditions {
         $cur = DBRow(Table(`contracts`), `id,value,conditions,active,wallet_id,token_id`, $Id)
         if Int($cur[`id`]) != $Id {
-            error Sprintf(`Contract %d does not exist`, $Id)
+            error Sprintf(`Contract %%d does not exist`, $Id)
         }
         Eval($cur[`conditions`])
         ValidateCondition($Conditions,$state)
@@ -106,7 +106,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
     }
     action {
         var root int
-        root = CompileContract($Value, $state, $cur[`wallet_id`], $cur[`token_id`])
+        root = CompileContract($Value, $state, Int($cur[`wallet_id`]), Int($cur[`token_id`]))
         DBUpdate(Table(`contracts`), $Id, `value,conditions`, $Value, $Conditions)
         FlushContract(root, $Id, Int($cur[`active`]) == 1)
     }
@@ -118,14 +118,14 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
     conditions {
         $cur = DBRow(Table(`contracts`), `id,conditions,active,wallet_id`, $Id)
         if Int($cur[`id`]) != $Id {
-            error Sprintf(`Contract %d does not exist`, $Id)
+            error Sprintf(`Contract %%d does not exist`, $Id)
         }
         if Int($cur[`active`]) == 1 {
-            error Sprintf(`The contract %d has been already activated`, $Id)
+            error Sprintf(`The contract %%d has been already activated`, $Id)
         }
         Eval($cur[`conditions`])
-        if $wallet != $cur[`wallet_id`] {
-            error Sprintf(`Wallet %d cannot activate the contract`, $wallet)
+        if $wallet != Int($cur[`wallet_id`]) {
+            error Sprintf(`Wallet %%d cannot activate the contract`, $wallet)
         }
     }
     action {
