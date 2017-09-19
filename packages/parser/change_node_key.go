@@ -61,7 +61,7 @@ func (p *ChangeNodeKeyParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	key := &model.MyNodeKey{}
-	found, err := key.GetZeroBlock(p.ChangeNodeKey.NewNodePublicKey)
+	found, err := key.GetZeroBlock(converter.HexToBin(p.ChangeNodeKey.NewNodePublicKey))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
