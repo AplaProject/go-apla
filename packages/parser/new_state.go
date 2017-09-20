@@ -74,7 +74,14 @@ func (p *NewStateParser) Validate() error {
 }
 
 func (p *NewStateParser) Main(country, currency string) (id string, err error) {
-	systemState := &model.SystemState{RbID: 0}
+	systemState := &model.SystemState{}
+	_, err = systemState.GetLast(p.DbTransaction)
+	if err != nil {
+		return
+	}
+
+	systemState.ID++
+	systemState.RbID = 0
 	err = systemState.Create(p.DbTransaction)
 	if err != nil {
 		return
@@ -361,17 +368,12 @@ func (p *NewStateParser) Rollback() error {
 		return p.ErrInfo(err)
 	}
 
-	ID, err := model.GetAILastValue("system_states")
+	ssToDel := &model.SystemState{}
+	_, err = ssToDel.GetLast(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// update  the AI
-	err = model.SetAI("system_states", ID+1)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	ssToDel := &model.SystemState{ID: ID}
 	err = ssToDel.Delete(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)

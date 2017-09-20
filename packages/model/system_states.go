@@ -33,8 +33,8 @@ func (ss *SystemState) GetCount() (int64, error) {
 	return count, err
 }
 
-func (ss *SystemState) GetLast() (bool, error) {
-	last := DBConn.Last(ss)
+func (ss *SystemState) GetLast(transaction *DbTransaction) (bool, error) {
+	last := getDB(transaction).Last(ss)
 	if last.RecordNotFound() {
 		return true, nil
 	}

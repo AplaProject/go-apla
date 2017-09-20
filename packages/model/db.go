@@ -280,65 +280,6 @@ func GetColumnCount(tableName string) (int64, error) {
 	return count, nil
 }
 
-func GetAiID(table string) (string, error) {
-	exists := ""
-	column := "id"
-	if table == "users" {
-		column = "user_id"
-	} else if table == "miners" {
-		column = "miner_id"
-	} else {
-		exists = ""
-		err := DBConn.Raw("SELECT column_name FROM information_schema.columns WHERE table_name=? and column_name=?", table, "id").Row().Scan(&exists)
-		if err != nil && err != sql.ErrNoRows {
-			return "", err
-		}
-		if len(exists) == 0 {
-			err := DBConn.Raw("SELECT column_name FROM information_schema.columns WHERE table_name=? and column_name=?", table, "rb_id").Row().Scan(&exists)
-			if err != nil {
-				return "", err
-			}
-			if len(exists) == 0 {
-				return "", fmt.Errorf("no id, rb_id")
-			}
-			column = "rb_id"
-		}
-	}
-	return column, nil
-}
-
-func SetAI(table string, AI int64) error {
-	AiID, err := GetAiID(table)
-	if err != nil {
-		return err
-	}
-	pgGetSerialSequence, err := GetSerialSequence(table, AiID)
-	if err != nil {
-		return err
-	}
-	err = SequenceRestartWith(pgGetSerialSequence, AI)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func GetAILastValue(table string) (int64, error) {
-	AiID, err := GetAiID(table)
-	if err != nil {
-		return 0, err
-	}
-	pgGetSerialSequence, err := GetSerialSequence(table, AiID)
-	if err != nil {
-		return 0, err
-	}
-	result, err := SequenceLastValue(pgGetSerialSequence)
-	if err != nil {
-		return 0, err
-	}
-	return result, nil
-}
-
 func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err error) {
 	hash, err = crypto.Hash(data)
 	if err != nil {

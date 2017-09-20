@@ -163,7 +163,7 @@ func (p *UpdFullNodesParser) Action() error {
 }
 
 func (p *UpdFullNodesParser) Rollback() error {
-	err := p.selectiveRollback("upd_full_nodes", "", false)
+	err := p.selectiveRollback("upd_full_nodes", "")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -191,19 +191,6 @@ func (p *UpdFullNodesParser) Rollback() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	maxID, err := fn.GetMaxID(nil)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	// update the AI
-	err = model.SetAI("full_nodes", int64(maxID+1))
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	p.rollbackAI("rb_full_nodes", 1)
 
 	for _, data := range fullNodesWallet {
 		// insert new data on wallet-nodes with the indication of the common rb_id
