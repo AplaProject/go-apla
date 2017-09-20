@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const (
@@ -88,7 +89,7 @@ func main() {
 		settings map[string]Settings
 	)
 
-	out := make(map[string]lib.Update)
+	out := make(map[string]utils.Update)
 
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {

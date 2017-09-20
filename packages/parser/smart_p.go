@@ -152,12 +152,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 	for key, val := range p.TxData {
 		extend[key] = val
 	}
-	/*	v := reflect.ValueOf(contract.parser.TxPtr).Elem()
-		t := v.Type()
-		for i := 1; i < t.NumField(); i++ {
-			extend[t.Field(i).Name] = v.Field(i).Interface()
-		}*/
-	//	fmt.Println(`Extend`, extend)
+
 	return &extend
 }
 

@@ -40,11 +40,7 @@ func (p *FirstBlockParser) Validate() error {
 
 func (p *FirstBlockParser) Action() error {
 	data := p.TxPtr.(*consts.FirstBlock)
-	//	myAddress := b58.Encode(lib.Address(data.PublicKey)) //utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]);
 	myAddress := crypto.Address(data.PublicKey)
-	log.Debugf("first block wallet: %d", myAddress)
-	log.Debugf("data.PublicKey %s", data.PublicKey)
-	log.Debugf("data.PublicKey %x", data.NodePublicKey)
 	dltWallet := &model.DltWallet{
 		WalletID:      myAddress,
 		Host:          data.Host,
@@ -54,7 +50,6 @@ func (p *FirstBlockParser) Action() error {
 		Amount:        decimal.NewFromFloat(consts.FIRST_QDLT).String(),
 	}
 
-	log.Debugf("wallet = %+v", dltWallet)
 	err := dltWallet.Create()
 	if err != nil {
 		return p.ErrInfo(err)

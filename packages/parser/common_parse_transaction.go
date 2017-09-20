@@ -45,19 +45,18 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 	p.TxPtr = nil
 	p.PublicKeys = nil
 	if len(*transactionBinaryData) > 0 {
-		// хэш транзакции
-		// hash of the transaction
+
 		hash, err := crypto.DoubleHash(*transactionBinaryData)
 		if err != nil {
 			log.Fatal(err)
 		}
 		transSlice = append(transSlice, hash)
 		input := (*transactionBinaryData)[:]
-		// первый байт - тип транзакции
+
 		// the first byte is type of the transaction
 		txType := converter.BinToDecBytesShift(transactionBinaryData, 1)
 		isStruct := consts.IsStruct(int(txType))
-		if txType > 127 { // транзакция с контрактом
+		if txType > 127 {
 			// transaction with the contract
 			isStruct = false
 			smartTx := tx.SmartContract{}
@@ -161,7 +160,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 				}
 			}
 			p.TxData[`forsign`] = forsign
-			//fmt.Println(`Smart Forsign`, forsign)
+
 		} else if isStruct {
 			p.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
 			if err := converter.BinUnmarshal(&input, p.TxPtr); err != nil {
@@ -172,7 +171,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 			p.TxCitizenID = head.CitizenID
 			p.TxWalletID = head.WalletID
 			p.TxTime = int64(head.Time)
-			fmt.Printf(`\nPARSED STRUCT %+v\n`, p.TxPtr)
+
 		}
 		if isStruct {
 			transSlice = append(transSlice, converter.Int64ToByte(txType))
@@ -192,7 +191,6 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 		} else if txType > 127 {
 			transSlice = append(transSlice, converter.Int64ToByte(txType))
 			transSlice = append(transSlice, converter.Int64ToByte(p.TxTime))
-			// преобразуем бинарные данные транзакции в массив
 			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
 		} else {
 			parser, err := GetParser(p, consts.TxTypes[int(txType)])
@@ -208,7 +206,6 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 				return transSlice, nil, utils.ErrInfo(fmt.Errorf("tx header is nil"))
 			}
 			transSlice = append(transSlice, converter.Int64ToByte(txType))
-			// следующие 4 байта - время транзакции
 			transSlice = append(transSlice, converter.Int64ToByte(header.Time))
 			transSlice = append(transSlice, converter.Int64ToByte(header.StateID))
 			transSlice = append(transSlice, converter.Int64ToByte(header.UserID))

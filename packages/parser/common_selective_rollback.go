@@ -25,20 +25,17 @@ import (
 )
 
 // selectiveRollback rollbacks the specified fields
-// откат не всех полей, а только указанных, либо 1 строку, если нет where
 // roll back not all the fields but the specified ones or only 1 line if there is not 'where'
 func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) error {
 	if len(where) > 0 {
 		where = " WHERE " + where
 	}
-	// получим rb_id, по которому можно найти данные, которые были до этого
 	// we obtain rb_id with help of that it is possible to find the data which was before
 	rbID, err := model.GetRollbackID(table, where, "desc")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if rbID > 0 {
-		// данные, которые восстановим
 		// data that we will be restored
 		rollback := &model.Rollback{}
 		err = rollback.Get(rbID)
@@ -51,7 +48,6 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		//log.Debug("logData",logData)
 		addSQLUpdate := ""
 		for k, v := range jsonMap {
 			if converter.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
@@ -65,7 +61,7 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		// подчищаем _log
+
 		// clean up the _log
 		rbToDel := &model.Rollback{RbID: rbID}
 		err = rbToDel.Delete()

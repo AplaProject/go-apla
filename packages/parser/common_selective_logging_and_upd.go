@@ -27,7 +27,6 @@ import (
 )
 
 // selectiveLoggingAndUpd changes DB and writes all DB changes for rollbacks
-// не использовать для комментов
 // do not use for comments
 func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (int64, string, error) {
 	var (
@@ -99,7 +98,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	if len(addSQLWhere) > 0 {
 		addSQLWhere = " WHERE " + addSQLWhere[0:len(addSQLWhere)-5]
 	}
-	// если есть, что логировать
+
 	// if there is something to log
 	selectQuery := `SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere
 	selectCost, err := model.GetQueryTotalCost(selectQuery)

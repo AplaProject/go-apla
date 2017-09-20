@@ -455,5 +455,5 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// go utils.ChatOutput(utils.ChatNewTx)
 
 	time.Sleep(time.Second * 3600 * 24 * 90)
-	log.Errorf("exit")
+	log.Infof("exit")
 }

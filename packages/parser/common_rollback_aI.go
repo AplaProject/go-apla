@@ -22,7 +22,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-// откатываем ID на кол-во затронутых строк
 // roll back the ID to the number of affected rows
 func (p *Parser) rollbackAI(table string, num int64) error {
 	if num == 0 {

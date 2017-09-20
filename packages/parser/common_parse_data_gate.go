@@ -29,7 +29,6 @@ import (
 )
 
 /*
-Обработка данных (блоков или транзакций), пришедших с гейта. Только проверка.
 Data processing (blocks or transactions) gotten from a gate. Just checking.
 */
 func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
@@ -41,11 +40,9 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 	var header *tx.Header
 
 	log.Debug("p.dataType: %d", p.dataType)
-	// если это транзакции (type>0), а не блок (type==0)
-	// if it's transactions (type>0), but block (type==0)
+	// if it's transactions (type>0)
 	if p.dataType > 0 {
 
-		// проверим, есть ли такой тип тр-ий
 		// check if the transaction type exist
 		if p.dataType < 128 && len(consts.TxTypes[p.dataType]) == 0 {
 			return nil, p.ErrInfo("Incorrect tx type " + converter.IntToStr(p.dataType))
@@ -55,7 +52,6 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 		transactionBinaryData = append(converter.DecToBin(int64(p.dataType), 1), transactionBinaryData...)
 		transactionBinaryDataFull = transactionBinaryData
 
-		// нет ли хэша этой тр-ии у нас в БД?
 		// Does the transaction hash exist?
 		err = p.CheckLogTx(transactionBinaryDataFull, true, false)
 		if err != nil {
@@ -68,7 +64,6 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 		}
 		p.TxHash = hash
 
-		// преобразуем бинарные данные транзакции в массив
 		// transforming binary data of the transaction to an array
 		log.Debug("transactionBinaryData: %x", transactionBinaryData)
 		p.TxSlice, header, err = p.ParseTransaction(&transactionBinaryData)
@@ -79,11 +74,6 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 		if len(p.TxSlice) < 3 {
 			return nil, p.ErrInfo(errors.New("len(p.TxSlice) < 3"))
 		}
-
-		// время транзакции может быть немного больше, чем время на ноде.
-		// у нода может быть просто не настроено время.
-		// время транзакции используется только для борьбы с атаками вчерашними транзакциями.
-		// А т.к. мы храним хэши в rb_transaction за 36 часов, то боятся нечего.
 
 		// Time of transaction can be slightly longer than time of a node.
 		// A node can use wrong time
@@ -97,13 +87,12 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 			if converter.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > curTime || converter.BytesToInt64(p.TxSlice[2]) < curTime-consts.MAX_TX_BACK {
 				return nil, p.ErrInfo(errors.New("incorrect tx time"))
 			}
-			// $this->transaction_array[3] могут подсунуть пустой
 			if !utils.CheckInputData(p.TxSlice[3], "bigint") {
 				return nil, p.ErrInfo(errors.New("incorrect user id"))
 			}
 		}
 	}
-	// Оперативные транзакции
+
 	// Operative transactions
 	if p.TxContract != nil {
 		if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {

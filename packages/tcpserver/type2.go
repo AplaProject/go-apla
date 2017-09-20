@@ -84,12 +84,8 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 		log.Fatal(err)
 	}
 	encryptedKey := converter.BytesShift(&*binaryTx, length)
-	log.Debug("encryptedKey: %x", encryptedKey)
-	log.Debug("encryptedKey: %s", encryptedKey)
 
 	iv := converter.BytesShift(&*binaryTx, 16)
-	log.Debug("iv: %s", iv)
-	log.Debug("iv: %x", iv)
 
 	if len(encryptedKey) == 0 {
 		return nil, nil, nil, utils.ErrInfo("len(encryptedKey) == 0")
@@ -122,13 +118,11 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 	if err != nil {
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
-	log.Debug("decrypted Key: %s", decKey)
+
 	if len(decKey) == 0 {
 		return nil, nil, nil, utils.ErrInfo("len(decKey)")
 	}
 
-	log.Debug("binaryTx %x", *binaryTx)
-	log.Debug("iv %s", iv)
 	decrypted, err := crypto.Decrypt(iv, *binaryTx, decKey)
 	if err != nil {
 		return nil, nil, nil, utils.ErrInfo(err)

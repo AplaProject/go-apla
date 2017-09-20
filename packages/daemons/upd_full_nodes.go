@@ -70,7 +70,6 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 
 	fullNodeID := fullNode.ID
-	log.Debug("fullNodeID = %d", fullNodeID)
 	if fullNodeID == 0 {
 		d.sleepTime = 10 * time.Second // because 1s is too small for non-full nodes
 		return nil
