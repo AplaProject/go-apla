@@ -456,3 +456,25 @@ DROP TABLE IF EXISTS "global_apps"; CREATE TABLE "global_apps" (
 "blocks" text  NOT NULL DEFAULT ''
 );
 ALTER TABLE ONLY "global_apps" ADD CONSTRAINT "global_apps_pkey" PRIMARY KEY (name);
+
+CREATE SEQUENCE global_states_list_id_seq START WITH 1;
+CREATE TABLE "global_states_list" (
+"id" integer NOT NULL DEFAULT nextval('global_states_list_id_seq'),
+"state_id" bigint NOT NULL DEFAULT '0',
+"state_name" varchar(128) NOT NULL DEFAULT '',
+"rb_id" int NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE global_states_list_id_seq owned by global_states_list.id;
+ALTER TABLE ONLY "global_states_list" ADD CONSTRAINT global_states_list_pkey PRIMARY KEY (id);
+CREATE INDEX global_states_index_name ON "global_states_list" (state_name);
+
+CREATE SEQUENCE global_currencies_list_id_seq START WITH 1;
+CREATE TABLE "global_currencies_list" (
+"id" integer NOT NULL DEFAULT nextval('global_currencies_list_id_seq'),
+"currency_code" varchar(32) NOT NULL DEFAULT '',
+"settings_table" varchar(128) NOT NULL DEFAULT '',
+"rb_id" int NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE global_currencies_list_id_seq owned by global_currencies_list.id;
+ALTER TABLE ONLY "global_currencies_list" ADD CONSTRAINT global_currencies_list_pkey PRIMARY KEY (id);
+CREATE INDEX global_currencies_index_code ON "global_currencies_list" (currency_code);
