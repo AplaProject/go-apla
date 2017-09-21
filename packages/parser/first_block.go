@@ -47,7 +47,7 @@ func (p *FirstBlockParser) Action() error {
 	//	myAddress := b58.Encode(lib.Address(data.PublicKey)) //utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]);
 	myAddress := crypto.Address(data.PublicKey)
 
-	err := model.ExecSchemaEcosystem(1, myAddress)
+	err := model.ExecSchemaEcosystem(1, myAddress, ``)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

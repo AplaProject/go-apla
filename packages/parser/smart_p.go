@@ -1293,31 +1293,16 @@ func Replace(s, old, new string) string {
 
 // FindEcosystem checks if there is an ecosystem with the specified name
 func FindEcosystem(p *Parser, country string) (int64, int64, error) {
-	query := `SELECT id FROM system_states`
-	cost, err := model.GetQueryTotalCost(query)
+	query := `SELECT id FROM system_states where name=?`
+	cost, err := model.GetQueryTotalCost(query, country)
 	if err != nil {
 		return 0, 0, err
 	}
-	data, err := model.GetList(`SELECT id FROM system_states`).String()
+	id, err := model.Single(query, country).Int64()
 	if err != nil {
 		return 0, 0, err
 	}
-	for _, id := range data {
-		query = fmt.Sprintf(`SELECT value FROM "%s_state_parameters" WHERE name = 'state_name'`, id)
-		idcost, err := model.GetQueryTotalCost(query)
-		if err != nil {
-			return cost, 0, err
-		}
-		cost += idcost
-		stateName, err := model.Single(query).String()
-		if err != nil {
-			return cost, 0, err
-		}
-		if strings.ToLower(stateName) == strings.ToLower(country) {
-			return cost, converter.StrToInt64(id), nil
-		}
-	}
-	return cost, 0, nil
+	return cost, id, nil
 }
 
 // UpdateLang updates language resource
@@ -1403,7 +1388,14 @@ func ActivateContract(p *Parser, tblid int64, state int64) error {
 }
 
 // CreateEcosystem creates a new ecosystem
-func CreateEcosystem(p *Parser, name string) error {
-	//	ExecSchemaEcosystem(id int, p.TxWalletID)
+func CreateEcosystem(p *Parser, wallet int64, name string) error {
+	_, id, err := p.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
+		name,
+	}, `system_states`, nil, nil, true)
+	if err != nil {
+		return err
+	}
+	fmt.Println(`ECO`, wallet, name)
+	model.ExecSchemaEcosystem(converter.StrToInt(id), wallet, name)
 	return nil
 }

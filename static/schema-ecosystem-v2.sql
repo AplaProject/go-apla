@@ -107,7 +107,7 @@ INSERT INTO "%[1]d_contracts" ("value", "wallet_id","active", "conditions") VALU
 
 DROP TABLE IF EXISTS "%[1]d_parameters";
 CREATE TABLE "%[1]d_parameters" (
-"name" varchar(255)  NOT NULL DEFAULT '',
+"name" varchar(255) NOT NULL DEFAULT '',
 "value" text NOT NULL DEFAULT '',
 "conditions" text  NOT NULL DEFAULT '',
 "rb_id" bigint  NOT NULL DEFAULT '0'
@@ -127,7 +127,7 @@ INSERT INTO "%[1]d_parameters" ("name", "value", "conditions") VALUES
 ('changing_page', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
 ('changing_menu', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
 ('changing_contracts', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('ecosystem_name', '%[1]d', 'ContractConditions(`MainCondition`)'),
+('ecosystem_name', '%[3]s', 'ContractConditions(`MainCondition`)'),
 ('max_sum', '1000000', 'ContractConditions(`MainCondition`)'),
 ('money_digit', '2', 'ContractConditions(`MainCondition`)');
 

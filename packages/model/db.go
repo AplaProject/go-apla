@@ -63,12 +63,12 @@ func GetRecordsCount(tableName string) (int64, error) {
 	return count, err
 }
 
-func ExecSchemaEcosystem(id int, wallet int64) error {
+func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 	schema, err := static.Asset("static/schema-ecosystem-v2.sql")
 	if err != nil {
 		return err
 	}
-	err = DBConn.Exec(fmt.Sprintf(string(schema), id, wallet)).Error
+	err = DBConn.Exec(fmt.Sprintf(string(schema), id, wallet, name)).Error
 	if err != nil {
 		return err
 	}

@@ -137,12 +137,15 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('contract NewEcosystem {
     data {
-        Name  string
+        Name  string "optional"
     }
     conditions {
+        if $Name && FindEcosystem($Name) {
+            error Sprintf(`Ecosystem %s is already existed`, $Name)
+        }
     }
     action {
-        CreateEcosystem($Name)
+        CreateEcosystem($wallet, $Name)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('contract NewParameter {
@@ -167,9 +170,19 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
     conditions {
         EvalCondition(Table(`parameters`), $Name, `conditions`)
         ValidateCondition($Conditions, $state)
+        var exist int
+       	if $Name == `ecosystem_name` {
+    		exist = FindEcosystem($Value)
+    		if exist > 0 && exist != $state {
+    			warning Sprintf(`Ecosystem %s already exists`, $Value)
+    		}
+    	}
     }
     action {
         DBUpdateExt(Table(`parameters`), `name`, $Name, `value,conditions`, $Value, $Conditions )
+       	if $Name == `ecosystem_name` {
+            DBUpdate(`system_states`, $state, `name`, $Value)
+        }
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ( 'contract NewMenu {

@@ -86,10 +86,12 @@ DROP SEQUENCE IF EXISTS system_states_id_seq CASCADE;
 CREATE SEQUENCE system_states_id_seq START WITH 1;
 DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
 "id" bigint NOT NULL default nextval('system_states_id_seq'),
+"name" varchar(255) NOT NULL DEFAULT '',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE system_states_id_seq owned by system_states.id;
 ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
+CREATE INDEX "system_states_index_name" ON "system_states" (name);
 
 DROP TABLE IF EXISTS "system_parameters";
 CREATE TABLE "system_parameters" (
@@ -235,6 +237,11 @@ INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES
           "new_column": "ContractAccess(\"@0UpdSysContract\")"}',
         '{"name": "ContractAccess(\"@0UpdSysContract\")", "value": "ContractAccess(\"@0UpdSysContract\")", 
           "votes": "ContractAccess(\"@0UpdSysContract\")"}',          
+        'ContractAccess(\"@0UpdSysContract\")'),
+        ('system_states', 
+        '{"insert": "false", "update": "ContractAccess(\"@1EditParameter\")", 
+          "new_column": "false"}',
+        '{"name": "ContractAccess(\"@1EditParameter\")"}',          
         'ContractAccess(\"@0UpdSysContract\")');
 
 
