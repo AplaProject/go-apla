@@ -28,7 +28,11 @@ type rowResult struct {
 }
 
 func row(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
-	row, err := model.GetOneRow(`SELECT * FROM "`+converter.Int64ToStr(data.state)+`_`+
+	cols := `*`
+	if len(data.params[`columns`].(string)) > 0 {
+		cols = converter.EscapeName(data.params[`columns`].(string))
+	}
+	row, err := model.GetOneRow(`SELECT `+cols+` FROM "`+converter.Int64ToStr(data.state)+`_`+
 		data.params[`name`].(string)+`" WHERE id = ?`, data.params[`id`].(string)).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)

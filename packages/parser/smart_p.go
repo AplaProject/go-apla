@@ -148,6 +148,7 @@ func init() {
 		"Contains":           strings.Contains,
 		"Replace":            Replace,
 		"FindEcosystem":      FindEcosystem,
+		"CreateEcosystem":    CreateEcosystem,
 		"UpdateLang":         UpdateLang,
 		"Size":               Size,
 		"Substr":             Substr,
@@ -205,7 +206,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 	}
 	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `state`: head.StateID,
 		`block`: block, `citizen`: citizenID, `wallet`: walletID, `wallet_block`: walletBlock,
-		`parent`: ``, `txcost`: p.GetContractLimit(),
+		`parent`: ``, `txcost`: p.GetContractLimit(), `txhash`: p.TxHash,
 		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime /*, `vars`: make(map[string]interface{})*/}
 	for key, val := range p.TxData {
 		extend[key] = val
@@ -314,7 +315,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			return fmt.Errorf("empty public key")
 		}
 		p.PublicKeys = append(p.PublicKeys, public)
-		fmt.Println(`CALL CONTRACT`, p.TxData[`forsign`].(string))
+		//		fmt.Println(`CALL CONTRACT`, p.TxData[`forsign`].(string))
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxSmart.BinSignatures, false)
 		if err != nil {
 			return err
@@ -1398,5 +1399,11 @@ func ActivateContract(p *Parser, tblid int64, state int64) error {
 		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract`)
 	}
 	smart.ActivateContract(tblid, state, true)
+	return nil
+}
+
+// CreateEcosystem creates a new ecosystem
+func CreateEcosystem(p *Parser, name string) error {
+	//	ExecSchemaEcosystem(id int, p.TxWalletID)
 	return nil
 }

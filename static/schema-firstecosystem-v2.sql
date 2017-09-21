@@ -25,6 +25,8 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
     action {
         DBUpdate(Table(`keys`), $wallet,`-amount`, $amount)
         DBUpdate(Table(`keys`), $recipient,`+amount`, $amount)
+        DBInsert(Table(`history`), `sender_id,recipient_id,amount,comment,block_id,txhash`, 
+            $wallet, $recipient, $amount, $Comment, $block, $txhash)
     }
 }', '%[1]d', 'ContractConditions(`MainCondition`)'),
 ('contract NewContract {
@@ -131,5 +133,198 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
     action {
         DBUpdate(Table(`contracts`), $Id, `active`, 1)
         Activate($Id, $state)
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract NewEcosystem {
+    data {
+        Name  string
+    }
+    conditions {
+    }
+    action {
+        CreateEcosystem($Name)
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract NewParameter {
+    data {
+        Name string
+        Value string
+        Conditions string
+    }
+    conditions {
+        ValidateCondition($Conditions, $state)
+    }
+    action {
+        DBInsert(Table(`parameters`), `name,value,conditions`, $Name, $Value, $Conditions )
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract EditParameter {
+    data {
+        Name string
+        Value string
+        Conditions string
+    }
+    conditions {
+        EvalCondition(Table(`parameters`), $Name, `conditions`)
+        ValidateCondition($Conditions, $state)
+    }
+    action {
+        DBUpdateExt(Table(`parameters`), `name`, $Name, `value,conditions`, $Value, $Conditions )
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+( 'contract NewMenu {
+    data {
+    	Name       string
+    	Value      string
+    	Conditions string
+    }
+    conditions {
+        ValidateCondition($Conditions,$state)
+    }
+    action {
+        DBInsert(Table(`menu`), `name,value,conditions`, $Name, $Value, $Conditions )
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract EditMenu {
+    data {
+    	Id         int
+    	Value      string
+    	Conditions string
+    }
+    conditions {
+        Eval(DBString(Table(`menu`), $Id, `conditions`))
+        ValidateCondition($Conditions,$state)
+    }
+    action {
+        DBUpdate(Table(`menu`), $Id, `value,conditions`, $Value, $Conditions)
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract AppendMenu {
+    data {
+        Id     int
+    	Value      string
+    }
+    conditions {
+        Eval(DBString(Table(`menu`), $Id, `conditions`))
+    }
+    action {
+        var table string
+        table = Table(`menu`)
+        DBUpdate(table, $Id, `value`, DBString(table, $Id, `value`) + "\r\n" + $Value )
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract NewPage {
+    data {
+    	Name       string
+    	Value      string
+    	Menu       string
+    	Conditions string
+    }
+    conditions {
+        ValidateCondition($Conditions,$state)
+       	if HasPrefix($Name, `sys-`) || HasPrefix($Name, `app-`) {
+	    	error `The name cannot start with sys- or app-`
+	    }
+    }
+    action {
+        DBInsert(Table(`pages`), `name,value,menu,conditions`, $Name, $Value, $Menu, $Conditions )
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract EditPage {
+    data {
+        Id         int
+    	Value      string
+    	Menu      string
+    	Conditions string
+    }
+    conditions {
+        Eval(DBString(Table(`pages`), $Id, `conditions`))
+        ValidateCondition($Conditions,$state)
+    }
+    action {
+        DBUpdate(Table(`pages`), $Id, `value,menu,conditions`, $Value, $Menu, $Conditions)
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract AppendPage {
+    data {
+        Id         int
+    	Value      string
+    }
+    conditions {
+        Eval(DBString(Table(`pages`), $Id, `conditions`))
+    }
+    action {
+        var value, table string
+        table = Table(`pages`)
+        value = DBString(table, `value`, $Id)
+       	if Contains(value, `PageEnd:`) {
+		   value = Replace(value, "PageEnd:", $Value) + "\r\nPageEnd:"
+    	} else {
+    		value = value + "\r\n" + $Value
+    	}
+        DBUpdate(table, $Id, `value`,  value )
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract NewLang {
+    data {
+        Name  string
+        Trans string
+    }
+    conditions {
+        EvalCondition(Table(`parameters`), `changing_language`, `value`)
+        var exist string
+        exist = DBStringExt(Table(`languages`), `name`, $Name, `name`)
+        if exist {
+            error Sprintf("The language resource %s already exists", $Name)
+        }
+    }
+    action {
+        DBInsert(Table(`languages`), `name,res`, $Name, $Trans )
+        UpdateLang($Name, $Trans)
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract EditLang {
+    data {
+        Name  string
+        Trans string
+    }
+    conditions {
+        EvalCondition(Table(`parameters`), `changing_language`, `value`)
+    }
+    action {
+        DBUpdateExt(Table(`languages`), `name`, $Name, `res`, $Trans )
+        UpdateLang($Name, $Trans)
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract NewSign {
+    data {
+    	Name       string
+    	Value      string
+    	Conditions string
+    }
+    conditions {
+        ValidateCondition($Conditions,$state)
+        var exist string
+        exist = DBStringExt(Table(`signatures`), `name`, $Name, `name`)
+        if exist {
+            error Sprintf("The signature %s already exists", $Name)
+        }
+    }
+    action {
+        DBInsert(Table(`signatures`), `name,value,conditions`, $Name, $Value, $Conditions )
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('contract EditSign {
+    data {
+    	Id         int
+    	Value      string
+    	Conditions string
+    }
+    conditions {
+        Eval(DBString(Table(`signatures`), $Id, `conditions`))
+        ValidateCondition($Conditions,$state)
+    }
+    action {
+        DBUpdate(Table(`signatures`), $Id, `value,conditions`, $Value, $Conditions)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)');

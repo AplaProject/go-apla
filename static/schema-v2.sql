@@ -158,13 +158,36 @@ INSERT INTO system_contracts ("value", "active", "conditions") VALUES
     }
 }', '0','ContractAccess("@0UpdSysContract")'),
 ('contract UpdFullNodes {
-    data {
+     data {
     }
     conditions {
-      Println(`UpdFullNodes condition`)
+      var prev int
+      var nodekey bytes
+      prev = DBInt(`upd_full_nodes`, `time`, 1)
+	    if $time-prev < SysParamInt(`upd_full_nodes_period`) {
+		    warning Sprintf("txTime - upd_full_nodes < UPD_FULL_NODES_PERIOD")
+	    }
+/*	    nodekey = bytes(DBStringExt(`dlt_wallets`, `node_public_key`, $wallet, `wallet_id`))
+	    if !nodekey {
+	        error `len(node_key) == 0`
+	    }*/
     }
     action {
-      Println(`UpdFullNodes action`)
+/*      var list array
+        list = DBGetList("dlt_wallets", "address_vote", 0, SysParamInt(`number_of_dlt_nodes`), "sum(amount) DESC", "address_vote != ? and amount > ? GROUP BY address_vote", ``, `10000000000000000000000`)
+        var i int
+        var out string
+        while i<Len(list) {
+            var row, item map
+            item = list[i]
+            row = DBRowExt(`dlt_wallets`, `host, wallet_id`, item[`address_vote`], `wallet_id`)
+            if i > 0 {
+                out = out + `,`
+            }
+            out = out + Sprintf(`[%q,%q]`, row[`host`],row[`wallet_id`])
+            i = i+1
+        }
+        UpdateSysParam(`full_nodes`, `[`+out+`]`, ``)*/
     }
 }', '0','ContractAccess("@0UpdSysContract")');
 

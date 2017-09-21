@@ -9,6 +9,24 @@ DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
 ALTER SEQUENCE "%[1]d_keys_id_seq" owned by "%[1]d_keys".id;
 
+DROP SEQUENCE IF EXISTS "%[1]d_history_id_seq" CASCADE;
+CREATE SEQUENCE "%[1]d_history_id_seq" START WITH 1;
+DROP TABLE IF EXISTS "%[1]d_history"; CREATE TABLE "%[1]d_history" (
+"id" bigint NOT NULL  default nextval('%[1]d_history_id_seq'),
+"sender_id" bigint NOT NULL DEFAULT '0',
+"recipient_id" bigint NOT NULL DEFAULT '0',
+"amount" decimal(30) NOT NULL DEFAULT '0',
+"comment" text NOT NULL DEFAULT '',
+"block_id" int  NOT NULL DEFAULT '0',
+"txhash" bytea  NOT NULL DEFAULT '',
+"rb_id" int  NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE "%[1]d_history_id_seq" owned by "%[1]d_history".id;
+ALTER TABLE ONLY "%[1]d_history" ADD CONSTRAINT "%[1]d_history_pkey" PRIMARY KEY (id);
+CREATE INDEX "%[1]d_history_index_sender" ON "%[1]d_history" (sender_id);
+CREATE INDEX "%[1]d_history_index_recipient" ON "%[1]d_history" (recipient_id);
+CREATE INDEX "%[1]d_history_index_block" ON "%[1]d_history" (block_id, txhash);
+
 
 DROP SEQUENCE IF EXISTS "%[1]d_languages_id_seq" CASCADE;
 CREATE SEQUENCE "%[1]d_languages_id_seq" START WITH 1;
@@ -98,6 +116,8 @@ ALTER TABLE ONLY "%[1]d_parameters" ADD CONSTRAINT "%[1]d_parameters_pkey" PRIMA
 
 INSERT INTO "%[1]d_parameters" ("name", "value", "conditions") VALUES 
 ('founder_account', '%[2]d', 'ContractConditions(`MainCondition`)'),
+('full_node_wallet_id', '%[2]d', 'ContractConditions(`MainCondition`)'),
+('host', '', 'ContractConditions(`MainCondition`)'),
 ('restore_access_condition', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
 ('new_table', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
 ('new_column', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
@@ -125,9 +145,13 @@ INSERT INTO "%[1]d_tables" ("name", "permissions","columns", "conditions") VALUE
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{}', 'ContractAccess(\"@1EditTable\")'),
         ('%[1]d_keys', 
-        '{"insert": "ContractAccess(\"@1DLTTransfer\")", "update": "ContractAccess(\"@1DLTTransfer\")", 
+        '{"insert": "ContractAccess(\"@1MoneyTransfer\")", "update": "ContractAccess(\"@1MoneyTransfer\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{}', 'ContractAccess(\"@1EditTable\")'),
+        ('%[1]d_history', 
+        '{"insert": "ContractAccess(\"@1MoneyTransfer\")", "update": "false", 
+          "new_column": "false"}',
+        '{}', 'ContractAccess(\"@1EditTable\")'),        
         ('%[1]d_languages', 
         '{"insert": "ContractAccess(\"@1NewLang\")", "update": "ContractAccess(\"@1EditLang\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',

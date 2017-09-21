@@ -27,11 +27,12 @@ import (
 )
 
 type loginResult struct {
-	Token   string `json:"token,omitempty"`
-	Refresh string `json:"refresh,omitempty"`
-	State   string `json:"state,omitempty"`
-	Wallet  string `json:"wallet,omitempty"`
-	Address string `json:"address,omitempty"`
+	Token     string `json:"token,omitempty"`
+	Refresh   string `json:"refresh,omitempty"`
+	State     string `json:"state,omitempty"`
+	Wallet    string `json:"wallet,omitempty"`
+	Address   string `json:"address,omitempty"`
+	NotifyKey string `json:"notify_key,omitempty"`
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
@@ -95,6 +96,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	result.Refresh, err = jwtGenerateToken(w, claims)
+	result.NotifyKey = `0`
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
