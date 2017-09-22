@@ -43,14 +43,11 @@ DROP TABLE IF EXISTS "main_lock"; CREATE TABLE "main_lock" (
 );
 CREATE UNIQUE INDEX main_lock_uniq ON "main_lock" USING btree (uniq);
 
-DROP SEQUENCE IF EXISTS migration_history_id_seq CASCADE;
-CREATE SEQUENCE migration_history_id_seq START WITH 1;
 DROP TABLE IF EXISTS "migration_history"; CREATE TABLE "migration_history" (
-"id" int NOT NULL  default nextval('migration_history_id_seq'),
+"id" int NOT NULL  DEFAULT '0',
 "version" int NOT NULL DEFAULT '0',
 "date_applied" int NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE migration_history_id_seq owned by migration_history.id;
 ALTER TABLE ONLY "migration_history" ADD CONSTRAINT migration_history_pkey PRIMARY KEY (id);
 
 DROP TABLE IF EXISTS "queue_tx"; CREATE TABLE "queue_tx" (
@@ -82,14 +79,11 @@ DROP TABLE IF EXISTS "rollback"; CREATE TABLE "rollback" (
 ALTER SEQUENCE rollback_rb_id_seq owned by rollback.rb_id;
 ALTER TABLE ONLY "rollback" ADD CONSTRAINT rollback_pkey PRIMARY KEY (rb_id);
 
-DROP SEQUENCE IF EXISTS system_states_id_seq CASCADE;
-CREATE SEQUENCE system_states_id_seq START WITH 1;
 DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
-"id" bigint NOT NULL default nextval('system_states_id_seq'),
+"id" bigint NOT NULL DEFAULT '0',
 "name" varchar(255) NOT NULL DEFAULT '',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE system_states_id_seq owned by system_states.id;
 ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
 CREATE INDEX "system_states_index_name" ON "system_states" (name);
 
@@ -128,10 +122,8 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('fuel_rate', '[["1","1000000000000000"]]', 'ContractAccess("@0UpdSysParam")'),
 ('recovery_address', '[["1","8275283526439353759"]]', 'ContractAccess("@0UpdSysParam")');
 
-DROP SEQUENCE IF EXISTS system_contracts_id_seq CASCADE;
-CREATE SEQUENCE system_contracts_id_seq START WITH 1;
 CREATE TABLE "system_contracts" (
-"id" bigint NOT NULL  default nextval('system_contracts_id_seq'),
+"id" bigint NOT NULL  DEFAULT '0',
 "value" text  NOT NULL DEFAULT '',
 "wallet_id" bigint NOT NULL DEFAULT '0',
 "token_id" bigint NOT NULL DEFAULT '0',
@@ -139,11 +131,10 @@ CREATE TABLE "system_contracts" (
 "conditions" text  NOT NULL DEFAULT '',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE "system_contracts_id_seq" owned by "system_contracts".id;
 ALTER TABLE ONLY "system_contracts" ADD CONSTRAINT system_contracts_pkey PRIMARY KEY (id);
 
-INSERT INTO system_contracts ("value", "active", "conditions") VALUES 
-('contract UpdSysParam {
+INSERT INTO system_contracts ("id","value", "active", "conditions") VALUES 
+('1','contract UpdSysParam {
     data {
     }
     conditions {
@@ -151,7 +142,7 @@ INSERT INTO system_contracts ("value", "active", "conditions") VALUES
     action {
     }
 }', '0','ContractAccess("@0UpdSysContract")'),
-('contract UpdSysContract {
+('2','contract UpdSysContract {
     data {
     }
     conditions {
@@ -159,7 +150,7 @@ INSERT INTO system_contracts ("value", "active", "conditions") VALUES
     action {
     }
 }', '0','ContractAccess("@0UpdSysContract")'),
-('contract UpdFullNodes {
+('3','contract UpdFullNodes {
      data {
     }
     conditions {
@@ -193,28 +184,22 @@ INSERT INTO system_contracts ("value", "active", "conditions") VALUES
     }
 }', '0','ContractAccess("@0UpdSysContract")');
 
-DROP SEQUENCE IF EXISTS upd_contracts_id_seq CASCADE;
-CREATE SEQUENCE upd_contracts_id_seq START WITH 1;
 CREATE TABLE "upd_contracts" (
-"id" bigint NOT NULL  default nextval('upd_contracts_id_seq'),
+"id" bigint NOT NULL  DEFAULT '0',
 "id_contract" bigint  NOT NULL DEFAULT '0',
 "value" text  NOT NULL DEFAULT '',
 "votes" bigint  NOT NULL DEFAULT '0',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE "upd_contracts_id_seq" owned by "upd_contracts".id;
 ALTER TABLE ONLY "upd_contracts" ADD CONSTRAINT upd_contracts_pkey PRIMARY KEY (id);
 
-DROP SEQUENCE IF EXISTS upd_system_parameters_id_seq CASCADE;
-CREATE SEQUENCE upd_system_parameters_id_seq START WITH 1;
 CREATE TABLE "upd_system_parameters" (
-"id" bigint NOT NULL  default nextval('upd_system_parameters_id_seq'),
+"id" bigint NOT NULL DEFAULT '0',
 "name" varchar(255)  NOT NULL DEFAULT '',
 "value" text  NOT NULL DEFAULT '',
 "votes" bigint  NOT NULL DEFAULT '0',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE "upd_system_parameters_id_seq" owned by "upd_system_parameters".id;
 ALTER TABLE ONLY "upd_system_parameters" ADD CONSTRAINT upd_system_parameters_pkey PRIMARY KEY (id);
 
 CREATE TABLE "system_tables" (

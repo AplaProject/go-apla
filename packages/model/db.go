@@ -589,7 +589,12 @@ func GetTableData(tableName string, limit int) ([]map[string]string, error) {
 }
 
 func InsertIntoMigration(version string, timeApplied int64) error {
-	return DBConn.Exec(`INSERT INTO migration_history (version, date_applied) VALUES (?, ?)`, version, timeApplied).Error
+	id, err := GetNextID(`migration_history`)
+	if err != nil {
+		return err
+	}
+	return DBConn.Exec(`INSERT INTO migration_history (id, version, date_applied) VALUES (?, ?, ?)`,
+		id, version, timeApplied).Error
 }
 
 func GetMap(query string, name, value string, args ...interface{}) (map[string]string, error) {
@@ -638,4 +643,16 @@ func handleError(err error) error {
 		return nil
 	}
 	return err
+}
+
+func GetNextID(table string) (int64, error) {
+	var id int64
+	rows, err := DBConn.Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
+	if err != nil {
+		return 0, err
+	}
+	rows.Next()
+	rows.Scan(&id)
+	rows.Close()
+	return id + 1, err
 }

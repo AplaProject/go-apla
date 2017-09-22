@@ -104,7 +104,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	// если есть, что логировать
 	// if there is something to log
 	selectQuery := `SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere
-	fmt.Println(`Select`, selectQuery)
+	//	fmt.Println(`Select`, selectQuery)
 	selectCost, err := model.GetQueryTotalCost(selectQuery)
 	if err != nil {
 		return 0, tableID, err
@@ -171,7 +171,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			}
 		}
 		updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere
-		fmt.Println(`Update`, updateQuery)
+		//		fmt.Println(`Update`, updateQuery)
 		updateCost, err := model.GetQueryTotalCost(updateQuery, rollback.RbID)
 		if err != nil {
 			return 0, tableID, err
@@ -220,7 +220,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
 		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSQLIns0+") VALUES ("+addSQLIns1+")")
 		if !isID {
-			id, err := model.Single(`select id from "` + table + `" order by id desc limit 1`).Int64()
+			id, err := model.GetNextID(table)
 			if err != nil {
 				return 0, ``, err
 			}
@@ -230,7 +230,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 
 		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0 + `) VALUES (` + addSQLIns1 + `)`
-		fmt.Println(`Insert`, insertQuery)
+		//		fmt.Println(`Insert`, insertQuery)
 
 		insertCost, err := model.GetQueryTotalCost(insertQuery)
 		if err != nil {

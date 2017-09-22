@@ -1,7 +1,7 @@
-INSERT INTO "system_states" ("rb_id") VALUES ('0');
+INSERT INTO "system_states" ("id","rb_id") VALUES ('1','0');
 
-INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES 
-('contract MoneyTransfer {
+INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
+('2','contract MoneyTransfer {
     data {
         Recipient string
         Amount    string
@@ -29,7 +29,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
             $wallet, $recipient, $amount, $Comment, $block, $txhash)
     }
 }', '%[1]d', 'ContractConditions(`MainCondition`)'),
-('contract NewContract {
+('3','contract NewContract {
     data {
     	Value      string
     	Conditions string
@@ -70,7 +70,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         FlushContract(root, id, false)
     }
 }', '%[1]d', 'ContractConditions(`MainCondition`)'),
-('contract EditContract {
+('4','contract EditContract {
     data {
         Id         int
     	Value      string
@@ -113,7 +113,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         FlushContract(root, $Id, Int($cur[`active`]) == 1)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract ActivateContract {
+('5','contract ActivateContract {
     data {
         Id         int
     }
@@ -135,7 +135,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         Activate($Id, $state)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract NewEcosystem {
+('6','contract NewEcosystem {
     data {
         Name  string "optional"
     }
@@ -147,8 +147,11 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
     action {
         CreateEcosystem($wallet, $Name)
     }
+    func rollback() {
+
+    }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract NewParameter {
+('7','contract NewParameter {
     data {
         Name string
         Value string
@@ -161,7 +164,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         DBInsert(Table(`parameters`), `name,value,conditions`, $Name, $Value, $Conditions )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract EditParameter {
+('8','contract EditParameter {
     data {
         Name string
         Value string
@@ -185,7 +188,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         }
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-( 'contract NewMenu {
+('9', 'contract NewMenu {
     data {
     	Name       string
     	Value      string
@@ -198,7 +201,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         DBInsert(Table(`menu`), `name,value,conditions`, $Name, $Value, $Conditions )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract EditMenu {
+('10','contract EditMenu {
     data {
     	Id         int
     	Value      string
@@ -212,7 +215,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         DBUpdate(Table(`menu`), $Id, `value,conditions`, $Value, $Conditions)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract AppendMenu {
+('11','contract AppendMenu {
     data {
         Id     int
     	Value      string
@@ -226,7 +229,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         DBUpdate(table, $Id, `value`, DBString(table, $Id, `value`) + "\r\n" + $Value )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract NewPage {
+('12','contract NewPage {
     data {
     	Name       string
     	Value      string
@@ -243,7 +246,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         DBInsert(Table(`pages`), `name,value,menu,conditions`, $Name, $Value, $Menu, $Conditions )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract EditPage {
+('13','contract EditPage {
     data {
         Id         int
     	Value      string
@@ -258,7 +261,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         DBUpdate(Table(`pages`), $Id, `value,menu,conditions`, $Value, $Menu, $Conditions)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract AppendPage {
+('14','contract AppendPage {
     data {
         Id         int
     	Value      string
@@ -278,7 +281,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         DBUpdate(table, $Id, `value`,  value )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract NewLang {
+('15','contract NewLang {
     data {
         Name  string
         Trans string
@@ -296,7 +299,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         UpdateLang($Name, $Trans)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract EditLang {
+('16','contract EditLang {
     data {
         Name  string
         Trans string
@@ -309,7 +312,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         UpdateLang($Name, $Trans)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract NewSign {
+('17','contract NewSign {
     data {
     	Name       string
     	Value      string
@@ -327,7 +330,7 @@ INSERT INTO "1_contracts" ("value", "wallet_id", "conditions") VALUES
         DBInsert(Table(`signatures`), `name,value,conditions`, $Name, $Value, $Conditions )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('contract EditSign {
+('18','contract EditSign {
     data {
     	Id         int
     	Value      string
