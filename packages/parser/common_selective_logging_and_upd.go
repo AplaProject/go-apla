@@ -63,8 +63,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 					vlen = len(v.(string))
 				}
 			}
-			if isCustom && vlen > 32 {
-				return 0, ``, fmt.Errorf(`hash value cannot be larger than 32 bytes`)
+			if isCustom && vlen > 64 {
+				return 0, ``, fmt.Errorf(`hash value cannot be larger than 64 bytes`)
 			}
 		}
 	}
@@ -183,9 +183,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 		tableID = logData[p.AllPkeys[table]]
 	} else {
+		isID := false
 		addSQLIns0 := ""
 		addSQLIns1 := ""
 		for i := 0; i < len(fields); i++ {
+			if fields[i] == `id` {
+				isID = true
+			}
 			if fields[i][:1] == "+" || fields[i][:1] == "-" {
 				addSQLIns0 += fields[i][1:len(fields[i])] + `,`
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
@@ -206,7 +210,6 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 				addSQLIns1 += `'` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
-		isID := false
 		if whereFields != nil && whereValues != nil {
 			for i := 0; i < len(whereFields); i++ {
 				if whereFields[i] == `id` {
@@ -224,7 +227,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			if err != nil {
 				return 0, ``, err
 			}
-			tableID = converter.Int64ToStr(id + 1)
+			tableID = converter.Int64ToStr(id)
 			addSQLIns0 += `,id`
 			addSQLIns1 += `,'` + tableID + `'`
 		}

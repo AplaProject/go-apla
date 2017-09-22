@@ -149,6 +149,7 @@ func init() {
 		"Replace":            Replace,
 		"FindEcosystem":      FindEcosystem,
 		"CreateEcosystem":    CreateEcosystem,
+		"RollbackEcosystem":  RollbackEcosystem,
 		"UpdateLang":         UpdateLang,
 		"Size":               Size,
 		"Substr":             Substr,
@@ -420,7 +421,6 @@ func (p *Parser) CallContract(flags int) (err error) {
 		}
 		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
 		walletTable := fmt.Sprintf(`%d_keys`, p.TxSmart.TokenEcosystem)
-		fmt.Println(`TokenEcosystem`, p.TxSmart.TokenEcosystem, p.TxSmart.StateID)
 		if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
 			[]string{converter.Int64ToStr(fromID)}, true); err != nil {
 			return err
@@ -1388,14 +1388,49 @@ func ActivateContract(p *Parser, tblid int64, state int64) error {
 }
 
 // CreateEcosystem creates a new ecosystem
-func CreateEcosystem(p *Parser, wallet int64, name string) error {
+func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
+	if p.TxContract.Name != `@1NewEcosystem` {
+		return 0, fmt.Errorf(`CreateEcosystem can be only called from @1NewEcosystem`)
+	}
 	_, id, err := p.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
 		name,
 	}, `system_states`, nil, nil, true)
 	if err != nil {
+		return 0, err
+	}
+	model.ExecSchemaEcosystem(converter.StrToInt(id), wallet, name)
+	return converter.StrToInt64(id), nil
+}
+
+func RollbackEcosystem(p *Parser) error {
+	if p.TxContract.Name != `@1NewEcosystem` {
+		return fmt.Errorf(`RollbackEcosystem can be only called from @1NewEcosystem`)
+	}
+	rollbackTx := &model.RollbackTx{}
+	err := rollbackTx.Get(p.TxHash, "system_states")
+	if err != nil {
 		return err
 	}
-	fmt.Println(`ECO`, wallet, name)
-	model.ExecSchemaEcosystem(converter.StrToInt(id), wallet, name)
-	return nil
+	lastID, err := model.GetNextID(`system_states`)
+	if err != nil {
+		return err
+	}
+	lastID--
+	if converter.StrToInt64(rollbackTx.TableID) != lastID {
+		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
+	}
+	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
+		`contracts`, `parameters`} {
+		err = model.DropTable(fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
+		if err != nil {
+			return err
+		}
+	}
+	rollbackTxToDel := &model.RollbackTx{TxHash: p.TxHash, NameTable: "system_states"}
+	err = rollbackTxToDel.DeleteByHashAndTableName()
+	if err != nil {
+		return err
+	}
+	ssToDel := &model.SystemState{ID: lastID}
+	return ssToDel.Delete()
 }

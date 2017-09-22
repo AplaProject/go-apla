@@ -145,10 +145,12 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         }
     }
     action {
-        CreateEcosystem($wallet, $Name)
+        var id int
+        id = CreateEcosystem($wallet, $Name)
+    	DBInsert(Str(id) + "_keys", "id,pub", $wallet, DBString("1_keys", "pub", $wallet))
     }
     func rollback() {
-
+        RollbackEcosystem()
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('7','contract NewParameter {

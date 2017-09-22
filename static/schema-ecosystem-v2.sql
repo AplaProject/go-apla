@@ -123,7 +123,7 @@ INSERT INTO "%[1]d_tables" ("name", "permissions","columns", "conditions") VALUE
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{}', 'ContractAccess(\"@1EditTable\")'),
         ('%[1]d_keys', 
-        '{"insert": "ContractAccess(\"@1MoneyTransfer\")", "update": "ContractAccess(\"@1MoneyTransfer\")", 
+        '{"insert": "ContractAccess(\"@1MoneyTransfer\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1MoneyTransfer\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{}', 'ContractAccess(\"@1EditTable\")'),
         ('%[1]d_history', 
