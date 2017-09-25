@@ -169,7 +169,10 @@ func waitTx(hash string) (int64, error) {
 		}
 		fmt.Println(`STATUS`, err, ret)
 		if len(ret.BlockID) > 0 {
-			return converter.StrToInt64(ret.BlockID), nil
+			if len(ret.Message) == 0 {
+				return converter.StrToInt64(ret.BlockID), nil
+			}
+			return converter.StrToInt64(ret.BlockID), fmt.Errorf(ret.Message)
 		}
 		if len(ret.Message) > 0 {
 			return 0, fmt.Errorf(ret.Message)
@@ -198,24 +201,31 @@ func randName(prefix string) string {
 	return fmt.Sprintf(`%s%d`, prefix, time.Now().Unix())
 }
 
-func postTx(txname string, form *url.Values) error {
+func postTxResult(txname string, form *url.Values) (id int64, msg string, err error) {
 	ret := make(map[string]interface{})
-	err := sendPost(`prepare/`+txname, form, &ret)
+	err = sendPost(`prepare/`+txname, form, &ret)
 	if err != nil {
-		return err
+		return
 	}
 	if err = appendSign(ret, form); err != nil {
-		return err
+		return
 	}
 	ret = map[string]interface{}{}
 	err = sendPost(`contract/`+txname, form, &ret)
 	if err != nil {
-		return err
+		return
 	}
-	if _, err = waitTx(ret[`hash`].(string)); err != nil {
-		return err
+	id, err = waitTx(ret[`hash`].(string))
+	if id != 0 && err != nil {
+		msg = err.Error()
+		err = nil
 	}
-	return nil
+	return
+}
+
+func postTx(txname string, form *url.Values) error {
+	_, _, err := postTxResult(txname, form)
+	return err
 }
 
 /*

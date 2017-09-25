@@ -205,10 +205,18 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			p.TxIds++
 			p.TxUsedCost = decimal.New(0, 0)
 			p.TxCost = 0
+			var result string
 			if p.TxContract != nil {
 				// check that there are enough money in CallContract
 				err := p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
 				fmt.Println(`FULL`, err)
+				resVal := (*p.TxContract.Extend)[`result`]
+				switch v := resVal.(type) {
+				case int64:
+					result = converter.Int64ToStr(v)
+				case string:
+					result = v
+				}
 				// pay for CPU resources
 				//				errpay := p.payContract()
 				if err != nil {
@@ -260,7 +268,8 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			// даем юзеру понять, что его тр-ия попала в блок
 			// let user know that his transaction  is added in the block
 			ts := &model.TransactionStatus{}
-			ts.UpdateBlockID(p.BlockData.BlockID, hashFull)
+			//			ts.UpdateBlockID(p.BlockData.BlockID, hashFull)
+			ts.UpdateBlockMsg(p.BlockData.BlockID, result, hashFull)
 			log.Debug("UPDATE transactions_status SET block_id = %d WHERE hex(hash) = %s", p.BlockData.BlockID, hashFull)
 
 			// Тут было time(). А значит если бы в цепочке блоков были блоки в которых были бы одинаковые хэши тр-ий, то ParseDataFull вернул бы error

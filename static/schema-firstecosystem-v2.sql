@@ -148,6 +148,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         var id int
         id = CreateEcosystem($wallet, $Name)
     	DBInsert(Str(id) + "_keys", "id,pub", $wallet, DBString("1_keys", "pub", $wallet))
+        $result = id
     }
     func rollback() {
         RollbackEcosystem()

@@ -17,9 +17,11 @@
 package apiv2
 
 import (
+	"fmt"
 	"net/url"
 	"testing"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 )
 
@@ -29,10 +31,22 @@ func TestNewEcosystem(t *testing.T) {
 		return
 	}
 	form := url.Values{`Name`: {``}}
-	if err := postTx(`NewEcosystem`, &form); err != nil {
+	if _, result, err := postTxResult(`NewEcosystem`, &form); err != nil {
 		t.Error(err)
 		return
+	} else {
+		var ret ecosystemsResult
+		err := sendGet(`ecosystems`, nil, &ret)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if int64(ret.Number) != converter.StrToInt64(result) {
+			t.Error(fmt.Errorf(`Ecosystems %d != %s`, ret.Number, result))
+			return
+		}
 	}
+
 	form = url.Values{`Name`: {crypto.RandSeq(13)}}
 	if err := postTx(`NewEcosystem`, &form); err != nil {
 		t.Error(err)

@@ -168,7 +168,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 		log.Fatal(err)
 	}
 	transactionStatus := &model.TransactionStatus{Hash: hash, Time: time.Now().Unix(), Type: int64(info.ID),
-		WalletID: int64(idkey), CitizenID: int64(idkey)}
+		WalletID: int64(idkey)}
 	err = transactionStatus.Create()
 	if err != nil {
 		result.Error = err.Error()

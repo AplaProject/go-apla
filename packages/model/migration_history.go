@@ -14,7 +14,6 @@ func (mh *MigrationHistory) Get() error {
 	return DBConn.First(mh).Error
 }
 
-
 func (mh *MigrationHistory) Create() error {
 	return DBConn.Create(mh).Error
 }

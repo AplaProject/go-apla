@@ -18,16 +18,20 @@ package apiv2
 
 import (
 	"net/http"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 type ecosystemsResult struct {
-	Number int `json:"number"`
+	Number uint32 `json:"number"`
 }
 
 func ecosystems(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
-	var result ecosystemsResult
 
-	result.Number = 22
-	data.result = &result
+	number, err := model.GetNextID(`system_states`)
+	if err != nil {
+		return err
+	}
+	data.result = &ecosystemsResult{Number: uint32(number - 1)}
 	return
 }

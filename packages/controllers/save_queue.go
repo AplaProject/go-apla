@@ -336,7 +336,7 @@ func (c *Controller) SaveQueue() (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	txStatus := &model.TransactionStatus{Hash: hash, Time: time.Now().Unix(), Type: txType, WalletID: walletID, CitizenID: citizenID}
+	txStatus := &model.TransactionStatus{Hash: hash, Time: time.Now().Unix(), Type: txType, WalletID: walletID}
 	err = txStatus.Create()
 	if err != nil {
 		return "", utils.ErrInfo(err)

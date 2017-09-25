@@ -333,11 +333,11 @@ func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err erro
 	}
 	hash = converter.BinToHex(hash)
 	ts := &TransactionStatus{
-		Hash:      hash,
-		Time:      time.Now().Unix(),
-		Type:      txType,
-		WalletID:  adminWallet,
-		CitizenID: adminWallet}
+		Hash:     hash,
+		Time:     time.Now().Unix(),
+		Type:     txType,
+		WalletID: adminWallet,
+	}
 	err = ts.Create()
 	if err != nil {
 		return nil, err
