@@ -104,6 +104,7 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('full_nodes', '', 'ContractAccess("@0UpdFullNodes")'),
 ('count_of_nodes', '101', 'ContractAccess("@0UpdSysParam")'),
 ('op_price', '', 'ContractAccess("@0UpdSysParam")'),
+('ecosystem_cost', '1000', 'ContractAccess("@0UpdSysParam")'),
 ('blockchain_url', '', 'ContractAccess("@0UpdSysParam")'),
 ('max_block_size', '67108864', 'ContractAccess("@0UpdSysParam")'),
 ('max_tx_size', '33554432', 'ContractAccess("@0UpdSysParam")'),

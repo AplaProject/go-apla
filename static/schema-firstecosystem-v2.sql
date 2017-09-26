@@ -147,6 +147,10 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     action {
         var id int
         id = CreateEcosystem($wallet, $Name)
+    	DBInsert(Str(id) + "_pages", "name,value,menu,conditions", `default_page`, 
+              SysParamString(`default_ecosystem_page`), `default_menu`, "ContractConditions(`MainCondition`)")
+    	DBInsert(Str(id) + "_menu", "name,value,conditions", `default_menu`, 
+              SysParamString(`default_ecosystem_menu`), "ContractConditions(`MainCondition`)")
     	DBInsert(Str(id) + "_keys", "id,pub", $wallet, DBString("1_keys", "pub", $wallet))
         $result = id
     }
@@ -345,5 +349,14 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     }
     action {
         DBUpdate(Table(`signatures`), $Id, `value,conditions`, $Value, $Conditions)
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('19','contract RequestCitizenship {
+    data {
+    	Name      string
+    }
+    conditions {
+    }
+    action {
     }
 }', '%[1]d','ContractConditions(`MainCondition`)');

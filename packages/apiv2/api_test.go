@@ -169,10 +169,7 @@ func waitTx(hash string) (int64, error) {
 		}
 		fmt.Println(`STATUS`, err, ret)
 		if len(ret.BlockID) > 0 {
-			if len(ret.Message) == 0 {
-				return converter.StrToInt64(ret.BlockID), nil
-			}
-			return converter.StrToInt64(ret.BlockID), fmt.Errorf(ret.Message)
+			return converter.StrToInt64(ret.BlockID), fmt.Errorf(ret.Result)
 		}
 		if len(ret.Message) > 0 {
 			return 0, fmt.Errorf(ret.Message)

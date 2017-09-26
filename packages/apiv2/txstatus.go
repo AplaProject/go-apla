@@ -26,6 +26,7 @@ import (
 type txstatusResult struct {
 	BlockID string `json:"blockid"`
 	Message string `json:"errmsg"`
+	Result  string `json:"result"`
 }
 
 func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
@@ -44,8 +45,10 @@ func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	if ts.BlockID > 0 {
 		status.BlockID = converter.Int64ToStr(ts.BlockID)
+		status.Result = ts.Error
+	} else {
+		status.Message = ts.Error
 	}
-	status.Message = ts.Error
 	data.result = &status
 	return nil
 }

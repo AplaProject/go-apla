@@ -107,6 +107,7 @@ INSERT INTO "%[1]d_parameters" ("name", "value", "conditions") VALUES
 ('changing_contracts', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
 ('ecosystem_name', '%[3]s', 'ContractConditions(`MainCondition`)'),
 ('max_sum', '1000000', 'ContractConditions(`MainCondition`)'),
+('citizenship_cost', '1', 'ContractConditions(`MainCondition`)'),
 ('money_digit', '2', 'ContractConditions(`MainCondition`)');
 
 CREATE TABLE "%[1]d_tables" (

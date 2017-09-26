@@ -36,7 +36,12 @@ type loginResult struct {
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	var msg string
+	var (
+		pubkey []byte
+		wallet int64
+		msg    string
+		err    error
+	)
 
 	if data.token != nil && data.token.Valid {
 		if claims, ok := data.token.Claims.(*JWTClaims); ok {
@@ -46,7 +51,28 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if len(msg) == 0 {
 		return errorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
 	}
-	pubkey := data.params[`pubkey`].([]byte)
+	state := data.params[`state`].(int64)
+	if state == 0 {
+		state = 1
+	}
+	if len(data.params[`wallet`].(string)) > 0 {
+		wallet = converter.StringToAddress(data.params[`wallet`].(string))
+	} else if len(data.params[`pubkey`].([]byte)) > 0 {
+		wallet = crypto.Address(data.params[`pubkey`].([]byte))
+	}
+	pubkey, err = model.Single(`select pub from "`+converter.Int64ToStr(state)+`_keys" where id=?`, wallet).Bytes()
+	if err != nil {
+		return errorAPI(w, err, http.StatusBadRequest)
+	}
+	if state > 1 && len(pubkey) == 0 {
+		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
+	}
+	if len(pubkey) == 0 {
+		pubkey = data.params[`pubkey`].([]byte)
+		if len(pubkey) == 0 {
+			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
+		}
+	}
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
@@ -54,28 +80,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if !verify {
 		return errorAPI(w, `E_SIGNATURE`, http.StatusBadRequest)
 	}
-	state := data.params[`state`].(int64)
-	if state == 0 {
-		state = 1
-	}
 	address := crypto.KeyToAddress(pubkey)
-	wallet := crypto.Address(pubkey)
-	if state > 1 {
-		sysState := &model.SystemState{}
-		if exist, err := sysState.IsExists(state); err == nil && exist {
-			citizen, err := model.Single(`SELECT id FROM "`+converter.Int64ToStr(state)+`_keys" WHERE id = ?`,
-				wallet).Int64()
-			if err != nil {
-				return errorAPI(w, err, http.StatusInternalServerError)
-			}
-			if citizen == 0 {
-				return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, address, state)
-			}
-		} else {
-			return errorAPI(w, err, http.StatusInternalServerError)
-		}
-	}
-
 	result := loginResult{State: converter.Int64ToStr(state), Wallet: converter.Int64ToStr(wallet),
 		Address: address}
 	data.result = &result
