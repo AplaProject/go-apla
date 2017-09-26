@@ -18,14 +18,21 @@ package apiv2
 
 import (
 	"net/http"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
-	var result paramValue
-
-	result = paramValue{
-		Name: `state_name`, Value: `Test`, Conditions: `ContractConditions("MainCondition")`,
+	state, err := checkEcosystem(w, data)
+	if err != nil {
+		return err
 	}
-	data.result = &result
+	sp := &model.StateParameter{}
+	err = sp.SetTablePrefix(converter.Int64ToStr(state)).GetByName(data.params[`name`].(string))
+	if err != nil {
+		return errorAPI(w, err, http.StatusBadRequest)
+	}
+	data.result = &paramValue{Name: sp.Name, Value: sp.Value, Conditions: sp.Conditions}
 	return
 }

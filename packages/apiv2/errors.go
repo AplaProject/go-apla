@@ -19,6 +19,7 @@ package apiv2
 var (
 	errors = map[string]string{
 		`E_DBNIL`:         `DB is nil`,
+		`E_ECOSYSTEM`:     `Ecosystem %d doesn't exist`,
 		`E_EMPTYPUBLIC`:   `Public key is undefined`,
 		`E_EMPTYSIGN`:     `Signature is undefined`,
 		`E_HASHWRONG`:     `Hash is incorrect`,

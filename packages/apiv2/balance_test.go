@@ -21,19 +21,20 @@ import (
 )
 
 func TestBalance(t *testing.T) {
-	/*	if err := keyLogin(0); err != nil {
-			t.Error(err)
-			return
-		}
-		ret, err := sendGet(`balance/`+gAddress, nil)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if len(ret[`amount`].(string)) < 10 {
-			t.Error(`too low balance`, ret)
-		}
-		ret, err = sendGet(`balance/`+gAddress+`?state=10000`, nil)
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	var ret balanceResult
+	err := sendGet(`balance/`+gAddress, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret.Amount) < 10 {
+		t.Error(`too low balance`, ret)
+	}
+	/*	err = sendGet(`balance/`+gAddress, &url.Values{}, &ret)
 		if err.Error() != `500 ` {
 			t.Error(err)
 			return

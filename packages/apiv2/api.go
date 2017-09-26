@@ -224,3 +224,18 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		w.Write(jsonResult)
 	})
 }
+
+func checkEcosystem(w http.ResponseWriter, data *apiData) (int64, error) {
+	state := data.state
+	if data.params[`ecosystem`].(int64) > 0 {
+		state = data.params[`ecosystem`].(int64)
+		count, err := model.GetNextID(`system_states`)
+		if err != nil {
+			return 0, errorAPI(w, err, http.StatusBadRequest)
+		}
+		if state >= count {
+			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, state)
+		}
+	}
+	return state, nil
+}

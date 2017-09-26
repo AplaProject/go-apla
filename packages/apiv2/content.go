@@ -61,7 +61,7 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	query = `SELECT value FROM "` + converter.Int64ToStr(data.state) + `_menu" WHERE name = ?`
 	pattern, err := model.Single(query, data.params[`name`].(string)).String()
 	if err != nil {
-		return err
+		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	ret := template.Template2JSON(pattern)
 	data.result = &contentResult{Tree: string(ret)}

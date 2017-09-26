@@ -53,3 +53,53 @@ func TestNewEcosystem(t *testing.T) {
 		return
 	}
 }
+
+func TestEcosystemParams(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	var ret ecosystemParamsResult
+	err := sendGet(`ecosystemparams`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret.List) < 5 {
+		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
+	}
+	err = sendGet(`ecosystemparams?names=ecosystem_name,new_table&idstate=1`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret.List) != 2 {
+		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
+	}
+}
+
+func TestEcosystemParam(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	var ret paramValue
+	err := sendGet(`ecosystemparam/changing_menu`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Value != "ContractConditions(`MainCondition`)" {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`ecosystemparam/myval`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret.Value) != 0 {
+		t.Error(err)
+		return
+	}
+}

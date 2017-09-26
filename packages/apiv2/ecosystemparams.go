@@ -18,6 +18,10 @@ package apiv2
 
 import (
 	"net/http"
+	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 type paramValue struct {
@@ -31,11 +35,29 @@ type ecosystemParamsResult struct {
 }
 
 func ecosystemParams(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
-	var result ecosystemParamsResult
-
-	result.List = []paramValue{
-		{Name: `state_name`, Value: `Test`, Conditions: `ContractConditions("MainCondition")`},
-		{Name: `currency`, Value: `TestMoney`, Conditions: `ContractConditions("MainCondition")`},
+	var (
+		result ecosystemParamsResult
+		names  map[string]bool
+	)
+	state, err := checkEcosystem(w, data)
+	if err != nil {
+		return err
+	}
+	sp := &model.StateParameter{}
+	list, err := sp.SetTablePrefix(converter.Int64ToStr(state)).GetAllStateParameters()
+	result.List = make([]paramValue, 0)
+	if len(data.params[`names`].(string)) > 0 {
+		names = make(map[string]bool)
+		for _, item := range strings.Split(data.params[`names`].(string), `,`) {
+			names[item] = true
+		}
+	}
+	for _, item := range list {
+		if names != nil && !names[item.Name] {
+			continue
+		}
+		result.List = append(result.List, paramValue{Name: item.Name, Value: item.Value,
+			Conditions: item.Conditions})
 	}
 	data.result = &result
 	return

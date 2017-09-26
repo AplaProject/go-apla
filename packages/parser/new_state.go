@@ -84,16 +84,16 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-	err = model.CreateStateTable(id)
+	//	err = model.CreateStateTable(id)
 	if err != nil {
 		return
 	}
 	sid := "ContractConditions(`MainCondition`)" //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
 	psid := sid                                  //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
-	err = model.CreateStateConditions(id, sid, psid, currency, country, p.TxWalletID)
-	if err != nil {
-		return
-	}
+	/*	err = model.CreateStateConditions(id, sid, psid, currency, country, p.TxWalletID)
+		if err != nil {
+			return
+		}*/
 	err = model.CreateSmartContractTable(id)
 	if err != nil {
 		return
@@ -295,10 +295,10 @@ MenuBack(Welcome)`,
 		return
 	}
 
-	err = model.CreateStateAnonymsTable(id)
-	if err != nil {
-		return
-	}
+	/*	err = model.CreateStateAnonymsTable(id)
+		if err != nil {
+			return
+		}*/
 
 	err = template.LoadContract(id)
 	return

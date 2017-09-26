@@ -35,9 +35,9 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if wallet == 0 {
 		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
-	if sval, ok := data.params[`state`]; ok {
+	/*	if sval, ok := data.params[`state`]; ok {
 		state = sval.(int64)
-	}
+	}*/
 	key := &model.Key{}
 	key.SetTablePrefix(state)
 	err := key.Get(wallet)
