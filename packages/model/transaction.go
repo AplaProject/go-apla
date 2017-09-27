@@ -55,6 +55,14 @@ func GetTransactionsCount(hash []byte) (int64, error) {
 	return rowsCount, nil
 }
 
+func GetTransactionCountAll() (int64, error) {
+	var rowsCount int64
+	if err := DBConn.Table("transactions").Count(&rowsCount).Error; err != nil {
+		return -1, err
+	}
+	return rowsCount, nil
+}
+
 func DeleteLoopedTransactions() (int64, error) {
 	query := DBConn.Exec("DELETE FROM transactions WHERE used = 0 AND counter > 10")
 	return query.RowsAffected, query.Error

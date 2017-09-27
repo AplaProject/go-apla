@@ -243,6 +243,7 @@ func initRoutes(listenHost, browserHost string) string {
 	setRoute(route, `/ajax`, controllers.Ajax, `GET`, `POST`)
 	setRoute(route, `/wschain`, controllers.WsBlockchain, `GET`)
 	setRoute(route, `/exchangeapi/:name`, exchangeapi.API, `GET`, `POST`)
+	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	apiv2.Route(route)
 	route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
