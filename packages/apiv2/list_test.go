@@ -17,34 +17,25 @@
 package apiv2
 
 import (
-	"github.com/jinzhu/gorm"
-	"net/http"
+	"fmt"
+	"testing"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
-type balanceResult struct {
-	Amount string `json:"amount"`
-	Money  string `json:"money"`
-}
-
-func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
-	state := data.state
-	wallet := converter.StringToAddress(data.params[`wallet`].(string))
-	if wallet == 0 {
-		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
+func TestList(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
 	}
-	/*	if sval, ok := data.params[`state`]; ok {
-		state = sval.(int64)
-	}*/
-	key := &model.Key{}
-	key.SetTablePrefix(state)
-	err := key.Get(wallet)
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return errorAPI(w, err, http.StatusInternalServerError)
+	var ret listResult
+	err := sendGet(`list/contracts`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
 	}
-	data.result = &balanceResult{Amount: key.Amount, Money: converter.EGSMoney(key.Amount)}
-	return nil
+	if converter.StrToInt64(ret.Count) < 7 {
+		t.Error(fmt.Errorf(`The number of records %d < 7`, ret.Count))
+		return
+	}
 }

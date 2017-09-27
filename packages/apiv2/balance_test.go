@@ -17,6 +17,7 @@
 package apiv2
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -34,9 +35,13 @@ func TestBalance(t *testing.T) {
 	if len(ret.Amount) < 10 {
 		t.Error(`too low balance`, ret)
 	}
-	/*	err = sendGet(`balance/`+gAddress, &url.Values{}, &ret)
-		if err.Error() != `500 ` {
-			t.Error(err)
-			return
-		}*/
+	err = sendGet(`balance/3434341`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret.Amount) > 0 {
+		t.Error(fmt.Errorf(`wrong balance %s`, ret.Amount))
+		return
+	}
 }

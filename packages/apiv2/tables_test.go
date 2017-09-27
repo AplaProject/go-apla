@@ -49,6 +49,7 @@ func TestTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
+//	fmt.Println(`RET`, ret)
 	if len(ret.Columns) == 0 {
 		t.Error(err)
 		return

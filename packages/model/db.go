@@ -407,25 +407,28 @@ func IsTable(tblname string) bool {
 
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
 
-	var dataType string
-	var characterMaximumLength string
-
-	rows, err := DBConn.
-		Table("information_schema.columns").
-		Where("table_name = '?' AND column_name = '?'", tableName, columnName).
-		Select("data_type", "character_maximum_length").Rows()
-	if err != nil {
-		return nil, err
-	}
-	for rows.Next() {
-		rows.Scan(&dataType)
-		rows.Scan(&characterMaximumLength)
-	}
-
-	result := make(map[string]string, 0)
-	result["data_type"] = dataType
-	result["character_maximum_length"] = characterMaximumLength
-	return result, nil
+	/*	var dataType string
+		var characterMaximumLength string
+			rows, err := DBConn.
+			Table("information_schema.columns").
+			Where("table_name = ? AND column_name = ?", tableName, columnName).
+			Select("data_type", "character_maximum_length").Rows()*/
+	return GetOneRow(`select data_type,character_maximum_length from
+			information_schema.columns where table_name = ? AND column_name = ?`,
+		tableName, columnName).String()
+	/*	if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			rows.Scan(&dataType)
+			rows.Scan(&characterMaximumLength)
+			fmt.Println(`COLDATA`, dataType, characterMaximumLength)
+		}
+		rows.Close()
+		result := make(map[string]string, 0)
+		result["data_type"] = dataType
+		result["character_maximum_length"] = characterMaximumLength
+		return row, nil*/
 }
 
 func GetColumnType(tblname, column string) (itype string) {

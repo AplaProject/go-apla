@@ -17,21 +17,45 @@
 package apiv2
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 type listResult struct {
-	Count int                 `json:"count"`
+	Count string              `json:"count"`
 	List  []map[string]string `json:"list"`
 }
 
 func list(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
-	var result listResult
+	var limit int
 
-	result = listResult{
-		Count: 2, List: []map[string]string{{`id`: `1`, `name`: `test 1`},
-			{`id`: `2`, `name`: `test 2`}},
+	table := converter.EscapeName(converter.Int64ToStr(data.state) + `_` + data.params[`name`].(string))
+	cols := `*`
+	if len(data.params[`columns`].(string)) > 0 {
+		cols = `id,` + converter.EscapeName(data.params[`columns`].(string))
 	}
-	data.result = &result
+
+	count, err := model.GetNextID(strings.Trim(table, `"`))
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	if data.params[`limit`].(int64) > 0 {
+		limit = int(data.params[`limit`].(int64))
+	} else {
+		limit = 25
+	}
+	list, err := model.GetAll(`select `+cols+` from `+table+` order by id desc`+
+		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
+	data.result = &listResult{
+		Count: converter.Int64ToStr(count - 1), List: list,
+	}
 	return
 }
