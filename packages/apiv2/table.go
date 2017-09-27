@@ -17,7 +17,11 @@
 package apiv2
 
 import (
+	"encoding/json"
 	"net/http"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 type columnInfo struct {
@@ -38,14 +42,32 @@ type tableResult struct {
 func table(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	var result tableResult
 
-	result = tableResult{
-		Name:       "mytable",
-		Insert:     `ContractConditions("MainCondition")`,
-		NewColumn:  `ContractConditions("MainCondition")`,
-		Update:     `ContractConditions("MainCondition")`,
-		Conditions: `ContractConditions("MainCondition")`,
-		Columns: []columnInfo{{Name: "mynum", Type: "numbers", Perm: "ContractConditions(`MainCondition`)"},
-			{Name: "mytext", Type: "text", Perm: "ContractConditions(`MainCondition`)"}},
+	row, err := model.GetOneRow(`select * from "`+converter.Int64ToStr(data.state)+`_tables" where name=?`,
+		data.params[`name`].(string)).String()
+	if len(row[`name`]) > 0 {
+		var perm map[string]string
+		err := json.Unmarshal([]byte(row[`permissions`]), &perm)
+		if err != nil {
+			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		}
+		var cols map[string]string
+		err = json.Unmarshal([]byte(row[`columns`]), &cols)
+		if err != nil {
+			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		}
+		columns := make([]columnInfo, 0)
+		for key, value := range cols {
+			columns = append(columns, columnInfo{Name: key, Perm: value,
+				Type: model.GetColumnType(converter.Int64ToStr(data.state)+`_`+data.params[`name`].(string), key)})
+		}
+		result = tableResult{
+			Name:       row[`name`],
+			Insert:     perm[`insert`],
+			NewColumn:  perm[`new_column`],
+			Update:     perm[`update`],
+			Conditions: row[`conditions`],
+			Columns:    columns,
+		}
 	}
 	data.result = &result
 	return

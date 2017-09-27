@@ -17,7 +17,11 @@
 package apiv2
 
 import (
+	"fmt"
 	"net/http"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 type tableInfo struct {
@@ -25,15 +29,38 @@ type tableInfo struct {
 }
 
 type tablesResult struct {
-	Count int         `json:"count"`
+	Count int64       `json:"count"`
 	List  []tableInfo `json:"list"`
 }
 
 func tables(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
-	var result tablesResult
+	var (
+		result tablesResult
+		limit  int
+	)
+
+	table := converter.Int64ToStr(data.state) + `_tables`
+
+	count, err := model.Single(`select count(*) from "` + table + `"`).Int64()
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
+	if data.params[`limit`].(int64) > 0 {
+		limit = int(data.params[`limit`].(int64))
+	} else {
+		limit = 25
+	}
+	list, err := model.GetAll(`select name from "`+table+`" order by name`+
+		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
 
 	result = tablesResult{
-		Count: 22, List: []tableInfo{{Name: `citizens`}, {Name: `contracts`}},
+		Count: count, List: make([]tableInfo, len(list)),
+	}
+	for i, item := range list {
+		result.List[i].Name = item[`name`]
 	}
 	data.result = &result
 	return

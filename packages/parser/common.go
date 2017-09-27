@@ -98,12 +98,12 @@ func InsertInLogTx(binaryTx []byte, time int64) error {
 }
 
 func IsCustomTable(table string) (isCustom bool, err error) {
-	if (table[0] >= '0' && table[0] <= '9') || strings.HasPrefix(table, `global_`) {
+	if table[0] >= '0' && table[0] <= '9' {
 		if off := strings.IndexByte(table, '_'); off > 0 {
 			prefix := table[:off]
 			tables := &model.Table{}
 			tables.SetTablePrefix(prefix)
-			err := tables.Get(table)
+			err := tables.Get(table[off+1:])
 			if err != nil {
 				return false, err
 			}
