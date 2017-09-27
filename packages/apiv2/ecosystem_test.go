@@ -68,7 +68,7 @@ func TestEcosystemParams(t *testing.T) {
 	if len(ret.List) < 5 {
 		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
 	}
-	err = sendGet(`ecosystemparams?names=ecosystem_name,new_table&idstate=1`, nil, &ret)
+	err = sendGet(`ecosystemparams?names=ecosystem_name,new_table&ecosystem=1`, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return
