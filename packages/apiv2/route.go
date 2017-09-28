@@ -71,6 +71,7 @@ func Route(route *hr.Router) {
 	//	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
 	post(`signtest/`, `forsign private:string`, signTest)
 	post(`test/:name`, ``, getTest)
+	post(`content`, `template:string`, jsonContent)
 
 }
 

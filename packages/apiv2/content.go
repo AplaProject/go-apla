@@ -21,7 +21,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/template"
+	"github.com/EGaaS/go-egaas-mvp/packages/templatev2"
 )
 
 type contentResult struct {
@@ -49,7 +49,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if err != nil {
 		return err
 	}
-	ret := template.Template2JSON(pattern)
+	ret := templatev2.Template2JSON(pattern)
 	data.result = &contentResult{Tree: string(ret)}
 	return nil
 }
@@ -63,7 +63,13 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
-	ret := template.Template2JSON(pattern)
+	ret := templatev2.Template2JSON(pattern)
+	data.result = &contentResult{Tree: string(ret)}
+	return nil
+}
+
+func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	ret := templatev2.Template2JSON(data.params[`template`].(string))
 	data.result = &contentResult{Tree: string(ret)}
 	return nil
 }
