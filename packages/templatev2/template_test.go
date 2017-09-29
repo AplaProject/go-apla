@@ -54,4 +54,6 @@ var forTest = tplList{
 		`[{"tag":"p","children":[{"tag":"text","text":"Some "},{"tag":"span","children":[{"tag":"text","text":"fake(text) "},{"tag":"strong","children":[{"tag":"text","text":"very "},{"tag":"em","children":[{"tag":"text","text":"important "},{"tag":"label","children":[{"tag":"text","text":"news"}]}]}]}]}]}]`},
 	{`Form(myclass, Input(myid)Button(Submit,default_page,myclass))`,
 		`[{"tag":"form","attr":{"class":"myclass"},"children":[{"tag":"input","attr":{"id":"myid"}},{"tag":"button","attr":{"class":"myclass","page":"default_page"},"children":[{"tag":"text","text":"Submit"}]}]}]`},
+	{`ContractButton(NewEcosystem, My Contract, myclass, "Name=myid,Id=i10,Value")`,
+		`[{"tag":"contractbtn","attr":{"class":"myclass","contract":"NewEcosystem","inputs":{"Id":"i10","Name":"myid","Value":"Value"}},"children":[{"tag":"text","text":"My Contract"}]}]`},
 }

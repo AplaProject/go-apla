@@ -18,7 +18,6 @@ package templatev2
 
 import (
 	"encoding/json"
-	//	"fmt"
 	"html"
 	"strings"
 	//	"unicode/utf8"
@@ -29,10 +28,11 @@ const (
 )
 
 type node struct {
-	Tag      string            `json:"tag"`
-	Attr     map[string]string `json:"attr,omitempty"`
-	Text     string            `json:"text,omitempty"`
-	Children []*node           `json:"children,omitempty"`
+	Tag  string                 `json:"tag"`
+	Attr map[string]interface{} `json:"attr,omitempty"`
+	//	Map      map[string]map[string]string `json:"map,omitempty"`
+	Text     string  `json:"text,omitempty"`
+	Children []*node `json:"children,omitempty"`
 }
 
 type parFunc struct {
@@ -75,17 +75,39 @@ func inputTag(par parFunc) string {
 	return ``
 }
 
+func contractBtnTag(par parFunc) string {
+	defaultTag(par)
+	setAttr(par, `Contract`)
+	inputs := strings.Split((*par.Pars)[`Inputs`], `,`)
+	if len(inputs) > 0 {
+		imap := make(map[string]string)
+		for _, v := range inputs {
+			v = strings.TrimSpace(v)
+			if off := strings.IndexByte(v, '='); off == -1 {
+				imap[v] = v
+			} else {
+				imap[strings.TrimSpace(v[:off])] = strings.TrimSpace(v[off+1:])
+			}
+		}
+		if len(imap) > 0 {
+			par.Node.Attr[`inputs`] = imap
+		}
+	}
+	return ``
+}
+
 var (
 	funcs = map[string]tplFunc{
-		`Div`:    {defaultTag, `div`, `Class,Body`},
-		`Button`: {buttonTag, `button`, `Body,Page,Class`},
-		`Em`:     {defaultTag, `em`, `Body,Class`},
-		`Form`:   {defaultTag, `form`, `Class,Body`},
-		`Input`:  {inputTag, `input`, `Id,Class,Placeholder,Type,Value`},
-		`Label`:  {defaultTag, `label`, `Body,Class`},
-		`P`:      {defaultTag, `p`, `Body,Class`},
-		`Span`:   {defaultTag, `span`, `Body,Class`},
-		`Strong`: {defaultTag, `strong`, `Body,Class`},
+		`Div`:            {defaultTag, `div`, `Class,Body`},
+		`Button`:         {buttonTag, `button`, `Body,Page,Class`},
+		`Em`:             {defaultTag, `em`, `Body,Class`},
+		`Form`:           {defaultTag, `form`, `Class,Body`},
+		`Input`:          {inputTag, `input`, `Id,Class,Placeholder,Type,Value`},
+		`Label`:          {defaultTag, `label`, `Body,Class`},
+		`P`:              {defaultTag, `p`, `Body,Class`},
+		`Span`:           {defaultTag, `span`, `Body,Class`},
+		`Strong`:         {defaultTag, `strong`, `Body,Class`},
+		`ContractButton`: {contractBtnTag, `contractbtn`, `Contract,Body,Class,Inputs`},
 	}
 )
 
@@ -116,7 +138,7 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 	}
 	if len(curFunc.Tag) > 0 {
 		curNode.Tag = curFunc.Tag
-		curNode.Attr = make(map[string]string)
+		curNode.Attr = make(map[string]interface{})
 		if len(pars[`Body`]) > 0 {
 			process(pars[`Body`], &curNode, vars)
 		}
