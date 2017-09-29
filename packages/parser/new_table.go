@@ -39,6 +39,13 @@ type NewTableParser struct {
 	NewTable *tx.NewTable
 }
 
+type Permissions struct {
+	GeneralUpdate string            `json:"general_update"`
+	Update        map[string]string `json:"update"`
+	Insert        string            `json:"insert"`
+	NewColumn     string            `json:"new_column"`
+}
+
 func (p *NewTableParser) Init() error {
 	newTable := &tx.NewTable{}
 	if err := msgpack.Unmarshal(p.TxBinaryData, newTable); err != nil {
@@ -138,9 +145,10 @@ func (p *NewTableParser) Action() error {
 	json.Unmarshal([]byte(p.NewTable.Columns), &cols)
 
 	indexes := make([]string, 0)
+	mainCondition := `ContractConditions("MainCondition")`
+	updateConditions := map[string]string{}
 
 	colsSQL := ""
-	colsSQL2 := ""
 	for _, data := range cols {
 		colType := ``
 		colDef := ``
@@ -161,13 +169,11 @@ func (p *NewTableParser) Action() error {
 			colDef = `NOT NULL DEFAULT '0'`
 		}
 		colsSQL += `"` + data[0] + `" ` + colType + " " + colDef + " ,\n"
-		colsSQL2 += `"` + data[0] + `": "ContractConditions(\"MainCondition\")",`
+		updateConditions[data[0]] = mainCondition
 		if data[2] == "1" {
 			indexes = append(indexes, data[0])
 		}
 	}
-	colsSQL2 = colsSQL2[:len(colsSQL2)-1]
-
 	err = model.CreateTable(tableName, colsSQL)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -176,13 +182,22 @@ func (p *NewTableParser) Action() error {
 	for _, index := range indexes {
 		err := model.CreateIndex(tableName+"_"+index, tableName, index)
 		if err != nil {
-			p.ErrInfo(err)
+			return p.ErrInfo(err)
 		}
 	}
-
+	perm := Permissions{
+		GeneralUpdate: mainCondition,
+		Update:        updateConditions,
+		Insert:        mainCondition,
+		NewColumn:     mainCondition,
+	}
+	jsonColumnsAndPerm, err := json.Marshal(perm)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	t := &model.Table{
 		Name: tableName,
-		ColumnsAndPermissions: `{"general_update":"ContractConditions(\"MainCondition\")", "update": {` + colsSQL2 + `}, "insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`,
+		ColumnsAndPermissions: string(jsonColumnsAndPerm),
 	}
 	t.SetTablePrefix(prefix)
 	err = t.Create()
@@ -204,7 +219,11 @@ func (p *NewTableParser) Rollback() error {
 	}
 	tableName := prefix + "_" + p.NewTable.Name
 	err = model.DropTable(tableName)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	t := &model.Table{Name: tableName}
+	t.SetTablePrefix(prefix)
 	err = t.Delete()
 	if err != nil {
 		return p.ErrInfo(err)

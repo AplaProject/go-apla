@@ -29,6 +29,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+	"github.com/jinzhu/gorm"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -71,11 +72,12 @@ func (p *UpdFullNodesParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	p.nodePublicKey = []byte(wallet.PublicKey)
+	p.nodePublicKey = []byte(wallet.NodePublicKey)
 	if len(p.nodePublicKey) == 0 {
 		return utils.ErrInfoFmt("len(nodePublicKey) = 0")
 	}
-	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, false)
+
+	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -92,8 +94,7 @@ func (p *UpdFullNodesParser) Action() error {
 		return p.ErrInfo(err)
 	}
 
-	// выбирем ноды, где wallet_id
-	// choose nodes where wallet_id is
+	// choose nodes with not emtyp wallet_id
 	fns := &model.FullNode{}
 	nodes, err := fns.GetAllFullNodesHasWalletID()
 	if err != nil {
@@ -125,8 +126,6 @@ func (p *UpdFullNodesParser) Action() error {
 		return p.ErrInfo(err)
 	}
 
-	// удаляем где wallet_id
-	// delete where the wallet_id is
 	fn := &model.FullNode{}
 	err = fn.DeleteNodesWithWallets()
 	if err != nil {
@@ -137,14 +136,12 @@ func (p *UpdFullNodesParser) Action() error {
 		return p.ErrInfo(err)
 	}
 
-	// обновляем AI
 	// update the AI
 	err = model.SetAI("full_nodes", int64(maxID+1))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// получаем новые данные по wallet-нодам
 	// obtain new data on wallet-nodes
 	dw := &model.DltWallet{}
 	all, err := dw.GetAddressVotes()
@@ -157,7 +154,6 @@ func (p *UpdFullNodesParser) Action() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		// вставляем новые данные по wallet-нодам с указанием общего rb_id
 		// insert new data on wallet-nodes with the indication of the common rb_id
 		fn := &model.FullNode{WalletID: wallet.WalletID, Host: wallet.Host, RbID: rbFN.RbID}
 		err = fn.Create()
@@ -168,9 +164,12 @@ func (p *UpdFullNodesParser) Action() error {
 
 	w := &model.DltWallet{}
 	if err := w.GetNewFuelRate(); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
 		return p.ErrInfo(err)
 	}
-	newRate := string(w.FuelRate)
+	newRate := strconv.FormatInt(w.FuelRate, 10)
 	if len(newRate) > 0 {
 		_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{newRate}, "system_parameters", []string{"name"}, []string{"fuel_rate"}, true)
 		if err != nil {
@@ -186,7 +185,6 @@ func (p *UpdFullNodesParser) Rollback() error {
 		return p.ErrInfo(err)
 	}
 
-	// получим rb_id чтобы восстановить оттуда данные
 	// get rb_id to restore the data from there
 	fnRB := &model.FullNode{}
 	if err := fnRB.GetRbIDFullNodesWithWallet(); err != nil {
@@ -204,7 +202,6 @@ func (p *UpdFullNodesParser) Rollback() error {
 		return p.ErrInfo(err)
 	}
 
-	// удаляем новые данные
 	// delete new data
 	fn := &model.FullNode{}
 	err = fn.DeleteNodesWithWallets()
@@ -226,7 +223,6 @@ func (p *UpdFullNodesParser) Rollback() error {
 	p.rollbackAI("rb_full_nodes", 1)
 
 	for _, data := range fullNodesWallet {
-		// вставляем новые данные по wallet-нодам с указанием общего rb_id
 		// insert new data on wallet-nodes with the indication of the common rb_id
 		id, err := strconv.ParseInt(data["id"], 10, 64)
 		if err != nil {

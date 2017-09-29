@@ -2,7 +2,8 @@ package model
 
 import (
 	"strconv"
-	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 
 	"github.com/jinzhu/gorm"
 )
@@ -10,7 +11,7 @@ import (
 type Table struct {
 	tableName             string
 	Name                  string `gorm:"primary_key;not null;size:100"`
-	ColumnsAndPermissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	ColumnsAndPermissions string `gorm:"not null"`
 	Conditions            string `gorm:"not null"`
 	RbID                  int64  `gorm:"not null"`
 }
@@ -23,8 +24,12 @@ func (t *Table) TableName() string {
 	return t.tableName
 }
 
-func (t *Table) Get(name string) error {
-	return DBConn.Where("name = ?", name).First(t).Error
+func (t *Table) Get(name string) (bool, error) {
+	query := DBConn.Where("name = ?", name).First(t)
+	if query.RecordNotFound() {
+		return false, nil
+	}
+	return true, query.Error
 }
 
 func (t *Table) Create() error {
@@ -51,37 +56,33 @@ func (t *Table) GetAll(prefix string) ([]Table, error) {
 }
 
 func (t *Table) GetTablePermissions(tablePrefix string, tableName string) (map[string]string, error) {
-	var value string
-	result := make(map[string]string, 0)
+	var key, value string
+	result := map[string]string{}
 	row, err := DBConn.Table(tablePrefix+"_tables").
-		Select("jsonb_each_text(columns_and_permissions)").
+		Select("(jsonb_each_text(columns_and_permissions)).*").
 		Where("name = ?", tableName).Rows()
 	if err != nil {
 		return nil, err
 	}
 	for row.Next() {
-		row.Scan(&value)
-		value = value[1 : len(value)-1]
-		line := strings.Split(value, ",")
-		result[line[0]] = line[1]
+		row.Scan(&key, &value)
+		result[key] = value
 	}
 	return result, err
 }
 
 func (t *Table) GetColumnsAndPermissions(tablePrefix string, tableName string) (map[string]string, error) {
-	var value string
-	result := make(map[string]string, 0)
+	var key, value string
+	result := map[string]string{}
 	row, err := DBConn.Table(tablePrefix+"_tables").
-		Select("jsonb_each_text(columns_and_permissions->'update')").
+		Select("(jsonb_each_text(columns_and_permissions->'update')).*").
 		Where("name = ?", tableName).Rows()
 	if err != nil {
 		return nil, err
 	}
 	for row.Next() {
-		row.Scan(&value)
-		value = value[1 : len(value)-1]
-		line := strings.Split(value, ",")
-		result[line[0]] = line[1]
+		row.Scan(&key, &value)
+		result[key] = value
 	}
 	return result, err
 }
@@ -130,7 +131,7 @@ func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) 
 
 func (t *Table) SetActionByName(table, name, action, actionValue string, rbID int64) (int64, error) {
 	log.Debugf("set action by name: name = %s, actions = %s, actionsValue = %s", name, action, actionValue)
-	query := DBConn.Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', `+`'`+actionValue+`'`+`, true), rb_id = ? WHERE name = ?`, rbID, name)
+	query := DBConn.Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(actionValue)+`"`, rbID, name)
 	return query.RowsAffected, query.Error
 }
 
@@ -167,7 +168,7 @@ func GetColumnsAndPermissionsAndRbIDWhereTable(table, tableName string) (map[str
 		return nil, err
 	}
 	result := make(map[string]string, 0)
-	result["table"] = temp.ColumnsAndPermissions
+	result["columns_and_permissions"] = temp.ColumnsAndPermissions
 	result["rb_id"] = strconv.FormatInt(temp.RbID, 10)
 	return result, nil
 }
@@ -183,7 +184,7 @@ func GetTableWhereUpdatePermissionAndTableName(table, columnName, tableName stri
 		return nil, err
 	}
 	result := make(map[string]string, 0)
-	result["table"] = temp.ColumnsAndPermissions
+	result["columns_and_permissions"] = temp.ColumnsAndPermissions
 	result["rb_id"] = strconv.FormatInt(temp.RbID, 10)
 	return result, nil
 }

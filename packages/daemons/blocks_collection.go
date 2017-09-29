@@ -140,7 +140,7 @@ func chooseBestHost(ctx context.Context, hosts []string) (string, int64, error) 
 				blockID: blockID,
 				err:     err,
 			}
-		}(GetHostPort(h))
+		}(getHostPort(h))
 	}
 	wg.Wait()
 
@@ -332,7 +332,6 @@ func loadFirstBlock(parser *parser.Parser) error {
 		return err
 	}
 	logger.LogDebug(consts.DebugMessage, "first block inserted")
-
 	return nil
 }
 

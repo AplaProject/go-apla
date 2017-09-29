@@ -69,7 +69,11 @@ func getTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	columns := make([]columnItem, 0)
 	for key, value := range columnsAndPermissions {
-		columns = append(columns, columnItem{Name: key, Perm: value, Type: model.GetColumnType(tableName, key)})
+		columnType, err := model.GetColumnType(tableName, key)
+		if err != nil {
+			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		}
+		columns = append(columns, columnItem{Name: key, Perm: value, Type: columnType})
 	}
 	data.result = &tableResult{Name: tableName, PermInsert: tablePermission[`insert`],
 		PermNewColumn: tablePermission[`new_column`], PermChange: tablePermission[`general_update`],

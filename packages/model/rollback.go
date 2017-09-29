@@ -5,7 +5,7 @@ import "strconv"
 type Rollback struct {
 	RbID    int64  `gorm:"primary_key;not null"`
 	BlockID int64  `gorm:"not null"`
-	Data    string `gorm:"not null"`
+	Data    string `gorm:"not null;type:jsonb(PostgreSQL)"`
 }
 
 func (Rollback) TableName() string {

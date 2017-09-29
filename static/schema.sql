@@ -1,6 +1,7 @@
 DROP SEQUENCE IF EXISTS "dlt_transactions_id_seq" CASCADE;
 CREATE SEQUENCE "dlt_transactions_id_seq" START WITH 1;
-DROP TABLE IF EXISTS "dlt_transactions"; CREATE TABLE "dlt_transactions" (
+DROP TABLE IF EXISTS "dlt_transactions";
+CREATE TABLE "dlt_transactions" (
 "id" bigint NOT NULL  default nextval('dlt_transactions_id_seq'),
 "sender_wallet_id" bigint NOT NULL DEFAULT '0',
 "recipient_wallet_id" bigint NOT NULL DEFAULT '0',
@@ -27,7 +28,7 @@ DROP TABLE IF EXISTS "my_keys"; CREATE TABLE "my_keys" (
 "add_time" int NOT NULL DEFAULT '0',
 "notification" smallint NOT NULL DEFAULT '0',
 "public_key" bytea  NOT NULL DEFAULT '',
-"private_key" varchar(3096) NOT NULL DEFAULT '',
+"private_key" bytea NOT NULL DEFAULT '',
 "password_hash" varchar(64) NOT NULL DEFAULT '',
 "status" my_keys_enum_status  NOT NULL DEFAULT 'my_pending',
 "my_time" int  NOT NULL DEFAULT '0',
@@ -48,7 +49,7 @@ DROP TABLE IF EXISTS "my_node_keys"; CREATE TABLE "my_node_keys" (
 "id" int NOT NULL  default nextval('my_node_keys_id_seq'),
 "add_time" int NOT NULL DEFAULT '0',
 "public_key" bytea  NOT NULL DEFAULT '',
-"private_key" varchar(3096) NOT NULL DEFAULT '',
+"private_key" bytea NOT NULL DEFAULT '',
 "status" my_node_keys_enum_status  NOT NULL DEFAULT 'my_pending',
 "my_time" int NOT NULL DEFAULT '0',
 "time" bigint NOT NULL DEFAULT '0',
@@ -175,7 +176,7 @@ CREATE SEQUENCE upd_full_nodes_id_seq START WITH 1;
 DROP TABLE IF EXISTS "upd_full_nodes"; CREATE TABLE "upd_full_nodes" (
 "id" bigint NOT NULL  default nextval('upd_full_nodes_id_seq'),
 "time" int NOT NULL DEFAULT '0',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE upd_full_nodes_id_seq owned by upd_full_nodes.id;
 ALTER TABLE ONLY "upd_full_nodes" ADD CONSTRAINT upd_full_nodes_pkey PRIMARY KEY (id);
@@ -200,7 +201,7 @@ CREATE SEQUENCE upd_full_nodes_id_seq START WITH 1;
 DROP TABLE IF EXISTS "upd_full_nodes"; CREATE TABLE "upd_full_nodes" (
 "id" bigint NOT NULL  default nextval('upd_full_nodes_id_seq'),
 "time" int NOT NULL DEFAULT '0',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE upd_full_nodes_id_seq owned by upd_full_nodes.id;
 ALTER TABLE ONLY "upd_full_nodes" ADD CONSTRAINT upd_full_nodes_pkey PRIMARY KEY (id);
@@ -209,7 +210,7 @@ CREATE TABLE "global_menu" (
 "name" varchar(255)  NOT NULL DEFAULT '',
 "value" text  NOT NULL DEFAULT '',
 "conditions" text  NOT NULL DEFAULT '',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "global_menu" ADD CONSTRAINT global_menu_pkey PRIMARY KEY (name);
 
@@ -218,7 +219,7 @@ CREATE TABLE "global_pages" (
 "value" text  NOT NULL DEFAULT '',
 "menu" varchar(255)  NOT NULL DEFAULT '',
 "conditions" text  NOT NULL DEFAULT '',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "global_pages" ADD CONSTRAINT global_pages_pkey PRIMARY KEY (name);
 
@@ -226,7 +227,7 @@ CREATE TABLE "global_signatures" (
 "name" varchar(100)  NOT NULL DEFAULT '',
 "value" jsonb,
 "conditions" text  NOT NULL DEFAULT '',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "global_signatures" ADD CONSTRAINT global_signatures_pkey PRIMARY KEY (name);
 
@@ -345,7 +346,7 @@ DROP TABLE IF EXISTS "system_restore_access"; CREATE TABLE "system_restore_acces
 "time" bigint NOT NULL DEFAULT '0',
 "close" bigint NOT NULL DEFAULT '0',
 "secret" text  NOT NULL DEFAULT '',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE system_restore_access_id_seq owned by system_restore_access.id;
 ALTER TABLE ONLY "system_restore_access" ADD CONSTRAINT system_restore_access_pkey PRIMARY KEY (id);
@@ -361,8 +362,8 @@ DROP TABLE IF EXISTS "dlt_transactions"; CREATE TABLE "dlt_transactions" (
 "commission" decimal(30) NOT NULL DEFAULT '0',
 "time" int  NOT NULL DEFAULT '0',
 "comment" text NOT NULL DEFAULT '',
-"block_id" bigint REFERENCES block_chain(id) NOT NULL DEFAULT '0',
-"rb_id" bigint REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"block_id" bigint NOT NULL DEFAULT '0',
+"rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE "dlt_transactions_id_seq" owned by "dlt_transactions".id;
 ALTER TABLE ONLY "dlt_transactions" ADD CONSTRAINT "dlt_transactions_pkey" PRIMARY KEY (id);
@@ -397,9 +398,9 @@ ALTER TABLE ONLY "full_nodes" ADD CONSTRAINT full_nodes_pkey PRIMARY KEY (id);
 DROP SEQUENCE IF EXISTS rb_full_nodes_rb_id_seq CASCADE;
 CREATE SEQUENCE rb_full_nodes_rb_id_seq START WITH 1;
 DROP TABLE IF EXISTS "rb_full_nodes"; CREATE TABLE "rb_full_nodes" (
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL  default nextval('rb_full_nodes_rb_id_seq'),
+"rb_id" bigint  NOT NULL  default nextval('rb_full_nodes_rb_id_seq'),
 "full_nodes_wallet_json" bytea  NOT NULL DEFAULT '',
-"block_id" int REFERENCES block_chain(id) NOT NULL DEFAULT '0',
+"block_id" int NOT NULL DEFAULT '0',
 "prev_rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE rb_full_nodes_rb_id_seq owned by rb_full_nodes.rb_id;
@@ -433,7 +434,7 @@ DROP TABLE IF EXISTS "system_recognized_states"; CREATE TABLE "system_recognized
 "node_public_key" bytea  NOT NULL DEFAULT '',
 "delegate_wallet_id" bigint NOT NULL DEFAULT '0',
 "delegate_state_id" int NOT NULL DEFAULT '0',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "system_recognized_states" ADD CONSTRAINT system_recognized_states_pkey PRIMARY KEY (state_id);
 
@@ -448,3 +449,32 @@ DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (
 );
 ALTER SEQUENCE rollback_tx_id_seq owned by rollback_tx.id;
 ALTER TABLE ONLY "rollback_tx" ADD CONSTRAINT rollback_tx_pkey PRIMARY KEY (id);
+
+DROP TABLE IF EXISTS "global_apps"; CREATE TABLE "global_apps" (
+"name" varchar(100)  NOT NULL DEFAULT '',
+"done" integer NOT NULL DEFAULT '0',
+"blocks" text  NOT NULL DEFAULT ''
+);
+ALTER TABLE ONLY "global_apps" ADD CONSTRAINT "global_apps_pkey" PRIMARY KEY (name);
+
+CREATE SEQUENCE global_states_list_id_seq START WITH 1;
+CREATE TABLE "global_states_list" (
+"id" integer NOT NULL DEFAULT nextval('global_states_list_id_seq'),
+"state_id" bigint NOT NULL DEFAULT '0',
+"state_name" varchar(128) NOT NULL DEFAULT '',
+"rb_id" int NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE global_states_list_id_seq owned by global_states_list.id;
+ALTER TABLE ONLY "global_states_list" ADD CONSTRAINT global_states_list_pkey PRIMARY KEY (id);
+CREATE INDEX global_states_index_name ON "global_states_list" (state_name);
+
+CREATE SEQUENCE global_currencies_list_id_seq START WITH 1;
+CREATE TABLE "global_currencies_list" (
+"id" integer NOT NULL DEFAULT nextval('global_currencies_list_id_seq'),
+"currency_code" varchar(32) NOT NULL DEFAULT '',
+"settings_table" varchar(128) NOT NULL DEFAULT '',
+"rb_id" int NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE global_currencies_list_id_seq owned by global_currencies_list.id;
+ALTER TABLE ONLY "global_currencies_list" ADD CONSTRAINT global_currencies_list_pkey PRIMARY KEY (id);
+CREATE INDEX global_currencies_index_code ON "global_currencies_list" (currency_code);

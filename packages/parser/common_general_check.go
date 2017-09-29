@@ -25,9 +25,8 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
-// общая проверка для всех _front
+// common check for all transactions
 func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck map[string]string) error {
-	// проверим, есть ли такой юзер и заодно получим public_key
 	txType := int64(header.Type)
 	if header.StateID > 0 {
 		p.TxStateID = uint32(header.StateID)
@@ -46,18 +45,15 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		log.Debug("datausers", dltWallet)
+
 		if len(dltWallet.PublicKey) == 0 {
 			if len(header.PublicKey) == 0 {
 				return utils.ErrInfoFmt("incorrect public_key")
 			}
-			// возможно юзер послал ключ с тр-ией
-			log.Debug("pubkey %x", header.PublicKey)
 			walletID, err := crypto.GetWalletIDByPublicKey(header.PublicKey)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
-			log.Debug("walletId %d", walletID)
 			if walletID == 0 {
 				return utils.ErrInfoFmt("incorrect wallet_id or public_key")
 			}
@@ -78,9 +74,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 		}
 		p.PublicKeys = append(p.PublicKeys, []byte(dltWallet.PublicKey))
 	}
-	// чтобы не записали слишком длинную подпись
-	// for not to record too long signature
-	// 128 - это нод-ключ
+
 	if len(header.BinSignatures) < 64 || len(header.BinSignatures) > 5120 {
 		return utils.ErrInfoFmt("incorrect sign size %d", len(header.BinSignatures))
 	}

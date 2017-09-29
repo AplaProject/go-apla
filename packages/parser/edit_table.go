@@ -98,7 +98,10 @@ func (p *EditTableParser) Action() error {
 	tblname := p.EditTable.Name
 	table := &model.Table{}
 	table.SetTablePrefix(prefix)
-	err := table.Get(tblname)
+	found, err := table.Get(tblname)
+	if !found {
+		return fmt.Errorf("table not found: %s", tblname)
+	}
 	if err != nil {
 		return err
 	}
@@ -134,9 +137,8 @@ func (p *EditTableParser) Action() error {
 		if err := smart.CompileEval(actions[action], uint32(p.EditTable.Header.StateID)); err != nil {
 			return err
 		}
-		actions[action] = strings.Replace(actions[action], `"`, `\"`, -1)
 		t := &model.Table{}
-		_, err = t.SetActionByName(tableName, tblname, action, `"`+actions[action]+`"`, rollback.RbID)
+		_, err = t.SetActionByName(tableName, tblname, action, actions[action], rollback.RbID)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

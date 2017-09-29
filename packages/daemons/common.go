@@ -32,19 +32,13 @@ import (
 )
 
 var (
-	log = logging.MustGetLogger("daemons")
-	/*DaemonCh        chan bool     = make(chan bool, 100)
-	AnswerDaemonCh  chan string   = make(chan string, 100)*/
-
-	// MonitorDaemonCh is a channel for daemons
+	log             = logging.MustGetLogger("daemons")
 	MonitorDaemonCh = make(chan []string, 100)
 )
 
 type daemon struct {
 	goRoutineName string
-	/*DaemonCh       chan bool
-	AnswerDaemonCh chan string*/
-	sleepTime time.Duration
+	sleepTime     time.Duration
 }
 
 func init() {
@@ -160,7 +154,7 @@ func StartDaemons() {
 	}
 }
 
-func GetHostPort(h string) string {
+func getHostPort(h string) string {
 	if strings.Contains(h, ":") {
 		return h
 	}

@@ -222,23 +222,6 @@ func main() {
 		log.SetOutput(logfile)
 	}
 	os.Chdir(dir)
-	/*	tmp := make(map[string]string)
-			tmp[`test`] = `Test string`
-			tmp[`param`] = `Test string
-		edededed
-		edededed
-		1111
-		 222
-		  3333`
-			tmp[`ok`] = `76436734`
-			err = map2yaml(tmp, `test.yaml`)
-			if err != nil {
-				fmt.Println(`YAML`, err)
-			}
-			var tmp2 map[string]string
-			err = yaml2map(`test.yaml`, &tmp2)
-			fmt.Println(`YAML`, tmp2)
-	*/
 	if !checkKey() {
 		return
 	}
@@ -285,7 +268,6 @@ cmd:
 					if err != nil {
 						fmt.Println(err)
 					}
-					//					fmt.Println(`RET`, ret)
 				}
 			}
 		case pars[0] == `quit`:

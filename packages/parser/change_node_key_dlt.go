@@ -76,13 +76,13 @@ func (p *ChangeNodeKeyDLTParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	mnk := &model.MyNodeKey{}
-	myKey := mnk.ID
-	err = mnk.GetZeroBlock(p.DLTChangeNodeKey.NewNodePublicKey)
+	found, err := mnk.GetZeroBlock(converter.HexToBin(p.DLTChangeNodeKey.NewNodePublicKey))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	myKey := mnk.ID
 	log.Debug("myKey %d", myKey)
-	if myKey > 0 {
+	if found {
 		_, _, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(int64(myKey))}, true)
 		if err != nil {
 			return p.ErrInfo(err)

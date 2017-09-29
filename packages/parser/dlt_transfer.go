@@ -113,7 +113,7 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
+	// check commission
 	if ourCommission.Cmp(commission) < 0 {
 		return p.ErrInfo(fmt.Sprintf("commission %v < dltPrice %v", ourCommission, commission))
 	}
@@ -184,8 +184,6 @@ func (p *DLTTransferParser) Action() error {
 
 	walletID := converter.StringToAddress(p.DLTTransfer.WalletAddress)
 	if dltWallet.WalletID == 0 {
-		log.Debug("walletId == 0")
-		log.Debug("%s", string(p.DLTTransfer.WalletAddress))
 		_, _, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{amount}, "dlt_wallets",
 			[]string{"wallet_id"}, []string{converter.Int64ToStr(walletID)}, true)
 	} else {

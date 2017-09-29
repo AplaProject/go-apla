@@ -25,6 +25,8 @@ import (
 
 	"context"
 
+	"encoding/hex"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
@@ -112,7 +114,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("transactions to put in new block: %+v", trs))
 
-	blockBin, err := generateNextBlock(prevBlock, *trs, string(nodeKey.PrivateKey), config, time.Now().Unix())
+	blockBin, err := generateNextBlock(prevBlock, *trs, hex.EncodeToString(nodeKey.PrivateKey), config, time.Now().Unix())
 	if err != nil {
 		logger.LogError(consts.BlockError, err)
 		return err

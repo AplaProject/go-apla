@@ -34,8 +34,6 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 	}
 
 	limit := 1000
-	//	var blocks []map[string][]byte
-	// откатываем наши блоки
 	// roll back our blocks
 	for {
 		block := &model.Block{}
@@ -49,7 +47,6 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		parser := new(Parser)
 		fmt.Printf(`%s `, blocks[0].ID)
 		for _, block := range blocks {
-			// Откатываем наши блоки до блока blockID
 			// roll back our blocks to the block blockID
 			parser.BinaryData = block.Data
 			err = parser.ParseDataRollback()

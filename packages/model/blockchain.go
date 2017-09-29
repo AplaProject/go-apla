@@ -61,7 +61,7 @@ func (b *Block) GetBlock(blockID int64) error {
 }
 
 func (b *Block) GetMaxBlock() error {
-	return handleError(DBConn.First(b).Error)
+	return handleError(DBConn.Last(b).Error)
 }
 
 func (b *Block) GetBlocksFrom(startFromID int64, ordering string) ([]Block, error) {

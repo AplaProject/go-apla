@@ -26,20 +26,18 @@ import (
 	"context"
 )
 
-/* Берем блок. Если блок имеет лучший хэш, то ищем, в каком блоке у нас пошла вилка // Take the block. If the block has the best hash, then look for the block where the fork started
- * Если вилка пошла менее чем variables->rollback_blocks блоков назад, то // If the fork begins less then variables->rollback_blocks blocks ago, than
- *  - получаем всю цепочку блоков, // get the whole chain of blocks
- *  - откатываем фронтальные данные от наших блоков, // roll back the frontal data from our blocks
- *  - заносим фронт. данные из новой цепочки // insert the frontal data from a new chain
- *  - если нет ошибок, то откатываем наши данные из блоков // if there is no error, then roll back our data from the blocks
- *  - и заносим новые данные // and insert new data
- *  - если где-то есть ошибки, то откатываемся к нашим прежним данным // if there are errors, then roll back to the former data
- * Если вилка была давно, то ничего не трогаем, и оставлеяем скрипту blocks_collection.php // if the fork was long ago then do not touch anything and leave the script blocks_collection.php
- * Ограничение variables->rollback_blocks нужно для защиты от подставных блоков // the limitation variables->rollback_blocks is needed for the protection against the false blocks
- *
+/* Take the block from the queue. If this block has the bigger block id than the last block from our chain, then find the fork
+ * If fork begins less then variables->rollback_blocks blocks ago, than
+ *  - get the whole chain of blocks
+ *  - roll back data from our blocks
+ *  - insert the frontal data from a new chain
+ *  - if there is no error, then roll back our data from the blocks
+ *  - and insert new data
+ *  - if there are errors, then roll back to the former data
  * */
 
-// QueueParserBlocks parses blocks from the queue
+
+// QueueParserBlocks parses and applies blocks from the queue
 func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	logger.LogDebug(consts.FuncStarted, "")
 
@@ -102,7 +100,7 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	p := new(parser.Parser)
 	p.GoroutineName = d.goRoutineName
 
-	host := GetHostPort(fullNode.Host)
+	host := getHostPort(fullNode.Host)
 	err = p.GetBlocks(blockID, host, "rollback_blocks_1", d.goRoutineName, 7)
 	if err != nil {
 		logger.LogError(consts.DBError, err)

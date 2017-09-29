@@ -37,22 +37,37 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 	if global == "" || global == "0" {
 		prefix = c.StateIDStr
 	}
-	var err error
+
 	page := &model.Page{}
 	menu := &model.Menu{}
-	if len(prefix) > 0 {
-		page.SetTablePrefix(prefix)
-		err = page.Get(pageName)
-		if err != nil {
-			return "", utils.ErrInfo(err)
-		}
 
-		menu.SetTablePrefix(prefix)
-		err = menu.Get(page.Menu)
-		if err != nil {
-			return "", utils.ErrInfo(err)
+	err := func() error {
+		if len(prefix) > 0 {
+			page.SetTablePrefix(prefix)
+			err := page.Get(pageName)
+			if err == model.RecordNotFound {
+				return nil
+			}
+			if err != nil {
+				return utils.ErrInfo(err)
+			}
+
+			menu.SetTablePrefix(prefix)
+			err = menu.Get(page.Menu)
+			if err == model.RecordNotFound {
+				return nil
+			}
+			if err != nil {
+				return utils.ErrInfo(err)
+			}
 		}
+		return nil
+	}()
+
+	if err != nil {
+		return "", err
 	}
+
 	params := make(map[string]string)
 	params[`state_id`] = c.StateIDStr
 	params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)

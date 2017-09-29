@@ -52,16 +52,6 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 	var count int64
 	blocks := make(map[int64]string)
 	for {
-		/*
-			// note in the database that we are alive
-						upd_deamon_time($db);
-			// note for not to provoke cleaning of the tables
-						upd_main_lock($db);
-			// check if we have to get out, because the script version has been updated
-						if (check_deamon_restart($db)){
-							main_unlock();
-							exit;
-						}*/
 		if blockID < 2 {
 			return utils.ErrInfo(errors.New("block_id < 2"))
 		}
@@ -82,18 +72,19 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 			ClearTmp(blocks)
 			return utils.ErrInfo(err)
 		}
-		log.Debug("binaryBlock: %x\n", binaryBlock)
+
 		binaryBlockFull := binaryBlock
 		if len(binaryBlock) == 0 {
-			log.Debug("len(binaryBlock) == 0")
+			log.Debug("got block with len(binaryBlock) == 0")
 			ClearTmp(blocks)
 			return utils.ErrInfo(errors.New("len(binaryBlock) == 0"))
 		}
-		converter.BytesShift(&binaryBlock, 1) // уберем 1-й байт - тип (блок/тр-я)
-		// remove the 1st byte - type (block/transaction)
+		// skip the transaction type field
+		converter.BytesShift(&binaryBlock, 1)
+
 		// parse the heading of a block
 		blockData := utils.ParseBlockHeader(&binaryBlock)
-		log.Debug("blockData", blockData)
+		log.Debugf("get block with blockData = %x", blockData)
 
 		// if the buggy chain exists, here we will ignore it
 		config := &model.Config{}
@@ -216,7 +207,6 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
-			log.Debug("binaryBlock: %x\n", binaryBlock)
 			parser.GoroutineName = goroutineName
 			parser.BinaryData = binaryBlock
 			// we pass the information about the previous block. So far there are new blocks, information about previous blocks in blockchain is still old, because the updating of blockchain is going below
@@ -314,12 +304,9 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-	log.Debug("prevblock", prevBlock)
-	log.Debug("blocks", blocks)
 
 	// go through new blocks
 	bSorted := converter.SortMap(blocks)
-	log.Debug("blocksSorted_", bSorted)
 	for _, data := range bSorted {
 		for blockID, tmpFileName := range data {
 
@@ -366,9 +353,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
-			log.Debug("tmpFileName %v", tmpFileName)
 		}
 	}
-	log.Debug("HAPPY END")
 	return nil
 }

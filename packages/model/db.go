@@ -93,11 +93,11 @@ func GetTables() ([]string, error) {
 }
 
 func Update(tblname, set, where string) error {
-	return DBConn.Exec("UPDATE " + tblname + " SET " + set + " " + where).Error
+	return DBConn.Exec(`UPDATE "` + tblname + `" SET ` + set + " " + where).Error
 }
 
 func Delete(tblname, where string) error {
-	return DBConn.Exec("DELETE FROM " + tblname + " " + where).Error
+	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
 }
 
 func InsertReturningLastID(table, columns, values string) (string, error) {
@@ -148,7 +148,7 @@ func GetCurrentSeqID(id, tblname string) (int64, error) {
 
 func GetRollbackID(tblname, where, ordering string) (int64, error) {
 	var result int64
-	query := "SELECT rb_id FROM " + tblname + " " + where + " order by rb_id " + ordering
+	query := `SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering
 	err := DBConn.Raw(query).Row().Scan(&result)
 	if err != nil {
 		log.Errorf("can't get rollback_id: %s for query %s", err, query)
@@ -315,7 +315,6 @@ func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err erro
 	if err != nil {
 		return nil, err
 	}
-	hash = converter.BinToHex(hash)
 	ts := &TransactionStatus{
 		Hash:      hash,
 		Time:      time.Now().Unix(),
@@ -373,7 +372,7 @@ func AlterTableAddColumn(tableName, columnName, columnType string) error {
 }
 
 func AlterTableDropColumn(tableName, columnName string) error {
-	return DBConn.Exec(`ALTER TABLE '` + tableName + `' DROP COLUMN ` + columnName).Error
+	return DBConn.Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN ` + columnName).Error
 }
 
 func CreateIndex(indexName, tableName, onColumn string) error {
@@ -390,44 +389,45 @@ func IsTable(tblname string) bool {
 }
 
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
-
-	var dataType string
-	var characterMaximumLength string
-
-	rows, err := DBConn.
-		Table("information_schema.columns").
-		Where("table_name = '?' AND column_name = '?'", tableName, columnName).
-		Select("data_type", "character_maximum_length").Rows()
+	var dataType, characterMaximumLength *string
+	err := DBConn.Raw(`SELECT data_type, character_maximum_length 
+				 FROM information_schema.columns 
+				 WHERE table_name = ? AND column_name = ?`, tableName, columnName).Row().Scan(&dataType, &characterMaximumLength)
 	if err != nil {
 		return nil, err
 	}
-	for rows.Next() {
-		rows.Scan(&dataType)
-		rows.Scan(&characterMaximumLength)
-	}
-
 	result := make(map[string]string, 0)
-	result["data_type"] = dataType
-	result["character_maximum_length"] = characterMaximumLength
+	if dataType != nil {
+		result["data_type"] = *dataType
+	}
+	if characterMaximumLength != nil {
+		result["character_maximum_length"] = *characterMaximumLength
+	}
 	return result, nil
 }
 
-func GetColumnType(tblname, column string) (itype string) {
-	coltype, _ := GetColumnDataTypeCharMaxLength(tblname, column)
-	if len(coltype) > 0 {
+func GetColumnType(tblname, column string) (itype string, err error) {
+	coltype, err := GetColumnDataTypeCharMaxLength(tblname, column)
+	if err != nil {
+		return
+	}
+	if _, ok := coltype["data_type"]; ok {
+		dataType := coltype["data_type"]
 		switch {
-		case coltype[`data_type`] == "character varying":
+		case dataType == "character varying":
 			itype = `text`
-		case coltype[`data_type`] == "bytea":
+		case dataType == "bytea":
 			itype = "varchar"
-		case coltype[`data_type`] == `bigint`:
+		case dataType == `bigint`:
 			itype = "numbers"
-		case strings.HasPrefix(coltype[`data_type`], `timestamp`):
+		case strings.HasPrefix(dataType, `timestamp`):
 			itype = "date_time"
-		case strings.HasPrefix(coltype[`data_type`], `numeric`):
+		case strings.HasPrefix(dataType, `numeric`):
 			itype = "money"
-		case strings.HasPrefix(coltype[`data_type`], `double`):
+		case strings.HasPrefix(dataType, `double`):
 			itype = "double"
+		default:
+			err = fmt.Errorf("Unknown column type")
 		}
 	}
 	return

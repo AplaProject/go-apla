@@ -27,7 +27,7 @@ import (
 // UpdBlockInfo updates info_block table
 func (p *Parser) UpdBlockInfo() {
 	blockID := p.BlockData.BlockID
-	// для локальных тестов
+
 	// for the local tests
 	if p.BlockData.BlockID == 1 {
 		if *utils.StartBlockID != 0 {
@@ -35,17 +35,13 @@ func (p *Parser) UpdBlockInfo() {
 		}
 	}
 	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockID, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletID, p.BlockData.StateID)
-	log.Debug("forSha", forSha)
 	hash, err := crypto.DoubleHash([]byte(forSha))
 	if err != nil {
 		log.Fatal(err)
 	}
-	//hash = converter.BinToHex(hash)
+
 	p.BlockData.Hash = hash
-	log.Debug("%v", p.BlockData.Hash)
-	log.Debug("%v", blockID)
-	log.Debug("%v", p.BlockData.Time)
-	log.Debug("%v", p.CurrentVersion)
+
 	if p.BlockData.BlockID == 1 {
 		ib := &model.InfoBlock{
 			Hash:           p.BlockData.Hash,
@@ -69,12 +65,12 @@ func (p *Parser) UpdBlockInfo() {
 			Sent:     0,
 		}
 		if err := ibUpdate.Update(); err != nil {
-			log.Error("%v", err)
+			log.Error("info block update error: %s", err)
 		}
 		config := &model.Config{}
 		err = config.ChangeBlockIDBatch(blockID, blockID)
 		if err != nil {
-			log.Error("%v", err)
+			log.Error("change block id batch error: %s", err)
 		}
 	}
 }

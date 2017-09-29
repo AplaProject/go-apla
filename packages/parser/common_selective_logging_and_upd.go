@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -27,7 +28,6 @@ import (
 )
 
 // selectiveLoggingAndUpd changes DB and writes all DB changes for rollbacks
-// не использовать для комментов
 // do not use for comments
 func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (int64, string, error) {
 	var (
@@ -89,13 +89,17 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	addSQLWhere := ""
 	if whereFields != nil && whereValues != nil {
 		for i := 0; i < len(whereFields); i++ {
-			addSQLWhere += whereFields[i] + "= '" + whereValues[i] + "' AND "
+			if _, err := strconv.ParseInt(whereValues[i], 10, 64); err == nil {
+				addSQLWhere += whereFields[i] + "= " + whereValues[i] + " AND "
+			} else {
+				addSQLWhere += whereFields[i] + "= '" + whereValues[i] + "' AND "
+			}
 		}
 	}
 	if len(addSQLWhere) > 0 {
 		addSQLWhere = " WHERE " + addSQLWhere[0:len(addSQLWhere)-5]
 	}
-	// если есть, что логировать
+
 	// if there is something to log
 	selectQuery := `SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere
 	selectCost, err := model.GetQueryTotalCost(selectQuery)

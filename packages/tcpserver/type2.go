@@ -23,6 +23,8 @@ import (
 	"encoding/pem"
 	"fmt"
 
+	"encoding/hex"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
@@ -91,10 +93,7 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 	}
 	encryptedKey := converter.BytesShift(&*binaryTx, length)
 	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("encryptedKey: %s", encryptedKey))
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("encryptedKey: %x", encryptedKey))
-
 	iv := converter.BytesShift(&*binaryTx, 16)
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("iv: %s", iv))
 	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("iv: %x", iv))
 
 	if len(encryptedKey) == 0 {
@@ -118,7 +117,7 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 		return nil, nil, nil, utils.ErrInfo("len(nodePrivateKey) == 0")
 	}
 
-	block, _ := pem.Decode([]byte(nodeKey.PrivateKey))
+	block, _ := pem.Decode([]byte(hex.EncodeToString(nodeKey.PrivateKey)))
 	if block == nil || block.Type != "RSA PRIVATE KEY" {
 		logger.LogError(consts.CryptoError, "No valid PEM data found")
 		return nil, nil, nil, utils.ErrInfo("No valid PEM data found")

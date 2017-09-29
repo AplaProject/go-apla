@@ -30,12 +30,12 @@ func Read() error {
 	ConfigIni = map[string]string{}
 	fullConfigIni, err := config.NewConfig("ini", *utils.Dir+"/"+configFileName)
 	if err != nil {
-		logger.LogError(consts.ConfigError, err)
+		logger.LogError(consts.ConfigError, err.Error())
 		return err
 	} else {
 		ConfigIni, err = fullConfigIni.GetSection("default")
 		if err != nil {
-			logger.LogError(consts.ConfigError, err)
+			logger.LogError(consts.ConfigError, err.Error())
 			return err
 		}
 	}
@@ -46,7 +46,7 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 	logger.LogDebug(consts.FuncStarted, "")
 	path := *utils.Dir + "/" + configFileName
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		logger.LogError(consts.IOError, err)
+		logger.LogError(consts.IOError, err.Error())
 		ioutil.WriteFile(path, []byte(``), 0644)
 	}
 	confIni, err := config.NewConfig("ini", path)
@@ -66,7 +66,7 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 
 	err = confIni.SaveConfigFile(path)
 	if err != nil {
-		logger.LogError(consts.IOError, err)
+		logger.LogError(consts.IOError, err.Error())
 		Drop()
 		return utils.ErrInfo(err)
 	}
@@ -76,6 +76,6 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 func Drop() {
 	err := os.Remove(*utils.Dir + "/" + configFileName)
 	if err != nil {
-		logger.LogError(consts.IOError, err)
+		logger.LogError(consts.IOError, err.Error())
 	}
 }

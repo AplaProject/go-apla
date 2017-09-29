@@ -62,7 +62,7 @@ func FileAsset(name string) ([]byte, error) {
 		if fi, err := os.Stat(logofile); err == nil && fi.Size() > 0 {
 			return ioutil.ReadFile(logofile)
 		} else if err != nil {
-			logger.LogError(consts.IOError, err)
+			logger.LogError(consts.IOError, err.Error())
 		}
 	}
 	return static.Asset(name)
@@ -100,12 +100,12 @@ func killOld() {
 	if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
 		dat, err := ioutil.ReadFile(*utils.Dir + "/daylight.pid")
 		if err != nil {
-			logger.LogError(consts.IOError, err)
+			logger.LogError(consts.IOError, err.Error())
 		}
 		var pidMap map[string]string
 		err = json.Unmarshal(dat, &pidMap)
 		if err != nil {
-			logger.LogError(consts.JSONError, err)
+			logger.LogError(consts.JSONError, err.Error())
 		}
 		logger.LogDebug(consts.DebugMessage, fmt.Sprintf("old PID (%s/daylight.pid): %s", *utils.Dir, pidMap["pid"]))
 
@@ -162,7 +162,7 @@ func savePid() error {
 	pid := os.Getpid()
 	PidAndVer, err := json.Marshal(map[string]string{"pid": converter.IntToStr(pid), "version": consts.VERSION})
 	if err != nil {
-		logger.LogError(consts.JSONError, err)
+		logger.LogError(consts.JSONError, err.Error())
 		return err
 	}
 	return ioutil.WriteFile(*utils.Dir+"/daylight.pid", PidAndVer, 0644)
@@ -176,20 +176,20 @@ func delPidFile() {
 func rollbackToBlock(blockID int64) error {
 	logger.LogDebug(consts.FuncStarted, "")
 	if err := template.LoadContracts(); err != nil {
-		logger.LogError(consts.ContractError, err)
+		logger.LogError(consts.ContractError, err.Error())
 		return err
 	}
 	parser := new(parser.Parser)
 	err := parser.RollbackToBlockID(*utils.RollbackToBlockID)
 	if err != nil {
-		logger.LogError(consts.RollbackError, err)
+		logger.LogError(consts.RollbackError, err.Error())
 		return err
 	}
 
 	// we recieve the statistics of all tables
 	allTable, err := model.GetAllTables()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		logger.LogError(consts.DBError, err.Error())
 		return err
 	}
 

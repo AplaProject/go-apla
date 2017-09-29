@@ -178,12 +178,20 @@ func (c *Controller) Install() (string, error) {
 		utils.FirstBlock()
 	}
 
-	NodePrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")
-	npubkey, err := crypto.PrivateToPublic(NodePrivateKey)
+	nodePrivateKeyHex, err := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("can't read NodePrivateKey file: %s", err)
+		return "", err
 	}
-	nodeKeys := &model.MyNodeKey{PrivateKey: NodePrivateKey, PublicKey: npubkey, BlockID: 1}
+
+	nodePrivateKey, err := hex.DecodeString(string(nodePrivateKeyHex))
+	if err != nil {
+		log.Errorf("can't decode private key")
+		return "", err
+	}
+	npubkey, err := crypto.PrivateToPublic(nodePrivateKey)
+
+	nodeKeys := &model.MyNodeKey{PrivateKey: nodePrivateKey, PublicKey: npubkey, BlockID: 1}
 	err = nodeKeys.Create()
 	if err != nil {
 		log.Error("my_node_key insert failed: %v", utils.ErrInfo(err))

@@ -264,7 +264,7 @@ func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Wr
 				logger.LogInfo(consts.ConnectionError, fmt.Sprintf("failed to send transaction to %s (%s)", h, err))
 			}
 			wg.Done()
-		}(GetHostPort(host))
+		}(getHostPort(host))
 	}
 	wg.Wait()
 

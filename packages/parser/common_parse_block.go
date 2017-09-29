@@ -24,23 +24,23 @@ import (
 // ParseBlock starts to parse a block
 func (p *Parser) ParseBlock() error {
 	/*
-				Заголовок // Heading
-				TYPE (0-блок, 1-тр-я)     1 // TYPE (0-block, 1-transaction)     1
-				BLOCK_ID   				       4
+		Block
+	    header:
+				TYPE (0-block, 1-transaction)      1
+				BLOCK_ID    				       4
 				TIME       					       4
 				WALLET_ID                         1-8
-				state_id                         1
-				SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		// from 128 to 512 bytes. Signaature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		Далее - тело блока (Тр-ии)
-		// Futher - the body of a block (transaction)
+				state_id                           1
+				SIGN                               from 128 to 512 bytes. Signaature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+		body (the list of transactions)
 	*/
+
 	p.BlockData = utils.ParseBlockHeader(&p.BinaryData)
-	log.Debug("block data: %v", p.BlockData)
+	log.Debug("parsed block header: %v", p.BlockData)
 
 	p.CurrentBlockID = p.BlockData.BlockID
 
-	// Until then let it be. Get tables p_keys. then it is necessary to update only when you change tables
+	// load all tables
 	allTables, err := model.GetAllTables()
 	if err != nil {
 		return utils.ErrInfo(err)

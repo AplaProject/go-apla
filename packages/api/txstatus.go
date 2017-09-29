@@ -17,7 +17,6 @@
 package api
 
 import (
-	"encoding/hex"
 	"fmt"
 	"net/http"
 
@@ -35,19 +34,15 @@ type txstatusResult struct {
 func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	logger.LogDebug(consts.FuncStarted, "")
 	var status txstatusResult
-	if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
-		logger.LogError(consts.RouteError, fmt.Sprintf("incorrect hash: %s", data.params[`hash`].(string)))
-		return errorAPI(w, `hash is incorrect`, http.StatusBadRequest)
-	}
 	ts := &model.TransactionStatus{}
-	notFound, err := ts.Get([]byte(data.params["hash"].(string)))
-	if err != nil {
-		logger.LogError(consts.DBError, err)
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
-	}
+	binTx := converter.HexToBin(data.params["hash"])
+	notFound, err := ts.Get(binTx)
 	if notFound {
 		logger.LogError(consts.RouteError, fmt.Sprintf("can't find transaction status by hash %s", data.params[`hash`].(string)))
 		return errorAPI(w, `hash has not been found`, http.StatusBadRequest)
+	}
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	if ts.BlockID > 0 {
 		status.BlockID = converter.Int64ToStr(ts.BlockID)

@@ -67,13 +67,17 @@ func (c *Controller) EditColumn() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
+	columnType, err := model.GetColumnType(tableName, columnName)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
 	TemplateStr, err := makeTemplate("edit_column", "editColumn", &editColumnPage{
 		Alert:            c.Alert,
 		Lang:             c.Lang,
 		TableName:        tableName,
 		ColumnName:       columnName,
 		ColumnPermission: columns[columnName],
-		ColumnType:       model.GetColumnType(tableName, columnName),
+		ColumnType:       columnType,
 		WalletID:         c.SessWalletID,
 		CitizenID:        c.SessCitizenID,
 		StateID:          c.SessStateID,

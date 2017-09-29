@@ -37,7 +37,7 @@ func (c *Controller) NewContract() (string, error) {
 		TxType:    txType,
 		TxTypeID:  utils.TypeInt(txType),
 		Global:    global,
-		Data:      map[string]string{`conditions`: "ContractConditions(`MainCondition`)"},
+		Data:      map[string]string{`conditions`: `ContractConditions("MainCondition")`},
 		StateID:   c.SessStateID})
 	if err != nil {
 		return "", utils.ErrInfo(err)

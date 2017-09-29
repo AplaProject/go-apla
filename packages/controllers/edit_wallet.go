@@ -47,7 +47,6 @@ func init() {
 
 // EditWallet is a controller for editing state's wallets
 func (c *Controller) EditWallet() (string, error) {
-
 	var (
 		data  map[string]string
 		alert string
@@ -85,7 +84,7 @@ func (c *Controller) EditWallet() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		data := wallet.ToMap()
+		data = wallet.ToMap()
 		if len(data) == 0 {
 			alert = fmt.Sprintf(`Wallet %s [%d] has not been found.`, idaddr, id)
 		} else {

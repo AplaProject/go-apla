@@ -110,7 +110,7 @@ func (p *EditColumnParser) Action() error {
 		return err
 	}
 	tableM := &model.Table{}
-	_, err = tableM.SetActionByName(table, p.EditColumn.TableName, "update, "+p.EditColumn.ColumnName, `"`+converter.EscapeForJSON(p.EditColumn.Permissions)+`"`, rb.RbID)
+	_, err = tableM.SetActionByName(table, p.EditColumn.TableName, "update, "+p.EditColumn.ColumnName, p.EditColumn.Permissions, rb.RbID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
