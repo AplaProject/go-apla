@@ -61,6 +61,12 @@ func defaultTag(par parFunc) string {
 	return ``
 }
 
+func buttonTag(par parFunc) string {
+	defaultTag(par)
+	setAttr(par, `Page`)
+	return ``
+}
+
 func inputTag(par parFunc) string {
 	defaultTag(par)
 	setAttr(par, `Placeholder`)
@@ -71,8 +77,15 @@ func inputTag(par parFunc) string {
 
 var (
 	funcs = map[string]tplFunc{
-		`Div`:   {defaultTag, `div`, `Class,Body`},
-		`Input`: {inputTag, `input`, `Id,Class,Placeholder,Type,Value`},
+		`Div`:    {defaultTag, `div`, `Class,Body`},
+		`Button`: {buttonTag, `button`, `Body,Page,Class`},
+		`Em`:     {defaultTag, `em`, `Body,Class`},
+		`Form`:   {defaultTag, `form`, `Class,Body`},
+		`Input`:  {inputTag, `input`, `Id,Class,Placeholder,Type,Value`},
+		`Label`:  {defaultTag, `label`, `Body,Class`},
+		`P`:      {defaultTag, `p`, `Body,Class`},
+		`Span`:   {defaultTag, `span`, `Body,Class`},
+		`Strong`: {defaultTag, `strong`, `Body,Class`},
 	}
 )
 

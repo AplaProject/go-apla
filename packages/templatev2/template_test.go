@@ -50,4 +50,8 @@ var forTest = tplList{
 			Div(Body: 
 				Input(Value: my default text))))`,
 		`[{"tag":"div","attr":{"class":"mydiv1"},"children":[{"tag":"div","attr":{"class":"mydiv2"},"children":[{"tag":"div","children":[{"tag":"input","attr":{"value":"my default text"}}]}]}]}]`},
+	{`P(Some Span(fake(text) Strong(very Em(important Label(news)))))`,
+		`[{"tag":"p","children":[{"tag":"text","text":"Some "},{"tag":"span","children":[{"tag":"text","text":"fake(text) "},{"tag":"strong","children":[{"tag":"text","text":"very "},{"tag":"em","children":[{"tag":"text","text":"important "},{"tag":"label","children":[{"tag":"text","text":"news"}]}]}]}]}]}]`},
+	{`Form(myclass, Input(myid)Button(Submit,default_page,myclass))`,
+		`[{"tag":"form","attr":{"class":"myclass"},"children":[{"tag":"input","attr":{"id":"myid"}},{"tag":"button","attr":{"class":"myclass","page":"default_page"},"children":[{"tag":"text","text":"Submit"}]}]}]`},
 }
