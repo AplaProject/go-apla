@@ -64,24 +64,12 @@ func defaultTag(par parFunc) string {
 func buttonTag(par parFunc) string {
 	defaultTag(par)
 	setAttr(par, `Page`)
-	return ``
-}
-
-func inputTag(par parFunc) string {
-	defaultTag(par)
-	setAttr(par, `Placeholder`)
-	setAttr(par, `Value`)
-	setAttr(par, `Type`)
-	return ``
-}
-
-func contractBtnTag(par parFunc) string {
-	defaultTag(par)
 	setAttr(par, `Contract`)
-	inputs := strings.Split((*par.Pars)[`Inputs`], `,`)
-	if len(inputs) > 0 {
+	setAttr(par, `Alert`)
+	setAttr(par, `PageParams`)
+	if len((*par.Pars)[`Params`]) > 0 {
 		imap := make(map[string]string)
-		for _, v := range inputs {
+		for _, v := range strings.Split((*par.Pars)[`Params`], `,`) {
 			v = strings.TrimSpace(v)
 			if off := strings.IndexByte(v, '='); off == -1 {
 				imap[v] = v
@@ -90,28 +78,40 @@ func contractBtnTag(par parFunc) string {
 			}
 		}
 		if len(imap) > 0 {
-			par.Node.Attr[`inputs`] = imap
+			par.Node.Attr[`params`] = imap
 		}
 	}
 	return ``
 }
 
+func inputTag(par parFunc) string {
+	defaultTag(par)
+	setAttr(par, `Placeholder`)
+	setAttr(par, `Value`)
+	setAttr(par, `Validate`)
+	setAttr(par, `Type`)
+	return ``
+}
+
 var (
 	funcs = map[string]tplFunc{
-		`Div`:            {defaultTag, `div`, `Class,Body`},
-		`Button`:         {buttonTag, `button`, `Body,Page,Class`},
-		`Em`:             {defaultTag, `em`, `Body,Class`},
-		`Form`:           {defaultTag, `form`, `Class,Body`},
-		`Input`:          {inputTag, `input`, `Id,Class,Placeholder,Type,Value`},
-		`Label`:          {defaultTag, `label`, `Body,Class`},
-		`P`:              {defaultTag, `p`, `Body,Class`},
-		`Span`:           {defaultTag, `span`, `Body,Class`},
-		`Strong`:         {defaultTag, `strong`, `Body,Class`},
-		`ContractButton`: {contractBtnTag, `contractbtn`, `Contract,Body,Class,Inputs`},
+		`Div`:    {defaultTag, `div`, `Class,Body`},
+		`Button`: {buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams,Alert`},
+		`Em`:     {defaultTag, `em`, `Body,Class`},
+		`Form`:   {defaultTag, `form`, `Class,Body`},
+		`Input`:  {inputTag, `input`, `Id,Class,Placeholder,Type,Value,Validate`},
+		`Label`:  {defaultTag, `label`, `Body,Class`},
+		`P`:      {defaultTag, `p`, `Body,Class`},
+		`Span`:   {defaultTag, `span`, `Body,Class`},
+		`Strong`: {defaultTag, `strong`, `Body,Class`},
 	}
+	modes = [][]rune{{'(', ')'}, {'{', '}'}}
 )
 
 func appendText(owner *node, text string) {
+	if len(strings.TrimSpace(text)) == 0 {
+		return
+	}
 	if len(text) > 0 {
 		owner.Children = append(owner.Children, &node{Tag: tagText, Text: html.EscapeString(text)})
 	}
@@ -164,7 +164,7 @@ func process(input string, owner *node, vars *map[string]string) {
 		curp            int
 		skip, isFunc    bool
 		curFunc         tplFunc
-		level           int
+		level, mode     int
 	)
 	//	fmt.Println(`Input`, input)
 	name := make([]rune, 0, 128)
@@ -188,7 +188,7 @@ func process(input string, owner *node, vars *map[string]string) {
 				}
 				continue
 			}
-			if len(params[curp]) == 0 && ch != ')' && ch != ',' {
+			if len(params[curp]) == 0 && ch != modes[mode][1] && ch != ',' {
 				if ch >= '!' {
 					if ch == '"' || ch == '`' {
 						pair = ch
@@ -198,20 +198,30 @@ func process(input string, owner *node, vars *map[string]string) {
 				}
 				continue
 			}
+			//			fmt.Println(`CH`, string(ch))
 			switch ch {
 			case ',':
-				if level == 1 {
+				if mode == 0 && level == 1 {
 					params = append(params, ``)
 					curp++
 					continue
 				}
-			case '(':
+			case modes[mode][0]:
 				level++
-			case ')':
+			case modes[mode][1]:
 				if level > 0 {
 					level--
 				}
 				if level == 0 {
+					if mode == 0 && off+1 < len(input) && rune(input[off+1]) == modes[1][0] &&
+						strings.Contains(curFunc.Params, `Body`) {
+						mode = 1
+						params = append(params, `Body:`)
+						curp++
+						skip = true
+						level = 1
+						continue
+					}
 					callFunc(&curFunc, owner, vars, &params)
 					isFunc = false
 					continue
@@ -226,13 +236,14 @@ func process(input string, owner *node, vars *map[string]string) {
 				curp = 0
 				appendText(owner, string(name[:nameOff]))
 				name = name[:0]
+				nameOff = 0
 				level = 1
+				mode = 0
 				continue
 			}
 		}
 		if (ch < 'A' || ch > 'Z') && (ch < 'a' || ch > 'z') {
-			nameOff = off + 1
-			//			chOff = ch
+			nameOff = len(name) + 1
 		}
 		name = append(name, ch)
 	}

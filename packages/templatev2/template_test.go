@@ -45,15 +45,45 @@ var forTest = tplList{
 		`[{"tag":"text","text":"input "},{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"text","text":"Content "},{"tag":"div","attr":{"class":"mypar"}},{"tag":"text","text":" the Div"}]}]`},
 	{`Div(, Input(myid, form-control, Your name)Input(,,,text))`,
 		`[{"tag":"div","children":[{"tag":"input","attr":{"class":"form-control","id":"myid","placeholder":"Your name"}},{"tag":"input","attr":{"type":"text"}}]}]`},
-	{`Div(Class: mydiv1, Body: 
-		Div(Class: mydiv2, 
-			Div(Body: 
-				Input(Value: my default text))))`,
+	{`Div(Class: mydiv1, Body:
+			Div(Class: mydiv2,
+				Div(Body:
+					Input(Value: my default text))))`,
 		`[{"tag":"div","attr":{"class":"mydiv1"},"children":[{"tag":"div","attr":{"class":"mydiv2"},"children":[{"tag":"div","children":[{"tag":"input","attr":{"value":"my default text"}}]}]}]}]`},
 	{`P(Some Span(fake(text) Strong(very Em(important Label(news)))))`,
 		`[{"tag":"p","children":[{"tag":"text","text":"Some "},{"tag":"span","children":[{"tag":"text","text":"fake(text) "},{"tag":"strong","children":[{"tag":"text","text":"very "},{"tag":"em","children":[{"tag":"text","text":"important "},{"tag":"label","children":[{"tag":"text","text":"news"}]}]}]}]}]}]`},
 	{`Form(myclass, Input(myid)Button(Submit,default_page,myclass))`,
 		`[{"tag":"form","attr":{"class":"myclass"},"children":[{"tag":"input","attr":{"id":"myid"}},{"tag":"button","attr":{"class":"myclass","page":"default_page"},"children":[{"tag":"text","text":"Submit"}]}]}]`},
-	{`ContractButton(NewEcosystem, My Contract, myclass, "Name=myid,Id=i10,Value")`,
-		`[{"tag":"contractbtn","attr":{"class":"myclass","contract":"NewEcosystem","inputs":{"Id":"i10","Name":"myid","Value":"Value"}},"children":[{"tag":"text","text":"My Contract"}]}]`},
+	{`Button(My Contract,, myclass, NewEcosystem, "Name=myid,Id=i10,Value", Alert: Message text)`,
+		`[{"tag":"button","attr":{"alert":"Message text","class":"myclass","contract":"NewEcosystem","params":{"Id":"i10","Name":"myid","Value":"Value"}},"children":[{"tag":"text","text":"My Contract"}]}]`},
+	{`Div(myclass)Div()
+				Div()`,
+		`[{"tag":"div","attr":{"class":"myclass"}},{"tag":"div"},{"tag":"div"}]`},
+	{`Div(myclass){Div()
+		P(){
+			Div(id){
+				Span(My text)
+			}
+		}
+	}`,
+		`[{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"div"},{"tag":"p","children":[{"tag":"div","attr":{"class":"id"},"children":[{"tag":"span","children":[{"tag":"text","text":"My text"}]}]}]}]}]`},
+	/*	{`Div(myclass)[]
+			Div()<
+			  Div()>
+			     Div(){
+					Div()(
+						Span(myclass){Some BR()text}
+						If(condition){/*next
+
+						@next@}.ElseIf(){
+
+						}.Else(){
+
+						}
+					)
+				 }
+			  <
+		>
+		[]`,
+				``},*/
 }
