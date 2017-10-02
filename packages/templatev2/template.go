@@ -33,6 +33,7 @@ type node struct {
 	//	Map      map[string]map[string]string `json:"map,omitempty"`
 	Text     string  `json:"text,omitempty"`
 	Children []*node `json:"children,omitempty"`
+	Tail     []*node `json:"tail,omitempty"`
 }
 
 type parFunc struct {
@@ -48,6 +49,37 @@ type tplFunc struct {
 	Tag    string   // HTML tag
 	Params string   // names of parameters
 }
+
+type tailInfo struct {
+	tplFunc
+	Last bool
+}
+
+type forTails struct {
+	Tails map[string]tailInfo
+}
+
+var (
+	funcs = map[string]tplFunc{
+		`Div`:    {defaultTag, `div`, `Class,Body`},
+		`Button`: {buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams,Alert`},
+		`Em`:     {defaultTag, `em`, `Body,Class`},
+		`Form`:   {defaultTag, `form`, `Class,Body`},
+		`If`:     {defaultTag, `if`, `Condition,Body`},
+		`Input`:  {inputTag, `input`, `Id,Class,Placeholder,Type,Value,Validate`},
+		`Label`:  {labelTag, `label`, `Body,Class,For`},
+		`P`:      {defaultTag, `p`, `Body,Class`},
+		`Span`:   {defaultTag, `span`, `Body,Class`},
+		`Strong`: {defaultTag, `strong`, `Body,Class`},
+	}
+	tails = map[string]forTails{
+		`if`: {map[string]tailInfo{
+			`Else`:   {tplFunc{defaultTag, `else`, `Body`}, true},
+			`ElseIf`: {tplFunc{defaultTag, `elseif`, `Condition,Body`}, false},
+		}},
+	}
+	modes = [][]rune{{'(', ')'}, {'{', '}'}}
+)
 
 func setAttr(par parFunc, name string) {
 	if len((*par.Pars)[name]) > 0 {
@@ -93,20 +125,11 @@ func inputTag(par parFunc) string {
 	return ``
 }
 
-var (
-	funcs = map[string]tplFunc{
-		`Div`:    {defaultTag, `div`, `Class,Body`},
-		`Button`: {buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams,Alert`},
-		`Em`:     {defaultTag, `em`, `Body,Class`},
-		`Form`:   {defaultTag, `form`, `Class,Body`},
-		`Input`:  {inputTag, `input`, `Id,Class,Placeholder,Type,Value,Validate`},
-		`Label`:  {defaultTag, `label`, `Body,Class`},
-		`P`:      {defaultTag, `p`, `Body,Class`},
-		`Span`:   {defaultTag, `span`, `Body,Class`},
-		`Strong`: {defaultTag, `strong`, `Body,Class`},
-	}
-	modes = [][]rune{{'(', ')'}, {'{', '}'}}
-)
+func labelTag(par parFunc) string {
+	defaultTag(par)
+	setAttr(par, `For`)
+	return ``
+}
 
 func appendText(owner *node, text string) {
 	if len(strings.TrimSpace(text)) == 0 {
@@ -168,6 +191,7 @@ func process(input string, owner *node, vars *map[string]string) {
 	)
 	//	fmt.Println(`Input`, input)
 	name := make([]rune, 0, 128)
+main:
 	for off, ch := range input {
 		if skip {
 			skip = false
@@ -221,6 +245,16 @@ func process(input string, owner *node, vars *map[string]string) {
 						skip = true
 						level = 1
 						continue
+					}
+					if tail, ok := tails[curFunc.Tag]; ok && off+1 < len(input) && input[off+1] == '.' {
+						for key, _ := range tail.Tails {
+							if strings.HasPrefix(input[off+2:], key+`(`) || strings.HasPrefix(input[off+2:], key+`{`) {
+								skip = true
+								mode = 0
+								level = 0
+								continue main
+							}
+						}
 					}
 					callFunc(&curFunc, owner, vars, &params)
 					isFunc = false

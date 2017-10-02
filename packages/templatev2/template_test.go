@@ -62,11 +62,11 @@ var forTest = tplList{
 	{`Div(myclass){Div()
 		P(){
 			Div(id){
-				Span(My text)
+				Label(My text,myl,forname)
 			}
 		}
 	}`,
-		`[{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"div"},{"tag":"p","children":[{"tag":"div","attr":{"class":"id"},"children":[{"tag":"span","children":[{"tag":"text","text":"My text"}]}]}]}]}]`},
+		`[{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"div"},{"tag":"p","children":[{"tag":"div","attr":{"class":"id"},"children":[{"tag":"label","attr":{"class":"myl","for":"forname"},"children":[{"tag":"text","text":"My text"}]}]}]}]}]`},
 	/*	{`Div(myclass)[]
 			Div()<
 			  Div()>
