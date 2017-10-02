@@ -21,14 +21,14 @@ import (
 )
 
 func authWallet(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	if data.sess.Get("wallet") == nil {
+	if data.wallet == 0 {
 		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 	}
 	return nil
 }
 
 func authState(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	if data.sess.Get("wallet") == nil || data.sess.Get("state").(int64) == 0 {
+	if data.wallet == 0 || data.state <= 1 {
 		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 	}
 	return nil

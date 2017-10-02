@@ -126,7 +126,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 					log.Fatal(err)
 				}
 				transactionStatus := &model.TransactionStatus{Hash: hash, Time: time.Now().Unix(), Type: int64(info.ID),
-					WalletID: c.SessWalletID, CitizenID: c.SessWalletID}
+					WalletID: c.SessWalletID}
 				err = transactionStatus.Create()
 				queueTx := &model.QueueTx{Hash: hash, Data: data}
 				err = queueTx.Create()

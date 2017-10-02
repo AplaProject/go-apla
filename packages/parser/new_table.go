@@ -196,8 +196,8 @@ func (p *NewTableParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	t := &model.Table{
-		Name: tableName,
-		ColumnsAndPermissions: string(jsonColumnsAndPerm),
+		Name:        tableName,
+		Permissions: `{"general_update":"ContractConditions(\"MainCondition\")", "update": {` + colsSQL2 + `}, "insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`,
 	}
 	t.SetTablePrefix(prefix)
 	err = t.Create(p.DbTransaction)

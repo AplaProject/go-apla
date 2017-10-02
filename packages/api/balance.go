@@ -26,19 +26,25 @@ import (
 
 type balanceResult struct {
 	Amount string `json:"amount"`
-	EGS    string `json:"egs"`
+	Money  string `json:"money"`
 }
 
 func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
+	state := data.state
 	wallet := converter.StringToAddress(data.params[`wallet`].(string))
 	if wallet == 0 {
 		return errorAPI(w, fmt.Sprintf(`Wallet %s is invalid`, data.params[`wallet`].(string)), http.StatusBadRequest)
 	}
-	total, err := model.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
+	if sval, ok := data.params[`state`]; ok {
+		state = sval.(int64)
+	}
+	key := &model.Key{}
+	key.SetTablePrefix(state)
+	err := key.Get(wallet)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
-	data.result = &balanceResult{Amount: total, EGS: converter.EGSMoney(total)}
+	data.result = &balanceResult{Amount: key.Amount, Money: converter.EGSMoney(key.Amount)}
 	return nil
 }

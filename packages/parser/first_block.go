@@ -17,10 +17,14 @@
 package parser
 
 import (
+	"encoding/hex"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
@@ -41,19 +45,28 @@ func (p *FirstBlockParser) Validate() error {
 func (p *FirstBlockParser) Action() error {
 	data := p.TxPtr.(*consts.FirstBlock)
 	myAddress := crypto.Address(data.PublicKey)
-	dltWallet := &model.DltWallet{
-		WalletID:      myAddress,
-		Host:          data.Host,
-		AddressVote:   converter.AddressToString(myAddress),
-		PublicKey:     data.PublicKey,
-		NodePublicKey: data.NodePublicKey,
-		Amount:        decimal.NewFromFloat(consts.FIRST_QDLT).String(),
-	}
-
-	err := dltWallet.Create(p.DbTransaction)
+	err := model.ExecSchemaEcosystem(1, myAddress, ``)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	key := &model.Key{
+		ID:        myAddress,
+		PublicKey: data.PublicKey,
+		Amount:    decimal.NewFromFloat(consts.FIRST_QDLT).String(),
+	}
+	if err = key.SetTablePrefix(consts.MainEco).Create(); err != nil {
+		return p.ErrInfo(err)
+	}
+	err = template.LoadContract(`1`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	node := &model.SystemParameterV2{Name: `full_nodes`}
+	if err = node.SaveArray([][]string{{data.Host, converter.Int64ToStr(myAddress),
+		hex.EncodeToString(data.NodePublicKey)}}); err != nil {
+		return p.ErrInfo(err)
+	}
+	syspar.SysUpdate()
 	fullNode := &model.FullNode{WalletID: myAddress, Host: data.Host}
 	err = fullNode.Create(p.DbTransaction)
 	if err != nil {

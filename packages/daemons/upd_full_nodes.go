@@ -27,6 +27,8 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -92,52 +94,42 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	var (
+		hash, data []byte
+	)
 
-	tr := tx.UpdFullNodes{
-		Header: tx.Header{
-			Type:      int(utils.TypeInt("UpdFullNodes")),
-			Time:      curTime,
-			UserID:    myWalletID,
-			StateID:   0,
-			PublicKey: myNodeKey.PublicKey,
-		},
+	contract := smart.GetContract(`@0UpdFullNodes`, 0)
+	if contract == nil {
+		return fmt.Errorf(`there is not @0UpdFullNodes contract`)
 	}
-
-	binSign, err := crypto.Sign(hex.EncodeToString(myNodeKey.PrivateKey), tr.ForSign())
+	info := (*contract).Block.Info.(*script.ContractInfo)
+	var (
+		smartTx     tx.SmartContract
+		toSerialize interface{}
+	)
+	smartTx.Header = tx.Header{Type: int(info.ID), Time: time.Now().Unix(), UserID: myWalletID, StateID: 0}
+	signature, err := crypto.Sign(string(myNodeKey.PrivateKey), smartTx.ForSign())
 	if err != nil {
 		return err
 	}
-	tr.Header.BinSignatures = binSign
-
-	data, err := msgpack.Marshal(tr)
+	toSerialize = tx.SmartContract{
+		Header: tx.Header{Type: int(info.ID), Time: smartTx.Header.Time,
+			UserID: myWalletID, BinSignatures: converter.EncodeLengthPlusData(signature)},
+		Data: make([]byte, 0),
+	}
+	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
 		return err
 	}
-	data = append(converter.DecToBin(int64(tr.Type), 1), data...)
-
-	hash, err := crypto.Hash(data)
-	if err != nil {
-		log.Errorf("hash error %s", err)
+	data = append([]byte{128}, serializedData...)
+	if hash, err = model.SendTx(int64(info.ID), myWalletID, data); err != nil {
 		return err
 	}
-
-	queueTx := &model.QueueTx{Hash: hash}
-	err = queueTx.DeleteTx()
-	if err != nil {
-		return err
-	}
-
-	queueTx.Data = data
-	queueTx.Hash = hash
-	err = queueTx.Save(nil)
-	if err != nil {
-		return nil
-	}
-
 	p := new(parser.Parser)
 	err = p.TxParser(hash, data, true)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

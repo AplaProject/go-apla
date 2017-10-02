@@ -92,16 +92,9 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-	err = model.CreateStateTable(p.DbTransaction, id)
-	if err != nil {
-		return
-	}
+
 	sid := `ContractConditions("MainCondition")` //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
 	psid := sid                                  //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
-	err = model.CreateStateConditions(p.DbTransaction, id, sid, psid, currency, country, p.TxWalletID)
-	if err != nil {
-		return
-	}
 	err = model.CreateSmartContractTable(p.DbTransaction, id)
 	if err != nil {
 		return
@@ -131,27 +124,15 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-
-	err = model.CreateStateTablesTable(p.DbTransaction, id)
-	if err != nil {
-		return
-	}
-	mainCondition := `ContractConditions("MainCondition")`
-	updateConditions := map[string]string{"public_key_0": mainCondition}
-	perm := Permissions{
-		GeneralUpdate: mainCondition,
-		Update:        updateConditions,
-		Insert:        mainCondition,
-		NewColumn:     mainCondition,
-	}
-	jsonPermissions, err := json.Marshal(perm)
-	if err != nil {
-		return
-	}
+	/*
+		err = model.CreateStateTablesTable(id)
+		if err != nil {
+			return
+		}*/
 	t := &model.Table{
-		Name: id + "_citizens",
-		ColumnsAndPermissions: string(jsonPermissions),
-		Conditions:            psid,
+		Name:        id + "_citizens",
+		Permissions: `{"general_update":"` + sid + `", "update": {"public_key_0": "` + sid + `"}, "insert": "` + sid + `", "new_column":"` + sid + `"}`,
+		Conditions:  psid,
 	}
 	t.SetTablePrefix(id)
 	err = t.Create(p.DbTransaction)
@@ -312,11 +293,6 @@ MenuBack(Welcome)`,
 	}
 
 	err = model.CreateStateAppsTable(p.DbTransaction, id)
-	if err != nil {
-		return
-	}
-
-	err = model.CreateStateAnonymsTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}

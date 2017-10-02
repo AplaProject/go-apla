@@ -83,6 +83,8 @@ const ALERT_KEY = `30820122300d06092a864886f70d01010105000382010f003082010a02820
 const UPD_AND_VER_URL = "http://egaas.org"
 const GOOGLE_API_KEY = "AIzaSyBLZlUPgd9uhX05OrsFU68yJOZFrYhZe84"
 
+const MainEco = 1
+
 // LangMap contains supported languages
 var LangMap = map[string]int{"en": 1, "ru": 42}
 

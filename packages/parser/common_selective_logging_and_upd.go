@@ -41,6 +41,9 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	}
 
 	isBytea := getBytea(table)
+	/*	if isCustom, pref, err = p.IsCustomTable(table); err != nil && pref != `notcustom` {
+		return 0, ``, err
+	}*/
 	if isCustom, err = IsCustomTable(table); err != nil {
 		return 0, ``, err
 	}
@@ -59,8 +62,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 					vlen = len(v.(string))
 				}
 			}
-			if isCustom && vlen > 32 {
-				return 0, ``, fmt.Errorf(`hash value cannot be larger than 32 bytes`)
+			if isCustom && vlen > 64 {
+				return 0, ``, fmt.Errorf(`hash value cannot be larger than 64 bytes`)
 			}
 		}
 	}
@@ -73,6 +76,9 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	}
 	log.Debug("addSQLFields %s", addSQLFields)
 	for i, field := range fields {
+		/*if p.AllPkeys[table] == field {
+			continue
+		}*/
 		field = strings.TrimSpace(field)
 		fields[i] = field
 		if field[:1] == "+" || field[:1] == "-" {
@@ -101,6 +107,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 
 	// if there is something to log
 	selectQuery := `SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere
+	//	fmt.Println(`Select`, selectQuery)
 	selectCost, err := model.GetQueryTotalCost(selectQuery)
 	if err != nil {
 		return 0, tableID, err
@@ -112,12 +119,16 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	cost += selectCost
 	log.Debug(`SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere)
 	if whereFields != nil && len(logData) > 0 {
+		/*	if whereFields != nil {
+			if len(logData) == 0 {
+				return tableID, fmt.Errorf(`update of the unknown record`)
+			}*/
 		jsonMap := make(map[string]string)
 		for k, v := range logData {
 			if k == p.AllPkeys[table] {
 				continue
 			}
-			if (isBytea[k] || converter.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"})) && v != "" {
+			if (isBytea[k] || converter.InSliceString(k, []string{"hash", "tx_hash", "pub", "tx_hash", "public_key_0", "node_public_key"})) && v != "" {
 				jsonMap[k] = string(converter.BinToHex([]byte(v)))
 			} else {
 				jsonMap[k] = v
@@ -163,6 +174,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			}
 		}
 		updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere
+		//		fmt.Println(`Update`, updateQuery)
 		updateCost, err := model.GetQueryTotalCost(updateQuery, rollback.RbID)
 		if err != nil {
 			return 0, tableID, err
@@ -174,9 +186,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 		tableID = logData[p.AllPkeys[table]]
 	} else {
+		isID := false
 		addSQLIns0 := ""
 		addSQLIns1 := ""
 		for i := 0; i < len(fields); i++ {
+			if fields[i] == `id` {
+				isID = true
+			}
 			if fields[i][:1] == "+" || fields[i][:1] == "-" {
 				addSQLIns0 += fields[i][1:len(fields[i])] + `,`
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
@@ -199,6 +215,9 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 		if whereFields != nil && whereValues != nil {
 			for i := 0; i < len(whereFields); i++ {
+				if whereFields[i] == `id` {
+					isID = true
+				}
 				addSQLIns0 += `` + whereFields[i] + `,`
 				addSQLIns1 += `'` + whereValues[i] + `',`
 			}
@@ -206,13 +225,25 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		addSQLIns0 = addSQLIns0[0 : len(addSQLIns0)-1]
 		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
 		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSQLIns0+") VALUES ("+addSQLIns1+")")
+		if !isID {
+			id, err := model.GetNextID(table)
+			if err != nil {
+				return 0, ``, err
+			}
+			tableID = converter.Int64ToStr(id)
+			addSQLIns0 += `,id`
+			addSQLIns1 += `,'` + tableID + `'`
+		}
+
 		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0 + `) VALUES (` + addSQLIns1 + `)`
+		//		fmt.Println(`Insert`, insertQuery)
+
 		insertCost, err := model.GetQueryTotalCost(insertQuery)
 		if err != nil {
 			return 0, tableID, err
 		}
 		cost += insertCost
-		tableID, err = model.InsertReturningLastID(p.DbTransaction, table, addSQLIns0, addSQLIns1)
+		err = p.p.DbTransaction.Exec(insertQuery).Error
 		if err != nil {
 			return 0, tableID, err
 		}

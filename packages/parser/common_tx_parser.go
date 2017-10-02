@@ -17,6 +17,7 @@
 package parser
 
 import (
+	//	"encoding/hex"
 	"errors"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -104,13 +105,14 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 	}
 	qtx := &model.QueueTx{}
 	found, err := qtx.GetByHash(hash)
+
+	p.DeleteQueueTx(hash)
 	if !found {
 		return nil
 	}
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-
 	if qtx.FromGate == 0 {
 		m := &model.TransactionStatus{}
 		err = m.SetError(errText, hash)

@@ -1,6 +1,8 @@
 package model
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/jinzhu/gorm"
+)
 
 type InfoBlock struct {
 	Hash           []byte `gorm:"not null"`

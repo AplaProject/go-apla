@@ -38,7 +38,9 @@ type apiData struct {
 	status int
 	result interface{}
 	params map[string]interface{}
-	sess   session.SessionStore
+	state  int64
+	wallet int64
+	//	sess   session.SessionStore
 }
 
 type forSign struct {
@@ -76,23 +78,12 @@ func errorAPI(w http.ResponseWriter, msg string, code int) error {
 }
 
 func getPrefix(data *apiData) (prefix string) {
-	if glob, ok := data.params[`global`].(int64); ok && glob > 0 {
-		prefix = `global`
-	} else {
-		prefix = converter.Int64ToStr(data.sess.Get(`state`).(int64))
-	}
-	return
+	return converter.Int64ToStr(data.state)
 }
 
 func getSignHeader(txName string, data *apiData) tx.Header {
-	var stateID int64
-
-	userID := data.sess.Get(`wallet`).(int64)
-	if data.sess.Get(`state`) != nil {
-		stateID = data.sess.Get(`state`).(int64)
-	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
-		UserID: userID, StateID: stateID}
+		UserID: data.state, StateID: data.wallet}
 }
 
 func getHeader(txName string, data *apiData) (tx.Header, error) {
@@ -108,13 +99,8 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 	if len(signature) == 0 {
 		return tx.Header{}, fmt.Errorf("signature is empty")
 	}
-	var stateID int64
-	userID := data.sess.Get(`wallet`).(int64)
-	if data.sess.Get(`state`) != nil {
-		stateID = data.sess.Get(`state`).(int64)
-	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
-		UserID: userID, StateID: stateID, PublicKey: publicKey,
+		UserID: data.wallet, StateID: data.state, PublicKey: publicKey,
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
@@ -150,12 +136,21 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			return
 		}
 
-		data.sess, err = apiSess.SessionStart(w, r)
+		sess, err := apiSess.SessionStart(w, r)
 		if err != nil {
 			errorAPI(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer data.sess.SessionRelease(w)
+		if sess.Get(`wallet`) != nil {
+			data.wallet = sess.Get(`wallet`).(int64)
+		}
+		if sess.Get(`state`) != nil {
+			data.state = sess.Get(`state`).(int64)
+		}
+		if data.state == 0 {
+			data.state = 1
+		}
+		sess.SessionRelease(w)
 		// Getting and validating request parameters
 		r.ParseForm()
 		data.params = make(map[string]interface{})

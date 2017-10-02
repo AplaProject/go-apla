@@ -28,13 +28,12 @@ var (
 )
 
 func GormInit(user string, pass string, dbName string) error {
-	var err error
-	DBConn, err = gorm.Open("postgres",
+	connect, err := gorm.Open("postgres",
 		fmt.Sprintf("host=localhost user=%s dbname=%s sslmode=disable password=%s", user, dbName, pass))
 	if err != nil {
 		return err
 	}
-
+	DBConn = connect
 	//	DBConn.LogMode(true)
 	return nil
 }
@@ -94,8 +93,27 @@ func GetRecordsCount(tableName string) (int64, error) {
 	return count, err
 }
 
+func ExecSchemaEcosystem(id int, wallet int64, name string) error {
+	schema, err := static.Asset("static/schema-ecosystem-v2.sql")
+	if err != nil {
+		return err
+	}
+	err = DBConn.Exec(fmt.Sprintf(string(schema), id, wallet, name)).Error
+	if err != nil {
+		return err
+	}
+	if id == 1 {
+		schema, err = static.Asset("static/schema-firstecosystem-v2.sql")
+		if err != nil {
+			return err
+		}
+		err = DBConn.Exec(fmt.Sprintf(string(schema), wallet)).Error
+	}
+	return err
+}
+
 func ExecSchema() error {
-	schema, err := static.Asset("static/schema.sql")
+	schema, err := static.Asset("static/schema-v2.sql")
 	if err != nil {
 		os.Remove(*utils.Dir + "/config.ini")
 		return err
@@ -286,11 +304,11 @@ func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err erro
 		return nil, err
 	}
 	ts := &TransactionStatus{
-		Hash:      hash,
-		Time:      time.Now().Unix(),
-		Type:      txType,
-		WalletID:  adminWallet,
-		CitizenID: adminWallet}
+		Hash:     hash,
+		Time:     time.Now().Unix(),
+		Type:     txType,
+		WalletID: adminWallet,
+	}
 	err = ts.Create()
 	if err != nil {
 		return nil, err
@@ -359,21 +377,28 @@ func IsTable(tblname string) bool {
 }
 
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
-	var dataType, characterMaximumLength *string
-	err := DBConn.Raw(`SELECT data_type, character_maximum_length 
-				 FROM information_schema.columns 
-				 WHERE table_name = ? AND column_name = ?`, tableName, columnName).Row().Scan(&dataType, &characterMaximumLength)
-	if err != nil {
-		return nil, err
-	}
-	result := make(map[string]string, 0)
-	if dataType != nil {
-		result["data_type"] = *dataType
-	}
-	if characterMaximumLength != nil {
-		result["character_maximum_length"] = *characterMaximumLength
-	}
-	return result, nil
+	/*	var dataType string
+		var characterMaximumLength string
+			rows, err := DBConn.
+			Table("information_schema.columns").
+			Where("table_name = ? AND column_name = ?", tableName, columnName).
+			Select("data_type", "character_maximum_length").Rows()*/
+	return GetOneRow(`select data_type,character_maximum_length from
+			information_schema.columns where table_name = ? AND column_name = ?`,
+		tableName, columnName).String()
+	/*	if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			rows.Scan(&dataType)
+			rows.Scan(&characterMaximumLength)
+			fmt.Println(`COLDATA`, dataType, characterMaximumLength)
+		}
+		rows.Close()
+		result := make(map[string]string, 0)
+		result["data_type"] = dataType
+		result["character_maximum_length"] = characterMaximumLength
+		return row, nil*/
 }
 
 func GetColumnType(tblname, column string) (itype string, err error) {
@@ -543,7 +568,12 @@ func GetTableData(tableName string, limit int) ([]map[string]string, error) {
 }
 
 func InsertIntoMigration(version string, timeApplied int64) error {
-	return DBConn.Exec(`INSERT INTO migration_history (version, date_applied) VALUES (?, ?)`, version, timeApplied).Error
+	id, err := GetNextID(`migration_history`)
+	if err != nil {
+		return err
+	}
+	return DBConn.Exec(`INSERT INTO migration_history (id, version, date_applied) VALUES (?, ?, ?)`,
+		id, version, timeApplied).Error
 }
 
 func GetMap(query string, name, value string, args ...interface{}) (map[string]string, error) {
@@ -592,4 +622,16 @@ func handleError(err error) error {
 		return nil
 	}
 	return err
+}
+
+func GetNextID(table string) (int64, error) {
+	var id int64
+	rows, err := DBConn.Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
+	if err != nil {
+		return 0, err
+	}
+	rows.Next()
+	rows.Scan(&id)
+	rows.Close()
+	return id + 1, err
 }

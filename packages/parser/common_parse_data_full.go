@@ -161,7 +161,6 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 		}
 
 		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
-
 		p, err := ParseTransaction(bufTransaction)
 		if err != nil {
 			return nil, fmt.Errorf("parse transaction error(%s)", err)
@@ -510,10 +509,6 @@ func playTransaction(p *Parser) error {
 		if err := p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err != nil {
 			return utils.ErrInfo(err)
 		}
-		// pay for CPU resources
-		if err := p.payFPrice(); err != nil {
-			return utils.ErrInfo(err)
-		}
 
 	} else {
 		if p.txParser == nil {
@@ -523,11 +518,6 @@ func playTransaction(p *Parser) error {
 		err := p.txParser.Action()
 		if _, ok := err.(error); ok {
 			return utils.ErrInfo(err.(error))
-		}
-
-		// pay for CPU resources
-		if err := p.payFPrice(); err != nil {
-			return utils.ErrInfo(err)
 		}
 	}
 	log.Debugf("play transaction %s - ok", consts.TxTypes[int(p.TxType)])

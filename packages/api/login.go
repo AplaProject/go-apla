@@ -17,12 +17,12 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type loginResult struct {
@@ -31,12 +31,18 @@ type loginResult struct {
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var msg string
-	switch uid := data.sess.Get(`uid`).(type) {
+	sess, err := apiSess.SessionStart(w, r)
+	if err != nil {
+		return err
+	}
+	defer sess.SessionRelease(w)
+	switch uid := sess.Get(`uid`).(type) {
 	case string:
 		msg = uid
 	default:
 		return errorAPI(w, "unknown uid", http.StatusBadRequest)
 	}
+
 	pubkey := data.params[`pubkey`].([]byte)
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
@@ -48,20 +54,16 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	state := data.params[`state`].(int64)
 	address := crypto.KeyToAddress(pubkey)
 	wallet := crypto.Address(pubkey)
-	var citizen int64
-	if state > 0 {
+	if state > 1 {
 		sysState := &model.SystemState{}
 		if exist, err := sysState.IsExists(state); err == nil && exist {
-			citizen, err = model.Single(`SELECT id FROM "`+converter.Int64ToStr(state)+`_citizens" WHERE id = ?`,
+			citizen, err := model.Single(`SELECT id FROM "`+converter.Int64ToStr(state)+`_keys" WHERE id = ?`,
 				wallet).Int64()
 			if err != nil {
 				return errorAPI(w, err.Error(), http.StatusInternalServerError)
 			}
 			if citizen == 0 {
-				state = 0
-				if utils.PrivCountry {
-					return errorAPI(w, "not a citizen", http.StatusForbidden)
-				}
+				return errorAPI(w, fmt.Sprintf("not a membership of ecosystem %d", state), http.StatusForbidden)
 			}
 		} else {
 			return errorAPI(w, err.Error(), http.StatusInternalServerError)
@@ -69,9 +71,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 
 	data.result = &loginResult{Address: address}
-	data.sess.Set("wallet", wallet)
-	data.sess.Set("address", address)
-	data.sess.Set("citizen", citizen)
-	data.sess.Set("state", state)
+	sess.Set("wallet", wallet)
+	sess.Set("address", address)
+	sess.Set("state", state)
 	return nil
 }

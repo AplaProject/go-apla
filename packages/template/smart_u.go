@@ -171,7 +171,8 @@ func init() {
 // LoadContracts reads and compiles contracts from smart_contracts tables
 func LoadContracts(transaction *model.DbTransaction) (err error) {
 	var states []map[string]string
-	prefix := []string{`global`}
+	var prefix []string
+	prefix = []string{`system`}
 	states, err = model.GetAll(`select id from system_states order by id`, -1)
 	if err != nil {
 		return err
@@ -179,7 +180,6 @@ func LoadContracts(transaction *model.DbTransaction) (err error) {
 	for _, istate := range states {
 		prefix = append(prefix, istate[`id`])
 	}
-	LoadContract(transaction, `global`)
 	for _, ipref := range prefix {
 		if err = LoadContract(transaction, ipref); err != nil {
 			break
@@ -196,13 +196,22 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	if err != nil {
 		return err
 	}
+	state := uint32(converter.StrToInt64(prefix))
 	for _, item := range contracts {
-		if err = smart.Compile(item[`value`], prefix, item[`active`] == `1`, converter.StrToInt64(item[`id`])); err != nil {
-			log.Error("Load Contract", item[`name`], err)
-			fmt.Println("Error Load Contract", item[`name`], err)
+		names := strings.Join(smart.ContractsList(item[`value`]), `,`)
+		owner := script.OwnerInfo{
+			StateID:  state,
+			Active:   item[`active`] == `1`,
+			TableID:  converter.StrToInt64(item[`id`]),
+			WalletID: converter.StrToInt64(item[`wallet_id`]),
+			TokenID:  converter.StrToInt64(item[`token_id`]),
+		}
+		if err = smart.Compile(item[`value`], &owner); err != nil {
+			log.Error("Load Contract", names, err)
+			fmt.Println("Error Load Contract", names, err)
 			//return
 		} else {
-			fmt.Println("OK Load Contract", item[`name`], item[`id`], item[`active`] == `1`)
+			fmt.Println("OK Load Contract", names, item[`id`], item[`active`] == `1`)
 		}
 	}
 	return
@@ -219,12 +228,12 @@ func Balance(walletID int64) (decimal.Decimal, error) {
 
 // EGSRate returns egs_rate of the state
 func EGSRate(idstate int64) (float64, error) {
-	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, `egs_rate`).Float64()
+	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_parameters" WHERE name = ?`, `egs_rate`).Float64()
 }
 
 // StateParam returns the value of state parameters
 func StateParam(idstate int64, name string) (string, error) {
-	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
+	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_parameters" WHERE name = ?`, name).String()
 }
 
 // Param returns the value of the specified varaible

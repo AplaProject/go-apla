@@ -326,12 +326,7 @@ func checkHash(header utils.BlockData, body []byte, prevHash []byte) (bool, erro
 		}
 		nodePublicKey = []byte(wallet.PublicKey)
 	} else {
-		systemState := &model.SystemRecognizedState{}
-		err = systemState.GetState(header.StateID)
-		if err != nil {
-			return true, err
-		}
-		nodePublicKey = systemState.NodePublicKey
+		return true, fmt.Errorf(`header.walletId == 0`)
 	}
 
 	// SIGN from 128 bytes to 512 bytes. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT

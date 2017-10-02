@@ -48,7 +48,7 @@ func Route(route *hr.Router) {
 		anyTx(`PUT`, url, params, preHandle, handle)
 	}
 
-	get(`balance/:wallet`, ``, authWallet, balance)
+	get(`balance/:wallet`, `?state:int64`, authWallet, balance)
 	get(`getuid`, ``, getUID)
 	get(`txstatus/:hash`, ``, authWallet, txstatus)
 	get(`smartcontract/:name`, ``, authState, getSmartContract)

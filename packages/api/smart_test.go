@@ -59,6 +59,18 @@ func TestSmartFields(t *testing.T) {
 	}
 }
 
+func TestMoneyTransfer(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	form := url.Values{`Amount`: {`53330000`}, `Recipient`: {`3330000`}}
+	if err := postTx(`smartcontract/MoneyTransfer`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+}
 func TestSmartContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {

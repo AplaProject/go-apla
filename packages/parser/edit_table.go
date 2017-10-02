@@ -105,7 +105,7 @@ func (p *EditTableParser) Action() error {
 	if err != nil {
 		return err
 	}
-	logData := map[string]string{"rb_id": converter.Int64ToStr(table.RbID), "columns_and_permissions": table.ColumnsAndPermissions}
+	logData := map[string]string{"rb_id": converter.Int64ToStr(table.RbID), "permissions": table.Permissions}
 	jsonMap := make(map[string]string)
 	for k, v := range logData {
 		if k == p.AllPkeys[tableName] {

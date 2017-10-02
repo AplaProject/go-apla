@@ -30,7 +30,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -74,24 +73,13 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 }
 
 func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
-	var result []byte
-	var err error
 	if walletID != 0 {
-		wallet := &model.DltWallet{}
-		err = wallet.GetWallet(walletID)
-		if err != nil {
-			return []byte(""), err
+		node := syspar.GetNode(walletID)
+		if node != nil {
+			return node.Public, nil
 		}
-		result = []byte(wallet.NodePublicKey)
-	} else {
-		srs := &model.SystemRecognizedState{}
-		err = srs.GetState(stateID)
-		if err != nil {
-			return []byte(""), err
-		}
-		result = []byte(srs.NodePublicKey)
 	}
-	return result, nil
+	return nil, fmt.Errorf(`unknown node %d`, walletID)
 }
 
 func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64) error {
@@ -109,12 +97,12 @@ func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64
 }
 
 func IsCustomTable(table string) (isCustom bool, err error) {
-	if (table[0] >= '0' && table[0] <= '9') || strings.HasPrefix(table, `global_`) {
+	if table[0] >= '0' && table[0] <= '9' {
 		if off := strings.IndexByte(table, '_'); off > 0 {
 			prefix := table[:off]
 			tables := &model.Table{}
 			tables.SetTablePrefix(prefix)
-			found, err := tables.Get(table)
+			found, err := tables.Get(table[off+1:])
 			if err != nil {
 				return false, err
 			}
@@ -191,10 +179,6 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 		return &EditPageParser{p, nil}, nil
 	case "EditMenu":
 		return &EditMenuParser{p, nil}, nil
-	case "EditContract":
-		return &EditContractParser{p, nil}, nil
-	case "NewContract":
-		return &NewContractParser{p, nil, 0}, nil
 	case "EditColumn":
 		return &EditColumnParser{p, nil}, nil
 	case "EditTable":
@@ -231,8 +215,6 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 		return &EditSignParser{p, nil}, nil
 	case "EditWallet":
 		return &EditWalletParser{p, nil}, nil
-	case "ActivateContract":
-		return &ActivateContractParser{p, nil, ""}, nil
 	case "NewAccount":
 		return &NewAccountParser{p, nil}, nil
 	}
@@ -309,7 +291,6 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		log.Error("get transaction from log error: %s", utils.ErrInfo(err))
 		return utils.ErrInfo(err)
 	}
-
 	if found {
 		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %x", searchedHash))
 	}
@@ -517,7 +498,7 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
-	govAccount, _ := template.StateParam(int64(p.TxStateID), `gov_account`)
+	govAccount, _ := template.StateParam(int64(p.TxStateID), `founder_account`)
 	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
 		return nil
 	}
@@ -557,7 +538,7 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 	prefix := table[:strings.IndexByte(table, '_')]
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	columnsAndPermissions, err := tables.GetPermissions(table, "update")
+	columnsAndPermissions, err := tables.GetColumns(table, "")
 	if err != nil {
 		return err
 	}
@@ -659,80 +640,5 @@ func (p *Parser) checkPrice(name string) error {
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-// GetContractLimit returns the default maximal cost of contract
-func (p *Parser) GetContractLimit() (ret int64) {
-	// default maximum cost of F
-	p.TxCost = script.CostDefault // ret * fuel
-	return p.TxCost
-}
-
-func (p *Parser) payFPrice() error {
-	var (
-		fromID int64
-		err    error
-	)
-
-	toID := p.BlockData.WalletID // account of node
-	systemParam := &model.SystemParameter{}
-	err = systemParam.Get("fuel_rate")
-	if err != nil {
-		return fmt.Errorf("can't get fuel_rate: %s", err)
-	}
-	fuel, err := decimal.NewFromString(systemParam.Value)
-	if err != nil {
-		return err
-	}
-	if fuel.Cmp(decimal.New(0, 0)) <= 0 {
-		return fmt.Errorf(`fuel rate must be greater than 0`)
-	}
-
-	if p.TxCost == 0 { // embedded transaction
-		fromID = p.TxWalletID
-		if fromID == 0 {
-			fromID = p.TxCitizenID
-		}
-	} else { // contract
-		if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
-			//fromID = p.TxContract.TxGovAccount
-			fromID = converter.StrToInt64(StateVal(p, `gov_account`))
-		} else {
-			// write directly from dlt_wallets of user
-			fromID = p.TxWalletID
-		}
-	}
-	egs := p.TxUsedCost.Mul(fuel)
-	log.Infof("Pay fuel=%v fromID=%d toID=%d cost=%v egs=%v", fuel, fromID, toID, p.TxUsedCost, egs)
-	if egs.Cmp(decimal.New(0, 0)) == 0 { // Is it possible to pay nothing?
-		return nil
-	}
-	wallet := &model.DltWallet{}
-	if err := wallet.GetWallet(fromID); err != nil {
-		return err
-	}
-	wltAmount, err := decimal.NewFromString(wallet.Amount)
-	if err != nil {
-		return err
-	}
-
-	if wltAmount.Cmp(egs) < 0 {
-		egs = wltAmount
-	}
-	commission := egs.Mul(decimal.New(3, 0)).Div(decimal.New(100, 0)).Floor()
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(fromID)}, true); err != nil {
-		return err
-	}
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(toID)}, true); err != nil {
-		return err
-	}
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(syspar.GetCommissionWallet())}, true); err != nil {
-		return err
-	}
-	log.Infof(" Paid commission %v", commission)
 	return nil
 }

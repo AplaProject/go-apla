@@ -30,8 +30,12 @@ type getUIDResult struct {
 
 func getUID(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	uid := converter.Int64ToStr(rand.New(rand.NewSource(time.Now().Unix())).Int63())
-	data.sess.Set("uid", uid)
-
+	sess, err := apiSess.SessionStart(w, r)
+	if err != nil {
+		return err
+	}
+	sess.Set("uid", uid)
+	sess.SessionRelease(w)
 	data.result = &getUIDResult{UID: uid}
 	return nil
 }

@@ -17,6 +17,7 @@
 package syspar
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"sync"
 
@@ -29,6 +30,8 @@ const (
 	NumberNodes = `number_of_dlt_nodes`
 	// FuelRate is the rate
 	FuelRate = `fuel_rate`
+	// FullNodes is the list of nodes
+	FullNodes = `full_nodes`
 	// OpPrice is the costs of operations
 	OpPrice = `op_price`
 	// GapsBetweenBlocks is the time between blocks
@@ -47,6 +50,10 @@ const (
 	MaxIndexes = `max_indexes`
 	// MaxBlockUserTx is the maximum number of user's transactions in one block
 	MaxBlockUserTx = `max_block_user_tx`
+	// SizeFuel is the fuel cost of 1024 bytes of the transaction data
+	SizeFuel = `size_fuel`
+	// SysCurrencies is the list of system currencies
+	SysCurrencies = `sys_currencies`
 	// UpdFullNodesPeriod is the maximum number of user's transactions in one block
 	UpdFullNodesPeriod = `upd_full_nodes_period`
 	// RecoveryAddress is the recovery address
@@ -55,29 +62,26 @@ const (
 	CommissionWallet = `commission_wallet`
 )
 
+type FullNode struct {
+	Host   string
+	Public []byte
+}
+
 var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
-		// For compatible of develop versions
-		// Remove later
-		GapsBetweenBlocks:  `3`,
-		MaxBlockSize:       `67108864`,
-		MaxTxSize:          `33554432`,
-		MaxTxCount:         `100000`,
-		MaxColumns:         `50`,
-		MaxIndexes:         `10`,
-		MaxBlockUserTx:     `100`,
-		UpdFullNodesPeriod: `3600`, // 3600 is for the test time, then we have to put 86400`
-		RecoveryAddress:    `8275283526439353759`,
-		CommissionWallet:   `8275283526439353759`,
 	}
-	cost  = make(map[string]int64)
-	mutex = &sync.RWMutex{}
+	cost    = make(map[string]int64)
+	nodes   = make(map[int64]*FullNode)
+	fuels   = make(map[int64]string)
+	wallets = make(map[int64]string)
+	mutex   = &sync.RWMutex{}
 )
 
 // SysUpdate reloads/updates values of system parameters
 func SysUpdate() error {
-	systemParameters, err := model.GetAllSystemParameters()
+	var err error
+	systemParameters, err := model.GetAllSystemParametersV2()
 	if err != nil {
 		return err
 	}
@@ -89,15 +93,85 @@ func SysUpdate() error {
 
 	cost = make(map[string]int64)
 	json.Unmarshal([]byte(cache[OpPrice]), &cost)
+
+	nodes = make(map[int64]*FullNode)
+	if len(cache[FullNodes]) > 0 {
+		inodes := make([][]string, 0)
+		err = json.Unmarshal([]byte(cache[FullNodes]), &inodes)
+		if err != nil {
+			return err
+		}
+		for _, item := range inodes {
+			if len(item) < 3 {
+				continue
+			}
+			pub, err := hex.DecodeString(item[2])
+			if err != nil {
+				return err
+			}
+			nodes[converter.StrToInt64(item[1])] = &FullNode{Host: item[0], Public: pub}
+		}
+	}
+	getParams := func(name string) (map[int64]string, error) {
+		res := make(map[int64]string)
+		if len(cache[name]) > 0 {
+			ifuels := make([][]string, 0)
+			err = json.Unmarshal([]byte(cache[name]), &ifuels)
+			if err != nil {
+				return res, err
+			}
+			for _, item := range ifuels {
+				if len(item) < 2 {
+					continue
+				}
+				res[converter.StrToInt64(item[0])] = item[1]
+			}
+		}
+		return res, nil
+	}
+	fuels, err = getParams(FuelRate)
+	wallets, err = getParams(CommissionWallet)
+
 	return err
+}
+
+func GetNode(wallet int64) *FullNode {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if ret, ok := nodes[wallet]; ok {
+		return ret
+	}
+	return nil
 }
 
 func SysInt64(name string) int64 {
 	return converter.StrToInt64(SysString(name))
 }
 
+func GetSizeFuel() int64 {
+	return SysInt64(SizeFuel)
+}
+
 func GetBlockchainURL() string {
 	return SysString(BlockchainURL)
+}
+
+func GetFuelRate(ecosystem int64) string {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if ret, ok := fuels[ecosystem]; ok {
+		return ret
+	}
+	return ``
+}
+
+func GetCommissionWallet(ecosystem int64) string {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if ret, ok := wallets[ecosystem]; ok {
+		return ret
+	}
+	return wallets[1]
 }
 
 func GetUpdFullNodesPeriod() int64 {
@@ -114,10 +188,6 @@ func GetMaxTxSize() int64 {
 
 func GetRecoveryAddress() int64 {
 	return converter.StrToInt64(SysString(RecoveryAddress))
-}
-
-func GetCommissionWallet() int64 {
-	return converter.StrToInt64(SysString(CommissionWallet))
 }
 
 func GetGapsBetweenBlocks() int {

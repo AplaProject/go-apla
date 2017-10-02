@@ -4,9 +4,13 @@ import "fmt"
 
 type SmartContract struct {
 	Header
-	Data []byte
+	TokenEcosystem int64
+	MaxSum         string
+	PayOver        string
+	Data           []byte
 }
 
 func (s SmartContract) ForSign() string {
-	return fmt.Sprintf("%d,%d,%d,%d", s.Type, s.Time, s.UserID, s.StateID)
+	return fmt.Sprintf("%d,%d,%d,%d,%d,%s,%s", s.Type, s.Time, s.UserID, s.StateID,
+		s.TokenEcosystem, s.MaxSum, s.PayOver)
 }
