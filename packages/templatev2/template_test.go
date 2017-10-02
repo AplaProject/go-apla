@@ -30,7 +30,7 @@ type tplList []tplItem
 func TestJSON(t *testing.T) {
 
 	for _, item := range forTest {
-		templ := Template2JSON(item.input)
+		templ := Template2JSON(item.input, false)
 		if string(templ) != item.want {
 			t.Errorf(`wrong json %s != %s`, templ, item.want)
 			return
@@ -67,23 +67,32 @@ var forTest = tplList{
 		}
 	}`,
 		`[{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"div"},{"tag":"p","children":[{"tag":"div","attr":{"class":"id"},"children":[{"tag":"label","attr":{"class":"myl","for":"forname"},"children":[{"tag":"text","text":"My text"}]}]}]}]}]`},
-	/*	{`Div(myclass)[]
-			Div()<
-			  Div()>
-			     Div(){
-					Div()(
-						Span(myclass){Some BR()text}
-						If(condition){/*next
+	{`If(true,OK)If(false){Skip}.Else{Span(Else OK)}`,
+		`[{"tag":"text","text":"OK"},{"tag":"span","children":[{"tag":"text","text":"Else OK"}]}]`},
+	{`If(false,First).ElseIf(0){Skip}.ElseIf(1){
+		Second Span(If(text){item})
+	}.ElseIf(true){Third}.Else{Fourth}`,
+		`[{"tag":"text","text":"Second "},{"tag":"span","children":[{"tag":"text","text":"item"}]}]`},
+}
 
-						@next@}.ElseIf(){
+func TestFullJSON(t *testing.T) {
 
-						}.Else(){
+	for _, item := range forFullTest {
+		templ := Template2JSON(item.input, true)
+		if string(templ) != item.want {
+			t.Errorf(`wrong json %s != %s`, templ, item.want)
+			return
+		}
+	}
+}
 
-						}
-					)
-				 }
-			  <
-		>
-		[]`,
-				``},*/
+var forFullTest = tplList{
+	{`Simple text +=<b>bold</b>`, `[{"tag":"text","text":"Simple text +=\u0026lt;b\u0026gt;bold\u0026lt;/b\u0026gt;"}]`},
+	{`Div(myclass control, Content of the Div)`, `[{"tag":"div","attr":{"class":"myclass control"},"children":[{"tag":"text","text":"Content of the Div"}]}]`},
+	{`If(true,OK)If(false){Skip}.Else{Span(Else OK)}`,
+		`[{"tag":"if","attr":{"condition":"true"},"children":[{"tag":"text","text":"OK"}]},{"tag":"if","attr":{"condition":"false"},"children":[{"tag":"text","text":"Skip"}],"tail":[{"tag":"else","children":[{"tag":"span","children":[{"tag":"text","text":"Else OK"}]}]}]}]`},
+	{`If(false,First).ElseIf(0){Skip}.ElseIf(1){
+		Second
+	}.ElseIf(true){Third}.Else{Fourth}`,
+		`[{"tag":"if","attr":{"condition":"false"},"children":[{"tag":"text","text":"First"}],"tail":[{"tag":"elseif","attr":{"condition":"0"},"children":[{"tag":"text","text":"Skip"}]},{"tag":"elseif","attr":{"condition":"1"},"children":[{"tag":"text","text":"Second"}]},{"tag":"elseif","attr":{"condition":"true"},"children":[{"tag":"text","text":"Third"}]},{"tag":"else","children":[{"tag":"text","text":"Fourth"}]}]}]`},
 }
