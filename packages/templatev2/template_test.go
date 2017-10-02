@@ -76,6 +76,9 @@ var forTest = tplList{
 	{`Button(Page: link){My Button}.Alert(ConfirmButton: ConfBtn, CancelButton: CancelBtn, 
 		   Text: Alert text, Icon:myicon)`,
 		`[{"tag":"button","attr":{"alert":{"cancelbutton":"CancelBtn","confirmbutton":"ConfBtn","icon":"myicon","text":"Alert text"},"page":"link"},"children":[{"tag":"text","text":"My Button"}]}]`},
+	{`Input(myid, form-control, Your name).Validate(minLength: 6, maxLength: 20)
+	InputErr(Name: myid, minLength: minLength error)`,
+		`[{"tag":"input","attr":{"class":"form-control","name":"myid","placeholder":"Your name","validate":{"maxlength":"20","minlength":"6"}}},{"tag":"inputerr","attr":{"minlength":"minLength error","name":"myid"}}]`},
 }
 
 func TestFullJSON(t *testing.T) {

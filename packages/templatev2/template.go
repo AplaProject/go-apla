@@ -66,14 +66,14 @@ type forTails struct {
 
 var (
 	funcs = map[string]tplFunc{
-		`Div`:    {defaultTag, defaultTag, `div`, `Class,Body`},
-		`Em`:     {defaultTag, defaultTag, `em`, `Body,Class`},
-		`Form`:   {defaultTag, defaultTag, `form`, `Class,Body`},
-		`Input`:  {defaultTag, defaultTag, `input`, `Name,Class,Placeholder,Type,Value`},
-		`Label`:  {defaultTag, defaultTag, `label`, `Body,Class,For`},
-		`P`:      {defaultTag, defaultTag, `p`, `Body,Class`},
-		`Span`:   {defaultTag, defaultTag, `span`, `Body,Class`},
-		`Strong`: {defaultTag, defaultTag, `strong`, `Body,Class`},
+		`Div`:      {defaultTag, defaultTag, `div`, `Class,Body`},
+		`Em`:       {defaultTag, defaultTag, `em`, `Body,Class`},
+		`Form`:     {defaultTag, defaultTag, `form`, `Class,Body`},
+		`InputErr`: {defaultTag, defaultTag, `inputerr`, `*`},
+		`Label`:    {defaultTag, defaultTag, `label`, `Body,Class,For`},
+		`P`:        {defaultTag, defaultTag, `p`, `Body,Class`},
+		`Span`:     {defaultTag, defaultTag, `span`, `Body,Class`},
+		`Strong`:   {defaultTag, defaultTag, `strong`, `Body,Class`},
 	}
 	tails = map[string]forTails{
 		`button`: {map[string]tailInfo{
@@ -83,6 +83,9 @@ var (
 			`Else`:   {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
 			`ElseIf`: {tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false},
 		}},
+		`input`: {map[string]tailInfo{
+			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, true},
+		}},
 	}
 	modes = [][]rune{{'(', ')'}, {'{', '}'}}
 )
@@ -90,6 +93,7 @@ var (
 func init() {
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
+	funcs[`Input`] = tplFunc{inputTag, inputTag, `input`, `Name,Class,Placeholder,Type,Value`}
 }
 
 func setAttr(par parFunc, name string) {
@@ -124,6 +128,35 @@ func alertFull(par parFunc) string {
 	return ``
 }
 
+func validateTag(par parFunc) string {
+	setAllAttr(par)
+	par.Owner.Attr[`validate`] = par.Node.Attr
+	return ``
+}
+
+func validateFull(par parFunc) string {
+	setAllAttr(par)
+	par.Owner.Tail = append(par.Owner.Tail, par.Node)
+	return ``
+}
+
+func defaultTail(par parFunc, tag string) {
+	if par.Tails != nil {
+		for _, v := range *par.Tails {
+			name := (*v)[len(*v)-1]
+			curFunc := tails[tag].Tails[name].tplFunc
+			pars := (*v)[:len(*v)-1]
+			callFunc(&curFunc, par.Node, par.Vars, &pars, nil)
+		}
+	}
+}
+
+func inputTag(par parFunc) string {
+	defaultTag(par)
+	defaultTail(par, `input`)
+	return ``
+}
+
 func buttonTag(par parFunc) string {
 	defaultTag(par)
 	if len((*par.Pars)[`Params`]) > 0 {
@@ -140,14 +173,7 @@ func buttonTag(par parFunc) string {
 			par.Node.Attr[`params`] = imap
 		}
 	}
-	if par.Tails != nil {
-		for _, v := range *par.Tails {
-			name := (*v)[len(*v)-1]
-			curFunc := tails[`button`].Tails[name].tplFunc
-			pars := (*v)[:len(*v)-1]
-			callFunc(&curFunc, par.Node, par.Vars, &pars, nil)
-		}
-	}
+	defaultTail(par, `button`)
 	return ``
 }
 
@@ -275,17 +301,27 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 	parFunc := parFunc{
 		Vars: vars,
 	}
-	for i, v := range strings.Split(curFunc.Params, `,`) {
-		if i < len(*params) {
-			val := strings.TrimSpace((*params)[i])
+	if curFunc.Params == `*` {
+		for _, v := range *params {
+			val := strings.TrimSpace(v)
 			off := strings.IndexByte(val, ':')
-			if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
+			if off != -1 {
 				pars[val[:off]] = strings.TrimSpace(val[off+1:])
-			} else {
-				pars[v] = val
 			}
-		} else if _, ok := pars[v]; !ok {
-			pars[v] = ``
+		}
+	} else {
+		for i, v := range strings.Split(curFunc.Params, `,`) {
+			if i < len(*params) {
+				val := strings.TrimSpace((*params)[i])
+				off := strings.IndexByte(val, ':')
+				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
+					pars[val[:off]] = strings.TrimSpace(val[off+1:])
+				} else {
+					pars[v] = val
+				}
+			} else if _, ok := pars[v]; !ok {
+				pars[v] = ``
+			}
 		}
 	}
 	if len(curFunc.Tag) > 0 {
