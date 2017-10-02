@@ -44,7 +44,7 @@ var forTest = tplList{
 	{`input Div(myclass, Content Div(mypar) the Div)`,
 		`[{"tag":"text","text":"input "},{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"text","text":"Content "},{"tag":"div","attr":{"class":"mypar"}},{"tag":"text","text":" the Div"}]}]`},
 	{`Div(, Input(myid, form-control, Your name)Input(,,,text))`,
-		`[{"tag":"div","children":[{"tag":"input","attr":{"class":"form-control","id":"myid","placeholder":"Your name"}},{"tag":"input","attr":{"type":"text"}}]}]`},
+		`[{"tag":"div","children":[{"tag":"input","attr":{"class":"form-control","name":"myid","placeholder":"Your name"}},{"tag":"input","attr":{"type":"text"}}]}]`},
 	{`Div(Class: mydiv1, Body:
 			Div(Class: mydiv2,
 				Div(Body:
@@ -53,7 +53,7 @@ var forTest = tplList{
 	{`P(Some Span(fake(text) Strong(very Em(important Label(news)))))`,
 		`[{"tag":"p","children":[{"tag":"text","text":"Some "},{"tag":"span","children":[{"tag":"text","text":"fake(text) "},{"tag":"strong","children":[{"tag":"text","text":"very "},{"tag":"em","children":[{"tag":"text","text":"important "},{"tag":"label","children":[{"tag":"text","text":"news"}]}]}]}]}]}]`},
 	{`Form(myclass, Input(myid)Button(Submit,default_page,myclass))`,
-		`[{"tag":"form","attr":{"class":"myclass"},"children":[{"tag":"input","attr":{"id":"myid"}},{"tag":"button","attr":{"class":"myclass","page":"default_page"},"children":[{"tag":"text","text":"Submit"}]}]}]`},
+		`[{"tag":"form","attr":{"class":"myclass"},"children":[{"tag":"input","attr":{"name":"myid"}},{"tag":"button","attr":{"class":"myclass","page":"default_page"},"children":[{"tag":"text","text":"Submit"}]}]}]`},
 	{`Button(My Contract,, myclass, NewEcosystem, "Name=myid,Id=i10,Value", Alert: Message text)`,
 		`[{"tag":"button","attr":{"alert":"Message text","class":"myclass","contract":"NewEcosystem","params":{"Id":"i10","Name":"myid","Value":"Value"}},"children":[{"tag":"text","text":"My Contract"}]}]`},
 	{`Div(myclass)Div()

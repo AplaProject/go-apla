@@ -66,7 +66,7 @@ var (
 		`Em`:     {defaultTag, `em`, `Body,Class`},
 		`Form`:   {defaultTag, `form`, `Class,Body`},
 		`If`:     {defaultTag, `if`, `Condition,Body`},
-		`Input`:  {inputTag, `input`, `Id,Class,Placeholder,Type,Value,Validate`},
+		`Input`:  {inputTag, `input`, `Name,Class,Placeholder,Type,Value,Validate`},
 		`Label`:  {labelTag, `label`, `Body,Class,For`},
 		`P`:      {defaultTag, `p`, `Body,Class`},
 		`Span`:   {defaultTag, `span`, `Body,Class`},
@@ -89,7 +89,7 @@ func setAttr(par parFunc, name string) {
 
 func defaultTag(par parFunc) string {
 	setAttr(par, `Class`)
-	setAttr(par, `Id`)
+	setAttr(par, `Name`)
 	return ``
 }
 
