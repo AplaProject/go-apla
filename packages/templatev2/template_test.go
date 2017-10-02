@@ -54,8 +54,8 @@ var forTest = tplList{
 		`[{"tag":"p","children":[{"tag":"text","text":"Some "},{"tag":"span","children":[{"tag":"text","text":"fake(text) "},{"tag":"strong","children":[{"tag":"text","text":"very "},{"tag":"em","children":[{"tag":"text","text":"important "},{"tag":"label","children":[{"tag":"text","text":"news"}]}]}]}]}]}]`},
 	{`Form(myclass, Input(myid)Button(Submit,default_page,myclass))`,
 		`[{"tag":"form","attr":{"class":"myclass"},"children":[{"tag":"input","attr":{"name":"myid"}},{"tag":"button","attr":{"class":"myclass","page":"default_page"},"children":[{"tag":"text","text":"Submit"}]}]}]`},
-	{`Button(My Contract,, myclass, NewEcosystem, "Name=myid,Id=i10,Value", Alert: Message text)`,
-		`[{"tag":"button","attr":{"alert":"Message text","class":"myclass","contract":"NewEcosystem","params":{"Id":"i10","Name":"myid","Value":"Value"}},"children":[{"tag":"text","text":"My Contract"}]}]`},
+	{`Button(My Contract,, myclass, NewEcosystem, "Name=myid,Id=i10,Value")`,
+		`[{"tag":"button","attr":{"class":"myclass","contract":"NewEcosystem","params":{"Id":"i10","Name":"myid","Value":"Value"}},"children":[{"tag":"text","text":"My Contract"}]}]`},
 	{`Div(myclass)Div()
 				Div()`,
 		`[{"tag":"div","attr":{"class":"myclass"}},{"tag":"div"},{"tag":"div"}]`},
@@ -73,6 +73,9 @@ var forTest = tplList{
 		Second Span(If(text){item})
 	}.ElseIf(true){Third}.Else{Fourth}`,
 		`[{"tag":"text","text":"Second "},{"tag":"span","children":[{"tag":"text","text":"item"}]}]`},
+	{`Button(Page: link){My Button}.Alert(ConfirmButton: ConfBtn, CancelButton: CancelBtn, 
+		   Text: Alert text, Icon:myicon)`,
+		`[{"tag":"button","attr":{"alert":{"cancelbutton":"CancelBtn","confirmbutton":"ConfBtn","icon":"myicon","text":"Alert text"},"page":"link"},"children":[{"tag":"text","text":"My Button"}]}]`},
 }
 
 func TestFullJSON(t *testing.T) {
@@ -95,4 +98,7 @@ var forFullTest = tplList{
 		Second
 	}.ElseIf(true){Third}.Else{Fourth}`,
 		`[{"tag":"if","attr":{"condition":"false"},"children":[{"tag":"text","text":"First"}],"tail":[{"tag":"elseif","attr":{"condition":"0"},"children":[{"tag":"text","text":"Skip"}]},{"tag":"elseif","attr":{"condition":"1"},"children":[{"tag":"text","text":"Second"}]},{"tag":"elseif","attr":{"condition":"true"},"children":[{"tag":"text","text":"Third"}]},{"tag":"else","children":[{"tag":"text","text":"Fourth"}]}]}]`},
+	{`Button(Page: link){My Button}.Alert(ConfirmButton: ConfBtn, CancelButton: CancelBtn, 
+			Text: Alert text, Icon:myicon)`,
+		`[{"tag":"button","attr":{"page":"link"},"children":[{"tag":"text","text":"My Button"}],"tail":[{"tag":"alert","attr":{"cancelbutton":"CancelBtn","confirmbutton":"ConfBtn","icon":"myicon","text":"Alert text"}}]}]`},
 }

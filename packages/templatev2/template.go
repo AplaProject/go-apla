@@ -67,16 +67,18 @@ type forTails struct {
 var (
 	funcs = map[string]tplFunc{
 		`Div`:    {defaultTag, defaultTag, `div`, `Class,Body`},
-		`Button`: {buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams,Alert`},
 		`Em`:     {defaultTag, defaultTag, `em`, `Body,Class`},
 		`Form`:   {defaultTag, defaultTag, `form`, `Class,Body`},
-		`Input`:  {inputTag, inputTag, `input`, `Name,Class,Placeholder,Type,Value,Validate`},
-		`Label`:  {labelTag, labelTag, `label`, `Body,Class,For`},
+		`Input`:  {defaultTag, defaultTag, `input`, `Name,Class,Placeholder,Type,Value`},
+		`Label`:  {defaultTag, defaultTag, `label`, `Body,Class,For`},
 		`P`:      {defaultTag, defaultTag, `p`, `Body,Class`},
 		`Span`:   {defaultTag, defaultTag, `span`, `Body,Class`},
 		`Strong`: {defaultTag, defaultTag, `strong`, `Body,Class`},
 	}
 	tails = map[string]forTails{
+		`button`: {map[string]tailInfo{
+			`Alert`: {tplFunc{alertTag, alertFull, `alert`, `ConfirmButton,CancelButton,Text,Icon`}, true},
+		}},
 		`if`: {map[string]tailInfo{
 			`Else`:   {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
 			`ElseIf`: {tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false},
@@ -86,6 +88,7 @@ var (
 )
 
 func init() {
+	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 }
 
@@ -95,19 +98,34 @@ func setAttr(par parFunc, name string) {
 	}
 }
 
+func setAllAttr(par parFunc) {
+	for key, v := range *par.Pars {
+		if key != `Body` && len(v) > 0 {
+			par.Node.Attr[strings.ToLower(key)] = v
+		}
+	}
+}
+
 func defaultTag(par parFunc) string {
-	setAttr(par, `Class`)
-	setAttr(par, `Name`)
+	setAllAttr(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return ``
+}
+
+func alertTag(par parFunc) string {
+	setAllAttr(par)
+	par.Owner.Attr[`alert`] = par.Node.Attr
+	return ``
+}
+
+func alertFull(par parFunc) string {
+	setAllAttr(par)
+	par.Owner.Tail = append(par.Owner.Tail, par.Node)
 	return ``
 }
 
 func buttonTag(par parFunc) string {
 	defaultTag(par)
-	setAttr(par, `Page`)
-	setAttr(par, `Contract`)
-	setAttr(par, `Alert`)
-	setAttr(par, `PageParams`)
 	if len((*par.Pars)[`Params`]) > 0 {
 		imap := make(map[string]string)
 		for _, v := range strings.Split((*par.Pars)[`Params`], `,`) {
@@ -120,6 +138,14 @@ func buttonTag(par parFunc) string {
 		}
 		if len(imap) > 0 {
 			par.Node.Attr[`params`] = imap
+		}
+	}
+	if par.Tails != nil {
+		for _, v := range *par.Tails {
+			name := (*v)[len(*v)-1]
+			curFunc := tails[`button`].Tails[name].tplFunc
+			pars := (*v)[:len(*v)-1]
+			callFunc(&curFunc, par.Node, par.Vars, &pars, nil)
 		}
 	}
 	return ``
@@ -196,7 +222,6 @@ func ifFull(par parFunc) string {
 			name := (*v)[len(*v)-1]
 			curFunc := tails[`if`].Tails[name].tplFunc
 			pars := (*v)[:len(*v)-1]
-			//			fmt.Println(`TAIL`, cond, name, curFunc, v, pars)
 			callFunc(&curFunc, par.Node, par.Vars, &pars, nil)
 		}
 	}
@@ -221,33 +246,14 @@ func elseifFull(par parFunc) string {
 }
 
 func elseTag(par parFunc) string {
-	if (*par.Vars)[`_full`] == `1` {
-		par.Owner.Tail = append(par.Owner.Tail, par.Node)
-	} else {
-		for _, item := range par.Node.Children {
-			par.Owner.Children = append(par.Owner.Children, item)
-		}
+	for _, item := range par.Node.Children {
+		par.Owner.Children = append(par.Owner.Children, item)
 	}
 	return ``
 }
 
 func elseFull(par parFunc) string {
 	par.Owner.Tail = append(par.Owner.Tail, par.Node)
-	return ``
-}
-
-func inputTag(par parFunc) string {
-	defaultTag(par)
-	setAttr(par, `Placeholder`)
-	setAttr(par, `Value`)
-	setAttr(par, `Validate`)
-	setAttr(par, `Type`)
-	return ``
-}
-
-func labelTag(par parFunc) string {
-	defaultTag(par)
-	setAttr(par, `For`)
 	return ``
 }
 
