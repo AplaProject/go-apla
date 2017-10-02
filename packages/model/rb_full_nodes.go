@@ -8,7 +8,7 @@ type RbFullNode struct {
 }
 
 func (r *RbFullNode) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(r).Error
+	return GetDB(transaction).Create(r).Error
 }
 
 func (r *RbFullNode) GetByRbID(id int64) error {

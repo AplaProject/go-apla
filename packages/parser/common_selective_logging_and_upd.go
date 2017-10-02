@@ -243,11 +243,12 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			return 0, tableID, err
 		}
 		cost += insertCost
-		err = p.p.DbTransaction.Exec(insertQuery).Error
-		if err != nil {
-			return 0, tableID, err
-		}
+		err = model.GetDB(p.DbTransaction).Exec(insertQuery).Error
 	}
+	if err != nil {
+		return 0, tableID, err
+	}
+
 	if generalRollback {
 		rollbackTx := &model.RollbackTx{
 			BlockID:   p.BlockData.BlockID,

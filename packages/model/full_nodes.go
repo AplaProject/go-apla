@@ -34,7 +34,7 @@ func (fn *FullNode) FindNodeByID(nodeID int64) error {
 
 func (fn *FullNode) GetAllFullNodesHasWalletID(transaction *DbTransaction) ([]FullNode, error) {
 	result := make([]FullNode, 0)
-	err := getDB(transaction).Where("wallet_id != 0").Find(&result).Error
+	err := GetDB(transaction).Where("wallet_id != 0").Find(&result).Error
 	return result, err
 }
 
@@ -43,7 +43,7 @@ func (fn *FullNode) GetRbIDFullNodesWithWallet() error {
 }
 
 func (fn *FullNode) DeleteNodesWithWallets(transaction *DbTransaction) error {
-	return getDB(transaction).Exec("DELETE FROM full_nodes WHERE wallet_id != 0").Error
+	return GetDB(transaction).Exec("DELETE FROM full_nodes WHERE wallet_id != 0").Error
 }
 
 func (fn *FullNode) FindNodeById(nodeid int64) error {
@@ -51,7 +51,7 @@ func (fn *FullNode) FindNodeById(nodeid int64) error {
 }
 
 func (fn *FullNode) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(fn).Error
+	return GetDB(transaction).Create(fn).Error
 }
 
 func FullNodeCreateTable() error {
@@ -97,7 +97,7 @@ func (fn *FullNode) ToMap() map[string]string {
 }
 
 func (fn *FullNode) GetMaxID(transaction *DbTransaction) (int32, error) {
-	err := getDB(transaction).Last(fn).Error
+	err := GetDB(transaction).Last(fn).Error
 	if err == nil {
 		return fn.ID, nil
 	}

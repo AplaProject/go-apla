@@ -305,7 +305,7 @@ func (c *Controller) SaveQueue() (string, error) {
 			return "", utils.ErrInfo(err)
 		}
 		if myWalletID == walletID {
-			nodeKeys := &model.MyNodeKey{PublicKey: converter.HexToBin(publicKey), PrivateKey: converter.HexToBin(privateKey)}
+			nodeKeys := &model.MyNodeKey{PublicKey: converter.HexToBin(publicKey), PrivateKey: string(privateKey)}
 			err = nodeKeys.Create()
 			if err != nil {
 				return "", utils.ErrInfo(err)

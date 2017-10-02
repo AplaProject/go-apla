@@ -23,8 +23,6 @@ import (
 
 	"context"
 
-	"encoding/hex"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
@@ -94,7 +92,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 	log.Debugf("transactions to put in new block: %+v", trs)
 
-	blockBin, err := generateNextBlock(prevBlock, *trs, hex.EncodeToString(nodeKey.PrivateKey), config, time.Now().Unix())
+	blockBin, err := generateNextBlock(prevBlock, *trs, nodeKey.PrivateKey, config, time.Now().Unix())
 	if err != nil {
 		log.Errorf("can't generate block: %s", err)
 		return err
@@ -136,6 +134,8 @@ func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key 
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debugf("generate block for sign: %s, key: %x, signed: %x", forSign, key, signed)
 
 	var buf bytes.Buffer
 	// fill header

@@ -22,7 +22,7 @@ func (sp *StateParameter) SetTablePrefix(tablePrefix string) *StateParameter {
 }
 
 func (sp *StateParameter) GetByNameTransaction(transaction *DbTransaction, name string) error {
-	return handleError(getDB(transaction).Where("name = ?", name).First(sp).Error)
+	return handleError(GetDB(transaction).Where("name = ?", name).First(sp).Error)
 }
 func (sp *StateParameter) GetByName(name string) error {
 	return handleError(DBConn.Where("name = ?", name).First(sp).Error)

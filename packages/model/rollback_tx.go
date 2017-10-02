@@ -26,13 +26,13 @@ func (rt *RollbackTx) DeleteByHash() error {
 }
 
 func (rt *RollbackTx) DeleteByHashAndTableName(transaction *DbTransaction) error {
-	return getDB(transaction).Where("tx_hash = ? and table_name = ?", rt.TxHash, rt.NameTable).Delete(rt).Error
+	return GetDB(transaction).Where("tx_hash = ? and table_name = ?", rt.TxHash, rt.NameTable).Delete(rt).Error
 }
 
 func (rt *RollbackTx) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(rt).Error
+	return GetDB(transaction).Create(rt).Error
 }
 
 func (rt *RollbackTx) Get(dbTransaction *DbTransaction, transactionHash []byte, tableName string) error {
-	return getDB(dbTransaction).Where("tx_hash = ? AND table_name = ?", transactionHash, tableName).First(rt).Error
+	return GetDB(dbTransaction).Where("tx_hash = ? AND table_name = ?", transactionHash, tableName).First(rt).Error
 }

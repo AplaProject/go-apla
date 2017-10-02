@@ -68,7 +68,7 @@ func (tr *DbTransaction) Commit() error {
 	return tr.conn.Commit().Error
 }
 
-func getDB(tr *DbTransaction) *gorm.DB {
+func GetDB(tr *DbTransaction) *gorm.DB {
 	if tr != nil && tr.conn != nil {
 		return tr.conn
 	}
@@ -139,7 +139,7 @@ func GetTables() ([]string, error) {
 }
 
 func Update(transaction *DbTransaction, tblname, set, where string) error {
-	return getDB(transaction).Exec(`UPDATE "` + tblname + `" SET ` + set + " " + where).Error
+	return GetDB(transaction).Exec(`UPDATE "` + tblname + `" SET ` + set + " " + where).Error
 }
 
 func Delete(tblname, where string) error {
@@ -154,7 +154,7 @@ func InsertReturningLastID(transaction *DbTransaction, table, columns, values st
 	}
 	insertQuery := `INSERT INTO "` + table + `" (` + columns + `) VALUES (` + values + `) RETURNING ` + returning
 
-	err = getDB(transaction).Raw(insertQuery).Row().Scan(&result)
+	err = GetDB(transaction).Raw(insertQuery).Row().Scan(&result)
 	if err != nil {
 		return "", err
 	}
@@ -356,7 +356,7 @@ func GetMyWalletID() (int64, error) {
 }
 
 func AlterTableAddColumn(transaction *DbTransaction, tableName, columnName, columnType string) error {
-	return getDB(transaction).Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
+	return GetDB(transaction).Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
 }
 
 func AlterTableDropColumn(tableName, columnName string) error {
@@ -364,7 +364,7 @@ func AlterTableDropColumn(tableName, columnName string) error {
 }
 
 func CreateIndex(transaction *DbTransaction, indexName, tableName, onColumn string) error {
-	return getDB(transaction).Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
+	return GetDB(transaction).Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
 }
 
 func IsTable(tblname string) bool {
@@ -500,7 +500,7 @@ func GetNameList(tableName string, count int) ([]map[string]string, error) {
 }
 
 func DropTable(transaction *DbTransaction, tableName string) error {
-	return getDB(transaction).DropTable(tableName).Error
+	return GetDB(transaction).DropTable(tableName).Error
 }
 
 func GetConditionsAndValue(tableName, name string) (map[string]string, error) {

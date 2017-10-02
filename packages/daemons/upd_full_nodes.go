@@ -18,9 +18,8 @@ package daemons
 
 import (
 	"context"
+	"fmt"
 	"time"
-
-	"encoding/hex"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -29,7 +28,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
@@ -108,7 +106,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 		toSerialize interface{}
 	)
 	smartTx.Header = tx.Header{Type: int(info.ID), Time: time.Now().Unix(), UserID: myWalletID, StateID: 0}
-	signature, err := crypto.Sign(string(myNodeKey.PrivateKey), smartTx.ForSign())
+	signature, err := crypto.Sign(myNodeKey.PrivateKey, smartTx.ForSign())
 	if err != nil {
 		return err
 	}

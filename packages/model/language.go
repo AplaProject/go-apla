@@ -41,7 +41,7 @@ func (l *Language) IsExistsByName(name string) (bool, error) {
 }
 
 func CreateLanguagesStateTable(transaction *DbTransaction, stateID string) error {
-	return getDB(transaction).Exec(`CREATE TABLE "` + stateID + `_languages" (
+	return GetDB(transaction).Exec(`CREATE TABLE "` + stateID + `_languages" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"res" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',
@@ -52,7 +52,7 @@ func CreateLanguagesStateTable(transaction *DbTransaction, stateID string) error
 }
 
 func CreateStateDefaultLanguages(transaction *DbTransaction, stateID, conditions string) error {
-	return getDB(transaction).Exec(`INSERT INTO "`+stateID+`_languages" (name, res, conditions) VALUES
+	return GetDB(transaction).Exec(`INSERT INTO "`+stateID+`_languages" (name, res, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?),
 		(?, ?, ?),

@@ -19,7 +19,7 @@ func (c Citizen) TableName() string {
 }
 
 func (c *Citizen) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(c).Error
+	return GetDB(transaction).Create(c).Error
 }
 
 func (c *Citizen) IsExists() (bool, error) {
@@ -44,7 +44,7 @@ func GetAllCitizensWhereIdMoreThan(tablePrefix string, id int64, limit int64) ([
 }
 
 func CreateCitizensStateTable(transaction *DbTransaction, stateID string) error {
-	return getDB(transaction).Exec(`CREATE TABLE "` + stateID + `_citizens" (
+	return GetDB(transaction).Exec(`CREATE TABLE "` + stateID + `_citizens" (
 				"id" bigint NOT NULL DEFAULT '0',
 				"public_key_0" bytea  NOT NULL DEFAULT '',				
 				"block_id" bigint NOT NULL DEFAULT '0',

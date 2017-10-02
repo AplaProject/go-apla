@@ -25,7 +25,7 @@ func (m *Menu) Get(name string) error {
 }
 
 func (m *Menu) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(m).Error
+	return GetDB(transaction).Create(m).Error
 }
 
 func (m *Menu) GetAll(prefix string) ([]Menu, error) {
@@ -44,7 +44,7 @@ func (m *Menu) ToMap() map[string]string {
 }
 
 func CreateStateMenuTable(transaction *DbTransaction, stateID string) error {
-	return getDB(transaction).Exec(`CREATE TABLE "` + stateID + `_menu" (
+	return GetDB(transaction).Exec(`CREATE TABLE "` + stateID + `_menu" (
 				"name" varchar(255)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
 				"conditions" bytea  NOT NULL DEFAULT '',

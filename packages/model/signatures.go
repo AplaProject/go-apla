@@ -50,7 +50,7 @@ func (s *Signature) ToMap() map[string]string {
 }
 
 func CreateSignaturesStateTable(transaction *DbTransaction, stateID string) error {
-	return getDB(transaction).Exec(`CREATE TABLE "` + stateID + `_signatures" (
+	return GetDB(transaction).Exec(`CREATE TABLE "` + stateID + `_signatures" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',

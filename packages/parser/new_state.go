@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"

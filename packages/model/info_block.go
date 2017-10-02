@@ -24,7 +24,7 @@ func (ib *InfoBlock) GetInfoBlock() error {
 }
 
 func (ib *InfoBlock) Update(transaction *DbTransaction) error {
-	return getDB(transaction).Model(&InfoBlock{}).Updates(ib).Error
+	return GetDB(transaction).Model(&InfoBlock{}).Updates(ib).Error
 }
 
 func (ib *InfoBlock) GetUnsent() (bool, error) {
@@ -44,7 +44,7 @@ func (ib *InfoBlock) Save() error {
 }
 
 func (ib *InfoBlock) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(ib).Error
+	return GetDB(transaction).Create(ib).Error
 }
 
 func GetCurBlockID() (int64, error) {

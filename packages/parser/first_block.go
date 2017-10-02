@@ -57,7 +57,7 @@ func (p *FirstBlockParser) Action() error {
 	if err = key.SetTablePrefix(consts.MainEco).Create(); err != nil {
 		return p.ErrInfo(err)
 	}
-	err = template.LoadContract(`1`)
+	err = template.LoadContract(p.DbTransaction, `1`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

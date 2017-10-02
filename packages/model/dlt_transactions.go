@@ -16,7 +16,7 @@ type DltTransaction struct {
 }
 
 func (dt *DltTransaction) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(dt).Error
+	return GetDB(transaction).Create(dt).Error
 }
 
 func (dt *DltTransaction) GetTransaction(senderWalletID, recipientWalletID int64, recipientWalletAddress string) error {

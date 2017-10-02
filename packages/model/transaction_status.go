@@ -23,7 +23,7 @@ func (ts *TransactionStatus) Get(transactionHash []byte) (bool, error) {
 }
 
 func (ts *TransactionStatus) UpdateBlockID(transaction *DbTransaction, newBlockID int64, transactionHash []byte) error {
-	return getDB(transaction).Model(&TransactionStatus{}).Where("hash = ?", transactionHash).Update("block_id", newBlockID).Error
+	return GetDB(transaction).Model(&TransactionStatus{}).Where("hash = ?", transactionHash).Update("block_id", newBlockID).Error
 }
 
 func (ts *TransactionStatus) UpdateBlockMsg(newBlockID int64, msg string, transactionHash []byte) error {

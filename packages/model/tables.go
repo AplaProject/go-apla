@@ -34,7 +34,7 @@ func (t *Table) Get(name string) (bool, error) {
 }
 
 func (t *Table) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(t).Error
+	return GetDB(transaction).Create(t).Error
 }
 
 func (t *Table) Delete() error {
@@ -156,12 +156,12 @@ func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) 
 
 func (t *Table) SetActionByName(transaction *DbTransaction, table, name, action, actionValue string, rbID int64) (int64, error) {
 	log.Debugf("set action by name: name = %s, actions = %s, actionsValue = %s", name, action, actionValue)
-	query := getDB(transaction).Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(actionValue)+`"`, rbID, name)
+	query := GetDB(transaction).Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(actionValue)+`"`, rbID, name)
 	return query.RowsAffected, query.Error
 }
 
 func CreateTable(transaction *DbTransaction, tableName, colsSQL string) error {
-	return getDB(transaction).Exec(`CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
+	return GetDB(transaction).Exec(`CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
 				CREATE TABLE "` + tableName + `" (
 				"id" bigint NOT NULL  default nextval('` + tableName + `_id_seq'),
 				` + colsSQL + `
@@ -177,7 +177,7 @@ func GetColumnsAndPermissionsAndRbIDWhereTable(transaction *DbTransaction, table
 		RbID                  int64
 	}
 	temp := &proxy{}
-	err := getDB(transaction).Table(table).Where("name = ?", tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
+	err := GetDB(transaction).Table(table).Where("name = ?", tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
 	if err != nil {
 		return nil, err
 	}

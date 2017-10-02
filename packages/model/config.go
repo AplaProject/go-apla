@@ -37,7 +37,7 @@ func (c *Config) ChangeBlockID(oldBlockID int64, newBlockID int64) error {
 }
 
 func (c *Config) ChangeBlockIDBatch(transaction *DbTransaction, oldBlockID int64, newBlockID int64) error {
-	return getDB(transaction).Model(c).Where("my_block_id < ?", oldBlockID).Update("my_block_id", newBlockID).Error
+	return GetDB(transaction).Model(c).Where("my_block_id < ?", oldBlockID).Update("my_block_id", newBlockID).Error
 }
 
 func ConfigCreateTable() error {

@@ -123,7 +123,7 @@ func (r *OneRow) Int() (map[string]int, error) {
 
 func GetAllTransaction(transaction *DbTransaction, query string, countRows int, args ...interface{}) ([]map[string]string, error) {
 	var result []map[string]string
-	rows, err := getDB(transaction).Raw(query, args...).Rows()
+	rows, err := GetDB(transaction).Raw(query, args...).Rows()
 	if err != nil {
 		return result, fmt.Errorf("%s in query %s %s", err, query, args)
 	}

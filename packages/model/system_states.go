@@ -34,7 +34,7 @@ func (ss *SystemState) GetCount() (int64, error) {
 }
 
 func (ss *SystemState) GetLast(transaction *DbTransaction) (bool, error) {
-	last := getDB(transaction).Last(ss)
+	last := GetDB(transaction).Last(ss)
 	if last.RecordNotFound() {
 		return true, nil
 	}
@@ -42,7 +42,7 @@ func (ss *SystemState) GetLast(transaction *DbTransaction) (bool, error) {
 }
 
 func (ss *SystemState) Delete(transaction *DbTransaction) error {
-	return getDB(transaction).Delete(ss).Error
+	return GetDB(transaction).Delete(ss).Error
 }
 
 func (ss *SystemState) IsExists(stateID int64) (bool, error) {
@@ -54,5 +54,5 @@ func (ss *SystemState) IsExists(stateID int64) (bool, error) {
 }
 
 func (ss *SystemState) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(ss).Error
+	return GetDB(transaction).Create(ss).Error
 }

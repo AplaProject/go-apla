@@ -9,7 +9,7 @@ type UpdFullNode struct {
 }
 
 func (ufn *UpdFullNode) Read(transaction *DbTransaction) error {
-	return handleError(getDB(transaction).First(ufn).Error)
+	return handleError(GetDB(transaction).First(ufn).Error)
 }
 
 func (ufn *UpdFullNode) GetAll() ([]UpdFullNode, error) {

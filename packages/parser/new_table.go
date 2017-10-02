@@ -145,10 +145,9 @@ func (p *NewTableParser) Action() error {
 	json.Unmarshal([]byte(p.NewTable.Columns), &cols)
 
 	indexes := make([]string, 0)
-	mainCondition := `ContractConditions("MainCondition")`
-	updateConditions := map[string]string{}
 
 	colsSQL := ""
+	colsSQL2 := ""
 	for _, data := range cols {
 		colType := ``
 		colDef := ``
@@ -169,11 +168,13 @@ func (p *NewTableParser) Action() error {
 			colDef = `NOT NULL DEFAULT '0'`
 		}
 		colsSQL += `"` + data[0] + `" ` + colType + " " + colDef + " ,\n"
-		updateConditions[data[0]] = mainCondition
+		colsSQL2 += `"` + data[0] + `": "ContractConditions(\"MainCondition\")",`
 		if data[2] == "1" {
 			indexes = append(indexes, data[0])
 		}
 	}
+	colsSQL2 = colsSQL2[:len(colsSQL2)-1]
+
 	err = model.CreateTable(p.DbTransaction, tableName, colsSQL)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -182,19 +183,10 @@ func (p *NewTableParser) Action() error {
 	for _, index := range indexes {
 		err := model.CreateIndex(p.DbTransaction, tableName+"_"+index, tableName, index)
 		if err != nil {
-			return p.ErrInfo(err)
+			p.ErrInfo(err)
 		}
 	}
-	perm := Permissions{
-		GeneralUpdate: mainCondition,
-		Update:        updateConditions,
-		Insert:        mainCondition,
-		NewColumn:     mainCondition,
-	}
-	jsonColumnsAndPerm, err := json.Marshal(perm)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
+
 	t := &model.Table{
 		Name:        tableName,
 		Permissions: `{"general_update":"ContractConditions(\"MainCondition\")", "update": {` + colsSQL2 + `}, "insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`,

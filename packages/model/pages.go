@@ -24,7 +24,7 @@ func (p *Page) Get(name string) error {
 }
 
 func (p *Page) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(p).Error
+	return GetDB(transaction).Create(p).Error
 }
 
 func (p *Page) GetWithMenu(prefix string) ([]Page, error) {
@@ -50,7 +50,7 @@ func (p *Page) ToMap() map[string]string {
 }
 
 func CreateStatePagesTable(transaction *DbTransaction, stateID string) error {
-	return getDB(transaction).Exec(`CREATE TABLE "` + stateID + `_pages" (
+	return GetDB(transaction).Exec(`CREATE TABLE "` + stateID + `_pages" (
 			    "name" varchar(255)  NOT NULL DEFAULT '',
 			    "value" text  NOT NULL DEFAULT '',
 			    "menu" varchar(255)  NOT NULL DEFAULT '',

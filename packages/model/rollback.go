@@ -26,7 +26,7 @@ func (r *Rollback) GetRollbacks(limit int) ([]Rollback, error) {
 }
 
 func (r *Rollback) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(r).Error
+	return GetDB(transaction).Create(r).Error
 }
 
 func (r *Rollback) Delete() error {

@@ -1402,7 +1402,7 @@ func RollbackEcosystem(p *Parser) error {
 		return fmt.Errorf(`RollbackEcosystem can be only called from @1NewEcosystem`)
 	}
 	rollbackTx := &model.RollbackTx{}
-	err := rollbackTx.Get(p.TxHash, "system_states")
+	err := rollbackTx.Get(p.DbTransaction, p.TxHash, "system_states")
 	if err != nil {
 		return err
 	}
@@ -1416,16 +1416,16 @@ func RollbackEcosystem(p *Parser) error {
 	}
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
 		`contracts`, `parameters`} {
-		err = model.DropTable(fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
+		err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			return err
 		}
 	}
 	rollbackTxToDel := &model.RollbackTx{TxHash: p.TxHash, NameTable: "system_states"}
-	err = rollbackTxToDel.DeleteByHashAndTableName()
+	err = rollbackTxToDel.DeleteByHashAndTableName(p.DbTransaction)
 	if err != nil {
 		return err
 	}
 	ssToDel := &model.SystemState{ID: lastID}
-	return ssToDel.Delete()
+	return ssToDel.Delete(p.DbTransaction)
 }

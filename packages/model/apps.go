@@ -44,7 +44,7 @@ func (a *App) Create() error {
 }
 
 func CreateStateAppsTable(transaction *DbTransaction, stateID string) error {
-	return getDB(transaction).Exec(`CREATE TABLE "` + stateID + `_apps" (
+	return GetDB(transaction).Exec(`CREATE TABLE "` + stateID + `_apps" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"done" integer NOT NULL DEFAULT '0',
 				"blocks" text  NOT NULL DEFAULT ''

@@ -57,8 +57,12 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 		}
 		columns := make([]columnInfo, 0)
 		for key, value := range cols {
+			colType, err := model.GetColumnType(converter.Int64ToStr(data.state)+`_`+data.params[`name`].(string), key)
+			if err != nil {
+				return errorAPI(w, err.Error(), http.StatusInternalServerError)
+			}
 			columns = append(columns, columnInfo{Name: key, Perm: value,
-				Type: model.GetColumnType(converter.Int64ToStr(data.state)+`_`+data.params[`name`].(string), key)})
+				Type: colType})
 		}
 		result = tableResult{
 			Name:       row[`name`],

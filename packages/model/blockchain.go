@@ -52,7 +52,7 @@ func (b *Block) IsExistsID(blockID int64) (bool, error) {
 }
 
 func (b *Block) Create(transaction *DbTransaction) error {
-	return getDB(transaction).Create(b).Error
+	return GetDB(transaction).Create(b).Error
 }
 
 func (b *Block) GetBlock(blockID int64) error {
@@ -86,7 +86,7 @@ func (b *Block) Delete() error {
 }
 
 func (b *Block) DeleteById(transaction *DbTransaction, id int64) error {
-	return getDB(transaction).Where("id = ?", id).Delete(Block{}).Error
+	return GetDB(transaction).Where("id = ?", id).Delete(Block{}).Error
 }
 
 func (b *Block) DeleteChain() error {

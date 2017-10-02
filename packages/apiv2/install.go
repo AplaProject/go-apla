@@ -137,7 +137,7 @@ func installCommon(data *installParams) (err error) {
 	if err != nil {
 		return err
 	}
-	nodeKeys := &model.MyNodeKey{PrivateKey: NodePrivateKey, PublicKey: npubkey, BlockID: 1}
+	nodeKeys := &model.MyNodeKey{PrivateKey: string(NodePrivateKey), PublicKey: npubkey, BlockID: 1}
 	err = nodeKeys.Create()
 	if err != nil {
 		return err
