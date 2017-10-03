@@ -49,7 +49,7 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			Time:           block.Header.Time,
 			StateID:        block.Header.StateID,
 			WalletID:       block.Header.WalletID,
-			CurrentVersion: block.Version,
+			CurrentVersion: fmt.Sprintf("%d", block.Header.Version),
 		}
 		err := ib.Create(dbTransaction)
 		if err != nil {

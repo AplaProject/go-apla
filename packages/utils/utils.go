@@ -54,6 +54,7 @@ type BlockData struct {
 	StateID  int64
 	Sign     []byte
 	Hash     []byte
+	Version  int
 }
 
 type Update struct {

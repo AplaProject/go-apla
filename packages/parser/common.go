@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"os"
@@ -276,11 +275,6 @@ func ClearTmp(blocks map[int64]string) {
 	}
 }
 
-// GetBlockInfo returns BlockData structure
-func (p *Parser) GetBlockInfo() *utils.BlockData {
-	return &utils.BlockData{Hash: p.BlockData.Hash, Time: p.BlockData.Time, WalletID: p.BlockData.WalletID, StateID: p.BlockData.StateID, BlockID: p.BlockData.BlockID}
-}
-
 // CheckLogTx checks if this transaction exists
 // And it would have successfully passed a frontal test
 func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
@@ -323,21 +317,6 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		}
 	}
 
-	return nil
-}
-
-// GetInfoBlock returns the latest block
-func (p *Parser) GetInfoBlock() error {
-	// the last successfully recorded block
-	p.PrevBlock = new(utils.BlockData)
-	ib := &model.InfoBlock{}
-	err := ib.GetInfoBlock()
-	if err != nil && err != sql.ErrNoRows {
-		return p.ErrInfo(err)
-	}
-	p.PrevBlock.Hash = ib.Hash
-	p.PrevBlock.BlockID = ib.BlockID
-	p.PrevBlock.Time = ib.Time
 	return nil
 }
 

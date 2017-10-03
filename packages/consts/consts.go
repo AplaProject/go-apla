@@ -19,6 +19,7 @@ package consts
 // текущая версия
 // Current version
 const VERSION = "0.1.6b9"
+const BLOCK_VERSION = 1
 
 const FIRST_QDLT = 1e+26
 const EGS_DIGIT = 18 //money_digit for EGS 1000000000000000000

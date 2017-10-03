@@ -142,6 +142,7 @@ func FirstBlock() {
 		BlockID:  1,
 		Time:     now,
 		WalletID: iAddress,
+		Version:  consts.BLOCK_VERSION,
 	}
 	var tx []byte
 	_, err = converter.BinMarshal(&tx,

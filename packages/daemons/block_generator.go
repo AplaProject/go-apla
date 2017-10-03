@@ -21,6 +21,7 @@ import (
 
 	"context"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -110,6 +111,7 @@ func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key 
 		Time:     time.Now().Unix(),
 		WalletID: c.DltWalletID,
 		StateID:  c.StateID,
+		Version:  consts.BLOCK_VERSION,
 	}
 
 	trData := make([][]byte, len(trs))

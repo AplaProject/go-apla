@@ -44,7 +44,6 @@ type Block struct {
 	MrklRoot   []byte
 	BinData    []byte
 	Parsers    []*Parser
-	Version    string
 }
 
 func InsertBlock(data []byte) error {
@@ -203,10 +202,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 		return utils.BlockData{}, fmt.Errorf("bad binary block length")
 	}
 
-	dataType := int(converter.BinToDec(binaryBlock.Next(1)))
-	if dataType != 0 {
-		return utils.BlockData{}, utils.ErrInfo(fmt.Errorf("incorrect dataType %d", dataType))
-	}
+	blockVersion := int(converter.BinToDec(binaryBlock.Next(1)))
 
 	if int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
 		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
@@ -217,6 +213,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 
 	block.BlockID = converter.BinToDec(binaryBlock.Next(4))
 	block.Time = converter.BinToDec(binaryBlock.Next(4))
+	block.Version = blockVersion
 
 	block.WalletID, err = converter.DecodeLenInt64Buf(binaryBlock)
 	if err != nil {
@@ -701,7 +698,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 
 	var buf bytes.Buffer
 	// fill header
-	buf.Write(converter.DecToBin(0, 1))
+	buf.Write(converter.DecToBin(header.Version, 1))
 	buf.Write(converter.DecToBin(header.BlockID, 4))
 	buf.Write(converter.DecToBin(header.Time, 4))
 	buf.Write(converter.EncodeLenInt64InPlace(header.WalletID))
