@@ -109,7 +109,7 @@ func GetTables() ([]string, error) {
 }
 
 func Update(tblname, set, where string) error {
-	return DBConn.Exec(`UPDATE "` + tblname + `" SET ` + set + " " + where).Error
+	return DBConn.Exec(`UPDATE "` + strings.Trim(tblname, `"`) + `" SET ` + set + " " + where).Error
 }
 
 func Delete(tblname, where string) error {

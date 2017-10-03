@@ -38,8 +38,11 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		isPublic, hash, publicKey []byte
 		toSerialize               interface{}
 	)
-	contract, err := validateSmartContract(r, data, nil)
+	contract, parerr, err := validateSmartContract(r, data, nil)
 	if err != nil {
+		if strings.HasPrefix(err.Error(), `E_`) {
+			return errorAPI(w, err.Error(), http.StatusBadRequest, parerr)
+		}
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
