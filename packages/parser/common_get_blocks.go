@@ -237,7 +237,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 			}
 			// if the mistake happened, we roll back all previous blocks from new chain
 			if err0 != nil {
-				parser.BlockError(err) // why?
+				parser.BlockError(err0) // why?
 				log.Debug("there is an error is rolled back all previous blocks of a new chain: %v", err)
 
 				// we ban the host which gave us a false chain for 1 hour

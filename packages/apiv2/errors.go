@@ -28,6 +28,7 @@ var (
 		`E_INSTALLED`:     `Apla is already installed`,
 		`E_INVALIDWALLET`: `Wallet %s is not valid`,
 		`E_NOTINSTALLED`:  `Apla is not installed`,
+		`E_QUERY`:         `DB query is wrong`,
 		`E_RECOVERED`:     `API recovered`,
 		`E_REFRESHTOKEN`:  `Refresh token is not valid`,
 		`E_SERVER`:        `Server error`,

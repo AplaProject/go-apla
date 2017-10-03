@@ -35,7 +35,7 @@ func row(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	row, err := model.GetOneRow(`SELECT `+cols+` FROM "`+converter.Int64ToStr(data.state)+`_`+
 		data.params[`name`].(string)+`" WHERE id = ?`, data.params[`id`].(string)).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)
 	}
 
 	data.result = &rowResult{Value: row}
