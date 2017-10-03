@@ -28,6 +28,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -128,7 +129,7 @@ func installCommon(data *installParams) (err error) {
 			}
 		}
 		*utils.GenerateFirstBlock = 1
-		utils.FirstBlock()
+		parser.FirstBlock()
 	}
 
 	NodePrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")

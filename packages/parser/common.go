@@ -25,6 +25,8 @@ import (
 	"strconv"
 	"strings"
 
+	"bytes"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -63,12 +65,13 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 		return BlockData, utils.ErrInfo(err)
 	}
 
-	if len(block.Data) > 0 {
-		binaryData := block.Data
-		converter.BytesShift(&binaryData, 1) // не нужно. 0 - блок, >0 - тр-ии
-		BlockData = utils.ParseBlockHeader(&binaryData)
-		BlockData.Hash = block.Hash
+	header, err := ParseBlockHeader(bytes.NewBuffer(block.Data))
+	if err != nil {
+		return nil, utils.ErrInfo(err)
 	}
+
+	BlockData = &header
+	BlockData.Hash = block.Hash
 	return BlockData, nil
 }
 

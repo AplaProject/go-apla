@@ -54,16 +54,26 @@ func InsertBlock(data []byte) error {
 		return err
 	}
 
-	if err := block.checkBlock(); err != nil {
+	if err := block.CheckBlock(); err != nil {
 		log.Errorf("check block error: %s", err)
 		return err
 	}
 
+	err = block.PlayBlockSafe()
+	if err != nil {
+		log.Errorf("play block failed: %s", err)
+		return err
+	}
+
+	log.Debugf("block %d was inserted successfully", block.Header.BlockID)
+	return nil
+}
+
+func (block *Block) PlayBlockSafe() error {
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
 		return err
 	}
-	block.Version = consts.VERSION
 
 	err = block.playBlock(dbTransaction)
 	if err != nil {
@@ -83,8 +93,6 @@ func InsertBlock(data []byte) error {
 	}
 
 	dbTransaction.Commit()
-	log.Debugf("block %d was inserted successfully", block.Header.BlockID)
-
 	return nil
 }
 
@@ -96,11 +104,6 @@ func ProcessBlock(data []byte) (*Block, error) {
 	buf := bytes.NewBuffer(data)
 	if buf.Len() == 0 {
 		return nil, fmt.Errorf("empty buffer")
-	}
-
-	dataType := int(converter.BinToDec(buf.Next(1)))
-	if dataType != 0 {
-		return nil, utils.ErrInfo(fmt.Errorf("incorrect dataType %d", dataType))
 	}
 
 	block, err := parseBlock(buf)
@@ -133,7 +136,7 @@ func getAllTables() (map[string]string, error) {
 }
 
 func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
-	header, err := parseBlockHeader(blockBuffer)
+	header, err := ParseBlockHeader(blockBuffer)
 	if err != nil {
 		return nil, err
 	}
@@ -192,9 +195,26 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 	}, nil
 }
 
-func parseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
+func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	var block utils.BlockData
 	var err error
+
+	if binaryBlock.Len() < 9 {
+		return utils.BlockData{}, fmt.Errorf("bad binary block length")
+	}
+
+	dataType := int(converter.BinToDec(binaryBlock.Next(1)))
+	if dataType != 0 {
+		return utils.BlockData{}, utils.ErrInfo(fmt.Errorf("incorrect dataType %d", dataType))
+	}
+
+	if int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
+		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
+			binaryBlock.Len(), syspar.GetMaxBlockSize())
+
+		return utils.BlockData{}, err
+	}
+
 	block.BlockID = converter.BinToDec(binaryBlock.Next(4))
 	block.Time = converter.BinToDec(binaryBlock.Next(4))
 
@@ -203,12 +223,18 @@ func parseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 		return utils.BlockData{}, err
 	}
 
+	if binaryBlock.Len() < 1 {
+		return utils.BlockData{}, fmt.Errorf("bad block format")
+	}
 	block.StateID = converter.BinToDec(binaryBlock.Next(1))
 
 	if block.BlockID > 1 {
 		signSize, err := converter.DecodeLengthBuf(binaryBlock)
 		if err != nil {
 			return utils.BlockData{}, err
+		}
+		if binaryBlock.Len() < signSize {
+			return utils.BlockData{}, fmt.Errorf("bad block format (no sign)")
 		}
 		block.Sign = binaryBlock.Next(int(signSize))
 	} else {
@@ -558,7 +584,7 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 	return nil
 }
 
-func (block *Block) checkBlock() error {
+func (block *Block) CheckBlock() error {
 	// exclude blocks from future
 	if block.Header.Time > time.Now().Unix() {
 		utils.ErrInfo(fmt.Errorf("incorrect block time"))
@@ -602,18 +628,28 @@ func (block *Block) checkBlock() error {
 
 	}
 
-	if block.Header.BlockID == 1 {
-		return nil
+	result, err := block.CheckHash()
+	if err != nil {
+		return utils.ErrInfo(err)
 	}
+	if !result {
+		return fmt.Errorf("incorrect signature / p.PrevBlock.BlockId: %d", block.PrevHeader.BlockID)
+	}
+	return nil
+}
 
+func (block *Block) CheckHash() (bool, error) {
+	if block.Header.BlockID == 1 {
+		return true, nil
+	}
 	// check block signature
 	if block.PrevHeader != nil {
 		nodePublicKey, err := GetNodePublicKeyWalletOrCB(block.Header.WalletID, block.Header.StateID)
 		if err != nil {
-			return utils.ErrInfo(err)
+			return false, utils.ErrInfo(err)
 		}
 		if len(nodePublicKey) == 0 {
-			return utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
+			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 		// check the signature
 		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
@@ -623,12 +659,56 @@ func (block *Block) checkBlock() error {
 
 		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, block.Header.Sign, true)
 		if err != nil {
-			return utils.ErrInfo(fmt.Errorf("err: %v / p.PrevBlock.BlockId: %d", err, block.PrevHeader.BlockID))
+			return false, utils.ErrInfo(fmt.Errorf("err: %v / p.PrevBlock.BlockId: %d", err, block.PrevHeader.BlockID))
 		}
-		if !resultCheckSign {
-			return utils.ErrInfo(fmt.Errorf("incorrect signature / p.PrevBlock.BlockId: %d", block.PrevHeader.BlockID))
-		}
+
+		return resultCheckSign, nil
 	}
 
-	return nil
+	return true, nil
+}
+
+func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, key string) ([]byte, error) {
+	var mrklArray [][]byte
+	var blockDataTx []byte
+	var signed []byte
+
+	for _, tr := range trData {
+		doubleHash, err := crypto.DoubleHash(tr)
+		if err != nil {
+			return nil, err
+		}
+		mrklArray = append(mrklArray, converter.BinToHex(doubleHash))
+		blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData([]byte(tr))...)
+	}
+
+	if key != "" {
+		if len(mrklArray) == 0 {
+			mrklArray = append(mrklArray, []byte("0"))
+		}
+		mrklRoot := utils.MerkleTreeRoot(mrklArray)
+
+		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s",
+			header.BlockID, prevHash, header.Time, header.WalletID, header.StateID, mrklRoot)
+
+		var err error
+		signed, err = crypto.Sign(key, forSign)
+		if err != nil {
+			return nil, err
+		}
+		log.Debugf("generate block for sign: %s, key: %x, signed: %x", forSign, key, signed)
+	}
+
+	var buf bytes.Buffer
+	// fill header
+	buf.Write(converter.DecToBin(0, 1))
+	buf.Write(converter.DecToBin(header.BlockID, 4))
+	buf.Write(converter.DecToBin(header.Time, 4))
+	buf.Write(converter.EncodeLenInt64InPlace(header.WalletID))
+	buf.Write(converter.DecToBin(header.StateID, 1))
+	buf.Write(converter.EncodeLengthPlusData(signed))
+	// data
+	buf.Write(blockDataTx)
+
+	return buf.Bytes(), nil
 }

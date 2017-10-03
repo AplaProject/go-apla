@@ -17,14 +17,12 @@
 package controllers
 
 import (
-	"encoding/binary"
-	"fmt"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -82,42 +80,22 @@ func (c *Controller) BlockExplorer() (string, error) {
 				}
 			}
 			txlist := make([]string, 0)
-			block := block.Data[1:]
-			utils.ParseBlockHeader(&block)
+			parsedBlock, err := parser.ProcessBlock(block.Data)
+			if err != nil {
+				return "", utils.ErrInfo(err)
+			}
 
-			for len(block) > 0 {
-				length, err := converter.DecodeLength(&block)
-				if err != nil {
-					log.Fatal(err)
-				}
-				size := int(length)
-				if size == 0 || len(block) < size {
-					break
-				}
+			for _, tr := range parsedBlock.Parsers {
 				var name string
-				itype := int(block[0])
-				if itype < 128 {
-					if stype, ok := consts.TxTypes[itype]; ok {
-						name = stype
-					} else {
-						name = fmt.Sprintf("unknown %d", itype)
-					}
+				if tr.TxContract != nil {
+					name = tr.TxContract.Name
 				} else {
-					itype -= 128
-					tmp := make([]byte, 4)
-					for i := 0; i < itype; i++ {
-						tmp[4-itype+i] = block[i+1]
-					}
-					idc := int32(binary.BigEndian.Uint32(tmp))
-					contract := smart.GetContractByID(idc)
-					if contract != nil {
-						name = contract.Name
-					} else {
-						name = fmt.Sprintf(`Unknown=%d`, idc)
-					}
+					name = consts.TxTypes[int(tr.TxType)]
+				}
+				if name == "" {
+					name = "unknown"
 				}
 				txlist = append(txlist, name)
-				block = block[size:]
 			}
 			blockInfo[`data`] = out
 			blockInfo[`tx_list`] = strings.Join(txlist, `, `)

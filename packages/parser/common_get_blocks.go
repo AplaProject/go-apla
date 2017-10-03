@@ -137,7 +137,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 			return utils.ErrInfo(err)
 		}
 
-		if err := block.checkBlock(); err != nil {
+		if err := block.CheckBlock(); err != nil {
 			dbTransaction.Rollback()
 			return utils.ErrInfo(err)
 		}

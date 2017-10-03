@@ -21,7 +21,6 @@ import (
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -31,10 +30,6 @@ func BlockRollback(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	if buf.Len() == 0 {
 		return fmt.Errorf("empty buffer")
-	}
-	dataType := int(converter.BinToDec(buf.Next(1)))
-	if dataType != 0 {
-		return utils.ErrInfo(fmt.Errorf("incorrect dataType %d", dataType))
 	}
 
 	block, err := parseBlock(buf)

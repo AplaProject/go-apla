@@ -187,22 +187,15 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			return err
 		}
 
-		// get block header and block body
-		header, body, err := parseBlock(blockID, blockBin)
-		if err != nil || header == nil {
+		block, err := parser.ProcessBlock(blockBin)
+		if err != nil {
 			// we got bad block and should ban this host
 			banNode(host, err)
 			return err
 		}
 
-		// get hash of the previous block from OUR chain to check current block from host
-		prevHash, err := getBlockHash(blockID - 1)
-		if err != nil {
-			return err
-		}
-
 		// hash compare could be failed in the case of fork
-		hashMatched, err := checkHash(*header, body, []byte(prevHash))
+		hashMatched, err := block.CheckHash()
 		if err != nil {
 			banNode(host, err)
 			return err
@@ -211,7 +204,6 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		if !hashMatched {
 			// it should be fork, replace our previous blocks to ones from the host
 			err := parser.GetBlocks(blockID-1, host, "rollback_blocks_2", consts.DATA_TYPE_BLOCK_BODY)
-
 			if err != nil {
 				banNode(host, err)
 				return err
@@ -225,7 +217,11 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			*/
 		}
 
-		if err = parser.InsertBlock(blockBin); err != nil {
+		if err = block.CheckBlock(); err != nil {
+			banNode(host, err)
+			return err
+		}
+		if err = block.PlayBlockSafe(); err != nil {
 			banNode(host, err)
 			return err
 		}
@@ -278,70 +274,6 @@ func loadFirstBlock() error {
 	return nil
 }
 
-// check block and get block header and block body
-func parseBlock(blockID int64, binaryBlock []byte) (header *utils.BlockData, body []byte, err error) {
-
-	if len(binaryBlock) == 0 {
-		err = fmt.Errorf("block is empty")
-		return
-	}
-
-	converter.BytesShift(&binaryBlock, 1) // remove 1-st byte - type (block/transaction)
-	header = utils.ParseBlockHeader(&binaryBlock)
-
-	if int64(len(binaryBlock)) > syspar.GetMaxBlockSize() {
-		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
-			len(binaryBlock), syspar.GetMaxBlockSize())
-
-		return
-	}
-
-	if header.BlockID != blockID {
-		err = fmt.Errorf(`header.BlockId != blockID  %v > %v`, header.BlockID, blockID)
-		return
-	}
-
-	body = binaryBlock
-	return
-}
-
-// check if new block is from our chain
-func checkHash(header utils.BlockData, body []byte, prevHash []byte) (bool, error) {
-	if header.BlockID == 1 {
-		return true, nil
-	}
-
-	mrklRoot, err := utils.GetMrklroot(body, false, syspar.GetMaxTxSize(), syspar.GetMaxTxCount())
-	if err != nil {
-		return true, err
-	}
-
-	// public key of those who has generated this block
-	var nodePublicKey []byte
-	if header.WalletID != 0 {
-		wallet := &model.DltWallet{}
-		err = wallet.GetWallet(header.WalletID)
-		if err != nil {
-			return true, err
-		}
-		nodePublicKey = []byte(wallet.PublicKey)
-	} else {
-		return true, fmt.Errorf(`header.walletId == 0`)
-	}
-
-	// SIGN from 128 bytes to 512 bytes. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
-	forSign := fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", header.BlockID, prevHash,
-		header.Time, header.WalletID, header.StateID, mrklRoot)
-
-	_, err = utils.CheckSign([][]byte{nodePublicKey}, forSign, header.Sign, true)
-	if err != nil {
-		// check failed, it seems that this new block is from the different fork
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func firstLoad(ctx context.Context, d *daemon) error {
 
 	DBLock()
@@ -388,18 +320,6 @@ func needLoad() (bool, error) {
 		return true, nil
 	}
 	return false, nil
-}
-func getBlockHash(blockID int64) (string, error) {
-	if blockID > 1 {
-		block := &model.Block{}
-		err := block.GetBlock(blockID)
-		if err != nil {
-			return "", err
-		}
-		return string(converter.BinToHex(block.Hash)), nil
-	}
-
-	return "0", nil
 }
 
 func banNode(host string, err error) {

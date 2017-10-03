@@ -303,7 +303,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// create first block
 	if *utils.GenerateFirstBlock == 1 {
 		log.Infof("generate first block")
-		utils.FirstBlock()
+		parser.FirstBlock()
 		os.Exit(0)
 
 	}

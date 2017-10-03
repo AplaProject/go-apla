@@ -17,14 +17,10 @@
 package daemons
 
 import (
-	"bytes"
-	"fmt"
 	"time"
 
 	"context"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -109,44 +105,17 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 }
 
 func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key string, c *model.Config, blockTime int64) ([]byte, error) {
-	newBlockID := prevBlock.BlockID + 1
+	header := &utils.BlockData{
+		BlockID:  prevBlock.BlockID + 1,
+		Time:     time.Now().Unix(),
+		WalletID: c.DltWalletID,
+		StateID:  c.StateID,
+	}
 
-	var mrklArray [][]byte
-	var blockDataTx []byte
+	trData := make([][]byte, len(trs))
 	for _, tr := range trs {
-		doubleHash, err := crypto.DoubleHash(tr.Data)
-		if err != nil {
-			return nil, err
-		}
-		mrklArray = append(mrklArray, converter.BinToHex(doubleHash))
-		blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData([]byte(tr.Data))...)
+		trData = append(trData, tr.Data)
 	}
 
-	if len(mrklArray) == 0 {
-		mrklArray = append(mrklArray, []byte("0"))
-	}
-	mrklRoot := utils.MerkleTreeRoot(mrklArray)
-
-	forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s",
-		newBlockID, prevBlock.Hash, blockTime, c.DltWalletID, c.StateID, mrklRoot)
-
-	signed, err := crypto.Sign(key, forSign)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debugf("generate block for sign: %s, key: %x, signed: %x", forSign, key, signed)
-
-	var buf bytes.Buffer
-	// fill header
-	buf.Write(converter.DecToBin(0, 1))
-	buf.Write(converter.DecToBin(newBlockID, 4))
-	buf.Write(converter.DecToBin(blockTime, 4))
-	buf.Write(converter.EncodeLenInt64InPlace(c.DltWalletID))
-	buf.Write(converter.DecToBin(c.StateID, 1))
-	buf.Write(converter.EncodeLengthPlusData(signed))
-	// data
-	buf.Write(blockDataTx)
-
-	return buf.Bytes(), nil
+	return parser.MarshallBlock(header, trData, prevBlock.Hash, key)
 }
