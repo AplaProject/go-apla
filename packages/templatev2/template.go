@@ -66,18 +66,21 @@ type forTails struct {
 
 var (
 	funcs = map[string]tplFunc{
-		`Div`:      {defaultTag, defaultTag, `div`, `Class,Body`},
-		`Em`:       {defaultTag, defaultTag, `em`, `Body,Class`},
-		`Form`:     {defaultTag, defaultTag, `form`, `Class,Body`},
-		`InputErr`: {defaultTag, defaultTag, `inputerr`, `*`},
-		`Label`:    {defaultTag, defaultTag, `label`, `Body,Class,For`},
-		`P`:        {defaultTag, defaultTag, `p`, `Body,Class`},
-		`Span`:     {defaultTag, defaultTag, `span`, `Body,Class`},
-		`Strong`:   {defaultTag, defaultTag, `strong`, `Body,Class`},
+		`Div`:       {defaultTag, defaultTag, `div`, `Class,Body`},
+		`Em`:        {defaultTag, defaultTag, `em`, `Body,Class`},
+		`Form`:      {defaultTag, defaultTag, `form`, `Class,Body`},
+		`InputErr`:  {defaultTag, defaultTag, `inputerr`, `*`},
+		`Label`:     {defaultTag, defaultTag, `label`, `Body,Class,For`},
+		`MenuGroup`: {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
+		`MenuItem`:  {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
+		`P`:         {defaultTag, defaultTag, `p`, `Body,Class`},
+		`Span`:      {defaultTag, defaultTag, `span`, `Body,Class`},
+		`Strong`:    {defaultTag, defaultTag, `strong`, `Body,Class`},
+		`Style`:     {defaultTag, defaultTag, `style`, `Css`},
 	}
 	tails = map[string]forTails{
 		`button`: {map[string]tailInfo{
-			`Alert`: {tplFunc{alertTag, alertFull, `alert`, `ConfirmButton,CancelButton,Text,Icon`}, true},
+			`Alert`: {tplFunc{alertTag, alertFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
 		}},
 		`if`: {map[string]tailInfo{
 			`Else`:   {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
@@ -352,12 +355,17 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 
 func getFunc(input string, curFunc tplFunc) (*[]string, int, *[]*[]string) {
 	var (
-		curp, off, mode int
-		skip            bool
-		pair, ch        rune
-		tailpar         *[]*[]string
+		curp, off, mode, lenParams int
+		skip                       bool
+		pair, ch                   rune
+		tailpar                    *[]*[]string
 	)
 	params := make([]string, 1)
+	if curFunc.Params == `*` {
+		lenParams = 0xff
+	} else {
+		lenParams = len(strings.Split(curFunc.Params, `,`))
+	}
 	level := 1
 	if input[0] == '{' {
 		mode = 1
@@ -394,7 +402,7 @@ main:
 		}
 		switch ch {
 		case ',':
-			if mode == 0 && level == 1 {
+			if mode == 0 && level == 1 && len(params) < lenParams {
 				params = append(params, ``)
 				curp++
 				continue

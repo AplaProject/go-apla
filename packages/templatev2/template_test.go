@@ -79,6 +79,16 @@ var forTest = tplList{
 	{`Input(myid, form-control, Your name).Validate(minLength: 6, maxLength: 20)
 	InputErr(Name: myid, minLength: minLength error)`,
 		`[{"tag":"input","attr":{"class":"form-control","name":"myid","placeholder":"Your name","validate":{"maxlength":"20","minlength":"6"}}},{"tag":"inputerr","attr":{"minlength":"minLength error","name":"myid"}}]`},
+	{`MenuItem(Menu 1,page1)MenuGroup(SubMenu){
+		MenuItem(Menu 2, page2)
+		MenuItem(Page: page3, Title: Menu 3, Icon: person)
+		}`,
+		`[{"tag":"menuitem","attr":{"page":"page1","title":"Menu 1"}},{"tag":"menugroup","attr":{"title":"SubMenu"},"children":[{"tag":"menuitem","attr":{"page":"page2","title":"Menu 2"}},{"tag":"menuitem","attr":{"icon":"person","page":"page3","title":"Menu 3"}}]}]`},
+	{`Style(.mydiv, .myspan {
+		color: #f00;
+		margin: 10px 5px;
+	})`,
+		`[{"tag":"style","attr":{"css":".mydiv, .myspan {\n\t\tcolor: #f00;\n\t\tmargin: 10px 5px;\n\t}"}}]`},
 }
 
 func TestFullJSON(t *testing.T) {
