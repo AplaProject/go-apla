@@ -25,7 +25,8 @@ import (
 )
 
 type tableInfo struct {
-	Name string `json:"name"`
+	Name  string `json:"name"`
+	Count string `json:"count"`
 }
 
 type tablesResult struct {
@@ -60,7 +61,19 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 		Count: count, List: make([]tableInfo, len(list)),
 	}
 	for i, item := range list {
+		var maxid int64
 		result.List[i].Name = item[`name`]
+		fullname := converter.Int64ToStr(data.state) + `_` + item[`name`]
+		if item[`name`] == `keys` {
+			err = model.DBConn.Table(fullname).Count(&maxid).Error
+		} else {
+			maxid, err = model.GetNextID(fullname)
+			maxid--
+		}
+		if err != nil {
+			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		}
+		result.List[i].Count = converter.Int64ToStr(maxid)
 	}
 	data.result = &result
 	return
