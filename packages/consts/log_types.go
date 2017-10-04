@@ -86,9 +86,16 @@ var LogEventsMap = map[LogEventType]string{
 	SignError:              "sign error",
 	VMEvent:                "VM event",
 	VMError:                "VMError",
-
-	FuncStarted:  "function started",
-	JustWaiting:  "just waiting",
-	DebugMessage: "debug message",
-	NodeBan:      "node banned",
+	FuncStarted:            "function started",
+	JustWaiting:            "just waiting",
+	DebugMessage:           "debug message",
+	NodeBan:                "node banned",
 }
+
+const (
+	NetworkError          = "Network error"
+	JSONMarshallError     = "JSON marshall error"
+	JSONUnmarshallError   = "JSON unmarshall error"
+	CommandExecutionError = "Command execution error"
+	ConvertionError       = "Convertion error"
+)

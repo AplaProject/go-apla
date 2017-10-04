@@ -23,33 +23,34 @@ import (
 	"runtime"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 func openBrowser(BrowserHTTPHost string) {
-	logger.LogDebug(consts.FuncStarted, fmt.Sprintf("runtime.GOOS: %v", runtime.GOOS))
 	var err error
+	cmd := ""
 	switch runtime.GOOS {
 	case "linux":
+		cmd = "xdg-open"
 		err = exec.Command("xdg-open", BrowserHTTPHost).Start()
 	case "windows", "darwin":
+		cmd = "open"
 		err = exec.Command("open", BrowserHTTPHost).Start()
 		if err != nil {
-			exec.Command("cmd", "/c", "start", BrowserHTTPHost).Start()
+			cmd = "cmd /c start"
+			err = exec.Command("cmd", "/c", "start", BrowserHTTPHost).Start()
 		}
 	default:
 		err = fmt.Errorf("unsupported platform")
 	}
 	if err != nil {
-		logger.LogError(consts.CommandError, err)
+		log.WithFields(log.Fields{"command": cmd, "type": consts.CommandExecutionError, "error": err}).Error("Error executing command opening browser")
 	}
 }
 
 // GetHTTPHost returns program's hosts
 func GetHTTPHost() (string, string, string) {
-	logger.LogDebug(consts.FuncStarted, "")
 	BrowserHTTPHost := "http://localhost:" + *utils.ListenHTTPPort
 	HandleHTTPHost := ""
 	ListenHTTPHost := ":" + *utils.ListenHTTPPort

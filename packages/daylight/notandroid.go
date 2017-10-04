@@ -19,58 +19,19 @@
 package daylight
 
 import (
+	"fmt"
 	"net"
 	"net/http"
-
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
-	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-
-	"fmt"
-
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	log "github.com/sirupsen/logrus"
 )
 
-// IosLog is reserved
-func IosLog(text string) {
-}
-
-/*
-func NewBoundListener(maxActive int, l net.Listener) net.Listener {
-	return &boundListener{l, make(chan bool, maxActive)}
-}
-
-type boundListener struct {
-	net.Listener
-	active chan bool
-}
-
-type boundConn struct {
-	net.Conn
-	active chan bool
-}
-
-func (l *boundListener) Accept() (net.Conn, error) {
-	l.active <- true
-	c, err := l.Listener.Accept()
-	if err != nil {
-		<-l.active
-		return nil, err
-	}
-	return &boundConn{c, l.active}, err
-}
-
-func (l *boundConn) Close() error {
-	err := l.Conn.Close()
-	<-l.active
-	return err
-}
-*/
-func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Handler) {
-	logger.LogDebug(consts.FuncStarted, "")
+func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Handler) error {
 	i := 0
 	host := ListenHTTPHost
 	var l net.Listener
@@ -78,26 +39,20 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Han
 	for {
 		i++
 		if i > 7 {
-			logger.LogError(consts.SystemError, fmt.Sprintf("error listening %s", host))
-			panic("Error listening ")
+			log.Warning("tried to listen ipV4 at all ports")
+			return fmt.Errorf("tried all ports")
 		}
 		if i > 1 {
 			host = ":7" + converter.IntToStr(i) + "79"
 			*BrowserHTTPHost = "http://" + host
 		}
-		logger.LogDebug(consts.DebugMessage, fmt.Sprintf("host: %s", host))
 		l, err = net.Listen("tcp4", host)
-		logger.LogDebug(consts.DebugMessage, fmt.Sprintf("l: %s", l))
+		log.WithFields(log.Fields{"host": host}).Debug("trying to listen at")
 		if err == nil {
-			// Если это повторный запуск и он не из консоли, то открываем окно браузера, т.к. скорее всего юзер тыкнул по иконке
-			// If this is a restart and it is made not from the console, then open the browser window, because user most likely pressed the icon
-			/*if *utils.Console == 0 {
-				openBrowser(browser)
-			}*/
-			logger.LogDebug(consts.DebugMessage, fmt.Sprintf("BrowserHTTPHost: %s", host))
+			log.WithFields(log.Fields{"host": host}).Info("listening at")
 			break
 		} else {
-			logger.LogError(consts.SystemError, err)
+			log.WithFields(log.Fields{"host": host, "error": err, "type": consts.NetworkError}).Debug("cannot listen at host")
 		}
 	}
 
@@ -105,24 +60,22 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Han
 		srv := &http.Server{Handler: route}
 		err = srv.Serve(l)
 		if err != nil {
-			logger.LogError(consts.SystemError, fmt.Sprintf("Error listening host %s. %s", ListenHTTPHost, err))
-			panic(err)
-			//os.Exit(1)
+			log.WithFields(log.Fields{"host": host, "error": err}).Fatal("serving http at host")
 		}
 	}()
+	return nil
 }
 
 // For ipv6 on the server
-func httpListenerV6(route http.Handler) {
-	logger.LogDebug(consts.FuncStarted, "")
+func httpListenerV6(route http.Handler) error {
 	i := 0
 	port := *utils.ListenHTTPPort
 	var l net.Listener
 	var err error
 	for {
 		if i > 7 {
-			logger.LogError(consts.SystemError, fmt.Sprintf("Error listening ipv6 %s", port))
-			panic("Error listening ")
+			log.Error("tried all ports")
+			return fmt.Errorf("tried all ports")
 		}
 		if i > 0 {
 			port = "7" + converter.IntToStr(i) + "79"
@@ -130,9 +83,10 @@ func httpListenerV6(route http.Handler) {
 		i++
 		l, err = net.Listen("tcp6", ":"+port)
 		if err == nil {
+			log.WithFields(log.Fields{"host": ":" + port}).Info("listening ipv6 at")
 			break
 		} else {
-			logger.LogError(consts.SystemError, err)
+			log.WithFields(log.Fields{"error": err, "host": ":" + port, "type": consts.NetworkError}).Error("cannot listenin at host")
 		}
 	}
 
@@ -140,29 +94,24 @@ func httpListenerV6(route http.Handler) {
 		srv := &http.Server{Handler: route}
 		err = srv.Serve(l)
 		if err != nil {
-			logger.LogError(consts.SystemError, fmt.Sprintf("error listening: %v", err))
-			panic(err)
+			log.WithFields(log.Fields{"error": err, "host": ":" + port}).Fatal("serving http at host")
 		}
 	}()
+	return nil
 }
 
 func tcpListener() {
-	logger.LogDebug(consts.FuncStarted, "tcp")
 	go func() {
-		logger.LogDebug(consts.DebugMessage, fmt.Sprintf("*utils.tcpHost: %s:%s", *utils.TCPHost, consts.TCP_PORT))
-		//if len(*utils.TCPHost) > 0 {
-		// включаем листинг TCP-сервером и обработку входящих запросов
-		// switch on the listing by TCP-server and the processing of incoming requests
+		log.WithFields(log.Fields{"host": *utils.TCPHost}).Info("Starting tcp listener at host")
 		l, err := net.Listen("tcp4", *utils.TCPHost+":"+consts.TCP_PORT)
 		if err != nil {
-			logger.LogError(consts.SystemError, fmt.Sprintf("error listening %s", err))
+			log.WithFields(log.Fields{"host": *utils.TCPHost, "error": err, "type": consts.NetworkError}).Error("Error tcp listening at host")
 		} else {
-			//defer l.Close()
 			go func() {
 				for {
 					conn, err := l.Accept()
 					if err != nil {
-						logger.LogError(consts.SystemError, fmt.Sprintf("error accepting: %s", err))
+						log.WithFields(log.Fields{"host": *utils.TCPHost, "error": err, "type": consts.NetworkError}).Error("Error accepting tcp at host")
 						time.Sleep(time.Second)
 					} else {
 						go func(conn net.Conn) {

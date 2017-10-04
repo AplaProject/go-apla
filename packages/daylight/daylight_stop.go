@@ -17,22 +17,18 @@
 package daylight
 
 import (
-	"fmt"
-	"time"
-
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 // Stop stops the program
 func Stop() {
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("Apla Stop : %v", model.DBConn))
+	log.Info("Trying to stop")
 	stopDaemons := &model.StopDaemon{StopTime: time.Now().Unix()}
 	err := stopDaemons.Create()
 	if err != nil {
-		logger.LogError(consts.SystemError, err)
+		log.Warning("Failed to stop")
 	}
-	logger.LogDebug(consts.DebugMessage, "Apla stop")
+	log.Info("Stopped")
 }

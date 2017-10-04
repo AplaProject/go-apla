@@ -1,14 +1,15 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/astaxie/beego/config"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -28,26 +29,27 @@ type DBConfig struct {
 
 func Read() error {
 	ConfigIni = map[string]string{}
-	fullConfigIni, err := config.NewConfig("ini", *utils.Dir+"/"+configFileName)
+	path := fmt.Sprintf("%s/%s", *utils.Dir, configFileName)
+	fullConfigIni, err := config.NewConfig("ini", path)
 	if err != nil {
-		logger.LogError(consts.ConfigError, err.Error())
+		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("new config")
 		return err
-	} else {
-		ConfigIni, err = fullConfigIni.GetSection("default")
-		if err != nil {
-			logger.LogError(consts.ConfigError, err.Error())
-			return err
-		}
+	}
+	ConfigIni, err = fullConfigIni.GetSection("default")
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("getting default config section")
+		return err
 	}
 	return nil
 }
 
 func Save(logLevel, installType string, dbConf *DBConfig) error {
-	logger.LogDebug(consts.FuncStarted, "")
-	path := *utils.Dir + "/" + configFileName
+	path := fmt.Sprintf("%s/%s", *utils.Dir, configFileName)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		logger.LogError(consts.IOError, err.Error())
-		ioutil.WriteFile(path, []byte(``), 0644)
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": path}).Error("os.Stat config file")
+		if err := ioutil.WriteFile(path, []byte(``), 0644); err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": path}).Error("creating config file")
+		}
 	}
 	confIni, err := config.NewConfig("ini", path)
 	confIni.Set("log_level", logLevel)
@@ -66,7 +68,7 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 
 	err = confIni.SaveConfigFile(path)
 	if err != nil {
-		logger.LogError(consts.IOError, err.Error())
+		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("saving config file")
 		Drop()
 		return utils.ErrInfo(err)
 	}
@@ -74,8 +76,9 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 }
 
 func Drop() {
-	err := os.Remove(*utils.Dir + "/" + configFileName)
+	path := fmt.Sprintf("%s/%s", *utils.Dir, configFileName)
+	err := os.Remove(path)
 	if err != nil {
-		logger.LogError(consts.IOError, err.Error())
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": path}).Error("Removing config")
 	}
 }

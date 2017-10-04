@@ -25,31 +25,29 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	log "github.com/sirupsen/logrus"
 )
 
 // KillPid kills the process with the specified pid
 func KillPid(pid string) error {
-	logger.LogDebug(consts.FuncStarted, "")
 	if model.DBConn != nil {
 		sd := &model.StopDaemon{StopTime: time.Now().Unix()}
 		err := sd.Create()
 		if err != nil {
-			logger.LogError(consts.DBError, err)
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error creating StopDaemon")
 			return err
 		}
 	}
 	rez, err := exec.Command("tasklist", "/fi", "PID eq "+pid).Output()
 	if err != nil {
-		logger.LogError(consts.CommandError, err)
+		log.WithFields(log.Fields{"type": consts.CommandExecutionError, "err": err, "cmd": "tasklist /fi PID eq" + pid}).Error("Error executing command")
 		return err
 	}
 	if string(rez) == "" {
 		return fmt.Errorf("null")
 	}
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("rez %s", string(rez)))
+	log.WithFields(log.Fields{"cmd": "tasklist /fi PID eq " + pid}).Debug("command execution result")
 	if ok, _ := regexp.MatchString(`(?i)PID`, string(rez)); !ok {
 		return fmt.Errorf("null")
 	}

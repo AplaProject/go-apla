@@ -23,8 +23,8 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -82,7 +82,7 @@ var (
 func SysUpdate() error {
 	systemParameters, err := model.GetAllSystemParameters()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all system parameters")
 		return err
 	}
 	mutex.Lock()
@@ -92,14 +92,17 @@ func SysUpdate() error {
 	}
 
 	cost = make(map[string]int64)
-	json.Unmarshal([]byte(cache[OpPrice]), &cost)
+	if err := json.Unmarshal([]byte(cache[OpPrice]), &cost); err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "value": cache[OpPrice]}).Error("unmarshalling opPrice from json")
+	}
 	return err
 }
 
 func SysInt64(name string) int64 {
-	val, err := strconv.ParseInt(SysString(name), 10, 64)
+	strVal := SysString(name)
+	val, err := strconv.ParseInt(strVal, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, SysString(name))
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strVal}).Error("converting str to int")
 	}
 	return val
 }
@@ -109,81 +112,91 @@ func GetBlockchainURL() string {
 }
 
 func GetUpdFullNodesPeriod() int64 {
-	val, err := strconv.ParseInt(SysString(UpdFullNodesPeriod), 10, 64)
+	strVal := SysString(UpdFullNodesPeriod)
+	val, err := strconv.ParseInt(strVal, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, SysString(UpdFullNodesPeriod))
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strVal}).Error("converting str to int")
 	}
 	return val
 }
 
 func GetMaxBlockSize() int64 {
-	val, err := strconv.ParseInt(SysString(MaxBlockSize), 10, 64)
+	strVal := SysString(MaxBlockSize)
+	val, err := strconv.ParseInt(strVal, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, SysString(MaxBlockSize))
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strVal}).Error("converting str to int")
 	}
 	return val
 }
 
 func GetMaxTxSize() int64 {
-	val, err := strconv.ParseInt(SysString(MaxTxSize), 10, 64)
+	strVal := SysString(MaxTxSize)
+	val, err := strconv.ParseInt(strVal, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, SysString(MaxTxSize))
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strVal}).Error("converting str to int")
 	}
 	return val
 }
 
 func GetRecoveryAddress() int64 {
-	val, err := strconv.ParseInt(SysString(RecoveryAddress), 10, 64)
+	strVal := SysString(RecoveryAddress)
+	val, err := strconv.ParseInt(strVal, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, SysString(RecoveryAddress))
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strVal}).Error("converting str to int")
 	}
 	return val
 }
 
 func GetCommissionWallet() int64 {
-	val, err := strconv.ParseInt(SysString(CommissionWallet), 10, 64)
+	strVal := SysString(CommissionWallet)
+	val, err := strconv.ParseInt(strVal, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, SysString(CommissionWallet))
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strVal}).Error("converting str to int")
 	}
 	return val
 }
 
 func GetGapsBetweenBlocks() int {
-	val, err := strconv.Atoi(SysString(GapsBetweenBlocks))
+	strVal := SysString(GapsBetweenBlocks)
+	val, err := strconv.Atoi(strVal)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, SysString(GapsBetweenBlocks))
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strVal}).Error("converting str to int")
 	}
 	return val
 }
 
 func GetMaxTxCount() int {
-	val, err := strconv.Atoi(SysString(MaxTxCount))
+	strVal := SysString(MaxTxCount)
+	val, err := strconv.Atoi(strVal)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, SysString(MaxTxCount))
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strVal}).Error("converting str to int")
 	}
 	return val
 }
 
 func GetMaxColumns() int {
-	val, err := strconv.Atoi(SysString(MaxColumns))
+	strVal := SysString(MaxColumns)
+	val, err := strconv.Atoi(strVal)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, SysString(MaxColumns))
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strVal}).Error("converting str to int")
 	}
 	return val
 }
 
 func GetMaxIndexes() int {
-	val, err := strconv.Atoi(SysString(MaxIndexes))
+	strVal := SysString(MaxIndexes)
+	val, err := strconv.Atoi(strVal)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, SysString(MaxIndexes))
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strVal}).Error("converting str to int")
 	}
 	return val
 }
 
 func GetMaxBlockUserTx() int {
-	val, err := strconv.Atoi(SysString(MaxBlockUserTx))
+	strVal := SysString(MaxBlockUserTx)
+	val, err := strconv.Atoi(strVal)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, SysString(MaxBlockUserTx))
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strVal}).Error("converting str to int")
 	}
 	return val
 }

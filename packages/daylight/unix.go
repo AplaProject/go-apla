@@ -24,17 +24,18 @@ import (
 	"syscall"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+	log "github.com/sirupsen/logrus"
 )
 
 func KillPid(pid string) error {
-	logger.LogDebug(consts.FuncStarted, "")
 	pidInt, err := strconv.Atoi(pid)
 	if err != nil {
+		log.WithFields(log.Fields{"pid": pid, "type": consts.ConvertionError}).Error("converting pid to int")
 		return err
 	}
 	err = syscall.Kill(pidInt, syscall.SIGTERM)
 	if err != nil {
+		log.WithFields(log.Fields{"pid": pid, "signal": syscall.SIGTERM}).Error("Error killing process with pid")
 		return err
 	}
 	return nil
