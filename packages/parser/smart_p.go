@@ -290,6 +290,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		fuelRate               decimal.Decimal
 	)
 	payWallet := &model.Key{}
+	p.TxContract.Extend = p.getExtend()
 	if flags&smart.CallRollback == 0 && (flags&smart.CallAction) != 0 {
 		toID = p.BlockData.WalletID
 		fromID = p.TxSmart.UserID
@@ -371,7 +372,6 @@ func (p *Parser) CallContract(flags int) (err error) {
 	}
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
-	p.TxContract.Extend = p.getExtend()
 	p.TxContract.StackCont = []string{p.TxContract.Name}
 	(*p.TxContract.Extend)[`stack_cont`] = StackCont
 	before := (*p.TxContract.Extend)[`txcost`].(int64)

@@ -18,7 +18,6 @@ package templatev2
 
 import (
 	"encoding/json"
-	//	"fmt"
 	"html"
 	"strings"
 	"unicode/utf8"
@@ -78,8 +77,24 @@ func setAllAttr(par parFunc) {
 	}
 }
 
-func ifValue(val string) bool {
-	var sep string
+func ifValue(val string, vars *map[string]string) bool {
+	var (
+		sep   string
+		owner node
+	)
+
+	if strings.IndexByte(val, '(') != -1 {
+		process(val, &owner, vars)
+		if len(owner.Children) > 0 {
+			inode := owner.Children[0]
+			if inode.Tag == tagText {
+				val = inode.Text
+			}
+		} else {
+			val = ``
+		}
+
+	}
 	if strings.Index(val, `;base64`) < 0 {
 		for _, item := range []string{`==`, `!=`, `<=`, `>=`, `<`, `>`} {
 			if strings.Index(val, item) >= 0 {
@@ -376,15 +391,14 @@ func process(input string, owner *node, vars *map[string]string) {
 }
 
 // Template2JSON converts templates to JSON data
-func Template2JSON(input string, full bool) []byte {
-	vars := make(map[string]string)
+func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 	if full {
-		vars[`_full`] = `1`
+		(*vars)[`_full`] = `1`
 	} else {
-		vars[`_full`] = `0`
+		(*vars)[`_full`] = `0`
 	}
 	root := node{}
-	process(input, &root, &vars)
+	process(input, &root, vars)
 	if root.Children == nil {
 		return []byte(`[]`)
 	}

@@ -17,6 +17,7 @@
 package templatev2
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -25,6 +26,7 @@ var (
 		`Div`:       {defaultTag, defaultTag, `div`, `Class,Body`},
 		`Em`:        {defaultTag, defaultTag, `em`, `Body,Class`},
 		`Form`:      {defaultTag, defaultTag, `form`, `Class,Body`},
+		`GetVar`:    {getvarTag, defaultTag, `getvar`, `Name`},
 		`InputErr`:  {defaultTag, defaultTag, `inputerr`, `*`},
 		`Label`:     {defaultTag, defaultTag, `label`, `Body,Class,For`},
 		`MenuGroup`: {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
@@ -40,11 +42,13 @@ var (
 			`Alert`: {tplFunc{alertTag, alertFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
 		}},
 		`if`: {map[string]tailInfo{
-			`Else`:   {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
-			`ElseIf`: {tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false},
+			`Else`: {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
 		}},
 		`input`: {map[string]tailInfo{
 			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, true},
+		}},
+		`dbfind`: {map[string]tailInfo{
+			`Columns`: {tplFunc{columnsTag, defaultTag, `columns`, `Columns`}, true},
 		}},
 	}
 	modes = [][]rune{{'(', ')'}, {'{', '}'}}
@@ -54,6 +58,10 @@ func init() {
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Input`] = tplFunc{inputTag, inputTag, `input`, `Name,Class,Placeholder,Type,Value`}
+	funcs[`DBFind`] = tplFunc{dbfindTag, defaultTag, `dbfind`, `Name`}
+
+	tails[`if`].Tails[`ElseIf`] = tailInfo{tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false}
+
 }
 
 func defaultTag(par parFunc) string {
@@ -74,9 +82,31 @@ func alertFull(par parFunc) string {
 	return ``
 }
 
+func dbfindTag(par parFunc) string {
+	if len((*par.Pars)[`Name`]) == 0 {
+		return ``
+	}
+	defaultTail(par, `dbfind`)
+	fmt.Println(`Tails`, par.Tails)
+	return ``
+}
+
+func columnsTag(par parFunc) string {
+	setAllAttr(par)
+	par.Owner.Attr[`columns`] = par.Node.Attr
+	return ``
+}
+
 func setvarTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) > 0 {
 		(*par.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
+	}
+	return ``
+}
+
+func getvarTag(par parFunc) string {
+	if len((*par.Pars)[`Name`]) > 0 {
+		return macro((*par.Vars)[(*par.Pars)[`Name`]], par.Vars)
 	}
 	return ``
 }
@@ -131,7 +161,7 @@ func buttonTag(par parFunc) string {
 }
 
 func ifTag(par parFunc) string {
-	cond := ifValue((*par.Pars)[`Condition`])
+	cond := ifValue((*par.Pars)[`Condition`], par.Vars)
 	if cond {
 		for _, item := range par.Node.Children {
 			par.Owner.Children = append(par.Owner.Children, item)
@@ -167,7 +197,7 @@ func ifFull(par parFunc) string {
 }
 
 func elseifTag(par parFunc) string {
-	cond := ifValue((*par.Pars)[`Condition`])
+	cond := ifValue((*par.Pars)[`Condition`], par.Vars)
 	if cond {
 		for _, item := range par.Node.Children {
 			par.Owner.Children = append(par.Owner.Children, item)

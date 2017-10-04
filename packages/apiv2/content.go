@@ -28,6 +28,13 @@ type contentResult struct {
 	Tree string `json:"tree"`
 }
 
+func initVars(data *apiData) *map[string]string {
+	vars := make(map[string]string)
+	vars[`state`] = converter.Int64ToStr(data.state)
+	vars[`wallet`] = converter.Int64ToStr(data.wallet)
+	return &vars
+}
+
 func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	/*	var result contentResult
 
@@ -49,7 +56,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if err != nil {
 		return err
 	}
-	ret := templatev2.Template2JSON(pattern, false)
+	ret := templatev2.Template2JSON(pattern, false, initVars(data))
 	data.result = &contentResult{Tree: string(ret)}
 	return nil
 }
@@ -63,13 +70,13 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
-	ret := templatev2.Template2JSON(pattern, false)
+	ret := templatev2.Template2JSON(pattern, false, initVars(data))
 	data.result = &contentResult{Tree: string(ret)}
 	return nil
 }
 
 func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	ret := templatev2.Template2JSON(data.params[`template`].(string), false)
+	ret := templatev2.Template2JSON(data.params[`template`].(string), false, initVars(data))
 	data.result = &contentResult{Tree: string(ret)}
 	return nil
 }

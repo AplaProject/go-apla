@@ -28,9 +28,9 @@ type tplItem struct {
 type tplList []tplItem
 
 func TestJSON(t *testing.T) {
-
+	vars := make(map[string]string)
 	for _, item := range forTest {
-		templ := Template2JSON(item.input, false)
+		templ := Template2JSON(item.input, false, &vars)
 		if string(templ) != item.want {
 			t.Errorf(`wrong json %s != %s`, templ, item.want)
 			return
@@ -62,12 +62,12 @@ var forTest = tplList{
 	{`Div(myclass){Div()
 		P(){
 			Div(id){
-				Label(My text,myl,forname)
+				Label(My #text#,myl,forname)
 			}
 		}
 	}`,
-		`[{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"div"},{"tag":"p","children":[{"tag":"div","attr":{"class":"id"},"children":[{"tag":"label","attr":{"class":"myl","for":"forname"},"children":[{"tag":"text","text":"My text"}]}]}]}]}]`},
-	{`If(true,OK)If(false){Skip}.Else{Span(Else OK)}`,
+		`[{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"div"},{"tag":"p","children":[{"tag":"div","attr":{"class":"id"},"children":[{"tag":"label","attr":{"class":"myl","for":"forname"},"children":[{"tag":"text","text":"My #text#"}]}]}]}]}]`},
+	{`SetVar(istrue, 1)If(GetVar(istrue),OK)If(GetVar(isfalse)){Skip}.Else{Span(Else OK)}`,
 		`[{"tag":"text","text":"OK"},{"tag":"span","children":[{"tag":"text","text":"Else OK"}]}]`},
 	{`If(false,First).ElseIf(0){Skip}.ElseIf(1){
 		Second Span(If(text){item})
@@ -94,9 +94,9 @@ var forTest = tplList{
 }
 
 func TestFullJSON(t *testing.T) {
-
+	vars := make(map[string]string)
 	for _, item := range forFullTest {
-		templ := Template2JSON(item.input, true)
+		templ := Template2JSON(item.input, true, &vars)
 		if string(templ) != item.want {
 			t.Errorf(`wrong json %s != %s`, templ, item.want)
 			return
@@ -109,10 +109,10 @@ var forFullTest = tplList{
 	{`Div(myclass control, Content of the Div)`, `[{"tag":"div","attr":{"class":"myclass control"},"children":[{"tag":"text","text":"Content of the Div"}]}]`},
 	{`If(true,OK)If(false){Skip}.Else{Span(Else OK)}`,
 		`[{"tag":"if","attr":{"condition":"true"},"children":[{"tag":"text","text":"OK"}]},{"tag":"if","attr":{"condition":"false"},"children":[{"tag":"text","text":"Skip"}],"tail":[{"tag":"else","children":[{"tag":"span","children":[{"tag":"text","text":"Else OK"}]}]}]}]`},
-	{`If(false,First).ElseIf(0){Skip}.ElseIf(1){
+	{`If(false,First).ElseIf(GetVar(my)){Skip}.ElseIf(1){
 		Second
 	}.ElseIf(true){Third}.Else{Fourth}`,
-		`[{"tag":"if","attr":{"condition":"false"},"children":[{"tag":"text","text":"First"}],"tail":[{"tag":"elseif","attr":{"condition":"0"},"children":[{"tag":"text","text":"Skip"}]},{"tag":"elseif","attr":{"condition":"1"},"children":[{"tag":"text","text":"Second"}]},{"tag":"elseif","attr":{"condition":"true"},"children":[{"tag":"text","text":"Third"}]},{"tag":"else","children":[{"tag":"text","text":"Fourth"}]}]}]`},
+		`[{"tag":"if","attr":{"condition":"false"},"children":[{"tag":"text","text":"First"}],"tail":[{"tag":"elseif","attr":{"condition":"GetVar(my)"},"children":[{"tag":"text","text":"Skip"}]},{"tag":"elseif","attr":{"condition":"1"},"children":[{"tag":"text","text":"Second"}]},{"tag":"elseif","attr":{"condition":"true"},"children":[{"tag":"text","text":"Third"}]},{"tag":"else","children":[{"tag":"text","text":"Fourth"}]}]}]`},
 	{`Button(Page: link){My Button}.Alert(ConfirmButton: ConfBtn, CancelButton: CancelBtn, 
 			Text: Alert text, Icon:myicon)`,
 		`[{"tag":"button","attr":{"page":"link"},"children":[{"tag":"text","text":"My Button"}],"tail":[{"tag":"alert","attr":{"cancelbutton":"CancelBtn","confirmbutton":"ConfBtn","icon":"myicon","text":"Alert text"}}]}]`},
