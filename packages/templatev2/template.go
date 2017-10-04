@@ -21,7 +21,7 @@ import (
 	//	"fmt"
 	"html"
 	"strings"
-	//	"unicode/utf8"
+	"unicode/utf8"
 
 	"github.com/shopspring/decimal"
 )
@@ -64,41 +64,6 @@ type forTails struct {
 	Tails map[string]tailInfo
 }
 
-var (
-	funcs = map[string]tplFunc{
-		`Div`:       {defaultTag, defaultTag, `div`, `Class,Body`},
-		`Em`:        {defaultTag, defaultTag, `em`, `Body,Class`},
-		`Form`:      {defaultTag, defaultTag, `form`, `Class,Body`},
-		`InputErr`:  {defaultTag, defaultTag, `inputerr`, `*`},
-		`Label`:     {defaultTag, defaultTag, `label`, `Body,Class,For`},
-		`MenuGroup`: {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
-		`MenuItem`:  {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
-		`P`:         {defaultTag, defaultTag, `p`, `Body,Class`},
-		`Span`:      {defaultTag, defaultTag, `span`, `Body,Class`},
-		`Strong`:    {defaultTag, defaultTag, `strong`, `Body,Class`},
-		`Style`:     {defaultTag, defaultTag, `style`, `Css`},
-	}
-	tails = map[string]forTails{
-		`button`: {map[string]tailInfo{
-			`Alert`: {tplFunc{alertTag, alertFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
-		}},
-		`if`: {map[string]tailInfo{
-			`Else`:   {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
-			`ElseIf`: {tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false},
-		}},
-		`input`: {map[string]tailInfo{
-			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, true},
-		}},
-	}
-	modes = [][]rune{{'(', ')'}, {'{', '}'}}
-)
-
-func init() {
-	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
-	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
-	funcs[`Input`] = tplFunc{inputTag, inputTag, `input`, `Name,Class,Placeholder,Type,Value`}
-}
-
 func setAttr(par parFunc, name string) {
 	if len((*par.Pars)[name]) > 0 {
 		par.Node.Attr[strings.ToLower(name)] = (*par.Pars)[name]
@@ -111,73 +76,6 @@ func setAllAttr(par parFunc) {
 			par.Node.Attr[strings.ToLower(key)] = v
 		}
 	}
-}
-
-func defaultTag(par parFunc) string {
-	setAllAttr(par)
-	par.Owner.Children = append(par.Owner.Children, par.Node)
-	return ``
-}
-
-func alertTag(par parFunc) string {
-	setAllAttr(par)
-	par.Owner.Attr[`alert`] = par.Node.Attr
-	return ``
-}
-
-func alertFull(par parFunc) string {
-	setAllAttr(par)
-	par.Owner.Tail = append(par.Owner.Tail, par.Node)
-	return ``
-}
-
-func validateTag(par parFunc) string {
-	setAllAttr(par)
-	par.Owner.Attr[`validate`] = par.Node.Attr
-	return ``
-}
-
-func validateFull(par parFunc) string {
-	setAllAttr(par)
-	par.Owner.Tail = append(par.Owner.Tail, par.Node)
-	return ``
-}
-
-func defaultTail(par parFunc, tag string) {
-	if par.Tails != nil {
-		for _, v := range *par.Tails {
-			name := (*v)[len(*v)-1]
-			curFunc := tails[tag].Tails[name].tplFunc
-			pars := (*v)[:len(*v)-1]
-			callFunc(&curFunc, par.Node, par.Vars, &pars, nil)
-		}
-	}
-}
-
-func inputTag(par parFunc) string {
-	defaultTag(par)
-	defaultTail(par, `input`)
-	return ``
-}
-
-func buttonTag(par parFunc) string {
-	defaultTag(par)
-	if len((*par.Pars)[`Params`]) > 0 {
-		imap := make(map[string]string)
-		for _, v := range strings.Split((*par.Pars)[`Params`], `,`) {
-			v = strings.TrimSpace(v)
-			if off := strings.IndexByte(v, '='); off == -1 {
-				imap[v] = v
-			} else {
-				imap[strings.TrimSpace(v[:off])] = strings.TrimSpace(v[off+1:])
-			}
-		}
-		if len(imap) > 0 {
-			par.Node.Attr[`params`] = imap
-		}
-	}
-	defaultTail(par, `button`)
-	return ``
 }
 
 func ifValue(val string) bool {
@@ -221,69 +119,57 @@ func ifValue(val string) bool {
 	return false
 }
 
-func ifTag(par parFunc) string {
-	cond := ifValue((*par.Pars)[`Condition`])
-	if cond {
-		for _, item := range par.Node.Children {
-			par.Owner.Children = append(par.Owner.Children, item)
-		}
+func replace(input string, level int, vars *map[string]string) string {
+	if len(input) == 0 {
+		return input
 	}
-	if !cond && par.Tails != nil {
-		for _, v := range *par.Tails {
-			name := (*v)[len(*v)-1]
-			curFunc := tails[`if`].Tails[name].tplFunc
-			pars := (*v)[:len(*v)-1]
-			callFunc(&curFunc, par.Owner, par.Vars, &pars, nil)
-			if (*par.Vars)[`_cond`] == `1` {
-				(*par.Vars)[`_cond`] = `0`
-				break
+	result := make([]rune, 0, utf8.RuneCountInString(input))
+	isName := false
+	name := make([]rune, 0, 128)
+	syschar := '#'
+	clearname := func() {
+		result = append(append(result, syschar), name...)
+		isName = false
+		name = name[:0]
+	}
+	for _, r := range input {
+		if r != syschar {
+			if isName {
+				name = append(name, r)
+				if len(name) > 64 || r <= ' ' {
+					clearname()
+				}
+			} else {
+				result = append(result, r)
 			}
+			continue
+		}
+		if isName {
+			if value, ok := (*vars)[string(name)]; ok {
+				if level < 10 {
+					value = replace(value, level+1, vars)
+				}
+				result = append(result, []rune(value)...)
+				isName = false
+			} else {
+				result = append(append(result, syschar), name...)
+			}
+			name = name[:0]
+		} else {
+			isName = true
 		}
 	}
-	return ``
-}
-
-func ifFull(par parFunc) string {
-	setAttr(par, `Condition`)
-	par.Owner.Children = append(par.Owner.Children, par.Node)
-	if par.Tails != nil {
-		for _, v := range *par.Tails {
-			name := (*v)[len(*v)-1]
-			curFunc := tails[`if`].Tails[name].tplFunc
-			pars := (*v)[:len(*v)-1]
-			callFunc(&curFunc, par.Node, par.Vars, &pars, nil)
-		}
+	if isName {
+		result = append(append(result, syschar), name...)
 	}
-	return ``
+	return string(result)
 }
 
-func elseifTag(par parFunc) string {
-	cond := ifValue((*par.Pars)[`Condition`])
-	if cond {
-		for _, item := range par.Node.Children {
-			par.Owner.Children = append(par.Owner.Children, item)
-		}
-		(*par.Vars)[`_cond`] = `1`
+func macro(input string, vars *map[string]string) string {
+	if (*vars)[`_full`] == `1` || strings.IndexByte(input, '#') == -1 {
+		return input
 	}
-	return ``
-}
-
-func elseifFull(par parFunc) string {
-	setAttr(par, `Condition`)
-	par.Owner.Tail = append(par.Owner.Tail, par.Node)
-	return ``
-}
-
-func elseTag(par parFunc) string {
-	for _, item := range par.Node.Children {
-		par.Owner.Children = append(par.Owner.Children, item)
-	}
-	return ``
-}
-
-func elseFull(par parFunc) string {
-	par.Owner.Tail = append(par.Owner.Tail, par.Node)
-	return ``
+	return replace(input, 0, vars)
 }
 
 func appendText(owner *node, text string) {
@@ -309,13 +195,13 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			val := strings.TrimSpace(v)
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
-				pars[val[:off]] = strings.TrimSpace(val[off+1:])
+				pars[val[:off]] = macro(strings.TrimSpace(val[off+1:]), vars)
 			}
 		}
 	} else {
 		for i, v := range strings.Split(curFunc.Params, `,`) {
 			if i < len(*params) {
-				val := strings.TrimSpace((*params)[i])
+				val := macro(strings.TrimSpace((*params)[i]), vars)
 				off := strings.IndexByte(val, ':')
 				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
 					pars[val[:off]] = strings.TrimSpace(val[off+1:])
@@ -472,6 +358,12 @@ func process(input string, owner *node, vars *map[string]string) {
 				nameOff = 0
 				params, shift, tailpars = getFunc(input[off:], curFunc)
 				callFunc(&curFunc, owner, vars, params, tailpars)
+				for off+shift+3 < len(input) && input[off+shift+1:off+shift+3] == `.(` {
+					var next int
+					params, next, tailpars = getFunc(input[off+shift+2:], curFunc)
+					callFunc(&curFunc, owner, vars, params, tailpars)
+					shift += next + 2
+				}
 				continue
 			}
 		}
