@@ -48,7 +48,12 @@ var (
 			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, true},
 		}},
 		`dbfind`: {map[string]tailInfo{
-			`Columns`: {tplFunc{columnsTag, defaultTag, `columns`, `Columns`}, true},
+			`Columns`: {tplFunc{tailTag, defaultTag, `columns`, `Columns`}, false},
+			`Where`:   {tplFunc{tailTag, defaultTag, `where`, `Where`}, false},
+			`WhereId`: {tplFunc{tailTag, defaultTag, `whereid`, `WhereId`}, false},
+			`Order`:   {tplFunc{tailTag, defaultTag, `order`, `Order`}, false},
+			`Count`:   {tplFunc{tailTag, defaultTag, `count`, `Count`}, false},
+			`Offset`:  {tplFunc{tailTag, defaultTag, `offset`, `Offset`}, false},
 		}},
 	}
 	modes = [][]rune{{'(', ')'}, {'{', '}'}}
@@ -87,13 +92,15 @@ func dbfindTag(par parFunc) string {
 		return ``
 	}
 	defaultTail(par, `dbfind`)
-	fmt.Println(`Tails`, par.Tails)
+	fmt.Println(`Par`, par.Node.Attr)
 	return ``
 }
 
-func columnsTag(par parFunc) string {
+func tailTag(par parFunc) string {
 	setAllAttr(par)
-	par.Owner.Attr[`columns`] = par.Node.Attr
+	for key, v := range par.Node.Attr {
+		par.Owner.Attr[key] = v
+	}
 	return ``
 }
 

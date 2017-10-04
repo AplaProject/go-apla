@@ -255,6 +255,7 @@ var (
 		{ // stateVar
 			lexNewLine: {stateBody, 0},
 			lexIdent:   {stateVarType, cfFParam},
+			isRCurly:   {stateBody | stateStay, 0},
 			//			lexIdent:   {stateVar, cfFParam},
 			//			lexType:    {stateVar, cfFType},
 			isComma: {stateVar, 0},

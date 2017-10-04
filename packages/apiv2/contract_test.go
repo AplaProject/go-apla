@@ -88,33 +88,34 @@ func TestNewContracts(t *testing.T) {
 
 var contracts = []smartContract{
 	{`testEmpty`, `contract testEmpty {
-			action { Test("empty",  "empty value")}}`,
+				action { Test("empty",  "empty value")}}`,
 		[]smartParams{
 			{nil, map[string]string{`empty`: `empty value`}},
 		}},
 	{`testUpd`, `contract testUpd {
-				action { Test("date",  "-2006.01.02-")}}`,
+					action { Test("date",  "-2006.01.02-")}}`,
 		[]smartParams{
 			{nil, map[string]string{`date`: `-` + time.Now().Format(`2006.01.02`) + `-`}},
 		}},
 	{`testSimple`, `contract testSimple {
-			data {
-				amount int
-				name   string
-			}
-			conditions {
-				Test("scond", $amount, $name)
-			}
-			action { Test("sact", $name, $amount)}}`,
+				data {
+					amount int
+					name   string
+				}
+				conditions {
+					Test("scond", $amount, $name)
+				}
+				action { Test("sact", $name, $amount)}}`,
 		[]smartParams{
 			{map[string]string{`name`: `Simple name`, `amount`: `-56781`},
 				map[string]string{`scond`: `-56781Simple name`,
 					`sact`: `Simple name-56781`}},
 		}},
-	{`errTest`, `contract errTest {
+	{`errTestVar`, `contract errTestVar {
 			conditions {
 			}
-			action { var test}}`,
+			action { var ivar int}
+		}`,
 		nil},
 }
 

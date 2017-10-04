@@ -250,6 +250,10 @@ func TestVMCompile(t *testing.T) {
 				return Sprintf("%d %s %s %s", 65123 + (1001-500)*11, my_test(), "Тестовая строка", Sprintf("> %s %d <","OK", 999 ))
 			}
 	}`, `my.initf`, `70634 Called my_test Ooops 777 Тестовая строка > OK 999 <`},
+		{`contract vars {
+		func cond() string {return "vars"}
+		func actions() { var test int}
+	}`, `vars.cond`, `vars`},
 	}
 	vm := NewVM()
 	vm.Extern = true
