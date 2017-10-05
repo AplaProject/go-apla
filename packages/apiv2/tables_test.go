@@ -50,9 +50,14 @@ func TestTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	//	fmt.Println(`RET`, ret)
 	if len(ret.Columns) == 0 {
 		t.Error(err)
 		return
 	}
+	err = sendGet(`table/contracts`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(`RET`, ret)
 }

@@ -447,6 +447,8 @@ func GetColumnType(tblname, column string) (itype string) {
 			itype = "money"
 		case strings.HasPrefix(coltype[`data_type`], `double`):
 			itype = "double"
+		default:
+			itype = coltype[`data_type`]
 		}
 	}
 	return
