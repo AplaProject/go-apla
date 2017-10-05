@@ -18,7 +18,11 @@ package templatev2
 
 import (
 	"fmt"
+	"html"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 var (
@@ -48,12 +52,13 @@ var (
 			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, true},
 		}},
 		`dbfind`: {map[string]tailInfo{
-			`Columns`: {tplFunc{tailTag, defaultTag, `columns`, `Columns`}, false},
-			`Where`:   {tplFunc{tailTag, defaultTag, `where`, `Where`}, false},
-			`WhereId`: {tplFunc{tailTag, defaultTag, `whereid`, `WhereId`}, false},
-			`Order`:   {tplFunc{tailTag, defaultTag, `order`, `Order`}, false},
-			`Count`:   {tplFunc{tailTag, defaultTag, `count`, `Count`}, false},
-			`Offset`:  {tplFunc{tailTag, defaultTag, `offset`, `Offset`}, false},
+			`Columns`:   {tplFunc{tailTag, defaultTag, `columns`, `Columns`}, false},
+			`Where`:     {tplFunc{tailTag, defaultTag, `where`, `Where`}, false},
+			`WhereId`:   {tplFunc{tailTag, defaultTag, `whereid`, `WhereId`}, false},
+			`Order`:     {tplFunc{tailTag, defaultTag, `order`, `Order`}, false},
+			`Limit`:     {tplFunc{tailTag, defaultTag, `limit`, `Limit`}, false},
+			`Offset`:    {tplFunc{tailTag, defaultTag, `offset`, `Offset`}, false},
+			`Ecosystem`: {tplFunc{tailTag, defaultTag, `ecosystem`, `Ecosystem`}, false},
 		}},
 	}
 	modes = [][]rune{{'(', ')'}, {'{', '}'}}
@@ -88,11 +93,73 @@ func alertFull(par parFunc) string {
 }
 
 func dbfindTag(par parFunc) string {
+	var (
+		fields string
+		state  int64
+	)
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
 	}
 	defaultTail(par, `dbfind`)
-	fmt.Println(`Par`, par.Node.Attr)
+	where := ``
+	order := ``
+	limit := 25
+	if par.Node.Attr[`columns`] != nil {
+		fields = converter.Escape(par.Node.Attr[`columns`].(string))
+	}
+	if len(fields) == 0 {
+		fields = `*`
+	}
+	if par.Node.Attr[`where`] != nil {
+		where = ` where ` + converter.Escape(par.Node.Attr[`where`].(string))
+	}
+	if par.Node.Attr[`whereid`] != nil {
+		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(par.Node.Attr[`whereid`].(string)))
+	}
+	if par.Node.Attr[`order`] != nil {
+		order = ` order by ` + converter.EscapeName(par.Node.Attr[`order`].(string))
+	}
+	if par.Node.Attr[`limit`] != nil {
+		limit = converter.StrToInt(par.Node.Attr[`limit`].(string))
+	}
+	if limit > 250 {
+		limit = 250
+	}
+	if par.Node.Attr[`ecosystem`] != nil {
+		state = converter.StrToInt64(par.Node.Attr[`ecosystem`].(string))
+	} else {
+		state = converter.StrToInt64((*par.Vars)[`state`])
+	}
+	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
+	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
+	if err != nil {
+		return err.Error()
+	}
+	data := make([][]string, 0)
+	cols := make([]string, 0)
+	lencol := 0
+	for _, item := range list {
+		if lencol == 0 {
+			for key := range item {
+				cols = append(cols, key)
+			}
+			lencol = len(cols)
+		}
+		row := make([]string, lencol)
+		for i, icol := range cols {
+			ival := item[icol]
+			if strings.IndexByte(ival, '<') >= 0 {
+				ival = html.EscapeString(ival)
+			}
+			if ival == `NULL` {
+				ival = ``
+			}
+			row[i] = ival
+		}
+		data = append(data, row)
+	}
+	par.Node.Columns = &cols
+	par.Node.Data = &data
 	return ``
 }
 

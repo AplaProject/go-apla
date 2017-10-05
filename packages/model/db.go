@@ -408,23 +408,22 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 	if err != nil {
 		return
 	}
-	if _, ok := coltype["data_type"]; ok {
-		dataType := coltype["data_type"]
+	if dataType, ok := coltype["data_type"]; ok {
 		switch {
 		case dataType == "character varying":
-			itype = `text`
-		case dataType == "bytea":
-			itype = "varchar"
+			itype = `varchar`
+			/*		case coltype[`data_type`] == "bytea":
+					itype = "bytea"*/
 		case dataType == `bigint`:
-			itype = "numbers"
+			itype = "number"
 		case strings.HasPrefix(dataType, `timestamp`):
-			itype = "date_time"
+			itype = "datetime"
 		case strings.HasPrefix(dataType, `numeric`):
 			itype = "money"
 		case strings.HasPrefix(dataType, `double`):
 			itype = "double"
 		default:
-			err = fmt.Errorf("Unknown column type")
+			itype = dataType
 		}
 	}
 	return
