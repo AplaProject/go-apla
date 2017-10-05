@@ -18,9 +18,10 @@ package apiv2
 
 import (
 	"encoding/hex"
+	"net/http"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"net/http"
 )
 
 type txstatusResult struct {
@@ -36,7 +37,7 @@ func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
 	}
 	ts := &model.TransactionStatus{}
-	notFound, err := ts.Get([]byte(data.params["hash"].(string)))
+	notFound, err := ts.Get([]byte(converter.HexToBin(data.params["hash"].(string))))
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}

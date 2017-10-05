@@ -1,9 +1,5 @@
 package model
 
-import (
-	"encoding/hex"
-)
-
 type TransactionStatus struct {
 	Hash     []byte `gorm:"primary_key;not null"`
 	Time     int64  `gorm:"not null;"`
@@ -21,17 +17,8 @@ func (ts *TransactionStatus) Create() error {
 	return DBConn.Create(ts).Error
 }
 
-func toHex(transactionHash []byte) []byte {
-	for _, b := range transactionHash {
-		if !(b >= '0' && b <= '9') && !(b >= 'a' && b <= 'f') {
-			return []byte(hex.EncodeToString(transactionHash))
-		}
-	}
-	return transactionHash
-}
-
 func (ts *TransactionStatus) Get(transactionHash []byte) (bool, error) {
-	query := DBConn.Where("hash = ?", toHex(transactionHash)).First(ts)
+	query := DBConn.Where("hash = ?", transactionHash).First(ts)
 	return query.RecordNotFound(), query.Error
 }
 
@@ -40,10 +27,10 @@ func (ts *TransactionStatus) UpdateBlockID(transaction *DbTransaction, newBlockI
 }
 
 func (ts *TransactionStatus) UpdateBlockMsg(newBlockID int64, msg string, transactionHash []byte) error {
-	return DBConn.Model(&TransactionStatus{}).Where("hash = ?", toHex(transactionHash)).Updates(
+	return DBConn.Model(&TransactionStatus{}).Where("hash = ?", transactionHash).Updates(
 		map[string]interface{}{"block_id": newBlockID, "error": msg}).Error
 }
 
 func (ts *TransactionStatus) SetError(errorText string, transactionHash []byte) error {
-	return DBConn.Model(&TransactionStatus{}).Where("hash = ?", toHex(transactionHash)).Update("error", errorText).Error
+	return DBConn.Model(&TransactionStatus{}).Where("hash = ?", transactionHash).Update("error", errorText).Error
 }
