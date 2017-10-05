@@ -68,11 +68,11 @@ type EncryptKey struct {
 	Error     string `json:"error"`
 }
 
-func validateSmartContract(r *http.Request, data *apiData, result *prepareResult) (contract *smart.Contract, err error) {
+func validateSmartContract(r *http.Request, data *apiData, result *prepareResult) (contract *smart.Contract, parerr interface{}, err error) {
 	cntname := data.params[`name`].(string)
 	contract = smart.GetContract(cntname, uint32(data.state))
 	if contract == nil {
-		return nil, fmt.Errorf(`there is not %s contract`, cntname)
+		return nil, cntname, fmt.Errorf(`E_CONTRACT`) //fmt.Errorf(`there is not %s contract`, cntname)
 	}
 
 	if contract.Block.Info.(*script.ContractInfo).Tx != nil {

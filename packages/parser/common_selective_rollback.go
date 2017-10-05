@@ -50,7 +50,7 @@ func (p *Parser) selectiveRollback(table string, where string) error {
 		}
 		addSQLUpdate := ""
 		for k, v := range jsonMap {
-			if converter.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
+			if converter.InSliceString(k, []string{"hash", "pub", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
 				addSQLUpdate += k + `=decode('` + string(converter.BinToHex([]byte(v))) + `','HEX'),`
 			} else {
 				addSQLUpdate += k + `='` + strings.Replace(v, `'`, `''`, -1) + `',`

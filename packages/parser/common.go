@@ -427,8 +427,12 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
 	govAccount, _ := template.StateParam(int64(p.TxStateID), `founder_account`)
-	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
-		return nil
+	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
+		if p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
+			return nil
+		} else {
+			return fmt.Errorf(`Access denied`)
+		}
 	}
 
 	if isCustom, err := IsCustomTable(table); err != nil {
@@ -458,18 +462,24 @@ func (p *Parser) AccessTable(table, action string) error {
 
 // AccessColumns checks access rights to the columns
 func (p *Parser) AccessColumns(table string, columns []string) error {
+
+	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
+		govAccount, _ := template.StateParam(int64(p.TxStateID), `founder_account`)
+		if p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
+			return nil
+		}
+		return fmt.Errorf(`Access denied`)
+	}
 	if isCustom, err := IsCustomTable(table); err != nil {
-		return err // table != ... is left for compatibility temporarily. Remove if after new_state refactoring
-	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
+		return err
+	} else if !isCustom && !strings.HasSuffix(table, `_parameters`) {
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
 	prefix := table[:strings.IndexByte(table, '_')]
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
 	columnsAndPermissions, err := tables.GetColumns(table, "")
-	if err != nil {
-		return err
-	}
+
 	if err != nil {
 		return err
 	}

@@ -30,10 +30,9 @@ import (
 // do not use for comments
 func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (int64, string, error) {
 	var (
-		tableID  string
-		isCustom bool
-		err      error
-		cost     int64
+		tableID string
+		err     error
+		cost    int64
 	)
 
 	if generalRollback && p.BlockData == nil {
@@ -41,13 +40,6 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	}
 
 	isBytea := getBytea(table)
-	/*	if isCustom, pref, err = p.IsCustomTable(table); err != nil && pref != `notcustom` {
-		return 0, ``, err
-	}*/
-	if isCustom, err = IsCustomTable(table); err != nil {
-		return 0, ``, err
-	}
-
 	for i, v := range ivalues {
 		if len(fields) > i && isBytea[fields[i]] {
 			var vlen int
@@ -62,8 +54,12 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 					vlen = len(v.(string))
 				}
 			}
-			if isCustom && vlen > 64 {
-				return 0, ``, fmt.Errorf(`hash value cannot be larger than 64 bytes`)
+			if vlen > 64 {
+				if isCustom, err := IsCustomTable(table); err != nil {
+					return 0, ``, err
+				} else if isCustom {
+					return 0, ``, fmt.Errorf(`hash value cannot be larger than 64 bytes`)
+				}
 			}
 		}
 	}
@@ -117,6 +113,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		return 0, tableID, err
 	}
 	cost += selectCost
+
 	log.Debug(`SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere)
 	if whereFields != nil && len(logData) > 0 {
 		/*	if whereFields != nil {

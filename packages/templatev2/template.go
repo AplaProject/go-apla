@@ -20,7 +20,9 @@ import (
 	"encoding/json"
 	"html"
 	"strings"
-	//	"unicode/utf8"
+	"unicode/utf8"
+
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -28,25 +30,37 @@ const (
 )
 
 type node struct {
-	Tag  string                 `json:"tag"`
-	Attr map[string]interface{} `json:"attr,omitempty"`
-	//	Map      map[string]map[string]string `json:"map,omitempty"`
-	Text     string  `json:"text,omitempty"`
-	Children []*node `json:"children,omitempty"`
+	Tag      string                 `json:"tag"`
+	Attr     map[string]interface{} `json:"attr,omitempty"`
+	Text     string                 `json:"text,omitempty"`
+	Children []*node                `json:"children,omitempty"`
+	Tail     []*node                `json:"tail,omitempty"`
 }
 
 type parFunc struct {
-	Node *node
-	Vars *map[string]string
-	Pars *map[string]string
+	Owner *node
+	Node  *node
+	Vars  *map[string]string
+	Pars  *map[string]string
+	Tails *[]*[]string
 }
 
 type nodeFunc func(par parFunc) string
 
 type tplFunc struct {
 	Func   nodeFunc // process function
+	Full   nodeFunc // full process function
 	Tag    string   // HTML tag
 	Params string   // names of parameters
+}
+
+type tailInfo struct {
+	tplFunc
+	Last bool
+}
+
+type forTails struct {
+	Tails map[string]tailInfo
 }
 
 func setAttr(par parFunc, name string) {
@@ -55,58 +69,123 @@ func setAttr(par parFunc, name string) {
 	}
 }
 
-func defaultTag(par parFunc) string {
-	setAttr(par, `Class`)
-	setAttr(par, `Id`)
-	return ``
+func setAllAttr(par parFunc) {
+	for key, v := range *par.Pars {
+		if key != `Body` && len(v) > 0 {
+			par.Node.Attr[strings.ToLower(key)] = v
+		}
+	}
 }
 
-func buttonTag(par parFunc) string {
-	defaultTag(par)
-	setAttr(par, `Page`)
-	setAttr(par, `Contract`)
-	setAttr(par, `Alert`)
-	setAttr(par, `PageParams`)
-	if len((*par.Pars)[`Params`]) > 0 {
-		imap := make(map[string]string)
-		for _, v := range strings.Split((*par.Pars)[`Params`], `,`) {
-			v = strings.TrimSpace(v)
-			if off := strings.IndexByte(v, '='); off == -1 {
-				imap[v] = v
-			} else {
-				imap[strings.TrimSpace(v[:off])] = strings.TrimSpace(v[off+1:])
+func ifValue(val string, vars *map[string]string) bool {
+	var (
+		sep   string
+		owner node
+	)
+
+	if strings.IndexByte(val, '(') != -1 {
+		process(val, &owner, vars)
+		if len(owner.Children) > 0 {
+			inode := owner.Children[0]
+			if inode.Tag == tagText {
+				val = inode.Text
+			}
+		} else {
+			val = ``
+		}
+
+	}
+	if strings.Index(val, `;base64`) < 0 {
+		for _, item := range []string{`==`, `!=`, `<=`, `>=`, `<`, `>`} {
+			if strings.Index(val, item) >= 0 {
+				sep = item
+				break
 			}
 		}
-		if len(imap) > 0 {
-			par.Node.Attr[`params`] = imap
+	}
+	cond := []string{val}
+	if len(sep) > 0 {
+		cond = strings.SplitN(val, sep, 2)
+		cond[0], cond[1] = strings.Trim(cond[0], `"`), strings.Trim(cond[1], `"`)
+	}
+	switch sep {
+	case ``:
+		return len(val) > 0 && val != `0` && val != `false`
+	case `==`:
+		return len(cond) == 2 && strings.TrimSpace(cond[0]) == strings.TrimSpace(cond[1])
+	case `!=`:
+		return len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1])
+	case `>`, `<`, `<=`, `>=`:
+		ret0, _ := decimal.NewFromString(strings.TrimSpace(cond[0]))
+		ret1, _ := decimal.NewFromString(strings.TrimSpace(cond[1]))
+		if len(cond) == 2 {
+			var bin bool
+			if sep == `>` || sep == `<=` {
+				bin = ret0.Cmp(ret1) > 0
+			} else {
+				bin = ret0.Cmp(ret1) < 0
+			}
+			if sep == `<=` || sep == `>=` {
+				bin = !bin
+			}
+			return bin
 		}
 	}
-	return ``
+	return false
 }
 
-func inputTag(par parFunc) string {
-	defaultTag(par)
-	setAttr(par, `Placeholder`)
-	setAttr(par, `Value`)
-	setAttr(par, `Validate`)
-	setAttr(par, `Type`)
-	return ``
-}
-
-var (
-	funcs = map[string]tplFunc{
-		`Div`:    {defaultTag, `div`, `Class,Body`},
-		`Button`: {buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams,Alert`},
-		`Em`:     {defaultTag, `em`, `Body,Class`},
-		`Form`:   {defaultTag, `form`, `Class,Body`},
-		`Input`:  {inputTag, `input`, `Id,Class,Placeholder,Type,Value,Validate`},
-		`Label`:  {defaultTag, `label`, `Body,Class`},
-		`P`:      {defaultTag, `p`, `Body,Class`},
-		`Span`:   {defaultTag, `span`, `Body,Class`},
-		`Strong`: {defaultTag, `strong`, `Body,Class`},
+func replace(input string, level int, vars *map[string]string) string {
+	if len(input) == 0 {
+		return input
 	}
-	modes = [][]rune{{'(', ')'}, {'{', '}'}}
-)
+	result := make([]rune, 0, utf8.RuneCountInString(input))
+	isName := false
+	name := make([]rune, 0, 128)
+	syschar := '#'
+	clearname := func() {
+		result = append(append(result, syschar), name...)
+		isName = false
+		name = name[:0]
+	}
+	for _, r := range input {
+		if r != syschar {
+			if isName {
+				name = append(name, r)
+				if len(name) > 64 || r <= ' ' {
+					clearname()
+				}
+			} else {
+				result = append(result, r)
+			}
+			continue
+		}
+		if isName {
+			if value, ok := (*vars)[string(name)]; ok {
+				if level < 10 {
+					value = replace(value, level+1, vars)
+				}
+				result = append(result, []rune(value)...)
+				isName = false
+			} else {
+				result = append(append(result, syschar), name...)
+			}
+			name = name[:0]
+		} else {
+			isName = true
+		}
+	}
+	if isName {
+		result = append(append(result, syschar), name...)
+	}
+	return string(result)
+}
+
+func macro(input string, vars *map[string]string) string {
+	if (*vars)[`_full`] == `1` || strings.IndexByte(input, '#') == -1 {
+		return input
+	}
+	return replace(input, 0, vars)
+}
 
 func appendText(owner *node, text string) {
 	if len(strings.TrimSpace(text)) == 0 {
@@ -117,23 +196,36 @@ func appendText(owner *node, text string) {
 	}
 }
 
-func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]string) {
-	var curNode node
+func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]string, tailpars *[]*[]string) {
+	var (
+		out     string
+		curNode node
+	)
 	pars := make(map[string]string)
 	parFunc := parFunc{
 		Vars: vars,
 	}
-	for i, v := range strings.Split(curFunc.Params, `,`) {
-		if i < len(*params) {
-			val := strings.TrimSpace((*params)[i])
+	if curFunc.Params == `*` {
+		for _, v := range *params {
+			val := strings.TrimSpace(v)
 			off := strings.IndexByte(val, ':')
-			if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
-				pars[val[:off]] = strings.TrimSpace(val[off+1:])
-			} else {
-				pars[v] = val
+			if off != -1 {
+				pars[val[:off]] = macro(strings.TrimSpace(val[off+1:]), vars)
 			}
-		} else if _, ok := pars[v]; !ok {
-			pars[v] = ``
+		}
+	} else {
+		for i, v := range strings.Split(curFunc.Params, `,`) {
+			if i < len(*params) {
+				val := macro(strings.TrimSpace((*params)[i]), vars)
+				off := strings.IndexByte(val, ':')
+				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
+					pars[val[:off]] = strings.TrimSpace(val[off+1:])
+				} else {
+					pars[v] = val
+				}
+			} else if _, ok := pars[v]; !ok {
+				pars[v] = ``
+			}
 		}
 	}
 	if len(curFunc.Tag) > 0 {
@@ -142,11 +234,17 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 		if len(pars[`Body`]) > 0 {
 			process(pars[`Body`], &curNode, vars)
 		}
-		owner.Children = append(owner.Children, &curNode)
+		parFunc.Owner = owner
+		//		owner.Children = append(owner.Children, &curNode)
 		parFunc.Node = &curNode
+		parFunc.Tails = tailpars
 	}
 	parFunc.Pars = &pars
-	out := curFunc.Func(parFunc)
+	if (*vars)[`_full`] == `1` {
+		out = curFunc.Full(parFunc)
+	} else {
+		out = curFunc.Func(parFunc)
+	}
 	if len(out) > 0 {
 		if len(owner.Children) > 0 && owner.Children[len(owner.Children)-1].Tag == tagText {
 			owner.Children[len(owner.Children)-1].Text += out
@@ -156,89 +254,131 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 	}
 }
 
-func process(input string, owner *node, vars *map[string]string) {
+func getFunc(input string, curFunc tplFunc) (*[]string, int, *[]*[]string) {
 	var (
-		nameOff int
-		/*chOff,*/ pair rune
-		params          []string
-		curp            int
-		skip, isFunc    bool
-		curFunc         tplFunc
-		level, mode     int
+		curp, off, mode, lenParams int
+		skip                       bool
+		pair, ch                   rune
+		tailpar                    *[]*[]string
 	)
-	//	fmt.Println(`Input`, input)
-	name := make([]rune, 0, 128)
-	for off, ch := range input {
+	params := make([]string, 1)
+	if curFunc.Params == `*` {
+		lenParams = 0xff
+	} else {
+		lenParams = len(strings.Split(curFunc.Params, `,`))
+	}
+	level := 1
+	if input[0] == '{' {
+		mode = 1
+	}
+	skip = true
+main:
+	for off, ch = range input {
 		if skip {
 			skip = false
 			continue
 		}
-		if isFunc {
-			//			fmt.Println(off, ch, curp, params)
-			if pair > 0 {
-				if ch != pair {
-					params[curp] += string(ch)
+		if pair > 0 {
+			if ch != pair {
+				params[curp] += string(ch)
+			} else {
+				if off+1 == len(input) || rune(input[off+1]) != pair {
+					pair = 0
 				} else {
-					if off+1 == len(input) || rune(input[off+1]) != pair {
-						pair = 0
-					} else {
-						params[curp] += string(ch)
-						skip = true
-					}
+					params[curp] += string(ch)
+					skip = true
 				}
+			}
+			continue
+		}
+		if len(params[curp]) == 0 && ch != modes[mode][1] && ch != ',' {
+			if ch >= '!' {
+				if ch == '"' || ch == '`' {
+					pair = ch
+				} else {
+					params[curp] += string(ch)
+				}
+			}
+			continue
+		}
+		switch ch {
+		case ',':
+			if mode == 0 && level == 1 && len(params) < lenParams {
+				params = append(params, ``)
+				curp++
 				continue
 			}
-			if len(params[curp]) == 0 && ch != modes[mode][1] && ch != ',' {
-				if ch >= '!' {
-					if ch == '"' || ch == '`' {
-						pair = ch
-					} else {
-						params[curp] += string(ch)
-					}
-				}
-				continue
+		case modes[mode][0]:
+			level++
+		case modes[mode][1]:
+			if level > 0 {
+				level--
 			}
-			//			fmt.Println(`CH`, string(ch))
-			switch ch {
-			case ',':
-				if mode == 0 && level == 1 {
-					params = append(params, ``)
+			if level == 0 {
+				if mode == 0 && off+1 < len(input) && rune(input[off+1]) == modes[1][0] &&
+					strings.Contains(curFunc.Params, `Body`) {
+					mode = 1
+					params = append(params, `Body:`)
 					curp++
+					skip = true
+					level = 1
 					continue
 				}
-			case modes[mode][0]:
-				level++
-			case modes[mode][1]:
-				if level > 0 {
-					level--
-				}
-				if level == 0 {
-					if mode == 0 && off+1 < len(input) && rune(input[off+1]) == modes[1][0] &&
-						strings.Contains(curFunc.Params, `Body`) {
-						mode = 1
-						params = append(params, `Body:`)
-						curp++
-						skip = true
-						level = 1
-						continue
+				for tail, ok := tails[curFunc.Tag]; ok && off+2 < len(input) && input[off+1] == '.'; {
+					for key, tailFunc := range tail.Tails {
+						if strings.HasPrefix(input[off+2:], key+`(`) || strings.HasPrefix(input[off+2:], key+`{`) {
+							parTail, shift, _ := getFunc(input[off+len(key)+2:], tailFunc.tplFunc)
+							off += shift + len(key) + 2
+							if tailpar == nil {
+								fortail := make([]*[]string, 0)
+								tailpar = &fortail
+							}
+							*parTail = append(*parTail, key)
+							*tailpar = append(*tailpar, parTail)
+							if tailFunc.Last {
+								break main
+							}
+						}
 					}
-					callFunc(&curFunc, owner, vars, &params)
-					isFunc = false
-					continue
 				}
+				break main
 			}
-			params[curp] += string(ch)
+		}
+		params[curp] += string(ch)
+		continue
+	}
+	return &params, off, tailpar
+}
+
+func process(input string, owner *node, vars *map[string]string) {
+	var (
+		nameOff, shift int
+		curFunc        tplFunc
+		isFunc         bool
+		params         *[]string
+		tailpars       *[]*[]string
+	)
+	//	fmt.Println(`Input`, input)
+	name := make([]rune, 0, 128)
+	//main:
+	for off, ch := range input {
+		if shift > 0 {
+			shift--
 			continue
 		}
 		if ch == '(' {
 			if curFunc, isFunc = funcs[string(name[nameOff:])]; isFunc {
-				params = make([]string, 1)
-				curp = 0
 				appendText(owner, string(name[:nameOff]))
 				name = name[:0]
 				nameOff = 0
-				level = 1
-				mode = 0
+				params, shift, tailpars = getFunc(input[off:], curFunc)
+				callFunc(&curFunc, owner, vars, params, tailpars)
+				for off+shift+3 < len(input) && input[off+shift+1:off+shift+3] == `.(` {
+					var next int
+					params, next, tailpars = getFunc(input[off+shift+2:], curFunc)
+					callFunc(&curFunc, owner, vars, params, tailpars)
+					shift += next + 2
+				}
 				continue
 			}
 		}
@@ -251,10 +391,17 @@ func process(input string, owner *node, vars *map[string]string) {
 }
 
 // Template2JSON converts templates to JSON data
-func Template2JSON(input string) []byte {
-	vars := make(map[string]string)
+func Template2JSON(input string, full bool, vars *map[string]string) []byte {
+	if full {
+		(*vars)[`_full`] = `1`
+	} else {
+		(*vars)[`_full`] = `0`
+	}
 	root := node{}
-	process(input, &root, &vars)
+	process(input, &root, vars)
+	if root.Children == nil {
+		return []byte(`[]`)
+	}
 	out, err := json.Marshal(root.Children)
 	if err != nil {
 		return []byte(err.Error())

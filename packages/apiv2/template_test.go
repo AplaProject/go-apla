@@ -17,27 +17,39 @@
 package apiv2
 
 import (
-	"net/http"
-
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"fmt"
+	"net/url"
+	"testing"
 )
 
-type rowResult struct {
-	Value map[string]string `json:"value"`
+type tplItem struct {
+	input string
+	want  string
 }
 
-func row(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
-	cols := `*`
-	if len(data.params[`columns`].(string)) > 0 {
-		cols = converter.EscapeName(data.params[`columns`].(string))
-	}
-	row, err := model.GetOneRow(`SELECT `+cols+` FROM "`+converter.Int64ToStr(data.state)+`_`+
-		data.params[`name`].(string)+`" WHERE id = ?`, data.params[`id`].(string)).String()
-	if err != nil {
-		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)
-	}
+type tplList []tplItem
 
-	data.result = &rowResult{Value: row}
-	return
+func TestAPI(t *testing.T) {
+	for _, item := range forTest {
+		var ret contentResult
+
+		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if ret.Tree != item.want {
+			t.Error(fmt.Errorf(`wrong tree %s != %s`, ret.Tree, item.want))
+			return
+		}
+	}
+}
+
+var forTest = tplList{
+	{`Simple Strong(bold text)`,
+		`[{"tag":"text","text":"Simple "},{"tag":"strong","children":[{"tag":"text","text":"bold text"}]}]`},
+	{`DBFind(1_keys)`,
+		``},
+	{`DBFind(1_keys).Columns(id,amount)`,
+		``},
 }

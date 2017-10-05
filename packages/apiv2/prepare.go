@@ -45,8 +45,11 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 	timeNow = time.Now().Unix()
 	result.Time = converter.Int64ToStr(timeNow)
 	result.Values = make(map[string]string)
-	contract, err := validateSmartContract(r, data, &result)
+	contract, parerr, err := validateSmartContract(r, data, &result)
 	if err != nil {
+		if strings.HasPrefix(err.Error(), `E_`) {
+			return errorAPI(w, err.Error(), http.StatusBadRequest, parerr)
+		}
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)

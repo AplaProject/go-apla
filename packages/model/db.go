@@ -139,7 +139,7 @@ func GetTables() ([]string, error) {
 }
 
 func Update(transaction *DbTransaction, tblname, set, where string) error {
-	return GetDB(transaction).Exec(`UPDATE "` + tblname + `" SET ` + set + " " + where).Error
+	return GetDB(transaction).Exec(`UPDATE "` + strings.Trim(tblname, `"`) + `" SET ` + set + " " + where).Error
 }
 
 func Delete(tblname, where string) error {
@@ -552,11 +552,12 @@ func NumIndexes(tblname string) (int, error) {
 }
 
 func IsIndex(tblname, column string) (bool, error) {
-	query := DBConn.Raw(fmt.Sprintf(`select t.relname as table_name, i.relname as index_name, a.attname as column_name
+	row, err := GetOneRow(`select t.relname as table_name, i.relname as index_name, a.attname as column_name
 	 from pg_class t, pg_class i, pg_index ix, pg_attribute a 
 	 where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey)
-		 and t.relkind = 'r'  and t.relname = '%s'  and a.attname = '%s'`, tblname, column))
-	return query.RowsAffected > 0, query.Error
+		 and t.relkind = 'r'  and t.relname = ?  and a.attname = ?`, tblname, column).String()
+	fmt.Println(`ISIndex`, tblname, column, row)
+	return len(row) > 0 && row[`column_name`] == column, err
 }
 
 func GetTableData(tableName string, limit int) ([]map[string]string, error) {

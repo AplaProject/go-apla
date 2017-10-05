@@ -298,6 +298,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		fuelRate               decimal.Decimal
 	)
 	payWallet := &model.Key{}
+	p.TxContract.Extend = p.getExtend()
 	if flags&smart.CallRollback == 0 && (flags&smart.CallAction) != 0 {
 		toID = p.BlockData.WalletID
 		fromID = p.TxSmart.UserID
@@ -379,7 +380,6 @@ func (p *Parser) CallContract(flags int) (err error) {
 	}
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
-	p.TxContract.Extend = p.getExtend()
 	p.TxContract.StackCont = []string{p.TxContract.Name}
 	(*p.TxContract.Extend)[`stack_cont`] = StackCont
 	before := (*p.TxContract.Extend)[`txcost`].(int64)
@@ -520,7 +520,6 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
 	qcost = 0
 	var isIndex bool
-
 	if err = checkReport(tblname); err != nil {
 		return
 	}

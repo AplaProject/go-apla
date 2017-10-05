@@ -17,7 +17,6 @@
 package apiv2
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -44,7 +43,7 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	cntname := data.params[`name`].(string)
 	contract := smart.GetContract(cntname, uint32(data.state))
 	if contract == nil {
-		return errorAPI(w, fmt.Sprintf(`there is not %s contract`, cntname), http.StatusBadRequest)
+		return errorAPI(w, `E_CONTRACT`, http.StatusBadRequest, cntname)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
 	fields := make([]contractField, 0)

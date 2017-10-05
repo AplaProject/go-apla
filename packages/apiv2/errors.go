@@ -18,6 +18,7 @@ package apiv2
 
 var (
 	errors = map[string]string{
+		`E_CONTRACT`:      `There is not %s contract`,
 		`E_DBNIL`:         `DB is nil`,
 		`E_ECOSYSTEM`:     `Ecosystem %d doesn't exist`,
 		`E_EMPTYPUBLIC`:   `Public key is undefined`,
@@ -27,6 +28,7 @@ var (
 		`E_INSTALLED`:     `Apla is already installed`,
 		`E_INVALIDWALLET`: `Wallet %s is not valid`,
 		`E_NOTINSTALLED`:  `Apla is not installed`,
+		`E_QUERY`:         `DB query is wrong`,
 		`E_RECOVERED`:     `API recovered`,
 		`E_REFRESHTOKEN`:  `Refresh token is not valid`,
 		`E_SERVER`:        `Server error`,

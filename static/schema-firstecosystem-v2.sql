@@ -42,7 +42,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
        	if $Wallet {
 		    $walletContract = AddressToId($Wallet)
 		    if $walletContract == 0 {
-			   error Sprintf(`wrong wallet %s`, $Wallet)
+			   error Sprintf(`wrong wallet %%s`, $Wallet)
 		    }
 	    }
 	    var list array
@@ -50,7 +50,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
 	    var i int
 	    while i < Len(list) {
 	        if IsContract(list[i], $state) {
-	            warning Sprintf(`Contract %s exists`, list[i] )
+	            warning Sprintf(`Contract %%s exists`, list[i] )
 	        }
 	        i = i + 1
 	    }
@@ -58,7 +58,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
             $TokenEcosystem = 1
         } else {
             if !SysFuel($TokenEcosystem) {
-                warning Sprintf(`Ecosystem %d is not system`, $TokenEcosystem )
+                warning Sprintf(`Ecosystem %%d is not system`, $TokenEcosystem )
             }
         }
     }
@@ -141,7 +141,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     }
     conditions {
         if $Name && FindEcosystem($Name) {
-            error Sprintf(`Ecosystem %s is already existed`, $Name)
+            error Sprintf(`Ecosystem %%s is already existed`, $Name)
         }
     }
     action {
@@ -184,7 +184,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
        	if $Name == `ecosystem_name` {
     		exist = FindEcosystem($Value)
     		if exist > 0 && exist != $state {
-    			warning Sprintf(`Ecosystem %s already exists`, $Value)
+    			warning Sprintf(`Ecosystem %%s already exists`, $Value)
     		}
     	}
     }
@@ -215,7 +215,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Conditions string
     }
     conditions {
-        Eval(DBString(Table(`menu`), $Id, `conditions`))
+        Eval(DBString(Table(`menu`), `conditions`, $Id))
         ValidateCondition($Conditions,$state)
     }
     action {
@@ -228,12 +228,12 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Value      string
     }
     conditions {
-        Eval(DBString(Table(`menu`), $Id, `conditions`))
+        Eval(DBString(Table(`menu`), `conditions`, $Id ))
     }
     action {
         var table string
         table = Table(`menu`)
-        DBUpdate(table, $Id, `value`, DBString(table, $Id, `value`) + "\r\n" + $Value )
+        DBUpdate(table, $Id, `value`, DBString(table, `value`, $Id) + "\r\n" + $Value )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('12','contract NewPage {
@@ -261,7 +261,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Conditions string
     }
     conditions {
-        Eval(DBString(Table(`pages`), $Id, `conditions`))
+        Eval(DBString(Table(`pages`), `conditions`, $Id))
         ValidateCondition($Conditions,$state)
     }
     action {
@@ -274,7 +274,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Value      string
     }
     conditions {
-        Eval(DBString(Table(`pages`), $Id, `conditions`))
+        Eval(DBString(Table(`pages`), `conditions`, $Id))
     }
     action {
         var value, table string
@@ -298,7 +298,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         var exist string
         exist = DBStringExt(Table(`languages`), `name`, $Name, `name`)
         if exist {
-            error Sprintf("The language resource %s already exists", $Name)
+            error Sprintf("The language resource %%s already exists", $Name)
         }
     }
     action {
@@ -330,7 +330,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         var exist string
         exist = DBStringExt(Table(`signatures`), `name`, $Name, `name`)
         if exist {
-            error Sprintf("The signature %s already exists", $Name)
+            error Sprintf("The signature %%s already exists", $Name)
         }
     }
     action {
@@ -344,7 +344,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Conditions string
     }
     conditions {
-        Eval(DBString(Table(`signatures`), $Id, `conditions`))
+        Eval(DBString(Table(`signatures`), `conditions`, $Id))
         ValidateCondition($Conditions,$state)
     }
     action {

@@ -51,12 +51,14 @@ func TestNewContracts(t *testing.T) {
 		var ret getContractResult
 		err := sendGet(`contract/`+item.Name, nil, &ret)
 		if err != nil {
-			if strings.Contains(err.Error(), `there is not `+item.Name+` contract`) {
+			if strings.Contains(err.Error(), fmt.Sprintf(errors[`E_CONTRACT`], item.Name)) {
 				form := url.Values{"Name": {item.Name}, "Value": {item.Value},
 					"Conditions": {`true`}}
 				if err := postTx(`NewContract`, &form); err != nil {
-					t.Error(err)
-					return
+					if item.Name != `errTest` || !strings.HasPrefix(err.Error(), `must be type 7d01 125 [Ln:4 Col:22]`) {
+						t.Error(err)
+						return
+					}
 				}
 			} else {
 				t.Error(err)
@@ -86,29 +88,35 @@ func TestNewContracts(t *testing.T) {
 
 var contracts = []smartContract{
 	{`testEmpty`, `contract testEmpty {
-		action { Test("empty",  "empty value")}}`,
+				action { Test("empty",  "empty value")}}`,
 		[]smartParams{
 			{nil, map[string]string{`empty`: `empty value`}},
 		}},
 	{`testUpd`, `contract testUpd {
-			action { Test("date",  "-2006.01.02-")}}`,
+					action { Test("date",  "-2006.01.02-")}}`,
 		[]smartParams{
 			{nil, map[string]string{`date`: `-` + time.Now().Format(`2006.01.02`) + `-`}},
 		}},
 	{`testSimple`, `contract testSimple {
-		data {
-			amount int
-			name   string
-		}
-		conditions {
-			Test("scond", $amount, $name)
-		}
-		action { Test("sact", $name, $amount)}}`,
+				data {
+					amount int
+					name   string
+				}
+				conditions {
+					Test("scond", $amount, $name)
+				}
+				action { Test("sact", $name, $amount)}}`,
 		[]smartParams{
 			{map[string]string{`name`: `Simple name`, `amount`: `-56781`},
 				map[string]string{`scond`: `-56781Simple name`,
 					`sact`: `Simple name-56781`}},
 		}},
+	{`errTestVar`, `contract errTestVar {
+			conditions {
+			}
+			action { var ivar int}
+		}`,
+		nil},
 }
 
 func TestEditContracts(t *testing.T) {
