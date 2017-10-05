@@ -91,10 +91,8 @@ var forTest = tplList{
 		`[{"tag":"style","attr":{"css":".mydiv, .myspan {\n\t\tcolor: #f00;\n\t\tmargin: 10px 5px;\n\t}"}}]`},
 	{`SetVar(testvalue, The, #n#, Value).(n, New).(param,"23")Span(Test value equals #testvalue#).(#param#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, New, Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
-	/*	{`DBFind(1_keys)`,
+/*	{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25)`,
 		``},*/
-	{`DBFind(1_keys).Columns(id,amount)`,
-		``},
 }
 
 func TestFullJSON(t *testing.T) {

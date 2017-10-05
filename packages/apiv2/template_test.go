@@ -30,6 +30,11 @@ type tplItem struct {
 type tplList []tplItem
 
 func TestAPI(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
 	for _, item := range forTest {
 		var ret contentResult
 
@@ -48,8 +53,8 @@ func TestAPI(t *testing.T) {
 var forTest = tplList{
 	{`Simple Strong(bold text)`,
 		`[{"tag":"text","text":"Simple "},{"tag":"strong","children":[{"tag":"text","text":"bold text"}]}]`},
-	{`DBFind(1_keys)`,
-		``},
-	{`DBFind(1_keys).Columns(id,amount)`,
-		``},
+	{`DBFind(parameters)`,
+		`[]`},
+	{`DBFind(parameters).Columns(name,value)`,
+		`[]`},
 }

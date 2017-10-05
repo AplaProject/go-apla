@@ -27,12 +27,15 @@ import (
 
 const (
 	tagText = `text`
+	tagData = `data`
 )
 
 type node struct {
 	Tag      string                 `json:"tag"`
 	Attr     map[string]interface{} `json:"attr,omitempty"`
 	Text     string                 `json:"text,omitempty"`
+	Columns  *[]string              `json:"columns,omitempty"`
+	Data     *[][]string            `json:"data,omitempty"`
 	Children []*node                `json:"children,omitempty"`
 	Tail     []*node                `json:"tail,omitempty"`
 }
@@ -326,7 +329,7 @@ main:
 				}
 				for tail, ok := tails[curFunc.Tag]; ok && off+2 < len(input) && input[off+1] == '.'; {
 					for key, tailFunc := range tail.Tails {
-						if strings.HasPrefix(input[off+2:], key+`(`) || strings.HasPrefix(input[off+2:], key+`{`) {
+						if len(input) > off+2 && (strings.HasPrefix(input[off+2:], key+`(`) || strings.HasPrefix(input[off+2:], key+`{`)) {
 							parTail, shift, _ := getFunc(input[off+len(key)+2:], tailFunc.tplFunc)
 							off += shift + len(key) + 2
 							if tailpar == nil {
