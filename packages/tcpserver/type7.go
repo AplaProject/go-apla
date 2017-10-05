@@ -18,19 +18,18 @@ package tcpserver
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 // Type7 writes the body of the specified block
 // blocksCollection and queue_parser_blocks daemons send the request through p.GetBlocks()
 func Type7(request *GetBodyRequest) (*GetBodyResponse, error) {
-	logger.LogDebug(consts.FuncStarted, "")
 	block := &model.Block{}
 	err := block.GetBlock(int64(request.BlockID))
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_id": request.BlockID}).Error("Error getting block with id")
 		return nil, utils.ErrInfo(err)
 	}
 	return &GetBodyResponse{Data: block.Data}, nil

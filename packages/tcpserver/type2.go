@@ -21,55 +21,52 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
 
 	"encoding/hex"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 // Type2 serves requests from disseminator
 func Type2(r *DisRequest) (*DisTrResponse, error) {
-	logger.LogDebug(consts.FuncStarted, "")
 	binaryData := r.Data
 	// take the transactions from usual users but not nodes.
 	_, _, decryptedBinData, err := DecryptData(&binaryData)
 	if err != nil {
-		logger.LogError(consts.CryptoError, err)
 		return nil, utils.ErrInfo(err)
 	}
 
 	if int64(len(binaryData)) > consts.MAX_TX_SIZE {
-		logger.LogError(consts.TransactionError, "len(txBinData) > max_tx_size")
+		log.WithFields(log.Fields{"type": consts.ProtocolError, "max_size": consts.MAX_TX_SIZE, "size": len(binaryData)}).Error("transaction size exceeds max size")
 		return nil, utils.ErrInfo("len(txBinData) > max_tx_size")
 	}
 
 	if len(binaryData) < 5 {
-		logger.LogError(consts.TransactionError, "len(binaryData) < 5")
+		log.WithFields(log.Fields{"type": consts.ProtocolError, "len": len(binaryData), "should_be_equal": 5}).Error("binary data slice has incorrect length")
 		return nil, utils.ErrInfo("len(binaryData) < 5")
 	}
 
 	decryptedBinDataFull := decryptedBinData
 	hash, err := crypto.Hash(decryptedBinDataFull)
 	if err != nil {
-		logger.LogFatal(consts.TransactionError, err)
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "value": decryptedBinDataFull}).Fatal("cannot hash tx bindata")
 	}
 
 	err = model.DeleteQueuedTransaction(hash)
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "hash": hash}).Error("Deleting queue_tx with hash")
 		return nil, utils.ErrInfo(err)
 	}
 
 	queueTx := &model.QueueTx{Hash: hash, Data: decryptedBinData, FromGate: 0}
 	err = queueTx.Create()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Creating queue_tx")
 		return nil, utils.ErrInfo(err)
 	}
 
@@ -77,49 +74,47 @@ func Type2(r *DisRequest) (*DisTrResponse, error) {
 }
 
 func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
-	logger.LogDebug(consts.FuncStarted, "")
 	if len(*binaryTx) == 0 {
-		logger.LogError(consts.TransactionError, "len(binaryTx) == 0")
+		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("binary tx is empty")
 		return nil, nil, nil, utils.ErrInfo("len(binaryTx) == 0")
 	}
 
 	myUserID := converter.BinToDecBytesShift(&*binaryTx, 5)
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("myUserId: %d", myUserID))
+	log.WithFields(log.Fields{"user_id": myUserID}).Debug("decrypted userID is")
 
 	// remove the encrypted key, and all that stay in $binary_tx will be encrypted keys of the transactions/blocks
 	length, err := converter.DecodeLength(&*binaryTx)
 	if err != nil {
-		logger.LogFatal(consts.TransactionError, err)
+		log.WithFields(log.Fields{"type": consts.ProtocolError, "error": err}).Error("Decoding binary tx length")
 	}
 	encryptedKey := converter.BytesShift(&*binaryTx, length)
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("encryptedKey: %s", encryptedKey))
 	iv := converter.BytesShift(&*binaryTx, 16)
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("iv: %x", iv))
+	log.WithFields(log.Fields{"encryptedKey": encryptedKey, "iv": iv}).Debug("binary tx encryptedKey and iv is")
 
 	if len(encryptedKey) == 0 {
-		logger.LogError(consts.CryptoError, "len(encryptedKey) == 0")
+		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("binary tx encrypted key is empty")
 		return nil, nil, nil, utils.ErrInfo("len(encryptedKey) == 0")
 	}
 
 	if len(*binaryTx) == 0 {
-		logger.LogError(consts.TransactionError, "len(*binaryTx) == 0")
+		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("binary tx is empty")
 		return nil, nil, nil, utils.ErrInfo("len(*binaryTx) == 0")
 	}
 
 	nodeKey := &model.MyNodeKey{}
 	err = nodeKey.GetNodeWithMaxBlockID()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting node with max blockID")
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
 	if len(nodeKey.PrivateKey) == 0 {
-		logger.LogError(consts.RecordNotFoundError, err)
+		log.WithFields(log.Fields{"type": consts.DBError}).Error("node with max blockID not found")
 		return nil, nil, nil, utils.ErrInfo("len(nodePrivateKey) == 0")
 	}
 
 	block, _ := pem.Decode([]byte(hex.EncodeToString(nodeKey.PrivateKey)))
 	if block == nil || block.Type != "RSA PRIVATE KEY" {
-		logger.LogError(consts.CryptoError, "No valid PEM data found")
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Error("No valid PEM data found")
 		return nil, nil, nil, utils.ErrInfo("No valid PEM data found")
 	}
 
@@ -130,20 +125,19 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 
 	decKey, err := rsa.DecryptPKCS1v15(crand.Reader, privateKey, encryptedKey)
 	if err != nil {
-		logger.LogError(consts.CryptoError, err)
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("rsa Decrypt")
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("decrypted Key: %s", decKey))
+	log.WithFields(log.Fields{"key": decKey}).Debug("decrypted key")
 	if len(decKey) == 0 {
-		logger.LogError(consts.CryptoError, "len(decKey) == 0")
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Error("decrypted key is empty")
 		return nil, nil, nil, utils.ErrInfo("len(decKey)")
 	}
 
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("binaryTx %x", *binaryTx))
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("iv %s", iv))
+	log.WithFields(log.Fields{"binaryTx": *binaryTx, "iv": iv}).Debug("binaryTx and iv is")
 	decrypted, err := crypto.Decrypt(iv, *binaryTx, decKey)
 	if err != nil {
-		logger.LogError(consts.CryptoError, err)
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("Decryption binary tx")
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
 

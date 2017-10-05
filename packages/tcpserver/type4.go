@@ -18,14 +18,13 @@ package tcpserver
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	log "github.com/sirupsen/logrus"
 )
 
 // Type4 writes the hash of the specified block
 // The request is sent by 'confirmations' daemon
 func Type4(r *ConfirmRequest) (*ConfirmResponse, error) {
-	logger.LogDebug(consts.FuncStarted, "")
 	resp := &ConfirmResponse{}
 	block := &model.Block{}
 	err := block.GetBlock(int64(r.BlockID))
@@ -36,9 +35,9 @@ func Type4(r *ConfirmRequest) (*ConfirmResponse, error) {
 		resp.Hash = block.Hash // can we send binary data ?
 	}
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_id": r.BlockID}).Error("Getting block")
 	} else if len(block.Hash) == 0 {
-		logger.LogDebug(consts.RecordNotFoundError, r.BlockID)
+		log.WithFields(log.Fields{"type": consts.DBError, "block_id": r.BlockID}).Warning("Block wih id not found")
 	}
 	return resp, nil
 }

@@ -18,18 +18,17 @@ package tcpserver
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 // Type10 sends the last block ID
 // blocksCollection daemon sends this request
 func Type10() (*MaxBlockResponse, error) {
-	logger.LogDebug(consts.FuncStarted, "")
 	blockID, err := model.GetCurBlockID()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur blockID")
 		return nil, utils.ErrInfo(err)
 	}
 

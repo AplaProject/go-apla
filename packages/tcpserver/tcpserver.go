@@ -18,14 +18,10 @@ package tcpserver
 
 import (
 	"flag"
-	"fmt"
-
+	"io"
 	"sync/atomic"
 
-	"io"
-
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -38,7 +34,6 @@ func init() {
 
 // HandleTCPRequest proceed TCP requests
 func HandleTCPRequest(rw io.ReadWriter) {
-	logger.LogDebug(consts.FuncStarted, "")
 	defer func() {
 		atomic.AddInt64(&counter, -1)
 	}()
@@ -51,11 +46,10 @@ func HandleTCPRequest(rw io.ReadWriter) {
 	dType := &TransactionType{}
 	err := ReadRequest(dType, rw)
 	if err != nil {
-		logger.LogError(consts.IOError, err)
 		return
 	}
 
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("tcpservers: got request type: %d", dType.Type))
+	log.WithFields(log.Fields{"request_type": dType.Type}).Debug("tcpserver got request type")
 	var response interface{}
 
 	switch dType.Type {
@@ -92,16 +86,12 @@ func HandleTCPRequest(rw io.ReadWriter) {
 	}
 
 	if err != nil {
-		logger.LogError(consts.DBError, fmt.Sprintf("tcpserver: parse request error: %s", err))
 		return
 	}
 	if response == nil {
 		return
 	}
 
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("tcpserver response: %+v", response))
-	err = SendRequest(response, rw)
-	if err != nil {
-		logger.LogError(consts.IOError, fmt.Sprintf("tcpserver handle error: %s", err))
-	}
+	log.WithFields(log.Fields{"response": response}).Debug("tcpserver responded")
+	SendRequest(response, rw)
 }

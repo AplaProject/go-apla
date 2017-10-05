@@ -98,4 +98,6 @@ const (
 	JSONUnmarshallError   = "JSON unmarshall error"
 	CommandExecutionError = "Command execution error"
 	ConvertionError       = "Convertion error"
+	TypeError             = "Type error"
+	ProtocolError         = "Protocol error"
 )

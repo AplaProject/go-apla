@@ -11,8 +11,8 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 type TransactionType struct {
@@ -54,9 +54,8 @@ type DisHashResponse struct {
 }
 
 func ReadRequest(request interface{}, r io.Reader) error {
-	logger.LogDebug(consts.FuncStarted, "")
 	if reflect.ValueOf(request).Elem().Kind() != reflect.Struct {
-		logger.LogError(consts.TCPCserverError, "bad request type")
+		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("bad request type")
 		panic("bad request type")
 	}
 	for i := 0; i < reflect.ValueOf(request).Elem().NumField(); i++ {
@@ -68,16 +67,18 @@ func ReadRequest(request interface{}, r io.Reader) error {
 			sizeVal := reflect.TypeOf(request).Elem().Field(i).Tag.Get("size")
 			if sizeVal != "" {
 				size, err = strconv.ParseUint(sizeVal, 10, 0)
+				if err != nil {
+					log.WithFields(log.Fields{"value": sizeVal, "type": consts.ConvertionError, "error": err}).Error("parsing uint")
+					return err
+				}
 			} else {
 				size, err = readUint(r, 4) // read size
-			}
-			if err != nil {
-				logger.LogError(consts.IncompatibleTypesError, err)
-				return err
+				if err != nil {
+					return err
+				}
 			}
 			value, err := readBytes(r, size)
 			if err != nil {
-				logger.LogError(consts.IOError, err)
 				return err
 			}
 			t.Set(reflect.ValueOf(value))
@@ -85,7 +86,6 @@ func ReadRequest(request interface{}, r io.Reader) error {
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			val, err := readUint(r, int(t.Type().Size()))
 			if err != nil {
-				logger.LogError(consts.IOError, err)
 				return err
 			}
 			t.SetUint(val)
@@ -93,13 +93,11 @@ func ReadRequest(request interface{}, r io.Reader) error {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			val, err := readUint(r, int(t.Type().Size()))
 			if err != nil {
-				logger.LogError(consts.IOError, err)
 				return err
 			}
 			t.SetInt(int64(val))
-
 		default:
-			logger.LogError(consts.TCPCserverError, "unsupported field")
+			log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("unsupported field")
 			panic("unsupported field")
 		}
 	}
@@ -107,9 +105,8 @@ func ReadRequest(request interface{}, r io.Reader) error {
 }
 
 func SendRequest(request interface{}, w io.Writer) error {
-	logger.LogDebug(consts.FuncStarted, "")
 	if reflect.ValueOf(request).Elem().Kind() != reflect.Struct {
-		logger.LogError(consts.TCPCserverError, "bad requset type")
+		log.Error("bad request type")
 		panic("bad request type")
 	}
 	for i := 0; i < reflect.ValueOf(request).Elem().NumField(); i++ {
@@ -122,37 +119,37 @@ func SendRequest(request interface{}, w io.Writer) error {
 			if sizeVal != "" {
 				size, err := strconv.Atoi(sizeVal)
 				if err != nil {
-					logger.LogError(consts.TCPCserverError, "bad size tag")
+					log.WithFields(log.Fields{"value": sizeVal, "type": consts.ConvertionError, "error": err}).Error("Converting str to int")
 					panic("bad size tag")
 				}
 				if size != len(value) {
-					logger.LogError(consts.TCPCserverError, fmt.Sprintf("bug, bad slice len, want: %d, got %d", size, len(value)))
+					log.WithFields(log.Fields{"size": size, "len": len(value), "type": consts.ProtocolError}).Error("bad slice len")
 					return fmt.Errorf("bug, bad slice len, want: %d, got %d", size, len(value))
 				}
 			} else {
 				_, err := w.Write(converter.DecToBin(len(value), 4))
 				if err != nil {
-					logger.LogError(consts.IOError, err)
+					log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bytes")
 					return err
 				}
 			}
 			_, err := w.Write(value)
 			if err != nil {
-				logger.LogError(consts.IOError, err)
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bytes")
 				return err
 			}
 
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			_, err := w.Write(converter.DecToBin(t.Uint(), int64(t.Type().Size())))
 			if err != nil {
-				logger.LogError(consts.IOError, err)
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bytes")
 				return err
 			}
 
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			_, err := w.Write(converter.DecToBin(t.Int(), int64(t.Type().Size())))
 			if err != nil {
-				logger.LogError(consts.IOError, err)
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bytes")
 				return err
 			}
 		}
@@ -161,25 +158,23 @@ func SendRequest(request interface{}, w io.Writer) error {
 }
 
 func readUint(r io.Reader, byteCount int) (uint64, error) {
-	logger.LogDebug(consts.DebugMessage, "")
 	buf, err := readBytes(r, uint64(byteCount))
 	if err != nil {
-		logger.LogError(consts.IOError, err)
 		return 0, utils.ErrInfo(err)
 	}
 	return uint64(converter.BinToDec(buf)), nil
 }
 
 func readBytes(r io.Reader, size uint64) ([]byte, error) {
-	logger.LogDebug(consts.DebugMessage, "")
-	if size > 10485760 { // TODO
-		logger.LogError(consts.TCPCserverError, "bad server")
-		return nil, errors.New("bad size")
+	var maxSize uint64 = 10485760
+	if size > maxSize {
+		log.WithFields(log.Fields{"size": size, "max_size": maxSize}).Error("bytes size to read exceeds max allowed size")
+		return nil, errors.New("bytes size to read exceeds max allowed size")
 	}
 	value := make([]byte, int(size))
 	_, err := io.ReadFull(r, value)
 	if err != nil {
-		logger.LogError(consts.IOError, err)
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("cannot read bytes")
 	}
 	return value, err
 }
