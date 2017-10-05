@@ -45,7 +45,6 @@ func Monitoring(w http.ResponseWriter, r *http.Request) {
 	addKey(&buf, "last_block_wallet", block.WalletID)
 	addKey(&buf, "last_block_state", block.StateID)
 	addKey(&buf, "last_block_transactions", block.Tx)
-	addKey(&buf, "last_block_miner_id", block.MaxMinerID)
 
 	trCount, err := model.GetTransactionCountAll()
 	if err != nil {

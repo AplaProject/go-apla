@@ -165,60 +165,6 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 		return &FirstBlockParser{p}, nil
 	case "DLTTransfer":
 		return &DLTTransferParser{p, nil}, nil
-	case "DLTChangeHostVote":
-		return &DLTChangeHostVoteParser{p, nil}, nil
-	case "UpdFullNodes":
-		return &UpdFullNodesParser{p, nil}, nil
-	case "ChangeNodeKey":
-		return &ChangeNodeKeyParser{p, nil}, nil
-	case "NewState":
-		return &NewStateParser{p, nil}, nil
-	case "NewColumn":
-		return &NewColumnParser{p, nil}, nil
-	case "NewTable":
-		return &NewTableParser{p, nil}, nil
-	case "EditPage":
-		return &EditPageParser{p, nil}, nil
-	case "EditMenu":
-		return &EditMenuParser{p, nil}, nil
-	case "EditColumn":
-		return &EditColumnParser{p, nil}, nil
-	case "EditTable":
-		return &EditTableParser{p, nil}, nil
-	case "EditStateParameters":
-		return &EditStateParametersParser{p, nil}, nil
-	case "NewStateParameters":
-		return &NewStateParametersParser{p, nil}, nil
-	case "NewPage":
-		return &NewPageParser{p, nil}, nil
-	case "NewMenu":
-		return &NewMenuParser{p, nil}, nil
-	case "ChangeNodeKeyDLT":
-		return &ChangeNodeKeyDLTParser{p, nil}, nil
-	case "AppendPage":
-		return &AppendPageParser{p, nil}, nil
-	case "RestoreAccessActive":
-		return &RestoreAccessActiveParser{p, nil, "", 0}, nil
-	case "RestoreAccessClose":
-		return &RestoreAccessCloseParser{p, nil}, nil
-	case "RestoreAccessRequest":
-		return &RestoreAccessRequestParser{p, nil}, nil
-	case "RestoreAccess":
-		return &RestoreAccessParser{p, nil}, nil
-	case "NewLang":
-		return &NewLangParser{p, nil}, nil
-	case "EditLang":
-		return &EditLangParser{p, nil}, nil
-	case "AppendMenu":
-		return &AppendMenuParser{p, nil}, nil
-	case "NewSign":
-		return &NewSignParser{p, nil}, nil
-	case "EditSign":
-		return &EditSignParser{p, nil}, nil
-	case "EditWallet":
-		return &EditWalletParser{p, nil}, nil
-	case "NewAccount":
-		return &NewAccountParser{p, nil}, nil
 	}
 	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }

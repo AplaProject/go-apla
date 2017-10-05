@@ -29,7 +29,6 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
@@ -96,6 +95,20 @@ var (
 		"Activate":          10,
 	}
 )
+
+//SignRes contains the data of the signature
+type SignRes struct {
+	Param string `json:"name"`
+	Text  string `json:"text"`
+}
+
+// TxSignJSON is a structure for additional signs of transaction
+type TxSignJSON struct {
+	ForSign string    `json:"forsign"`
+	Field   string    `json:"field"`
+	Title   string    `json:"title"`
+	Params  []SignRes `json:"params"`
+}
 
 func init() {
 	smart.Extend(&script.ExtendData{Objects: map[string]interface{}{
@@ -1008,7 +1021,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 		return fmt.Errorf(`wrong signature`)
 	}
 
-	var sign controllers.TxSignJSON
+	var sign TxSignJSON
 	err = json.Unmarshal([]byte(value), &sign)
 	if err != nil {
 		return err

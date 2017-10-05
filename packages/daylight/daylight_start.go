@@ -34,7 +34,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/daemons"
 	"github.com/EGaaS/go-egaas-mvp/packages/exchangeapi"
@@ -236,12 +235,6 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 }
 func initRoutes(listenHost, browserHost string) string {
 	route := httprouter.New()
-	setRoute(route, `/`, controllers.Index, `GET`)
-	setRoute(route, `/content`, controllers.Content, `GET`, `POST`)
-	setRoute(route, `/template`, controllers.Template, `GET`, `POST`)
-	setRoute(route, `/app`, controllers.App, `GET`, `POST`)
-	setRoute(route, `/ajax`, controllers.Ajax, `GET`, `POST`)
-	setRoute(route, `/wschain`, controllers.WsBlockchain, `GET`)
 	setRoute(route, `/exchangeapi/:name`, exchangeapi.API, `GET`, `POST`)
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	apiv2.Route(route)
@@ -316,8 +309,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if !utils.Mobile() {
 		killOld()
 	}
-
-	controllers.SessInit()
 
 	// TODO: ??
 	if fi, err := os.Stat(*utils.Dir + `/logo.png`); err == nil && fi.Size() > 0 {
@@ -399,8 +390,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 		tcpListener()
 		log.Debugf("tcp listener started")
-		go controllers.GetChain()
-
 	}
 
 	stopdaemons.WaintForSignals()
