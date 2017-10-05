@@ -320,6 +320,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		//		fmt.Println(`CALL CONTRACT`, p.TxData[`forsign`].(string))
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxSmart.BinSignatures, false)
 		if err != nil {
+			fmt.Println(`ForSign`, p.TxData[`forsign`].(string))
 			return err
 		}
 		if !CheckSignResult {
