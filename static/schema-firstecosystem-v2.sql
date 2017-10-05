@@ -215,7 +215,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Conditions string
     }
     conditions {
-        Eval(DBString(Table(`menu`), $Id, `conditions`))
+        Eval(DBString(Table(`menu`), `conditions`, $Id))
         ValidateCondition($Conditions,$state)
     }
     action {
@@ -228,12 +228,12 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Value      string
     }
     conditions {
-        Eval(DBString(Table(`menu`), $Id, `conditions`))
+        Eval(DBString(Table(`menu`), `conditions`, $Id ))
     }
     action {
         var table string
         table = Table(`menu`)
-        DBUpdate(table, $Id, `value`, DBString(table, $Id, `value`) + "\r\n" + $Value )
+        DBUpdate(table, $Id, `value`, DBString(table, `value`, $Id) + "\r\n" + $Value )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('12','contract NewPage {
@@ -261,7 +261,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Conditions string
     }
     conditions {
-        Eval(DBString(Table(`pages`), $Id, `conditions`))
+        Eval(DBString(Table(`pages`), `conditions`, $Id))
         ValidateCondition($Conditions,$state)
     }
     action {
@@ -274,7 +274,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Value      string
     }
     conditions {
-        Eval(DBString(Table(`pages`), $Id, `conditions`))
+        Eval(DBString(Table(`pages`), `conditions`, $Id))
     }
     action {
         var value, table string
@@ -344,7 +344,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Conditions string
     }
     conditions {
-        Eval(DBString(Table(`signatures`), $Id, `conditions`))
+        Eval(DBString(Table(`signatures`), `conditions`, $Id))
         ValidateCondition($Conditions,$state)
     }
     action {

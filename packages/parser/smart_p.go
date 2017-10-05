@@ -512,7 +512,6 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
 	qcost = 0
 	var isIndex bool
-
 	if err = checkReport(tblname); err != nil {
 		return
 	}
