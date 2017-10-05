@@ -150,6 +150,7 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 
 	// parse transactions
 	for blockBuffer.Len() > 0 {
+		log.Debugf("transactions: %x", blockBuffer.Bytes())
 		transactionSize, err := converter.DecodeLengthBuf(blockBuffer)
 		if err != nil {
 			return nil, fmt.Errorf("bad block format (%s)", err)
@@ -165,6 +166,9 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
 		p, err := ParseTransaction(bufTransaction)
 		if err != nil {
+			if p.TxHash != nil {
+				p.processBadTransaction(p.TxHash, err.Error())
+			}
 			return nil, fmt.Errorf("parse transaction error(%s)", err)
 		}
 		p.BlockData = &header
@@ -671,12 +675,13 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	var signed []byte
 
 	for _, tr := range trData {
+		log.Debugf("try to add transaction %x to block", tr)
 		doubleHash, err := crypto.DoubleHash(tr)
 		if err != nil {
 			return nil, err
 		}
 		mrklArray = append(mrklArray, converter.BinToHex(doubleHash))
-		blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData([]byte(tr))...)
+		blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData(tr)...)
 	}
 
 	if key != "" {
@@ -705,6 +710,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	buf.Write(converter.DecToBin(header.StateID, 1))
 	buf.Write(converter.EncodeLengthPlusData(signed))
 	// data
+	log.Debugf("block data tx: %x", blockDataTx)
 	buf.Write(blockDataTx)
 
 	return buf.Bytes(), nil

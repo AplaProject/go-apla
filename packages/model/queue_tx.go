@@ -72,6 +72,7 @@ func GetAllUnverifiedAndUnusedTransactions() ([]*QueueTx, error) {
 		if err := rows.Scan(&data, &hash); err != nil {
 			return nil, err
 		}
+		log.Debugf("add transaction: %x", hash)
 		result = append(result, &QueueTx{Data: data, Hash: hash})
 	}
 	if err := rows.Err(); err != nil {

@@ -114,7 +114,7 @@ func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key 
 		Version:  consts.BLOCK_VERSION,
 	}
 
-	trData := make([][]byte, len(trs))
+	trData := make([][]byte, 0, len(trs))
 	for _, tr := range trs {
 		trData = append(trData, tr.Data)
 	}

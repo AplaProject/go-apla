@@ -163,6 +163,7 @@ func FirstBlock() {
 		return
 	}
 
+	log.Debugf("start marshalling first block")
 	block, err := MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
 	if err != nil {
 		log.Errorf("block marshalling failed: %s", err)

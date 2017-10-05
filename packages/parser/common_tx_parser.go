@@ -120,21 +120,20 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 			return utils.ErrInfo(err)
 		}
 	}
-	p.DeleteQueueTx(hash)
 	return nil
 }
 
 // DeleteQueueTx deletes a transaction from the queue
-func (p *Parser) DeleteQueueTx(hashHex []byte) error {
-	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %x", hashHex)
-	delQueueTx := &model.QueueTx{Hash: hashHex}
+func (p *Parser) DeleteQueueTx(hash []byte) error {
+	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %x", hash)
+	delQueueTx := &model.QueueTx{Hash: hash}
 	err := delQueueTx.DeleteTx()
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
 	// Because we process transactions with verified=0 in queue_parser_tx, after processing we need to delete them
-	logging.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(converter.BinToHex(hashHex)) + " AND verified=0 AND used = 0")
-	_, err = model.DeleteTransactionIfUnused(hashHex)
+	logging.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(converter.BinToHex(hash)) + " AND verified=0 AND used = 0")
+	_, err = model.DeleteTransactionIfUnused(hash)
 	if err != nil {
 		logging.WriteSelectiveLog(err)
 		return utils.ErrInfo(err)

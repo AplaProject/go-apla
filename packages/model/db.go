@@ -298,8 +298,8 @@ func GetColumnCount(tableName string) (int64, error) {
 	return count, nil
 }
 
-func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err error) {
-	hash, err = crypto.Hash(data)
+func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
+	hash, err := crypto.Hash(data)
 	if err != nil {
 		return nil, err
 	}
@@ -313,10 +313,12 @@ func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err erro
 	if err != nil {
 		return nil, err
 	}
-	qtx := &QueueTx{Hash: hash,
-		Data: data}
+	qtx := &QueueTx{
+		Hash: hash,
+		Data: data,
+	}
 	err = qtx.Create()
-	return
+	return hash, err
 }
 
 func GetLastBlockData() (map[string]int64, error) {
