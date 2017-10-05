@@ -436,13 +436,13 @@ func GetColumnType(tblname, column string) (itype string) {
 	if len(coltype) > 0 {
 		switch {
 		case coltype[`data_type`] == "character varying":
-			itype = `text`
-		case coltype[`data_type`] == "bytea":
-			itype = "varchar"
+			itype = `varchar`
+			/*		case coltype[`data_type`] == "bytea":
+					itype = "bytea"*/
 		case coltype[`data_type`] == `bigint`:
-			itype = "numbers"
+			itype = "number"
 		case strings.HasPrefix(coltype[`data_type`], `timestamp`):
-			itype = "date_time"
+			itype = "datetime"
 		case strings.HasPrefix(coltype[`data_type`], `numeric`):
 			itype = "money"
 		case strings.HasPrefix(coltype[`data_type`], `double`):
