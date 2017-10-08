@@ -25,12 +25,14 @@ import (
 func TestContent(t *testing.T) {
 	var ret contentResult
 
-	err := sendPost(`content`, &url.Values{`template`: {`input Div(myclass, Content Div(mypar) the Div)`}}, &ret)
+	err := sendPost(`content`, &url.Values{`template`: {`input Div(myclass, #mytest# Div(mypar) the Div)`},
+		`mytest`: {`test value`}}, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if ret.Tree != `[{"tag":"text","text":"input "},{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"text","text":"Content "},{"tag":"div","attr":{"class":"mypar"}},{"tag":"text","text":" the Div"}]}]` {
+	//	fmt.Println(`RET`, ret.Tree)
+	if ret.Tree != `[{"tag":"text","text":"input "},{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"text","text":"test value "},{"tag":"div","attr":{"class":"mypar"}},{"tag":"text","text":" the Div"}]}]` {
 		t.Error(fmt.Errorf(`wrong tree`, ret.Tree))
 		return
 	}

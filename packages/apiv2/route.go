@@ -49,8 +49,6 @@ func Route(route *hr.Router) {
 
 	get(`balance/:wallet`, `?state:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)
-	get(`content/page/:name`, ``, authWallet, getPage)
-	get(`content/menu/:name`, ``, authWallet, getMenu)
 	get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
 	get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
 	get(`ecosystems`, ``, authWallet, ecosystems)
@@ -63,6 +61,8 @@ func Route(route *hr.Router) {
 	//	get(`smartcontract/:name`, ``, authState, getSmartContract)
 	get(`test/:name`, ``, getTest)
 
+	post(`content/page/:name`, ``, authWallet, getPage)
+	post(`content/menu/:name`, ``, authWallet, getMenu)
 	post(`install`, `?first_load_blockchain_url ?first_block_dir log_level type db_host db_port 
 	db_name db_pass db_user:string,?generate_first_block:int64`, install)
 	post(`login`, `?pubkey signature:hex,?wallet:string,?state ?expire:int64`, login)

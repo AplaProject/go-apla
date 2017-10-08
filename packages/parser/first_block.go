@@ -59,6 +59,17 @@ func (p *FirstBlockParser) Action() error {
 	if err = key.SetTablePrefix(consts.MainEco).Create(); err != nil {
 		return p.ErrInfo(err)
 	}
+	/*	value := syspar.SysString(`default_ecosystem_page`)
+		err = model.DBConn.Exec(``).Error
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+		value = syspar.SysString(`default_ecosystem_menu`)
+		DBInsert(Str(id)+"_pages", "name,value,menu,conditions", `default_page`,
+			SysParamString(`default_ecosystem_page`), `default_menu`, "ContractConditions(`MainCondition`)")
+		DBInsert(Str(id)+"_menu", "name,value,conditions", `default_menu`,
+			SysParamString(`default_ecosystem_menu`), "ContractConditions(`MainCondition`)")
+	*/
 	err = template.LoadContract(`1`)
 	if err != nil {
 		return p.ErrInfo(err)

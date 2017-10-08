@@ -100,6 +100,16 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	form = url.Values{"Name": {`testMenu`}, "Value": {`first
+		second
+		third`},
+		"Conditions": {`true`}}
+	err = postTx(`NewMenu`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	form = url.Values{"Name": {name}, "Value": {`New Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	id, msg, err = postTxResult(`EditParameter`, &form)
@@ -123,188 +133,47 @@ func TestPage(t *testing.T) {
 		return
 	}
 	fmt.Println(`RET`, id, msg)
-	/*		ret, err := sendGet(`page/`+name+glob.url, nil)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if ret[`value`].(string) != value {
-			t.Error(fmt.Errorf(`Menu is not right %s`, ret[`value`].(string)))
-			return
-		}
-
-		value += "\r\nP(updated, Additional paragraph)"
-		form = url.Values{"value": {value}, "menu": {menu},
-			"conditions": {`true`}, `global`: {glob.value}}
-
-		if err := putTx(`page/`+name, &form); err != nil {
-			t.Error(err)
-			return
-		}
-		ret, err = sendGet(`page/`+name+glob.url, nil)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if ret[`value`].(string) != value {
-			t.Error(fmt.Errorf(`Page is not right %s`, ret[`value`].(string)))
-			return
-		}
-		if ret[`menu`].(string) != menu {
-			t.Error(fmt.Errorf(`Page menu is not right %s`, ret[`menu`].(string)))
-			return
-		}
-		append := "P(appended, Append paragraph)"
-		form = url.Values{"value": {append}, `global`: {glob.value}}
-
-		if err := putTx(`appendpage/`+name, &form); err != nil {
-			t.Error(err)
-			return
-		}
-		ret, err = sendGet(`page/`+name+glob.url, nil)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if ret[`value`].(string) != value+"\r\n"+append {
-			t.Error(fmt.Errorf(`Appended page is not right %s`, ret[`value`].(string)))
-			return
-		}
-	}
-
-
-		wanted := func(name, want string) bool {
-			var ret getTestResult
-			err := sendPost(`test/`+name, nil, &ret)
-			if err != nil {
-				t.Error(err)
-				return false
-			}
-			if ret.Value != want {
-				t.Error(fmt.Errorf(`%s != %s`, ret.Value, want))
-				return false
-			}
-			return true
-		}
-
-		if err := keyLogin(1); err != nil {
-			t.Error(err)
-			return
-		}
-		for _, item := range contracts {
-			var ret getContractResult
-			err := sendGet(`contract/`+item.Name, nil, &ret)
-			if err != nil {
-				if strings.Contains(err.Error(), fmt.Sprintf(errors[`E_CONTRACT`], item.Name)) {
-					form := url.Values{"Name": {item.Name}, "Value": {item.Value},
-						"Conditions": {`true`}}
-					if err := postTx(`NewContract`, &form); err != nil {
-						if item.Name != `errTest` || !strings.HasPrefix(err.Error(), `must be type 7d01 125 [Ln:4 Col:22]`) {
-							t.Error(err)
-							return
-						}
-					}
-				} else {
-					t.Error(err)
-					return
-				}
-			}
-			if strings.HasSuffix(item.Name, `testUpd`) {
-				continue
-			}
-			for _, par := range item.Params {
-				form := url.Values{}
-				for key, value := range par.Params {
-					form[key] = []string{value}
-				}
-				if err := postTx(item.Name, &form); err != nil {
-					t.Error(err)
-					return
-				}
-				for key, value := range par.Results {
-					if !wanted(key, value) {
-						return
-					}
-				}
-			}
-		}*/
 }
 
-/*func TestSmartContracts(t *testing.T) {
-
-	wanted := func(name, want string) bool {
-		ret, err := sendGet(`test/`+name, nil)
-		if err != nil {
-			t.Error(err)
-			return false
-		}
-		if ret[`value`].(string) != want {
-			t.Error(fmt.Errorf(`%s != %s`, ret[`value`].(string), want))
-			return false
-		}
-		return true
-	}
-
+func TestNewTable(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
-	for _, item := range contracts {
-		_, err := sendGet(`contract/`+item.Name, nil)
-		if err != nil {
-			if strings.Contains(err.Error(), `incorrect id`) {
-				form := url.Values{"name": {item.Name}, "value": {item.Value},
-					"conditions": {`true`}, `global`: {`0`}}
-				if err := postTx(`contract`, &form); err != nil {
-					t.Error(err)
-					return
-				}
-				if err := putTx(`activatecontract/`+item.Name, &url.Values{}); err != nil {
-					t.Error(err)
-					return
-				}
-			} else {
-				t.Error(err)
-				return
-			}
-		}
-		for _, par := range item.Params {
-			form := url.Values{}
-			for key, value := range par.Params {
-				form[key] = []string{value}
-			}
-			if err := postTx(`smartcontract/`+item.Name, &form); err != nil {
-				t.Error(err)
-				return
-			}
-			for key, value := range par.Results {
-				if !wanted(key, value) {
-					return
-				}
-			}
-		}
-	}
-}
 
-var contracts = []smartContract{
-	{`testEmpty`, `contract testEmpty {
-		action { Test("empty",  "empty value")}}`,
-		[]smartParams{
-			{nil, map[string]string{`empty`: `empty value`}},
-		}},
-	{`testSimple`, `contract testSimple {
-		data {
-			amount int
-			name   string
+	form := url.Values{"Name": {`contracts`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
+	  "conditions":"true"},
+	{"name":"Amount", "type":"number","index": "0", "conditions":"true"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	/*	name := randName(`page`)
+		menu := `government`
+		value := `P(test,test paragraph)`
+		form = url.Values{"Name": {name}, "Value": {`New Param Value`},
+			"Conditions": {`ContractConditions("MainCondition")`}}
+		id, msg, err = postTxResult(`EditParameter`, &form)
+		if err != nil {
+			t.Error(err)
+			return
 		}
-		conditions {
-			Test("scond", $amount, $name)
+		form = url.Values{"Name": {name}, "Value": {value},
+			"Menu": {menu}, "Conditions": {`ContractConditions("MainCondition")`}}
+		id, msg, err = postTxResult(`NewPage`, &form)
+		if err != nil {
+			t.Error(err)
+			return
 		}
-		action { Test("sact", $name, $amount)}}`,
-		[]smartParams{
-			{map[string]string{`name`: `Simple name`, `amount`: `-56781`},
-				map[string]string{`scond`: `-56781Simple name`,
-					`sact`: `Simple name-56781`}},
-		}},
+
+		form = url.Values{"Id": {`1`}, "Value": {value + `Span(Test)`},
+			"Menu": {menu}, "Conditions": {`ContractConditions("MainCondition")`}}
+		id, msg, err = postTxResult(`EditPage`, &form)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		fmt.Println(`RET`, id, msg)*/
 }
-*/

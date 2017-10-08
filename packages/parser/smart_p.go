@@ -94,6 +94,10 @@ var (
 		"FlushContract":     50,
 		"Eval":              10,
 		"Activate":          10,
+		"CreateEcosystem":   100,
+		"RollbackEcosystem": 100,
+		"TableConditions":   100,
+		"CreateTable":       100,
 	}
 )
 
@@ -150,6 +154,7 @@ func init() {
 		"FindEcosystem":      FindEcosystem,
 		"CreateEcosystem":    CreateEcosystem,
 		"RollbackEcosystem":  RollbackEcosystem,
+		"TableConditions":    TableConditions,
 		"UpdateLang":         UpdateLang,
 		"Size":               Size,
 		"Substr":             Substr,
@@ -1433,4 +1438,66 @@ func RollbackEcosystem(p *Parser) error {
 	}
 	ssToDel := &model.SystemState{ID: lastID}
 	return ssToDel.Delete()
+}
+
+func TableConditions(p *Parser, name, columns, permissions string) (err error) {
+	if p.TxContract.Name != `@1NewTable` {
+		return fmt.Errorf(`TableConditions can be only called from @1NewTable`)
+	}
+	var cols []map[string]string
+	err = json.Unmarshal([]byte(columns), &cols)
+	if err != nil {
+		return
+	}
+	if len(cols) == 0 {
+		return fmt.Errorf(`len(cols) == 0`)
+	}
+	if len(cols) > syspar.GetMaxColumns() {
+		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
+	}
+	var indexes int
+	for _, data := range cols {
+		if len(data[`name`]) == 0 || len(data[`type`]) == 0 {
+			return fmt.Errorf(`worng column`)
+		}
+		itype := data[`type`]
+		if itype != `varchar` && itype != `number` && itype != `datetime` && itype != `text` && itype != `bytea` && itype != `double` && itype != `money` {
+			return fmt.Errorf(`incorrect type`)
+		}
+		if data[`index`] == `1` {
+			if itype != `varchar` && itype != `number` && itype != `datetime` {
+				return fmt.Errorf(`incorrect index type`)
+			}
+			indexes++
+		}
+	}
+	if indexes > syspar.GetMaxIndexes() {
+		return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
+	}
+
+	prefix := converter.Int64ToStr(p.TxSmart.StateID)
+
+	t := &model.Table{}
+	t.SetTablePrefix(prefix)
+	exists, err := t.ExistsByName(prefix + "_" + name)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf(`table exists`)
+	}
+
+	if err := p.AccessRights("new_table", false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateTable(p *Parser, name string, columns string) error {
+	if p.TxContract.Name != `@1NewTable` {
+		return fmt.Errorf(`CreateTable can be only called from @1NewTable`)
+	}
+
+	return nil
 }
