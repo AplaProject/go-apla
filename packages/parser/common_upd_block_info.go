@@ -25,52 +25,55 @@ import (
 )
 
 // UpdBlockInfo updates info_block table
-func (p *Parser) UpdBlockInfo() {
-	blockID := p.BlockData.BlockID
-
+func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
+	blockID := block.Header.BlockID
 	// for the local tests
-	if p.BlockData.BlockID == 1 {
+	if block.Header.BlockID == 1 {
 		if *utils.StartBlockID != 0 {
 			blockID = *utils.StartBlockID
 		}
 	}
-	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockID, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletID, p.BlockData.StateID)
+	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
+		block.Header.Time, block.Header.WalletID, block.Header.StateID)
+
 	hash, err := crypto.DoubleHash([]byte(forSha))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	p.BlockData.Hash = hash
-
-	if p.BlockData.BlockID == 1 {
+	block.Header.Hash = hash
+	if block.Header.BlockID == 1 {
 		ib := &model.InfoBlock{
-			Hash:           p.BlockData.Hash,
+			Hash:           hash,
 			BlockID:        blockID,
-			Time:           p.BlockData.Time,
-			StateID:        p.BlockData.StateID,
-			WalletID:       p.BlockData.WalletID,
-			CurrentVersion: p.CurrentVersion,
+			Time:           block.Header.Time,
+			StateID:        block.Header.StateID,
+			WalletID:       block.Header.WalletID,
+			CurrentVersion: fmt.Sprintf("%d", block.Header.Version),
 		}
-		err := ib.Create()
+		err := ib.Create(dbTransaction)
 		if err != nil {
-			log.Error("error insert into info_block %v", err)
+			return fmt.Errorf("error insert into info_block %s", err)
 		}
 	} else {
 		ibUpdate := &model.InfoBlock{
-			Hash:     p.BlockData.Hash,
+			Hash:     hash,
 			BlockID:  blockID,
-			Time:     p.BlockData.Time,
-			StateID:  p.BlockData.StateID,
-			WalletID: p.BlockData.WalletID,
+			Time:     block.Header.Time,
+			StateID:  block.Header.StateID,
+			WalletID: block.Header.WalletID,
 			Sent:     0,
 		}
-		if err := ibUpdate.Update(); err != nil {
-			log.Error("info block update error: %s", err)
+		if err := ibUpdate.Update(dbTransaction); err != nil {
+			return fmt.Errorf("error while updating info_block: %s", err)
 		}
+
 		config := &model.Config{}
-		err = config.ChangeBlockIDBatch(blockID, blockID)
+		err = config.ChangeBlockIDBatch(dbTransaction, blockID, blockID)
 		if err != nil {
-			log.Error("change block id batch error: %s", err)
+			return err
 		}
 	}
+
+	return nil
 }

@@ -25,14 +25,14 @@ func (rt *RollbackTx) DeleteByHash() error {
 	return DBConn.Where("tx_hash = ?", rt.TxHash).Delete(rt).Error
 }
 
-func (rt *RollbackTx) DeleteByHashAndTableName() error {
-	return DBConn.Where("tx_hash = ? and table_name = ?", rt.TxHash, rt.NameTable).Delete(rt).Error
+func (rt *RollbackTx) DeleteByHashAndTableName(transaction *DbTransaction) error {
+	return GetDB(transaction).Where("tx_hash = ? and table_name = ?", rt.TxHash, rt.NameTable).Delete(rt).Error
 }
 
-func (rt *RollbackTx) Create() error {
-	return DBConn.Create(rt).Error
+func (rt *RollbackTx) Create(transaction *DbTransaction) error {
+	return GetDB(transaction).Create(rt).Error
 }
 
-func (rt *RollbackTx) Get(transactionHash []byte, tableName string) error {
-	return DBConn.Where("tx_hash = ? AND table_name = ?", transactionHash, tableName).First(rt).Error
+func (rt *RollbackTx) Get(dbTransaction *DbTransaction, transactionHash []byte, tableName string) error {
+	return GetDB(dbTransaction).Where("tx_hash = ? AND table_name = ?", transactionHash, tableName).First(rt).Error
 }

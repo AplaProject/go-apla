@@ -1,6 +1,8 @@
 package model
 
-import "strconv"
+import (
+	"strconv"
+)
 
 type Menu struct {
 	tableName  string
@@ -22,8 +24,8 @@ func (m *Menu) Get(name string) error {
 	return DBConn.Where("name = ?", name).First(m).Error
 }
 
-func (m *Menu) Create() error {
-	return DBConn.Create(m).Error
+func (m *Menu) Create(transaction *DbTransaction) error {
+	return GetDB(transaction).Create(m).Error
 }
 
 func (m *Menu) GetAll(prefix string) ([]Menu, error) {
@@ -41,8 +43,8 @@ func (m *Menu) ToMap() map[string]string {
 	return result
 }
 
-func CreateStateMenuTable(stateID string) error {
-	return DBConn.Exec(`CREATE TABLE "` + stateID + `_menu" (
+func CreateStateMenuTable(transaction *DbTransaction, stateID string) error {
+	return GetDB(transaction).Exec(`CREATE TABLE "` + stateID + `_menu" (
 				"name" varchar(255)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
 				"conditions" bytea  NOT NULL DEFAULT '',

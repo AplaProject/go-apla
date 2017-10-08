@@ -28,7 +28,7 @@ func (p *Parser) autoRollback() error {
 		return utils.ErrInfo(err)
 	}
 	for _, tx := range txs {
-		err := p.selectiveRollback(tx.NameTable, p.AllPkeys[tx.NameTable]+"='"+tx.TableID+`'`, true)
+		err := p.selectiveRollback(tx.NameTable, p.AllPkeys[tx.NameTable]+"='"+tx.TableID+`'`)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

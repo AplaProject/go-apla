@@ -22,8 +22,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
-	"encoding/hex"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
@@ -112,7 +110,7 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 		return nil, nil, nil, utils.ErrInfo("len(nodePrivateKey) == 0")
 	}
 
-	block, _ := pem.Decode([]byte(hex.EncodeToString(nodeKey.PrivateKey)))
+	block, _ := pem.Decode([]byte(nodeKey.PrivateKey))
 	if block == nil || block.Type != "RSA PRIVATE KEY" {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Error("No valid PEM data found")
 		return nil, nil, nil, utils.ErrInfo("No valid PEM data found")

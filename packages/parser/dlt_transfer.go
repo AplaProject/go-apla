@@ -31,6 +31,8 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
+	"bytes"
+
 	"github.com/shopspring/decimal"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
@@ -41,6 +43,31 @@ type DLTTransferParser struct {
 }
 
 func (p *DLTTransferParser) Init() error {
+	if p.BlockData.Version == 0 {
+		oldSlice, err := ParseOldTransaction(bytes.NewBuffer(p.TxBinaryData))
+		if err != nil {
+			return fmt.Errorf("old transaction parsing failed")
+		}
+		if len(oldSlice) < 10 {
+			return fmt.Errorf("bad transaction format")
+		}
+		p.DLTTransfer = &tx.DLTTransfer{
+			Header: tx.Header{
+				Type:          int(p.TxType),
+				Time:          converter.BytesToInt64(oldSlice[2]),
+				UserID:        converter.BytesToInt64(oldSlice[3]),
+				StateID:       converter.BytesToInt64(oldSlice[4]),
+				PublicKey:     converter.BinToHex(oldSlice[9]),
+				BinSignatures: converter.BinToHex(oldSlice[10]),
+			},
+			WalletAddress: string(oldSlice[5]),
+			Amount:        string(oldSlice[6]),
+			Commission:    string(oldSlice[7]),
+			Comment:       string(oldSlice[8]),
+		}
+		return nil
+	}
+
 	dltTransfer := &tx.DLTTransfer{}
 	if err := msgpack.Unmarshal(p.TxBinaryData, dltTransfer); err != nil {
 		return p.ErrInfo(err)
@@ -213,7 +240,7 @@ func (p *DLTTransferParser) Action() error {
 		Time:                   p.BlockData.Time,
 		BlockID:                p.BlockData.BlockID,
 	}
-	err = dltTransaction.Create()
+	err = dltTransaction.Create(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -223,7 +250,7 @@ func (p *DLTTransferParser) Action() error {
 		NameTable: "dlt_transactions",
 		TableID:   converter.Int64ToStr(dltTransaction.ID),
 	}
-	err = rollbackTx.Create()
+	err = rollbackTx.Create(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

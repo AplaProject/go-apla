@@ -17,121 +17,103 @@
 package parser
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-/**
- * Block rollback
- */
-func (p *Parser) ParseDataRollback() error {
-	var txType int
-	p.dataPre()
-	if p.dataType != 0 {
-		// parse only blocks
-		return utils.ErrInfo(fmt.Errorf("incorrect dataType"))
+func BlockRollback(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	if buf.Len() == 0 {
+		return fmt.Errorf("empty buffer")
 	}
-	var err error
 
-	err = p.ParseBlock()
+	block, err := parseBlock(buf)
 	if err != nil {
-		return utils.ErrInfo(err)
+		return err
 	}
-	if len(p.BinaryData) > 0 {
-		// in the beginning it is necessary to obtain the sizes of all the transactions in order to go through them in reverse order
-		binForSize := p.BinaryData
-		var sizesSlice []int64
-		for {
-			txSize, err := converter.DecodeLength(&binForSize)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if txSize == 0 {
-				break
-			}
-			sizesSlice = append(sizesSlice, txSize)
-			// remove the transaction
-			converter.BytesShift(&binForSize, txSize)
-			if len(binForSize) == 0 {
-				break
-			}
+
+	dbTransaction, err := model.StartTransaction()
+	if err != nil {
+		return err
+	}
+
+	err = doBlockRollback(dbTransaction, block)
+
+	if err != nil {
+		dbTransaction.Rollback()
+		return err
+	}
+
+	b := &model.Block{}
+	err = b.DeleteById(dbTransaction, block.Header.BlockID)
+	if err != nil {
+		dbTransaction.Rollback()
+		return err
+	}
+
+	err = dbTransaction.Commit()
+	return err
+}
+
+func doBlockRollback(transaction *model.DbTransaction, block *Block) error {
+	// rollback transactions in reverse order
+	for i := len(block.Parsers) - 1; i >= 0; i-- {
+		p := block.Parsers[i]
+		p.DbTransaction = transaction
+
+		_, err := model.MarkTransactionUnusedAndUnverified(transaction, p.TxHash)
+		if err != nil {
+			return utils.ErrInfo(err)
 		}
-		sizesSlice = converter.SliceReverse(sizesSlice)
-		for i := 0; i < len(sizesSlice); i++ {
-			transactionBinaryData := converter.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
-			p.TxBinaryData = transactionBinaryData
-			// get transaction type
-			txType = int(converter.BinToDecBytesShift(&p.TxBinaryData, 1))
-			// get transaction size
-			converter.BytesShiftReverse(&p.BinaryData, len(converter.EncodeLength(sizesSlice[i])))
-			hash, err := crypto.Hash(transactionBinaryData)
-			if err != nil {
-				return err
-			}
-			p.TxHash = hash
+		_, err = model.DeleteLogTransactionsByHash(transaction, p.TxHash)
+		if err != nil {
+			return utils.ErrInfo(err)
+		}
 
-			affect, err := model.MarkTransactionUnusedAndUnverified(p.TxHash)
-			if err != nil {
-				logging.WriteSelectiveLog(err)
-				return p.ErrInfo(err)
-			}
-			logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
-			_, err = model.DeleteLogTransactionsByHash(p.TxHash)
-			if err != nil {
-				return p.ErrInfo(err)
-			}
+		ts := &model.TransactionStatus{}
+		err = ts.UpdateBlockID(transaction, 0, p.TxHash)
+		if err != nil {
+			return utils.ErrInfo(err)
+		}
 
-			// let user know that his territory isn't in the block
-			ts := &model.TransactionStatus{}
-			err = ts.UpdateBlockID(0, p.TxHash)
-			if err != nil {
-				return p.ErrInfo(err)
-			}
-			// put the transaction in the turn for checking suddenly we will need it
-			_, err = model.DeleteQueueTxByHash(p.TxHash)
-			if err != nil {
-				return p.ErrInfo(err)
-			}
-			queueTx := &model.QueueTx{Hash: p.TxHash, Data: transactionBinaryData}
-			err = queueTx.Save()
-			if err != nil {
-				return p.ErrInfo(err)
-			}
+		_, err = model.DeleteQueueTxByHash(transaction, p.TxHash)
+		if err != nil {
+			return utils.ErrInfo(err)
+		}
+		queueTx := &model.QueueTx{Hash: p.TxHash, Data: p.TxFullData}
+		err = queueTx.Save(transaction)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
 
-			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
+		if p.TxContract != nil {
+			if err := p.CallContract(smart.CallInit | smart.CallRollback); err != nil {
+				return utils.ErrInfo(err)
+			}
+			if err = p.autoRollback(); err != nil {
+				return p.ErrInfo(err)
+			}
+		} else {
+			MethodName := consts.TxTypes[int(p.TxType)]
+			parser, err := GetParser(p, MethodName)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
-			if p.TxContract != nil {
-				if err := p.CallContract(smart.CallInit | smart.CallRollback); err != nil {
-					return utils.ErrInfo(err)
-				}
-				if err = p.autoRollback(); err != nil {
-					return p.ErrInfo(err)
-				}
-			} else {
-				MethodName := consts.TxTypes[txType]
-				parser, err := GetParser(p, MethodName)
-				if err != nil {
-					return p.ErrInfo(err)
-				}
-				result := parser.Init()
-				if _, ok := result.(error); ok {
-					return p.ErrInfo(result.(error))
-				}
-				result = parser.Rollback()
-				if _, ok := result.(error); ok {
-					return p.ErrInfo(result.(error))
-				}
+			result := parser.Init()
+			if _, ok := result.(error); ok {
+				return p.ErrInfo(result.(error))
+			}
+			result = parser.Rollback()
+			if _, ok := result.(error); ok {
+				return p.ErrInfo(result.(error))
 			}
 		}
 	}
+
 	return nil
 }

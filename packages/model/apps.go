@@ -43,8 +43,8 @@ func (a *App) Create() error {
 	return DBConn.Create(a).Error
 }
 
-func CreateStateAppsTable(stateID string) error {
-	return DBConn.Exec(`CREATE TABLE "` + stateID + `_apps" (
+func CreateStateAppsTable(transaction *DbTransaction, stateID string) error {
+	return GetDB(transaction).Exec(`CREATE TABLE "` + stateID + `_apps" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"done" integer NOT NULL DEFAULT '0',
 				"blocks" text  NOT NULL DEFAULT ''

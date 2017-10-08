@@ -4,7 +4,7 @@ type MyNodeKey struct {
 	ID         int32  `gorm:"primary_key;not null"`
 	AddTime    int32  `gorm:"not null"`
 	PublicKey  []byte `gorm:"not null"`
-	PrivateKey []byte `gorm:"not null"`
+	PrivateKey string `gorm:"not null"`
 	Status     string `gorm:"not null;default:'my_pending'"`
 	MyTime     int32  `gorm:"not null"`
 	Time       int32  `gorm:"not null"`

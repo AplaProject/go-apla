@@ -70,11 +70,7 @@ func initialLoad(d *daemon, ctx context.Context) error {
 			return err
 		}
 
-		parser := new(parser.Parser)
-		parser.GoroutineName = d.goRoutineName
-
-		if err := firstLoad(ctx, d, parser); err != nil {
-			logger.LogError(consts.BlockchainLoadError, err)
+		if err := firstLoad(ctx, d); err != nil {
 			return err
 		}
 	}
@@ -187,29 +183,18 @@ func getHostBlockID(host string) (int64, error) {
 
 // load from host all blocks from our last block to maxBlockID
 func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
-	logger.LogDebug(consts.FuncStarted, "")
-	locked, err := DbLock(ctx, d.goRoutineName)
-	if !locked || err != nil {
-		logger.LogError(consts.DBError, err)
-		return err
-	}
-	defer DbUnlock(d.goRoutineName)
+	DBLock()
+	defer DBUnlock()
 
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
-	if err = curBlock.GetInfoBlock(); err != nil {
-		logger.LogError(consts.DBError, err)
+	if err := curBlock.GetInfoBlock(); err != nil {
 		return err
 	}
 
-	parser := new(parser.Parser)
-	parser.GoroutineName = d.goRoutineName
-
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID++ {
-		UpdMainLock()
-
 		if ctx.Err() != nil {
-			logger.LogError(consts.ContextError, err)
+			logger.LogError(consts.ContextError, ctx.Err())
 			return ctx.Err()
 		}
 
@@ -219,24 +204,16 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			return err
 		}
 
-		// get block header and block body
-		header, body, err := parseBlock(blockID, blockBin)
-		if err != nil || header == nil {
+		block, err := parser.ProcessBlock(blockBin)
+		if err != nil {
 			// we got bad block and should ban this host
 			banNode(host, err)
 			logger.LogError(consts.NodeBan, fmt.Sprintf("%s %s", host, err))
 			return err
 		}
 
-		// get hash of the previous block from OUR chain to check current block from host
-		prevHash, err := getBlockHash(blockID - 1)
-		if err != nil {
-			logger.LogError(consts.BlockError, err)
-			return err
-		}
-
 		// hash compare could be failed in the case of fork
-		hashMatched, err := checkHash(*header, body, []byte(prevHash))
+		hashMatched, err := block.CheckHash()
 		if err != nil {
 			logger.LogError(consts.BlockError, err)
 			logger.LogError(consts.NodeBan, fmt.Sprintf("%s %s", host, err))
@@ -246,9 +223,7 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 		if !hashMatched {
 			// it should be fork, replace our previous blocks to ones from the host
-			err := parser.GetBlocks(blockID-1, host, "rollback_blocks_2",
-				d.goRoutineName, consts.DATA_TYPE_BLOCK_BODY)
-
+			err := parser.GetBlocks(blockID-1, host, "rollback_blocks_2", consts.DATA_TYPE_BLOCK_BODY)
 			if err != nil {
 				logger.LogError(consts.BlockError, err)
 				logger.LogError(consts.NodeBan, fmt.Sprintf("%s %s", host, err))
@@ -264,17 +239,12 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			*/
 		}
 
-		parser.BinaryData = blockBin
-		if err = parser.ParseDataFull(false); err != nil {
+		if err = block.CheckBlock(); err != nil {
 			banNode(host, err)
-			parser.BlockError(err)
-			logger.LogError(consts.BlockError, err)
-			logger.LogError(consts.NodeBan, fmt.Sprintf("%s %s", host, err))
 			return err
 		}
-
-		if err = parser.InsertIntoBlockchain(); err != nil {
-			logger.LogError(consts.DBError, err)
+		if err = block.PlayBlockSafe(); err != nil {
+			banNode(host, err)
 			return err
 		}
 	}
@@ -301,8 +271,7 @@ func downloadChain(ctx context.Context, fileName, url string) error {
 }
 
 // init first block from file or from embedded value
-func loadFirstBlock(parser *parser.Parser) error {
-	logger.LogDebug(consts.FuncStarted, "")
+func loadFirstBlock() error {
 	var newBlock []byte
 	var err error
 
@@ -317,105 +286,24 @@ func loadFirstBlock(parser *parser.Parser) error {
 			return err
 		}
 	}
-	parser.BinaryData = newBlock
-	parser.CurrentVersion = consts.VERSION
 
-	logger.LogDebug(consts.DebugMessage, "start to insert first block")
-	if err = parser.ParseDataFull(false); err != nil {
-		parser.BlockError(err)
-		logger.LogError(consts.BlockError, err)
+	log.Infof("start to insert first block")
+	if err = parser.InsertBlock(newBlock); err != nil {
+		log.Errorf("failed to parse first block: %s", err)
 		return err
 	}
 
-	if err = parser.InsertIntoBlockchain(); err != nil {
-		logger.LogError(consts.DBError, err)
-		return err
-	}
-	logger.LogDebug(consts.DebugMessage, "first block inserted")
+	log.Infof("first block inserted")
 	return nil
 }
 
-// check block and get block header and block body
-func parseBlock(blockID int64, binaryBlock []byte) (header *utils.BlockData, body []byte, err error) {
-	logger.LogDebug(consts.FuncStarted, "")
-	if len(binaryBlock) == 0 {
-		err = fmt.Errorf("block is empty")
-		return
-	}
+func firstLoad(ctx context.Context, d *daemon) error {
 
-	converter.BytesShift(&binaryBlock, 1) // remove 1-st byte - type (block/transaction)
-	header = utils.ParseBlockHeader(&binaryBlock)
-
-	if int64(len(binaryBlock)) > syspar.GetMaxBlockSize() {
-		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
-			len(binaryBlock), syspar.GetMaxBlockSize())
-		return
-	}
-
-	if header.BlockID != blockID {
-		err = fmt.Errorf(`header.BlockId != blockID  %v > %v`, header.BlockID, blockID)
-		return
-	}
-
-	body = binaryBlock
-	return
-}
-
-// check if new block is from our chain
-func checkHash(header utils.BlockData, body []byte, prevHash []byte) (bool, error) {
-	if header.BlockID == 1 {
-		return true, nil
-	}
-
-	mrklRoot, err := utils.GetMrklroot(body, false, syspar.GetMaxTxSize(), syspar.GetMaxTxCount())
-	if err != nil {
-		return true, err
-	}
-
-	// public key of those who has generated this block
-	var nodePublicKey []byte
-	if header.WalletID != 0 {
-		wallet := &model.DltWallet{}
-		err = wallet.GetWallet(header.WalletID)
-		if err != nil {
-			logger.LogError(consts.DBError, err)
-			return true, err
-		}
-		nodePublicKey = []byte(wallet.PublicKey)
-	} else {
-		systemState := &model.SystemRecognizedState{}
-		err = systemState.GetState(header.StateID)
-		if err != nil {
-			logger.LogError(consts.DBError, err)
-			return true, err
-		}
-		nodePublicKey = systemState.NodePublicKey
-	}
-
-	// SIGN from 128 bytes to 512 bytes. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
-	forSign := fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", header.BlockID, prevHash,
-		header.Time, header.WalletID, header.StateID, mrklRoot)
-
-	_, err = utils.CheckSign([][]byte{nodePublicKey}, forSign, header.Sign, true)
-	if err != nil {
-		// check failed, it seems that this new block is from the different fork
-		return false, nil
-	}
-
-	return true, nil
-}
-
-func firstLoad(ctx context.Context, d *daemon, parser *parser.Parser) error {
-	logger.LogDebug(consts.FuncStarted, "")
-	locked, err := DbLock(ctx, d.goRoutineName)
-	if !locked || err != nil {
-		logger.LogError(consts.DBError, err)
-		return err
-	}
-	defer DbUnlock(d.goRoutineName)
+	DBLock()
+	defer DBUnlock()
 
 	nodeConfig := &model.Config{}
-	err = nodeConfig.GetConfig()
+	err := nodeConfig.GetConfig()
 	if err != nil {
 		logger.LogError(consts.DBError, err)
 		return err
@@ -435,13 +323,13 @@ func firstLoad(ctx context.Context, d *daemon, parser *parser.Parser) error {
 			return err
 		}
 
-		err = loadFromFile(ctx, parser, fileName)
+		err = loadFromFile(ctx, fileName)
 		if err != nil {
 			logger.LogError(consts.BlockchainLoadError, err)
 			return err
 		}
 	} else {
-		err = loadFirstBlock(parser)
+		err = loadFirstBlock()
 	}
 
 	return err
@@ -463,44 +351,22 @@ func needLoad() (bool, error) {
 	logger.LogDebug(consts.DebugMessage, "blockchain shouldn't be loaded")
 	return false, nil
 }
-func getBlockHash(blockID int64) (string, error) {
-	logger.LogDebug(consts.FuncStarted, "")
-	if blockID > 1 {
-		block := &model.Block{}
-		err := block.GetBlock(blockID)
-		if err != nil {
-			logger.LogError(consts.DBError, err)
-			return "", err
-		}
-		return string(converter.BinToHex(block.Hash)), nil
-	}
-
-	return "0", nil
-}
 
 func banNode(host string, err error) {
 	// TODO
 }
 
-func loadFromFile(ctx context.Context, parser *parser.Parser, fileName string) error {
-	logger.LogDebug(consts.FuncStarted, "")
+func loadFromFile(ctx context.Context, fileName string) error {
 	file, err := os.Open(fileName)
 	if err != nil {
 		logger.LogError(consts.IOError, err)
 		return err
 	}
 	defer file.Close()
-
-	first := true
 	for {
 		if ctx.Err() != nil {
 			logger.LogError(consts.ContextError, err)
 			return ctx.Err()
-		}
-
-		if err = UpdMainLock(); err != nil {
-			logger.LogError(consts.DBError, err)
-			return err
 		}
 
 		block, err := readBlock(file)
@@ -521,20 +387,7 @@ func loadFromFile(ctx context.Context, parser *parser.Parser, fileName string) e
 		}
 
 		if *utils.StartBlockID == 0 || (*utils.StartBlockID > 0 && block.ID > *utils.StartBlockID) {
-			parser.BinaryData = block.Data
-			if first {
-				parser.CurrentVersion = consts.VERSION
-				first = false
-			}
-
-			if err = parser.ParseDataFull(false); err != nil {
-				parser.BlockError(err)
-				logger.LogError(consts.BlockError, err)
-				return err
-			}
-
-			if err = parser.InsertIntoBlockchain(); err != nil {
-				logger.LogError(consts.DBError, err)
+			if err = parser.InsertBlock(block.Data); err != nil {
 				return err
 			}
 		}

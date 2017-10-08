@@ -203,6 +203,10 @@ func valueToBool(v interface{}) bool {
 		}
 	case bool:
 		return val
+	case string:
+		return len(val) > 0
+	case []uint8:
+		return len(val) > 0
 	default:
 		dec, _ := decimal.NewFromString(val.(string))
 		return dec.Cmp(decimal.New(0, 0)) != 0
@@ -424,9 +428,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			if i < 0 {
 				logger.LogError(consts.VMError, "wrong var")
-				return 0, fmt.Errorf(`wrong var`)
+				return 0, fmt.Errorf(`wrong var %v`, ivar.Obj.Value)
 			}
-			//			fmt.Println(`VAR`, voff, *ivar.Obj, ivar.Owner.Vars, rt.vars)
+			//fmt.Println(`VAR`, voff, *ivar.Obj, ivar.Owner.Vars, rt.vars)
 			//rt.stack = append(rt.stack, rt.vars[voff+ivar.Obj.Value.(int)])
 		case cmdExtend, cmdCallExtend:
 			if val, ok := (*rt.extend)[cmd.Value.(string)]; ok {

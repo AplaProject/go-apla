@@ -98,6 +98,7 @@ const (
 	keyFalse
 	keyVar
 	keyTX
+	keySettings
 	keyBreak
 	keyContinue
 	keyWarning
@@ -113,13 +114,12 @@ var (
 	// The list of key words
 	keywords = map[string]uint32{`contract`: keyContract, `func`: keyFunc, `return`: keyReturn,
 		`if`: keyIf, `else`: keyElse, `error`: keyError, `warning`: keyWarning, `info`: keyInfo,
-		`while`: keyWhile, `data`: keyTX, `nil`: keyNil, `action`: keyAction, `conditions`: keyCond,
+		`while`: keyWhile, `data`: keyTX, `settings`: keySettings, `nil`: keyNil, `action`: keyAction, `conditions`: keyCond,
 		`true`: keyTrue, `false`: keyFalse, `break`: keyBreak, `continue`: keyContinue, `var`: keyVar}
 	// list of available types
 	// Список типов которые хранят соответствующие reflect типы
 	// The list of types which save the corresponding 'reflect' type
-	types = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `by
-tes`: reflect.TypeOf([]byte{}),
+	types = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `bytes`: reflect.TypeOf([]byte{}),
 		`int`: reflect.TypeOf(int64(0)), `address`: reflect.TypeOf(uint64(0)),
 		`array`: reflect.TypeOf([]interface{}{}),
 		`map`:   reflect.TypeOf(map[string]interface{}{}), `money`: reflect.TypeOf(decimal.New(0, 0)),
@@ -224,6 +224,7 @@ func lexParser(input []rune) (Lexems, error) {
 				if lexID == lexString && skip {
 					skip = false
 					value = strings.Replace(value.(string), `\"`, `"`, -1)
+					value = strings.Replace(strings.Replace(value.(string), `\r`, "\r", -1), `\n`, "\n", -1)
 				}
 				for i, ch := range value.(string) {
 					if ch == 0xa {

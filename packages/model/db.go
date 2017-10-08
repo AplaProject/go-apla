@@ -30,13 +30,12 @@ var (
 )
 
 func GormInit(user string, pass string, dbName string) error {
-	var err error
-	DBConn, err = gorm.Open("postgres",
+	connect, err := gorm.Open("postgres",
 		fmt.Sprintf("host=localhost user=%s dbname=%s sslmode=disable password=%s", user, dbName, pass))
 	if err != nil {
 		return err
 	}
-
+	DBConn = connect
 	//	DBConn.LogMode(true)
 	return nil
 }
@@ -46,6 +45,36 @@ func GormClose() error {
 		return DBConn.Close()
 	}
 	return nil
+}
+
+type DbTransaction struct {
+	conn *gorm.DB
+}
+
+func StartTransaction() (*DbTransaction, error) {
+	conn := DBConn.Begin()
+	if conn.Error != nil {
+		return nil, conn.Error
+	}
+
+	return &DbTransaction{
+		conn: conn,
+	}, nil
+}
+
+func (tr *DbTransaction) Rollback() {
+	tr.conn.Rollback()
+}
+
+func (tr *DbTransaction) Commit() error {
+	return tr.conn.Commit().Error
+}
+
+func GetDB(tr *DbTransaction) *gorm.DB {
+	if tr != nil && tr.conn != nil {
+		return tr.conn
+	}
+	return DBConn
 }
 
 func DropTables() error {
@@ -66,8 +95,27 @@ func GetRecordsCount(tableName string) (int64, error) {
 	return count, err
 }
 
+func ExecSchemaEcosystem(id int, wallet int64, name string) error {
+	schema, err := static.Asset("static/schema-ecosystem-v2.sql")
+	if err != nil {
+		return err
+	}
+	err = DBConn.Exec(fmt.Sprintf(string(schema), id, wallet, name)).Error
+	if err != nil {
+		return err
+	}
+	if id == 1 {
+		schema, err = static.Asset("static/schema-firstecosystem-v2.sql")
+		if err != nil {
+			return err
+		}
+		err = DBConn.Exec(fmt.Sprintf(string(schema), wallet)).Error
+	}
+	return err
+}
+
 func ExecSchema() error {
-	schema, err := static.Asset("static/schema.sql")
+	schema, err := static.Asset("static/schema-v2.sql")
 	if err != nil {
 		os.Remove(*utils.Dir + "/config.ini")
 		return err
@@ -92,22 +140,23 @@ func GetTables() ([]string, error) {
 	return result, err
 }
 
-func Update(tblname, set, where string) error {
-	return DBConn.Exec(`UPDATE "` + tblname + `" SET ` + set + " " + where).Error
+func Update(transaction *DbTransaction, tblname, set, where string) error {
+	return GetDB(transaction).Exec(`UPDATE "` + strings.Trim(tblname, `"`) + `" SET ` + set + " " + where).Error
 }
 
 func Delete(tblname, where string) error {
 	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
 }
 
-func InsertReturningLastID(table, columns, values string) (string, error) {
+func InsertReturningLastID(transaction *DbTransaction, table, columns, values string) (string, error) {
 	var result string
 	returning, err := GetFirstColumnName(table)
 	if err != nil {
 		return "", err
 	}
 	insertQuery := `INSERT INTO "` + table + `" (` + columns + `) VALUES (` + values + `) RETURNING ` + returning
-	err = DBConn.Raw(insertQuery).Row().Scan(&result)
+
+	err = GetDB(transaction).Raw(insertQuery).Row().Scan(&result)
 	if err != nil {
 		return "", err
 	}
@@ -251,84 +300,27 @@ func GetColumnCount(tableName string) (int64, error) {
 	return count, nil
 }
 
-func GetAiID(table string) (string, error) {
-	exists := ""
-	column := "id"
-	if table == "users" {
-		column = "user_id"
-	} else if table == "miners" {
-		column = "miner_id"
-	} else {
-		exists = ""
-		err := DBConn.Raw("SELECT column_name FROM information_schema.columns WHERE table_name=? and column_name=?", table, "id").Row().Scan(&exists)
-		if err != nil && err != sql.ErrNoRows {
-			return "", err
-		}
-		if len(exists) == 0 {
-			err := DBConn.Raw("SELECT column_name FROM information_schema.columns WHERE table_name=? and column_name=?", table, "rb_id").Row().Scan(&exists)
-			if err != nil {
-				return "", err
-			}
-			if len(exists) == 0 {
-				return "", fmt.Errorf("no id, rb_id")
-			}
-			column = "rb_id"
-		}
-	}
-	return column, nil
-}
-
-func SetAI(table string, AI int64) error {
-	AiID, err := GetAiID(table)
-	if err != nil {
-		return err
-	}
-	pgGetSerialSequence, err := GetSerialSequence(table, AiID)
-	if err != nil {
-		return err
-	}
-	err = SequenceRestartWith(pgGetSerialSequence, AI)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func GetAILastValue(table string) (int64, error) {
-	AiID, err := GetAiID(table)
-	if err != nil {
-		return 0, err
-	}
-	pgGetSerialSequence, err := GetSerialSequence(table, AiID)
-	if err != nil {
-		return 0, err
-	}
-	result, err := SequenceLastValue(pgGetSerialSequence)
-	if err != nil {
-		return 0, err
-	}
-	return result, nil
-}
-
-func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err error) {
-	hash, err = crypto.Hash(data)
+func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
+	hash, err := crypto.Hash(data)
 	if err != nil {
 		return nil, err
 	}
 	ts := &TransactionStatus{
-		Hash:      hash,
-		Time:      time.Now().Unix(),
-		Type:      txType,
-		WalletID:  adminWallet,
-		CitizenID: adminWallet}
+		Hash:     hash,
+		Time:     time.Now().Unix(),
+		Type:     txType,
+		WalletID: adminWallet,
+	}
 	err = ts.Create()
 	if err != nil {
 		return nil, err
 	}
-	qtx := &QueueTx{Hash: hash,
-		Data: data}
+	qtx := &QueueTx{
+		Hash: hash,
+		Data: data,
+	}
 	err = qtx.Create()
-	return
+	return hash, err
 }
 
 func GetLastBlockData() (map[string]int64, error) {
@@ -367,16 +359,16 @@ func GetMyWalletID() (int64, error) {
 	return walletID, nil
 }
 
-func AlterTableAddColumn(tableName, columnName, columnType string) error {
-	return DBConn.Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
+func AlterTableAddColumn(transaction *DbTransaction, tableName, columnName, columnType string) error {
+	return GetDB(transaction).Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
 }
 
 func AlterTableDropColumn(tableName, columnName string) error {
 	return DBConn.Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN ` + columnName).Error
 }
 
-func CreateIndex(indexName, tableName, onColumn string) error {
-	return DBConn.Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
+func CreateIndex(transaction *DbTransaction, indexName, tableName, onColumn string) error {
+	return GetDB(transaction).Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
 }
 
 func IsTable(tblname string) bool {
@@ -389,21 +381,28 @@ func IsTable(tblname string) bool {
 }
 
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
-	var dataType, characterMaximumLength *string
-	err := DBConn.Raw(`SELECT data_type, character_maximum_length 
-				 FROM information_schema.columns 
-				 WHERE table_name = ? AND column_name = ?`, tableName, columnName).Row().Scan(&dataType, &characterMaximumLength)
-	if err != nil {
-		return nil, err
-	}
-	result := make(map[string]string, 0)
-	if dataType != nil {
-		result["data_type"] = *dataType
-	}
-	if characterMaximumLength != nil {
-		result["character_maximum_length"] = *characterMaximumLength
-	}
-	return result, nil
+	/*	var dataType string
+		var characterMaximumLength string
+			rows, err := DBConn.
+			Table("information_schema.columns").
+			Where("table_name = ? AND column_name = ?", tableName, columnName).
+			Select("data_type", "character_maximum_length").Rows()*/
+	return GetOneRow(`select data_type,character_maximum_length from
+			information_schema.columns where table_name = ? AND column_name = ?`,
+		tableName, columnName).String()
+	/*	if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			rows.Scan(&dataType)
+			rows.Scan(&characterMaximumLength)
+			fmt.Println(`COLDATA`, dataType, characterMaximumLength)
+		}
+		rows.Close()
+		result := make(map[string]string, 0)
+		result["data_type"] = dataType
+		result["character_maximum_length"] = characterMaximumLength
+		return row, nil*/
 }
 
 func GetColumnType(tblname, column string) (itype string, err error) {
@@ -411,23 +410,22 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 	if err != nil {
 		return
 	}
-	if _, ok := coltype["data_type"]; ok {
-		dataType := coltype["data_type"]
+	if dataType, ok := coltype["data_type"]; ok {
 		switch {
 		case dataType == "character varying":
-			itype = `text`
-		case dataType == "bytea":
-			itype = "varchar"
+			itype = `varchar`
+			/*		case coltype[`data_type`] == "bytea":
+					itype = "bytea"*/
 		case dataType == `bigint`:
-			itype = "numbers"
+			itype = "number"
 		case strings.HasPrefix(dataType, `timestamp`):
-			itype = "date_time"
+			itype = "datetime"
 		case strings.HasPrefix(dataType, `numeric`):
 			itype = "money"
 		case strings.HasPrefix(dataType, `double`):
 			itype = "double"
 		default:
-			err = fmt.Errorf("Unknown column type")
+			itype = dataType
 		}
 	}
 	return
@@ -515,8 +513,8 @@ func GetNameList(tableName string, count int) ([]map[string]string, error) {
 	return result, nil
 }
 
-func DropTable(tableName string) error {
-	return DBConn.DropTable(tableName).Error
+func DropTable(transaction *DbTransaction, tableName string) error {
+	return GetDB(transaction).DropTable(tableName).Error
 }
 
 func GetConditionsAndValue(tableName, name string) (map[string]string, error) {
@@ -572,11 +570,12 @@ func NumIndexes(tblname string) (int, error) {
 }
 
 func IsIndex(tblname, column string) (bool, error) {
-	query := DBConn.Raw(fmt.Sprintf(`select t.relname as table_name, i.relname as index_name, a.attname as column_name
+	row, err := GetOneRow(`select t.relname as table_name, i.relname as index_name, a.attname as column_name
 	 from pg_class t, pg_class i, pg_index ix, pg_attribute a 
 	 where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey)
-		 and t.relkind = 'r'  and t.relname = '%s'  and a.attname = '%s'`, tblname, column))
-	return query.RowsAffected > 0, query.Error
+		 and t.relkind = 'r'  and t.relname = ?  and a.attname = ?`, tblname, column).String()
+	fmt.Println(`ISIndex`, tblname, column, row)
+	return len(row) > 0 && row[`column_name`] == column, err
 }
 
 func GetTableData(tableName string, limit int) ([]map[string]string, error) {
@@ -588,7 +587,12 @@ func GetTableData(tableName string, limit int) ([]map[string]string, error) {
 }
 
 func InsertIntoMigration(version string, timeApplied int64) error {
-	return DBConn.Exec(`INSERT INTO migration_history (version, date_applied) VALUES (?, ?)`, version, timeApplied).Error
+	id, err := GetNextID(`migration_history`)
+	if err != nil {
+		return err
+	}
+	return DBConn.Exec(`INSERT INTO migration_history (id, version, date_applied) VALUES (?, ?, ?)`,
+		id, version, timeApplied).Error
 }
 
 func GetMap(query string, name, value string, args ...interface{}) (map[string]string, error) {
@@ -637,6 +641,18 @@ func handleError(err error) error {
 		return nil
 	}
 	return err
+}
+
+func GetNextID(table string) (int64, error) {
+	var id int64
+	rows, err := DBConn.Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
+	if err != nil {
+		return 0, err
+	}
+	rows.Next()
+	rows.Scan(&id)
+	rows.Close()
+	return id + 1, err
 }
 
 // Now returns the current time of postgresql

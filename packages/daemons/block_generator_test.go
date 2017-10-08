@@ -67,7 +67,7 @@ func TestBlockGenerator(t *testing.T) {
 		WalletID: 1000,
 		StateID:  1,
 	}
-	if err := nodes.Create(); err != nil {
+	if err := nodes.Create(nil); err != nil {
 		t.Fatalf("can't create full_nodes config: %s", err)
 	}
 
@@ -78,7 +78,7 @@ func TestBlockGenerator(t *testing.T) {
 		Time:     time.Now().Unix() - 100,
 		Hash:     []byte("ttt"),
 	}
-	if err := prevBlock.Create(); err != nil {
+	if err := prevBlock.Create(nil); err != nil {
 		t.Fatalf("can't create prevBlock value: %s", err)
 	}
 
@@ -102,7 +102,7 @@ func TestBlockGenerator(t *testing.T) {
 		PublicKey:     public,
 		NodePublicKey: public,
 	}
-	if err := wallet.Create(); err != nil {
+	if err := wallet.Create(nil); err != nil {
 		t.Fatalf("can't create wallet: %s", err)
 	}
 

@@ -9,11 +9,12 @@ import (
 )
 
 type Table struct {
-	tableName             string
-	Name                  string `gorm:"primary_key;not null;size:100"`
-	ColumnsAndPermissions string `gorm:"not null"`
-	Conditions            string `gorm:"not null"`
-	RbID                  int64  `gorm:"not null"`
+	tableName   string
+	Name        string `gorm:"primary_key;not null;size:100"`
+	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	Columns     string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	Conditions  string `gorm:"not null"`
+	RbID        int64  `gorm:"not null"`
 }
 
 func (t *Table) SetTablePrefix(prefix string) {
@@ -32,8 +33,8 @@ func (t *Table) Get(name string) (bool, error) {
 	return true, query.Error
 }
 
-func (t *Table) Create() error {
-	return DBConn.Create(t).Error
+func (t *Table) Create(transaction *DbTransaction) error {
+	return GetDB(transaction).Create(t).Error
 }
 
 func (t *Table) Delete() error {
@@ -43,7 +44,8 @@ func (t *Table) Delete() error {
 func (t *Table) ToMap() map[string]string {
 	result := make(map[string]string, 0)
 	result["name"] = t.Name
-	result["columns_and_permissions"] = t.ColumnsAndPermissions
+	result["permissions"] = t.Permissions
+	result["columns"] = t.Columns
 	result["conditions"] = t.Conditions
 	result["rb_id"] = strconv.FormatInt(t.RbID, 10)
 	return result
@@ -59,7 +61,7 @@ func (t *Table) GetTablePermissions(tablePrefix string, tableName string) (map[s
 	var key, value string
 	result := map[string]string{}
 	row, err := DBConn.Table(tablePrefix+"_tables").
-		Select("(jsonb_each_text(columns_and_permissions)).*").
+		Select("jsonb_each_text(permissions)").
 		Where("name = ?", tableName).Rows()
 	if err != nil {
 		return nil, err
@@ -75,7 +77,7 @@ func (t *Table) GetColumnsAndPermissions(tablePrefix string, tableName string) (
 	var key, value string
 	result := map[string]string{}
 	row, err := DBConn.Table(tablePrefix+"_tables").
-		Select("(jsonb_each_text(columns_and_permissions->'update')).*").
+		Select("jsonb_each_text(columns->'update')").
 		Where("name = ?", tableName).Rows()
 	if err != nil {
 		return nil, err
@@ -96,7 +98,7 @@ func (t *Table) ExistsByName(name string) (bool, error) {
 }
 
 func (t *Table) IsExistsByPermissionsAndTableName(columnName, tableName string) (bool, error) {
-	query := DBConn.Where(`(columns_and_permissions->'update'-> ? ) is not null AND name = ?`, columnName, tableName).First(t)
+	query := DBConn.Where(`(columns-> ? ) is not null AND name = ?`, columnName, tableName).First(t)
 	if query.Error == nil {
 		return !query.RecordNotFound(), nil
 	}
@@ -106,12 +108,12 @@ func (t *Table) IsExistsByPermissionsAndTableName(columnName, tableName string) 
 	return false, query.Error
 }
 
-func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) {
+func (t *Table) GetColumns(name, jsonKey string) (map[string]string, error) {
 	keyStr := ""
 	if jsonKey != "" {
 		keyStr = `->'` + jsonKey + `'`
 	}
-	rows, err := DBConn.Raw(`SELECT data.* FROM "`+t.tableName+`", jsonb_each_text(columns_and_permissions`+keyStr+`) AS data WHERE name = ?`, name).Rows()
+	rows, err := DBConn.Raw(`SELECT data.* FROM "`+t.tableName+`", jsonb_each_text(columns`+keyStr+`) AS data WHERE name = ?`, name).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -129,25 +131,37 @@ func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) 
 	return result, nil
 }
 
-func (t *Table) SetActionByName(table, name, action, actionValue string, rbID int64) (int64, error) {
+func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) {
+	keyStr := ""
+	if jsonKey != "" {
+		keyStr = `->'` + jsonKey + `'`
+	}
+	rows, err := DBConn.Raw(`SELECT data.* FROM "`+t.tableName+`", jsonb_each_text(permissions`+keyStr+`) AS data WHERE name = ?`, name).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var key, value string
+	result := map[string]string{}
+	for rows.Next() {
+		rows.Scan(&key, &value)
+		result[key] = value
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (t *Table) SetActionByName(transaction *DbTransaction, table, name, action, actionValue string, rbID int64) (int64, error) {
 	log.Debugf("set action by name: name = %s, actions = %s, actionsValue = %s", name, action, actionValue)
-	query := DBConn.Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(actionValue)+`"`, rbID, name)
+	query := GetDB(transaction).Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(actionValue)+`"`, rbID, name)
 	return query.RowsAffected, query.Error
 }
 
-func CreateStateTablesTable(stateID string) error {
-	return DBConn.Exec(`CREATE TABLE "` + stateID + `_tables" (
-				"name" varchar(100)  NOT NULL DEFAULT '',
-				"columns_and_permissions" jsonb,
-				"conditions" text  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER TABLE ONLY "` + stateID + `_tables" ADD CONSTRAINT "` + stateID + `_tables_pkey" PRIMARY KEY (name);
-	`).Error
-}
-
-func CreateTable(tableName, colsSQL string) error {
-	return DBConn.Exec(`CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
+func CreateTable(transaction *DbTransaction, tableName, colsSQL string) error {
+	return GetDB(transaction).Exec(`CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
 				CREATE TABLE "` + tableName + `" (
 				"id" bigint NOT NULL  default nextval('` + tableName + `_id_seq'),
 				` + colsSQL + `
@@ -157,13 +171,13 @@ func CreateTable(tableName, colsSQL string) error {
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`).Error
 }
 
-func GetColumnsAndPermissionsAndRbIDWhereTable(table, tableName string) (map[string]string, error) {
+func GetColumnsAndPermissionsAndRbIDWhereTable(transaction *DbTransaction, table, tableName string) (map[string]string, error) {
 	type proxy struct {
 		ColumnsAndPermissions string
 		RbID                  int64
 	}
 	temp := &proxy{}
-	err := DBConn.Table(table).Where("name = ?", tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
+	err := GetDB(transaction).Table(table).Where("name = ?", tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +193,7 @@ func GetTableWhereUpdatePermissionAndTableName(table, columnName, tableName stri
 		RbID                  int64
 	}
 	temp := &proxy{}
-	err := DBConn.Table(table).Where("(columns_and_permissions->'update'-> ? ) is not null AND name = ?", columnName, tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
+	err := DBConn.Table(table).Where("(columns-> ? ) is not null AND name = ?", columnName, tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
 	if err != nil {
 		return nil, err
 	}

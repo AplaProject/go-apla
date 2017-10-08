@@ -19,7 +19,6 @@ package utils
 import (
 	"archive/zip"
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -69,6 +68,7 @@ type BlockData struct {
 	StateID  int64
 	Sign     []byte
 	Hash     []byte
+	Version  int
 }
 
 var (
@@ -174,36 +174,6 @@ func Android() bool {
 		return true
 	}
 	return false
-}
-
-// ParseBlockHeader parses the header of the block
-func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
-	result := new(BlockData)
-	/*
-		 Block header:
-		TYPE(0-block, 1-transaction)     1
-		BLOCK_ID   				         4
-		TIME       					     4
-		WALLET_ID                        1-8
-		state_id                         1
-		SIGN                             from 128 to 512 байт. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-	*/
-	result.BlockID = converter.BinToDecBytesShift(binaryBlock, 4)
-	result.Time = converter.BinToDecBytesShift(binaryBlock, 4)
-	result.WalletID, _ = converter.DecodeLenInt64(binaryBlock)
-
-	result.StateID = converter.BinToDecBytesShift(binaryBlock, 1)
-	if result.BlockID > 1 {
-		signSize, err := converter.DecodeLength(binaryBlock)
-		if err != nil {
-			logger.LogFatal(consts.BlockError, err)
-		}
-		result.Sign = converter.BytesShift(binaryBlock, signSize)
-	} else {
-		*binaryBlock = (*binaryBlock)[1:]
-	}
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.StateID: %v / result.Sign: %v", result.BlockID, result.Time, result.WalletID, result.StateID, result.Sign))
-	return result
 }
 
 // CheckInputData checks the input data
@@ -720,6 +690,7 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 		length, err := converter.DecodeLength(&signs)
 		if err != nil {
 			logger.LogFatal(consts.SignError, err)
+			return false, err
 		}
 		if length > 0 {
 			signsSlice = append(signsSlice, converter.BytesShift(&signs, length))
@@ -1002,87 +973,6 @@ func ShellExecute(cmdline string) {
 	}
 }
 
-// FirstBlock generates the first block
-func FirstBlock() {
-	logger.LogDebug(consts.FuncStarted, "FirstBlock")
-
-	if len(*FirstBlockPublicKey) == 0 {
-		logger.LogDebug(consts.DebugMessage, "len(*FirstBlockPublicKey) == 0")
-		priv, pub, _ := crypto.GenHexKeys()
-		err := ioutil.WriteFile(*Dir+"/PrivateKey", []byte(priv), 0644)
-		if err != nil {
-			logger.LogError(consts.IOError, fmt.Sprintf("write publick key failed: %v", err))
-			return
-		}
-		logger.LogDebug(consts.DebugMessage, fmt.Sprintf("public key: %s", pub))
-		*FirstBlockPublicKey = pub
-	}
-	if len(*FirstBlockNodePublicKey) == 0 {
-		logger.LogDebug(consts.DebugMessage, "len(*FirstBlockNodePublicKey) == 0")
-		priv, pub, _ := crypto.GenHexKeys()
-		err := ioutil.WriteFile(*Dir+"/NodePrivateKey", []byte(priv), 0644)
-		if err != nil {
-			logger.LogError(consts.IOError, fmt.Sprintf("write private kery failed: %v", err))
-			return
-		}
-		*FirstBlockNodePublicKey = pub
-	}
-
-	PublicKey := *FirstBlockPublicKey
-	PublicKeyBytes, err := hex.DecodeString(string(PublicKey))
-	if err != nil {
-		logger.LogError(consts.CryptoError, fmt.Sprintf("can't generate key, decode string failed: %s", err))
-		return
-	}
-
-	NodePublicKey := *FirstBlockNodePublicKey
-	NodePublicKeyBytes, err := hex.DecodeString(string(NodePublicKey))
-	if err != nil {
-		logger.LogError(consts.CryptoError, fmt.Sprintf("can't generate key, decode string failed: %s", err))
-		return
-	}
-
-	Host := *FirstBlockHost
-	if len(Host) == 0 {
-		Host = "127.0.0.1"
-	}
-
-	var block, tx []byte
-	iAddress := int64(crypto.Address(PublicKeyBytes))
-	now := uint32(time.Now().Unix())
-
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("wallet_id: %+v\n", iAddress))
-	_, err = converter.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
-	if err != nil {
-		logger.LogError(consts.BlockError, fmt.Sprintf("first block header marshall error: %v", err))
-		return
-	}
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("len(PublicKeyBytes) = %d, len(NodePublicKeyBytes) = %d", len(PublicKeyBytes), len(NodePublicKeyBytes)))
-	_, err = converter.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
-		Time: now, WalletID: iAddress, CitizenID: 0},
-		PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
-	if err != nil {
-		logger.LogError(consts.BlockError, fmt.Sprintf("first block body marshal error: %v", err))
-		return
-	}
-	converter.EncodeLenByte(&block, tx)
-
-	firstBlockDir := ""
-	if len(*FirstBlockDir) == 0 {
-		firstBlockDir = *Dir
-	} else {
-		firstBlockDir = filepath.Join("", *FirstBlockDir)
-		if _, err := os.Stat(firstBlockDir); os.IsNotExist(err) {
-			if err = os.Mkdir(firstBlockDir, 0755); err != nil {
-				logger.LogError(consts.IOError, fmt.Sprintf("can't create directory for 1block: %v", err))
-				return
-			}
-		}
-	}
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("write first block to: %s/1block", firstBlockDir))
-	ioutil.WriteFile(filepath.Join(firstBlockDir, "1block"), block, 0644)
-}
-
 // EgaasUpdate decompresses and updates executable file
 func EgaasUpdate(url string) error {
 	//	GetUpdVerAndURL(host string) (updinfo *lib.Update, err error)
@@ -1118,12 +1008,6 @@ func EgaasUpdate(url string) error {
 	reader.Close()
 	zipped.Close()
 	writer.Close()
-
-	/*	pwd, err := os.Getwd()
-		if err != nil {
-			return ErrInfo(err)
-		}
-		fmt.Print(pwd)*/
 
 	folderPath, err := osext.ExecutableFolder()
 	if err != nil {

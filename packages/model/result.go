@@ -136,9 +136,9 @@ func (r *OneRow) Int() (map[string]int, error) {
 	return result, nil
 }
 
-func GetAll(query string, countRows int, args ...interface{}) ([]map[string]string, error) {
+func GetAllTransaction(transaction *DbTransaction, query string, countRows int, args ...interface{}) ([]map[string]string, error) {
 	var result []map[string]string
-	rows, err := DBConn.Raw(query, args...).Rows()
+	rows, err := GetDB(transaction).Raw(query, args...).Rows()
 	if err != nil {
 		return result, fmt.Errorf("%s in query %s %s", err, query, args)
 	}
@@ -194,9 +194,13 @@ func GetAll(query string, countRows int, args ...interface{}) ([]map[string]stri
 	return result, nil
 }
 
-func GetOneRow(query string, args ...interface{}) *OneRow {
+func GetAll(query string, countRows int, args ...interface{}) ([]map[string]string, error) {
+	return GetAllTransaction(nil, query, countRows, args)
+}
+
+func GetOneRowTransaction(transaction *DbTransaction, query string, args ...interface{}) *OneRow {
 	result := make(map[string]string)
-	all, err := GetAll(query, 1, args...)
+	all, err := GetAllTransaction(transaction, query, 1, args...)
 	if err != nil {
 		return &OneRow{result, fmt.Errorf("%s in query %s %s", err, query, args)}
 	}
@@ -204,4 +208,8 @@ func GetOneRow(query string, args ...interface{}) *OneRow {
 		return &OneRow{result, nil}
 	}
 	return &OneRow{all[0], nil}
+}
+
+func GetOneRow(query string, args ...interface{}) *OneRow {
+	return GetOneRowTransaction(nil, query, args)
 }

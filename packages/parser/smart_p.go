@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -28,7 +29,6 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
@@ -39,6 +39,8 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
+
+	"github.com/jinzhu/gorm"
 )
 
 var (
@@ -50,6 +52,8 @@ var (
 		"DBGetTable":     struct{}{},
 		"DBString":       struct{}{},
 		"DBInt":          struct{}{},
+		"DBRowExt":       struct{}{},
+		"DBRow":          struct{}{},
 		"DBStringExt":    struct{}{},
 		"DBIntExt":       struct{}{},
 		"DBFreeRequest":  struct{}{},
@@ -62,19 +66,50 @@ var (
 		"UpdatePage":     struct{}{},
 		"DBInsertReport": struct{}{},
 		"UpdateSysParam": struct{}{},
+		"FindEcosystem":  struct{}{},
 	}
 	extendCost = map[string]int64{
-		"AddressToId":    10,
-		"IdToAddress":    10,
-		"NewState":       1000, // ?? What cost must be?
-		"Sha256":         50,
-		"PubToID":        10,
-		"StateVal":       10,
-		"SysParamString": 10,
-		"SysParamInt":    10,
-		"SysCost":        10,
+		"AddressToId":       10,
+		"IdToAddress":       10,
+		"NewState":          1000, // ?? What cost must be?
+		"Sha256":            50,
+		"PubToID":           10,
+		"StateVal":          10,
+		"SysParamString":    10,
+		"SysParamInt":       10,
+		"SysCost":           10,
+		"SysFuel":           10,
+		"ValidateCondition": 30,
+		"PrefixTable":       10,
+		"EvalCondition":     20,
+		"HasPrefix":         10,
+		"Contains":          10,
+		"Replace":           10,
+		"UpdateLang":        10,
+		"Size":              10,
+		"Substr":            10,
+		"ContractsList":     10,
+		"IsContract":        10,
+		"CompileContract":   100,
+		"FlushContract":     50,
+		"Eval":              10,
+		"Activate":          10,
 	}
 )
+
+//SignRes contains the data of the signature
+type SignRes struct {
+	Param string `json:"name"`
+	Text  string `json:"text"`
+}
+
+// TxSignJSON is a structure for additional signs of transaction
+type TxSignJSON struct {
+	ForSign string    `json:"forsign"`
+	Field   string    `json:"field"`
+	Title   string    `json:"title"`
+	Params  []SignRes `json:"params"`
+}
 
 func init() {
 	smart.Extend(&script.ExtendData{Objects: map[string]interface{}{
@@ -85,6 +120,8 @@ func init() {
 		"DBGetTable":         DBGetTable,
 		"DBString":           DBString,
 		"DBInt":              DBInt,
+		"DBRowExt":           DBRowExt,
+		"DBRow":              DBRow,
 		"DBStringExt":        DBStringExt,
 		"DBFreeRequest":      DBFreeRequest,
 		"DBIntExt":           DBIntExt,
@@ -95,13 +132,14 @@ func init() {
 		"AddressToId":        AddressToID,
 		"IdToAddress":        IDToAddress,
 		"DBAmount":           DBAmount,
-		"ContractAccess":     IsContract,
+		"ContractAccess":     ContractAccess,
 		"ContractConditions": ContractConditions,
 		"NewState":           NewStateFunc,
 		"StateVal":           StateVal,
 		"SysParamString":     SysParamString,
 		"SysParamInt":        SysParamInt,
 		"SysCost":            SysCost,
+		"SysFuel":            SysFuel,
 		"Int":                Int,
 		"Str":                Str,
 		"Money":              Money,
@@ -117,6 +155,24 @@ func init() {
 		"UpdatePage":         UpdatePage,
 		"DBInsertReport":     DBInsertReport,
 		"UpdateSysParam":     UpdateSysParam,
+		"ValidateCondition":  ValidateCondition,
+		"PrefixTable":        PrefixTable,
+		"EvalCondition":      EvalCondition,
+		"HasPrefix":          strings.HasPrefix,
+		"Contains":           strings.Contains,
+		"Replace":            Replace,
+		"FindEcosystem":      FindEcosystem,
+		"CreateEcosystem":    CreateEcosystem,
+		"RollbackEcosystem":  RollbackEcosystem,
+		"UpdateLang":         UpdateLang,
+		"Size":               Size,
+		"Substr":             Substr,
+		"ContractsList":      ContractsList,
+		"IsContract":         IsContract,
+		"CompileContract":    CompileContract,
+		"FlushContract":      FlushContract,
+		"Eval":               Eval,
+		"Activate":           ActivateContract,
 		"check_signature":    CheckSignature, // system function
 	}, AutoPars: map[string]string{
 		`*parser.Parser`: `parser`,
@@ -130,6 +186,31 @@ func getCost(name string) int64 {
 		return val
 	}
 	return -1
+}
+
+// GetContractLimit returns the default maximal cost of contract
+func (p *Parser) GetContractLimit() (ret int64) {
+	// default maximum cost of F
+	if len(p.TxSmart.MaxSum) > 0 {
+		maxSumInt, err := strconv.ParseInt(p.TxSmart.MaxSum, 10, 64)
+		if err != nil {
+			maxSumInt = 0
+		}
+		p.TxCost = maxSumInt
+	} else {
+		cost, _ := template.StateParam(p.TxSmart.StateID, `max_sum`)
+		if len(cost) > 0 {
+			costInt, err := strconv.ParseInt(cost, 10, 64)
+			if err != nil {
+				costInt = 0
+			}
+			p.TxCost = costInt
+		}
+	}
+	if p.TxCost == 0 {
+		p.TxCost = script.CostDefault // fuel
+	}
+	return p.TxCost
 }
 
 func (p *Parser) getExtend() *map[string]interface{} {
@@ -148,7 +229,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 	}
 	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `state`: head.StateID,
 		`block`: block, `citizen`: citizenID, `wallet`: walletID, `wallet_block`: walletBlock,
-		`parent`: ``, `txcost`: p.GetContractLimit(),
+		`parent`: ``, `txcost`: p.GetContractLimit(), `txhash`: p.TxHash, `result`: ``,
 		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime /*, `vars`: make(map[string]interface{})*/}
 	for key, val := range p.TxData {
 		extend[key] = val
@@ -168,43 +249,154 @@ func StackCont(p interface{}, name string) {
 	return
 }
 
+/*func (p *Parser) payContract() error {
+	var (
+		fromID int64
+		err    error
+	)
+	//return nil
+	toID := p.BlockData.WalletID // account of node
+	fuel, err := decimal.NewFromString(syspar.GetFuelRate(p.TxSmart.TokenEcosystem))
+	if err != nil {
+		return err
+	}
+	if fuel.Cmp(decimal.New(0, 0)) <= 0 {
+		return fmt.Errorf(`fuel rate must be greater than 0`)
+	}
+
+
+	egs := p.TxUsedCost.Mul(fuel)
+	fmt.Printf("Pay fuel=%v fromID=%d toID=%d cost=%v egs=%v", fuel, fromID, toID, p.TxUsedCost, egs)
+	if egs.Cmp(decimal.New(0, 0)) == 0 { // Is it possible to pay nothing?
+		return nil
+	}
+	wallet := &model.DltWallet{}
+	if err := wallet.GetWallet(fromID); err != nil {
+		return err
+	}
+	wltAmount, err := decimal.NewFromString(wallet.Amount)
+	if err != nil {
+		return err
+	}
+
+	if wltAmount.Cmp(egs) < 0 {
+		egs = wltAmount
+	}
+	commission := egs.Mul(decimal.New(3, 0)).Div(decimal.New(100, 0)).Floor()
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
+		[]string{converter.Int64ToStr(fromID)}, true); err != nil {
+		return err
+	}
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
+		[]string{converter.Int64ToStr(toID)}, true); err != nil {
+		return err
+	}
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
+		[]string{converter.Int64ToStr(syspar.GetCommissionWallet())}, true); err != nil {
+		return err
+	}
+	//	fmt.Printf(" Paid commission %v\r\n", commission)
+	return nil
+}*/
+
 // CallContract calls the contract functions according to the specified flags
 func (p *Parser) CallContract(flags int) (err error) {
-	var public []byte
-	if flags&smart.CallRollback == 0 {
+	var (
+		public                 []byte
+		sizeFuel, toID, fromID int64
+		fuelRate               decimal.Decimal
+	)
+	payWallet := &model.Key{}
+	p.TxContract.Extend = p.getExtend()
+	if flags&smart.CallRollback == 0 && (flags&smart.CallAction) != 0 {
+		toID = p.BlockData.WalletID
+		fromID = p.TxSmart.UserID
 		if len(p.TxSmart.PublicKey) > 0 && string(p.TxSmart.PublicKey) != `null` {
 			public = p.TxSmart.PublicKey
 		}
-		if len(p.PublicKeys) == 0 {
-			wallet := &model.DltWallet{}
-			err := wallet.GetWallet(p.TxSmart.UserID)
-			if err != nil {
-				return err
-			}
-			if len(wallet.PublicKey) == 0 {
-				if len(public) > 0 {
-					p.PublicKeys = append(p.PublicKeys, public)
-				} else {
-					return fmt.Errorf("unknown wallet id")
-				}
-			} else {
-				p.PublicKeys = append(p.PublicKeys, []byte(wallet.PublicKey))
-			}
+		wallet := &model.Key{}
+		wallet.SetTablePrefix(p.TxSmart.StateID)
+		err := wallet.Get(p.TxSmart.UserID)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return err
 		}
+		if len(wallet.PublicKey) > 0 {
+			public = wallet.PublicKey
+		}
+		if p.TxSmart.Type == 258 { // UpdFullNodes
+			node := syspar.GetNode(p.TxSmart.UserID)
+			if node == nil {
+				return fmt.Errorf("unknown node id")
+			}
+			public = node.Public
+		}
+		if len(public) == 0 {
+			return fmt.Errorf("empty public key")
+		}
+		p.PublicKeys = append(p.PublicKeys, public)
+		//		fmt.Println(`CALL CONTRACT`, p.TxData[`forsign`].(string))
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxSmart.BinSignatures, false)
 		if err != nil {
+			fmt.Println(`ForSign`, p.TxData[`forsign`].(string))
 			return err
 		}
 		if !CheckSignResult {
 			return fmt.Errorf("incorrect sign")
 		}
+		if p.TxSmart.StateID > 0 {
+			if p.TxSmart.TokenEcosystem == 0 {
+				p.TxSmart.TokenEcosystem = p.TxSmart.StateID
+			}
+			fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(p.TxSmart.TokenEcosystem))
+			if err != nil {
+				return err
+			}
+			if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
+				return fmt.Errorf(`Fuel rate must be greater than 0`)
+			}
+			if len(p.TxSmart.PayOver) > 0 {
+				payOver, err := decimal.NewFromString(p.TxSmart.PayOver)
+				if err != nil {
+					return err
+				}
+				fuelRate = fuelRate.Add(payOver)
+			}
+			if p.TxContract.Block.Info.(*script.ContractInfo).Owner.Active {
+				fromID = p.TxContract.Block.Info.(*script.ContractInfo).Owner.WalletID
+				p.TxSmart.TokenEcosystem = p.TxContract.Block.Info.(*script.ContractInfo).Owner.TokenID
+			} else if len(p.TxSmart.PayOver) > 0 {
+				payOver, err := decimal.NewFromString(p.TxSmart.PayOver)
+				if err != nil {
+					return err
+				}
+				fuelRate = fuelRate.Add(payOver)
+			}
+			payWallet.SetTablePrefix(p.TxSmart.TokenEcosystem)
+			if err = payWallet.Get(fromID); err != nil {
+				return err
+			}
+			if !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(p.TxSmart.PublicKey, payWallet.PublicKey) {
+				return fmt.Errorf(`Token and user public keys are different`)
+			}
+			amount, err := decimal.NewFromString(payWallet.Amount)
+			if err != nil {
+				return err
+			}
+			sizeFuel = syspar.GetSizeFuel() * int64(len(p.TxSmart.Data)) / 1024
+			if amount.Cmp(decimal.New(sizeFuel, 0).Mul(fuelRate)) <= 0 {
+				return fmt.Errorf(`current balance is not enough`)
+			}
+		}
 	}
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
-	p.TxContract.Extend = p.getExtend()
 	p.TxContract.StackCont = []string{p.TxContract.Name}
 	(*p.TxContract.Extend)[`stack_cont`] = StackCont
 	before := (*p.TxContract.Extend)[`txcost`].(int64)
+
+	// Payment for the size
+	(*p.TxContract.Extend)[`txcost`] = (*p.TxContract.Extend)[`txcost`].(int64) - sizeFuel
+
 	var price int64 = -1
 	if cprice := p.TxContract.GetFunc(`price`); cprice != nil {
 		var ret []interface{}
@@ -219,21 +411,6 @@ func (p *Parser) CallContract(flags int) (err error) {
 			return fmt.Errorf(`Wrong type of price function`)
 		}
 	}
-	systemParam := &model.SystemParameter{}
-	err = systemParam.Get("fuel_rate")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fuelRate, err := decimal.NewFromString(systemParam.Value)
-	if err != nil {
-		return err
-	}
-	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
-		return fmt.Errorf(`Fuel rate must be greater than 0`)
-	}
-	if !p.TxContract.Block.Info.(*script.ContractInfo).Active {
-		return fmt.Errorf(`Contract %s is not active`, p.TxContract.Name)
-	}
 	p.TxContract.FreeRequest = false
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {
@@ -243,7 +420,6 @@ func (p *Parser) CallContract(flags int) (err error) {
 			}
 			p.TxContract.Called = 1 << i
 			_, err = smart.Run(cfunc, nil, p.TxContract.Extend)
-
 			if err != nil {
 				break
 			}
@@ -251,6 +427,32 @@ func (p *Parser) CallContract(flags int) (err error) {
 	}
 	p.TxUsedCost = decimal.New(before-(*p.TxContract.Extend)[`txcost`].(int64), 0)
 	p.TxContract.TxPrice = price
+	if (flags&smart.CallAction) != 0 && p.TxSmart.StateID > 0 {
+		apl := p.TxUsedCost.Mul(fuelRate)
+		fmt.Printf("Pay fuel=%v fromID=%d toID=%d cost=%v apl=%v", fuelRate, fromID, toID, p.TxUsedCost, apl)
+		wltAmount, err := decimal.NewFromString(payWallet.Amount)
+		if err != nil {
+			return err
+		}
+		if wltAmount.Cmp(apl) < 0 {
+			apl = wltAmount
+		}
+		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
+		walletTable := fmt.Sprintf(`%d_keys`, p.TxSmart.TokenEcosystem)
+		if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
+			[]string{converter.Int64ToStr(fromID)}, true); err != nil {
+			return err
+		}
+		if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
+			[]string{converter.Int64ToStr(toID)}, true); err != nil {
+			return err
+		}
+		if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
+			[]string{syspar.GetCommissionWallet(p.TxSmart.TokenEcosystem)}, true); err != nil {
+			return err
+		}
+		fmt.Printf(" Paid commission %v\r\n", commission)
+	}
 	return
 }
 
@@ -332,7 +534,6 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
 	qcost = 0
 	var isIndex bool
-
 	if err = checkReport(tblname); err != nil {
 		return
 	}
@@ -344,7 +545,7 @@ func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, pa
 	if isIndex, err = model.IsIndex(tblname, column); err != nil {
 		return
 	} else if !isIndex {
-		err = fmt.Errorf(`there is not index on %s`, column)
+		err = fmt.Errorf(`there is no index on %s`, column)
 	} else {
 		qcost, _, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, true)
 	}
@@ -408,7 +609,7 @@ func getBytea(table string) map[string]bool {
 		return isBytea
 	}
 	for _, icol := range colTypes {
-		isBytea[icol[`column_name`]] = icol[`data_type`] == `bytea`
+		isBytea[icol[`column_name`]] = icol[`column_name`] != `conditions` && icol[`data_type`] == `bytea`
 	}
 	return isBytea
 }
@@ -432,7 +633,7 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (in
 	if isIndex, err := model.IsIndex(tblname, idname); err != nil {
 		return 0, ``, err
 	} else if !isIndex {
-		return 0, ``, fmt.Errorf(`there is not index on %s`, idname)
+		return 0, ``, fmt.Errorf(`there is no index on %s`, idname)
 	}
 	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
 	if err != nil {
@@ -488,7 +689,7 @@ func DBStringWhere(tblname string, name string, where string, params ...interfac
 		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
 			return 0, ``, err
 		} else if !isIndex {
-			return 0, ``, fmt.Errorf(`there is not index on %s`, iret[1])
+			return 0, ``, fmt.Errorf(`there is no index on %s`, iret[1])
 		}
 	}
 	selectQuery := `select ` + converter.EscapeName(name) + ` from ` + converter.EscapeName(tblname) + ` where ` + strings.Replace(converter.Escape(where), `$`, `?`, -1)
@@ -522,7 +723,7 @@ func StateTable(p *Parser, tblname string) string {
 	return fmt.Sprintf("%d_%s", p.TxStateID, tblname)
 }
 
-// StateTable adds a prefix with the state number to the table name
+// StateTableTx adds a prefix with the state number to the table name
 func StateTableTx(p *Parser, tblname string) string {
 	return fmt.Sprintf("%v_%s", p.TxData[`StateId`], tblname)
 }
@@ -555,8 +756,8 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 	return true, nil
 }
 
-// IsContract checks whether the name of the executable contract matches one of the names listed in the parameters.
-func IsContract(p *Parser, names ...interface{}) bool {
+// ContractAccess checks whether the name of the executable contract matches one of the names listed in the parameters.
+func ContractAccess(p *Parser, names ...interface{}) bool {
 	for _, iname := range names {
 		name := iname.(string)
 		if p.TxContract != nil && len(name) > 0 {
@@ -578,11 +779,11 @@ func IsContract(p *Parser, names ...interface{}) bool {
 
 // IsGovAccount checks whether the specified account is the owner of the state
 func IsGovAccount(p *Parser, citizen int64) bool {
-	account, err := strconv.ParseInt(StateVal(p, `gov_account`), 10, 64)
+	stateValInt, err := strconv.ParseInt(StateVal(p, "founder_account"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, StateVal(p, `gov_account`))
+		stateValInt = 0
 	}
-	return account == citizen
+	return stateValInt == citizen
 }
 
 // AddressToID converts the string representation of the wallet number to a numeric
@@ -645,7 +846,7 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 		blockTime = p.BlockData.Time
 	}
 
-	return smart.EvalIf(conditions, converter.Int64ToStr(int64(p.TxStateID)), &map[string]interface{}{`state`: p.TxStateID,
+	return smart.EvalIf(conditions, p.TxStateID, &map[string]interface{}{`state`: p.TxStateID,
 		`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p,
 		`block_time`: blockTime, `time`: time})
 }
@@ -669,6 +870,11 @@ func SysParamInt(name string) int64 {
 // SysCost returns the cost of the transaction from the system parameter
 func SysCost(name string) int64 {
 	return syspar.SysCost(name)
+}
+
+// SysFuel returns the fuel rate
+func SysFuel(state int64) string {
+	return syspar.GetFuelRate(state)
 }
 
 // Int converts a string to a number
@@ -740,19 +946,24 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 	if len(fields) == 0 {
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	root, err := smart.CompileBlock(value, prefix, false, sc.ID)
+	prefixInt, err := strconv.ParseInt(prefix, 10, 64)
+	if err != nil {
+		prefixInt = 0
+	}
+	root, err := smart.CompileBlock(value, &script.OwnerInfo{StateID: uint32(prefixInt),
+		Active: false, TableID: sc.ID, WalletID: sc.WalletID, TokenID: 0})
 	if err != nil {
 		return 0, err
 	}
 	_, _, err = p.selectiveLoggingAndUpd(fields, values,
-		prefix+"_smart_contracts", []string{"id"}, []string{converter.Int64ToStr(sc.ID)}, true)
+		prefix+"_smart_contracts", []string{"id"}, []string{strconv.Itoa(int(sc.ID))}, true)
 	if err != nil {
 		return 0, err
 	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
-			root.Children[i].Info.(*script.ContractInfo).TableID = sc.ID
-			root.Children[i].Info.(*script.ContractInfo).Active = sc.Active == "1"
+			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = sc.ID
+			root.Children[i].Info.(*script.ContractInfo).Owner.Active = sc.Active == "1"
 		}
 	}
 	smart.FlushBlock(root)
@@ -835,7 +1046,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 		return fmt.Errorf(`wrong signature`)
 	}
 
-	var sign controllers.TxSignJSON
+	var sign TxSignJSON
 	err = json.Unmarshal([]byte(value), &sign)
 	if err != nil {
 		return err
@@ -908,7 +1119,7 @@ func checkWhere(tblname string, where string, order string) (string, string, err
 		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
 			return ``, ``, err
 		} else if !isIndex {
-			return ``, ``, fmt.Errorf(`there is not index on %s`, iret[1])
+			return ``, ``, fmt.Errorf(`there is no index on %s`, iret[1])
 		}
 	}
 	if len(order) > 0 {
@@ -986,6 +1197,54 @@ func NewStateFunc(p *Parser, country, currency string) (err error) {
 	return
 }
 
+// DBRowExt returns one row from the table StringExt
+func DBRowExt(tblname string, columns string, id interface{}, idname string) (int64, map[string]string, error) {
+
+	if err := checkReport(tblname); err != nil {
+		return 0, nil, err
+	}
+
+	isBytea := getBytea(tblname)
+	if isBytea[idname] {
+		switch id.(type) {
+		case string:
+			if vbyte, err := hex.DecodeString(id.(string)); err == nil {
+				id = vbyte
+			}
+		}
+	}
+	if isIndex, err := model.IsIndex(tblname, idname); err != nil {
+		return 0, nil, err
+	} else if !isIndex {
+		return 0, nil, fmt.Errorf(`there is no index on %s`, idname)
+	}
+	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where ` + converter.EscapeName(idname) + `=?`
+	cost, err := model.GetQueryTotalCost(query, id)
+	if err != nil {
+		return 0, nil, err
+	}
+	res, err := model.GetOneRow(query, id).String()
+
+	return cost, res, err
+}
+
+// DBRow returns one row from the table StringExt
+func DBRow(tblname string, columns string, id int64) (int64, map[string]string, error) {
+
+	if err := checkReport(tblname); err != nil {
+		return 0, nil, err
+	}
+
+	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where id=?`
+	cost, err := model.GetQueryTotalCost(query, id)
+	if err != nil {
+		return 0, nil, err
+	}
+	res, err := model.GetOneRow(query, id).String()
+
+	return cost, res, err
+}
+
 // UpdateSysParam updates the system parameter
 func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 	var (
@@ -1031,4 +1290,188 @@ func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 		return 0, err
 	}
 	return 0, nil
+}
+
+// ValidateCondition checks if the condition can be compiled
+func ValidateCondition(condition string, state int64) error {
+	if len(condition) == 0 {
+		return fmt.Errorf("Conditions cannot be empty")
+	}
+	return smart.CompileEval(condition, uint32(state))
+}
+
+// PrefixTable returns table name with global or state prefix
+func PrefixTable(p *Parser, tablename string, global int64) string {
+	tablename = converter.Sanitize(tablename, ``)
+	if global == 1 {
+		return `global_` + tablename
+	}
+	return StateTable(p, tablename)
+}
+
+// EvalCondition gets the condition and check it
+func EvalCondition(p *Parser, table, name, condfield string) error {
+	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM `+converter.EscapeName(table)+
+		` WHERE name = ?`, name).String()
+	if err != nil {
+		return err
+	}
+	return Eval(p, conditions)
+}
+
+// Replace replaces old substrings to new substrings
+func Replace(s, old, new string) string {
+	return strings.Replace(s, old, new, -1)
+}
+
+// FindEcosystem checks if there is an ecosystem with the specified name
+func FindEcosystem(p *Parser, country string) (int64, int64, error) {
+	query := `SELECT id FROM system_states where name=?`
+	cost, err := model.GetQueryTotalCost(query, country)
+	if err != nil {
+		return 0, 0, err
+	}
+	id, err := model.Single(query, country).Int64()
+	if err != nil {
+		return 0, 0, err
+	}
+	return cost, id, nil
+}
+
+// UpdateLang updates language resource
+func UpdateLang(p *Parser, name, trans string) {
+	language.UpdateLang(int(p.TxStateID), name, trans)
+}
+
+// Size returns the length of the string
+func Size(s string) int64 {
+	return int64(len(s))
+}
+
+// Substr returns the substring of the string
+func Substr(s string, off int64, slen int64) string {
+	ilen := int64(len(s))
+	if off < 0 || slen < 0 || off > ilen {
+		return ``
+	}
+	if off+slen > ilen {
+		return s[off:]
+	}
+	return s[off : off+slen]
+}
+
+func IsContract(name string, state int64) bool {
+	return smart.GetContract(name, uint32(state)) != nil
+}
+
+func ContractsList(value string) []interface{} {
+	list := smart.ContractsList(value)
+	result := make([]interface{}, len(list))
+	for i := 0; i < len(list); i++ {
+		result[i] = reflect.ValueOf(list[i]).Interface()
+	}
+	return result
+}
+
+func CompileContract(p *Parser, code string, state, id, token int64) (interface{}, error) {
+	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` {
+		return 0, fmt.Errorf(`CompileContract can be only called from NewContract or EditContract`)
+	}
+	return smart.CompileBlock(code, &script.OwnerInfo{StateID: uint32(state), WalletID: id, TokenID: token})
+}
+
+func FlushContract(p *Parser, iroot interface{}, id int64, active bool) error {
+	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` {
+		return fmt.Errorf(`FlushContract can be only called from NewContract or EditContract`)
+	}
+	root := iroot.(*script.Block)
+	for i, item := range root.Children {
+		if item.Type == script.ObjContract {
+			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = id
+			root.Children[i].Info.(*script.ContractInfo).Owner.Active = active
+		}
+	}
+
+	smart.FlushBlock(root)
+	return nil
+}
+
+// Eval evaluates the condition
+func Eval(p *Parser, condition string) error {
+	if len(condition) == 0 {
+		return fmt.Errorf(`The condition is empty`)
+	}
+	ret, err := p.EvalIf(condition)
+	if err != nil {
+		return err
+	}
+	if !ret {
+		return fmt.Errorf(`Access denied`)
+	}
+	return nil
+}
+
+// ActivateContract sets Active status of the contract in smartVM
+func ActivateContract(p *Parser, tblid int64, state int64) error {
+	if p.TxContract.Name != `@1ActivateContract` {
+		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract`)
+	}
+	smart.ActivateContract(tblid, state, true)
+	return nil
+}
+
+// CreateEcosystem creates a new ecosystem
+func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
+	if p.TxContract.Name != `@1NewEcosystem` {
+		return 0, fmt.Errorf(`CreateEcosystem can be only called from @1NewEcosystem`)
+	}
+	_, id, err := p.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
+		name,
+	}, `system_states`, nil, nil, true)
+	if err != nil {
+		return 0, err
+	}
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return 0, err
+	}
+	model.ExecSchemaEcosystem(idInt, wallet, name)
+	return int64(idInt), nil
+}
+
+func RollbackEcosystem(p *Parser) error {
+	if p.TxContract.Name != `@1NewEcosystem` {
+		return fmt.Errorf(`RollbackEcosystem can be only called from @1NewEcosystem`)
+	}
+	rollbackTx := &model.RollbackTx{}
+	err := rollbackTx.Get(p.DbTransaction, p.TxHash, "system_states")
+	if err != nil {
+		return err
+	}
+	lastID, err := model.GetNextID(`system_states`)
+	if err != nil {
+		return err
+	}
+	lastID--
+	tableIDInt, err := strconv.ParseInt(rollbackTx.TableID, 10, 64)
+	if err != nil {
+		return err
+	}
+	if tableIDInt != lastID {
+		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
+	}
+	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
+		`contracts`, `parameters`} {
+		err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
+		if err != nil {
+			return err
+		}
+	}
+	rollbackTxToDel := &model.RollbackTx{TxHash: p.TxHash, NameTable: "system_states"}
+	err = rollbackTxToDel.DeleteByHashAndTableName(p.DbTransaction)
+	if err != nil {
+		return err
+	}
+	ssToDel := &model.SystemState{ID: lastID}
+	return ssToDel.Delete(p.DbTransaction)
 }

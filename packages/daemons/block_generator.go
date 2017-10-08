@@ -17,7 +17,6 @@
 package daemons
 
 import (
-	"bytes"
 	"fmt"
 	"time"
 
@@ -25,10 +24,6 @@ import (
 
 	"context"
 
-	"encoding/hex"
-
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
@@ -39,38 +34,22 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	logger.LogDebug(consts.FuncStarted, "")
 	d.sleepTime = time.Second
 
-	locked, err := DbLock(ctx, d.goRoutineName)
-	if !locked || err != nil {
-		logger.LogError(consts.DBError, err)
-		return err
-	}
-	defer DbUnlock(d.goRoutineName)
-
 	config := &model.Config{}
-	if err = config.GetConfig(); err != nil {
-		logger.LogError(consts.ConfigError, err)
+	if err := config.GetConfig(); err != nil {
 		return err
-	}
-
-	if config.StateID > 0 {
-		systemState := &model.SystemRecognizedState{}
-		delegated, err := systemState.IsDelegated(config.StateID)
-		if err == nil && delegated {
-			// we are the state and we have delegated the node maintenance to another user or state
-			logger.LogWarn(consts.JustWaiting, "we delegated block generation, sleep for hour")
-			d.sleepTime = 3600 * time.Second
-			return nil
-		}
 	}
 
 	fullNodes := &model.FullNode{}
-	err = fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	err := fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
 	if err != nil || fullNodes.ID == 0 {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
 		logger.LogWarn(consts.JustWaiting, "we are not full node, sleep for 10 seconds")
 		return nil
 	}
+
+	DBLock()
+	defer DBUnlock()
 
 	prevBlock := &model.InfoBlock{}
 	err = prevBlock.GetInfoBlock()
@@ -114,18 +93,16 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("transactions to put in new block: %+v", trs))
 
-	blockBin, err := generateNextBlock(prevBlock, *trs, hex.EncodeToString(nodeKey.PrivateKey), config, time.Now().Unix())
+	blockBin, err := generateNextBlock(prevBlock, *trs, nodeKey.PrivateKey, config, time.Now().Unix())
 	if err != nil {
 		logger.LogError(consts.BlockError, err)
 		return err
 	}
 
-	p.BinaryData = blockBin
-	logger.LogDebug(consts.DebugMessage, "try to parse new transactions")
-	err = p.ParseDataFull(true)
+	log.Debugf("try to parse new transactions")
+	err = parser.InsertBlock(blockBin)
 	if err != nil {
-		logger.LogError(consts.BlockError, err)
-		p.BlockError(err)
+		log.Errorf("parser block error: %s", err)
 		return err
 	}
 
@@ -133,45 +110,18 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 }
 
 func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key string, c *model.Config, blockTime int64) ([]byte, error) {
-	logger.LogDebug(consts.FuncStarted, "")
-	newBlockID := prevBlock.BlockID + 1
+	header := &utils.BlockData{
+		BlockID:  prevBlock.BlockID + 1,
+		Time:     time.Now().Unix(),
+		WalletID: c.DltWalletID,
+		StateID:  c.StateID,
+		Version:  consts.BLOCK_VERSION,
+	}
 
-	var mrklArray [][]byte
-	var blockDataTx []byte
+	trData := make([][]byte, 0, len(trs))
 	for _, tr := range trs {
-		doubleHash, err := crypto.DoubleHash(tr.Data)
-		if err != nil {
-			logger.LogError(consts.CryptoError, err)
-			return nil, err
-		}
-		mrklArray = append(mrklArray, converter.BinToHex(doubleHash))
-		blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData([]byte(tr.Data))...)
+		trData = append(trData, tr.Data)
 	}
 
-	if len(mrklArray) == 0 {
-		mrklArray = append(mrklArray, []byte("0"))
-	}
-	mrklRoot := utils.MerkleTreeRoot(mrklArray)
-
-	forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s",
-		newBlockID, prevBlock.Hash, blockTime, c.DltWalletID, c.StateID, mrklRoot)
-
-	signed, err := crypto.Sign(key, forSign)
-	if err != nil {
-		logger.LogError(consts.CryptoError, err)
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-	// fill header
-	buf.Write(converter.DecToBin(0, 1))
-	buf.Write(converter.DecToBin(newBlockID, 4))
-	buf.Write(converter.DecToBin(blockTime, 4))
-	buf.Write(converter.EncodeLenInt64InPlace(c.DltWalletID))
-	buf.Write(converter.DecToBin(c.StateID, 1))
-	buf.Write(converter.EncodeLengthPlusData(signed))
-	// data
-	buf.Write(blockDataTx)
-
-	return buf.Bytes(), nil
+	return parser.MarshallBlock(header, trData, prevBlock.Hash, key)
 }

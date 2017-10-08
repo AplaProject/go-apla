@@ -49,8 +49,8 @@ func (s *Signature) ToMap() map[string]string {
 	return result
 }
 
-func CreateSignaturesStateTable(stateID string) error {
-	return DBConn.Exec(`CREATE TABLE "` + stateID + `_signatures" (
+func CreateSignaturesStateTable(transaction *DbTransaction, stateID string) error {
+	return GetDB(transaction).Exec(`CREATE TABLE "` + stateID + `_signatures" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',

@@ -170,10 +170,10 @@ func init() {
 }
 
 // LoadContracts reads and compiles contracts from smart_contracts tables
-func LoadContracts() (err error) {
-	logger.LogDebug(consts.FuncStarted, "")
+func LoadContracts(transaction *model.DbTransaction) (err error) {
 	var states []map[string]string
-	prefix := []string{`global`}
+	var prefix []string
+	prefix = []string{`system`}
 	states, err = model.GetAll(`select id from system_states order by id`, -1)
 	if err != nil {
 		logger.LogError(consts.DBError, err)
@@ -182,9 +182,8 @@ func LoadContracts() (err error) {
 	for _, istate := range states {
 		prefix = append(prefix, istate[`id`])
 	}
-	LoadContract(`global`)
 	for _, ipref := range prefix {
-		if err = LoadContract(ipref); err != nil {
+		if err = LoadContract(transaction, ipref); err != nil {
 			logger.LogError(consts.ContractError, err)
 			break
 		}
@@ -194,23 +193,43 @@ func LoadContracts() (err error) {
 }
 
 // LoadContract reads and compiles contract of new state
-func LoadContract(prefix string) (err error) {
-	logger.LogDebug(consts.FuncStarted, "")
+func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
-	contracts, err = model.GetAll(`select * from "`+prefix+`_smart_contracts" order by id`, -1)
+	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
 	if err != nil {
 		logger.LogError(consts.DBError, err)
 		return err
 	}
+	stateId, err := strconv.ParseInt(prefix, 10, 64)
+	if err != nil {
+		return err
+	}
+	state := uint32(stateId)
 	for _, item := range contracts {
-		id, err := strconv.ParseInt(item["id"], 10, 64)
+		names := strings.Join(smart.ContractsList(item[`value`]), `,`)
+		itemID, err := strconv.ParseInt(item["id"], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrToIntError, item["id"])
+			return err
 		}
-		if err = smart.Compile(item[`value`], prefix, item[`active`] == `1`, id); err != nil {
-			logger.LogError(consts.ContractError, fmt.Sprintf("contract %s loading error: %s", item["name"], err))
+		walletID, err := strconv.ParseInt(item["wallet_id"], 10, 64)
+		if err != nil {
+			return err
+		}
+		tokenID, err := strconv.ParseInt(item["token_id"], 10, 64)
+		if err != nil {
+			return err
+		}
+		owner := script.OwnerInfo{
+			StateID:  state,
+			Active:   item[`active`] == `1`,
+			TableID:  itemID,
+			WalletID: walletID,
+			TokenID:  tokenID,
+		}
+		if err = smart.Compile(item[`value`], &owner); err != nil {
+			fmt.Println("Error Load Contract", names, err)
 		} else {
-			logger.LogDebug(consts.DebugMessage, fmt.Sprintf("OK Load contract name: %s, id: %s, active: %t", item[`name`], item[`id`], item[`active`] == `1`))
+			fmt.Println("OK Load Contract", names, item[`id`], item[`active`] == `1`)
 		}
 	}
 	return
@@ -2609,7 +2628,6 @@ func ChartPie(vars *map[string]string, pars *map[string]string) string {
 
 // ProceedTemplate proceeds html template
 func ProceedTemplate(html string, data interface{}) (string, error) {
-
 	defer func() {
 		if r := recover(); r != nil {
 			logger.LogError(consts.PanicRecoveredError, r)

@@ -32,9 +32,9 @@ func (fn *FullNode) FindNodeByID(nodeID int64) error {
 	return handleError(DBConn.Where("id = ?", nodeID).First(fn).Error)
 }
 
-func (fn *FullNode) GetAllFullNodesHasWalletID() ([]FullNode, error) {
+func (fn *FullNode) GetAllFullNodesHasWalletID(transaction *DbTransaction) ([]FullNode, error) {
 	result := make([]FullNode, 0)
-	err := DBConn.Where("wallet_id != 0").Find(&result).Error
+	err := GetDB(transaction).Where("wallet_id != 0").Find(&result).Error
 	return result, err
 }
 
@@ -42,16 +42,16 @@ func (fn *FullNode) GetRbIDFullNodesWithWallet() error {
 	return handleError(DBConn.Where("wallet_id != 0").First(fn).Error)
 }
 
-func (fn *FullNode) DeleteNodesWithWallets() error {
-	return DBConn.Exec("DELETE FROM full_nodes WHERE wallet_id != 0").Error
+func (fn *FullNode) DeleteNodesWithWallets(transaction *DbTransaction) error {
+	return GetDB(transaction).Exec("DELETE FROM full_nodes WHERE wallet_id != 0").Error
 }
 
 func (fn *FullNode) FindNodeById(nodeid int64) error {
 	return handleError(DBConn.Where("id = ?", nodeid).First(fn).Error)
 }
 
-func (fn *FullNode) Create() error {
-	return DBConn.Create(fn).Error
+func (fn *FullNode) Create(transaction *DbTransaction) error {
+	return GetDB(transaction).Create(fn).Error
 }
 
 func FullNodeCreateTable() error {
@@ -96,15 +96,13 @@ func (fn *FullNode) ToMap() map[string]string {
 	return result
 }
 
-func (fn *FullNode) GetMaxID() (int32, error) {
-	err := DBConn.Last(fn).Error
-
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return 0, nil
-		}
-		return -1, err
+func (fn *FullNode) GetMaxID(transaction *DbTransaction) (int32, error) {
+	err := GetDB(transaction).Last(fn).Error
+	if err == nil {
+		return fn.ID, nil
 	}
-
-	return fn.ID, nil
+	if err == gorm.ErrRecordNotFound {
+		return -1, nil
+	}
+	return -1, err
 }

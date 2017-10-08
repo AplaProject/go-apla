@@ -44,18 +44,10 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		if len(blocks) == 0 {
 			break
 		}
-		parser := new(Parser)
 		fmt.Printf(`%s `, blocks[0].ID)
 		for _, block := range blocks {
 			// roll back our blocks to the block blockID
-			parser.BinaryData = block.Data
-			err = parser.ParseDataRollback()
-			if err != nil {
-				return p.ErrInfo(err)
-			}
-
-			b := &model.Block{}
-			err = b.DeleteById(block.ID)
+			err = BlockRollback(block.Data)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
@@ -83,7 +75,7 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		Time:     time,
 		WalletID: walletID,
 		StateID:  stateID}
-	err = ib.Update()
+	err = ib.Update(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

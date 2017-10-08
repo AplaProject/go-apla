@@ -37,7 +37,7 @@ func TestLock(t *testing.T) {
 	createTables(t, db.DB())
 
 	ctx, _ := context.WithTimeout(context.Background(), 200*time.Millisecond)
-	ok, err := DbLock(ctx, "test")
+	ok, err := DBLock(ctx, "test")
 	if err != nil {
 		t.Errorf("lock returned %s", err)
 	}
@@ -95,9 +95,9 @@ func TestUnlock(t *testing.T) {
 	}
 
 	// try another goroutine name
-	err = DbUnlock("some_another_name")
+	err = DBUnlock("some_another_name")
 	if err != nil {
-		t.Errorf("DbUnlock error: %s", err)
+		t.Errorf("DBUnlock error: %s", err)
 	}
 
 	ok, err = tryLock("some_another_name")
@@ -110,9 +110,9 @@ func TestUnlock(t *testing.T) {
 	}
 
 	// try unlock
-	err = DbUnlock("test")
+	err = DBUnlock("test")
 	if err != nil {
-		t.Errorf("DbUnlock error: %s", err)
+		t.Errorf("DBUnlock error: %s", err)
 	}
 
 	ok, err = tryLock("some_another_name")

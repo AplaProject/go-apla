@@ -51,81 +51,12 @@ func CheckDB() bool {
 	return false
 }
 
-// UpdMainLock updates the lock time
-func UpdMainLock() error {
-	return model.MainLockUpdate()
-}
-
-// DbLock locks daemons
-func DbLock(ctx context.Context, goRoutineName string) (bool, error) {
-
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error("Recovered", r)
-			panic(r)
-		}
-	}()
-
-	ok, err := tryLock(goRoutineName)
-
-	ticker := time.NewTicker(1 * time.Second)
-
-	for !ok && err == nil {
-		select {
-		case <-ticker.C:
-			ok, err = tryLock(goRoutineName)
-		case <-ctx.Done():
-			return false, ctx.Err()
-		}
-
-	}
-	return ok, err
-}
-
-const MaxLockTime = 600
-
-func tryLock(goRoutineName string) (bool, error) {
+// DBLock locks daemons
+func DBLock() {
 	mutex.Lock()
-	defer mutex.Unlock()
-
-	ml := model.MainLock{}
-	found, err := ml.Get()
-
-	// check for lock record and lock period
-	if found {
-		lockPeriod := time.Now().Unix() - int64(ml.LockTime)
-		if lockPeriod > MaxLockTime {
-			log.Error("%d %s %d", ml.LockTime, ml.ScriptName, lockPeriod)
-			if utils.Mobile() {
-				err = model.MainLockDelete(ml.ScriptName)
-				if err != nil {
-					return false, err
-				}
-			}
-		}
-	} else {
-		ml.LockTime = int32(time.Now().Unix())
-		ml.ScriptName = goRoutineName
-		ml.Info = utils.Caller(2)
-		if err = ml.Save(); err != nil {
-			return false, err
-		}
-		return true, nil
-	}
-	return false, err
 }
 
-// DbUnlock unlocks database
-func DbUnlock(goRoutineName string) error {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error("Recovered", r)
-			panic(r)
-		}
-	}()
-	log.Debug("DbUnlock %v %v", utils.Caller(2), goRoutineName)
-	if err := model.MainLockDelete(goRoutineName); err != nil {
-		return utils.ErrInfo(err)
-	}
-	return nil
+// DBUnlock unlocks database
+func DBUnlock() {
+	mutex.Unlock()
 }

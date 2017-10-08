@@ -26,8 +26,8 @@ func (sc *SmartContract) TableName() string {
 	return sc.tableName
 }
 
-func (sc *SmartContract) Create() error {
-	return DBConn.Create(sc).Error
+func (sc *SmartContract) Create(transaction *DbTransaction) error {
+	return GetDB(transaction).Create(sc).Error
 }
 
 func (sc *SmartContract) GetByID(contractID int64) error {
@@ -54,8 +54,8 @@ func (sc *SmartContract) GetByName(contractName string) error {
 	return DBConn.Where("name = ?", contractName).Find(sc).Error
 }
 
-func (sc *SmartContract) UpdateConditions(conditions string) error {
-	return DBConn.Model(sc).Update("conditions", conditions).Error
+func (sc *SmartContract) UpdateConditions(transaction *DbTransaction, conditions string) error {
+	return GetDB(transaction).Model(sc).Update("conditions", conditions).Error
 }
 
 func (sc *SmartContract) ToMap() map[string]string {
@@ -80,8 +80,8 @@ func GetAllSmartContracts(tablePrefix string) ([]SmartContract, error) {
 	return *contracts, nil
 }
 
-func CreateSmartContractTable(id string) error {
-	return DBConn.Exec(`CREATE SEQUENCE "` + id + `_smart_contracts_id_seq" START WITH 1;
+func CreateSmartContractTable(transaction *DbTransaction, id string) error {
+	return GetDB(transaction).Exec(`CREATE SEQUENCE "` + id + `_smart_contracts_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_smart_contracts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_smart_contracts_id_seq'),
 				"name" varchar(100)  NOT NULL DEFAULT '',

@@ -85,6 +85,10 @@ const (
 	stateAssignEval
 	stateAssign
 	stateTX
+	stateSettings
+	stateConsts
+	stateConstsAssign
+	stateConstsValue
 	stateFields
 	stateEval
 
@@ -112,6 +116,7 @@ const (
 	errVars                  // wrong variables
 	errVarType               // must be type
 	errAssign                // must be '='
+	errStrNum                // must be number or string
 )
 
 const (
@@ -130,6 +135,9 @@ const (
 	cfAssignVar
 	cfAssign
 	cfTX
+	cfSettings
+	cfConstName
+	cfConstValue
 	cfField
 	cfFieldType
 	cfFieldTag
@@ -164,6 +172,9 @@ var (
 		fAssignVar,
 		fAssign,
 		fTx,
+		fSettings,
+		fConstName,
+		fConstValue,
 		fField,
 		fFieldType,
 		fFieldTag,
@@ -193,6 +204,7 @@ var (
 			lexKeyword | (keyElse << 8):     {stateBlock | statePush, cfElse},
 			lexKeyword | (keyVar << 8):      {stateVar, 0},
 			lexKeyword | (keyTX << 8):       {stateTX, cfTX},
+			lexKeyword | (keySettings << 8): {stateSettings, cfSettings},
 			lexKeyword | (keyError << 8):    {stateEval, cfCmdError},
 			lexKeyword | (keyWarning << 8):  {stateEval, cfCmdError},
 			lexKeyword | (keyInfo << 8):     {stateEval, cfCmdError},
@@ -246,6 +258,7 @@ var (
 		{ // stateVar
 			lexNewLine: {stateBody, 0},
 			lexIdent:   {stateVarType, cfFParam},
+			isRCurly:   {stateBody | stateStay, 0},
 			//			lexIdent:   {stateVar, cfFParam},
 			//			lexType:    {stateVar, cfFType},
 			isComma: {stateVar, 0},
@@ -274,6 +287,28 @@ var (
 			isLCurly:   {stateFields, 0},
 			0:          {errMustLCurly, cfError},
 		},
+		{ // stateSettings
+			lexNewLine: {stateSettings, 0},
+			isLCurly:   {stateConsts, 0},
+			0:          {errMustLCurly, cfError},
+		},
+		{ // stateConsts
+			lexNewLine: {stateConsts, 0},
+			lexComment: {stateConsts, 0},
+			isComma:    {stateConsts, 0},
+			lexIdent:   {stateConstsAssign, cfConstName},
+			isRCurly:   {stateToBody, 0},
+			0:          {errMustRCurly, cfError},
+		},
+		{ // stateConstsAssign
+			isEq: {stateConstsValue, 0},
+			0:    {errAssign, cfError},
+		},
+		{ // stateConstsValue
+			lexString: {stateConsts, cfConstValue},
+			lexNumber: {stateConsts, cfConstValue},
+			0:         {errStrNum, cfError},
+		},
 		{ // stateFields
 			lexNewLine: {stateFields, 0},
 			lexComment: {stateFields, 0},
@@ -289,14 +324,15 @@ var (
 
 func fError(buf *[]*Block, state int, lexem *Lexem) error {
 	errors := []string{`no error`,
-		`unknown command`,  // errUnknownCmd
-		`must be the name`, // errMustName
-		`must be '{'`,      // errMustLCurly
-		`must be '}'`,      // errMustRCurly
-		`wrong parameters`, // errParams
-		`wrong variables`,  // errVars
-		`must be type`,     // errVarType
-		`must be '='`,      // errAssign
+		`unknown command`,          // errUnknownCmd
+		`must be the name`,         // errMustName
+		`must be '{'`,              // errMustLCurly
+		`must be '}'`,              // errMustRCurly
+		`wrong parameters`,         // errParams
+		`wrong variables`,          // errVars
+		`must be type`,             // errVarType
+		`must be '='`,              // errAssign
+		`must be number or string`, // errStrNum
 	}
 	fmt.Printf("%s %x %v [Ln:%d Col:%d]\r\n", errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
 	if lexem.Type == lexNewLine {
@@ -420,6 +456,32 @@ func fTx(buf *[]*Block, state int, lexem *Lexem) error {
 	return nil
 }
 
+func fSettings(buf *[]*Block, state int, lexem *Lexem) error {
+	contract := (*buf)[len(*buf)-1]
+	if contract.Type != ObjContract {
+		return fmt.Errorf(`data can only be in contract`)
+	}
+	(*contract).Info.(*ContractInfo).Settings = make(map[string]interface{})
+	return nil
+}
+
+func fConstName(buf *[]*Block, state int, lexem *Lexem) error {
+	sets := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Settings
+	sets[lexem.Value.(string)] = nil
+	return nil
+}
+
+func fConstValue(buf *[]*Block, state int, lexem *Lexem) error {
+	sets := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Settings
+	for key, val := range sets {
+		if val == nil {
+			sets[key] = lexem.Value
+			break
+		}
+	}
+	return nil
+}
+
 func fField(buf *[]*Block, state int, lexem *Lexem) error {
 	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
 	*tx = append(*tx, &FieldInfo{Name: lexem.Value.(string), Type: reflect.TypeOf(nil)})
@@ -459,6 +521,9 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 
 // StateName checks the name of the contract and modifies it to @[state]name if it is necessary.
 func StateName(state uint32, name string) string {
+	if len(name) < 3 {
+		return name
+	}
 	if name[0] != '@' {
 		return fmt.Sprintf(`@%d%s`, state, name)
 	} else if name[1] < '0' || name[1] > '9' {
@@ -477,7 +542,8 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	case stateBlock:
 		itype = ObjContract
 		name = StateName((*buf)[0].Info.(uint32), name)
-		fblock.Info = &ContractInfo{ID: uint32(len(prev.Children) - 1), Name: name, Active: (*buf)[0].Active, TableID: (*buf)[0].TableID} //lexem.Value.(string)}
+		fblock.Info = &ContractInfo{ID: uint32(len(prev.Children) - 1), Name: name,
+			Owner: (*buf)[0].Owner} //lexem.Value.(string)}
 	default:
 		itype = ObjFunc
 		fblock.Info = &FuncInfo{}
@@ -488,8 +554,8 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 // CompileBlock compile the source code into the Block structure with a byte-code
-func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int64) (*Block, error) {
-	root := &Block{Info: idstate, Active: active, TableID: tblid}
+func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
+	root := &Block{Info: owner.StateID, Owner: owner}
 	lexems, err := lexParser(input)
 	if err != nil {
 		logger.LogError(consts.VMError, err)
@@ -633,9 +699,8 @@ func (vm *VM) FlushExtern() {
 }
 
 // Compile compiles a source code and loads the byte-code into the virtual machine
-func (vm *VM) Compile(input []rune, state uint32, active bool, tblid int64) error {
-	logger.LogDebug(consts.FuncStarted, "")
-	root, err := vm.CompileBlock(input, state, active, tblid)
+func (vm *VM) Compile(input []rune, owner *OwnerInfo) error {
+	root, err := vm.CompileBlock(input, owner)
 	if err == nil {
 		vm.FlushBlock(root)
 	} else {

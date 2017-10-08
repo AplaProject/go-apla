@@ -53,6 +53,17 @@ func getArray() []interface{} {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
+		{`contract sets {
+			settings {
+				val = 1.56
+				rate = 100000000000
+				name="Name parameter"
+			}
+			func getset string {
+				return Settings("@22sets","name")
+			}
+		}`, `sets.getset`, `Name parameter`},
+
 		{`func proc(par string) string {
 					return par + "proc"
 					}
@@ -218,6 +229,10 @@ func TestVMCompile(t *testing.T) {
 				return Sprintf("%d %s %s %s", 65123 + (1001-500)*11, my_test(), "Тестовая строка", Sprintf("> %s %d <","OK", 999 ))
 			}
 	}`, `my.initf`, `70634 Called my_test Ooops 777 Тестовая строка > OK 999 <`},
+		{`contract vars {
+		func cond() string {return "vars"}
+		func actions() { var test int}
+	}`, `vars.cond`, `vars`},
 	}
 	vm := NewVM()
 	vm.Extern = true
@@ -226,7 +241,7 @@ func TestVMCompile(t *testing.T) {
 
 	for ikey, item := range test {
 		source := []rune(item.Input)
-		if err := vm.Compile(source, uint32(ikey)+22, true, 1); err != nil {
+		if err := vm.Compile(source, &OwnerInfo{StateID: uint32(ikey) + 22, Active: true, TableID: 1}); err != nil {
 			t.Error(err)
 		} else {
 			if out, err := vm.Call(item.Func, nil, &map[string]interface{}{

@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"os"
@@ -25,13 +24,13 @@ import (
 	"strconv"
 	"strings"
 
+	"bytes"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -65,43 +64,33 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 		return BlockData, utils.ErrInfo(err)
 	}
 
-	if len(block.Data) > 0 {
-		binaryData := block.Data
-		converter.BytesShift(&binaryData, 1) // не нужно. 0 - блок, >0 - тр-ии
-		BlockData = utils.ParseBlockHeader(&binaryData)
-		BlockData.Hash = block.Hash
+	header, err := ParseBlockHeader(bytes.NewBuffer(block.Data))
+	if err != nil {
+		return nil, utils.ErrInfo(err)
 	}
+
+	BlockData = &header
+	BlockData.Hash = block.Hash
 	return BlockData, nil
 }
 
 func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
-	var result []byte
-	var err error
 	if walletID != 0 {
-		wallet := &model.DltWallet{}
-		err = wallet.GetWallet(walletID)
-		if err != nil {
-			return []byte(""), err
+		node := syspar.GetNode(walletID)
+		if node != nil {
+			return node.Public, nil
 		}
-		result = []byte(wallet.NodePublicKey)
-	} else {
-		srs := &model.SystemRecognizedState{}
-		err = srs.GetState(stateID)
-		if err != nil {
-			return []byte(""), err
-		}
-		result = []byte(srs.NodePublicKey)
 	}
-	return result, nil
+	return nil, fmt.Errorf(`unknown node %d`, walletID)
 }
 
-func InsertInLogTx(binaryTx []byte, time int64) error {
+func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64) error {
 	txHash, err := crypto.Hash(binaryTx)
 	if err != nil {
 		log.Fatal(err)
 	}
 	ltx := &model.LogTransaction{Hash: txHash, Time: time}
-	err = ltx.Create()
+	err = ltx.Create(transaction)
 	if err != nil {
 		log.Errorf("error insert transaction into log: %s", err)
 		return utils.ErrInfo(err)
@@ -110,12 +99,12 @@ func InsertInLogTx(binaryTx []byte, time int64) error {
 }
 
 func IsCustomTable(table string) (isCustom bool, err error) {
-	if (table[0] >= '0' && table[0] <= '9') || strings.HasPrefix(table, `global_`) {
+	if table[0] >= '0' && table[0] <= '9' {
 		if off := strings.IndexByte(table, '_'); off > 0 {
 			prefix := table[:off]
 			tables := &model.Table{}
 			tables.SetTablePrefix(prefix)
-			found, err := tables.Get(table)
+			found, err := tables.Get(table[off+1:])
 			if err != nil {
 				return false, err
 			}
@@ -127,15 +116,15 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 	return false, nil
 }
 
-func IsState(country string) (int64, error) {
+func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 	ids, err := model.GetAllSystemStatesIDs()
 	if err != nil {
 		return 0, err
 	}
 	for _, id := range ids {
 		sp := &model.StateParameter{}
-		sp.SetTablePrefix(converter.Int64ToStr(id))
-		err = sp.GetByName("state_name")
+		sp.SetTablePrefix(strconv.Itoa(int(id)))
+		err = sp.GetByNameTransaction(transaction, "state_name")
 		if err != nil {
 			return 0, err
 		}
@@ -163,7 +152,7 @@ func GetTablePrefix(global string, stateId int64) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	stateIdStr := converter.Int64ToStr(stateId)
+	stateIdStr := strconv.Itoa(int(stateId))
 	if globalInt == 1 {
 		return "global", nil
 	}
@@ -176,66 +165,6 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 		return &FirstBlockParser{p}, nil
 	case "DLTTransfer":
 		return &DLTTransferParser{p, nil}, nil
-	case "DLTChangeHostVote":
-		return &DLTChangeHostVoteParser{p, nil}, nil
-	case "UpdFullNodes":
-		return &UpdFullNodesParser{p, nil}, nil
-	case "ChangeNodeKey":
-		return &ChangeNodeKeyParser{p, nil}, nil
-	case "NewState":
-		return &NewStateParser{p, nil}, nil
-	case "NewColumn":
-		return &NewColumnParser{p, nil}, nil
-	case "NewTable":
-		return &NewTableParser{p, nil}, nil
-	case "EditPage":
-		return &EditPageParser{p, nil}, nil
-	case "EditMenu":
-		return &EditMenuParser{p, nil}, nil
-	case "EditContract":
-		return &EditContractParser{p, nil}, nil
-	case "NewContract":
-		return &NewContractParser{p, nil, 0}, nil
-	case "EditColumn":
-		return &EditColumnParser{p, nil}, nil
-	case "EditTable":
-		return &EditTableParser{p, nil}, nil
-	case "EditStateParameters":
-		return &EditStateParametersParser{p, nil}, nil
-	case "NewStateParameters":
-		return &NewStateParametersParser{p, nil}, nil
-	case "NewPage":
-		return &NewPageParser{p, nil}, nil
-	case "NewMenu":
-		return &NewMenuParser{p, nil}, nil
-	case "ChangeNodeKeyDLT":
-		return &ChangeNodeKeyDLTParser{p, nil}, nil
-	case "AppendPage":
-		return &AppendPageParser{p, nil}, nil
-	case "RestoreAccessActive":
-		return &RestoreAccessActiveParser{p, nil, "", 0}, nil
-	case "RestoreAccessClose":
-		return &RestoreAccessCloseParser{p, nil}, nil
-	case "RestoreAccessRequest":
-		return &RestoreAccessRequestParser{p, nil}, nil
-	case "RestoreAccess":
-		return &RestoreAccessParser{p, nil}, nil
-	case "NewLang":
-		return &NewLangParser{p, nil}, nil
-	case "EditLang":
-		return &EditLangParser{p, nil}, nil
-	case "AppendMenu":
-		return &AppendMenuParser{p, nil}, nil
-	case "NewSign":
-		return &NewSignParser{p, nil}, nil
-	case "EditSign":
-		return &EditSignParser{p, nil}, nil
-	case "EditWallet":
-		return &EditWalletParser{p, nil}, nil
-	case "ActivateContract":
-		return &ActivateContractParser{p, nil, ""}, nil
-	case "NewAccount":
-		return &NewAccountParser{p, nil}, nil
 	}
 	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }
@@ -251,44 +180,38 @@ type txMapsType struct {
 
 // Parser is a structure for parsing transactions
 type Parser struct {
-	TxMaps           *txMapsType
-	TxMap            map[string][]byte
-	TxMapS           map[string]string
-	TxIds            int // count of transactions
-	TxMapArr         []map[string][]byte
-	TxMapsArr        []*txMapsType
-	BlockData        *utils.BlockData
-	PrevBlock        *utils.BlockData
-	BinaryData       []byte
-	TxBinaryData     []byte
-	blockHash        []byte
-	dataType         int
-	blockData        []byte
-	CurrentBlockID   int64
-	fullTxBinaryData []byte
-	TxHash           []byte
-	TxSlice          [][]byte
-	MerkleRoot       []byte
-	GoroutineName    string
-	CurrentVersion   string
-	MrklRoot         []byte
-	PublicKeys       [][]byte
-	TxUserID         int64
-	TxCitizenID      int64
-	TxWalletID       int64
-	TxStateID        uint32
-	TxStateIDStr     string
-	TxTime           int64
-	TxCost           int64           // Maximum cost of executing contract
-	TxUsedCost       decimal.Decimal // Used cost of CPU resources
-	nodePublicKey    []byte
-	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go
-	TxData           map[string]interface{}
-	TxSmart          *tx.SmartContract
-	TxContract       *smart.Contract
-	TxVars           map[string]string
-	AllPkeys         map[string]string
-	States           map[int64]string
+	BlockData      *utils.BlockData
+	PrevBlock      *utils.BlockData
+	dataType       int
+	blockData      []byte
+	CurrentVersion string
+	MrklRoot       []byte
+	PublicKeys     [][]byte
+
+	TxBinaryData  []byte // transaction binary data
+	TxFullData    []byte // full transaction, with type and data
+	TxHash        []byte
+	TxSlice       [][]byte
+	TxMap         map[string][]byte
+	TxIds         int // count of transactions
+	TxUserID      int64
+	TxCitizenID   int64
+	TxWalletID    int64
+	TxStateID     uint32
+	TxStateIDStr  string
+	TxTime        int64
+	TxType        int64
+	TxCost        int64           // Maximum cost of executing contract
+	TxUsedCost    decimal.Decimal // Used cost of CPU resources
+	TxPtr         interface{}     // Pointer to the corresponding struct in consts/struct.go
+	TxData        map[string]interface{}
+	TxSmart       *tx.SmartContract
+	TxContract    *smart.Contract
+	TxHeader      *tx.Header
+	txParser      ParserInterface
+	DbTransaction *model.DbTransaction
+
+	AllPkeys map[string]string
 }
 
 // ClearTmp deletes temporary files
@@ -298,28 +221,9 @@ func ClearTmp(blocks map[int64]string) {
 	}
 }
 
-// GetBlockInfo returns BlockData structure
-func (p *Parser) GetBlockInfo() *utils.BlockData {
-	return &utils.BlockData{Hash: p.BlockData.Hash, Time: p.BlockData.Time, WalletID: p.BlockData.WalletID, StateID: p.BlockData.StateID, BlockID: p.BlockData.BlockID}
-}
-
-func (p *Parser) dataPre() {
-	hash, err := crypto.DoubleHash(p.BinaryData)
-	if err != nil {
-		log.Fatal(err)
-	}
-	p.blockHash = hash
-
-	p.blockData = p.BinaryData
-	// get the data type
-	p.dataType = int(converter.BinToDec(converter.BytesShift(&p.BinaryData, 1)))
-	log.Debug("dataType", p.dataType)
-}
-
 // CheckLogTx checks if this transaction exists
-// This is protection against ddos, when one transaction could be sent a million times
 // And it would have successfully passed a frontal test
-func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
+func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	searchedHash, err := crypto.Hash(txBinary)
 	if err != nil {
 		log.Fatal(err)
@@ -330,17 +234,15 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		log.Error("get transaction from log error: %s", utils.ErrInfo(err))
 		return utils.ErrInfo(err)
 	}
-
 	if found {
 		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %x", searchedHash))
 	}
 
 	if transactions {
-		// check whether we have such a transaction
+		// check for duplicate transaction
 		tx := &model.Transaction{}
 		err := tx.GetVerified(searchedHash)
 		if err != nil {
-			log.Error("get verified transaction error: %s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
 		}
 		if len(tx.Hash) > 0 {
@@ -349,7 +251,7 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	}
 
 	if txQueue {
-		// check whether we have such a transaction in transaction queue
+		// check for duplicate transaction from queue
 		qtx := &model.QueueTx{}
 		found, err := qtx.GetByHash(searchedHash)
 		if found {
@@ -364,48 +266,35 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	return nil
 }
 
-// GetInfoBlock returns the latest block
-func (p *Parser) GetInfoBlock() error {
-	// the last successfully recorded block
-	p.PrevBlock = new(utils.BlockData)
-	ib := &model.InfoBlock{}
-	err := ib.GetInfoBlock()
-	if err != nil && err != sql.ErrNoRows {
-		return p.ErrInfo(err)
-	}
-	p.PrevBlock.Hash = ib.Hash
-	p.PrevBlock.BlockID = ib.BlockID
-	p.PrevBlock.Time = ib.Time
-	return nil
-}
-
 // InsertIntoBlockchain inserts a block into the blockchain
-func (p *Parser) InsertIntoBlockchain() error {
+func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error {
 
-	if p.BlockData.BlockID == 1 {
-		// for tests
+	// for local tests
+	blockID := block.Header.BlockID
+	if block.Header.BlockID == 1 {
 		if *utils.StartBlockID != 0 {
-			p.BlockData.BlockID = *utils.StartBlockID
+			blockID = *utils.StartBlockID
 		}
 	}
 
-	block := &model.Block{}
-	err := block.DeleteById(p.BlockData.BlockID)
+	// record into the block chain
+	bl := &model.Block{}
+	err := bl.DeleteById(transaction, blockID)
 	if err != nil {
 		return err
 	}
 	b := &model.Block{
-		ID:       p.BlockData.BlockID,
-		Hash:     p.BlockData.Hash,
-		Data:     p.blockData,
-		StateID:  p.BlockData.StateID,
-		WalletID: p.BlockData.WalletID,
-		Time:     p.BlockData.Time,
-		Tx:       int32(p.TxIds),
+		ID:       blockID,
+		Hash:     block.Header.Hash,
+		Data:     block.BinData,
+		StateID:  block.Header.StateID,
+		WalletID: block.Header.WalletID,
+		Time:     block.Header.Time,
+		Tx:       int32(len(block.Parsers)),
 	}
-	err = b.Create()
+	err = b.Create(transaction)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("can't create block: %s", err)
 		return err
 	}
 	return nil
@@ -479,7 +368,7 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	}
 
 	wallet := &model.DltWallet{}
-	err := wallet.GetWallet(walletID)
+	err := wallet.GetWalletTransaction(p.DbTransaction, walletID)
 	if err != nil {
 		return err
 	}
@@ -513,7 +402,7 @@ func (p *Parser) BlockError(err error) {
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(p.TxStateIDStr)
-	err := sp.GetByName(condition)
+	err := sp.GetByNameTransaction(p.DbTransaction, condition)
 	if err != nil {
 		return err
 	}
@@ -537,13 +426,17 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
-	govAccount, _ := template.StateParam(int64(p.TxStateID), `gov_account`)
-	account, err := strconv.ParseInt(govAccount, 10, 64)
-	if err != nil {
-		logger.LogInfo(consts.StrToIntError, govAccount)
-	}
-	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == account {
-		return nil
+	govAccount, _ := template.StateParam(int64(p.TxStateID), `founder_account`)
+	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
+		govAccountInt, err := strconv.ParseInt(govAccount, 10, 64)
+		if err != nil {
+			return err
+		}
+		if p.TxContract != nil && p.TxCitizenID == govAccountInt {
+			return nil
+		} else {
+			return fmt.Errorf(`Access denied`)
+		}
 	}
 
 	if isCustom, err := IsCustomTable(table); err != nil {
@@ -573,18 +466,28 @@ func (p *Parser) AccessTable(table, action string) error {
 
 // AccessColumns checks access rights to the columns
 func (p *Parser) AccessColumns(table string, columns []string) error {
+
+	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
+		govAccount, _ := template.StateParam(int64(p.TxStateID), `founder_account`)
+		govAccountInt, err := strconv.ParseInt(govAccount, 10, 64)
+		if err != nil {
+			return err
+		}
+		if p.TxContract != nil && p.TxCitizenID == govAccountInt {
+			return nil
+		}
+		return fmt.Errorf(`Access denied`)
+	}
 	if isCustom, err := IsCustomTable(table); err != nil {
-		return err // table != ... is left for compatibility temporarily. Remove if after new_state refactoring
-	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
+		return err
+	} else if !isCustom && !strings.HasSuffix(table, `_parameters`) {
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
 	prefix := table[:strings.IndexByte(table, '_')]
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	columnsAndPermissions, err := tables.GetPermissions(table, "update")
-	if err != nil {
-		return err
-	}
+	columnsAndPermissions, err := tables.GetColumns(table, "")
+
 	if err != nil {
 		return err
 	}
@@ -683,83 +586,5 @@ func (p *Parser) checkPrice(name string) error {
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-// GetContractLimit returns the default maximal cost of contract
-func (p *Parser) GetContractLimit() (ret int64) {
-	// default maximum cost of F
-	p.TxCost = script.CostDefault // ret * fuel
-	return p.TxCost
-}
-
-func (p *Parser) payFPrice() error {
-	var (
-		fromID int64
-		err    error
-	)
-
-	toID := p.BlockData.WalletID // account of node
-	systemParam := &model.SystemParameter{}
-	err = systemParam.Get("fuel_rate")
-	if err != nil {
-		return fmt.Errorf("can't get fuel_rate: %s", err)
-	}
-	fuel, err := decimal.NewFromString(systemParam.Value)
-	if err != nil {
-		return err
-	}
-	if fuel.Cmp(decimal.New(0, 0)) <= 0 {
-		return fmt.Errorf(`fuel rate must be greater than 0`)
-	}
-
-	if p.TxCost == 0 { // embedded transaction
-		fromID = p.TxWalletID
-		if fromID == 0 {
-			fromID = p.TxCitizenID
-		}
-	} else { // contract
-		if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
-			//fromID = p.TxContract.TxGovAccount
-			fromID, err = strconv.ParseInt(StateVal(p, `gov_account`), 10, 64)
-			if err != nil {
-				logger.LogInfo(consts.StrToIntError, StateVal(p, `gov_account`))
-			}
-		} else {
-			// write directly from dlt_wallets of user
-			fromID = p.TxWalletID
-		}
-	}
-	egs := p.TxUsedCost.Mul(fuel)
-	log.Infof("Pay fuel=%v fromID=%d toID=%d cost=%v egs=%v", fuel, fromID, toID, p.TxUsedCost, egs)
-	if egs.Cmp(decimal.New(0, 0)) == 0 { // Is it possible to pay nothing?
-		return nil
-	}
-	wallet := &model.DltWallet{}
-	if err := wallet.GetWallet(fromID); err != nil {
-		return err
-	}
-	wltAmount, err := decimal.NewFromString(wallet.Amount)
-	if err != nil {
-		return err
-	}
-
-	if wltAmount.Cmp(egs) < 0 {
-		egs = wltAmount
-	}
-	commission := egs.Mul(decimal.New(3, 0)).Div(decimal.New(100, 0)).Floor()
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(fromID)}, true); err != nil {
-		return err
-	}
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(toID)}, true); err != nil {
-		return err
-	}
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(syspar.GetCommissionWallet())}, true); err != nil {
-		return err
-	}
-	log.Infof(" Paid commission %v", commission)
 	return nil
 }

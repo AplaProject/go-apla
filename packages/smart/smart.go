@@ -19,6 +19,7 @@ package smart
 import (
 	"encoding/hex"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -82,7 +83,7 @@ func init() {
 	}})
 }
 
-func pref2state(prefix string) (state uint32) {
+/*func pref2state(prefix string) (state uint32) {
 	if prefix != `global` {
 		if val, err := strconv.ParseUint(prefix, 10, 32); err == nil {
 			state = uint32(val)
@@ -91,7 +92,7 @@ func pref2state(prefix string) (state uint32) {
 		}
 	}
 	return
-}
+}*/
 
 // ExternOff switches off the extern compiling mode in smartVM
 func ExternOff() {
@@ -100,13 +101,13 @@ func ExternOff() {
 }
 
 // Compile compiles contract source code in smartVM
-func Compile(src, prefix string, active bool, tblid int64) error {
-	return smartVM.Compile([]rune(src), pref2state(prefix), active, tblid)
+func Compile(src string, owner *script.OwnerInfo) error {
+	return smartVM.Compile([]rune(src), owner)
 }
 
 // CompileBlock calls CompileBlock for smartVM
-func CompileBlock(src, prefix string, active bool, tblid int64) (*script.Block, error) {
-	return smartVM.CompileBlock([]rune(src), pref2state(prefix), active, tblid)
+func CompileBlock(src string, owner *script.OwnerInfo) (*script.Block, error) {
+	return smartVM.CompileBlock([]rune(src), owner)
 }
 
 // CompileEval calls CompileEval for smartVM
@@ -115,8 +116,8 @@ func CompileEval(src string, prefix uint32) error {
 }
 
 // EvalIf calls EvalIf for smartVM
-func EvalIf(src, prefix string, extend *map[string]interface{}) (bool, error) {
-	return smartVM.EvalIf(src, pref2state(prefix), extend)
+func EvalIf(src string, state uint32, extend *map[string]interface{}) (bool, error) {
+	return smartVM.EvalIf(src, state, extend)
 }
 
 // FlushBlock calls FlushBlock for smartVM
@@ -159,17 +160,12 @@ func Run(block *script.Block, params []interface{}, extend *map[string]interface
 }
 
 // ActivateContract sets Active status of the contract in smartVM
-func ActivateContract(tblid int64, prefix string, active bool) {
-	logger.LogDebug(consts.FuncStarted, "")
-	if prefix == `global` {
-		prefix = `0`
-	}
+func ActivateContract(tblid, state int64, active bool) {
 	for i, item := range smartVM.Block.Children {
 		if item != nil && item.Type == script.ObjContract {
 			cinfo := item.Info.(*script.ContractInfo)
-			if cinfo.TableID == tblid && strings.HasPrefix(cinfo.Name, `@`+prefix) &&
-				(len(cinfo.Name) > len(prefix)+1 && cinfo.Name[len(prefix)+1] > '9') {
-				smartVM.Children[i].Info.(*script.ContractInfo).Active = active
+			if cinfo.Owner.TableID == tblid && cinfo.Owner.StateID == uint32(state) {
+				smartVM.Children[i].Info.(*script.ContractInfo).Owner.Active = active
 			}
 		}
 	}
@@ -262,4 +258,15 @@ func Float(v interface{}) (ret float64) {
 		}
 	}
 	return
+}
+
+func ContractsList(value string) []string {
+	list := make([]string, 0)
+	re := regexp.MustCompile(`contract[\s]*([\d\w_]+)[\s]*{`)
+	for _, item := range re.FindAllStringSubmatch(value, -1) {
+		if len(item) > 1 {
+			list = append(list, item[1])
+		}
+	}
+	return list
 }

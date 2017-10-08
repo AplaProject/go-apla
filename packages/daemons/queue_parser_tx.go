@@ -30,16 +30,11 @@ import (
 
 // QueueParserTx parses transaction from the queue
 func QueueParserTx(d *daemon, ctx context.Context) error {
-	logger.LogDebug(consts.FuncStarted, "")
-	lock, err := DbLock(ctx, d.goRoutineName)
-	if !lock || err != nil {
-		logger.LogError(consts.DBError, err)
-		return err
-	}
-	defer DbUnlock(d.goRoutineName)
+	DBLock()
+	defer DBUnlock()
 
 	infoBlock := &model.InfoBlock{}
-	err = infoBlock.GetInfoBlock()
+	err := infoBlock.GetInfoBlock()
 	if err != nil {
 		logger.LogError(consts.DBError, err)
 		return err

@@ -33,16 +33,16 @@ func (ss *SystemState) GetCount() (int64, error) {
 	return count, err
 }
 
-func (ss *SystemState) GetLast() (bool, error) {
-	last := DBConn.Last(ss)
+func (ss *SystemState) GetLast(transaction *DbTransaction) (bool, error) {
+	last := GetDB(transaction).Last(ss)
 	if last.RecordNotFound() {
 		return true, nil
 	}
 	return false, last.Error
 }
 
-func (ss *SystemState) Delete() error {
-	return DBConn.Delete(ss).Error
+func (ss *SystemState) Delete(transaction *DbTransaction) error {
+	return GetDB(transaction).Delete(ss).Error
 }
 
 func (ss *SystemState) IsExists(stateID int64) (bool, error) {
@@ -53,6 +53,6 @@ func (ss *SystemState) IsExists(stateID int64) (bool, error) {
 	return !query.RecordNotFound(), query.Error
 }
 
-func (ss *SystemState) Create() error {
-	return DBConn.Create(ss).Error
+func (ss *SystemState) Create(transaction *DbTransaction) error {
+	return GetDB(transaction).Create(ss).Error
 }

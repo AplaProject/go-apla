@@ -43,13 +43,16 @@ func Read() error {
 	return nil
 }
 
+func IsExist() bool {
+	path := *utils.Dir + "/" + configFileName
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
+}
+
 func Save(logLevel, installType string, dbConf *DBConfig) error {
-	path := fmt.Sprintf("%s/%s", *utils.Dir, configFileName)
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": path}).Error("os.Stat config file")
-		if err := ioutil.WriteFile(path, []byte(``), 0644); err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": path}).Error("creating config file")
-		}
+	path := *utils.Dir + "/" + configFileName
+	if !IsExist() {
+		ioutil.WriteFile(path, []byte(``), 0644)
 	}
 	confIni, err := config.NewConfig("ini", path)
 	confIni.Set("log_level", logLevel)
@@ -62,6 +65,7 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 	confIni.Set("db_user", dbConf.User)
 	confIni.Set("db_host", dbConf.Host)
 	confIni.Set("db_port", dbConf.Port)
+	confIni.Set("version2", `true`)
 	confIni.Set("db_password", dbConf.Password)
 	confIni.Set("db_name", dbConf.Name)
 	confIni.Set("node_state_id", `*`)

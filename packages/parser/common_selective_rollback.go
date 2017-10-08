@@ -26,7 +26,7 @@ import (
 
 // selectiveRollback rollbacks the specified fields
 // roll back not all the fields but the specified ones or only 1 line if there is not 'where'
-func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) error {
+func (p *Parser) selectiveRollback(table string, where string) error {
 	if len(where) > 0 {
 		where = " WHERE " + where
 	}
@@ -50,14 +50,14 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		}
 		addSQLUpdate := ""
 		for k, v := range jsonMap {
-			if converter.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
+			if converter.InSliceString(k, []string{"hash", "pub", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
 				addSQLUpdate += k + `=decode('` + string(converter.BinToHex([]byte(v))) + `','HEX'),`
 			} else {
 				addSQLUpdate += k + `='` + strings.Replace(v, `'`, `''`, -1) + `',`
 			}
 		}
 		addSQLUpdate = addSQLUpdate[0 : len(addSQLUpdate)-1]
-		err = model.Update(table, addSQLUpdate, where)
+		err = model.Update(p.DbTransaction, table, addSQLUpdate, where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -68,14 +68,10 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		p.rollbackAI("rollback", 1)
 	} else {
 		err = model.Delete(table, where)
 		if err != nil {
 			return p.ErrInfo(err)
-		}
-		if rollbackAI {
-			p.rollbackAI(table, 1)
 		}
 	}
 

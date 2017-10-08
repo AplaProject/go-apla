@@ -17,7 +17,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 )
 
 func encode(x, y []byte) string {
@@ -240,10 +239,7 @@ func TestFirstBlock(t *testing.T) {
 	g := initGorm(t)
 	defer g.Close()
 
-	parser := new(parser.Parser)
-	parser.GoroutineName = "test"
-
-	err := loadFirstBlock(parser)
+	err := loadFirstBlock()
 	if err != nil {
 		t.Errorf("loadFirstBlock return error: %s", err)
 	}
@@ -265,10 +261,7 @@ func TestLoadFromFile(t *testing.T) {
 		t.Fatalf("can't write to file: %s", err)
 	}
 
-	parser := new(parser.Parser)
-	parser.GoroutineName = "test"
-
-	err = loadFromFile(context.Background(), parser, fileName)
+	err = loadFromFile(context.Background(), fileName)
 	if err != nil {
 		t.Fatalf("load from file return error: %s", err)
 	}

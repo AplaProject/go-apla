@@ -17,6 +17,7 @@
 package parser
 
 import (
+	//	"encoding/hex"
 	"errors"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -30,13 +31,11 @@ import (
 func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 
 	log.Debugf("transaction hex data: %x", binaryTx)
-	p.BinaryData = binaryTx
-	p.TxBinaryData = binaryTx
 
 	// get parameters for "struct" transactions
 	txType, walletID, citizenID := GetTxTypeAndUserID(binaryTx)
 
-	header, err := p.ParseDataGate(false)
+	header, err := CheckTransaction(binaryTx)
 	if err != nil {
 		log.Errorf("parse data gate error: %s", err)
 		p.processBadTransaction(hash, err.Error())
@@ -73,9 +72,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		return utils.ErrInfo(err)
 	}
 
-	log.Debug("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES (%x, %v, %v, %v, %v, %v, %v, %v)", hash, converter.BinToHex(binaryTx), 0, int8(txType), walletID, citizenID, 0, counter)
 	logging.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
-
 	// put with verified=1
 	newTx := &model.Transaction{
 		Hash:      hash,
@@ -91,10 +88,9 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		logging.WriteSelectiveLog(err)
 		return utils.ErrInfo(err)
 	}
-	logging.WriteSelectiveLog("result insert")
 	log.Debug("INSERT INTO transactions - OK")
 
-	// remove transaction from the turn (with verified=0)
+	// remove transaction from the queue (with verified=0)
 	err = p.DeleteQueueTx(hash)
 	if err != nil {
 		return utils.ErrInfo(err)
@@ -109,13 +105,14 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 	}
 	qtx := &model.QueueTx{}
 	found, err := qtx.GetByHash(hash)
+
+	p.DeleteQueueTx(hash)
 	if !found {
 		return nil
 	}
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-
 	if qtx.FromGate == 0 {
 		m := &model.TransactionStatus{}
 		err = m.SetError(errText, hash)
@@ -123,21 +120,20 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 			return utils.ErrInfo(err)
 		}
 	}
-	p.DeleteQueueTx(hash)
 	return nil
 }
 
 // DeleteQueueTx deletes a transaction from the queue
-func (p *Parser) DeleteQueueTx(hashHex []byte) error {
-	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", hashHex)
-	delQueueTx := &model.QueueTx{Hash: hashHex}
+func (p *Parser) DeleteQueueTx(hash []byte) error {
+	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %x", hash)
+	delQueueTx := &model.QueueTx{Hash: hash}
 	err := delQueueTx.DeleteTx()
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
 	// Because we process transactions with verified=0 in queue_parser_tx, after processing we need to delete them
-	logging.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(hashHex) + " AND verified=0 AND used = 0")
-	_, err = model.DeleteTransactionIfUnused(hashHex)
+	logging.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(converter.BinToHex(hash)) + " AND verified=0 AND used = 0")
+	_, err = model.DeleteTransactionIfUnused(hash)
 	if err != nil {
 		logging.WriteSelectiveLog(err)
 		return utils.ErrInfo(err)
@@ -149,15 +145,12 @@ func (p *Parser) DeleteQueueTx(hashHex []byte) error {
 func (p *Parser) AllTxParser() error {
 	all, err := model.GetAllUnverifiedAndUnusedTransactions()
 	for _, data := range all {
-		log.Debug("hash: %x", data.Hash)
 		err = p.TxParser(data.Hash, data.Data, false)
 		if err != nil {
-			log.Errorf("transaction parser error: %s", err)
-
-			// TODO: return after first bad transaction ?
+			log.Errorf("transaction parser error: %s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
 		}
-		log.Debugf("transaction parsed successfully")
+		log.Debugf("transaction %x parsed successfully", data.Hash)
 	}
 	return nil
 }

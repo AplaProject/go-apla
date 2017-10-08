@@ -8,8 +8,8 @@ type UpdFullNode struct {
 	RbID int64 `gorm:"not null"`
 }
 
-func (ufn *UpdFullNode) Read() error {
-	return handleError(DBConn.First(ufn).Error)
+func (ufn *UpdFullNode) Read(transaction *DbTransaction) error {
+	return handleError(GetDB(transaction).First(ufn).Error)
 }
 
 func (ufn *UpdFullNode) GetAll() ([]UpdFullNode, error) {

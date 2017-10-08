@@ -23,8 +23,8 @@ func (p *Page) Get(name string) error {
 	return DBConn.Where("name = ?", name).First(p).Error
 }
 
-func (p *Page) Create() error {
-	return DBConn.Create(p).Error
+func (p *Page) Create(transaction *DbTransaction) error {
+	return GetDB(transaction).Create(p).Error
 }
 
 func (p *Page) GetWithMenu(prefix string) ([]Page, error) {
@@ -49,8 +49,8 @@ func (p *Page) ToMap() map[string]string {
 	return result
 }
 
-func CreateStatePagesTable(stateID string) error {
-	return DBConn.Exec(`CREATE TABLE "` + stateID + `_pages" (
+func CreateStatePagesTable(transaction *DbTransaction, stateID string) error {
+	return GetDB(transaction).Exec(`CREATE TABLE "` + stateID + `_pages" (
 			    "name" varchar(255)  NOT NULL DEFAULT '',
 			    "value" text  NOT NULL DEFAULT '',
 			    "menu" varchar(255)  NOT NULL DEFAULT '',

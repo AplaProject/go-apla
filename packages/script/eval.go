@@ -36,7 +36,7 @@ var (
 func (vm *VM) CompileEval(input string, state uint32) error {
 	logger.LogDebug(consts.FuncStarted, "")
 	source := `func eval bool { return ` + input + `}`
-	block, err := vm.CompileBlock([]rune(source), state, false, 0)
+	block, err := vm.CompileBlock([]rune(source), &OwnerInfo{StateID: state})
 	if err == nil {
 		crc, err := crypto.CalcChecksum([]byte(input))
 		if err != nil {

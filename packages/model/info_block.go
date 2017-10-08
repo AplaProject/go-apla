@@ -1,6 +1,8 @@
 package model
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/jinzhu/gorm"
+)
 
 type InfoBlock struct {
 	Hash           []byte `gorm:"not null"`
@@ -21,8 +23,8 @@ func (ib *InfoBlock) GetInfoBlock() error {
 	return handleError(DBConn.Last(ib).Error)
 }
 
-func (ib *InfoBlock) Update() error {
-	return DBConn.Model(&InfoBlock{}).Updates(ib).Error
+func (ib *InfoBlock) Update(transaction *DbTransaction) error {
+	return GetDB(transaction).Model(&InfoBlock{}).Updates(ib).Error
 }
 
 func (ib *InfoBlock) GetUnsent() (bool, error) {
@@ -41,8 +43,8 @@ func (ib *InfoBlock) Save() error {
 	return DBConn.Save(ib).Error
 }
 
-func (ib *InfoBlock) Create() error {
-	return DBConn.Create(ib).Error
+func (ib *InfoBlock) Create(transaction *DbTransaction) error {
+	return GetDB(transaction).Create(ib).Error
 }
 
 func GetCurBlockID() (int64, error) {

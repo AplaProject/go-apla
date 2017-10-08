@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -64,7 +63,7 @@ func (p *NewStateParser) Validate() error {
 		return p.ErrInfo("incorrect sign")
 	}
 	country := string(p.NewState.StateName)
-	if exist, err := IsState(country); err != nil {
+	if exist, err := IsState(p.DbTransaction, country); err != nil {
 		return p.ErrInfo(err)
 	} else if exist > 0 {
 		return fmt.Errorf(`State %s already exists`, country)
@@ -74,28 +73,28 @@ func (p *NewStateParser) Validate() error {
 }
 
 func (p *NewStateParser) Main(country, currency string) (id string, err error) {
-	systemState := &model.SystemState{RbID: 0}
-	err = systemState.Create()
+	systemState := &model.SystemState{}
+	_, err = systemState.GetLast(p.DbTransaction)
+	if err != nil {
+		return
+	}
+
+	systemState.ID++
+	systemState.RbID = 0
+	err = systemState.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
 	id = converter.Int64ToStr(systemState.ID)
 	rollbackTx := model.RollbackTx{BlockID: p.BlockData.BlockID, TxHash: p.TxHash, NameTable: "system_states", TableID: id}
-	err = rollbackTx.Create()
+	err = rollbackTx.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
-	err = model.CreateStateTable(id)
-	if err != nil {
-		return
-	}
+
 	sid := `ContractConditions("MainCondition")` //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
 	psid := sid                                  //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
-	err = model.CreateStateConditions(id, sid, psid, currency, country, p.TxWalletID)
-	if err != nil {
-		return
-	}
-	err = model.CreateSmartContractTable(id)
+	err = model.CreateSmartContractTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
@@ -114,46 +113,35 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 		WalletID: p.TxWalletID,
 		Active:   "1"}
 	sc.SetTablePrefix(id)
-	err = sc.Create()
+	err = sc.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
 	scu := &model.SmartContract{}
 	scu.SetTablePrefix(id)
-	err = scu.UpdateConditions(sid)
+	err = scu.UpdateConditions(p.DbTransaction, sid)
 	if err != nil {
 		return
 	}
-
-	err = model.CreateStateTablesTable(id)
-	if err != nil {
-		return
-	}
-	mainCondition := `ContractConditions("MainCondition")`
-	updateConditions := map[string]string{"public_key_0": mainCondition}
-	perm := Permissions{
-		GeneralUpdate: mainCondition,
-		Update:        updateConditions,
-		Insert:        mainCondition,
-		NewColumn:     mainCondition,
-	}
-	jsonPermissions, err := json.Marshal(perm)
-	if err != nil {
-		return
-	}
+	/*
+		err = model.CreateStateTablesTable(id)
+		if err != nil {
+			return
+		}*/
 	t := &model.Table{
-		Name: id + "_citizens",
-		ColumnsAndPermissions: string(jsonPermissions),
-		Conditions:            psid,
+		Name:        id + "_citizens",
+		Permissions: `{"general_update":"` + sid + `", "update": {"public_key_0": "` + sid + `"}, "insert": "` + sid + `", "new_column":"` + sid + `"}`,
+		Conditions:  psid,
 	}
 	t.SetTablePrefix(id)
-	err = t.Create()
+	err = t.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
 
-	err = model.CreateStatePagesTable(id)
+	err = model.CreateStatePagesTable(p.DbTransaction, id)
 	if err != nil {
+		log.Errorf("can't create state tables: %s", err)
 		return
 	}
 	dashboardValue := `FullScreen(1)
@@ -217,7 +205,7 @@ PageEnd:
 		Conditions: sid,
 	}
 	firstPage.SetTablePrefix(id)
-	err = firstPage.Create()
+	err = firstPage.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
@@ -228,12 +216,12 @@ PageEnd:
 		Conditions: sid,
 	}
 	secondPage.SetTablePrefix(id)
-	err = secondPage.Create()
+	err = secondPage.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
 
-	err = model.CreateStateMenuTable(id)
+	err = model.CreateStateMenuTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
@@ -244,7 +232,7 @@ PageEnd:
 		Conditions: sid,
 	}
 	firstMenu.SetTablePrefix(id)
-	err = firstMenu.Create()
+	err = firstMenu.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
@@ -267,53 +255,48 @@ MenuBack(Welcome)`,
 		Conditions: sid,
 	}
 	secondMenu.SetTablePrefix(id)
-	err = secondMenu.Create()
+	err = secondMenu.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
 
-	err = model.CreateCitizensStateTable(id)
+	err = model.CreateCitizensStateTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
 
 	dltWallet := &model.DltWallet{}
-	err = dltWallet.GetWallet(p.TxWalletID)
+	err = dltWallet.GetWalletTransaction(p.DbTransaction, p.TxWalletID)
 	if err != nil {
 		return
 	}
 
 	citizen := &model.Citizen{ID: p.TxWalletID, PublicKey: dltWallet.PublicKey}
 	citizen.SetTablePrefix(id)
-	err = citizen.Create()
+	err = citizen.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
-	err = model.CreateLanguagesStateTable(id)
+	err = model.CreateLanguagesStateTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
-	err = model.CreateStateDefaultLanguages(id, sid)
-	if err != nil {
-		return
-	}
-
-	err = model.CreateSignaturesStateTable(id)
+	err = model.CreateStateDefaultLanguages(p.DbTransaction, id, sid)
 	if err != nil {
 		return
 	}
 
-	err = model.CreateStateAppsTable(id)
+	err = model.CreateSignaturesStateTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
 
-	err = model.CreateStateAnonymsTable(id)
+	err = model.CreateStateAppsTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
 
-	err = template.LoadContract(id)
+	err = template.LoadContract(p.DbTransaction, id)
 	return
 }
 
@@ -325,7 +308,7 @@ func (p *NewStateParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	dltWallet := &model.DltWallet{}
-	err = dltWallet.GetWallet(p.TxWalletID)
+	err = dltWallet.GetWalletTransaction(p.DbTransaction, p.TxWalletID)
 	if err != nil {
 		return p.ErrInfo(err)
 	} else if len(p.NewState.Header.PublicKey) > 30 && len(dltWallet.PublicKey) == 0 {
@@ -337,7 +320,7 @@ func (p *NewStateParser) Action() error {
 
 func (p *NewStateParser) Rollback() error {
 	rollbackTx := &model.RollbackTx{}
-	err := rollbackTx.Get(p.TxHash, "system_states")
+	err := rollbackTx.Get(p.DbTransaction, p.TxHash, "system_states")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -348,30 +331,25 @@ func (p *NewStateParser) Rollback() error {
 
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
 		`smart_contracts`, `state_parameters`, `apps`, `anonyms`} {
-		err = model.DropTable(fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
+		err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	}
 
 	rollbackTxToDel := &model.RollbackTx{TxHash: p.TxHash, NameTable: "system_states"}
-	err = rollbackTxToDel.DeleteByHashAndTableName()
+	err = rollbackTxToDel.DeleteByHashAndTableName(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	ID, err := model.GetAILastValue("system_states")
+	ssToDel := &model.SystemState{}
+	_, err = ssToDel.GetLast(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// update  the AI
-	err = model.SetAI("system_states", ID+1)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	ssToDel := &model.SystemState{ID: ID}
-	err = ssToDel.Delete()
+	err = ssToDel.Delete(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

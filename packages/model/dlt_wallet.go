@@ -24,6 +24,10 @@ func (DltWallet) TableName() string {
 	return "dlt_wallets"
 }
 
+func (w *DltWallet) GetWalletTransaction(transaction *DbTransaction, walletID int64) error {
+	return handleError(GetDB(transaction).Where("wallet_id = ?", walletID).First(&w).Error)
+}
+
 func (w *DltWallet) GetWallet(walletID int64) error {
 	return handleError(DBConn.Where("wallet_id = ?", walletID).First(&w).Error)
 }
@@ -53,8 +57,8 @@ func (w *DltWallet) IsExists() (bool, error) {
 	return !query.RecordNotFound(), query.Error
 }
 
-func (w *DltWallet) Create() error {
-	return DBConn.Create(w).Error
+func (w *DltWallet) Create(transaction *DbTransaction) error {
+	return GetDB(transaction).Create(w).Error
 }
 
 func (w *DltWallet) GetVotes(limit int) ([]map[string]string, error) {
@@ -98,7 +102,7 @@ func (w *DltWallet) ToMap() map[string]string {
 }
 
 func (w *DltWallet) GetNewFuelRate() error {
-	return DBConn.Where("fuel_rate !=0").Select("fuel_rate").Group("fuel_rate").Order("sum(amount)").Limit(1).Find(w).Error
+	return DBConn.Table("dlt_wallets").Where("fuel_rate !=0").Select("fuel_rate").Group("fuel_rate").Order("sum(amount)").Limit(1).Find(w).Error
 }
 
 func (w *DltWallet) GetAddressVotes() ([]string, error) {

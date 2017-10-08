@@ -18,8 +18,8 @@ func (qt *QueueTx) DeleteTx() error {
 	return DBConn.Delete(qt).Error
 }
 
-func (qt *QueueTx) Save() error {
-	return DBConn.Save(qt).Error
+func (qt *QueueTx) Save(transaction *DbTransaction) error {
+	return GetDB(transaction).Save(qt).Error
 }
 
 func (qt *QueueTx) Create() error {
@@ -34,8 +34,8 @@ func (qt *QueueTx) GetByHash(hash []byte) (bool, error) {
 	return true, query.Error
 }
 
-func DeleteQueueTxByHash(hash []byte) (int64, error) {
-	query := DBConn.Exec("DELETE FROM queue_tx WHERE hash = ?", hash)
+func DeleteQueueTxByHash(transaction *DbTransaction, hash []byte) (int64, error) {
+	query := GetDB(transaction).Exec("DELETE FROM queue_tx WHERE hash = ?", hash)
 	return query.RowsAffected, query.Error
 }
 
@@ -72,6 +72,7 @@ func GetAllUnverifiedAndUnusedTransactions() ([]*QueueTx, error) {
 		if err := rows.Scan(&data, &hash); err != nil {
 			return nil, err
 		}
+		log.Debugf("add transaction: %x", hash)
 		result = append(result, &QueueTx{Data: data, Hash: hash})
 	}
 	if err := rows.Err(); err != nil {

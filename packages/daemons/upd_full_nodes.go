@@ -21,16 +21,15 @@ import (
 	"fmt"
 	"time"
 
-	"encoding/hex"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
@@ -40,15 +39,11 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	logger.LogError(consts.FuncStarted, "")
 	d.sleepTime = 60 * time.Second
 
-	locked, err := DbLock(ctx, d.goRoutineName)
-	if !locked || err != nil {
-		logger.LogError(consts.DBError, err)
-		return err
-	}
-	defer DbUnlock(d.goRoutineName)
+	DBLock()
+	defer DBUnlock()
 
 	infoBlock := &model.InfoBlock{}
-	err = infoBlock.GetInfoBlock()
+	err := infoBlock.GetInfoBlock()
 	if err != nil {
 		logger.LogError(consts.DBError, err)
 		return err
@@ -88,7 +83,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 
 	// check if the time of the last updating passed
 	updFn := &model.UpdFullNode{}
-	err = updFn.Read()
+	err = updFn.Read(nil)
 	if err != nil {
 		logger.LogError(consts.DBError, err)
 		return err
@@ -106,56 +101,45 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 		logger.LogError(consts.DBError, err)
 		return err
 	}
+	var (
+		hash, data []byte
+	)
 
-	tr := tx.UpdFullNodes{
-		Header: tx.Header{
-			Type:      int(utils.TypeInt("UpdFullNodes")),
-			Time:      curTime,
-			UserID:    myWalletID,
-			StateID:   0,
-			PublicKey: myNodeKey.PublicKey,
-		},
+	contract := smart.GetContract(`@0UpdFullNodes`, 0)
+	if contract == nil {
+		return fmt.Errorf(`there is not @0UpdFullNodes contract`)
 	}
-
-	binSign, err := crypto.Sign(hex.EncodeToString(myNodeKey.PrivateKey), tr.ForSign())
+	info := (*contract).Block.Info.(*script.ContractInfo)
+	var (
+		smartTx     tx.SmartContract
+		toSerialize interface{}
+	)
+	smartTx.Header = tx.Header{Type: int(info.ID), Time: time.Now().Unix(), UserID: myWalletID, StateID: 0}
+	signature, err := crypto.Sign(myNodeKey.PrivateKey, smartTx.ForSign())
 	if err != nil {
 		logger.LogError(consts.CryptoError, err)
 		return err
 	}
-	tr.Header.BinSignatures = binSign
-
-	data, err := msgpack.Marshal(tr)
-	if err != nil {
-		return err
+	toSerialize = tx.SmartContract{
+		Header: tx.Header{Type: int(info.ID), Time: smartTx.Header.Time,
+			UserID: myWalletID, BinSignatures: converter.EncodeLengthPlusData(signature)},
+		Data: make([]byte, 0),
 	}
-	data = append(converter.DecToBin(int64(tr.Type), 1), data...)
-
-	hash, err := crypto.Hash(data)
+	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
 		logger.LogError(consts.CryptoError, err)
 		return err
 	}
-
-	queueTx := &model.QueueTx{Hash: hash}
-	err = queueTx.DeleteTx()
-	if err != nil {
-		logger.LogError(consts.DBError, err)
+	data = append([]byte{128}, serializedData...)
+	if hash, err = model.SendTx(int64(info.ID), myWalletID, data); err != nil {
 		return err
 	}
-
-	queueTx.Data = data
-	queueTx.Hash = hash
-	err = queueTx.Save()
-	if err != nil {
-		logger.LogError(consts.DBError, err)
-		return nil
-	}
-
 	p := new(parser.Parser)
 	err = p.TxParser(hash, data, true)
 	if err != nil {
 		logger.LogError(consts.ParserError, err)
 		return err
 	}
+
 	return nil
 }
