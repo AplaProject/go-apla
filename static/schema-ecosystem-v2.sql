@@ -34,7 +34,7 @@ CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
 
 DROP TABLE IF EXISTS "%[1]d_menu"; CREATE TABLE "%[1]d_menu" (
     "id" bigint  NOT NULL DEFAULT '0',
-    "name" character varying(255) NOT NULL DEFAULT '',
+    "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
     "value" text NOT NULL DEFAULT '',
     "conditions" text NOT NULL DEFAULT '',
     "rb_id" bigint NOT NULL DEFAULT '0'
@@ -44,7 +44,7 @@ CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
 
 DROP TABLE IF EXISTS "%d_pages"; CREATE TABLE "%[1]d_pages" (
     "id" bigint  NOT NULL DEFAULT '0',
-    "name" character varying(255) NOT NULL DEFAULT '',
+    "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
     "value" text NOT NULL DEFAULT '',
     "menu" character varying(255) NOT NULL DEFAULT '',
     "conditions" text NOT NULL DEFAULT '',
@@ -52,6 +52,16 @@ DROP TABLE IF EXISTS "%d_pages"; CREATE TABLE "%[1]d_pages" (
 );
 ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
+
+DROP TABLE IF EXISTS "%d_blocks"; CREATE TABLE "%[1]d_blocks" (
+    "id" bigint  NOT NULL DEFAULT '0',
+    "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
+    "value" text NOT NULL DEFAULT '',
+    "conditions" text NOT NULL DEFAULT '',
+    "rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
+CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
 
 DROP TABLE IF EXISTS "%d_signatures"; CREATE TABLE "%[1]d_signatures" (
     "id" bigint  NOT NULL DEFAULT '0',
@@ -163,6 +173,13 @@ INSERT INTO "%[1]d_tables" ("name", "permissions","columns", "conditions") VALUE
     "value": "ContractAccess(\"@1EditPage\")",
     "menu": "ContractAccess(\"@1EditPage\")",
     "conditions": "ContractAccess(\"@1EditPage\")"
+        }', 'ContractAccess("@1EditTable")'),
+        ('blocks', 
+        '{"insert": "ContractAccess(\"@1NewBlock\")", "update": "ContractAccess(\"@1EditBlock\")", 
+          "new_column": "ContractAccess(\"@1NewColumn\")"}',
+        '{"name": "ContractAccess(\"@1EditBlock\")",
+    "value": "ContractAccess(\"@1EditBlock\")",
+    "conditions": "ContractAccess(\"@1EditBlock\")"
         }', 'ContractAccess("@1EditTable")'),
         ('signatures', 
         '{"insert": "ContractAccess(\"@1NewSign\")", "update": "ContractAccess(\"@1EditSign\")", 

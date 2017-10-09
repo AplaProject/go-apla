@@ -359,4 +359,34 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     }
     action {
     }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('20','contract NewBlock {
+    data {
+    	Name       string
+    	Value      string
+    	Conditions string
+    }
+    conditions {
+        ValidateCondition($Conditions,$state)
+       	if HasPrefix($Name, `sys-`) || HasPrefix($Name, `app-`) {
+	    	error `The name cannot start with sys- or app-`
+	    }
+    }
+    action {
+        DBInsert(Table(`blocks`), `name,value,conditions`, $Name, $Value, $Conditions )
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('21','contract EditBlock {
+    data {
+        Id         int
+    	Value      string
+    	Conditions string
+    }
+    conditions {
+        Eval(DBString(Table(`blocks`), `conditions`, $Id))
+        ValidateCondition($Conditions,$state)
+    }
+    action {
+        DBUpdate(Table(`blocks`), $Id, `value,conditions`, $Value, $Conditions)
+    }
 }', '%[1]d','ContractConditions(`MainCondition`)');
