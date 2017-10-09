@@ -389,4 +389,20 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     action {
         DBUpdate(Table(`blocks`), $Id, `value,conditions`, $Value, $Conditions)
     }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('22','contract NewTable {
+    data {
+    	Name       string
+    	Columns      string
+    	Permissions string
+    }
+    conditions {
+        TableConditions($Name, $Columns, $Permissions)
+    }
+    action {
+        CreateTable($Name, $Columns, $Permissions)
+    }
+    func rollback() {
+        RollbackTable($Name)
+    }
 }', '%[1]d','ContractConditions(`MainCondition`)');

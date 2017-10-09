@@ -98,6 +98,7 @@ var (
 		"RollbackEcosystem": 100,
 		"TableConditions":   100,
 		"CreateTable":       100,
+		"RollbackTable":     100,
 	}
 )
 
@@ -154,6 +155,8 @@ func init() {
 		"FindEcosystem":      FindEcosystem,
 		"CreateEcosystem":    CreateEcosystem,
 		"RollbackEcosystem":  RollbackEcosystem,
+		"CreateTable":        CreateTable,
+		"RollbackTable":      RollbackTable,
 		"TableConditions":    TableConditions,
 		"UpdateLang":         UpdateLang,
 		"Size":               Size,
@@ -1464,12 +1467,19 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 		if itype != `varchar` && itype != `number` && itype != `datetime` && itype != `text` && itype != `bytea` && itype != `double` && itype != `money` {
 			return fmt.Errorf(`incorrect type`)
 		}
+		if len(data[`conditions`]) == 0 {
+			return fmt.Errorf(`Conditions is empty`)
+		}
+		if err = smart.CompileEval(data[`conditions`], uint32(p.TxSmart.StateID)); err != nil {
+			return err
+		}
 		if data[`index`] == `1` {
 			if itype != `varchar` && itype != `number` && itype != `datetime` {
 				return fmt.Errorf(`incorrect index type`)
 			}
 			indexes++
 		}
+
 	}
 	if indexes > syspar.GetMaxIndexes() {
 		return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
@@ -1479,25 +1489,133 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 
 	t := &model.Table{}
 	t.SetTablePrefix(prefix)
-	exists, err := t.ExistsByName(prefix + "_" + name)
+	exists, err := t.ExistsByName(name)
 	if err != nil {
 		return err
 	}
 	if exists {
-		return fmt.Errorf(`table exists`)
+		return fmt.Errorf(`table %s exists`, name)
 	}
 
 	if err := p.AccessRights("new_table", false); err != nil {
 		return err
 	}
 
+	var perm map[string]string
+	err = json.Unmarshal([]byte(permissions), &perm)
+	if err != nil {
+		return
+	}
+	for _, v := range []string{`insert`, `update`, `new_column`} {
+		if len(perm[v]) == 0 {
+			return fmt.Errorf(`%v condition is empty`, v)
+		}
+		if err = smart.CompileEval(perm[v], uint32(p.TxSmart.StateID)); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-func CreateTable(p *Parser, name string, columns string) error {
+func CreateTable(p *Parser, name string, columns, permissions string) error {
+	var err error
 	if p.TxContract.Name != `@1NewTable` {
 		return fmt.Errorf(`CreateTable can be only called from @1NewTable`)
 	}
+	prefix := converter.Int64ToStr(p.TxSmart.StateID)
 
+	tableName := prefix + "_" + name
+
+	var cols []map[string]string
+	err = json.Unmarshal([]byte(columns), &cols)
+	if err != nil {
+		return err
+	}
+	indexes := make([]string, 0)
+
+	colsSQL := ""
+	//	colsSQL2 := ""
+	colperm := make(map[string]string)
+	for _, data := range cols {
+		colname := strings.ToLower(data[`name`])
+		colType := ``
+		colDef := ``
+		switch data[`type`] {
+		case "varchar":
+			colType = `varchar(102400)`
+		case "number":
+			colType = `bigint`
+			colDef = `NOT NULL DEFAULT '0'`
+		case "datetime":
+			colType = `timestamp`
+		case "double":
+			colType = `double precision`
+		case "money":
+			colType = `decimal (30, 0)`
+			colDef = `NOT NULL DEFAULT '0'`
+		default:
+			colType = data[`type`]
+		}
+		colsSQL += `"` + colname + `" ` + colType + " " + colDef + " ,\n"
+		//colsSQL2 += `"` + data[`name`] + `": "ContractConditions(\"MainCondition\")",`
+		colperm[colname] = data[`conditions`]
+		if data[`index`] == "1" {
+			indexes = append(indexes, colname)
+		}
+	}
+	colout, err := json.Marshal(colperm)
+	if err != nil {
+		return err
+	}
+	//	colsSQL2 = colsSQL2[:len(colsSQL2)-1]
+	fmt.Println(`Create`, colsSQL)
+	err = model.CreateTable(tableName, colsSQL)
+	if err != nil {
+		return err
+	}
+
+	for _, index := range indexes {
+		err := model.CreateIndex(tableName+"_"+index, tableName, index)
+		if err != nil {
+			return err
+		}
+	}
+	var perm map[string]string
+	permlist := make(map[string]string)
+	err = json.Unmarshal([]byte(permissions), &perm)
+	if err != nil {
+		return err
+	}
+	for _, v := range []string{`insert`, `update`, `new_column`} {
+		permlist[v] = perm[v]
+	}
+	permout, err := json.Marshal(permlist)
+	if err != nil {
+		return err
+	}
+	t := &model.Table{
+		Name:        name,
+		Columns:     string(colout),
+		Permissions: string(permout),
+		Conditions:  `ContractAccess("@1EditTable")`,
+	}
+	t.SetTablePrefix(prefix)
+	err = t.Create()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func RollbackTable(p *Parser, name string) error {
+	if p.TxContract.Name != `@1NewTable` {
+		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
+	}
+	err := model.DropTable(fmt.Sprintf("%d_%s", p.TxSmart.StateID, name))
+	t := &model.Table{Name: name}
+	err = t.Delete()
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -123,7 +123,7 @@ INSERT INTO "%[1]d_parameters" ("id","name", "value", "conditions") VALUES
 ('16','money_digit', '2', 'ContractConditions(`MainCondition`)');
 
 CREATE TABLE "%[1]d_tables" (
-"name" varchar(100)  NOT NULL DEFAULT '',
+"name" varchar(100) UNIQUE NOT NULL DEFAULT '',
 "permissions" jsonb,
 "columns" jsonb,
 "conditions" text  NOT NULL DEFAULT '',

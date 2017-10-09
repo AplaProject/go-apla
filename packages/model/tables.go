@@ -171,13 +171,11 @@ func (t *Table) SetActionByName(table, name, action, actionValue string, rbID in
 }*/
 
 func CreateTable(tableName, colsSQL string) error {
-	return DBConn.Exec(`CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
-				CREATE TABLE "` + tableName + `" (
-				"id" bigint NOT NULL  default nextval('` + tableName + `_id_seq'),
+	return DBConn.Exec(`CREATE TABLE "` + tableName + `" (
+				"id" bigint NOT NULL DEFAULT '0',
 				` + colsSQL + `
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`).Error
 }
 

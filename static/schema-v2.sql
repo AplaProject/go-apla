@@ -115,6 +115,7 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('max_tx_size', '33554432', 'ContractAccess("@0UpdSysParam")'),
 ('max_tx_count', '1000', 'ContractAccess("@0UpdSysParam")'),
 ('max_columns', '50', 'ContractAccess("@0UpdSysParam")'),
+('max_indexes', '1', 'ContractAccess("@0UpdSysParam")'),
 ('max_block_user_tx', '100', 'ContractAccess("@0UpdSysParam")'),
 ('max_fuel_tx', '1000', 'ContractAccess("@0UpdSysParam")'),
 ('max_fuel_block', '100000', 'ContractAccess("@0UpdSysParam")'),

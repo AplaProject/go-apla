@@ -141,7 +141,7 @@ func TestNewTable(t *testing.T) {
 		return
 	}
 
-	form := url.Values{"Name": {`contracts`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
+	form := url.Values{"Name": {`testcontracts`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
 	  "conditions":"true"},
 	{"name":"Amount", "type":"number","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
