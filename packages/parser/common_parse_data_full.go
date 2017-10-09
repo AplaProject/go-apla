@@ -161,11 +161,9 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 					return utils.ErrInfo(fmt.Errorf("empty user_id"))
 				}
 
-				// считаем по каждому юзеру, сколько в блоке от него транзакций
 				// count for each user how many transactions from him are in the block
 				txCounter[userID]++
 
-				// чтобы 1 юзер не смог прислать дос-блок размером в 10гб, который заполнит своими же транзакциями
 				// to prevent the possibility when 1 user can send a 10-gigabyte dos-block which will fill with his own transactions
 				if txCounter[userID] > int64(syspar.GetMaxBlockUserTx()) {
 					err0 := p.RollbackTo(txForRollbackTo, true)
@@ -176,9 +174,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 			}
 			if p.TxContract == nil {
-				// время в транзакции не может быть больше, чем на MAX_TX_FORW сек времени блока
 				// time in the transaction cannot be more than MAX_TX_FORW seconds of block time
-				// и  время в транзакции не может быть меньше времени блока -24ч.
 				// and time in transaction cannot be less than -24 of block time
 				if converter.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > p.BlockData.Time || converter.BytesToInt64(p.TxSlice[2]) < p.BlockData.Time-consts.MAX_TX_BACK {
 					err0 := p.RollbackTo(txForRollbackTo, true)
@@ -188,7 +184,6 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 					return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
 				}
 
-				// проверим, есть ли такой тип тр-ий
 				// check if such type of transaction exists
 				_, ok := consts.TxTypes[converter.BytesToInt(p.TxSlice[1])]
 				if !ok {
@@ -200,6 +195,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 
 			}
+
 			p.TxMap = map[string][]byte{}
 
 			p.TxIds++
@@ -207,6 +203,18 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			p.TxCost = 0
 			var result string
 			if p.TxContract != nil {
+
+				txCounter[p.TxSmart.UserID]++
+				// to prevent the possibility when 1 user can send a 10-gigabyte dos-block which will fill with his own transactions
+				if txCounter[p.TxSmart.UserID] > int64(syspar.GetMaxBlockUserTx()) {
+					//					Is it neccessary?
+					err0 := p.RollbackTo(txForRollbackTo, true)
+					if err0 != nil {
+						log.Error("error: %v", err0)
+					}
+					return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
+				}
+
 				// check that there are enough money in CallContract
 				err := p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
 				fmt.Println(`FULL`, err)
