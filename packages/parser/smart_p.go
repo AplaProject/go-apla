@@ -99,6 +99,7 @@ var (
 		"TableConditions":   100,
 		"CreateTable":       100,
 		"RollbackTable":     100,
+		"PermTable":         100,
 	}
 )
 
@@ -157,6 +158,7 @@ func init() {
 		"RollbackEcosystem":  RollbackEcosystem,
 		"CreateTable":        CreateTable,
 		"RollbackTable":      RollbackTable,
+		"PermTable":          PermTable,
 		"TableConditions":    TableConditions,
 		"UpdateLang":         UpdateLang,
 		"Size":               Size,
@@ -1444,9 +1446,57 @@ func RollbackEcosystem(p *Parser) error {
 }
 
 func TableConditions(p *Parser, name, columns, permissions string) (err error) {
-	if p.TxContract.Name != `@1NewTable` {
+	isEdit := len(columns) == 0
+
+	if isEdit {
+		if p.TxContract.Name != `@1EditTable` {
+			return fmt.Errorf(`TableConditions can be only called from @1EditTable`)
+		}
+	} else if p.TxContract.Name != `@1NewTable` {
 		return fmt.Errorf(`TableConditions can be only called from @1NewTable`)
 	}
+
+	prefix := converter.Int64ToStr(p.TxSmart.StateID)
+
+	t := &model.Table{}
+	t.SetTablePrefix(prefix)
+	exists, err := t.ExistsByName(name)
+	if err != nil {
+		return err
+	}
+	if isEdit {
+		if !exists {
+			return fmt.Errorf(`table %s doesn't exist`, name)
+		}
+	} else if exists {
+		return fmt.Errorf(`table %s exists`, name)
+	}
+
+	var perm map[string]string
+	err = json.Unmarshal([]byte(permissions), &perm)
+	if err != nil {
+		return
+	}
+	if len(perm) != 3 {
+		return fmt.Errorf(`Permissions must contain "insert", "new_column", "update"`)
+	}
+	for _, v := range []string{`insert`, `update`, `new_column`} {
+		if len(perm[v]) == 0 {
+			return fmt.Errorf(`%v condition is empty`, v)
+		}
+		if err = smart.CompileEval(perm[v], uint32(p.TxSmart.StateID)); err != nil {
+			return err
+		}
+	}
+	if isEdit {
+		if err = p.AccessTable(name, `update`); err != nil {
+			if err = p.AccessRights(`changing_tables`, false); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
 	var cols []map[string]string
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
@@ -1485,35 +1535,10 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 		return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
 	}
 
-	prefix := converter.Int64ToStr(p.TxSmart.StateID)
-
-	t := &model.Table{}
-	t.SetTablePrefix(prefix)
-	exists, err := t.ExistsByName(name)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return fmt.Errorf(`table %s exists`, name)
-	}
-
 	if err := p.AccessRights("new_table", false); err != nil {
 		return err
 	}
 
-	var perm map[string]string
-	err = json.Unmarshal([]byte(permissions), &perm)
-	if err != nil {
-		return
-	}
-	for _, v := range []string{`insert`, `update`, `new_column`} {
-		if len(perm[v]) == 0 {
-			return fmt.Errorf(`%v condition is empty`, v)
-		}
-		if err = smart.CompileEval(perm[v], uint32(p.TxSmart.StateID)); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -1568,7 +1593,6 @@ func CreateTable(p *Parser, name string, columns, permissions string) error {
 		return err
 	}
 	//	colsSQL2 = colsSQL2[:len(colsSQL2)-1]
-	fmt.Println(`Create`, colsSQL)
 	err = model.CreateTable(tableName, colsSQL)
 	if err != nil {
 		return err
@@ -1618,4 +1642,26 @@ func RollbackTable(p *Parser, name string) error {
 		return err
 	}
 	return nil
+}
+
+func PermTable(p *Parser, name, permissions string) error {
+	if p.TxContract.Name != `@1EditTable` {
+		return fmt.Errorf(`EditTable can be only called from @1EditTable`)
+	}
+	var perm map[string]string
+	permlist := make(map[string]string)
+	err := json.Unmarshal([]byte(permissions), &perm)
+	if err != nil {
+		return err
+	}
+	for _, v := range []string{`insert`, `update`, `new_column`} {
+		permlist[v] = perm[v]
+	}
+	permout, err := json.Marshal(permlist)
+	if err != nil {
+		return err
+	}
+	_, _, err = p.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
+		fmt.Sprintf(`%d_tables`, p.TxSmart.StateID), []string{`name`}, []string{name}, true)
+	return err
 }

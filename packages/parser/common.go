@@ -584,7 +584,6 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
 	columnsAndPermissions, err := tables.GetColumns(table, "")
-
 	if err != nil {
 		return err
 	}

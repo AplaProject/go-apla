@@ -405,4 +405,16 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     func rollback() {
         RollbackTable($Name)
     }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('23','contract EditTable {
+    data {
+    	Name       string
+    	Permissions string
+    }
+    conditions {
+        TableConditions($Name, ``, $Permissions)
+    }
+    action {
+        PermTable($Name, $Permissions )
+    }
 }', '%[1]d','ContractConditions(`MainCondition`)');

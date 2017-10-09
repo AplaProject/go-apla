@@ -140,12 +140,20 @@ func TestNewTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
-
-	form := url.Values{"Name": {`testcontracts`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
+	name := randName(`tbl`)
+	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
 	  "conditions":"true"},
 	{"name":"Amount", "type":"number","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {name},
+		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
+			"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
+	err = postTx(`EditTable`, &form)
 	if err != nil {
 		t.Error(err)
 		return
