@@ -102,3 +102,11 @@ static/prepros.cfg
 static/sass
 packages/static/static.go
 packages/apiv2/key
+go-apla
+1block
+NodePrivateKey
+PrivateKey
+SelectiveLog.txt
+config.ini
+dclog.txt
+exchangeapi.db

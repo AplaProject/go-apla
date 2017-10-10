@@ -17,8 +17,8 @@
 package tcpserver
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/utils"
 )
 
 // Type7 writes the body of the specified block

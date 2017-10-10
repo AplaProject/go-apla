@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/AplaProject/go-apla/packages/script"
 )
 
 // Contract contains the information about the contract.

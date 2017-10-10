@@ -6,8 +6,8 @@ import (
 
 	"bytes"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 )
 
 func Monitoring(w http.ResponseWriter, r *http.Request) {

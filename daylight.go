@@ -22,11 +22,11 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/daylight"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/static"
-	"github.com/EGaaS/go-egaas-mvp/packages/system"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/daylight"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/static"
+	"github.com/AplaProject/go-apla/packages/system"
+	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
 	"github.com/go-thrust/thrust"
@@ -37,7 +37,7 @@ func main_loader(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, string(data))
 }
 func main_loader_html(w http.ResponseWriter, r *http.Request) {
-	html := `<html><title>EgaaS</title><body  bgcolor="#4DC3FD" style="margin:0;padding:0;overflow:hidden; text-align:center"><img src="static/img/main_loader.gif"/></body></html>`
+	html := `<html><title>Apla</title><body  bgcolor="#4DC3FD" style="margin:0;padding:0;overflow:hidden; text-align:center"><img src="static/img/main_loader.gif"/></body></html>`
 	fmt.Fprint(w, html)
 }
 func main() {
@@ -55,7 +55,7 @@ func main() {
 		thrustWindow = thrust.NewWindow(thrust.WindowOptions{
 			RootUrl:  "http://localhost:7979/loader.html",
 			HasFrame: winVer() != 6,
-			Title:    "EGaaS",
+			Title:    "AplaProject",
 			Size:     commands.SizeHW{Width: width, Height: height},
 		})
 

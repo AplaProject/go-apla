@@ -23,7 +23,7 @@ import (
 
 	"strconv"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/model"
 )
 
 type cacheLang struct {

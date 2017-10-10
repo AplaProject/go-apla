@@ -20,8 +20,8 @@ import (
 	"encoding/hex"
 	"net/http"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 )
 
 type txstatusResult struct {

@@ -34,8 +34,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/lib"
+	"github.com/AplaProject/go-apla/packages/utils"
 )
 
 const (

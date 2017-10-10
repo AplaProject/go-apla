@@ -9,8 +9,8 @@ import (
 
 	"fmt"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/utils"
 )
 
 type TransactionType struct {

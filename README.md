@@ -1,35 +1,19 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/EGaaS/go-egaas-mvp)](https://goreportcard.com/report/github.com/EGaaS/go-egaas-mvp)
+[![Go Report Card](https://goreportcard.com/badge/github.com/AplaProject/go-apla/)](https://goreportcard.com/report/github.com/AplaProject/go-apla/)
 
-### Installation v1.x - only egs-wallet
-
-Install golang >=1.6 https://golang.org/dl/<br>
-Set GOPATH<br>
-Install git https://git-scm.com/
-```
-go get -u github.com/jteeuwen/go-bindata/...
-git clone -b 1.0 https://github.com/EGaaS/go-egaas-mvp.git
-cd go-egaas-mvp
-rm -rf packages/static/static.go
-$GOPATH/bin/go-bindata -o="packages/static/static.go" -pkg="static" static/..
-go build
-./go-egaas-mvp
-```
-
-### Installation v0.x - full egaas (private blockchain)
-
+### Installation
 
 Install golang >=1.6 https://golang.org/dl/<br>
 Set GOPATH<br>
 Install git https://git-scm.com/
 ```
 go get -u github.com/jteeuwen/go-bindata/...
-go get -u github.com/EGaaS/go-egaas-mvp
-cd $GOPATH/src/github.com/EGaaS/go-egaas-mvp
+go get -u github.com/AplaProject/go-apla
+cd $GOPATH/src/github.com/AplaProject/go-apla
 $GOPATH/bin/go-bindata -o="packages/static/static.go" -pkg="static" static/..
 go build
-./go-egaas-mvp
+./go-apla
 ```
 
 
 ### Questions?
-email: hello@egaas.org
+email: hello@apla.io

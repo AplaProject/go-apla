@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/AplaProject/go-apla/packages/converter"
 )
 
 type signProvider int

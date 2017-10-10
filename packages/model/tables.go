@@ -3,7 +3,7 @@ package model
 import (
 	"strconv"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/AplaProject/go-apla/packages/converter"
 
 	"github.com/jinzhu/gorm"
 )

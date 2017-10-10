@@ -22,7 +22,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/op/go-logging"
 )
 

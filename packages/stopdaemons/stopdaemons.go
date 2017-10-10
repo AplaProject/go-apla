@@ -21,9 +21,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/system"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/system"
+	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/op/go-logging"
 )
 

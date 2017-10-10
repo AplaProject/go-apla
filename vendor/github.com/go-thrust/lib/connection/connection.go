@@ -11,7 +11,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/go-thrust/lib/commands"
 	. "github.com/go-thrust/lib/common"
 )

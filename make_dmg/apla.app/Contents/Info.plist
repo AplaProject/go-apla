@@ -5,13 +5,13 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Egaas</string>
+	<string>apla</string>
 	<key>CFBundleExecutable</key>
 	<string>starter</string>
 	<key>CFBundleIconFile</key>
-	<string>egaas.icns</string>
+	<string>apla.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.egaas</string>
+	<string>org.apla</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>

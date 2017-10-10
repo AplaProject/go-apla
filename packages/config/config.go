@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/astaxie/beego/config"
 	"github.com/op/go-logging"
 )

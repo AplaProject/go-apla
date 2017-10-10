@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/utils"
 )
 
 // Stop stops the program

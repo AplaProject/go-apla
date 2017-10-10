@@ -13,7 +13,7 @@ git config --global user.email "you@example.com"
 go get -u github.com/jteeuwen/go-bindata/...
 rm packages/static/static.go
 git stash
-go get -u -f github.com/EGaaS/go-mvp
+go get -u -f github.com/AplaProject/go-apla
 go-bindata -o="packages/static/static.go" -pkg="static" static/...
 GOARCH=$ARCH1  CGO_ENABLED=1  go build -o make_deb/daylight$ARCH0/usr/share/daylight/daylight
 cd make_deb

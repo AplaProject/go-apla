@@ -20,13 +20,13 @@ package daylight
 
 import (
 	//"fmt"
-	//"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	//"github.com/AplaProject/go-apla/packages/consts"
 	"net"
 	"net/http"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/tcpserver"
+	"github.com/AplaProject/go-apla/packages/utils"
 	//"os"
 	//"regexp"
 	//	"time"
@@ -35,7 +35,7 @@ import (
 
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 )
 
 // IosLog is reserved

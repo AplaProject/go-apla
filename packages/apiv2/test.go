@@ -20,8 +20,8 @@ import (
 	"encoding/hex"
 	"net/http"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/smart"
 )
 
 type getTestResult struct {

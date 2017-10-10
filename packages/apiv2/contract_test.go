@@ -23,8 +23,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
 )
 
 func TestNewContracts(t *testing.T) {

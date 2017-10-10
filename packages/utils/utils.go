@@ -36,9 +36,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/kardianos/osext"
 	"github.com/mcuadros/go-version"
 	"github.com/op/go-logging"
@@ -85,7 +85,7 @@ var (
 	OldVersion = flag.String("oldVersion", "", "")
 	// TestRollBack equals 1 for testing rollback
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
-	// Dir is EGAAS folder
+	// Dir is apla folder
 	Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
 	// OldFileName is the old file name
 	OldFileName = flag.String("oldFileName", "", "")
@@ -924,11 +924,11 @@ func ShellExecute(cmdline string) {
 	}
 }
 
-// EgaasUpdate decompresses and updates executable file
-func EgaasUpdate(url string) error {
+// AplaUpdate decompresses and updates executable file
+func AplaUpdate(url string) error {
 	//	GetUpdVerAndURL(host string) (updinfo *lib.Update, err error)
 
-	zipfile := filepath.Join(*Dir, "egaas.zip")
+	zipfile := filepath.Join(*Dir, "apla.zip")
 	/*	_, err := DownloadToFile(url, zipfile, 3600, nil, nil, "upd")
 		if err != nil {
 			return ErrInfo(err)

@@ -20,8 +20,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/script"
-	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/smart"
 )
 
 type contractField struct {

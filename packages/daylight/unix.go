@@ -22,7 +22,7 @@ package daylight
 import (
 	"syscall"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/AplaProject/go-apla/packages/converter"
 )
 
 func KillPid(pid string) error {

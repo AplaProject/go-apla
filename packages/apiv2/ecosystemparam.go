@@ -19,8 +19,8 @@ package apiv2
 import (
 	"net/http"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 )
 
 func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {

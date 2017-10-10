@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/AplaProject/go-apla/packages/lib"
 	"io/ioutil"
 	"math/big"
 )

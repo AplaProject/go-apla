@@ -17,7 +17,7 @@
 package tcpserver
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/model"
 )
 
 // Type4 writes the hash of the specified block

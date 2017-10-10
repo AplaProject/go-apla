@@ -30,21 +30,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/apiv2"
-	"github.com/EGaaS/go-egaas-mvp/packages/config"
-	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/daemons"
-	"github.com/EGaaS/go-egaas-mvp/packages/exchangeapi"
-	"github.com/EGaaS/go-egaas-mvp/packages/language"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/parser"
-	"github.com/EGaaS/go-egaas-mvp/packages/schema"
-	"github.com/EGaaS/go-egaas-mvp/packages/static"
-	"github.com/EGaaS/go-egaas-mvp/packages/stopdaemons"
-	"github.com/EGaaS/go-egaas-mvp/packages/template"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/apiv2"
+	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/daemons"
+	"github.com/AplaProject/go-apla/packages/exchangeapi"
+	"github.com/AplaProject/go-apla/packages/language"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/parser"
+	"github.com/AplaProject/go-apla/packages/schema"
+	"github.com/AplaProject/go-apla/packages/static"
+	"github.com/AplaProject/go-apla/packages/stopdaemons"
+	"github.com/AplaProject/go-apla/packages/template"
+	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
@@ -305,7 +305,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	exchangeapi.InitAPI()
 
-	// kill previously run eGaaS
+	// kill previously run apla
 	if !utils.Mobile() {
 		killOld()
 	}

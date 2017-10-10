@@ -20,8 +20,8 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 )
 
 // selectiveRollback rollbacks the specified fields

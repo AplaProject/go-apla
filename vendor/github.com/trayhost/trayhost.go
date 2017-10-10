@@ -33,8 +33,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/op/go-logging"
 )
 

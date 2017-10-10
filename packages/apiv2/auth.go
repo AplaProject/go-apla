@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/crypto"
 
 	"github.com/dgrijalva/jwt-go"
 )

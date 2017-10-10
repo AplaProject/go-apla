@@ -19,8 +19,8 @@ package exchangeapi
 import (
 	"net/http"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 )
 
 // Balance is the result structure of balamce handler

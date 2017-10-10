@@ -9,7 +9,7 @@ import (
 
 	"context"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/model"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 

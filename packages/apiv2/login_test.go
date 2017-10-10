@@ -21,7 +21,7 @@ import (
 		"fmt"
 		"net/url"*/
 	"testing"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	//	"github.com/AplaProject/go-apla/packages/crypto"
 )
 
 func TestAuth(t *testing.T) {

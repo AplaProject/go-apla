@@ -14,7 +14,7 @@ import (
 
 	"bytes"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/shopspring/decimal"
 )
 
@@ -674,7 +674,7 @@ func StrToMoney(str string) float64 {
 	return StrToFloat64(new)
 }
 
-// AddressToString converts int64 address to EGAAS address as XXXX-...-XXXX.
+// AddressToString converts int64 address to apla address as XXXX-...-XXXX.
 func AddressToString(address int64) (ret string) {
 	num := strconv.FormatUint(uint64(address), 10)
 	val := []byte(strings.Repeat("0", 20-len(num)) + num)
@@ -702,8 +702,8 @@ func EncodeLengthPlusData(idata interface{}) []byte {
 	return append(EncodeLength(int64(len(data))), data...)
 }
 
-// StringToAddress converts string EGAAS address to int64 address. The input address can be a positive or negative
-// number, or EGAAS address in XXXX-...-XXXX format. Returns 0 when error occurs.
+// StringToAddress converts string apla address to int64 address. The input address can be a positive or negative
+// number, or apla address in XXXX-...-XXXX format. Returns 0 when error occurs.
 func StringToAddress(address string) (result int64) {
 	var (
 		err error
@@ -831,7 +831,7 @@ func StripTags(value string) string {
 	return strings.Replace(strings.Replace(value, `<`, `&lt;`, -1), `>`, `&gt;`, -1)
 }
 
-// IsValidAddress checks if the specified address is EGAAS address.
+// IsValidAddress checks if the specified address is apla address.
 func IsValidAddress(address string) bool {
 	val := []byte(strings.Replace(address, `-`, ``, -1))
 	if len(val) != 20 {
