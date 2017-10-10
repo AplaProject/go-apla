@@ -549,7 +549,7 @@ func (p *Parser) AccessTable(table, action string) error {
 	prefix := table[:strings.IndexByte(table, '_')]
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	tablePermission, err := tables.GetPermissions(table, "")
+	tablePermission, err := tables.GetPermissions(table[strings.IndexByte(table, '_')+1:], "")
 	if err != nil {
 		return err
 	}

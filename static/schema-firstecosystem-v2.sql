@@ -430,9 +430,22 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         ColumnCondition($TableName, $Name, $Type, $Permissions, $Index)
     }
     action {
+        CreateColumn($TableName, $Name, $Type, $Permissions, $Index)
     }
     func rollback() {
-        RollbackColumn()
+        RollbackColumn($TableName, $Name)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-;
+('25','contract EditColumn {
+    data {
+    	TableName   string
+	    Name        string
+	    Permissions string
+    }
+    conditions {
+        ColumnCondition($TableName, $Name, ``, $Permissions, ``)
+    }
+    action {
+        PermColumn($TableName, $Name, $Permissions)
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)');

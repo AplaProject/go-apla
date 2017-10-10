@@ -68,6 +68,8 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 			Conditions: row[`conditions`],
 			Columns:    columns,
 		}
+	} else {
+		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
 	}
 	data.result = &result
 	return

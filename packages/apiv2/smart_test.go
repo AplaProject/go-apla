@@ -119,7 +119,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 5; i++ {
 		name = randName(`page`)
 		form = url.Values{"Name": {name}, "Value": {value},
 			"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
@@ -129,6 +129,14 @@ func TestPage(t *testing.T) {
 			return
 		}
 	}
+	form = url.Values{"Name": {name}, "Value": {value},
+		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	id, msg, err = postTxResult(`NewBlock`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	form = url.Values{"Id": {`2`}, "Value": {value + `Span(Test)`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	id, msg, err = postTxResult(`EditPage`, &form)
@@ -169,30 +177,18 @@ func TestNewTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	/*	name := randName(`page`)
-		menu := `government`
-		value := `P(test,test paragraph)`
-		form = url.Values{"Name": {name}, "Value": {`New Param Value`},
-			"Conditions": {`ContractConditions("MainCondition")`}}
-		id, msg, err = postTxResult(`EditParameter`, &form)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		form = url.Values{"Name": {name}, "Value": {value},
-			"Menu": {menu}, "Conditions": {`ContractConditions("MainCondition")`}}
-		id, msg, err = postTxResult(`NewPage`, &form)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-
-		form = url.Values{"Id": {`1`}, "Value": {value + `Span(Test)`},
-			"Menu": {menu}, "Conditions": {`ContractConditions("MainCondition")`}}
-		id, msg, err = postTxResult(`EditPage`, &form)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		fmt.Println(`RET`, id, msg)*/
+	form = url.Values{"TableName": {name}, "Name": {`newCol`},
+		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
+	err = postTx(`NewColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"TableName": {name}, "Name": {`newCol`},
+		"Permissions": {"ContractConditions(\"MainCondition\")"}}
+	err = postTx(`EditColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }

@@ -35,6 +35,7 @@ var (
 		`E_SERVER`:        `Server error`,
 		`E_SIGNATURE`:     `Signature is incorrect`,
 		`E_STATELOGIN`:    `%s is not a membership of ecosystem %s`,
+		`E_TABLENOTFOUND`: `Table %s has not been found`,
 		`E_TOKEN`:         `Token is not valid`,
 		`E_UNAUTHORIZED`:  `Unauthorized`,
 		`E_UNDEFINEVAL`:   `Value %s is undefined`,
