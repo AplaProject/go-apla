@@ -21,9 +21,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
 )
 
 type contractsResult struct {
