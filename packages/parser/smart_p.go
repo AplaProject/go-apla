@@ -309,6 +309,12 @@ func (p *Parser) CallContract(flags int) (err error) {
 	)
 	payWallet := &model.Key{}
 	p.TxContract.Extend = p.getExtend()
+	var price int64
+
+	methods := []string{`init`, `conditions`, `action`, `rollback`}
+	p.TxContract.StackCont = []string{p.TxContract.Name}
+	(*p.TxContract.Extend)[`stack_cont`] = StackCont
+
 	if flags&smart.CallRollback == 0 && (flags&smart.CallAction) != 0 {
 		toID = p.BlockData.WalletID
 		fromID = p.TxSmart.UserID
@@ -383,35 +389,30 @@ func (p *Parser) CallContract(flags int) (err error) {
 			if err != nil {
 				return err
 			}
+			if cprice := p.TxContract.GetFunc(`price`); cprice != nil {
+				var ret []interface{}
+				if ret, err = smart.Run(cprice, nil, p.TxContract.Extend); err != nil {
+					return err
+				} else if len(ret) == 1 {
+					if _, ok := ret[0].(int64); !ok {
+						return fmt.Errorf(`Wrong result type of price function`)
+					}
+					price = ret[0].(int64)
+				} else {
+					return fmt.Errorf(`Wrong type of price function`)
+				}
+			}
 			sizeFuel = syspar.GetSizeFuel() * int64(len(p.TxSmart.Data)) / 1024
-			if amount.Cmp(decimal.New(sizeFuel, 0).Mul(fuelRate)) <= 0 {
+			if amount.Cmp(decimal.New(sizeFuel+price, 0).Mul(fuelRate)) <= 0 {
 				return fmt.Errorf(`current balance is not enough`)
 			}
 		}
 	}
-
-	methods := []string{`init`, `conditions`, `action`, `rollback`}
-	p.TxContract.StackCont = []string{p.TxContract.Name}
-	(*p.TxContract.Extend)[`stack_cont`] = StackCont
-	before := (*p.TxContract.Extend)[`txcost`].(int64)
+	before := (*p.TxContract.Extend)[`txcost`].(int64) + price
 
 	// Payment for the size
 	(*p.TxContract.Extend)[`txcost`] = (*p.TxContract.Extend)[`txcost`].(int64) - sizeFuel
 
-	var price int64 = -1
-	if cprice := p.TxContract.GetFunc(`price`); cprice != nil {
-		var ret []interface{}
-		if ret, err = smart.Run(cprice, nil, p.TxContract.Extend); err != nil {
-			return err
-		} else if len(ret) == 1 {
-			if _, ok := ret[0].(int64); !ok {
-				return fmt.Errorf(`Wrong result type of price function`)
-			}
-			price = ret[0].(int64)
-		} else {
-			return fmt.Errorf(`Wrong type of price function`)
-		}
-	}
 	p.TxContract.FreeRequest = false
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {
@@ -422,6 +423,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			p.TxContract.Called = 1 << i
 			_, err = smart.Run(cfunc, nil, p.TxContract.Extend)
 			if err != nil {
+				before -= price
 				break
 			}
 		}
@@ -1413,11 +1415,12 @@ func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
 	_, id, err := p.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
 		name,
 	}, `system_states`, nil, nil, true)
+
 	if err != nil {
 		return 0, err
 	}
-	model.ExecSchemaEcosystem(converter.StrToInt(id), wallet, name)
-	return converter.StrToInt64(id), nil
+	err = model.ExecSchemaEcosystem(converter.StrToInt(id), wallet, name)
+	return converter.StrToInt64(id), err
 }
 
 func RollbackEcosystem(p *Parser) error {
@@ -1438,7 +1441,7 @@ func RollbackEcosystem(p *Parser) error {
 		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
 	}
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
-		`contracts`, `parameters`} {
+		`contracts`, `parameters`, `blocks`, `history`, `keys`} {
 		err = model.DropTable(fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			return err

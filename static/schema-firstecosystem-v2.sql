@@ -69,6 +69,9 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
                $Value, $Conditions, $walletContract, $TokenEcosystem)
         FlushContract(root, id, false)
     }
+    func price() int {
+        return  SysParamInt(`contract_price`)
+    }
 }', '%[1]d', 'ContractConditions(`MainCondition`)'),
 ('4','contract EditContract {
     data {
@@ -154,6 +157,9 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	DBInsert(Str(id) + "_keys", "id,pub", $wallet, DBString("1_keys", "pub", $wallet))
         $result = id
     }
+    func price() int {
+        return  SysParamInt(`ecosystem_price`)
+    }
     func rollback() {
         RollbackEcosystem()
     }
@@ -207,6 +213,9 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     action {
         DBInsert(Table(`menu`), `name,value,conditions`, $Name, $Value, $Conditions )
     }
+    func price() int {
+        return  SysParamInt(`menu_price`)
+    }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('10','contract EditMenu {
     data {
@@ -251,6 +260,9 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     }
     action {
         DBInsert(Table(`pages`), `name,value,menu,conditions`, $Name, $Value, $Menu, $Conditions )
+    }
+    func price() int {
+        return  SysParamInt(`page_price`)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('13','contract EditPage {
@@ -405,6 +417,9 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     func rollback() {
         RollbackTable($Name)
     }
+    func price() int {
+        return  SysParamInt(`table_price`)
+    }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('23','contract EditTable {
     data {
@@ -434,6 +449,9 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     }
     func rollback() {
         RollbackColumn($TableName, $Name)
+    }
+    func price() int {
+        return  SysParamInt(`column_price`)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('25','contract EditColumn {
