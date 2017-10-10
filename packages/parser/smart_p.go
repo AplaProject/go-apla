@@ -1665,3 +1665,45 @@ func PermTable(p *Parser, name, permissions string) error {
 		fmt.Sprintf(`%d_tables`, p.TxSmart.StateID), []string{`name`}, []string{name}, true)
 	return err
 }
+
+func ColumnCondition(p *Parser, tableName, name, coltype, permissions, index string) error {
+	if p.TxContract.Name != `@1NewColumn` {
+		return fmt.Errorf(`ColumnCondition can be only called from @1NewColumn`)
+	}
+
+	/*	err := p.generalCheck(`new_column`, &p.NewColumn.Header, map[string]string{"permissions": p.NewColumn.Permissions})
+		if err != nil {
+			return p.ErrInfo(err)
+		}*/
+
+	prefix := converter.Int64ToStr(p.TxSmart.StateID)
+	tEx := &model.Table{}
+	tEx.SetTablePrefix(prefix)
+
+	exists, err := tEx.IsExistsByPermissionsAndTableName(name, tableName)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf(`column %s exists`, name)
+	}
+	tblName := fmt.Sprintf("%d_%s", p.TxSmart.StateID, tableName)
+	count, err := model.GetColumnCount(tblName)
+	if count >= int64(syspar.GetMaxColumns()) {
+		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
+	}
+	if index == `1` {
+		count, err := model.NumIndexes(tblName)
+		if err != nil {
+			return err
+		}
+		if count >= syspar.GetMaxIndexes() {
+			return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
+		}
+	}
+
+	if err := p.AccessTable(tblName, "new_column"); err != nil {
+		return err
+	}
+	return nil
+}

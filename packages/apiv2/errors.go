@@ -27,6 +27,7 @@ var (
 		`E_HASHNOTFOUND`:  `Hash has not been found`,
 		`E_INSTALLED`:     `Apla is already installed`,
 		`E_INVALIDWALLET`: `Wallet %s is not valid`,
+		`E_NOTFOUND`:      `Page not found`,
 		`E_NOTINSTALLED`:  `Apla is not installed`,
 		`E_QUERY`:         `DB query is wrong`,
 		`E_RECOVERED`:     `API recovered`,

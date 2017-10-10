@@ -60,6 +60,9 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if err != nil {
 		return err
 	}
+	if len(pattern) == 0 {
+		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+	}
 	ret := templatev2.Template2JSON(pattern[`value`], false, initVars(r, data))
 	data.result = &contentResult{Tree: string(ret), Menu: pattern[`menu`]}
 	return nil
@@ -74,6 +77,10 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
+	if len(pattern) == 0 {
+		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+	}
+
 	ret := templatev2.Template2JSON(pattern, false, initVars(r, data))
 	data.result = &contentResult{Tree: string(ret)}
 	return nil

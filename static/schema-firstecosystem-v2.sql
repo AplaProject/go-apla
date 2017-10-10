@@ -417,4 +417,22 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     action {
         PermTable($Name, $Permissions )
     }
-}', '%[1]d','ContractConditions(`MainCondition`)');
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('24','contract NewColumn {
+    data {
+    	TableName   string
+	    Name        string
+	    Type        string
+	    Permissions string
+	    Index       string "optional"
+    }
+    conditions {
+        ColumnCondition($TableName, $Name, $Type, $Permissions, $Index)
+    }
+    action {
+    }
+    func rollback() {
+        RollbackColumn()
+    }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+;

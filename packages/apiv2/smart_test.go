@@ -90,6 +90,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 	name := randName(`page`)
+	menuname := randName(`menu`)
 	menu := `government`
 	value := `P(test,test paragraph)`
 
@@ -100,9 +101,9 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Name": {`testMenu`}, "Value": {`first
-		second
-		third`},
+	form = url.Values{"Name": {menuname}, "Value": {`first
+			second
+			third`},
 		"Conditions": {`true`}}
 	err = postTx(`NewMenu`, &form)
 	if err != nil {
@@ -117,21 +118,31 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Name": {name}, "Value": {value},
-		"Menu": {menu}, "Conditions": {`ContractConditions("MainCondition")`}}
-	id, msg, err = postTxResult(`NewPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
 
-	form = url.Values{"Id": {`1`}, "Value": {value + `Span(Test)`},
-		"Menu": {menu}, "Conditions": {`ContractConditions("MainCondition")`}}
+	for i := 0; i < 10; i++ {
+		name = randName(`page`)
+		form = url.Values{"Name": {name}, "Value": {value},
+			"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		id, msg, err = postTxResult(`NewPage`, &form)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	}
+	form = url.Values{"Id": {`2`}, "Value": {value + `Span(Test)`},
+		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	id, msg, err = postTxResult(`EditPage`, &form)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	form = url.Values{"Id": {`2`}, "Value": {`Span(Append)`}}
+	id, msg, err = postTxResult(`AppendPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	fmt.Println(`RET`, id, msg)
 }
 
