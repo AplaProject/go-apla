@@ -63,6 +63,16 @@ func (p *FirstBlockParser) Action() error {
 	if err = key.SetTablePrefix(consts.MainEco).Create(); err != nil {
 		return p.ErrInfo(err)
 	}
+	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_pages" (id,name,menu,value,conditions) values('1', 'default_page',
+		  'default_menu', ?, 'ContractAccess("@1EditPage")')`, syspar.SysString(`default_ecosystem_page`)).Error
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_menu" (id,name,value,conditions) values('1', 'default_menu', ?, 'ContractAccess("@1EditMenu")')`,
+		syspar.SysString(`default_ecosystem_menu`)).Error
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	err = template.LoadContract(p.DbTransaction, `1`)
 	if err != nil {
 		return p.ErrInfo(err)

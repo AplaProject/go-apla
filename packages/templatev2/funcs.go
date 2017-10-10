@@ -67,6 +67,7 @@ var (
 func init() {
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
+	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
 	funcs[`Input`] = tplFunc{inputTag, inputTag, `input`, `Name,Class,Placeholder,Type,Value`}
 	funcs[`DBFind`] = tplFunc{dbfindTag, defaultTag, `dbfind`, `Name`}
 
@@ -167,6 +168,25 @@ func tailTag(par parFunc) string {
 	setAllAttr(par)
 	for key, v := range par.Node.Attr {
 		par.Owner.Attr[key] = v
+	}
+	return ``
+}
+
+func includeTag(par parFunc) string {
+	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Vars)[`_include`]) < 5 {
+		pattern, err := model.Single(`select value from "`+(*par.Vars)[`state`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
+		if err != nil {
+			return err.Error()
+		}
+		if len(pattern) > 0 {
+			root := node{}
+			(*par.Vars)[`_include`] += `1`
+			process(pattern, &root, par.Vars)
+			(*par.Vars)[`_include`] = (*par.Vars)[`_include`][:len((*par.Vars)[`_include`])-1]
+			for _, item := range root.Children {
+				par.Owner.Children = append(par.Owner.Children, item)
+			}
+		}
 	}
 	return ``
 }

@@ -91,7 +91,10 @@ var forTest = tplList{
 		`[{"tag":"style","attr":{"css":".mydiv, .myspan {\n\t\tcolor: #f00;\n\t\tmargin: 10px 5px;\n\t}"}}]`},
 	{`SetVar(testvalue, The, #n#, Value).(n, New).(param,"23")Span(Test value equals #testvalue#).(#param#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, New, Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
-/*	{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25)`,
+/*	{`Div(myclass, Include(test)Span(OK))`,
+		`[{"tag":"include","attr":{"name":"myblock"}}]`},*/
+
+	/*	{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25)`,
 		``},*/
 }
 
@@ -120,4 +123,6 @@ var forFullTest = tplList{
 		`[{"tag":"button","attr":{"page":"link"},"children":[{"tag":"text","text":"My Button"}],"tail":[{"tag":"alert","attr":{"cancelbutton":"CancelBtn","confirmbutton":"ConfBtn","icon":"myicon","text":"Alert text"}}]}]`},
 	{`SetVar(testvalue, The new value).(n, param).Span(#testvalue#)`,
 		`[{"tag":"setvar","attr":{"name":"testvalue","value":"The new value"}},{"tag":"setvar","attr":{"name":"n","value":"param"}},{"tag":"text","text":"."},{"tag":"span","children":[{"tag":"text","text":"#testvalue#"}]}]`},
+	{`Include(myblock)`,
+		`[{"tag":"include","attr":{"name":"myblock"}}]`},
 }
