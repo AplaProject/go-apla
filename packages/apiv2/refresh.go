@@ -22,7 +22,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/dgrijalva/jwt-go"
+	log "github.com/sirupsen/logrus"
 )
 
 type refreshResult struct {
@@ -30,33 +33,40 @@ type refreshResult struct {
 	Refresh string `json:"refresh,omitempty"`
 }
 
-func refresh(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func refresh(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	if data.token == nil || !data.token.Valid {
+		logger.Error("token is invalid or valid")
 		return errorAPI(w, `E_TOKEN`, http.StatusBadRequest)
 	}
 	claims, ok := data.token.Claims.(*JWTClaims)
-	claimsInt, err := strconv.ParseInt(claims.Wallet, 10, 64)
-	if err != nil {
-		claimsInt = 0
+	if !ok {
+		logger.WithFields(log.Fields{"type": consts.SessionError}).Error("getting jwt claims")
+		return errorAPI(w, `E_TOKEN`, http.StatusBadRequest)
 	}
-	if !ok || claimsInt == 0 {
+	_, err := strconv.ParseInt(claims.Wallet, 10, 64)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Warning("convertion wallet to int")
 		return errorAPI(w, `E_TOKEN`, http.StatusBadRequest)
 	}
 	token, err := jwt.ParseWithClaims(data.params[`token`].(string), &JWTClaims{},
 		func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				logger.WithFields(log.Fields{"type": consts.SessionError, "signing_method": token.Header["alg"]}).Error("unexpected signing method")
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
 			return []byte(jwtSecret), nil
 		})
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.SessionError, "signing_method": token.Header["alg"]}).Error("unexpected signing method")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if token == nil || !token.Valid {
+		logger.WithFields(log.Fields{"type": consts.SessionError}).Error("token is invalid")
 		return errorAPI(w, `E_REFRESHTOKEN`, http.StatusBadRequest)
 	}
 	refClaims, ok := token.Claims.(*JWTClaims)
 	if !ok || refClaims.Wallet != claims.Wallet || refClaims.State != claims.State {
+		logger.WithFields(log.Fields{"type": consts.SessionError}).Error("token wallet or state is invalid")
 		return errorAPI(w, `E_REFRESHTOKEN`, http.StatusBadRequest)
 	}
 	var result refreshResult
@@ -69,11 +79,13 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Second * time.Duration(expire)).Unix()
 	result.Token, err = jwtGenerateToken(w, *claims)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.SessionError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	result.Refresh, err = jwtGenerateToken(w, *claims)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.SessionError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	return nil

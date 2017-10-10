@@ -21,6 +21,9 @@ import (
 	"net/http"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
@@ -30,7 +33,7 @@ type listResult struct {
 	List  []map[string]string `json:"list"`
 }
 
-func list(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
+func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	var limit int
 
 	table := converter.EscapeName(converter.Int64ToStr(data.state) + `_` + data.params[`name`].(string))
@@ -41,6 +44,7 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 
 	count, err := model.GetNextID(strings.Trim(table, `"`))
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting next table id")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -52,10 +56,12 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	list, err := model.GetAll(`select `+cols+` from `+table+` order by id desc`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &listResult{
-		Count: converter.Int64ToStr(count - 1), List: list,
+		Count: converter.Int64ToStr(count - 1),
+		List:  list,
 	}
 	return
 }

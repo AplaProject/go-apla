@@ -30,12 +30,12 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/dgrijalva/jwt-go"
 	hr "github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -71,7 +71,7 @@ const (
 	pOptional = 0x100
 )
 
-type apiHandle func(http.ResponseWriter, *http.Request, *apiData) error
+type apiHandle func(http.ResponseWriter, *http.Request, *apiData, *log.Entry) error
 
 var (
 	installed bool
@@ -131,11 +131,12 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 	}
 	signature := data.params[`signature`].([]byte)
 	if len(signature) == 0 {
+		log.WithFields(log.Fields{"params": data.params}).Error("signature is empty")
 		return tx.Header{}, fmt.Errorf("signature is empty")
 	}
 	timeInt, err := strconv.ParseInt(data.params["time"].(string), 10, 64)
 	if err != nil {
-		timeInt = 0
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "val": data.params["time"], "error": err}).Error("converting http param time to int")
 	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: timeInt,
 		UserID: data.wallet, StateID: data.state, PublicKey: publicKey,
@@ -146,10 +147,12 @@ func sendEmbeddedTx(txType int, userID int64, toSerialize interface{}) (*hashTx,
 	var hash []byte
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("send embedded tx marshall to msgpack")
 		return nil, err
 	}
 	if hash, err = model.SendTx(int64(txType), userID,
 		append(converter.DecToBin(int64(txType), 1), serializedData...)); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx to the queue")
 		return nil, err
 	}
 	return &hashTx{Hash: string(converter.BinToHex(hash))}, nil
@@ -162,11 +165,12 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			err  error
 			data apiData
 		)
+		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
+		requestLogger.Info("received http request")
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
+				requestLogger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r, "stack": debug.Stack()}).Error("panic recovered error")
 				errorAPI(w, `E_RECOVERED`, http.StatusInternalServerError)
-				logger.LogError(consts.PanicRecoveredError, r)
 			}
 		}()
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -180,7 +184,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}
 		token, err := jwtToken(r)
 		if err != nil {
-			logger.LogError(consts.SessionError, "")
+			requestLogger.WithFields(log.Fields{"type": consts.SessionError, "params": params, "error": err}).Error("starting session")
 			errorAPI(w, err, http.StatusBadRequest)
 			return
 		}
@@ -189,10 +193,12 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.Wallet) > 0 {
 				stateInt, err := strconv.ParseInt(claims.State, 10, 64)
 				if err != nil {
+					requestLogger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": claims.State}).Warning("converting state to int failed, using 0")
 					stateInt = 0
 				}
 				walletInt, err := strconv.ParseInt(claims.Wallet, 10, 64)
 				if err != nil {
+					requestLogger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": claims.Wallet}).Warning("converting wallet to int failed, using 0")
 					walletInt = 0
 				}
 				data.state = stateInt
@@ -208,7 +214,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {
-				logger.LogError(consts.RouteError, fmt.Sprintf("undefined val %s", key))
+				requestLogger.WithFields(log.Fields{"type": consts.RouteError, "error": fmt.Sprintf("undefined val %s", key)}).Error("undefined val")
 				errorAPI(w, `E_UNDEFINEVAL`, http.StatusBadRequest, key)
 				return
 			}
@@ -216,12 +222,12 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			case pInt64:
 				data.params[key], err = strconv.ParseInt(val, 10, 64)
 				if err != nil {
-					logger.LogInfo(consts.StrToIntError, val)
+					requestLogger.WithFields(log.Fields{"type": consts.ConvertionError, "value": val, "error": err}).Error("converting http parameter to int")
 				}
 			case pHex:
 				bin, err := hex.DecodeString(val)
 				if err != nil {
-					logger.LogError(consts.RouteError, err)
+					requestLogger.WithFields(log.Fields{"type": consts.ConvertionError, "value": val, "error": err}).Error("decoding http parameter from hex")
 					errorAPI(w, err, http.StatusBadRequest)
 					return
 				}
@@ -231,13 +237,13 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			}
 		}
 		for _, handler := range handlers {
-			if handler(w, r, &data) != nil {
+			if handler(w, r, &data, requestLogger) != nil {
 				return
 			}
 		}
 		jsonResult, err := json.Marshal(data.result)
 		if err != nil {
-			logger.LogError(consts.RouteError, err)
+			requestLogger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marhsalling http response to json")
 			errorAPI(w, err, http.StatusInternalServerError)
 			return
 		}
@@ -245,15 +251,17 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 	})
 }
 
-func checkEcosystem(w http.ResponseWriter, data *apiData) (int64, error) {
+func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (int64, error) {
 	state := data.state
 	if data.params[`ecosystem`].(int64) > 0 {
 		state = data.params[`ecosystem`].(int64)
 		count, err := model.GetNextID(`system_states`)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id system states")
 			return 0, errorAPI(w, err, http.StatusBadRequest)
 		}
 		if state >= count {
+			logger.WithFields(log.Fields{"state_id": state, "count": count}).Error("state_id is larger then max count")
 			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, state)
 		}
 	}

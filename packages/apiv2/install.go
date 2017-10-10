@@ -26,10 +26,13 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type installResult struct {
@@ -49,8 +52,9 @@ type installParams struct {
 	dbUsername             string
 }
 
-func installCommon(data *installParams) (err error) {
+func installCommon(data *installParams, logger *log.Entry) (err error) {
 	if installed || model.DBConn != nil || config.IsExist() {
+		logger.Warning("Already installed")
 		return fmt.Errorf(`E_INSTALLED`)
 	}
 	if data.generateFirstBlock {
@@ -90,12 +94,15 @@ func installCommon(data *installParams) (err error) {
 	}
 	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 	if err != nil || model.DBConn == nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("initializing DB")
 		return fmt.Errorf(`E_DBNIL`)
 	}
 	if err = model.DropTables(); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping all tables")
 		return err
 	}
 	if err = model.ExecSchema(); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing db schema")
 		return err
 	}
 	conf := &model.Config{FirstLoadBlockchain: data.installType, FirstLoadBlockchainURL: data.firstLoadBlockchainURL, AutoReload: 259200}
@@ -104,25 +111,36 @@ func installCommon(data *installParams) (err error) {
 	}
 	install := &model.Install{Progress: "complete"}
 	if err = install.Create(); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating install")
 		return err
 	}
 	if _, err = os.Stat(*utils.FirstBlockDir + "/1block"); len(*utils.FirstBlockDir) > 0 && os.IsNotExist(err) {
 		// If there is no key, this is the first run and the need to create them in the working directory.
 		if _, err = os.Stat(*utils.Dir + "/PrivateKey"); os.IsNotExist(err) {
 			if len(*utils.FirstBlockPublicKey) == 0 {
-				priv, pub, _ := crypto.GenHexKeys()
+				logger.Info("private key not exists, creating new one")
+				priv, pub, err := crypto.GenHexKeys()
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("generating hex keys")
+				}
 				err = ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
 				if err != nil {
-					return
+					logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating private key file")
+					return err
 				}
 				*utils.FirstBlockPublicKey = pub
 			}
 		}
 		if _, err = os.Stat(*utils.Dir + "/NodePrivateKey"); os.IsNotExist(err) {
 			if len(*utils.FirstBlockNodePublicKey) == 0 {
-				priv, pub, _ := crypto.GenHexKeys()
+				logger.Info("node private key not exists, creating new one")
+				priv, pub, err := crypto.GenHexKeys()
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("generating hex keys")
+				}
 				err = ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
 				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating node private key file")
 					return err
 				}
 				*utils.FirstBlockNodePublicKey = pub
@@ -136,37 +154,44 @@ func installCommon(data *installParams) (err error) {
 	var npubkey []byte
 	npubkey, err = crypto.PrivateToPublic(NodePrivateKey)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
 		return err
 	}
 	nodeKeys := &model.MyNodeKey{PrivateKey: string(NodePrivateKey), PublicKey: npubkey, BlockID: 1}
 	err = nodeKeys.Create()
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating MyNodeKey")
 		return err
 	}
 	if *utils.DltWalletID == 0 {
+		logger.Info("dltWallet is not set from command line, retrieving it from private key file")
 		var key []byte
 		key, err = ioutil.ReadFile(*utils.Dir + "/PrivateKey")
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading private key file")
 			return err
 		}
 		key, err = hex.DecodeString(string(key))
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding private key from hex")
 			return err
 		}
 		key, err = crypto.PrivateToPublic(key)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
 			return err
 		}
 		*utils.DltWalletID = crypto.Address(key)
 	}
 	err = model.UpdateConfig("dlt_wallet_id", *utils.DltWalletID)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("setting config.dlt_wallet_id")
 		return err
 	}
 	return nil
 }
 
-func install(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var result installResult
 
 	data.result = &result
@@ -184,7 +209,7 @@ func install(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if val := data.params["generate_first_block"]; val.(int64) == 1 {
 		params.generateFirstBlock = true
 	}
-	err := installCommon(&params)
+	err := installCommon(&params, logger)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), `E_`) {
 			return errorAPI(w, err.Error(), http.StatusInternalServerError)

@@ -20,8 +20,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	log "github.com/sirupsen/logrus"
 )
 
 type paramValue struct {
@@ -34,17 +36,20 @@ type ecosystemParamsResult struct {
 	List []paramValue `json:"list"`
 }
 
-func ecosystemParams(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
+func ecosystemParams(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	var (
 		result ecosystemParamsResult
 		names  map[string]bool
 	)
-	state, err := checkEcosystem(w, data)
+	state, err := checkEcosystem(w, data, logger)
 	if err != nil {
 		return err
 	}
 	sp := &model.StateParameter{}
 	list, err := sp.SetTablePrefix(converter.Int64ToStr(state)).GetAllStateParameters()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting all state parameters")
+	}
 	result.List = make([]paramValue, 0)
 	if len(data.params[`names`].(string)) > 0 {
 		names = make(map[string]bool)

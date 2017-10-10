@@ -19,6 +19,9 @@ package apiv2
 import (
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/templatev2"
@@ -35,25 +38,15 @@ func initVars(data *apiData) *map[string]string {
 	return &vars
 }
 
-func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	/*	var result contentResult
-
-		result = contentResult{
-			Tree: `[{"type":"fn","name":"Title","data":["State info"]},{"type":"fn","name":"Navigation","data":[[{"type":"fn","name":"LiTemplate","data":["government","Government"]}],"State info"]},{"type":"block","name":"Divs","data":["md-4","panel panel-default elastic center"],"children":[{"type":"block","name":"Divs","data":["panel-body"],"children":[{"type":"fn","name":"IfParams","data":["#flag#==\"\"",[{"type":"fn","name":"Image","data":["static/img/noflag.svg","No flag","img-responsive"]}],[{"type":"fn","name":"Image","data":["#flag#","Flag","img-responsive"]}]]},{"type":"fn","name":"DivsEnd"}]},{"type":"fn","name":"DivsEnd"}]}]`,
-		}*/
+func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var query string
 	params := make(map[string]string)
-	/*	for name, val := range data.params {
-		params[name] = val
-	}*/
 	page := data.params[`name`].(string)
-	/*	if page == `body` {
-		params[`autobody`] = r.FormValue("body")
-	}*/
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	query = `SELECT value FROM "` + converter.Int64ToStr(data.state) + `_pages" WHERE name = ?`
 	pattern, err := model.Single(query, page).String()
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
 		return err
 	}
 	ret := templatev2.Template2JSON(pattern, false, initVars(data))
@@ -61,13 +54,14 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	return nil
 }
 
-func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var query string
 	params := make(map[string]string)
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	query = `SELECT value FROM "` + converter.Int64ToStr(data.state) + `_menu" WHERE name = ?`
 	pattern, err := model.Single(query, data.params[`name`].(string)).String()
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	ret := templatev2.Template2JSON(pattern, false, initVars(data))
@@ -75,7 +69,7 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	return nil
 }
 
-func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	ret := templatev2.Template2JSON(data.params[`template`].(string), false, initVars(data))
 	data.result = &contentResult{Tree: string(ret)}
 	return nil

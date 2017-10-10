@@ -17,12 +17,11 @@
 package apiv2
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	hr "github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
 )
 
 func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
@@ -87,7 +86,7 @@ func processParams(input string) (params map[string]int) {
 		var vtype int
 		types := strings.Split(par, `:`)
 		if len(types) != 2 {
-			logger.LogFatal(consts.RouteError, fmt.Sprintf(`Incorrect api route parameters: "%s"`, par))
+			log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Incorrect api route parameters")
 		}
 		switch types[1] {
 		case `hex`:
@@ -97,7 +96,7 @@ func processParams(input string) (params map[string]int) {
 		case `int64`:
 			vtype = pInt64
 		default:
-			logger.LogFatal(consts.RouteError, fmt.Sprintf(`Unknown type of api route parameter: "%s"`, par))
+			log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Unknown type of api route parameter")
 		}
 		vars := strings.Split(types[0], ` `)
 		for _, v := range vars {
@@ -109,7 +108,7 @@ func processParams(input string) (params map[string]int) {
 				if len(v) > 1 {
 					params[v[1:]] = vtype | pOptional
 				} else {
-					logger.LogFatal(consts.RouteError, fmt.Sprintf(`Incorrect name of api route parameter: "%s"`, par))
+					log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Incorrect name of api route parameter")
 				}
 			} else {
 				params[v] = vtype

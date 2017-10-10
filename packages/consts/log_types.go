@@ -100,6 +100,6 @@ const (
 	ConvertionError       = "Convertion error"
 	TypeError             = "Type error"
 	ProtocolError         = "Protocol error"
-	MarhasllingError      = "Marshalling error"
+	MarshallingError      = "Marshalling error"
 	UnmarshallingError    = "Unmarshalling error"
 )

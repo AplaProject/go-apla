@@ -20,8 +20,11 @@ import (
 	"encoding/hex"
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type getTestResult struct {
@@ -33,19 +36,20 @@ type signTestResult struct {
 	Public    string `json:"pubkey"`
 }
 
-func getTest(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func getTest(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	data.result = &getTestResult{Value: smart.GetTestValue(data.params[`name`].(string))}
 	return nil
 }
 
-func signTest(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+func signTest(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	sign, err := crypto.Sign(data.params[`private`].(string), data.params[`forsign`].(string))
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing data with private key")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	pub, err := crypto.PrivateToPublicHex(data.params[`private`].(string))
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	data.result = &signTestResult{Signature: hex.EncodeToString(sign), Public: pub}

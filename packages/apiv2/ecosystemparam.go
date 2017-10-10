@@ -17,20 +17,23 @@
 package apiv2
 
 import (
+	log "github.com/sirupsen/logrus"
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
-func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
-	state, err := checkEcosystem(w, data)
+func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	state, err := checkEcosystem(w, data, logger)
 	if err != nil {
 		return err
 	}
 	sp := &model.StateParameter{}
 	err = sp.SetTablePrefix(converter.Int64ToStr(state)).GetByName(data.params[`name`].(string))
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting state parameter by name")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	data.result = &paramValue{Name: sp.Name, Value: sp.Value, Conditions: sp.Conditions}

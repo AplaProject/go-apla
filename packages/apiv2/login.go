@@ -20,10 +20,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+
 	"github.com/dgrijalva/jwt-go"
+	log "github.com/sirupsen/logrus"
 )
 
 type loginResult struct {
@@ -35,7 +38,7 @@ type loginResult struct {
 	NotifyKey string `json:"notify_key,omitempty"`
 }
 
-func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var (
 		pubkey []byte
 		wallet int64
@@ -49,10 +52,12 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		}
 	}
 	if len(msg) == 0 {
+		logger.Error("UID is empty")
 		return errorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
 	}
 	state := data.params[`state`].(int64)
 	if state == 0 {
+		logger.Warning("state is empty, using 1 as a state")
 		state = 1
 	}
 	if len(data.params[`wallet`].(string)) > 0 {
@@ -62,22 +67,27 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	pubkey, err = model.Single(`select pub from "`+converter.Int64ToStr(state)+`_keys" where id=?`, wallet).Bytes()
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	if state > 1 && len(pubkey) == 0 {
+		logger.Error("public key is empty, and state is not default")
 		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
 	}
 	if len(pubkey) == 0 {
 		pubkey = data.params[`pubkey`].([]byte)
 		if len(pubkey) == 0 {
+			logger.Error("public key is empty")
 			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 		}
 	}
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
+		logger.WithFields(log.Fields{"pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("checking signature")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	if !verify {
+		logger.WithFields(log.Fields{"pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("incorrect signature")
 		return errorAPI(w, `E_SIGNATURE`, http.StatusBadRequest)
 	}
 	address := crypto.KeyToAddress(pubkey)
@@ -86,6 +96,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	data.result = &result
 	expire := data.params[`expire`].(int64)
 	if expire == 0 {
+		logger.WithFields(log.Fields{"expire": jwtExpire}).Warning("using expire from jwt")
 		expire = jwtExpire
 	}
 	claims := JWTClaims{
@@ -97,12 +108,14 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	result.Token, err = jwtGenerateToken(w, claims)
 	if err != nil {
+		logger.WithFields(log.Fields{"error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	result.Refresh, err = jwtGenerateToken(w, claims)
 	result.NotifyKey = `0`
 	if err != nil {
+		logger.WithFields(log.Fields{"error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 

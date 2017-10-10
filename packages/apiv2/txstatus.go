@@ -22,8 +22,9 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type txstatusResult struct {
@@ -32,18 +33,20 @@ type txstatusResult struct {
 	Result  string `json:"result"`
 }
 
-func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	logger.LogDebug(consts.FuncStarted, "")
+func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var status txstatusResult
 	if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
+		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding tx hash from hex")
 		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
 	}
 	ts := &model.TransactionStatus{}
 	notFound, err := ts.Get([]byte(converter.HexToBin(data.params["hash"].(string))))
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("getting transaction status by hash")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if notFound {
+		logger.WithFields(log.Fields{"type": consts.DBError, "key": []byte(converter.HexToBin(data.params["hash"].(string)))}).Error("getting transaction status by hash")
 		return errorAPI(w, `E_HASHNOTFOUND`, http.StatusBadRequest)
 	}
 	if ts.BlockID > 0 {

@@ -21,9 +21,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 
 	"github.com/dgrijalva/jwt-go"
+	log "github.com/sirupsen/logrus"
 )
 
 type getUIDResult struct {
@@ -35,7 +37,7 @@ type getUIDResult struct {
 	Address string `json:"address,omitempty"`
 }
 
-func getUID(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
+func getUID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	var result getUIDResult
 
 	data.result = &result
@@ -57,6 +59,7 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	}
 	result.Token, err = jwtGenerateToken(w, claims)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.SessionError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	return

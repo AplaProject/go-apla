@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -61,15 +62,17 @@ func jwtGenerateToken(w http.ResponseWriter, claims JWTClaims) (string, error) {
 	//	w.Header().Set("Authorization", jwtPrefix+signedToken)
 }
 
-func authWallet(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	if data.wallet == 0 {
+		logger.Error("wallet is empty")
 		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}
 	return nil
 }
 
-func authState(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func authState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	if data.wallet == 0 || data.state <= 1 {
+		logger.Error("state is empty")
 		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}
 	return nil
