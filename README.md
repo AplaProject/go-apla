@@ -9,7 +9,7 @@ Install git https://git-scm.com/
 go get -u github.com/jteeuwen/go-bindata/...
 go get -u github.com/AplaProject/go-apla
 cd $GOPATH/src/github.com/AplaProject/go-apla
-$GOPATH/bin/go-bindata -o="packages/static/static.go" -pkg="static" static/..
+$GOPATH/bin/go-bindata -o="packages/static/static.go" -pkg="static" static/...
 go build
 ./go-apla
 ```
