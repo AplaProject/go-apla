@@ -1584,6 +1584,9 @@ func CreateTable(p *Parser, name string, columns, permissions string) error {
 		switch data[`type`] {
 		case "varchar":
 			colType = `varchar(102400)`
+		case "character":
+			colType = `character(1)`
+			colDef = `NOT NULL DEFAULT '0'`
 		case "number":
 			colType = `bigint`
 			colDef = `NOT NULL DEFAULT '0'`
@@ -1749,6 +1752,8 @@ func CreateColumn(p *Parser, tableName, name, coltype, permissions, index string
 		colType = `varchar(102400)`
 	case "number":
 		colType = `bigint NOT NULL DEFAULT '0'`
+	case "character":
+		colType = `character(1) NOT NULL DEFAULT '0'`
 	case "datetime":
 		colType = `timestamp`
 	case "double":

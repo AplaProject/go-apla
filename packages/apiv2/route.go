@@ -49,6 +49,7 @@ func Route(route *hr.Router) {
 
 	get(`balance/:wallet`, `?state:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)
+	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
 	get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
 	get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
 	get(`ecosystems`, ``, authWallet, ecosystems)

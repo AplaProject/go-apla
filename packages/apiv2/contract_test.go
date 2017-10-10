@@ -249,3 +249,19 @@ func TestActivateContracts(t *testing.T) {
 		return
 	}
 }
+
+func TestContracts(t *testing.T) {
+
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	var ret contractsResult
+	err := sendGet(`contracts`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(`RET`, ret)
+}
