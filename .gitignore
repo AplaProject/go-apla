@@ -108,4 +108,11 @@ apla.pid
 packages/static/
 public/
 
+tools/update_client/update.priv
+tools/update_client/update.pub
+tools/update_server/update.db
+tools/update_server/update.db.lock
+tools/update_server/update.priv
+tools/update_server/update.pub
+
 .vscode/
