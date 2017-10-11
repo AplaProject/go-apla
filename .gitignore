@@ -110,3 +110,5 @@ config.ini
 dclog.txt
 exchangeapi.db
 daylight.pid
+
+packages/static/
