@@ -172,7 +172,7 @@ func delPidFile() {
 
 func rollbackToBlock(blockID int64) error {
 	if err := template.LoadContracts(nil); err != nil {
-		log.Errorf(`Load Contracts`, err)
+		log.Errorf(`Load Contracts: %s`, err)
 		return err
 	}
 	parser := new(parser.Parser)

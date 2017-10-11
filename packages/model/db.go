@@ -245,24 +245,27 @@ func GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
 	if plan, ok = firstNode["Plan"]; !ok {
 		return 0, errors.New("No Plan key in result")
 	}
-	var planMap map[string]interface{}
-	if planMap, ok = plan.(map[string]interface{}); !ok {
+
+	planMap, ok := plan.(map[string]interface{})
+	if !ok {
 		return 0, errors.New("Plan is not map[string]interface{}")
 	}
-	if totalCost, ok := planMap["Total Cost"]; ok {
-		if totalCostNum, ok := totalCost.(json.Number); ok {
-			if totalCostF64, err := totalCostNum.Float64(); err != nil {
-				return 0, err
-			} else {
-				return int64(totalCostF64), nil
-			}
-		} else {
-			return 0, errors.New("Total cost is not a number")
-		}
-	} else {
+
+	totalCost, ok := planMap["Total Cost"]
+	if !ok {
 		return 0, errors.New("PlanMap has no TotalCost")
 	}
-	return 0, nil
+
+	totalCostNum, ok := totalCost.(json.Number)
+	if !ok {
+		return 0, errors.New("Total cost is not a number")
+	}
+
+	totalCostF64, err := totalCostNum.Float64()
+	if err != nil {
+		return 0, err
+	}
+	return int64(totalCostF64), nil
 }
 
 func GetAllTables() ([]string, error) {
