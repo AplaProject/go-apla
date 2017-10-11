@@ -100,7 +100,6 @@ Temporary Items
 
 static/prepros.cfg
 static/sass
-packages/static/static.go
 packages/apiv2/key
 go-apla
 1block
