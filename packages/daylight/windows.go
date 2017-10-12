@@ -52,7 +52,3 @@ func KillPid(pid string) error {
 	}
 	return nil
 }
-
-func tray() {
-
-}

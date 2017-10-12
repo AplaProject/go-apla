@@ -14,89 +14,61 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package stopdaemons
+package daemons
 
 import (
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
+	"time"
 
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/system"
 	"github.com/AplaProject/go-apla/packages/utils"
 )
 
-/*
-#include <stdio.h>
-#include <signal.h>
-
-extern void go_callback_int();
-static inline void SigBreak_Handler(int n_signal){
-    printf("closed\n");
-	go_callback_int();
-}
-static inline void waitSig() {
-    #if (WIN32 || WIN64)
-    signal(SIGBREAK, &SigBreak_Handler);
-    signal(SIGINT, &SigBreak_Handler);
-    #endif
-}
-*/
-import (
-	"C"
-)
-
-//export go_callback_int
-func go_callback_int() {
-	SigChan <- syscall.Signal(1)
-}
-
-// SigChan is a channel
-var SigChan chan os.Signal
-
-func waitSig() {
-	C.waitSig()
-}
-
-// Signals waits for Interrupt os.Kill signals
-func WaintForSignals() {
-	SigChan = make(chan os.Signal, 1)
-	waitSig()
-	var Term os.Signal = syscall.SIGTERM
-	go func() {
-		signal.Notify(SigChan, os.Interrupt, os.Kill, Term)
-		<-SigChan
-		fmt.Println("got kill signal")
-
-		if utils.CancelFunc != nil {
+// WaitStopTime closes the database and stop daemons
+func WaitStopTime() {
+	var first bool
+	for {
+		if model.DBConn == nil {
+			time.Sleep(time.Second * 3)
+			continue
+		}
+		if !first {
+			err := model.Delete("stop_daemons", "")
+			if err != nil {
+				log.Error(utils.ErrInfo(err).Error())
+			}
+			first = true
+		}
+		dExists, err := model.Single(`SELECT stop_time FROM stop_daemons`).Int64()
+		if err != nil {
+			log.Error(utils.ErrInfo(err).Error())
+		}
+		log.Debug("dExtit: %d", dExists)
+		if dExists > 0 {
+			fmt.Println("Stop_daemons from DB!")
 			utils.CancelFunc()
 			for i := 0; i < utils.DaemonsCount; i++ {
 				name := <-utils.ReturnCh
 				log.Debugf("daemon %s stopped", name)
 			}
+			system.FinishThrust()
 
-			log.Debug("Daemons killed")
 			fmt.Println("Daemons killed")
-		}
-
-		system.FinishThrust()
-
-		if model.DBConn != nil {
 			err := model.GormClose()
 			if err != nil {
-				log.Error("gorm close error: %s", utils.ErrInfo(err).Error())
+				log.Errorf("gorm close failed: %s", utils.ErrInfo(err).Error())
 			}
-		}
-
-		err := os.Remove(*utils.Dir + "/daylight.pid")
-		if err != nil {
-			log.Error("can't remove pid file: %s", err)
-		} else {
+			fmt.Println("DB Closed")
+			err = os.Remove(*utils.Dir + "/daylight.pid")
+			if err != nil {
+				log.Error(utils.ErrInfo(err).Error())
+				panic(err)
+			}
 			fmt.Println("removed " + *utils.Dir + "/daylight.pid")
+
 		}
-
-		os.Exit(1)
-
-	}()
+		time.Sleep(time.Second)
+	}
 }

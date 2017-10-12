@@ -25,54 +25,14 @@ import (
 	"net/http"
 
 	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/tcpserver"
 	"github.com/AplaProject/go-apla/packages/utils"
 	//"os"
 	//"regexp"
 	//	"time"
 
 	"fmt"
-
-	"time"
-
-	"github.com/AplaProject/go-apla/packages/consts"
 )
 
-// IosLog is reserved
-func IosLog(text string) {
-}
-
-/*
-func NewBoundListener(maxActive int, l net.Listener) net.Listener {
-	return &boundListener{l, make(chan bool, maxActive)}
-}
-
-type boundListener struct {
-	net.Listener
-	active chan bool
-}
-
-type boundConn struct {
-	net.Conn
-	active chan bool
-}
-
-func (l *boundListener) Accept() (net.Conn, error) {
-	l.active <- true
-	c, err := l.Listener.Accept()
-	if err != nil {
-		<-l.active
-		return nil, err
-	}
-	return &boundConn{c, l.active}, err
-}
-
-func (l *boundConn) Close() error {
-	err := l.Conn.Close()
-	<-l.active
-	return err
-}
-*/
 func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Handler) {
 
 	i := 0
@@ -93,11 +53,6 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Han
 		l, err = net.Listen("tcp4", host)
 		log.Debug("l", l)
 		if err == nil {
-			// Если это повторный запуск и он не из консоли, то открываем окно браузера, т.к. скорее всего юзер тыкнул по иконке
-			// If this is a restart and it is made not from the console, then open the browser window, because user most likely pressed the icon
-			/*if *utils.Console == 0 {
-				openBrowser(browser)
-			}*/
 			fmt.Println("BrowserHTTPHost", host)
 			break
 		} else {
@@ -151,37 +106,5 @@ func httpListenerV6(route http.Handler) {
 			panic(err)
 			//os.Exit(1)
 		}
-	}()
-}
-
-func tcpListener() {
-	log.Debug("tcp")
-	go func() {
-		log.Debug("*utils.tcpHost: %v", *utils.TCPHost+":"+consts.TCP_PORT)
-		//if len(*utils.TCPHost) > 0 {
-		// включаем листинг TCP-сервером и обработку входящих запросов
-		// switch on the listing by TCP-server and the processing of incoming requests
-		l, err := net.Listen("tcp4", *utils.TCPHost+":"+consts.TCP_PORT)
-		if err != nil {
-			log.Error("Error listening:", err)
-			//panic(err)
-		} else {
-			//defer l.Close()
-			go func() {
-				for {
-					conn, err := l.Accept()
-					if err != nil {
-						log.Error("Error accepting:", err)
-						time.Sleep(time.Second)
-					} else {
-						go func(conn net.Conn) {
-							tcpserver.HandleTCPRequest(conn)
-							conn.Close()
-						}(conn)
-					}
-				}
-			}()
-		}
-		//}
 	}()
 }
