@@ -122,10 +122,10 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	form = url.Values{"Name": {name}, "Value": {`New Param Value`},
+	form = url.Values{"Name": {name + `23`}, "Value": {`New Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	id, msg, err = postTxResult(`EditParameter`, &form)
-	if err != nil {
+	if err.Error() != fmt.Sprintf(`Record %s23 has not been found`, name) {
 		t.Error(err)
 		return
 	}

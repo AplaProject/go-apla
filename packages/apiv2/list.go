@@ -41,7 +41,7 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 
 	count, err := model.GetNextID(strings.Trim(table, `"`))
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
 	}
 
 	if data.params[`limit`].(int64) > 0 {

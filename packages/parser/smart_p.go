@@ -1311,6 +1311,9 @@ func EvalCondition(p *Parser, table, name, condfield string) error {
 	if err != nil {
 		return err
 	}
+	if len(conditions) == 0 {
+		return fmt.Errorf(`Record %s has not been found`, name)
+	}
 	return Eval(p, conditions)
 }
 
