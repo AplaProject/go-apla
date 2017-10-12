@@ -112,3 +112,4 @@ exchangeapi.db
 daylight.pid
 
 packages/static/
+public/
