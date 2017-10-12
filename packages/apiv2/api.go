@@ -34,7 +34,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	hr "github.com/julienschmidt/httprouter"
 	"github.com/op/go-logging"
-	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const (
@@ -135,19 +134,6 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
 		UserID: data.wallet, StateID: data.state, PublicKey: publicKey,
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
-}
-
-func sendEmbeddedTx(txType int, userID int64, toSerialize interface{}) (*hashTx, error) {
-	var hash []byte
-	serializedData, err := msgpack.Marshal(toSerialize)
-	if err != nil {
-		return nil, err
-	}
-	if hash, err = model.SendTx(int64(txType), userID,
-		append(converter.DecToBin(int64(txType), 1), serializedData...)); err != nil {
-		return nil, err
-	}
-	return &hashTx{Hash: string(converter.BinToHex(hash))}, nil
 }
 
 // DefaultHandler is a common handle function for api requests

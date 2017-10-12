@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
 )
@@ -32,9 +33,14 @@ type contractField struct {
 }
 
 type getContractResult struct {
-	script.OwnerInfo
-	Fields []contractField `json:"fields"`
-	Name   string          `json:"name"`
+	StateID  uint32          `json:"state"`
+	Active   bool            `json:"active"`
+	TableID  string          `json:"tableid"`
+	WalletID string          `json:"walletid"`
+	TokenID  string          `json:"tokenid"`
+	Address  string          `json:"address"`
+	Fields   []contractField `json:"fields"`
+	Name     string          `json:"name"`
 }
 
 func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
@@ -47,7 +53,11 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
 	fields := make([]contractField, 0)
-	result = getContractResult{Name: info.Name, OwnerInfo: *info.Owner}
+	result = getContractResult{Name: info.Name, StateID: info.Owner.StateID,
+		Active: info.Owner.Active, TableID: converter.Int64ToStr(info.Owner.TableID),
+		WalletID: converter.Int64ToStr(info.Owner.WalletID),
+		TokenID:  converter.Int64ToStr(info.Owner.TokenID),
+		Address:  converter.AddressToString(info.Owner.WalletID)}
 
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {

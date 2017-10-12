@@ -54,6 +54,11 @@ func TestAPI(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	err = sendPost(`content/menu/default_menu`, &url.Values{}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	err = sendPost(`content/page/default_page`, &url.Values{}, &ret)
 	if err != nil {
 		t.Error(err)

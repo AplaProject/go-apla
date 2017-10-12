@@ -35,6 +35,7 @@ CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
 DROP TABLE IF EXISTS "%[1]d_menu"; CREATE TABLE "%[1]d_menu" (
     "id" bigint  NOT NULL DEFAULT '0',
     "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
+    "title" character varying(255) NOT NULL DEFAULT '',
     "value" text NOT NULL DEFAULT '',
     "conditions" text NOT NULL DEFAULT '',
     "rb_id" bigint NOT NULL DEFAULT '0'

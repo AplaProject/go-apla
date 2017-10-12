@@ -23,7 +23,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 )
 
@@ -145,7 +144,7 @@ func TestEditContracts(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	sid := converter.Int64ToStr(ret.TableID)
+	sid := ret.TableID
 	var row rowResult
 	err = sendGet(`row/contracts/`+sid, nil, &row)
 	if err != nil {
@@ -219,7 +218,7 @@ func TestActivateContracts(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {converter.Int64ToStr(ret.TableID)}}); err != nil {
+	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
 		t.Error(err)
 		return
 	}
@@ -232,7 +231,7 @@ func TestActivateContracts(t *testing.T) {
 		t.Error(fmt.Errorf(`Not activate ` + rnd))
 	}
 	var row rowResult
-	err = sendGet(`row/contracts/`+converter.Int64ToStr(ret.TableID), nil, &row)
+	err = sendGet(`row/contracts/`+ret.TableID, nil, &row)
 	if err != nil {
 		t.Error(err)
 		return

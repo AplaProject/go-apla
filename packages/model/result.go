@@ -196,5 +196,5 @@ func GetOneRowTransaction(transaction *DbTransaction, query string, args ...inte
 }
 
 func GetOneRow(query string, args ...interface{}) *OneRow {
-	return GetOneRowTransaction(nil, query, args)
+	return GetOneRowTransaction(nil, query, args...)
 }

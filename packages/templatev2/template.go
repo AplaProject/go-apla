@@ -19,6 +19,7 @@ package templatev2
 import (
 	"encoding/json"
 	"html"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -209,11 +210,13 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 		Vars: vars,
 	}
 	if curFunc.Params == `*` {
-		for _, v := range *params {
+		for i, v := range *params {
 			val := strings.TrimSpace(v)
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
 				pars[val[:off]] = macro(strings.TrimSpace(val[off+1:]), vars)
+			} else {
+				pars[strconv.Itoa(i)] = macro(val, vars)
 			}
 		}
 	} else {

@@ -203,7 +203,7 @@ func valueToBool(v interface{}) bool {
 	case []uint8:
 		return len(val) > 0
 	default:
-		dec, _ := decimal.NewFromString(val.(string))
+		dec, _ := decimal.NewFromString(fmt.Sprintf(`%v`, val))
 		return dec.Cmp(decimal.New(0, 0)) != 0
 	}
 	return false

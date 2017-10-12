@@ -389,7 +389,7 @@ func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]st
 			Where("table_name = ? AND column_name = ?", tableName, columnName).
 			Select("data_type", "character_maximum_length").Rows()*/
 	return GetOneRow(`select data_type,character_maximum_length from
-			information_schema.columns where table_name = ? AND column_name = ?`,
+			 information_schema.columns where table_name = ? AND column_name = ?`,
 		tableName, columnName).String()
 	/*	if err != nil {
 			return nil, err

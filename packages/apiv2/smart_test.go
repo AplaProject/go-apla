@@ -93,6 +93,17 @@ func TestPage(t *testing.T) {
 	menuname := randName(`menu`)
 	menu := `government`
 	value := `P(test,test paragraph)`
+	/*
+		for i := 0; i < 25; i++ {
+			name := randName(`block`)
+			form := url.Values{"Name": {name}, "Value": {value},
+				"Conditions": {"ContractConditions(`MainCondition`)"}}
+			_, _, err := postTxResult(`NewBlock`, &form)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+		}*/
 
 	form := url.Values{"Name": {name}, "Value": {`Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
@@ -103,7 +114,7 @@ func TestPage(t *testing.T) {
 	}
 	form = url.Values{"Name": {menuname}, "Value": {`first
 			second
-			third`},
+			third`}, "Title": {`My Menu`},
 		"Conditions": {`true`}}
 	err = postTx(`NewMenu`, &form)
 	if err != nil {
@@ -162,7 +173,8 @@ func TestNewTable(t *testing.T) {
 	name := randName(`tbl`)
 	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
 	  "conditions":"true"},
-	{"name":"Amount", "type":"number","index": "0", "conditions":"true"}]`},
+	{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
+	{"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
 	if err != nil {

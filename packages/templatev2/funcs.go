@@ -19,6 +19,7 @@ package templatev2
 import (
 	"fmt"
 	"html"
+	"strconv"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -27,6 +28,7 @@ import (
 
 var (
 	funcs = map[string]tplFunc{
+		`Address`:   {addressTag, defaultTag, `address`, `Wallet`},
 		`Div`:       {defaultTag, defaultTag, `div`, `Class,Body`},
 		`Em`:        {defaultTag, defaultTag, `em`, `Body,Class`},
 		`Form`:      {defaultTag, defaultTag, `form`, `Class,Body`},
@@ -70,6 +72,8 @@ func init() {
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
 	funcs[`Input`] = tplFunc{inputTag, inputTag, `input`, `Name,Class,Placeholder,Type,Value`}
 	funcs[`DBFind`] = tplFunc{dbfindTag, defaultTag, `dbfind`, `Name`}
+	funcs[`And`] = tplFunc{andTag, defaultTag, `and`, `*`}
+	funcs[`Or`] = tplFunc{orTag, defaultTag, `or`, `*`}
 
 	tails[`if`].Tails[`ElseIf`] = tailInfo{tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false}
 
@@ -79,6 +83,38 @@ func defaultTag(par parFunc) string {
 	setAllAttr(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
+}
+
+func addressTag(par parFunc) string {
+	idval := (*par.Pars)[`Wallet`]
+	if len(idval) == 0 {
+		idval = (*par.Vars)[`wallet`]
+	}
+	id, _ := strconv.ParseInt(idval, 10, 64)
+	if id == 0 {
+		return `unknown address`
+	}
+	return converter.AddressToString(id)
+}
+
+func andTag(par parFunc) string {
+	count := len(*par.Pars)
+	for i := 0; i < count; i++ {
+		if !ifValue((*par.Pars)[strconv.Itoa(i)], par.Vars) {
+			return `0`
+		}
+	}
+	return `1`
+}
+
+func orTag(par parFunc) string {
+	count := len(*par.Pars)
+	for i := 0; i < count; i++ {
+		if ifValue((*par.Pars)[strconv.Itoa(i)], par.Vars) {
+			return `1`
+		}
+	}
+	return `0`
 }
 
 func alertTag(par parFunc) string {

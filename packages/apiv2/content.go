@@ -25,8 +25,9 @@ import (
 )
 
 type contentResult struct {
-	Menu string `json:"menu"`
-	Tree string `json:"tree"`
+	Menu  string `json:"menu,omitempty"`
+	Title string `json:"title,omitempty"`
+	Tree  string `json:"tree"`
 }
 
 func initVars(r *http.Request, data *apiData) *map[string]string {
@@ -72,8 +73,8 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var query string
 	params := make(map[string]string)
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
-	query = `SELECT value FROM "` + converter.Int64ToStr(data.state) + `_menu" WHERE name = ?`
-	pattern, err := model.Single(query, data.params[`name`].(string)).String()
+	query = `SELECT value, title FROM "` + converter.Int64ToStr(data.state) + `_menu" WHERE name = ?`
+	pattern, err := model.GetOneRow(query, data.params[`name`].(string)).String()
 	if err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
@@ -81,8 +82,8 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 
-	ret := templatev2.Template2JSON(pattern, false, initVars(r, data))
-	data.result = &contentResult{Tree: string(ret)}
+	ret := templatev2.Template2JSON(pattern[`value`], false, initVars(r, data))
+	data.result = &contentResult{Tree: string(ret), Title: pattern[`title`]}
 	return nil
 }
 

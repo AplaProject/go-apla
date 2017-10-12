@@ -152,8 +152,8 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         id = CreateEcosystem($wallet, $Name)
     	DBInsert(Str(id) + "_pages", "name,value,menu,conditions", `default_page`, 
               SysParamString(`default_ecosystem_page`), `default_menu`, "ContractConditions(`MainCondition`)")
-    	DBInsert(Str(id) + "_menu", "name,value,conditions", `default_menu`, 
-              SysParamString(`default_ecosystem_menu`), "ContractConditions(`MainCondition`)")
+    	DBInsert(Str(id) + "_menu", "name,value,title,conditions", `default_menu`, 
+              SysParamString(`default_ecosystem_menu`), "default", "ContractConditions(`MainCondition`)")
     	DBInsert(Str(id) + "_keys", "id,pub", $wallet, DBString("1_keys", "pub", $wallet))
         $result = id
     }
@@ -205,13 +205,14 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     data {
     	Name       string
     	Value      string
+    	Title      string "optional"
     	Conditions string
     }
     conditions {
         ValidateCondition($Conditions,$state)
     }
     action {
-        DBInsert(Table(`menu`), `name,value,conditions`, $Name, $Value, $Conditions )
+        DBInsert(Table(`menu`), `name,value,title,conditions`, $Name, $Value, $Title, $Conditions )
     }
     func price() int {
         return  SysParamInt(`menu_price`)
@@ -221,6 +222,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     data {
     	Id         int
     	Value      string
+        Title      string "optional"
     	Conditions string
     }
     conditions {
@@ -228,7 +230,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         ValidateCondition($Conditions,$state)
     }
     action {
-        DBUpdate(Table(`menu`), $Id, `value,conditions`, $Value, $Conditions)
+        DBUpdate(Table(`menu`), $Id, `value,title,conditions`, $Value, $Title, $Conditions)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('11','contract AppendMenu {

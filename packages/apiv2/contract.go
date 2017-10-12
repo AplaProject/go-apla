@@ -127,6 +127,6 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		append([]byte{128}, serializedData...)); err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	data.result = &contractResult{Hash: string(converter.BinToHex(hash))}
+	data.result = &contractResult{Hash: hex.EncodeToString(hash)} // !!! string(converter.BinToHex(hash))}
 	return nil
 }
