@@ -23,7 +23,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
+
+	"github.com/op/go-logging"
 )
 
 // Contract contains the information about the contract.
@@ -54,6 +58,7 @@ const (
 var (
 	smartVM   *script.VM
 	smartTest = make(map[string]string)
+	log       = logging.MustGetLogger("daemons")
 )
 
 func testValue(name string, v ...interface{}) {
@@ -252,4 +257,53 @@ func ContractsList(value string) []string {
 		}
 	}
 	return list
+}
+
+// LoadContracts reads and compiles contracts from smart_contracts tables
+func LoadContracts(transaction *model.DbTransaction) (err error) {
+	var states []map[string]string
+	var prefix []string
+	prefix = []string{`system`}
+	states, err = model.GetAll(`select id from system_states order by id`, -1)
+	if err != nil {
+		return err
+	}
+	for _, istate := range states {
+		prefix = append(prefix, istate[`id`])
+	}
+	for _, ipref := range prefix {
+		if err = LoadContract(transaction, ipref); err != nil {
+			break
+		}
+	}
+	ExternOff()
+	return
+}
+
+// LoadContract reads and compiles contract of new state
+func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
+	var contracts []map[string]string
+	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
+	if err != nil {
+		return err
+	}
+	state := uint32(converter.StrToInt64(prefix))
+	for _, item := range contracts {
+		names := strings.Join(ContractsList(item[`value`]), `,`)
+		owner := script.OwnerInfo{
+			StateID:  state,
+			Active:   item[`active`] == `1`,
+			TableID:  converter.StrToInt64(item[`id`]),
+			WalletID: converter.StrToInt64(item[`wallet_id`]),
+			TokenID:  converter.StrToInt64(item[`token_id`]),
+		}
+		if err = Compile(item[`value`], &owner); err != nil {
+			log.Error("Load Contract", names, err)
+			fmt.Println("Error Load Contract", names, err)
+			//return
+		} else {
+			fmt.Println("OK Load Contract", names, item[`id`], item[`active`] == `1`)
+		}
+	}
+	return
 }

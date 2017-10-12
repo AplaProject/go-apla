@@ -23,6 +23,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
+
 	"github.com/shopspring/decimal"
 )
 
@@ -413,4 +416,9 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 		return []byte(err.Error())
 	}
 	return out
+}
+
+// StateParam returns the value of state parameters
+func StateParam(idstate int64, name string) (string, error) {
+	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_parameters" WHERE name = ?`, name).String()
 }

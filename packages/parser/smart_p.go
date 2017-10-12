@@ -35,7 +35,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/template"
+	"github.com/AplaProject/go-apla/packages/templatev2"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/shopspring/decimal"
 
@@ -143,7 +143,6 @@ func init() {
 		"DBAmount":           DBAmount,
 		"ContractAccess":     ContractAccess,
 		"ContractConditions": ContractConditions,
-		"NewState":           NewStateFunc,
 		"StateVal":           StateVal,
 		"SysParamString":     SysParamString,
 		"SysParamInt":        SysParamInt,
@@ -211,7 +210,7 @@ func (p *Parser) GetContractLimit() (ret int64) {
 	if len(p.TxSmart.MaxSum) > 0 {
 		p.TxCost = converter.StrToInt64(p.TxSmart.MaxSum)
 	} else {
-		cost, _ := template.StateParam(p.TxSmart.StateID, `max_sum`)
+		cost, _ := templatev2.StateParam(p.TxSmart.StateID, `max_sum`)
 		if len(cost) > 0 {
 			p.TxCost = converter.StrToInt64(cost)
 		}
@@ -856,7 +855,7 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 
 // StateVal returns the value of the specified parameter for the state
 func StateVal(p *Parser, name string) string {
-	val, _ := template.StateParam(int64(p.TxStateID), name)
+	val, _ := templatev2.StateParam(int64(p.TxStateID), name)
 	return val
 }
 
@@ -1183,13 +1182,6 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 			}*/
 	}
 	return 0, result, err
-}
-
-// NewStateFunc creates a new country
-func NewStateFunc(p *Parser, country, currency string) (err error) {
-	newStateParser := NewStateParser{p, nil}
-	_, err = newStateParser.Main(country, currency)
-	return
 }
 
 // DBRowExt returns one row from the table StringExt
