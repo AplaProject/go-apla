@@ -25,7 +25,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/template"
+	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 
@@ -73,7 +73,7 @@ func (p *FirstBlockParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = template.LoadContract(p.DbTransaction, `1`)
+	err = smart.LoadContract(p.DbTransaction, `1`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -41,9 +41,9 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/schema"
+	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/stopdaemons"
-	"github.com/AplaProject/go-apla/packages/template"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
@@ -171,7 +171,7 @@ func delPidFile() {
 }
 
 func rollbackToBlock(blockID int64) error {
-	if err := template.LoadContracts(nil); err != nil {
+	if err := smart.LoadContracts(nil); err != nil {
 		log.Errorf(`Load Contracts: %s`, err)
 		return err
 	}
@@ -382,7 +382,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		// signals for daemons to exit
 		go stopdaemons.WaitStopTime()
 
-		if err := template.LoadContracts(nil); err != nil {
+		if err := smart.LoadContracts(nil); err != nil {
 			log.Errorf("Load Contracts error: %s", err)
 			Exit(1)
 		}

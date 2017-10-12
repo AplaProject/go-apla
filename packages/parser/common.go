@@ -32,7 +32,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/template"
+	"github.com/AplaProject/go-apla/packages/templatev2"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 	"github.com/op/go-logging"
@@ -426,7 +426,7 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
-	govAccount, _ := template.StateParam(int64(p.TxStateID), `founder_account`)
+	govAccount, _ := templatev2.StateParam(int64(p.TxStateID), `founder_account`)
 	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
 		if p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
 			return nil
@@ -464,7 +464,7 @@ func (p *Parser) AccessTable(table, action string) error {
 func (p *Parser) AccessColumns(table string, columns []string) error {
 
 	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
-		govAccount, _ := template.StateParam(int64(p.TxStateID), `founder_account`)
+		govAccount, _ := templatev2.StateParam(int64(p.TxStateID), `founder_account`)
 		if p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
 			return nil
 		}
