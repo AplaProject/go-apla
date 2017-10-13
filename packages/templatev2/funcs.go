@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/model"
 )
 
@@ -35,6 +36,7 @@ var (
 		`GetVar`:    {getvarTag, defaultTag, `getvar`, `Name`},
 		`InputErr`:  {defaultTag, defaultTag, `inputerr`, `*`},
 		`Label`:     {defaultTag, defaultTag, `label`, `Body,Class,For`},
+		`LangRes`:   {langresTag, defaultTag, `langres`, `Name,Lang`},
 		`MenuGroup`: {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
 		`MenuItem`:  {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
 		`P`:         {defaultTag, defaultTag, `p`, `Body,Class`},
@@ -95,6 +97,15 @@ func addressTag(par parFunc) string {
 		return `unknown address`
 	}
 	return converter.AddressToString(id)
+}
+
+func langresTag(par parFunc) string {
+	lang := (*par.Pars)[`Lang`]
+	if len(lang) == 0 {
+		lang = (*par.Vars)[`accept_lang`]
+	}
+	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Vars)[`state`])), lang)
+	return ret
 }
 
 func andTag(par parFunc) string {

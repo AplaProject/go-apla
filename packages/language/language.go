@@ -93,7 +93,7 @@ func loadLang(state int) error {
 // LangText looks for the specified word through language sources and returns the meaning of the source
 // if it is found. Search goes according to the languages specified in 'accept'
 func LangText(in string, state int, accept string) (string, bool) {
-	if strings.IndexByte(in, ' ') >= 0 {
+	if strings.IndexByte(in, ' ') >= 0 || state == 0 {
 		return in, false
 	}
 	if _, ok := lang[state]; !ok {
