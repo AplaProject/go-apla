@@ -93,17 +93,6 @@ func TestPage(t *testing.T) {
 	menuname := randName(`menu`)
 	menu := `government`
 	value := `P(test,test paragraph)`
-	/*
-		for i := 0; i < 25; i++ {
-			name := randName(`block`)
-			form := url.Values{"Name": {name}, "Value": {value},
-				"Conditions": {"ContractConditions(`MainCondition`)"}}
-			_, _, err := postTxResult(`NewBlock`, &form)
-			if err != nil {
-				t.Error(err)
-				return
-			}
-		}*/
 
 	form := url.Values{"Name": {name}, "Value": {`Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
@@ -121,6 +110,11 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	err = postTx(`NewMenu`, &form)
+	if err.Error() != fmt.Sprintf(`!Menu %s aready exists`, menuname) {
+		t.Error(err)
+		return
+	}
 
 	form = url.Values{"Name": {name + `23`}, "Value": {`New Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
@@ -130,16 +124,20 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	for i := 0; i < 5; i++ {
-		name = randName(`page`)
-		form = url.Values{"Name": {name}, "Value": {value},
-			"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
-		id, msg, err = postTxResult(`NewPage`, &form)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+	name = randName(`page`)
+	form = url.Values{"Name": {name}, "Value": {value},
+		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	id, msg, err = postTxResult(`NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
 	}
+	err = postTx(`NewPage`, &form)
+	if err.Error() != fmt.Sprintf(`!Page %s aready exists`, name) {
+		t.Error(err)
+		return
+	}
+
 	form = url.Values{"Name": {name}, "Value": {value},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
 	id, msg, err = postTxResult(`NewBlock`, &form)
@@ -147,7 +145,11 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
-
+	err = postTx(`NewBlock`, &form)
+	if err.Error() != fmt.Sprintf(`!Block %s aready exists`, name) {
+		t.Error(err)
+		return
+	}
 	form = url.Values{"Id": {`2`}, "Value": {value + `Span(Test)`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	id, msg, err = postTxResult(`EditPage`, &form)

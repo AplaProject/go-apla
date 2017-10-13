@@ -210,6 +210,9 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     }
     conditions {
         ValidateCondition($Conditions,$state)
+        if DBIntExt(Table(`menu`), `id`, $Name, `name`) {
+            warning Sprintf( `Menu %%s aready exists`, $Name)
+        }
     }
     action {
         DBInsert(Table(`menu`), `name,value,title,conditions`, $Name, $Value, $Title, $Conditions )
@@ -256,9 +259,9 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     }
     conditions {
         ValidateCondition($Conditions,$state)
-       	if HasPrefix($Name, `sys-`) || HasPrefix($Name, `app-`) {
-	    	error `The name cannot start with sys- or app-`
-	    }
+        if DBIntExt(Table(`pages`), `id`, $Name, `name`) {
+            warning Sprintf( `Page %%s aready exists`, $Name)
+        }
     }
     action {
         DBInsert(Table(`pages`), `name,value,menu,conditions`, $Name, $Value, $Menu, $Conditions )
@@ -382,9 +385,9 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     }
     conditions {
         ValidateCondition($Conditions,$state)
-       	if HasPrefix($Name, `sys-`) || HasPrefix($Name, `app-`) {
-	    	error `The name cannot start with sys- or app-`
-	    }
+        if DBIntExt(Table(`blocks`), `id`, $Name, `name`) {
+            warning Sprintf( `Block %%s aready exists`, $Name)
+        }
     }
     action {
         DBInsert(Table(`blocks`), `name,value,conditions`, $Name, $Value, $Conditions )
