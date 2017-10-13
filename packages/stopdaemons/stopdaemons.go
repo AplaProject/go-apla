@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package daemons
+package stopdaemons
 
 import (
 	"fmt"
@@ -24,7 +24,10 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/system"
 	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/op/go-logging"
 )
+
+var log = logging.MustGetLogger("stop_daemons")
 
 // WaitStopTime closes the database and stop daemons
 func WaitStopTime() {

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package daemons
+package stopdaemons
 
 import (
 	"fmt"
@@ -60,7 +60,7 @@ func waitSig() {
 }
 
 // Signals waits for Interrupt os.Kill signals
-func WaitForSignals() {
+func WaintForSignals() {
 	SigChan = make(chan os.Signal, 1)
 	waitSig()
 	var Term os.Signal = syscall.SIGTERM

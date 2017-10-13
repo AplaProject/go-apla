@@ -19,6 +19,7 @@ package daylight
 import (
 	"encoding/json"
 	"fmt"
+	//	_ "image/png"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -31,10 +32,10 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/apiv2"
 	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/daemons"
-	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
 	"github.com/AplaProject/go-apla/packages/exchangeapi"
 	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -42,6 +43,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/schema"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/static"
+	"github.com/AplaProject/go-apla/packages/stopdaemons"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
@@ -252,6 +254,7 @@ func initRoutes(listenHost, browserHost string) string {
 func Start(dir string, thrustWindowLoder *window.Window) {
 
 	var err error
+	IosLog("start")
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -280,6 +283,12 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 		if err != nil {
 			log.Errorf("gorm init error: %s", err)
+			Exit(1)
+		}
+
+		err = syspar.SysUpdate()
+		if err != nil {
+			log.Error("can't read system parameters: %s", utils.ErrInfo(err))
 			Exit(1)
 		}
 	}
@@ -340,6 +349,8 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		Exit(0)
 	}
 
+	log.Debug("public")
+	IosLog("public")
 	if _, err := os.Stat(*utils.Dir + "/public"); os.IsNotExist(err) {
 		err = os.Mkdir(*utils.Dir+"/public", 0755)
 		if err != nil {
@@ -353,13 +364,35 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err := daemonsctl.RunAllDaemons()
-		if err != nil {
-			os.Exit(1)
+		log.Info("start daemons")
+		daemons.StartDaemons()
+		log.Debugf("daemon started")
+
+		daemonsTable := make(map[string]string)
+		go func() {
+			for {
+				daemonNameAndTime := <-daemons.MonitorDaemonCh
+				daemonsTable[daemonNameAndTime[0]] = daemonNameAndTime[1]
+				if time.Now().Unix()%10 == 0 {
+					log.Debug("daemonsTable: %v\n", daemonsTable)
+				}
+			}
+		}()
+
+		// signals for daemons to exit
+		go stopdaemons.WaitStopTime()
+
+		if err := smart.LoadContracts(nil); err != nil {
+			log.Errorf("Load Contracts error: %s", err)
+			Exit(1)
 		}
+		log.Debugf("all contracts loaded")
+
+		tcpListener()
+		log.Debugf("tcp listener started")
 	}
 
-	daemons.WaitForSignals()
+	stopdaemons.WaintForSignals()
 
 	go func() {
 		time.Sleep(time.Second)
@@ -411,5 +444,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// (they are entered from the 'connections' daemon and from those who connected to the node by their own)
 	// go utils.ChatOutput(utils.ChatNewTx)
 
-	select {}
+	time.Sleep(time.Second * 3600 * 24 * 90)
+	log.Infof("exit")
 }

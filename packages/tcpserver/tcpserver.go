@@ -26,9 +26,6 @@ import (
 
 	"io"
 
-	"net"
-	"time"
-
 	"github.com/op/go-logging"
 )
 
@@ -108,32 +105,4 @@ func HandleTCPRequest(rw io.ReadWriter) {
 	if err != nil {
 		log.Errorf("tcpserver handle error: %s", err)
 	}
-}
-
-func TcpListener(laddr string) error {
-	log.Debugf("listen addres: %s", laddr)
-
-	l, err := net.Listen("tcp4", laddr)
-	if err != nil {
-		log.Error("Error listening:", err)
-		return err
-	}
-
-	go func() {
-		defer l.Close()
-		for {
-			conn, err := l.Accept()
-			if err != nil {
-				log.Error("Error accepting:", err)
-				time.Sleep(time.Second)
-			} else {
-				go func(conn net.Conn) {
-					HandleTCPRequest(conn)
-					conn.Close()
-				}(conn)
-			}
-		}
-	}()
-
-	return nil
 }

@@ -27,7 +27,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/config"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -164,12 +163,6 @@ func installCommon(data *installParams) (err error) {
 	if err != nil {
 		return err
 	}
-
-	err = daemonsctl.RunAllDaemons()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 

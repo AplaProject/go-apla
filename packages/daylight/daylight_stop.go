@@ -1,5 +1,3 @@
-// +build windows
-
 // Copyright 2016 The go-daylight Authors
 // This file is part of the go-daylight library.
 //
@@ -20,39 +18,25 @@ package daylight
 
 import (
 	"fmt"
-	"os/exec"
-	"regexp"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 )
 
-// KillPid kills the process with the specified pid
-func KillPid(pid string) error {
-	if model.DBConn != nil {
-		sd := &model.StopDaemon{StopTime: time.Now().Unix()}
-		err := sd.Create()
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			return err
-		}
-	}
-	rez, err := exec.Command("tasklist", "/fi", "PID eq "+pid).Output()
+// Stop stops the program
+func Stop() {
+	log.Debug("Stop()")
+	IosLog("Stop()")
+	log.Debug("DayLight Stop : %v", model.DBConn)
+	IosLog("utils.DB:" + fmt.Sprintf("%v", model.DBConn))
+
+	stopDaemons := &model.StopDaemon{StopTime: time.Now().Unix()}
+	err := stopDaemons.Create()
 	if err != nil {
-		return err
+		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
+		log.Error("%v", utils.ErrInfo(err))
 	}
-	if string(rez) == "" {
-		return fmt.Errorf("null")
-	}
-	log.Debug("%rez s", string(rez))
-	fmt.Println("rez", string(rez))
-	if ok, _ := regexp.MatchString(`(?i)PID`, string(rez)); !ok {
-		return fmt.Errorf("null")
-	}
-	return nil
-}
-
-func tray() {
-
+	log.Debug("DayLight Stop")
+	IosLog("DayLight Stop")
 }
