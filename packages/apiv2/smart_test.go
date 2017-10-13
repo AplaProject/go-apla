@@ -77,7 +77,7 @@ func TestMoneyTransfer(t *testing.T) {
 		return
 	}
 	form = url.Values{`Amount`: {`53330000`}, `Recipient`: {`0005207000`}}
-	if err := postTx(`MoneyTransfer`, &form); err != nil {
+	if err := postTx(`MoneyTransfer`, &form); err.Error() != `Recipient 0005207000 is invalid` {
 		t.Error(err)
 		return
 	}
@@ -150,13 +150,29 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Id": {`2`}, "Value": {value + `Span(Test)`},
+	form = url.Values{"Id": {`1`}, "Name": {name}, "Value": {value},
+		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`EditBlock`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	form = url.Values{"Id": {`1`}, "Value": {value + `Span(Test)`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	id, msg, err = postTxResult(`EditPage`, &form)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	form = url.Values{"Id": {`1112`}, "Value": {value + `Span(Test)`},
+		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`EditPage`, &form)
+	if err.Error() != `Item 1112 has not been found` {
+		t.Error(err)
+		return
+	}
+
 	form = url.Values{"Id": {`2`}, "Value": {`Span(Append)`}}
 	id, msg, err = postTxResult(`AppendPage`, &form)
 	if err != nil {

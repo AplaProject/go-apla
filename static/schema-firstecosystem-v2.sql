@@ -1,7 +1,22 @@
 INSERT INTO "system_states" ("id","rb_id") VALUES ('1','0');
 
 INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
-('2','contract MoneyTransfer {
+('2','contract SystemFunctions {
+}
+
+func ConditionById(table string, validate bool) {
+    var cond string
+    cond = DBString(Table(table), `conditions`, $Id)
+    if !cond {
+        error Sprintf(`Item %%d has not been found`, $Id)
+    }
+    Eval(cond)
+    if validate {
+        ValidateCondition($Conditions,$state)
+    }
+}
+', '%[1]d','ContractConditions(`MainCondition`)'),
+('3','contract MoneyTransfer {
     data {
         Recipient string
         Amount    string
@@ -29,7 +44,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
             $wallet, $recipient, $amount, $Comment, $block, $txhash)
     }
 }', '%[1]d', 'ContractConditions(`MainCondition`)'),
-('3','contract NewContract {
+('4','contract NewContract {
     data {
     	Value      string
     	Conditions string
@@ -73,7 +88,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         return  SysParamInt(`contract_price`)
     }
 }', '%[1]d', 'ContractConditions(`MainCondition`)'),
-('4','contract EditContract {
+('5','contract EditContract {
     data {
         Id         int
     	Value      string
@@ -116,7 +131,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         FlushContract(root, $Id, Int($cur[`active`]) == 1)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('5','contract ActivateContract {
+('6','contract ActivateContract {
     data {
         Id         int
     }
@@ -138,7 +153,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         Activate($Id, $state)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('6','contract NewEcosystem {
+('7','contract NewEcosystem {
     data {
         Name  string "optional"
     }
@@ -164,7 +179,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         RollbackEcosystem()
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('7','contract NewParameter {
+('8','contract NewParameter {
     data {
         Name string
         Value string
@@ -177,7 +192,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         DBInsert(Table(`parameters`), `name,value,conditions`, $Name, $Value, $Conditions )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('8','contract EditParameter {
+('9','contract EditParameter {
     data {
         Name string
         Value string
@@ -201,7 +216,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         }
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('9', 'contract NewMenu {
+('10', 'contract NewMenu {
     data {
     	Name       string
     	Value      string
@@ -221,7 +236,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         return  SysParamInt(`menu_price`)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('10','contract EditMenu {
+('11','contract EditMenu {
     data {
     	Id         int
     	Value      string
@@ -229,20 +244,19 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Conditions string
     }
     conditions {
-        Eval(DBString(Table(`menu`), `conditions`, $Id))
-        ValidateCondition($Conditions,$state)
+        ConditionById(`menu`, true)
     }
     action {
         DBUpdate(Table(`menu`), $Id, `value,title,conditions`, $Value, $Title, $Conditions)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('11','contract AppendMenu {
+('12','contract AppendMenu {
     data {
         Id     int
     	Value      string
     }
     conditions {
-        Eval(DBString(Table(`menu`), `conditions`, $Id ))
+        ConditionById(`menu`, false)
     }
     action {
         var table string
@@ -250,7 +264,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         DBUpdate(table, $Id, `value`, DBString(table, `value`, $Id) + "\r\n" + $Value )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('12','contract NewPage {
+('13','contract NewPage {
     data {
     	Name       string
     	Value      string
@@ -270,7 +284,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         return  SysParamInt(`page_price`)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('13','contract EditPage {
+('14','contract EditPage {
     data {
         Id         int
     	Value      string
@@ -278,20 +292,19 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Conditions string
     }
     conditions {
-        Eval(DBString(Table(`pages`), `conditions`, $Id))
-        ValidateCondition($Conditions,$state)
+        ConditionById(`pages`, true)
     }
     action {
         DBUpdate(Table(`pages`), $Id, `value,menu,conditions`, $Value, $Menu, $Conditions)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('14','contract AppendPage {
+('15','contract AppendPage {
     data {
         Id         int
     	Value      string
     }
     conditions {
-        Eval(DBString(Table(`pages`), `conditions`, $Id))
+        ConditionById(`pages`, false)
     }
     action {
         var value, table string
@@ -305,7 +318,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         DBUpdate(table, $Id, `value`,  value )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('15','contract NewLang {
+('16','contract NewLang {
     data {
         Name  string
         Trans string
@@ -323,7 +336,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         UpdateLang($Name, $Trans)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('16','contract EditLang {
+('17','contract EditLang {
     data {
         Name  string
         Trans string
@@ -336,7 +349,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         UpdateLang($Name, $Trans)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('17','contract NewSign {
+('18','contract NewSign {
     data {
     	Name       string
     	Value      string
@@ -354,27 +367,17 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
         DBInsert(Table(`signatures`), `name,value,conditions`, $Name, $Value, $Conditions )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
-('18','contract EditSign {
+('19','contract EditSign {
     data {
     	Id         int
     	Value      string
     	Conditions string
     }
     conditions {
-        Eval(DBString(Table(`signatures`), `conditions`, $Id))
-        ValidateCondition($Conditions,$state)
+        ConditionById(`signatures`, true)
     }
     action {
         DBUpdate(Table(`signatures`), $Id, `value,conditions`, $Value, $Conditions)
-    }
-}', '%[1]d','ContractConditions(`MainCondition`)'),
-('19','contract RequestCitizenship {
-    data {
-    	Name      string
-    }
-    conditions {
-    }
-    action {
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('20','contract NewBlock {
@@ -400,8 +403,7 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
     	Conditions string
     }
     conditions {
-        Eval(DBString(Table(`blocks`), `conditions`, $Id))
-        ValidateCondition($Conditions,$state)
+        ConditionById(`blocks`, true)
     }
     action {
         DBUpdate(Table(`blocks`), $Id, `value,conditions`, $Value, $Conditions)
