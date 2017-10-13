@@ -19,26 +19,25 @@ package daemons
 import (
 	"context"
 	"flag"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/op/go-logging"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
-	log             = logging.MustGetLogger("daemons")
 	MonitorDaemonCh = make(chan []string, 100)
 )
 
 type daemon struct {
 	goRoutineName string
 	sleepTime     time.Duration
+	logger        *log.Entry
 }
 
 func init() {
@@ -80,43 +79,37 @@ var rollbackList = []string{
 }
 
 func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon, context.Context) error, retCh chan string) {
+	logger := log.WithFields(log.Fields{"daemon_name": goRoutineName})
 	defer func() {
 		if r := recover(); r != nil {
+			logger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r}).Error("panic in daemon")
 			panic(r)
 		}
 	}()
 
 	err := WaitDB(ctx)
 	if err != nil {
-		logger.LogError(consts.DBError, err)
 		return
 	}
 
 	d := &daemon{
 		goRoutineName: goRoutineName,
 		sleepTime:     1 * time.Second,
+		logger:        logger,
 	}
 
-	err = handler(d, ctx)
-	if err != nil {
-		logger.LogError(consts.DaemonError, fmt.Sprintf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(1)))
-	}
+	handler(d, ctx)
 
 	for {
 		select {
 		case <-ctx.Done():
+			logger.Info("daemon done his work")
 			retCh <- goRoutineName
 			return
 
 		case <-time.After(d.sleepTime):
-			log.Info(d.goRoutineName)
 			MonitorDaemonCh <- []string{d.goRoutineName, converter.Int64ToStr(time.Now().Unix())}
-
-			err = handler(d, ctx)
-			if err != nil {
-				logger.LogError(consts.DaemonError, fmt.Sprintf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(1)))
-			}
-
+			handler(d, ctx)
 		}
 	}
 }
@@ -141,16 +134,17 @@ func StartDaemons() {
 	if len(config.ConfigIni["daemons"]) > 0 {
 		daemonsToStart = strings.Split(config.ConfigIni["daemons"], ",")
 	}
+	log.WithFields(log.Fields{"daemons_to_start": daemonsToStart}).Info("starting daemons")
 
 	for _, name := range daemonsToStart {
 		handler, ok := daemonsList[name]
 		if ok {
 			go daemonLoop(ctx, name, handler, utils.ReturnCh)
+			log.WithFields(log.Fields{"daemon_name": name}).Info("started")
 			utils.DaemonsCount++
 			continue
 		}
-
-		logger.LogError(consts.DaemonError, fmt.Sprintf("unknown daemon name: %s", name))
+		log.WithFields(log.Fields{"daemon_name": name}).Warning("unknown daemon name")
 	}
 }
 

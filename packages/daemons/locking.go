@@ -2,12 +2,10 @@ package daemons
 
 import (
 	"context"
+	"sync"
 	"time"
 
-	"sync"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 var mutex = sync.Mutex{}
@@ -41,7 +39,7 @@ func CheckDB() bool {
 
 	err := install.Get()
 	if err != nil {
-		log.Errorf("%v", utils.ErrInfo(err))
+		//log.Errorf("%v", utils.ErrInfo(err))
 	}
 
 	if install.Progress == "complete" {

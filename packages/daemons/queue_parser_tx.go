@@ -20,12 +20,10 @@ import (
 	"context"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
-	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // QueueParserTx parses transaction from the queue
@@ -36,28 +34,25 @@ func QueueParserTx(d *daemon, ctx context.Context) error {
 	infoBlock := &model.InfoBlock{}
 	err := infoBlock.GetInfoBlock()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		return err
 	}
 	if infoBlock.BlockID == 0 {
-		logger.LogDebug(consts.DebugMessage, "there are now blocks for parse")
+		d.logger.Debug("no blocks for parsing")
 		return nil
 	}
 
 	// delete looped transactions
-	logging.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
-	affect, err := model.DeleteLoopedTransactions()
+	_, err = model.DeleteLoopedTransactions()
 	if err != nil {
-		logging.WriteSelectiveLog(err)
-		logger.LogError(consts.DBError, err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting looped transactions")
 		return err
 	}
-	logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
 
 	p := new(parser.Parser)
 	err = p.AllTxParser()
 	if err != nil {
-		logger.LogError(consts.ParserError, err)
+		d.logger.WithFields(log.Fields{"error": err}).Error("parsing transactions")
 		return err
 	}
 

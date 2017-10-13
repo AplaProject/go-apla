@@ -25,18 +25,18 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // UpdFullNodes sends UpdFullNodes transactions
 func UpdFullNodes(d *daemon, ctx context.Context) error {
-	logger.LogError(consts.FuncStarted, "")
 	d.sleepTime = 60 * time.Second
 
 	DBLock()
@@ -45,11 +45,12 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	infoBlock := &model.InfoBlock{}
 	err := infoBlock.GetInfoBlock()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		return err
 	}
 
 	if infoBlock.BlockID == 0 {
+		d.logger.Warning("info block not found, sleeping 10 seconds")
 		d.sleepTime = 10 * time.Second
 		return nil
 	}
@@ -57,24 +58,23 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	nodeConfig := &model.Config{}
 	err = nodeConfig.GetConfig()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
 		return err
 
 	}
 	myStateID := nodeConfig.StateID
 	myWalletID := nodeConfig.DltWalletID
-	logger.LogDebug(consts.DebugMessage, myWalletID)
 	// If we are in the list of those who are able to generate the blocks
 	fullNode := &model.FullNode{}
 	err = fullNode.FindNode(myStateID, myWalletID, myStateID, myWalletID)
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("finding full node")
 		return err
 	}
 
 	fullNodeID := fullNode.ID
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("fullNodeID = %d", fullNodeID))
 	if fullNodeID == 0 {
+		d.logger.Warning("full node not found, sleeping 10 seconds")
 		d.sleepTime = 10 * time.Second // because 1s is too small for non-full nodes
 		return nil
 	}
@@ -85,20 +85,20 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	updFn := &model.UpdFullNode{}
 	err = updFn.Read(nil)
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("reading upd full node")
 		return err
 	}
 
 	updFullNodes := int64(updFn.Time)
 	if curTime-updFullNodes <= syspar.GetUpdFullNodesPeriod() {
-		logger.LogDebug(consts.DebugMessage, "curTime-adminTime <= consts.UPD_FULL_NODES_PERIOD")
+		d.logger.Debug("upd full nodes period is not expired")
 		return nil
 	}
 
 	myNodeKey := &model.MyNodeKey{}
 	err = myNodeKey.GetNodeWithMaxBlockID()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node with max block id")
 		return err
 	}
 	var (
@@ -107,6 +107,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 
 	contract := smart.GetContract(`@0UpdFullNodes`, 0)
 	if contract == nil {
+		d.logger.WithFields(log.Fields{"contract_name": "@0UpdFullNodes"}).Error("Getting contract")
 		return fmt.Errorf(`there is not @0UpdFullNodes contract`)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
@@ -117,7 +118,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	smartTx.Header = tx.Header{Type: int(info.ID), Time: time.Now().Unix(), UserID: myWalletID, StateID: 0}
 	signature, err := crypto.Sign(myNodeKey.PrivateKey, smartTx.ForSign())
 	if err != nil {
-		logger.LogError(consts.CryptoError, err)
+		d.logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing smart tx with node private key")
 		return err
 	}
 	toSerialize = tx.SmartContract{
@@ -127,17 +128,18 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
-		logger.LogError(consts.CryptoError, err)
+		d.logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smartContract transaction to msgpack")
 		return err
 	}
 	data = append([]byte{128}, serializedData...)
 	if hash, err = model.SendTx(int64(info.ID), myWalletID, data); err != nil {
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx to the queue")
 		return err
 	}
 	p := new(parser.Parser)
 	err = p.TxParser(hash, data, true)
 	if err != nil {
-		logger.LogError(consts.ParserError, err)
+		d.logger.WithFields(log.Fields{"error": err}).Error("parsing transaction")
 		return err
 	}
 

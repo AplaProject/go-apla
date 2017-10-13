@@ -17,13 +17,14 @@
 package daemons
 
 import (
+	"context"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 
-	"context"
+	log "github.com/sirupsen/logrus"
 )
 
 /* Take the block from the queue. If this block has the bigger block id than the last block from our chain, then find the fork
@@ -38,25 +39,23 @@ import (
 
 // QueueParserBlocks parses and applies blocks from the queue
 func QueueParserBlocks(d *daemon, ctx context.Context) error {
-	logger.LogDebug(consts.FuncStarted, "")
-
 	DBLock()
 	defer DBUnlock()
 
 	infoBlock := &model.InfoBlock{}
 	err := infoBlock.GetInfoBlock()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		return err
 	}
 	queueBlock := &model.QueueBlock{}
 	err = queueBlock.GetQueueBlock()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting queue block")
 		return err
 	}
 	if len(queueBlock.Hash) == 0 {
-		logger.LogError(consts.RecordNotFoundError, "")
+		d.logger.Error("queue block not found")
 		return err
 	}
 
@@ -64,7 +63,7 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	if queueBlock.BlockID > infoBlock.BlockID+consts.RB_BLOCKS_1 {
 		err = queueBlock.Delete()
 		if err != nil {
-			logger.LogError(consts.DBError, err)
+			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting queue block")
 		}
 		return utils.ErrInfo("rollback_blocks_1")
 	}
@@ -73,7 +72,7 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	if queueBlock.BlockID <= infoBlock.BlockID {
 		err = queueBlock.Delete()
 		if err != nil {
-			logger.LogError(consts.DBError, err)
+			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting queue block")
 		}
 		return utils.ErrInfo("old block")
 	}
@@ -85,7 +84,7 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	if err != nil {
 		err = queueBlock.Delete()
 		if err != nil {
-			logger.LogError(consts.DBError, err)
+			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting queue block")
 		}
 		return utils.ErrInfo(err)
 	}
@@ -95,10 +94,10 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	host := getHostPort(fullNode.Host)
 	err = parser.GetBlocks(blockID, host, "rollback_blocks_1", 7)
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback_blocks")
 		err = queueBlock.Delete()
 		if err != nil {
-			logger.LogError(consts.DBError, err)
+			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting queue block")
 		}
 		return utils.ErrInfo(err)
 	}
