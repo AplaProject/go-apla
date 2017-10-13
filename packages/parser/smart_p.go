@@ -1422,7 +1422,7 @@ func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	err = model.ExecSchemaEcosystem(converter.StrToInt(id), wallet, name)
+	err = model.ExecSchemaEcosystem(p.DbTransaction, converter.StrToInt(id), wallet, name)
 	return converter.StrToInt64(id), err
 }
 

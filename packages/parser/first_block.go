@@ -51,7 +51,7 @@ func (p *FirstBlockParser) Validate() error {
 func (p *FirstBlockParser) Action() error {
 	data := p.TxPtr.(*consts.FirstBlock)
 	myAddress := crypto.Address(data.PublicKey)
-	err := model.ExecSchemaEcosystem(1, myAddress, ``)
+	err := model.ExecSchemaEcosystem(p.DbTransaction, 1, myAddress, ``)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -78,11 +78,12 @@ func (p *FirstBlockParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	node := &model.SystemParameterV2{Name: `full_nodes`}
-	if err = node.SaveArray([][]string{{data.Host, converter.Int64ToStr(myAddress),
+	if err = node.SaveArray(p.DbTransaction, [][]string{{data.Host, converter.Int64ToStr(myAddress),
 		hex.EncodeToString(data.NodePublicKey)}}); err != nil {
 		return p.ErrInfo(err)
 	}
 	syspar.SysUpdate()
+
 	fullNode := &model.FullNode{WalletID: myAddress, Host: data.Host}
 	err = fullNode.Create(p.DbTransaction)
 	if err != nil {
