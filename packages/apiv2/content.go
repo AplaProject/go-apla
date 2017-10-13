@@ -37,27 +37,14 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 	}
 	vars[`state`] = converter.Int64ToStr(data.state)
 	vars[`wallet`] = converter.Int64ToStr(data.wallet)
+	vars[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	return &vars
 }
 
 func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	/*	var result contentResult
 
-		result = contentResult{
-			Tree: `[{"type":"fn","name":"Title","data":["State info"]},{"type":"fn","name":"Navigation","data":[[{"type":"fn","name":"LiTemplate","data":["government","Government"]}],"State info"]},{"type":"block","name":"Divs","data":["md-4","panel panel-default elastic center"],"children":[{"type":"block","name":"Divs","data":["panel-body"],"children":[{"type":"fn","name":"IfParams","data":["#flag#==\"\"",[{"type":"fn","name":"Image","data":["static/img/noflag.svg","No flag","img-responsive"]}],[{"type":"fn","name":"Image","data":["#flag#","Flag","img-responsive"]}]]},{"type":"fn","name":"DivsEnd"}]},{"type":"fn","name":"DivsEnd"}]}]`,
-		}*/
-	var query string
-	params := make(map[string]string)
-	/*	for name, val := range data.params {
-		params[name] = val
-	}*/
-	page := data.params[`name`].(string)
-	/*	if page == `body` {
-		params[`autobody`] = r.FormValue("body")
-	}*/
-	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
-	query = `SELECT value,menu FROM "` + converter.Int64ToStr(data.state) + `_pages" WHERE name = ?`
-	pattern, err := model.GetOneRow(query, page).String()
+	query := `SELECT value,menu FROM "` + converter.Int64ToStr(data.state) + `_pages" WHERE name = ?`
+	pattern, err := model.GetOneRow(query, data.params[`name`].(string)).String()
 	if err != nil {
 		return err
 	}
@@ -70,10 +57,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	var query string
-	params := make(map[string]string)
-	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
-	query = `SELECT value, title FROM "` + converter.Int64ToStr(data.state) + `_menu" WHERE name = ?`
+	query := `SELECT value, title FROM "` + converter.Int64ToStr(data.state) + `_menu" WHERE name = ?`
 	pattern, err := model.GetOneRow(query, data.params[`name`].(string)).String()
 	if err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
