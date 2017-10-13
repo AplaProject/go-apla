@@ -63,16 +63,16 @@ func (sp SystemParameterV2) TableName() string {
 	return "system_parameters"
 }
 
-func (sp SystemParameterV2) Update(transaction *DbTransaction, value string) error {
-	return GetDB(transaction).Model(sp).Where("name = ?", sp.Name).Update(`value`, value).Error
+func (sp SystemParameterV2) Update(value string) error {
+	return DBConn.Model(sp).Where("name = ?", sp.Name).Update(`value`, value).Error
 }
 
-func (sp *SystemParameterV2) SaveArray(transaction *DbTransaction, list [][]string) error {
+func (sp *SystemParameterV2) SaveArray(list [][]string) error {
 	ret, err := json.Marshal(list)
 	if err != nil {
 		return err
 	}
-	return sp.Update(transaction, string(ret))
+	return sp.Update(string(ret))
 }
 
 func (sp *SystemParameterV2) Get(name string) error {
@@ -86,4 +86,3 @@ func GetAllSystemParametersV2() ([]SystemParameterV2, error) {
 	}
 	return *parameters, nil
 }
-

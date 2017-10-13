@@ -39,6 +39,14 @@ func GetAllUnsentTransactions() (*[]Transaction, error) {
 	return transactions, nil
 }
 
+func GetLastTransactions(limit int) ([]Transaction, error) {
+	transactions := new([]Transaction)
+	if err := DBConn.Limit(limit).Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+	return *transactions, nil
+}
+
 func GetTransactionsCount(hash []byte) (int64, error) {
 	var rowsCount int64
 	if err := DBConn.Table("transactions").Where("hash = ?", hash).Count(&rowsCount).Error; err != nil {
@@ -92,6 +100,11 @@ func MarkTransactionUnusedAndUnverified(transaction *DbTransaction, transactionH
 
 func MarkVerifiedAndNotUsedTransactionsUnverified() (int64, error) {
 	query := DBConn.Exec("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+	return query.RowsAffected, query.Error
+}
+
+func MarkTransactionUnused(transactionHash []byte) (int64, error) {
+	query := DBConn.Exec("UPDATE transactions SET used = 0 WHERE hash = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
 

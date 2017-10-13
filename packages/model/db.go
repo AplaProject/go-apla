@@ -87,12 +87,18 @@ func DropTables() error {
 	`).Error
 }
 
-func ExecSchemaEcosystem(transaction *DbTransaction, id int, wallet int64, name string) error {
+func GetRecordsCount(tableName string) (int64, error) {
+	var count int64
+	err := DBConn.Table(tableName).Count(&count).Error
+	return count, err
+}
+
+func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 	schema, err := static.Asset("static/schema-ecosystem-v2.sql")
 	if err != nil {
 		return err
 	}
-	err = GetDB(transaction).Exec(fmt.Sprintf(string(schema), id, wallet, name)).Error
+	err = DBConn.Exec(fmt.Sprintf(string(schema), id, wallet, name)).Error
 	if err != nil {
 		return err
 	}
@@ -101,7 +107,7 @@ func ExecSchemaEcosystem(transaction *DbTransaction, id int, wallet int64, name 
 		if err != nil {
 			return err
 		}
-		err = GetDB(transaction).Exec(fmt.Sprintf(string(schema), wallet)).Error
+		err = DBConn.Exec(fmt.Sprintf(string(schema), wallet)).Error
 	}
 	return err
 }
@@ -115,12 +121,76 @@ func ExecSchema() error {
 	return DBConn.Exec(string(schema)).Error
 }
 
+func GetColumnsCount(tableName string) (int64, error) {
+	var count int64
+	err := DBConn.Table("information_schema.columns").
+		Where("table_name=?", tableName).
+		Select("column_name").
+		Count(&count).Error
+	return count, err
+}
+
+func GetTables() ([]string, error) {
+	var result []string
+	err := DBConn.Table("information_schema.tables").
+		Where("table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')").
+		Select("table_name").Scan(&result).Error
+	return result, err
+}
+
 func Update(transaction *DbTransaction, tblname, set, where string) error {
 	return GetDB(transaction).Exec(`UPDATE "` + strings.Trim(tblname, `"`) + `" SET ` + set + " " + where).Error
 }
 
 func Delete(tblname, where string) error {
 	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
+}
+
+func InsertReturningLastID(transaction *DbTransaction, table, columns, values string) (string, error) {
+	var result string
+	returning, err := GetFirstColumnName(table)
+	if err != nil {
+		return "", err
+	}
+	insertQuery := `INSERT INTO "` + table + `" (` + columns + `) VALUES (` + values + `) RETURNING ` + returning
+
+	err = GetDB(transaction).Raw(insertQuery).Row().Scan(&result)
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+func SequenceRestartWith(seqName string, id int64) error {
+	return DBConn.Exec("ALTER SEQUENCE " + seqName + " RESTART WITH " + converter.Int64ToStr(id)).Error
+}
+
+func SequenceLastValue(seqName string) (int64, error) {
+	var result int64
+	if err := DBConn.Raw("SELECT last_value FROM " + seqName).Row().Scan(&result); err != nil {
+		return 0, err
+	}
+	return result, nil
+}
+
+func GetSerialSequence(table, AiID string) (string, error) {
+	var result string
+	query := `SELECT pg_get_serial_sequence('` + table + `', '` + AiID + `')`
+	err := DBConn.Raw(query).Row().Scan(&result)
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+func GetCurrentSeqID(id, tblname string) (int64, error) {
+	var result int64
+	query := "SELECT " + id + " FROM " + tblname + " ORDER BY " + id + " DESC LIMIT 1"
+	err := DBConn.Raw(query).Row().Scan(&result)
+	if err != nil {
+		return 0, err
+	}
+	return result, nil
 }
 
 func GetRollbackID(tblname, where, ordering string) (int64, error) {
@@ -254,6 +324,42 @@ func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
 	return hash, err
 }
 
+func GetLastBlockData() (map[string]int64, error) {
+	result := make(map[string]int64)
+	confirmation := &Confirmation{}
+	err := confirmation.GetMaxGoodBlock()
+	if err != nil {
+		return result, utils.ErrInfo(err)
+	}
+	confirmedBlockID := confirmation.BlockID
+	if confirmedBlockID == 0 {
+		confirmedBlockID = 1
+	}
+	// obtain the time of the last affected block
+	block := &Block{}
+	err = block.GetBlock(confirmedBlockID)
+	if err != nil || len(block.Data) == 0 {
+		return result, utils.ErrInfo(err)
+	}
+	result["blockId"] = block.ID
+	// the time of the last block
+	result["lastBlockTime"] = block.Time
+	return result, nil
+}
+
+func GetMyWalletID() (int64, error) {
+	conf := &Config{}
+	err := conf.GetConfig()
+	if err != nil {
+		return 0, err
+	}
+	walletID := conf.DltWalletID
+	if walletID == 0 {
+		walletID = converter.StringToAddress(*utils.WalletAddress)
+	}
+	return walletID, nil
+}
+
 func AlterTableAddColumn(transaction *DbTransaction, tableName, columnName, columnType string) error {
 	return GetDB(transaction).Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
 }
@@ -264,6 +370,15 @@ func AlterTableDropColumn(tableName, columnName string) error {
 
 func CreateIndex(transaction *DbTransaction, indexName, tableName, onColumn string) error {
 	return GetDB(transaction).Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
+}
+
+func IsTable(tblname string) bool {
+	var name string
+	DBConn.Table("information_schema.tables").
+		Where("table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema') AND table_name=?`", tblname).
+		Select("table_name").Row().Scan(&name)
+
+	return name == tblname
 }
 
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
@@ -373,8 +488,39 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 	return int64(sleepTime), nil
 }
 
+func GetNameList(tableName string, count int) ([]map[string]string, error) {
+	var names []string
+	err := DBConn.Table(tableName).Order("name").Limit(count).Pluck("name", &names).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make([]map[string]string, 0)
+	for _, name := range names {
+		line := make(map[string]string)
+		line["name"] = name
+		result = append(result, line)
+	}
+	return result, nil
+}
+
 func DropTable(transaction *DbTransaction, tableName string) error {
 	return GetDB(transaction).DropTable(tableName).Error
+}
+
+func GetConditionsAndValue(tableName, name string) (map[string]string, error) {
+	type proxy struct {
+		Conditions string
+		Value      string
+	}
+	var temp proxy
+	err := DBConn.Table(tableName).Where("name = ?", name).Select("conditions", "value").Find(&temp).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]string)
+	result["conditions"] = temp.Conditions
+	result["value"] = temp.Value
+	return result, nil
 }
 
 // Because of import cycle utils and config
@@ -417,6 +563,14 @@ func IsIndex(tblname, column string) (bool, error) {
 	return len(row) > 0 && row[`column_name`] == column, err
 }
 
+func GetTableData(tableName string, limit int) ([]map[string]string, error) {
+	// TODO fix with EGAAS-240
+	if tableName == "dlt_wallets" {
+		return GetAll(`SELECT * FROM "`+tableName+`" order by wallet_id`, limit)
+	}
+	return GetAll(`SELECT * FROM "`+tableName+`" order by id`, limit)
+}
+
 func InsertIntoMigration(version string, timeApplied int64) error {
 	id, err := GetNextID(`migration_history`)
 	if err != nil {
@@ -424,6 +578,47 @@ func InsertIntoMigration(version string, timeApplied int64) error {
 	}
 	return DBConn.Exec(`INSERT INTO migration_history (id, version, date_applied) VALUES (?, ?, ?)`,
 		id, version, timeApplied).Error
+}
+
+func GetMap(query string, name, value string, args ...interface{}) (map[string]string, error) {
+	result := make(map[string]string)
+	all, err := GetAll(query, -1, args...)
+	if err != nil {
+		return result, err
+	}
+	for _, v := range all {
+		result[v[name]] = v[value]
+	}
+	return result, err
+}
+
+// ListResult is a structure for the list result
+type ListResult struct {
+	result []string
+	err    error
+}
+
+// String return the slice of strings
+func (r *ListResult) String() ([]string, error) {
+	if r.err != nil {
+		return r.result, r.err
+	}
+	return r.result, nil
+}
+
+// GetList returns the result of the query as ListResult variable
+func GetList(query string, args ...interface{}) *ListResult {
+	var result []string
+	all, err := GetAll(query, -1, args...)
+	if err != nil {
+		return &ListResult{result, err}
+	}
+	for _, v := range all {
+		for _, v2 := range v {
+			result = append(result, v2)
+		}
+	}
+	return &ListResult{result, nil}
 }
 
 func handleError(err error) error {
