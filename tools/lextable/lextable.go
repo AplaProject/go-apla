@@ -70,7 +70,7 @@ var (
 	states = `{
 	"main": {
 			"n;": ["main", "newline", "next"],
-			"()#[].,{}": ["main", "sys", "next"],
+			"()#[],{}": ["main", "sys", "next"],
 			"s": ["main", "", "next"],
 			"q": ["string", "", "push next"],
 			"Q": ["dstring", "", "push next"],
@@ -82,6 +82,7 @@ var (
 			"*+-": ["main", "oper", "next"],
 			"01": ["number", "", "push next"],
 			"@$a_r": ["ident", "", "push next"],
+			".": ["dot", "", "push next"],
 			"d": ["error", "", ""]
 		},
 	"string": {
@@ -96,6 +97,14 @@ var (
 	"dslash": {
 		"d": ["dstring", "", "next"]
 	},		
+	"dot": {
+		".": ["ddot", "", "next"],
+		"d": ["main", "sys", "pop"]
+	},
+	"ddot": {
+		".": ["main", "ident", "pop next"],
+		"d": ["error", "", ""]
+	},
 	"and": {
 			"&": ["main", "oper", "pop next"],
 			"d": ["error", "", ""]

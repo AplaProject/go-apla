@@ -19,6 +19,7 @@ package script
 import (
 	"fmt"
 	"reflect"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
@@ -69,6 +70,21 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		count = in
 	}
 	if obj.Type == ObjFunc {
+		//		fmt.Println(`Func`, cmd == cmdCallVari, in, count, obj.Value.(*Block).Info.(*FuncInfo))
+		//		fmt.Println(`Stack`, len(rt.stack), rt.stack, size)
+		if cmd == cmdCallVari {
+			parcount := count + 1 - in
+			if parcount < 0 {
+				return fmt.Errorf(`wrong count of parameters`)
+			}
+			pars := make([]interface{}, parcount)
+			shift := size - parcount
+			for i := parcount; i > 0; i-- {
+				pars[i-1] = reflect.ValueOf(rt.stack[size+i-parcount-1])
+			}
+			rt.stack = rt.stack[:shift]
+			rt.stack = append(rt.stack, pars)
+		}
 		_, err = rt.RunCode(obj.Value.(*Block))
 	} else {
 		finfo := obj.Value.(ExtFuncInfo)
@@ -730,6 +746,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
+			fmt.Println(string(debug.Stack()))
 			err = fmt.Errorf(`runtime panic error`)
 		}
 	}()
