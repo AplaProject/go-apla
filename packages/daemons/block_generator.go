@@ -21,6 +21,7 @@ import (
 
 	"context"
 
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
@@ -35,9 +36,8 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	fullNodes := &model.FullNode{}
-	err := fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
-	if err != nil || fullNodes.ID == 0 {
+	fullNode := syspar.GetNode(config.DltWalletID)
+	if fullNode == nil {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
 		log.Infof("we are not full node, sleep for 10 seconds")
@@ -48,14 +48,14 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	defer DBUnlock()
 
 	prevBlock := &model.InfoBlock{}
-	err = prevBlock.GetInfoBlock()
+	err := prevBlock.GetInfoBlock()
 	if err != nil {
 		log.Errorf("can't get block: %s", err)
 		return err
 	}
 
 	// calculate the next block generation time
-	sleepTime, err := model.GetSleepTime(config.DltWalletID, config.StateID, config.StateID, config.DltWalletID)
+	sleepTime, err := syspar.GetSleepTime(config.DltWalletID, prevBlock.WalletID)
 	if err != nil {
 		log.Errorf("can't get sleep time: %s", err)
 		return err

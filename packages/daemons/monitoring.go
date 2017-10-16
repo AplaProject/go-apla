@@ -6,6 +6,7 @@ import (
 
 	"bytes"
 
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 )
@@ -25,13 +26,8 @@ func Monitoring(w http.ResponseWriter, r *http.Request) {
 	addKey(&buf, "info_block_wallet", infoBlock.WalletID)
 	addKey(&buf, "info_block_state", infoBlock.StateID)
 
-	fullNode := &model.FullNode{}
-	nodes, err := fullNode.GetAll()
-	if err != nil {
-		logError(w, fmt.Errorf("can't get full nodes: %s", err))
-		return
-	}
-	addKey(&buf, "full_nodes_count", len(*nodes))
+	nodes := syspar.GetNodeHosts()
+	addKey(&buf, "full_nodes_count", len(nodes))
 
 	block := &model.Block{}
 	err = block.GetMaxBlock()

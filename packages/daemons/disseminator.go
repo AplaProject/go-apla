@@ -26,6 +26,8 @@ import (
 	"io"
 	"sync"
 
+	"fmt"
+
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
@@ -45,11 +47,10 @@ func Disseminator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	node := &model.FullNode{}
-	err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
-	if err != nil {
-		log.Errorf("can't get full_node: %s", err)
-		return err
+	node := syspar.GetNode(config.DltWalletID)
+	if node == nil {
+		log.Errorf("can't get full_node with wallet id = %v", config.DltWalletID)
+		return fmt.Errorf("unknown node")
 	}
 	fullNodeID := node.ID
 
@@ -64,7 +65,7 @@ func Disseminator(d *daemon, ctx context.Context) error {
 	if isFullNode {
 		// send blocks and transactions hashes
 		log.Debugf("we are full_node")
-		return sendHashes(fullNodeID)
+		return sendHashes(int32(fullNodeID))
 	} else {
 		// we are not full node for this StateID and WalletID, so just send transactions
 		log.Debugf("we are not full_node")
@@ -216,13 +217,9 @@ func MarshallTrHash(tr model.Transaction) []byte {
 }
 
 func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer) error) error {
-	hosts, err := model.GetFullNodesHosts()
-	if err != nil {
-		return err
-	}
+	hosts := syspar.GetNodeHosts()
 
 	var wg sync.WaitGroup
-
 	for _, host := range hosts {
 		wg.Add(1)
 		go func(h string) {

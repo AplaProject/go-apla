@@ -611,7 +611,7 @@ func (block *Block) CheckBlock() error {
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", block.Header.BlockID, block.PrevHeader.BlockID))
 		}
 		// check time interval between blocks
-		sleepTime, err := model.GetSleepTime(block.Header.WalletID, block.Header.StateID, block.PrevHeader.StateID, block.PrevHeader.WalletID)
+		sleepTime, err := syspar.GetSleepTime(block.Header.WalletID, block.PrevHeader.WalletID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

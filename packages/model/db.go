@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/config"
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	logging "github.com/op/go-logging"
@@ -430,62 +429,6 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 		}
 	}
 	return
-}
-
-func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int64) (int64, error) {
-	// take the list of all full_nodes
-
-	node := &FullNode{}
-	fullNodes, err := node.GetAll()
-	if err != nil {
-		return 0, err
-	}
-	fullNodesList := make([]map[string]string, 0, len(*fullNodes))
-	for _, node := range *fullNodes {
-		nodeMap := node.ToMap()
-		fullNodesList = append(fullNodesList, nodeMap)
-	}
-
-	// determine full_node_id of the one, who had to generate a block (but could delegate this)
-	err = node.Get(prevBlockWalletID)
-	if err != nil {
-		return 0, err
-	}
-	prevBlockFullNodeID := node.ID
-	prevBlockFullNodePosition := func(fullNodesList []map[string]string, prevBlockFullNodeID int64) int {
-		for i, fullNodes := range fullNodesList {
-			if converter.StrToInt64(fullNodes["id"]) == prevBlockFullNodeID {
-				return i
-			}
-		}
-		return -1
-	}(fullNodesList, int64(prevBlockFullNodeID))
-
-	// define our place (Including in the 'delegate')
-	myPosition := func(fullNodesList []map[string]string, myWalletID, myStateID int64) int {
-		for i, fullNodes := range fullNodesList {
-			if converter.StrToInt64(fullNodes["state_id"]) == myStateID || converter.StrToInt64(fullNodes["wallet_id"]) == myWalletID ||
-				converter.StrToInt64(fullNodes["final_delegate_state_id"]) == myWalletID || converter.StrToInt64(fullNodes["final_delegate_wallet_id"]) == myWalletID {
-				return i
-			}
-		}
-		return -1
-	}(fullNodesList, myWalletID, myStateID)
-
-	sleepTime := 0
-	if myPosition == prevBlockFullNodePosition {
-		sleepTime = ((len(fullNodesList) + myPosition) - int(prevBlockFullNodePosition)) * consts.GAPS_BETWEEN_BLOCKS
-	}
-
-	if myPosition > prevBlockFullNodePosition {
-		sleepTime = (myPosition - int(prevBlockFullNodePosition)) * consts.GAPS_BETWEEN_BLOCKS
-	}
-
-	if myPosition < prevBlockFullNodePosition {
-		sleepTime = (len(fullNodesList) - prevBlockFullNodePosition) * consts.GAPS_BETWEEN_BLOCKS
-	}
-
-	return int64(sleepTime), nil
 }
 
 func GetNameList(tableName string, count int) ([]map[string]string, error) {

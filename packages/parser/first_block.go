@@ -89,11 +89,6 @@ func (p *FirstBlockParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	syspar.SysUpdate()
-	fullNode := &model.FullNode{WalletID: myAddress, Host: data.Host}
-	err = fullNode.Create(p.DbTransaction)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
 
 	return nil
 }

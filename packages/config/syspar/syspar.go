@@ -63,6 +63,7 @@ const (
 )
 
 type FullNode struct {
+	ID     int64
 	Host   string
 	Public []byte
 }
@@ -101,7 +102,7 @@ func SysUpdate() error {
 		if err != nil {
 			return err
 		}
-		for _, item := range inodes {
+		for i, item := range inodes {
 			if len(item) < 3 {
 				continue
 			}
@@ -109,7 +110,7 @@ func SysUpdate() error {
 			if err != nil {
 				return err
 			}
-			nodes[converter.StrToInt64(item[1])] = &FullNode{Host: item[0], Public: pub}
+			nodes[converter.StrToInt64(item[1])] = &FullNode{ID: int64(i + 1), Host: item[0], Public: pub}
 		}
 	}
 	getParams := func(name string) (map[int64]string, error) {
@@ -142,6 +143,66 @@ func GetNode(wallet int64) *FullNode {
 		return ret
 	}
 	return nil
+}
+
+func FindNodeByID(id int64) *FullNode {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	for _, node := range nodes {
+		if node.ID == id {
+			return node
+		}
+	}
+
+	return nil
+}
+
+func GetNodesDistance(firstWalletID, secondWalletID int64) (int, bool) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	firstNode, ok := nodes[firstWalletID]
+	if !ok {
+		return 0, false
+	}
+
+	secondNode, ok := nodes[secondWalletID]
+	if !ok {
+		return 0, false
+	}
+
+	if secondNode.ID > firstNode.ID {
+		return int(secondNode.ID - firstNode.ID), true
+	}
+
+	if secondNode.ID == firstNode.ID {
+		return len(nodes), true
+	}
+
+	// secondNodeID < firstNodeID
+	return len(nodes) - int(firstNode.ID) + int(secondNode.ID), true
+}
+
+func GetSleepTime(myWalletID, prevBlockWalletID int64) (int64, error) {
+
+	distance, ok := GetNodesDistance(myWalletID, prevBlockWalletID)
+	if !ok {
+		return 0, nil
+	}
+
+	return int64(distance * GetGapsBetweenBlocks()), nil
+}
+
+func GetNodeHosts() []string {
+	mutex.RLock()
+	mutex.RUnlock()
+
+	hosts := make([]string, 0, len(nodes))
+	for _, node := range nodes {
+		hosts = append(hosts, node.Host)
+	}
+	return hosts
 }
 
 func SysInt64(name string) int64 {

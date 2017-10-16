@@ -17,12 +17,14 @@
 package daemons
 
 import (
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	"context"
+	"fmt"
 )
 
 /* Take the block from the queue. If this block has the bigger block id than the last block from our chain, then find the fork
@@ -68,17 +70,15 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	}
 
 	// download blocks for check
-	fullNode := &model.FullNode{}
-
-	err = fullNode.FindNodeByID(queueBlock.FullNodeID)
-	if err != nil {
+	node := syspar.FindNodeByID(queueBlock.FullNodeID)
+	if node == nil {
 		queueBlock.Delete()
-		return utils.ErrInfo(err)
+		return fmt.Errorf("can't find node: %d", queueBlock.FullNodeID)
 	}
 
 	blockID := queueBlock.BlockID
 
-	host := getHostPort(fullNode.Host)
+	host := getHostPort(node.Host)
 	err = parser.GetBlocks(blockID, host, "rollback_blocks_1", 7)
 	if err != nil {
 		log.Error("v", err)

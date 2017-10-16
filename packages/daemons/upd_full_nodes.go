@@ -56,18 +56,11 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 		return err
 
 	}
-	myStateID := nodeConfig.StateID
 	myWalletID := nodeConfig.DltWalletID
 
 	// If we are in the list of those who are able to generate the blocks
-	fullNode := &model.FullNode{}
-	err = fullNode.FindNode(myStateID, myWalletID, myStateID, myWalletID)
-	if err != nil {
-		return err
-	}
-
-	fullNodeID := fullNode.ID
-	if fullNodeID == 0 {
+	fullNode := syspar.GetNode(myWalletID)
+	if fullNode == nil {
 		d.sleepTime = 10 * time.Second // because 1s is too small for non-full nodes
 		return nil
 	}
