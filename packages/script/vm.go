@@ -87,7 +87,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			pars := make([]interface{}, parcount)
 			shift := size - parcount
 			for i := parcount; i > 0; i-- {
-				pars[i-1] = reflect.ValueOf(rt.stack[size+i-parcount-1])
+				pars[i-1] = rt.stack[size+i-parcount-1]
 			}
 			rt.stack = rt.stack[:shift]
 			rt.stack = append(rt.stack, pars)
@@ -372,7 +372,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 			}
 		case cmdWhile:
-			if valueToBool(rt.stack[len(rt.stack)-1]) {
+			val := rt.stack[len(rt.stack)-1]
+			rt.stack = rt.stack[:len(rt.stack)-1]
+			if valueToBool(val) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 				newci := labels[len(labels)-1]
 				labels = labels[:len(labels)-1]
@@ -418,7 +420,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					}
 				}
 			}
-			//			fmt.Println(`CMD ASSIGN`, count, rt.stack, rt.vars)
 		case cmdReturn:
 			status = statusReturn
 		case cmdError:
@@ -473,7 +474,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			if i < 0 {
 				return 0, fmt.Errorf(`wrong var %v`, ivar.Obj.Value)
 			}
-			//fmt.Println(`VAR`, voff, *ivar.Obj, ivar.Owner.Vars, rt.vars)
 			//rt.stack = append(rt.stack, rt.vars[voff+ivar.Obj.Value.(int)])
 		case cmdExtend, cmdCallExtend:
 			if val, ok := (*rt.extend)[cmd.Value.(string)]; ok {
@@ -562,11 +562,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			rt.stack[size-1] = !valueToBool(top[0])
 
 		case cmdAdd:
-			/*			fmt.Println(`Stack`)
-						for _, item := range rt.stack {
-							fmt.Printf("|%v|", item)
-						}
-						fmt.Println(`Stack`, rt.stack)*/
 			switch top[1].(type) {
 			case string:
 				switch top[0].(type) {
@@ -769,19 +764,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	/*	if status == statusBreak {
 		status = statusNormal
 	}*/
+	last := rt.blocks[len(rt.blocks)-1]
+	rt.blocks = rt.blocks[:len(rt.blocks)-1]
 	if status == statusReturn {
-		//		fmt.Println(`Status`, start, rt.stack)
-		if rt.blocks[len(rt.blocks)-1].Block.Type == ObjFunc {
-			for count := len(rt.blocks[len(rt.blocks)-1].Block.Info.(*FuncInfo).Results); count > 0; count-- {
+		if last.Block.Type == ObjFunc {
+			for count := len(last.Block.Info.(*FuncInfo).Results); count > 0; count-- {
 				rt.stack[start] = rt.stack[len(rt.stack)-count]
 				start++
 			}
 			status = statusNormal
-			rt.blocks = rt.blocks[:len(rt.blocks)-1]
-
-			//			fmt.Println(`Ret function`, start, rt.stack)
 		} else {
-			rt.blocks = rt.blocks[:len(rt.blocks)-1]
 			return
 		}
 	}
@@ -801,7 +793,6 @@ func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]in
 	rt.extend = extend
 	if _, err = rt.RunCode(block); err == nil {
 		off := len(rt.stack) - len(info.Results)
-		//		fmt.Println(`RUN`, len(rt.stack), len(info.Results))
 		for i := 0; i < len(info.Results); i++ {
 			ret = append(ret, rt.stack[off+i])
 		}

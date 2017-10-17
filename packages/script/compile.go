@@ -226,11 +226,13 @@ var (
 		},
 		{ // stateFParams
 			lexNewLine: {stateFParams, 0},
+			lexComment: {stateFParams, 0},
 			isLPar:     {stateFParam, 0},
 			0:          {stateFResult | stateStay, 0},
 		},
 		{ // stateFParam
 			lexNewLine: {stateFParam, 0},
+			lexComment: {stateFParam, 0},
 			lexIdent:   {stateFParamTYPE, cfFParam},
 			// lexType:    {stateFParam, cfFType},
 			isComma: {stateFParam, 0},
@@ -238,6 +240,7 @@ var (
 			0:       {errParams, cfError},
 		},
 		{ // stateFParamTYPE
+			lexComment:                  {stateFParamTYPE, 0},
 			lexIdent:                    {stateFParamTYPE, cfFParam},
 			lexType:                     {stateFParam, cfFType},
 			lexKeyword | (keyTail << 8): {stateFTail, cfFTail},

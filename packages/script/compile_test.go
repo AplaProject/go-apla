@@ -270,13 +270,21 @@ func TestVMCompile(t *testing.T) {
 	func emptytail(tail ...) string {
 		return Sprintf("%d ", lenArray(tail))
 	}
+	func sum(out string, values ...) string {
+		var i, res int
+		while i < lenArray(values) {
+		   res = res + values[i]
+		   i = i+1
+		}
+		return Sprintf(out, res)
+	}
 	func calltail() string {
 		var out string
 		out = emptytail() + emptytail(10) + emptytail("name1", "name2")
 		out = out + mytail("OK") + mytail("1=", 11) + mytail("2=", "name", 11)
-		return out
+		return out + sum("Sum: %d", 10, 20, 30, 40)
 	}
-	`, `calltail`, `0 1 2 OK1==11 2==11+name `},
+	`, `calltail`, `0 1 2 OK1==11 2==11+name Sum: 100`},
 		{`func DBFind( table string).Columns(columns string) 
 		. Where(format string, tail ...). Limit(limit int).
 		Offset(offset int) string  {
@@ -314,7 +322,6 @@ func TestVMCompile(t *testing.T) {
 				},
 			}); err == nil {
 				if out[0].(string) != item.Output {
-					fmt.Println(out[0].(string))
 					t.Error(`error vm ` + out[0].(string) + `!=` + item.Output)
 					break
 				}
