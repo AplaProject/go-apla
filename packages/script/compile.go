@@ -73,6 +73,7 @@ const (
 	stateFParamTYPE
 	stateFTail
 	stateFResult
+	stateFDot
 	stateVar
 	stateVarType
 	stateAssignEval
@@ -125,6 +126,7 @@ const (
 	cfFParam
 	cfFType
 	cfFTail
+	cfFNameParam
 	cfAssignVar
 	cfAssign
 	cfTX
@@ -161,6 +163,7 @@ var (
 		fFparam,
 		fFtype,
 		fFtail,
+		fFNameParam,
 		fAssignVar,
 		fAssign,
 		fTx,
@@ -249,9 +252,15 @@ var (
 		},
 		{ // stateFResult
 			lexNewLine: {stateFResult, 0},
+			isDot:      {stateFDot, 0},
 			lexType:    {stateFResult, cfFResult},
 			isComma:    {stateFResult, 0},
 			0:          {stateBlock | stateStay, 0},
+		},
+		{ // stateFDot
+			lexNewLine: {stateFDot, 0},
+			lexIdent:   {stateFParams, cfFNameParam},
+			0:          {errMustName, cfError},
 		},
 		{ // stateVar
 			lexNewLine: {stateBody, 0},
@@ -358,7 +367,19 @@ func fFparam(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
 	if block.Type == ObjFunc && (state == stateFParam || state == stateFParamTYPE) {
 		fblock := block.Info.(*FuncInfo)
-		fblock.Params = append(fblock.Params, reflect.TypeOf(nil))
+		if fblock.Names == nil {
+			fblock.Params = append(fblock.Params, reflect.TypeOf(nil))
+		} else {
+			for key := range *fblock.Names {
+				if key[0] == '_' {
+					name := key[1:]
+					params := append((*fblock.Names)[name].Params, reflect.TypeOf(nil))
+					offset := append((*fblock.Names)[name].Offset, len(block.Vars))
+					(*fblock.Names)[name] = FuncName{Params: params, Offset: offset}
+					break
+				}
+			}
+		}
 	}
 	if block.Objects == nil {
 		block.Objects = make(map[string]*ObjInfo)
@@ -372,9 +393,22 @@ func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
 	if block.Type == ObjFunc && state == stateFParam {
 		fblock := block.Info.(*FuncInfo)
-		for pkey, param := range fblock.Params {
-			if param == reflect.TypeOf(nil) {
-				fblock.Params[pkey] = lexem.Value.(reflect.Type)
+		if fblock.Names == nil {
+			for pkey, param := range fblock.Params {
+				if param == reflect.TypeOf(nil) {
+					fblock.Params[pkey] = lexem.Value.(reflect.Type)
+				}
+			}
+		} else {
+			for key := range *fblock.Names {
+				if key[0] == '_' {
+					for pkey, param := range (*fblock.Names)[key[1:]].Params {
+						if param == reflect.TypeOf(nil) {
+							(*fblock.Names)[key[1:]].Params[pkey] = lexem.Value.(reflect.Type)
+						}
+					}
+					break
+				}
 			}
 		}
 	}
@@ -391,21 +425,60 @@ func fFtail(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
 
 	fblock := block.Info.(*FuncInfo)
-	for pkey, param := range fblock.Params {
-		if param == reflect.TypeOf(nil) {
-			if used {
-				return fmt.Errorf(`... parameter must be one`)
+	if fblock.Names == nil {
+		for pkey, param := range fblock.Params {
+			if param == reflect.TypeOf(nil) {
+				if used {
+					return fmt.Errorf(`... parameter must be one`)
+				}
+				fblock.Params[pkey] = reflect.TypeOf([]interface{}{})
+				used = true
 			}
-			fblock.Params[pkey] = reflect.TypeOf([]interface{}{})
-			used = true
+		}
+		block.Info.(*FuncInfo).Variadic = true
+	} else {
+		for key := range *fblock.Names {
+			if key[0] == '_' {
+				name := key[1:]
+				for pkey, param := range (*fblock.Names)[name].Params {
+					if param == reflect.TypeOf(nil) {
+						if used {
+							return fmt.Errorf(`... parameter must be one`)
+						}
+						(*fblock.Names)[name].Params[pkey] = reflect.TypeOf([]interface{}{})
+						used = true
+					}
+				}
+				offset := append((*fblock.Names)[name].Offset, len(block.Vars))
+				(*fblock.Names)[name] = FuncName{Params: (*fblock.Names)[name].Params,
+					Offset: offset, Variadic: true}
+				break
+			}
 		}
 	}
-	block.Info.(*FuncInfo).Variadic = true
 	for vkey, ivar := range block.Vars {
 		if ivar == reflect.TypeOf(nil) {
 			block.Vars[vkey] = reflect.TypeOf([]interface{}{})
 		}
 	}
+	return nil
+}
+
+func fFNameParam(buf *[]*Block, state int, lexem *Lexem) error {
+	block := (*buf)[len(*buf)-1]
+
+	fblock := block.Info.(*FuncInfo)
+	if fblock.Names == nil {
+		names := make(map[string]FuncName)
+		fblock.Names = &names
+	}
+	for key := range *fblock.Names {
+		if key[0] == '_' {
+			delete(*fblock.Names, key)
+		}
+	}
+	(*fblock.Names)[`_`+lexem.Value.(string)] = FuncName{}
+
 	return nil
 }
 
@@ -809,7 +882,36 @@ main:
 				}
 			}
 			if len(buffer) > 0 {
+				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdFuncName {
+					buffer = buffer[:len(buffer)-1]
+					(*prev).Value = FuncNameCmd{Name: prev.Value.(FuncNameCmd).Name,
+						Count: parcount[len(parcount)-1]}
+					parcount = parcount[:len(parcount)-1]
+					bytecode = append(bytecode, prev)
+				}
 				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdCall || prev.Cmd == cmdCallVari {
+					if prev.Value.(*ObjInfo).Type == ObjFunc && prev.Value.(*ObjInfo).Value.(*Block).Info.(*FuncInfo).Names != nil {
+						if bytecode[len(bytecode)-1].Cmd != cmdFuncName {
+							bytecode = append(bytecode, &ByteCode{cmdPush, nil})
+						}
+						if i < len(*lexems)-4 && (*lexems)[i+1].Type == isDot {
+							if (*lexems)[i+2].Type != lexIdent {
+								return fmt.Errorf(`must be the name of the tail`)
+							}
+							names := prev.Value.(*ObjInfo).Value.(*Block).Info.(*FuncInfo).Names
+							if _, ok := (*names)[(*lexems)[i+2].Value.(string)]; !ok {
+								return fmt.Errorf(`unknown function tail %s`, (*lexems)[i+2].Value.(string))
+							}
+							buffer = append(buffer, &ByteCode{cmdFuncName, FuncNameCmd{Name: (*lexems)[i+2].Value.(string)}})
+							count := 0
+							if (*lexems)[i+3].Type != isRPar {
+								count++
+							}
+							parcount = append(parcount, count)
+							i += 2
+							break
+						}
+					}
 					count := parcount[len(parcount)-1]
 					parcount = parcount[:len(parcount)-1]
 					if prev.Cmd == cmdCallVari {

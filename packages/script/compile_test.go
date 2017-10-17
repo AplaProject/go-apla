@@ -277,6 +277,22 @@ func TestVMCompile(t *testing.T) {
 		return out
 	}
 	`, `calltail`, `0 1 2 OK1==11 2==11+name `},
+		{`func DBFind( table string).Columns(columns string) 
+		. Where(format string, tail ...). Limit(limit int).
+		Offset(offset int) string  {
+		Println("DBFind", table, tail)
+		return Sprintf("%s %s %s %d %d=", table, columns, format, limit, offset)
+	}
+	func names() string {
+		var out, cols string
+		cols = "name,value"
+		out = DBFind( "mytable") + DBFind( "keys"
+			).Columns(cols)+ DBFind( "keys"
+				).Offset(199).Columns("qq"+"my")
+		out = out + DBFind( "table").Columns("name").Where("id=?", 
+			100).Limit(10) + DBFind( "table").Where("request")
+		return out
+	}`, `names`, `mytable   0 0=keys name,value  0 0=keys qqmy  0 199=table name id=? 10 0=table  request 0 0=`},
 	}
 	vm := NewVM()
 	vm.Extern = true

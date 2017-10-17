@@ -72,6 +72,13 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 	if obj.Type == ObjFunc {
 		//		fmt.Println(`Func`, cmd == cmdCallVari, in, count, obj.Value.(*Block).Info.(*FuncInfo))
 		//		fmt.Println(`Stack`, len(rt.stack), rt.stack, size)
+		var imap map[string][]interface{}
+		if obj.Value.(*Block).Info.(*FuncInfo).Names != nil {
+			if rt.stack[size-1] != nil {
+				imap = rt.stack[size-1].(map[string][]interface{})
+			}
+			rt.stack = rt.stack[:size-1]
+		}
 		if cmd == cmdCallVari {
 			parcount := count + 1 - in
 			if parcount < 0 {
@@ -84,6 +91,9 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			}
 			rt.stack = rt.stack[:shift]
 			rt.stack = append(rt.stack, pars)
+		}
+		if obj.Value.(*Block).Info.(*FuncInfo).Names != nil {
+			rt.stack = append(rt.stack, imap)
 		}
 		_, err = rt.RunCode(obj.Value.(*Block))
 	} else {
@@ -287,8 +297,16 @@ func (vm *VM) RunInit(cost int64) *RunTime {
 // RunCode executes Block
 func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	top := make([]interface{}, 8)
-	start := len(rt.stack)
 	rt.blocks = append(rt.blocks, &blockStack{block, len(rt.vars)})
+	var namemap map[string][]interface{}
+	if block.Type == ObjFunc && block.Info.(*FuncInfo).Names != nil {
+		if rt.stack[len(rt.stack)-1] != nil {
+			namemap = rt.stack[len(rt.stack)-1].(map[string][]interface{})
+		}
+		rt.stack = rt.stack[:len(rt.stack)-1]
+	}
+	start := len(rt.stack)
+	varoff := len(rt.vars)
 	for vkey, vpar := range block.Vars {
 		rt.cost--
 		var value interface{}
@@ -303,6 +321,22 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 		}
 		rt.vars = append(rt.vars, value)
+	}
+	if namemap != nil {
+		for key, item := range namemap {
+			params := (*block.Info.(*FuncInfo).Names)[key]
+			if params.Variadic {
+
+			}
+			for i, value := range item {
+				if params.Variadic && i >= len(params.Params)-1 {
+					off := varoff + params.Offset[len(params.Params)-1]
+					rt.vars[off] = append(rt.vars[off].([]interface{}), value)
+				} else {
+					rt.vars[varoff+params.Offset[i]] = value
+				}
+			}
+		}
 	}
 	if block.Type == ObjFunc {
 		start -= len(block.Info.(*FuncInfo).Params)
@@ -395,6 +429,19 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				pattern = `*%v`
 			}
 			err = fmt.Errorf(pattern, rt.stack[len(rt.stack)-1])
+		case cmdFuncName:
+			ifunc := cmd.Value.(FuncNameCmd)
+			mapoff := len(rt.stack) - 1 - ifunc.Count
+			if rt.stack[mapoff] == nil {
+				rt.stack[mapoff] = make(map[string][]interface{})
+			}
+			params := make([]interface{}, ifunc.Count)
+			for i := 0; i < ifunc.Count; i++ {
+				params[i] = rt.stack[mapoff+1+i]
+			}
+			rt.stack[mapoff].(map[string][]interface{})[ifunc.Name] = params
+			rt.stack = rt.stack[:mapoff+1]
+			continue
 		case cmdCallVari, cmdCall:
 			if cmd.Value.(*ObjInfo).Type == ObjExtFunc {
 				finfo := cmd.Value.(*ObjInfo).Value.(ExtFuncInfo)
