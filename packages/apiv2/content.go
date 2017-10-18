@@ -25,9 +25,10 @@ import (
 )
 
 type contentResult struct {
-	Menu  string `json:"menu,omitempty"`
-	Title string `json:"title,omitempty"`
-	Tree  string `json:"tree"`
+	Menu     string `json:"menu,omitempty"`
+	MenuTree string `json:"menutree,omitempty"`
+	Title    string `json:"title,omitempty"`
+	Tree     string `json:"tree"`
 }
 
 func initVars(r *http.Request, data *apiData) *map[string]string {
@@ -52,7 +53,12 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 	ret := templatev2.Template2JSON(pattern[`value`], false, initVars(r, data))
-	data.result = &contentResult{Tree: string(ret), Menu: pattern[`menu`]}
+
+	menu, err := model.Single(`SELECT value FROM "`+converter.Int64ToStr(data.state)+
+		`_menu" WHERE name = ?`, pattern[`menu`]).String()
+	retmenu := templatev2.Template2JSON(menu, false, initVars(r, data))
+
+	data.result = &contentResult{Tree: string(ret), Menu: pattern[`menu`], MenuTree: string(retmenu)}
 	return nil
 }
 
