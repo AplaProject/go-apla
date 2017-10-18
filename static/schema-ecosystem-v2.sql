@@ -25,7 +25,7 @@ CREATE INDEX "%[1]d_history_index_block" ON "%[1]d_history" (block_id, txhash);
 DROP TABLE IF EXISTS "%[1]d_languages"; CREATE TABLE "%[1]d_languages" (
   "id" bigint  NOT NULL DEFAULT '0',
   "name" character varying(100) NOT NULL DEFAULT '',
-  "res" jsonb,
+  "res" text NOT NULL DEFAULT '',
   "conditions" text NOT NULL DEFAULT '',
   "rb_id" bigint NOT NULL DEFAULT '0'
 );
@@ -97,7 +97,7 @@ INSERT INTO "%[1]d_contracts" ("id", "value", "wallet_id","active", "conditions"
 DROP TABLE IF EXISTS "%[1]d_parameters";
 CREATE TABLE "%[1]d_parameters" (
 "id" bigint NOT NULL  DEFAULT '0',
-"name" varchar(255) NOT NULL DEFAULT '',
+"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
 "value" text NOT NULL DEFAULT '',
 "conditions" text  NOT NULL DEFAULT '',
 "rb_id" bigint  NOT NULL DEFAULT '0'

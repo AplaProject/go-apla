@@ -187,6 +187,9 @@ func ConditionById(table string, validate bool) {
     }
     conditions {
         ValidateCondition($Conditions, $state)
+        if DBIntExt(Table(`parameters`), `id`, $Name, `name`) {
+            warning Sprintf( `Parameter %%s already exists`, $Name)
+        }
     }
     action {
         DBInsert(Table(`parameters`), `name,value,conditions`, $Name, $Value, $Conditions )
@@ -226,7 +229,7 @@ func ConditionById(table string, validate bool) {
     conditions {
         ValidateCondition($Conditions,$state)
         if DBIntExt(Table(`menu`), `id`, $Name, `name`) {
-            warning Sprintf( `Menu %%s aready exists`, $Name)
+            warning Sprintf( `Menu %%s already exists`, $Name)
         }
     }
     action {
@@ -274,7 +277,7 @@ func ConditionById(table string, validate bool) {
     conditions {
         ValidateCondition($Conditions,$state)
         if DBIntExt(Table(`pages`), `id`, $Name, `name`) {
-            warning Sprintf( `Page %%s aready exists`, $Name)
+            warning Sprintf( `Page %%s already exists`, $Name)
         }
     }
     action {
