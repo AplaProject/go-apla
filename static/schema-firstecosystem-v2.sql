@@ -15,6 +15,11 @@ func ConditionById(table string, validate bool) {
         ValidateCondition($Conditions,$state)
     }
 }
+
+func DBFind(table string).Columns(columns string).Where(where string, params ...)
+     .WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
+    return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
+}
 ', '%[1]d','ContractConditions(`MainCondition`)'),
 ('3','contract MoneyTransfer {
     data {

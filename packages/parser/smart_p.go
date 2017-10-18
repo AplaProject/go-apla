@@ -18,6 +18,7 @@ package parser
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -49,6 +50,7 @@ var (
 		"DBUpdateExt":    struct{}{},
 		"DBGetList":      struct{}{},
 		"DBGetTable":     struct{}{},
+		"DBSelect":       struct{}{},
 		"DBString":       struct{}{},
 		"DBInt":          struct{}{},
 		"DBRowExt":       struct{}{},
@@ -127,6 +129,7 @@ func init() {
 		"DBUpdateExt":        DBUpdateExt,
 		"DBGetList":          DBGetList,
 		"DBGetTable":         DBGetTable,
+		"DBSelect":           DBSelect,
 		"DBString":           DBString,
 		"DBInt":              DBInt,
 		"DBRowExt":           DBRowExt,
@@ -1103,19 +1106,19 @@ func LangRes(p *Parser, idRes, lang string) string {
 }
 
 func checkWhere(tblname string, where string, order string) (string, string, error) {
-	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
-	ret := re.FindAllStringSubmatch(where, -1)
+	/*	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
+		ret := re.FindAllStringSubmatch(where, -1)
 
-	for _, iret := range ret {
-		if len(iret) != 2 {
-			continue
-		}
-		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
-			return ``, ``, err
-		} else if !isIndex {
-			return ``, ``, fmt.Errorf(`there is no index on %s`, iret[1])
-		}
-	}
+		for _, iret := range ret {
+			if len(iret) != 2 {
+				continue
+			}
+			if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
+				return ``, ``, err
+			} else if !isIndex {
+				return ``, ``, fmt.Errorf(`there is no index on %s`, iret[1])
+			}
+		}*/
 	if len(order) > 0 {
 		order = ` order by ` + converter.EscapeName(order)
 	}
@@ -1182,6 +1185,71 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 			}*/
 	}
 	return 0, result, err
+}
+
+// DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
+func DBSelect(p *Parser, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
+	where string, params []interface{}) (int64, []interface{}, error) {
+
+	var (
+		err  error
+		rows *sql.Rows
+	)
+	if err = checkReport(tblname); err != nil {
+		return 0, nil, err
+	}
+	if len(columns) == 0 {
+		columns = `*`
+	}
+	if len(order) == 0 {
+		order = `id`
+	}
+	where = strings.Replace(converter.Escape(where), `$`, `?`, -1)
+	if id > 0 {
+		where = fmt.Sprintf(`id='%d'`, id)
+	}
+	if limit == 0 {
+		limit = 25
+	}
+	if limit < 0 || limit > 250 {
+		limit = 250
+	}
+	if ecosystem == 0 {
+		ecosystem = p.TxSmart.StateID
+	}
+	tblname = fmt.Sprintf(`%d_%s`, ecosystem, tblname)
+	rows, err = model.DBConn.Table(tblname).Select(columns).Where(where, params...).Order(order).
+		Offset(offset).Limit(limit).Rows()
+	if err != nil {
+		return 0, nil, err
+	}
+	defer rows.Close()
+	cols, err := rows.Columns()
+	if err != nil {
+		return 0, nil, err
+	}
+	values := make([][]byte, len(cols))
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+	result := make([]interface{}, 0, 50)
+	for rows.Next() {
+		err = rows.Scan(scanArgs...)
+		if err != nil {
+			return 0, nil, err
+		}
+		row := make(map[string]string)
+		for i, col := range values {
+			var value string
+			if col != nil {
+				value = string(col)
+			}
+			row[cols[i]] = value
+		}
+		result = append(result, reflect.ValueOf(row).Interface())
+	}
+	return 0, result, nil
 }
 
 // DBRowExt returns one row from the table StringExt
