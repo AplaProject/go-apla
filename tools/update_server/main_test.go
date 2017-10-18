@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/EGaaS/update_server/config"
+	"github.com/AplaProject/go-apla/tools/update_server/config"
 )
 
 func TestConfig(t *testing.T) {

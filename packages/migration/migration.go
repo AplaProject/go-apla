@@ -1532,3 +1532,24 @@ var (
 		}
 	}', '%[1]d','ContractConditions("MainCondition")');`
 )
+
+var VersionedMigrations map[string]string
+
+func init() {
+	VersionedMigrations = make(map[string]string, 0)
+
+	VersionedMigrations["1.0.1"] = `CREATE TABLE "migration_test" (
+		"name" varchar(100)  NOT NULL DEFAULT '',
+		"permissions" jsonb,
+		"columns" jsonb,
+		"conditions" text  NOT NULL DEFAULT '',
+		"rb_id" bigint NOT NULL DEFAULT '0'
+		);`
+	VersionedMigrations["2.0.1"] = `CREATE TABLE "migrations_test_2" (
+		"name" varchar(100)  NOT NULL DEFAULT '',
+		"permissions" jsonb,
+		"columns" jsonb,
+		"conditions" text  NOT NULL DEFAULT '',
+		"rb_id" bigint NOT NULL DEFAULT '0'
+		);`
+}

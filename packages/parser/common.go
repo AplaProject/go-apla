@@ -23,6 +23,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/autoupdate"
+
 	"bytes"
 
 	"github.com/AplaProject/go-apla/packages/conf"
@@ -36,6 +38,10 @@ import (
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
+)
+
+var (
+	updater = autoupdate.NewUpdater("http://localhost:8090", "update.pub")
 )
 
 // GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
@@ -283,6 +289,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
 		return err
 	}
+	updater.TryUpdate(blockID)
 	return nil
 }
 

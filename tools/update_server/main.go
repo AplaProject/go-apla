@@ -8,10 +8,10 @@ import (
 	"os"
 	"sort"
 
-	"github.com/EGaaS/update_server/structs"
+	"github.com/AplaProject/go-apla/tools/update_server/structs"
 
-	"github.com/EGaaS/update_server/config"
-	"github.com/EGaaS/update_server/database"
+	"github.com/AplaProject/go-apla/tools/update_server/config"
+	"github.com/AplaProject/go-apla/tools/update_server/database"
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/go-version"
 )
@@ -37,7 +37,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/v1/binary", addBinary).Methods("POST")
-	r.HandleFunc("/v1/binary/{version}", getBinary).Methods("GET")
+	r.HandleFunc("/v1/binary/{version}/{GOOS}/{GOARCH}", getBinary).Methods("GET")
 	r.HandleFunc("/v1/binary/{version}", removeBinary).Methods("DELETE")
 	r.HandleFunc("/v1/last", getLastVersion).Methods("GET")
 
@@ -92,7 +92,7 @@ func getVersions(w http.ResponseWriter, r *http.Request) {
 
 func getBinary(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	version := vars["version"]
+	version := vars["version"] + "_" + vars["GOOS"] + "_" + vars["GOARCH"]
 	binary, err := db.GetBinary(version)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

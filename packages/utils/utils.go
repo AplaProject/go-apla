@@ -730,3 +730,15 @@ func GetNodeKeys() (string, string, error) {
 	}
 	return string(nprivkey), string(npubkey), nil
 }
+
+func Stop() {
+	log.Debug("Stop()")
+	log.Debug("DayLight Stop : %v", model.DBConn)
+
+	stopDaemons := &model.StopDaemon{StopTime: time.Now().Unix()}
+	err := stopDaemons.Create()
+	if err != nil {
+		log.Error("%v", utils.ErrInfo(err))
+	}
+	log.Debug("DayLight Stop")
+}
