@@ -78,18 +78,31 @@ type FieldInfo struct {
 
 // ContractInfo contains the contract information
 type ContractInfo struct {
-	ID    uint32
-	Name  string
-	Owner *OwnerInfo
-	Used  map[string]bool // Called contracts
-	Tx    *[]*FieldInfo
+	ID       uint32
+	Name     string
+	Owner    *OwnerInfo
+	Used     map[string]bool // Called contracts
+	Tx       *[]*FieldInfo
 	Settings map[string]interface{}
+}
+
+// for cmdFuncName
+type FuncNameCmd struct {
+	Name  string
+	Count int
+}
+
+type FuncName struct {
+	Params   []reflect.Type
+	Offset   []int
+	Variadic bool
 }
 
 // FuncInfo contains the function information
 type FuncInfo struct {
 	Params   []reflect.Type
 	Results  []reflect.Type
+	Names    *map[string]FuncName
 	Variadic bool
 }
 

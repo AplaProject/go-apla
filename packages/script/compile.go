@@ -40,17 +40,13 @@ type compileStates []stateLine
 
 type compileFunc func(*[]*Block, int, *Lexem) error
 
-// Компилятор преобразует последовательность лексем в байт-код с помощью конечного автомата, подобно тому как
-// это было реализовано при лексическом анализе. Отличие заключается в том, что мы не конвертируем список
-// состояний и переходов в промежуточный массив.
 // The compiler converts the sequence of lexemes into the bytecodes using a finite state machine the same as
 // it was implemented in lexical analysis. The difference lays in that we do not convert the list of
 // states and transitions to the intermediate array.
 
-/* Байт-код из себя представляет дерево - на самом верхнем уровне функции контракты, и далее идет вложенность
- в соответствии с вложенностью фигурных скобок. Узлами дерева являются структуры типа Block.
- Например,
-// Byte code could be described as a tree where functions and contracts are on the top level and nesting goes further according to nesting of bracketed brackets. Tree nodes are structures of 'Block' type. For instance,
+/* Byte code could be described as a tree where functions and contracts are on the top level and
+nesting goes further according to nesting of bracketed brackets. Tree nodes are structures of
+'Block' type. For instance,
  func a {
 	 if b {
 		 while d {
@@ -60,10 +56,9 @@ type compileFunc func(*[]*Block, int, *Lexem) error
 	 if c {
 	 }
  }
-будет скомпилировано в Block(a) у которого будут два дочерних блока Block(b) и Block(c), которые
-      отвечают за выполнение байт-кода внутри if, а Block(b) в свою очередь будет иметь дочерний
-	  блок Block(d) с циклом.
-// will be compiled into Block(a) which will have two child blocks Block (b) and Block (c) that are responsible for executing bytecode inside if. Block (b) will have a child Block (d) with a cycle.
+ will be compiled into Block(a) which will have two child blocks Block (b) and Block (c) that
+ are responsible for executing bytecode inside if. Block (b) will have a child Block (d) with
+ a cycle.
 */
 
 const (
@@ -76,7 +71,9 @@ const (
 	stateFParams
 	stateFParam
 	stateFParamTYPE
+	stateFTail
 	stateFResult
+	stateFDot
 	stateVar
 	stateVarType
 	stateAssignEval
@@ -102,7 +99,6 @@ const (
 )
 
 const (
-	// Ошибки компиляции
 	// Errors of compilation
 	//	errNoError    = iota
 	errUnknownCmd = iota + 1 // unknown command
@@ -117,8 +113,8 @@ const (
 )
 
 const (
-	// Это список идентификаторов для функций, которые будут генерировать байт-код для соответствующих случаев
-	// This is a list of identifiers for functions that will generate a bytecode for the corresponding cases
+	// This is a list of identifiers for functions that will generate a bytecode for
+	// the corresponding cases
 	// Indexes of handle functions funcs = CompileFunc[]
 	//	cfNothing = iota
 	cfError = iota + 1
@@ -129,6 +125,8 @@ const (
 	cfElse
 	cfFParam
 	cfFType
+	cfFTail
+	cfFNameParam
 	cfAssignVar
 	cfAssign
 	cfTX
@@ -147,7 +145,6 @@ const (
 )
 
 var (
-	// Массив операций и их приоритет
 	// Array of operations and their priority
 	opers = map[uint32]operPrior{
 		isOr: {cmdOr, 10}, isAnd: {cmdAnd, 15}, isEqEq: {cmdEqual, 20}, isNotEq: {cmdNotEq, 20},
@@ -155,7 +152,6 @@ var (
 		isPlus: {cmdAdd, 25}, isMinus: {cmdSub, 25}, isAsterisk: {cmdMul, 30},
 		isSolidus: {cmdDiv, 30}, isSign: {cmdSign, cmdUnary}, isNot: {cmdNot, cmdUnary}, isLPar: {cmdSys, 0xff}, isRPar: {cmdSys, 0},
 	}
-	// Массив функций, соответствующий константам cf...
 	// The array of functions corresponding to the constants cf...
 	funcs = []compileFunc{nil,
 		fError,
@@ -166,6 +162,8 @@ var (
 		fElse,
 		fFparam,
 		fFtype,
+		fFtail,
+		fFNameParam,
 		fAssignVar,
 		fAssign,
 		fTx,
@@ -228,11 +226,13 @@ var (
 		},
 		{ // stateFParams
 			lexNewLine: {stateFParams, 0},
+			lexComment: {stateFParams, 0},
 			isLPar:     {stateFParam, 0},
 			0:          {stateFResult | stateStay, 0},
 		},
 		{ // stateFParam
 			lexNewLine: {stateFParam, 0},
+			lexComment: {stateFParam, 0},
 			lexIdent:   {stateFParamTYPE, cfFParam},
 			// lexType:    {stateFParam, cfFType},
 			isComma: {stateFParam, 0},
@@ -240,26 +240,37 @@ var (
 			0:       {errParams, cfError},
 		},
 		{ // stateFParamTYPE
-			lexIdent: {stateFParamTYPE, cfFParam},
-			lexType:  {stateFParam, cfFType},
-			isComma:  {stateFParamTYPE, 0},
+			lexComment:                  {stateFParamTYPE, 0},
+			lexIdent:                    {stateFParamTYPE, cfFParam},
+			lexType:                     {stateFParam, cfFType},
+			lexKeyword | (keyTail << 8): {stateFTail, cfFTail},
+			isComma:                     {stateFParamTYPE, 0},
 			//			isRPar:   {stateFResult, 0},
 			0: {errVarType, cfError},
 		},
+		{ // stateFTail
+			lexNewLine: {stateFTail, 0},
+			isRPar:     {stateFResult, 0},
+			0:          {errParams, cfError},
+		},
 		{ // stateFResult
 			lexNewLine: {stateFResult, 0},
+			isDot:      {stateFDot, 0},
 			lexType:    {stateFResult, cfFResult},
 			isComma:    {stateFResult, 0},
 			0:          {stateBlock | stateStay, 0},
+		},
+		{ // stateFDot
+			lexNewLine: {stateFDot, 0},
+			lexIdent:   {stateFParams, cfFNameParam},
+			0:          {errMustName, cfError},
 		},
 		{ // stateVar
 			lexNewLine: {stateBody, 0},
 			lexIdent:   {stateVarType, cfFParam},
 			isRCurly:   {stateBody | stateStay, 0},
-			//			lexIdent:   {stateVar, cfFParam},
-			//			lexType:    {stateVar, cfFType},
-			isComma: {stateVar, 0},
-			0:       {errVars, cfError},
+			isComma:    {stateVar, 0},
+			0:          {errVars, cfError},
 		},
 		{ // stateVarType
 			lexIdent: {stateVarType, cfFParam},
@@ -359,7 +370,19 @@ func fFparam(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
 	if block.Type == ObjFunc && (state == stateFParam || state == stateFParamTYPE) {
 		fblock := block.Info.(*FuncInfo)
-		fblock.Params = append(fblock.Params, reflect.TypeOf(nil))
+		if fblock.Names == nil {
+			fblock.Params = append(fblock.Params, reflect.TypeOf(nil))
+		} else {
+			for key := range *fblock.Names {
+				if key[0] == '_' {
+					name := key[1:]
+					params := append((*fblock.Names)[name].Params, reflect.TypeOf(nil))
+					offset := append((*fblock.Names)[name].Offset, len(block.Vars))
+					(*fblock.Names)[name] = FuncName{Params: params, Offset: offset}
+					break
+				}
+			}
+		}
 	}
 	if block.Objects == nil {
 		block.Objects = make(map[string]*ObjInfo)
@@ -373,9 +396,22 @@ func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
 	if block.Type == ObjFunc && state == stateFParam {
 		fblock := block.Info.(*FuncInfo)
-		for pkey, param := range fblock.Params {
-			if param == reflect.TypeOf(nil) {
-				fblock.Params[pkey] = lexem.Value.(reflect.Type)
+		if fblock.Names == nil {
+			for pkey, param := range fblock.Params {
+				if param == reflect.TypeOf(nil) {
+					fblock.Params[pkey] = lexem.Value.(reflect.Type)
+				}
+			}
+		} else {
+			for key := range *fblock.Names {
+				if key[0] == '_' {
+					for pkey, param := range (*fblock.Names)[key[1:]].Params {
+						if param == reflect.TypeOf(nil) {
+							(*fblock.Names)[key[1:]].Params[pkey] = lexem.Value.(reflect.Type)
+						}
+					}
+					break
+				}
 			}
 		}
 	}
@@ -384,6 +420,68 @@ func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 			block.Vars[vkey] = lexem.Value.(reflect.Type)
 		}
 	}
+	return nil
+}
+
+func fFtail(buf *[]*Block, state int, lexem *Lexem) error {
+	var used bool
+	block := (*buf)[len(*buf)-1]
+
+	fblock := block.Info.(*FuncInfo)
+	if fblock.Names == nil {
+		for pkey, param := range fblock.Params {
+			if param == reflect.TypeOf(nil) {
+				if used {
+					return fmt.Errorf(`... parameter must be one`)
+				}
+				fblock.Params[pkey] = reflect.TypeOf([]interface{}{})
+				used = true
+			}
+		}
+		block.Info.(*FuncInfo).Variadic = true
+	} else {
+		for key := range *fblock.Names {
+			if key[0] == '_' {
+				name := key[1:]
+				for pkey, param := range (*fblock.Names)[name].Params {
+					if param == reflect.TypeOf(nil) {
+						if used {
+							return fmt.Errorf(`... parameter must be one`)
+						}
+						(*fblock.Names)[name].Params[pkey] = reflect.TypeOf([]interface{}{})
+						used = true
+					}
+				}
+				offset := append((*fblock.Names)[name].Offset, len(block.Vars))
+				(*fblock.Names)[name] = FuncName{Params: (*fblock.Names)[name].Params,
+					Offset: offset, Variadic: true}
+				break
+			}
+		}
+	}
+	for vkey, ivar := range block.Vars {
+		if ivar == reflect.TypeOf(nil) {
+			block.Vars[vkey] = reflect.TypeOf([]interface{}{})
+		}
+	}
+	return nil
+}
+
+func fFNameParam(buf *[]*Block, state int, lexem *Lexem) error {
+	block := (*buf)[len(*buf)-1]
+
+	fblock := block.Info.(*FuncInfo)
+	if fblock.Names == nil {
+		names := make(map[string]FuncName)
+		fblock.Names = &names
+	}
+	for key := range *fblock.Names {
+		if key[0] == '_' {
+			delete(*fblock.Names, key)
+		}
+	}
+	(*fblock.Names)[`_`+lexem.Value.(string)] = FuncName{}
+
 	return nil
 }
 
@@ -570,6 +668,7 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 			ok       bool
 		)
 		lexem := lexems[i]
+		//		fmt.Println(`LEXEM`, lexem.Type, lexem.Value, curState)
 		if newState, ok = states[curState][int(lexem.Type)]; !ok {
 			newState = states[curState][0]
 		}
@@ -725,7 +824,6 @@ func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block)
 	return
 }
 
-// Данная функиця отвечает за компиляцию выражений
 // This function is responsible for the compilation of expressions
 func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
 	i := *ind
@@ -741,7 +839,7 @@ main:
 		var cmd *ByteCode
 		var call bool
 		lexem := (*lexems)[i]
-		//		fmt.Println(i, parcount, lexem)
+		//fmt.Println(i, parcount, lexem)
 		switch lexem.Type {
 		case isRCurly, isLCurly:
 			i--
@@ -787,7 +885,36 @@ main:
 				}
 			}
 			if len(buffer) > 0 {
+				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdFuncName {
+					buffer = buffer[:len(buffer)-1]
+					(*prev).Value = FuncNameCmd{Name: prev.Value.(FuncNameCmd).Name,
+						Count: parcount[len(parcount)-1]}
+					parcount = parcount[:len(parcount)-1]
+					bytecode = append(bytecode, prev)
+				}
 				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdCall || prev.Cmd == cmdCallVari {
+					if prev.Value.(*ObjInfo).Type == ObjFunc && prev.Value.(*ObjInfo).Value.(*Block).Info.(*FuncInfo).Names != nil {
+						if bytecode[len(bytecode)-1].Cmd != cmdFuncName {
+							bytecode = append(bytecode, &ByteCode{cmdPush, nil})
+						}
+						if i < len(*lexems)-4 && (*lexems)[i+1].Type == isDot {
+							if (*lexems)[i+2].Type != lexIdent {
+								return fmt.Errorf(`must be the name of the tail`)
+							}
+							names := prev.Value.(*ObjInfo).Value.(*Block).Info.(*FuncInfo).Names
+							if _, ok := (*names)[(*lexems)[i+2].Value.(string)]; !ok {
+								return fmt.Errorf(`unknown function tail %s`, (*lexems)[i+2].Value.(string))
+							}
+							buffer = append(buffer, &ByteCode{cmdFuncName, FuncNameCmd{Name: (*lexems)[i+2].Value.(string)}})
+							count := 0
+							if (*lexems)[i+3].Type != isRPar {
+								count++
+							}
+							parcount = append(parcount, count)
+							i += 2
+							break
+						}
+					}
 					count := parcount[len(parcount)-1]
 					parcount = parcount[:len(parcount)-1]
 					if prev.Cmd == cmdCallVari {
@@ -896,8 +1023,8 @@ main:
 						isContract = true
 					}
 					cmdCall := uint16(cmdCall)
-					if objInfo.Type == ObjExtFunc && objInfo.Value.(ExtFuncInfo).Variadic { /*||
-						(objInfo.Type == ObjFunc && objInfo.Value.(*Block).Info.(FuncInfo).Variadic )*/
+					if (objInfo.Type == ObjExtFunc && objInfo.Value.(ExtFuncInfo).Variadic) ||
+						(objInfo.Type == ObjFunc && objInfo.Value.(*Block).Info.(*FuncInfo).Variadic) {
 						cmdCall = cmdCallVari
 					}
 					count := 0

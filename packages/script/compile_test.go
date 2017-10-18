@@ -58,6 +58,10 @@ func getArray() []interface{} {
 		"The second string", int64(2000)}
 }
 
+func lenArray(par []interface{}) int64 {
+	return int64(len(par))
+}
+
 /*			if (111> 10) { //01 Commment
 				if 0==1 {
 					Println("TRUE TRUE temp function")
@@ -254,16 +258,60 @@ func TestVMCompile(t *testing.T) {
 		func cond() string {return "vars"}
 		func actions() { var test int}
 	}`, `vars.cond`, `vars`},
+		{`func mytail(name string, tail ...) string {
+		if lenArray(tail) == 0 {
+			return name
+		}
+		if lenArray(tail) == 1 {
+			return Sprintf("%s=%v ", name, tail[0])
+		}
+		return Sprintf("%s=%v+%v ", name, tail[1], tail[0])
+	}
+	func emptytail(tail ...) string {
+		return Sprintf("%d ", lenArray(tail))
+	}
+	func sum(out string, values ...) string {
+		var i, res int
+		while i < lenArray(values) {
+		   res = res + values[i]
+		   i = i+1
+		}
+		return Sprintf(out, res)
+	}
+	func calltail() string {
+		var out string
+		out = emptytail() + emptytail(10) + emptytail("name1", "name2")
+		out = out + mytail("OK") + mytail("1=", 11) + mytail("2=", "name", 11)
+		return out + sum("Sum: %d", 10, 20, 30, 40)
+	}
+	`, `calltail`, `0 1 2 OK1==11 2==11+name Sum: 100`},
+		{`func DBFind( table string).Columns(columns string) 
+		. Where(format string, tail ...). Limit(limit int).
+		Offset(offset int) string  {
+		Println("DBFind", table, tail)
+		return Sprintf("%s %s %s %d %d=", table, columns, format, limit, offset)
+	}
+	func names() string {
+		var out, cols string
+		cols = "name,value"
+		out = DBFind( "mytable") + DBFind( "keys"
+			).Columns(cols)+ DBFind( "keys"
+				).Offset(199).Columns("qq"+"my")
+		out = out + DBFind( "table").Columns("name").Where("id=?", 
+			100).Limit(10) + DBFind( "table").Where("request")
+		return out
+	}`, `names`, `mytable   0 0=keys name,value  0 0=keys qqmy  0 199=table name id=? 10 0=table  request 0 0=`},
 	}
 	vm := NewVM()
 	vm.Extern = true
 	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
-		"GetMap": getMap, "GetArray": getArray}, nil})
+		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray}, nil})
 
 	for ikey, item := range test {
 		source := []rune(item.Input)
 		if err := vm.Compile(source, &OwnerInfo{StateID: uint32(ikey) + 22, Active: true, TableID: 1}); err != nil {
 			t.Error(err)
+			break
 		} else {
 			if out, err := vm.Call(item.Func, nil, &map[string]interface{}{
 				`rt_state`: uint32(ikey) + 22,
@@ -274,11 +322,12 @@ func TestVMCompile(t *testing.T) {
 				},
 			}); err == nil {
 				if out[0].(string) != item.Output {
-					fmt.Println(out[0].(string))
-					t.Error(`error vm ` + item.Input)
+					t.Error(`error vm ` + out[0].(string) + `!=` + item.Output)
+					break
 				}
 			} else if err.Error() != item.Output {
 				t.Error(err)
+				break
 			}
 
 		}
