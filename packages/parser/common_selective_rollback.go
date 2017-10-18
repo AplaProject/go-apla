@@ -20,19 +20,24 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // selectiveRollback rollbacks the specified fields
 // roll back not all the fields but the specified ones or only 1 line if there is not 'where'
 func (p *Parser) selectiveRollback(table string, where string) error {
+	logger := p.GetLogger()
 	if len(where) > 0 {
 		where = " WHERE " + where
 	}
 	// we obtain rb_id with help of that it is possible to find the data which was before
 	rbID, err := model.GetRollbackID(table, where, "desc")
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback id")
 		return p.ErrInfo(err)
 	}
 	if rbID > 0 {
@@ -40,12 +45,14 @@ func (p *Parser) selectiveRollback(table string, where string) error {
 		rollback := &model.Rollback{}
 		err = rollback.Get(rbID)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback by id")
 			return p.ErrInfo(err)
 		}
 
 		var jsonMap map[string]string
 		err = json.Unmarshal([]byte(rollback.Data), &jsonMap)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollback.Data from json")
 			return p.ErrInfo(err)
 		}
 		addSQLUpdate := ""
@@ -59,6 +66,7 @@ func (p *Parser) selectiveRollback(table string, where string) error {
 		addSQLUpdate = addSQLUpdate[0 : len(addSQLUpdate)-1]
 		err = model.Update(p.DbTransaction, table, addSQLUpdate, where)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "query": addSQLUpdate}).Error("updating table")
 			return p.ErrInfo(err)
 		}
 
@@ -66,11 +74,13 @@ func (p *Parser) selectiveRollback(table string, where string) error {
 		rbToDel := &model.Rollback{RbID: rbID}
 		err = rbToDel.Delete()
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback")
 			return p.ErrInfo(err)
 		}
 	} else {
 		err = model.Delete(table, where)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting from table")
 			return p.ErrInfo(err)
 		}
 	}

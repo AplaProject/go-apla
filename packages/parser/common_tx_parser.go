@@ -17,33 +17,31 @@
 package parser
 
 import (
-	//	"encoding/hex"
 	"errors"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // TxParser writes transactions into the queue
 func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
-
-	log.Debugf("transaction hex data: %x", binaryTx)
-
 	// get parameters for "struct" transactions
+	logger := p.GetLogger()
 	txType, walletID, citizenID := GetTxTypeAndUserID(binaryTx)
 
 	header, err := CheckTransaction(binaryTx)
 	if err != nil {
-		log.Errorf("parse data gate error: %s", err)
+		logger.Error("checking transaction")
 		p.processBadTransaction(hash, err.Error())
 		return err
 	}
 
-	if !( /*txType > 127 ||*/ consts.IsStruct(int(txType))) {
+	if !(consts.IsStruct(int(txType))) {
 		if header == nil {
+			logger.Error("tx header is nil")
 			return utils.ErrInfo(errors.New("header is nil"))
 		}
 		walletID = header.StateID
@@ -56,23 +54,20 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		return errors.New(errStr)
 	}
 
-	logging.WriteSelectiveLog("SELECT counter FROM transactions WHERE hex(hash) = " + string(hash))
 	tx := &model.Transaction{}
 	err = tx.Get(hash)
 	if err != nil {
-		logging.WriteSelectiveLog(err)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting transaction by hash")
 		return utils.ErrInfo(err)
 	}
 	counter := tx.Counter
 	counter++
-	logging.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(hash))
 	_, err = model.DeleteTransactionByHash(hash)
 	if err != nil {
-		logging.WriteSelectiveLog(err)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction by hash")
 		return utils.ErrInfo(err)
 	}
 
-	logging.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
 	// put with verified=1
 	newTx := &model.Transaction{
 		Hash:      hash,
@@ -85,14 +80,14 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	}
 	err = newTx.Create()
 	if err != nil {
-		logging.WriteSelectiveLog(err)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating new transaction")
 		return utils.ErrInfo(err)
 	}
-	log.Debug("INSERT INTO transactions - OK")
 
 	// remove transaction from the queue (with verified=0)
 	err = p.DeleteQueueTx(hash)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")
 		return utils.ErrInfo(err)
 	}
 
@@ -100,23 +95,29 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 }
 
 func (p *Parser) processBadTransaction(hash []byte, errText string) error {
+	logger := p.GetLogger()
 	if len(errText) > 255 {
 		errText = errText[:255]
 	}
 	qtx := &model.QueueTx{}
 	found, err := qtx.GetByHash(hash)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting tx by hash from queue")
+	}
 
 	p.DeleteQueueTx(hash)
 	if !found {
 		return nil
 	}
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")
 		return utils.ErrInfo(err)
 	}
 	if qtx.FromGate == 0 {
 		m := &model.TransactionStatus{}
 		err = m.SetError(errText, hash)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("setting transaction status error")
 			return utils.ErrInfo(err)
 		}
 	}
@@ -125,17 +126,17 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 
 // DeleteQueueTx deletes a transaction from the queue
 func (p *Parser) DeleteQueueTx(hash []byte) error {
-	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %x", hash)
+	logger := p.GetLogger()
 	delQueueTx := &model.QueueTx{Hash: hash}
 	err := delQueueTx.DeleteTx()
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")
 		return utils.ErrInfo(err)
 	}
 	// Because we process transactions with verified=0 in queue_parser_tx, after processing we need to delete them
-	logging.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(converter.BinToHex(hash)) + " AND verified=0 AND used = 0")
 	_, err = model.DeleteTransactionIfUnused(hash)
 	if err != nil {
-		logging.WriteSelectiveLog(err)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction if unused")
 		return utils.ErrInfo(err)
 	}
 	return nil
@@ -143,14 +144,17 @@ func (p *Parser) DeleteQueueTx(hash []byte) error {
 
 // AllTxParser parses new transactions
 func (p *Parser) AllTxParser() error {
+	logger := p.GetLogger()
 	all, err := model.GetAllUnverifiedAndUnusedTransactions()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unverified and unused transactions")
+	}
 	for _, data := range all {
 		err = p.TxParser(data.Hash, data.Data, false)
 		if err != nil {
-			log.Errorf("transaction parser error: %s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
 		}
-		log.Debugf("transaction %x parsed successfully", data.Hash)
+		logger.Debug("transaction parsed successfully")
 	}
 	return nil
 }

@@ -24,11 +24,14 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func BlockRollback(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	if buf.Len() == 0 {
+		log.Error("empty buffer")
 		return fmt.Errorf("empty buffer")
 	}
 
@@ -39,6 +42,7 @@ func BlockRollback(data []byte) error {
 
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting transaction")
 		return err
 	}
 
@@ -62,32 +66,38 @@ func BlockRollback(data []byte) error {
 
 func doBlockRollback(transaction *model.DbTransaction, block *Block) error {
 	// rollback transactions in reverse order
+	logger := block.GetLogger()
 	for i := len(block.Parsers) - 1; i >= 0; i-- {
 		p := block.Parsers[i]
 		p.DbTransaction = transaction
 
 		_, err := model.MarkTransactionUnusedAndUnverified(transaction, p.TxHash)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting transaction")
 			return utils.ErrInfo(err)
 		}
 		_, err = model.DeleteLogTransactionsByHash(transaction, p.TxHash)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting log transactions by hash")
 			return utils.ErrInfo(err)
 		}
 
 		ts := &model.TransactionStatus{}
 		err = ts.UpdateBlockID(transaction, 0, p.TxHash)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating block id in transaction status")
 			return utils.ErrInfo(err)
 		}
 
 		_, err = model.DeleteQueueTxByHash(transaction, p.TxHash)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transacion from queue by hash")
 			return utils.ErrInfo(err)
 		}
 		queueTx := &model.QueueTx{Hash: p.TxHash, Data: p.TxFullData}
 		err = queueTx.Save(transaction)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving transaction to the queue")
 			return p.ErrInfo(err)
 		}
 

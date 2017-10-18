@@ -569,7 +569,7 @@ func DBString(tblname string, name string, id int64) (int64, string, error) {
 func Sha256(text string) string {
 	hash, err := crypto.Hash([]byte(text))
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatal(consts.CryptoError, err)
 	}
 	hash = converter.BinToHex(hash)
 	return string(hash)

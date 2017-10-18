@@ -19,12 +19,14 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -34,8 +36,10 @@ type NewStateParser struct {
 }
 
 func (p *NewStateParser) Init() error {
+	logger := p.GetLogger()
 	newState := &tx.NewState{}
 	if err := msgpack.Unmarshal(p.TxBinaryData, newState); err != nil {
+		logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("Unmarshalling new state transaction from msgpack")
 		return p.ErrInfo(err)
 	}
 	p.NewState = newState
@@ -43,8 +47,10 @@ func (p *NewStateParser) Init() error {
 }
 
 func (p *NewStateParser) Validate() error {
+	logger := p.GetLogger()
 	err := p.generalCheck(`new_state`, &p.NewState.Header, map[string]string{})
 	if err != nil {
+		logger.WithError(err).Error("general check new state")
 		return p.ErrInfo(err)
 	}
 
@@ -52,20 +58,25 @@ func (p *NewStateParser) Validate() error {
 	verifyData := map[string][]interface{}{"state_name": []interface{}{p.NewState.StateName}, "currency_name": []interface{}{p.NewState.CurrencyName}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
+		logger.WithError(err).Error("checking input data")
 		return p.ErrInfo(err)
 	}
 
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewState.ForSign(), p.NewState.Header.BinSignatures, false)
 	if err != nil {
+		logger.WithError(err).Error("checking sign")
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
+		logger.Error("incorrect sign")
 		return p.ErrInfo("incorrect sign")
 	}
 	country := string(p.NewState.StateName)
 	if exist, err := IsState(p.DbTransaction, country); err != nil {
+		logger.WithError(err).Error("checking that country is state")
 		return p.ErrInfo(err)
 	} else if exist > 0 {
+		logger.Error("state already exists")
 		return fmt.Errorf(`State %s already exists`, country)
 	}
 
@@ -73,9 +84,11 @@ func (p *NewStateParser) Validate() error {
 }
 
 func (p *NewStateParser) Main(country, currency string) (id string, err error) {
+	logger := p.GetLogger()
 	systemState := &model.SystemState{}
 	_, err = systemState.GetLast(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting last system state")
 		return
 	}
 
@@ -83,12 +96,14 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	systemState.RbID = 0
 	err = systemState.Create(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating system state")
 		return
 	}
 	id = converter.Int64ToStr(systemState.ID)
 	rollbackTx := model.RollbackTx{BlockID: p.BlockData.BlockID, TxHash: p.TxHash, NameTable: "system_states", TableID: id}
 	err = rollbackTx.Create(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating rollback tx")
 		return
 	}
 
@@ -96,6 +111,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	psid := sid                                  //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
 	err = model.CreateSmartContractTable(p.DbTransaction, id)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating smart contract table")
 		return
 	}
 	sc := &model.SmartContract{
@@ -115,19 +131,16 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	sc.SetTablePrefix(id)
 	err = sc.Create(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating smart contract")
 		return
 	}
 	scu := &model.SmartContract{}
 	scu.SetTablePrefix(id)
 	err = scu.UpdateConditions(p.DbTransaction, sid)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating smart contract conditions")
 		return
 	}
-	/*
-		err = model.CreateStateTablesTable(id)
-		if err != nil {
-			return
-		}*/
 	t := &model.Table{
 		Name:        id + "_citizens",
 		Permissions: `{"general_update":"` + sid + `", "update": {"public_key_0": "` + sid + `"}, "insert": "` + sid + `", "new_column":"` + sid + `"}`,
@@ -136,12 +149,13 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	t.SetTablePrefix(id)
 	err = t.Create(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating table")
 		return
 	}
 
 	err = model.CreateStatePagesTable(p.DbTransaction, id)
 	if err != nil {
-		log.Errorf("can't create state tables: %s", err)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating state pages table")
 		return
 	}
 	dashboardValue := `FullScreen(1)
@@ -207,6 +221,7 @@ PageEnd:
 	firstPage.SetTablePrefix(id)
 	err = firstPage.Create(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating first page")
 		return
 	}
 	secondPage := &model.Page{
@@ -218,11 +233,13 @@ PageEnd:
 	secondPage.SetTablePrefix(id)
 	err = secondPage.Create(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating second page")
 		return
 	}
 
 	err = model.CreateStateMenuTable(p.DbTransaction, id)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating state menu table")
 		return
 	}
 	firstMenu := &model.Menu{
@@ -234,6 +251,7 @@ PageEnd:
 	firstMenu.SetTablePrefix(id)
 	err = firstMenu.Create(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating menu")
 		return
 	}
 	secondMenu := &model.Menu{
@@ -257,17 +275,20 @@ MenuBack(Welcome)`,
 	secondMenu.SetTablePrefix(id)
 	err = secondMenu.Create(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating menu")
 		return
 	}
 
 	err = model.CreateCitizensStateTable(p.DbTransaction, id)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating citizens state table")
 		return
 	}
 
 	dltWallet := &model.DltWallet{}
 	err = dltWallet.GetWalletTransaction(p.DbTransaction, p.TxWalletID)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet transactions")
 		return
 	}
 
@@ -275,24 +296,29 @@ MenuBack(Welcome)`,
 	citizen.SetTablePrefix(id)
 	err = citizen.Create(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating citizen")
 		return
 	}
 	err = model.CreateLanguagesStateTable(p.DbTransaction, id)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating languages state table")
 		return
 	}
 	err = model.CreateStateDefaultLanguages(p.DbTransaction, id, sid)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating state default languages")
 		return
 	}
 
 	err = model.CreateSignaturesStateTable(p.DbTransaction, id)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating signatures state table")
 		return
 	}
 
 	err = model.CreateStateAppsTable(p.DbTransaction, id)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating state apps table")
 		return
 	}
 
@@ -301,6 +327,7 @@ MenuBack(Welcome)`,
 }
 
 func (p *NewStateParser) Action() error {
+	logger := p.GetLogger()
 	country := string(p.NewState.StateName)
 	currency := string(p.NewState.CurrencyName)
 	_, err := p.Main(country, currency)
@@ -310,6 +337,7 @@ func (p *NewStateParser) Action() error {
 	dltWallet := &model.DltWallet{}
 	err = dltWallet.GetWalletTransaction(p.DbTransaction, p.TxWalletID)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet transaction")
 		return p.ErrInfo(err)
 	} else if len(p.NewState.Header.PublicKey) > 30 && len(dltWallet.PublicKey) == 0 {
 		_, _, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{converter.HexToBin(p.NewState.Header.PublicKey)}, "dlt_wallets",
@@ -319,13 +347,16 @@ func (p *NewStateParser) Action() error {
 }
 
 func (p *NewStateParser) Rollback() error {
+	logger := p.GetLogger()
 	rollbackTx := &model.RollbackTx{}
 	err := rollbackTx.Get(p.DbTransaction, p.TxHash, "system_states")
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback tx")
 		return p.ErrInfo(err)
 	}
 	err = p.autoRollback()
 	if err != nil {
+		logger.Error("auto rollbacking")
 		return p.ErrInfo(err)
 	}
 
@@ -333,6 +364,7 @@ func (p *NewStateParser) Rollback() error {
 		`smart_contracts`, `state_parameters`, `apps`, `anonyms`} {
 		err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
 			return p.ErrInfo(err)
 		}
 	}
@@ -340,17 +372,20 @@ func (p *NewStateParser) Rollback() error {
 	rollbackTxToDel := &model.RollbackTx{TxHash: p.TxHash, NameTable: "system_states"}
 	err = rollbackTxToDel.DeleteByHashAndTableName(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback tx by hash and table name")
 		return p.ErrInfo(err)
 	}
 
 	ssToDel := &model.SystemState{}
 	_, err = ssToDel.GetLast(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting last system state")
 		return p.ErrInfo(err)
 	}
 
 	err = ssToDel.Delete(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting system state")
 		return p.ErrInfo(err)
 	}
 
