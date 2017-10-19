@@ -1,5 +1,12 @@
 package migration
 
+import (
+	"time"
+
+	"github.com/AplaProject/go-apla/packages/model"
+	version "github.com/hashicorp/go-version"
+)
+
 var (
 	Schema = `DROP TABLE IF EXISTS "transactions_status"; CREATE TABLE "transactions_status" (
 		"hash" bytea  NOT NULL DEFAULT '',
@@ -11,7 +18,7 @@ var (
 		"error" varchar(255) NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "transactions_status" ADD CONSTRAINT transactions_status_pkey PRIMARY KEY (hash);
-		
+
 		DROP TABLE IF EXISTS "confirmations"; CREATE TABLE "confirmations" (
 		"block_id" bigint  NOT NULL DEFAULT '0',
 		"good" int  NOT NULL DEFAULT '0',
@@ -19,7 +26,7 @@ var (
 		"time" int  NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "confirmations" ADD CONSTRAINT confirmations_pkey PRIMARY KEY (block_id);
-		
+
 		DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
 		"id" int NOT NULL DEFAULT '0',
 		"hash" bytea  NOT NULL DEFAULT '',
@@ -31,27 +38,27 @@ var (
 		"tx" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "block_chain" ADD CONSTRAINT block_chain_pkey PRIMARY KEY (id);
-		
+
 		DROP TABLE IF EXISTS "log_transactions"; CREATE TABLE "log_transactions" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"time" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "log_transactions" ADD CONSTRAINT log_transactions_pkey PRIMARY KEY (hash);
-		
+
 		DROP TABLE IF EXISTS "migration_history"; CREATE TABLE "migration_history" (
 		"id" int NOT NULL  DEFAULT '0',
 		"version" int NOT NULL DEFAULT '0',
 		"date_applied" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "migration_history" ADD CONSTRAINT migration_history_pkey PRIMARY KEY (id);
-		
+
 		DROP TABLE IF EXISTS "queue_tx"; CREATE TABLE "queue_tx" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"data" bytea NOT NULL DEFAULT '',
 		"from_gate" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
-		
+
 		DROP SEQUENCE IF EXISTS rollback_rb_id_seq CASCADE;
 		CREATE SEQUENCE rollback_rb_id_seq START WITH 1;
 		DROP TABLE IF EXISTS "rollback"; CREATE TABLE "rollback" (
@@ -61,13 +68,13 @@ var (
 		);
 		ALTER SEQUENCE rollback_rb_id_seq owned by rollback.rb_id;
 		ALTER TABLE ONLY "rollback" ADD CONSTRAINT rollback_pkey PRIMARY KEY (rb_id);
-		
+
 		DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
 		"id" bigint NOT NULL DEFAULT '0',
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
-		
+
 		DROP TABLE IF EXISTS "system_parameters";
 		CREATE TABLE "system_parameters" (
 		"id" bigint NOT NULL DEFAULT '0',
@@ -78,8 +85,8 @@ var (
 		);
 		ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY (id);
 		CREATE INDEX "system_parameters_index_name" ON "system_parameters" (name);
-		
-		INSERT INTO system_parameters ("id","name", "value", "conditions") VALUES 
+
+		INSERT INTO system_parameters ("id","name", "value", "conditions") VALUES
 		('1','default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'true'),
 		('2','default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'true'),
 		('3','default_ecosystem_contract', '', 'true'),
@@ -141,7 +148,7 @@ var (
 		('59','extend_cost_create_column', '50', 'true'),
 		('60','extend_cost_perm_column', '50', 'true'),
 		('61','extend_cost_json_to_map', '50', 'true');
-		
+
 		CREATE TABLE "system_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"value" text  NOT NULL DEFAULT '',
@@ -152,8 +159,8 @@ var (
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "system_contracts" ADD CONSTRAINT system_contracts_pkey PRIMARY KEY (id);
-		
-		
+
+
 		CREATE TABLE "system_tables" (
 		"name" varchar(100)  NOT NULL DEFAULT '',
 		"permissions" jsonb,
@@ -162,12 +169,12 @@ var (
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "system_tables" ADD CONSTRAINT system_tables_pkey PRIMARY KEY (name);
-		
+
 		INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES  ('system_states',
 				'{"insert": "false", "update": "ContractAccess(\"@1EditParameter\")",
 				  "new_column": "false"}','{}', 'ContractAccess(\"@0UpdSysContract\")');
-		
-		
+
+
 		DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"block_id" int NOT NULL DEFAULT '0',
@@ -178,14 +185,14 @@ var (
 		"current_version" varchar(50) NOT NULL DEFAULT '0.0.1',
 		"sent" smallint NOT NULL DEFAULT '0'
 		);
-		
+
 		DROP TABLE IF EXISTS "queue_blocks"; CREATE TABLE "queue_blocks" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"full_node_id" bigint NOT NULL DEFAULT '0',
 		"block_id" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "queue_blocks" ADD CONSTRAINT queue_blocks_pkey PRIMARY KEY (hash);
-		
+
 		DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"data" bytea NOT NULL DEFAULT '',
@@ -198,7 +205,7 @@ var (
 		"verified" smallint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "transactions" ADD CONSTRAINT transactions_pkey PRIMARY KEY (hash);
-		
+
 		DROP SEQUENCE IF EXISTS rollback_tx_id_seq CASCADE;
 		CREATE SEQUENCE rollback_tx_id_seq START WITH 1;
 		DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (
@@ -210,12 +217,12 @@ var (
 		);
 		ALTER SEQUENCE rollback_tx_id_seq owned by rollback_tx.id;
 		ALTER TABLE ONLY "rollback_tx" ADD CONSTRAINT rollback_tx_pkey PRIMARY KEY (id);
-		
+
 		DROP TABLE IF EXISTS "install"; CREATE TABLE "install" (
 		"progress" varchar(10) NOT NULL DEFAULT ''
 		);
-		
-		
+
+
 		DROP TYPE IF EXISTS "my_node_keys_enum_status" CASCADE;
 		CREATE TYPE "my_node_keys_enum_status" AS ENUM ('my_pending','approved');
 		DROP SEQUENCE IF EXISTS my_node_keys_id_seq CASCADE;
@@ -233,7 +240,7 @@ var (
 		);
 		ALTER SEQUENCE my_node_keys_id_seq owned by my_node_keys.id;
 		ALTER TABLE ONLY "my_node_keys" ADD CONSTRAINT my_node_keys_pkey PRIMARY KEY (id);
-		
+
 		DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 		"stop_time" int NOT NULL DEFAULT '0'
 		);
@@ -246,7 +253,7 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_languages" ADD CONSTRAINT "%[1]d_vde_languages_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_languages_index_name" ON "%[1]d_vde_languages" (name);
-	  
+
 	  DROP TABLE IF EXISTS "%[1]d_vde_menu"; CREATE TABLE "%[1]d_vde_menu" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -256,7 +263,7 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_menu" ADD CONSTRAINT "%[1]d_vde_menu_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_menu_index_name" ON "%[1]d_vde_menu" (name);
-	  
+
 	  DROP TABLE IF EXISTS "%[1]d_vde_pages"; CREATE TABLE "%[1]d_vde_pages" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -266,7 +273,7 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_pages" ADD CONSTRAINT "%[1]d_vde_pages_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_pages_index_name" ON "%[1]d_vde_pages" (name);
-	  
+
 	  DROP TABLE IF EXISTS "%[1]d_vde_blocks"; CREATE TABLE "%[1]d_vde_blocks" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -275,7 +282,7 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_blocks" ADD CONSTRAINT "%[1]d_vde_blocks_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_blocks_index_name" ON "%[1]d_vde_blocks" (name);
-	  
+
 	  DROP TABLE IF EXISTS "%[1]d_vde_signatures"; CREATE TABLE "%[1]d_vde_signatures" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(100) NOT NULL DEFAULT '',
@@ -283,14 +290,14 @@ var (
 		  "conditions" text NOT NULL DEFAULT ''
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_signatures" ADD CONSTRAINT "%[1]d_vde_signatures_pkey" PRIMARY KEY (name);
-	  
+
 	  CREATE TABLE "%[1]d_vde_contracts" (
 	  "id" bigint NOT NULL  DEFAULT '0',
 	  "value" text  NOT NULL DEFAULT '',
 	  "conditions" text  NOT NULL DEFAULT ''
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_contracts" ADD CONSTRAINT "%[1]d_vde_contracts_pkey" PRIMARY KEY (id);
-	  
+
 	  DROP TABLE IF EXISTS "%[1]d_vde_parameters";
 	  CREATE TABLE "%[1]d_vde_parameters" (
 	  "id" bigint NOT NULL  DEFAULT '0',
@@ -300,8 +307,8 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_parameters" ADD CONSTRAINT "%[1]d_vde_parameters_pkey" PRIMARY KEY ("id");
 	  CREATE INDEX "%[1]d_vde_parameters_index_name" ON "%[1]d_vde_parameters" (name);
-	  
-	  INSERT INTO "%[1]d_vde_parameters" ("id","name", "value", "conditions") VALUES 
+
+	  INSERT INTO "%[1]d_vde_parameters" ("id","name", "value", "conditions") VALUES
 	  ('1','founder_account', '%[2]d', 'ContractConditions("MainCondition")'),
 	  ('2','new_table', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
 	  ('3','new_column', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
@@ -311,10 +318,10 @@ var (
 	  ('7','changing_page', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
 	  ('8','changing_menu', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
 	  ('9','changing_contracts', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
-	  ('10','stylesheet', 'body { 
+	  ('10','stylesheet', 'body {
 		/* You can define your custom styles here or create custom CSS rules */
 	  }', 'ContractConditions("MainCondition")');
-	  
+
 	  CREATE TABLE "%[1]d_vde_tables" (
 	  "id" bigint NOT NULL  DEFAULT '0',
 	  "name" varchar(100) UNIQUE NOT NULL DEFAULT '',
@@ -324,49 +331,49 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_tables" ADD CONSTRAINT "%[1]d_vde_tables_pkey" PRIMARY KEY ("id");
 	  CREATE INDEX "%[1]d_vde_tables_index_name" ON "%[1]d_vde_tables" (name);
-	  
-	  INSERT INTO "%[1]d_vde_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts', 
-			  '{"insert": "ContractAccess(\"NewContract\")", "update": "ContractAccess(\"EditContract\")", 
+
+	  INSERT INTO "%[1]d_vde_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts',
+			  '{"insert": "ContractAccess(\"NewContract\")", "update": "ContractAccess(\"EditContract\")",
 				"new_column": "ContractAccess(\"NewColumn\")"}',
 			  '{"value": "ContractAccess(\"EditContract\")",
 				"conditions": "ContractAccess(\"EditContract\")"}', 'ContractAccess("EditTable")'),
-			  ('2', 'languages', 
-			  '{"insert": "ContractAccess(\"NewLang\")", "update": "ContractAccess(\"EditLang\")", 
+			  ('2', 'languages',
+			  '{"insert": "ContractAccess(\"NewLang\")", "update": "ContractAccess(\"EditLang\")",
 				"new_column": "ContractAccess(\"NewColumn\")"}',
 			  '{ "name": "ContractAccess(\"EditLang\")",
 				"res": "ContractAccess(\"EditLang\")",
 				"conditions": "ContractAccess(\"EditLang\")"}', 'ContractAccess("EditTable")'),
-			  ('3', 'menu', 
-			  '{"insert": "ContractAccess(\"NewMenu\")", "update": "ContractAccess(\"EditMenu\", \"AppendMenu\")", 
+			  ('3', 'menu',
+			  '{"insert": "ContractAccess(\"NewMenu\")", "update": "ContractAccess(\"EditMenu\", \"AppendMenu\")",
 				"new_column": "ContractAccess(\"NewColumn\")"}',
 			  '{"name": "ContractAccess(\"EditMenu\")",
 		  "value": "ContractAccess(\"EditMenu\", \"AppendMenu\")",
 		  "conditions": "ContractAccess(\"EditMenu\")"
 			  }', 'ContractAccess("EditTable")'),
-			  ('4', 'pages', 
-			  '{"insert": "ContractAccess(\"NewPage\")", "update": "ContractAccess(\"EditPage\", \"AppendPage\")", 
+			  ('4', 'pages',
+			  '{"insert": "ContractAccess(\"NewPage\")", "update": "ContractAccess(\"EditPage\", \"AppendPage\")",
 				"new_column": "ContractAccess(\"NewColumn\")"}',
 			  '{"name": "ContractAccess(\"EditPage\")",
 		  "value": "ContractAccess(\"EditPage\", \"AppendPage\")",
 		  "menu": "ContractAccess(\"EditPage\")",
 		  "conditions": "ContractAccess(\"EditPage\")"
 			  }', 'ContractAccess("EditTable")'),
-			  ('5', 'blocks', 
-			  '{"insert": "ContractAccess(\"NewBlock\")", "update": "ContractAccess(\"EditBlock\")", 
+			  ('5', 'blocks',
+			  '{"insert": "ContractAccess(\"NewBlock\")", "update": "ContractAccess(\"EditBlock\")",
 				"new_column": "ContractAccess(\"NewColumn\")"}',
 			  '{"name": "ContractAccess(\"EditBlock\")",
 		  "value": "ContractAccess(\"EditBlock\")",
 		  "conditions": "ContractAccess(\"EditBlock\")"
 			  }', 'ContractAccess("EditTable")'),
-			  ('6', 'signatures', 
-			  '{"insert": "ContractAccess(\"NewSign\")", "update": "ContractAccess(\"EditSign\")", 
+			  ('6', 'signatures',
+			  '{"insert": "ContractAccess(\"NewSign\")", "update": "ContractAccess(\"EditSign\")",
 				"new_column": "ContractAccess(\"NewColumn\")"}',
 			  '{"name": "ContractAccess(\"EditSign\")",
 		  "value": "ContractAccess(\"EditSign\")",
 		  "conditions": "ContractAccess(\"EditSign\")"
 			  }', 'ContractAccess("EditTable")');
-	  
-	  INSERT INTO "%[1]d_vde_contracts" ("id", "value", "conditions") VALUES 
+
+	  INSERT INTO "%[1]d_vde_contracts" ("id", "value", "conditions") VALUES
 	  ('1','contract MainCondition {
 		conditions {
 		  if EcosysParam("founder_account")!=$key_id
@@ -377,16 +384,16 @@ var (
 	  }', 'ContractConditions("MainCondition")'),
 	  ('2','contract VDEFunctions {
 	  }
-	  
+
 	  func DBFind(table string).Columns(columns string).Where(where string, params ...)
 		   .WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
 		  return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
 	  }
-	  
+
 	  func DBString(table, column string, id int) string {
 		  var ret array
 		  var result string
-		  
+
 		  ret = DBFind(table).Columns(column).WhereId(id)
 		  if Len(ret) > 0 {
 			  var vmap map
@@ -395,7 +402,7 @@ var (
 		  }
 		  return result
 	  }
-	  
+
 	  func ConditionById(table string, validate bool) {
 		  var cond string
 		  cond = DBString(table, "conditions", $Id)
@@ -462,7 +469,7 @@ var (
 						  ok = true
 						  break
 					  }
-					  j = j + 1 
+					  j = j + 1
 				  }
 				  if !ok {
 					  error "Contracts or functions names cannot be changed"
@@ -725,7 +732,7 @@ var (
 			i = i + 1
 		}
 	}
-	
+
 	func ImportData(row array) {
 		if !row {
 			return
@@ -739,7 +746,7 @@ var (
 			i = i + 1
 			tblname = idata["Table"]
 			columns = Join(idata["Columns"], ",")
-			list = idata["Data"] 
+			list = idata["Data"]
 			if !list {
 				continue
 			}
@@ -752,7 +759,7 @@ var (
 			}
 		}
 	}
-	
+
 	contract Import {
 		data {
 			Data string
@@ -780,7 +787,7 @@ var (
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
-		
+
 		DROP TABLE IF EXISTS "%[1]d_history"; CREATE TABLE "%[1]d_history" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"sender_id" bigint NOT NULL DEFAULT '0',
@@ -795,8 +802,8 @@ var (
 		CREATE INDEX "%[1]d_history_index_sender" ON "%[1]d_history" (sender_id);
 		CREATE INDEX "%[1]d_history_index_recipient" ON "%[1]d_history" (recipient_id);
 		CREATE INDEX "%[1]d_history_index_block" ON "%[1]d_history" (block_id, txhash);
-		
-		
+
+
 		DROP TABLE IF EXISTS "%[1]d_languages"; CREATE TABLE "%[1]d_languages" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(100) NOT NULL DEFAULT '',
@@ -806,7 +813,7 @@ var (
 		);
 		ALTER TABLE ONLY "%[1]d_languages" ADD CONSTRAINT "%[1]d_languages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
-		
+
 		DROP TABLE IF EXISTS "%[1]d_menu"; CREATE TABLE "%[1]d_menu" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -817,7 +824,7 @@ var (
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
-		
+
 		DROP TABLE IF EXISTS "%[1]d_pages"; CREATE TABLE "%[1]d_pages" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -828,7 +835,7 @@ var (
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
-		
+
 		DROP TABLE IF EXISTS "%[1]d_blocks"; CREATE TABLE "%[1]d_blocks" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -838,7 +845,7 @@ var (
 		);
 		ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
-		
+
 		DROP TABLE IF EXISTS "%[1]d_signatures"; CREATE TABLE "%[1]d_signatures" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(100) NOT NULL DEFAULT '',
@@ -847,7 +854,7 @@ var (
 			"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
-		
+
 		CREATE TABLE "%[1]d_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"value" text  NOT NULL DEFAULT '',
@@ -858,8 +865,8 @@ var (
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
-		
-		INSERT INTO "%[1]d_contracts" ("id", "value", "wallet_id","active", "conditions") VALUES 
+
+		INSERT INTO "%[1]d_contracts" ("id", "value", "wallet_id","active", "conditions") VALUES
 		('1','contract MainCondition {
 		  conditions {
 			if EcosysParam("founder_account")!=$key_id
@@ -868,7 +875,7 @@ var (
 			}
 		  }
 		}', '%[2]d', '0', 'ContractConditions("MainCondition")');
-		
+
 		DROP TABLE IF EXISTS "%[1]d_parameters";
 		CREATE TABLE "%[1]d_parameters" (
 		"id" bigint NOT NULL  DEFAULT '0',
@@ -879,8 +886,8 @@ var (
 		);
 		ALTER TABLE ONLY "%[1]d_parameters" ADD CONSTRAINT "%[1]d_parameters_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_parameters_index_name" ON "%[1]d_parameters" (name);
-		
-		INSERT INTO "%[1]d_parameters" ("id","name", "value", "conditions") VALUES 
+
+		INSERT INTO "%[1]d_parameters" ("id","name", "value", "conditions") VALUES
 		('1','founder_account', '%[2]d', 'ContractConditions("MainCondition")'),
 		('2','new_table', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
 		('3','changing_tables', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
@@ -895,7 +902,7 @@ var (
 		('12','stylesheet', 'body {
 		  /* You can define your custom styles here or create custom CSS rules */
 		}', 'ContractConditions("MainCondition")');
-		
+
 		CREATE TABLE "%[1]d_tables" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"name" varchar(100) UNIQUE NOT NULL DEFAULT '',
@@ -906,8 +913,8 @@ var (
 		);
 		ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
-		
-		INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts', 
+
+		INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts',
 			'{"insert": "ContractAccess(\"@1NewContract\")", "update": "ContractAccess(\"@1EditContract\",\"@1ActivateContract\", \"@1DeactivateContract\")",
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
 				'{"value": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\", \"@1DeactivateContract\")",
@@ -915,56 +922,56 @@ var (
 				  "token_id": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\", \"@1DeactivateContract\")",
 				  "active": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\", \"@1DeactivateContract\")",
 				  "conditions": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\", \"@1DeactivateContract\")"}', 'ContractAccess("@1EditTable")'),
-				('2', 'keys', 
-				'{"insert": "ContractAccess(\"@1MoneyTransfer\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1MoneyTransfer\")", 
+				('2', 'keys',
+				'{"insert": "ContractAccess(\"@1MoneyTransfer\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1MoneyTransfer\")",
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
 				'{"pub": "ContractAccess(\"@1MoneyTransfer\")",
 				  "amount": "ContractAccess(\"@1MoneyTransfer\")"}', 'ContractAccess("@1EditTable")'),
-				('3', 'history', 
-				'{"insert": "ContractAccess(\"@1MoneyTransfer\")", "update": "false", 
+				('3', 'history',
+				'{"insert": "ContractAccess(\"@1MoneyTransfer\")", "update": "false",
 				  "new_column": "false"}',
 				'{"sender_id": "ContractAccess(\"@1MoneyTransfer\")",
 				  "recipient_id": "ContractAccess(\"@1MoneyTransfer\")",
 				  "amount":  "ContractAccess(\"@1MoneyTransfer\")",
 				  "comment": "ContractAccess(\"@1MoneyTransfer\")",
 				  "block_id":  "ContractAccess(\"@1MoneyTransfer\")",
-				  "txhash": "ContractAccess(\"@1MoneyTransfer\")"}', 'ContractAccess("@1EditTable")'),        
-				('4', 'languages', 
-				'{"insert": "ContractAccess(\"@1NewLang\")", "update": "ContractAccess(\"@1EditLang\")", 
+				  "txhash": "ContractAccess(\"@1MoneyTransfer\")"}', 'ContractAccess("@1EditTable")'),
+				('4', 'languages',
+				'{"insert": "ContractAccess(\"@1NewLang\")", "update": "ContractAccess(\"@1EditLang\")",
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
 				'{ "name": "ContractAccess(\"@1EditLang\")",
 				  "res": "ContractAccess(\"@1EditLang\")",
 				  "conditions": "ContractAccess(\"@1EditLang\")"}', 'ContractAccess("@1EditTable")'),
-				('5', 'menu', 
-					'{"insert": "ContractAccess(\"@1NewMenu\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")", 
+				('5', 'menu',
+					'{"insert": "ContractAccess(\"@1NewMenu\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")",
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
 				'{"name": "ContractAccess(\"@1EditMenu\")",
 			"value": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")",
 			"conditions": "ContractAccess(\"@1EditMenu\")"
 				}', 'ContractAccess("@1EditTable")'),
-				('6', 'pages', 
-					'{"insert": "ContractAccess(\"@1NewPage\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditPage\",\"@1AppendPage\")", 
+				('6', 'pages',
+					'{"insert": "ContractAccess(\"@1NewPage\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditPage\",\"@1AppendPage\")",
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
 				'{"name": "ContractAccess(\"@1EditPage\")",
 			"value": "ContractAccess(\"@1EditPage\",\"@1AppendPage\")",
 			"menu": "ContractAccess(\"@1EditPage\")",
 			"conditions": "ContractAccess(\"@1EditPage\")"
 				}', 'ContractAccess("@1EditTable")'),
-				('7', 'blocks', 
-				'{"insert": "ContractAccess(\"@1NewBlock\")", "update": "ContractAccess(\"@1EditBlock\")", 
+				('7', 'blocks',
+				'{"insert": "ContractAccess(\"@1NewBlock\")", "update": "ContractAccess(\"@1EditBlock\")",
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
 				'{"name": "ContractAccess(\"@1EditBlock\")",
 			"value": "ContractAccess(\"@1EditBlock\")",
 			"conditions": "ContractAccess(\"@1EditBlock\")"
 				}', 'ContractAccess("@1EditTable")'),
-				('8', 'signatures', 
-				'{"insert": "ContractAccess(\"@1NewSign\")", "update": "ContractAccess(\"@1EditSign\")", 
+				('8', 'signatures',
+				'{"insert": "ContractAccess(\"@1NewSign\")", "update": "ContractAccess(\"@1EditSign\")",
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
 				'{"name": "ContractAccess(\"@1EditSign\")",
 			"value": "ContractAccess(\"@1EditSign\")",
 			"conditions": "ContractAccess(\"@1EditSign\")"
 				}', 'ContractAccess("@1EditTable")');
-		
+
 		`
 
 	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id","rb_id") VALUES ('1','0');
@@ -972,16 +979,16 @@ var (
 	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
 	('2','contract SystemFunctions {
 	}
-	
+
 	func DBFind(table string).Columns(columns string).Where(where string, params ...)
 		 .WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
 		return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
 	}
-	
+
 	func DBString(table, column string, id int) string {
 		var ret array
 		var result string
-		
+
 		ret = DBFind(table).Columns(column).WhereId(id)
 		if Len(ret) > 0 {
 			var vmap map
@@ -990,7 +997,7 @@ var (
 		}
 		return result
 	}
-	
+
 	func ConditionById(table string, validate bool) {
 		var cond string
 		cond = DBString(table, "conditions", $Id)
@@ -1002,7 +1009,7 @@ var (
 			ValidateCondition($Conditions,$ecosystem_id)
 		}
 	}
-	
+
 	', '%[1]d','ContractConditions("MainCondition")'),
 	('3','contract MoneyTransfer {
 		data {
@@ -1028,7 +1035,7 @@ var (
 		action {
 			DBUpdate("keys", $key_id,"-amount", $amount)
 			DBUpdate("keys", $recipient,"+amount", $amount)
-			DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash", 
+			DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
 				$key_id, $recipient, $amount, $Comment, $block, $txhash)
 		}
 	}', '%[1]d', 'ContractConditions("MainCondition")'),
@@ -1068,7 +1075,7 @@ var (
 		action {
 			var root, id int
 			root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
-			id = DBInsert("contracts", "value,conditions, wallet_id, token_id", 
+			id = DBInsert("contracts", "value,conditions, wallet_id, token_id",
 				   $Value, $Conditions, $walletContract, $TokenEcosystem)
 			FlushContract(root, id, false)
 			$result = id
@@ -1453,7 +1460,7 @@ var (
 			i = i + 1
 		}
 	}
-	
+
 	func ImportData(row array) {
 		if !row {
 			return
@@ -1467,7 +1474,7 @@ var (
 			i = i + 1
 			tblname = idata["Table"]
 			columns = Join(idata["Columns"], ",")
-			list = idata["Data"] 
+			list = idata["Data"]
 			if !list {
 				continue
 			}
@@ -1480,7 +1487,7 @@ var (
 			}
 		}
 	}
-	
+
 	contract Import {
 		data {
 			Data string
@@ -1533,23 +1540,51 @@ var (
 	}', '%[1]d','ContractConditions("MainCondition")');`
 )
 
-var VersionedMigrations map[string]string
+type migrationData struct {
+	vers      *version.Version
+	migration string
+}
+
+var versionedMigrations []migrationData
 
 func init() {
-	VersionedMigrations = make(map[string]string, 0)
+	versionedMigrations = make([]migrationData, 0)
+	/*
+		version1, _ := version.NewVersion("1.0.1")
+		migration1 := migrationData{version1, `CREATE TABLE "migration_test" (
+			"name" varchar(100)  NOT NULL DEFAULT '',
+			"permissions" jsonb,
+			"columns" jsonb,
+			"conditions" text  NOT NULL DEFAULT '',
+			"rb_id" bigint NOT NULL DEFAULT '0'
+			);`}
 
-	VersionedMigrations["1.0.1"] = `CREATE TABLE "migration_test" (
-		"name" varchar(100)  NOT NULL DEFAULT '',
-		"permissions" jsonb,
-		"columns" jsonb,
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint NOT NULL DEFAULT '0'
-		);`
-	VersionedMigrations["2.0.1"] = `CREATE TABLE "migrations_test_2" (
-		"name" varchar(100)  NOT NULL DEFAULT '',
-		"permissions" jsonb,
-		"columns" jsonb,
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint NOT NULL DEFAULT '0'
-		);`
+		version2, _ := version.NewVersion("2.0.1")
+		migration2 := migrationData{version2, `CREATE TABLE "migrations_test_2" (
+			"name" varchar(100)  NOT NULL DEFAULT '',
+			"permissions" jsonb,
+			"columns" jsonb,
+			"conditions" text  NOT NULL DEFAULT '',
+			"rb_id" bigint NOT NULL DEFAULT '0'
+			);`}
+	*/
+	versionedMigrations = append(versionedMigrations, migration1)
+	versionedMigrations = append(versionedMigrations, migration2)
+}
+
+func Migrate(vers *version.Version) err {
+	for _, migration := range versionedMigrations {
+		if migration.Vers.LessThan(vers) {
+			err := model.DBConn.Exec(migration.migration)
+			if err != nil {
+				return err
+			}
+			dbMigration := &model.MigrationHistory{Version: migration.vers.String(), DateApplied: time.Date().Now()}
+			err = dbMigration.Save()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

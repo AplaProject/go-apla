@@ -12,10 +12,11 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/migration"
+	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/tools/update_client/client"
 	"github.com/AplaProject/go-apla/tools/update_client/structs"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	version "github.com/hashicorp/go-version"
 )
 
@@ -89,7 +90,18 @@ func (u *Updater) getNeededVersionsUpdates(updateAddr string) ([]*version.Versio
 	if err != nil {
 		return nil, err
 	}
-	currentVersion := getLocalVersion()
+	dbVersion, err := getLocalVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	softwareVersion, _ := version.NewVersion(consts.VERSION)
+	if dbVersion.LessThan(softwareVersion) {
+		err = migration.Migrate(softwareVersion)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	var neededVersions []*version.Version
 	for _, ver := range vers {
@@ -155,7 +167,12 @@ func (u *Updater) checkUpdateFile(version *version.Version, publicKey string) er
 	return nil
 }
 
-func getLocalVersion() *version.Version {
-	result, _ := version.NewVersion("1.0.0")
-	return result
+func getLocalVersion() (*version.Version, error) {
+	migration := &model.MigrationHistory{}
+	err := migration.Get()
+	if err != nil {
+		return nil, err
+	}
+	result, _ := version.NewVersion(migration.Version)
+	return result, nil
 }
