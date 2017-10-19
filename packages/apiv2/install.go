@@ -58,7 +58,7 @@ func InstallCommon(data *InstallParams) (err error) {
 	}
 	if data.InstallType == `PRIVATE_NET` {
 		*utils.FirstBlockDir = *utils.Dir
-		if len(data.FirstBlockDir) > 0  && data.FirstBlockDir != "undefined" {
+		if len(data.FirstBlockDir) > 0 && data.FirstBlockDir != "undefined" {
 			*utils.FirstBlockDir = data.FirstBlockDir
 		}
 	}
@@ -103,28 +103,29 @@ func InstallCommon(data *InstallParams) (err error) {
 	if err = install.Create(); err != nil {
 		return err
 	}
+	// If there is no key, this is the first run and the need to create them in the working directory.
+	if _, err = os.Stat(*utils.Dir + "/PrivateKey"); os.IsNotExist(err) {
+		if len(*utils.FirstBlockPublicKey) == 0 {
+			priv, pub, _ := crypto.GenHexKeys()
+			err = ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
+			if err != nil {
+				return
+			}
+			*utils.FirstBlockPublicKey = pub
+		}
+	}
+	if _, err = os.Stat(*utils.Dir + "/NodePrivateKey"); os.IsNotExist(err) {
+		if len(*utils.FirstBlockNodePublicKey) == 0 {
+			priv, pub, _ := crypto.GenHexKeys()
+			err = ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
+			if err != nil {
+				return err
+			}
+			*utils.FirstBlockNodePublicKey = pub
+		}
+	}
+
 	if _, err = os.Stat(*utils.FirstBlockDir + "/1block"); len(*utils.FirstBlockDir) > 0 && os.IsNotExist(err) {
-		// If there is no key, this is the first run and the need to create them in the working directory.
-		if _, err = os.Stat(*utils.Dir + "/PrivateKey"); os.IsNotExist(err) {
-			if len(*utils.FirstBlockPublicKey) == 0 {
-				priv, pub, _ := crypto.GenHexKeys()
-				err = ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
-				if err != nil {
-					return
-				}
-				*utils.FirstBlockPublicKey = pub
-			}
-		}
-		if _, err = os.Stat(*utils.Dir + "/NodePrivateKey"); os.IsNotExist(err) {
-			if len(*utils.FirstBlockNodePublicKey) == 0 {
-				priv, pub, _ := crypto.GenHexKeys()
-				err = ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
-				if err != nil {
-					return err
-				}
-				*utils.FirstBlockNodePublicKey = pub
-			}
-		}
 		*utils.GenerateFirstBlock = 1
 		parser.FirstBlock()
 	}
