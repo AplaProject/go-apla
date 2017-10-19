@@ -45,13 +45,13 @@ import (
 
 var (
 	funcCallsDB = map[string]struct{}{
-		"DBInsert":       struct{}{},
-		"DBUpdate":       struct{}{},
-		"DBUpdateExt":    struct{}{},
-		"DBGetList":      struct{}{},
-		"DBGetTable":     struct{}{},
-		"DBSelect":       struct{}{},
-		"DBString":       struct{}{},
+		"DBInsert":    struct{}{},
+		"DBUpdate":    struct{}{},
+		"DBUpdateExt": struct{}{},
+		//		"DBGetList":      struct{}{},
+		//		"DBGetTable":     struct{}{},
+		"DBSelect": struct{}{},
+		//		"DBString":       struct{}{},
 		"DBInt":          struct{}{},
 		"DBRowExt":       struct{}{},
 		"DBRow":          struct{}{},
@@ -124,13 +124,13 @@ type TxSignJSON struct {
 
 func init() {
 	smart.Extend(&script.ExtendData{Objects: map[string]interface{}{
-		"DBInsert":           DBInsert,
-		"DBUpdate":           DBUpdate,
-		"DBUpdateExt":        DBUpdateExt,
-		"DBGetList":          DBGetList,
-		"DBGetTable":         DBGetTable,
-		"DBSelect":           DBSelect,
-		"DBString":           DBString,
+		"DBInsert":    DBInsert,
+		"DBUpdate":    DBUpdate,
+		"DBUpdateExt": DBUpdateExt,
+		//		"DBGetList":          DBGetList,
+		//		"DBGetTable":         DBGetTable,
+		"DBSelect": DBSelect,
+		//		"DBString":           DBString,
 		"DBInt":              DBInt,
 		"DBRowExt":           DBRowExt,
 		"DBRow":              DBRow,
@@ -471,6 +471,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 
 // DBInsert inserts a record into the specified database table
 func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) { // map[string]interface{}) {
+	tblname = TableName(p, tblname)
 	if err = p.AccessTable(tblname, "insert"); err != nil {
 		return
 	}
@@ -525,6 +526,7 @@ func checkReport(tblname string) error {
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
 	qcost = 0
+	tblname = TableName(p, tblname)
 	/*	if err = p.AccessTable(tblname, "general_update"); err != nil {
 		return
 	}*/
@@ -543,6 +545,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
 	qcost = 0
 	var isIndex bool
+	tblname = TableName(p, tblname)
 	if err = checkReport(tblname); err != nil {
 		return
 	}
@@ -599,7 +602,8 @@ func HexToBytes(hexdata string) ([]byte, error) {
 }
 
 // DBInt returns the numeric value of the column for the record with the specified id
-func DBInt(tblname string, name string, id int64) (int64, int64, error) {
+func DBInt(p *Parser, tblname string, name string, id int64) (int64, int64, error) {
+	tblname = TableName(p, tblname)
 	if err := checkReport(tblname); err != nil {
 		return 0, 0, err
 	}
@@ -624,7 +628,9 @@ func getBytea(table string) map[string]bool {
 }
 
 // DBStringExt returns the value of 'name' column for the record with the specified value of the 'idname' field
-func DBStringExt(tblname string, name string, id interface{}, idname string) (int64, string, error) {
+func DBStringExt(p *Parser, tblname string, name string, id interface{}, idname string) (int64, string, error) {
+	tblname = TableName(p, tblname)
+
 	if err := checkReport(tblname); err != nil {
 		return 0, ``, err
 	}
@@ -653,10 +659,12 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (in
 }
 
 // DBIntExt returns the numeric value of the 'name' column for the record with the specified value of the 'idname' field
-func DBIntExt(tblname string, name string, id interface{}, idname string) (cost int64, ret int64, err error) {
+func DBIntExt(p *Parser, tblname string, name string, id interface{}, idname string) (cost int64, ret int64, err error) {
 	var val string
 	var qcost int64
-	qcost, val, err = DBStringExt(tblname, name, id, idname)
+
+	tblname = TableName(p, tblname)
+	qcost, val, err = DBStringExt(p, tblname, name, id, idname)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -673,7 +681,7 @@ func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, i
 		return 0, fmt.Errorf(`DBFreeRequest can be executed only once`)
 	}
 	p.TxContract.FreeRequest = true
-	cost, ret, err := DBStringExt(tblname, idname, id, idname)
+	cost, ret, err := DBStringExt(p, tblname, idname, id, idname)
 	if err != nil {
 		return 0, err
 	}
@@ -730,6 +738,14 @@ func DBIntWhere(tblname string, name string, where string, params ...interface{}
 // StateTable adds a prefix with the state number to the table name
 func StateTable(p *Parser, tblname string) string {
 	return fmt.Sprintf("%d_%s", p.TxStateID, tblname)
+}
+
+func TableName(p *Parser, tblname string) string {
+	tblname = strings.Trim(converter.EscapeName(tblname), `"`)
+	if tblname[0] >= '1' && tblname[0] <= '9' && strings.IndexByte(tblname, '_') != -1 {
+		return tblname
+	}
+	return fmt.Sprintf(`%d_%s`, p.TxStateID, tblname)
 }
 
 // StateTableTx adds a prefix with the state number to the table name
@@ -1253,7 +1269,9 @@ func DBSelect(p *Parser, tblname string, columns string, id int64, order string,
 }
 
 // DBRowExt returns one row from the table StringExt
-func DBRowExt(tblname string, columns string, id interface{}, idname string) (int64, map[string]string, error) {
+func DBRowExt(p *Parser, tblname string, columns string, id interface{}, idname string) (int64, map[string]string, error) {
+
+	tblname = TableName(p, tblname)
 
 	if err := checkReport(tblname); err != nil {
 		return 0, nil, err
@@ -1284,7 +1302,8 @@ func DBRowExt(tblname string, columns string, id interface{}, idname string) (in
 }
 
 // DBRow returns one row from the table StringExt
-func DBRow(tblname string, columns string, id int64) (int64, map[string]string, error) {
+func DBRow(p *Parser, tblname string, columns string, id int64) (int64, map[string]string, error) {
+	tblname = TableName(p, tblname)
 
 	if err := checkReport(tblname); err != nil {
 		return 0, nil, err
@@ -1366,8 +1385,8 @@ func PrefixTable(p *Parser, tablename string, global int64) string {
 
 // EvalCondition gets the condition and check it
 func EvalCondition(p *Parser, table, name, condfield string) error {
-	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM `+converter.EscapeName(table)+
-		` WHERE name = ?`, name).String()
+	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM "`+TableName(p, table)+
+		`" WHERE name = ?`, name).String()
 	if err != nil {
 		return err
 	}

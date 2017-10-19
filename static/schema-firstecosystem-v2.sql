@@ -4,9 +4,27 @@ INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES
 ('2','contract SystemFunctions {
 }
 
+func DBFind(table string).Columns(columns string).Where(where string, params ...)
+     .WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
+    return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
+}
+
+func DBString(table, column string, id int) string {
+    var ret array
+    var result string
+    
+    ret = DBFind(table).Columns(column).WhereId(id)
+    if Len(ret) > 0 {
+        var vmap map
+        vmap = ret[0]
+        result = vmap[column]
+    }
+    return result
+}
+
 func ConditionById(table string, validate bool) {
     var cond string
-    cond = DBString(Table(table), `conditions`, $Id)
+    cond = DBString(table, `conditions`, $Id)
     if !cond {
         error Sprintf(`Item %%d has not been found`, $Id)
     }
@@ -16,10 +34,6 @@ func ConditionById(table string, validate bool) {
     }
 }
 
-func DBFind(table string).Columns(columns string).Where(where string, params ...)
-     .WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
-    return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
-}
 ', '%[1]d','ContractConditions(`MainCondition`)'),
 ('3','contract MoneyTransfer {
     data {
@@ -37,15 +51,15 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         if $amount == 0 {
             error "Amount is zero"
         }
-        total = Money(DBString(Table(`keys`), `amount`, $wallet))
+        total = Money(DBString(`keys`, `amount`, $wallet))
         if $amount >= total {
             error Sprintf("Money is not enough %%v < %%v",total, $amount)
         }
     }
     action {
-        DBUpdate(Table(`keys`), $wallet,`-amount`, $amount)
-        DBUpdate(Table(`keys`), $recipient,`+amount`, $amount)
-        DBInsert(Table(`history`), `sender_id,recipient_id,amount,comment,block_id,txhash`, 
+        DBUpdate(`keys`, $wallet,`-amount`, $amount)
+        DBUpdate(`keys`, $recipient,`+amount`, $amount)
+        DBInsert(`history`, `sender_id,recipient_id,amount,comment,block_id,txhash`, 
             $wallet, $recipient, $amount, $Comment, $block, $txhash)
     }
 }', '%[1]d', 'ContractConditions(`MainCondition`)'),
@@ -85,7 +99,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
     action {
         var root, id int
         root = CompileContract($Value, $state, $walletContract, $TokenEcosystem)
-        id = DBInsert(Table(`contracts`), `value,conditions, wallet_id, token_id`, 
+        id = DBInsert(`contracts`, `value,conditions, wallet_id, token_id`, 
                $Value, $Conditions, $walletContract, $TokenEcosystem)
         FlushContract(root, id, false)
     }
@@ -100,7 +114,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
     	Conditions string
     }
     conditions {
-        $cur = DBRow(Table(`contracts`), `id,value,conditions,active,wallet_id,token_id`, $Id)
+        $cur = DBRow(`contracts`, `id,value,conditions,active,wallet_id,token_id`, $Id)
         if Int($cur[`id`]) != $Id {
             error Sprintf(`Contract %%d does not exist`, $Id)
         }
@@ -132,7 +146,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
     action {
         var root int
         root = CompileContract($Value, $state, Int($cur[`wallet_id`]), Int($cur[`token_id`]))
-        DBUpdate(Table(`contracts`), $Id, `value,conditions`, $Value, $Conditions)
+        DBUpdate(`contracts`, $Id, `value,conditions`, $Value, $Conditions)
         FlushContract(root, $Id, Int($cur[`active`]) == 1)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
@@ -141,7 +155,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         Id         int
     }
     conditions {
-        $cur = DBRow(Table(`contracts`), `id,conditions,active,wallet_id`, $Id)
+        $cur = DBRow(`contracts`, `id,conditions,active,wallet_id`, $Id)
         if Int($cur[`id`]) != $Id {
             error Sprintf(`Contract %%d does not exist`, $Id)
         }
@@ -154,7 +168,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         }
     }
     action {
-        DBUpdate(Table(`contracts`), $Id, `active`, 1)
+        DBUpdate(`contracts`, $Id, `active`, 1)
         Activate($Id, $state)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
@@ -174,7 +188,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
               SysParamString(`default_ecosystem_page`), `default_menu`, "ContractConditions(`MainCondition`)")
     	DBInsert(Str(id) + "_menu", "name,value,title,conditions", `default_menu`, 
               SysParamString(`default_ecosystem_menu`), "default", "ContractConditions(`MainCondition`)")
-    	DBInsert(Str(id) + "_keys", "id,pub", $wallet, DBString("1_keys", "pub", $wallet))
+    	DBInsert(Str(id) + "_keys", "id,pub", $wallet, DBString("keys", "pub", $wallet))
         $result = id
     }
     func price() int {
@@ -192,12 +206,12 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
     }
     conditions {
         ValidateCondition($Conditions, $state)
-        if DBIntExt(Table(`parameters`), `id`, $Name, `name`) {
+        if DBIntExt(`parameters`, `id`, $Name, `name`) {
             warning Sprintf( `Parameter %%s already exists`, $Name)
         }
     }
     action {
-        DBInsert(Table(`parameters`), `name,value,conditions`, $Name, $Value, $Conditions )
+        DBInsert(`parameters`, `name,value,conditions`, $Name, $Value, $Conditions )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('9','contract EditParameter {
@@ -207,7 +221,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         Conditions string
     }
     conditions {
-        EvalCondition(Table(`parameters`), $Name, `conditions`)
+        EvalCondition(`parameters`, $Name, `conditions`)
         ValidateCondition($Conditions, $state)
         var exist int
        	if $Name == `ecosystem_name` {
@@ -218,7 +232,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
     	}
     }
     action {
-        DBUpdateExt(Table(`parameters`), `name`, $Name, `value,conditions`, $Value, $Conditions )
+        DBUpdateExt(`parameters`, `name`, $Name, `value,conditions`, $Value, $Conditions )
        	if $Name == `ecosystem_name` {
             DBUpdate(`system_states`, $state, `name`, $Value)
         }
@@ -233,12 +247,12 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
     }
     conditions {
         ValidateCondition($Conditions,$state)
-        if DBIntExt(Table(`menu`), `id`, $Name, `name`) {
+        if DBIntExt(`menu`, `id`, $Name, `name`) {
             warning Sprintf( `Menu %%s already exists`, $Name)
         }
     }
     action {
-        DBInsert(Table(`menu`), `name,value,title,conditions`, $Name, $Value, $Title, $Conditions )
+        DBInsert(`menu`, `name,value,title,conditions`, $Name, $Value, $Title, $Conditions )
     }
     func price() int {
         return  SysParamInt(`menu_price`)
@@ -255,7 +269,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         ConditionById(`menu`, true)
     }
     action {
-        DBUpdate(Table(`menu`), $Id, `value,title,conditions`, $Value, $Title, $Conditions)
+        DBUpdate(`menu`, $Id, `value,title,conditions`, $Value, $Title, $Conditions)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('12','contract AppendMenu {
@@ -267,9 +281,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         ConditionById(`menu`, false)
     }
     action {
-        var table string
-        table = Table(`menu`)
-        DBUpdate(table, $Id, `value`, DBString(table, `value`, $Id) + "\r\n" + $Value )
+        DBUpdate(`menu`, $Id, `value`, DBString(`menu`, `value`, $Id) + "\r\n" + $Value )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('13','contract NewPage {
@@ -281,12 +293,12 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
     }
     conditions {
         ValidateCondition($Conditions,$state)
-        if DBIntExt(Table(`pages`), `id`, $Name, `name`) {
+        if DBIntExt(`pages`, `id`, $Name, `name`) {
             warning Sprintf( `Page %%s already exists`, $Name)
         }
     }
     action {
-        DBInsert(Table(`pages`), `name,value,menu,conditions`, $Name, $Value, $Menu, $Conditions )
+        DBInsert(`pages`, `name,value,menu,conditions`, $Name, $Value, $Menu, $Conditions )
     }
     func price() int {
         return  SysParamInt(`page_price`)
@@ -303,7 +315,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         ConditionById(`pages`, true)
     }
     action {
-        DBUpdate(Table(`pages`), $Id, `value,menu,conditions`, $Value, $Menu, $Conditions)
+        DBUpdate(`pages`, $Id, `value,menu,conditions`, $Value, $Menu, $Conditions)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('15','contract AppendPage {
@@ -315,15 +327,14 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         ConditionById(`pages`, false)
     }
     action {
-        var value, table string
-        table = Table(`pages`)
-        value = DBString(table, `value`, $Id)
+        var value string
+        value = DBString(`pages`, `value`, $Id)
        	if Contains(value, `PageEnd:`) {
 		   value = Replace(value, "PageEnd:", $Value) + "\r\nPageEnd:"
     	} else {
     		value = value + "\r\n" + $Value
     	}
-        DBUpdate(table, $Id, `value`,  value )
+        DBUpdate(`pages`, $Id, `value`,  value )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('16','contract NewLang {
@@ -332,15 +343,15 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         Trans string
     }
     conditions {
-        EvalCondition(Table(`parameters`), `changing_language`, `value`)
+        EvalCondition(`parameters`, `changing_language`, `value`)
         var exist string
-        exist = DBStringExt(Table(`languages`), `name`, $Name, `name`)
+        exist = DBStringExt(`languages`, `name`, $Name, `name`)
         if exist {
             error Sprintf("The language resource %%s already exists", $Name)
         }
     }
     action {
-        DBInsert(Table(`languages`), `name,res`, $Name, $Trans )
+        DBInsert(`languages`, `name,res`, $Name, $Trans )
         UpdateLang($Name, $Trans)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
@@ -350,10 +361,10 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         Trans string
     }
     conditions {
-        EvalCondition(Table(`parameters`), `changing_language`, `value`)
+        EvalCondition(`parameters`, `changing_language`, `value`)
     }
     action {
-        DBUpdateExt(Table(`languages`), `name`, $Name, `res`, $Trans )
+        DBUpdateExt(`languages`, `name`, $Name, `res`, $Trans )
         UpdateLang($Name, $Trans)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
@@ -366,13 +377,13 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
     conditions {
         ValidateCondition($Conditions,$state)
         var exist string
-        exist = DBStringExt(Table(`signatures`), `name`, $Name, `name`)
+        exist = DBStringExt(`signatures`, `name`, $Name, `name`)
         if exist {
             error Sprintf("The signature %%s already exists", $Name)
         }
     }
     action {
-        DBInsert(Table(`signatures`), `name,value,conditions`, $Name, $Value, $Conditions )
+        DBInsert(`signatures`, `name,value,conditions`, $Name, $Value, $Conditions )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('19','contract EditSign {
@@ -385,7 +396,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         ConditionById(`signatures`, true)
     }
     action {
-        DBUpdate(Table(`signatures`), $Id, `value,conditions`, $Value, $Conditions)
+        DBUpdate(`signatures`, $Id, `value,conditions`, $Value, $Conditions)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('20','contract NewBlock {
@@ -396,12 +407,12 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
     }
     conditions {
         ValidateCondition($Conditions,$state)
-        if DBIntExt(Table(`blocks`), `id`, $Name, `name`) {
+        if DBIntExt(`blocks`, `id`, $Name, `name`) {
             warning Sprintf( `Block %%s aready exists`, $Name)
         }
     }
     action {
-        DBInsert(Table(`blocks`), `name,value,conditions`, $Name, $Value, $Conditions )
+        DBInsert(`blocks`, `name,value,conditions`, $Name, $Value, $Conditions )
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('21','contract EditBlock {
@@ -414,7 +425,7 @@ func DBFind(table string).Columns(columns string).Where(where string, params ...
         ConditionById(`blocks`, true)
     }
     action {
-        DBUpdate(Table(`blocks`), $Id, `value,conditions`, $Value, $Conditions)
+        DBUpdate(`blocks`, $Id, `value,conditions`, $Value, $Conditions)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('22','contract NewTable {
