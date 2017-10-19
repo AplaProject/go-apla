@@ -37,6 +37,7 @@ var (
 		`E_STATELOGIN`:    `%s is not a membership of ecosystem %s`,
 		`E_TABLENOTFOUND`: `Table %s has not been found`,
 		`E_TOKEN`:         `Token is not valid`,
+		`E_TOKENEXPIRED`:  `%s`,
 		`E_UNAUTHORIZED`:  `Unauthorized`,
 		`E_UNDEFINEVAL`:   `Value %s is undefined`,
 		`E_UNKNOWNUID`:    `Unknown uid`,

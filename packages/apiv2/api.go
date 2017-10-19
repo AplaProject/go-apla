@@ -161,6 +161,10 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}
 		token, err := jwtToken(r)
 		if err != nil {
+			if strings.HasPrefix(err.Error(), `token is expired`) {
+				errorAPI(w, `E_TOKENEXPIRED`, http.StatusUnauthorized, err.Error())
+				return
+			}
 			errorAPI(w, err, http.StatusBadRequest)
 			return
 		}
