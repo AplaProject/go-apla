@@ -36,47 +36,44 @@ type installResult struct {
 	Success bool `json:"success"`
 }
 
-type installParams struct {
-	generateFirstBlock     bool
-	installType            string
-	logLevel               string
-	firstLoadBlockchainURL string
-	firstBlockDir          string
-	dbHost                 string
-	dbPort                 string
-	dbName                 string
-	dbPassword             string
-	dbUsername             string
+type InstallParams struct {
+	GenerateFirstBlock     bool
+	InstallType            string
+	LogLevel               string
+	FirstLoadBlockchainURL string
+	FirstBlockDir          string
+	DbHost                 string
+	DbPort                 string
+	DbName                 string
+	DbPassword             string
+	DbUsername             string
 }
 
-func installCommon(data *installParams) (err error) {
-	if installed || model.DBConn != nil || config.IsExist() {
-		return fmt.Errorf(`E_INSTALLED`)
-	}
-	if data.generateFirstBlock {
+func InstallCommon(data *InstallParams) (err error) {
+	if data.GenerateFirstBlock {
 		*utils.GenerateFirstBlock = 1
 	}
-	if data.logLevel != "DEBUG" {
-		data.logLevel = "ERROR"
+	if data.LogLevel != "DEBUG" {
+		data.LogLevel = "ERROR"
 	}
-	if data.installType == `PRIVATE_NET` {
+	if data.InstallType == `PRIVATE_NET` {
 		*utils.FirstBlockDir = *utils.Dir
-		if len(data.firstBlockDir) > 0 {
-			*utils.FirstBlockDir = data.firstBlockDir
+		if len(data.FirstBlockDir) > 0 {
+			*utils.FirstBlockDir = data.FirstBlockDir
 		}
 	}
-	if len(data.firstLoadBlockchainURL) == 0 {
-		data.firstLoadBlockchainURL = syspar.GetBlockchainURL()
+	if len(data.FirstLoadBlockchainURL) == 0 {
+		data.FirstLoadBlockchainURL = syspar.GetBlockchainURL()
 	}
 	dbConfig := config.DBConfig{
 		Type:     `postgresql`,
-		User:     data.dbUsername,
-		Host:     data.dbHost,
-		Port:     data.dbPort,
-		Password: data.dbPassword,
-		Name:     data.dbName,
+		User:     data.DbUsername,
+		Host:     data.DbHost,
+		Port:     data.DbPort,
+		Password: data.DbPassword,
+		Name:     data.DbName,
 	}
-	err = config.Save(data.logLevel, data.installType, &dbConfig)
+	err = config.Save(data.LogLevel, data.InstallType, &dbConfig)
 	if err != nil {
 		return err
 	}
@@ -98,7 +95,7 @@ func installCommon(data *installParams) (err error) {
 	if err = model.ExecSchema(); err != nil {
 		return err
 	}
-	conf := &model.Config{FirstLoadBlockchain: data.installType, FirstLoadBlockchainURL: data.firstLoadBlockchainURL, AutoReload: 259200}
+	conf := &model.Config{FirstLoadBlockchain: data.InstallType, FirstLoadBlockchainURL: data.FirstLoadBlockchainURL, AutoReload: 259200}
 	if err = conf.Create(); err != nil {
 		return err
 	}
@@ -171,20 +168,23 @@ func install(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
 	data.result = &result
 
-	params := installParams{installType: data.params["type"].(string),
-		logLevel:               data.params["log_level"].(string),
-		firstLoadBlockchainURL: data.params["first_load_blockchain_url"].(string),
-		dbHost:                 data.params["db_host"].(string),
-		dbPort:                 data.params["db_port"].(string),
-		dbName:                 data.params["db_name"].(string),
-		dbUsername:             data.params["db_user"].(string),
-		dbPassword:             data.params["db_pass"].(string),
-		firstBlockDir:          data.params["first_block_dir"].(string),
+	params := InstallParams{InstallType: data.params["type"].(string),
+		LogLevel:               data.params["log_level"].(string),
+		FirstLoadBlockchainURL: data.params["first_load_blockchain_url"].(string),
+		DbHost:                 data.params["db_host"].(string),
+		DbPort:                 data.params["db_port"].(string),
+		DbName:                 data.params["db_name"].(string),
+		DbUsername:             data.params["db_user"].(string),
+		DbPassword:             data.params["db_pass"].(string),
+		FirstBlockDir:          data.params["first_block_dir"].(string),
 	}
 	if val := data.params["generate_first_block"]; val.(int64) == 1 {
-		params.generateFirstBlock = true
+		params.GenerateFirstBlock = true
 	}
-	err := installCommon(&params)
+	if installed || model.DBConn != nil || config.IsExist() {
+		return fmt.Errorf(`E_INSTALLED`)
+	}
+	err := InstallCommon(&params)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), `E_`) {
 			return errorAPI(w, err.Error(), http.StatusInternalServerError)

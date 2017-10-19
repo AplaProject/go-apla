@@ -250,6 +250,22 @@ func initRoutes(listenHost, browserHost string) string {
 	return browserHost
 }
 
+func reinstall() error {
+	params := &apiv2.InstallParams{
+		GenerateFirstBlock:     false,
+		InstallType:            config.ConfigIni["install_type"],
+		LogLevel:               config.ConfigIni["log_level"],
+		FirstLoadBlockchainURL: config.ConfigIni["first_load_url"],
+		FirstBlockDir:          config.ConfigIni["first_block_dir"],
+		DbHost:                 config.ConfigIni["db_host"],
+		DbPort:                 config.ConfigIni["db_port"],
+		DbName:                 config.ConfigIni["db_name"],
+		DbPassword:             config.ConfigIni["db_password"],
+		DbUsername:             config.ConfigIni["db_user"],
+	}
+	return apiv2.InstallCommon(params)
+}
+
 // Start starts the main code of the program
 func Start(dir string, thrustWindowLoder *window.Window) {
 
@@ -277,6 +293,20 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}
 
 	readConfig()
+
+	if *utils.Reset == 1 {
+		if config.ConfigIni["db_type"] == "" {
+			fmt.Printf("bad config or config not found")
+			os.Exit(1)
+		}
+		err := reinstall()
+		if err != nil {
+			fmt.Printf("error: %s", err)
+			os.Exit(1)
+		}
+		fmt.Printf("success")
+		os.Exit(0)
+	}
 
 	if len(config.ConfigIni["db_type"]) > 0 {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
