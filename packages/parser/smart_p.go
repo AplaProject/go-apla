@@ -45,13 +45,12 @@ import (
 
 var (
 	funcCallsDB = map[string]struct{}{
-		"DBInsert":    struct{}{},
-		"DBUpdate":    struct{}{},
-		"DBUpdateExt": struct{}{},
-		//		"DBGetList":      struct{}{},
-		//		"DBGetTable":     struct{}{},
-		"DBSelect": struct{}{},
-		//		"DBString":       struct{}{},
+		"DBInsert":       struct{}{},
+		"DBUpdate":       struct{}{},
+		"DBUpdateExt":    struct{}{},
+		"DBGetList":      struct{}{},
+		"DBGetTable":     struct{}{},
+		"DBSelect":       struct{}{},
 		"DBInt":          struct{}{},
 		"DBRowExt":       struct{}{},
 		"DBRow":          struct{}{},
@@ -124,13 +123,12 @@ type TxSignJSON struct {
 
 func init() {
 	smart.Extend(&script.ExtendData{Objects: map[string]interface{}{
-		"DBInsert":    DBInsert,
-		"DBUpdate":    DBUpdate,
-		"DBUpdateExt": DBUpdateExt,
-		//		"DBGetList":          DBGetList,
-		//		"DBGetTable":         DBGetTable,
-		"DBSelect": DBSelect,
-		//		"DBString":           DBString,
+		"DBInsert":           DBInsert,
+		"DBUpdate":           DBUpdate,
+		"DBUpdateExt":        DBUpdateExt,
+		"DBGetList":          DBGetList,
+		"DBGetTable":         DBGetTable,
+		"DBSelect":           DBSelect,
 		"DBInt":              DBInt,
 		"DBRowExt":           DBRowExt,
 		"DBRow":              DBRow,
@@ -742,7 +740,7 @@ func StateTable(p *Parser, tblname string) string {
 
 func TableName(p *Parser, tblname string) string {
 	tblname = strings.Trim(converter.EscapeName(tblname), `"`)
-	if tblname[0] >= '1' && tblname[0] <= '9' && strings.IndexByte(tblname, '_') != -1 {
+	if tblname[0] >= '1' && tblname[0] <= '9' && strings.Contains(tblname, `_`) {
 		return tblname
 	}
 	return fmt.Sprintf(`%d_%s`, p.TxStateID, tblname)
