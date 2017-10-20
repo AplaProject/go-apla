@@ -101,6 +101,11 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	err = postTx(`NewParameter`, &form)
+	if err.Error() != fmt.Sprintf(`!Parameter %s already exists`, name) {
+		t.Error(err)
+		return
+	}
 	form = url.Values{"Name": {menuname}, "Value": {`first
 			second
 			third`}, "Title": {`My Menu`},
@@ -111,7 +116,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 	err = postTx(`NewMenu`, &form)
-	if err.Error() != fmt.Sprintf(`!Menu %s aready exists`, menuname) {
+	if err.Error() != fmt.Sprintf(`!Menu %s already exists`, menuname) {
 		t.Error(err)
 		return
 	}
@@ -133,7 +138,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 	err = postTx(`NewPage`, &form)
-	if err.Error() != fmt.Sprintf(`!Page %s aready exists`, name) {
+	if err.Error() != fmt.Sprintf(`!Page %s already exists`, name) {
 		t.Error(err)
 		return
 	}

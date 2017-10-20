@@ -25,7 +25,7 @@ CREATE INDEX "%[1]d_history_index_block" ON "%[1]d_history" (block_id, txhash);
 DROP TABLE IF EXISTS "%[1]d_languages"; CREATE TABLE "%[1]d_languages" (
   "id" bigint  NOT NULL DEFAULT '0',
   "name" character varying(100) NOT NULL DEFAULT '',
-  "res" jsonb,
+  "res" text NOT NULL DEFAULT '',
   "conditions" text NOT NULL DEFAULT '',
   "rb_id" bigint NOT NULL DEFAULT '0'
 );
@@ -97,7 +97,7 @@ INSERT INTO "%[1]d_contracts" ("id", "value", "wallet_id","active", "conditions"
 DROP TABLE IF EXISTS "%[1]d_parameters";
 CREATE TABLE "%[1]d_parameters" (
 "id" bigint NOT NULL  DEFAULT '0',
-"name" varchar(255) NOT NULL DEFAULT '',
+"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
 "value" text NOT NULL DEFAULT '',
 "conditions" text  NOT NULL DEFAULT '',
 "rb_id" bigint  NOT NULL DEFAULT '0'
@@ -109,19 +109,18 @@ INSERT INTO "%[1]d_parameters" ("id","name", "value", "conditions") VALUES
 ('1','founder_account', '%[2]d', 'ContractConditions(`MainCondition`)'),
 ('2','full_node_wallet_id', '%[2]d', 'ContractConditions(`MainCondition`)'),
 ('3','host', '', 'ContractConditions(`MainCondition`)'),
-('4','restore_access_condition', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('5','new_table', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('6','new_column', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('7','changing_tables', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('8','changing_language', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('9','changing_signature', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('10','changing_page', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('11','changing_menu', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('12','changing_contracts', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('13','ecosystem_name', '%[3]s', 'ContractConditions(`MainCondition`)'),
-('14','max_sum', '1000000', 'ContractConditions(`MainCondition`)'),
-('15','citizenship_cost', '1', 'ContractConditions(`MainCondition`)'),
-('16','money_digit', '2', 'ContractConditions(`MainCondition`)');
+('4','new_table', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('5','new_column', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('6','changing_tables', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('7','changing_language', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('8','changing_signature', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('9','changing_page', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('10','changing_menu', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('11','changing_contracts', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('12','ecosystem_name', '%[3]s', 'ContractConditions(`MainCondition`)'),
+('13','max_sum', '1000000', 'ContractConditions(`MainCondition`)'),
+('14','citizenship_cost', '1', 'ContractConditions(`MainCondition`)'),
+('15','money_digit', '2', 'ContractConditions(`MainCondition`)');
 
 CREATE TABLE "%[1]d_tables" (
 "name" varchar(100) UNIQUE NOT NULL DEFAULT '',

@@ -86,6 +86,73 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`TestDBFindOK`, `
+		contract TestDBFindOK {
+		action {
+			var ret array
+			var vals map
+			ret = DBFind("contracts")
+			if Len(ret) {
+				Test("0",  "1")	
+			} else {
+				Test("0",  "0")	
+			}
+			ret = DBFind("contracts").Limit(3)
+			if Len(ret) == 3 {
+				Test("1",  "1")	
+			} else {
+				Test("1",  "0")	
+			}
+			ret = DBFind("contracts").Order("id").Offset(1).Limit(1)
+			if Len(ret) != 1 {
+				Test("2",  "0")	
+			} else {
+				vals = ret[0]
+				Test("2",  vals["id"])	
+			}
+			ret = DBFind("contracts").Columns("id,rb_id").Order("id").Offset(1).Limit(1)
+			if Len(ret) != 1 {
+				Test("3",  "0")	
+			} else {
+				vals = ret[0]
+				Test("3", vals["value"] + vals["id"])	
+			}
+			ret = DBFind("contracts").Columns("id,rb_id").Where("id='1'")
+			if Len(ret) != 1 {
+				Test("4",  "0")	
+			} else {
+				vals = ret[0]
+				Test("4", vals["id"])	
+			}
+			ret = DBFind("contracts").Columns("id,rb_id").Where("id='1'")
+			if Len(ret) != 1 {
+				Test("4",  "0")	
+			} else {
+				vals = ret[0]
+				Test("4", vals["id"])	
+			}
+			ret = DBFind("contracts").Columns("id,value").Where("id> ? and id < ?", 3, 8).Order("id")
+			if Len(ret) != 4 {
+				Test("5",  "0")	
+			} else {
+				vals = ret[0]
+				Test("5", vals["id"])	
+			}
+			ret = DBFind("contracts").WhereId(7)
+			if Len(ret) != 1 {
+				Test("6",  "0")	
+			} else {
+				vals = ret[0]
+				Test("6", vals["id"])	
+			}
+			Test("255",  "255")	
+		}
+	}`,
+		[]smartParams{
+			{nil, map[string]string{`0`: `1`, `1`: `1`, `2`: `2`, `3`: `2`, `4`: `1`, `5`: `4`,
+				`6`:   `7`,
+				`255`: `255`}},
+		}},
 	{`testEmpty`, `contract testEmpty {
 				action { Test("empty",  "empty value")}}`,
 		[]smartParams{

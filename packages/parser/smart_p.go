@@ -18,6 +18,7 @@ package parser
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -49,7 +50,7 @@ var (
 		"DBUpdateExt":    struct{}{},
 		"DBGetList":      struct{}{},
 		"DBGetTable":     struct{}{},
-		"DBString":       struct{}{},
+		"DBSelect":       struct{}{},
 		"DBInt":          struct{}{},
 		"DBRowExt":       struct{}{},
 		"DBRow":          struct{}{},
@@ -127,7 +128,7 @@ func init() {
 		"DBUpdateExt":        DBUpdateExt,
 		"DBGetList":          DBGetList,
 		"DBGetTable":         DBGetTable,
-		"DBString":           DBString,
+		"DBSelect":           DBSelect,
 		"DBInt":              DBInt,
 		"DBRowExt":           DBRowExt,
 		"DBRow":              DBRow,
@@ -468,6 +469,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 
 // DBInsert inserts a record into the specified database table
 func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) { // map[string]interface{}) {
+	tblname = TableName(p, tblname)
 	if err = p.AccessTable(tblname, "insert"); err != nil {
 		return
 	}
@@ -522,6 +524,7 @@ func checkReport(tblname string) error {
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
 	qcost = 0
+	tblname = TableName(p, tblname)
 	/*	if err = p.AccessTable(tblname, "general_update"); err != nil {
 		return
 	}*/
@@ -540,6 +543,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
 	qcost = 0
 	var isIndex bool
+	tblname = TableName(p, tblname)
 	if err = checkReport(tblname); err != nil {
 		return
 	}
@@ -596,7 +600,8 @@ func HexToBytes(hexdata string) ([]byte, error) {
 }
 
 // DBInt returns the numeric value of the column for the record with the specified id
-func DBInt(tblname string, name string, id int64) (int64, int64, error) {
+func DBInt(p *Parser, tblname string, name string, id int64) (int64, int64, error) {
+	tblname = TableName(p, tblname)
 	if err := checkReport(tblname); err != nil {
 		return 0, 0, err
 	}
@@ -621,7 +626,9 @@ func getBytea(table string) map[string]bool {
 }
 
 // DBStringExt returns the value of 'name' column for the record with the specified value of the 'idname' field
-func DBStringExt(tblname string, name string, id interface{}, idname string) (int64, string, error) {
+func DBStringExt(p *Parser, tblname string, name string, id interface{}, idname string) (int64, string, error) {
+	tblname = TableName(p, tblname)
+
 	if err := checkReport(tblname); err != nil {
 		return 0, ``, err
 	}
@@ -650,10 +657,12 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (in
 }
 
 // DBIntExt returns the numeric value of the 'name' column for the record with the specified value of the 'idname' field
-func DBIntExt(tblname string, name string, id interface{}, idname string) (cost int64, ret int64, err error) {
+func DBIntExt(p *Parser, tblname string, name string, id interface{}, idname string) (cost int64, ret int64, err error) {
 	var val string
 	var qcost int64
-	qcost, val, err = DBStringExt(tblname, name, id, idname)
+
+	tblname = TableName(p, tblname)
+	qcost, val, err = DBStringExt(p, tblname, name, id, idname)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -670,7 +679,7 @@ func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, i
 		return 0, fmt.Errorf(`DBFreeRequest can be executed only once`)
 	}
 	p.TxContract.FreeRequest = true
-	cost, ret, err := DBStringExt(tblname, idname, id, idname)
+	cost, ret, err := DBStringExt(p, tblname, idname, id, idname)
 	if err != nil {
 		return 0, err
 	}
@@ -727,6 +736,14 @@ func DBIntWhere(tblname string, name string, where string, params ...interface{}
 // StateTable adds a prefix with the state number to the table name
 func StateTable(p *Parser, tblname string) string {
 	return fmt.Sprintf("%d_%s", p.TxStateID, tblname)
+}
+
+func TableName(p *Parser, tblname string) string {
+	tblname = strings.Trim(converter.EscapeName(tblname), `"`)
+	if tblname[0] >= '1' && tblname[0] <= '9' && strings.Contains(tblname, `_`) {
+		return tblname
+	}
+	return fmt.Sprintf(`%d_%s`, p.TxStateID, tblname)
 }
 
 // StateTableTx adds a prefix with the state number to the table name
@@ -1103,19 +1120,19 @@ func LangRes(p *Parser, idRes, lang string) string {
 }
 
 func checkWhere(tblname string, where string, order string) (string, string, error) {
-	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
-	ret := re.FindAllStringSubmatch(where, -1)
+	/*	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
+		ret := re.FindAllStringSubmatch(where, -1)
 
-	for _, iret := range ret {
-		if len(iret) != 2 {
-			continue
-		}
-		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
-			return ``, ``, err
-		} else if !isIndex {
-			return ``, ``, fmt.Errorf(`there is no index on %s`, iret[1])
-		}
-	}
+		for _, iret := range ret {
+			if len(iret) != 2 {
+				continue
+			}
+			if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
+				return ``, ``, err
+			} else if !isIndex {
+				return ``, ``, fmt.Errorf(`there is no index on %s`, iret[1])
+			}
+		}*/
 	if len(order) > 0 {
 		order = ` order by ` + converter.EscapeName(order)
 	}
@@ -1184,8 +1201,75 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 	return 0, result, err
 }
 
+// DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
+func DBSelect(p *Parser, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
+	where string, params []interface{}) (int64, []interface{}, error) {
+
+	var (
+		err  error
+		rows *sql.Rows
+	)
+	if err = checkReport(tblname); err != nil {
+		return 0, nil, err
+	}
+	if len(columns) == 0 {
+		columns = `*`
+	}
+	if len(order) == 0 {
+		order = `id`
+	}
+	where = strings.Replace(converter.Escape(where), `$`, `?`, -1)
+	if id > 0 {
+		where = fmt.Sprintf(`id='%d'`, id)
+	}
+	if limit == 0 {
+		limit = 25
+	}
+	if limit < 0 || limit > 250 {
+		limit = 250
+	}
+	if ecosystem == 0 {
+		ecosystem = p.TxSmart.StateID
+	}
+	tblname = fmt.Sprintf(`%d_%s`, ecosystem, tblname)
+	rows, err = model.DBConn.Table(tblname).Select(columns).Where(where, params...).Order(order).
+		Offset(offset).Limit(limit).Rows()
+	if err != nil {
+		return 0, nil, err
+	}
+	defer rows.Close()
+	cols, err := rows.Columns()
+	if err != nil {
+		return 0, nil, err
+	}
+	values := make([][]byte, len(cols))
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+	result := make([]interface{}, 0, 50)
+	for rows.Next() {
+		err = rows.Scan(scanArgs...)
+		if err != nil {
+			return 0, nil, err
+		}
+		row := make(map[string]string)
+		for i, col := range values {
+			var value string
+			if col != nil {
+				value = string(col)
+			}
+			row[cols[i]] = value
+		}
+		result = append(result, reflect.ValueOf(row).Interface())
+	}
+	return 0, result, nil
+}
+
 // DBRowExt returns one row from the table StringExt
-func DBRowExt(tblname string, columns string, id interface{}, idname string) (int64, map[string]string, error) {
+func DBRowExt(p *Parser, tblname string, columns string, id interface{}, idname string) (int64, map[string]string, error) {
+
+	tblname = TableName(p, tblname)
 
 	if err := checkReport(tblname); err != nil {
 		return 0, nil, err
@@ -1216,7 +1300,8 @@ func DBRowExt(tblname string, columns string, id interface{}, idname string) (in
 }
 
 // DBRow returns one row from the table StringExt
-func DBRow(tblname string, columns string, id int64) (int64, map[string]string, error) {
+func DBRow(p *Parser, tblname string, columns string, id int64) (int64, map[string]string, error) {
+	tblname = TableName(p, tblname)
 
 	if err := checkReport(tblname); err != nil {
 		return 0, nil, err
@@ -1298,8 +1383,8 @@ func PrefixTable(p *Parser, tablename string, global int64) string {
 
 // EvalCondition gets the condition and check it
 func EvalCondition(p *Parser, table, name, condfield string) error {
-	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM `+converter.EscapeName(table)+
-		` WHERE name = ?`, name).String()
+	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM "`+TableName(p, table)+
+		`" WHERE name = ?`, name).String()
 	if err != nil {
 		return err
 	}
