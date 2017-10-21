@@ -188,7 +188,7 @@ func ConditionById(table string, validate bool) {
               SysParamString(`default_ecosystem_page`), `default_menu`, "ContractConditions(`MainCondition`)")
     	DBInsert(Str(id) + "_menu", "name,value,title,conditions", `default_menu`, 
               SysParamString(`default_ecosystem_menu`), "default", "ContractConditions(`MainCondition`)")
-    	DBInsert(Str(id) + "_keys", "id,pub", $wallet, DBString("keys", "pub", $wallet))
+    	DBInsert(Str(id) + "_keys", "id,pub", $wallet, DBString("1_keys", "pub", $wallet))
         $result = id
     }
     func price() int {

@@ -57,6 +57,54 @@ func TestNewEcosystem(t *testing.T) {
 	}
 }
 
+func TestEditEcosystem(t *testing.T) {
+	var (
+		err error
+	)
+	if err = keyLogin(2); err != nil {
+		t.Error(err)
+		return
+	}
+	//	menuname := randName(`menu`)
+	menu := `government`
+	value := `P(test,test paragraph)`
+
+	name := randName(`page`)
+	form := url.Values{"Name": {name}, "Value": {value},
+		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`@1NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`@1NewPage`, &form)
+	if err.Error() != fmt.Sprintf(`!Page %s already exists`, name) {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Id": {`1`}, "Value": {value},
+		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`@1EditPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Value": {`contract testEmpty {
+		action { Test("empty",  "empty value")}}`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	if err := postTx(`@1NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Id": {`2`}, "Value": {`contract testEmpty {
+		action { Test("empty3",  "empty value")}}`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	if err := postTx(`@1EditContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
 func TestEcosystemParams(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
