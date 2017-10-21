@@ -1511,6 +1511,13 @@ func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
 		return 0, err
 	}
 	err = model.ExecSchemaEcosystem(converter.StrToInt(id), wallet, name)
+	if err != nil {
+		return 0, err
+	}
+	err = smart.LoadContract(p.DbTransaction, id)
+	if err != nil {
+		return 0, err
+	}
 	return converter.StrToInt64(id), err
 }
 
