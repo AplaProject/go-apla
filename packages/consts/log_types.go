@@ -102,4 +102,5 @@ const (
 	ProtocolError         = "Protocol error"
 	MarshallingError      = "Marshalling error"
 	UnmarshallingError    = "Unmarshalling error"
+	ParseError            = "Parse error"
 )

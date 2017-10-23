@@ -24,8 +24,8 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -61,7 +61,6 @@ type RunTime struct {
 func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 	var (
 		count, in int
-		//		f         interface{}
 	)
 	size := len(rt.stack)
 	in = rt.vm.getInParams(obj)
@@ -80,14 +79,12 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		pars := make([]reflect.Value, in)
 		limit := 0
 		(*rt.extend)[`rt`] = rt
-		//		fmt.Println(`CALL`, finfo, count, in)
 		auto := 0
 		for k := 0; k < in; k++ {
 			if len(finfo.Auto[k]) > 0 {
 				auto++
 			}
 		}
-		//		fmt.Println(`Extend`, auto, *rt.extend, finfo.Auto)
 		shift := size - count + auto
 		if finfo.Variadic {
 			shift = size - count
@@ -104,13 +101,11 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			}
 			if !pars[count-i].IsValid() {
 				pars[count-i] = reflect.Zero(reflect.TypeOf(map[string]interface{}{}))
-				//reflect.ValueOf((*interface{})(nil)) //reflect.Zero(reflect.TypeOf(&MyType{}))
 			}
 		}
 		if i > 0 {
 			pars[in-1] = reflect.ValueOf(rt.stack[size-i : size])
 		}
-		//fmt.Println(`Pars`, shift, count, limit, i, size, pars)
 		if finfo.Variadic {
 			result = foo.CallSlice(pars)
 		} else {
@@ -118,7 +113,6 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		}
 		rt.stack = rt.stack[:shift]
 
-		//	fmt.Println(`Result`, result)
 		for i, iret := range result {
 			// first return value of every extend function that makes queries to DB is cost
 			if i == 0 && rt.vm.FuncCallsDB != nil {
@@ -126,7 +120,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 					cost := iret.Int()
 					if cost > rt.cost {
 						rt.cost = 0
-						logger.LogWarn(consts.VMEvent, "paid CPU resource is over")
+						rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Error("paid CPU resource is over")
 						return fmt.Errorf("paid CPU resource is over")
 					} else {
 						rt.cost -= cost
@@ -143,11 +137,6 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			}
 		}
 	}
-	/*	if
-		if result[len(result)-1].Interface() != nil {
-			return result[len(result)-1].Interface().(error)
-		}
-	*/
 	return
 }
 
@@ -157,23 +146,17 @@ func (rt *RunTime) extendFunc(name string) error {
 		f  interface{}
 	)
 	if f, ok = (*rt.extend)[name]; !ok || reflect.ValueOf(f).Kind().String() != `func` {
-		logger.LogError(consts.VMError, fmt.Sprintf(`unknown function %s`, name))
+		rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "contract_func_name": name}).Error("unknown function")
 		return fmt.Errorf(`unknown function %s`, name)
 	}
 	size := len(rt.stack)
 	foo := reflect.ValueOf(f)
-	//	if count != foo.Type().NumIn() {
-	//	return fmt.Errorf(`The number of params %s is wrong`, name)
-	//
 	count := foo.Type().NumIn()
 	pars := make([]reflect.Value, count)
 	for i := count; i > 0; i-- {
 		pars[count-i] = reflect.ValueOf(rt.stack[size-i])
 	}
 	result := foo.Call(pars)
-	/*	if result[len(result)-1].Interface() != nil {
-		return result[len(result)-1].Interface().(error)
-	}*/
 	rt.stack = rt.stack[:size-count]
 	for i, iret := range result {
 		if foo.Type().Out(i).String() == `error` {
@@ -223,10 +206,8 @@ func ValueToInt(v interface{}) (ret int64) {
 	case string:
 		ret, err = strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrToIntError, err)
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting value from string to int")
 		}
-		/*	default:
-			ret = val.(decimal.Decimal)*/
 	}
 	return
 }
@@ -241,9 +222,9 @@ func ValueToFloat(v interface{}) (ret float64) {
 		ret = float64(val)
 	case string:
 		ret, err = strconv.ParseFloat(val, 64)
-		logger.LogInfo(consts.StrToFloatError, err)
-		/*	default:
-			ret = val.(decimal.Decimal)*/
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting value from string to float")
+		}
 	}
 	return
 }
@@ -257,7 +238,7 @@ func ValueToDecimal(v interface{}) (ret decimal.Decimal) {
 	case string:
 		ret, err = decimal.NewFromString(val)
 		if err != nil {
-			logger.LogInfo(consts.StrToDecimalError, err)
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting value from string to decimal")
 		}
 	case int64:
 		ret = decimal.New(val, 0)
@@ -285,7 +266,6 @@ func (vm *VM) RunInit(cost int64) *RunTime {
 
 // RunCode executes Block
 func (rt *RunTime) RunCode(block *Block) (status int, err error) {
-	logger.LogDebug(consts.FuncStarted, "")
 	top := make([]interface{}, 8)
 	start := len(rt.stack)
 	rt.blocks = append(rt.blocks, &blockStack{block, len(rt.vars)})
@@ -309,18 +289,17 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	}
 	var assign []*VarInfo
 	labels := make([]int, 0)
-	//main:
 	for ci := 0; ci < len(block.Code); ci++ { //_, cmd := range block.Code {
 		rt.cost--
 		if rt.cost <= 0 {
-			logger.LogWarn(consts.VMError, `paid CPU resource is over`)
+			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Warn("paid CPU resource is over")
 			return 0, fmt.Errorf(`paid CPU resource is over`)
 		}
 		cmd := block.Code[ci]
 		var bin interface{}
 		size := len(rt.stack)
 		if size < int(cmd.Cmd>>8) {
-			logger.LogError(consts.VMError, "stack is empty")
+			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Error("stack is empty")
 			return 0, fmt.Errorf(`stack is empty`)
 		}
 		for i := 1; i <= int(cmd.Cmd>>8); i++ {
@@ -373,8 +352,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					var i int
 					for i = len(rt.blocks) - 1; i >= 0; i-- {
 						if item.Owner == rt.blocks[i].Block {
-							//							fmt.Println(`Var`, item.Obj.Type, item.Obj.Value, rt.blocks[i].Block.Vars[item.Obj.Value.(int)])
-
 							switch rt.blocks[i].Block.Vars[item.Obj.Value.(int)].String() {
 							case Decimal:
 								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = ValueToDecimal(rt.stack[len(rt.stack)-count+ivar])
@@ -386,7 +363,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					}
 				}
 			}
-			//			fmt.Println(`CMD ASSIGN`, count, rt.stack, rt.vars)
 		case cmdReturn:
 			status = statusReturn
 		case cmdError:
@@ -404,7 +380,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					cost := rt.vm.ExtCost(finfo.Name)
 					if cost > rt.cost {
 						rt.cost = 0
-						logger.LogWarn(consts.VMEvent, `paid CPU resource is over`)
+						rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Warning("paid CPU resource is over")
 						return 0, fmt.Errorf(`paid CPU resource is over`)
 					} else if cost == -1 {
 						rt.cost -= CostCall
@@ -427,18 +403,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 			}
 			if i < 0 {
-				logger.LogError(consts.VMError, "wrong var")
+				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "var": ivar.Obj.Value}).Error("wrong var")
 				return 0, fmt.Errorf(`wrong var %v`, ivar.Obj.Value)
 			}
-			//fmt.Println(`VAR`, voff, *ivar.Obj, ivar.Owner.Vars, rt.vars)
-			//rt.stack = append(rt.stack, rt.vars[voff+ivar.Obj.Value.(int)])
 		case cmdExtend, cmdCallExtend:
 			if val, ok := (*rt.extend)[cmd.Value.(string)]; ok {
 				rt.cost -= CostExtend
 				if cmd.Cmd == cmdCallExtend {
 					err = rt.extendFunc(cmd.Value.(string))
 					if err != nil {
-						logger.LogError(consts.VMError, fmt.Sprintf(`extend function %s %s`, cmd.Value.(string), err.Error()))
+						rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "error": err, "cmd": cmd.Value.(string)}).Error("executing extended function")
 						return 0, fmt.Errorf(`extend function %s %s`, cmd.Value.(string), err.Error())
 					}
 				} else {
@@ -449,6 +423,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					rt.stack = append(rt.stack, val)
 				}
 			} else {
+				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "cmd": cmd.Value.(string)}).Error("unknown extend identifier")
 				err = fmt.Errorf(`unknown extend identifier %s`, cmd.Value.(string))
 			}
 		case cmdIndex:
@@ -469,6 +444,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 				rt.stack = rt.stack[:size-1]
 			default:
+				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_type": itype}).Error("type does not support indexing")
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
 			}
 		case cmdSetIndex:
@@ -507,6 +483,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 				rt.stack = rt.stack[:size-2]
 			default:
+				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_type": itype}).Error("type does not support indexing")
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
 			}
 		case cmdSign:
@@ -520,11 +497,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			rt.stack[size-1] = !valueToBool(top[0])
 
 		case cmdAdd:
-			/*			fmt.Println(`Stack`)
-						for _, item := range rt.stack {
-							fmt.Printf("|%v|", item)
-						}
-						fmt.Println(`Stack`, rt.stack)*/
 			switch top[1].(type) {
 			case string:
 				switch top[0].(type) {
@@ -709,11 +681,11 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = !bin.(bool)
 			}
 		default:
+			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_cmd": cmd.Cmd}).Error("Unknown command")
 			err = fmt.Errorf(`Unknown command %d`, cmd.Cmd)
 		}
 		if err != nil {
 			rt.err = err
-			//			status = STATUS_ERROR
 			break
 		}
 		if status == statusReturn || status == statusContinue || status == statusBreak {
@@ -724,11 +696,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			rt.stack = rt.stack[:size-1]
 		}
 	}
-	/*	if status == statusBreak {
-		status = statusNormal
-	}*/
 	if status == statusReturn {
-		//		fmt.Println(`Status`, start, rt.stack)
 		if rt.blocks[len(rt.blocks)-1].Block.Type == ObjFunc {
 			for count := len(rt.blocks[len(rt.blocks)-1].Block.Info.(*FuncInfo).Results); count > 0; count-- {
 				rt.stack[start] = rt.stack[len(rt.stack)-count]
@@ -736,8 +704,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			status = statusNormal
 			rt.blocks = rt.blocks[:len(rt.blocks)-1]
-
-			//			fmt.Println(`Ret function`, start, rt.stack)
 		} else {
 			rt.blocks = rt.blocks[:len(rt.blocks)-1]
 			return
@@ -745,17 +711,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	}
 	rt.stack = rt.stack[:start]
 	if err != nil {
-		logger.LogError(consts.VMError, err)
+		rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("error in vm")
 	}
 	return
 }
 
 // Run executes Block with the specified parameters and extended variables and functions
 func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
-	logger.LogDebug(consts.FuncStarted, "")
 	defer func() {
 		if r := recover(); r != nil {
-			logger.LogError(consts.PanicRecoveredError, r)
+			rt.vm.logger.WithFields(log.Fields{"type": consts.PanicRecoveredError}).Error("runtime panic error")
 			err = fmt.Errorf(`runtime panic error`)
 		}
 	}()
@@ -763,13 +728,9 @@ func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]in
 	rt.extend = extend
 	if _, err = rt.RunCode(block); err == nil {
 		off := len(rt.stack) - len(info.Results)
-		//		fmt.Println(`RUN`, len(rt.stack), len(info.Results))
 		for i := 0; i < len(info.Results); i++ {
 			ret = append(ret, rt.stack[off+i])
 		}
-	}
-	if err != nil {
-		logger.LogError(consts.VMError, err)
 	}
 	return
 }

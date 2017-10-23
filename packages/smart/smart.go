@@ -24,8 +24,9 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Contract contains the information about the contract.
@@ -68,7 +69,6 @@ func GetTestValue(name string) string {
 }
 
 func init() {
-	logger.LogDebug(consts.FuncStarted, "VM Started")
 	smartVM = script.NewVM()
 	smartVM.Extern = true
 	smartVM.Extend(&script.ExtendData{Objects: map[string]interface{}{
@@ -83,20 +83,8 @@ func init() {
 	}})
 }
 
-/*func pref2state(prefix string) (state uint32) {
-	if prefix != `global` {
-		if val, err := strconv.ParseUint(prefix, 10, 32); err == nil {
-			state = uint32(val)
-		} else if err != nil {
-			logger.LogDebug(consts.StrToIntError, err)
-		}
-	}
-	return
-}*/
-
 // ExternOff switches off the extern compiling mode in smartVM
 func ExternOff() {
-	logger.LogDebug(consts.VMEvent, "extern off")
 	smartVM.FlushExtern()
 }
 
@@ -141,7 +129,6 @@ func Extend(ext *script.ExtendData) {
 
 // Run executes Block in smartVM
 func Run(block *script.Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
-	logger.LogDebug(consts.FuncStarted, "")
 	var extcost int64
 	cost := script.CostDefault
 	if ecost, ok := (*extend)[`txcost`]; ok {
@@ -150,7 +137,7 @@ func Run(block *script.Block, params []interface{}, extend *map[string]interface
 	rt := smartVM.RunInit(cost)
 	ret, err = rt.Run(block, params, extend)
 	if err != nil {
-		logger.LogError(consts.VMError, err)
+		log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("running block in smart vm")
 	}
 	if ecost, ok := (*extend)[`txcost`]; ok && cost > ecost.(int64) {
 		extcost = cost - ecost.(int64)
@@ -173,7 +160,6 @@ func ActivateContract(tblid, state int64, active bool) {
 
 // GetContract returns true if the contract exists in smartVM
 func GetContract(name string, state uint32) *Contract {
-	logger.LogDebug(consts.FuncStarted, "")
 	name = script.StateName(state, name)
 	obj, ok := smartVM.Objects[name]
 	if ok && obj.Type == script.ObjContract {
@@ -184,7 +170,6 @@ func GetContract(name string, state uint32) *Contract {
 
 // GetUsedContracts returns the list of contracts which are called from the specified contract
 func GetUsedContracts(name string, state uint32, full bool) []string {
-	logger.LogDebug(consts.FuncStarted, "")
 	contract := GetContract(name, state)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Used == nil {
 		return nil
@@ -209,7 +194,6 @@ func GetUsedContracts(name string, state uint32, full bool) []string {
 
 // GetContractByID returns true if the contract exists
 func GetContractByID(id int32) *Contract {
-	logger.LogDebug(consts.FuncStarted, "")
 	idcont := id // - CNTOFF
 	if len(smartVM.Children) <= int(idcont) || smartVM.Children[idcont].Type != script.ObjContract {
 		return nil
@@ -220,7 +204,6 @@ func GetContractByID(id int32) *Contract {
 
 // GetFunc returns the block of the specified function in the contract
 func (contract *Contract) GetFunc(name string) *script.Block {
-	logger.LogDebug(consts.FuncStarted, "")
 	if block, ok := (*contract).Block.Objects[name]; ok && block.Type == script.ObjFunc {
 		return block.Value.(*script.Block)
 	}
@@ -229,7 +212,6 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 
 // TxJSON returns JSON data which has been generated from Tx data and extended variables
 func TxJSON(contract *Contract) string {
-	logger.LogDebug(consts.FuncStarted, "")
 	lines := make([]string, 0)
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 		switch fitem.Type.String() {
@@ -254,7 +236,7 @@ func Float(v interface{}) (ret float64) {
 		if val, err := strconv.ParseFloat(value, 64); err == nil {
 			ret = val
 		} else if err != nil {
-			logger.LogError(consts.StrToFloatError, err)
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": value}).Error("converting value from string to float")
 		}
 	}
 	return

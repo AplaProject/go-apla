@@ -19,7 +19,7 @@ package script
 const (
 	//	cmdUnknown = iota // error
 	// Здесь описаны команды байт-кода
-	// here are described the commands of bytecode 
+	// here are described the commands of bytecode
 	cmdPush       = iota + 1 // Push value to stack
 	cmdVar                   // Push variable to stack
 	cmdExtend                // Push extend variable to stack

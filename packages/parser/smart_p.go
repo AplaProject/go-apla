@@ -18,6 +18,7 @@ package parser
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -25,22 +26,20 @@ import (
 	"strconv"
 	"strings"
 
-	"encoding/hex"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/shopspring/decimal"
 
 	"github.com/jinzhu/gorm"
+	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -194,6 +193,7 @@ func (p *Parser) GetContractLimit() (ret int64) {
 	if len(p.TxSmart.MaxSum) > 0 {
 		maxSumInt, err := strconv.ParseInt(p.TxSmart.MaxSum, 10, 64)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.TxSmart.MaxSum}).Error("comverting tx smart max sum to int")
 			maxSumInt = 0
 		}
 		p.TxCost = maxSumInt
@@ -202,6 +202,7 @@ func (p *Parser) GetContractLimit() (ret int64) {
 		if len(cost) > 0 {
 			costInt, err := strconv.ParseInt(cost, 10, 64)
 			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": cost}).Error("comverting tx smart max sum to int")
 				costInt = 0
 			}
 			p.TxCost = costInt
@@ -249,56 +250,6 @@ func StackCont(p interface{}, name string) {
 	return
 }
 
-/*func (p *Parser) payContract() error {
-	var (
-		fromID int64
-		err    error
-	)
-	//return nil
-	toID := p.BlockData.WalletID // account of node
-	fuel, err := decimal.NewFromString(syspar.GetFuelRate(p.TxSmart.TokenEcosystem))
-	if err != nil {
-		return err
-	}
-	if fuel.Cmp(decimal.New(0, 0)) <= 0 {
-		return fmt.Errorf(`fuel rate must be greater than 0`)
-	}
-
-
-	egs := p.TxUsedCost.Mul(fuel)
-	fmt.Printf("Pay fuel=%v fromID=%d toID=%d cost=%v egs=%v", fuel, fromID, toID, p.TxUsedCost, egs)
-	if egs.Cmp(decimal.New(0, 0)) == 0 { // Is it possible to pay nothing?
-		return nil
-	}
-	wallet := &model.DltWallet{}
-	if err := wallet.GetWallet(fromID); err != nil {
-		return err
-	}
-	wltAmount, err := decimal.NewFromString(wallet.Amount)
-	if err != nil {
-		return err
-	}
-
-	if wltAmount.Cmp(egs) < 0 {
-		egs = wltAmount
-	}
-	commission := egs.Mul(decimal.New(3, 0)).Div(decimal.New(100, 0)).Floor()
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(fromID)}, true); err != nil {
-		return err
-	}
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(toID)}, true); err != nil {
-		return err
-	}
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(syspar.GetCommissionWallet())}, true); err != nil {
-		return err
-	}
-	//	fmt.Printf(" Paid commission %v\r\n", commission)
-	return nil
-}*/
-
 // CallContract calls the contract functions according to the specified flags
 func (p *Parser) CallContract(flags int) (err error) {
 	var (
@@ -318,6 +269,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		wallet.SetTablePrefix(p.TxSmart.StateID)
 		err := wallet.Get(p.TxSmart.UserID)
 		if err != nil && err != gorm.ErrRecordNotFound {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 			return err
 		}
 		if len(wallet.PublicKey) > 0 {
@@ -326,6 +278,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		if p.TxSmart.Type == 258 { // UpdFullNodes
 			node := syspar.GetNode(p.TxSmart.UserID)
 			if node == nil {
+				log.WithFields(log.Fields{"user_id": p.TxSmart.UserID}).Error("unknown node id")
 				return fmt.Errorf("unknown node id")
 			}
 			public = node.Public
@@ -334,10 +287,9 @@ func (p *Parser) CallContract(flags int) (err error) {
 			return fmt.Errorf("empty public key")
 		}
 		p.PublicKeys = append(p.PublicKeys, public)
-		//		fmt.Println(`CALL CONTRACT`, p.TxData[`forsign`].(string))
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxSmart.BinSignatures, false)
 		if err != nil {
-			fmt.Println(`ForSign`, p.TxData[`forsign`].(string))
+			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("checking tx data sign")
 			return err
 		}
 		if !CheckSignResult {
@@ -349,14 +301,17 @@ func (p *Parser) CallContract(flags int) (err error) {
 			}
 			fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(p.TxSmart.TokenEcosystem))
 			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.TxSmart.TokenEcosystem}).Error("converting ecosystem fuel rate from string to decimal")
 				return err
 			}
 			if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
+				log.Error("Fuel rate must be greater than 0")
 				return fmt.Errorf(`Fuel rate must be greater than 0`)
 			}
 			if len(p.TxSmart.PayOver) > 0 {
 				payOver, err := decimal.NewFromString(p.TxSmart.PayOver)
 				if err != nil {
+					log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
 					return err
 				}
 				fuelRate = fuelRate.Add(payOver)
@@ -367,12 +322,14 @@ func (p *Parser) CallContract(flags int) (err error) {
 			} else if len(p.TxSmart.PayOver) > 0 {
 				payOver, err := decimal.NewFromString(p.TxSmart.PayOver)
 				if err != nil {
+					log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
 					return err
 				}
 				fuelRate = fuelRate.Add(payOver)
 			}
 			payWallet.SetTablePrefix(p.TxSmart.TokenEcosystem)
 			if err = payWallet.Get(fromID); err != nil {
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 				return err
 			}
 			if !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(p.TxSmart.PublicKey, payWallet.PublicKey) {
@@ -380,10 +337,12 @@ func (p *Parser) CallContract(flags int) (err error) {
 			}
 			amount, err := decimal.NewFromString(payWallet.Amount)
 			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
 				return err
 			}
 			sizeFuel = syspar.GetSizeFuel() * int64(len(p.TxSmart.Data)) / 1024
 			if amount.Cmp(decimal.New(sizeFuel, 0).Mul(fuelRate)) <= 0 {
+				log.Error("current balance is not enough")
 				return fmt.Errorf(`current balance is not enough`)
 			}
 		}
@@ -404,10 +363,12 @@ func (p *Parser) CallContract(flags int) (err error) {
 			return err
 		} else if len(ret) == 1 {
 			if _, ok := ret[0].(int64); !ok {
+				log.WithFields(log.Fields{"type": consts.TypeError}).Error("wrong result type of price function")
 				return fmt.Errorf(`Wrong result type of price function`)
 			}
 			price = ret[0].(int64)
 		} else {
+			log.WithFields(log.Fields{"type": consts.TypeError}).Error("wrong result type of price function")
 			return fmt.Errorf(`Wrong type of price function`)
 		}
 	}
@@ -429,9 +390,9 @@ func (p *Parser) CallContract(flags int) (err error) {
 	p.TxContract.TxPrice = price
 	if (flags&smart.CallAction) != 0 && p.TxSmart.StateID > 0 {
 		apl := p.TxUsedCost.Mul(fuelRate)
-		fmt.Printf("Pay fuel=%v fromID=%d toID=%d cost=%v apl=%v", fuelRate, fromID, toID, p.TxUsedCost, apl)
 		wltAmount, err := decimal.NewFromString(payWallet.Amount)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
 			return err
 		}
 		if wltAmount.Cmp(apl) < 0 {
@@ -451,7 +412,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			[]string{syspar.GetCommissionWallet(p.TxSmart.TokenEcosystem)}, true); err != nil {
 			return err
 		}
-		fmt.Printf(" Paid commission %v\r\n", commission)
+		log.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")
 	}
 	return
 }
@@ -464,6 +425,7 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qco
 	var ind int
 	var lastID string
 	if ind, err = model.NumIndexes(tblname); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("num indexes")
 		return
 	}
 	qcost, lastID, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
@@ -484,9 +446,10 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 	if names[0] != `global` {
 		state, err = strconv.ParseInt(names[0], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrToIntError, names[0])
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": names[0]}).Error("converting name from string to int")
 		}
 		if state != int64(p.TxStateID) {
+			log.WithFields(log.Fields{"state_id": state, "tx_state_id": p.TxStateID}).Error("Wrong state in DBInsertReport")
 			err = fmt.Errorf(`Wrong state in DBInsertReport`)
 			return
 		}
@@ -508,6 +471,7 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 
 func checkReport(tblname string) error {
 	if strings.Contains(tblname, `_reports_`) {
+		log.Error("Access denied to report table")
 		return fmt.Errorf(`Access denied to report table`)
 	}
 	return nil
@@ -516,9 +480,6 @@ func checkReport(tblname string) error {
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
 	qcost = 0
-	/*	if err = p.AccessTable(tblname, "general_update"); err != nil {
-		return
-	}*/
 	if err = checkReport(tblname); err != nil {
 		return
 	}
@@ -543,8 +504,10 @@ func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, pa
 		return
 	}
 	if isIndex, err = model.IsIndex(tblname, column); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
 		return
 	} else if !isIndex {
+		log.WithFields(log.Fields{"column": column}).Error("There is no index on")
 		err = fmt.Errorf(`there is no index on %s`, column)
 	} else {
 		qcost, _, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, true)
@@ -559,9 +522,13 @@ func DBString(tblname string, name string, id int64) (int64, string, error) {
 	}
 	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, "", nil
 	}
 	res, err := model.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).String()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting dbstring")
+	}
 	return cost, res, err
 }
 
@@ -569,7 +536,7 @@ func DBString(tblname string, name string, id int64) (int64, string, error) {
 func Sha256(text string) string {
 	hash, err := crypto.Hash([]byte(text))
 	if err != nil {
-		logger.LogFatal(consts.CryptoError, err)
+		log.WithFields(log.Fields{"value": text, "error": err, "type": consts.CryptoError}).Fatal("hashing text")
 	}
 	hash = converter.BinToHex(hash)
 	return string(hash)
@@ -579,6 +546,7 @@ func Sha256(text string) string {
 func PubToID(hexkey string) int64 {
 	pubkey, err := hex.DecodeString(hexkey)
 	if err != nil {
+		log.WithFields(log.Fields{"value": hexkey, "error": err, "type": consts.CryptoError}).Error("decoding hexkey to string")
 		return 0
 	}
 	return crypto.Address(pubkey)
@@ -596,9 +564,13 @@ func DBInt(tblname string, name string, id int64) (int64, int64, error) {
 	}
 	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, 0, err
 	}
 	res, err := model.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).Int64()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting db int")
+	}
 	return cost, res, err
 }
 
@@ -606,6 +578,7 @@ func getBytea(table string) map[string]bool {
 	isBytea := make(map[string]bool)
 	colTypes, err := model.GetAll(`select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
 		return isBytea
 	}
 	for _, icol := range colTypes {
@@ -631,15 +604,21 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (in
 	}
 
 	if isIndex, err := model.IsIndex(tblname, idname); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
 		return 0, ``, err
 	} else if !isIndex {
+		log.WithFields(log.Fields{"colname": idname}).Error("there is no index")
 		return 0, ``, fmt.Errorf(`there is no index on %s`, idname)
 	}
 	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, "", err
 	}
 	res, err := model.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id).String()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting dbstring ext")
+	}
 	return cost, res, err
 }
 
@@ -655,12 +634,16 @@ func DBIntExt(tblname string, name string, id interface{}, idname string) (cost 
 		return 0, 0, nil
 	}
 	res, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting DBStringExt result from string to int")
+	}
 	return qcost, res, err
 }
 
 // DBFreeRequest is a free function that is needed to find the record with the specified value in the 'idname' column.
 func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, idname string) (int64, error) {
 	if p.TxContract.FreeRequest {
+		log.Error("DBFreeRequest can be executed only once")
 		return 0, fmt.Errorf(`DBFreeRequest can be executed only once`)
 	}
 	p.TxContract.FreeRequest = true
@@ -687,18 +670,22 @@ func DBStringWhere(tblname string, name string, where string, params ...interfac
 			continue
 		}
 		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
 			return 0, ``, err
 		} else if !isIndex {
+			log.WithFields(log.Fields{"column": iret[1]}).Error("there is no index")
 			return 0, ``, fmt.Errorf(`there is no index on %s`, iret[1])
 		}
 	}
 	selectQuery := `select ` + converter.EscapeName(name) + ` from ` + converter.EscapeName(tblname) + ` where ` + strings.Replace(converter.Escape(where), `$`, `?`, -1)
 	qcost, err := model.GetQueryTotalCost(selectQuery, params...)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, "", err
 	}
 	res, err := model.Single(selectQuery, params).String()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
 		return 0, "", err
 	}
 	return qcost, res, err
@@ -715,6 +702,9 @@ func DBIntWhere(tblname string, name string, where string, params ...interface{}
 		return 0, 0, nil
 	}
 	res, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "value": val}).Error("convertion DBStringWhere result from string to int")
+	}
 	return cost, res, err
 }
 
@@ -737,11 +727,13 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 			if contract == nil {
 				contract = smart.GetContract(name, 0)
 				if contract == nil {
+					log.WithFields(log.Fields{"contract_name": name}).Error("Unknown contract")
 					return false, fmt.Errorf(`Unknown contract %s`, name)
 				}
 			}
 			block := contract.GetFunc(`conditions`)
 			if block == nil {
+				log.WithFields(log.Fields{"contract_name": name}).Error("There is not conditions in contract")
 				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
 			}
 			_, err := smart.Run(block, []interface{}{}, &map[string]interface{}{`state`: int64(p.TxStateID),
@@ -750,6 +742,7 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 				return false, err
 			}
 		} else {
+			log.Error("empty contract name in ContractConditions")
 			return false, fmt.Errorf(`empty contract name in ContractConditions`)
 		}
 	}
@@ -764,7 +757,6 @@ func ContractAccess(p *Parser, names ...interface{}) bool {
 			if name[0] != '@' {
 				name = fmt.Sprintf(`@%d`, p.TxStateID) + name
 			}
-			//		return p.TxContract.Name == name
 			if p.TxContract.StackCont[len(p.TxContract.StackCont)-1] == name {
 				return true
 			}
@@ -781,6 +773,7 @@ func ContractAccess(p *Parser, names ...interface{}) bool {
 func IsGovAccount(p *Parser, citizen int64) bool {
 	stateValInt, err := strconv.ParseInt(StateVal(p, "founder_account"), 10, 64)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": StateVal(p, "founder_account")}).Error("converting founder_account from string to int")
 		stateValInt = 0
 	}
 	return stateValInt == citizen
@@ -823,9 +816,13 @@ func DBAmount(tblname, column string, id int64) (int64, decimal.Decimal) {
 
 	balance, err := model.Single("SELECT amount FROM "+converter.EscapeName(tblname)+" WHERE "+converter.EscapeName(column)+" = ?", id).String()
 	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("executing single query")
 		return 0, decimal.New(0, 0)
 	}
-	val, _ := decimal.NewFromString(balance)
+	val, err := decimal.NewFromString(balance)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.ConvertionError}).Error("converting balance from string to decimal")
+	}
 	return 0, val
 }
 
@@ -835,12 +832,6 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 	if p.TxSmart != nil {
 		time = p.TxSmart.Time
 	}
-	/*	if p.TxPtr != nil {
-		switch val := p.TxPtr.(type) {
-		case *consts.TXHeader:
-			time = int64(val.Time)
-		}
-	}*/
 	blockTime := int64(0)
 	if p.BlockData != nil {
 		blockTime = p.BlockData.Time
@@ -881,7 +872,7 @@ func SysFuel(state int64) string {
 func Int(val string) int64 {
 	value, err := strconv.ParseInt(val, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, val)
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting value from string to int")
 	}
 	return value
 }
@@ -918,16 +909,19 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 	sc.SetTablePrefix(prefix)
 	err := sc.GetByName(name)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting smart contract by name")
 		return 0, err
 	}
 	cond := sc.Conditions
 	if len(cond) > 0 {
 		ret, err := p.EvalIf(cond)
 		if err != nil {
+			log.WithFields(log.Fields{"error": err, "conditions": cond}).Error("evaluating smart contract conditions")
 			return 0, err
 		}
 		if !ret {
 			if err = p.AccessRights(`changing_smart_contracts`, false); err != nil {
+				log.WithError(err).Error("checking changing_smart_contract access rights")
 				return 0, err
 			}
 		}
@@ -938,16 +932,19 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 	}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions, p.TxStateID); err != nil {
+			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": p.TxStateID}).Error("compiling eval conditions")
 			return 0, err
 		}
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
 	}
 	if len(fields) == 0 {
+		log.Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
 	prefixInt, err := strconv.ParseInt(prefix, 10, 64)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "value": prefix}).Error("converting prefix from string to int")
 		prefixInt = 0
 	}
 	root, err := smart.CompileBlock(value, &script.OwnerInfo{StateID: uint32(prefixInt),
@@ -987,12 +984,14 @@ func UpdateParam(p *Parser, name, value, conditions string) (int64, error) {
 	}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
+			log.WithFields(log.Fields{"conditions": conditions, "error": err}).Error("compiling eval conditions")
 			return 0, err
 		}
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
 	}
 	if len(fields) == 0 {
+		log.Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
 	_, _, err := p.selectiveLoggingAndUpd(fields, values,
@@ -1012,6 +1011,7 @@ func UpdateMenu(p *Parser, name, value, conditions, global string, stateID int64
 	values := []interface{}{value}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
+			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": p.TxStateID}).Error("compiling eval conditions")
 			return err
 		}
 		fields = append(fields, "conditions")
@@ -1032,10 +1032,10 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	if state == 0 {
 		pref = `global`
 	}
-	//	fmt.Println(`CheckSignature`, i, state, name)
 	p := (*i)[`parser`].(*Parser)
 	value, err := model.Single(`select value from "`+pref+`_signatures" where name=?`, name).String()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
 		return err
 	}
 	if len(value) == 0 {
@@ -1043,12 +1043,14 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	}
 	hexsign, err := hex.DecodeString((*i)[`Signature`].(string))
 	if len(hexsign) == 0 || err != nil {
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("comverting signature to hex")
 		return fmt.Errorf(`wrong signature`)
 	}
 
 	var sign TxSignJSON
 	err = json.Unmarshal([]byte(value), &sign)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling sign")
 		return err
 	}
 	wallet := (*i)[`wallet`].(int64)
@@ -1079,6 +1081,7 @@ func UpdatePage(p *Parser, name, value, menu, conditions, global string, stateID
 	values := []interface{}{value}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
+			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": p.TxStateID}).Error("compile eval conditions")
 			return err
 		}
 		fields = append(fields, "conditions")
@@ -1117,8 +1120,10 @@ func checkWhere(tblname string, where string, order string) (string, string, err
 			continue
 		}
 		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
 			return ``, ``, err
 		} else if !isIndex {
+			log.WithFields(log.Fields{"column": iret[1]}).Error("there is no index")
 			return ``, ``, fmt.Errorf(`there is no index on %s`, iret[1])
 		}
 	}
@@ -1144,8 +1149,10 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 			continue
 		}
 		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
 			return 0, nil, err
 		} else if !isIndex {
+			log.WithFields(log.Fields{"column": iret[1]}).Error("there is no index")
 			return 0, nil, fmt.Errorf(`there is not index on %s`, iret[1])
 		}
 	}
@@ -1157,6 +1164,9 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 	}
 	list, err := model.GetAll(`select `+converter.Escape(name)+` from `+converter.EscapeName(tblname)+` where `+
 		strings.Replace(converter.Escape(where), `$`, `?`, -1)+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get all")
+	}
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
 		result[i] = reflect.ValueOf(list[i]).Interface()
@@ -1179,13 +1189,12 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 	cols := strings.Split(converter.Escape(columns), `,`)
 	list, err := model.GetAll(`select `+strings.Join(cols, `,`)+` from `+converter.EscapeName(tblname)+` where `+
 		where+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get all")
+	}
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
-		//result[i] = make(map[string]interface{})
 		result[i] = reflect.ValueOf(list[i]).Interface()
-		/*		for _, key := range cols {
-				result[i][key] = reflect.ValueOf(list[i][key]).Interface()
-			}*/
 	}
 	return 0, result, err
 }
@@ -1199,7 +1208,6 @@ func NewStateFunc(p *Parser, country, currency string) (err error) {
 
 // DBRowExt returns one row from the table StringExt
 func DBRowExt(tblname string, columns string, id interface{}, idname string) (int64, map[string]string, error) {
-
 	if err := checkReport(tblname); err != nil {
 		return 0, nil, err
 	}
@@ -1214,16 +1222,22 @@ func DBRowExt(tblname string, columns string, id interface{}, idname string) (in
 		}
 	}
 	if isIndex, err := model.IsIndex(tblname, idname); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
 		return 0, nil, err
 	} else if !isIndex {
+		log.WithFields(log.Fields{"column": idname}).Error("There is no index on")
 		return 0, nil, fmt.Errorf(`there is no index on %s`, idname)
 	}
 	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where ` + converter.EscapeName(idname) + `=?`
 	cost, err := model.GetQueryTotalCost(query, id)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, nil, err
 	}
 	res, err := model.GetOneRow(query, id).String()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
+	}
 
 	return cost, res, err
 }
@@ -1238,9 +1252,13 @@ func DBRow(tblname string, columns string, id int64) (int64, map[string]string, 
 	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where id=?`
 	cost, err := model.GetQueryTotalCost(query, id)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, nil, err
 	}
 	res, err := model.GetOneRow(query, id).String()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
+	}
 
 	return cost, res, err
 }
@@ -1255,6 +1273,7 @@ func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 	par := &model.SystemParameter{}
 	err := par.Get(name)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("system parameter get")
 		return 0, err
 	}
 	cond := par.Conditions
@@ -1273,12 +1292,14 @@ func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 	}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions, 0); err != nil {
+			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": 0}).Error("compiling eval")
 			return 0, err
 		}
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
 	}
 	if len(fields) == 0 {
+		log.Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
 	_, _, err = p.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"name"}, []string{name}, true)
@@ -1287,6 +1308,7 @@ func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 	}
 	err = syspar.SysUpdate()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 		return 0, err
 	}
 	return 0, nil
@@ -1295,6 +1317,7 @@ func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 // ValidateCondition checks if the condition can be compiled
 func ValidateCondition(condition string, state int64) error {
 	if len(condition) == 0 {
+		log.Error("conditions cannot be empty")
 		return fmt.Errorf("Conditions cannot be empty")
 	}
 	return smart.CompileEval(condition, uint32(state))
@@ -1314,6 +1337,7 @@ func EvalCondition(p *Parser, table, name, condfield string) error {
 	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM `+converter.EscapeName(table)+
 		` WHERE name = ?`, name).String()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
 		return err
 	}
 	return Eval(p, conditions)
@@ -1329,10 +1353,12 @@ func FindEcosystem(p *Parser, country string) (int64, int64, error) {
 	query := `SELECT id FROM system_states where name=?`
 	cost, err := model.GetQueryTotalCost(query, country)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, 0, err
 	}
 	id, err := model.Single(query, country).Int64()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
 		return 0, 0, err
 	}
 	return cost, id, nil
@@ -1375,6 +1401,7 @@ func ContractsList(value string) []interface{} {
 
 func CompileContract(p *Parser, code string, state, id, token int64) (interface{}, error) {
 	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` {
+		log.Error("CompileContract can be only called from NewContract or EditContract")
 		return 0, fmt.Errorf(`CompileContract can be only called from NewContract or EditContract`)
 	}
 	return smart.CompileBlock(code, &script.OwnerInfo{StateID: uint32(state), WalletID: id, TokenID: token})
@@ -1382,6 +1409,7 @@ func CompileContract(p *Parser, code string, state, id, token int64) (interface{
 
 func FlushContract(p *Parser, iroot interface{}, id int64, active bool) error {
 	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` {
+		log.Error("FlushContract can be only called from NewContract or EditContract")
 		return fmt.Errorf(`FlushContract can be only called from NewContract or EditContract`)
 	}
 	root := iroot.(*script.Block)
@@ -1399,6 +1427,7 @@ func FlushContract(p *Parser, iroot interface{}, id int64, active bool) error {
 // Eval evaluates the condition
 func Eval(p *Parser, condition string) error {
 	if len(condition) == 0 {
+		log.Error("The condition is empty")
 		return fmt.Errorf(`The condition is empty`)
 	}
 	ret, err := p.EvalIf(condition)
@@ -1414,6 +1443,7 @@ func Eval(p *Parser, condition string) error {
 // ActivateContract sets Active status of the contract in smartVM
 func ActivateContract(p *Parser, tblid int64, state int64) error {
 	if p.TxContract.Name != `@1ActivateContract` {
+		log.Error("ActivateContract can be only called from @1ActivateContract")
 		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract`)
 	}
 	smart.ActivateContract(tblid, state, true)
@@ -1423,6 +1453,7 @@ func ActivateContract(p *Parser, tblid int64, state int64) error {
 // CreateEcosystem creates a new ecosystem
 func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
 	if p.TxContract.Name != `@1NewEcosystem` {
+		log.Error("CreateEcosystem can be only called from @1NewEcosystem")
 		return 0, fmt.Errorf(`CreateEcosystem can be only called from @1NewEcosystem`)
 	}
 	_, id, err := p.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
@@ -1433,6 +1464,7 @@ func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
 	}
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": id}).Error("converting id from string to int")
 		return 0, err
 	}
 	model.ExecSchemaEcosystem(idInt, wallet, name)
@@ -1441,35 +1473,42 @@ func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
 
 func RollbackEcosystem(p *Parser) error {
 	if p.TxContract.Name != `@1NewEcosystem` {
+		log.Error("RollbackEcosystem can be only called from @1NewEcosystem")
 		return fmt.Errorf(`RollbackEcosystem can be only called from @1NewEcosystem`)
 	}
 	rollbackTx := &model.RollbackTx{}
 	err := rollbackTx.Get(p.DbTransaction, p.TxHash, "system_states")
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback tx")
 		return err
 	}
 	lastID, err := model.GetNextID(`system_states`)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
 		return err
 	}
 	lastID--
 	tableIDInt, err := strconv.ParseInt(rollbackTx.TableID, 10, 64)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("converting table id from string to int")
 		return err
 	}
 	if tableIDInt != lastID {
+		log.WithFields(log.Fields{"table_id": tableIDInt, "last_id": lastID}).Error("incorrect ecosystem id")
 		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
 	}
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
 		`contracts`, `parameters`} {
 		err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
 			return err
 		}
 	}
 	rollbackTxToDel := &model.RollbackTx{TxHash: p.TxHash, NameTable: "system_states"}
 	err = rollbackTxToDel.DeleteByHashAndTableName(p.DbTransaction)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback tx by hash and table name")
 		return err
 	}
 	ssToDel := &model.SystemState{ID: lastID}

@@ -19,9 +19,11 @@ package script
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // operPrior contains command and its priority
@@ -237,17 +239,15 @@ var (
 		{ // stateFParam
 			lexNewLine: {stateFParam, 0},
 			lexIdent:   {stateFParamTYPE, cfFParam},
-			// lexType:    {stateFParam, cfFType},
-			isComma: {stateFParam, 0},
-			isRPar:  {stateFResult, 0},
-			0:       {errParams, cfError},
+			isComma:    {stateFParam, 0},
+			isRPar:     {stateFResult, 0},
+			0:          {errParams, cfError},
 		},
 		{ // stateFParamTYPE
 			lexIdent: {stateFParamTYPE, cfFParam},
 			lexType:  {stateFParam, cfFType},
 			isComma:  {stateFParamTYPE, 0},
-			//			isRPar:   {stateFResult, 0},
-			0: {errVarType, cfError},
+			0:        {errVarType, cfError},
 		},
 		{ // stateFResult
 			lexNewLine: {stateFResult, 0},
@@ -334,10 +334,12 @@ func fError(buf *[]*Block, state int, lexem *Lexem) error {
 		`must be '='`,              // errAssign
 		`must be number or string`, // errStrNum
 	}
-	fmt.Printf("%s %x %v [Ln:%d Col:%d]\r\n", errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
+	logger := lexem.GetLogger()
 	if lexem.Type == lexNewLine {
+		logger.WithFields(log.Fields{"error": errors[state], "lex_value": lexem.Value, "type": consts.ParseError}).Error("unexpected new line")
 		return fmt.Errorf(`%s (unexpected new line) [Ln:%d]`, errors[state], lexem.Line-1)
 	}
+	logger.WithFields(log.Fields{"error": errors[state], "lex_value": lexem.Value, "type": consts.ParseError}).Error("parsing error")
 	return fmt.Errorf(`%s %x %v [Ln:%d Col:%d]`, errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
 }
 
@@ -348,7 +350,6 @@ func fFuncResult(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func fReturn(buf *[]*Block, state int, lexem *Lexem) error {
-	//	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
 	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdReturn, 0}) //len(fblock.Results)})
 	return nil
 }
@@ -422,7 +423,8 @@ func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 	} else {
 		objInfo, tobj := findVar(lexem.Value.(string), buf)
 		if objInfo == nil || objInfo.Type != ObjVar {
-			logger.LogError(consts.VMError, fmt.Sprintf(`unknown variable %s`, lexem.Value.(string)))
+			logger := lexem.GetLogger()
+			logger.WithFields(log.Fields{"type": consts.ParseError, "lex_value": lexem.Value.(string)}).Error("unknown variable")
 			return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 		}
 		ivar = VarInfo{objInfo, tobj}
@@ -448,8 +450,9 @@ func fAssign(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fTx(buf *[]*Block, state int, lexem *Lexem) error {
 	contract := (*buf)[len(*buf)-1]
+	logger := lexem.GetLogger()
 	if contract.Type != ObjContract {
-		logger.LogError(consts.VMError, `data can only be in contract`)
+		logger.WithFields(log.Fields{"type": consts.ParseError, "contract_type": contract.Type, "lex_value": lexem.Value}).Error("data can only be in contract")
 		return fmt.Errorf(`data can only be in contract`)
 	}
 	(*contract).Info.(*ContractInfo).Tx = new([]*FieldInfo)
@@ -459,6 +462,8 @@ func fTx(buf *[]*Block, state int, lexem *Lexem) error {
 func fSettings(buf *[]*Block, state int, lexem *Lexem) error {
 	contract := (*buf)[len(*buf)-1]
 	if contract.Type != ObjContract {
+		logger := lexem.GetLogger()
+		logger.WithFields(log.Fields{"type": consts.ParseError, "contract_type": contract.Type, "lex_value": lexem.Value}).Error("data can only be in contract")
 		return fmt.Errorf(`data can only be in contract`)
 	}
 	(*contract).Info.(*ContractInfo).Settings = make(map[string]interface{})
@@ -512,7 +517,8 @@ func fFieldTag(buf *[]*Block, state int, lexem *Lexem) error {
 func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 	code := (*(*buf)[len(*buf)-2]).Code
 	if code[len(code)-1].Cmd != cmdIf {
-		logger.LogError(consts.VMError, fmt.Sprintf(`there is not if before %v [Ln:%d Col:%d]`, lexem.Type, lexem.Line, lexem.Column))
+		logger := lexem.GetLogger()
+		logger.WithFields(log.Fields{"type": consts.ParseError}).Error("there is not if before")
 		return fmt.Errorf(`there is not if before %v [Ln:%d Col:%d]`, lexem.Type, lexem.Line, lexem.Column)
 	}
 	(*(*buf)[len(*buf)-2]).Code = append(code, &ByteCode{cmdElse, (*buf)[len(*buf)-1]})
@@ -558,7 +564,6 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 	root := &Block{Info: owner.StateID, Owner: owner}
 	lexems, err := lexParser(input)
 	if err != nil {
-		logger.LogError(consts.VMError, err)
 		return nil, err
 	}
 	if len(lexems) == 0 {
@@ -582,14 +587,11 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 		nextState := newState.NewState & 0xff
 		if (newState.NewState & stateFork) > 0 {
 			fork = i
-			//			continue
 		}
 		if (newState.NewState & stateToFork) > 0 {
 			i = fork
 			fork = 0
 			lexem = lexems[i]
-			//			fmt.Printf("State %x %x %v %v\r\n", curState, newState.NewState, lexem, stack)
-			//			continue
 		}
 
 		if (newState.NewState & stateStay) > 0 {
@@ -603,11 +605,10 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 			}
 			curlen := len((*blockstack[len(blockstack)-1]).Code)
 			if err := vm.compileEval(&lexems, &i, &blockstack); err != nil {
-				logger.LogError(consts.VMError, err)
 				return nil, err
 			}
 			if (newState.NewState&stateMustEval) > 0 && curlen == len((*blockstack[len(blockstack)-1]).Code) {
-				logger.LogError(consts.VMError, "there is not eval expression")
+				log.WithFields(log.Fields{"type": consts.ParseError}).Error("there is not eval expression")
 				return nil, fmt.Errorf("there is not eval expression")
 			}
 			nextState = curState
@@ -625,7 +626,6 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 		if (newState.NewState & statePop) > 0 {
 			if len(stack) == 0 {
 				err := fError(&blockstack, errMustLCurly, lexem)
-				logger.LogError(consts.VMError, err)
 				return nil, err
 			}
 			nextState = stack[len(stack)-1]
@@ -649,7 +649,6 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 		}
 		if newState.Func > 0 {
 			if err := funcs[newState.Func](&blockstack, nextState, lexem); err != nil {
-				logger.LogError(consts.VMError, err)
 				return nil, err
 			}
 		}
@@ -657,7 +656,6 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 	}
 	if len(stack) > 0 {
 		err := fError(&blockstack, errMustRCurly, lexems[len(lexems)-1])
-		logger.LogError(consts.VMError, err)
 		return nil, err
 	}
 	return root, nil
@@ -665,7 +663,6 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 
 // FlushBlock loads the compiled Block into the virtual machine
 func (vm *VM) FlushBlock(root *Block) {
-	logger.LogDebug(consts.FuncStarted, "")
 	shift := len(vm.Children)
 	for key, item := range root.Objects {
 		if cur, ok := vm.Objects[key]; ok && item.Type == ObjContract {
@@ -690,10 +687,6 @@ func (vm *VM) FlushBlock(root *Block) {
 
 // FlushExtern switches off the extern mode of the compilation
 func (vm *VM) FlushExtern() {
-	logger.LogDebug(consts.FuncStarted, "")
-	/*	if !vm.Extern {
-		return
-	}*/
 	vm.Extern = false
 	return
 }
@@ -703,8 +696,6 @@ func (vm *VM) Compile(input []rune, owner *OwnerInfo) error {
 	root, err := vm.CompileBlock(input, owner)
 	if err == nil {
 		vm.FlushBlock(root)
-	} else {
-		logger.LogError(consts.VMError, err)
 	}
 	return err
 }
@@ -747,13 +738,12 @@ func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
 	bytecode := make(ByteCodes, 0, 100)
 	parcount := make([]int, 0, 20)
 	setIndex := false
-	//	mode := 0
 main:
 	for ; i < len(*lexems); i++ {
 		var cmd *ByteCode
 		var call bool
 		lexem := (*lexems)[i]
-		//		fmt.Println(i, parcount, lexem)
+		logger := lexem.GetLogger()
 		switch lexem.Type {
 		case isRCurly, isLCurly:
 			i--
@@ -788,7 +778,7 @@ main:
 		case isRPar:
 			for {
 				if len(buffer) == 0 {
-					logger.LogError(consts.VMError, "there is not pair")
+					logger.WithFields(log.Fields{"lex_value": lexem.Value.(string), "type": consts.ParseError}).Error("there is not pair")
 					return fmt.Errorf(`there is not pair`)
 				}
 				prev := buffer[len(buffer)-1]
@@ -813,7 +803,7 @@ main:
 		case isRBrack:
 			for {
 				if len(buffer) == 0 {
-					logger.LogError(consts.VMError, "there is not pair")
+					logger.WithFields(log.Fields{"lex_value": lexem.Value.(string), "type": consts.ParseError}).Error("there is not pair")
 					return fmt.Errorf(`there is not pair`)
 				}
 				prev := buffer[len(buffer)-1]
@@ -868,7 +858,7 @@ main:
 					}
 				}
 			} else {
-				logger.LogError(consts.VMError, fmt.Sprintf(`unknown operator %d`, lexem.Value.(uint32)))
+				logger.WithFields(log.Fields{"lex_value": strconv.FormatUint(uint64(lexem.Value.(uint32)), 10), "type": consts.ParseError}).Error("unknown operator")
 				return fmt.Errorf(`unknown operator %d`, lexem.Value.(uint32))
 			}
 		case lexNumber, lexString:
@@ -894,7 +884,7 @@ main:
 		case lexIdent:
 			objInfo, tobj := vm.findObj(lexem.Value.(string), block)
 			if objInfo == nil && (!vm.Extern || i >= len(*lexems)-2 || (*lexems)[i+1].Type != isLPar) {
-				logger.LogError(consts.VMError, fmt.Sprintf(`unknown identifier %s`, lexem.Value.(string)))
+				logger.WithFields(log.Fields{"lex_value": lexem.Value.(string), "type": consts.ParseError}).Error("unknown identifier")
 				return fmt.Errorf(`unknown identifier %s`, lexem.Value.(string))
 			}
 			if i < len(*lexems)-2 {
@@ -905,7 +895,7 @@ main:
 					}
 					if objInfo == nil || (objInfo.Type != ObjExtFunc && objInfo.Type != ObjFunc &&
 						objInfo.Type != ObjContract) {
-						logger.LogError(consts.VMError, fmt.Sprintf(`unknown function %s`, lexem.Value.(string)))
+						logger.WithFields(log.Fields{"lex_value": lexem.Value.(string), "type": consts.ParseError}).Error("unknown function")
 						return fmt.Errorf(`unknown function %s`, lexem.Value.(string))
 					}
 					if objInfo.Type == ObjContract {
@@ -913,8 +903,7 @@ main:
 						isContract = true
 					}
 					cmdCall := uint16(cmdCall)
-					if objInfo.Type == ObjExtFunc && objInfo.Value.(ExtFuncInfo).Variadic { /*||
-						(objInfo.Type == ObjFunc && objInfo.Value.(*Block).Info.(FuncInfo).Variadic )*/
+					if objInfo.Type == ObjExtFunc && objInfo.Value.(ExtFuncInfo).Variadic {
 						cmdCall = cmdCallVari
 					}
 					count := 0
@@ -949,7 +938,7 @@ main:
 				}
 				if (*lexems)[i+1].Type == isLBrack {
 					if objInfo == nil || objInfo.Type != ObjVar {
-						logger.LogError(consts.VMError, fmt.Sprintf(`unknown variable %s`, lexem.Value.(string)))
+						logger.WithFields(log.Fields{"lex_value": lexem.Value.(string), "type": consts.ParseError}).Error("unknown variable")
 						return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 					}
 					buffer = append(buffer, &ByteCode{cmdIndex, 0})
@@ -966,7 +955,7 @@ main:
 	*ind = i
 	for i := len(buffer) - 1; i >= 0; i-- {
 		if buffer[i].Cmd == cmdSys {
-			logger.LogError(consts.VMError, "there is not pair")
+			log.WithFields(log.Fields{"type": consts.ParseError}).Error("there is not pair")
 			return fmt.Errorf(`there is not pair`)
 		}
 		bytecode = append(bytecode, buffer[i])
