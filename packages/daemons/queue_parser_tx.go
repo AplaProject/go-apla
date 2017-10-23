@@ -19,7 +19,6 @@ package daemons
 import (
 	"context"
 
-	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/logging"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
@@ -40,16 +39,17 @@ func QueueParserTx(d *daemon, ctx context.Context) error {
 		return nil
 	}
 
+	p := new(parser.Parser)
 	// delete looped transactions
-	logging.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
-	affect, err := model.DeleteLoopedTransactions()
+	trs, err := model.GetLoopedTransactions()
 	if err != nil {
 		logging.WriteSelectiveLog(err)
 		return err
 	}
-	logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
+	for _, tr := range *trs {
+		p.ProcessBadTransaction(tr.Hash, "looped transaction")
+	}
 
-	p := new(parser.Parser)
 	err = p.AllTxParser()
 	if err != nil {
 		return err

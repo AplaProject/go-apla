@@ -169,7 +169,7 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 		p, err := ParseTransaction(bufTransaction)
 		if err != nil {
 			if p.TxHash != nil {
-				p.processBadTransaction(p.TxHash, err.Error())
+				p.ProcessBadTransaction(p.TxHash, err.Error())
 			}
 			return nil, fmt.Errorf("parse transaction error(%s)", err)
 		}
@@ -580,7 +580,7 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			// skip this transaction
 			log.Errorf("play transaction error: %s", err)
 			model.MarkTransactionUsed(nil, p.TxHash)
-			p.processBadTransaction(p.TxHash, err.Error())
+			p.ProcessBadTransaction(p.TxHash, err.Error())
 			continue
 		}
 

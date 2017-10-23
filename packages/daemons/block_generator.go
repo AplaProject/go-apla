@@ -99,6 +99,9 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	err = parser.InsertBlock(blockBin)
 	if err != nil {
 		log.Errorf("parser block error: %s", err)
+		for _, tr := range *trs {
+			model.MarkTransactionUnusedAndUnverified(nil, tr.Hash)
+		}
 		return err
 	}
 

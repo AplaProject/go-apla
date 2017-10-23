@@ -68,6 +68,15 @@ func DeleteLoopedTransactions() (int64, error) {
 	return query.RowsAffected, query.Error
 }
 
+func GetLoopedTransactions() (*[]Transaction, error) {
+	transactions := new([]Transaction)
+	if err := DBConn.Where("counter > 10 AND used = 0").Find(transactions).Error; err != nil {
+		return nil, err
+	}
+	return transactions, nil
+
+}
+
 func DeleteTransactionByHash(hash []byte) (int64, error) {
 	query := DBConn.Exec("DELETE FROM transactions WHERE hash = ?", hash)
 	return query.RowsAffected, query.Error

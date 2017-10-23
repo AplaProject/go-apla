@@ -37,7 +37,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	header, err := CheckTransaction(binaryTx)
 	if err != nil {
 		log.Errorf("parse data gate error: %s", err)
-		p.processBadTransaction(hash, err.Error())
+		p.ProcessBadTransaction(hash, err.Error())
 		return err
 	}
 
@@ -51,7 +51,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 
 	if walletID == 0 && citizenID == 0 {
 		errStr := "undefined walletID and citizenID"
-		p.processBadTransaction(hash, errStr)
+		p.ProcessBadTransaction(hash, errStr)
 		return errors.New(errStr)
 	}
 
@@ -70,6 +70,8 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		logging.WriteSelectiveLog(err)
 		return utils.ErrInfo(err)
 	}
+
+	log.Debugf("old transaction: %+v", tx)
 
 	logging.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
 	// put with verified=1
@@ -98,7 +100,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	return nil
 }
 
-func (p *Parser) processBadTransaction(hash []byte, errText string) error {
+func (p *Parser) ProcessBadTransaction(hash []byte, errText string) error {
 	if len(errText) > 255 {
 		errText = errText[:255]
 	}
@@ -147,6 +149,7 @@ func (p *Parser) DeleteQueueTx(hash []byte) error {
 func (p *Parser) AllTxParser() error {
 	all, err := model.GetAllUnverifiedAndUnusedTransactions()
 	for _, data := range all {
+		log.Debugf("start parsing transaction %+v", data)
 		err = p.TxParser(data.Hash, data.Data, false)
 		if err != nil {
 			log.Errorf("transaction parser error: %s", utils.ErrInfo(err))
