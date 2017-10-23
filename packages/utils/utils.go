@@ -40,10 +40,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/kardianos/osext"
 	"github.com/mcuadros/go-version"
-	//"github.com/op/go-logging"
+	log "github.com/sirupsen/logrus"
 )
 
 //var log = logging.MustGetLogger("daemons")
@@ -191,8 +190,6 @@ func CheckInputData(idata interface{}, dataType string) bool {
 	case []byte:
 		data = string(idata.([]byte))
 	}
-	logger.LogDebug(consts.DebugMessage, "CheckInputData:"+data)
-	logger.LogDebug(consts.DebugMessage, "dataType:"+dataType)
 	switch dataType {
 	case "arbitration_trust_list":
 		if ok, _ := regexp.MatchString(`^\[[0-9]{1,10}(,[0-9]{1,10}){0,100}\]$`, data); ok {
@@ -216,7 +213,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrToIntError, data)
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
 			}
 			if value <= 30 {
 				return true
@@ -226,7 +223,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^(?i)[a-z]+$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrToIntError, data)
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
 			}
 			if value <= 1024 {
 				return true
@@ -236,7 +233,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[\pL0-9\,\s\.\-\:\=\;\?\!\%\)\(\@\/\n\r]{1,20}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrToIntError, data)
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
 			}
 			if value <= 1024 {
 				return true
@@ -246,7 +243,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrToIntError, data)
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
 			}
 			if value <= 1024 {
 				return true
@@ -256,7 +253,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[0-9]{1,2}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrToIntError, data)
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
 			}
 			if value <= 30 {
 				return true
@@ -266,7 +263,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrToIntError, data)
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
 			}
 			if value <= 255 {
 				return true
@@ -276,7 +273,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrToIntError, data)
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
 			}
 			if value <= 15 && value >= 5 {
 				return true
@@ -286,7 +283,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrToIntError, data)
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
 			}
 			if value <= 127 {
 				return true
@@ -296,7 +293,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[0-9]{1,5}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrToIntError, data)
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
 			}
 			if value <= 65535 {
 				return true
@@ -521,7 +518,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 	case "level":
 		value, err := strconv.Atoi(data)
 		if err != nil {
-			logger.LogInfo(consts.StrToIntError, data)
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
 		}
 		if value >= 0 && value <= 34 {
 			return true
@@ -557,11 +554,13 @@ func CheckInputData(idata interface{}, dataType string) bool {
 func GetHTTPTextAnswer(url string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "url": url}).Error("cannot get url")
 		return "", err
 	}
 	defer resp.Body.Close()
 	htmlData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("cannot read response body")
 		return "", err
 	}
 	if resp.StatusCode == 404 {
@@ -628,6 +627,7 @@ func CallMethod(i interface{}, methodName string) interface{} {
 	}
 
 	// return or panic, method not found of either type
+	log.WithFields(log.Fields{"method_name": methodName}).Error("method not found")
 	return fmt.Errorf("method %s not found", methodName)
 }
 
@@ -644,23 +644,30 @@ func Caller(steps int) string {
 func CopyFileContents(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "file_name": src}).Error("opening file")
 		return ErrInfo(err)
 	}
 	defer in.Close()
 	out, err := os.Create(dst)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "file_name": dst}).Error("creating file")
 		return ErrInfo(err)
 	}
 	defer func() {
 		cerr := out.Close()
 		if err == nil {
+			log.WithFields(log.Fields{"error": err, "type": consts.IOError, "file_name": dst}).Error("closing file")
 			err = cerr
 		}
 	}()
 	if _, err = io.Copy(out, in); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "from_file": src, "to_file": dst}).Error("copying from to")
 		return ErrInfo(err)
 	}
 	err = out.Sync()
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "file_name": dst}).Error("syncing file")
+	}
 	return ErrInfo(err)
 }
 
@@ -668,18 +675,21 @@ func CopyFileContents(src, dst string) error {
 func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			logger.LogError(consts.PanicRecoveredError, r)
+			log.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r}).Error("recovered panic in check sign")
 		}
 	}()
 
 	var signsSlice [][]byte
 	if len(forSign) == 0 {
+		log.Error("for sign is empty")
 		return false, ErrInfoFmt("len(forSign) == 0")
 	}
 	if len(publicKeys) == 0 {
+		log.Error("public keys is empty")
 		return false, ErrInfoFmt("len(publicKeys) == 0")
 	}
 	if len(signs) == 0 {
+		log.Error("signs is empty")
 		return false, ErrInfoFmt("len(signs) == 0")
 	}
 
@@ -689,13 +699,14 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 	} else {
 		length, err := converter.DecodeLength(&signs)
 		if err != nil {
-			logger.LogFatal(consts.SignError, err)
+			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Fatal("decoding signs length")
 			return false, err
 		}
 		if length > 0 {
 			signsSlice = append(signsSlice, converter.BytesShift(&signs, length))
 		}
 		if len(publicKeys) != len(signsSlice) {
+			log.WithFields(log.Fields{"public_keys_length": len(publicKeys), "signs_length": len(signsSlice)}).Error("public keys and signs slices lengths does not match")
 			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
 		}
 	}
@@ -704,12 +715,11 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 
 // MerkleTreeRoot rertun Merkle value
 func MerkleTreeRoot(dataArray [][]byte) []byte {
-	logger.LogDebug(consts.FuncStarted, fmt.Sprintf("dataArray: %s", dataArray))
 	result := make(map[int32][][]byte)
 	for _, v := range dataArray {
 		hash, err := crypto.DoubleHash(v)
 		if err != nil {
-			logger.LogFatal(consts.CryptoError, err)
+			log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("double hasing value, while calculating merkle tree root")
 		}
 		hash = converter.BinToHex(hash)
 		result[0] = append(result[0], hash)
@@ -727,14 +737,14 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 				if _, ok := result[j+1]; !ok {
 					hash, err := crypto.DoubleHash(append(result[j][i], result[j][i+1]...))
 					if err != nil {
-						logger.LogFatal(consts.CryptoError, err)
+						log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("double hasing value, while calculating merkle tree root")
 					}
 					hash = converter.BinToHex(hash)
 					result[j+1] = [][]byte{hash}
 				} else {
 					hash, err := crypto.DoubleHash([]byte(append(result[j][i], result[j][i+1]...)))
 					if err != nil {
-						logger.LogFatal(consts.CryptoError, err)
+						log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("double hasing value, while calculating merkle tree root")
 					}
 					hash = converter.BinToHex(hash)
 					result[j+1] = append(result[j+1], hash)
@@ -744,9 +754,7 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 		j++
 	}
 
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("result: %v", result))
 	ret := result[int32(len(result)-1)]
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("result_: %s", ret))
 	return []byte(ret[0])
 }
 
@@ -757,15 +765,16 @@ func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int)
 	// parse [error] after the calling of a function
 	if len(binaryData) > 0 {
 		for {
-
 			// to exclude an attack on memory overflow
 			if !first {
 				if txSize > maxTxSize {
+					log.WithFields(log.Fields{"tx_size": txSize, "max_tx_size": maxTxSize}).Error("tx size is larger than max tx size")
 					return nil, ErrInfoFmt("[error] MAX_TX_SIZE")
 				}
 			}
 			txSize, err := converter.DecodeLength(&binaryData)
 			if err != nil {
+				log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("decoding tx size from bindata")
 				panic(err)
 			}
 
@@ -774,7 +783,7 @@ func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int)
 				transactionBinaryData := converter.BytesShift(&binaryData, txSize)
 				dSha256Hash, err := crypto.DoubleHash(transactionBinaryData)
 				if err != nil {
-					logger.LogFatal(consts.CryptoError, err)
+					log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("double hashing tx bindata")
 				}
 				dSha256Hash = converter.BinToHex(dSha256Hash)
 				mrklSlice = append(mrklSlice, dSha256Hash)
@@ -783,6 +792,7 @@ func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int)
 			// to exclude an attack on memory overflow
 			if !first {
 				if len(mrklSlice) > maxTxCount {
+					log.WithFields(log.Fields{"mrkl_slice_length": len(mrklSlice), "max_tx_count": maxTxCount}).Error("merkle slice is larger then max tx count")
 					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), maxTxCount))
 				}
 			}
@@ -793,11 +803,9 @@ func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int)
 	} else {
 		mrklSlice = append(mrklSlice, []byte("0"))
 	}
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("mrklSlice: %s", mrklSlice))
 	if len(mrklSlice) == 0 {
 		mrklSlice = append(mrklSlice, []byte("0"))
 	}
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("mrklSlice: %s", mrklSlice))
 	return MerkleTreeRoot(mrklSlice), nil
 }
 
@@ -813,12 +821,12 @@ func TypeInt(txType string) int64 {
 
 // GetNetworkTime returns the network time
 func GetNetworkTime() (*time.Time, error) {
-
 	ntpAddr := []string{"0.pool.ntp.org", "europe.pool.ntp.org", "asia.pool.ntp.org", "oceania.pool.ntp.org", "north-america.pool.ntp.org", "south-america.pool.ntp.org", "africa.pool.ntp.org"}
 	for i := 0; i < len(ntpAddr); i++ {
 		host := ntpAddr[i]
 		raddr, err := net.ResolveUDPAddr("udp", host+":123")
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host, "port": 123}).Warning("resolving udp address")
 			continue
 		}
 
@@ -827,6 +835,7 @@ func GetNetworkTime() (*time.Time, error) {
 
 		con, err := net.DialUDP("udp", nil, raddr)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host, "port": 123}).Warning("dialing addres by udp")
 			continue
 		}
 
@@ -834,6 +843,7 @@ func GetNetworkTime() (*time.Time, error) {
 
 		_, err = con.Write(data)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host, "port": 123}).Warning("writing data to udp connection")
 			continue
 		}
 
@@ -841,6 +851,7 @@ func GetNetworkTime() (*time.Time, error) {
 
 		_, err = con.Read(data)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host, "port": 123}).Warning("reading data from udp connection")
 			continue
 		}
 
@@ -854,6 +865,7 @@ func GetNetworkTime() (*time.Time, error) {
 		t := time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC).Add(time.Duration(nsec)).Local()
 		return &t, nil
 	}
+	log.Error("unable connect to NTP")
 	return nil, errors.New("unable connect to NTP")
 
 }
@@ -862,6 +874,7 @@ func GetNetworkTime() (*time.Time, error) {
 func TCPConn(Addr string) (net.Conn, error) {
 	conn, err := net.DialTimeout("tcp", Addr, 10*time.Second)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "address": Addr}).Error("dialing tcp")
 		return nil, ErrInfo(err)
 	}
 	conn.SetReadDeadline(time.Now().Add(consts.READ_TIMEOUT * time.Second))
@@ -874,11 +887,13 @@ func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 	size := converter.DecToBin(len(binaryData), 4)
 	_, err := conn.Write(size)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bindata size to connection")
 		return ErrInfo(err)
 	}
 	if len(binaryData) > 0 {
 		_, err = conn.Write(binaryData)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bindata to connection")
 			return ErrInfo(err)
 		}
 	}
@@ -889,6 +904,7 @@ func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 func GetCurrentDir() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warning("getting current dir")
 		return "."
 	}
 	return dir
@@ -902,41 +918,40 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	}
 	defer conn.Close()
 
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("dataTypeBlockBody: %v", dataTypeBlockBody))
 	// send the type of data
 	_, err = conn.Write(converter.DecToBin(dataTypeBlockBody, 2))
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data type block body to connection")
 		return nil, ErrInfo(err)
 	}
-
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("blockID: %v", blockID))
 
 	// send the number of a block
 	_, err = conn.Write(converter.DecToBin(blockID, 4))
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing block ID to connection")
 		return nil, ErrInfo(err)
 	}
 
 	// recieve the data size as a response that server wants to transfer
 	buf := make([]byte, 4)
-	n, err := conn.Read(buf)
+	_, err = conn.Read(buf)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data size from connection")
 		return nil, ErrInfo(err)
 	}
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("dataSize buf: %x / get: %v", buf, n))
-
 	// if the data size is less than 10mb, we will receive them
 	dataSize := converter.BinToDec(buf)
 	var binaryBlock []byte
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("dataSize: %v", dataSize))
 	if dataSize < 10485760 && dataSize > 0 {
 		binaryBlock = make([]byte, dataSize)
 
 		_, err = io.ReadFull(conn, binaryBlock)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data from connection")
 			return nil, ErrInfo(err)
 		}
 	} else {
+		log.Error("null block")
 		return nil, ErrInfo("null block")
 	}
 	return binaryBlock, nil
@@ -945,12 +960,12 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 
 // GetUpdVerAndURL downloads the information about the version
 func GetUpdVerAndURL(host string) (updinfo *Update, err error) {
-
 	update, err := GetHTTPTextAnswer(host + "/update.json")
 	if len(update) > 0 {
 		updateData := make(map[string]Update)
 		err = json.Unmarshal([]byte(update), &updateData)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling update data json")
 			return
 		}
 		if upd, ok := updateData[runtime.GOOS+`_`+runtime.GOARCH]; ok && version.Compare(upd.Version, consts.VERSION, ">") {
@@ -975,16 +990,10 @@ func ShellExecute(cmdline string) {
 
 // EgaasUpdate decompresses and updates executable file
 func EgaasUpdate(url string) error {
-	//	GetUpdVerAndURL(host string) (updinfo *lib.Update, err error)
-
 	zipfile := filepath.Join(*Dir, "egaas.zip")
-	/*	_, err := DownloadToFile(url, zipfile, 3600, nil, nil, "upd")
-		if err != nil {
-			return ErrInfo(err)
-		}
-		fmt.Println(zipfile)*/
 	reader, err := zip.OpenReader(zipfile)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("opening zipfile for reading")
 		return ErrInfo(err)
 	}
 	appname := filepath.Base(os.Args[0])
@@ -994,15 +1003,18 @@ func EgaasUpdate(url string) error {
 	f := ftemp[0]
 	zipped, err := f.Open()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("opening first file in zip archive")
 		return ErrInfo(err)
 	}
 
 	writer, err := os.OpenFile(tmpname, os.O_WRONLY|os.O_CREATE, f.Mode())
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("opening file")
 		return ErrInfo(err)
 	}
 
 	if _, err = io.Copy(writer, zipped); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("copying data")
 		return ErrInfo(err)
 	}
 	reader.Close()
@@ -1011,6 +1023,7 @@ func EgaasUpdate(url string) error {
 
 	folderPath, err := osext.ExecutableFolder()
 	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("finding executable in folder")
 		return ErrInfo(err)
 	}
 
@@ -1024,6 +1037,7 @@ func EgaasUpdate(url string) error {
 	}
 	err = exec.Command(tmpname, "-oldFileName", old, "-dir", *Dir, "-oldVersion", consts.VERSION).Start()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CommandExecutionError, "error": err}).Error("executing command")
 		return ErrInfo(err)
 	}
 	return nil
@@ -1034,10 +1048,12 @@ func EgaasUpdate(url string) error {
 func GetPrefix(tableName, stateID string) (string, error) {
 	s := strings.Split(tableName, "_")
 	if len(s) < 2 {
+		log.WithFields(log.Fields{"table_name": tableName}).Error("incorrect table name")
 		return "", ErrInfo("incorrect table name")
 	}
 	prefix := s[0]
 	if prefix != "global" && prefix != stateID {
+		log.WithFields(log.Fields{"table_name": tableName}).Error("incorrect table name")
 		return "", ErrInfo("incorrect table name")
 	}
 	return prefix, nil
