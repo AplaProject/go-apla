@@ -22,7 +22,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -119,8 +122,14 @@ func ifValue(val string, vars *map[string]string) bool {
 	case `!=`:
 		return len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1])
 	case `>`, `<`, `<=`, `>=`:
-		ret0, _ := decimal.NewFromString(strings.TrimSpace(cond[0]))
-		ret1, _ := decimal.NewFromString(strings.TrimSpace(cond[1]))
+		ret0, err := decimal.NewFromString(strings.TrimSpace(cond[0]))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strings.TrimSpace(cond[0])}).Error("converting left condition from string to decimal")
+		}
+		ret1, err := decimal.NewFromString(strings.TrimSpace(cond[1]))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strings.TrimSpace(cond[1])}).Error("converting right condition from string to decimal")
+		}
 		if len(cond) == 2 {
 			var bin bool
 			if sep == `>` || sep == `<=` {
@@ -361,9 +370,7 @@ func process(input string, owner *node, vars *map[string]string) {
 		params         *[]string
 		tailpars       *[]*[]string
 	)
-	//	fmt.Println(`Input`, input)
 	name := make([]rune, 0, 128)
-	//main:
 	for off, ch := range input {
 		if shift > 0 {
 			shift--
@@ -407,6 +414,7 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 	}
 	out, err := json.Marshal(root.Children)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling template data to json")
 		return []byte(err.Error())
 	}
 	return out

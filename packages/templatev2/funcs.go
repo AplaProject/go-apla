@@ -22,8 +22,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -117,6 +120,7 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`whereid`] != nil {
 		whereid, err := strconv.ParseInt(par.Node.Attr["whereid"].(string), 10, 64)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": par.Node.Attr["whereid"].(string)}).Error("converting node attr whereid from string to int")
 			return err.Error()
 		}
 		where = fmt.Sprintf(` where id='%d'`, whereid)
@@ -127,6 +131,7 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`limit`] != nil {
 		limitInt, err := strconv.Atoi(par.Node.Attr["limit"].(string))
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": par.Node.Attr["limit"]}).Error("converting node attr limit from string to int")
 			return err.Error()
 		}
 		limit = limitInt
@@ -138,17 +143,20 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`ecosystem`] != nil {
 		state, err = strconv.ParseInt(par.Node.Attr["ecosystem"].(string), 10, 64)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": par.Node.Attr["limit"]}).Error("converting node attr ecosystem from string to int")
 			return err.Error()
 		}
 	} else {
 		state, err = strconv.ParseInt((*par.Vars)["state"], 10, 64)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": par.Node.Attr["state"]}).Error("converting node attr state from string to int")
 			return err.Error()
 		}
 	}
 	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
 	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
 		return err.Error()
 	}
 	data := make([][]string, 0)
