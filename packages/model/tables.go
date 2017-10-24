@@ -155,7 +155,6 @@ func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) 
 }
 
 func (t *Table) SetActionByName(transaction *DbTransaction, table, name, action, actionValue string, rbID int64) (int64, error) {
-	log.Debugf("set action by name: name = %s, actions = %s, actionsValue = %s", name, action, actionValue)
 	query := GetDB(transaction).Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(actionValue)+`"`, rbID, name)
 	return query.RowsAffected, query.Error
 }
