@@ -19,8 +19,8 @@ func (p *Page) TableName() string {
 	return p.tableName
 }
 
-func (p *Page) Get(name string) error {
-	return DBConn.Where("name = ?", name).First(p).Error
+func (p *Page) Get(name string) (bool, error) {
+	return isFound(DBConn.Where("name = ?", name).First(p))
 }
 
 func (p *Page) Create(transaction *DbTransaction) error {

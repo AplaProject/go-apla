@@ -11,6 +11,6 @@ func (r *RbFullNode) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(r).Error
 }
 
-func (r *RbFullNode) GetByRbID(id int64) error {
-	return DBConn.Where("rb_id = ?", id).First(r).Error
+func (r *RbFullNode) GetByRbID(id int64) (bool, error) {
+	return isFound(DBConn.Where("rb_id = ?", id).First(r))
 }

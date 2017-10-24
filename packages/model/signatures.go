@@ -2,8 +2,6 @@ package model
 
 import (
 	"strconv"
-
-	"github.com/jinzhu/gorm"
 )
 
 type Signature struct {
@@ -22,16 +20,8 @@ func (s *Signature) TableName() string {
 	return s.tableName
 }
 
-func (s *Signature) Get(name string) error {
-	return DBConn.Where("name = ?", name).First(s).Error
-}
-
-func (s *Signature) ExistsByName(name string) (bool, error) {
-	query := DBConn.Where("name = ?", name).First(s)
-	if query.Error == gorm.ErrRecordNotFound {
-		return false, nil
-	}
-	return !query.RecordNotFound(), query.Error
+func (s *Signature) Get(name string) (bool, error) {
+	return isFound(DBConn.Where("name = ?", name).First(s))
 }
 
 func (s *Signature) GetAllOredered(prefix string) ([]Signature, error) {

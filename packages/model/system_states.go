@@ -23,8 +23,8 @@ func GetAllSystemStatesIDs() ([]int64, error) {
 	return ids, nil
 }
 
-func (ss *SystemState) Get(id int64) error {
-	return DBConn.Where("id = ?", id).First(ss).Error
+func (ss *SystemState) Get(id int64) (bool, error) {
+	return isFound(DBConn.Where("id = ?", id).First(ss))
 }
 
 func (ss *SystemState) GetCount() (int64, error) {

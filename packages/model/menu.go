@@ -7,6 +7,7 @@ import (
 type Menu struct {
 	tableName  string
 	Name       string `gorm:"primary_key;not null;size:255"`
+	Title      string `gorm:"not null"`
 	Value      string `gorm:"not null"`
 	Conditions string `gorm:"not null"`
 	RbID       int64  `gorm:"not null"`
@@ -20,8 +21,8 @@ func (m Menu) TableName() string {
 	return m.tableName
 }
 
-func (m *Menu) Get(name string) error {
-	return DBConn.Where("name = ?", name).First(m).Error
+func (m *Menu) Get(name string) (bool, error) {
+	return isFound(DBConn.Where("name = ?", name).First(m))
 }
 
 func (m *Menu) Create(transaction *DbTransaction) error {
@@ -38,6 +39,7 @@ func (m *Menu) ToMap() map[string]string {
 	result := make(map[string]string)
 	result["name"] = m.Name
 	result["value"] = m.Value
+	result["title"] = m.Title
 	result["conditions"] = m.Conditions
 	result["rb_id"] = strconv.FormatInt(m.RbID, 10)
 	return result

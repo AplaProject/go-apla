@@ -17,6 +17,9 @@
 package daemons
 
 import (
+	"encoding/hex"
+	"errors"
+
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -39,18 +42,26 @@ const (
 // else send the full transactions
 func Disseminator(d *daemon, ctx context.Context) error {
 	config := &model.Config{}
-	err := config.GetConfig()
+	found, err := config.Get()
 	if err != nil {
 		log.Errorf("can't get config: %s", err)
 		return err
 	}
 
+	if !found {
+		return errors.New("can't found config")
+	}
 	node := &model.FullNode{}
-	err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	found, err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
 	if err != nil {
 		log.Errorf("can't get full_node: %s", err)
 		return err
 	}
+
+	if !found {
+		return errors.New("can't find config")
+	}
+
 	fullNodeID := node.ID
 
 	// find out who we are, fullnode or not
@@ -160,9 +171,12 @@ func sendHashesResp(resp []byte, w io.Writer) error {
 		// Parse the list of requested transactions
 		txHash := converter.BytesShift(&resp, 16)
 		tr := &model.Transaction{}
-		err := tr.Read(txHash)
+		found, err := tr.Read(txHash)
 		if err != nil {
 			return err
+		}
+		if !found {
+			return errors.New("can't find transaction: Hash " + hex.EncodeToString(txHash))
 		}
 		if len(tr.Data) > 0 {
 			buf.Write(converter.EncodeLengthPlusData(tr.Data))

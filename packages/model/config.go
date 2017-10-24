@@ -20,8 +20,8 @@ func UpdateConfig(field string, value interface{}) error {
 	return DBConn.Model(&Config{}).Update(field, value).Error
 }
 
-func (c *Config) GetConfig() error {
-	return handleError(DBConn.First(&c).Error)
+func (c *Config) Get() (bool, error) {
+	return isFound(DBConn.First(&c))
 }
 
 func (c *Config) Save() error {

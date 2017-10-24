@@ -10,8 +10,8 @@ func (mh *MigrationHistory) TableName() string {
 	return "migration_history"
 }
 
-func (mh *MigrationHistory) Get() error {
-	return DBConn.First(mh).Error
+func (mh *MigrationHistory) Get() (bool, error) {
+	return isFound(DBConn.First(mh))
 }
 
 func (mh *MigrationHistory) Create() error {

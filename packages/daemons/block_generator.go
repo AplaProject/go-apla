@@ -17,6 +17,7 @@
 package daemons
 
 import (
+	"errors"
 	"time"
 
 	"context"
@@ -31,13 +32,18 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	d.sleepTime = time.Second
 
 	config := &model.Config{}
-	if err := config.GetConfig(); err != nil {
+	found, err := config.Get()
+	if err != nil {
 		return err
 	}
 
+	if !found {
+		return errors.New("config not found")
+	}
+
 	fullNodes := &model.FullNode{}
-	err := fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
-	if err != nil || fullNodes.ID == 0 {
+	found, err = fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	if err != nil || !found {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
 		log.Infof("we are not full node, sleep for 10 seconds")
@@ -48,10 +54,13 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	defer DBUnlock()
 
 	prevBlock := &model.InfoBlock{}
-	err = prevBlock.GetInfoBlock()
+	found, err = prevBlock.Get()
 	if err != nil {
 		log.Errorf("can't get block: %s", err)
 		return err
+	}
+	if !found {
+		return errors.New("can't find info block")
 	}
 
 	// calculate the next block generation time

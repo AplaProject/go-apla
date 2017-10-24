@@ -29,10 +29,15 @@ func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData) (err 
 		return err
 	}
 	sp := &model.StateParameter{}
-	err = sp.SetTablePrefix(converter.Int64ToStr(state)).GetByName(data.params[`name`].(string))
+	sp.SetTablePrefix(converter.Int64ToStr(state))
+	found, err := sp.GetByName(data.params[`name`].(string))
 	if err != nil {
+		return errorAPI(w, err, http.StatusInternalServerError)
+	}
+	if !found {
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
+
 	data.result = &paramValue{Name: sp.Name, Value: sp.Value, Conditions: sp.Conditions}
 	return
 }

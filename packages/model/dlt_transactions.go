@@ -18,14 +18,13 @@ type DltTransaction struct {
 func (dt *DltTransaction) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(dt).Error
 }
-
-func (dt *DltTransaction) GetTransaction(senderWalletID, recipientWalletID int64, recipientWalletAddress string) error {
-	return DBConn.Where("sender_wallet_id = ? OR recipient_wallet_id = ? OR recipient_wallet_address = ?",
-		senderWalletID, recipientWalletID, recipientWalletAddress).First(dt).Error
+func (dt *DltTransaction) GetTransaction(senderWalletID, recipientWalletID int64, recipientWalletAddress string) (bool, error) {
+	return isFound(DBConn.Where("sender_wallet_id = ? OR recipient_wallet_id = ? OR recipient_wallet_address = ?",
+		senderWalletID, recipientWalletID, recipientWalletAddress).First(dt))
 }
 
-func (dt *DltTransaction) GetIncomingTransactions(recipientWalletID int64) error {
-	return DBConn.Where("recipient_wallet_id=?", recipientWalletID).First(dt).Error
+func (dt *DltTransaction) GetIncomingTransactions(recipientWalletID int64) (bool, error) {
+	return isFound(DBConn.Where("recipient_wallet_id=?", recipientWalletID).First(dt))
 }
 
 func (dt *DltTransaction) GetCount(senderWalletID, recipientWalletID int64, recipientWalletAddress string) (int64, error) {

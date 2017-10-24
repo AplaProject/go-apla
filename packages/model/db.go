@@ -27,14 +27,20 @@ var (
 	RecordNotFound = gorm.ErrRecordNotFound
 )
 
+func isFound(db *gorm.DB) (bool, error) {
+	if db.RecordNotFound() {
+		return false, nil
+	}
+	return true, db.Error
+}
+
 func GormInit(user string, pass string, dbName string) error {
-	connect, err := gorm.Open("postgres",
+	var err error
+	DBConn, err = gorm.Open("postgres",
 		fmt.Sprintf("host=localhost user=%s dbname=%s sslmode=disable password=%s", user, dbName, pass))
 	if err != nil {
 		return err
 	}
-	DBConn = connect
-	//	DBConn.LogMode(true)
 	return nil
 }
 
@@ -327,7 +333,7 @@ func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
 func GetLastBlockData() (map[string]int64, error) {
 	result := make(map[string]int64)
 	confirmation := &Confirmation{}
-	err := confirmation.GetMaxGoodBlock()
+	_, err := confirmation.GetMaxGoodBlock()
 	if err != nil {
 		return result, utils.ErrInfo(err)
 	}
@@ -337,7 +343,7 @@ func GetLastBlockData() (map[string]int64, error) {
 	}
 	// obtain the time of the last affected block
 	block := &Block{}
-	err = block.GetBlock(confirmedBlockID)
+	_, err = block.Get(confirmedBlockID)
 	if err != nil || len(block.Data) == 0 {
 		return result, utils.ErrInfo(err)
 	}
@@ -349,7 +355,7 @@ func GetLastBlockData() (map[string]int64, error) {
 
 func GetMyWalletID() (int64, error) {
 	conf := &Config{}
-	err := conf.GetConfig()
+	_, err := conf.Get()
 	if err != nil {
 		return 0, err
 	}
@@ -382,28 +388,9 @@ func IsTable(tblname string) bool {
 }
 
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
-	/*	var dataType string
-		var characterMaximumLength string
-			rows, err := DBConn.
-			Table("information_schema.columns").
-			Where("table_name = ? AND column_name = ?", tableName, columnName).
-			Select("data_type", "character_maximum_length").Rows()*/
 	return GetOneRow(`select data_type,character_maximum_length from
 			 information_schema.columns where table_name = ? AND column_name = ?`,
 		tableName, columnName).String()
-	/*	if err != nil {
-			return nil, err
-		}
-		for rows.Next() {
-			rows.Scan(&dataType)
-			rows.Scan(&characterMaximumLength)
-			fmt.Println(`COLDATA`, dataType, characterMaximumLength)
-		}
-		rows.Close()
-		result := make(map[string]string, 0)
-		result["data_type"] = dataType
-		result["character_maximum_length"] = characterMaximumLength
-		return row, nil*/
 }
 
 func GetColumnType(tblname, column string) (itype string, err error) {
@@ -447,7 +434,7 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 	}
 
 	// determine full_node_id of the one, who had to generate a block (but could delegate this)
-	err = node.Get(prevBlockWalletID)
+	_, err = node.Get(prevBlockWalletID)
 	if err != nil {
 		return 0, err
 	}
@@ -571,15 +558,6 @@ func GetTableData(tableName string, limit int) ([]map[string]string, error) {
 	return GetAll(`SELECT * FROM "`+tableName+`" order by id`, limit)
 }
 
-func InsertIntoMigration(version string, timeApplied int64) error {
-	id, err := GetNextID(`migration_history`)
-	if err != nil {
-		return err
-	}
-	return DBConn.Exec(`INSERT INTO migration_history (id, version, date_applied) VALUES (?, ?, ?)`,
-		id, version, timeApplied).Error
-}
-
 func GetMap(query string, name, value string, args ...interface{}) (map[string]string, error) {
 	result := make(map[string]string)
 	all, err := GetAll(query, -1, args...)
@@ -619,13 +597,6 @@ func GetList(query string, args ...interface{}) *ListResult {
 		}
 	}
 	return &ListResult{result, nil}
-}
-
-func handleError(err error) error {
-	if err == gorm.ErrRecordNotFound {
-		return nil
-	}
-	return err
 }
 
 func GetNextID(table string) (int64, error) {

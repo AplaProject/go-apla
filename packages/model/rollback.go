@@ -12,8 +12,8 @@ func (Rollback) TableName() string {
 	return "rollback"
 }
 
-func (r *Rollback) Get(rollbackID int64) error {
-	return DBConn.Where("rb_id = ?", rollbackID).First(r).Error
+func (r *Rollback) Get(rollbackID int64) (bool, error) {
+	return isFound(DBConn.Where("rb_id = ?", rollbackID).First(r))
 }
 
 func (r *Rollback) GetRollbacks(limit int) ([]Rollback, error) {

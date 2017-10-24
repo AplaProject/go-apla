@@ -41,7 +41,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 	}
 	if txType == utils.TypeInt("DLTTransfer") || txType == utils.TypeInt("NewState") || txType == utils.TypeInt("DLTChangeHostVote") || txType == utils.TypeInt("ChangeNodeKeyDLT") || txType == utils.TypeInt("CitizenRequest") || txType == utils.TypeInt("UpdFullNodes") {
 		dltWallet := &model.DltWallet{}
-		err := dltWallet.GetWalletTransaction(p.DbTransaction, p.TxWalletID)
+		_, err := dltWallet.GetWalletTransaction(p.DbTransaction, p.TxWalletID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -65,11 +65,11 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 	} else {
 		log.Debugf("parser general check, user_id = %d", header.UserID)
 		dltWallet := &model.DltWallet{}
-		err := dltWallet.GetWalletTransaction(p.DbTransaction, header.UserID)
+		found, err := dltWallet.GetWalletTransaction(p.DbTransaction, header.UserID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		if len(dltWallet.PublicKey) == 0 {
+		if !found {
 			return utils.ErrInfoFmt("incorrect user_id")
 		}
 		p.PublicKeys = append(p.PublicKeys, []byte(dltWallet.PublicKey))

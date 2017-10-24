@@ -21,6 +21,6 @@ func (a *Account) TableName() string {
 	return a.tableName
 }
 
-func (a *Account) Get(accountID int64) error {
-	return DBConn.Where("id = ?", accountID).First(a).Error
+func (a *Account) Get(accountID int64) (bool, error) {
+	return isFound(DBConn.Where("id = ?", accountID).First(a))
 }

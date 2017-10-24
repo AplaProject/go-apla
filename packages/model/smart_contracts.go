@@ -30,8 +30,8 @@ func (sc *SmartContract) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(sc).Error
 }
 
-func (sc *SmartContract) GetByID(contractID int64) error {
-	return DBConn.Where("id = ?", contractID).Find(sc).Error
+func (sc *SmartContract) GetByID(contractID int64) (bool, error) {
+	return isFound(DBConn.Where("id = ?", contractID).Find(sc))
 }
 
 func (sc *SmartContract) ExistsByID(contractID int64) (bool, error) {
@@ -50,8 +50,8 @@ func (sc *SmartContract) ExistsByName(name string) (bool, error) {
 	return !query.RecordNotFound(), query.Error
 }
 
-func (sc *SmartContract) GetByName(contractName string) error {
-	return DBConn.Where("name = ?", contractName).Find(sc).Error
+func (sc *SmartContract) GetByName(contractName string) (bool, error) {
+	return isFound(DBConn.Where("name = ?", contractName).Find(sc))
 }
 
 func (sc *SmartContract) UpdateConditions(transaction *DbTransaction, conditions string) error {

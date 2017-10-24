@@ -36,11 +36,9 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/daemons"
-	"github.com/AplaProject/go-apla/packages/exchangeapi"
 	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
-	"github.com/AplaProject/go-apla/packages/schema"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/stopdaemons"
@@ -218,7 +216,6 @@ func processOldFile(oldFileName string) error {
 		log.Errorf("can't copy from %s %v", oldFileName, utils.ErrInfo(err))
 		return err
 	}
-	schema.Migration()
 
 	err = exec.Command(*utils.OldFileName, "-dir", *utils.Dir).Start()
 	if err != nil {
@@ -235,7 +232,6 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 }
 func initRoutes(listenHost, browserHost string) string {
 	route := httprouter.New()
-	setRoute(route, `/exchangeapi/:name`, exchangeapi.API, `GET`, `POST`)
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	apiv2.Route(route)
 	route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
@@ -302,8 +298,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}
 
 	fmt.Printf("work dir = %s\ndcVersion=%s\n", *utils.Dir, consts.VERSION)
-
-	exchangeapi.InitAPI()
 
 	// kill previously run apla
 	if !utils.Mobile() {

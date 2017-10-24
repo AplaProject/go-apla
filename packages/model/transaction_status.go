@@ -18,8 +18,7 @@ func (ts *TransactionStatus) Create() error {
 }
 
 func (ts *TransactionStatus) Get(transactionHash []byte) (bool, error) {
-	query := DBConn.Where("hash = ?", transactionHash).First(ts)
-	return query.RecordNotFound(), query.Error
+	return isFound(DBConn.Where("hash = ?", transactionHash).First(ts))
 }
 
 func (ts *TransactionStatus) UpdateBlockID(transaction *DbTransaction, newBlockID int64, transactionHash []byte) error {

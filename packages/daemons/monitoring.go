@@ -14,9 +14,13 @@ func Monitoring(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 
 	infoBlock := &model.InfoBlock{}
-	err := infoBlock.GetInfoBlock()
+	found, err := infoBlock.Get()
 	if err != nil {
 		logError(w, fmt.Errorf("can't get info block: %s", err))
+		return
+	}
+	if !found {
+		logError(w, fmt.Errorf("can't find info block: %s", err))
 		return
 	}
 	addKey(&buf, "info_block_id", infoBlock.BlockID)
@@ -34,10 +38,13 @@ func Monitoring(w http.ResponseWriter, r *http.Request) {
 	addKey(&buf, "full_nodes_count", len(*nodes))
 
 	block := &model.Block{}
-	err = block.GetMaxBlock()
+	found, err = block.GetMaxBlock()
 	if err != nil {
 		logError(w, fmt.Errorf("can't get max block: %s", err))
 		return
+	}
+	if !found {
+		logError(w, fmt.Errorf("can't find info block"))
 	}
 	addKey(&buf, "last_block_id", block.ID)
 	addKey(&buf, "last_block_hash", converter.BinToHex(block.Hash))

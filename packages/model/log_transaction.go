@@ -1,36 +1,24 @@
 package model
 
-import (
-	"github.com/jinzhu/gorm"
-)
-
 type LogTransaction struct {
 	Hash []byte `gorm:"primary_key;not null"`
 	Time int64  `gorm:"not null"`
 }
 
 func (lt *LogTransaction) IsExists() (bool, error) {
-	query := DBConn.First(lt)
-	if query.Error == gorm.ErrRecordNotFound {
-		return false, nil
-	}
-	return !query.RecordNotFound(), query.Error
+	return isFound(DBConn.First(lt))
 }
 
 func (lt *LogTransaction) Delete() error {
 	return DBConn.Delete(lt).Error
 }
 
-func (lt *LogTransaction) Get() error {
-	return handleError(DBConn.First(lt).Error)
+func (lt *LogTransaction) Get() (bool, error) {
+	return isFound(DBConn.First(lt))
 }
 
 func (lt *LogTransaction) GetByHash(hash []byte) (bool, error) {
-	query := DBConn.Where("hash = ?", hash).First(lt)
-	if query.RecordNotFound() {
-		return false, nil
-	}
-	return true, query.Error
+	return isFound(DBConn.Where("hash = ?", hash).First(lt))
 }
 
 func (lt *LogTransaction) Create(transaction *DbTransaction) error {

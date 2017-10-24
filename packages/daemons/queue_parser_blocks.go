@@ -17,6 +17,8 @@
 package daemons
 
 import (
+	"errors"
+
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
@@ -42,16 +44,19 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	defer DBUnlock()
 
 	infoBlock := &model.InfoBlock{}
-	err := infoBlock.GetInfoBlock()
+	found, err := infoBlock.Get()
 	if err != nil {
 		return err
+	}
+	if !found {
+		return errors.New("can't find info block")
 	}
 	queueBlock := &model.QueueBlock{}
-	err = queueBlock.GetQueueBlock()
+	found, err = queueBlock.Get()
 	if err != nil {
 		return err
 	}
-	if len(queueBlock.Hash) == 0 {
+	if found {
 		return err
 	}
 
@@ -70,10 +75,14 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	// download blocks for check
 	fullNode := &model.FullNode{}
 
-	err = fullNode.FindNodeByID(queueBlock.FullNodeID)
+	found, err = fullNode.FindNodeByID(queueBlock.FullNodeID)
 	if err != nil {
 		queueBlock.Delete()
 		return utils.ErrInfo(err)
+	}
+	if !found {
+		queueBlock.Delete()
+		return errors.New("can't find queue block")
 	}
 
 	blockID := queueBlock.BlockID

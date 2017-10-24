@@ -1,9 +1,5 @@
 package model
 
-import (
-	"github.com/jinzhu/gorm"
-)
-
 type InfoBlock struct {
 	Hash           []byte `gorm:"not null"`
 	StateID        int64  `gorm:"not null default 0"`
@@ -19,8 +15,8 @@ func (ib *InfoBlock) TableName() string {
 	return "info_block"
 }
 
-func (ib *InfoBlock) GetInfoBlock() error {
-	return handleError(DBConn.Last(ib).Error)
+func (ib *InfoBlock) Get() (bool, error) {
+	return isFound(DBConn.Last(ib))
 }
 
 func (ib *InfoBlock) Update(transaction *DbTransaction) error {
@@ -28,11 +24,7 @@ func (ib *InfoBlock) Update(transaction *DbTransaction) error {
 }
 
 func (ib *InfoBlock) GetUnsent() (bool, error) {
-	err := DBConn.Where("sent = ?", "0").First(&ib).Error
-	if err == gorm.ErrRecordNotFound {
-		return false, nil
-	}
-	return true, err
+	return isFound(DBConn.Where("sent = ?", "0").First(&ib))
 }
 
 func (ib *InfoBlock) MarkSent() error {
@@ -49,7 +41,7 @@ func (ib *InfoBlock) Create(transaction *DbTransaction) error {
 
 func GetCurBlockID() (int64, error) {
 	curBlock := &InfoBlock{}
-	err := curBlock.GetInfoBlock()
+	_, err := curBlock.Get()
 	if err != nil {
 		return 0, err
 	}

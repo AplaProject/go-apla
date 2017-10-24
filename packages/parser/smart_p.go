@@ -19,6 +19,7 @@ package parser
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -914,9 +915,12 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 	prefix := converter.Int64ToStr(int64(p.TxStateID))
 	sc := &model.SmartContract{}
 	sc.SetTablePrefix(prefix)
-	err := sc.GetByName(name)
+	found, err := sc.GetByName(name)
 	if err != nil {
 		return 0, err
+	}
+	if !found {
+		return 0, errors.New("can't find smart contract: Name " + name)
 	}
 	cond := sc.Conditions
 	if len(cond) > 0 {
@@ -1240,7 +1244,10 @@ func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 	)
 
 	par := &model.SystemParameter{}
-	err := par.Get(name)
+	found, err := par.Get(name)
+	if !found {
+		return 0, errors.New("can't find system parameter: Name " + name)
+	}
 	if err != nil {
 		return 0, err
 	}

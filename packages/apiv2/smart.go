@@ -83,17 +83,18 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 			if strings.Contains(fitem.Tags, `signature`) && result != nil {
 				if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					pref := getPrefix(data)
-					var value string
-					value, err = model.Single(fmt.Sprintf(`select value from "%s_signatures" where name=?`, pref), ret[1]).String()
+					signature := &model.Signature{}
+					signature.SetTablePrefix(pref)
+					found, err := signature.Get(ret[1])
 					if err != nil {
 						break
 					}
-					if len(value) == 0 {
+					if !found {
 						err = fmt.Errorf(`%s is unknown signature`, ret[1])
 						break
 					}
 					var sign TxSignJSON
-					err = json.Unmarshal([]byte(value), &sign)
+					err = json.Unmarshal([]byte(signature.Value), &sign)
 					if err != nil {
 						break
 					}
@@ -144,12 +145,13 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 		return result
 	}
 	id = converter.StringToAddress(walletID)
-	pubKey, err := model.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
+	wallet := &model.DltWallet{}
+	found, err := wallet.Get(id)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	if len(pubKey) == 0 {
+	if !found {
 		result.Error = `unknown wallet id`
 		return result
 	}
@@ -161,17 +163,18 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 		pub, _ := hex.DecodeString(result.Public)
 		idnew := crypto.Address(pub)
 
-		exist, err := model.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
+		newWallet := &model.DltWallet{}
+		found, err := newWallet.Get(idnew)
 		if err != nil {
 			result.Error = err.Error()
 			return result
 		}
-		if exist == 0 {
+		if !found {
 			result.WalletID = idnew
 		}
 	}
 	priv, _ := hex.DecodeString(private)
-	encrypted, err := crypto.SharedEncrypt([]byte(pubKey), priv)
+	encrypted, err := crypto.SharedEncrypt(wallet.PublicKey, priv)
 	if err != nil {
 		result.Error = err.Error()
 		return result

@@ -27,11 +27,7 @@ func (qt *QueueTx) Create() error {
 }
 
 func (qt *QueueTx) GetByHash(hash []byte) (bool, error) {
-	query := DBConn.Where("hash = ?", hash).First(qt)
-	if query.RecordNotFound() {
-		return false, nil
-	}
-	return true, query.Error
+	return isFound(DBConn.Where("hash = ?", hash).First(qt))
 }
 
 func DeleteQueueTxByHash(transaction *DbTransaction, hash []byte) (int64, error) {
@@ -72,7 +68,6 @@ func GetAllUnverifiedAndUnusedTransactions() ([]*QueueTx, error) {
 		if err := rows.Scan(&data, &hash); err != nil {
 			return nil, err
 		}
-		log.Debugf("add transaction: %x", hash)
 		result = append(result, &QueueTx{Data: data, Hash: hash})
 	}
 	if err := rows.Err(); err != nil {

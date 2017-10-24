@@ -30,11 +30,7 @@ func (mnk *MyNodeKey) Create() error {
 }
 
 func (mnk *MyNodeKey) GetZeroBlock(publicKey []byte) (bool, error) {
-	query := DBConn.Where("block_id = 0 AND public_key = ?", publicKey).First(mnk)
-	if query.RecordNotFound() {
-		return false, nil
-	}
-	return true, query.Error
+	return isFound(DBConn.Where("block_id = 0 AND public_key = ?", publicKey).First(mnk))
 }
 
 func MyNodeKeysCreateTable() error {

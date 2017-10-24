@@ -1,6 +1,8 @@
 package daemons
 
 import (
+	"errors"
+
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -26,9 +28,12 @@ func writeNextBlocks(fileName string, minToSave int) error {
 	}
 
 	infoBlock := &model.InfoBlock{}
-	err = infoBlock.GetInfoBlock()
+	found, err := infoBlock.Get()
 	if err != nil {
 		return err
+	}
+	if !found {
+		return errors.New("can't find info block")
 	}
 
 	curBlockID := infoBlock.BlockID

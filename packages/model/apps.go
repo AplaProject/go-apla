@@ -1,7 +1,5 @@
 package model
 
-import "github.com/jinzhu/gorm"
-
 type App struct {
 	tableName string
 	Name      string `gorm:"primary_key;not null;size:100"`
@@ -17,22 +15,14 @@ func (a *App) TableName() string {
 	return a.tableName
 }
 
-func (a *App) Get(name string) error {
-	return handleError(DBConn.Where("name = ?", name).First(a).Error)
+func (a *App) Get(name string) (bool, error) {
+	return isFound(DBConn.Where("name = ?", name).First(a))
 }
 
 func (a *App) GetAll() ([]App, error) {
 	apps := make([]App, 0)
 	err := DBConn.Table(a.tableName).Find(&apps).Error
 	return apps, err
-}
-
-func (a *App) IsExists(name string) (bool, error) {
-	query := DBConn.Where("name = ?", name).First(a)
-	if query.Error == gorm.ErrRecordNotFound {
-		return false, nil
-	}
-	return !query.RecordNotFound(), query.Error
 }
 
 func (a *App) Save() error {

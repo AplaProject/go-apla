@@ -22,8 +22,8 @@ func (l *Language) TableName() string {
 	return l.tableName
 }
 
-func (l *Language) Get(name string) error {
-	return DBConn.Where("name = ?", name).First(l).Error
+func (l *Language) Get(name string) (bool, error) {
+	return isFound(DBConn.Where("name = ?", name).First(l))
 }
 
 func (l *Language) GetAll(prefix string) ([]Language, error) {

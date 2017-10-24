@@ -1,7 +1,5 @@
 package model
 
-import "github.com/jinzhu/gorm"
-
 type Citizen struct {
 	tableName string
 	ID        int64  `gorm:"primary_key;not null"`
@@ -22,16 +20,8 @@ func (c *Citizen) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(c).Error
 }
 
-func (c *Citizen) IsExists() (bool, error) {
-	query := DBConn.Where("id = ?", c.ID).First(c)
-	if query.Error == gorm.ErrRecordNotFound {
-		return false, nil
-	}
-	return !query.RecordNotFound(), query.Error
-}
-
-func (c *Citizen) Get(id int64) error {
-	return handleError(DBConn.Where("id = ?", id).First(c).Error)
+func (c *Citizen) Get(id int64) (bool, error) {
+	return isFound(DBConn.Where("id = ?", id).First(c))
 }
 
 func GetAllCitizensWhereIdMoreThan(tablePrefix string, id int64, limit int64) ([]Citizen, error) {

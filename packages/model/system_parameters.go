@@ -16,8 +16,8 @@ func (sp SystemParameter) TableName() string {
 	return "system_parameters"
 }
 
-func (sp *SystemParameter) Get(name string) error {
-	return DBConn.Where("name = ?", name).First(sp).Error
+func (sp *SystemParameter) Get(name string) (bool, error) {
+	return isFound(DBConn.Where("name = ?", name).First(sp))
 }
 
 func (sp *SystemParameter) GetJSONField(jsonField string, name string) (string, error) {
@@ -75,8 +75,8 @@ func (sp *SystemParameterV2) SaveArray(list [][]string) error {
 	return sp.Update(string(ret))
 }
 
-func (sp *SystemParameterV2) Get(name string) error {
-	return DBConn.Where("name = ?", name).First(sp).Error
+func (sp *SystemParameterV2) Get(name string) (bool, error) {
+	return isFound(DBConn.Where("name = ?", name).First(sp))
 }
 
 func GetAllSystemParametersV2() ([]SystemParameterV2, error) {
