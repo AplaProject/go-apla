@@ -926,14 +926,8 @@ func ShellExecute(cmdline string) {
 
 // AplaUpdate decompresses and updates executable file
 func AplaUpdate(url string) error {
-	//	GetUpdVerAndURL(host string) (updinfo *lib.Update, err error)
-
 	zipfile := filepath.Join(*Dir, "apla.zip")
-	/*	_, err := DownloadToFile(url, zipfile, 3600, nil, nil, "upd")
-		if err != nil {
-			return ErrInfo(err)
-		}
-		fmt.Println(zipfile)*/
+
 	reader, err := zip.OpenReader(zipfile)
 	if err != nil {
 		return ErrInfo(err)
@@ -959,12 +953,6 @@ func AplaUpdate(url string) error {
 	reader.Close()
 	zipped.Close()
 	writer.Close()
-
-	/*	pwd, err := os.Getwd()
-		if err != nil {
-			return ErrInfo(err)
-		}
-		fmt.Print(pwd)*/
 
 	folderPath, err := osext.ExecutableFolder()
 	if err != nil {

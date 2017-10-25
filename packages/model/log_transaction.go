@@ -5,18 +5,6 @@ type LogTransaction struct {
 	Time int64  `gorm:"not null"`
 }
 
-func (lt *LogTransaction) IsExists() (bool, error) {
-	return isFound(DBConn.First(lt))
-}
-
-func (lt *LogTransaction) Delete() error {
-	return DBConn.Delete(lt).Error
-}
-
-func (lt *LogTransaction) Get() (bool, error) {
-	return isFound(DBConn.First(lt))
-}
-
 func (lt *LogTransaction) GetByHash(hash []byte) (bool, error) {
 	return isFound(DBConn.Where("hash = ?", hash).First(lt))
 }
@@ -36,8 +24,4 @@ func GetLogTransactionsCount(hash []byte) (int64, error) {
 		return -1, err
 	}
 	return rowsCount, nil
-}
-
-func LogTransactionsCreateTable() error {
-	return DBConn.CreateTable(&LogTransaction{}).Error
 }

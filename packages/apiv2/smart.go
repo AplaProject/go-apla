@@ -31,20 +31,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/smart"
 )
 
-/*
-type smartField struct {
-	Name string `json:"name"`
-	HTML string `json:"htmltype"`
-	Type string `json:"txtype"`
-	Tags string `json:"tags"`
-}
-
-type smartFieldsResult struct {
-	Fields []smartField `json:"fields"`
-	Name   string       `json:"name"`
-	Active bool         `json:"active"`
-}*/
-
 //SignRes contains the data of the signature
 type SignRes struct {
 	Param string `json:"name"`
@@ -72,7 +58,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 	cntname := data.params[`name`].(string)
 	contract = smart.GetContract(cntname, uint32(data.state))
 	if contract == nil {
-		return nil, cntname, fmt.Errorf(`E_CONTRACT`) //fmt.Errorf(`there is not %s contract`, cntname)
+		return nil, cntname, fmt.Errorf(`E_CONTRACT`)
 	}
 
 	if contract.Block.Info.(*script.ContractInfo).Tx != nil {

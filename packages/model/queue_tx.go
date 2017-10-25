@@ -10,10 +10,6 @@ func (qt *QueueTx) TableName() string {
 	return "queue_tx"
 }
 
-func DeleteQueueTx() error {
-	return DBConn.Delete(&QueueTx{}).Error
-}
-
 func (qt *QueueTx) DeleteTx() error {
 	return DBConn.Delete(qt).Error
 }

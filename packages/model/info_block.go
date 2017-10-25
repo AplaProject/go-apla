@@ -27,16 +27,12 @@ func (ib *InfoBlock) GetUnsent() (bool, error) {
 	return isFound(DBConn.Where("sent = ?", "0").First(&ib))
 }
 
-func (ib *InfoBlock) MarkSent() error {
-	return DBConn.Model(ib).Update("sent", "1").Error
-}
-
-func (ib *InfoBlock) Save() error {
-	return DBConn.Save(ib).Error
-}
-
 func (ib *InfoBlock) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(ib).Error
+}
+
+func (ib *InfoBlock) MarkSent() error {
+	return DBConn.Model(ib).Update("sent", "1").Error
 }
 
 func GetCurBlockID() (int64, error) {
@@ -46,10 +42,6 @@ func GetCurBlockID() (int64, error) {
 		return 0, err
 	}
 	return curBlock.BlockID, nil
-}
-
-func InfoBlockCreateTable() error {
-	return DBConn.CreateTable(&InfoBlock{}).Error
 }
 
 func BlockGetUnsent() (*InfoBlock, error) {

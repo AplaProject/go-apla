@@ -1,9 +1,5 @@
 package model
 
-import (
-	"strconv"
-)
-
 type StateParameter struct {
 	tableName  string
 	Name       string `gorm:"primary_key;not null;size:100"`
@@ -35,13 +31,4 @@ func (sp *StateParameter) GetAllStateParameters() ([]StateParameter, error) {
 		return nil, err
 	}
 	return parameters, nil
-}
-
-func (sp *StateParameter) ToMap() map[string]string {
-	result := make(map[string]string, 0)
-	result["name"] = sp.Name
-	result["value"] = sp.Value
-	result["conditions"] = sp.Conditions
-	result["rb_id"] = strconv.FormatInt(sp.RbID, 10)
-	return result
 }

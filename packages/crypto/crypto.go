@@ -108,7 +108,6 @@ func SharedDecrypt(private, ciphertext []byte) ([]byte, error) {
 }
 
 // GenBytesKeys generates a random pair of ECDSA private and public binary keys.
-// TODO параметризировать fillLeft
 func GenBytesKeys() ([]byte, []byte, error) {
 	var curve elliptic.Curve
 	switch ellipticSize {
@@ -176,14 +175,12 @@ func decryptCBC(ciphertext, key, iv []byte) ([]byte, error) {
 	return ret, nil
 }
 
-// TODO в приватные
 // PKCS7Padding realizes PKCS#7 encoding which is described in RFC 5652.
 func _PKCS7Padding(src []byte, blockSize int) []byte {
 	padding := blockSize - len(src)%blockSize
 	return append(src, bytes.Repeat([]byte{byte(padding)}, padding)...)
 }
 
-//TODO в приватные
 // PKCS7UnPadding realizes PKCS#7 decoding.
 func _PKCS7UnPadding(src []byte) ([]byte, error) {
 	length := len(src)

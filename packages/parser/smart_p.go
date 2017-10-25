@@ -38,9 +38,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/templatev2"
 	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/shopspring/decimal"
-
 	"github.com/jinzhu/gorm"
+	"github.com/shopspring/decimal"
 )
 
 var (
@@ -158,9 +157,6 @@ func init() {
 		"PubToID":            PubToID,
 		"HexToBytes":         HexToBytes,
 		"LangRes":            LangRes,
-		"UpdateContract":     UpdateContract,
-		"UpdateParam":        UpdateParam,
-		"UpdateMenu":         UpdateMenu,
 		"UpdatePage":         UpdatePage,
 		"DBInsertReport":     DBInsertReport,
 		"UpdateSysParam":     UpdateSysParam,
@@ -223,11 +219,10 @@ func (p *Parser) GetContractLimit() (ret int64) {
 }
 
 func (p *Parser) getExtend() *map[string]interface{} {
-	head := p.TxSmart //consts.HeaderNew(contract.parser.TxPtr)
+	head := p.TxSmart
 	var citizenID, walletID int64
 	citizenID = int64(head.UserID)
 	walletID = int64(head.UserID)
-	// test
 	block := int64(0)
 	blockTime := int64(0)
 	walletBlock := int64(0)
@@ -239,7 +234,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `state`: head.StateID,
 		`block`: block, `citizen`: citizenID, `wallet`: walletID, `wallet_block`: walletBlock,
 		`parent`: ``, `txcost`: p.GetContractLimit(), `txhash`: p.TxHash, `result`: ``,
-		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime /*, `vars`: make(map[string]interface{})*/}
+		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime}
 	for key, val := range p.TxData {
 		extend[key] = val
 	}
@@ -258,57 +253,7 @@ func StackCont(p interface{}, name string) {
 	return
 }
 
-/*func (p *Parser) payContract() error {
-	var (
-		fromID int64
-		err    error
-	)
-	//return nil
-	toID := p.BlockData.WalletID // account of node
-	fuel, err := decimal.NewFromString(syspar.GetFuelRate(p.TxSmart.TokenEcosystem))
-	if err != nil {
-		return err
-	}
-	if fuel.Cmp(decimal.New(0, 0)) <= 0 {
-		return fmt.Errorf(`fuel rate must be greater than 0`)
-	}
-
-
-	egs := p.TxUsedCost.Mul(fuel)
-	fmt.Printf("Pay fuel=%v fromID=%d toID=%d cost=%v egs=%v", fuel, fromID, toID, p.TxUsedCost, egs)
-	if egs.Cmp(decimal.New(0, 0)) == 0 { // Is it possible to pay nothing?
-		return nil
-	}
-	wallet := &model.DltWallet{}
-	if err := wallet.GetWallet(fromID); err != nil {
-		return err
-	}
-	wltAmount, err := decimal.NewFromString(wallet.Amount)
-	if err != nil {
-		return err
-	}
-
-	if wltAmount.Cmp(egs) < 0 {
-		egs = wltAmount
-	}
-	commission := egs.Mul(decimal.New(3, 0)).Div(decimal.New(100, 0)).Floor()
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(fromID)}, true); err != nil {
-		return err
-	}
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(toID)}, true); err != nil {
-		return err
-	}
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(syspar.GetCommissionWallet())}, true); err != nil {
-		return err
-	}
-	//	fmt.Printf(" Paid commission %v\r\n", commission)
-	return nil
-}*/
-
-// CallContract calls the contract functions according to the specified flags
+// // CallContract calls the contract functions according to the specified flags
 func (p *Parser) CallContract(flags int) (err error) {
 	var (
 		public                 []byte
@@ -349,7 +294,6 @@ func (p *Parser) CallContract(flags int) (err error) {
 			return fmt.Errorf("empty public key")
 		}
 		p.PublicKeys = append(p.PublicKeys, public)
-		//		fmt.Println(`CALL CONTRACT`, p.TxData[`forsign`].(string))
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxSmart.BinSignatures, false)
 		if err != nil {
 			fmt.Println(`ForSign`, p.TxData[`forsign`].(string))
@@ -468,7 +412,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 }
 
 // DBInsert inserts a record into the specified database table
-func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) { // map[string]interface{}) {
+func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
 	if err = p.AccessTable(tblname, "insert"); err != nil {
 		return
 	}
@@ -521,11 +465,8 @@ func checkReport(tblname string) error {
 }
 
 // DBUpdate updates the item with the specified id in the table
-func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
+func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
 	qcost = 0
-	/*	if err = p.AccessTable(tblname, "general_update"); err != nil {
-		return
-	}*/
 	if err = checkReport(tblname); err != nil {
 		return
 	}
@@ -538,7 +479,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 }
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
+func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) {
 	qcost = 0
 	var isIndex bool
 	if err = checkReport(tblname); err != nil {
@@ -666,7 +607,7 @@ func DBIntExt(tblname string, name string, id interface{}, idname string) (cost 
 }
 
 // DBFreeRequest is a free function that is needed to find the record with the specified value in the 'idname' column.
-func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, idname string) (int64, error) {
+func DBFreeRequest(p *Parser, tblname string, id interface{}, idname string) (int64, error) {
 	if p.TxContract.FreeRequest {
 		return 0, fmt.Errorf(`DBFreeRequest can be executed only once`)
 	}
@@ -771,7 +712,6 @@ func ContractAccess(p *Parser, names ...interface{}) bool {
 			if name[0] != '@' {
 				name = fmt.Sprintf(`@%d`, p.TxStateID) + name
 			}
-			//		return p.TxContract.Name == name
 			if p.TxContract.StackCont[len(p.TxContract.StackCont)-1] == name {
 				return true
 			}
@@ -838,12 +778,7 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 	if p.TxSmart != nil {
 		time = p.TxSmart.Time
 	}
-	/*	if p.TxPtr != nil {
-		switch val := p.TxPtr.(type) {
-		case *consts.TXHeader:
-			time = int64(val.Time)
-		}
-	}*/
+
 	blockTime := int64(0)
 	if p.BlockData != nil {
 		blockTime = p.BlockData.Time
@@ -906,123 +841,6 @@ func Float(v interface{}) (ret float64) {
 	return script.ValueToFloat(v)
 }
 
-// UpdateContract updates the content and condition of contract with the specified name
-func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
-	var (
-		fields []string
-		values []interface{}
-	)
-	prefix := converter.Int64ToStr(int64(p.TxStateID))
-	sc := &model.SmartContract{}
-	sc.SetTablePrefix(prefix)
-	found, err := sc.GetByName(name)
-	if err != nil {
-		return 0, err
-	}
-	if !found {
-		return 0, errors.New("can't find smart contract: Name " + name)
-	}
-	cond := sc.Conditions
-	if len(cond) > 0 {
-		ret, err := p.EvalIf(cond)
-		if err != nil {
-			return 0, err
-		}
-		if !ret {
-			if err = p.AccessRights(`changing_smart_contracts`, false); err != nil {
-				return 0, err
-			}
-		}
-	}
-	if len(value) > 0 {
-		fields = append(fields, "value")
-		values = append(values, value)
-	}
-	if len(conditions) > 0 {
-		if err := smart.CompileEval(conditions, p.TxStateID); err != nil {
-			return 0, err
-		}
-		fields = append(fields, "conditions")
-		values = append(values, conditions)
-	}
-	if len(fields) == 0 {
-		return 0, fmt.Errorf(`empty value and condition`)
-	}
-	root, err := smart.CompileBlock(value, &script.OwnerInfo{StateID: uint32(converter.StrToInt64(prefix)),
-		Active: false, TableID: sc.ID, WalletID: sc.WalletID, TokenID: 0})
-	if err != nil {
-		return 0, err
-	}
-	_, _, err = p.selectiveLoggingAndUpd(fields, values,
-		prefix+"_smart_contracts", []string{"id"}, []string{converter.Int64ToStr(sc.ID)}, true)
-	if err != nil {
-		return 0, err
-	}
-	for i, item := range root.Children {
-		if item.Type == script.ObjContract {
-			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = sc.ID
-			root.Children[i].Info.(*script.ContractInfo).Owner.Active = sc.Active == "1"
-		}
-	}
-	smart.FlushBlock(root)
-
-	return 0, nil
-}
-
-// UpdateParam updates the value and condition of parameter with the specified name for the state
-func UpdateParam(p *Parser, name, value, conditions string) (int64, error) {
-	var (
-		fields []string
-		values []interface{}
-	)
-
-	if err := p.AccessRights(name, true); err != nil {
-		return 0, err
-	}
-	if len(value) > 0 {
-		fields = append(fields, "value")
-		values = append(values, value)
-	}
-	if len(conditions) > 0 {
-		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
-			return 0, err
-		}
-		fields = append(fields, "conditions")
-		values = append(values, conditions)
-	}
-	if len(fields) == 0 {
-		return 0, fmt.Errorf(`empty value and condition`)
-	}
-	_, _, err := p.selectiveLoggingAndUpd(fields, values,
-		converter.Int64ToStr(int64(p.TxStateID))+"_state_parameters", []string{"name"}, []string{name}, true)
-	if err != nil {
-		return 0, err
-	}
-	return 0, nil
-}
-
-// UpdateMenu updates the value and condition for the specified menu
-func UpdateMenu(p *Parser, name, value, conditions, global string, stateID int64) error {
-	if err := p.AccessChange(`menu`, p.TxStateIDStr, global, stateID); err != nil {
-		return err
-	}
-	fields := []string{"value"}
-	values := []interface{}{value}
-	if len(conditions) > 0 {
-		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
-			return err
-		}
-		fields = append(fields, "conditions")
-		values = append(values, conditions)
-	}
-	_, _, err := p.selectiveLoggingAndUpd(fields, values, converter.Int64ToStr(int64(p.TxStateID))+"_menu",
-		[]string{"name"}, []string{name}, true)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // CheckSignature checks the additional signatures for the contract
 func CheckSignature(i *map[string]interface{}, name string) error {
 	state, name := script.ParseContract(name)
@@ -1030,7 +848,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	if state == 0 {
 		pref = `global`
 	}
-	//	fmt.Println(`CheckSignature`, i, state, name)
+
 	p := (*i)[`parser`].(*Parser)
 	value, err := model.Single(`select value from "`+pref+`_signatures" where name=?`, name).String()
 	if err != nil {
@@ -1179,11 +997,7 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 		where+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
-		//result[i] = make(map[string]interface{})
 		result[i] = reflect.ValueOf(list[i]).Interface()
-		/*		for _, key := range cols {
-				result[i][key] = reflect.ValueOf(list[i][key]).Interface()
-			}*/
 	}
 	return 0, result, err
 }
@@ -1581,7 +1395,6 @@ func CreateTable(p *Parser, name string, columns, permissions string) error {
 	indexes := make([]string, 0)
 
 	colsSQL := ""
-	//	colsSQL2 := ""
 	colperm := make(map[string]string)
 	colList := make(map[string]bool)
 	for _, data := range cols {
@@ -1612,7 +1425,6 @@ func CreateTable(p *Parser, name string, columns, permissions string) error {
 			colType = data[`type`]
 		}
 		colsSQL += `"` + colname + `" ` + colType + " " + colDef + " ,\n"
-		//colsSQL2 += `"` + data[`name`] + `": "ContractConditions(\"MainCondition\")",`
 		colperm[colname] = data[`conditions`]
 		if data[`index`] == "1" {
 			indexes = append(indexes, colname)
@@ -1622,7 +1434,6 @@ func CreateTable(p *Parser, name string, columns, permissions string) error {
 	if err != nil {
 		return err
 	}
-	//	colsSQL2 = colsSQL2[:len(colsSQL2)-1]
 	err = model.CreateTable(p.DbTransaction, tableName, colsSQL)
 	if err != nil {
 		return err

@@ -2,8 +2,6 @@ package model
 
 import (
 	"fmt"
-
-	"github.com/jinzhu/gorm"
 )
 
 type Key struct {
@@ -28,16 +26,4 @@ func (m Key) TableName() string {
 
 func (m *Key) Get(wallet int64) error {
 	return DBConn.Where("id = ?", wallet).First(m).Error
-}
-
-func (m *Key) IsExists() (bool, error) {
-	query := DBConn.Where("id = ?", m.ID).First(m)
-	if query.Error == gorm.ErrRecordNotFound {
-		return false, nil
-	}
-	return !query.RecordNotFound(), query.Error
-}
-
-func (m *Key) Create() error {
-	return DBConn.Create(m).Error
 }

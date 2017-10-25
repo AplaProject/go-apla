@@ -28,11 +28,3 @@ func (mnk *MyNodeKey) GetNodeWithMaxBlockID() error {
 func (mnk *MyNodeKey) Create() error {
 	return DBConn.Create(mnk).Error
 }
-
-func (mnk *MyNodeKey) GetZeroBlock(publicKey []byte) (bool, error) {
-	return isFound(DBConn.Where("block_id = 0 AND public_key = ?", publicKey).First(mnk))
-}
-
-func MyNodeKeysCreateTable() error {
-	return DBConn.CreateTable(&MyNodeKey{}).Error
-}

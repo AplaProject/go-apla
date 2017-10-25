@@ -24,22 +24,10 @@ func (c *Config) Get() (bool, error) {
 	return isFound(DBConn.First(&c))
 }
 
-func (c *Config) Save() error {
-	return DBConn.Save(c).Error
-}
-
 func (c *Config) Create() error {
 	return DBConn.Create(c).Error
 }
 
-func (c *Config) ChangeBlockID(oldBlockID int64, newBlockID int64) error {
-	return DBConn.Model(c).Where("my_block_id = ?", oldBlockID).Update("my_block_id", newBlockID).Error
-}
-
 func (c *Config) ChangeBlockIDBatch(transaction *DbTransaction, oldBlockID int64, newBlockID int64) error {
 	return GetDB(transaction).Model(c).Where("my_block_id < ?", oldBlockID).Update("my_block_id", newBlockID).Error
-}
-
-func ConfigCreateTable() error {
-	return DBConn.CreateTable(&Config{}).Error
 }

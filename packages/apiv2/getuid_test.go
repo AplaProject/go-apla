@@ -26,7 +26,6 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
-	//	"github.com/jinzhu/gorm"
 )
 
 func TestGetUID(t *testing.T) {
@@ -121,15 +120,6 @@ func TestMaxID(t *testing.T) {
 	for i := 0; i < 100000; i++ {
 		var id int64
 		if i > 0 {
-			/*			rows, err := model.DBConn.Raw("select id from maxid order by id desc limit 1").Rows()
-						//rows, err := model.DBConn.Raw("select max(id) from maxid").Rows()
-						//rows, err := model.DBConn.Raw("select count(id) from maxid").Rows()
-						if err != nil {
-							t.Error(err)
-						}
-						rows.Next()
-						rows.Scan(&id)
-						rows.Close()*/
 			id = int64(i)
 		}
 		model.DBConn.Exec(`INSERT INTO maxid (id,name) VALUES(?,?)`, id+1, fmt.Sprintf(`My name %d`, id+1))

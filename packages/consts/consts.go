@@ -24,31 +24,25 @@ const BLOCK_VERSION = 1
 const FIRST_QDLT = 1e+26
 const EGS_DIGIT = 18 //money_digit for EGS 1000000000000000000
 
-// используется в confirmations
 // is used in confirmations
 const COUNT_CONFIRMED_NODES = 5
 const WAIT_CONFIRMED_NODES = 10
 const MAX_TX_SIZE = 32 << 20
 const GAPS_BETWEEN_BLOCKS = 3
 
-// У скольких нодов должен быть такой же блок как и у нас, чтобы считать, что блок у большей части DC-сети. для get_confirmed_block_id()
 // The number of nodes which should have the same block as we have for regarding this block belongs to the major part of DC-net. For get_confirmed_block_id()
 const MIN_CONFIRMED_NODES = 0
 
-// примерный текущий крайний блок
 // Approximate current last block
 const LAST_BLOCK = 330000
 
-// примерный размер блокчейна
 // Approximate blockchain size
 const BLOCKCHAIN_SIZE = 1000
 const DOWNLOAD_CHAIN_TRY_COUNT = 10
 
-// на сколько может бежать время в тр-ии
 // How fast could the time of transaction pass
 const MAX_TX_FORW = 0
 
-// тр-ия может блуждать по сети сутки и потом попасть в блок
 // transaction may wander in the net for a day and then get into a block
 const MAX_TX_BACK = 86400
 
@@ -56,12 +50,10 @@ const ERROR_TIME = 1
 
 const ROUND_FIX = 0.00000000001
 
-// таймауты для TCP
 // timeouts for TCP
 const READ_TIMEOUT = 20
 const WRITE_TIMEOUT = 20
 
-// дефолтное знаение, со скольким нодами устанавляиваем связь
 // default value, with how many nodes we make the connection
 const OUT_CONNECTIONS = 10
 

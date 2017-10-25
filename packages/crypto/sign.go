@@ -83,7 +83,6 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 	return
 }
 
-// TODO параметризировать, длина данных в зависимости от длины кривой
 // CheckECDSA checks if forSign has been signed with corresponding to public the private key
 func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
 	if len(data) == 0 {

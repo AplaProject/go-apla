@@ -42,7 +42,7 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 
 	table := converter.Int64ToStr(data.state) + `_tables`
 
-	count, err := model.Single(`select count(*) from "` + table + `"`).Int64()
+	count, err := model.GetRecordsCount(table)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}

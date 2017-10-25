@@ -28,13 +28,6 @@ type TestVM struct {
 }
 
 func (block *Block) String() (ret string) {
-	/*	for _, item := range lexems {
-		slex := string(source[item.Offset:item.Right])
-		if item.Type == 0 {
-			slex = `error`
-		}
-		ret += fmt.Sprintf("[%d %s]", item.Type, slex)
-	}*/
 	if (*block).Objects != nil {
 		ret = fmt.Sprintf("Objects: %v\n", (*block).Objects)
 	}
@@ -61,20 +54,6 @@ func getArray() []interface{} {
 func lenArray(par []interface{}) int64 {
 	return int64(len(par))
 }
-
-/*			if (111> 10) { //01 Commment
-				if 0==1 {
-					Println("TRUE TRUE temp function")
-				} else { // 02 Commment
-				eeee
-
-3232 Комментарий
-// 3232 Comments
-				}
-			} else {
-				Println("FALSE temp function")
-			}
-			return "OK"*/
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{

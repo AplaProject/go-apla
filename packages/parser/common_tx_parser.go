@@ -42,7 +42,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		return err
 	}
 
-	if !( /*txType > 127 ||*/ consts.IsStruct(int(txType))) {
+	if !(consts.IsStruct(int(txType))) {
 		if header == nil {
 			return utils.ErrInfo(errors.New("header is nil"))
 		}
@@ -109,17 +109,14 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 	}
 	// looks like there is not hash in queue_tx in this moment
 	qtx := &model.QueueTx{}
-	/*found*/ _, err := qtx.GetByHash(hash)
+	_, err := qtx.GetByHash(hash)
 
 	p.DeleteQueueTx(hash)
-	/*	it was commented because found is (always?) false
-		if !found {
-				return nil
-			}*/
+
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-	// -----
+
 	if qtx.FromGate == 0 {
 		m := &model.TransactionStatus{}
 		err = m.SetError(errText, hash)

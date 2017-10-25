@@ -165,11 +165,6 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			}
 		}
 	}
-	/*	if
-		if result[len(result)-1].Interface() != nil {
-			return result[len(result)-1].Interface().(error)
-		}
-	*/
 	return
 }
 
@@ -183,18 +178,14 @@ func (rt *RunTime) extendFunc(name string) error {
 	}
 	size := len(rt.stack)
 	foo := reflect.ValueOf(f)
-	//	if count != foo.Type().NumIn() {
-	//	return fmt.Errorf(`The number of params %s is wrong`, name)
-	//
+
 	count := foo.Type().NumIn()
 	pars := make([]reflect.Value, count)
 	for i := count; i > 0; i-- {
 		pars[count-i] = reflect.ValueOf(rt.stack[size-i])
 	}
 	result := foo.Call(pars)
-	/*	if result[len(result)-1].Interface() != nil {
-		return result[len(result)-1].Interface().(error)
-	}*/
+
 	rt.stack = rt.stack[:size-count]
 	for i, iret := range result {
 		if foo.Type().Out(i).String() == `error` {
@@ -242,8 +233,6 @@ func ValueToInt(v interface{}) (ret int64) {
 		ret = val
 	case string:
 		ret, _ = strconv.ParseInt(val, 10, 64)
-		/*	default:
-			ret = val.(decimal.Decimal)*/
 	}
 	return
 }
@@ -257,8 +246,6 @@ func ValueToFloat(v interface{}) (ret float64) {
 		ret = float64(val)
 	case string:
 		ret, _ = strconv.ParseFloat(val, 64)
-		/*	default:
-			ret = val.(decimal.Decimal)*/
 	}
 	return
 }
@@ -761,9 +748,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			rt.stack = rt.stack[:size-1]
 		}
 	}
-	/*	if status == statusBreak {
-		status = statusNormal
-	}*/
 	last := rt.blocks[len(rt.blocks)-1]
 	rt.blocks = rt.blocks[:len(rt.blocks)-1]
 	if status == statusReturn {
