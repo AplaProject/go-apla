@@ -217,7 +217,7 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			val := strings.TrimSpace(v)
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
-				pars[val[:off]] = macro(strings.TrimSpace(val[off+1:]), vars)
+				pars[val[:off]] = macro(strings.Trim(val[off+1:], "\t\r\n \"`"), vars)
 			} else {
 				pars[strconv.Itoa(i)] = macro(val, vars)
 			}
@@ -228,7 +228,7 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 				val := macro(strings.TrimSpace((*params)[i]), vars)
 				off := strings.IndexByte(val, ':')
 				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
-					pars[val[:off]] = strings.TrimSpace(val[off+1:])
+					pars[val[:off]] = strings.Trim(val[off+1:], "\t\r\n \"`")
 				} else {
 					pars[v] = val
 				}
@@ -266,7 +266,7 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 func getFunc(input string, curFunc tplFunc) (*[]string, int, *[]*[]string) {
 	var (
 		curp, off, mode, lenParams int
-		skip                       bool
+		skip, quote                bool
 		pair, ch                   rune
 		tailpar                    *[]*[]string
 	)
@@ -293,6 +293,10 @@ main:
 			} else {
 				if off+1 == len(input) || rune(input[off+1]) != pair {
 					pair = 0
+					if quote {
+						params[curp] += string(ch)
+						quote = false
+					}
 				} else {
 					params[curp] += string(ch)
 					skip = true
@@ -310,7 +314,11 @@ main:
 			}
 			continue
 		}
+
 		switch ch {
+		case '"', '`':
+			pair = ch
+			quote = true
 		case ',':
 			if mode == 0 && level == 1 && len(params) < lenParams {
 				params = append(params, ``)

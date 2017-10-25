@@ -39,6 +39,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Button(Contract: MyContract, Body:My Contract, Class: myclass, Params:"Name=myid,Id=i10,Value")`,
+		`[{"tag":"button","attr":{"class":"myclass","contract":"MyContract","params":{"Id":"i10","Name":"myid","Value":"Value"}},"children":[{"tag":"text","text":"My Contract"}]}]`},
 	{`Simple text +=<b>bold</b>`, `[{"tag":"text","text":"Simple text +=\u0026lt;b\u0026gt;bold\u0026lt;/b\u0026gt;"}]`},
 	{`Div(myclass control, Content of the Div)`, `[{"tag":"div","attr":{"class":"myclass control"},"children":[{"tag":"text","text":"Content of the Div"}]}]`},
 	{`input Div(myclass, Content Div(mypar) the Div)`,
