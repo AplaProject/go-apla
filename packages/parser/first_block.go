@@ -49,6 +49,14 @@ func (p *FirstBlockParser) Validate() error {
 }
 
 func (p *FirstBlockParser) Action() error {
+	if p.BlockData != nil && p.BlockData.Version == 0 {
+		// use old version of first block action
+		err := p.OldAction()
+		if err != nil {
+			return err
+		}
+	}
+
 	data := p.TxPtr.(*consts.FirstBlock)
 	myAddress := crypto.Address(data.PublicKey)
 	err := model.ExecSchemaEcosystem(1, myAddress, ``)
@@ -89,11 +97,6 @@ func (p *FirstBlockParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	syspar.SysUpdate()
-	fullNode := &model.FullNode{WalletID: myAddress, Host: data.Host}
-	err = fullNode.Create(p.DbTransaction)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
 
 	return nil
 }
@@ -103,6 +106,31 @@ func (p *FirstBlockParser) Rollback() error {
 }
 
 func (p FirstBlockParser) Header() *tx.Header {
+	return nil
+}
+
+func (p *FirstBlockParser) OldAction() error {
+	data := p.TxPtr.(*consts.FirstBlock)
+	myAddress := crypto.Address(data.PublicKey)
+	dltWallet := &model.DltWallet{
+		WalletID:      myAddress,
+		Host:          data.Host,
+		AddressVote:   converter.AddressToString(myAddress),
+		PublicKey:     data.PublicKey,
+		NodePublicKey: data.NodePublicKey,
+		Amount:        decimal.NewFromFloat(consts.FIRST_QDLT).String(),
+	}
+
+	err := dltWallet.Create(p.DbTransaction)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	fullNode := &model.FullNode{WalletID: myAddress, Host: data.Host}
+	err = fullNode.Create(p.DbTransaction)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
 	return nil
 }
 

@@ -60,7 +60,7 @@ type SystemParameterV2 struct {
 }
 
 func (sp SystemParameterV2) TableName() string {
-	return "system_parameters"
+	return "system_parameters_v2"
 }
 
 func (sp SystemParameterV2) Update(value string) error {

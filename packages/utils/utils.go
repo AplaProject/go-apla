@@ -655,11 +655,11 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 }
 
 // MerkleTreeRoot rertun Merkle value
-func MerkleTreeRoot(dataArray [][]byte) []byte {
+func MerkleTreeRoot(dataArray [][]byte, version int) []byte {
 	log.Debug("dataArray: %s", dataArray)
 	result := make(map[int32][][]byte)
 	for _, v := range dataArray {
-		hash, err := crypto.DoubleHash(v)
+		hash, err := crypto.DoubleHash(v, version)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -677,14 +677,14 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 				}
 			} else {
 				if _, ok := result[j+1]; !ok {
-					hash, err := crypto.DoubleHash(append(result[j][i], result[j][i+1]...))
+					hash, err := crypto.DoubleHash(append(result[j][i], result[j][i+1]...), version)
 					if err != nil {
 						log.Fatal(err)
 					}
 					hash = converter.BinToHex(hash)
 					result[j+1] = [][]byte{hash}
 				} else {
-					hash, err := crypto.DoubleHash([]byte(append(result[j][i], result[j][i+1]...)))
+					hash, err := crypto.DoubleHash([]byte(append(result[j][i], result[j][i+1]...)), version)
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -700,57 +700,6 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 	ret := result[int32(len(result)-1)]
 	log.Debug("result_: %s", ret)
 	return []byte(ret[0])
-}
-
-// GetMrklroot returns MerkleTreeRoot
-func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int) ([]byte, error) {
-	var mrklSlice [][]byte
-	var txSize int64
-	// parse [error] after the calling of a function
-	if len(binaryData) > 0 {
-		for {
-
-			// to exclude an attack on memory overflow
-			if !first {
-				if txSize > maxTxSize {
-					return nil, ErrInfoFmt("[error] MAX_TX_SIZE")
-				}
-			}
-			txSize, err := converter.DecodeLength(&binaryData)
-			if err != nil {
-				panic(err)
-			}
-
-			// separate one transaction from the list of transactions
-			if txSize > 0 {
-				transactionBinaryData := converter.BytesShift(&binaryData, txSize)
-				dSha256Hash, err := crypto.DoubleHash(transactionBinaryData)
-				if err != nil {
-					log.Fatal(err)
-				}
-				dSha256Hash = converter.BinToHex(dSha256Hash)
-				mrklSlice = append(mrklSlice, dSha256Hash)
-			}
-
-			// to exclude an attack on memory overflow
-			if !first {
-				if len(mrklSlice) > maxTxCount {
-					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), maxTxCount))
-				}
-			}
-			if len(binaryData) == 0 {
-				break
-			}
-		}
-	} else {
-		mrklSlice = append(mrklSlice, []byte("0"))
-	}
-	log.Debug("mrklSlice: %s", mrklSlice)
-	if len(mrklSlice) == 0 {
-		mrklSlice = append(mrklSlice, []byte("0"))
-	}
-	log.Debug("mrklSlice: %s", mrklSlice)
-	return MerkleTreeRoot(mrklSlice), nil
 }
 
 // TypeInt returns the identifier of the embedded transaction

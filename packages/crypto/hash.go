@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"crypto/sha256"
+	"fmt"
 )
 
 type hashProvider int
@@ -22,12 +23,15 @@ func Hash(msg []byte) ([]byte, error) {
 	}
 }
 
-func DoubleHash(msg []byte) ([]byte, error) {
+func DoubleHash(msg []byte, version int) ([]byte, error) {
 	if len(msg) == 0 {
 		log.Debug(HashingEmpty.Error())
 	}
 	switch hashProv {
 	case _SHA256:
+		if version == 0 {
+			return hashDoubleSHA256Old(msg), nil
+		}
 		return hashDoubleSHA256(msg), nil
 	default:
 		return nil, UnknownProviderError
@@ -39,13 +43,15 @@ func hashSHA256(msg []byte) []byte {
 	return hash[:]
 }
 
-//In the previous version of this function (api v 1.0) this func worked in another way.
-//First, hash has been calculated from input data
-//Second, obtained hash has been converted to hex
-//Third, hex value has been hashed once more time
-//In this variant second step is omited.
+func hashDoubleSHA256Old(msg []byte) []byte {
+	firstHash := sha256.Sum256(msg)
+	secondHash := sha256.Sum256([]byte(fmt.Sprintf("%x", firstHash[:])))
+	return secondHash[:]
+}
+
 func hashDoubleSHA256(msg []byte) []byte {
 	firstHash := sha256.Sum256(msg)
 	secondHash := sha256.Sum256(firstHash[:])
 	return secondHash[:]
+
 }

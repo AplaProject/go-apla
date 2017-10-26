@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -33,10 +34,10 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			blockID = *utils.StartBlockID
 		}
 	}
-	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
+	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockID, converter.BinToHex(block.PrevHeader.Hash), block.MrklRoot,
 		block.Header.Time, block.Header.WalletID, block.Header.StateID)
 
-	hash, err := crypto.DoubleHash([]byte(forSha))
+	hash, err := crypto.DoubleHash([]byte(forSha), block.Header.Version)
 	if err != nil {
 		log.Fatal(err)
 	}

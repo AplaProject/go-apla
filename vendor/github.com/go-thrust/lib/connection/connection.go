@@ -11,7 +11,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/go-thrust/lib/commands"
 	. "github.com/go-thrust/lib/common"
 )
@@ -104,11 +103,8 @@ func Clean() {
 
 func CleanExit() {
 	Clean()
-	if model.DBConn != nil {
-		model.SetStopNow()
-	} else {
-		os.Exit(0)
-	}
+	os.Exit(0)
+
 }
 
 func Reader(out *Out, in *In) {

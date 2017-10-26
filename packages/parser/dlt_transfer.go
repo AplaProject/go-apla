@@ -39,7 +39,8 @@ type DLTTransferParser struct {
 }
 
 func (p *DLTTransferParser) Init() error {
-	if p.BlockData.Version == 0 {
+	if p.BlockData != nil && p.BlockData.Version == 0 {
+		log.Debugf("use old dlltransfer parser")
 		oldSlice, err := ParseOldTransaction(bytes.NewBuffer(p.TxBinaryData))
 		if err != nil {
 			return fmt.Errorf("old transaction parsing failed")

@@ -23,7 +23,6 @@ import (
 	"runtime"
 
 	"github.com/AplaProject/go-apla/packages/daylight"
-	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/system"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -62,13 +61,9 @@ func main() {
 		thrust.NewEventHandler("*", func(cr commands.CommandResponse) {
 			//			fmt.Println(fmt.Sprintf("======Event(%d) - Signaled by Command (%s)", cr.TargetID, cr.Type))
 			if cr.TargetID > 1 && cr.Type == "closed" {
-				if model.DBConn != nil {
-					model.SetStopNow()
-				} else {
-					thrust.Exit()
-					system.FinishThrust()
-					os.Exit(0)
-				}
+				thrust.Exit()
+				system.FinishThrust()
+				os.Exit(0)
 			}
 		})
 		thrustWindow.Show()

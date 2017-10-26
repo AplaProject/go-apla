@@ -22,22 +22,10 @@ import (
 	"fmt"
 	"os/exec"
 	"regexp"
-	"time"
-
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/utils"
 )
 
 // KillPid kills the process with the specified pid
 func KillPid(pid string) error {
-	if model.DBConn != nil {
-		sd := &model.StopDaemon{StopTime: time.Now().Unix()}
-		err := sd.Create()
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			return err
-		}
-	}
 	rez, err := exec.Command("tasklist", "/fi", "PID eq "+pid).Output()
 	if err != nil {
 		return err

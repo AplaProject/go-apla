@@ -56,12 +56,11 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 		return err
 
 	}
-	myStateID := nodeConfig.StateID
 	myWalletID := nodeConfig.DltWalletID
 
 	// If we are in the list of those who are able to generate the blocks
 	fullNode := &model.FullNode{}
-	err = fullNode.FindNode(myStateID, myWalletID, myStateID, myWalletID)
+	err = fullNode.Get(myWalletID)
 	if err != nil {
 		return err
 	}

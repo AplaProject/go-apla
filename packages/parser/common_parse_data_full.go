@@ -142,6 +142,8 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 		return nil, err
 	}
 
+	log.Debugf("block header: %+v", header)
+
 	allKeys, err := getAllTables()
 	if err != nil {
 		return nil, err
@@ -166,7 +168,7 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 		}
 
 		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
-		p, err := ParseTransaction(bufTransaction)
+		p, err := ParseTransaction(bufTransaction, &header)
 		if err != nil {
 			if p.TxHash != nil {
 				p.processBadTransaction(p.TxHash, err.Error())
@@ -180,7 +182,7 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 
 		// build merkle tree
 		if len(p.TxFullData) > 0 {
-			dSha256Hash, err := crypto.DoubleHash(p.TxFullData)
+			dSha256Hash, err := crypto.DoubleHash(p.TxFullData, header.Version)
 			if err != nil {
 				return nil, err
 			}
@@ -196,7 +198,7 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 	return &Block{
 		Header:   header,
 		Parsers:  parsers,
-		MrklRoot: utils.MerkleTreeRoot(mrklSlice),
+		MrklRoot: utils.MerkleTreeRoot(mrklSlice, header.Version),
 	}, nil
 }
 
@@ -247,7 +249,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	return block, nil
 }
 
-func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
+func ParseTransaction(buffer *bytes.Buffer, blockHeader *utils.BlockData) (*Parser, error) {
 	if buffer.Len() == 0 {
 		return nil, fmt.Errorf("empty transaction buffer")
 	}
@@ -262,6 +264,7 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 	p.TxHash = hash
 	p.TxUsedCost = decimal.New(0, 0)
 	p.TxFullData = buffer.Bytes()
+	p.BlockData = blockHeader
 
 	txType := int64(buffer.Bytes()[0])
 	p.dataType = int(txType)
@@ -441,7 +444,8 @@ func parseStructTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	trParser, err := GetParser(p, consts.TxTypes[int(txType)])
 	if err != nil {
-		return err
+		log.Errorf("skip unknown transaction %d", txType)
+		return nil
 	}
 	p.txParser = trParser
 
@@ -479,6 +483,11 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 		return utils.ErrInfo(err)
 	}
 
+	if p.TxHeader == nil {
+		log.Debugf("skip unknown transaction")
+		return nil
+	}
+
 	// time in the transaction cannot be more than MAX_TX_FORW seconds of block time
 	if p.TxTime-consts.MAX_TX_FORW > checkTime {
 		return utils.ErrInfo(fmt.Errorf("transaction time is too big"))
@@ -502,7 +511,7 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 
 func CheckTransaction(data []byte) (*tx.Header, error) {
 	trBuff := bytes.NewBuffer(data)
-	p, err := ParseTransaction(trBuff)
+	p, err := ParseTransaction(trBuff, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -553,7 +562,8 @@ func playTransaction(p *Parser) (string, error) {
 
 	} else {
 		if p.txParser == nil {
-			return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
+			log.Errorf("can't find parser for %d", p.TxType)
+			return "", nil
 		}
 
 		err := p.txParser.Action()
@@ -617,7 +627,8 @@ func (block *Block) CheckBlock() error {
 		}
 
 		if block.PrevHeader.Time+sleepTime-block.Header.Time > consts.ERROR_TIME {
-			return utils.ErrInfo(fmt.Errorf("incorrect block time"))
+			return utils.ErrInfo(fmt.Errorf("incorrect block time, prev header = %+v, current header = %+v",
+				block.PrevHeader, block.Header))
 		}
 	}
 
@@ -667,8 +678,9 @@ func (block *Block) CheckHash() (bool, error) {
 		if len(nodePublicKey) == 0 {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
+		log.Debugf("prev block header: %x", block.PrevHeader.Hash)
 		// check the signature
-		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
+		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s", block.Header.BlockID, converter.BinToHex(block.PrevHeader.Hash),
 			block.Header.Time, block.Header.WalletID, block.Header.StateID, block.MrklRoot)
 
 		log.Debugf("check block for sign: %s, key: %x", forSign, nodePublicKey)
@@ -691,7 +703,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 
 	for _, tr := range trData {
 		log.Debugf("try to add transaction %x to block", tr)
-		doubleHash, err := crypto.DoubleHash(tr)
+		doubleHash, err := crypto.DoubleHash(tr, header.Version)
 		if err != nil {
 			return nil, err
 		}
@@ -703,10 +715,10 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 		if len(mrklArray) == 0 {
 			mrklArray = append(mrklArray, []byte("0"))
 		}
-		mrklRoot := utils.MerkleTreeRoot(mrklArray)
+		mrklRoot := utils.MerkleTreeRoot(mrklArray, header.Version)
 
 		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s",
-			header.BlockID, prevHash, header.Time, header.WalletID, header.StateID, mrklRoot)
+			header.BlockID, converter.BinToHex(prevHash), header.Time, header.WalletID, header.StateID, mrklRoot)
 
 		var err error
 		signed, err = crypto.Sign(key, forSign)

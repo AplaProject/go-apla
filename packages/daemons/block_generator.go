@@ -36,7 +36,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 
 	fullNodes := &model.FullNode{}
-	err := fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	err := fullNodes.Get(config.DltWalletID)
 	if err != nil || fullNodes.ID == 0 {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second

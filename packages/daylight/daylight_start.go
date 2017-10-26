@@ -139,7 +139,7 @@ func initLogs() error {
 		if level, ok := config.ConfigIni["log_level"]; ok {
 			*utils.LogLevel = level
 		} else {
-			*utils.LogLevel = "INFO"
+			*utils.LogLevel = "DEBUG"
 		}
 	}
 

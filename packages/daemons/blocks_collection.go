@@ -59,8 +59,8 @@ func initialLoad(d *daemon, ctx context.Context) error {
 	}
 
 	if toLoad {
-		log.Debugf("star first block loading")
-		if err := model.UpdateConfig("current_load_clockchain", "file"); err != nil {
+		log.Debugf("start first block loading")
+		if err := model.UpdateConfig("current_load_blockchain", "file"); err != nil {
 			return err
 		}
 
@@ -69,7 +69,7 @@ func initialLoad(d *daemon, ctx context.Context) error {
 		}
 	}
 
-	if err := model.UpdateConfig("current_load_clockchain", "nodes"); err != nil {
+	if err := model.UpdateConfig("current_load_blockchain", "nodes"); err != nil {
 		return err
 	}
 
@@ -91,6 +91,7 @@ func blocksCollection(d *daemon, ctx context.Context) error {
 		return err
 	}
 
+	log.Debugf("we have choosen host %s, max block id: %d", host, maxBlockID)
 	// update our chain till maxBlockID from the host
 	if err := updateChain(ctx, d, host, maxBlockID); err != nil {
 		return err
@@ -182,13 +183,17 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			return ctx.Err()
 		}
 
+		log.Debugf("try to load block %d from host %s", blockID, host)
 		blockBin, err := utils.GetBlockBody(host, blockID, consts.DATA_TYPE_BLOCK_BODY)
 		if err != nil {
+			log.Errorf("can't get block body: %s", err)
 			return err
 		}
+		log.Debugf("we have got block %d, bin: %x", blockID, blockBin)
 
 		block, err := parser.ProcessBlock(blockBin)
 		if err != nil {
+			log.Errorf("can't process block: %s", err)
 			// we got bad block and should ban this host
 			banNode(host, err)
 			return err
@@ -285,7 +290,8 @@ func firstLoad(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	if nodeConfig.FirstLoadBlockchain == "file" {
+	if nodeConfig.FirstLoadBlockchain == "TESTNET_URL" {
+
 		log.Debugf("first load from file")
 		blockchainURL := nodeConfig.FirstLoadBlockchainURL
 		if len(blockchainURL) == 0 {
@@ -293,6 +299,7 @@ func firstLoad(ctx context.Context, d *daemon) error {
 		}
 
 		fileName := *utils.Dir + "/public/blockchain"
+
 		err = downloadChain(ctx, fileName, blockchainURL)
 		if err != nil {
 			return err

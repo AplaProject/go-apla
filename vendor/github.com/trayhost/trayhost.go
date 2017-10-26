@@ -30,11 +30,8 @@ package trayhost
 
 import (
 	"reflect"
-	"time"
 	"unsafe"
 
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/op/go-logging"
 )
 
@@ -78,13 +75,6 @@ func EnterLoop(title string, imageData []byte) {
 
 	// If reached, user clicked Exit
 	isExiting = true
-	if model.DBConn != nil {
-		sd := &model.StopDaemon{StopTime: time.Now().Unix()}
-		err := sd.Create()
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-		}
-	}
 }
 
 // Set the URL that the tray icon will open in a browser

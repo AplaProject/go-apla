@@ -46,7 +46,7 @@ func Disseminator(d *daemon, ctx context.Context) error {
 	}
 
 	node := &model.FullNode{}
-	err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	err = node.Get(config.DltWalletID)
 	if err != nil {
 		log.Errorf("can't get full_node: %s", err)
 		return err

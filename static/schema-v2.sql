@@ -86,16 +86,16 @@ DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
 ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
 CREATE INDEX "system_states_index_name" ON "system_states" (name);
 
-DROP TABLE IF EXISTS "system_parameters";
-CREATE TABLE "system_parameters" (
+DROP TABLE IF EXISTS "system_parameters_v2";
+CREATE TABLE "system_parameters_v2" (
 "name" varchar(255)  NOT NULL DEFAULT '',
 "value" text NOT NULL DEFAULT '',
 "conditions" text  NOT NULL DEFAULT '',
 "rb_id" bigint  NOT NULL DEFAULT '0'
 );
-ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
+ALTER TABLE ONLY "system_parameters_v2" ADD CONSTRAINT system_parameters_v2_pkey PRIMARY KEY ("name");
 
-INSERT INTO system_parameters ("name", "value", "conditions") VALUES 
+INSERT INTO system_parameters_v2 ("name", "value", "conditions") VALUES 
 ('default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'ContractAccess("@0UpdSysParam")'),    
 ('default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'ContractAccess("@0UpdSysParam")'),
 ('default_ecosystem_contract', '', 'ContractAccess("@0UpdSysParam")'),
@@ -331,3 +331,33 @@ DROP TABLE IF EXISTS "upd_full_nodes"; CREATE TABLE "upd_full_nodes" (
 );
 ALTER SEQUENCE upd_full_nodes_id_seq owned by upd_full_nodes.id;
 ALTER TABLE ONLY "upd_full_nodes" ADD CONSTRAINT upd_full_nodes_pkey PRIMARY KEY (id);
+
+DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
+"wallet_id" bigint  NOT NULL DEFAULT '0',
+"public_key_0" bytea  NOT NULL DEFAULT '',
+"node_public_key" bytea  NOT NULL DEFAULT '',
+"last_forging_data_upd" bigint NOT NULL DEFAULT '0',
+"amount" decimal(30) NOT NULL DEFAULT '0',
+"host" varchar(50) NOT NULL DEFAULT '',
+"address_vote" varchar(255) NOT NULL DEFAULT '',
+"fuel_rate" bigint NOT NULL DEFAULT '0',
+"spending_contract" varchar(100) NOT NULL DEFAULT '',
+"conditions_change" text NOT NULL DEFAULT '',
+"rb_id" bigint  NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "dlt_wallets" ADD CONSTRAINT dlt_wallets_pkey PRIMARY KEY (wallet_id);
+
+DROP TABLE IF EXISTS "system_parameters";
+CREATE TABLE "system_parameters" (
+"name" varchar(255)  NOT NULL DEFAULT '',
+"value" jsonb,
+"conditions" text  NOT NULL DEFAULT '',
+"rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
+
+INSERT INTO system_parameters ("name", "value") VALUES ('number_of_dlt_nodes', '100');
+INSERT INTO system_parameters ("name", "value") VALUES ('fuel_rate', '1000000000000000');
+INSERT INTO system_parameters ("name", "value") VALUES ('max_columns', '20');
+INSERT INTO system_parameters ("name", "value") VALUES ('op_price', '{"edit_contract":100, "edit_column":100, "edit_menu":100, "edit_page":100, "edit_state_parameters":100,"edit_table":100,"new_column":100,"new_contract":100,"new_menu":100,"new_state_parameters":100,"new_page":100, "insert":100, "update":"200", "change_node": 100, "edit_lang": 10, "edit_sign": 10, "change_host_vote": 100, "new_column":500, "new_lang": 10, "new_sign": 10, "new_column_w_index":1000, "add_table":5000,  "select":10, "new_state":1000000, "dlt_transfer":1, "system_restore_access_active":10000, "system_restore_access_close":100, "system_restore_access_request":100, "system_restore_access":100,"activate_cost":100}');
+

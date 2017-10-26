@@ -66,6 +66,7 @@ func installCommon(data *installParams) (err error) {
 			*utils.FirstBlockDir = data.firstBlockDir
 		}
 	}
+
 	if len(data.firstLoadBlockchainURL) == 0 {
 		data.firstLoadBlockchainURL = syspar.GetBlockchainURL()
 	}
@@ -99,7 +100,12 @@ func installCommon(data *installParams) (err error) {
 	if err = model.ExecSchema(); err != nil {
 		return err
 	}
-	conf := &model.Config{FirstLoadBlockchain: data.installType, FirstLoadBlockchainURL: data.firstLoadBlockchainURL, AutoReload: 259200}
+
+	conf := &model.Config{
+		FirstLoadBlockchain:    data.installType,
+		FirstLoadBlockchainURL: data.firstLoadBlockchainURL,
+		AutoReload:             259200,
+	}
 	if err = conf.Create(); err != nil {
 		return err
 	}
