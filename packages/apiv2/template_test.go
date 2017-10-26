@@ -69,7 +69,7 @@ func TestAPI(t *testing.T) {
 var forTest = tplList{
 	{`Simple Strong(bold text)`,
 		`[{"tag":"text","text":"Simple "},{"tag":"strong","children":[{"tag":"text","text":"bold text"}]}]`},
-	{`DBFind(parameters)`,
+	{`DBFind(parameters, mysrc)`,
 		`[]`},
 	{`DBFind(parameters).Columns(name,value)`,
 		`[]`},

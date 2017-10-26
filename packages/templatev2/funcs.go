@@ -209,6 +209,8 @@ func dbfindTag(par parFunc) string {
 	}
 	par.Node.Columns = &cols
 	par.Node.Data = &data
+	setAllAttr(par)
+	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
 }
 
