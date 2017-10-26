@@ -238,6 +238,10 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			}
 		}
 	}
+	state := int(converter.StrToInt64((*vars)[`state`]))
+	for i, v := range pars {
+		pars[i] = language.LangMacro(v, state, (*vars)[`accept_lang`])
+	}
 	if len(curFunc.Tag) > 0 {
 		curNode.Tag = curFunc.Tag
 		curNode.Attr = make(map[string]interface{})
@@ -248,10 +252,6 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 		//		owner.Children = append(owner.Children, &curNode)
 		parFunc.Node = &curNode
 		parFunc.Tails = tailpars
-	}
-	state := int(converter.StrToInt64((*vars)[`state`]))
-	for i, v := range pars {
-		pars[i] = language.LangMacro(v, state, (*vars)[`accept_lang`])
 	}
 	parFunc.Pars = &pars
 	if (*vars)[`_full`] == `1` {
