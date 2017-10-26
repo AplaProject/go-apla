@@ -44,6 +44,7 @@ var (
 		`Span`:      {defaultTag, defaultTag, `span`, `Body,Class`},
 		`Strong`:    {defaultTag, defaultTag, `strong`, `Body,Class`},
 		`Style`:     {defaultTag, defaultTag, `style`, `Css`},
+		`Table`:     {tableTag, defaultTag, `table`, `Source,Columns`},
 	}
 	tails = map[string]forTails{
 		`button`: {map[string]tailInfo{
@@ -73,7 +74,7 @@ func init() {
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
 	funcs[`Input`] = tplFunc{inputTag, inputTag, `input`, `Name,Class,Placeholder,Type,Value`}
-	funcs[`DBFind`] = tplFunc{dbfindTag, defaultTag, `dbfind`, `Name`}
+	funcs[`DBFind`] = tplFunc{dbfindTag, defaultTag, `dbfind`, `Name,Source`}
 	funcs[`And`] = tplFunc{andTag, defaultTag, `and`, `*`}
 	funcs[`Or`] = tplFunc{orTag, defaultTag, `or`, `*`}
 
@@ -248,6 +249,25 @@ func setvarTag(par parFunc) string {
 func getvarTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) > 0 {
 		return macro((*par.Vars)[(*par.Pars)[`Name`]], par.Vars)
+	}
+	return ``
+}
+
+func tableTag(par parFunc) string {
+	defaultTag(par)
+	if len((*par.Pars)[`Columns`]) > 0 {
+		imap := make(map[string]string)
+		for _, v := range strings.Split((*par.Pars)[`Columns`], `,`) {
+			v = strings.TrimSpace(v)
+			if off := strings.IndexByte(v, '='); off == -1 {
+				imap[v] = v
+			} else {
+				imap[strings.TrimSpace(v[:off])] = strings.TrimSpace(v[off+1:])
+			}
+		}
+		if len(imap) > 0 {
+			par.Node.Attr[`columns`] = imap
+		}
 	}
 	return ``
 }
