@@ -62,20 +62,6 @@ func lenArray(par []interface{}) int64 {
 	return int64(len(par))
 }
 
-/*			if (111> 10) { //01 Commment
-				if 0==1 {
-					Println("TRUE TRUE temp function")
-				} else { // 02 Commment
-				eeee
-
-3232 Комментарий
-// 3232 Comments
-				}
-			} else {
-				Println("FALSE temp function")
-			}
-			return "OK"*/
-
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
 		{`contract sets {
@@ -251,9 +237,9 @@ func TestVMCompile(t *testing.T) {
 
 	contract my {
 			func initf string {
-				return Sprintf("%d %s %s %s", 65123 + (1001-500)*11, my_test(), "Тестовая строка", Sprintf("> %s %d <","OK", 999 ))
+				return Sprintf("%d %s %s %s", 65123 + (1001-500)*11, my_test(), "Test message", Sprintf("> %s %d <","OK", 999 ))
 			}
-	}`, `my.initf`, `70634 Called my_test Ooops 777 Тестовая строка > OK 999 <`},
+	}`, `my.initf`, `70634 Called my_test Ooops 777 Test message > OK 999 <`},
 		{`contract vars {
 		func cond() string {return "vars"}
 		func actions() { var test int}
