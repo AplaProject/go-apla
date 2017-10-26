@@ -57,13 +57,13 @@ func TestLang(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	input = fmt.Sprintf(`Span(Text LangRes(%s,es)`, name)
+	input = fmt.Sprintf(`Span(Text LangRes(%s,es)) Input(Class: form-control, Placeholder: $%[1]s$, Type: text, Name: Name)`, name)
 	err = sendPost(`content`, &url.Values{`template`: {input}}, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if ret.Tree != `[{"tag":"span","children":[{"tag":"text","text":"Text Spanish text"}]}]` {
+	if ret.Tree != `[{"tag":"span","children":[{"tag":"text","text":"Text Spanish text"}]},{"tag":"input","attr":{"class":"form-control","name":"Name","placeholder":"My test","type":"text"}}]` {
 		t.Error(fmt.Errorf(`wrong tree %s`, ret.Tree))
 		return
 	}

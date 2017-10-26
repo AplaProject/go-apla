@@ -24,6 +24,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/model"
 
 	"github.com/shopspring/decimal"
@@ -247,6 +248,10 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 		//		owner.Children = append(owner.Children, &curNode)
 		parFunc.Node = &curNode
 		parFunc.Tails = tailpars
+	}
+	state := int(converter.StrToInt64((*vars)[`state`]))
+	for i, v := range pars {
+		pars[i] = language.LangMacro(v, state, (*vars)[`accept_lang`])
 	}
 	parFunc.Pars = &pars
 	if (*vars)[`_full`] == `1` {

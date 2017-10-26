@@ -124,7 +124,7 @@ func LangText(in string, state int, accept string) (string, bool) {
 // LangMacro replaces all inclusions of $resname$ in the incoming text with the corresponding language resources,
 // if they exist
 func LangMacro(input string, state int, accept string) string {
-	if len(input) == 0 {
+	if !strings.ContainsRune(input, '$') {
 		return input
 	}
 	syschar := '$'
