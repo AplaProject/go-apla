@@ -265,10 +265,10 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 
 func getFunc(input string, curFunc tplFunc) (*[]string, int, *[]*[]string) {
 	var (
-		curp, off, mode, lenParams int
-		skip, quote                bool
-		pair, ch                   rune
-		tailpar                    *[]*[]string
+		curp, skip, off, mode, lenParams int
+		quote                            bool
+		pair, ch                         rune
+		tailpar                          *[]*[]string
 	)
 	params := make([]string, 1)
 	if curFunc.Params == `*` {
@@ -280,11 +280,11 @@ func getFunc(input string, curFunc tplFunc) (*[]string, int, *[]*[]string) {
 	if input[0] == '{' {
 		mode = 1
 	}
-	skip = true
+	skip = 1
 main:
 	for off, ch = range input {
-		if skip {
-			skip = false
+		if skip > 0 {
+			skip--
 			continue
 		}
 		if pair > 0 {
@@ -299,7 +299,7 @@ main:
 					}
 				} else {
 					params[curp] += string(ch)
-					skip = true
+					skip = 1
 				}
 			}
 			continue
@@ -332,30 +332,66 @@ main:
 				level--
 			}
 			if level == 0 {
-				if mode == 0 && off+1 < len(input) && rune(input[off+1]) == modes[1][0] &&
-					strings.Contains(curFunc.Params, `Body`) {
-					mode = 1
-					params = append(params, `Body:`)
-					curp++
-					skip = true
-					level = 1
-					continue
+				if mode == 0 && strings.Contains(curFunc.Params, `Body`) {
+					var isBody bool
+					next := off + 1
+					for next < len(input) {
+						if rune(input[next]) == modes[1][0] {
+							isBody = true
+							break
+						}
+						if rune(input[next]) == ' ' || rune(input[next]) == '\t' {
+							next++
+							continue
+						}
+						break
+					}
+					if isBody {
+						mode = 1
+						params = append(params, `Body:`)
+						curp++
+						skip = next - off
+						level = 1
+						continue
+					}
 				}
 				for tail, ok := tails[curFunc.Tag]; ok && off+2 < len(input) && input[off+1] == '.'; {
+					var found bool
 					for key, tailFunc := range tail.Tails {
-						if len(input) > off+2 && (strings.HasPrefix(input[off+2:], key+`(`) || strings.HasPrefix(input[off+2:], key+`{`)) {
-							parTail, shift, _ := getFunc(input[off+len(key)+2:], tailFunc.tplFunc)
-							off += shift + len(key) + 2
-							if tailpar == nil {
-								fortail := make([]*[]string, 0)
-								tailpar = &fortail
+						next := off + 2
+						if next < len(input) && strings.HasPrefix(input[next:], key) {
+							var isTail bool
+							next += len(key)
+							for next < len(input) {
+								if rune(input[next]) == '(' || rune(input[next]) == '{' {
+									isTail = true
+									break
+								}
+								if rune(input[next]) == ' ' || rune(input[next]) == '\t' {
+									next++
+									continue
+								}
+								break
 							}
-							*parTail = append(*parTail, key)
-							*tailpar = append(*tailpar, parTail)
-							if tailFunc.Last {
-								break main
+							if isTail {
+								parTail, shift, _ := getFunc(input[next:], tailFunc.tplFunc)
+								off = shift + next
+								if tailpar == nil {
+									fortail := make([]*[]string, 0)
+									tailpar = &fortail
+								}
+								*parTail = append(*parTail, key)
+								*tailpar = append(*tailpar, parTail)
+								found = true
+								if tailFunc.Last {
+									break main
+								}
+								break
 							}
 						}
+					}
+					if !found {
+						break
 					}
 				}
 				break main

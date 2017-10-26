@@ -39,6 +39,9 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`If(true) {OK}.Else {false} Div(){test} If(false, FALSE).ElseIf(0) { Skip }.ElseIf(1) {Else OK
+		}.Else {Fourth}If(0).Else{ALL right}`,
+		`[{"tag":"text","text":"OK"},{"tag":"div","children":[{"tag":"text","text":"test"}]},{"tag":"text","text":"Else OK"},{"tag":"text","text":"ALL right"}]`},
 	{`Button(Contract: MyContract, Body:My Contract, Class: myclass, Params:"Name=myid,Id=i10,Value")`,
 		`[{"tag":"button","attr":{"class":"myclass","contract":"MyContract","params":{"Id":"i10","Name":"myid","Value":"Value"}},"children":[{"tag":"text","text":"My Contract"}]}]`},
 	{`Simple text +=<b>bold</b>`, `[{"tag":"text","text":"Simple text +=\u0026lt;b\u0026gt;bold\u0026lt;/b\u0026gt;"}]`},
@@ -132,4 +135,7 @@ var forFullTest = tplList{
 		`[{"tag":"setvar","attr":{"name":"testvalue","value":"The new value"}},{"tag":"setvar","attr":{"name":"n","value":"param"}},{"tag":"text","text":"."},{"tag":"span","children":[{"tag":"text","text":"#testvalue#"}]}]`},
 	{`Include(myblock)`,
 		`[{"tag":"include","attr":{"name":"myblock"}}]`},
+	{`If(true) {OK}.Else {false} If(false, FALSE).ElseIf(1) {Else OK
+			}.Else {Fourth}If(0).Else{ALL right}.What`,
+		`[{"tag":"if","attr":{"condition":"true"},"children":[{"tag":"text","text":"OK"}],"tail":[{"tag":"else","children":[{"tag":"text","text":"false"}]}]},{"tag":"if","attr":{"condition":"false"},"children":[{"tag":"text","text":"FALSE"}],"tail":[{"tag":"elseif","attr":{"condition":"1"},"children":[{"tag":"text","text":"Else OK"}]},{"tag":"else","children":[{"tag":"text","text":"Fourth"}]}]},{"tag":"if","attr":{"condition":"0"},"tail":[{"tag":"else","children":[{"tag":"text","text":"ALL right"}]}]},{"tag":"text","text":".What"}]`},
 }
