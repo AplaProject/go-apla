@@ -17,6 +17,7 @@
 package templatev2
 
 import (
+	"encoding/json"
 	"fmt"
 	"html"
 	"strconv"
@@ -30,40 +31,55 @@ import (
 var (
 	funcs = map[string]tplFunc{
 		`Address`:   {addressTag, defaultTag, `address`, `Wallet`},
-		`Div`:       {defaultTag, defaultTag, `div`, `Class,Body`},
 		`Em`:        {defaultTag, defaultTag, `em`, `Body,Class`},
-		`Form`:      {defaultTag, defaultTag, `form`, `Class,Body`},
 		`GetVar`:    {getvarTag, defaultTag, `getvar`, `Name`},
 		`InputErr`:  {defaultTag, defaultTag, `inputerr`, `*`},
-		`Label`:     {defaultTag, defaultTag, `label`, `Body,Class,For`},
 		`LangRes`:   {langresTag, defaultTag, `langres`, `Name,Lang`},
 		`MenuGroup`: {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
 		`MenuItem`:  {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
-		`P`:         {defaultTag, defaultTag, `p`, `Body,Class`},
 		`SetVar`:    {setvarTag, defaultTag, `setvar`, `Name,Value`},
-		`Span`:      {defaultTag, defaultTag, `span`, `Body,Class`},
 		`Strong`:    {defaultTag, defaultTag, `strong`, `Body,Class`},
 		`Style`:     {defaultTag, defaultTag, `style`, `Css`},
-		`Table`:     {tableTag, defaultTag, `table`, `Source,Columns`},
 	}
 	tails = map[string]forTails{
 		`button`: {map[string]tailInfo{
-			`Alert`: {tplFunc{alertTag, alertFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
+			`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
+			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		}},
+		`div`: {map[string]tailInfo{
+			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		}},
+		`form`: {map[string]tailInfo{
+			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		}},
 		`if`: {map[string]tailInfo{
 			`Else`: {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
 		}},
 		`input`: {map[string]tailInfo{
-			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, true},
+			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
+			`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		}},
+		`label`: {map[string]tailInfo{
+			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		}},
 		`dbfind`: {map[string]tailInfo{
-			`Columns`:   {tplFunc{tailTag, defaultTag, `columns`, `Columns`}, false},
-			`Where`:     {tplFunc{tailTag, defaultTag, `where`, `Where`}, false},
-			`WhereId`:   {tplFunc{tailTag, defaultTag, `whereid`, `WhereId`}, false},
-			`Order`:     {tplFunc{tailTag, defaultTag, `order`, `Order`}, false},
-			`Limit`:     {tplFunc{tailTag, defaultTag, `limit`, `Limit`}, false},
-			`Offset`:    {tplFunc{tailTag, defaultTag, `offset`, `Offset`}, false},
-			`Ecosystem`: {tplFunc{tailTag, defaultTag, `ecosystem`, `Ecosystem`}, false},
+			`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
+			`Where`:     {tplFunc{tailTag, defaultTailFull, `where`, `Where`}, false},
+			`WhereId`:   {tplFunc{tailTag, defaultTailFull, `whereid`, `WhereId`}, false},
+			`Order`:     {tplFunc{tailTag, defaultTailFull, `order`, `Order`}, false},
+			`Limit`:     {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
+			`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
+			`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
+			`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		}},
+		`p`: {map[string]tailInfo{
+			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		}},
+		`span`: {map[string]tailInfo{
+			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		}},
+		`table`: {map[string]tailInfo{
+			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		}},
 	}
 	modes = [][]rune{{'(', ')'}, {'{', '}'}}
@@ -71,12 +87,18 @@ var (
 
 func init() {
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
+	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
+	funcs[`Form`] = tplFunc{defaultTailTag, defaultTailTag, `form`, `Class,Body`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
-	funcs[`Input`] = tplFunc{inputTag, inputTag, `input`, `Name,Class,Placeholder,Type,Value`}
-	funcs[`DBFind`] = tplFunc{dbfindTag, defaultTag, `dbfind`, `Name,Source`}
+	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,Value`}
+	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
+	funcs[`DBFind`] = tplFunc{dbfindTag, defaultTailTag, `dbfind`, `Name,Source`}
 	funcs[`And`] = tplFunc{andTag, defaultTag, `and`, `*`}
 	funcs[`Or`] = tplFunc{orTag, defaultTag, `or`, `*`}
+	funcs[`P`] = tplFunc{defaultTailTag, defaultTailTag, `p`, `Body,Class`}
+	funcs[`Span`] = tplFunc{defaultTailTag, defaultTailTag, `span`, `Body,Class`}
+	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
 
 	tails[`if`].Tails[`ElseIf`] = tailInfo{tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false}
 
@@ -135,7 +157,7 @@ func alertTag(par parFunc) string {
 	return ``
 }
 
-func alertFull(par parFunc) string {
+func defaultTailFull(par parFunc) string {
 	setAllAttr(par)
 	par.Owner.Tail = append(par.Owner.Tail, par.Node)
 	return ``
@@ -184,33 +206,63 @@ func dbfindTag(par parFunc) string {
 	if err != nil {
 		return err.Error()
 	}
+	//	list := []map[string]string{{"id": "1", "amount": "200"}, {"id": "2", "amount": "300"}}
 	data := make([][]string, 0)
 	cols := make([]string, 0)
 	lencol := 0
+	defcol := 0
 	for _, item := range list {
 		if lencol == 0 {
 			for key := range item {
 				cols = append(cols, key)
 			}
+			defcol = len(cols)
+			if par.Node.Attr[`customs`] != nil {
+				for _, v := range par.Node.Attr[`customs`].([]string) {
+					cols = append(cols, v)
+				}
+			}
 			lencol = len(cols)
 		}
 		row := make([]string, lencol)
 		for i, icol := range cols {
-			ival := item[icol]
-			if strings.IndexByte(ival, '<') >= 0 {
-				ival = html.EscapeString(ival)
-			}
-			if ival == `NULL` {
-				ival = ``
+			var ival string
+			if i < defcol {
+				ival = item[icol]
+				if strings.IndexByte(ival, '<') >= 0 {
+					ival = html.EscapeString(ival)
+				}
+				if ival == `NULL` {
+					ival = ``
+				}
+			} else {
+				out, err := json.Marshal(par.Node.Attr[`custombody`].([]*node)[i-defcol])
+				if err == nil {
+					ival = replace(string(out), 0, &item)
+				}
 			}
 			row[i] = ival
 		}
 		data = append(data, row)
 	}
 	setAllAttr(par)
+	delete(par.Node.Attr, `customs`)
+	delete(par.Node.Attr, `custombody`)
 	par.Node.Attr[`columns`] = &cols
 	par.Node.Attr[`data`] = &data
 	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return ``
+}
+
+func customTag(par parFunc) string {
+	setAllAttr(par)
+	if par.Owner.Attr[`customs`] == nil {
+		par.Owner.Attr[`customs`] = make([]string, 0)
+		par.Owner.Attr[`custombody`] = make([]*node, 0)
+	}
+	par.Owner.Attr[`customs`] = append(par.Owner.Attr[`customs`].([]string), par.Node.Attr[`column`].(string))
+	par.Owner.Attr[`custombody`] = append(par.Owner.Attr[`custombody`].([]*node), par.Node.Children...)
+
 	return ``
 }
 
@@ -257,6 +309,7 @@ func getvarTag(par parFunc) string {
 
 func tableTag(par parFunc) string {
 	defaultTag(par)
+	defaultTail(par, `table`)
 	if len((*par.Pars)[`Columns`]) > 0 {
 		imap := make(map[string]string)
 		for _, v := range strings.Split((*par.Pars)[`Columns`], `,`) {
@@ -297,9 +350,9 @@ func defaultTail(par parFunc, tag string) {
 	}
 }
 
-func inputTag(par parFunc) string {
+func defaultTailTag(par parFunc) string {
 	defaultTag(par)
-	defaultTail(par, `input`)
+	defaultTail(par, par.Node.Tag)
 	return ``
 }
 

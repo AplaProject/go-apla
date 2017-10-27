@@ -59,11 +59,17 @@ var forTest = tplList{
 		`[{"tag":"p","children":[{"tag":"text","text":"Some "},{"tag":"span","children":[{"tag":"text","text":"fake(text) "},{"tag":"strong","children":[{"tag":"text","text":"very "},{"tag":"em","children":[{"tag":"text","text":"important "},{"tag":"label","children":[{"tag":"text","text":"news"}]}]}]}]}]}]`},
 	{`Form(myclass, Input(myid)Button(Submit,default_page,myclass))`,
 		`[{"tag":"form","attr":{"class":"myclass"},"children":[{"tag":"input","attr":{"name":"myid"}},{"tag":"button","attr":{"class":"myclass","page":"default_page"},"children":[{"tag":"text","text":"Submit"}]}]}]`},
-	{`Button(My Contract,, myclass, NewEcosystem, "Name=myid,Id=i10,Value")`,
-		`[{"tag":"button","attr":{"class":"myclass","contract":"NewEcosystem","params":{"Id":"i10","Name":"myid","Value":"Value"}},"children":[{"tag":"text","text":"My Contract"}]}]`},
-	{`Div(myclass)Div()
+	{`Button(My Contract,, myclass, NewEcosystem, "Name=myid,Id=i10,Value").Style( .btn {
+		border: 10px 10px;
+	})`,
+		`[{"tag":"button","attr":{"class":"myclass","contract":"NewEcosystem","params":{"Id":"i10","Name":"myid","Value":"Value"},"style":".btn {\n\t\tborder: 10px 10px;\n\t}"},"children":[{"tag":"text","text":"My Contract"}]}]`},
+	{`Div(myclass)Div().Style{
+		.class {
+			text-style: italic;
+		}
+	}
 				Div()`,
-		`[{"tag":"div","attr":{"class":"myclass"}},{"tag":"div"},{"tag":"div"}]`},
+		`[{"tag":"div","attr":{"class":"myclass"}},{"tag":"div","attr":{"style":".class {\n\t\t\ttext-style: italic;\n\t\t}"}},{"tag":"div"}]`},
 	{`Div(myclass){Div()
 		P(){
 			Div(id){
@@ -106,8 +112,9 @@ var forTest = tplList{
 	/*	{`Div(myclass, Include(test)Span(OK))`,
 		`[{"tag":"include","attr":{"name":"myblock"}}]`},*/
 
-	/*	{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25)`,
-		``},*/
+	/*	{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25).Custom(myid){Strong(#id#)
+	 }.Custom(mybtn){Button(#amount#,mypage=#id#)}`,
+	``},*/
 }
 
 func TestFullJSON(t *testing.T) {
@@ -122,6 +129,8 @@ func TestFullJSON(t *testing.T) {
 }
 
 var forFullTest = tplList{
+	{`DBFind(parameters, mysrc).Columns("name,amount").Limit(10)Table(mysrc,"Name=name,Amount=amount").Style(.tbl {boder: 0px;})`,
+		`[{"tag":"dbfind","attr":{"name":"parameters","source":"mysrc"},"tail":[{"tag":"columns","attr":{"columns":"name,amount"}},{"tag":"limit","attr":{"limit":"10"}}]},{"tag":"table","attr":{"columns":"Name=name,Amount=amount","source":"mysrc"},"tail":[{"tag":"style","attr":{"style":".tbl {boder: 0px;}"}}]}]`},
 	{`Simple text +=<b>bold</b>`, `[{"tag":"text","text":"Simple text +=\u0026lt;b\u0026gt;bold\u0026lt;/b\u0026gt;"}]`},
 	{`Div(myclass control, Content of the Div)`, `[{"tag":"div","attr":{"class":"myclass control"},"children":[{"tag":"text","text":"Content of the Div"}]}]`},
 	{`If(true,OK)If(false){Skip}.Else{Span(Else OK)}`,
