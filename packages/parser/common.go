@@ -125,7 +125,7 @@ func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 	for _, id := range ids {
 		sp := &model.StateParameter{}
 		sp.SetTablePrefix(converter.Int64ToStr(id))
-		_, err := sp.GetByNameTransaction(transaction, "state_name")
+		_, err := sp.Get(transaction, "state_name")
 		if err != nil {
 			return 0, err
 		}
@@ -369,7 +369,7 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	}
 
 	wallet := &model.DltWallet{}
-	found, err := wallet.GetWalletTransaction(p.DbTransaction, walletID)
+	found, err := wallet.Get(p.DbTransaction, walletID)
 	if err != nil {
 		return err
 	}
@@ -407,7 +407,7 @@ func (p *Parser) BlockError(err error) {
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(p.TxStateIDStr)
-	_, err := sp.GetByNameTransaction(p.DbTransaction, condition)
+	_, err := sp.Get(p.DbTransaction, condition)
 	if err != nil {
 		return err
 	}

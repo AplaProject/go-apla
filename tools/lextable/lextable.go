@@ -150,8 +150,6 @@ var (
 }`
 )
 
-//			"/": ["comment", "", "pop next"],
-
 func main() {
 	var alpha [129]byte
 	for ind, ch := range alphabet {

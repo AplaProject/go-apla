@@ -16,12 +16,8 @@ func (sp *StateParameter) SetTablePrefix(tablePrefix string) {
 	sp.tableName = tablePrefix + "_parameters"
 }
 
-func (sp *StateParameter) GetByNameTransaction(transaction *DbTransaction, name string) (bool, error) {
+func (sp *StateParameter) Get(transaction *DbTransaction, name string) (bool, error) {
 	return isFound(GetDB(transaction).Where("name = ?", name).First(sp))
-}
-
-func (sp *StateParameter) GetByName(name string) (bool, error) {
-	return isFound(DBConn.Where("name = ?", name).First(sp))
 }
 
 func (sp *StateParameter) GetAllStateParameters() ([]StateParameter, error) {

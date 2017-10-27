@@ -11,20 +11,6 @@ type Block struct {
 	MaxMinerID int32  `gorm:"not null"`
 }
 
-func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
-	var err error
-	blockchain := new([]Block)
-	if endblockID > 0 {
-		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(&blockchain).Error
-	} else {
-		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ?", startBlockID).Find(&blockchain).Error
-	}
-	if err != nil {
-		return nil, err
-	}
-	return *blockchain, nil
-}
-
 func (Block) TableName() string {
 	return "block_chain"
 }
@@ -41,11 +27,18 @@ func (b *Block) GetMaxBlock() (bool, error) {
 	return isFound(DBConn.Last(b))
 }
 
-func (b *Block) GetBlocksFrom(startFromID int64, ordering string) ([]Block, error) {
+func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
-	err = DBConn.Order("id "+ordering).Where("id > ?", startFromID).Find(&blockchain).Error
-	return *blockchain, err
+	if endblockID > 0 {
+		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(&blockchain).Error
+	} else {
+		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ?", startBlockID).Find(&blockchain).Error
+	}
+	if err != nil {
+		return nil, err
+	}
+	return *blockchain, nil
 }
 
 func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {
@@ -56,6 +49,13 @@ func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {
 	} else {
 		err = DBConn.Order("id desc").Limit(limit).Find(&blockchain).Error
 	}
+	return *blockchain, err
+}
+
+func (b *Block) GetBlocksFrom(startFromID int64, ordering string) ([]Block, error) {
+	var err error
+	blockchain := new([]Block)
+	err = DBConn.Order("id "+ordering).Where("id > ?", startFromID).Find(&blockchain).Error
 	return *blockchain, err
 }
 

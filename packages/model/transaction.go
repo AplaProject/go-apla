@@ -13,17 +13,17 @@ type Transaction struct {
 	Verified  int8   `gorm:"not null;default:1"`
 }
 
-func GetAllUnusedTransactions() (*[]Transaction, error) {
+func GetAllTransactions(limit int) (*[]Transaction, error) {
 	transactions := new([]Transaction)
-	if err := DBConn.Where("used = ?", "0").Find(&transactions).Error; err != nil {
+	if err := DBConn.Limit(limit).Find(&transactions).Error; err != nil {
 		return nil, err
 	}
 	return transactions, nil
 }
 
-func GetAllTransactions(limit int) (*[]Transaction, error) {
+func GetAllUnusedTransactions() (*[]Transaction, error) {
 	transactions := new([]Transaction)
-	if err := DBConn.Limit(limit).Find(&transactions).Error; err != nil {
+	if err := DBConn.Where("used = ?", "0").Find(&transactions).Error; err != nil {
 		return nil, err
 	}
 	return transactions, nil
@@ -37,17 +37,17 @@ func GetAllUnsentTransactions() (*[]Transaction, error) {
 	return transactions, nil
 }
 
-func GetTransactionsCount(hash []byte) (int64, error) {
+func GetTransactionCountAll() (int64, error) {
 	var rowsCount int64
-	if err := DBConn.Table("transactions").Where("hash = ?", hash).Count(&rowsCount).Error; err != nil {
+	if err := DBConn.Table("transactions").Count(&rowsCount).Error; err != nil {
 		return -1, err
 	}
 	return rowsCount, nil
 }
 
-func GetTransactionCountAll() (int64, error) {
+func GetTransactionsCount(hash []byte) (int64, error) {
 	var rowsCount int64
-	if err := DBConn.Table("transactions").Count(&rowsCount).Error; err != nil {
+	if err := DBConn.Table("transactions").Where("hash = ?", hash).Count(&rowsCount).Error; err != nil {
 		return -1, err
 	}
 	return rowsCount, nil

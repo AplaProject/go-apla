@@ -30,7 +30,7 @@ func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData) (err 
 	}
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(converter.Int64ToStr(state))
-	found, err := sp.GetByName(data.params[`name`].(string))
+	found, err := sp.Get(nil, data.params[`name`].(string))
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}

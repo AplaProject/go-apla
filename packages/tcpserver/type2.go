@@ -52,7 +52,7 @@ func Type2(r *DisRequest) (*DisTrResponse, error) {
 		log.Fatal(err)
 	}
 
-	err = model.DeleteQueuedTransaction(hash)
+	_, err = model.DeleteQueueTxByHash(nil, hash)
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}

@@ -31,10 +31,6 @@ func DeleteQueueTxByHash(transaction *DbTransaction, hash []byte) (int64, error)
 	return query.RowsAffected, query.Error
 }
 
-func DeleteQueuedTransaction(hash []byte) error {
-	return DBConn.Exec("DELETE FROM queue_tx WHERE hash = ?", hash).Error
-}
-
 func GetQueuedTransactionsCount(hash []byte) (int64, error) {
 	var rowsCount int64
 	err := DBConn.Table("queue_tx").Where("hash = ?", hash).Count(&rowsCount).Error

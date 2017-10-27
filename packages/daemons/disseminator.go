@@ -121,9 +121,13 @@ func sendTransactions() error {
 
 // send block and transactions hashes
 func sendHashes(fullNodeID int32) error {
-	block, err := model.BlockGetUnsent()
+	infoBlock := &model.InfoBlock{}
+	found, err := infoBlock.GetUnsent()
 	if err != nil {
 		return err
+	}
+	if !found {
+		return errors.New("can't find info block")
 	}
 
 	trs, err := model.GetAllUnsentTransactions()
@@ -131,13 +135,13 @@ func sendHashes(fullNodeID int32) error {
 		return err
 	}
 
-	if (trs == nil || len(*trs) == 0) && block == nil {
+	if trs == nil || len(*trs) == 0 {
 		// it's nothing to send
 		log.Debugf("it's nothing to send")
 		return nil
 	}
 
-	buf := prepareHashReq(block, trs, fullNodeID)
+	buf := prepareHashReq(infoBlock, trs, fullNodeID)
 	if buf != nil || len(buf) > 0 {
 		err := sendPacketToAll(FULL_REQUEST, buf, sendHashesResp)
 		if err != nil {
@@ -146,11 +150,9 @@ func sendHashes(fullNodeID int32) error {
 	}
 
 	// mark all transactions and block as sent
-	if block != nil {
-		err = block.MarkSent()
-		if err != nil {
-			return err
-		}
+	err = infoBlock.MarkSent()
+	if err != nil {
+		return err
 	}
 
 	if trs != nil {

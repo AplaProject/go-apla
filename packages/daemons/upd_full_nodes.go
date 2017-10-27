@@ -85,7 +85,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 
 	// check if the time of the last updating passed
 	updFn := &model.UpdFullNode{}
-	found, err = updFn.Read(nil)
+	found, err = updFn.Get(nil)
 	if err != nil {
 		return err
 	}

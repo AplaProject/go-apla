@@ -88,7 +88,7 @@ func (p *DLTTransferParser) Validate() error {
 
 	// public key need only when we don't have public_key in the dlt_wallets table
 	dltWallet := &model.DltWallet{}
-	found, err := dltWallet.Get(converter.StringToAddress(p.DLTTransfer.WalletAddress))
+	found, err := dltWallet.Get(nil, converter.StringToAddress(p.DLTTransfer.WalletAddress))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -159,7 +159,7 @@ func (p *DLTTransferParser) Validate() error {
 	}
 
 	wallet := &model.DltWallet{}
-	found, err = wallet.Get(p.TxWalletID)
+	found, err = wallet.Get(nil, p.TxWalletID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -184,7 +184,7 @@ func (p *DLTTransferParser) Validate() error {
 func (p *DLTTransferParser) Action() error {
 	log.Debug("wallet address %s", p.DLTTransfer.WalletAddress)
 	dltWallet := &model.DltWallet{}
-	found, err := dltWallet.Get(p.TxWalletID)
+	found, err := dltWallet.Get(nil, p.TxWalletID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -18,10 +18,6 @@ func (DltWallet) TableName() string {
 	return "dlt_wallets"
 }
 
-func (w *DltWallet) GetWalletTransaction(transaction *DbTransaction, walletID int64) (bool, error) {
+func (w *DltWallet) Get(transaction *DbTransaction, walletID int64) (bool, error) {
 	return isFound(GetDB(transaction).Where("wallet_id = ?", walletID).First(&w))
-}
-
-func (w *DltWallet) Get(walletID int64) (bool, error) {
-	return isFound(DBConn.Where("wallet_id = ?", walletID).First(&w))
 }

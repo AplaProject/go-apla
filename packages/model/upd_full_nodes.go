@@ -6,6 +6,6 @@ type UpdFullNode struct {
 	RbID int64 `gorm:"not null"`
 }
 
-func (ufn *UpdFullNode) Read(transaction *DbTransaction) (bool, error) {
+func (ufn *UpdFullNode) Get(transaction *DbTransaction) (bool, error) {
 	return isFound(GetDB(transaction).First(ufn))
 }

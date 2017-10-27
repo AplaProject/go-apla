@@ -34,21 +34,3 @@ func (ib *InfoBlock) Create(transaction *DbTransaction) error {
 func (ib *InfoBlock) MarkSent() error {
 	return DBConn.Model(ib).Update("sent", "1").Error
 }
-
-func GetCurBlockID() (int64, error) {
-	curBlock := &InfoBlock{}
-	_, err := curBlock.Get()
-	if err != nil {
-		return 0, err
-	}
-	return curBlock.BlockID, nil
-}
-
-func BlockGetUnsent() (*InfoBlock, error) {
-	ib := &InfoBlock{}
-	found, err := ib.GetUnsent()
-	if !found {
-		return nil, err
-	}
-	return ib, err
-}
