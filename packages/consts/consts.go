@@ -60,6 +60,11 @@ const COUNT_BLOCK_BEFORE_SAVE = RB_BLOCKS_2
 
 const UPD_AND_VER_URL = "http://apla.io"
 
+var AddressLength = 20
+var PubkeyLength = 64
+var PrivkeyLength = 32
+var BlockSize = 16
+
 // TxTypes is the list of the embedded transactions
 var TxTypes = map[int]string{
 	1:  "FirstBlock",
