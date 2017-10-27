@@ -19,6 +19,7 @@ package script
 import (
 	"fmt"
 	"reflect"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
@@ -71,6 +72,31 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		count = in
 	}
 	if obj.Type == ObjFunc {
+		//		fmt.Println(`Func`, cmd == cmdCallVari, in, count, obj.Value.(*Block).Info.(*FuncInfo))
+		//		fmt.Println(`Stack`, len(rt.stack), rt.stack, size)
+		var imap map[string][]interface{}
+		if obj.Value.(*Block).Info.(*FuncInfo).Names != nil {
+			if rt.stack[size-1] != nil {
+				imap = rt.stack[size-1].(map[string][]interface{})
+			}
+			rt.stack = rt.stack[:size-1]
+		}
+		if cmd == cmdCallVari {
+			parcount := count + 1 - in
+			if parcount < 0 {
+				return fmt.Errorf(`wrong count of parameters`)
+			}
+			pars := make([]interface{}, parcount)
+			shift := size - parcount
+			for i := parcount; i > 0; i-- {
+				pars[i-1] = rt.stack[size+i-parcount-1]
+			}
+			rt.stack = rt.stack[:shift]
+			rt.stack = append(rt.stack, pars)
+		}
+		if obj.Value.(*Block).Info.(*FuncInfo).Names != nil {
+			rt.stack = append(rt.stack, imap)
+		}
 		_, err = rt.RunCode(obj.Value.(*Block))
 	} else {
 		finfo := obj.Value.(ExtFuncInfo)
@@ -191,7 +217,7 @@ func valueToBool(v interface{}) bool {
 	case []uint8:
 		return len(val) > 0
 	default:
-		dec, _ := decimal.NewFromString(val.(string))
+		dec, _ := decimal.NewFromString(fmt.Sprintf(`%v`, val))
 		return dec.Cmp(decimal.New(0, 0)) != 0
 	}
 	return false
@@ -267,8 +293,16 @@ func (vm *VM) RunInit(cost int64) *RunTime {
 // RunCode executes Block
 func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	top := make([]interface{}, 8)
-	start := len(rt.stack)
 	rt.blocks = append(rt.blocks, &blockStack{block, len(rt.vars)})
+	var namemap map[string][]interface{}
+	if block.Type == ObjFunc && block.Info.(*FuncInfo).Names != nil {
+		if rt.stack[len(rt.stack)-1] != nil {
+			namemap = rt.stack[len(rt.stack)-1].(map[string][]interface{})
+		}
+		rt.stack = rt.stack[:len(rt.stack)-1]
+	}
+	start := len(rt.stack)
+	varoff := len(rt.vars)
 	for vkey, vpar := range block.Vars {
 		rt.cost--
 		var value interface{}
@@ -283,6 +317,22 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 		}
 		rt.vars = append(rt.vars, value)
+	}
+	if namemap != nil {
+		for key, item := range namemap {
+			params := (*block.Info.(*FuncInfo).Names)[key]
+			if params.Variadic {
+
+			}
+			for i, value := range item {
+				if params.Variadic && i >= len(params.Params)-1 {
+					off := varoff + params.Offset[len(params.Params)-1]
+					rt.vars[off] = append(rt.vars[off].([]interface{}), value)
+				} else {
+					rt.vars[varoff+params.Offset[i]] = value
+				}
+			}
+		}
 	}
 	if block.Type == ObjFunc {
 		start -= len(block.Info.(*FuncInfo).Params)
@@ -319,7 +369,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 			}
 		case cmdWhile:
-			if valueToBool(rt.stack[len(rt.stack)-1]) {
+			val := rt.stack[len(rt.stack)-1]
+			rt.stack = rt.stack[:len(rt.stack)-1]
+			if valueToBool(val) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 				newci := labels[len(labels)-1]
 				labels = labels[:len(labels)-1]
@@ -373,6 +425,19 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				pattern = `*%v`
 			}
 			err = fmt.Errorf(pattern, rt.stack[len(rt.stack)-1])
+		case cmdFuncName:
+			ifunc := cmd.Value.(FuncNameCmd)
+			mapoff := len(rt.stack) - 1 - ifunc.Count
+			if rt.stack[mapoff] == nil {
+				rt.stack[mapoff] = make(map[string][]interface{})
+			}
+			params := make([]interface{}, ifunc.Count)
+			for i := 0; i < ifunc.Count; i++ {
+				params[i] = rt.stack[mapoff+1+i]
+			}
+			rt.stack[mapoff].(map[string][]interface{})[ifunc.Name] = params
+			rt.stack = rt.stack[:mapoff+1]
+			continue
 		case cmdCallVari, cmdCall:
 			if cmd.Value.(*ObjInfo).Type == ObjExtFunc {
 				finfo := cmd.Value.(*ObjInfo).Value.(ExtFuncInfo)
@@ -696,16 +761,20 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			rt.stack = rt.stack[:size-1]
 		}
 	}
+	/*	if status == statusBreak {
+		status = statusNormal
+	}*/
+	last := rt.blocks[len(rt.blocks)-1]
+	rt.blocks = rt.blocks[:len(rt.blocks)-1]
 	if status == statusReturn {
-		if rt.blocks[len(rt.blocks)-1].Block.Type == ObjFunc {
-			for count := len(rt.blocks[len(rt.blocks)-1].Block.Info.(*FuncInfo).Results); count > 0; count-- {
+		if last.Block.Type == ObjFunc {
+			for count := len(last.Block.Info.(*FuncInfo).Results); count > 0; count-- {
 				rt.stack[start] = rt.stack[len(rt.stack)-count]
 				start++
 			}
 			status = statusNormal
 			rt.blocks = rt.blocks[:len(rt.blocks)-1]
 		} else {
-			rt.blocks = rt.blocks[:len(rt.blocks)-1]
 			return
 		}
 	}
@@ -720,7 +789,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			rt.vm.logger.WithFields(log.Fields{"type": consts.PanicRecoveredError}).Error("runtime panic error")
+			rt.vm.logger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "stack": debug.Stack()}).Error("runtime panic error")
 			err = fmt.Errorf(`runtime panic error`)
 		}
 	}()

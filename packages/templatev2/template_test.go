@@ -91,7 +91,15 @@ var forTest = tplList{
 		`[{"tag":"style","attr":{"css":".mydiv, .myspan {\n\t\tcolor: #f00;\n\t\tmargin: 10px 5px;\n\t}"}}]`},
 	{`SetVar(testvalue, The, #n#, Value).(n, New).(param,"23")Span(Test value equals #testvalue#).(#param#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, New, Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
-/*	{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25)`,
+	{`SetVar(test, mytest).(empty,0)And(0,test,0)Or(0,#test#)Or(0, And(0,0))And(0,Or(0,my,while))
+		And(1,#mytest#)Or(#empty#, And(#empty#, line))`,
+		`[{"tag":"text","text":"010010"}]`},
+	{`Address()Span(Address(-5728238900021))Address(3467347643873).(-6258391547979339691)`,
+		`[{"tag":"text","text":"unknown address"},{"tag":"span","children":[{"tag":"text","text":"1844-6738-3454-7065-1595"}]},{"tag":"text","text":"0000-0003-4673-4764-38731218-8352-5257-3021-1925"}]`},
+	/*	{`Div(myclass, Include(test)Span(OK))`,
+		`[{"tag":"include","attr":{"name":"myblock"}}]`},*/
+
+	/*	{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25)`,
 		``},*/
 }
 
@@ -120,4 +128,6 @@ var forFullTest = tplList{
 		`[{"tag":"button","attr":{"page":"link"},"children":[{"tag":"text","text":"My Button"}],"tail":[{"tag":"alert","attr":{"cancelbutton":"CancelBtn","confirmbutton":"ConfBtn","icon":"myicon","text":"Alert text"}}]}]`},
 	{`SetVar(testvalue, The new value).(n, param).Span(#testvalue#)`,
 		`[{"tag":"setvar","attr":{"name":"testvalue","value":"The new value"}},{"tag":"setvar","attr":{"name":"n","value":"param"}},{"tag":"text","text":"."},{"tag":"span","children":[{"tag":"text","text":"#testvalue#"}]}]`},
+	{`Include(myblock)`,
+		`[{"tag":"include","attr":{"name":"myblock"}}]`},
 }

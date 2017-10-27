@@ -3,7 +3,7 @@ package model
 import (
 	"strconv"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/AplaProject/go-apla/packages/converter"
 
 	"github.com/jinzhu/gorm"
 )
@@ -159,14 +159,23 @@ func (t *Table) SetActionByName(transaction *DbTransaction, table, name, action,
 	return query.RowsAffected, query.Error
 }
 
+/*func CreateStateTablesTable(stateID string) error {
+	return DBConn.Exec(`CREATE TABLE "` + stateID + `_tables" (
+				"name" varchar(100)  NOT NULL DEFAULT '',
+				"columns_and_permissions" jsonb,
+				"conditions" text  NOT NULL DEFAULT '',
+				"rb_id" bigint NOT NULL DEFAULT '0'
+				);
+				ALTER TABLE ONLY "` + stateID + `_tables" ADD CONSTRAINT "` + stateID + `_tables_pkey" PRIMARY KEY (name);
+	`).Error
+}*/
+
 func CreateTable(transaction *DbTransaction, tableName, colsSQL string) error {
-	return GetDB(transaction).Exec(`CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
-				CREATE TABLE "` + tableName + `" (
-				"id" bigint NOT NULL  default nextval('` + tableName + `_id_seq'),
+	return GetDB(transaction).Exec(`CREATE TABLE "` + tableName + `" (
+				"id" bigint NOT NULL DEFAULT '0',
 				` + colsSQL + `
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`).Error
 }
 

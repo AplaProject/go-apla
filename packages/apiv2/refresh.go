@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"

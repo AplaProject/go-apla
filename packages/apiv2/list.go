@@ -21,11 +21,11 @@ import (
 	"net/http"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	log "github.com/sirupsen/logrus"
 )
 
 type listResult struct {
@@ -45,7 +45,7 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Ent
 	count, err := model.GetNextID(strings.Trim(table, `"`))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting next table id")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
 	}
 
 	if data.params[`limit`].(int64) > 0 {

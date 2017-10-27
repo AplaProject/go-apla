@@ -13,10 +13,10 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+	log "github.com/sirupsen/logrus"
 )
 
 // TODO In order to add new crypto provider with another key length it will be neccecary to fix constant blocksizes like
@@ -58,7 +58,7 @@ var (
 
 func Encrypt(msg []byte, key []byte, iv []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		logger.LogDebug(consts.CryptoError, EncryptingEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(EncryptingEmpty.Error())
 	}
 	switch cryptoProv {
 	case _AESCBC:
@@ -70,7 +70,7 @@ func Encrypt(msg []byte, key []byte, iv []byte) ([]byte, error) {
 
 func Decrypt(msg []byte, key []byte, iv []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		logger.LogDebug(consts.CryptoError, DecryptingEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(DecryptingEmpty.Error())
 	}
 	switch cryptoProv {
 	case _AESCBC:

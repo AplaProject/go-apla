@@ -20,7 +20,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/crypto"
 )
 
 type evalCode struct {

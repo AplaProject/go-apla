@@ -21,10 +21,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/crypto"
 
 	"github.com/dgrijalva/jwt-go"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -59,7 +59,6 @@ func jwtToken(r *http.Request) (*jwt.Token, error) {
 func jwtGenerateToken(w http.ResponseWriter, claims JWTClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(jwtSecret))
-	//	w.Header().Set("Authorization", jwtPrefix+signedToken)
 }
 
 func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {

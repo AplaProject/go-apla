@@ -21,7 +21,7 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/AplaProject/go-apla/packages/lib"
 	"github.com/shopspring/decimal"
 	"testing"
 )

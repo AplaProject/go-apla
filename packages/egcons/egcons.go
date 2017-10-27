@@ -30,18 +30,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/lib"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	"github.com/go-yaml/yaml"
 )
 
 // Settings contains options of the program
 type Settings struct {
-	NodeURL string // URL of EGAAS node
+	NodeURL string // URL of apla node
 	Log     bool   // if true then the program writes log data
 	Cookie  string //*http.Cookie
 	Key     string // decrypted private key

@@ -90,10 +90,23 @@ type ContractInfo struct {
 	Settings map[string]interface{}
 }
 
+// for cmdFuncName
+type FuncNameCmd struct {
+	Name  string
+	Count int
+}
+
+type FuncName struct {
+	Params   []reflect.Type
+	Offset   []int
+	Variadic bool
+}
+
 // FuncInfo contains the function information
 type FuncInfo struct {
 	Params   []reflect.Type
 	Results  []reflect.Type
+	Names    *map[string]FuncName
 	Variadic bool
 }
 
@@ -269,7 +282,7 @@ func NewVM() *VM {
 		map[string]string{
 			`*script.RunTime`: `rt`,
 		}})
-	vm.logger = log.WithFields(log.Fields{"extern": vm.Extern, "vm_block_type": vm.Block.Type, "vm_owner_state_id": vm.Owner.StateID, "vm_owner_activate": vm.Owner.Active, "vm_owner_table_id": vm.Owner.TableID, "vm_owner_wallet_id": vm.Owner.WalletID, "vm_owner_token_id": vm.Owner.TokenID})
+	vm.logger = log.WithFields(log.Fields{"extern": vm.Extern, "vm_block_type": vm.Block.Type})
 	return &vm
 }
 

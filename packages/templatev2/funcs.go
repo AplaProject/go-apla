@@ -22,21 +22,24 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/language"
+	"github.com/AplaProject/go-apla/packages/model"
 
 	log "github.com/sirupsen/logrus"
 )
 
 var (
 	funcs = map[string]tplFunc{
+		`Address`:   {addressTag, defaultTag, `address`, `Wallet`},
 		`Div`:       {defaultTag, defaultTag, `div`, `Class,Body`},
 		`Em`:        {defaultTag, defaultTag, `em`, `Body,Class`},
 		`Form`:      {defaultTag, defaultTag, `form`, `Class,Body`},
 		`GetVar`:    {getvarTag, defaultTag, `getvar`, `Name`},
 		`InputErr`:  {defaultTag, defaultTag, `inputerr`, `*`},
 		`Label`:     {defaultTag, defaultTag, `label`, `Body,Class,For`},
+		`LangRes`:   {langresTag, defaultTag, `langres`, `Name,Lang`},
 		`MenuGroup`: {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
 		`MenuItem`:  {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
 		`P`:         {defaultTag, defaultTag, `p`, `Body,Class`},
@@ -71,8 +74,11 @@ var (
 func init() {
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
+	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
 	funcs[`Input`] = tplFunc{inputTag, inputTag, `input`, `Name,Class,Placeholder,Type,Value`}
 	funcs[`DBFind`] = tplFunc{dbfindTag, defaultTag, `dbfind`, `Name`}
+	funcs[`And`] = tplFunc{andTag, defaultTag, `and`, `*`}
+	funcs[`Or`] = tplFunc{orTag, defaultTag, `or`, `*`}
 
 	tails[`if`].Tails[`ElseIf`] = tailInfo{tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false}
 
@@ -82,6 +88,52 @@ func defaultTag(par parFunc) string {
 	setAllAttr(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
+}
+
+func addressTag(par parFunc) string {
+	idval := (*par.Pars)[`Wallet`]
+	if len(idval) == 0 {
+		idval = (*par.Vars)[`wallet`]
+	}
+	id, _ := strconv.ParseInt(idval, 10, 64)
+	if id == 0 {
+		return `unknown address`
+	}
+	return converter.AddressToString(id)
+}
+
+func langresTag(par parFunc) string {
+	lang := (*par.Pars)[`Lang`]
+	if len(lang) == 0 {
+		lang = (*par.Vars)[`accept_lang`]
+	}
+	stateInt, err := strconv.ParseInt((*par.Vars)["state"], 10, 64)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": (*par.Vars)["state"]}).Error("converting state from string to int")
+		stateInt = 0
+	}
+	ret, _ := language.LangText((*par.Pars)[`Name`], int(stateInt), lang)
+	return ret
+}
+
+func andTag(par parFunc) string {
+	count := len(*par.Pars)
+	for i := 0; i < count; i++ {
+		if !ifValue((*par.Pars)[strconv.Itoa(i)], par.Vars) {
+			return `0`
+		}
+	}
+	return `1`
+}
+
+func orTag(par parFunc) string {
+	count := len(*par.Pars)
+	for i := 0; i < count; i++ {
+		if ifValue((*par.Pars)[strconv.Itoa(i)], par.Vars) {
+			return `1`
+		}
+	}
+	return `0`
 }
 
 func alertTag(par parFunc) string {
@@ -191,6 +243,25 @@ func tailTag(par parFunc) string {
 	setAllAttr(par)
 	for key, v := range par.Node.Attr {
 		par.Owner.Attr[key] = v
+	}
+	return ``
+}
+
+func includeTag(par parFunc) string {
+	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Vars)[`_include`]) < 5 {
+		pattern, err := model.Single(`select value from "`+(*par.Vars)[`state`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
+		if err != nil {
+			return err.Error()
+		}
+		if len(pattern) > 0 {
+			root := node{}
+			(*par.Vars)[`_include`] += `1`
+			process(pattern, &root, par.Vars)
+			(*par.Vars)[`_include`] = (*par.Vars)[`_include`][:len((*par.Vars)[`_include`])-1]
+			for _, item := range root.Children {
+				par.Owner.Children = append(par.Owner.Children, item)
+			}
+		}
 	}
 	return ``
 }

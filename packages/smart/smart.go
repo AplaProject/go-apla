@@ -23,8 +23,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/script"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -251,4 +252,70 @@ func ContractsList(value string) []string {
 		}
 	}
 	return list
+}
+
+// LoadContracts reads and compiles contracts from smart_contracts tables
+func LoadContracts(transaction *model.DbTransaction) (err error) {
+	var states []map[string]string
+	var prefix []string
+	prefix = []string{`system`}
+	states, err = model.GetAll(`select id from system_states order by id`, -1)
+	if err != nil {
+		return err
+	}
+	for _, istate := range states {
+		prefix = append(prefix, istate[`id`])
+	}
+	for _, ipref := range prefix {
+		if err = LoadContract(transaction, ipref); err != nil {
+			break
+		}
+	}
+	ExternOff()
+	return
+}
+
+// LoadContract reads and compiles contract of new state
+func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
+	var contracts []map[string]string
+	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
+	if err != nil {
+		return err
+	}
+	stateInt, err := strconv.ParseInt(prefix, 10, 64)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": prefix}).Error("converting prefix from string to int64")
+	}
+	state := uint32(stateInt)
+	for _, item := range contracts {
+		tableIDInt, err := strconv.ParseInt(item["id"], 10, 64)
+		if err != nil {
+			tableIDInt = 0
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": item["id"]}).Error("converting tableID from string to int64")
+		}
+		walletIDInt, err := strconv.ParseInt(item["wallet_id"], 10, 64)
+		if err != nil {
+			walletIDInt = 0
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": item["wallet_id"]}).Error("converting walletID from string to int64")
+		}
+		tokenIDInt, err := strconv.ParseInt(item["token_id"], 10, 64)
+		if err != nil {
+			tokenIDInt = 0
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": item["token_id"]}).Error("converting tokenID from string to int64")
+		}
+		names := strings.Join(ContractsList(item[`value`]), `,`)
+		owner := script.OwnerInfo{
+			StateID:  state,
+			Active:   item[`active`] == `1`,
+			TableID:  tableIDInt,
+			WalletID: walletIDInt,
+			TokenID:  tokenIDInt,
+		}
+		if err = Compile(item[`value`], &owner); err != nil {
+			log.Error("Load Contract", names, err)
+		} else {
+			log.WithFields(log.Fields{"contract_name": names, "contract_id": item["id"], "contract_active": item["active"]}).Info("OK Loading Contract")
+		}
+	}
+	return
 }

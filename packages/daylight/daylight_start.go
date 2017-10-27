@@ -30,22 +30,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/apiv2"
-	"github.com/EGaaS/go-egaas-mvp/packages/config"
-	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/daemons"
-	"github.com/EGaaS/go-egaas-mvp/packages/exchangeapi"
-	"github.com/EGaaS/go-egaas-mvp/packages/language"
-	logtools "github.com/EGaaS/go-egaas-mvp/packages/log"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/parser"
-	"github.com/EGaaS/go-egaas-mvp/packages/schema"
-	"github.com/EGaaS/go-egaas-mvp/packages/static"
-	"github.com/EGaaS/go-egaas-mvp/packages/stopdaemons"
-	"github.com/EGaaS/go-egaas-mvp/packages/template"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/apiv2"
+	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/daemons"
+	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
+	"github.com/AplaProject/go-apla/packages/exchangeapi"
+	"github.com/AplaProject/go-apla/packages/language"
+	logtools "github.com/AplaProject/go-apla/packages/log"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/parser"
+	"github.com/AplaProject/go-apla/packages/schema"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/static"
+	"github.com/AplaProject/go-apla/packages/utils"
+
 	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
@@ -177,8 +177,8 @@ func delPidFile() {
 }
 
 func rollbackToBlock(blockID int64) error {
-	if err := template.LoadContracts(nil); err != nil {
-		log.Errorf(`Load Contracts`, err)
+	if err := smart.LoadContracts(nil); err != nil {
+		log.Errorf(`Load Contracts: %s`, err)
 		return err
 	}
 	parser := new(parser.Parser)
@@ -293,11 +293,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				"db_name": config.ConfigIni["db_name"], "type": consts.DBError}).Error("can't init gorm")
 			Exit(1)
 		}
-
-		err = syspar.SysUpdate()
-		if err != nil {
-			Exit(1)
-		}
 	}
 
 	// create first block
@@ -311,7 +306,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	exchangeapi.InitAPI()
 	log.Info("Initialized exchange API")
 
-	// kill previously run eGaaS
+	// kill previously run apla
 	if !utils.Mobile() {
 		killOld()
 	}
@@ -357,32 +352,14 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	BrowserHTTPHost, _, ListenHTTPHost := GetHTTPHost()
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		daemons.StartDaemons()
+		err := daemonsctl.RunAllDaemons()
 		log.Info("Daemons started")
-
-		daemonsTable := make(map[string]string)
-		go func() {
-			for {
-				daemonNameAndTime := <-daemons.MonitorDaemonCh
-				daemonsTable[daemonNameAndTime[0]] = daemonNameAndTime[1]
-				if time.Now().Unix()%10 == 0 {
-					log.WithFields(log.Fields{"daemons_table": daemonsTable}).Debug("trying to startup daemons")
-				}
-			}
-		}()
-
-		// signals for daemons to exit
-		go stopdaemons.WaitStopTime()
-
-		if err := template.LoadContracts(nil); err != nil {
-			log.Errorf("Load Contracts error: %s", err)
-			Exit(1)
+		if err != nil {
+			os.Exit(1)
 		}
-		tcpListener()
-		log.Debugf("tcp listener started")
 	}
 
-	stopdaemons.WaintForSignals()
+	daemons.WaitForSignals()
 
 	go func() {
 		time.Sleep(time.Second)
@@ -430,5 +407,5 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// (they are entered from the 'connections' daemon and from those who connected to the node by their own)
 	// go utils.ChatOutput(utils.ChatNewTx)
 
-	time.Sleep(time.Second * 3600 * 24 * 90)
+	select {}
 }

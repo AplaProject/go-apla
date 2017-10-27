@@ -18,6 +18,7 @@ package parser
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -26,16 +27,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	"github.com/EGaaS/go-egaas-mvp/packages/language"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/script"
-	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/template"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/language"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/templatev2"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	"github.com/jinzhu/gorm"
 	"github.com/shopspring/decimal"
@@ -49,7 +50,7 @@ var (
 		"DBUpdateExt":    struct{}{},
 		"DBGetList":      struct{}{},
 		"DBGetTable":     struct{}{},
-		"DBString":       struct{}{},
+		"DBSelect":       struct{}{},
 		"DBInt":          struct{}{},
 		"DBRowExt":       struct{}{},
 		"DBRow":          struct{}{},
@@ -93,6 +94,16 @@ var (
 		"FlushContract":     50,
 		"Eval":              10,
 		"Activate":          10,
+		"CreateEcosystem":   100,
+		"RollbackEcosystem": 100,
+		"TableConditions":   100,
+		"CreateTable":       100,
+		"RollbackTable":     100,
+		"PermTable":         100,
+		"ColumnCondition":   50,
+		"CreateColumn":      50,
+		"RollbackColumn":    50,
+		"PermColumn":        50,
 	}
 )
 
@@ -117,7 +128,7 @@ func init() {
 		"DBUpdateExt":        DBUpdateExt,
 		"DBGetList":          DBGetList,
 		"DBGetTable":         DBGetTable,
-		"DBString":           DBString,
+		"DBSelect":           DBSelect,
 		"DBInt":              DBInt,
 		"DBRowExt":           DBRowExt,
 		"DBRow":              DBRow,
@@ -133,7 +144,6 @@ func init() {
 		"DBAmount":           DBAmount,
 		"ContractAccess":     ContractAccess,
 		"ContractConditions": ContractConditions,
-		"NewState":           NewStateFunc,
 		"StateVal":           StateVal,
 		"SysParamString":     SysParamString,
 		"SysParamInt":        SysParamInt,
@@ -163,6 +173,14 @@ func init() {
 		"FindEcosystem":      FindEcosystem,
 		"CreateEcosystem":    CreateEcosystem,
 		"RollbackEcosystem":  RollbackEcosystem,
+		"CreateTable":        CreateTable,
+		"RollbackTable":      RollbackTable,
+		"PermTable":          PermTable,
+		"TableConditions":    TableConditions,
+		"ColumnCondition":    ColumnCondition,
+		"CreateColumn":       CreateColumn,
+		"RollbackColumn":     RollbackColumn,
+		"PermColumn":         PermColumn,
 		"UpdateLang":         UpdateLang,
 		"Size":               Size,
 		"Substr":             Substr,
@@ -198,7 +216,7 @@ func (p *Parser) GetContractLimit() (ret int64) {
 		}
 		p.TxCost = maxSumInt
 	} else {
-		cost, _ := template.StateParam(p.TxSmart.StateID, `max_sum`)
+		cost, _ := templatev2.StateParam(p.TxSmart.StateID, `max_sum`)
 		if len(cost) > 0 {
 			costInt, err := strconv.ParseInt(cost, 10, 64)
 			if err != nil {
@@ -259,6 +277,12 @@ func (p *Parser) CallContract(flags int) (err error) {
 	)
 	payWallet := &model.Key{}
 	p.TxContract.Extend = p.getExtend()
+	var price int64
+
+	methods := []string{`init`, `conditions`, `action`, `rollback`}
+	p.TxContract.StackCont = []string{p.TxContract.Name}
+	(*p.TxContract.Extend)[`stack_cont`] = StackCont
+
 	if flags&smart.CallRollback == 0 && (flags&smart.CallAction) != 0 {
 		toID = p.BlockData.WalletID
 		fromID = p.TxSmart.UserID
@@ -297,7 +321,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		}
 		if p.TxSmart.StateID > 0 {
 			if p.TxSmart.TokenEcosystem == 0 {
-				p.TxSmart.TokenEcosystem = p.TxSmart.StateID
+				p.TxSmart.TokenEcosystem = 1
 			}
 			fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(p.TxSmart.TokenEcosystem))
 			if err != nil {
@@ -340,38 +364,30 @@ func (p *Parser) CallContract(flags int) (err error) {
 				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
 				return err
 			}
+			if cprice := p.TxContract.GetFunc(`price`); cprice != nil {
+				var ret []interface{}
+				if ret, err = smart.Run(cprice, nil, p.TxContract.Extend); err != nil {
+					return err
+				} else if len(ret) == 1 {
+					if _, ok := ret[0].(int64); !ok {
+						return fmt.Errorf(`Wrong result type of price function`)
+					}
+					price = ret[0].(int64)
+				} else {
+					return fmt.Errorf(`Wrong type of price function`)
+				}
+			}
 			sizeFuel = syspar.GetSizeFuel() * int64(len(p.TxSmart.Data)) / 1024
-			if amount.Cmp(decimal.New(sizeFuel, 0).Mul(fuelRate)) <= 0 {
-				log.Error("current balance is not enough")
+			if amount.Cmp(decimal.New(sizeFuel+price, 0).Mul(fuelRate)) <= 0 {
 				return fmt.Errorf(`current balance is not enough`)
 			}
 		}
 	}
-
-	methods := []string{`init`, `conditions`, `action`, `rollback`}
-	p.TxContract.StackCont = []string{p.TxContract.Name}
-	(*p.TxContract.Extend)[`stack_cont`] = StackCont
-	before := (*p.TxContract.Extend)[`txcost`].(int64)
+	before := (*p.TxContract.Extend)[`txcost`].(int64) + price
 
 	// Payment for the size
 	(*p.TxContract.Extend)[`txcost`] = (*p.TxContract.Extend)[`txcost`].(int64) - sizeFuel
 
-	var price int64 = -1
-	if cprice := p.TxContract.GetFunc(`price`); cprice != nil {
-		var ret []interface{}
-		if ret, err = smart.Run(cprice, nil, p.TxContract.Extend); err != nil {
-			return err
-		} else if len(ret) == 1 {
-			if _, ok := ret[0].(int64); !ok {
-				log.WithFields(log.Fields{"type": consts.TypeError}).Error("wrong result type of price function")
-				return fmt.Errorf(`Wrong result type of price function`)
-			}
-			price = ret[0].(int64)
-		} else {
-			log.WithFields(log.Fields{"type": consts.TypeError}).Error("wrong result type of price function")
-			return fmt.Errorf(`Wrong type of price function`)
-		}
-	}
 	p.TxContract.FreeRequest = false
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {
@@ -382,6 +398,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			p.TxContract.Called = 1 << i
 			_, err = smart.Run(cfunc, nil, p.TxContract.Extend)
 			if err != nil {
+				before -= price
 				break
 			}
 		}
@@ -419,6 +436,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 
 // DBInsert inserts a record into the specified database table
 func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) { // map[string]interface{}) {
+	tblname = TableName(p, tblname)
 	if err = p.AccessTable(tblname, "insert"); err != nil {
 		return
 	}
@@ -480,6 +498,7 @@ func checkReport(tblname string) error {
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
 	qcost = 0
+	tblname = TableName(p, tblname)
 	if err = checkReport(tblname); err != nil {
 		return
 	}
@@ -495,6 +514,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
 	qcost = 0
 	var isIndex bool
+	tblname = TableName(p, tblname)
 	if err = checkReport(tblname); err != nil {
 		return
 	}
@@ -558,7 +578,8 @@ func HexToBytes(hexdata string) ([]byte, error) {
 }
 
 // DBInt returns the numeric value of the column for the record with the specified id
-func DBInt(tblname string, name string, id int64) (int64, int64, error) {
+func DBInt(p *Parser, tblname string, name string, id int64) (int64, int64, error) {
+	tblname = TableName(p, tblname)
 	if err := checkReport(tblname); err != nil {
 		return 0, 0, err
 	}
@@ -588,7 +609,9 @@ func getBytea(table string) map[string]bool {
 }
 
 // DBStringExt returns the value of 'name' column for the record with the specified value of the 'idname' field
-func DBStringExt(tblname string, name string, id interface{}, idname string) (int64, string, error) {
+func DBStringExt(p *Parser, tblname string, name string, id interface{}, idname string) (int64, string, error) {
+	tblname = TableName(p, tblname)
+
 	if err := checkReport(tblname); err != nil {
 		return 0, ``, err
 	}
@@ -623,10 +646,12 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (in
 }
 
 // DBIntExt returns the numeric value of the 'name' column for the record with the specified value of the 'idname' field
-func DBIntExt(tblname string, name string, id interface{}, idname string) (cost int64, ret int64, err error) {
+func DBIntExt(p *Parser, tblname string, name string, id interface{}, idname string) (cost int64, ret int64, err error) {
 	var val string
 	var qcost int64
-	qcost, val, err = DBStringExt(tblname, name, id, idname)
+
+	tblname = TableName(p, tblname)
+	qcost, val, err = DBStringExt(p, tblname, name, id, idname)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -647,7 +672,7 @@ func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, i
 		return 0, fmt.Errorf(`DBFreeRequest can be executed only once`)
 	}
 	p.TxContract.FreeRequest = true
-	cost, ret, err := DBStringExt(tblname, idname, id, idname)
+	cost, ret, err := DBStringExt(p, tblname, idname, id, idname)
 	if err != nil {
 		return 0, err
 	}
@@ -711,6 +736,14 @@ func DBIntWhere(tblname string, name string, where string, params ...interface{}
 // StateTable adds a prefix with the state number to the table name
 func StateTable(p *Parser, tblname string) string {
 	return fmt.Sprintf("%d_%s", p.TxStateID, tblname)
+}
+
+func TableName(p *Parser, tblname string) string {
+	tblname = strings.Trim(converter.EscapeName(tblname), `"`)
+	if tblname[0] >= '1' && tblname[0] <= '9' && strings.Contains(tblname, `_`) {
+		return tblname
+	}
+	return fmt.Sprintf(`%d_%s`, p.TxStateID, tblname)
 }
 
 // StateTableTx adds a prefix with the state number to the table name
@@ -844,7 +877,7 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 
 // StateVal returns the value of the specified parameter for the state
 func StateVal(p *Parser, name string) string {
-	val, _ := template.StateParam(int64(p.TxStateID), name)
+	val, _ := templatev2.StateParam(int64(p.TxStateID), name)
 	return val
 }
 
@@ -1112,21 +1145,6 @@ func LangRes(p *Parser, idRes, lang string) string {
 }
 
 func checkWhere(tblname string, where string, order string) (string, string, error) {
-	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
-	ret := re.FindAllStringSubmatch(where, -1)
-
-	for _, iret := range ret {
-		if len(iret) != 2 {
-			continue
-		}
-		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
-			return ``, ``, err
-		} else if !isIndex {
-			log.WithFields(log.Fields{"column": iret[1]}).Error("there is no index")
-			return ``, ``, fmt.Errorf(`there is no index on %s`, iret[1])
-		}
-	}
 	if len(order) > 0 {
 		order = ` order by ` + converter.EscapeName(order)
 	}
@@ -1199,15 +1217,80 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 	return 0, result, err
 }
 
-// NewStateFunc creates a new country
-func NewStateFunc(p *Parser, country, currency string) (err error) {
-	newStateParser := NewStateParser{p, nil}
-	_, err = newStateParser.Main(country, currency)
-	return
+// DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
+func DBSelect(p *Parser, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
+	where string, params []interface{}) (int64, []interface{}, error) {
+
+	var (
+		err  error
+		rows *sql.Rows
+	)
+	if err = checkReport(tblname); err != nil {
+		return 0, nil, err
+	}
+	if len(columns) == 0 {
+		columns = `*`
+	}
+	if len(order) == 0 {
+		order = `id`
+	}
+	where = strings.Replace(converter.Escape(where), `$`, `?`, -1)
+	if id > 0 {
+		where = fmt.Sprintf(`id='%d'`, id)
+	}
+	if limit == 0 {
+		limit = 25
+	}
+	if limit < 0 || limit > 250 {
+		limit = 250
+	}
+	if ecosystem == 0 {
+		ecosystem = p.TxSmart.StateID
+	}
+	if tblname[0] < '1' || tblname[0] > '9' || !strings.Contains(tblname, `_`) {
+		tblname = fmt.Sprintf(`%d_%s`, ecosystem, tblname)
+	}
+
+	rows, err = model.DBConn.Table(tblname).Select(columns).Where(where, params...).Order(order).
+		Offset(offset).Limit(limit).Rows()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting rows from table")
+		return 0, nil, err
+	}
+	defer rows.Close()
+	cols, err := rows.Columns()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rows columns")
+		return 0, nil, err
+	}
+	values := make([][]byte, len(cols))
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+	result := make([]interface{}, 0, 50)
+	for rows.Next() {
+		err = rows.Scan(scanArgs...)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("scanning next row")
+			return 0, nil, err
+		}
+		row := make(map[string]string)
+		for i, col := range values {
+			var value string
+			if col != nil {
+				value = string(col)
+			}
+			row[cols[i]] = value
+		}
+		result = append(result, reflect.ValueOf(row).Interface())
+	}
+	return 0, result, nil
 }
 
 // DBRowExt returns one row from the table StringExt
-func DBRowExt(tblname string, columns string, id interface{}, idname string) (int64, map[string]string, error) {
+func DBRowExt(p *Parser, tblname string, columns string, id interface{}, idname string) (int64, map[string]string, error) {
+	tblname = TableName(p, tblname)
 	if err := checkReport(tblname); err != nil {
 		return 0, nil, err
 	}
@@ -1243,7 +1326,8 @@ func DBRowExt(tblname string, columns string, id interface{}, idname string) (in
 }
 
 // DBRow returns one row from the table StringExt
-func DBRow(tblname string, columns string, id int64) (int64, map[string]string, error) {
+func DBRow(p *Parser, tblname string, columns string, id int64) (int64, map[string]string, error) {
+	tblname = TableName(p, tblname)
 
 	if err := checkReport(tblname); err != nil {
 		return 0, nil, err
@@ -1334,11 +1418,14 @@ func PrefixTable(p *Parser, tablename string, global int64) string {
 
 // EvalCondition gets the condition and check it
 func EvalCondition(p *Parser, table, name, condfield string) error {
-	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM `+converter.EscapeName(table)+
-		` WHERE name = ?`, name).String()
+	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM "`+TableName(p, table)+
+		`" WHERE name = ?`, name).String()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
 		return err
+	}
+	if len(conditions) == 0 {
+		return fmt.Errorf(`Record %s has not been found`, name)
 	}
 	return Eval(p, conditions)
 }
@@ -1459,6 +1546,7 @@ func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
 	_, id, err := p.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
 		name,
 	}, `system_states`, nil, nil, true)
+
 	if err != nil {
 		return 0, err
 	}
@@ -1468,6 +1556,13 @@ func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
 		return 0, err
 	}
 	model.ExecSchemaEcosystem(idInt, wallet, name)
+	if err != nil {
+		return 0, err
+	}
+	err = smart.LoadContract(p.DbTransaction, id)
+	if err != nil {
+		return 0, err
+	}
 	return int64(idInt), nil
 }
 
@@ -1498,7 +1593,7 @@ func RollbackEcosystem(p *Parser) error {
 		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
 	}
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
-		`contracts`, `parameters`} {
+		`contracts`, `parameters`, `blocks`, `history`, `keys`} {
 		err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
@@ -1513,4 +1608,422 @@ func RollbackEcosystem(p *Parser) error {
 	}
 	ssToDel := &model.SystemState{ID: lastID}
 	return ssToDel.Delete(p.DbTransaction)
+}
+
+func TableConditions(p *Parser, name, columns, permissions string) (err error) {
+	isEdit := len(columns) == 0
+
+	if isEdit {
+		if p.TxContract.Name != `@1EditTable` {
+			return fmt.Errorf(`TableConditions can be only called from @1EditTable`)
+		}
+	} else if p.TxContract.Name != `@1NewTable` {
+		return fmt.Errorf(`TableConditions can be only called from @1NewTable`)
+	}
+
+	prefix := converter.Int64ToStr(p.TxSmart.StateID)
+	t := &model.Table{}
+	t.SetTablePrefix(prefix)
+	exists, err := t.ExistsByName(name)
+	if err != nil {
+		return err
+	}
+	if isEdit {
+		if !exists {
+			log.WithFields(log.Fields{"table_name": name}).Error("table does not exists")
+			return fmt.Errorf(`table %s doesn't exist`, name)
+		}
+	} else if exists {
+		log.WithFields(log.Fields{"table_name": name}).Error("table exists")
+		return fmt.Errorf(`table %s exists`, name)
+	}
+
+	var perm map[string]string
+	err = json.Unmarshal([]byte(permissions), &perm)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling permissions from json")
+		return
+	}
+	if len(perm) != 3 {
+		log.WithFields(log.Fields{"size": len(perm)}).Error("permissions must contain insert, new_column, and update")
+		return fmt.Errorf(`Permissions must contain "insert", "new_column", "update"`)
+	}
+	for _, v := range []string{`insert`, `update`, `new_column`} {
+		if len(perm[v]) == 0 {
+			log.WithFields(log.Fields{"condition_type": v}).Error("condition is empty")
+			return fmt.Errorf(`%v condition is empty`, v)
+		}
+		if err = smart.CompileEval(perm[v], uint32(p.TxSmart.StateID)); err != nil {
+			return err
+		}
+	}
+	if isEdit {
+		if err = p.AccessTable(name, `update`); err != nil {
+			if err = p.AccessRights(`changing_tables`, false); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	var cols []map[string]string
+	err = json.Unmarshal([]byte(columns), &cols)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns permissions from json")
+		return
+	}
+	if len(cols) == 0 {
+		log.Error("Columns are empty")
+		return fmt.Errorf(`len(cols) == 0`)
+	}
+	if len(cols) > syspar.GetMaxColumns() {
+		log.WithFields(log.Fields{"size": len(cols), "max_size": syspar.GetMaxColumns()}).Error("Too many columns")
+		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
+	}
+	var indexes int
+	for _, data := range cols {
+		if len(data[`name`]) == 0 || len(data[`type`]) == 0 {
+			log.Error("wrong column")
+			return fmt.Errorf(`worng column`)
+		}
+		itype := data[`type`]
+		if itype != `varchar` && itype != `number` && itype != `datetime` && itype != `text` &&
+			itype != `bytea` && itype != `double` && itype != `money` && itype != `character` {
+			return fmt.Errorf(`incorrect type`)
+		}
+		if len(data[`conditions`]) == 0 {
+			return fmt.Errorf(`Conditions is empty`)
+		}
+		if err = smart.CompileEval(data[`conditions`], uint32(p.TxSmart.StateID)); err != nil {
+			return err
+		}
+		if data[`index`] == `1` {
+			if itype != `varchar` && itype != `number` && itype != `datetime` {
+				return fmt.Errorf(`incorrect index type`)
+			}
+			indexes++
+		}
+
+	}
+	if indexes > syspar.GetMaxIndexes() {
+		log.WithFields(log.Fields{"size": indexes, "max_size": syspar.GetMaxIndexes}).Error("Too many indexes")
+		return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
+	}
+
+	if err := p.AccessRights("new_table", false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateTable(p *Parser, name string, columns, permissions string) error {
+	var err error
+	if p.TxContract.Name != `@1NewTable` {
+		return fmt.Errorf(`CreateTable can be only called from @1NewTable`)
+	}
+	prefix := converter.Int64ToStr(p.TxSmart.StateID)
+
+	tableName := prefix + "_" + name
+
+	var cols []map[string]string
+	err = json.Unmarshal([]byte(columns), &cols)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns permissions from json")
+		return err
+	}
+	indexes := make([]string, 0)
+
+	colsSQL := ""
+	colperm := make(map[string]string)
+	colList := make(map[string]bool)
+	for _, data := range cols {
+		colname := strings.ToLower(data[`name`])
+		if colList[colname] {
+			log.WithFields(log.Fields{"column_name": data}).Error("Duplicate column")
+			return fmt.Errorf(`There are the same columns`)
+		}
+		colList[colname] = true
+		colType := ``
+		colDef := ``
+		switch data[`type`] {
+		case "varchar":
+			colType = `varchar(102400)`
+		case "character":
+			colType = `character(1)`
+			colDef = `NOT NULL DEFAULT '0'`
+		case "number":
+			colType = `bigint`
+			colDef = `NOT NULL DEFAULT '0'`
+		case "datetime":
+			colType = `timestamp`
+		case "double":
+			colType = `double precision`
+		case "money":
+			colType = `decimal (30, 0)`
+			colDef = `NOT NULL DEFAULT '0'`
+		default:
+			colType = data[`type`]
+		}
+		colsSQL += `"` + colname + `" ` + colType + " " + colDef + " ,\n"
+		colperm[colname] = data[`conditions`]
+		if data[`index`] == "1" {
+			indexes = append(indexes, colname)
+		}
+	}
+	colout, err := json.Marshal(colperm)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling column permissions")
+		return err
+	}
+	err = model.CreateTable(p.DbTransaction, tableName, colsSQL)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating table")
+		return err
+	}
+
+	for _, index := range indexes {
+		err := model.CreateIndex(p.DbTransaction, tableName+"_"+index, tableName, index)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating index")
+			return err
+		}
+	}
+	var perm map[string]string
+	permlist := make(map[string]string)
+	err = json.Unmarshal([]byte(permissions), &perm)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling permissions")
+		return err
+	}
+	for _, v := range []string{`insert`, `update`, `new_column`} {
+		permlist[v] = perm[v]
+	}
+	permout, err := json.Marshal(permlist)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("unmarshalling permissions")
+		return err
+	}
+	t := &model.Table{
+		Name:        name,
+		Columns:     string(colout),
+		Permissions: string(permout),
+		Conditions:  `ContractAccess("@1EditTable")`,
+	}
+	t.SetTablePrefix(prefix)
+	err = t.Create(p.DbTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating table")
+		return err
+	}
+	return nil
+}
+
+func RollbackTable(p *Parser, name string) error {
+	if p.TxContract.Name != `@1NewTable` {
+		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
+	}
+	err := model.DropTable(p.DbTransaction, fmt.Sprintf("%d_%s", p.TxSmart.StateID, name))
+	t := &model.Table{Name: name}
+	err = t.Delete()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
+		return err
+	}
+	return nil
+}
+
+func PermTable(p *Parser, name, permissions string) error {
+	if p.TxContract.Name != `@1EditTable` {
+		return fmt.Errorf(`EditTable can be only called from @1EditTable`)
+	}
+	var perm map[string]string
+	permlist := make(map[string]string)
+	err := json.Unmarshal([]byte(permissions), &perm)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling table permissions to json")
+		return err
+	}
+	for _, v := range []string{`insert`, `update`, `new_column`} {
+		permlist[v] = perm[v]
+	}
+	permout, err := json.Marshal(permlist)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling permission list to json")
+		return err
+	}
+	_, _, err = p.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
+		fmt.Sprintf(`%d_tables`, p.TxSmart.StateID), []string{`name`}, []string{name}, true)
+	return err
+}
+
+func ColumnCondition(p *Parser, tableName, name, coltype, permissions, index string) error {
+	if p.TxContract.Name != `@1NewColumn` && p.TxContract.Name != `@1EditColumn` {
+		log.Error("ColumnConditions can be only called from @1NewColumn")
+		return fmt.Errorf(`ColumnCondition can be only called from @1NewColumn`)
+	}
+	isExist := p.TxContract.Name == `@1EditColumn`
+	tEx := &model.Table{}
+	tEx.SetTablePrefix(converter.Int64ToStr(p.TxSmart.StateID))
+	name = strings.ToLower(name)
+
+	exists, err := tEx.IsExistsByPermissionsAndTableName(name, tableName)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("querying that table is exists by permissions and table name")
+		return err
+	}
+	if isExist {
+		if !exists {
+			log.WithFields(log.Fields{"column_name": name}).Error("column does not exists")
+			return fmt.Errorf(`column %s doesn't exists`, name)
+		}
+	} else if exists {
+		log.WithFields(log.Fields{"column_name": name}).Error("column exists")
+		return fmt.Errorf(`column %s exists`, name)
+	}
+	if len(permissions) == 0 {
+		log.Error("Permissions are empty")
+		return fmt.Errorf(`Permissions are empty`)
+	}
+	if err = smart.CompileEval(permissions, uint32(p.TxSmart.StateID)); err != nil {
+		return err
+	}
+	tblName := fmt.Sprintf("%d_%s", p.TxSmart.StateID, tableName)
+	if isExist {
+		return p.AccessTable(tblName, `update`)
+	}
+	count, err := model.GetColumnCount(tblName)
+	if count >= int64(syspar.GetMaxColumns()) {
+		log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxColumns()}).Error("Too many columns")
+		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
+	}
+	if coltype != `varchar` && coltype != `number` && coltype != `datetime` && coltype != `character` &&
+		coltype != `text` && coltype != `bytea` && coltype != `double` && coltype != `money` {
+		log.WithFields(log.Fields{"column_type": coltype}).Error("Unknown column type")
+		return fmt.Errorf(`incorrect type`)
+	}
+	if index == `1` {
+		count, err := model.NumIndexes(tblName)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("num indexes")
+			return err
+		}
+		if count >= syspar.GetMaxIndexes() {
+			log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxIndexes()}).Error("Too many indexes")
+			return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
+		}
+		if coltype != `varchar` && coltype != `number` && coltype != `datetime` {
+			log.WithFields(log.Fields{"column_type": coltype}).Error("incorrect index type")
+			return fmt.Errorf(`incorrect index type`)
+		}
+	}
+
+	if err := p.AccessTable(tblName, "new_column"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func CreateColumn(p *Parser, tableName, name, coltype, permissions, index string) error {
+	if p.TxContract.Name != `@1NewColumn` {
+		log.Error("CreateColumn can be only called from @1NewColumn")
+		return fmt.Errorf(`CreateColumn can be only called from @1NewColumn`)
+	}
+	name = strings.ToLower(name)
+	tblname := fmt.Sprintf(`%d_%s`, p.TxSmart.StateID, tableName)
+
+	colType := ``
+	switch coltype {
+	case "varchar":
+		colType = `varchar(102400)`
+	case "number":
+		colType = `bigint NOT NULL DEFAULT '0'`
+	case "character":
+		colType = `character(1) NOT NULL DEFAULT '0'`
+	case "datetime":
+		colType = `timestamp`
+	case "double":
+		colType = `double precision`
+	case "money":
+		colType = `decimal (30, 0) NOT NULL DEFAULT '0'`
+	default:
+		colType = coltype
+	}
+	err := model.AlterTableAddColumn(p.DbTransaction, tblname, name, colType)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("adding column to the table")
+		return err
+	}
+
+	if index == "1" {
+		err = model.CreateIndex(p.DbTransaction, tblname+"_"+name+"_index", tblname, name)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating index for table")
+			return err
+		}
+	}
+	tables := fmt.Sprintf(`%d_tables`, p.TxSmart.StateID)
+	type cols struct {
+		Columns string
+	}
+	temp := &cols{}
+	err = model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting columns from the table")
+		return err
+	}
+	var perm map[string]string
+	err = json.Unmarshal([]byte(temp.Columns), &perm)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns to json")
+		return err
+	}
+	perm[name] = permissions
+	permout, err := json.Marshal(perm)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("marshalling columns permissions to json")
+		return err
+	}
+	_, _, err = p.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
+		tables, []string{`name`}, []string{tableName}, true)
+	return nil
+}
+
+func RollbackColumn(p *Parser, tableName, name string) error {
+	if p.TxContract.Name != `@1NewColumn` {
+		return fmt.Errorf(`RollbackColumn can be only called from @1NewColumn`)
+	}
+	return model.AlterTableDropColumn(fmt.Sprintf(`%d_%s`, p.TxSmart.StateID, tableName), name)
+}
+
+func PermColumn(p *Parser, tableName, name, permissions string) error {
+	if p.TxContract.Name != `@1EditColumn` {
+		return fmt.Errorf(`EditColumn can be only called from @1EditColumn`)
+	}
+	name = strings.ToLower(name)
+	tables := fmt.Sprintf(`%d_tables`, p.TxSmart.StateID)
+	type cols struct {
+		Columns string
+	}
+	temp := &cols{}
+	err := model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("querying columns by table name")
+		return err
+	}
+	var perm map[string]string
+	err = json.Unmarshal([]byte(temp.Columns), &perm)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns permissions from json")
+		return err
+	}
+	perm[name] = permissions
+	permout, err := json.Marshal(perm)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling column permissions to json")
+		return err
+	}
+	_, _, err = p.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
+		tables, []string{`name`}, []string{tableName}, true)
+	return err
 }

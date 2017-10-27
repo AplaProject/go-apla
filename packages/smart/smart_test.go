@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"testing"
 	//	"time"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type TestSmart struct {

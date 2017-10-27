@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/jinzhu/gorm"
 )
 

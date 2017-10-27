@@ -26,8 +26,8 @@ func (ts *TransactionStatus) UpdateBlockID(transaction *DbTransaction, newBlockI
 	return GetDB(transaction).Model(&TransactionStatus{}).Where("hash = ?", transactionHash).Update("block_id", newBlockID).Error
 }
 
-func (ts *TransactionStatus) UpdateBlockMsg(newBlockID int64, msg string, transactionHash []byte) error {
-	return DBConn.Model(&TransactionStatus{}).Where("hash = ?", transactionHash).Updates(
+func (ts *TransactionStatus) UpdateBlockMsg(transaction *DbTransaction, newBlockID int64, msg string, transactionHash []byte) error {
+	return GetDB(transaction).Model(&TransactionStatus{}).Where("hash = ?", transactionHash).Updates(
 		map[string]interface{}{"block_id": newBlockID, "error": msg}).Error
 }
 

@@ -19,58 +19,70 @@ package apiv2
 import (
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/templatev2"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/templatev2"
+	log "github.com/sirupsen/logrus"
 )
 
 type contentResult struct {
-	Tree string `json:"tree"`
+	Menu     string `json:"menu,omitempty"`
+	MenuTree string `json:"menutree,omitempty"`
+	Title    string `json:"title,omitempty"`
+	Tree     string `json:"tree"`
 }
 
-func initVars(data *apiData) *map[string]string {
+func initVars(r *http.Request, data *apiData) *map[string]string {
 	vars := make(map[string]string)
+	for name := range r.Form {
+		vars[name] = r.FormValue(name)
+	}
 	vars[`state`] = converter.Int64ToStr(data.state)
 	vars[`wallet`] = converter.Int64ToStr(data.wallet)
+	vars[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	return &vars
 }
 
 func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var query string
-	params := make(map[string]string)
-	page := data.params[`name`].(string)
-	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
-	query = `SELECT value FROM "` + converter.Int64ToStr(data.state) + `_pages" WHERE name = ?`
-	pattern, err := model.Single(query, page).String()
+	query := `SELECT value,menu FROM "` + converter.Int64ToStr(data.state) + `_pages" WHERE name = ?`
+	pattern, err := model.GetOneRow(query, data.params[`name`].(string)).String()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
 		return err
 	}
-	ret := templatev2.Template2JSON(pattern, false, initVars(data))
-	data.result = &contentResult{Tree: string(ret)}
+	if len(pattern) == 0 {
+		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+	}
+	ret := templatev2.Template2JSON(pattern[`value`], false, initVars(r, data))
+
+	menu, err := model.Single(`SELECT value FROM "`+converter.Int64ToStr(data.state)+
+		`_menu" WHERE name = ?`, pattern[`menu`]).String()
+	retmenu := templatev2.Template2JSON(menu, false, initVars(r, data))
+
+	data.result = &contentResult{Tree: string(ret), Menu: pattern[`menu`], MenuTree: string(retmenu)}
 	return nil
 }
 
 func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var query string
-	params := make(map[string]string)
-	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
-	query = `SELECT value FROM "` + converter.Int64ToStr(data.state) + `_menu" WHERE name = ?`
-	pattern, err := model.Single(query, data.params[`name`].(string)).String()
+	query := `SELECT value, title FROM "` + converter.Int64ToStr(data.state) + `_menu" WHERE name = ?`
+	pattern, err := model.GetOneRow(query, data.params[`name`].(string)).String()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
-	ret := templatev2.Template2JSON(pattern, false, initVars(data))
-	data.result = &contentResult{Tree: string(ret)}
+	if len(pattern) == 0 {
+		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+	}
+
+	ret := templatev2.Template2JSON(pattern[`value`], false, initVars(r, data))
+	data.result = &contentResult{Tree: string(ret), Title: pattern[`title`]}
 	return nil
 }
 
 func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	ret := templatev2.Template2JSON(data.params[`template`].(string), false, initVars(data))
+	ret := templatev2.Template2JSON(data.params[`template`].(string), false, initVars(r, data))
 	data.result = &contentResult{Tree: string(ret)}
 	return nil
 }

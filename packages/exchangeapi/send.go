@@ -23,16 +23,15 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/utils"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/boltdb/bolt"
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 // Send is a answer structure for send handle function
@@ -41,7 +40,6 @@ type Send struct {
 }
 
 func send(r *http.Request) interface{} {
-	logger.LogDebug(consts.FuncStarted, "")
 	var (
 		result Send
 		priv   []byte
@@ -49,26 +47,26 @@ func send(r *http.Request) interface{} {
 
 	sender := converter.StringToAddress(r.FormValue(`sender`))
 	if sender == 0 {
-		logger.LogInfo(consts.APIParamsError, "sender is invalid")
+		log.Info("sender is invalid")
 		result.Error = `Sender is invalid`
 		return result
 	}
 	recipient := converter.StringToAddress(r.FormValue(`recipient`))
 	if recipient == 0 {
-		logger.LogInfo(consts.APIParamsError, "Recepient is invalid")
+		log.Info("recipient is invalid")
 		result.Error = `Recipient is invalid`
 		return result
 	}
 	money := r.FormValue(`amount`)
 	re := regexp.MustCompile(`^\d+$`)
 	if !re.Match([]byte(money)) {
-		logger.LogInfo(consts.APIParamsError, fmt.Sprintf(`The value of money %s is not valid`, money))
+		log.Info("The value of money is not valid")
 		result.Error = fmt.Sprintf(`The value of money %s is not valid`, money)
 		return result
 	}
 	amount, err := decimal.NewFromString(money)
 	if err != nil {
-		logger.LogError(consts.APIParamsError, err)
+		log.Error(err)
 		result.Error = err.Error()
 		return result
 	}
@@ -94,16 +92,15 @@ func send(r *http.Request) interface{} {
 	systemParam := &model.SystemParameter{}
 	err = systemParam.Get("fuel_rate")
 	if err != nil {
-		logger.LogError(consts.DBError, err)
 		log.Fatal(err)
 	}
 	fuelRate, err := decimal.NewFromString(systemParam.Value)
 	if err != nil {
-		logger.LogError(consts.SystemParamsError, err)
+		log.Error(err)
 		return err
 	}
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
-		logger.LogInfo(consts.SystemParamsError, `fuel rate must be greater than 0`)
+		log.Error("fuel rate must be greater than 0")
 		result.Error = `fuel rate must be greater than 0`
 		return result
 	}
@@ -112,18 +109,18 @@ func send(r *http.Request) interface{} {
 
 	total, err := model.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, sender).String()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		log.Error(err)
 		result.Error = err.Error()
 		return result
 	}
 	totalAmount, err := decimal.NewFromString(total)
 	if err != nil {
-		logger.LogError(consts.IncompatibleTypesError, err)
+		log.Error(err)
 		result.Error = err.Error()
 		return result
 	}
 	if totalAmount.Cmp(amount.Add(commission)) < 0 {
-		logger.LogInfo(consts.RequestConditionError, fmt.Sprintf(`There is not enough money. %v is less than %v`, totalAmount, amount.Add(commission)))
+		log.Info("not enought money")
 		result.Error = fmt.Sprintf(`There is not enough money. %v is less than %v`, totalAmount, amount.Add(commission))
 		return result
 	}
@@ -134,7 +131,7 @@ func send(r *http.Request) interface{} {
 		wallet, amount.String(), commission.String(), `api`)
 	signature, err := crypto.Sign(hex.EncodeToString(priv), forSign)
 	if err != nil {
-		logger.LogError(consts.CryptoError, err)
+		log.Error(err)
 		result.Error = err.Error()
 		return result
 	}
@@ -153,7 +150,7 @@ func send(r *http.Request) interface{} {
 	data = append(data, converter.EncodeLengthPlusData([]byte(`api`))...)
 	pub, err := crypto.PrivateToPublic(priv)
 	if err != nil {
-		logger.LogError(consts.CryptoError, err)
+		log.Error(err)
 		result.Error = "Cryptographic error"
 		return result
 	}
@@ -161,7 +158,7 @@ func send(r *http.Request) interface{} {
 	data = append(data, binsign...)
 	_, err = model.SendTx(txType, sender, data)
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		log.Error(err)
 		result.Error = err.Error()
 		return result
 	}

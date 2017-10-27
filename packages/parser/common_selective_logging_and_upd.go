@@ -23,9 +23,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -62,7 +62,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			}
 			if vlen > 64 {
 				if isCustom, err := IsCustomTable(table); err != nil {
-					logger.Error("is custom table")
+					logger.WithError(err).Error("is custom table")
 					return 0, ``, err
 				} else if isCustom {
 					return 0, ``, fmt.Errorf(`hash value cannot be larger than 64 bytes`)

@@ -28,8 +28,8 @@ import (
 	//	"testing"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	//	"github.com/shopspring/decimal"
 )
 
@@ -148,6 +148,16 @@ func getSign(forSign string) (string, error) {
 		return ``, err
 	}
 	return hex.EncodeToString(sign), nil
+}
+
+func getTestSign(forSign string) (string, error) {
+	var ret signTestResult
+	err := sendPost(`signtest`, &url.Values{"forsign": {forSign},
+		"private": {gPrivate}}, &ret)
+	if err != nil {
+		return ``, err
+	}
+	return ret.Signature, nil
 }
 
 func appendSign(ret map[string]interface{}, form *url.Values) error {

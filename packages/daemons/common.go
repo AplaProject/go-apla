@@ -22,10 +22,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -119,6 +119,19 @@ func StartDaemons() {
 	if config.ConfigIni["daemons"] == "null" {
 		return
 	}
+
+	go WaitStopTime()
+
+	daemonsTable := make(map[string]string)
+	go func() {
+		for {
+			daemonNameAndTime := <-MonitorDaemonCh
+			daemonsTable[daemonNameAndTime[0]] = daemonNameAndTime[1]
+			if time.Now().Unix()%10 == 0 {
+				log.Debug("daemonsTable: %v\n", daemonsTable)
+			}
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	utils.CancelFunc = cancel

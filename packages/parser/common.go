@@ -25,18 +25,18 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/templatev2"
+	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/template"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 // GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
@@ -448,7 +448,7 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
 	logger := p.GetLogger()
-	govAccount, _ := template.StateParam(int64(p.TxStateID), `founder_account`)
+	govAccount, _ := templatev2.StateParam(int64(p.TxStateID), `founder_account`)
 	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
 		govAccountInt, err := strconv.ParseInt(govAccount, 10, 64)
 		if err != nil {
@@ -473,7 +473,7 @@ func (p *Parser) AccessTable(table, action string) error {
 	prefix := table[:strings.IndexByte(table, '_')]
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	tablePermission, err := tables.GetPermissions(table, "")
+	tablePermission, err := tables.GetPermissions(table[strings.IndexByte(table, '_')+1:], "")
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table permissions")
 		return err
@@ -496,7 +496,7 @@ func (p *Parser) AccessTable(table, action string) error {
 func (p *Parser) AccessColumns(table string, columns []string) error {
 	logger := p.GetLogger()
 	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
-		govAccount, _ := template.StateParam(int64(p.TxStateID), `founder_account`)
+		govAccount, _ := templatev2.StateParam(int64(p.TxStateID), `founder_account`)
 		govAccountInt, err := strconv.ParseInt(govAccount, 10, 64)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("parsing gov account to int")

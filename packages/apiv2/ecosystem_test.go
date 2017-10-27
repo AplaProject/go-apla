@@ -21,34 +21,85 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
 )
 
 func TestNewEcosystem(t *testing.T) {
-	if err := keyLogin(1); err != nil {
+	var (
+		err    error
+		result string
+	)
+	if err = keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
 	form := url.Values{`Name`: {``}}
-	if _, result, err := postTxResult(`NewEcosystem`, &form); err != nil {
+	if _, result, err = postTxResult(`NewEcosystem`, &form); err != nil {
 		t.Error(err)
 		return
-	} else {
-		var ret ecosystemsResult
-		err := sendGet(`ecosystems`, nil, &ret)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if int64(ret.Number) != converter.StrToInt64(result) {
-			t.Error(fmt.Errorf(`Ecosystems %d != %s`, ret.Number, result))
-			return
-		}
+	}
+	var ret ecosystemsResult
+	err = sendGet(`ecosystems`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if int64(ret.Number) != converter.StrToInt64(result) {
+		t.Error(fmt.Errorf(`Ecosystems %d != %s`, ret.Number, result))
+		return
 	}
 
 	form = url.Values{`Name`: {crypto.RandSeq(13)}}
 	if err := postTx(`NewEcosystem`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestEditEcosystem(t *testing.T) {
+	var (
+		err error
+	)
+	if err = keyLogin(2); err != nil {
+		t.Error(err)
+		return
+	}
+	//	menuname := randName(`menu`)
+	menu := `government`
+	value := `P(test,test paragraph)`
+
+	name := randName(`page`)
+	form := url.Values{"Name": {name}, "Value": {value},
+		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`@1NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`@1NewPage`, &form)
+	if err.Error() != fmt.Sprintf(`!Page %s already exists`, name) {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Id": {`1`}, "Value": {value},
+		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`@1EditPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Value": {`contract testEmpty {
+		action { Test("empty",  "empty value")}}`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	if err := postTx(`@1NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Id": {`2`}, "Value": {`contract testEmpty {
+		action { Test("empty3",  "empty value")}}`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	if err := postTx(`@1EditContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}

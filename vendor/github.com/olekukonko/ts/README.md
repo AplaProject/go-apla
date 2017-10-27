@@ -1,10 +1,10 @@
 ts (Terminal Size)
 ==
 
-[![Build Status](https://travis-ci.org/olekukonko/ts.png?branch=master)](https://travis-ci.org/olekukonko/ts) [![Total views](https://sourcegraph.com/api/repos/github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/olekukonko/ts/counters/views.png)](https://sourcegraph.com/github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/olekukonko/ts)
+[![Build Status](https://travis-ci.org/olekukonko/ts.png?branch=master)](https://travis-ci.org/olekukonko/ts) [![Total views](https://sourcegraph.com/api/repos/github.com/olekukonko/ts/counters/views.png)](https://sourcegraph.com/github.com/olekukonko/ts)
 
 Simple go Application to get Terminal Size. So Many Implementations do not support windows but `ts` has full windows support.
-Run `go get github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/olekukonko/ts` to download and install
+Run `go get github.com/olekukonko/ts` to download and install
 
 #### Example
 
@@ -13,7 +13,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/olekukonko/ts"
+	"github.com/olekukonko/ts"
 )
 
 func main() {
@@ -25,4 +25,4 @@ func main() {
 }
 ```
 
-[See Documentation](http://godoc.org/github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/olekukonko/ts)
+[See Documentation](http://godoc.org/github.com/olekukonko/ts)

@@ -1,35 +1,50 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/EGaaS/go-egaas-mvp)](https://goreportcard.com/report/github.com/EGaaS/go-egaas-mvp)
+[![Go Report Card](https://goreportcard.com/badge/github.com/AplaProject/go-apla)](https://goreportcard.com/report/github.com/AplaProject/go-apla) 
+[![Build Status](https://travis-ci.org/AplaProject/go-apla.svg?branch=master)](https://travis-ci.org/AplaProject/go-apla) 
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://apla.readthedocs.io/en/latest/)
+[![API Reference](
+https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667
+)](https://godoc.org/github.com/AplaProject/go-apla)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-apla?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-### Installation v1.x - only egs-wallet
 
-Install golang >=1.6 https://golang.org/dl/<br>
-Set GOPATH<br>
-Install git https://git-scm.com/
+# Installation
+
+## Requirements
+
+* Go >=1.9
+* git
+
+## Build
+
+Clone:
+```
+git clone https://github.com/AplaProject/go-apla.git $GOPATH/src/github.com/AplaProject/go-apla
+```
+
+Build Apla:
 ```
 go get -u github.com/jteeuwen/go-bindata/...
-git clone -b 1.0 https://github.com/EGaaS/go-egaas-mvp.git
-cd go-egaas-mvp
-rm -rf packages/static/static.go
-$GOPATH/bin/go-bindata -o="packages/static/static.go" -pkg="static" static/..
-go build
-./go-egaas-mvp
+$GOPATH/bin/go-bindata -o="$GOPATH/src/github.com/AplaProject/go-apla/packages/static/static.go" -pkg="static" -prefix="$GOPATH/src/github.com/AplaProject/go-apla/" $GOPATH/src/github.com/AplaProject/go-apla/static/...
+go install github.com/AplaProject/go-apla
 ```
 
-### Installation v0.x - full egaas (private blockchain)
+# Running
+
+Create Apla directory and copy binary:
+```
+mkdir ~/apla
+cp $GOPATH/bin/go-apla ~/apla
+```
+
+Run apla:
+```
+~/apla/go-apla
+```
+Open Apla: http://localhost:7079/
 
 
-Install golang >=1.6 https://golang.org/dl/<br>
-Set GOPATH<br>
-Install git https://git-scm.com/
-```
-go get -u github.com/jteeuwen/go-bindata/...
-go get -u github.com/EGaaS/go-egaas-mvp
-cd $GOPATH/src/github.com/EGaaS/go-egaas-mvp
-$GOPATH/bin/go-bindata -o="packages/static/static.go" -pkg="static" static/..
-go build
-./go-egaas-mvp
-```
+----------
 
 
 ### Questions?
-email: hello@egaas.org
+email: hello@apla.io

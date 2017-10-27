@@ -42,7 +42,7 @@ void kill_childproc( DWORD myprocID) {
 	    while (bContinue)
 	    {
 	        if (pe.th32ParentProcessID == myprocID && memcmp( pe.szExeFile, "tmp_", 4 ) != 0 &&
-				memcmp(pe.szExeFile, "egaas", 5) != 0)
+				memcmp(pe.szExeFile, "apla", 4) != 0)
 	        {
 	            HANDLE hChildProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe.th32ProcessID);
 

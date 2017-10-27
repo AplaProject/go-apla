@@ -24,8 +24,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
 	//	"github.com/jinzhu/gorm"
 )
 
@@ -38,7 +38,7 @@ func TestGetUID(t *testing.T) {
 		if v[`error`] == `E_NOTINSTALLED` {
 			var instRes installResult
 			err := sendPost(`install`, &url.Values{`db_port`: {`5432`}, `db_host`: {`localhost`},
-				`type`: {`PRIVATE_NET`}, `db_name`: {`v2`}, `log_level`: {`ERROR`},
+				`type`: {`PRIVATE_NET`}, `db_name`: {`apla`}, `log_level`: {`ERROR`},
 				`db_pass`: {`postgres`}, `db_user`: {`postgres`}}, &instRes)
 			if err != nil {
 				t.Error(err)

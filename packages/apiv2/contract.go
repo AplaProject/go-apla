@@ -22,11 +22,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/script"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -157,6 +157,6 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("error sending tx")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	data.result = &contractResult{Hash: string(converter.BinToHex(hash))}
+	data.result = &contractResult{Hash: hex.EncodeToString(hash)} // !!! string(converter.BinToHex(hash))}
 	return nil
 }

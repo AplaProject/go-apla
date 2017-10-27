@@ -38,6 +38,7 @@ const (
 	cmdBreak                 // break
 	cmdIndex                 // get index []
 	cmdSetIndex              // set index []
+	cmdFuncName              // set func name Func(...).Name(...)
 	cmdError                 // error command
 )
 

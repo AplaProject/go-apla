@@ -22,12 +22,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 type histOper struct {
@@ -36,7 +35,6 @@ type histOper struct {
 	Amount  string `json:"amount"`
 	EGS     string `json:"egs"`
 	Time    string `json:"time"`
-	//	Wallet  string `json:"wallet"`
 }
 
 // History is an answer structure for history request
@@ -46,20 +44,19 @@ type History struct {
 }
 
 func history(r *http.Request) interface{} {
-	logger.LogDebug(consts.DebugMessage, "")
 	var (
 		result History
 	)
 
 	wallet := converter.StringToAddress(r.FormValue(`wallet`))
 	if wallet == 0 {
-		logger.LogInfo(consts.APIParamsError, `Wallet is invalid`)
+		log.Info("Wallet is invalid")
 		result.Error = `Wallet is invalid`
 		return result
 	}
 	c, err := strconv.ParseInt(r.FormValue("count"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrToIntError, r.FormValue("count"))
+		log.Info(r.FormValue("count"))
 	}
 	count := int(c)
 	if count == 0 {
@@ -71,14 +68,10 @@ func history(r *http.Request) interface{} {
 	list := make([]histOper, 0)
 	current, err := model.GetOneRow(`select amount, rb_id from dlt_wallets where wallet_id=?`, wallet).String()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
 		result.Error = err.Error()
 		return result
 	}
 	rb, err := strconv.ParseInt(current[`rb_id`], 10, 64)
-	if err != nil {
-		logger.LogInfo(consts.StrToIntError, current[`rb_id`])
-	}
 	if len(current) > 0 && rb != 0 {
 		balance, _ := decimal.NewFromString(current[`amount`])
 		for len(list) < count && rb > 0 {
@@ -87,20 +80,14 @@ func history(r *http.Request) interface{} {
 			left join block_chain as b on b.id=r.block_id
 			where r.rb_id=?`, rb).String()
 			if err != nil {
-				logger.LogError(consts.DBError, err)
 				result.Error = err.Error()
 				return result
 			}
 			if err = json.Unmarshal([]byte(prev[`data`]), &data); err != nil {
-				logger.LogError(consts.JSONError, err)
 				result.Error = err.Error()
 				return result
 			}
 			rb, err = strconv.ParseInt(data[`rb_id`], 10, 64)
-			if err != nil {
-				logger.LogInfo(consts.StrToIntError, data[`rb_id`])
-			}
-			//			fmt.Println(`DATA`, prev)
 			if amount, ok := data[`amount`]; ok {
 				var dif decimal.Decimal
 				val, _ := decimal.NewFromString(amount)
@@ -113,10 +100,7 @@ func history(r *http.Request) interface{} {
 				if balance.Cmp(val) < 0 {
 					sign = `-`
 				}
-				timeInt, err := strconv.ParseInt(prev["time"], 10, 64)
-				if err != nil {
-					logger.LogInfo(consts.StrToIntError, prev["time"])
-				}
+				timeInt, _ := strconv.ParseInt(prev["time"], 10, 64)
 				dt := time.Unix(timeInt, 0)
 
 				list = append(list, histOper{BlockID: prev[`block_id`], Dif: sign + converter.EGSMoney(dif.String()),
@@ -129,15 +113,11 @@ func history(r *http.Request) interface{} {
 	if rb == 0 {
 		first, err := model.GetOneRow(`select * from dlt_transactions where recipient_wallet_id=? order by id`, wallet).String()
 		if err != nil {
-			logger.LogError(consts.DBError, err)
 			result.Error = err.Error()
 			return result
 		}
 		if len(first) > 0 {
-			timeInt, err := strconv.ParseInt(first["time"], 10, 64)
-			if err != nil {
-				logger.LogInfo(consts.StrToIntError, first["time"])
-			}
+			timeInt, _ := strconv.ParseInt(first["time"], 10, 64)
 			dt := time.Unix(timeInt, 0)
 			list = append(list, histOper{BlockID: first[`block_id`], Dif: `+` + converter.EGSMoney(first[`amount`]),
 				Amount: first[`amount`],

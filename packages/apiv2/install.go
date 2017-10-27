@@ -24,13 +24,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config"
-	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/parser"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/parser"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -188,6 +189,12 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("setting config.dlt_wallet_id")
 		return err
 	}
+
+	err = daemonsctl.RunAllDaemons()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

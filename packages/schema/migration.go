@@ -17,30 +17,28 @@
 package schema
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func Migration() {
-	logger.LogDebug(consts.FuncStarted, "")
 	oldDbVersion, err := model.Single(`SELECT version FROM migration_history ORDER BY id DESC LIMIT 1`).String()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting last version from migration history")
 	}
 	if len(*utils.OldVersion) == 0 && consts.VERSION != oldDbVersion {
 		*utils.OldVersion = oldDbVersion
 	}
 
-	logger.LogDebug(consts.DebugMessage, fmt.Sprintf("*utils.OldVersion %v", *utils.OldVersion))
 	if len(*utils.OldVersion) > 0 {
 		err = model.InsertIntoMigration(consts.VERSION, time.Now().Unix())
 		if err != nil {
-			logger.LogDebug(consts.DBError, err)
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting migration version")
 		}
 	}
 }

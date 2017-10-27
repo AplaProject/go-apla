@@ -20,10 +20,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+	"github.com/AplaProject/go-apla/packages/converter"
 )
 
 func TestList(t *testing.T) {
@@ -39,6 +36,11 @@ func TestList(t *testing.T) {
 	}
 	if converter.StrToInt64(ret.Count) < 7 {
 		t.Error(fmt.Errorf(`The number of records %d < 7`, ret.Count))
+		return
+	}
+	err = sendGet(`list/qwert`, nil, &ret)
+	if err.Error() != `400 {"error": "E_TABLENOTFOUND", "msg": "Table qwert has not been found" , "params": ["qwert"]}` {
+		t.Error(err)
 		return
 	}
 }

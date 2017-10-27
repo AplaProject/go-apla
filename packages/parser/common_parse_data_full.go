@@ -20,18 +20,19 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/script"
-	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -560,25 +561,37 @@ func (block *Block) readPreviousBlock() error {
 	return nil
 }
 
-func playTransaction(p *Parser) error {
+func playTransaction(p *Parser) (string, error) {
 	// smart-contract
 	if p.TxContract != nil {
 		// check that there are enough money in CallContract
 		if err := p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err != nil {
-			return utils.ErrInfo(err)
+			return "", utils.ErrInfo(err)
 		}
+
+		var result string
+		resVal := (*p.TxContract.Extend)[`result`]
+		switch v := resVal.(type) {
+		case int64:
+			result = strconv.FormatInt(v, 10)
+		case string:
+			result = v
+		default:
+			return "", fmt.Errorf("bad transaction result")
+		}
+		return result, nil
 
 	} else {
 		if p.txParser == nil {
-			return utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
+			return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
 		}
 
 		err := p.txParser.Action()
 		if _, ok := err.(error); ok {
-			return utils.ErrInfo(err.(error))
+			return "", utils.ErrInfo(err.(error))
 		}
 	}
-	return nil
+	return "", nil
 }
 
 func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
@@ -591,7 +604,8 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 	for _, p := range block.Parsers {
 		p.DbTransaction = dbTransaction
 
-		if err := playTransaction(p); err != nil {
+		msg, err := playTransaction(p)
+		if err != nil {
 			// skip this transaction
 			model.MarkTransactionUsed(nil, p.TxHash)
 			p.processBadTransaction(p.TxHash, err.Error())
@@ -605,7 +619,7 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 
 		// update status
 		ts := &model.TransactionStatus{}
-		if err := ts.UpdateBlockID(p.DbTransaction, block.Header.BlockID, p.TxHash); err != nil {
+		if err := ts.UpdateBlockMsg(p.DbTransaction, block.Header.BlockID, msg, p.TxHash); err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("updating transaction status block id")
 			return err
 		}

@@ -9,7 +9,7 @@ import (
 	"log"
 	"fmt"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	"github.com/AplaProject/go-apla/packages/static"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 

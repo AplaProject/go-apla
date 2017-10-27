@@ -23,14 +23,14 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/template"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -57,16 +57,24 @@ func (p *FirstBlockParser) Action() error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return p.ErrInfo(err)
 	}
-	key := &model.Key{
-		ID:        myAddress,
-		PublicKey: data.PublicKey,
-		Amount:    decimal.NewFromFloat(consts.FIRST_QDLT).String(),
-	}
-	if err = key.SetTablePrefix(consts.MainEco).Create(); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("setting table prefix")
+	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
+		myAddress, data.PublicKey, decimal.NewFromFloat(consts.FIRST_QDLT).String()).Error
+	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = template.LoadContract(p.DbTransaction, `1`)
+	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_pages" (id,name,menu,value,conditions) values('1', 'default_page',
+		  'default_menu', ?, 'ContractAccess("@1EditPage")')`, syspar.SysString(`default_ecosystem_page`)).Error
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return p.ErrInfo(err)
+	}
+	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_menu" (id,name,value,title,conditions) values('1', 'default_menu', ?, ?, 'ContractAccess("@1EditMenu")')`,
+		syspar.SysString(`default_ecosystem_menu`), `default`).Error
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default menu")
+		return p.ErrInfo(err)
+	}
+	err = smart.LoadContract(p.DbTransaction, `1`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

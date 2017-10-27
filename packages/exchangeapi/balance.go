@@ -19,11 +19,11 @@ package exchangeapi
 import (
 	"net/http"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	log "github.com/sirupsen/logrus"
 )
 
 // Balance is the result structure of balamce handler
@@ -34,7 +34,6 @@ type Balance struct {
 }
 
 func balance(r *http.Request) interface{} {
-	logger.LogDebug(consts.FuncStarted, "")
 	var result Balance
 
 	wallet := converter.StringToAddress(r.FormValue(`wallet`))
@@ -44,8 +43,7 @@ func balance(r *http.Request) interface{} {
 	}
 	total, err := model.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
 	if err != nil {
-		logger.LogError(consts.DBError, err)
-		result.Error = err.Error()
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting amount from dlt_wallets")
 		return result
 	}
 	result.Amount = total

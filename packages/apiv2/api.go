@@ -27,16 +27,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 	"github.com/dgrijalva/jwt-go"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const (
@@ -51,7 +50,6 @@ type apiData struct {
 	state  int64
 	wallet int64
 	token  *jwt.Token
-	//	sess   session.SessionStore
 }
 
 type forSign struct {
@@ -143,21 +141,6 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
-func sendEmbeddedTx(txType int, userID int64, toSerialize interface{}) (*hashTx, error) {
-	var hash []byte
-	serializedData, err := msgpack.Marshal(toSerialize)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("send embedded tx marshall to msgpack")
-		return nil, err
-	}
-	if hash, err = model.SendTx(int64(txType), userID,
-		append(converter.DecToBin(int64(txType), 1), serializedData...)); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx to the queue")
-		return nil, err
-	}
-	return &hashTx{Hash: string(converter.BinToHex(hash))}, nil
-}
-
 // DefaultHandler is a common handle function for api requests
 func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
@@ -185,6 +168,12 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		token, err := jwtToken(r)
 		if err != nil {
 			requestLogger.WithFields(log.Fields{"type": consts.SessionError, "params": params, "error": err}).Error("starting session")
+			errmsg := err.Error()
+			expired := `token is expired by`
+			if strings.HasPrefix(errmsg, expired) {
+				errorAPI(w, `E_TOKENEXPIRED`, http.StatusUnauthorized, errmsg[len(expired):])
+				return
+			}
 			errorAPI(w, err, http.StatusBadRequest)
 			return
 		}

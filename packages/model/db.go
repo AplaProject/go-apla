@@ -10,16 +10,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/static"
+	"github.com/AplaProject/go-apla/packages/utils"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/static"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -262,28 +261,30 @@ func GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
 		log.Error("No Plan key in result")
 		return 0, errors.New("No Plan key in result")
 	}
-	var planMap map[string]interface{}
-	if planMap, ok = plan.(map[string]interface{}); !ok {
+	planMap, ok := plan.(map[string]interface{})
+	if !ok {
 		log.Error("Plan is not map[string]interface{}")
 		return 0, errors.New("Plan is not map[string]interface{}")
 	}
-	if totalCost, ok := planMap["Total Cost"]; ok {
-		if totalCostNum, ok := totalCost.(json.Number); ok {
-			if totalCostF64, err := totalCostNum.Float64(); err != nil {
-				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("converting total cost num to float64")
-				return 0, err
-			} else {
-				return int64(totalCostF64), nil
-			}
-		} else {
-			log.Error("Total cost is not a number")
-			return 0, errors.New("Total cost is not a number")
-		}
-	} else {
-		log.Error("Plan map has no TotalCost")
+
+	totalCost, ok := planMap["Total Cost"]
+	if !ok {
+		log.Error("PlanMap has no TotalCost")
 		return 0, errors.New("PlanMap has no TotalCost")
 	}
-	return 0, nil
+
+	totalCostNum, ok := totalCost.(json.Number)
+	if !ok {
+		log.Error("Total cost is not a number")
+		return 0, errors.New("Total cost is not a number")
+	}
+
+	totalCostF64, err := totalCostNum.Float64()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("converting query total cost from json number to float64")
+		return 0, err
+	}
+	return int64(totalCostF64), nil
 }
 
 func GetAllTables() ([]string, error) {
@@ -291,17 +292,20 @@ func GetAllTables() ([]string, error) {
 	sql := `SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')`
 	rows, err := DBConn.Raw(sql).Rows()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": sql}).Error("executing raw query")
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var tblname string
 		if err := rows.Scan(&tblname); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("scanning table name from row")
 			return nil, err
 		}
 		result = append(result, tblname)
 	}
 	if err := rows.Err(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("retrieving rows from table")
 		return nil, err
 	}
 	return result, nil
@@ -314,6 +318,7 @@ func GetColumnCount(tableName string) (int64, error) {
 		return 0, nil
 	}
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing raw query")
 		return 0, err
 	}
 	return count, nil
@@ -322,6 +327,7 @@ func GetColumnCount(tableName string) (int64, error) {
 func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
 	hash, err := crypto.Hash(data)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing data")
 		return nil, err
 	}
 	ts := &TransactionStatus{
@@ -332,6 +338,7 @@ func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
 	}
 	err = ts.Create()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("transaction status create")
 		return nil, err
 	}
 	qtx := &QueueTx{
@@ -347,6 +354,7 @@ func GetLastBlockData() (map[string]int64, error) {
 	confirmation := &Confirmation{}
 	err := confirmation.GetMaxGoodBlock()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max good block id from confirmation")
 		return result, utils.ErrInfo(err)
 	}
 	confirmedBlockID := confirmation.BlockID
@@ -357,6 +365,7 @@ func GetLastBlockData() (map[string]int64, error) {
 	block := &Block{}
 	err = block.GetBlock(confirmedBlockID)
 	if err != nil || len(block.Data) == 0 {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max good block")
 		return result, utils.ErrInfo(err)
 	}
 	result["blockId"] = block.ID
@@ -369,6 +378,7 @@ func GetMyWalletID() (int64, error) {
 	conf := &Config{}
 	err := conf.GetConfig()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
 		return 0, err
 	}
 	walletID := conf.DltWalletID
@@ -400,28 +410,9 @@ func IsTable(tblname string) bool {
 }
 
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
-	/*	var dataType string
-		var characterMaximumLength string
-			rows, err := DBConn.
-			Table("information_schema.columns").
-			Where("table_name = ? AND column_name = ?", tableName, columnName).
-			Select("data_type", "character_maximum_length").Rows()*/
 	return GetOneRow(`select data_type,character_maximum_length from
-			information_schema.columns where table_name = ? AND column_name = ?`,
+			 information_schema.columns where table_name = ? AND column_name = ?`,
 		tableName, columnName).String()
-	/*	if err != nil {
-			return nil, err
-		}
-		for rows.Next() {
-			rows.Scan(&dataType)
-			rows.Scan(&characterMaximumLength)
-			fmt.Println(`COLDATA`, dataType, characterMaximumLength)
-		}
-		rows.Close()
-		result := make(map[string]string, 0)
-		result["data_type"] = dataType
-		result["character_maximum_length"] = characterMaximumLength
-		return row, nil*/
 }
 
 func GetColumnType(tblname, column string) (itype string, err error) {
@@ -452,10 +443,10 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 
 func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int64) (int64, error) {
 	// take the list of all full_nodes
-
 	node := &FullNode{}
 	fullNodes, err := node.GetAll()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all full nodes")
 		return 0, err
 	}
 	fullNodesList := make([]map[string]string, 0, len(*fullNodes))
@@ -467,6 +458,7 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 	// determine full_node_id of the one, who had to generate a block (but could delegate this)
 	err = node.Get(prevBlockWalletID)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node by prev block wallet id")
 		return 0, err
 	}
 	prevBlockFullNodeID := node.ID

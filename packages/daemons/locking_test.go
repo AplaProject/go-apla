@@ -9,7 +9,7 @@ import (
 
 	"context"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/model"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
@@ -37,6 +37,8 @@ func TestLock(t *testing.T) {
 	createTables(t, db.DB())
 
 	ctx, _ := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer ctx.Done()
+
 	ok, err := DBLock(ctx, "test")
 	if err != nil {
 		t.Errorf("lock returned %s", err)
@@ -131,6 +133,8 @@ func TestWait(t *testing.T) {
 	createTables(t, db.DB())
 
 	ctx, _ := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer ctx.Done()
+
 	err := WaitDB(ctx)
 	if err == nil {
 		t.Errorf("should be error")
@@ -144,6 +148,8 @@ func TestWait(t *testing.T) {
 	}
 
 	ctx, _ = context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer ctx.Done()
+
 	err = WaitDB(ctx)
 	if err != nil {
 		t.Errorf("wait failed: %s", err)

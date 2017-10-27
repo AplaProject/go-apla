@@ -2,16 +2,15 @@ package tcpserver
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"reflect"
-
 	"strconv"
 
-	"fmt"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/utils"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	log "github.com/sirupsen/logrus"
 )
 

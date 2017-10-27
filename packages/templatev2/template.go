@@ -19,10 +19,13 @@ package templatev2
 import (
 	"encoding/json"
 	"html"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -218,11 +221,13 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 		Vars: vars,
 	}
 	if curFunc.Params == `*` {
-		for _, v := range *params {
+		for i, v := range *params {
 			val := strings.TrimSpace(v)
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
 				pars[val[:off]] = macro(strings.TrimSpace(val[off+1:]), vars)
+			} else {
+				pars[strconv.Itoa(i)] = macro(val, vars)
 			}
 		}
 	} else {
@@ -418,4 +423,9 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 		return []byte(err.Error())
 	}
 	return out
+}
+
+// StateParam returns the value of state parameters
+func StateParam(idstate int64, name string) (string, error) {
+	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_parameters" WHERE name = ?`, name).String()
 }

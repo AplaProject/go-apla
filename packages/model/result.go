@@ -7,10 +7,10 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+	log "github.com/sirupsen/logrus"
 )
 
 // SingleResult is a structure for the single result
@@ -103,7 +103,7 @@ func (r *OneRow) Int64() (map[string]int64, error) {
 	for k, v := range r.result {
 		res, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrToIntError, v)
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": v}).Error("converting one row from string to int")
 		}
 		result[k] = res
 	}
@@ -111,12 +111,16 @@ func (r *OneRow) Int64() (map[string]int64, error) {
 }
 
 func (r *OneRow) Float64() (map[string]float64, error) {
+	var err error
 	result := make(map[string]float64)
 	if r.err != nil {
 		return result, r.err
 	}
 	for k, v := range r.result {
-		result[k], _ = strconv.ParseFloat(v, 64)
+		result[k], err = strconv.ParseFloat(v, 64)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": v}).Error("converting one row from string to float")
+		}
 	}
 	return result, nil
 }
@@ -130,7 +134,7 @@ func (r *OneRow) Int() (map[string]int, error) {
 	for k, v := range r.result {
 		result[k], err = strconv.Atoi(v)
 		if err != nil {
-			logger.LogInfo(consts.StrToIntError, v)
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": v}).Error("converting one row from string to int")
 		}
 	}
 	return result, nil
@@ -211,5 +215,5 @@ func GetOneRowTransaction(transaction *DbTransaction, query string, args ...inte
 }
 
 func GetOneRow(query string, args ...interface{}) *OneRow {
-	return GetOneRowTransaction(nil, query, args)
+	return GetOneRowTransaction(nil, query, args...)
 }

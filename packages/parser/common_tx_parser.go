@@ -19,9 +19,9 @@ package parser
 import (
 	"errors"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -99,16 +99,14 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 	if len(errText) > 255 {
 		errText = errText[:255]
 	}
+	// looks like there is not hash in queue_tx in this moment
 	qtx := &model.QueueTx{}
-	found, err := qtx.GetByHash(hash)
+	_, err := qtx.GetByHash(hash)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting tx by hash from queue")
 	}
 
 	p.DeleteQueueTx(hash)
-	if !found {
-		return nil
-	}
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")
 		return utils.ErrInfo(err)

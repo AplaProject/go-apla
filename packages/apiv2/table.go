@@ -20,11 +20,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	log "github.com/sirupsen/logrus"
 )
 
 type columnInfo struct {
@@ -78,6 +78,8 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			Conditions: row[`conditions`],
 			Columns:    columns,
 		}
+	} else {
+		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
 	}
 	data.result = &result
 	return

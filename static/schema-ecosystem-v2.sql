@@ -25,7 +25,7 @@ CREATE INDEX "%[1]d_history_index_block" ON "%[1]d_history" (block_id, txhash);
 DROP TABLE IF EXISTS "%[1]d_languages"; CREATE TABLE "%[1]d_languages" (
   "id" bigint  NOT NULL DEFAULT '0',
   "name" character varying(100) NOT NULL DEFAULT '',
-  "res" jsonb,
+  "res" text NOT NULL DEFAULT '',
   "conditions" text NOT NULL DEFAULT '',
   "rb_id" bigint NOT NULL DEFAULT '0'
 );
@@ -34,7 +34,8 @@ CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
 
 DROP TABLE IF EXISTS "%[1]d_menu"; CREATE TABLE "%[1]d_menu" (
     "id" bigint  NOT NULL DEFAULT '0',
-    "name" character varying(255) NOT NULL DEFAULT '',
+    "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
+    "title" character varying(255) NOT NULL DEFAULT '',
     "value" text NOT NULL DEFAULT '',
     "conditions" text NOT NULL DEFAULT '',
     "rb_id" bigint NOT NULL DEFAULT '0'
@@ -42,9 +43,9 @@ DROP TABLE IF EXISTS "%[1]d_menu"; CREATE TABLE "%[1]d_menu" (
 ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
 
-DROP TABLE IF EXISTS "%d_pages"; CREATE TABLE "%[1]d_pages" (
+DROP TABLE IF EXISTS "%[1]d_pages"; CREATE TABLE "%[1]d_pages" (
     "id" bigint  NOT NULL DEFAULT '0',
-    "name" character varying(255) NOT NULL DEFAULT '',
+    "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
     "value" text NOT NULL DEFAULT '',
     "menu" character varying(255) NOT NULL DEFAULT '',
     "conditions" text NOT NULL DEFAULT '',
@@ -53,7 +54,17 @@ DROP TABLE IF EXISTS "%d_pages"; CREATE TABLE "%[1]d_pages" (
 ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
 
-DROP TABLE IF EXISTS "%d_signatures"; CREATE TABLE "%[1]d_signatures" (
+DROP TABLE IF EXISTS "%[1]d_blocks"; CREATE TABLE "%[1]d_blocks" (
+    "id" bigint  NOT NULL DEFAULT '0',
+    "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
+    "value" text NOT NULL DEFAULT '',
+    "conditions" text NOT NULL DEFAULT '',
+    "rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
+CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
+
+DROP TABLE IF EXISTS "%[1]d_signatures"; CREATE TABLE "%[1]d_signatures" (
     "id" bigint  NOT NULL DEFAULT '0',
     "name" character varying(100) NOT NULL DEFAULT '',
     "value" jsonb,
@@ -86,7 +97,7 @@ INSERT INTO "%[1]d_contracts" ("id", "value", "wallet_id","active", "conditions"
 DROP TABLE IF EXISTS "%[1]d_parameters";
 CREATE TABLE "%[1]d_parameters" (
 "id" bigint NOT NULL  DEFAULT '0',
-"name" varchar(255) NOT NULL DEFAULT '',
+"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
 "value" text NOT NULL DEFAULT '',
 "conditions" text  NOT NULL DEFAULT '',
 "rb_id" bigint  NOT NULL DEFAULT '0'
@@ -98,22 +109,21 @@ INSERT INTO "%[1]d_parameters" ("id","name", "value", "conditions") VALUES
 ('1','founder_account', '%[2]d', 'ContractConditions(`MainCondition`)'),
 ('2','full_node_wallet_id', '%[2]d', 'ContractConditions(`MainCondition`)'),
 ('3','host', '', 'ContractConditions(`MainCondition`)'),
-('4','restore_access_condition', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('5','new_table', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('6','new_column', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('7','changing_tables', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('8','changing_language', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('9','changing_signature', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('10','changing_page', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('11','changing_menu', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('12','changing_contracts', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('13','ecosystem_name', '%[3]s', 'ContractConditions(`MainCondition`)'),
-('14','max_sum', '1000000', 'ContractConditions(`MainCondition`)'),
-('15','citizenship_cost', '1', 'ContractConditions(`MainCondition`)'),
-('16','money_digit', '2', 'ContractConditions(`MainCondition`)');
+('4','new_table', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('5','new_column', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('6','changing_tables', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('7','changing_language', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('8','changing_signature', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('9','changing_page', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('10','changing_menu', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('11','changing_contracts', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('12','ecosystem_name', '%[3]s', 'ContractConditions(`MainCondition`)'),
+('13','max_sum', '1000000', 'ContractConditions(`MainCondition`)'),
+('14','citizenship_cost', '1', 'ContractConditions(`MainCondition`)'),
+('15','money_digit', '2', 'ContractConditions(`MainCondition`)');
 
 CREATE TABLE "%[1]d_tables" (
-"name" varchar(100)  NOT NULL DEFAULT '',
+"name" varchar(100) UNIQUE NOT NULL DEFAULT '',
 "permissions" jsonb,
 "columns" jsonb,
 "conditions" text  NOT NULL DEFAULT '',
@@ -150,19 +160,26 @@ INSERT INTO "%[1]d_tables" ("name", "permissions","columns", "conditions") VALUE
           "res": "ContractAccess(\"@1EditLang\")",
           "conditions": "ContractAccess(\"@1EditLang\")"}', 'ContractAccess("@1EditTable")'),
         ('menu', 
-        '{"insert": "ContractAccess(\"@1NewMenu\")", "update": "ContractAccess(\"@1EditMenu\")", 
+        '{"insert": "ContractAccess(\"@1NewMenu\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditMenu\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditMenu\")",
     "value": "ContractAccess(\"@1EditMenu\")",
     "conditions": "ContractAccess(\"@1EditMenu\")"
         }', 'ContractAccess("@1EditTable")'),
         ('pages', 
-        '{"insert": "ContractAccess(\"@1NewPage\")", "update": "ContractAccess(\"@1EditPage\")", 
+        '{"insert": "ContractAccess(\"@1NewPage\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditPage\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditPage\")",
     "value": "ContractAccess(\"@1EditPage\")",
     "menu": "ContractAccess(\"@1EditPage\")",
     "conditions": "ContractAccess(\"@1EditPage\")"
+        }', 'ContractAccess("@1EditTable")'),
+        ('blocks', 
+        '{"insert": "ContractAccess(\"@1NewBlock\")", "update": "ContractAccess(\"@1EditBlock\")", 
+          "new_column": "ContractAccess(\"@1NewColumn\")"}',
+        '{"name": "ContractAccess(\"@1EditBlock\")",
+    "value": "ContractAccess(\"@1EditBlock\")",
+    "conditions": "ContractAccess(\"@1EditBlock\")"
         }', 'ContractAccess("@1EditTable")'),
         ('signatures', 
         '{"insert": "ContractAccess(\"@1NewSign\")", "update": "ContractAccess(\"@1EditSign\")", 

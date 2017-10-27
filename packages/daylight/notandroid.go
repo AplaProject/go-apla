@@ -22,12 +22,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/utils"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -98,29 +97,4 @@ func httpListenerV6(route http.Handler) error {
 		}
 	}()
 	return nil
-}
-
-func tcpListener() {
-	go func() {
-		log.WithFields(log.Fields{"host": *utils.TCPHost}).Info("Starting tcp listener at host")
-		l, err := net.Listen("tcp4", *utils.TCPHost+":"+consts.TCP_PORT)
-		if err != nil {
-			log.WithFields(log.Fields{"host": *utils.TCPHost, "error": err, "type": consts.NetworkError}).Error("Error tcp listening at host")
-		} else {
-			go func() {
-				for {
-					conn, err := l.Accept()
-					if err != nil {
-						log.WithFields(log.Fields{"host": *utils.TCPHost, "error": err, "type": consts.NetworkError}).Error("Error accepting tcp at host")
-						time.Sleep(time.Second)
-					} else {
-						go func(conn net.Conn) {
-							tcpserver.HandleTCPRequest(conn)
-							conn.Close()
-						}(conn)
-					}
-				}
-			}()
-		}
-	}()
 }

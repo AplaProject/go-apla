@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/utils"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/astaxie/beego/config"
 	log "github.com/sirupsen/logrus"
 )

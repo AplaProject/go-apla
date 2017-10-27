@@ -23,8 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/crypto"
 )
 
 func TestNewContracts(t *testing.T) {
@@ -87,6 +86,73 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`TestDBFindOK`, `
+		contract TestDBFindOK {
+		action {
+			var ret array
+			var vals map
+			ret = DBFind("contracts")
+			if Len(ret) {
+				Test("0",  "1")	
+			} else {
+				Test("0",  "0")	
+			}
+			ret = DBFind("contracts").Limit(3)
+			if Len(ret) == 3 {
+				Test("1",  "1")	
+			} else {
+				Test("1",  "0")	
+			}
+			ret = DBFind("contracts").Order("id").Offset(1).Limit(1)
+			if Len(ret) != 1 {
+				Test("2",  "0")	
+			} else {
+				vals = ret[0]
+				Test("2",  vals["id"])	
+			}
+			ret = DBFind("contracts").Columns("id,rb_id").Order("id").Offset(1).Limit(1)
+			if Len(ret) != 1 {
+				Test("3",  "0")	
+			} else {
+				vals = ret[0]
+				Test("3", vals["value"] + vals["id"])	
+			}
+			ret = DBFind("contracts").Columns("id,rb_id").Where("id='1'")
+			if Len(ret) != 1 {
+				Test("4",  "0")	
+			} else {
+				vals = ret[0]
+				Test("4", vals["id"])	
+			}
+			ret = DBFind("contracts").Columns("id,rb_id").Where("id='1'")
+			if Len(ret) != 1 {
+				Test("4",  "0")	
+			} else {
+				vals = ret[0]
+				Test("4", vals["id"])	
+			}
+			ret = DBFind("contracts").Columns("id,value").Where("id> ? and id < ?", 3, 8).Order("id")
+			if Len(ret) != 4 {
+				Test("5",  "0")	
+			} else {
+				vals = ret[0]
+				Test("5", vals["id"])	
+			}
+			ret = DBFind("contracts").WhereId(7)
+			if Len(ret) != 1 {
+				Test("6",  "0")	
+			} else {
+				vals = ret[0]
+				Test("6", vals["id"])	
+			}
+			Test("255",  "255")	
+		}
+	}`,
+		[]smartParams{
+			{nil, map[string]string{`0`: `1`, `1`: `1`, `2`: `2`, `3`: `2`, `4`: `1`, `5`: `4`,
+				`6`:   `7`,
+				`255`: `255`}},
+		}},
 	{`testEmpty`, `contract testEmpty {
 				action { Test("empty",  "empty value")}}`,
 		[]smartParams{
@@ -145,7 +211,7 @@ func TestEditContracts(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	sid := converter.Int64ToStr(ret.TableID)
+	sid := ret.TableID
 	var row rowResult
 	err = sendGet(`row/contracts/`+sid, nil, &row)
 	if err != nil {
@@ -219,7 +285,7 @@ func TestActivateContracts(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {converter.Int64ToStr(ret.TableID)}}); err != nil {
+	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
 		t.Error(err)
 		return
 	}
@@ -232,7 +298,7 @@ func TestActivateContracts(t *testing.T) {
 		t.Error(fmt.Errorf(`Not activate ` + rnd))
 	}
 	var row rowResult
-	err = sendGet(`row/contracts/`+converter.Int64ToStr(ret.TableID), nil, &row)
+	err = sendGet(`row/contracts/`+ret.TableID, nil, &row)
 	if err != nil {
 		t.Error(err)
 		return
@@ -248,4 +314,20 @@ func TestActivateContracts(t *testing.T) {
 	if !wanted(`active`, rnd) {
 		return
 	}
+}
+
+func TestContracts(t *testing.T) {
+
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	var ret contractsResult
+	err := sendGet(`contracts`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(`RET`, ret)
 }

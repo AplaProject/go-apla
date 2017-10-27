@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/AplaProject/go-apla/packages/model"
 )
 
 var mutex = sync.Mutex{}

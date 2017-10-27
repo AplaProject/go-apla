@@ -37,7 +37,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/EGaaS/go-egaas-mvp/vendor/github.com/astaxie/beego/session"
+	"github.com/astaxie/beego/session"
 
 	"github.com/bradfitz/gomemcache/memcache"
 )

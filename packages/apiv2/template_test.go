@@ -48,6 +48,22 @@ func TestAPI(t *testing.T) {
 			return
 		}
 	}
+	var ret contentResult
+	err := sendPost(`content/page/mypage`, &url.Values{}, &ret)
+	if err != nil && err.Error() != `404 {"error": "E_NOTFOUND", "msg": "Page not found" }` {
+		t.Error(err)
+		return
+	}
+	err = sendPost(`content/menu/default_menu`, &url.Values{}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendPost(`content/page/default_page`, &url.Values{}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }
 
 var forTest = tplList{

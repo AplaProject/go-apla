@@ -37,19 +37,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/kardianos/osext"
 	"github.com/mcuadros/go-version"
 	log "github.com/sirupsen/logrus"
 )
-
-//var log = logging.MustGetLogger("daemons")
-
-/*const (
-	UpdPublicKey = `fd7f6ccf79ec35a7cf18640e83f0bbc62a5ae9ea7e9260e3a93072dd088d3c7acf5bcb95a7b44fcfceff8de4b16591d146bb3dc6e79f93f900e59a847d2684c3`
-)*/
 
 // Update contains version info parameters
 type Update struct {
@@ -91,7 +85,7 @@ var (
 	OldVersion = flag.String("oldVersion", "", "")
 	// TestRollBack equals 1 for testing rollback
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
-	// Dir is EGAAS folder
+	// Dir is apla folder
 	Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
 	// OldFileName is the old file name
 	OldFileName = flag.String("oldFileName", "", "")
@@ -988,9 +982,9 @@ func ShellExecute(cmdline string) {
 	}
 }
 
-// EgaasUpdate decompresses and updates executable file
-func EgaasUpdate(url string) error {
-	zipfile := filepath.Join(*Dir, "egaas.zip")
+// AplaUpdate decompresses and updates executable file
+func AplaUpdate(url string) error {
+	zipfile := filepath.Join(*Dir, "apla.zip")
 	reader, err := zip.OpenReader(zipfile)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("opening zipfile for reading")
