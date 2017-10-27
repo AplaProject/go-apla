@@ -39,8 +39,6 @@ type node struct {
 	Tag      string                 `json:"tag"`
 	Attr     map[string]interface{} `json:"attr,omitempty"`
 	Text     string                 `json:"text,omitempty"`
-	Columns  *[]string              `json:"columns,omitempty"`
-	Data     *[][]string            `json:"data,omitempty"`
 	Children []*node                `json:"children,omitempty"`
 	Tail     []*node                `json:"tail,omitempty"`
 }
