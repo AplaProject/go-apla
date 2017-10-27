@@ -206,7 +206,8 @@ func dbfindTag(par parFunc) string {
 	if err != nil {
 		return err.Error()
 	}
-	//	list := []map[string]string{{"id": "1", "amount": "200"}, {"id": "2", "amount": "300"}}
+	/*	list := []map[string]string{{"id": "1", "amount": "200"}, {"id": "2", "amount": "300"}}
+		fmt.Println(tblname, where, order)*/
 	data := make([][]string, 0)
 	cols := make([]string, 0)
 	lencol := 0
@@ -236,7 +237,7 @@ func dbfindTag(par parFunc) string {
 					ival = ``
 				}
 			} else {
-				out, err := json.Marshal(par.Node.Attr[`custombody`].([]*node)[i-defcol])
+				out, err := json.Marshal(par.Node.Attr[`custombody`].([][]*node)[i-defcol])
 				if err == nil {
 					ival = replace(string(out), 0, &item)
 				}
@@ -258,10 +259,10 @@ func customTag(par parFunc) string {
 	setAllAttr(par)
 	if par.Owner.Attr[`customs`] == nil {
 		par.Owner.Attr[`customs`] = make([]string, 0)
-		par.Owner.Attr[`custombody`] = make([]*node, 0)
+		par.Owner.Attr[`custombody`] = make([][]*node, 0)
 	}
 	par.Owner.Attr[`customs`] = append(par.Owner.Attr[`customs`].([]string), par.Node.Attr[`column`].(string))
-	par.Owner.Attr[`custombody`] = append(par.Owner.Attr[`custombody`].([]*node), par.Node.Children...)
+	par.Owner.Attr[`custombody`] = append(par.Owner.Attr[`custombody`].([][]*node), par.Node.Children)
 
 	return ``
 }

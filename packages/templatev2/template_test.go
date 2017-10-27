@@ -112,9 +112,11 @@ var forTest = tplList{
 	/*	{`Div(myclass, Include(test)Span(OK))`,
 		`[{"tag":"include","attr":{"name":"myblock"}}]`},*/
 
-	/*	{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25).Custom(myid){Strong(#id#)
-	 }.Custom(mybtn){Button(#amount#,mypage=#id#)}`,
-	``},*/
+	/*	{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25).Custom(myid){
+			Strong(#id#, text-muted)
+			Div(,div element: #id#)
+		 }.Custom(mybtn){Button(#amount#,mypage=#id#)}`,
+			``},*/
 }
 
 func TestFullJSON(t *testing.T) {
