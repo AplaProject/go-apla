@@ -39,7 +39,6 @@ var (
 		`MenuItem`:  {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
 		`SetVar`:    {setvarTag, defaultTag, `setvar`, `Name,Value`},
 		`Strong`:    {defaultTag, defaultTag, `strong`, `Body,Class`},
-		`Style`:     {defaultTag, defaultTag, `style`, `Css`},
 	}
 	tails = map[string]forTails{
 		`button`: {map[string]tailInfo{

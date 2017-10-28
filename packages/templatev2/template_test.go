@@ -95,11 +95,6 @@ var forTest = tplList{
 		MenuItem(Page: page3, Title: Menu 3, Icon: person)
 		}`,
 		`[{"tag":"menuitem","attr":{"page":"page1","title":"Menu 1"}},{"tag":"menugroup","attr":{"title":"SubMenu"},"children":[{"tag":"menuitem","attr":{"page":"page2","title":"Menu 2"}},{"tag":"menuitem","attr":{"icon":"person","page":"page3","title":"Menu 3"}}]}]`},
-	{`Style(.mydiv, .myspan {
-		color: #f00;
-		margin: 10px 5px;
-	})`,
-		`[{"tag":"style","attr":{"css":".mydiv, .myspan {\n\t\tcolor: #f00;\n\t\tmargin: 10px 5px;\n\t}"}}]`},
 	{`SetVar(testvalue, The, #n#, Value).(n, New).(param,"23")Span(Test value equals #testvalue#).(#param#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, New, Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
 	{`SetVar(test, mytest).(empty,0)And(0,test,0)Or(0,#test#)Or(0, And(0,0))And(0,Or(0,my,while))
