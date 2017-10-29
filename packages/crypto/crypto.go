@@ -10,10 +10,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"math/big"
 
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	logging "github.com/op/go-logging"
 )
 
@@ -33,18 +33,20 @@ const (
 )
 
 var (
-	HashingError         = errors.New("Hashing error")
-	EncryptingError      = errors.New("Encoding error")
-	DecryptingError      = errors.New("Decrypting error")
-	UnknownProviderError = errors.New("Unknown provider")
-	HashingEmpty         = errors.New("Hashing empty value")
-	EncryptingEmpty      = errors.New("Encrypting empty value")
-	DecryptingEmpty      = errors.New("Decrypting empty value")
-	SigningEmpty         = errors.New("Signing empty value")
-	CheckingSignEmpty    = errors.New("Cheking sign of empty")
-	IncorrectSign        = errors.New("Incorrect sign")
-	UnsupportedCurveSize = errors.New("Unsupported curve size")
-	log                  = logging.MustGetLogger("crypto")
+	HashingError           = errors.New("Hashing error")
+	EncryptingError        = errors.New("Encoding error")
+	DecryptingError        = errors.New("Decrypting error")
+	UnknownProviderError   = errors.New("Unknown provider")
+	HashingEmpty           = errors.New("Hashing empty value")
+	EncryptingEmpty        = errors.New("Encrypting empty value")
+	DecryptingEmpty        = errors.New("Decrypting empty value")
+	SigningEmpty           = errors.New("Signing empty value")
+	CheckingSignEmpty      = errors.New("Cheking sign of empty")
+	IncorrectSign          = errors.New("Incorrect sign")
+	UnsupportedCurveSize   = errors.New("Unsupported curve size")
+	IncorrectPrivKeyLength = errors.New("Incorrect private key length")
+	IncorrectPubKeyLength  = errors.New("Incorrect public key length")
+	log                    = logging.MustGetLogger("crypto")
 )
 
 var (
@@ -94,21 +96,7 @@ func SharedEncrypt(public, text []byte) ([]byte, error) {
 	return val, err
 }
 
-// SharedDecrypt decrypts the ciphertext by using private key.
-func SharedDecrypt(private, ciphertext []byte) ([]byte, error) {
-	if len(ciphertext) <= 64 {
-		return nil, fmt.Errorf(`too short cipher %d`, len(ciphertext))
-	}
-	shared, err := getSharedKey(private, ciphertext[:64])
-	if err != nil {
-		return nil, err
-	}
-	val, err := Encrypt(shared, ciphertext[64:], ciphertext[:aes.BlockSize])
-	return val, err
-}
-
 // GenBytesKeys generates a random pair of ECDSA private and public binary keys.
-// TODO параметризировать fillLeft
 func GenBytesKeys() ([]byte, []byte, error) {
 	var curve elliptic.Curve
 	switch ellipticSize {
@@ -135,62 +123,70 @@ func GenHexKeys() (string, string, error) {
 
 // CBCEncrypt encrypts the text by using the key parameter. It uses CBC mode of AES.
 func encryptCBC(text, key, iv []byte) ([]byte, error) {
+	if iv == nil {
+		iv = make([]byte, consts.BlockSize)
+		if _, err := crand.Read(iv); err != nil {
+			return nil, err
+		}
+	} else if len(iv) < consts.BlockSize {
+		return nil, fmt.Errorf(`wrong size of iv %d`, len(iv))
+	} else if len(iv) > consts.BlockSize {
+		iv = iv[:consts.BlockSize]
+	}
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-	plaintext := _PKCS7Padding(text, aes.BlockSize)
-	if iv == nil {
-		iv = make([]byte, aes.BlockSize, aes.BlockSize+len(plaintext))
-		if _, err := io.ReadFull(crand.Reader, iv); err != nil {
-			return nil, err
-		}
-	}
-	if len(iv) < aes.BlockSize {
-		return nil, fmt.Errorf(`wrong size of iv %d`, len(iv))
-	}
-	mode := cipher.NewCBCEncrypter(block, iv[:aes.BlockSize])
+	plaintext := _PKCS7Padding(text, consts.BlockSize)
+	mode := cipher.NewCBCEncrypter(block, iv)
 	encrypted := make([]byte, len(plaintext))
 	mode.CryptBlocks(encrypted, plaintext)
 	return append(iv, encrypted...), nil
+
 }
 
 // CBCDecrypt decrypts the text by using key. It uses CBC mode of AES.
 func decryptCBC(ciphertext, key, iv []byte) ([]byte, error) {
+	if iv == nil {
+		iv = ciphertext[:consts.BlockSize]
+		ciphertext = ciphertext[consts.BlockSize:]
+	}
+	if len(ciphertext) < consts.BlockSize || len(ciphertext)%consts.BlockSize != 0 {
+		return nil, fmt.Errorf(`Wrong size of cipher %d`, len(ciphertext))
+	}
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-	if len(ciphertext) < aes.BlockSize || len(ciphertext)%aes.BlockSize != 0 {
-		return nil, fmt.Errorf(`Wrong size of cipher %d`, len(ciphertext))
-	}
-	if iv == nil {
-		iv = ciphertext[:aes.BlockSize]
-		ciphertext = ciphertext[aes.BlockSize:]
-	}
+
 	ret := make([]byte, len(ciphertext))
-	cipher.NewCBCDecrypter(block, iv[:aes.BlockSize]).CryptBlocks(ret, ciphertext)
+	cipher.NewCBCDecrypter(block, iv[:consts.BlockSize]).CryptBlocks(ret, ciphertext)
 	if ret, err = _PKCS7UnPadding(ret); err != nil {
 		return nil, err
 	}
 	return ret, nil
+
 }
 
-// TODO в приватные
 // PKCS7Padding realizes PKCS#7 encoding which is described in RFC 5652.
 func _PKCS7Padding(src []byte, blockSize int) []byte {
 	padding := blockSize - len(src)%blockSize
 	return append(src, bytes.Repeat([]byte{byte(padding)}, padding)...)
 }
 
-//TODO в приватные
 // PKCS7UnPadding realizes PKCS#7 decoding.
 func _PKCS7UnPadding(src []byte) ([]byte, error) {
 	length := len(src)
-	if length < int(src[length-1]) {
-		return nil, fmt.Errorf(`incorrect input of PKCS7UnPadding`)
+	padLength := int(src[length-1])
+	for i := length - padLength; i < length; i++ {
+		if int(src[i]) != padLength {
+			return nil, fmt.Errorf(`incorrect input of PKCS7UnPadding`)
+		}
 	}
 	return src[:length-int(src[length-1])], nil
+
 }
 
 // GetSharedKey creates and returns the shared key = private * public.
@@ -206,12 +202,17 @@ func getSharedKey(private, public []byte) (shared []byte, err error) {
 
 	switch signProv {
 	case _ECDSA:
-		private = converter.FillLeft(private)
-		public = converter.FillLeft(public)
+		if len(private) != consts.PubkeySizeLength/2 {
+			return nil, IncorrectPrivKeyLength
+		}
+		if len(public) != consts.PubkeySizeLength {
+			return nil, IncorrectPubKeyLength
+		}
+
 		pub := new(ecdsa.PublicKey)
 		pub.Curve = pubkeyCurve
-		pub.X = new(big.Int).SetBytes(public[0:32])
-		pub.Y = new(big.Int).SetBytes(public[32:])
+		pub.X = new(big.Int).SetBytes(public[0 : consts.PubkeySizeLength/2])
+		pub.Y = new(big.Int).SetBytes(public[consts.PubkeySizeLength/2:])
 
 		bi := new(big.Int).SetBytes(private)
 		priv := new(ecdsa.PrivateKey)
@@ -220,8 +221,10 @@ func getSharedKey(private, public []byte) (shared []byte, err error) {
 		priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
 
 		if priv.Curve.IsOnCurve(pub.X, pub.Y) {
-			x, _ := pub.Curve.ScalarMult(pub.X, pub.Y, priv.D.Bytes())
-			key, err := Hash([]byte(hex.EncodeToString(x.Bytes())))
+			x, y := pub.Curve.ScalarMult(pub.X, pub.Y, priv.D.Bytes())
+			bytes := x.Bytes()
+			bytes = append(bytes, y.Bytes()...)
+			key, err := Hash(bytes)
 			if err != nil {
 				return nil, UnknownProviderError
 			}

@@ -91,21 +91,24 @@ func Type1(r *DisRequest, rw io.ReadWriter) error {
 }
 
 func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
-
-	blockID, err := model.GetCurBlockID()
+	infoBlock := &model.InfoBlock{}
+	found, err := infoBlock.Get()
 	if err != nil {
 		return utils.ErrInfo(err)
+	}
+	if !found {
+		return errors.New("can't find info block")
 	}
 
 	// get block ID
 	newBlockID := converter.BinToDec(buf.Next(3))
-	log.Debug("newDataBlockID: %d / blockID: %d", newBlockID, blockID)
+	log.Debug("newDataBlockID: %d / blockID: %d", newBlockID, infoBlock.BlockID)
 
 	// get block hash
 	blockHash := buf.Next(32)
 
 	// we accept only new blocks
-	if newBlockID >= blockID {
+	if newBlockID >= infoBlock.BlockID {
 		queueBlock := &model.QueueBlock{Hash: blockHash, FullNodeID: fullNodeID, BlockID: newBlockID}
 		err = queueBlock.Create()
 		if err != nil {

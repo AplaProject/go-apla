@@ -18,6 +18,7 @@ package daemons
 
 import (
 	"context"
+	"errors"
 	"net"
 	"time"
 
@@ -47,19 +48,27 @@ func Confirmations(d *daemon, ctx context.Context) error {
 
 	// check last blocks, but not more than 5
 	confirmations := &model.Confirmation{}
-	err := confirmations.GetGoodBlock(consts.MIN_CONFIRMED_NODES)
+	found, err := confirmations.GetGoodBlock(consts.MIN_CONFIRMED_NODES)
 	if err != nil {
 		log.Error("get good block error: %s", err)
 		return err
 	}
 
+	if !found {
+		return errors.New("confirmations not found")
+	}
+
 	ConfirmedBlockID := confirmations.BlockID
 	infoBlock := &model.InfoBlock{}
-	err = infoBlock.GetInfoBlock()
+	found, err = infoBlock.Get()
 	if err != nil {
 		log.Error("get info_block error: %v", err)
 		return err
 	}
+	if !found {
+		return errors.New("info block not found")
+	}
+
 	LastBlockID := infoBlock.BlockID
 	if LastBlockID == 0 {
 		return nil
@@ -84,11 +93,15 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		log.Debug("blockID for confirmation: %d", blockID)
 
 		block := model.Block{}
-		err := block.GetBlock(blockID)
+		found, err := block.Get(blockID)
 		if err != nil {
 			log.Error("get block error: %v", err)
 			return err
 		}
+		if !found {
+			return errors.New("info block not found")
+		}
+
 		hashStr := string(converter.BinToHex(block.Hash))
 		log.Debugf("hash for check: %x", hashStr)
 		if len(hashStr) == 0 {
@@ -129,8 +142,8 @@ func Confirmations(d *daemon, ctx context.Context) error {
 			log.Info("st0 %v  st1 %v", st0, st1)
 		}
 		confirmation := &model.Confirmation{}
-		err = confirmation.GetConfirmation(blockID)
-		if err == nil {
+		found, err = confirmation.GetConfirmation(blockID)
+		if err == nil && found {
 			log.Debug("UPDATE confirmations SET good = %v, bad = %v, time = %v WHERE block_id = %v", st1, st0, time.Now().Unix(), blockID)
 			confirmation.BlockID = blockID
 			confirmation.Good = int32(st1)
@@ -141,7 +154,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 				log.Error("confirmation save error: %v", err)
 				return err
 			}
-		} else {
+		} else if err == nil && !found {
 			confirmation.BlockID = blockID
 			confirmation.Good = int32(st1)
 			confirmation.Bad = int32(st0)
@@ -152,6 +165,8 @@ func Confirmations(d *daemon, ctx context.Context) error {
 				log.Error("confirmation save error: %v", err)
 				return err
 			}
+		} else {
+			return err
 		}
 		log.Debug("blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES %d>%d && %d>=%d\n", blockID, startBlockID, st1, consts.MIN_CONFIRMED_NODES)
 		if blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES {

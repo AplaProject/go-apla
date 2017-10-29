@@ -10,10 +10,6 @@ func (qt *QueueTx) TableName() string {
 	return "queue_tx"
 }
 
-func DeleteQueueTx() error {
-	return DBConn.Delete(&QueueTx{}).Error
-}
-
 func (qt *QueueTx) DeleteTx() error {
 	return DBConn.Delete(qt).Error
 }
@@ -27,20 +23,12 @@ func (qt *QueueTx) Create() error {
 }
 
 func (qt *QueueTx) GetByHash(hash []byte) (bool, error) {
-	query := DBConn.Where("hash = ?", hash).First(qt)
-	if query.RecordNotFound() {
-		return false, nil
-	}
-	return true, query.Error
+	return isFound(DBConn.Where("hash = ?", hash).First(qt))
 }
 
 func DeleteQueueTxByHash(transaction *DbTransaction, hash []byte) (int64, error) {
 	query := GetDB(transaction).Exec("DELETE FROM queue_tx WHERE hash = ?", hash)
 	return query.RowsAffected, query.Error
-}
-
-func DeleteQueuedTransaction(hash []byte) error {
-	return DBConn.Exec("DELETE FROM queue_tx WHERE hash = ?", hash).Error
 }
 
 func GetQueuedTransactionsCount(hash []byte) (int64, error) {
@@ -72,7 +60,6 @@ func GetAllUnverifiedAndUnusedTransactions() ([]*QueueTx, error) {
 		if err := rows.Scan(&data, &hash); err != nil {
 			return nil, err
 		}
-		log.Debugf("add transaction: %x", hash)
 		result = append(result, &QueueTx{Data: data, Hash: hash})
 	}
 	if err := rows.Err(); err != nil {

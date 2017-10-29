@@ -18,7 +18,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-//TODO параметризировать
 func FillLeft(slice []byte) []byte {
 	if len(slice) >= 32 {
 		return slice
@@ -26,7 +25,6 @@ func FillLeft(slice []byte) []byte {
 	return append(make([]byte, 32-len(slice)), slice...)
 }
 
-//TODO перенести в конвертеры
 func EncodeLenInt64(data *[]byte, x int64) *[]byte {
 	var length int
 	buf := make([]byte, 8)
@@ -48,13 +46,11 @@ func EncodeLenInt64InPlace(x int64) []byte {
 	return buf[:length+1]
 }
 
-// TODO перенести в конвертеры
 func EncodeLenByte(out *[]byte, buf []byte) *[]byte {
 	*out = append(append(*out, EncodeLength(int64(len(buf)))...), buf...)
 	return out
 }
 
-// TODO перенести в конвертеры
 // EncodeLength encodes int64 number to []byte. If it is less than 128 then it returns []byte{length}.
 // Otherwise, it returns (0x80 | len of int64) + int64 as BigEndian []byte
 //
@@ -75,7 +71,6 @@ func EncodeLength(length int64) []byte {
 	return append(buf[:1], buf[i:]...)
 }
 
-//TODO перенести в конвертеры
 // DecodeLenInt64 gets int64 from []byte and shift the slice. The []byte should  be
 // encoded with EncodeLengthPlusInt64.
 func DecodeLenInt64(data *[]byte) (int64, error) {
@@ -114,7 +109,6 @@ func DecodeLenInt64Buf(buf *bytes.Buffer) (int64, error) {
 
 }
 
-// TODO перенести в конвертеры
 // DecodeLength decodes []byte to int64 and shifts buf. Bytes must be encoded with EncodeLength function.
 //
 //   0x43 => 67
@@ -161,7 +155,6 @@ func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
 	return int(binary.BigEndian.Uint64(append(make([]byte, 8-length), buf.Next(int(length))...))), nil
 }
 
-// TODO перенести в конвертеры
 // BinMarshal converts v parameter to []byte slice.
 func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
 	var err error
@@ -310,7 +303,6 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
 
 }
 
-// TODO перенести в конвертеры
 // BinUnmarshal converts []byte slice which has been made with BinMarshal to v
 func BinUnmarshal(out *[]byte, v interface{}) error {
 	t := reflect.ValueOf(v)
@@ -771,7 +763,6 @@ func EscapeForJSON(data string) string {
 	return strings.Replace(data, `"`, `\"`, -1)
 }
 
-// TODO перенести в валидаторы
 // ValidateEmail validates email
 func ValidateEmail(email string) bool {
 	Re := regexp.MustCompile(`^(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
@@ -815,7 +806,6 @@ func RSortMap(m map[int64]string) []map[int64]string {
 	return result
 }
 
-// TODO перенести в валидаторы
 // InSliceString searches the string in the slice of strings
 func InSliceString(search string, slice []string) bool {
 	for _, v := range slice {

@@ -44,10 +44,14 @@ func signTest(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
-	pub, err := crypto.PrivateToPublicHex(data.params[`private`].(string))
+	private, err := hex.DecodeString(data.params[`private`].(string))
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
+	}
+	pub, err := crypto.PrivateToPublic(private)
 	if err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
-	data.result = &signTestResult{Signature: hex.EncodeToString(sign), Public: pub}
+	data.result = &signTestResult{Signature: hex.EncodeToString(sign), Public: hex.EncodeToString(pub)}
 	return nil
 }

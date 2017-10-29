@@ -1,10 +1,6 @@
 package model
 
-import (
-	"strconv"
-
-	"github.com/jinzhu/gorm"
-)
+import "strconv"
 
 type FullNode struct {
 	ID                    int32  `gorm:"primary_key;not_null"`
@@ -16,46 +12,24 @@ type FullNode struct {
 	RbID                  int64  `gorm:"not null default 0"`
 }
 
-func (fn *FullNode) FindNode(stateID int64, walletID int64, finalDelegateStateID int64, finalDelegateWalletID int64) error {
-	return handleError(DBConn.Where(
+func (fn *FullNode) FindNode(stateID int64, walletID int64, finalDelegateStateID int64, finalDelegateWalletID int64) (bool, error) {
+	return isFound(DBConn.Where(
 		"state_id = ?", stateID).Or(
 		"wallet_id = ?", walletID).Or(
 		"final_delegate_state_id = ?", finalDelegateStateID).Or(
-		"final_delegate_wallet_id = ?", finalDelegateWalletID).Find(&fn).Error)
+		"final_delegate_wallet_id = ?", finalDelegateWalletID).Find(&fn))
 }
 
-func (fn *FullNode) Get(walletID int64) error {
-	return handleError(DBConn.Where("wallet_id = ?", walletID).First(fn).Error)
+func (fn *FullNode) Get(walletID int64) (bool, error) {
+	return isFound(DBConn.Where("wallet_id = ?", walletID).First(fn))
 }
 
-func (fn *FullNode) FindNodeByID(nodeID int64) error {
-	return handleError(DBConn.Where("id = ?", nodeID).First(fn).Error)
-}
-
-func (fn *FullNode) GetAllFullNodesHasWalletID(transaction *DbTransaction) ([]FullNode, error) {
-	result := make([]FullNode, 0)
-	err := GetDB(transaction).Where("wallet_id != 0").Find(&result).Error
-	return result, err
-}
-
-func (fn *FullNode) GetRbIDFullNodesWithWallet() error {
-	return handleError(DBConn.Where("wallet_id != 0").First(fn).Error)
-}
-
-func (fn *FullNode) DeleteNodesWithWallets(transaction *DbTransaction) error {
-	return GetDB(transaction).Exec("DELETE FROM full_nodes WHERE wallet_id != 0").Error
-}
-
-func (fn *FullNode) FindNodeById(nodeid int64) error {
-	return handleError(DBConn.Where("id = ?", nodeid).First(fn).Error)
+func (fn *FullNode) FindNodeByID(nodeID int64) (bool, error) {
+	return isFound(DBConn.Where("id = ?", nodeID).First(fn))
 }
 
 func (fn *FullNode) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(fn).Error
-}
-
-func FullNodeCreateTable() error {
-	return DBConn.CreateTable(&FullNode{}).Error
 }
 
 func GetFullNodesHosts() ([]string, error) {
@@ -94,15 +68,4 @@ func (fn *FullNode) ToMap() map[string]string {
 	result["final_delegate_state_id"] = strconv.FormatInt(fn.FinalDelegateStateID, 10)
 	result["rb_id"] = strconv.FormatInt(fn.RbID, 10)
 	return result
-}
-
-func (fn *FullNode) GetMaxID(transaction *DbTransaction) (int32, error) {
-	err := GetDB(transaction).Last(fn).Error
-	if err == nil {
-		return fn.ID, nil
-	}
-	if err == gorm.ErrRecordNotFound {
-		return -1, nil
-	}
-	return -1, err
 }

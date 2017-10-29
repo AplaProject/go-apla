@@ -6,8 +6,8 @@ type QueueBlock struct {
 	FullNodeID int64  `gorm:"not null"`
 }
 
-func (qb *QueueBlock) GetQueueBlock() error {
-	return handleError(DBConn.First(qb).Error)
+func (qb *QueueBlock) Get() (bool, error) {
+	return isFound(DBConn.First(qb))
 }
 
 func (qb *QueueBlock) Delete() error {

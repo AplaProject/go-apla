@@ -18,9 +18,10 @@ func (sd *StopDaemon) Delete() error {
 	return DBConn.Delete(&StopDaemon{}).Error
 }
 
-func (sd *StopDaemon) Get() error {
-	return DBConn.First(sd).Error
+func (sd *StopDaemon) Get() (bool, error) {
+	return isFound(DBConn.First(sd))
 }
+
 func SetStopNow() error {
 	stopTime := &StopDaemon{StopTime: time.Now().Unix()}
 	return stopTime.Create()

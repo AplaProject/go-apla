@@ -17,6 +17,9 @@
 package daemons
 
 import (
+	"encoding/hex"
+	"errors"
+
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -39,18 +42,26 @@ const (
 // else send the full transactions
 func Disseminator(d *daemon, ctx context.Context) error {
 	config := &model.Config{}
-	err := config.GetConfig()
+	found, err := config.Get()
 	if err != nil {
 		log.Errorf("can't get config: %s", err)
 		return err
 	}
 
+	if !found {
+		return errors.New("can't found config")
+	}
 	node := &model.FullNode{}
-	err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	found, err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
 	if err != nil {
 		log.Errorf("can't get full_node: %s", err)
 		return err
 	}
+
+	if !found {
+		return errors.New("can't find config")
+	}
+
 	fullNodeID := node.ID
 
 	// find out who we are, fullnode or not
@@ -110,9 +121,13 @@ func sendTransactions() error {
 
 // send block and transactions hashes
 func sendHashes(fullNodeID int32) error {
-	block, err := model.BlockGetUnsent()
+	infoBlock := &model.InfoBlock{}
+	found, err := infoBlock.GetUnsent()
 	if err != nil {
 		return err
+	}
+	if !found {
+		return errors.New("can't find info block")
 	}
 
 	trs, err := model.GetAllUnsentTransactions()
@@ -120,13 +135,13 @@ func sendHashes(fullNodeID int32) error {
 		return err
 	}
 
-	if (trs == nil || len(*trs) == 0) && block == nil {
+	if trs == nil || len(*trs) == 0 {
 		// it's nothing to send
 		log.Debugf("it's nothing to send")
 		return nil
 	}
 
-	buf := prepareHashReq(block, trs, fullNodeID)
+	buf := prepareHashReq(infoBlock, trs, fullNodeID)
 	if buf != nil || len(buf) > 0 {
 		err := sendPacketToAll(FULL_REQUEST, buf, sendHashesResp)
 		if err != nil {
@@ -135,11 +150,9 @@ func sendHashes(fullNodeID int32) error {
 	}
 
 	// mark all transactions and block as sent
-	if block != nil {
-		err = block.MarkSent()
-		if err != nil {
-			return err
-		}
+	err = infoBlock.MarkSent()
+	if err != nil {
+		return err
 	}
 
 	if trs != nil {
@@ -160,9 +173,12 @@ func sendHashesResp(resp []byte, w io.Writer) error {
 		// Parse the list of requested transactions
 		txHash := converter.BytesShift(&resp, 16)
 		tr := &model.Transaction{}
-		err := tr.Read(txHash)
+		found, err := tr.Read(txHash)
 		if err != nil {
 			return err
+		}
+		if !found {
+			return errors.New("can't find transaction: Hash " + hex.EncodeToString(txHash))
 		}
 		if len(tr.Data) > 0 {
 			buf.Write(converter.EncodeLengthPlusData(tr.Data))

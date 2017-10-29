@@ -1,9 +1,5 @@
 package model
 
-import (
-	"strconv"
-)
-
 type StateParameter struct {
 	tableName  string
 	Name       string `gorm:"primary_key;not null;size:100"`
@@ -16,16 +12,12 @@ func (sp *StateParameter) TableName() string {
 	return sp.tableName
 }
 
-func (sp *StateParameter) SetTablePrefix(tablePrefix string) *StateParameter {
+func (sp *StateParameter) SetTablePrefix(tablePrefix string) {
 	sp.tableName = tablePrefix + "_parameters"
-	return sp
 }
 
-func (sp *StateParameter) GetByNameTransaction(transaction *DbTransaction, name string) error {
-	return handleError(GetDB(transaction).Where("name = ?", name).First(sp).Error)
-}
-func (sp *StateParameter) GetByName(name string) error {
-	return handleError(DBConn.Where("name = ?", name).First(sp).Error)
+func (sp *StateParameter) Get(transaction *DbTransaction, name string) (bool, error) {
+	return isFound(GetDB(transaction).Where("name = ?", name).First(sp))
 }
 
 func (sp *StateParameter) GetAllStateParameters() ([]StateParameter, error) {
@@ -35,13 +27,4 @@ func (sp *StateParameter) GetAllStateParameters() ([]StateParameter, error) {
 		return nil, err
 	}
 	return parameters, nil
-}
-
-func (sp *StateParameter) ToMap() map[string]string {
-	result := make(map[string]string, 0)
-	result["name"] = sp.Name
-	result["value"] = sp.Value
-	result["conditions"] = sp.Conditions
-	result["rb_id"] = strconv.FormatInt(sp.RbID, 10)
-	return result
 }

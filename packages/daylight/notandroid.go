@@ -19,16 +19,11 @@
 package daylight
 
 import (
-	//"fmt"
-	//"github.com/AplaProject/go-apla/packages/consts"
 	"net"
 	"net/http"
 
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/utils"
-	//"os"
-	//"regexp"
-	//	"time"
 
 	"fmt"
 )

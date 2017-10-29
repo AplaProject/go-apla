@@ -44,7 +44,8 @@ func ecosystemParams(w http.ResponseWriter, r *http.Request, data *apiData) (err
 		return err
 	}
 	sp := &model.StateParameter{}
-	list, err := sp.SetTablePrefix(converter.Int64ToStr(state)).GetAllStateParameters()
+	sp.SetTablePrefix(converter.Int64ToStr(state))
+	list, err := sp.GetAllStateParameters()
 	result.List = make([]paramValue, 0)
 	if len(data.params[`names`].(string)) > 0 {
 		names = make(map[string]bool)

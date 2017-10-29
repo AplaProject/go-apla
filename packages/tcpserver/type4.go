@@ -25,8 +25,8 @@ import (
 func Type4(r *ConfirmRequest) (*ConfirmResponse, error) {
 	resp := &ConfirmResponse{}
 	block := &model.Block{}
-	err := block.GetBlock(int64(r.BlockID))
-	if err != nil || len(block.Hash) == 0 {
+	found, err := block.Get(int64(r.BlockID))
+	if err != nil || !found {
 		hash := [32]byte{}
 		resp.Hash = hash[:]
 	} else {

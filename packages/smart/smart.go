@@ -85,15 +85,6 @@ func init() {
 	}})
 }
 
-/*func pref2state(prefix string) (state uint32) {
-	if prefix != `global` {
-		if val, err := strconv.ParseUint(prefix, 10, 32); err == nil {
-			state = uint32(val)
-		}
-	}
-	return
-}*/
-
 // ExternOff switches off the extern compiling mode in smartVM
 func ExternOff() {
 	smartVM.FlushExtern()

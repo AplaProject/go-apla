@@ -18,6 +18,7 @@ package daemons
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -40,7 +41,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	defer DBUnlock()
 
 	infoBlock := &model.InfoBlock{}
-	err := infoBlock.GetInfoBlock()
+	_, err := infoBlock.Get()
 	if err != nil {
 		return err
 	}
@@ -51,19 +52,27 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 
 	nodeConfig := &model.Config{}
-	err = nodeConfig.GetConfig()
+	found, err := nodeConfig.Get()
 	if err != nil {
 		return err
-
 	}
+
+	if !found {
+		return errors.New("can't find config")
+	}
+
 	myStateID := nodeConfig.StateID
 	myWalletID := nodeConfig.DltWalletID
 
 	// If we are in the list of those who are able to generate the blocks
 	fullNode := &model.FullNode{}
-	err = fullNode.FindNode(myStateID, myWalletID, myStateID, myWalletID)
+	found, err = fullNode.FindNode(myStateID, myWalletID, myStateID, myWalletID)
 	if err != nil {
 		return err
+	}
+
+	if !found {
+		return fmt.Errorf("can't find full node with stateID: %d, walletID: %d", myStateID, myWalletID)
 	}
 
 	fullNodeID := fullNode.ID
@@ -76,9 +85,13 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 
 	// check if the time of the last updating passed
 	updFn := &model.UpdFullNode{}
-	err = updFn.Read(nil)
+	found, err = updFn.Get(nil)
 	if err != nil {
 		return err
+	}
+
+	if !found {
+		return errors.New("can't find update_full_nodes")
 	}
 
 	updFullNodes := int64(updFn.Time)

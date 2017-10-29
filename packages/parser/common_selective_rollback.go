@@ -18,6 +18,8 @@ package parser
 
 import (
 	"encoding/json"
+	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -38,9 +40,13 @@ func (p *Parser) selectiveRollback(table string, where string) error {
 	if rbID > 0 {
 		// data that we will be restored
 		rollback := &model.Rollback{}
-		err = rollback.Get(rbID)
+		found, err := rollback.Get(rbID)
 		if err != nil {
 			return p.ErrInfo(err)
+		}
+
+		if !found {
+			return errors.New("rollback not found. ID: " + strconv.FormatInt(rbID, 10))
 		}
 
 		var jsonMap map[string]string

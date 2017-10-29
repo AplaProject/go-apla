@@ -17,8 +17,9 @@
 package apiv2
 
 import (
-	"github.com/jinzhu/gorm"
 	"net/http"
+
+	"github.com/jinzhu/gorm"
 
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -36,9 +37,7 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if wallet == 0 {
 		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
-	/*	if sval, ok := data.params[`state`]; ok {
-		state = sval.(int64)
-	}*/
+
 	key := &model.Key{}
 	key.SetTablePrefix(state)
 	err := key.Get(wallet)

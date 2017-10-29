@@ -28,13 +28,6 @@ type TestVM struct {
 }
 
 func (block *Block) String() (ret string) {
-	/*	for _, item := range lexems {
-		slex := string(source[item.Offset:item.Right])
-		if item.Type == 0 {
-			slex = `error`
-		}
-		ret += fmt.Sprintf("[%d %s]", item.Type, slex)
-	}*/
 	if (*block).Objects != nil {
 		ret = fmt.Sprintf("Objects: %v\n", (*block).Objects)
 	}
