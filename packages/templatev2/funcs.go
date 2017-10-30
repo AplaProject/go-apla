@@ -61,6 +61,9 @@ var (
 		`label`: {map[string]tailInfo{
 			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		}},
+		`data`: {map[string]tailInfo{
+			`Custom`: {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		}},
 		`dbfind`: {map[string]tailInfo{
 			`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
 			`Where`:     {tplFunc{tailTag, defaultTailFull, `where`, `Where`}, false},
@@ -80,6 +83,9 @@ var (
 		`table`: {map[string]tailInfo{
 			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		}},
+		`select`: {map[string]tailInfo{
+			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		}},
 	}
 	modes = [][]rune{{'(', ')'}, {'{', '}'}}
 )
@@ -92,12 +98,14 @@ func init() {
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
 	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,Value`}
 	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
+	funcs[`Data`] = tplFunc{dataTag, defaultTailTag, `data`, `Source,Columns,Data`}
 	funcs[`DBFind`] = tplFunc{dbfindTag, defaultTailTag, `dbfind`, `Name,Source`}
 	funcs[`And`] = tplFunc{andTag, defaultTag, `and`, `*`}
 	funcs[`Or`] = tplFunc{orTag, defaultTag, `or`, `*`}
 	funcs[`P`] = tplFunc{defaultTailTag, defaultTailTag, `p`, `Body,Class`}
 	funcs[`Span`] = tplFunc{defaultTailTag, defaultTailTag, `span`, `Body,Class`}
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
+	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Source,Column,Class`}
 
 	tails[`if`].Tails[`ElseIf`] = tailInfo{tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false}
 
@@ -159,6 +167,98 @@ func alertTag(par parFunc) string {
 func defaultTailFull(par parFunc) string {
 	setAllAttr(par)
 	par.Owner.Tail = append(par.Owner.Tail, par.Node)
+	return ``
+}
+
+func dataTag(par parFunc) string {
+	setAllAttr(par)
+	defaultTail(par, `data`)
+
+	rows := strings.Split((*par.Pars)[`Data`], "\n")
+	data := make([][]string, 0)
+	cols := strings.Split((*par.Pars)[`Columns`], `,`)
+
+	lencol := 0
+	defcol := 0
+	for _, item := range rows {
+		if lencol == 0 {
+			defcol = len(cols)
+			if par.Node.Attr[`customs`] != nil {
+				for _, v := range par.Node.Attr[`customs`].([]string) {
+					cols = append(cols, v)
+				}
+			}
+			lencol = len(cols)
+		}
+		item = strings.TrimSpace(item)
+		if len(item) == 0 {
+			continue
+		}
+		row := make([]string, lencol)
+		vals := make(map[string]string)
+		var shift int
+		for i, icol := range cols {
+			var ival string
+			if i < defcol {
+				var (
+					val []rune
+				)
+				subitem := item[shift:]
+				if i == defcol-1 {
+					ival = subitem
+				} else {
+					var pair rune
+					for off, ch := range subitem {
+						if pair > 0 {
+							if ch == pair {
+								if off+1 < len(subitem) && rune(subitem[off+1]) == pair {
+									val = append(val, ch)
+									off++
+									continue
+								} else {
+									pair = 0
+								}
+							}
+							val = append(val, ch)
+							continue
+						}
+						if ch == ',' {
+							shift = off + 1
+							break
+						}
+						if ch == '"' || ch == '`' {
+							pair = ch
+						}
+						val = append(val, ch)
+					}
+					if val != nil {
+						ival = string(val)
+					}
+				}
+				if strings.IndexByte(ival, '<') >= 0 {
+					ival = html.EscapeString(ival)
+				}
+				ival = strings.TrimSpace(ival)
+				if ival[0] == ival[len(ival)-1] && (ival[0] == '"' || ival[0] == '`') {
+					ival = ival[1 : len(ival)-1]
+				}
+				vals[icol] = ival
+			} else {
+				out, err := json.Marshal(par.Node.Attr[`custombody`].([][]*node)[i-defcol])
+				if err == nil {
+					ival = replace(string(out), 0, &vals)
+				}
+			}
+			row[i] = ival
+		}
+		data = append(data, row)
+	}
+	setAllAttr(par)
+	delete(par.Node.Attr, `customs`)
+	delete(par.Node.Attr, `custombody`)
+	par.Node.Attr[`columns`] = &cols
+	par.Node.Attr[`data`] = &data
+	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
 }
 

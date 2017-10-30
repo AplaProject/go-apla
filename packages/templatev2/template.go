@@ -77,7 +77,7 @@ func setAttr(par parFunc, name string) {
 
 func setAllAttr(par parFunc) {
 	for key, v := range *par.Pars {
-		if key != `Body` && len(v) > 0 {
+		if key != `Body` && key != `Data` && len(v) > 0 {
 			par.Node.Attr[strings.ToLower(key)] = v
 		}
 	}
@@ -335,7 +335,7 @@ main:
 				level--
 			}
 			if level == 0 {
-				if mode == 0 && strings.Contains(curFunc.Params, `Body`) {
+				if mode == 0 && (strings.Contains(curFunc.Params, `Body`) || strings.Contains(curFunc.Params, `Data`)) {
 					var isBody bool
 					next := off + 1
 					for next < len(input) {
@@ -351,7 +351,12 @@ main:
 					}
 					if isBody {
 						mode = 1
-						params = append(params, `Body:`)
+						for _, keyp := range []string{`Body`, `Data`} {
+							if strings.Contains(curFunc.Params, keyp) {
+								params = append(params, keyp+`:`)
+								break
+							}
+						}
 						curp++
 						skip = next - off
 						level = 1

@@ -39,6 +39,14 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Select(mysrc,name,myclass)`,
+		`[{"tag":"select","attr":{"class":"myclass","column":"name","source":"mysrc"}}]`},
+	{`Data(mysrc,"id,name",
+		1, John Silver
+		2, "Mark, Twist"
+		3, "Unknown ""Person"""
+	)`,
+		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","John Silver"],["2","Mark, Twist"],["3","Unknown \"Person\""]],"source":"mysrc"}}]`},
 	{`If(true) {OK}.Else {false} Div(){test} If(false, FALSE).ElseIf(0) { Skip }.ElseIf(1) {Else OK
 		}.Else {Fourth}If(0).Else{ALL right}`,
 		`[{"tag":"text","text":"OK"},{"tag":"div","children":[{"tag":"text","text":"test"}]},{"tag":"text","text":"Else OK"},{"tag":"text","text":"ALL right"}]`},
@@ -104,10 +112,13 @@ var forTest = tplList{
 		`[{"tag":"text","text":"unknown address"},{"tag":"span","children":[{"tag":"text","text":"1844-6738-3454-7065-1595"}]},{"tag":"text","text":"0000-0003-4673-4764-38731218-8352-5257-3021-1925"}]`},
 	{`Table(src, "id=ID,name,wallet=Wallet")`,
 		`[{"tag":"table","attr":{"columns":{"id":"ID","name":"name","wallet":"Wallet"},"source":"src"}}]`},
-			Strong(#id#, text-muted)
-			Div(,div element: #id#)
-		 }.Custom(mybtn){Button(#amount#,mypage=#id#)}`,
-}
+	/*	{`Div(myclass, Include(test)Span(OK))`,
+			`[{"tag":"include","attr":{"name":"myblock"}}]`},
+			{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25).Custom(myid){
+		 			Strong(#id#, text-muted)
+		 			Div(,div element: #id#)
+		 		 }.Custom(mybtn){Button(#amount#,mypage=#id#)}`,
+			``},*/}
 
 func TestFullJSON(t *testing.T) {
 	vars := make(map[string]string)
