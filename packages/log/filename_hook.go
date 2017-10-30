@@ -4,6 +4,7 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -26,6 +27,7 @@ func (hook ContextHook) Fire(entry *logrus.Entry) error {
 			entry.Data["file"] = path.Base(file)
 			entry.Data["func"] = path.Base(name)
 			entry.Data["line"] = line
+			entry.Data["time"] = time.Now().Format(time.RFC3339)
 			break
 		}
 	}
