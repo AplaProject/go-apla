@@ -17,6 +17,7 @@
 package templatev2
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -174,13 +175,16 @@ func dataTag(par parFunc) string {
 	setAllAttr(par)
 	defaultTail(par, `data`)
 
-	rows := strings.Split((*par.Pars)[`Data`], "\n")
 	data := make([][]string, 0)
 	cols := strings.Split((*par.Pars)[`Columns`], `,`)
 
+	list, err := csv.NewReader(strings.NewReader((*par.Pars)[`Data`])).ReadAll()
+	if err != nil {
+		par.Node.Attr[`error`] = err.Error()
+	}
 	lencol := 0
 	defcol := 0
-	for _, item := range rows {
+	for _, item := range list {
 		if lencol == 0 {
 			defcol = len(cols)
 			if par.Node.Attr[`customs`] != nil {
@@ -190,57 +194,14 @@ func dataTag(par parFunc) string {
 			}
 			lencol = len(cols)
 		}
-		item = strings.TrimSpace(item)
-		if len(item) == 0 {
-			continue
-		}
 		row := make([]string, lencol)
 		vals := make(map[string]string)
-		var shift int
 		for i, icol := range cols {
 			var ival string
 			if i < defcol {
-				var (
-					val []rune
-				)
-				subitem := item[shift:]
-				if i == defcol-1 {
-					ival = subitem
-				} else {
-					var pair rune
-					for off, ch := range subitem {
-						if pair > 0 {
-							if ch == pair {
-								if off+1 < len(subitem) && rune(subitem[off+1]) == pair {
-									val = append(val, ch)
-									off++
-									continue
-								} else {
-									pair = 0
-								}
-							}
-							val = append(val, ch)
-							continue
-						}
-						if ch == ',' {
-							shift = off + 1
-							break
-						}
-						if ch == '"' || ch == '`' {
-							pair = ch
-						}
-						val = append(val, ch)
-					}
-					if val != nil {
-						ival = string(val)
-					}
-				}
+				ival = strings.TrimSpace(item[i])
 				if strings.IndexByte(ival, '<') >= 0 {
 					ival = html.EscapeString(ival)
-				}
-				ival = strings.TrimSpace(ival)
-				if ival[0] == ival[len(ival)-1] && (ival[0] == '"' || ival[0] == '`') {
-					ival = ival[1 : len(ival)-1]
 				}
 				vals[icol] = ival
 			} else {

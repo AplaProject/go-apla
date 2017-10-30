@@ -227,7 +227,11 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 				val := macro(strings.TrimSpace((*params)[i]), vars)
 				off := strings.IndexByte(val, ':')
 				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
-					pars[val[:off]] = strings.Trim(val[off+1:], "\t\r\n \"`")
+					cut := "\t\r\n \"`"
+					if val[:off] == `Data` {
+						cut = "\t\r\n "
+					}
+					pars[val[:off]] = strings.Trim(val[off+1:], cut)
 				} else {
 					pars[v] = val
 				}
@@ -307,7 +311,7 @@ main:
 			}
 			continue
 		}
-		if len(params[curp]) == 0 && ch != modes[mode][1] && ch != ',' {
+		if len(params[curp]) == 0 && mode == 0 && ch != modes[mode][1] && ch != ',' {
 			if ch >= '!' {
 				if ch == '"' || ch == '`' {
 					pair = ch
@@ -320,8 +324,10 @@ main:
 
 		switch ch {
 		case '"', '`':
-			pair = ch
-			quote = true
+			if mode == 0 {
+				pair = ch
+				quote = true
+			}
 		case ',':
 			if mode == 0 && level == 1 && len(params) < lenParams {
 				params = append(params, ``)
@@ -419,9 +425,7 @@ func process(input string, owner *node, vars *map[string]string) {
 		params         *[]string
 		tailpars       *[]*[]string
 	)
-	//	fmt.Println(`Input`, input)
 	name := make([]rune, 0, 128)
-	//main:
 	for off, ch := range input {
 		if shift > 0 {
 			shift--

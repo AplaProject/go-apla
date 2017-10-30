@@ -39,13 +39,19 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Data(mysrc,"id,name",
+		"1",John Silver,2
+		2,"Mark, Twist"
+	)`,
+		`[{"tag":"data","attr":{"columns":["id","name"],"data":[],"error":"line 2, column 0: wrong number of fields in line","source":"mysrc"}}]`},
+
 	{`Select(mysrc,name,myclass)`,
 		`[{"tag":"select","attr":{"class":"myclass","column":"name","source":"mysrc"}}]`},
-	{`Data(mysrc,"id,name",
-		1, John Silver
-		2, "Mark, Twist"
-		3, "Unknown ""Person"""
-	)`,
+	{`Data(mysrc,"id,name"){
+		"1",John Silver
+		2,"Mark, Twist"
+		3,"Unknown ""Person"""
+		}`,
 		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","John Silver"],["2","Mark, Twist"],["3","Unknown \"Person\""]],"source":"mysrc"}}]`},
 	{`If(true) {OK}.Else {false} Div(){test} If(false, FALSE).ElseIf(0) { Skip }.ElseIf(1) {Else OK
 		}.Else {Fourth}If(0).Else{ALL right}`,
