@@ -43,6 +43,19 @@ type global struct {
 	value string
 }
 
+// PrivateToPublicHex returns the hex public key for the specified hex private key.
+func PrivateToPublicHex(hexkey string) (string, error) {
+	key, err := hex.DecodeString(hexkey)
+	if err != nil {
+		return ``, fmt.Errorf("Decode hex error")
+	}
+	pubKey, err := crypto.PrivateToPublic(key)
+	if err != nil {
+		return ``, err
+	}
+	return hex.EncodeToString(pubKey), nil
+}
+
 func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
 	client := &http.Client{}
 	var ioform io.Reader
@@ -115,7 +128,7 @@ func keyLogin(state int64) (err error) {
 	if err != nil {
 		return
 	}
-	pub, err = crypto.PrivateToPublicHex(string(key))
+	pub, err = PrivateToPublicHex(string(key))
 	if err != nil {
 		return
 	}
@@ -128,7 +141,7 @@ func keyLogin(state int64) (err error) {
 	}
 	gAddress = logret.Address
 	gPrivate = string(key)
-	gPublic, err = crypto.PrivateToPublicHex(gPrivate)
+	gPublic, err = PrivateToPublicHex(gPrivate)
 	gAuth = logret.Token
 	if err != nil {
 		return

@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	logging "github.com/op/go-logging"
 )
 

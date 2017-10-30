@@ -88,7 +88,7 @@ func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
 	if len(data) == 0 {
 		return false, fmt.Errorf("invalid parameters len(data) == 0")
 	}
-	if len(public) != consts.PubkeyLength {
+	if len(public) != consts.PubkeySizeLength {
 		return false, fmt.Errorf("invalid parameters len(public) = %d", len(public))
 	}
 	if len(signature) == 0 {
