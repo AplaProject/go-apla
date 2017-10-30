@@ -120,7 +120,10 @@ INSERT INTO "%[1]d_parameters" ("id","name", "value", "conditions") VALUES
 ('12','ecosystem_name', '%[3]s', 'ContractConditions(`MainCondition`)'),
 ('13','max_sum', '1000000', 'ContractConditions(`MainCondition`)'),
 ('14','citizenship_cost', '1', 'ContractConditions(`MainCondition`)'),
-('15','money_digit', '2', 'ContractConditions(`MainCondition`)');
+('15','money_digit', '2', 'ContractConditions(`MainCondition`)'),
+('16','stylesheet', 'body { 
+  /* You can define your custom styles here or create custom CSS rules */
+}', 'ContractConditions(`MainCondition`)');
 
 CREATE TABLE "%[1]d_tables" (
 "name" varchar(100) UNIQUE NOT NULL DEFAULT '',
