@@ -34,6 +34,7 @@ var (
 		`Address`:   {addressTag, defaultTag, `address`, `Wallet`},
 		`Em`:        {defaultTag, defaultTag, `em`, `Body,Class`},
 		`GetVar`:    {getvarTag, defaultTag, `getvar`, `Name`},
+		`Image`:     {defaultTag, defaultTag, `image`, `Src,Class`},
 		`InputErr`:  {defaultTag, defaultTag, `inputerr`, `*`},
 		`LangRes`:   {langresTag, defaultTag, `langres`, `Name,Lang`},
 		`MenuGroup`: {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},

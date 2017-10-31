@@ -39,20 +39,21 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Image(/images/myimage.jpg,myclass)`,
+		`[{"tag":"image","attr":{"class":"myclass","src":"/images/myimage.jpg"}}]`},
 	{`Data(mysrc,"id,name",
 		"1",John Silver,2
-		2,"Mark, Twist"
+		2,"Mark, Smith"
 	)`,
 		`[{"tag":"data","attr":{"columns":["id","name"],"data":[],"error":"line 2, column 0: wrong number of fields in line","source":"mysrc"}}]`},
-
 	{`Select(mysrc,name,myclass)`,
 		`[{"tag":"select","attr":{"class":"myclass","column":"name","source":"mysrc"}}]`},
 	{`Data(mysrc,"id,name"){
 		"1",John Silver
-		2,"Mark, Twist"
+		2,"Mark, Smith"
 		3,"Unknown ""Person"""
 		}`,
-		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","John Silver"],["2","Mark, Twist"],["3","Unknown \"Person\""]],"source":"mysrc"}}]`},
+		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","John Silver"],["2","Mark, Smith"],["3","Unknown \"Person\""]],"source":"mysrc"}}]`},
 	{`If(true) {OK}.Else {false} Div(){test} If(false, FALSE).ElseIf(0) { Skip }.ElseIf(1) {Else OK
 		}.Else {Fourth}If(0).Else{ALL right}`,
 		`[{"tag":"text","text":"OK"},{"tag":"div","children":[{"tag":"text","text":"test"}]},{"tag":"text","text":"Else OK"},{"tag":"text","text":"ALL right"}]`},
