@@ -73,7 +73,6 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 	priv := new(ecdsa.PrivateKey)
 	priv.PublicKey.Curve = pubkeyCurve
 	priv.D = bi
-	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
 
 	signhash, err := Hash([]byte(data))
 	if err != nil {
@@ -87,15 +86,14 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 	return
 }
 
-// TODO параметризировать, длина данных в зависимости от длины кривой
 // CheckECDSA checks if forSign has been signed with corresponding to public the private key
 func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
 	if len(data) == 0 {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Error("data is empty")
 		return false, fmt.Errorf("invalid parameters len(data) == 0")
 	}
-	if len(public) != 64 {
-		log.WithFields(log.Fields{"size": len(public), "size_match": 64, "type": consts.CryptoError}).Error("invalid public key")
+	if len(public) != consts.PubkeySizeLength {
+		log.WithFields(log.Fields{"size": len(public), "size_match": consts.PubkeySizeLength, "type": consts.SizeDoesNotMatch}).Error("invalid public key")
 		return false, fmt.Errorf("invalid parameters len(public) = %d", len(public))
 	}
 	if len(signature) == 0 {
@@ -118,8 +116,8 @@ func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
 
 	pubkey := new(ecdsa.PublicKey)
 	pubkey.Curve = pubkeyCurve
-	pubkey.X = new(big.Int).SetBytes(public[0:32])
-	pubkey.Y = new(big.Int).SetBytes(public[32:])
+	pubkey.X = new(big.Int).SetBytes(public[0:consts.PrivkeyLength])
+	pubkey.Y = new(big.Int).SetBytes(public[consts.PrivkeyLength:])
 	r, s, err := parseSign(hex.EncodeToString(signature))
 	if err != nil {
 		return false, err

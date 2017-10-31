@@ -19,6 +19,8 @@ package daemons
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
+	"errors"
 	"io"
 	"sync"
 
@@ -41,18 +43,26 @@ const (
 // else send the full transactions
 func Disseminator(d *daemon, ctx context.Context) error {
 	config := &model.Config{}
-	err := config.GetConfig()
+	found, err := config.Get()
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get config")
 		return err
 	}
 
+	if !found {
+		return errors.New("can't found config")
+	}
 	node := &model.FullNode{}
-	err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	found, err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("finding node")
 		return err
 	}
+
+	if !found {
+		return errors.New("can't find config")
+	}
+
 	fullNodeID := node.ID
 
 	// find out who we are, fullnode or not
@@ -113,10 +123,14 @@ func sendTransactions(logger *log.Entry) error {
 
 // send block and transactions hashes
 func sendHashes(fullNodeID int32, logger *log.Entry) error {
-	block, err := model.BlockGetUnsent()
+	infoBlock := &model.InfoBlock{}
+	found, err := infoBlock.GetUnsent()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting unsent blocks")
 		return err
+	}
+	if !found {
+		return errors.New("can't find info block")
 	}
 
 	trs, err := model.GetAllUnsentTransactions()
@@ -125,13 +139,12 @@ func sendHashes(fullNodeID int32, logger *log.Entry) error {
 		return err
 	}
 
-	if (trs == nil || len(*trs) == 0) && block == nil {
-		// it's nothing to send'
+	if trs == nil || len(*trs) == 0 {
 		logger.Debug("nothing to send")
 		return nil
 	}
 
-	buf := prepareHashReq(block, trs, fullNodeID)
+	buf := prepareHashReq(infoBlock, trs, fullNodeID)
 	if buf != nil || len(buf) > 0 {
 		err := sendPacketToAll(FULL_REQUEST, buf, sendHashesResp, logger)
 		if err != nil {
@@ -140,12 +153,10 @@ func sendHashes(fullNodeID int32, logger *log.Entry) error {
 	}
 
 	// mark all transactions and block as sent
-	if block != nil {
-		err = block.MarkSent()
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marking block sent")
-			return err
-		}
+	err = infoBlock.MarkSent()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marking block sent")
+		return err
 	}
 
 	if trs != nil {
@@ -166,10 +177,13 @@ func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
 		// Parse the list of requested transactions
 		txHash := converter.BytesShift(&resp, 16)
 		tr := &model.Transaction{}
-		err := tr.Read(txHash)
+		found, err := tr.Read(txHash)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("reading transaction by hash")
 			return err
+		}
+		if !found {
+			return errors.New("can't find transaction: Hash " + hex.EncodeToString(txHash))
 		}
 		if len(tr.Data) > 0 {
 			buf.Write(converter.EncodeLengthPlusData(tr.Data))

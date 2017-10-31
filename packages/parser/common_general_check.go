@@ -45,7 +45,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 	}
 	if txType == utils.TypeInt("DLTTransfer") || txType == utils.TypeInt("NewState") || txType == utils.TypeInt("DLTChangeHostVote") || txType == utils.TypeInt("ChangeNodeKeyDLT") || txType == utils.TypeInt("CitizenRequest") || txType == utils.TypeInt("UpdFullNodes") {
 		dltWallet := &model.DltWallet{}
-		err := dltWallet.GetWalletTransaction(p.DbTransaction, p.TxWalletID)
+		_, err := dltWallet.Get(p.DbTransaction, p.TxWalletID)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet transaction")
 			return utils.ErrInfo(err)
@@ -72,13 +72,13 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 		}
 	} else {
 		dltWallet := &model.DltWallet{}
-		err := dltWallet.GetWalletTransaction(p.DbTransaction, header.UserID)
+		found, err := dltWallet.Get(p.DbTransaction, header.UserID)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet transaction")
 			return utils.ErrInfo(err)
 		}
-		if len(dltWallet.PublicKey) == 0 {
-			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect transaction public key")
+		if !found {
+			logger.WithFields(log.Fields{"type": consts.NotFound}).Error("transaction public key not found")
 			return utils.ErrInfoFmt("incorrect user_id")
 		}
 		p.PublicKeys = append(p.PublicKeys, []byte(dltWallet.PublicKey))

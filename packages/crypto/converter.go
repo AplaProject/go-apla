@@ -6,11 +6,11 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
-	"errors"
 	"math/big"
 	"strconv"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 )
 
@@ -21,7 +21,7 @@ func Address(pubKey []byte) int64 {
 	crc := calcCRC64(h512[:])
 	// replace the last digit by checksum
 	num := strconv.FormatUint(crc, 10)
-	val := []byte(strings.Repeat("0", 20-len(num)) + num)
+	val := []byte(strings.Repeat("0", consts.AddressLength-len(num)) + num)
 	return int64(crc - (crc % 10) + uint64(checkSum(val[:len(val)-1])))
 }
 
@@ -39,21 +39,8 @@ func PrivateToPublic(key []byte) ([]byte, error) {
 	priv := new(ecdsa.PrivateKey)
 	priv.PublicKey.Curve = pubkeyCurve
 	priv.D = bi
-	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
+	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(key)
 	return append(converter.FillLeft(priv.PublicKey.X.Bytes()), converter.FillLeft(priv.PublicKey.Y.Bytes())...), nil
-}
-
-// PrivateToPublicHex returns the hex public key for the specified hex private key.
-func PrivateToPublicHex(hexkey string) (string, error) {
-	key, err := hex.DecodeString(hexkey)
-	if err != nil {
-		return ``, errors.New("Decode hex error")
-	}
-	pubKey, err := PrivateToPublic(key)
-	if err != nil {
-		return ``, err
-	}
-	return hex.EncodeToString(pubKey), nil
 }
 
 // KeyToAddress converts a public key to apla address XXXX-...-XXXX.

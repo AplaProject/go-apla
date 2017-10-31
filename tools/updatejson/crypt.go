@@ -43,22 +43,3 @@ func Decrypt(key, ciphertext []byte) ([]byte, error) {
 	mode.CryptBlocks(ciphertext, ciphertext)
 	return ciphertext, nil
 }
-
-/*
-func Encrypt(key, plaintext []byte) ([]byte, error) {
-	if len(plaintext)%aes.BlockSize != 0 {
-		return nil, fmt.Errorf("plaintext is not a multiple of the block size")
-	}
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return nil, err
-	}
-	mode := cipher.NewCBCEncrypter(block, iv)
-	mode.CryptBlocks(ciphertext[aes.BlockSize:], plaintext)
-	return ciphertext, nil
-}*/

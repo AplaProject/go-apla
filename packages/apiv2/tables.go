@@ -44,9 +44,9 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 	)
 
 	table := converter.Int64ToStr(data.state) + `_tables`
-	count, err := model.Single(`select count(*) from "` + table + `"`).Int64()
+	count, err := model.GetRecordsCount(table)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from tables")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting records count from tables")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	if data.params[`limit`].(int64) > 0 {

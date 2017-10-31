@@ -18,6 +18,7 @@ package parser
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -55,7 +56,7 @@ func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, walletID int64, citiz
 func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	BlockData := new(utils.BlockData)
 	block := &model.Block{}
-	err := block.GetBlock(blockID)
+	_, err := block.Get(blockID)
 	if err != nil {
 		return BlockData, utils.ErrInfo(err)
 	}
@@ -121,8 +122,8 @@ func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 	}
 	for _, id := range ids {
 		sp := &model.StateParameter{}
-		sp.SetTablePrefix(strconv.Itoa(int(id)))
-		err = sp.GetByNameTransaction(transaction, "state_name")
+		sp.SetTablePrefix(converter.Int64ToStr(id))
+		_, err := sp.Get(transaction, "state_name")
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("state get by name transaction")
 			return 0, err
@@ -251,12 +252,12 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	if transactions {
 		// check for duplicate transaction
 		tx := &model.Transaction{}
-		err := tx.GetVerified(searchedHash)
+		found, err := tx.GetVerified(searchedHash)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting verified transaction")
 			return utils.ErrInfo(err)
 		}
-		if len(tx.Hash) > 0 {
+		if !found {
 			log.WithFields(log.Fields{"tx_hash": tx.Hash, "type": consts.DuplicateObject}).Error("double tx in transactions")
 			return utils.ErrInfo(fmt.Errorf("double tx in transactions %x", searchedHash))
 		}
@@ -382,11 +383,15 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	}
 
 	wallet := &model.DltWallet{}
-	err := wallet.GetWalletTransaction(p.DbTransaction, walletID)
+	found, err := wallet.Get(p.DbTransaction, walletID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet transaction")
 		return err
 	}
+	if !found {
+		return errors.New("wallet not found. ID: " + strconv.FormatInt(walletID, 10))
+	}
+
 	amountAndCommission := amount
 	amountAndCommission.Add(commission)
 	wltAmount, err := decimal.NewFromString(wallet.Amount)
@@ -420,28 +425,29 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	logger := p.GetLogger()
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(p.TxStateIDStr)
-	err := sp.GetByNameTransaction(p.DbTransaction, condition)
+	_, err := sp.Get(p.DbTransaction, condition)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting state parameter by name transaction")
 		return err
 	}
+
 	conditions := sp.Value
 	if iscondition {
 		conditions = sp.Conditions
 	}
-	if len(conditions) > 0 {
-		ret, err := p.EvalIf(conditions)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("Evaluationg conditions")
-			return err
-		}
-		if !ret {
-			logger.WithFields(log.Fields{"type": consts.AccessDenied, "conditions": conditions}).Error("Access denied")
-			return fmt.Errorf(`Access denied`)
-		}
-	} else {
+	if len(conditions) == 0 {
+		log.WithFields(log.Fields{"conditions": condition}).Error("There is not in state_parameters")
 		return fmt.Errorf(`There is not %s in state_parameters`, condition)
 	}
+
+	ret, err := p.EvalIf(conditions)
+	if err != nil {
+		return err
+	}
+	if !ret {
+		return fmt.Errorf(`Access denied`)
+	}
+
 	return nil
 }
 
@@ -557,7 +563,7 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 	case "pages":
 		page := &model.Page{}
 		page.SetTablePrefix(prefix)
-		if err := page.Get(name); err != nil {
+		if _, err := page.Get(name); err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
 			return err
 		}
@@ -565,26 +571,28 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 	case "menus":
 		menu := &model.Menu{}
 		menu.SetTablePrefix(prefix)
-		if err := menu.Get(name); err != nil {
+		if _, err := menu.Get(name); err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
 			return err
 		}
 		conditions = menu.Conditions
 	}
 
-	if len(conditions) > 0 {
-		ret, err := p.EvalIf(conditions)
-		if err != nil {
-			logger.WithFields(log.Fields{"conditions": conditions, "type": consts.EvalError}).Error("evaluating conditions")
-			return err
-		}
-		if !ret {
-			logger.WithFields(log.Fields{"conditions": conditions, "type": consts.AccessDenied}).Error("access denied")
-			return fmt.Errorf(`Access denied`)
-		}
-	} else {
+	if len(conditions) == 0 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject, "table": prefix + "_" + table}).Error("There is not conditions in")
 		return fmt.Errorf(`There is not conditions in %s`, prefix+`_`+table)
 	}
+
+	ret, err := p.EvalIf(conditions)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("evaluating conditions")
+		return err
+	}
+	if !ret {
+		log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
+		return fmt.Errorf(`Access denied`)
+	}
+
 	return nil
 }
 
@@ -602,7 +610,7 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 	p.TxCost = 0
 	p.TxUsedCost, _ = decimal.NewFromString(*fPrice)
 	systemParam := &model.SystemParameter{}
-	err = systemParam.Get("fuel_rate")
+	_, err = systemParam.Get("fuel_rate")
 	if err != nil {
 		logger.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting system parameter")
 	}

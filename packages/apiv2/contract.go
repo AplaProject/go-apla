@@ -38,8 +38,8 @@ type contractResult struct {
 
 func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var (
-		isPublic, hash, publicKey []byte
-		toSerialize               interface{}
+		hash, publicKey []byte
+		toSerialize     interface{}
 	)
 	contract, parerr, err := validateSmartContract(r, data, nil)
 	if err != nil {
@@ -50,12 +50,14 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
 
-	isPublic, err = model.Single(`SELECT pub FROM "`+converter.Int64ToStr(data.state)+`_keys" WHERE id = ?`, data.wallet).Bytes()
+	key := &model.Key{}
+	key.SetTablePrefix(data.state)
+	err = key.Get(data.wallet)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	if len(isPublic) == 0 {
+	if len(key.PublicKey) == 0 {
 		if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
 			publicKey = data.params[`pubkey`].([]byte)
 			lenpub := len(publicKey)

@@ -1,9 +1,5 @@
 package model
 
-import (
-	"github.com/jinzhu/gorm"
-)
-
 type InfoBlock struct {
 	Hash           []byte `gorm:"not null"`
 	StateID        int64  `gorm:"not null default 0"`
@@ -19,8 +15,8 @@ func (ib *InfoBlock) TableName() string {
 	return "info_block"
 }
 
-func (ib *InfoBlock) GetInfoBlock() error {
-	return handleError(DBConn.Last(ib).Error)
+func (ib *InfoBlock) Get() (bool, error) {
+	return isFound(DBConn.Last(ib))
 }
 
 func (ib *InfoBlock) Update(transaction *DbTransaction) error {
@@ -28,43 +24,13 @@ func (ib *InfoBlock) Update(transaction *DbTransaction) error {
 }
 
 func (ib *InfoBlock) GetUnsent() (bool, error) {
-	err := DBConn.Where("sent = ?", "0").First(&ib).Error
-	if err == gorm.ErrRecordNotFound {
-		return false, nil
-	}
-	return true, err
-}
-
-func (ib *InfoBlock) MarkSent() error {
-	return DBConn.Model(ib).Update("sent", "1").Error
-}
-
-func (ib *InfoBlock) Save() error {
-	return DBConn.Save(ib).Error
+	return isFound(DBConn.Where("sent = ?", "0").First(&ib))
 }
 
 func (ib *InfoBlock) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(ib).Error
 }
 
-func GetCurBlockID() (int64, error) {
-	curBlock := &InfoBlock{}
-	err := curBlock.GetInfoBlock()
-	if err != nil {
-		return 0, err
-	}
-	return curBlock.BlockID, nil
-}
-
-func InfoBlockCreateTable() error {
-	return DBConn.CreateTable(&InfoBlock{}).Error
-}
-
-func BlockGetUnsent() (*InfoBlock, error) {
-	ib := &InfoBlock{}
-	found, err := ib.GetUnsent()
-	if !found {
-		return nil, err
-	}
-	return ib, err
+func (ib *InfoBlock) MarkSent() error {
+	return DBConn.Model(ib).Update("sent", "1").Error
 }

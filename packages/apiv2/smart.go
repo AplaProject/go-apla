@@ -61,7 +61,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 	cntname := data.params[`name`].(string)
 	contract = smart.GetContract(cntname, uint32(data.state))
 	if contract == nil {
-		return nil, cntname, fmt.Errorf(`E_CONTRACT`) //fmt.Errorf(`there is not %s contract`, cntname)
+		return nil, cntname, fmt.Errorf(`E_CONTRACT`)
 	}
 
 	if contract.Block.Info.(*script.ContractInfo).Tx != nil {
@@ -72,19 +72,20 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 			if strings.Contains(fitem.Tags, `signature`) && result != nil {
 				if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					pref := getPrefix(data)
-					var value string
-					value, err = model.Single(fmt.Sprintf(`select value from "%s_signatures" where name=?`, pref), ret[1]).String()
+					signature := &model.Signature{}
+					signature.SetTablePrefix(pref)
+					found, err := signature.Get(ret[1])
 					if err != nil {
 						log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting signature by name")
 						break
 					}
-					if len(value) == 0 {
-						log.WithFields(log.Fields{"type": consts.EmptyObject, "signature": ret[1]}).Error("unknown signature")
+					if !found {
+						log.WithFields(log.Fields{"type": consts.NotFound, "signature": ret[1]}).Error("unknown signature")
 						err = fmt.Errorf(`%s is unknown signature`, ret[1])
 						break
 					}
 					var sign TxSignJSON
-					err = json.Unmarshal([]byte(value), &sign)
+					err = json.Unmarshal([]byte(signature.Value), &sign)
 					if err != nil {
 						log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling sign from json")
 						break
@@ -139,14 +140,15 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 		return result
 	}
 	id = converter.StringToAddress(walletID)
-	pubKey, err := model.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
+	wallet := &model.DltWallet{}
+	found, err := wallet.Get(nil, id)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from dlt_wallets")
 		result.Error = err.Error()
 		return result
 	}
-	if len(pubKey) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("unknown wallet id")
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("unknown wallet id")
 		result.Error = `unknown wallet id`
 		return result
 	}
@@ -158,18 +160,19 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 		pub, _ := hex.DecodeString(result.Public)
 		idnew := crypto.Address(pub)
 
-		exist, err := model.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
+		newWallet := &model.DltWallet{}
+		found, err := newWallet.Get(nil, idnew)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting wallet_id from dlt_wallets")
 			result.Error = err.Error()
 			return result
 		}
-		if exist == 0 {
+		if !found {
 			result.WalletID = idnew
 		}
 	}
 	priv, _ := hex.DecodeString(private)
-	encrypted, err := crypto.SharedEncrypt([]byte(pubKey), priv)
+	encrypted, err := crypto.SharedEncrypt(wallet.PublicKey, priv)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("shared encrypting public key")
 		result.Error = err.Error()

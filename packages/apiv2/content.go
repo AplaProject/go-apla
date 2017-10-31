@@ -46,38 +46,42 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 }
 
 func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	query := `SELECT value,menu FROM "` + converter.Int64ToStr(data.state) + `_pages" WHERE name = ?`
-	pattern, err := model.GetOneRow(query, data.params[`name`].(string)).String()
+	page := &model.Page{}
+	page.SetTablePrefix(converter.Int64ToStr(data.state))
+	found, err := page.Get(data.params[`name`].(string))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
 		return err
 	}
-	if len(pattern) == 0 {
+	if !found {
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
-	ret := templatev2.Template2JSON(pattern[`value`], false, initVars(r, data))
+
+	ret := templatev2.Template2JSON(page.Value, false, initVars(r, data))
 
 	menu, err := model.Single(`SELECT value FROM "`+converter.Int64ToStr(data.state)+
-		`_menu" WHERE name = ?`, pattern[`menu`]).String()
+		`_menu" WHERE name = ?`, page.Menu).String()
 	retmenu := templatev2.Template2JSON(menu, false, initVars(r, data))
 
-	data.result = &contentResult{Tree: string(ret), Menu: pattern[`menu`], MenuTree: string(retmenu)}
+	data.result = &contentResult{Tree: string(ret), Menu: page.Menu, MenuTree: string(retmenu)}
 	return nil
 }
 
 func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	query := `SELECT value, title FROM "` + converter.Int64ToStr(data.state) + `_menu" WHERE name = ?`
-	pattern, err := model.GetOneRow(query, data.params[`name`].(string)).String()
+	menu := &model.Menu{}
+	menu.SetTablePrefix(converter.Int64ToStr(data.state))
+	found, err := menu.Get(data.params[`name`].(string))
+
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
-	if len(pattern) == 0 {
+	if found {
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 
-	ret := templatev2.Template2JSON(pattern[`value`], false, initVars(r, data))
-	data.result = &contentResult{Tree: string(ret), Title: pattern[`title`]}
+	ret := templatev2.Template2JSON(menu.Value, false, initVars(r, data))
+	data.result = &contentResult{Tree: string(ret), Title: menu.Title}
 	return nil
 }
 

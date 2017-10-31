@@ -21,6 +21,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -158,9 +159,6 @@ func init() {
 		"PubToID":            PubToID,
 		"HexToBytes":         HexToBytes,
 		"LangRes":            LangRes,
-		"UpdateContract":     UpdateContract,
-		"UpdateParam":        UpdateParam,
-		"UpdateMenu":         UpdateMenu,
 		"UpdatePage":         UpdatePage,
 		"DBInsertReport":     DBInsertReport,
 		"UpdateSysParam":     UpdateSysParam,
@@ -233,11 +231,10 @@ func (p *Parser) GetContractLimit() (ret int64) {
 }
 
 func (p *Parser) getExtend() *map[string]interface{} {
-	head := p.TxSmart //consts.HeaderNew(contract.parser.TxPtr)
+	head := p.TxSmart
 	var citizenID, walletID int64
 	citizenID = int64(head.UserID)
 	walletID = int64(head.UserID)
-	// test
 	block := int64(0)
 	blockTime := int64(0)
 	walletBlock := int64(0)
@@ -249,7 +246,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `state`: head.StateID,
 		`block`: block, `citizen`: citizenID, `wallet`: walletID, `wallet_block`: walletBlock,
 		`parent`: ``, `txcost`: p.GetContractLimit(), `txhash`: p.TxHash, `result`: ``,
-		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime /*, `vars`: make(map[string]interface{})*/}
+		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime}
 	for key, val := range p.TxData {
 		extend[key] = val
 	}
@@ -268,7 +265,7 @@ func StackCont(p interface{}, name string) {
 	return
 }
 
-// CallContract calls the contract functions according to the specified flags
+// // CallContract calls the contract functions according to the specified flags
 func (p *Parser) CallContract(flags int) (err error) {
 	var (
 		public                 []byte
@@ -440,7 +437,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 }
 
 // DBInsert inserts a record into the specified database table
-func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) { // map[string]interface{}) {
+func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
 	tblname = TableName(p, tblname)
 	if err = p.AccessTable(tblname, "insert"); err != nil {
 		return
@@ -501,7 +498,7 @@ func checkReport(tblname string) error {
 }
 
 // DBUpdate updates the item with the specified id in the table
-func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
+func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
 	qcost = 0
 	tblname = TableName(p, tblname)
 	if err = checkReport(tblname); err != nil {
@@ -516,7 +513,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 }
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
+func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) {
 	qcost = 0
 	var isIndex bool
 	tblname = TableName(p, tblname)
@@ -671,7 +668,7 @@ func DBIntExt(p *Parser, tblname string, name string, id interface{}, idname str
 }
 
 // DBFreeRequest is a free function that is needed to find the record with the specified value in the 'idname' column.
-func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, idname string) (int64, error) {
+func DBFreeRequest(p *Parser, tblname string, id interface{}, idname string) (int64, error) {
 	if p.TxContract.FreeRequest {
 		log.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("DBFreeRequest can be executed only once")
 		return 0, fmt.Errorf(`DBFreeRequest can be executed only once`)
@@ -934,132 +931,6 @@ func Money(v interface{}) (ret decimal.Decimal) {
 // Float converts the value to float64
 func Float(v interface{}) (ret float64) {
 	return script.ValueToFloat(v)
-}
-
-// UpdateContract updates the content and condition of contract with the specified name
-func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
-	var (
-		fields []string
-		values []interface{}
-	)
-	prefix := converter.Int64ToStr(int64(p.TxStateID))
-	sc := &model.SmartContract{}
-	sc.SetTablePrefix(prefix)
-	err := sc.GetByName(name)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting smart contract by name")
-		return 0, err
-	}
-	cond := sc.Conditions
-	if len(cond) > 0 {
-		ret, err := p.EvalIf(cond)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err, "conditions": cond, "type": consts.EvalError}).Error("evaluating smart contract conditions")
-			return 0, err
-		}
-		if !ret {
-			if err = p.AccessRights(`changing_smart_contracts`, false); err != nil {
-				return 0, err
-			}
-		}
-	}
-	if len(value) > 0 {
-		fields = append(fields, "value")
-		values = append(values, value)
-	}
-	if len(conditions) > 0 {
-		if err := smart.CompileEval(conditions, p.TxStateID); err != nil {
-			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": p.TxStateID, "type": consts.EvalError}).Error("compiling eval conditions")
-			return 0, err
-		}
-		fields = append(fields, "conditions")
-		values = append(values, conditions)
-	}
-	if len(fields) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
-		return 0, fmt.Errorf(`empty value and condition`)
-	}
-	prefixInt, err := strconv.ParseInt(prefix, 10, 64)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "value": prefix}).Error("converting prefix from string to int")
-		prefixInt = 0
-	}
-	root, err := smart.CompileBlock(value, &script.OwnerInfo{StateID: uint32(prefixInt),
-		Active: false, TableID: sc.ID, WalletID: sc.WalletID, TokenID: 0})
-	if err != nil {
-		return 0, err
-	}
-	_, _, err = p.selectiveLoggingAndUpd(fields, values,
-		prefix+"_smart_contracts", []string{"id"}, []string{strconv.Itoa(int(sc.ID))}, true)
-	if err != nil {
-		return 0, err
-	}
-	for i, item := range root.Children {
-		if item.Type == script.ObjContract {
-			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = sc.ID
-			root.Children[i].Info.(*script.ContractInfo).Owner.Active = sc.Active == "1"
-		}
-	}
-	smart.FlushBlock(root)
-
-	return 0, nil
-}
-
-// UpdateParam updates the value and condition of parameter with the specified name for the state
-func UpdateParam(p *Parser, name, value, conditions string) (int64, error) {
-	var (
-		fields []string
-		values []interface{}
-	)
-
-	if err := p.AccessRights(name, true); err != nil {
-		return 0, err
-	}
-	if len(value) > 0 {
-		fields = append(fields, "value")
-		values = append(values, value)
-	}
-	if len(conditions) > 0 {
-		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
-			log.WithFields(log.Fields{"conditions": conditions, "error": err, "type": consts.EvalError}).Error("compiling eval conditions")
-			return 0, err
-		}
-		fields = append(fields, "conditions")
-		values = append(values, conditions)
-	}
-	if len(fields) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
-		return 0, fmt.Errorf(`empty value and condition`)
-	}
-	_, _, err := p.selectiveLoggingAndUpd(fields, values,
-		converter.Int64ToStr(int64(p.TxStateID))+"_state_parameters", []string{"name"}, []string{name}, true)
-	if err != nil {
-		return 0, err
-	}
-	return 0, nil
-}
-
-// UpdateMenu updates the value and condition for the specified menu
-func UpdateMenu(p *Parser, name, value, conditions, global string, stateID int64) error {
-	if err := p.AccessChange(`menu`, p.TxStateIDStr, global, stateID); err != nil {
-		return err
-	}
-	fields := []string{"value"}
-	values := []interface{}{value}
-	if len(conditions) > 0 {
-		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
-			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": p.TxStateID, "type": consts.EvalError}).Error("compiling eval conditions")
-			return err
-		}
-		fields = append(fields, "conditions")
-		values = append(values, conditions)
-	}
-	_, _, err := p.selectiveLoggingAndUpd(fields, values, converter.Int64ToStr(int64(p.TxStateID))+"_menu",
-		[]string{"name"}, []string{name}, true)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // CheckSignature checks the additional signatures for the contract
@@ -1360,7 +1231,10 @@ func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 	)
 
 	par := &model.SystemParameter{}
-	err := par.Get(name)
+	found, err := par.Get(name)
+	if !found {
+		return 0, errors.New("can't find system parameter: Name " + name)
+	}
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("system parameter get")
 		return 0, err

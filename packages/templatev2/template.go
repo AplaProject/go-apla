@@ -25,6 +25,7 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/model"
 
 	"github.com/shopspring/decimal"
@@ -40,8 +41,6 @@ type node struct {
 	Tag      string                 `json:"tag"`
 	Attr     map[string]interface{} `json:"attr,omitempty"`
 	Text     string                 `json:"text,omitempty"`
-	Columns  *[]string              `json:"columns,omitempty"`
-	Data     *[][]string            `json:"data,omitempty"`
 	Children []*node                `json:"children,omitempty"`
 	Tail     []*node                `json:"tail,omitempty"`
 }
@@ -80,7 +79,7 @@ func setAttr(par parFunc, name string) {
 
 func setAllAttr(par parFunc) {
 	for key, v := range *par.Pars {
-		if key != `Body` && len(v) > 0 {
+		if key != `Body` && key != `Data` && len(v) > 0 {
 			par.Node.Attr[strings.ToLower(key)] = v
 		}
 	}
@@ -225,7 +224,7 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			val := strings.TrimSpace(v)
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
-				pars[val[:off]] = macro(strings.TrimSpace(val[off+1:]), vars)
+				pars[val[:off]] = macro(strings.Trim(val[off+1:], "\t\r\n \"`"), vars)
 			} else {
 				pars[strconv.Itoa(i)] = macro(val, vars)
 			}
@@ -236,7 +235,11 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 				val := macro(strings.TrimSpace((*params)[i]), vars)
 				off := strings.IndexByte(val, ':')
 				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
-					pars[val[:off]] = strings.TrimSpace(val[off+1:])
+					cut := "\t\r\n \"`"
+					if val[:off] == `Data` {
+						cut = "\t\r\n "
+					}
+					pars[val[:off]] = strings.Trim(val[off+1:], cut)
 				} else {
 					pars[v] = val
 				}
@@ -245,6 +248,13 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			}
 		}
 	}
+	stateInt, err := strconv.ParseInt((*vars)["state"], 10, 64)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": (*vars)["state"]}).Error("parsing vars state to int")
+	}
+	for i, v := range pars {
+		pars[i] = language.LangMacro(v, int(stateInt), (*vars)[`accept_lang`])
+	}
 	if len(curFunc.Tag) > 0 {
 		curNode.Tag = curFunc.Tag
 		curNode.Attr = make(map[string]interface{})
@@ -252,7 +262,6 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			process(pars[`Body`], &curNode, vars)
 		}
 		parFunc.Owner = owner
-		//		owner.Children = append(owner.Children, &curNode)
 		parFunc.Node = &curNode
 		parFunc.Tails = tailpars
 	}
@@ -273,10 +282,10 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 
 func getFunc(input string, curFunc tplFunc) (*[]string, int, *[]*[]string) {
 	var (
-		curp, off, mode, lenParams int
-		skip                       bool
-		pair, ch                   rune
-		tailpar                    *[]*[]string
+		curp, skip, off, mode, lenParams int
+		quote                            bool
+		pair, ch                         rune
+		tailpar                          *[]*[]string
 	)
 	params := make([]string, 1)
 	if curFunc.Params == `*` {
@@ -288,11 +297,11 @@ func getFunc(input string, curFunc tplFunc) (*[]string, int, *[]*[]string) {
 	if input[0] == '{' {
 		mode = 1
 	}
-	skip = true
+	skip = 1
 main:
 	for off, ch = range input {
-		if skip {
-			skip = false
+		if skip > 0 {
+			skip--
 			continue
 		}
 		if pair > 0 {
@@ -301,14 +310,18 @@ main:
 			} else {
 				if off+1 == len(input) || rune(input[off+1]) != pair {
 					pair = 0
+					if quote {
+						params[curp] += string(ch)
+						quote = false
+					}
 				} else {
 					params[curp] += string(ch)
-					skip = true
+					skip = 1
 				}
 			}
 			continue
 		}
-		if len(params[curp]) == 0 && ch != modes[mode][1] && ch != ',' {
+		if len(params[curp]) == 0 && mode == 0 && ch != modes[mode][1] && ch != ',' {
 			if ch >= '!' {
 				if ch == '"' || ch == '`' {
 					pair = ch
@@ -318,7 +331,13 @@ main:
 			}
 			continue
 		}
+
 		switch ch {
+		case '"', '`':
+			if mode == 0 {
+				pair = ch
+				quote = true
+			}
 		case ',':
 			if mode == 0 && level == 1 && len(params) < lenParams {
 				params = append(params, ``)
@@ -332,30 +351,71 @@ main:
 				level--
 			}
 			if level == 0 {
-				if mode == 0 && off+1 < len(input) && rune(input[off+1]) == modes[1][0] &&
-					strings.Contains(curFunc.Params, `Body`) {
-					mode = 1
-					params = append(params, `Body:`)
-					curp++
-					skip = true
-					level = 1
-					continue
-				}
-				for tail, ok := tails[curFunc.Tag]; ok && off+2 < len(input) && input[off+1] == '.'; {
-					for key, tailFunc := range tail.Tails {
-						if len(input) > off+2 && (strings.HasPrefix(input[off+2:], key+`(`) || strings.HasPrefix(input[off+2:], key+`{`)) {
-							parTail, shift, _ := getFunc(input[off+len(key)+2:], tailFunc.tplFunc)
-							off += shift + len(key) + 2
-							if tailpar == nil {
-								fortail := make([]*[]string, 0)
-								tailpar = &fortail
-							}
-							*parTail = append(*parTail, key)
-							*tailpar = append(*tailpar, parTail)
-							if tailFunc.Last {
-								break main
+				if mode == 0 && (strings.Contains(curFunc.Params, `Body`) || strings.Contains(curFunc.Params, `Data`)) {
+					var isBody bool
+					next := off + 1
+					for next < len(input) {
+						if rune(input[next]) == modes[1][0] {
+							isBody = true
+							break
+						}
+						if rune(input[next]) == ' ' || rune(input[next]) == '\t' {
+							next++
+							continue
+						}
+						break
+					}
+					if isBody {
+						mode = 1
+						for _, keyp := range []string{`Body`, `Data`} {
+							if strings.Contains(curFunc.Params, keyp) {
+								params = append(params, keyp+`:`)
+								break
 							}
 						}
+						curp++
+						skip = next - off
+						level = 1
+						continue
+					}
+				}
+				for tail, ok := tails[curFunc.Tag]; ok && off+2 < len(input) && input[off+1] == '.'; {
+					var found bool
+					for key, tailFunc := range tail.Tails {
+						next := off + 2
+						if next < len(input) && strings.HasPrefix(input[next:], key) {
+							var isTail bool
+							next += len(key)
+							for next < len(input) {
+								if rune(input[next]) == '(' || rune(input[next]) == '{' {
+									isTail = true
+									break
+								}
+								if rune(input[next]) == ' ' || rune(input[next]) == '\t' {
+									next++
+									continue
+								}
+								break
+							}
+							if isTail {
+								parTail, shift, _ := getFunc(input[next:], tailFunc.tplFunc)
+								off = shift + next
+								if tailpar == nil {
+									fortail := make([]*[]string, 0)
+									tailpar = &fortail
+								}
+								*parTail = append(*parTail, key)
+								*tailpar = append(*tailpar, parTail)
+								found = true
+								if tailFunc.Last {
+									break main
+								}
+								break
+							}
+						}
+					}
+					if !found {
+						break
 					}
 				}
 				break main

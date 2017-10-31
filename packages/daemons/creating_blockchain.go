@@ -1,16 +1,17 @@
 package daemons
 
 import (
+	"context"
+	"errors"
+	"io"
+	"os"
+	"time"
+
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
-
-	"context"
-	"io"
-	"os"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -27,10 +28,13 @@ func writeNextBlocks(fileName string, minToSave int, logger *log.Entry) error {
 	}
 
 	infoBlock := &model.InfoBlock{}
-	err = infoBlock.GetInfoBlock()
+	found, err := infoBlock.Get()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		return err
+	}
+	if !found {
+		return errors.New("can't find info block")
 	}
 
 	curBlockID := infoBlock.BlockID

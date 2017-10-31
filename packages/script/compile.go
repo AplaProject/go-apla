@@ -67,7 +67,7 @@ nesting goes further according to nesting of bracketed brackets. Tree nodes are 
 */
 
 const (
-	// The list of state types Список состояний
+	// The list of state types
 	stateRoot = iota
 	stateBody
 	stateBlock
@@ -91,7 +91,7 @@ const (
 	stateFields
 	stateEval
 
-	// The list of state flags Список флагов
+	// The list of state flags
 	statePush     = 0x0100
 	statePop      = 0x0200
 	stateStay     = 0x0400
@@ -183,7 +183,7 @@ var (
 		fBreak,
 		fCmdError,
 	}
-	// states описывает конечный автомат с состояниями, на основе которого будет генерироваться байт-код
+
 	// 'states' describes a finite machine with states on the base of which a bytecode will be generated
 	states = compileStates{
 		{ // stateRoot

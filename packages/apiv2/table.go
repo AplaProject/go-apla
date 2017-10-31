@@ -45,17 +45,22 @@ type tableResult struct {
 func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	var result tableResult
 
-	row, err := model.GetOneRow(`select * from "`+converter.Int64ToStr(data.state)+`_tables" where name=?`,
-		data.params[`name`].(string)).String()
-	if len(row[`name`]) > 0 {
+	table := &model.Table{}
+	table.SetTablePrefix(converter.Int64ToStr(data.state))
+	_, err = table.Get(data.params[`name`].(string))
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	if len(table.Name) > 0 {
 		var perm map[string]string
-		err := json.Unmarshal([]byte(row[`permissions`]), &perm)
+		err := json.Unmarshal([]byte(table.Permissions), &perm)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table permissions to json")
 			return errorAPI(w, err.Error(), http.StatusInternalServerError)
 		}
 		var cols map[string]string
-		err = json.Unmarshal([]byte(row[`columns`]), &cols)
+		err = json.Unmarshal([]byte(table.Columns), &cols)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table columns to json")
 			return errorAPI(w, err.Error(), http.StatusInternalServerError)
@@ -71,11 +76,11 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 				Type: colType})
 		}
 		result = tableResult{
-			Name:       row[`name`],
+			Name:       table.Name,
 			Insert:     perm[`insert`],
 			NewColumn:  perm[`new_column`],
 			Update:     perm[`update`],
-			Conditions: row[`conditions`],
+			Conditions: table.Conditions,
 			Columns:    columns,
 		}
 	} else {

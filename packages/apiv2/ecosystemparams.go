@@ -47,7 +47,8 @@ func ecosystemParams(w http.ResponseWriter, r *http.Request, data *apiData, logg
 		return err
 	}
 	sp := &model.StateParameter{}
-	list, err := sp.SetTablePrefix(converter.Int64ToStr(state)).GetAllStateParameters()
+	sp.SetTablePrefix(converter.Int64ToStr(state))
+	list, err := sp.GetAllStateParameters()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting all state parameters")
 	}

@@ -36,12 +36,10 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/daemons"
 	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
-	"github.com/AplaProject/go-apla/packages/exchangeapi"
 	"github.com/AplaProject/go-apla/packages/language"
 	logtools "github.com/AplaProject/go-apla/packages/log"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
-	"github.com/AplaProject/go-apla/packages/schema"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -202,10 +200,9 @@ func rollbackToBlock(blockID int64) error {
 	// check blocks related tables
 	startData := map[string]int64{"install": 1, "config": 1, "queue_tx": 99999, "log_transactions": 1, "transactions_status": 99999, "block_chain": 1, "info_block": 1, "dlt_wallets": 1, "confirmations": 9999999, "full_nodes": 1, "system_parameters": 4, "my_node_keys": 99999, "transactions": 999999}
 	for _, table := range allTable {
-		query := "SELECT COUNT(*) FROM " + converter.EscapeName(table)
-		count, err := model.Single(query).Int64()
+		count, err := model.GetRecordsCount(converter.EscapeName(table))
 		if err != nil {
-			log.WithFields(log.Fields{"error": err, "query": query, "type": consts.DBError}).Error("Error querying DB")
+			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("Error querying DB")
 			return err
 		}
 		if count > 0 && count > startData[table] {
@@ -222,7 +219,6 @@ func processOldFile(oldFileName string) error {
 	if err != nil {
 		return err
 	}
-	schema.Migration()
 
 	err = exec.Command(*utils.OldFileName, "-dir", *utils.Dir).Start()
 	if err != nil {
@@ -239,7 +235,6 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 }
 func initRoutes(listenHost, browserHost string) string {
 	route := httprouter.New()
-	setRoute(route, `/exchangeapi/:name`, exchangeapi.API, `GET`, `POST`)
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	apiv2.Route(route)
 	route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
@@ -303,8 +298,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}
 
 	log.WithFields(log.Fields{"work_dir": *utils.Dir, "version": consts.VERSION}).Info("started with")
-	exchangeapi.InitAPI()
-	log.Info("Initialized exchange API")
 
 	// kill previously run apla
 	if !utils.Mobile() {

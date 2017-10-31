@@ -761,9 +761,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			rt.stack = rt.stack[:size-1]
 		}
 	}
-	/*	if status == statusBreak {
-		status = statusNormal
-	}*/
 	last := rt.blocks[len(rt.blocks)-1]
 	rt.blocks = rt.blocks[:len(rt.blocks)-1]
 	if status == statusReturn {

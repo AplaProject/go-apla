@@ -44,7 +44,7 @@ func TestLang(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if ret.Tree != `[{"tag":"span","children":[{"tag":"text","text":"Text My test"},{"tag":"text","text":"+French string"}]}]` {
+	if ret.Tree != `[{"tag":"table","attr":{"columns":{"My test":"name"},"source":"mysrc"}},{"tag":"span","children":[{"tag":"text","text":"Text Spanish text"},{"tag":"text","text":" My test"}]},{"tag":"input","attr":{"class":"form-control","name":"Name","placeholder":"My test","type":"text"}}]` {
 		t.Error(fmt.Errorf(`wrong tree %s`, ret.Tree))
 		return
 	}
@@ -57,13 +57,13 @@ func TestLang(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	input = fmt.Sprintf(`Span(Text LangRes(%s,es)`, name)
+	input = fmt.Sprintf(`Table(mysrc,"$%[1]s$=name")Span(Text LangRes(%[1]s,es) $%[1]s$) Input(Class: form-control, Placeholder: $%[1]s$, Type: text, Name: Name)`, name)
 	err = sendPost(`content`, &url.Values{`template`: {input}}, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if ret.Tree != `[{"tag":"span","children":[{"tag":"text","text":"Text Spanish text"}]}]` {
+	if ret.Tree != `[{"tag":"span","children":[{"tag":"text","text":"Text Spanish text"},{"tag":"text","text":" My test"}]},{"tag":"input","attr":{"class":"form-control","name":"Name","placeholder":"My test","type":"text"}}]` {
 		t.Error(fmt.Errorf(`wrong tree %s`, ret.Tree))
 		return
 	}

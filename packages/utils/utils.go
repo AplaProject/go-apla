@@ -17,9 +17,7 @@
 package utils
 
 import (
-	"archive/zip"
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -40,8 +38,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/kardianos/osext"
-	"github.com/mcuadros/go-version"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -752,57 +748,6 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 	return []byte(ret[0])
 }
 
-// GetMrklroot returns MerkleTreeRoot
-func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int) ([]byte, error) {
-	var mrklSlice [][]byte
-	var txSize int64
-	// parse [error] after the calling of a function
-	if len(binaryData) > 0 {
-		for {
-			// to exclude an attack on memory overflow
-			if !first {
-				if txSize > maxTxSize {
-					log.WithFields(log.Fields{"tx_size": txSize, "max_tx_size": maxTxSize, "type": consts.ParameterExceeded}).Error("tx size is larger than max tx size")
-					return nil, ErrInfoFmt("[error] MAX_TX_SIZE")
-				}
-			}
-			txSize, err := converter.DecodeLength(&binaryData)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("decoding tx size from bindata")
-				panic(err)
-			}
-
-			// separate one transaction from the list of transactions
-			if txSize > 0 {
-				transactionBinaryData := converter.BytesShift(&binaryData, txSize)
-				dSha256Hash, err := crypto.DoubleHash(transactionBinaryData)
-				if err != nil {
-					log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("double hashing tx bindata")
-				}
-				dSha256Hash = converter.BinToHex(dSha256Hash)
-				mrklSlice = append(mrklSlice, dSha256Hash)
-			}
-
-			// to exclude an attack on memory overflow
-			if !first {
-				if len(mrklSlice) > maxTxCount {
-					log.WithFields(log.Fields{"mrkl_slice_length": len(mrklSlice), "max_tx_count": maxTxCount, "type": consts.ParameterExceeded}).Error("merkle slice is larger then max tx count")
-					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), maxTxCount))
-				}
-			}
-			if len(binaryData) == 0 {
-				break
-			}
-		}
-	} else {
-		mrklSlice = append(mrklSlice, []byte("0"))
-	}
-	if len(mrklSlice) == 0 {
-		mrklSlice = append(mrklSlice, []byte("0"))
-	}
-	return MerkleTreeRoot(mrklSlice), nil
-}
-
 // TypeInt returns the identifier of the embedded transaction
 func TypeInt(txType string) int64 {
 	for k, v := range consts.TxTypes {
@@ -811,57 +756,6 @@ func TypeInt(txType string) int64 {
 		}
 	}
 	return 0
-}
-
-// GetNetworkTime returns the network time
-func GetNetworkTime() (*time.Time, error) {
-	ntpAddr := []string{"0.pool.ntp.org", "europe.pool.ntp.org", "asia.pool.ntp.org", "oceania.pool.ntp.org", "north-america.pool.ntp.org", "south-america.pool.ntp.org", "africa.pool.ntp.org"}
-	for i := 0; i < len(ntpAddr); i++ {
-		host := ntpAddr[i]
-		raddr, err := net.ResolveUDPAddr("udp", host+":123")
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host, "port": 123}).Warning("resolving udp address")
-			continue
-		}
-
-		data := make([]byte, 48)
-		data[0] = 3<<3 | 3
-
-		con, err := net.DialUDP("udp", nil, raddr)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host, "port": 123}).Warning("dialing addres by udp")
-			continue
-		}
-
-		defer con.Close()
-
-		_, err = con.Write(data)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host, "port": 123}).Warning("writing data to udp connection")
-			continue
-		}
-
-		con.SetDeadline(time.Now().Add(5 * time.Second))
-
-		_, err = con.Read(data)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host, "port": 123}).Warning("reading data from udp connection")
-			continue
-		}
-
-		var sec, frac uint64
-		sec = uint64(data[43]) | uint64(data[42])<<8 | uint64(data[41])<<16 | uint64(data[40])<<24
-		frac = uint64(data[47]) | uint64(data[46])<<8 | uint64(data[45])<<16 | uint64(data[44])<<24
-
-		nsec := sec * 1e9
-		nsec += (frac * 1e9) >> 32
-
-		t := time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC).Add(time.Duration(nsec)).Local()
-		return &t, nil
-	}
-	log.WithFields(log.Fields{"type": consts.ConnectionError}).Error("unable connect to NTP")
-	return nil, errors.New("unable connect to NTP")
-
 }
 
 // TCPConn connects to the address
@@ -874,24 +768,6 @@ func TCPConn(Addr string) (net.Conn, error) {
 	conn.SetReadDeadline(time.Now().Add(consts.READ_TIMEOUT * time.Second))
 	conn.SetWriteDeadline(time.Now().Add(consts.WRITE_TIMEOUT * time.Second))
 	return conn, nil
-}
-
-// WriteSizeAndData writes []byte to the connection
-func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
-	size := converter.DecToBin(len(binaryData), 4)
-	_, err := conn.Write(size)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bindata size to connection")
-		return ErrInfo(err)
-	}
-	if len(binaryData) > 0 {
-		_, err = conn.Write(binaryData)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bindata to connection")
-			return ErrInfo(err)
-		}
-	}
-	return nil
 }
 
 // GetCurrentDir returns the current directory
@@ -952,23 +828,6 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 
 }
 
-// GetUpdVerAndURL downloads the information about the version
-func GetUpdVerAndURL(host string) (updinfo *Update, err error) {
-	update, err := GetHTTPTextAnswer(host + "/update.json")
-	if len(update) > 0 {
-		updateData := make(map[string]Update)
-		err = json.Unmarshal([]byte(update), &updateData)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling update data json")
-			return
-		}
-		if upd, ok := updateData[runtime.GOOS+`_`+runtime.GOARCH]; ok && version.Compare(upd.Version, consts.VERSION, ">") {
-			updinfo = &upd
-		}
-	}
-	return
-}
-
 // ShellExecute runs cmdline
 func ShellExecute(cmdline string) {
 	time.Sleep(500 * time.Millisecond)
@@ -980,77 +839,6 @@ func ShellExecute(cmdline string) {
 	case "darwin":
 		exec.Command("open", cmdline).Start()
 	}
-}
-
-// AplaUpdate decompresses and updates executable file
-func AplaUpdate(url string) error {
-	zipfile := filepath.Join(*Dir, "apla.zip")
-	reader, err := zip.OpenReader(zipfile)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("opening zipfile for reading")
-		return ErrInfo(err)
-	}
-	appname := filepath.Base(os.Args[0])
-	tmpname := filepath.Join(*Dir, `tmp_`+appname)
-
-	ftemp := reader.Reader.File
-	f := ftemp[0]
-	zipped, err := f.Open()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("opening first file in zip archive")
-		return ErrInfo(err)
-	}
-
-	writer, err := os.OpenFile(tmpname, os.O_WRONLY|os.O_CREATE, f.Mode())
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("opening file")
-		return ErrInfo(err)
-	}
-
-	if _, err = io.Copy(writer, zipped); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("copying data")
-		return ErrInfo(err)
-	}
-	reader.Close()
-	zipped.Close()
-	writer.Close()
-
-	folderPath, err := osext.ExecutableFolder()
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("finding executable in folder")
-		return ErrInfo(err)
-	}
-
-	old := ""
-	if _, err := os.Stat(os.Args[0]); err == nil {
-		old = os.Args[0]
-	} else if _, err := os.Stat(filepath.Join(folderPath, appname)); err == nil {
-		old = filepath.Join(folderPath, appname)
-	} else {
-		old = filepath.Join(*Dir, appname)
-	}
-	err = exec.Command(tmpname, "-oldFileName", old, "-dir", *Dir, "-oldVersion", consts.VERSION).Start()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CommandExecutionError, "error": err}).Error("executing command")
-		return ErrInfo(err)
-	}
-	return nil
-}
-
-// GetPrefix returns the prefix of the table. In this case it is checked that the prefix was global or matched
-// with the identifier of the state
-func GetPrefix(tableName, stateID string) (string, error) {
-	s := strings.Split(tableName, "_")
-	if len(s) < 2 {
-		log.WithFields(log.Fields{"table_name": tableName, "type": consts.InvalidObject}).Error("incorrect table name")
-		return "", ErrInfo("incorrect table name")
-	}
-	prefix := s[0]
-	if prefix != "global" && prefix != stateID {
-		log.WithFields(log.Fields{"table_name": tableName, "type": consts.InvalidObject}).Error("incorrect table name")
-		return "", ErrInfo("incorrect table name")
-	}
-	return prefix, nil
 }
 
 // GetParent returns the information where the call of function happened

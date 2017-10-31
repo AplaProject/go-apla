@@ -18,6 +18,7 @@ package daemons
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -32,14 +33,19 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	d.sleepTime = time.Second
 
 	config := &model.Config{}
-	if err := config.GetConfig(); err != nil {
+	found, err := config.Get()
+	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cannot get config")
 		return err
 	}
 
+	if !found {
+		return errors.New("config not found")
+	}
+
 	fullNodes := &model.FullNode{}
-	err := fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
-	if err != nil || fullNodes.ID == 0 {
+	found, err = fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	if err != nil || !found {
 		if err != nil {
 			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("error finding full node")
 		}
@@ -53,10 +59,13 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	defer DBUnlock()
 
 	prevBlock := &model.InfoBlock{}
-	err = prevBlock.GetInfoBlock()
+	found, err = prevBlock.Get()
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting previous block")
 		return err
+	}
+	if !found {
+		return errors.New("can't find info block")
 	}
 
 	// calculate the next block generation time
@@ -78,7 +87,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		if err != nil {
 			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node with max blockID")
 		}
-		d.logger.Error("node private key is empty")
+		d.logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
 		return err
 	}
 

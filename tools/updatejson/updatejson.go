@@ -95,21 +95,7 @@ func main() {
 	if err != nil {
 		exit(err)
 	}
-	/*	privateKey, publicKey := lib.GenKeys()
-		ioutil.WriteFile(filepath.Join(dir, `Private.txt`), []byte(privateKey), 0644)
-		ioutil.WriteFile(filepath.Join(dir, `Public.txt`), []byte(publicKey), 0644)*/
 
-	/* privKey, _ := ioutil.ReadFile(filepath.Join(dir, `Private.txt`))
-	key, err := hex.DecodeString(string(privKey))
-	if err != nil {
-		panic(err)
-	}
-	pass := md5.Sum([]byte(`******`))
-	cipherkey, err := Encrypt([]byte(pass[:]), key)
-	if err != nil {
-		panic(err)
-	}
-	ioutil.WriteFile(filepath.Join(dir, `Cipher.txt`), []byte(hex.EncodeToString(cipherkey)), 0644)*/
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter password: ")
 	psw, _ := reader.ReadString('\n')
@@ -185,16 +171,12 @@ func main() {
 		upd.URL = set.Domain + set.ZipFile
 		out[key] = upd
 	}
-	//	fmt.Println(`Set`, out)
 
 	if updjson, err := json.Marshal(out); err != nil {
 		exit(err)
 	} else if err = ioutil.WriteFile(filepath.Join(options.JSONPath, `update.json`), updjson, 0644); err != nil {
 		exit(err)
 	}
-	/*		if err = os.Chdir(srcPath); err != nil {
-			exit(err)
-		}*/
 
 	exit(nil)
 }

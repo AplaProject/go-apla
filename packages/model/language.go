@@ -1,10 +1,6 @@
 package model
 
-import (
-	"strconv"
-
-	"github.com/jinzhu/gorm"
-)
+import "strconv"
 
 type Language struct {
 	tableName  string
@@ -22,47 +18,10 @@ func (l *Language) TableName() string {
 	return l.tableName
 }
 
-func (l *Language) Get(name string) error {
-	return DBConn.Where("name = ?", name).First(l).Error
-}
-
 func (l *Language) GetAll(prefix string) ([]Language, error) {
 	result := new([]Language)
 	err := DBConn.Table(prefix + "_languages").Order("name").Find(&result).Error
 	return *result, err
-}
-
-func (l *Language) IsExistsByName(name string) (bool, error) {
-	query := DBConn.Where("name = ?", name).First(l)
-	if query.Error == gorm.ErrRecordNotFound {
-		return false, nil
-	}
-	return !query.RecordNotFound(), query.Error
-}
-
-func CreateLanguagesStateTable(transaction *DbTransaction, stateID string) error {
-	return GetDB(transaction).Exec(`CREATE TABLE "` + stateID + `_languages" (
-				"name" varchar(100)  NOT NULL DEFAULT '',
-				"res" jsonb,
-				"conditions" text  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER TABLE ONLY "` + stateID + `_languages" ADD CONSTRAINT "` + stateID + `_languages_pkey" PRIMARY KEY (name);
-		`).Error
-}
-
-func CreateStateDefaultLanguages(transaction *DbTransaction, stateID, conditions string) error {
-	return GetDB(transaction).Exec(`INSERT INTO "`+stateID+`_languages" (name, res, conditions) VALUES
-		(?, ?, ?),
-		(?, ?, ?),
-		(?, ?, ?),
-		(?, ?, ?),
-		(?, ?, ?)`,
-		`dateformat`, `{"en": "YYYY-MM-DD", "ru": "DD.MM.YYYY"}`, conditions,
-		`timeformat`, `{"en": "YYYY-MM-DD HH:MI:SS", "ru": "DD.MM.YYYY HH:MI:SS"}`, conditions,
-		`Gender`, `{"en": "Gender", "ru": "Пол"}`, conditions,
-		`male`, `{"en": "Male", "ru": "Мужской"}`, conditions,
-		`female`, `{"en": "Female", "ru": "Женский"}`, conditions).Error
 }
 
 func (l *Language) ToMap() map[string]string {

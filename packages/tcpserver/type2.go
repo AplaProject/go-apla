@@ -56,7 +56,7 @@ func Type2(r *DisRequest) (*DisTrResponse, error) {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "value": decryptedBinDataFull}).Fatal("cannot hash tx bindata")
 	}
 
-	err = model.DeleteQueuedTransaction(hash)
+	_, err = model.DeleteQueueTxByHash(nil, hash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "hash": hash}).Error("Deleting queue_tx with hash")
 		return nil, utils.ErrInfo(err)

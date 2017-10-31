@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"encoding/hex"
 	"errors"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -54,11 +55,15 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	}
 
 	tx := &model.Transaction{}
-	err = tx.Get(hash)
+	found, err := tx.Get(hash)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting transaction by hash")
 		return utils.ErrInfo(err)
 	}
+	if !found {
+		return errors.New("transaction not found. Hex hash: " + hex.EncodeToString(hash))
+	}
+
 	counter := tx.Counter
 	counter++
 	_, err = model.DeleteTransactionByHash(hash)
@@ -104,7 +109,6 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting tx by hash from queue")
 	}
-
 	p.DeleteQueueTx(hash)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")

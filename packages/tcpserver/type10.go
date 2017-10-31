@@ -17,6 +17,8 @@
 package tcpserver
 
 import (
+	"errors"
+
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -27,13 +29,18 @@ import (
 // Type10 sends the last block ID
 // blocksCollection daemon sends this request
 func Type10() (*MaxBlockResponse, error) {
-	blockID, err := model.GetCurBlockID()
+	infoBlock := &model.InfoBlock{}
+	found, err := infoBlock.Get()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur blockID")
 		return nil, utils.ErrInfo(err)
 	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("cant found info block")
+		return nil, errors.New("can't found info block")
+	}
 
 	return &MaxBlockResponse{
-		BlockID: uint32(blockID),
+		BlockID: uint32(infoBlock.BlockID),
 	}, nil
 }
