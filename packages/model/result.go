@@ -2,9 +2,15 @@ package model
 
 import (
 	"database/sql"
+	"encoding/binary"
 	"fmt"
+	"math"
+	"strconv"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // SingleResult is a structure for the single result
@@ -46,7 +52,8 @@ func (r *SingleResult) Float64() (float64, error) {
 	if r.err != nil {
 		return 0, r.err
 	}
-	return converter.StrToFloat64(string(r.result)), nil
+	return math.Float64frombits(binary.LittleEndian.Uint64(r.result)), nil
+	//return converter.StrToFloat64(string(r.result)), nil
 }
 
 // String returns string
@@ -94,29 +101,41 @@ func (r *OneRow) Int64() (map[string]int64, error) {
 		return result, r.err
 	}
 	for k, v := range r.result {
-		result[k] = converter.StrToInt64(v)
+		res, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": v}).Error("converting one row from string to int")
+		}
+		result[k] = res
 	}
 	return result, nil
 }
 
 func (r *OneRow) Float64() (map[string]float64, error) {
+	var err error
 	result := make(map[string]float64)
 	if r.err != nil {
 		return result, r.err
 	}
 	for k, v := range r.result {
-		result[k] = converter.StrToFloat64(v)
+		result[k], err = strconv.ParseFloat(v, 64)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": v}).Error("converting one row from string to float")
+		}
 	}
 	return result, nil
 }
 
 func (r *OneRow) Int() (map[string]int, error) {
+	var err error
 	result := make(map[string]int)
 	if r.err != nil {
 		return result, r.err
 	}
 	for k, v := range r.result {
-		result[k] = converter.StrToInt(v)
+		result[k], err = strconv.Atoi(v)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": v}).Error("converting one row from string to int")
+		}
 	}
 	return result, nil
 }

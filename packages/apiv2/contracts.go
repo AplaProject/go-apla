@@ -19,11 +19,15 @@ package apiv2
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type contractsResult struct {
@@ -31,13 +35,14 @@ type contractsResult struct {
 	List  []map[string]string `json:"list"`
 }
 
-func getContracts(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
+func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	var limit int
 
 	table := fmt.Sprintf(`%d_contracts`, data.state)
 
 	count, err := model.GetNextID(table)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -49,6 +54,7 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData) (err er
 	list, err := model.GetAll(`select * from "`+table+`" order by id desc`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	for ind, val := range list {
@@ -56,7 +62,12 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData) (err er
 			list[ind][`wallet_id`] = ``
 			list[ind][`address`] = ``
 		} else {
-			list[ind][`address`] = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
+			walletIDInt, err := strconv.ParseInt(val["wallet_id"], 10, 64)
+			if err != nil {
+				walletIDInt = 0
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val["wallet_id"]}).Error("converting wallet_id from string to int")
+			}
+			list[ind][`address`] = converter.AddressToString(walletIDInt)
 		}
 		if val[`active`] == `NULL` {
 			list[ind][`active`] = ``

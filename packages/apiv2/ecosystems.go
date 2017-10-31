@@ -19,17 +19,20 @@ package apiv2
 import (
 	"net/http"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type ecosystemsResult struct {
 	Number uint32 `json:"number"`
 }
 
-func ecosystems(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
-
+func ecosystems(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	number, err := model.GetNextID(`system_states`)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error getting next system_states id")
 		return err
 	}
 	data.result = &ecosystemsResult{Number: uint32(number - 1)}

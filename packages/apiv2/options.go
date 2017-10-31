@@ -17,9 +17,8 @@
 package apiv2
 
 import (
-	"net/http"
-
 	hr "github.com/julienschmidt/httprouter"
+	"net/http"
 )
 
 func optionsHandler() hr.Handle {

@@ -17,13 +17,15 @@
 package daemons
 
 import (
-	"fmt"
 	"os"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/system"
 	"github.com/AplaProject/go-apla/packages/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // WaitStopTime closes the database and stop daemons
@@ -37,37 +39,31 @@ func WaitStopTime() {
 		if !first {
 			err := model.Delete("stop_daemons", "")
 			if err != nil {
-				log.Error(utils.ErrInfo(err).Error())
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting from stop daemons")
 			}
 			first = true
 		}
 		dExists, err := model.Single(`SELECT stop_time FROM stop_daemons`).Int64()
 		if err != nil {
-			log.Error(utils.ErrInfo(err).Error())
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting stop_time from StopDaemons")
 		}
-		log.Debug("dExtit: %d", dExists)
 		if dExists > 0 {
-			fmt.Println("Stop_daemons from DB!")
 			utils.CancelFunc()
 			for i := 0; i < utils.DaemonsCount; i++ {
 				name := <-utils.ReturnCh
-				log.Debugf("daemon %s stopped", name)
+				log.WithFields(log.Fields{"daemon_name": name}).Debug("daemon stopped")
 			}
 			system.FinishThrust()
 
-			fmt.Println("Daemons killed")
 			err := model.GormClose()
 			if err != nil {
-				log.Errorf("gorm close failed: %s", utils.ErrInfo(err).Error())
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("gorm close")
 			}
-			fmt.Println("DB Closed")
 			err = os.Remove(*utils.Dir + "/daylight.pid")
 			if err != nil {
-				log.Error(utils.ErrInfo(err).Error())
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": *utils.Dir + "/daylight.pid"}).Error("removing file")
 				panic(err)
 			}
-			fmt.Println("removed " + *utils.Dir + "/daylight.pid")
-
 		}
 		time.Sleep(time.Second)
 	}

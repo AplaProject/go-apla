@@ -23,11 +23,13 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/model"
 
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -122,8 +124,14 @@ func ifValue(val string, vars *map[string]string) bool {
 	case `!=`:
 		return len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1])
 	case `>`, `<`, `<=`, `>=`:
-		ret0, _ := decimal.NewFromString(strings.TrimSpace(cond[0]))
-		ret1, _ := decimal.NewFromString(strings.TrimSpace(cond[1]))
+		ret0, err := decimal.NewFromString(strings.TrimSpace(cond[0]))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strings.TrimSpace(cond[0])}).Error("converting left condition from string to decimal")
+		}
+		ret1, err := decimal.NewFromString(strings.TrimSpace(cond[1]))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strings.TrimSpace(cond[1])}).Error("converting right condition from string to decimal")
+		}
 		if len(cond) == 2 {
 			var bin bool
 			if sep == `>` || sep == `<=` {
@@ -240,9 +248,12 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			}
 		}
 	}
-	state := int(converter.StrToInt64((*vars)[`state`]))
+	stateInt, err := strconv.ParseInt((*vars)["state"], 10, 64)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": (*vars)["state"]}).Error("parsing vars state to int")
+	}
 	for i, v := range pars {
-		pars[i] = language.LangMacro(v, state, (*vars)[`accept_lang`])
+		pars[i] = language.LangMacro(v, int(stateInt), (*vars)[`accept_lang`])
 	}
 	if len(curFunc.Tag) > 0 {
 		curNode.Tag = curFunc.Tag
@@ -251,7 +262,6 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			process(pars[`Body`], &curNode, vars)
 		}
 		parFunc.Owner = owner
-		//		owner.Children = append(owner.Children, &curNode)
 		parFunc.Node = &curNode
 		parFunc.Tails = tailpars
 	}
@@ -469,6 +479,7 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 	}
 	out, err := json.Marshal(root.Children)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling template data to json")
 		return []byte(err.Error())
 	}
 	return out
@@ -476,5 +487,9 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 
 // StateParam returns the value of state parameters
 func StateParam(idstate int64, name string) (string, error) {
-	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_parameters" WHERE name = ?`, name).String()
+	val, err := model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_parameters" WHERE name = ?`, name).String()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting state parameter")
+	}
+	return val, err
 }

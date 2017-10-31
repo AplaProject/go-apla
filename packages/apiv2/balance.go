@@ -17,10 +17,11 @@
 package apiv2
 
 import (
+	"github.com/jinzhu/gorm"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 
-	"github.com/jinzhu/gorm"
-
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 )
@@ -30,18 +31,18 @@ type balanceResult struct {
 	Money  string `json:"money"`
 }
 
-func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	state := data.state
 	wallet := converter.StringToAddress(data.params[`wallet`].(string))
 	if wallet == 0 {
+		logger.WithFields(log.Fields{"type": consts.ConvertionError, "value": data.params["wallet"].(string)}).Error("converting wallet to address")
 		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
-
 	key := &model.Key{}
 	key.SetTablePrefix(state)
 	err := key.Get(wallet)
 	if err != nil && err != gorm.ErrRecordNotFound {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting Key for wallet")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	data.result = &balanceResult{Amount: key.Amount, Money: converter.EGSMoney(key.Amount)}

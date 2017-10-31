@@ -18,35 +18,35 @@ package daylight
 
 import (
 	"fmt"
-	//	_ "image/png"
+
 	"os/exec"
 	"runtime"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/op/go-logging"
-)
 
-var (
-	log    = logging.MustGetLogger("daylight")
-	format = logging.MustStringFormatter("%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{message}")
+	log "github.com/sirupsen/logrus"
 )
 
 func openBrowser(BrowserHTTPHost string) {
-	log.Debug("runtime.GOOS: %v", runtime.GOOS)
 	var err error
+	cmd := ""
 	switch runtime.GOOS {
 	case "linux":
+		cmd = "xdg-open"
 		err = exec.Command("xdg-open", BrowserHTTPHost).Start()
 	case "windows", "darwin":
+		cmd = "open"
 		err = exec.Command("open", BrowserHTTPHost).Start()
 		if err != nil {
-			exec.Command("cmd", "/c", "start", BrowserHTTPHost).Start()
+			cmd = "cmd /c start"
+			err = exec.Command("cmd", "/c", "start", BrowserHTTPHost).Start()
 		}
 	default:
 		err = fmt.Errorf("unsupported platform")
 	}
 	if err != nil {
-		log.Error("%v", err)
+		log.WithFields(log.Fields{"command": cmd, "type": consts.CommandExecutionError, "error": err}).Error("Error executing command opening browser")
 	}
 }
 

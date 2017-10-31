@@ -19,17 +19,18 @@
 package daylight
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/utils"
 
-	"fmt"
+	log "github.com/sirupsen/logrus"
 )
 
-func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Handler) {
-
+func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Handler) error {
 	i := 0
 	host := ListenHTTPHost
 	var l net.Listener
@@ -37,47 +38,43 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Han
 	for {
 		i++
 		if i > 7 {
-			log.Error("Error listening %d", host)
-			panic("Error listening ")
+			log.Warning("tried to listen ipV4 at all ports")
+			return fmt.Errorf("tried all ports")
 		}
 		if i > 1 {
 			host = ":7" + converter.IntToStr(i) + "79"
 			*BrowserHTTPHost = "http://" + host
 		}
-		log.Debug("host", host)
 		l, err = net.Listen("tcp4", host)
-		log.Debug("l", l)
+		log.WithFields(log.Fields{"host": host, "type": consts.NetworkError}).Debug("trying to listen at")
 		if err == nil {
-			fmt.Println("BrowserHTTPHost", host)
+			log.WithFields(log.Fields{"host": host}).Info("listening at")
 			break
 		} else {
-			log.Error(utils.ErrInfo(err).Error())
+			log.WithFields(log.Fields{"host": host, "error": err, "type": consts.NetworkError}).Debug("cannot listen at host")
 		}
 	}
 
 	go func() {
-		srv := &http.Server{Handler: route} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
-		//		srv.SetKeepAlivesEnabled(false)
+		srv := &http.Server{Handler: route}
 		err = srv.Serve(l)
-		//		err = http.Serve( NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
 		if err != nil {
-			log.Error("Error listening:", err, ListenHTTPHost)
-			panic(err)
-			//os.Exit(1)
+			log.WithFields(log.Fields{"host": host, "error": err, "type": consts.NetworkError}).Fatal("serving http at host")
 		}
 	}()
+	return nil
 }
 
 // For ipv6 on the server
-func httpListenerV6(route http.Handler) {
+func httpListenerV6(route http.Handler) error {
 	i := 0
 	port := *utils.ListenHTTPPort
 	var l net.Listener
 	var err error
 	for {
 		if i > 7 {
-			log.Error("Error listening ipv6 %d", port)
-			panic("Error listening ")
+			log.WithFields(log.Fields{"type": consts.NetworkError}).Error("tried all ports")
+			return fmt.Errorf("tried all ports")
 		}
 		if i > 0 {
 			port = "7" + converter.IntToStr(i) + "79"
@@ -85,21 +82,19 @@ func httpListenerV6(route http.Handler) {
 		i++
 		l, err = net.Listen("tcp6", ":"+port)
 		if err == nil {
+			log.WithFields(log.Fields{"host": ":" + port}).Info("listening ipv6 at")
 			break
 		} else {
-			log.Error(utils.ErrInfo(err).Error())
+			log.WithFields(log.Fields{"error": err, "host": ":" + port, "type": consts.NetworkError}).Error("cannot listenin at host")
 		}
 	}
 
 	go func() {
-		srv := &http.Server{Handler: route} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
-		//		srv.SetKeepAlivesEnabled(false)
+		srv := &http.Server{Handler: route}
 		err = srv.Serve(l)
-		//		err = http.Serve(NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
 		if err != nil {
-			log.Error("Error listening:", err)
-			panic(err)
-			//os.Exit(1)
+			log.WithFields(log.Fields{"error": err, "host": ":" + port}).Fatal("serving http at host")
 		}
 	}()
+	return nil
 }

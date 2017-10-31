@@ -31,16 +31,23 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/op/go-logging"
+	log "github.com/sirupsen/logrus"
 )
 
-var log = logging.MustGetLogger("daemons")
+// Update contains version info parameters
+type Update struct {
+	Version string
+	Hash    string
+	Sign    string
+	URL     string
+}
 
 // BlockData is a structure of the block's header
 type BlockData struct {
@@ -51,13 +58,6 @@ type BlockData struct {
 	Sign     []byte
 	Hash     []byte
 	Version  int
-}
-
-type Update struct {
-	Version string
-	Hash    string
-	Sign    string
-	URL     string
 }
 
 var (
@@ -180,8 +180,6 @@ func CheckInputData(idata interface{}, dataType string) bool {
 	case []byte:
 		data = string(idata.([]byte))
 	}
-	log.Debug("CheckInputData:" + data)
-	log.Debug("dataType:" + dataType)
 	switch dataType {
 	case "arbitration_trust_list":
 		if ok, _ := regexp.MatchString(`^\[[0-9]{1,10}(,[0-9]{1,10}){0,100}\]$`, data); ok {
@@ -203,55 +201,91 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		}
 	case "type":
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
-			if converter.StrToInt(data) <= 30 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
+			}
+			if value <= 30 {
 				return true
 			}
 		}
 	case "word":
 		if ok, _ := regexp.MatchString(`^(?i)[a-z]+$`, data); ok {
-			if converter.StrToInt(data) <= 1024 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
+			}
+			if value <= 1024 {
 				return true
 			}
 		}
 	case "currency_name", "state_name":
 		if ok, _ := regexp.MatchString(`^[\pL0-9\,\s\.\-\:\=\;\?\!\%\)\(\@\/\n\r]{1,20}$`, data); ok {
-			if converter.StrToInt(data) <= 1024 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
+			}
+			if value <= 1024 {
 				return true
 			}
 		}
 	case "string":
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
-			if converter.StrToInt(data) <= 1024 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
+			}
+			if value <= 1024 {
 				return true
 			}
 		}
 	case "referral":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,2}$`, data); ok {
-			if converter.StrToInt(data) <= 30 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
+			}
+			if value <= 30 {
 				return true
 			}
 		}
 	case "currency_id":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if converter.StrToInt(data) <= 255 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
+			}
+			if value <= 255 {
 				return true
 			}
 		}
 	case "system_commission":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if converter.StrToInt(data) <= 15 && converter.StrToInt(data) >= 5 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
+			}
+			if value <= 15 && value >= 5 {
 				return true
 			}
 		}
 	case "tinyint":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if converter.StrToInt(data) <= 127 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
+			}
+			if value <= 127 {
 				return true
 			}
 		}
 	case "smallint":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,5}$`, data); ok {
-			if converter.StrToInt(data) <= 65535 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
+			}
+			if value <= 65535 {
 				return true
 			}
 		}
@@ -472,7 +506,11 @@ func CheckInputData(idata interface{}, dataType string) bool {
 			return true
 		}
 	case "level":
-		if converter.StrToInt(data) >= 0 && converter.StrToInt(data) <= 34 {
+		value, err := strconv.Atoi(data)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data}).Error("converting value to int")
+		}
+		if value >= 0 && value <= 34 {
 			return true
 		}
 	case "comment":
@@ -506,11 +544,13 @@ func CheckInputData(idata interface{}, dataType string) bool {
 func GetHTTPTextAnswer(url string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "url": url}).Error("cannot get url")
 		return "", err
 	}
 	defer resp.Body.Close()
 	htmlData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("cannot read response body")
 		return "", err
 	}
 	if resp.StatusCode == 404 {
@@ -577,6 +617,7 @@ func CallMethod(i interface{}, methodName string) interface{} {
 	}
 
 	// return or panic, method not found of either type
+	log.WithFields(log.Fields{"method_name": methodName, "type": consts.NotFound}).Error("method not found")
 	return fmt.Errorf("method %s not found", methodName)
 }
 
@@ -593,23 +634,30 @@ func Caller(steps int) string {
 func CopyFileContents(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "file_name": src}).Error("opening file")
 		return ErrInfo(err)
 	}
 	defer in.Close()
 	out, err := os.Create(dst)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "file_name": dst}).Error("creating file")
 		return ErrInfo(err)
 	}
 	defer func() {
 		cerr := out.Close()
 		if err == nil {
+			log.WithFields(log.Fields{"error": err, "type": consts.IOError, "file_name": dst}).Error("closing file")
 			err = cerr
 		}
 	}()
 	if _, err = io.Copy(out, in); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "from_file": src, "to_file": dst}).Error("copying from to")
 		return ErrInfo(err)
 	}
 	err = out.Sync()
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "file_name": dst}).Error("syncing file")
+	}
 	return ErrInfo(err)
 }
 
@@ -617,18 +665,21 @@ func CopyFileContents(src, dst string) error {
 func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("Panic CheckECDSA %v", r)
+			log.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r}).Error("recovered panic in check sign")
 		}
 	}()
 
 	var signsSlice [][]byte
 	if len(forSign) == 0 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("for sign is empty")
 		return false, ErrInfoFmt("len(forSign) == 0")
 	}
 	if len(publicKeys) == 0 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public keys is empty")
 		return false, ErrInfoFmt("len(publicKeys) == 0")
 	}
 	if len(signs) == 0 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signs is empty")
 		return false, ErrInfoFmt("len(signs) == 0")
 	}
 
@@ -638,12 +689,14 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 	} else {
 		length, err := converter.DecodeLength(&signs)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Fatal("decoding signs length")
 			return false, err
 		}
 		if length > 0 {
 			signsSlice = append(signsSlice, converter.BytesShift(&signs, length))
 		}
 		if len(publicKeys) != len(signsSlice) {
+			log.WithFields(log.Fields{"public_keys_length": len(publicKeys), "signs_length": len(signsSlice), "type": consts.InvalidObject}).Error("public keys and signs slices lengths does not match")
 			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
 		}
 	}
@@ -652,12 +705,11 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 
 // MerkleTreeRoot rertun Merkle value
 func MerkleTreeRoot(dataArray [][]byte) []byte {
-	log.Debug("dataArray: %s", dataArray)
 	result := make(map[int32][][]byte)
 	for _, v := range dataArray {
 		hash, err := crypto.DoubleHash(v)
 		if err != nil {
-			log.Fatal(err)
+			log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("double hasing value, while calculating merkle tree root")
 		}
 		hash = converter.BinToHex(hash)
 		result[0] = append(result[0], hash)
@@ -675,14 +727,14 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 				if _, ok := result[j+1]; !ok {
 					hash, err := crypto.DoubleHash(append(result[j][i], result[j][i+1]...))
 					if err != nil {
-						log.Fatal(err)
+						log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("double hasing value, while calculating merkle tree root")
 					}
 					hash = converter.BinToHex(hash)
 					result[j+1] = [][]byte{hash}
 				} else {
 					hash, err := crypto.DoubleHash([]byte(append(result[j][i], result[j][i+1]...)))
 					if err != nil {
-						log.Fatal(err)
+						log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("double hasing value, while calculating merkle tree root")
 					}
 					hash = converter.BinToHex(hash)
 					result[j+1] = append(result[j+1], hash)
@@ -692,9 +744,7 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 		j++
 	}
 
-	log.Debug("result: %s", result)
 	ret := result[int32(len(result)-1)]
-	log.Debug("result_: %s", ret)
 	return []byte(ret[0])
 }
 
@@ -712,6 +762,7 @@ func TypeInt(txType string) int64 {
 func TCPConn(Addr string) (net.Conn, error) {
 	conn, err := net.DialTimeout("tcp", Addr, 10*time.Second)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "address": Addr}).Error("dialing tcp")
 		return nil, ErrInfo(err)
 	}
 	conn.SetReadDeadline(time.Now().Add(consts.READ_TIMEOUT * time.Second))
@@ -723,6 +774,7 @@ func TCPConn(Addr string) (net.Conn, error) {
 func GetCurrentDir() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warning("getting current dir")
 		return "."
 	}
 	return dir
@@ -736,29 +788,27 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	}
 	defer conn.Close()
 
-	log.Debug("dataTypeBlockBody: %v", dataTypeBlockBody)
 	// send the type of data
 	_, err = conn.Write(converter.DecToBin(dataTypeBlockBody, 2))
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data type block body to connection")
 		return nil, ErrInfo(err)
 	}
-
-	log.Debug("blockID: %v", blockID)
 
 	// send the number of a block
 	_, err = conn.Write(converter.DecToBin(blockID, 4))
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing block ID to connection")
 		return nil, ErrInfo(err)
 	}
 
 	// recieve the data size as a response that server wants to transfer
 	buf := make([]byte, 4)
-	n, err := conn.Read(buf)
+	_, err = conn.Read(buf)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data size from connection")
 		return nil, ErrInfo(err)
 	}
-	log.Debug("dataSize buf: %x / get: %v", buf, n)
-
 	// if the data size is less than 10mb, we will receive them
 	dataSize := converter.BinToDec(buf)
 	var binaryBlock []byte
@@ -767,9 +817,11 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 
 		_, err = io.ReadFull(conn, binaryBlock)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data from connection")
 			return nil, ErrInfo(err)
 		}
 	} else {
+		log.Error("null block")
 		return nil, ErrInfo("null block")
 	}
 	return binaryBlock, nil

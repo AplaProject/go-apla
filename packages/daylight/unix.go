@@ -20,14 +20,23 @@
 package daylight
 
 import (
+	"strconv"
 	"syscall"
 
-	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/consts"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func KillPid(pid string) error {
-	err := syscall.Kill(converter.StrToInt(pid), syscall.SIGTERM)
+	pidInt, err := strconv.Atoi(pid)
 	if err != nil {
+		log.WithFields(log.Fields{"value": pid, "type": consts.ConvertionError, "error": err}).Error("converting pid to int")
+		return err
+	}
+	err = syscall.Kill(pidInt, syscall.SIGTERM)
+	if err != nil {
+		log.WithFields(log.Fields{"pid": pid, "signal": syscall.SIGTERM}).Error("Error killing process with pid")
 		return err
 	}
 	return nil

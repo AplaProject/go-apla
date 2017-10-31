@@ -24,9 +24,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -143,7 +146,12 @@ func langresTag(par parFunc) string {
 	if len(lang) == 0 {
 		lang = (*par.Vars)[`accept_lang`]
 	}
-	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Vars)[`state`])), lang)
+	stateInt, err := strconv.ParseInt((*par.Vars)["state"], 10, 64)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": (*par.Vars)["state"]}).Error("converting state from string to int")
+		stateInt = 0
+	}
+	ret, _ := language.LangText((*par.Pars)[`Name`], int(stateInt), lang)
 	return ret
 }
 
@@ -253,25 +261,45 @@ func dbfindTag(par parFunc) string {
 		where = ` where ` + converter.Escape(par.Node.Attr[`where`].(string))
 	}
 	if par.Node.Attr[`whereid`] != nil {
-		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(par.Node.Attr[`whereid`].(string)))
+		whereid, err := strconv.ParseInt(par.Node.Attr["whereid"].(string), 10, 64)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": par.Node.Attr["whereid"].(string)}).Error("converting node attr whereid from string to int")
+			return err.Error()
+		}
+		where = fmt.Sprintf(` where id='%d'`, whereid)
 	}
 	if par.Node.Attr[`order`] != nil {
 		order = ` order by ` + converter.EscapeName(par.Node.Attr[`order`].(string))
 	}
 	if par.Node.Attr[`limit`] != nil {
-		limit = converter.StrToInt(par.Node.Attr[`limit`].(string))
+		limitInt, err := strconv.Atoi(par.Node.Attr["limit"].(string))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": par.Node.Attr["limit"]}).Error("converting node attr limit from string to int")
+			return err.Error()
+		}
+		limit = limitInt
 	}
 	if limit > 250 {
 		limit = 250
 	}
+	var err error
 	if par.Node.Attr[`ecosystem`] != nil {
-		state = converter.StrToInt64(par.Node.Attr[`ecosystem`].(string))
+		state, err = strconv.ParseInt(par.Node.Attr["ecosystem"].(string), 10, 64)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": par.Node.Attr["limit"]}).Error("converting node attr ecosystem from string to int")
+			return err.Error()
+		}
 	} else {
-		state = converter.StrToInt64((*par.Vars)[`state`])
+		state, err = strconv.ParseInt((*par.Vars)["state"], 10, 64)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": par.Node.Attr["state"]}).Error("converting node attr state from string to int")
+			return err.Error()
+		}
 	}
 	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
 	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
 		return err.Error()
 	}
 	/*	list := []map[string]string{{"id": "1", "amount": "200"}, {"id": "2", "amount": "300"}}
@@ -347,6 +375,7 @@ func includeTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Vars)[`_include`]) < 5 {
 		pattern, err := model.Single(`select value from "`+(*par.Vars)[`state`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by name")
 			return err.Error()
 		}
 		if len(pattern) > 0 {

@@ -19,10 +19,11 @@ package daemons
 import (
 	"context"
 
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/logging"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // QueueParserTx parses transaction from the queue
@@ -33,25 +34,25 @@ func QueueParserTx(d *daemon, ctx context.Context) error {
 	infoBlock := &model.InfoBlock{}
 	_, err := infoBlock.Get()
 	if err != nil {
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		return err
 	}
 	if infoBlock.BlockID == 0 {
-		log.Debugf("there are no blocks for parse")
+		d.logger.Debug("no blocks for parsing")
 		return nil
 	}
 
 	// delete looped transactions
-	logging.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
-	affect, err := model.DeleteLoopedTransactions()
+	_, err = model.DeleteLoopedTransactions()
 	if err != nil {
-		logging.WriteSelectiveLog(err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting looped transactions")
 		return err
 	}
-	logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
 
 	p := new(parser.Parser)
 	err = p.AllTxParser()
 	if err != nil {
+		d.logger.WithFields(log.Fields{"error": err}).Error("parsing transactions")
 		return err
 	}
 

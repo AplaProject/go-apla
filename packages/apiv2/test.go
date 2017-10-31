@@ -20,8 +20,11 @@ import (
 	"encoding/hex"
 	"net/http"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/smart"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type getTestResult struct {
@@ -33,15 +36,15 @@ type signTestResult struct {
 	Public    string `json:"pubkey"`
 }
 
-func getTest(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func getTest(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	data.result = &getTestResult{Value: smart.GetTestValue(data.params[`name`].(string))}
 	return nil
 }
 
-func signTest(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+func signTest(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	sign, err := crypto.Sign(data.params[`private`].(string), data.params[`forsign`].(string))
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing data with private key")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	private, err := hex.DecodeString(data.params[`private`].(string))
@@ -50,6 +53,7 @@ func signTest(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	pub, err := crypto.PrivateToPublic(private)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	data.result = &signTestResult{Signature: hex.EncodeToString(sign), Public: hex.EncodeToString(pub)}

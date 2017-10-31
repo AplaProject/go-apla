@@ -17,14 +17,16 @@
 package apiv2
 
 import (
+	log "github.com/sirupsen/logrus"
 	"net/http"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 )
 
-func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
-	state, err := checkEcosystem(w, data)
+func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	state, err := checkEcosystem(w, data, logger)
 	if err != nil {
 		return err
 	}
@@ -32,6 +34,7 @@ func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData) (err 
 	sp.SetTablePrefix(converter.Int64ToStr(state))
 	found, err := sp.Get(nil, data.params[`name`].(string))
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting state parameter by name")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if !found {

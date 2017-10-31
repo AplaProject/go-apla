@@ -23,11 +23,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 
-	"github.com/op/go-logging"
+	log "github.com/sirupsen/logrus"
 )
 
 // Contract contains the information about the contract.
@@ -58,7 +58,6 @@ const (
 var (
 	smartVM   *script.VM
 	smartTest = make(map[string]string)
-	log       = logging.MustGetLogger("daemons")
 )
 
 func testValue(name string, v ...interface{}) {
@@ -138,6 +137,9 @@ func Run(block *script.Block, params []interface{}, extend *map[string]interface
 	}
 	rt := smartVM.RunInit(cost)
 	ret, err = rt.Run(block, params, extend)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("running block in smart vm")
+	}
 	if ecost, ok := (*extend)[`txcost`]; ok && cost > ecost.(int64) {
 		extcost = cost - ecost.(int64)
 	}
@@ -234,6 +236,8 @@ func Float(v interface{}) (ret float64) {
 	case string:
 		if val, err := strconv.ParseFloat(value, 64); err == nil {
 			ret = val
+		} else if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": value}).Error("converting value from string to float")
 		}
 	}
 	return
@@ -257,6 +261,7 @@ func LoadContracts(transaction *model.DbTransaction) (err error) {
 	prefix = []string{`system`}
 	states, err = model.GetAll(`select id from system_states order by id`, -1)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting ids from system_states")
 		return err
 	}
 	for _, istate := range states {
@@ -276,24 +281,42 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
 	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting all transactions from contracts")
 		return err
 	}
-	state := uint32(converter.StrToInt64(prefix))
+	stateInt, err := strconv.ParseInt(prefix, 10, 64)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": prefix}).Error("converting prefix from string to int64")
+	}
+	state := uint32(stateInt)
 	for _, item := range contracts {
+		tableIDInt, err := strconv.ParseInt(item["id"], 10, 64)
+		if err != nil {
+			tableIDInt = 0
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": item["id"]}).Error("converting tableID from string to int64")
+		}
+		walletIDInt, err := strconv.ParseInt(item["wallet_id"], 10, 64)
+		if err != nil {
+			walletIDInt = 0
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": item["wallet_id"]}).Error("converting walletID from string to int64")
+		}
+		tokenIDInt, err := strconv.ParseInt(item["token_id"], 10, 64)
+		if err != nil {
+			tokenIDInt = 0
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": item["token_id"]}).Error("converting tokenID from string to int64")
+		}
 		names := strings.Join(ContractsList(item[`value`]), `,`)
 		owner := script.OwnerInfo{
 			StateID:  state,
 			Active:   item[`active`] == `1`,
-			TableID:  converter.StrToInt64(item[`id`]),
-			WalletID: converter.StrToInt64(item[`wallet_id`]),
-			TokenID:  converter.StrToInt64(item[`token_id`]),
+			TableID:  tableIDInt,
+			WalletID: walletIDInt,
+			TokenID:  tokenIDInt,
 		}
 		if err = Compile(item[`value`], &owner); err != nil {
-			log.Error("Load Contract", names, err)
-			fmt.Println("Error Load Contract", names, err)
-			//return
+			log.WithFields(log.Fields{"type": consts.EvalError, "names": names, "error": err}).Error("Load Contract")
 		} else {
-			fmt.Println("OK Load Contract", names, item[`id`], item[`active`] == `1`)
+			log.WithFields(log.Fields{"contract_name": names, "contract_id": item["id"], "contract_active": item["active"]}).Info("OK Loading Contract")
 		}
 	}
 	return
