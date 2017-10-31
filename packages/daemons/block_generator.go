@@ -87,7 +87,6 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	// verify transactions
 	err = p.AllTxParser()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"error": err}).Error("parsing all transactions")
 		return err
 	}
 
@@ -99,13 +98,11 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 
 	blockBin, err := generateNextBlock(prevBlock, *trs, nodeKey.PrivateKey, config, time.Now().Unix())
 	if err != nil {
-		d.logger.WithFields(log.Fields{"error": err}).Error("generating next block")
 		return err
 	}
 
 	err = parser.InsertBlock(blockBin)
 	if err != nil {
-		d.logger.WithFields(log.Fields{"error": err}).Error("inserting block")
 		return err
 	}
 

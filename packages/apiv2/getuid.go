@@ -59,7 +59,7 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 	}
 	result.Token, err = jwtGenerateToken(w, claims)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.SessionError, "error": err}).Error("generating jwt token")
+		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	return

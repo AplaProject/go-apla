@@ -52,12 +52,12 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 	if len(msg) == 0 {
-		logger.Error("UID is empty")
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("UID is empty")
 		return errorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
 	}
 	state := data.params[`state`].(int64)
 	if state == 0 {
-		logger.Warning("state is empty, using 1 as a state")
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Warning("state is empty, using 1 as a state")
 		state = 1
 	}
 	if len(data.params[`wallet`].(string)) > 0 {
@@ -71,13 +71,13 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	if state > 1 && len(pubkey) == 0 {
-		logger.Error("public key is empty, and state is not default")
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty, and state is not default")
 		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
 	}
 	if len(pubkey) == 0 {
 		pubkey = data.params[`pubkey`].([]byte)
 		if len(pubkey) == 0 {
-			logger.Error("public key is empty")
+			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
 			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 		}
 	}
@@ -96,7 +96,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	data.result = &result
 	expire := data.params[`expire`].(int64)
 	if expire == 0 {
-		logger.WithFields(log.Fields{"expire": jwtExpire}).Warning("using expire from jwt")
+		logger.WithFields(log.Fields{"type": consts.JWTError, "expire": jwtExpire}).Warning("using expire from jwt")
 		expire = jwtExpire
 	}
 	claims := JWTClaims{
@@ -108,14 +108,14 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	}
 	result.Token, err = jwtGenerateToken(w, claims)
 	if err != nil {
-		logger.WithFields(log.Fields{"error": err}).Error("generating jwt token")
+		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	result.Refresh, err = jwtGenerateToken(w, claims)
 	result.NotifyKey = `0`
 	if err != nil {
-		logger.WithFields(log.Fields{"error": err}).Error("generating jwt token")
+		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 

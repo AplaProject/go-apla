@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/crypto"
 
 	"github.com/dgrijalva/jwt-go"
@@ -63,7 +64,7 @@ func jwtGenerateToken(w http.ResponseWriter, claims JWTClaims) (string, error) {
 
 func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	if data.wallet == 0 {
-		logger.Error("wallet is empty")
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
 		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}
 	return nil
@@ -71,7 +72,7 @@ func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *l
 
 func authState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	if data.wallet == 0 || data.state <= 1 {
-		logger.Error("state is empty")
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("state is empty")
 		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}
 	return nil

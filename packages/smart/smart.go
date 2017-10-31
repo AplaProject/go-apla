@@ -261,6 +261,7 @@ func LoadContracts(transaction *model.DbTransaction) (err error) {
 	prefix = []string{`system`}
 	states, err = model.GetAll(`select id from system_states order by id`, -1)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting ids from system_states")
 		return err
 	}
 	for _, istate := range states {
@@ -280,6 +281,7 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
 	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting all transactions from contracts")
 		return err
 	}
 	stateInt, err := strconv.ParseInt(prefix, 10, 64)
@@ -312,7 +314,7 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 			TokenID:  tokenIDInt,
 		}
 		if err = Compile(item[`value`], &owner); err != nil {
-			log.Error("Load Contract", names, err)
+			log.WithFields(log.Fields{"type": consts.EvalError, "names": names, "error": err}).Error("Load Contract")
 		} else {
 			log.WithFields(log.Fields{"contract_name": names, "contract_id": item["id"], "contract_active": item["active"]}).Info("OK Loading Contract")
 		}

@@ -64,7 +64,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 			}
 		}
 		if len(publicKey) == 0 {
-			logger.Error("public key is empty")
+			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
 			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 		}
 	} else {
@@ -73,7 +73,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	}
 	signature := data.params[`signature`].([]byte)
 	if len(signature) == 0 {
-		logger.Error("signature is empty")
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signature is empty")
 		return errorAPI(w, `E_EMPTYSIGN`, http.StatusBadRequest)
 	}
 	idata := make([]byte, 0)

@@ -56,7 +56,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 
 	for {
 		if blockID < 2 {
-			log.Error("block id is smaller than 2")
+			log.WithFields(log.Fields{"type": consts.BlockIsFirst}).Error("block id is smaller than 2")
 			return utils.ErrInfo(errors.New("block_id < 2"))
 		}
 		// if the limit of blocks received from the node was exaggerated
@@ -77,11 +77,11 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 		}
 
 		if badBlocks[block.Header.BlockID] == string(converter.BinToHex(block.Header.Sign)) {
-			log.WithFields(log.Fields{"block_id": block.Header.BlockID}).Error("block is bad")
+			log.WithFields(log.Fields{"block_id": block.Header.BlockID, "type": consts.InvalidObject}).Error("block is bad")
 			return utils.ErrInfo(errors.New("bad block"))
 		}
 		if block.Header.BlockID != blockID {
-			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID}).Error("block ids does not match")
+			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
 			return utils.ErrInfo(errors.New("bad block_data['block_id']"))
 		}
 

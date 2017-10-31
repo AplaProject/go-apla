@@ -41,7 +41,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	)
 
 	if generalRollback && p.BlockData == nil {
-		logger.Error("Block is indefined")
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Block is undefined")
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
@@ -62,9 +62,9 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			}
 			if vlen > 64 {
 				if isCustom, err := IsCustomTable(table); err != nil {
-					logger.WithError(err).Error("is custom table")
 					return 0, ``, err
 				} else if isCustom {
+					log.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("hash value cannot be larger than 64 bytes")
 					return 0, ``, fmt.Errorf(`hash value cannot be larger than 64 bytes`)
 				}
 			}

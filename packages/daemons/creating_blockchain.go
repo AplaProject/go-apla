@@ -97,7 +97,7 @@ func readBlock(r io.Reader, logger *log.Entry) (*blockData, error) {
 
 	size := converter.BinToDec(buf)
 	if size > syspar.GetMaxBlockSize() {
-		logger.WithFields(log.Fields{"size": size, "max_size": syspar.GetMaxBlockSize()}).Error("reading block from file")
+		logger.WithFields(log.Fields{"size": size, "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("reading block from file")
 		return nil, utils.ErrInfo("size > MAX_BLOCK_SIZE")
 	}
 
@@ -157,7 +157,7 @@ func getLastBlockID(fileName string, logger *log.Entry) (int64, error) {
 	}
 	size := converter.BinToDec(buf)
 	if size > syspar.GetMaxBlockSize() {
-		logger.WithFields(log.Fields{"size": size, "max_size": syspar.GetMaxBlockSize()}).Error("block size is more than max size")
+		logger.WithFields(log.Fields{"size": size, "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("block size is more than max size")
 		return 0, utils.ErrInfo("size > conts.MAX_BLOCK_SIZE")
 	}
 

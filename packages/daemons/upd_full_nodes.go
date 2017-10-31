@@ -107,7 +107,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 
 	contract := smart.GetContract(`@0UpdFullNodes`, 0)
 	if contract == nil {
-		d.logger.WithFields(log.Fields{"contract_name": "@0UpdFullNodes"}).Error("Getting contract")
+		d.logger.WithFields(log.Fields{"contract_name": "@0UpdFullNodes", "type": consts.NotFound}).Error("Getting contract")
 		return fmt.Errorf(`there is not @0UpdFullNodes contract`)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
@@ -139,7 +139,6 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	p := new(parser.Parser)
 	err = p.TxParser(hash, data, true)
 	if err != nil {
-		d.logger.WithFields(log.Fields{"error": err}).Error("parsing transaction")
 		return err
 	}
 

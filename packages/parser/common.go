@@ -166,7 +166,7 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	case "DLTTransfer":
 		return &DLTTransferParser{p, nil}, nil
 	}
-	log.WithFields(log.Fields{"tx_type": txType}).Error("unknown txType")
+	log.WithFields(log.Fields{"tx_type": txType, "type": consts.UnknownObject}).Error("unknown txType")
 	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }
 
@@ -235,7 +235,7 @@ func ClearTmp(blocks map[int64]string) {
 func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	searchedHash, err := crypto.Hash(txBinary)
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal(err)
 	}
 	logTx := &model.LogTransaction{}
 	found, err := logTx.GetByHash(searchedHash)
@@ -244,7 +244,7 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		return utils.ErrInfo(err)
 	}
 	if found {
-		log.WithFields(log.Fields{"tx_hash": searchedHash}).Error("double tx in log transactions")
+		log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in log transactions")
 		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %x", searchedHash))
 	}
 
@@ -257,7 +257,7 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 			return utils.ErrInfo(err)
 		}
 		if len(tx.Hash) > 0 {
-			log.WithFields(log.Fields{"tx_hash": tx.Hash}).Error("double tx in transactions")
+			log.WithFields(log.Fields{"tx_hash": tx.Hash, "type": consts.DuplicateObject}).Error("double tx in transactions")
 			return utils.ErrInfo(fmt.Errorf("double tx in transactions %x", searchedHash))
 		}
 	}
@@ -267,7 +267,7 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		qtx := &model.QueueTx{}
 		found, err := qtx.GetByHash(searchedHash)
 		if found {
-			log.WithFields(log.Fields{"tx_hash": searchedHash}).Error("double tx in queue")
+			log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in queue")
 			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %x", searchedHash))
 		}
 		if err != nil {
@@ -432,11 +432,11 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	if len(conditions) > 0 {
 		ret, err := p.EvalIf(conditions)
 		if err != nil {
-			logger.WithError(err).Error("Evaluationg conditions")
+			logger.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("Evaluationg conditions")
 			return err
 		}
 		if !ret {
-			logger.Error("Access denied")
+			logger.WithFields(log.Fields{"type": consts.AccessDenied, "conditions": conditions}).Error("Access denied")
 			return fmt.Errorf(`Access denied`)
 		}
 	} else {
@@ -458,7 +458,7 @@ func (p *Parser) AccessTable(table, action string) error {
 		if p.TxContract != nil && p.TxCitizenID == govAccountInt {
 			return nil
 		} else {
-			logger.Error("Access denied")
+			logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
 			return fmt.Errorf(`Access denied`)
 		}
 	}
@@ -467,7 +467,7 @@ func (p *Parser) AccessTable(table, action string) error {
 		return err
 		// TODO: table != ... is left for compatibility temporarily. Remove it
 	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
-		logger.WithFields(log.Fields{"table": table}).Error("is not custom table")
+		logger.WithFields(log.Fields{"table": table, "type": consts.InvalidObject}).Error("is not custom table")
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
 	prefix := table[:strings.IndexByte(table, '_')]
@@ -481,11 +481,11 @@ func (p *Parser) AccessTable(table, action string) error {
 	if len(tablePermission[action]) > 0 {
 		ret, err := p.EvalIf(tablePermission[action])
 		if err != nil {
-			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "error": err}).Error("evaluating table permissions for action")
+			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "error": err, "type": consts.EvalError}).Error("evaluating table permissions for action")
 			return err
 		}
 		if !ret {
-			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "error": err}).Error("access denied")
+			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "type": consts.EvalError}).Error("access denied")
 			return fmt.Errorf(`Access denied`)
 		}
 	}
@@ -505,12 +505,13 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 		if p.TxContract != nil && p.TxCitizenID == govAccountInt {
 			return nil
 		}
+		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access Denied")
 		return fmt.Errorf(`Access denied`)
 	}
 	if isCustom, err := IsCustomTable(table); err != nil {
 		return err
 	} else if !isCustom && !strings.HasSuffix(table, `_parameters`) {
-		logger.WithFields(log.Fields{"table": table}).Error("is not custom table")
+		logger.WithFields(log.Fields{"table": table, "type": consts.InvalidObject}).Error("is not custom table")
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
 	prefix := table[:strings.IndexByte(table, '_')]
@@ -533,11 +534,11 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 		if ok && len(cond) > 0 {
 			ret, err := p.EvalIf(cond)
 			if err != nil {
-				logger.WithFields(log.Fields{"condition": cond, "column": col}).Error("evaluating condition")
+				logger.WithFields(log.Fields{"condition": cond, "column": col, "type": consts.EvalError}).Error("evaluating condition")
 				return err
 			}
 			if !ret {
-				logger.WithFields(log.Fields{"condition": cond, "column": col}).Error("action denied")
+				logger.WithFields(log.Fields{"condition": cond, "column": col, "type": consts.AccessDenied}).Error("action denied")
 				return fmt.Errorf(`Access denied`)
 			}
 		}
@@ -574,11 +575,11 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 	if len(conditions) > 0 {
 		ret, err := p.EvalIf(conditions)
 		if err != nil {
-			logger.WithFields(log.Fields{"conditions": conditions}).Error("evaluating conditions")
+			logger.WithFields(log.Fields{"conditions": conditions, "type": consts.EvalError}).Error("evaluating conditions")
 			return err
 		}
 		if !ret {
-			logger.WithFields(log.Fields{"conditions": conditions}).Error("access denied")
+			logger.WithFields(log.Fields{"conditions": conditions, "type": consts.AccessDenied}).Error("access denied")
 			return fmt.Errorf(`Access denied`)
 		}
 	} else {

@@ -41,7 +41,7 @@ func Type2(r *DisRequest) (*DisTrResponse, error) {
 	}
 
 	if int64(len(binaryData)) > consts.MAX_TX_SIZE {
-		log.WithFields(log.Fields{"type": consts.ProtocolError, "max_size": consts.MAX_TX_SIZE, "size": len(binaryData)}).Error("transaction size exceeds max size")
+		log.WithFields(log.Fields{"type": consts.ParameterExceeded, "max_size": consts.MAX_TX_SIZE, "size": len(binaryData)}).Error("transaction size exceeds max size")
 		return nil, utils.ErrInfo("len(txBinData) > max_tx_size")
 	}
 
@@ -74,7 +74,7 @@ func Type2(r *DisRequest) (*DisTrResponse, error) {
 
 func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 	if len(*binaryTx) == 0 {
-		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("binary tx is empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("binary tx is empty")
 		return nil, nil, nil, utils.ErrInfo("len(binaryTx) == 0")
 	}
 
@@ -91,12 +91,12 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 	log.WithFields(log.Fields{"encryptedKey": encryptedKey, "iv": iv}).Debug("binary tx encryptedKey and iv is")
 
 	if len(encryptedKey) == 0 {
-		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("binary tx encrypted key is empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("binary tx encrypted key is empty")
 		return nil, nil, nil, utils.ErrInfo("len(encryptedKey) == 0")
 	}
 
 	if len(*binaryTx) == 0 {
-		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("binary tx is empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("binary tx is empty")
 		return nil, nil, nil, utils.ErrInfo("len(*binaryTx) == 0")
 	}
 
@@ -107,7 +107,7 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
 	if len(nodeKey.PrivateKey) == 0 {
-		log.WithFields(log.Fields{"type": consts.DBError}).Error("node with max blockID not found")
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("node with max blockID not found")
 		return nil, nil, nil, utils.ErrInfo("len(nodePrivateKey) == 0")
 	}
 
@@ -119,6 +119,7 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("Parse PKCS1PrivateKey")
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
 
@@ -129,7 +130,7 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 	}
 	log.WithFields(log.Fields{"key": decKey}).Debug("decrypted key")
 	if len(decKey) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Error("decrypted key is empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("decrypted key is empty")
 		return nil, nil, nil, utils.ErrInfo("len(decKey)")
 	}
 

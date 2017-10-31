@@ -437,6 +437,7 @@ func fFtail(buf *[]*Block, state int, lexem *Lexem) error {
 		for pkey, param := range fblock.Params {
 			if param == reflect.TypeOf(nil) {
 				if used {
+					log.WithFields(log.Fields{"type": consts.ParseError}).Error("... paramters must be one")
 					return fmt.Errorf(`... parameter must be one`)
 				}
 				fblock.Params[pkey] = reflect.TypeOf([]interface{}{})
@@ -451,6 +452,7 @@ func fFtail(buf *[]*Block, state int, lexem *Lexem) error {
 				for pkey, param := range (*fblock.Names)[name].Params {
 					if param == reflect.TypeOf(nil) {
 						if used {
+							log.WithFields(log.Fields{"type": consts.ParseError}).Error("... paramters must be one")
 							return fmt.Errorf(`... parameter must be one`)
 						}
 						(*fblock.Names)[name].Params[pkey] = reflect.TypeOf([]interface{}{})
@@ -903,10 +905,12 @@ main:
 						}
 						if i < len(*lexems)-4 && (*lexems)[i+1].Type == isDot {
 							if (*lexems)[i+2].Type != lexIdent {
+								log.WithFields(log.Fields{"type": consts.ParseError}).Error("must be the name of the tail")
 								return fmt.Errorf(`must be the name of the tail`)
 							}
 							names := prev.Value.(*ObjInfo).Value.(*Block).Info.(*FuncInfo).Names
 							if _, ok := (*names)[(*lexems)[i+2].Value.(string)]; !ok {
+								log.WithFields(log.Fields{"type": consts.ParseError, "tail": (*lexems)[i+2].Value.(string)}).Error("unknown function tail")
 								return fmt.Errorf(`unknown function tail %s`, (*lexems)[i+2].Value.(string))
 							}
 							buffer = append(buffer, &ByteCode{cmdFuncName, FuncNameCmd{Name: (*lexems)[i+2].Value.(string)}})

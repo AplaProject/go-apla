@@ -135,7 +135,7 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.WithFields(log.Fields{"txHash": newDataTxHash}).Warning("tx with this hash already exists in log_tx")
+			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in log_tx")
 			continue
 		}
 
@@ -145,7 +145,7 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.WithFields(log.Fields{"txHash": newDataTxHash}).Warning("tx with this hash already exists in tx")
+			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in tx")
 			continue
 		}
 
@@ -156,7 +156,7 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.WithFields(log.Fields{"txHash": newDataTxHash}).Warning("tx with this hash already exists in queue_tx")
+			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in queue_tx")
 			continue
 		}
 		needTx = append(needTx, newDataTxHash...)
@@ -182,12 +182,12 @@ func saveNewTransactions(r *DisRequest) error {
 
 		txBinData := converter.BytesShift(&binaryTxs, txSize)
 		if len(txBinData) == 0 {
-			log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("binaryTxs is empty")
+			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("binaryTxs is empty")
 			return utils.ErrInfo(errors.New("len(txBinData) == 0"))
 		}
 
 		if int64(len(txBinData)) > consts.MAX_TX_SIZE {
-			log.WithFields(log.Fields{"type": consts.ProtocolError, "len": len(txBinData), "size": consts.MAX_TX_SIZE}).Error("len of tx data exceeds max size")
+			log.WithFields(log.Fields{"type": consts.ParameterExceeded, "len": len(txBinData), "size": consts.MAX_TX_SIZE}).Error("len of tx data exceeds max size")
 			return utils.ErrInfo("len(txBinData) > max_tx_size")
 		}
 

@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -72,8 +72,6 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		count = in
 	}
 	if obj.Type == ObjFunc {
-		//		fmt.Println(`Func`, cmd == cmdCallVari, in, count, obj.Value.(*Block).Info.(*FuncInfo))
-		//		fmt.Println(`Stack`, len(rt.stack), rt.stack, size)
 		var imap map[string][]interface{}
 		if obj.Value.(*Block).Info.(*FuncInfo).Names != nil {
 			if rt.stack[size-1] != nil {
@@ -84,6 +82,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		if cmd == cmdCallVari {
 			parcount := count + 1 - in
 			if parcount < 0 {
+				log.WithFields(log.Fields{"type": consts.VMError}).Error("wrong count of parameters")
 				return fmt.Errorf(`wrong count of parameters`)
 			}
 			pars := make([]interface{}, parcount)
@@ -657,6 +656,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(float64) / ValueToFloat(top[0])
 			case int64:
 				if top[0].(int64) == 0 {
+					log.WithFields(log.Fields{"type": consts.DivisionByZero}).Error("divided by zero")
 					return 0, fmt.Errorf(`divided by zero`)
 				}
 				bin = top[1].(int64) / top[0].(int64)

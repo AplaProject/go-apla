@@ -35,12 +35,17 @@ type refreshResult struct {
 
 func refresh(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	if data.token == nil || !data.token.Valid {
-		logger.Error("token is invalid or valid")
+		if data.token == nil {
+			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("token is nil")
+		}
+		if !data.token.Valid {
+			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("token is invalid")
+		}
 		return errorAPI(w, `E_TOKEN`, http.StatusBadRequest)
 	}
 	claims, ok := data.token.Claims.(*JWTClaims)
 	if !ok {
-		logger.WithFields(log.Fields{"type": consts.SessionError}).Error("getting jwt claims")
+		logger.WithFields(log.Fields{"type": consts.JWTError}).Error("getting jwt claims")
 		return errorAPI(w, `E_TOKEN`, http.StatusBadRequest)
 	}
 	_, err := strconv.ParseInt(claims.Wallet, 10, 64)
@@ -51,22 +56,27 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	token, err := jwt.ParseWithClaims(data.params[`token`].(string), &JWTClaims{},
 		func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				logger.WithFields(log.Fields{"type": consts.SessionError, "signing_method": token.Header["alg"]}).Error("unexpected signing method")
+				logger.WithFields(log.Fields{"type": consts.JWTError, "signing_method": token.Header["alg"]}).Error("unexpected signing method")
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
 			return []byte(jwtSecret), nil
 		})
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.SessionError, "signing_method": token.Header["alg"]}).Error("unexpected signing method")
+		logger.WithFields(log.Fields{"type": consts.JWTError, "signing_method": token.Header["alg"]}).Error("unexpected signing method")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if token == nil || !token.Valid {
-		logger.WithFields(log.Fields{"type": consts.SessionError}).Error("token is invalid")
+		if data.token == nil {
+			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("token is nil")
+		}
+		if !token.Valid {
+			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("token is invalid")
+		}
 		return errorAPI(w, `E_REFRESHTOKEN`, http.StatusBadRequest)
 	}
 	refClaims, ok := token.Claims.(*JWTClaims)
 	if !ok || refClaims.Wallet != claims.Wallet || refClaims.State != claims.State {
-		logger.WithFields(log.Fields{"type": consts.SessionError}).Error("token wallet or state is invalid")
+		logger.WithFields(log.Fields{"type": consts.JWTError}).Error("token wallet or state is invalid")
 		return errorAPI(w, `E_REFRESHTOKEN`, http.StatusBadRequest)
 	}
 	var result refreshResult
@@ -79,13 +89,13 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Second * time.Duration(expire)).Unix()
 	result.Token, err = jwtGenerateToken(w, *claims)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.SessionError, "error": err}).Error("generating jwt token")
+		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	result.Refresh, err = jwtGenerateToken(w, *claims)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.SessionError, "error": err}).Error("generating jwt token")
+		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	return nil

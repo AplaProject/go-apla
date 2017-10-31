@@ -17,9 +17,9 @@
 package script
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/crypto"
 )
 
@@ -59,6 +59,7 @@ func (vm *VM) EvalIf(input string, state uint32, vars *map[string]interface{}) (
 	}
 	if eval, ok := evals[crc]; !ok || eval.Source != input {
 		if err := vm.CompileEval(input, state); err != nil {
+			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("compiling eval")
 			return false, err
 		}
 	}

@@ -34,14 +34,13 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 
 	header, err := CheckTransaction(binaryTx)
 	if err != nil {
-		logger.Error("checking transaction")
 		p.processBadTransaction(hash, err.Error())
 		return err
 	}
 
 	if !(consts.IsStruct(int(txType))) {
 		if header == nil {
-			logger.Error("tx header is nil")
+			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("tx header is nil")
 			return utils.ErrInfo(errors.New("header is nil"))
 		}
 		walletID = header.StateID

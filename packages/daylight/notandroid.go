@@ -46,7 +46,7 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Han
 			*BrowserHTTPHost = "http://" + host
 		}
 		l, err = net.Listen("tcp4", host)
-		log.WithFields(log.Fields{"host": host}).Debug("trying to listen at")
+		log.WithFields(log.Fields{"host": host, "type": consts.NetworkError}).Debug("trying to listen at")
 		if err == nil {
 			log.WithFields(log.Fields{"host": host}).Info("listening at")
 			break
@@ -59,7 +59,7 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Han
 		srv := &http.Server{Handler: route}
 		err = srv.Serve(l)
 		if err != nil {
-			log.WithFields(log.Fields{"host": host, "error": err}).Fatal("serving http at host")
+			log.WithFields(log.Fields{"host": host, "error": err, "type": consts.NetworkError}).Fatal("serving http at host")
 		}
 	}()
 	return nil
@@ -73,7 +73,7 @@ func httpListenerV6(route http.Handler) error {
 	var err error
 	for {
 		if i > 7 {
-			log.Error("tried all ports")
+			log.WithFields(log.Fields{"type": consts.NetworkError}).Error("tried all ports")
 			return fmt.Errorf("tried all ports")
 		}
 		if i > 0 {

@@ -101,13 +101,13 @@ func (block *Block) PlayBlockSafe() error {
 
 func ProcessBlock(data []byte) (*Block, error) {
 	if int64(len(data)) > syspar.GetMaxBlockSize() {
-		log.WithFields(log.Fields{"size": len(data), "max_size": syspar.GetMaxBlockSize()}).Error("block size exceeds max block size")
+		log.WithFields(log.Fields{"size": len(data), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("block size exceeds max block size")
 		return nil, utils.ErrInfo(fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]`))
 	}
 
 	buf := bytes.NewBuffer(data)
 	if buf.Len() == 0 {
-		log.Error("block data is empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("block data is empty")
 		return nil, fmt.Errorf("empty buffer")
 	}
 
@@ -166,12 +166,12 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 			return nil, fmt.Errorf("bad block format (%s)", err)
 		}
 		if blockBuffer.Len() < int(transactionSize) {
-			logger.WithFields(log.Fields{"size": blockBuffer.Len(), "match_size": int(transactionSize)}).Error("transaction size does not matches encoded length")
+			logger.WithFields(log.Fields{"size": blockBuffer.Len(), "match_size": int(transactionSize), "type": consts.SizeDoesNotMatch}).Error("transaction size does not matches encoded length")
 			return nil, fmt.Errorf("bad block format (transaction len is too big: %d)", transactionSize)
 		}
 
 		if transactionSize == 0 {
-			logger.Error("transaction size is 0")
+			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("transaction size is 0")
 			return nil, fmt.Errorf("transaction size is 0")
 		}
 
@@ -216,14 +216,14 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	var err error
 
 	if binaryBlock.Len() < 9 {
-		log.WithFields(log.Fields{"size": binaryBlock.Len()}).Error("binary block size is too small")
+		log.WithFields(log.Fields{"size": binaryBlock.Len(), "type": consts.SizeDoesNotMatch}).Error("binary block size is too small")
 		return utils.BlockData{}, fmt.Errorf("bad binary block length")
 	}
 
 	blockVersion := int(converter.BinToDec(binaryBlock.Next(1)))
 
 	if int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
-		log.WithFields(log.Fields{"size": binaryBlock.Len(), "max_size": syspar.GetMaxBlockSize()}).Error("binary block size exceeds max block size")
+		log.WithFields(log.Fields{"size": binaryBlock.Len(), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
 		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
 			binaryBlock.Len(), syspar.GetMaxBlockSize())
 
@@ -241,6 +241,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	}
 
 	if binaryBlock.Len() < 1 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("bad block format, len is < 1")
 		return utils.BlockData{}, fmt.Errorf("bad block format")
 	}
 	block.StateID = converter.BinToDec(binaryBlock.Next(1))
@@ -266,6 +267,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 
 func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 	if buffer.Len() == 0 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty transaction buffer")
 		return nil, fmt.Errorf("empty transaction buffer")
 	}
 
@@ -343,7 +345,7 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 
 	contract := smart.GetContractByID(int32(smartTx.Type))
 	if contract == nil {
-		logger.WithFields(log.Fields{"contract_type": smartTx.Type}).Error("unknown contract")
+		logger.WithFields(log.Fields{"contract_type": smartTx.Type, "type": consts.NotFound}).Error("unknown contract")
 		return fmt.Errorf(`unknown contract %d`, smartTx.Type)
 	}
 	forsign := smartTx.ForSign()
@@ -444,7 +446,6 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 func parseStructTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	trParser, err := GetParser(p, consts.TxTypes[int(txType)])
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "tx_type": int(txType)}).Error("getting parser for tx type")
 		return err
 	}
 	p.txParser = trParser
@@ -469,7 +470,6 @@ func parseStructTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	trParser, err := GetParser(p, consts.TxTypes[int(txType)])
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "tx_type": int(txType)}).Error("getting parser for tx type")
 		return err
 	}
 	p.txParser = trParser
@@ -493,7 +493,6 @@ func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 
 	err = trParser.Validate()
 	if _, ok := err.(error); ok {
-		log.WithFields(log.Fields{"error": err, "tx_type": int(txType), "tx_time": p.TxTime, "tx_state_id": p.TxStateID, "tx_user_id": p.TxUserID}).Error("parser validate")
 		return utils.ErrInfo(err.(error))
 	}
 
@@ -509,20 +508,20 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 
 	// time in the transaction cannot be more than MAX_TX_FORW seconds of block time
 	if p.TxTime-consts.MAX_TX_FORW > checkTime {
-		logger.WithFields(log.Fields{"tx_max_forw": consts.MAX_TX_FORW}).Error("time in the tx cannot be more than MAX_TX_FORW seconds of block time ")
+		logger.WithFields(log.Fields{"tx_max_forw": consts.MAX_TX_FORW, "type": consts.ParameterExceeded}).Error("time in the tx cannot be more than MAX_TX_FORW seconds of block time ")
 		return utils.ErrInfo(fmt.Errorf("transaction time is too big"))
 	}
 
 	// time in transaction cannot be less than -24 of block time
 	if p.TxTime < checkTime-consts.MAX_TX_BACK {
-		logger.WithFields(log.Fields{"tx_max_back": consts.MAX_TX_BACK}).Error("time in the tx cannot be less then -24 of block time")
+		logger.WithFields(log.Fields{"tx_max_back": consts.MAX_TX_BACK, "type": consts.ParameterExceeded}).Error("time in the tx cannot be less then -24 of block time")
 		return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
 	}
 
 	if p.TxContract == nil {
 		if p.BlockData != nil && p.BlockData.BlockID != 1 {
 			if p.TxUserID == 0 {
-				logger.Error("Empty user id")
+				logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Empty user id")
 				return utils.ErrInfo(fmt.Errorf("emtpy user id"))
 			}
 		}
@@ -634,13 +633,13 @@ func (block *Block) CheckBlock() error {
 	logger := block.GetLogger()
 	// exclude blocks from future
 	if block.Header.Time > time.Now().Unix() {
-		logger.Error("block time is larger than now")
+		logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("block time is larger than now")
 		utils.ErrInfo(fmt.Errorf("incorrect block time"))
 	}
 	// is this block too early? Allowable error = error_time
 	if block.PrevHeader != nil {
 		if block.Header.BlockID != block.PrevHeader.BlockID+1 {
-			logger.Error("block id is larger then previous more than on 1")
+			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("block id is larger then previous more than on 1")
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", block.Header.BlockID, block.PrevHeader.BlockID))
 		}
 		// check time interval between blocks
@@ -651,7 +650,7 @@ func (block *Block) CheckBlock() error {
 		}
 
 		if block.PrevHeader.Time+sleepTime-block.Header.Time > consts.ERROR_TIME {
-			logger.Error("incorrect block time")
+			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect block time")
 			return utils.ErrInfo(fmt.Errorf("incorrect block time"))
 		}
 	}
@@ -663,7 +662,7 @@ func (block *Block) CheckBlock() error {
 		hexHash := string(converter.BinToHex(p.TxHash))
 		// check for duplicate transactions
 		if _, ok := txHashes[hexHash]; ok {
-			logger.WithFields(log.Fields{"tx_hash": hexHash}).Error("duplicate transaction")
+			logger.WithFields(log.Fields{"tx_hash": hexHash, "type": consts.DuplicateObject}).Error("duplicate transaction")
 			return utils.ErrInfo(fmt.Errorf("duplicate transaction %s", hexHash))
 		}
 		txHashes[hexHash] = struct{}{}
@@ -671,7 +670,7 @@ func (block *Block) CheckBlock() error {
 		// check for max transaction per user in one block
 		txCounter[p.TxUserID]++
 		if txCounter[p.TxUserID] > syspar.GetMaxBlockUserTx() {
-			logger.WithFields(log.Fields{"user_tx": txCounter[p.TxUserID], "max_user_tx": syspar.GetMaxBlockUserTx(), "tx_user_id": p.TxUserID}).Error("user with id exceed max user transactions per block")
+			logger.WithFields(log.Fields{"user_tx": txCounter[p.TxUserID], "max_user_tx": syspar.GetMaxBlockUserTx(), "tx_user_id": p.TxUserID, "type": consts.ParameterExceeded}).Error("user with id exceed max user transactions per block")
 			return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
 		}
 
@@ -686,7 +685,7 @@ func (block *Block) CheckBlock() error {
 		return utils.ErrInfo(err)
 	}
 	if !result {
-		logger.Error("incorrect signature")
+		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect signature")
 		return fmt.Errorf("incorrect signature / p.PrevBlock.BlockId: %d", block.PrevHeader.BlockID)
 	}
 	return nil
@@ -701,11 +700,10 @@ func (block *Block) CheckHash() (bool, error) {
 	if block.PrevHeader != nil {
 		nodePublicKey, err := GetNodePublicKeyWalletOrCB(block.Header.WalletID, block.Header.StateID)
 		if err != nil {
-			logger.Error("getting node public key wallet or CB")
 			return false, utils.ErrInfo(err)
 		}
 		if len(nodePublicKey) == 0 {
-			logger.Error("node public key is empty")
+			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node public key is empty")
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 		// check the signature

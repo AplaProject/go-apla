@@ -23,6 +23,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/consts"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -103,7 +105,7 @@ func TcpListener(laddr string) error {
 
 	l, err := net.Listen("tcp4", laddr)
 	if err != nil {
-		log.Error("Error listening:", err)
+		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": laddr}).Error("Error listening")
 		return err
 	}
 
@@ -112,7 +114,7 @@ func TcpListener(laddr string) error {
 		for {
 			conn, err := l.Accept()
 			if err != nil {
-				log.Error("Error accepting:", err)
+				log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": laddr}).Error("Error accepting")
 				time.Sleep(time.Second)
 			} else {
 				go func(conn net.Conn) {

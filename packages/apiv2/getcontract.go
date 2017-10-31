@@ -51,7 +51,6 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *
 	cntname := data.params[`name`].(string)
 	contract := smart.GetContract(cntname, uint32(data.state))
 	if contract == nil {
-		logger.WithFields(log.Fields{"value": cntname}).Error("Getting contract")
 		return errorAPI(w, `E_CONTRACT`, http.StatusBadRequest, cntname)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)

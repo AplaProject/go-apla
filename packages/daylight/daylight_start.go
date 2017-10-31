@@ -344,7 +344,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.Mkdir(dir, 0755)
 		if err != nil {
-			log.WithFields(log.Fields{"path": dir, "error": err}).Error("Making dir")
+			log.WithFields(log.Fields{"path": dir, "error": err, "type": consts.IOError}).Error("Making dir")
 			Exit(1)
 		}
 	}

@@ -302,12 +302,13 @@ func (p *Parser) CallContract(flags int) (err error) {
 		if p.TxSmart.Type == 258 { // UpdFullNodes
 			node := syspar.GetNode(p.TxSmart.UserID)
 			if node == nil {
-				log.WithFields(log.Fields{"user_id": p.TxSmart.UserID}).Error("unknown node id")
+				log.WithFields(log.Fields{"user_id": p.TxSmart.UserID, "type": consts.NotFound}).Error("unknown node id")
 				return fmt.Errorf("unknown node id")
 			}
 			public = node.Public
 		}
 		if len(public) == 0 {
+			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty public key")
 			return fmt.Errorf("empty public key")
 		}
 		p.PublicKeys = append(p.PublicKeys, public)
@@ -317,6 +318,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			return err
 		}
 		if !CheckSignResult {
+			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 			return fmt.Errorf("incorrect sign")
 		}
 		if p.TxSmart.StateID > 0 {
@@ -329,7 +331,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 				return err
 			}
 			if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
-				log.Error("Fuel rate must be greater than 0")
+				log.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("Fuel rate must be greater than 0")
 				return fmt.Errorf(`Fuel rate must be greater than 0`)
 			}
 			if len(p.TxSmart.PayOver) > 0 {
@@ -370,15 +372,18 @@ func (p *Parser) CallContract(flags int) (err error) {
 					return err
 				} else if len(ret) == 1 {
 					if _, ok := ret[0].(int64); !ok {
+						log.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong result type of price function")
 						return fmt.Errorf(`Wrong result type of price function`)
 					}
 					price = ret[0].(int64)
 				} else {
+					log.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong type of price function")
 					return fmt.Errorf(`Wrong type of price function`)
 				}
 			}
 			sizeFuel = syspar.GetSizeFuel() * int64(len(p.TxSmart.Data)) / 1024
 			if amount.Cmp(decimal.New(sizeFuel+price, 0).Mul(fuelRate)) <= 0 {
+				log.WithFields(log.Fields{"tyoe": consts.NoFunds}).Error("current balance is not enough")
 				return fmt.Errorf(`current balance is not enough`)
 			}
 		}
@@ -467,7 +472,7 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": names[0]}).Error("converting name from string to int")
 		}
 		if state != int64(p.TxStateID) {
-			log.WithFields(log.Fields{"state_id": state, "tx_state_id": p.TxStateID}).Error("Wrong state in DBInsertReport")
+			log.WithFields(log.Fields{"state_id": state, "tx_state_id": p.TxStateID, "type": consts.InvalidObject}).Error("Wrong state in DBInsertReport")
 			err = fmt.Errorf(`Wrong state in DBInsertReport`)
 			return
 		}
@@ -489,7 +494,7 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 
 func checkReport(tblname string) error {
 	if strings.Contains(tblname, `_reports_`) {
-		log.Error("Access denied to report table")
+		log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied to report table")
 		return fmt.Errorf(`Access denied to report table`)
 	}
 	return nil
@@ -527,7 +532,7 @@ func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, pa
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
 		return
 	} else if !isIndex {
-		log.WithFields(log.Fields{"column": column}).Error("There is no index on")
+		log.WithFields(log.Fields{"column": column, "type": consts.NoIndex}).Error("There is no index on")
 		err = fmt.Errorf(`there is no index on %s`, column)
 	} else {
 		qcost, _, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, true)
@@ -630,7 +635,7 @@ func DBStringExt(p *Parser, tblname string, name string, id interface{}, idname 
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
 		return 0, ``, err
 	} else if !isIndex {
-		log.WithFields(log.Fields{"colname": idname}).Error("there is no index")
+		log.WithFields(log.Fields{"colname": idname, "type": consts.NoIndex}).Error("there is no index")
 		return 0, ``, fmt.Errorf(`there is no index on %s`, idname)
 	}
 	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
@@ -668,7 +673,7 @@ func DBIntExt(p *Parser, tblname string, name string, id interface{}, idname str
 // DBFreeRequest is a free function that is needed to find the record with the specified value in the 'idname' column.
 func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, idname string) (int64, error) {
 	if p.TxContract.FreeRequest {
-		log.Error("DBFreeRequest can be executed only once")
+		log.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("DBFreeRequest can be executed only once")
 		return 0, fmt.Errorf(`DBFreeRequest can be executed only once`)
 	}
 	p.TxContract.FreeRequest = true
@@ -698,7 +703,7 @@ func DBStringWhere(tblname string, name string, where string, params ...interfac
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
 			return 0, ``, err
 		} else if !isIndex {
-			log.WithFields(log.Fields{"column": iret[1]}).Error("there is no index")
+			log.WithFields(log.Fields{"column": iret[1], "type": consts.NoIndex}).Error("there is no index")
 			return 0, ``, fmt.Errorf(`there is no index on %s`, iret[1])
 		}
 	}
@@ -760,13 +765,13 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 			if contract == nil {
 				contract = smart.GetContract(name, 0)
 				if contract == nil {
-					log.WithFields(log.Fields{"contract_name": name}).Error("Unknown contract")
+					log.WithFields(log.Fields{"contract_name": name, "type": consts.NotFound}).Error("Unknown contract")
 					return false, fmt.Errorf(`Unknown contract %s`, name)
 				}
 			}
 			block := contract.GetFunc(`conditions`)
 			if block == nil {
-				log.WithFields(log.Fields{"contract_name": name}).Error("There is not conditions in contract")
+				log.WithFields(log.Fields{"contract_name": name, "type": consts.EmptyObject}).Error("There is not conditions in contract")
 				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
 			}
 			_, err := smart.Run(block, []interface{}{}, &map[string]interface{}{`state`: int64(p.TxStateID),
@@ -775,7 +780,7 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 				return false, err
 			}
 		} else {
-			log.Error("empty contract name in ContractConditions")
+			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty contract name in ContractConditions")
 			return false, fmt.Errorf(`empty contract name in ContractConditions`)
 		}
 	}
@@ -949,12 +954,11 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 	if len(cond) > 0 {
 		ret, err := p.EvalIf(cond)
 		if err != nil {
-			log.WithFields(log.Fields{"error": err, "conditions": cond}).Error("evaluating smart contract conditions")
+			log.WithFields(log.Fields{"error": err, "conditions": cond, "type": consts.EvalError}).Error("evaluating smart contract conditions")
 			return 0, err
 		}
 		if !ret {
 			if err = p.AccessRights(`changing_smart_contracts`, false); err != nil {
-				log.WithError(err).Error("checking changing_smart_contract access rights")
 				return 0, err
 			}
 		}
@@ -965,14 +969,14 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 	}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions, p.TxStateID); err != nil {
-			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": p.TxStateID}).Error("compiling eval conditions")
+			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": p.TxStateID, "type": consts.EvalError}).Error("compiling eval conditions")
 			return 0, err
 		}
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
 	}
 	if len(fields) == 0 {
-		log.Error("empty value and condition")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
 	prefixInt, err := strconv.ParseInt(prefix, 10, 64)
@@ -1017,14 +1021,14 @@ func UpdateParam(p *Parser, name, value, conditions string) (int64, error) {
 	}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
-			log.WithFields(log.Fields{"conditions": conditions, "error": err}).Error("compiling eval conditions")
+			log.WithFields(log.Fields{"conditions": conditions, "error": err, "type": consts.EvalError}).Error("compiling eval conditions")
 			return 0, err
 		}
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
 	}
 	if len(fields) == 0 {
-		log.Error("empty value and condition")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
 	_, _, err := p.selectiveLoggingAndUpd(fields, values,
@@ -1044,7 +1048,7 @@ func UpdateMenu(p *Parser, name, value, conditions, global string, stateID int64
 	values := []interface{}{value}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
-			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": p.TxStateID}).Error("compiling eval conditions")
+			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": p.TxStateID, "type": consts.EvalError}).Error("compiling eval conditions")
 			return err
 		}
 		fields = append(fields, "conditions")
@@ -1100,6 +1104,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 		return err
 	}
 	if !CheckSignResult {
+		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect signature")
 		return fmt.Errorf(`incorrect signature ` + forsign)
 	}
 	return nil
@@ -1114,7 +1119,7 @@ func UpdatePage(p *Parser, name, value, menu, conditions, global string, stateID
 	values := []interface{}{value}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
-			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": p.TxStateID}).Error("compile eval conditions")
+			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": p.TxStateID, "type": consts.EvalError}).Error("compile eval conditions")
 			return err
 		}
 		fields = append(fields, "conditions")
@@ -1170,7 +1175,7 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
 			return 0, nil, err
 		} else if !isIndex {
-			log.WithFields(log.Fields{"column": iret[1]}).Error("there is no index")
+			log.WithFields(log.Fields{"column": iret[1], "type": consts.NoIndex}).Error("there is no index")
 			return 0, nil, fmt.Errorf(`there is not index on %s`, iret[1])
 		}
 	}
@@ -1308,7 +1313,7 @@ func DBRowExt(p *Parser, tblname string, columns string, id interface{}, idname 
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("is index")
 		return 0, nil, err
 	} else if !isIndex {
-		log.WithFields(log.Fields{"column": idname}).Error("There is no index on")
+		log.WithFields(log.Fields{"column": idname, "type": consts.NoIndex}).Error("There is no index on")
 		return 0, nil, fmt.Errorf(`there is no index on %s`, idname)
 	}
 	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where ` + converter.EscapeName(idname) + `=?`
@@ -1364,9 +1369,11 @@ func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 	if len(cond) > 0 {
 		ret, err := p.EvalIf(cond)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("evaluating conditions")
 			return 0, err
 		}
 		if !ret {
+			log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
 			return 0, fmt.Errorf(`Access denied`)
 		}
 	}
@@ -1376,14 +1383,14 @@ func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 	}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions, 0); err != nil {
-			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": 0}).Error("compiling eval")
+			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": 0, "type": consts.EvalError}).Error("compiling eval")
 			return 0, err
 		}
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
 	}
 	if len(fields) == 0 {
-		log.Error("empty value and condition")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
 	_, _, err = p.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"name"}, []string{name}, true)
@@ -1401,7 +1408,7 @@ func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 // ValidateCondition checks if the condition can be compiled
 func ValidateCondition(condition string, state int64) error {
 	if len(condition) == 0 {
-		log.Error("conditions cannot be empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("conditions cannot be empty")
 		return fmt.Errorf("Conditions cannot be empty")
 	}
 	return smart.CompileEval(condition, uint32(state))
@@ -1425,6 +1432,7 @@ func EvalCondition(p *Parser, table, name, condfield string) error {
 		return err
 	}
 	if len(conditions) == 0 {
+		log.WithFields(log.Fields{"type": consts.NotFound, "name": name}).Error("Record not found")
 		return fmt.Errorf(`Record %s has not been found`, name)
 	}
 	return Eval(p, conditions)
@@ -1488,7 +1496,7 @@ func ContractsList(value string) []interface{} {
 
 func CompileContract(p *Parser, code string, state, id, token int64) (interface{}, error) {
 	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` {
-		log.Error("CompileContract can be only called from NewContract or EditContract")
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CompileContract can be only called from NewContract or EditContract")
 		return 0, fmt.Errorf(`CompileContract can be only called from NewContract or EditContract`)
 	}
 	return smart.CompileBlock(code, &script.OwnerInfo{StateID: uint32(state), WalletID: id, TokenID: token})
@@ -1496,7 +1504,7 @@ func CompileContract(p *Parser, code string, state, id, token int64) (interface{
 
 func FlushContract(p *Parser, iroot interface{}, id int64, active bool) error {
 	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` {
-		log.Error("FlushContract can be only called from NewContract or EditContract")
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("FlushContract can be only called from NewContract or EditContract")
 		return fmt.Errorf(`FlushContract can be only called from NewContract or EditContract`)
 	}
 	root := iroot.(*script.Block)
@@ -1514,14 +1522,16 @@ func FlushContract(p *Parser, iroot interface{}, id int64, active bool) error {
 // Eval evaluates the condition
 func Eval(p *Parser, condition string) error {
 	if len(condition) == 0 {
-		log.Error("The condition is empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("The condition is empty")
 		return fmt.Errorf(`The condition is empty`)
 	}
 	ret, err := p.EvalIf(condition)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("eval condition")
 		return err
 	}
 	if !ret {
+		log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
 		return fmt.Errorf(`Access denied`)
 	}
 	return nil
@@ -1530,7 +1540,7 @@ func Eval(p *Parser, condition string) error {
 // ActivateContract sets Active status of the contract in smartVM
 func ActivateContract(p *Parser, tblid int64, state int64) error {
 	if p.TxContract.Name != `@1ActivateContract` {
-		log.Error("ActivateContract can be only called from @1ActivateContract")
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ActivateContract can be only called from @1ActivateContract")
 		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract`)
 	}
 	smart.ActivateContract(tblid, state, true)
@@ -1540,7 +1550,7 @@ func ActivateContract(p *Parser, tblid int64, state int64) error {
 // CreateEcosystem creates a new ecosystem
 func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
 	if p.TxContract.Name != `@1NewEcosystem` {
-		log.Error("CreateEcosystem can be only called from @1NewEcosystem")
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateEcosystem can be only called from @1NewEcosystem")
 		return 0, fmt.Errorf(`CreateEcosystem can be only called from @1NewEcosystem`)
 	}
 	_, id, err := p.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
@@ -1557,6 +1567,7 @@ func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
 	}
 	model.ExecSchemaEcosystem(idInt, wallet, name)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return 0, err
 	}
 	err = smart.LoadContract(p.DbTransaction, id)
@@ -1568,7 +1579,7 @@ func CreateEcosystem(p *Parser, wallet int64, name string) (int64, error) {
 
 func RollbackEcosystem(p *Parser) error {
 	if p.TxContract.Name != `@1NewEcosystem` {
-		log.Error("RollbackEcosystem can be only called from @1NewEcosystem")
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackEcosystem can be only called from @1NewEcosystem")
 		return fmt.Errorf(`RollbackEcosystem can be only called from @1NewEcosystem`)
 	}
 	rollbackTx := &model.RollbackTx{}
@@ -1589,7 +1600,7 @@ func RollbackEcosystem(p *Parser) error {
 		return err
 	}
 	if tableIDInt != lastID {
-		log.WithFields(log.Fields{"table_id": tableIDInt, "last_id": lastID}).Error("incorrect ecosystem id")
+		log.WithFields(log.Fields{"table_id": tableIDInt, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
 		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
 	}
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
@@ -1615,9 +1626,11 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 
 	if isEdit {
 		if p.TxContract.Name != `@1EditTable` {
+			log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1EditTable")
 			return fmt.Errorf(`TableConditions can be only called from @1EditTable`)
 		}
 	} else if p.TxContract.Name != `@1NewTable` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1NewTable")
 		return fmt.Errorf(`TableConditions can be only called from @1NewTable`)
 	}
 
@@ -1626,15 +1639,16 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 	t.SetTablePrefix(prefix)
 	exists, err := t.ExistsByName(name)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("table is exists")
 		return err
 	}
 	if isEdit {
 		if !exists {
-			log.WithFields(log.Fields{"table_name": name}).Error("table does not exists")
+			log.WithFields(log.Fields{"table_name": name, "type": consts.NotFound}).Error("table does not exists")
 			return fmt.Errorf(`table %s doesn't exist`, name)
 		}
 	} else if exists {
-		log.WithFields(log.Fields{"table_name": name}).Error("table exists")
+		log.WithFields(log.Fields{"table_name": name, "type": consts.Found}).Error("table exists")
 		return fmt.Errorf(`table %s exists`, name)
 	}
 
@@ -1645,15 +1659,16 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 		return
 	}
 	if len(perm) != 3 {
-		log.WithFields(log.Fields{"size": len(perm)}).Error("permissions must contain insert, new_column, and update")
+		log.WithFields(log.Fields{"size": len(perm), "type": consts.InvalidObject}).Error("permissions must contain insert, new_column, and update")
 		return fmt.Errorf(`Permissions must contain "insert", "new_column", "update"`)
 	}
 	for _, v := range []string{`insert`, `update`, `new_column`} {
 		if len(perm[v]) == 0 {
-			log.WithFields(log.Fields{"condition_type": v}).Error("condition is empty")
+			log.WithFields(log.Fields{"condition_type": v, "type": consts.EmptyObject}).Error("condition is empty")
 			return fmt.Errorf(`%v condition is empty`, v)
 		}
 		if err = smart.CompileEval(perm[v], uint32(p.TxSmart.StateID)); err != nil {
+			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("compile evaluating permissions")
 			return err
 		}
 	}
@@ -1673,32 +1688,36 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 		return
 	}
 	if len(cols) == 0 {
-		log.Error("Columns are empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Columns are empty")
 		return fmt.Errorf(`len(cols) == 0`)
 	}
 	if len(cols) > syspar.GetMaxColumns() {
-		log.WithFields(log.Fields{"size": len(cols), "max_size": syspar.GetMaxColumns()}).Error("Too many columns")
+		log.WithFields(log.Fields{"size": len(cols), "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
 	var indexes int
 	for _, data := range cols {
 		if len(data[`name`]) == 0 || len(data[`type`]) == 0 {
-			log.Error("wrong column")
+			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("wrong column")
 			return fmt.Errorf(`worng column`)
 		}
 		itype := data[`type`]
 		if itype != `varchar` && itype != `number` && itype != `datetime` && itype != `text` &&
 			itype != `bytea` && itype != `double` && itype != `money` && itype != `character` {
+			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect type")
 			return fmt.Errorf(`incorrect type`)
 		}
 		if len(data[`conditions`]) == 0 {
+			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Conditions is empty")
 			return fmt.Errorf(`Conditions is empty`)
 		}
 		if err = smart.CompileEval(data[`conditions`], uint32(p.TxSmart.StateID)); err != nil {
+			log.WithFields(log.Fields{"type": consts.EvalError}).Error("compile eval conditions")
 			return err
 		}
 		if data[`index`] == `1` {
 			if itype != `varchar` && itype != `number` && itype != `datetime` {
+				log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect index type")
 				return fmt.Errorf(`incorrect index type`)
 			}
 			indexes++
@@ -1706,7 +1725,7 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 
 	}
 	if indexes > syspar.GetMaxIndexes() {
-		log.WithFields(log.Fields{"size": indexes, "max_size": syspar.GetMaxIndexes}).Error("Too many indexes")
+		log.WithFields(log.Fields{"size": indexes, "max_size": syspar.GetMaxIndexes, "type": consts.ParameterExceeded}).Error("Too many indexes")
 		return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
 	}
 
@@ -1720,6 +1739,7 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 func CreateTable(p *Parser, name string, columns, permissions string) error {
 	var err error
 	if p.TxContract.Name != `@1NewTable` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateTable can be only called from @1NewTable")
 		return fmt.Errorf(`CreateTable can be only called from @1NewTable`)
 	}
 	prefix := converter.Int64ToStr(p.TxSmart.StateID)
@@ -1740,7 +1760,7 @@ func CreateTable(p *Parser, name string, columns, permissions string) error {
 	for _, data := range cols {
 		colname := strings.ToLower(data[`name`])
 		if colList[colname] {
-			log.WithFields(log.Fields{"column_name": data}).Error("Duplicate column")
+			log.WithFields(log.Fields{"column_name": data, "type": consts.DuplicateObject}).Error("Duplicate column")
 			return fmt.Errorf(`There are the same columns`)
 		}
 		colList[colname] = true
@@ -1821,6 +1841,7 @@ func CreateTable(p *Parser, name string, columns, permissions string) error {
 
 func RollbackTable(p *Parser, name string) error {
 	if p.TxContract.Name != `@1NewTable` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from @1NewTable")
 		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
 	}
 	err := model.DropTable(p.DbTransaction, fmt.Sprintf("%d_%s", p.TxSmart.StateID, name))
@@ -1835,6 +1856,7 @@ func RollbackTable(p *Parser, name string) error {
 
 func PermTable(p *Parser, name, permissions string) error {
 	if p.TxContract.Name != `@1EditTable` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditTable can be only called from @1EditTable")
 		return fmt.Errorf(`EditTable can be only called from @1EditTable`)
 	}
 	var perm map[string]string
@@ -1859,7 +1881,7 @@ func PermTable(p *Parser, name, permissions string) error {
 
 func ColumnCondition(p *Parser, tableName, name, coltype, permissions, index string) error {
 	if p.TxContract.Name != `@1NewColumn` && p.TxContract.Name != `@1EditColumn` {
-		log.Error("ColumnConditions can be only called from @1NewColumn")
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ColumnConditions can be only called from @1NewColumn")
 		return fmt.Errorf(`ColumnCondition can be only called from @1NewColumn`)
 	}
 	isExist := p.TxContract.Name == `@1EditColumn`
@@ -1874,15 +1896,15 @@ func ColumnCondition(p *Parser, tableName, name, coltype, permissions, index str
 	}
 	if isExist {
 		if !exists {
-			log.WithFields(log.Fields{"column_name": name}).Error("column does not exists")
+			log.WithFields(log.Fields{"column_name": name, "type": consts.NotFound}).Error("column does not exists")
 			return fmt.Errorf(`column %s doesn't exists`, name)
 		}
 	} else if exists {
-		log.WithFields(log.Fields{"column_name": name}).Error("column exists")
+		log.WithFields(log.Fields{"column_name": name, "type": consts.Found}).Error("column exists")
 		return fmt.Errorf(`column %s exists`, name)
 	}
 	if len(permissions) == 0 {
-		log.Error("Permissions are empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Permissions are empty")
 		return fmt.Errorf(`Permissions are empty`)
 	}
 	if err = smart.CompileEval(permissions, uint32(p.TxSmart.StateID)); err != nil {
@@ -1894,12 +1916,12 @@ func ColumnCondition(p *Parser, tableName, name, coltype, permissions, index str
 	}
 	count, err := model.GetColumnCount(tblName)
 	if count >= int64(syspar.GetMaxColumns()) {
-		log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxColumns()}).Error("Too many columns")
+		log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
 	if coltype != `varchar` && coltype != `number` && coltype != `datetime` && coltype != `character` &&
 		coltype != `text` && coltype != `bytea` && coltype != `double` && coltype != `money` {
-		log.WithFields(log.Fields{"column_type": coltype}).Error("Unknown column type")
+		log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("Unknown column type")
 		return fmt.Errorf(`incorrect type`)
 	}
 	if index == `1` {
@@ -1909,11 +1931,11 @@ func ColumnCondition(p *Parser, tableName, name, coltype, permissions, index str
 			return err
 		}
 		if count >= syspar.GetMaxIndexes() {
-			log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxIndexes()}).Error("Too many indexes")
+			log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxIndexes(), "type": consts.ParameterExceeded}).Error("Too many indexes")
 			return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
 		}
 		if coltype != `varchar` && coltype != `number` && coltype != `datetime` {
-			log.WithFields(log.Fields{"column_type": coltype}).Error("incorrect index type")
+			log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("incorrect index type")
 			return fmt.Errorf(`incorrect index type`)
 		}
 	}
@@ -1926,7 +1948,7 @@ func ColumnCondition(p *Parser, tableName, name, coltype, permissions, index str
 
 func CreateColumn(p *Parser, tableName, name, coltype, permissions, index string) error {
 	if p.TxContract.Name != `@1NewColumn` {
-		log.Error("CreateColumn can be only called from @1NewColumn")
+		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("CreateColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`CreateColumn can be only called from @1NewColumn`)
 	}
 	name = strings.ToLower(name)
@@ -1991,6 +2013,7 @@ func CreateColumn(p *Parser, tableName, name, coltype, permissions, index string
 
 func RollbackColumn(p *Parser, tableName, name string) error {
 	if p.TxContract.Name != `@1NewColumn` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`RollbackColumn can be only called from @1NewColumn`)
 	}
 	return model.AlterTableDropColumn(fmt.Sprintf(`%d_%s`, p.TxSmart.StateID, tableName), name)
@@ -1998,6 +2021,7 @@ func RollbackColumn(p *Parser, tableName, name string) error {
 
 func PermColumn(p *Parser, tableName, name, permissions string) error {
 	if p.TxContract.Name != `@1EditColumn` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditColumn can be only called from @1EditColumn")
 		return fmt.Errorf(`EditColumn can be only called from @1EditColumn`)
 	}
 	name = strings.ToLower(name)

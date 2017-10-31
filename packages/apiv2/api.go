@@ -129,7 +129,7 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 	}
 	signature := data.params[`signature`].([]byte)
 	if len(signature) == 0 {
-		log.WithFields(log.Fields{"params": data.params}).Error("signature is empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject, "params": data.params}).Error("signature is empty")
 		return tx.Header{}, fmt.Errorf("signature is empty")
 	}
 	timeInt, err := strconv.ParseInt(data.params["time"].(string), 10, 64)
@@ -167,7 +167,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}
 		token, err := jwtToken(r)
 		if err != nil {
-			requestLogger.WithFields(log.Fields{"type": consts.SessionError, "params": params, "error": err}).Error("starting session")
+			requestLogger.WithFields(log.Fields{"type": consts.JWTError, "params": params, "error": err}).Error("starting session")
 			errmsg := err.Error()
 			expired := `token is expired by`
 			if strings.HasPrefix(errmsg, expired) {
@@ -250,7 +250,7 @@ func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (in
 			return 0, errorAPI(w, err, http.StatusBadRequest)
 		}
 		if state >= count {
-			logger.WithFields(log.Fields{"state_id": state, "count": count}).Error("state_id is larger then max count")
+			logger.WithFields(log.Fields{"state_id": state, "count": count, "type": consts.ParameterExceeded}).Error("state_id is larger then max count")
 			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, state)
 		}
 	}

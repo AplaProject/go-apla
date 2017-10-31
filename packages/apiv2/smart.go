@@ -24,26 +24,15 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
+
+	log "github.com/sirupsen/logrus"
 )
-
-/*
-type smartField struct {
-	Name string `json:"name"`
-	HTML string `json:"htmltype"`
-	Type string `json:"txtype"`
-	Tags string `json:"tags"`
-}
-
-type smartFieldsResult struct {
-	Fields []smartField `json:"fields"`
-	Name   string       `json:"name"`
-	Active bool         `json:"active"`
-}*/
 
 //SignRes contains the data of the signature
 type SignRes struct {
@@ -86,15 +75,18 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 					var value string
 					value, err = model.Single(fmt.Sprintf(`select value from "%s_signatures" where name=?`, pref), ret[1]).String()
 					if err != nil {
+						log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting signature by name")
 						break
 					}
 					if len(value) == 0 {
+						log.WithFields(log.Fields{"type": consts.EmptyObject, "signature": ret[1]}).Error("unknown signature")
 						err = fmt.Errorf(`%s is unknown signature`, ret[1])
 						break
 					}
 					var sign TxSignJSON
 					err = json.Unmarshal([]byte(value), &sign)
 					if err != nil {
+						log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling sign from json")
 						break
 					}
 					sign.ForSign = fmt.Sprintf(`%s,%d`, (*result).Time, uint64(data.wallet))
@@ -109,12 +101,14 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 
 				val = strings.TrimSpace(r.FormValue(fitem.Name))
 				if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
+					log.WithFields(log.Fields{"type": consts.EmptyObject, "item_name": fitem.Name}).Error("route item is empty")
 					err = fmt.Errorf(`%s is empty`, fitem.Name)
 					break
 				}
 				if strings.Contains(fitem.Tags, `address`) {
 					addr := converter.StringToAddress(val)
 					if addr == 0 {
+						log.WithFields(log.Fields{"type": consts.ConvertionError, "value": val}).Error("converting string to address")
 						err = fmt.Errorf(`Address %s is not valid`, val)
 						break
 					}
@@ -122,6 +116,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 				if fitem.Type.String() == script.Decimal {
 					re := regexp.MustCompile(`^\d+$`) //`^\d+\.?\d+?$`
 					if !re.Match([]byte(val)) {
+						log.WithFields(log.Fields{"type": consts.InvalidObject, "value": val}).Error("The value of money is not valid")
 						err = fmt.Errorf(`The value of money %s is not valid`, val)
 						break
 					}
@@ -146,10 +141,12 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 	id = converter.StringToAddress(walletID)
 	pubKey, err := model.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from dlt_wallets")
 		result.Error = err.Error()
 		return result
 	}
 	if len(pubKey) == 0 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("unknown wallet id")
 		result.Error = `unknown wallet id`
 		return result
 	}
@@ -163,6 +160,7 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 
 		exist, err := model.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting wallet_id from dlt_wallets")
 			result.Error = err.Error()
 			return result
 		}
@@ -173,6 +171,7 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 	priv, _ := hex.DecodeString(private)
 	encrypted, err := crypto.SharedEncrypt([]byte(pubKey), priv)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("shared encrypting public key")
 		result.Error = err.Error()
 		return result
 	}

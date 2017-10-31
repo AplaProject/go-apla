@@ -621,7 +621,7 @@ func CallMethod(i interface{}, methodName string) interface{} {
 	}
 
 	// return or panic, method not found of either type
-	log.WithFields(log.Fields{"method_name": methodName}).Error("method not found")
+	log.WithFields(log.Fields{"method_name": methodName, "type": consts.NotFound}).Error("method not found")
 	return fmt.Errorf("method %s not found", methodName)
 }
 
@@ -675,15 +675,15 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 
 	var signsSlice [][]byte
 	if len(forSign) == 0 {
-		log.Error("for sign is empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("for sign is empty")
 		return false, ErrInfoFmt("len(forSign) == 0")
 	}
 	if len(publicKeys) == 0 {
-		log.Error("public keys is empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public keys is empty")
 		return false, ErrInfoFmt("len(publicKeys) == 0")
 	}
 	if len(signs) == 0 {
-		log.Error("signs is empty")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signs is empty")
 		return false, ErrInfoFmt("len(signs) == 0")
 	}
 
@@ -700,7 +700,7 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 			signsSlice = append(signsSlice, converter.BytesShift(&signs, length))
 		}
 		if len(publicKeys) != len(signsSlice) {
-			log.WithFields(log.Fields{"public_keys_length": len(publicKeys), "signs_length": len(signsSlice)}).Error("public keys and signs slices lengths does not match")
+			log.WithFields(log.Fields{"public_keys_length": len(publicKeys), "signs_length": len(signsSlice), "type": consts.InvalidObject}).Error("public keys and signs slices lengths does not match")
 			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
 		}
 	}
@@ -762,7 +762,7 @@ func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int)
 			// to exclude an attack on memory overflow
 			if !first {
 				if txSize > maxTxSize {
-					log.WithFields(log.Fields{"tx_size": txSize, "max_tx_size": maxTxSize}).Error("tx size is larger than max tx size")
+					log.WithFields(log.Fields{"tx_size": txSize, "max_tx_size": maxTxSize, "type": consts.ParameterExceeded}).Error("tx size is larger than max tx size")
 					return nil, ErrInfoFmt("[error] MAX_TX_SIZE")
 				}
 			}
@@ -786,7 +786,7 @@ func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int)
 			// to exclude an attack on memory overflow
 			if !first {
 				if len(mrklSlice) > maxTxCount {
-					log.WithFields(log.Fields{"mrkl_slice_length": len(mrklSlice), "max_tx_count": maxTxCount}).Error("merkle slice is larger then max tx count")
+					log.WithFields(log.Fields{"mrkl_slice_length": len(mrklSlice), "max_tx_count": maxTxCount, "type": consts.ParameterExceeded}).Error("merkle slice is larger then max tx count")
 					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), maxTxCount))
 				}
 			}
@@ -859,7 +859,7 @@ func GetNetworkTime() (*time.Time, error) {
 		t := time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC).Add(time.Duration(nsec)).Local()
 		return &t, nil
 	}
-	log.Error("unable connect to NTP")
+	log.WithFields(log.Fields{"type": consts.ConnectionError}).Error("unable connect to NTP")
 	return nil, errors.New("unable connect to NTP")
 
 }
@@ -1017,7 +1017,7 @@ func AplaUpdate(url string) error {
 
 	folderPath, err := osext.ExecutableFolder()
 	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Error("finding executable in folder")
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("finding executable in folder")
 		return ErrInfo(err)
 	}
 
@@ -1042,12 +1042,12 @@ func AplaUpdate(url string) error {
 func GetPrefix(tableName, stateID string) (string, error) {
 	s := strings.Split(tableName, "_")
 	if len(s) < 2 {
-		log.WithFields(log.Fields{"table_name": tableName}).Error("incorrect table name")
+		log.WithFields(log.Fields{"table_name": tableName, "type": consts.InvalidObject}).Error("incorrect table name")
 		return "", ErrInfo("incorrect table name")
 	}
 	prefix := s[0]
 	if prefix != "global" && prefix != stateID {
-		log.WithFields(log.Fields{"table_name": tableName}).Error("incorrect table name")
+		log.WithFields(log.Fields{"table_name": tableName, "type": consts.InvalidObject}).Error("incorrect table name")
 		return "", ErrInfo("incorrect table name")
 	}
 	return prefix, nil

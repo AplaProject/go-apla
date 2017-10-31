@@ -31,7 +31,7 @@ import (
 func BlockRollback(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	if buf.Len() == 0 {
-		log.Error("empty buffer")
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty buffer")
 		return fmt.Errorf("empty buffer")
 	}
 
@@ -56,6 +56,7 @@ func BlockRollback(data []byte) error {
 	b := &model.Block{}
 	err = b.DeleteById(dbTransaction, block.Header.BlockID)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
 		dbTransaction.Rollback()
 		return err
 	}

@@ -53,7 +53,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 
 		if len(dltWallet.PublicKey) == 0 {
 			if len(header.PublicKey) == 0 {
-				logger.Error("incorrect transaction public key")
+				logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect transaction public key")
 				return utils.ErrInfoFmt("incorrect public_key")
 			}
 			walletID, err := crypto.GetWalletIDByPublicKey(header.PublicKey)
@@ -78,23 +78,23 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 			return utils.ErrInfo(err)
 		}
 		if len(dltWallet.PublicKey) == 0 {
-			logger.Error("incorrect transaction public key")
+			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect transaction public key")
 			return utils.ErrInfoFmt("incorrect user_id")
 		}
 		p.PublicKeys = append(p.PublicKeys, []byte(dltWallet.PublicKey))
 	}
 
 	if len(header.BinSignatures) < 64 || len(header.BinSignatures) > 5120 {
-		logger.WithFields(log.Fields{"size": header.BinSignatures}).Error("incorrect sign size")
+		logger.WithFields(log.Fields{"size": header.BinSignatures, "type": consts.InvalidObject}).Error("incorrect sign size")
 		return utils.ErrInfoFmt("incorrect sign size %d", len(header.BinSignatures))
 	}
 	for _, cond := range []string{`conditions`, `conditions_change`, `permissions`} {
 		if val, ok := conditionsCheck[cond]; ok && len(val) == 0 {
-			logger.WithFields(log.Fields{"condition": cond}).Error("condition is empty")
+			logger.WithFields(log.Fields{"condition": cond, "type": consts.EmptyObject}).Error("condition is empty")
 			return utils.ErrInfoFmt("Conditions cannot be empty")
 		}
 		if err := smart.CompileEval(string(conditionsCheck[cond]), uint32(p.TxStateID)); err != nil {
-			logger.WithFields(log.Fields{"condition": cond, "condition_value": conditionsCheck[cond]}).Error("condition is empty")
+			logger.WithFields(log.Fields{"condition": cond, "condition_value": conditionsCheck[cond], "type": consts.EmptyObject}).Error("condition is empty")
 			return utils.ErrInfo(err)
 		}
 	}

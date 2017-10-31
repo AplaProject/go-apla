@@ -105,7 +105,7 @@ func ReadRequest(request interface{}, r io.Reader) error {
 
 func SendRequest(request interface{}, w io.Writer) error {
 	if reflect.ValueOf(request).Elem().Kind() != reflect.Struct {
-		log.Error("bad request type")
+		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("bad request type")
 		panic("bad request type")
 	}
 	for i := 0; i < reflect.ValueOf(request).Elem().NumField(); i++ {
@@ -167,7 +167,7 @@ func readUint(r io.Reader, byteCount int) (uint64, error) {
 func readBytes(r io.Reader, size uint64) ([]byte, error) {
 	var maxSize uint64 = 10485760
 	if size > maxSize {
-		log.WithFields(log.Fields{"size": size, "max_size": maxSize}).Error("bytes size to read exceeds max allowed size")
+		log.WithFields(log.Fields{"size": size, "max_size": maxSize, "type": consts.ParameterExceeded}).Error("bytes size to read exceeds max allowed size")
 		return nil, errors.New("bytes size to read exceeds max allowed size")
 	}
 	value := make([]byte, int(size))

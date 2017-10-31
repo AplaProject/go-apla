@@ -48,7 +48,7 @@ func (p *DLTTransferParser) Init() error {
 			return fmt.Errorf("old transaction parsing failed")
 		}
 		if len(oldSlice) < 10 {
-			logger.Error("bad transaction format")
+			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("bad transaction format")
 			return fmt.Errorf("bad transaction format")
 		}
 		p.DLTTransfer = &tx.DLTTransfer{
@@ -118,7 +118,7 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 	if ourAmount.Cmp(zero) <= 0 {
-		logger.Error("dlt transfer amount is less then zero")
+		logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("dlt transfer amount is less then zero")
 		return p.ErrInfo("amount<=0")
 	}
 
@@ -129,11 +129,11 @@ func (p *DLTTransferParser) Validate() error {
 	}
 	fuelRate, err := decimal.NewFromString(systemParam.Value)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": systemParam.Value}).Error("coverting fuel rate system parameter from string to decimal")
+		logger.WithFields(log.Fields{"type": consts.ParameterExceeded, "error": err, "value": systemParam.Value}).Error("coverting fuel rate system parameter from string to decimal")
 		return err
 	}
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
-		logger.Error("fuel rate param is less than zero")
+		logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("fuel rate param is less than zero")
 		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 	// 1 000 000 000 000 000 000 qDLT = 1 DLT * 100 000 000
@@ -153,7 +153,7 @@ func (p *DLTTransferParser) Validate() error {
 
 	// check commission
 	if ourCommission.Cmp(commission) < 0 {
-		logger.WithFields(log.Fields{"commission": commission, "our_commission": ourCommission}).Error("our commission is less than commission")
+		logger.WithFields(log.Fields{"commission": commission, "our_commission": ourCommission, "type": consts.ParameterExceeded}).Error("our commission is less than commission")
 		return p.ErrInfo(fmt.Sprintf("commission %v < dltPrice %v", ourCommission, commission))
 	}
 
@@ -166,7 +166,7 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
-		logger.Error("incorrect sign")
+		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 		return p.ErrInfo("incorrect sign OOPS")
 	}
 

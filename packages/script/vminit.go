@@ -188,21 +188,21 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	parnames := make(map[string]bool)
 	pars := strings.Split(txs, `,`)
 	if len(pars) != len(params) {
-		logger.WithFields(log.Fields{"contract_params_len": len(pars), "contract_params_len_needed": len(params)}).Error("wrong contract parameters pars")
+		logger.WithFields(log.Fields{"contract_params_len": len(pars), "contract_params_len_needed": len(params), "type": consts.ContractError}).Error("wrong contract parameters pars")
 		return fmt.Errorf(`wrong contract parameters`)
 	}
 	for _, ipar := range pars {
 		parnames[ipar] = true
 	}
 	if !cblock.Info.(*ContractInfo).Owner.Active {
-		logger.Error("contract is not active")
+		logger.WithFields(log.Fields{"type": consts.ContractError}).Error("contract is not active")
 		return fmt.Errorf(`Contract %s is not active`, name)
 	}
 	var isSignature bool
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			if !parnames[tx.Name] {
-				logger.WithFields(log.Fields{"transaction_name": tx.Name}).Error("transaction not defined")
+				logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
 				return fmt.Errorf(`%s is not defined`, tx.Name)
 			}
 			if tx.Name == `Signature` {
@@ -211,7 +211,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		}
 	}
 	if _, ok := (*rt.extend)[`loop_`+name]; ok {
-		logger.Error("there is loop in contract")
+		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": name}).Error("there is loop in contract")
 		return fmt.Errorf(`there is loop in %s contract`, name)
 	}
 	(*rt.extend)[`loop_`+name] = true
@@ -247,7 +247,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		obj := rt.vm.Objects[`check_signature`]
 		finfo := obj.Value.(ExtFuncInfo)
 		if err := finfo.Func.(func(*map[string]interface{}, string) error)(rt.extend, name); err != nil {
-			logger.WithFields(log.Fields{"error": err, "func_name": finfo.Name}).Error("executing exended function")
+			logger.WithFields(log.Fields{"error": err, "func_name": finfo.Name, "type": consts.ContractError}).Error("executing exended function")
 			return err
 		}
 	}
@@ -258,7 +258,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 			_, err := rtemp.Run(block.Value.(*Block), nil, rt.extend)
 			rt.cost = rtemp.cost
 			if err != nil {
-				logger.WithFields(log.Fields{"error": err, "method_name": method}).Error("executing contract method")
+				logger.WithFields(log.Fields{"error": err, "method_name": method, "type": consts.ContractError}).Error("executing contract method")
 				return err
 			}
 		}
@@ -410,7 +410,7 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			val, ok := params[tx.Name]
 			if !ok {
-				logger.WithFields(log.Fields{"transaction_name": tx.Name}).Error("transaction not defined")
+				logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
 				return fmt.Errorf(`%s is not defined`, tx.Name)
 			}
 			names = append(names, tx.Name)

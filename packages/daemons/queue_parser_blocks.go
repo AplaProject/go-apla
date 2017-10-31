@@ -55,7 +55,7 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 		return err
 	}
 	if len(queueBlock.Hash) == 0 {
-		d.logger.Error("queue block not found")
+		d.logger.WithFields(log.Fields{"type": consts.NotFound}).Error("queue block not found")
 		return err
 	}
 
