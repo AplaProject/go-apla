@@ -15,6 +15,7 @@ const (
 	ParseError               = "Parse"
 	IOError                  = "IO"
 	CryptoError              = "Crypto"
+	ContractError            = "Contract"
 	DBError                  = "DB"
 	PanicRecoveredError      = "Panic"
 	ConnectionError          = "Connection"

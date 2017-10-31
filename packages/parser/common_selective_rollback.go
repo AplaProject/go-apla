@@ -20,9 +20,9 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	log "github.com/sirupsen/logrus"
 )

@@ -3,8 +3,8 @@ package crypto
 import (
 	"crypto/sha256"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+	"github.com/AplaProject/go-apla/packages/consts"
+	log "github.com/sirupsen/logrus"
 )
 
 type hashProvider int
@@ -15,7 +15,7 @@ const (
 
 func Hash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		logger.LogDebug(consts.CryptoError, HashingEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": HashingEmpty.Error()}).Error(HashingEmpty.Error())
 	}
 	switch hashProv {
 	case _SHA256:
@@ -27,7 +27,7 @@ func Hash(msg []byte) ([]byte, error) {
 
 func DoubleHash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		logger.LogDebug(consts.CryptoError, HashingEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": HashingEmpty.Error()}).Error(HashingEmpty.Error())
 	}
 	switch hashProv {
 	case _SHA256:
