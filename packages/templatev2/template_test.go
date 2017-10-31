@@ -39,8 +39,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
-	{`Image(/images/myimage.jpg,myclass)`,
-		`[{"tag":"image","attr":{"class":"myclass","src":"/images/myimage.jpg"}}]`},
+	{`Image(/images/myimage.jpg,My photo,myclass)`,
+		`[{"tag":"image","attr":{"alt":"My photo","class":"myclass","src":"/images/myimage.jpg"}}]`},
 	{`Data(mysrc,"id,name",
 		"1",John Silver,2
 		2,"Mark, Smith"

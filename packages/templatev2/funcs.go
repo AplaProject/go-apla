@@ -34,7 +34,6 @@ var (
 		`Address`:   {addressTag, defaultTag, `address`, `Wallet`},
 		`Em`:        {defaultTag, defaultTag, `em`, `Body,Class`},
 		`GetVar`:    {getvarTag, defaultTag, `getvar`, `Name`},
-		`Image`:     {defaultTag, defaultTag, `image`, `Src,Class`},
 		`InputErr`:  {defaultTag, defaultTag, `inputerr`, `*`},
 		`LangRes`:   {langresTag, defaultTag, `langres`, `Name,Lang`},
 		`MenuGroup`: {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
@@ -55,6 +54,9 @@ var (
 		}},
 		`if`: {map[string]tailInfo{
 			`Else`: {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
+		}},
+		`image`: {map[string]tailInfo{
+			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		}},
 		`input`: {map[string]tailInfo{
 			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
@@ -97,6 +99,7 @@ func init() {
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
 	funcs[`Form`] = tplFunc{defaultTailTag, defaultTailTag, `form`, `Class,Body`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
+	funcs[`Image`] = tplFunc{defaultTag, defaultTag, `image`, `Src,Alt,Class`}
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
 	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,Value`}
 	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
