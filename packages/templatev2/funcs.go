@@ -65,6 +65,9 @@ var (
 		`label`: {map[string]tailInfo{
 			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		}},
+		`linkpage`: {map[string]tailInfo{
+			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		}},
 		`data`: {map[string]tailInfo{
 			`Custom`: {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
 		}},
@@ -103,6 +106,7 @@ func init() {
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
 	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,Value`}
 	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
+	funcs[`LinkPage`] = tplFunc{defaultTailTag, defaultTailTag, `linkpage`, `Body,Page,Class,PageParams`}
 	funcs[`Data`] = tplFunc{dataTag, defaultTailTag, `data`, `Source,Columns,Data`}
 	funcs[`DBFind`] = tplFunc{dbfindTag, defaultTailTag, `dbfind`, `Name,Source`}
 	funcs[`And`] = tplFunc{andTag, defaultTag, `and`, `*`}

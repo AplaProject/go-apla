@@ -39,6 +39,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`LinkPage(My page,mypage)`,
+		`[{"tag":"linkpage","attr":{"page":"mypage"},"children":[{"tag":"text","text":"My page"}]}]`},
 	{`Image(/images/myimage.jpg,My photo,myclass)`,
 		`[{"tag":"image","attr":{"alt":"My photo","class":"myclass","src":"/images/myimage.jpg"}}]`},
 	{`Data(mysrc,"id,name",
