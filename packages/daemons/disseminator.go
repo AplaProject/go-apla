@@ -75,10 +75,10 @@ func Disseminator(d *daemon, ctx context.Context) error {
 
 	if isFullNode {
 		// send blocks and transactions hashes
-		d.logger.Info("we are full_node, sending hashes")
+		d.logger.Debug("we are full_node, sending hashes")
 		return sendHashes(fullNodeID, d.logger)
 	} else {
-		d.logger.Info("we are full_node, sending transactions")
+		d.logger.Debug("we are full_node, sending transactions")
 		// we are not full node for this StateID and WalletID, so just send transactions
 		return sendTransactions(d.logger)
 	}

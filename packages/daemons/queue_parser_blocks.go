@@ -59,8 +59,8 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 		return err
 	}
 	if !found {
-		d.logger.WithFields(log.Fields{"type": consts.NotFound}).Error("queue block not found")
-		return err
+		d.logger.WithFields(log.Fields{"type": consts.NotFound}).Debug("queue block not found")
+		return nil
 	}
 
 	// check if the block gets in the rollback_blocks_1 limit

@@ -521,7 +521,13 @@ func HexToBin(ihexdata interface{}) []byte {
 
 // BinToDec converts input binary []byte to int64
 func BinToDec(bin []byte) int64 {
-	return int64(binary.BigEndian.Uint64(bin))
+	var a uint64
+	l := len(bin)
+	for i, b := range bin {
+		shift := uint64((l - i - 1) * 8)
+		a |= uint64(b) << shift
+	}
+	return int64(a)
 }
 
 // BinToDecBytesShift converts the input binary []byte to int64 and shifts the input bin

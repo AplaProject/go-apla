@@ -284,6 +284,9 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting all transactions from contracts")
 		return err
 	}
+	if prefix == "system" {
+		prefix = "1"
+	}
 	stateInt, err := strconv.ParseInt(prefix, 10, 64)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": prefix}).Error("converting prefix from string to int64")

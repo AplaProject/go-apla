@@ -43,11 +43,12 @@ func WaitStopTime() {
 			}
 			first = true
 		}
-		dExists, err := model.Single(`SELECT stop_time FROM stop_daemons`).Int64()
+		sd := model.StopDaemon{}
+		_, err := sd.Get()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting stop_time from StopDaemons")
 		}
-		if dExists > 0 {
+		if sd.StopTime > 0 {
 			utils.CancelFunc()
 			for i := 0; i < utils.DaemonsCount; i++ {
 				name := <-utils.ReturnCh

@@ -76,7 +76,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 	toSleep := int64(sleepTime) - (time.Now().Unix() - int64(prevBlock.Time))
 	if toSleep > 0 {
-		d.logger.WithFields(log.Fields{"type": consts.JustWaiting, "seconds": toSleep}).Info("sleeping n seconds")
+		d.logger.WithFields(log.Fields{"type": consts.JustWaiting, "seconds": toSleep}).Debug("sleeping n seconds")
 		d.sleepTime = time.Duration(toSleep) * time.Second
 		return nil
 	}
