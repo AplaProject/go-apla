@@ -31,15 +31,16 @@ import (
 
 var (
 	funcs = map[string]tplFunc{
-		`Address`:   {addressTag, defaultTag, `address`, `Wallet`},
-		`Em`:        {defaultTag, defaultTag, `em`, `Body,Class`},
-		`GetVar`:    {getvarTag, defaultTag, `getvar`, `Name`},
-		`InputErr`:  {defaultTag, defaultTag, `inputerr`, `*`},
-		`LangRes`:   {langresTag, defaultTag, `langres`, `Name,Lang`},
-		`MenuGroup`: {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
-		`MenuItem`:  {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
-		`SetVar`:    {setvarTag, defaultTag, `setvar`, `Name,Value`},
-		`Strong`:    {defaultTag, defaultTag, `strong`, `Body,Class`},
+		`Address`:    {addressTag, defaultTag, `address`, `Wallet`},
+		`Em`:         {defaultTag, defaultTag, `em`, `Body,Class`},
+		`GetVar`:     {getvarTag, defaultTag, `getvar`, `Name`},
+		`ImageInput`: {defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`},
+		`InputErr`:   {defaultTag, defaultTag, `inputerr`, `*`},
+		`LangRes`:    {langresTag, defaultTag, `langres`, `Name,Lang`},
+		`MenuGroup`:  {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
+		`MenuItem`:   {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
+		`SetVar`:     {setvarTag, defaultTag, `setvar`, `Name,Value`},
+		`Strong`:     {defaultTag, defaultTag, `strong`, `Body,Class`},
 	}
 	tails = map[string]forTails{
 		`button`: {map[string]tailInfo{
@@ -91,7 +92,8 @@ var (
 			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		}},
 		`select`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
+			`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		}},
 	}
 	modes = [][]rune{{'(', ')'}, {'{', '}'}}
@@ -102,7 +104,7 @@ func init() {
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
 	funcs[`Form`] = tplFunc{defaultTailTag, defaultTailTag, `form`, `Class,Body`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
-	funcs[`Image`] = tplFunc{defaultTag, defaultTag, `image`, `Src,Alt,Class`}
+	funcs[`Image`] = tplFunc{defaultTailTag, defaultTailTag, `image`, `Src,Alt,Class`}
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
 	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,Value`}
 	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
@@ -114,7 +116,7 @@ func init() {
 	funcs[`P`] = tplFunc{defaultTailTag, defaultTailTag, `p`, `Body,Class`}
 	funcs[`Span`] = tplFunc{defaultTailTag, defaultTailTag, `span`, `Body,Class`}
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
-	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Source,Column,Class`}
+	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,Column,Class`}
 
 	tails[`if`].Tails[`ElseIf`] = tailInfo{tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false}
 
