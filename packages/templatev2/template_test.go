@@ -50,8 +50,8 @@ var forTest = tplList{
 		2,"Mark, Smith"
 	)`,
 		`[{"tag":"data","attr":{"columns":["id","name"],"data":[],"error":"line 2, column 0: wrong number of fields in line","source":"mysrc"}}]`},
-	{`Select(myselect,mysrc,name,myclass)`,
-		`[{"tag":"select","attr":{"class":"myclass","column":"name","name":"myselect","source":"mysrc"}}]`},
+	{`Select(myselect,mysrc,name,id,0,myclass)`,
+		`[{"tag":"select","attr":{"class":"myclass","name":"myselect","namecolumn":"name","source":"mysrc","value":"0","valuecolumn":"id"}}]`},
 	{`Data(mysrc,"id,name"){
 		"1",John Silver
 		2,"Mark, Smith"

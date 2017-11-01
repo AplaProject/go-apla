@@ -116,7 +116,7 @@ func init() {
 	funcs[`P`] = tplFunc{defaultTailTag, defaultTailTag, `p`, `Body,Class`}
 	funcs[`Span`] = tplFunc{defaultTailTag, defaultTailTag, `span`, `Body,Class`}
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
-	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,Column,Class`}
+	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
 
 	tails[`if`].Tails[`ElseIf`] = tailInfo{tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false}
 
