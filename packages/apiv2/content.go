@@ -72,7 +72,7 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
-	if found {
+	if !found {
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 
