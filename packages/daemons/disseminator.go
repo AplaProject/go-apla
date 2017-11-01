@@ -17,20 +17,19 @@
 package daemons
 
 import (
-	"bytes"
-	"context"
 	"encoding/hex"
 	"errors"
-	"io"
-	"sync"
 
-	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 
-	log "github.com/sirupsen/logrus"
+	"bytes"
+	"context"
+	"io"
+	"sync"
+
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
 const (
@@ -45,7 +44,7 @@ func Disseminator(d *daemon, ctx context.Context) error {
 	config := &model.Config{}
 	found, err := config.Get()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get config")
+		log.Errorf("can't get config: %s", err)
 		return err
 	}
 
@@ -55,7 +54,7 @@ func Disseminator(d *daemon, ctx context.Context) error {
 	node := &model.FullNode{}
 	found, err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("finding node")
+		log.Errorf("can't get full_node: %s", err)
 		return err
 	}
 
@@ -75,25 +74,24 @@ func Disseminator(d *daemon, ctx context.Context) error {
 
 	if isFullNode {
 		// send blocks and transactions hashes
-		d.logger.Info("we are full_node, sending hashes")
-		return sendHashes(fullNodeID, d.logger)
+		log.Debugf("we are full_node")
+		return sendHashes(fullNodeID)
 	} else {
-		d.logger.Info("we are full_node, sending transactions")
 		// we are not full node for this StateID and WalletID, so just send transactions
-		return sendTransactions(d.logger)
+		log.Debugf("we are not full_node")
+		return sendTransactions()
 	}
 }
 
-func sendTransactions(logger *log.Entry) error {
+func sendTransactions() error {
 	// get unsent transactions
 	trs, err := model.GetAllUnsentTransactions()
+
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unsent transactions")
 		return err
 	}
 
 	if trs == nil {
-		logger.Info("transactions not found")
 		return nil
 	}
 
@@ -104,7 +102,7 @@ func sendTransactions(logger *log.Entry) error {
 	}
 
 	if buf.Len() > 0 {
-		err := sendPacketToAll(TRANSACTIONS_REQUEST, buf.Bytes(), nil, logger)
+		err := sendPacketToAll(TRANSACTIONS_REQUEST, buf.Bytes(), nil)
 		if err != nil {
 			return err
 		}
@@ -114,7 +112,7 @@ func sendTransactions(logger *log.Entry) error {
 	for _, tr := range *trs {
 		_, err := model.MarkTransactionSent(tr.Hash)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marking transaction sent")
+			log.Errorf("failed to set transaction as sent: %s", err)
 		}
 	}
 
@@ -122,11 +120,10 @@ func sendTransactions(logger *log.Entry) error {
 }
 
 // send block and transactions hashes
-func sendHashes(fullNodeID int32, logger *log.Entry) error {
+func sendHashes(fullNodeID int32) error {
 	infoBlock := &model.InfoBlock{}
 	found, err := infoBlock.GetUnsent()
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting unsent blocks")
 		return err
 	}
 	if !found {
@@ -135,18 +132,18 @@ func sendHashes(fullNodeID int32, logger *log.Entry) error {
 
 	trs, err := model.GetAllUnsentTransactions()
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting unsent transactions")
 		return err
 	}
 
 	if trs == nil || len(*trs) == 0 {
-		logger.Debug("nothing to send")
+		// it's nothing to send
+		log.Debugf("it's nothing to send")
 		return nil
 	}
 
 	buf := prepareHashReq(infoBlock, trs, fullNodeID)
 	if buf != nil || len(buf) > 0 {
-		err := sendPacketToAll(FULL_REQUEST, buf, sendHashesResp, logger)
+		err := sendPacketToAll(FULL_REQUEST, buf, sendHashesResp)
 		if err != nil {
 			return err
 		}
@@ -155,7 +152,6 @@ func sendHashes(fullNodeID int32, logger *log.Entry) error {
 	// mark all transactions and block as sent
 	err = infoBlock.MarkSent()
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marking block sent")
 		return err
 	}
 
@@ -163,7 +159,7 @@ func sendHashes(fullNodeID int32, logger *log.Entry) error {
 		for _, tr := range *trs {
 			_, err := model.MarkTransactionSent(tr.Hash)
 			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marking transaction sent")
+				log.Errorf("error set transaction %+v as sent: %s", tr, err)
 			}
 		}
 	}
@@ -171,7 +167,7 @@ func sendHashes(fullNodeID int32, logger *log.Entry) error {
 	return nil
 }
 
-func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
+func sendHashesResp(resp []byte, w io.Writer) error {
 	var buf bytes.Buffer
 	for len(resp) > 16 {
 		// Parse the list of requested transactions
@@ -179,7 +175,6 @@ func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
 		tr := &model.Transaction{}
 		found, err := tr.Read(txHash)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("reading transaction by hash")
 			return err
 		}
 		if !found {
@@ -192,13 +187,9 @@ func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
 	// write out the requested transactions
 	_, err := w.Write(converter.DecToBin(buf.Len(), 4))
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing tx size")
 		return err
 	}
 	_, err = w.Write(buf.Bytes())
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing tx data")
-	}
 	return err
 }
 
@@ -240,10 +231,9 @@ func MarshallTrHash(tr model.Transaction) []byte {
 	return tr.Hash
 }
 
-func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer, logger *log.Entry) error, logger *log.Entry) error {
+func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer) error) error {
 	hosts, err := model.GetFullNodesHosts()
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get full nodes hosts")
 		return err
 	}
 
@@ -252,7 +242,10 @@ func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Wr
 	for _, host := range hosts {
 		wg.Add(1)
 		go func(h string) {
-			sendDRequest(h, reqType, buf, respHand, logger)
+			err := sendDRequest(h, reqType, buf, respHand)
+			if err != nil {
+				log.Infof("failed to send transaction to %s (%s)", h, err)
+			}
 			wg.Done()
 		}(getHostPort(host))
 	}
@@ -268,10 +261,9 @@ len   4 bytes
 data  len bytes
 */
 
-func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte, io.Writer, *log.Entry) error, logger *log.Entry) error {
+func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte, io.Writer) error) error {
 	conn, err := utils.TCPConn(host)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host}).Error("tcp connection to host")
 		return err
 	}
 	defer conn.Close()
@@ -279,7 +271,6 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 	// type
 	_, err = conn.Write(converter.DecToBin(reqType, 2))
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host}).Error("writing request type to host")
 		return err
 	}
 
@@ -287,14 +278,12 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 	size := converter.DecToBin(len(buf), 4)
 	_, err = conn.Write(size)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host}).Error("writing data size to host")
 		return err
 	}
 
 	// data
 	_, err = conn.Write(buf)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host}).Error("writing data to host")
 		return err
 	}
 
@@ -303,25 +292,19 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 		buf := make([]byte, 4)
 		// read data size
 		_, err = io.ReadFull(conn, buf)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data size")
-		}
 
 		respSize := converter.BinToDec(buf)
 		if respSize > syspar.GetMaxTxSize() {
-			logger.WithFields(log.Fields{"size": respSize, "max_size": syspar.GetMaxTxSize(), "type": consts.ParameterExceeded}).Warning("reponse size is larger than max tx size")
 			return nil
 		}
 		// read the data
 		resp := make([]byte, respSize)
 		_, err = io.ReadFull(conn, resp)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data")
 			return err
 		}
-		err = respHandler(resp, conn, logger)
+		err = respHandler(resp, conn)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data")
 			return err
 		}
 	}

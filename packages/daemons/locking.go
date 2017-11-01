@@ -2,10 +2,12 @@ package daemons
 
 import (
 	"context"
-	"sync"
 	"time"
 
+	"sync"
+
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/utils"
 )
 
 var mutex = sync.Mutex{}
@@ -39,7 +41,7 @@ func CheckDB() bool {
 
 	err := install.Get()
 	if err != nil {
-		//log.Errorf("%v", utils.ErrInfo(err))
+		log.Errorf("%v", utils.ErrInfo(err))
 	}
 
 	if install.Progress == "complete" {

@@ -18,17 +18,22 @@ package tcpserver
 
 import (
 	"flag"
-	"io"
-	"net"
+	//	"fmt"
+
+	//	"runtime"
+
 	"sync/atomic"
+
+	"io"
+
+	"net"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/consts"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/op/go-logging"
 )
 
 var (
+	log     = logging.MustGetLogger("tcpserver")
 	counter int64
 )
 
@@ -50,10 +55,11 @@ func HandleTCPRequest(rw io.ReadWriter) {
 	dType := &TransactionType{}
 	err := ReadRequest(dType, rw)
 	if err != nil {
+		log.Errorf("read request type failed: %s", err)
 		return
 	}
 
-	log.WithFields(log.Fields{"request_type": dType.Type}).Debug("tcpserver got request type")
+	log.Debugf("tcpservers: got request type: %d", dType.Type)
 	var response interface{}
 
 	switch dType.Type {
@@ -90,14 +96,18 @@ func HandleTCPRequest(rw io.ReadWriter) {
 	}
 
 	if err != nil {
+		log.Errorf("tcpserver: parse request error: %s", err)
 		return
 	}
 	if response == nil {
 		return
 	}
 
-	log.WithFields(log.Fields{"response": response}).Debug("tcpserver responded")
-	SendRequest(response, rw)
+	log.Debugf("tcpserver response: %+v", response)
+	err = SendRequest(response, rw)
+	if err != nil {
+		log.Errorf("tcpserver handle error: %s", err)
+	}
 }
 
 func TcpListener(laddr string) error {
@@ -105,7 +115,7 @@ func TcpListener(laddr string) error {
 
 	l, err := net.Listen("tcp4", laddr)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": laddr}).Error("Error listening")
+		log.Error("Error listening:", err)
 		return err
 	}
 
@@ -114,7 +124,7 @@ func TcpListener(laddr string) error {
 		for {
 			conn, err := l.Accept()
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": laddr}).Error("Error accepting")
+				log.Error("Error accepting:", err)
 				time.Sleep(time.Second)
 			} else {
 				go func(conn net.Conn) {

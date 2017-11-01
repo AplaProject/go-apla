@@ -26,14 +26,13 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // get the list of transactions which belong to the sender from 'disseminator' daemon
 // do not load the blocks here because here could be the chain of blocks that are loaded for a long time
 // download the transactions here, because they are small and definitely will be downloaded in 60 sec
 func Type1(r *DisRequest, rw io.ReadWriter) error {
+
 	buf := bytes.NewBuffer(r.Data)
 
 	/*
@@ -95,17 +94,15 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 	infoBlock := &model.InfoBlock{}
 	found, err := infoBlock.Get()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur block ID")
 		return utils.ErrInfo(err)
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("cant find info block")
 		return errors.New("can't find info block")
 	}
 
 	// get block ID
 	newBlockID := converter.BinToDec(buf.Next(3))
-	log.WithFields(log.Fields{"new_block_id": newBlockID}).Debug("Generated new block id")
+	log.Debug("newDataBlockID: %d / blockID: %d", newBlockID, infoBlock.BlockID)
 
 	// get block hash
 	blockHash := buf.Next(32)
@@ -115,7 +112,6 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 		queueBlock := &model.QueueBlock{Hash: blockHash, FullNodeID: fullNodeID, BlockID: newBlockID}
 		err = queueBlock.Create()
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Creating QueueBlock")
 			return utils.ErrInfo(err)
 		}
 	}
@@ -124,11 +120,11 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 }
 
 func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
+
 	var needTx []byte
 	for buf.Len() > 0 {
 		newDataTxHash := buf.Next(16)
 		if len(newDataTxHash) == 0 {
-			log.WithFields(log.Fields{"len": len(newDataTxHash), "type": consts.ProtocolError}).Error("wrong transactions hash size")
 			return nil, errors.New("wrong transactions hash size")
 		}
 
@@ -136,32 +132,29 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 		// check log_transaction
 		exists, err := model.GetLogTransactionsCount(newDataTxHash)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "txHash": newDataTxHash}).Error("Getting log tx count")
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in log_tx")
+			log.Debug("exists")
 			continue
 		}
 
 		exists, err = model.GetTransactionsCount(newDataTxHash)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "txHash": newDataTxHash}).Error("Getting tx count")
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in tx")
+			log.Debug("exists")
 			continue
 		}
 
 		// check transaction queue
 		exists, err = model.GetQueuedTransactionsCount(newDataTxHash)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting queue_tx count")
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in queue_tx")
+			log.Debug("exists")
 			continue
 		}
 		needTx = append(needTx, newDataTxHash...)
@@ -171,40 +164,36 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 }
 
 func saveNewTransactions(r *DisRequest) error {
+
 	binaryTxs := r.Data
-	log.WithFields(log.Fields{"binaryTxs": binaryTxs}).Debug("trying to save binary txs")
+	log.Debug("binaryTxs %x", binaryTxs)
 
 	for len(binaryTxs) > 0 {
 		txSize, err := converter.DecodeLength(&binaryTxs)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ProtocolError, "err": err}).Error("decoding binary txs length")
 			return err
 		}
 		if int64(len(binaryTxs)) < txSize {
-			log.WithFields(log.Fields{"type": consts.ProtocolError, "size": txSize, "len": len(binaryTxs)}).Error("incorrect binary txs len")
 			return utils.ErrInfo(errors.New("bad transactions packet"))
 		}
 
 		txBinData := converter.BytesShift(&binaryTxs, txSize)
 		if len(txBinData) == 0 {
-			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("binaryTxs is empty")
 			return utils.ErrInfo(errors.New("len(txBinData) == 0"))
 		}
 
 		if int64(len(txBinData)) > consts.MAX_TX_SIZE {
-			log.WithFields(log.Fields{"type": consts.ParameterExceeded, "len": len(txBinData), "size": consts.MAX_TX_SIZE}).Error("len of tx data exceeds max size")
 			return utils.ErrInfo("len(txBinData) > max_tx_size")
 		}
 
 		hash, err := crypto.Hash(txBinData)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "value": txBinData}).Fatal("cannot hash bindata")
+			log.Fatal(err)
 		}
 
 		queueTx := &model.QueueTx{Hash: hash, Data: txBinData, FromGate: 1}
 		err = queueTx.Create()
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("error creating QueueTx")
 			return err
 		}
 	}

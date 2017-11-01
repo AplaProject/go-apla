@@ -21,11 +21,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type listResult struct {
@@ -33,7 +30,7 @@ type listResult struct {
 	List  []map[string]string `json:"list"`
 }
 
-func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+func list(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	var limit int
 
 	table := converter.EscapeName(converter.Int64ToStr(data.state) + `_` + data.params[`name`].(string))
@@ -44,7 +41,6 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Ent
 
 	count, err := model.GetNextID(strings.Trim(table, `"`))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting next table id")
 		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
 	}
 
@@ -56,12 +52,10 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Ent
 	list, err := model.GetAll(`select `+cols+` from `+table+` order by id desc`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &listResult{
-		Count: converter.Int64ToStr(count - 1),
-		List:  list,
+		Count: converter.Int64ToStr(count - 1), List: list,
 	}
 	return
 }

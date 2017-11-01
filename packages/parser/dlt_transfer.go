@@ -17,21 +17,20 @@
 package parser
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"strconv"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 
+	"bytes"
+
 	"github.com/shopspring/decimal"
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -41,14 +40,12 @@ type DLTTransferParser struct {
 }
 
 func (p *DLTTransferParser) Init() error {
-	logger := p.GetLogger()
 	if p.BlockData.Version == 0 {
 		oldSlice, err := ParseOldTransaction(bytes.NewBuffer(p.TxBinaryData))
 		if err != nil {
 			return fmt.Errorf("old transaction parsing failed")
 		}
 		if len(oldSlice) < 10 {
-			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("bad transaction format")
 			return fmt.Errorf("bad transaction format")
 		}
 		p.DLTTransfer = &tx.DLTTransfer{
@@ -70,7 +67,6 @@ func (p *DLTTransferParser) Init() error {
 
 	dltTransfer := &tx.DLTTransfer{}
 	if err := msgpack.Unmarshal(p.TxBinaryData, dltTransfer); err != nil {
-		logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling dlt transfer from binary with msgpack")
 		return p.ErrInfo(err)
 	}
 	p.DLTTransfer = dltTransfer
@@ -79,7 +75,6 @@ func (p *DLTTransferParser) Init() error {
 }
 
 func (p *DLTTransferParser) Validate() error {
-	logger := p.GetLogger()
 	err := p.generalCheck(`dlt_transfer`, &p.DLTTransfer.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
@@ -95,17 +90,14 @@ func (p *DLTTransferParser) Validate() error {
 	dltWallet := &model.DltWallet{}
 	found, err := dltWallet.Get(nil, converter.StringToAddress(p.DLTTransfer.WalletAddress))
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("checking that dlt wallet is exists")
 		return p.ErrInfo(err)
 	}
 	if !found {
 		bkey, err := hex.DecodeString(string(p.DLTTransfer.Header.PublicKey))
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding transaction public key from hex")
 			return p.ErrInfo(err)
 		}
 		if crypto.KeyToAddress(bkey) != converter.AddressToString(p.TxWalletID) {
-			logger.WithFields(log.Fields{"key_address": crypto.KeyToAddress(bkey), "wallet_address": converter.AddressToString(p.TxWalletID)}).Error("wallet addresses does not match")
 			return p.ErrInfo("incorrect public_key")
 		}
 	}
@@ -114,18 +106,16 @@ func (p *DLTTransferParser) Validate() error {
 
 	ourAmount, err := decimal.NewFromString(p.DLTTransfer.Amount)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.DLTTransfer.Amount}).Error("coverting dlt transfer amount from string to decimal")
 		return p.ErrInfo(err)
 	}
 	if ourAmount.Cmp(zero) <= 0 {
-		logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("dlt transfer amount is less then zero")
 		return p.ErrInfo("amount<=0")
 	}
 
 	systemParam := &model.SystemParameter{}
 	found, err = systemParam.Get("fuel_rate")
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting fuel rate system param")
+		log.Fatal(err)
 	}
 	if !found {
 		return p.ErrInfo("can't find fuel rate")
@@ -133,11 +123,9 @@ func (p *DLTTransferParser) Validate() error {
 
 	fuelRate, err := decimal.NewFromString(systemParam.Value)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ParameterExceeded, "error": err, "value": systemParam.Value}).Error("coverting fuel rate system parameter from string to decimal")
 		return err
 	}
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
-		logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("fuel rate param is less than zero")
 		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 	// 1 000 000 000 000 000 000 qDLT = 1 DLT * 100 000 000
@@ -145,19 +133,16 @@ func (p *DLTTransferParser) Validate() error {
 	//
 	fPriceDecimal := decimal.New(syspar.SysCost(`dlt_transfer`), 0)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("converting sys cost dlt_transfer to decimal")
 		return p.ErrInfo(err)
 	}
 	commission := fPriceDecimal.Mul(fuelRate)
-	ourCommission, err := decimal.NewFromString(p.DLTTransfer.Commission)
+	ourCommission, err := decimal.NewFromString(p.DLTTransfer.Commission) //fPrice)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.DLTTransfer.Commission}).Error("coverting dlt transfer commission from string to decimal")
 		return p.ErrInfo(err)
 	}
 
 	// check commission
 	if ourCommission.Cmp(commission) < 0 {
-		logger.WithFields(log.Fields{"commission": commission, "our_commission": ourCommission, "type": consts.ParameterExceeded}).Error("our commission is less than commission")
 		return p.ErrInfo(fmt.Sprintf("commission %v < dltPrice %v", ourCommission, commission))
 	}
 
@@ -170,14 +155,12 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
-		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 		return p.ErrInfo("incorrect sign OOPS")
 	}
 
 	wallet := &model.DltWallet{}
 	found, err = wallet.Get(nil, p.TxWalletID)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 		return p.ErrInfo(err)
 	}
 	if !found {
@@ -185,16 +168,13 @@ func (p *DLTTransferParser) Validate() error {
 	}
 	wltAmount, err := decimal.NewFromString(wallet.Amount)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("converting wallet amount from string to decimal")
 		return p.ErrInfo(err)
 	}
 
 	if wltAmount.Cmp(ourAmount.Add(ourCommission)) < 0 {
-		logger.Error("wallet amount is less than our amount + our commission")
 		return p.ErrInfo(fmt.Sprintf("%s + %s < %s)", ourAmount, ourCommission, wallet.Amount))
 	}
 	if converter.StringToAddress(p.DLTTransfer.WalletAddress) == 0 {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.DLTTransfer.WalletAddress}).Error("converting wallet address string to address")
 		return p.ErrInfo(fmt.Sprintf(`Wallet %v is invalid`, p.DLTTransfer.WalletAddress))
 	}
 
@@ -202,33 +182,32 @@ func (p *DLTTransferParser) Validate() error {
 }
 
 func (p *DLTTransferParser) Action() error {
-	logger := p.GetLogger()
+	log.Debug("wallet address %s", p.DLTTransfer.WalletAddress)
 	dltWallet := &model.DltWallet{}
 	found, err := dltWallet.Get(nil, p.TxWalletID)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 		return p.ErrInfo(err)
 	}
 	if !found {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("wallet not found")
 		return p.ErrInfo("can't find wallet. ID: " + strconv.FormatInt(p.TxWalletID, 10))
 	}
 
+	log.Debug("amount %s", p.DLTTransfer.Amount)
+	log.Debug("commission %s", p.DLTTransfer.Commission)
 	amount, err := decimal.NewFromString(p.DLTTransfer.Amount)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.DLTTransfer.Amount}).Error("coverting dlt transfer amount from string to decimal")
 		return p.ErrInfo(err)
 	}
 	commission, err := decimal.NewFromString(p.DLTTransfer.Commission)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.DLTTransfer.Amount}).Error("coverting dlt transfer commission from string to decimal")
 		return p.ErrInfo(err)
 	}
 	amountAndCommission := amount.Add(commission)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.DLTTransfer.Amount}).Error("coverting dlt transfer commission from string to decimal")
 		return p.ErrInfo(err)
 	}
+	log.Debug("amountAndCommission %s", amountAndCommission)
+	log.Debug("amountAndCommission %s", amountAndCommission.String())
 	if len(p.DLTTransfer.Header.PublicKey) > 30 && len(dltWallet.PublicKey) == 0 {
 		_, _, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{amountAndCommission.String(), converter.HexToBin(p.DLTTransfer.PublicKey)}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	} else {
@@ -255,14 +234,10 @@ func (p *DLTTransferParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	walletAddress, err := strconv.ParseInt(p.DLTTransfer.WalletAddress, 10, 64)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.DLTTransfer.WalletAddress}).Error("convertion wallet address to int")
-	}
 	dltTransaction := &model.DltTransaction{
 		SenderWalletID:         p.TxWalletID,
 		RecipientWalletID:      dltWallet.WalletID,
-		RecipientWalletAddress: converter.AddressToString(walletAddress),
+		RecipientWalletAddress: converter.AddressToString(int64(converter.StrToUint64(p.DLTTransfer.WalletAddress))),
 		Amount:                 &amount,
 		Commission:             &commission,
 		Comment:                p.DLTTransfer.Comment,
@@ -271,7 +246,6 @@ func (p *DLTTransferParser) Action() error {
 	}
 	err = dltTransaction.Create(p.DbTransaction)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating dlt transaction")
 		return p.ErrInfo(err)
 	}
 	rollbackTx := &model.RollbackTx{
@@ -282,7 +256,6 @@ func (p *DLTTransferParser) Action() error {
 	}
 	err = rollbackTx.Create(p.DbTransaction)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating rollback transaction")
 		return p.ErrInfo(err)
 	}
 	return nil

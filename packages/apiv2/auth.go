@@ -21,11 +21,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/crypto"
 
 	"github.com/dgrijalva/jwt-go"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -60,19 +58,18 @@ func jwtToken(r *http.Request) (*jwt.Token, error) {
 func jwtGenerateToken(w http.ResponseWriter, claims JWTClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(jwtSecret))
+	//	w.Header().Set("Authorization", jwtPrefix+signedToken)
 }
 
-func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func authWallet(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if data.wallet == 0 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
 		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}
 	return nil
 }
 
-func authState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func authState(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if data.wallet == 0 || data.state <= 1 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("state is empty")
 		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}
 	return nil

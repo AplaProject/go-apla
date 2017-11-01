@@ -18,14 +18,12 @@ package language
 
 import (
 	"encoding/json"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/model"
+	"strconv"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/model"
 )
 
 type cacheLang struct {
@@ -65,10 +63,7 @@ func UpdateLang(state int, name, value string) {
 		return
 	}
 	var ires map[string]string
-	err := json.Unmarshal([]byte(value), &ires)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "value": value, "error": err}).Error("Unmarshalling json")
-	}
+	json.Unmarshal([]byte(value), &ires)
 	if len(ires) > 0 {
 		(*lang[state]).res[name] = &ires
 	}
@@ -79,7 +74,6 @@ func loadLang(state int) error {
 	language := &model.Language{}
 	languages, err := language.GetAll(strconv.FormatInt(int64(state), 10))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error querying all languages")
 		return err
 	}
 	list := make([]map[string]string, 0)
@@ -89,10 +83,7 @@ func loadLang(state int) error {
 	res := &cacheLang{make(map[string]*map[string]string)}
 	for _, ilist := range list {
 		var ires map[string]string
-		err := json.Unmarshal([]byte(ilist[`res`]), &ires)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "value": ilist["res"], "error": err}).Error("Unmarshalling json")
-		}
+		json.Unmarshal([]byte(ilist[`res`]), &ires)
 		(*res).res[ilist[`name`]] = &ires
 	}
 	lang[state] = res

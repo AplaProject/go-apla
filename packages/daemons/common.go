@@ -26,18 +26,17 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/utils"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/op/go-logging"
 )
 
 var (
+	log             = logging.MustGetLogger("daemons")
 	MonitorDaemonCh = make(chan []string, 100)
 )
 
 type daemon struct {
 	goRoutineName string
 	sleepTime     time.Duration
-	logger        *log.Entry
 }
 
 func init() {
@@ -79,10 +78,9 @@ var rollbackList = []string{
 }
 
 func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon, context.Context) error, retCh chan string) {
-	logger := log.WithFields(log.Fields{"daemon_name": goRoutineName})
 	defer func() {
 		if r := recover(); r != nil {
-			logger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r}).Error("panic in daemon")
+			log.Error("daemon Recovered", r)
 			panic(r)
 		}
 	}()
@@ -95,21 +93,28 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 	d := &daemon{
 		goRoutineName: goRoutineName,
 		sleepTime:     1 * time.Second,
-		logger:        logger,
 	}
 
-	handler(d, ctx)
+	err = handler(d, ctx)
+	if err != nil {
+		log.Errorf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(1))
+	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("daemon done his work")
 			retCh <- goRoutineName
 			return
 
 		case <-time.After(d.sleepTime):
+			log.Info(d.goRoutineName)
 			MonitorDaemonCh <- []string{d.goRoutineName, converter.Int64ToStr(time.Now().Unix())}
-			handler(d, ctx)
+
+			err = handler(d, ctx)
+			if err != nil {
+				log.Errorf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(2))
+			}
+
 		}
 	}
 }
@@ -147,17 +152,17 @@ func StartDaemons() {
 	if len(config.ConfigIni["daemons"]) > 0 {
 		daemonsToStart = strings.Split(config.ConfigIni["daemons"], ",")
 	}
-	log.WithFields(log.Fields{"daemons_to_start": daemonsToStart}).Info("starting daemons")
 
 	for _, name := range daemonsToStart {
 		handler, ok := daemonsList[name]
 		if ok {
 			go daemonLoop(ctx, name, handler, utils.ReturnCh)
-			log.WithFields(log.Fields{"daemon_name": name}).Info("started")
 			utils.DaemonsCount++
 			continue
 		}
-		log.WithFields(log.Fields{"daemon_name": name}).Warning("unknown daemon name")
+
+		log.Errorf("unknown daemon name: %s", name)
+
 	}
 }
 

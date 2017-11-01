@@ -17,9 +17,8 @@
 package script
 
 import (
-	log "github.com/sirupsen/logrus"
+	"log"
 
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/crypto"
 )
 
@@ -36,10 +35,11 @@ var (
 func (vm *VM) CompileEval(input string, state uint32) error {
 	source := `func eval bool { return ` + input + `}`
 	block, err := vm.CompileBlock([]rune(source), &OwnerInfo{StateID: state})
+	//	fmt.Println(`Compile Eval`, err, input)
 	if err == nil {
 		crc, err := crypto.CalcChecksum([]byte(input))
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("calculating compile eval input checksum")
+			log.Fatal(err)
 		}
 		evals[crc] = &evalCode{Source: input, Code: block}
 		return nil
@@ -55,11 +55,10 @@ func (vm *VM) EvalIf(input string, state uint32, vars *map[string]interface{}) (
 	}
 	crc, err := crypto.CalcChecksum([]byte(input))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("calculating compile eval checksum")
+		log.Fatal(err)
 	}
 	if eval, ok := evals[crc]; !ok || eval.Source != input {
 		if err := vm.CompileEval(input, state); err != nil {
-			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("compiling eval")
 			return false, err
 		}
 	}

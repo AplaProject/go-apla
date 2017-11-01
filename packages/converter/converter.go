@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"math"
 	"reflect"
 	"regexp"
@@ -15,14 +16,13 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/shopspring/decimal"
-	log "github.com/sirupsen/logrus"
 )
 
 func FillLeft(slice []byte) []byte {
-	if len(slice) >= consts.FillSize {
+	if len(slice) >= 32 {
 		return slice
 	}
-	return append(make([]byte, consts.FillSize-len(slice)), slice...)
+	return append(make([]byte, 32-len(slice)), slice...)
 }
 
 func EncodeLenInt64(data *[]byte, x int64) *[]byte {
@@ -79,7 +79,6 @@ func DecodeLenInt64(data *[]byte) (int64, error) {
 	}
 	length := int((*data)[0]) + 1
 	if len(*data) < length {
-		log.WithFields(log.Fields{"data_length": len(*data), "length": length, "type": consts.UnmarshallingError}).Error("length of data is smaller then encoded length")
 		return 0, fmt.Errorf(`length of data %d < %d`, len(*data), length)
 	}
 	buf := make([]byte, 8)
@@ -96,19 +95,18 @@ func DecodeLenInt64Buf(buf *bytes.Buffer) (int64, error) {
 
 	val, err := buf.ReadByte()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("cannot read bytes from buffer")
 		return 0, err
 	}
 
 	length := int(val)
 	if buf.Len() < length {
-		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "data_length": buf.Len(), "length": length}).Error("length of data is smaller then encoded length")
 		return 0, fmt.Errorf(`length of data %d < %d`, buf.Len(), length)
 	}
 	data := make([]byte, 8)
 	copy(data, buf.Next(length))
 
 	return int64(binary.LittleEndian.Uint64(data)), nil
+
 }
 
 // DecodeLength decodes []byte to int64 and shifts buf. Bytes must be encoded with EncodeLength function.
@@ -125,7 +123,6 @@ func DecodeLength(buf *[]byte) (ret int64, err error) {
 	if (length & 0x80) != 0 {
 		length &= 0x7F
 		if len(*buf) < int(length+1) {
-			log.WithFields(log.Fields{"data_length": len(*buf), "length": int(length + 1)}).Error("length of data is smaller then encoded length")
 			return 0, fmt.Errorf(`input slice has small size`)
 		}
 		ret = int64(binary.BigEndian.Uint64(append(make([]byte, 8-length), (*buf)[1:length+1]...)))
@@ -144,7 +141,6 @@ func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
 
 	length, err := buf.ReadByte()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("cannot read bytes from buffer")
 		return 0, err
 	}
 
@@ -154,7 +150,6 @@ func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
 
 	length &= 0x7F
 	if buf.Len() < int(length) {
-		log.WithFields(log.Fields{"data_length": buf.Len(), "length": int(length), "type": consts.UnmarshallingError}).Error("length of data is smaller then encoded length")
 		return 0, fmt.Errorf(`input slice has small size`)
 	}
 	return int(binary.BigEndian.Uint64(append(make([]byte, 8-length), buf.Next(int(length))...))), nil
@@ -226,7 +221,7 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
 		t = t.Elem()
 	}
 	if buf.Len() == 0 {
-		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": "input slice is empty"}).Error("input slice is empty")
+		return fmt.Errorf(`input slice is empty`)
 	}
 	switch t.Kind() {
 	case reflect.Uint8, reflect.Int8:
@@ -242,7 +237,6 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
 	case reflect.Int32:
 		val, err := buf.ReadByte()
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading bytes from buffer")
 			return err
 		}
 		if val < 128 {
@@ -252,13 +246,11 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
 			size := val - 128
 			tmp := make([]byte, 4)
 			if buf.Len() <= int(size) || size > 4 {
-				log.WithFields(log.Fields{"type": consts.UnmarshallingError, "data_length": buf.Len(), "length": int(size)}).Error("bin unmarshalling int32")
 				return fmt.Errorf(`wrong input data`)
 			}
 			for ; i < size; i++ {
 				byteVal, err := buf.ReadByte()
 				if err != nil {
-					log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading bytes from buffer")
 					return err
 				}
 				tmp[4-size+i] = byteVal
@@ -284,7 +276,6 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
 			return err
 		}
 		if buf.Len() < int(val) {
-			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "data_length": buf.Len(), "length": int(val)}).Error("bin unmarshalling string")
 			return fmt.Errorf(`input slice is short`)
 		}
 		t.SetString(string(buf.Next(val)))
@@ -301,13 +292,11 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
 			return err
 		}
 		if buf.Len() < int(val) {
-			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "data_length": buf.Len(), "length": int(val)}).Error("bin unmarshalling slice")
 			return fmt.Errorf(`input slice is short`)
 		}
 		t.SetBytes(buf.Next(int(val)))
 
 	default:
-		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "value_type": t.Kind()}).Error("BinUnmrashal unsupported type")
 		return fmt.Errorf(`unsupported type of BinUnmarshal %v`, t.Kind())
 	}
 	return nil
@@ -367,7 +356,6 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 			return err
 		}
 		if len(*out) < int(val) {
-			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "data_length": len(*out), "length": int(val)}).Error("input slice is short")
 			return fmt.Errorf(`input slice is short`)
 		}
 		t.SetString(string((*out)[:val]))
@@ -375,7 +363,6 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 	case reflect.Struct:
 		for i := 0; i < t.NumField(); i++ {
 			if err := BinUnmarshal(out, t.Field(i).Addr().Interface()); err != nil {
-				log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("bin unmarshalling struct")
 				return err
 			}
 		}
@@ -385,13 +372,11 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 			return err
 		}
 		if len(*out) < int(val) {
-			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "data_length": len(*out), "length": int(val)}).Error("input slice is short")
 			return fmt.Errorf(`input slice is short`)
 		}
 		t.SetBytes((*out)[:val])
 		*out = (*out)[val:]
 	default:
-		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "value_type": t.Kind()}).Error("BinUnmrashal unsupported type")
 		return fmt.Errorf(`unsupported type of BinUnmarshal %v`, t.Kind())
 	}
 	return nil
@@ -441,30 +426,34 @@ func EscapeName(name string) string {
 	return string(append(out, '"'))
 }
 
+// Float2Bytes converts float64 to []byte
 func float2Bytes(float float64) []byte {
 	bytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(bytes, math.Float64bits(float))
 	return bytes
 }
 
+// Bytes2Float converts []byte to float64
 func bytes2Float(bytes []byte) float64 {
 	return math.Float64frombits(binary.LittleEndian.Uint64(bytes))
 }
 
+// UInt32ToStr converts uint32 to string
 func UInt32ToStr(num uint32) string {
 	return strconv.FormatInt(int64(num), 10)
 }
 
+// Int64ToStr converts int64 to string
 func Int64ToStr(num int64) string {
 	return strconv.FormatInt(num, 10)
 }
 
+// Int64ToByte converts int64 to []byte
 func Int64ToByte(num int64) []byte {
-	result := make([]byte, 8)
-	binary.LittleEndian.PutUint64(result, uint64(num))
-	return result
+	return []byte(strconv.FormatInt(num, 10))
 }
 
+// IntToStr converts integer to string
 func IntToStr(num int) string {
 	return strconv.Itoa(num)
 }
@@ -480,7 +469,7 @@ func DecToBin(v interface{}, sizeBytes int64) []byte {
 	case uint64:
 		dec = int64(v.(uint64))
 	case string:
-		dec, _ = strconv.ParseInt(v.(string), 10, 64)
+		dec = StrToInt64(v.(string))
 	}
 	Hex := fmt.Sprintf("%0"+Int64ToStr(sizeBytes*2)+"x", dec)
 	return HexToBin([]byte(Hex))
@@ -514,14 +503,20 @@ func HexToBin(ihexdata interface{}) []byte {
 	var str []byte
 	str, err := hex.DecodeString(hexdata)
 	if err != nil {
-		log.WithFields(log.Fields{"data": hexdata, "error": err, "type": consts.ConvertionError}).Error("decoding string to hex")
+		log.Printf("HexToBin error: %s", err)
 	}
 	return str
 }
 
 // BinToDec converts input binary []byte to int64
 func BinToDec(bin []byte) int64 {
-	return int64(binary.BigEndian.Uint64(bin))
+	var a uint64
+	l := len(bin)
+	for i, b := range bin {
+		shift := uint64((l - i - 1) * 8)
+		a |= uint64(b) << shift
+	}
+	return int64(a)
 }
 
 // BinToDecBytesShift converts the input binary []byte to int64 and shifts the input bin
@@ -581,7 +576,7 @@ func InterfaceToFloat64(i interface{}) float64 {
 	case int64:
 		result = float64(i.(int64))
 	case string:
-		result, _ = strconv.ParseFloat(i.(string), 64)
+		result = StrToFloat64(i.(string))
 	case []byte:
 		result = BytesToFloat64(i.([]byte))
 	}
@@ -608,11 +603,28 @@ func BytesShiftReverse(str *[]byte, v interface{}) []byte {
 	return substr
 }
 
+// StrToInt64 converts string to int64
+func StrToInt64(s string) int64 {
+	int64, _ := strconv.ParseInt(s, 10, 64)
+	return int64
+}
+
 // BytesToInt64 converts []bytes to int64
 func BytesToInt64(s []byte) int64 {
-	return int64(binary.LittleEndian.Uint64(s))
-	//int64, _ := strconv.ParseInt(string(s), 10, 64)
-	//return int64
+	int64, _ := strconv.ParseInt(string(s), 10, 64)
+	return int64
+}
+
+// StrToUint64 converts string to the unsinged int64
+func StrToUint64(s string) uint64 {
+	ret, _ := strconv.ParseUint(s, 10, 64)
+	return ret
+}
+
+// StrToInt converts string to integer
+func StrToInt(s string) int {
+	i, _ := strconv.Atoi(s)
+	return i
 }
 
 // Float64ToStr converts float64 to string
@@ -620,13 +632,16 @@ func Float64ToStr(f float64) string {
 	return strconv.FormatFloat(f, 'f', 13, 64)
 }
 
+// StrToFloat64 converts string to float64
+func StrToFloat64(s string) float64 {
+	Float64, _ := strconv.ParseFloat(s, 64)
+	return Float64
+}
+
 // BytesToFloat64 converts []byte to float64
 func BytesToFloat64(s []byte) float64 {
-	bits := binary.LittleEndian.Uint64(s)
-	float64 := math.Float64frombits(bits)
-	return float64
-	//Float64, _ := strconv.ParseFloat(string(s), 64)
-	//return Float64
+	Float64, _ := strconv.ParseFloat(string(s), 64)
+	return Float64
 }
 
 // BytesToInt converts []byte to integer
@@ -648,8 +663,7 @@ func StrToMoney(str string) float64 {
 	} else {
 		new = str
 	}
-	result, _ := strconv.ParseFloat(new, 64)
-	return result
+	return StrToFloat64(new)
 }
 
 // AddressToString converts int64 address to apla address as XXXX-...-XXXX.
@@ -675,6 +689,8 @@ func EncodeLengthPlusData(idata interface{}) []byte {
 	case []byte:
 		data = idata.([]byte)
 	}
+	//log.Debug("data: %x", data)
+	//log.Debug("len data: %d", len(data))
 	return append(EncodeLength(int64(len(data))), data...)
 }
 
@@ -883,4 +899,12 @@ func RoundWithPrecision(num float64, precision int) float64 {
 	num += consts.ROUND_FIX
 	output := math.Pow(10, float64(precision))
 	return float64(Round(num*output)) / output
+}
+
+func RoundWithoutPrecision(num float64) int64 {
+	//log.Debug("num", num)
+	//num += ROUND_FIX
+	//	return int(StrToFloat64(Float64ToStr(num)) + math.Copysign(0.5, num))
+	//log.Debug("num", num)
+	return int64(num + math.Copysign(0.5, num))
 }

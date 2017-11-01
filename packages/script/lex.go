@@ -23,10 +23,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/consts"
-
 	"github.com/shopspring/decimal"
-	log "github.com/sirupsen/logrus"
 )
 
 // The lexical analysis of the incoming program is implemented in this file. It is the first phase of compilation
@@ -132,10 +129,6 @@ type Lexem struct {
 	Column uint32      // Position inside the line
 }
 
-func (l Lexem) GetLogger() *log.Entry {
-	return log.WithFields(log.Fields{"lex_type": l.Type, "lex_line": l.Line, "lex_column": l.Column})
-}
-
 // Lexems is a slice of lexems
 type Lexems []*Lexem
 
@@ -232,13 +225,11 @@ func lexParser(input []rune) (Lexems, error) {
 					if val, err := strconv.ParseFloat(name, 64); err == nil {
 						value = val
 					} else {
-						log.WithFields(log.Fields{"error": err, "value": name, "lex_line": line, "lex_col": off - offline + 1, "type": consts.ConvertionError}).Error("converting lex number to float")
 						return nil, fmt.Errorf(`%v %s [Ln:%d Col:%d]`, err, name, line, off-offline+1)
 					}
 				} else if val, err := strconv.ParseInt(name, 10, 64); err == nil {
 					value = val
 				} else {
-					log.WithFields(log.Fields{"error": err, "value": name, "lex_line": line, "lex_col": off - offline + 1, "type": consts.ConvertionError}).Error("converting lex number to int")
 					return nil, fmt.Errorf(`%v %s [Ln:%d Col:%d]`, err, name, line, off-offline+1)
 				}
 			case lexIdent:

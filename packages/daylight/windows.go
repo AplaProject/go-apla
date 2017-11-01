@@ -24,11 +24,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // KillPid kills the process with the specified pid
@@ -37,19 +34,19 @@ func KillPid(pid string) error {
 		sd := &model.StopDaemon{StopTime: time.Now().Unix()}
 		err := sd.Create()
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error creating StopDaemon")
+			log.Error("%v", utils.ErrInfo(err))
 			return err
 		}
 	}
 	rez, err := exec.Command("tasklist", "/fi", "PID eq "+pid).Output()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CommandExecutionError, "err": err, "cmd": "tasklist /fi PID eq" + pid}).Error("Error executing command")
 		return err
 	}
 	if string(rez) == "" {
 		return fmt.Errorf("null")
 	}
-	log.WithFields(log.Fields{"cmd": "tasklist /fi PID eq " + pid}).Debug("command execution result")
+	log.Debug("%rez s", string(rez))
+	fmt.Println("rez", string(rez))
 	if ok, _ := regexp.MatchString(`(?i)PID`, string(rez)); !ok {
 		return fmt.Errorf("null")
 	}

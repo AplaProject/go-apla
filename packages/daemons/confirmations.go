@@ -28,8 +28,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/tcpserver"
 	"github.com/AplaProject/go-apla/packages/utils"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var tick int
@@ -37,6 +35,7 @@ var tick int
 // Confirmations gets and checks blocks from nodes
 // Getting amount of nodes, which has the same hash as we do
 func Confirmations(d *daemon, ctx context.Context) error {
+
 	// the first 2 minutes we sleep for 10 sec for blocks to be collected
 	tick++
 
@@ -51,7 +50,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 	confirmations := &model.Confirmation{}
 	found, err := confirmations.GetGoodBlock(consts.MIN_CONFIRMED_NODES)
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting good block")
+		log.Error("get good block error: %s", err)
 		return err
 	}
 
@@ -63,7 +62,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 	infoBlock := &model.InfoBlock{}
 	found, err = infoBlock.Get()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
+		log.Error("get info_block error: %v", err)
 		return err
 	}
 	if !found {
@@ -83,18 +82,20 @@ func Confirmations(d *daemon, ctx context.Context) error {
 	if startBlockID == 0 {
 		startBlockID = LastBlockID
 	}
-	d.logger.WithFields(log.Fields{"start_block_id": startBlockID, "last_block_id": LastBlockID}).Info("confirming blocks from to")
+	log.Debug("confirmation: startBlockID: %d / LastBlockID: %d", startBlockID, LastBlockID)
 
 	for blockID := LastBlockID; blockID >= startBlockID; blockID-- {
+
 		if ctx.Err() != nil {
-			d.logger.WithFields(log.Fields{"type": consts.ContextError, "error": err}).Error("error in context")
 			return ctx.Err()
 		}
+
+		log.Debug("blockID for confirmation: %d", blockID)
 
 		block := model.Block{}
 		found, err := block.Get(blockID)
 		if err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by ID")
+			log.Error("get block error: %v", err)
 			return err
 		}
 		if !found {
@@ -102,9 +103,9 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		}
 
 		hashStr := string(converter.BinToHex(block.Hash))
-		d.logger.WithFields(log.Fields{"hash": hashStr}).Debug("checking hash")
+		log.Debugf("hash for check: %x", hashStr)
 		if len(hashStr) == 0 {
-			d.logger.WithFields(log.Fields{"hash": hashStr}).Debug("hash not found")
+			log.Debug("len(hash) == 0")
 			continue
 		}
 
@@ -114,7 +115,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		} else {
 			hosts, err = model.GetFullNodesHosts()
 			if err != nil {
-				d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting full nodes hosts")
+				log.Error("get full node error: %s", err)
 				return err
 			}
 		}
@@ -123,32 +124,34 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		for i := 0; i < len(hosts); i++ {
 			// TODO: ports should be in the table hosts
 			host := hosts[i] + ":" + utils.GetTcpPort(config.ConfigIni)
-			d.logger.WithFields(log.Fields{"host": host, "block_id": blockID}).Debug("checking block id confirmed at node")
+			log.Debugf("host %v", host)
 			go func() {
-				IsReachable(host, blockID, ch, d.logger)
+				IsReachable(host, blockID, ch)
 			}()
 		}
 		var answer string
 		var st0, st1 int64
 		for i := 0; i < len(hosts); i++ {
 			answer = <-ch
+			log.Info("answer == hash (%s = %s)", answer, hashStr)
 			if answer == hashStr {
 				st1++
 			} else {
 				st0++
 			}
-			d.logger.WithFields(log.Fields{"good_count": st1, "bad_count": st0, "hash": hashStr}).Debug("checked block with hash for confirmations")
+			log.Info("st0 %v  st1 %v", st0, st1)
 		}
 		confirmation := &model.Confirmation{}
 		found, err = confirmation.GetConfirmation(blockID)
 		if err == nil && found {
+			log.Debug("UPDATE confirmations SET good = %v, bad = %v, time = %v WHERE block_id = %v", st1, st0, time.Now().Unix(), blockID)
 			confirmation.BlockID = blockID
 			confirmation.Good = int32(st1)
 			confirmation.Bad = int32(st0)
 			confirmation.Time = int32(time.Now().Unix())
 			err = confirmation.Save()
 			if err != nil {
-				d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving confirmation")
+				log.Error("confirmation save error: %v", err)
 				return err
 			}
 		} else if err == nil && !found {
@@ -156,14 +159,16 @@ func Confirmations(d *daemon, ctx context.Context) error {
 			confirmation.Good = int32(st1)
 			confirmation.Bad = int32(st0)
 			confirmation.Time = int32(time.Now().Unix())
+			log.Debug("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( %v, %v, %v, %v )", blockID, st1, st0, time.Now().Unix())
 			err = confirmation.Save()
 			if err != nil {
-				d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving confirmation")
+				log.Error("confirmation save error: %v", err)
 				return err
 			}
 		} else {
 			return err
 		}
+		log.Debug("blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES %d>%d && %d>=%d\n", blockID, startBlockID, st1, consts.MIN_CONFIRMED_NODES)
 		if blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES {
 			break
 		}
@@ -173,10 +178,11 @@ func Confirmations(d *daemon, ctx context.Context) error {
 
 }
 
-func checkConf(host string, blockID int64, logger *log.Entry) string {
+func checkConf(host string, blockID int64) string {
+	log.Debug("confirmation: check conf for host: %s", host)
 	conn, err := net.DialTimeout("tcp", host, 5*time.Second)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host, "block_id": blockID}).Error("dialing to host")
+		log.Debug("net dial error: %v", utils.ErrInfo(err))
 		return "0"
 	}
 	defer conn.Close()
@@ -190,24 +196,25 @@ func checkConf(host string, blockID int64, logger *log.Entry) string {
 	}
 	err = tcpserver.SendRequest(&confRequest{Type: 4, BlockID: uint32(blockID)}, conn)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host, "block_id": blockID}).Error("sending confirmation request")
+		log.Error("send request error: %v", utils.ErrInfo(err))
 		return "0"
 	}
 
 	resp := &tcpserver.ConfirmResponse{}
 	err = tcpserver.ReadRequest(resp, conn)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host, "block_id": blockID}).Error("receiving confirmation response")
+		log.Error("read request error: %v", utils.ErrInfo(err))
 		return "0"
 	}
 	return string(converter.BinToHex(resp.Hash))
 }
 
 // IsReachable checks if there is blockID on the host
-func IsReachable(host string, blockID int64, ch0 chan string, logger *log.Entry) {
+func IsReachable(host string, blockID int64, ch0 chan string) {
+	log.Info("IsReachable %v", host)
 	ch := make(chan string, 1)
 	go func() {
-		ch <- checkConf(host, blockID, logger)
+		ch <- checkConf(host, blockID)
 	}()
 	select {
 	case reachable := <-ch:

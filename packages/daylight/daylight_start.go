@@ -26,7 +26,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
@@ -37,29 +36,26 @@ import (
 	"github.com/AplaProject/go-apla/packages/daemons"
 	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
 	"github.com/AplaProject/go-apla/packages/language"
-	logtools "github.com/AplaProject/go-apla/packages/log"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/utils"
-
 	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
 	"github.com/go-thrust/thrust"
 	"github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
+	"github.com/op/go-logging"
 )
 
 // FileAsset returns the body of the file
 func FileAsset(name string) ([]byte, error) {
+
 	if name := strings.Replace(name, "\\", "/", -1); name == `static/img/logo.`+utils.LogoExt {
 		logofile := *utils.Dir + `/logo.` + utils.LogoExt
 		if fi, err := os.Stat(logofile); err == nil && fi.Size() > 0 {
 			return ioutil.ReadFile(logofile)
-		} else if err != nil {
-			log.WithFields(log.Fields{"path": logofile, "error": err, "type": consts.IOError}).Error("Reading logo file")
 		}
 	}
 	return static.Asset(name)
@@ -80,11 +76,7 @@ func readConfig() {
 	if *utils.Dir == "" {
 		*utils.Dir = config.ConfigIni["dir"]
 	}
-	country, err := strconv.ParseInt(config.ConfigIni["one_country"], 10, 64)
-	if err != nil {
-		log.WithFields(log.Fields{"value": config.ConfigIni["one_country"], "type": consts.ConvertionError}).Error("parsing to int")
-	}
-	utils.OneCountry = country
+	utils.OneCountry = converter.StrToInt64(config.ConfigIni["one_country"])
 	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
 	if len(config.ConfigIni["lang"]) > 0 {
 		language.LangList = strings.Split(config.ConfigIni["lang"], `,`)
@@ -92,24 +84,30 @@ func readConfig() {
 }
 
 func killOld() {
-	pidPath := *utils.Dir + "/daylight.pid"
-	if _, err := os.Stat(pidPath); err == nil {
-		data, err := ioutil.ReadFile(pidPath)
+	if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
+		dat, err := ioutil.ReadFile(*utils.Dir + "/daylight.pid")
 		if err != nil {
-			log.WithFields(log.Fields{"path": pidPath, "error": err, "type": consts.IOError}).Error("reading pid file")
+			log.Error("%v", utils.ErrInfo(err))
 		}
 		var pidMap map[string]string
-		err = json.Unmarshal(data, &pidMap)
+		err = json.Unmarshal(dat, &pidMap)
 		if err != nil {
-			log.WithFields(log.Fields{"data": data, "error": err, "type": consts.JSONUnmarshallError}).Error("unmarshalling pid map")
+			log.Error("%v", utils.ErrInfo(err))
 		}
-		log.WithFields(log.Fields{"path": *utils.Dir + pidMap["pid"]}).Debug("old pid path")
+		fmt.Println("old PID ("+*utils.Dir+"/daylight.pid"+"):", pidMap["pid"])
 
-		KillPid(pidMap["pid"])
+		err = KillPid(pidMap["pid"])
+		if nil != err {
+			fmt.Println(err)
+			log.Error("KillPid %v", utils.ErrInfo(err))
+		}
 		if fmt.Sprintf("%s", err) != "null" {
+			fmt.Println(fmt.Sprintf("%s", err))
 			// give 15 sec to end the previous process
 			for i := 0; i < 15; i++ {
+				log.Debug("waiting killer %d", i)
 				if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
+					fmt.Println("waiting killer")
 					time.Sleep(time.Second)
 				} else { // if there is no daylight.pid, so it is finished
 					break
@@ -120,51 +118,45 @@ func killOld() {
 }
 
 func initLogs() error {
-	var err error
+	var backend *logging.LogBackend
 
-	if config.ConfigIni["log_output"] != "file" {
-		log.SetOutput(os.Stdout)
+	if config.ConfigIni["log_output"] == "console" {
+		backend = logging.NewLogBackend(os.Stderr, "", 0)
 	} else {
-		fileName := *utils.Dir + "/dclog.txt"
-		openMode := os.O_APPEND
-		if _, err := os.Stat(fileName); os.IsNotExist(err) {
-			openMode = os.O_CREATE
-		}
-
-		f, err := os.OpenFile(fileName, os.O_WRONLY|openMode, 0755)
+		f, err := os.OpenFile(*utils.Dir+"/dclog.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
 		if err != nil {
-			fmt.Println("Can't open log file ", fileName)
 			return err
 		}
-		log.SetOutput(f)
+		backend = logging.NewLogBackend(f, "", 0)
 	}
 
-	if level, ok := config.ConfigIni["log_level"]; ok {
-		switch level {
-		case "Debug":
-			log.SetLevel(log.DebugLevel)
-		case "Info":
-			log.SetLevel(log.InfoLevel)
-		case "Warn":
-			log.SetLevel(log.WarnLevel)
-		case "Error":
-			log.SetLevel(log.ErrorLevel)
+	backendFormatter := logging.NewBackendFormatter(backend, format)
+	backendLeveled := logging.AddModuleLevel(backendFormatter)
+
+	if *utils.LogLevel == "" {
+		if level, ok := config.ConfigIni["log_level"]; ok {
+			*utils.LogLevel = level
+		} else {
+			*utils.LogLevel = "INFO"
 		}
-	} else {
-		log.SetLevel(log.InfoLevel)
 	}
 
-	log.AddHook(logtools.ContextHook{})
+	logLevel, err := logging.LogLevel(*utils.LogLevel)
+	if err != nil {
+		log.Error("bad log level - %s: %v", *utils.LogLevel, utils.ErrInfo(err))
+		return err
+	}
 
-	return err
+	log.Infof("set logLevel: %v", logLevel)
+	backendLeveled.SetLevel(logLevel, "")
+	logging.SetBackend(backendLeveled)
+	return nil
 }
 
 func savePid() error {
 	pid := os.Getpid()
-	toMarshal := map[string]string{"pid": converter.IntToStr(pid), "version": consts.VERSION}
-	PidAndVer, err := json.Marshal(toMarshal)
+	PidAndVer, err := json.Marshal(map[string]string{"pid": converter.IntToStr(pid), "version": consts.VERSION})
 	if err != nil {
-		log.WithFields(log.Fields{"pid": pid, "data": toMarshal, "error": err, "type": consts.JSONMarshallError}).Error("marshalling json")
 		return err
 	}
 	return ioutil.WriteFile(*utils.Dir+"/daylight.pid", PidAndVer, 0644)
@@ -182,13 +174,14 @@ func rollbackToBlock(blockID int64) error {
 	parser := new(parser.Parser)
 	err := parser.RollbackToBlockID(*utils.RollbackToBlockID)
 	if err != nil {
+		log.Errorf("rollback return error: %s", err)
 		return err
 	}
 
 	// we recieve the statistics of all tables
 	allTable, err := model.GetAllTables()
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("error getting all tables")
+		log.Errorf("get all tables failed: %s", err)
 		return err
 	}
 
@@ -202,27 +195,29 @@ func rollbackToBlock(blockID int64) error {
 	for _, table := range allTable {
 		count, err := model.GetRecordsCount(converter.EscapeName(table))
 		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("Error querying DB")
+			log.Errorf("select from table %s failed: %s", table, err)
 			return err
 		}
 		if count > 0 && count > startData[table] {
-			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Warn("record count in table is larger then start")
+			fmt.Println(">>ALERT<<", table, count)
 		} else {
-			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Info("record count in table is ok")
+			fmt.Println(table, "ok")
 		}
 	}
 	return nil
 }
 
 func processOldFile(oldFileName string) error {
+
 	err := utils.CopyFileContents(os.Args[0], oldFileName)
 	if err != nil {
+		log.Errorf("can't copy from %s %v", oldFileName, utils.ErrInfo(err))
 		return err
 	}
 
 	err = exec.Command(*utils.OldFileName, "-dir", *utils.Dir).Start()
 	if err != nil {
-		log.WithFields(log.Fields{"cmd": *utils.OldFileName + " -dir " + *utils.Dir, "error": err, "type": consts.CommandExecutionError}).Error("executing command")
+		log.Errorf("exec command error: %v", utils.ErrInfo(err))
 		return err
 	}
 	return nil
@@ -251,11 +246,12 @@ func initRoutes(listenHost, browserHost string) string {
 
 // Start starts the main code of the program
 func Start(dir string, thrustWindowLoder *window.Window) {
+
 	var err error
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.WithFields(log.Fields{"panic": r, "type": consts.PanicRecoveredError}).Error("recovered panic")
+			log.Error("Recovered", r)
 			panic(r)
 		}
 	}()
@@ -275,17 +271,11 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	readConfig()
 
-	err = initLogs()
-	if err != nil {
-		Exit(1)
-	}
-
 	if len(config.ConfigIni["db_type"]) > 0 {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 		if err != nil {
-			log.WithFields(log.Fields{"db_user": config.ConfigIni["db_user"], "db_password": config.ConfigIni["db_password"],
-				"db_name": config.ConfigIni["db_name"], "type": consts.DBError}).Error("can't init gorm")
+			log.Errorf("gorm init error: %s", err)
 			Exit(1)
 		}
 	}
@@ -295,9 +285,10 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		log.Infof("generate first block")
 		parser.FirstBlock()
 		os.Exit(0)
+
 	}
 
-	log.WithFields(log.Fields{"work_dir": *utils.Dir, "version": consts.VERSION}).Info("started with")
+	fmt.Printf("work dir = %s\ndcVersion=%s\n", *utils.Dir, consts.VERSION)
 
 	// kill previously run apla
 	if !utils.Mobile() {
@@ -307,6 +298,12 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// TODO: ??
 	if fi, err := os.Stat(*utils.Dir + `/logo.png`); err == nil && fi.Size() > 0 {
 		utils.LogoExt = `png`
+	}
+
+	err = initLogs()
+	if err != nil {
+		log.Error("logs init failed: %v", utils.ErrInfo(err))
+		Exit(1)
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -320,6 +317,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// save the current pid and version
 	if !utils.Mobile() {
 		if err := savePid(); err != nil {
+			log.Errorf("can't create pid: %s", err)
 			Exit(1)
 		}
 		defer delPidFile()
@@ -327,26 +325,29 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	// database rollback to the specified block
 	if *utils.RollbackToBlockID > 0 {
-		log.WithFields(log.Fields{"block_id": *utils.RollbackToBlockID}).Info("Rollbacking to block ID")
-		rollbackToBlock(*utils.RollbackToBlockID)
-		log.WithFields(log.Fields{"block_id": *utils.RollbackToBlockID}).Info("Rollback is ok")
+		err := rollbackToBlock(*utils.RollbackToBlockID)
+		if err != nil {
+			fmt.Printf("rollback error: %s\n", err)
+		} else {
+			fmt.Printf("OK\n")
+		}
 		Exit(0)
 	}
 
-	dir = *utils.Dir + "/public"
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err = os.Mkdir(dir, 0755)
+	if _, err := os.Stat(*utils.Dir + "/public"); os.IsNotExist(err) {
+		err = os.Mkdir(*utils.Dir+"/public", 0755)
 		if err != nil {
-			log.WithFields(log.Fields{"path": dir, "error": err, "type": consts.IOError}).Error("Making dir")
+			log.Error("%v", utils.ErrInfo(err))
 			Exit(1)
 		}
 	}
 
 	BrowserHTTPHost, _, ListenHTTPHost := GetHTTPHost()
+	fmt.Printf("BrowserHTTPHost: %v, ListenHTTPHost: %v\n", BrowserHTTPHost, ListenHTTPHost)
+
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err := daemonsctl.RunAllDaemons()
-		log.Info("Daemons started")
 		if err != nil {
 			os.Exit(1)
 		}
@@ -359,7 +360,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		BrowserHTTPHost = initRoutes(ListenHTTPHost, BrowserHTTPHost)
 
 		if *utils.Console == 0 && !utils.Mobile() {
-			log.Info("starting browser")
+			log.Debugf("try to start browser")
 			time.Sleep(time.Second)
 			if thrustWindowLoder != nil {
 				thrustWindowLoder.Close()
@@ -371,13 +372,16 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 					thrustWindow.OpenDevtools()
 				}
 				thrustWindow.HandleEvent("*", func(cr commands.EventResult) {
-					log.WithFields(log.Fields{"event": cr}).Debug("handle event")
+					fmt.Println("HandleEvent", cr)
 				})
 				thrustWindow.HandleRemote(func(er commands.EventResult, this *window.Window) {
+					//					fmt.Println("RemoteMessage Recieved:", er.Message.Payload)
 					if len(er.Message.Payload) > 7 && er.Message.Payload[:7] == `mailto:` && runtime.GOOS == `windows` {
 						utils.ShellExecute(er.Message.Payload)
 					} else if len(er.Message.Payload) > 7 && er.Message.Payload[:2] == `[{` {
 						ioutil.WriteFile(filepath.Join(*utils.Dir, `accounts.txt`), []byte(er.Message.Payload), 0644)
+						//					} else if len(er.Message.Payload) >= 7 && er.Message.Payload[:7] == `USERID=` {
+						// for Lite version - do nothing
 					} else if er.Message.Payload == `ACCOUNTS` {
 						accounts, _ := ioutil.ReadFile(filepath.Join(*utils.Dir, `accounts.txt`))
 						this.SendRemoteMessage(string(accounts))
@@ -387,6 +391,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 					// Keep in mind once we have the message, lets say its json of some new type we made,
 					// We can unmarshal it to that type.
 					// Same goes for the other way around.
+					//					this.SendRemoteMessage("boop")
 				})
 				thrustWindow.Show()
 				thrustWindow.Focus()

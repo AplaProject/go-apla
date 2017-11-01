@@ -27,8 +27,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // Type2 serves requests from disseminator
@@ -41,31 +39,29 @@ func Type2(r *DisRequest) (*DisTrResponse, error) {
 	}
 
 	if int64(len(binaryData)) > consts.MAX_TX_SIZE {
-		log.WithFields(log.Fields{"type": consts.ParameterExceeded, "max_size": consts.MAX_TX_SIZE, "size": len(binaryData)}).Error("transaction size exceeds max size")
 		return nil, utils.ErrInfo("len(txBinData) > max_tx_size")
 	}
 
 	if len(binaryData) < 5 {
-		log.WithFields(log.Fields{"type": consts.ProtocolError, "len": len(binaryData), "should_be_equal": 5}).Error("binary data slice has incorrect length")
 		return nil, utils.ErrInfo("len(binaryData) < 5")
 	}
 
 	decryptedBinDataFull := decryptedBinData
 	hash, err := crypto.Hash(decryptedBinDataFull)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "value": decryptedBinDataFull}).Fatal("cannot hash tx bindata")
+		log.Fatal(err)
 	}
 
 	_, err = model.DeleteQueueTxByHash(nil, hash)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "hash": hash}).Error("Deleting queue_tx with hash")
 		return nil, utils.ErrInfo(err)
 	}
 
+	//hexBinData := converter.BinToHex(decryptedBinDataFull)
+	log.Debug("INSERT INTO queue_tx (hash, data) (%s, %s)", hash, decryptedBinData)
 	queueTx := &model.QueueTx{Hash: hash, Data: decryptedBinData, FromGate: 0}
 	err = queueTx.Create()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Creating queue_tx")
 		return nil, utils.ErrInfo(err)
 	}
 
@@ -74,70 +70,59 @@ func Type2(r *DisRequest) (*DisTrResponse, error) {
 
 func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 	if len(*binaryTx) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("binary tx is empty")
 		return nil, nil, nil, utils.ErrInfo("len(binaryTx) == 0")
 	}
 
 	myUserID := converter.BinToDecBytesShift(&*binaryTx, 5)
-	log.WithFields(log.Fields{"user_id": myUserID}).Debug("decrypted userID is")
+	log.Debug("myUserId: %d", myUserID)
 
 	// remove the encrypted key, and all that stay in $binary_tx will be encrypted keys of the transactions/blocks
 	length, err := converter.DecodeLength(&*binaryTx)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ProtocolError, "error": err}).Error("Decoding binary tx length")
+		log.Fatal(err)
 	}
 	encryptedKey := converter.BytesShift(&*binaryTx, length)
+
 	iv := converter.BytesShift(&*binaryTx, 16)
-	log.WithFields(log.Fields{"encryptedKey": encryptedKey, "iv": iv}).Debug("binary tx encryptedKey and iv is")
 
 	if len(encryptedKey) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("binary tx encrypted key is empty")
 		return nil, nil, nil, utils.ErrInfo("len(encryptedKey) == 0")
 	}
 
 	if len(*binaryTx) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("binary tx is empty")
 		return nil, nil, nil, utils.ErrInfo("len(*binaryTx) == 0")
 	}
 
 	nodeKey := &model.MyNodeKey{}
 	err = nodeKey.GetNodeWithMaxBlockID()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting node with max blockID")
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
 	if len(nodeKey.PrivateKey) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("node with max blockID not found")
 		return nil, nil, nil, utils.ErrInfo("len(nodePrivateKey) == 0")
 	}
 
 	block, _ := pem.Decode([]byte(nodeKey.PrivateKey))
 	if block == nil || block.Type != "RSA PRIVATE KEY" {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Error("No valid PEM data found")
 		return nil, nil, nil, utils.ErrInfo("No valid PEM data found")
 	}
 
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("Parse PKCS1PrivateKey")
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
 
 	decKey, err := rsa.DecryptPKCS1v15(crand.Reader, privateKey, encryptedKey)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("rsa Decrypt")
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
-	log.WithFields(log.Fields{"key": decKey}).Debug("decrypted key")
+
 	if len(decKey) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("decrypted key is empty")
 		return nil, nil, nil, utils.ErrInfo("len(decKey)")
 	}
 
-	log.WithFields(log.Fields{"binaryTx": *binaryTx, "iv": iv}).Debug("binaryTx and iv is")
 	decrypted, err := crypto.Decrypt(iv, *binaryTx, decKey)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("Decryption binary tx")
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
 

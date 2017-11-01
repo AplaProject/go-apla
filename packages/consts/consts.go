@@ -104,7 +104,5 @@ var TxTypes = map[int]string{
 	35: "NewAccount",
 }
 
-var FillSize = 32
-
 func init() {
 }

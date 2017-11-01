@@ -17,16 +17,15 @@
 package daemons
 
 import (
-	"context"
 	"errors"
 	"time"
+
+	"context"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/utils"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func BlockGenerator(d *daemon, ctx context.Context) error {
@@ -35,7 +34,6 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	config := &model.Config{}
 	found, err := config.Get()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cannot get config")
 		return err
 	}
 
@@ -46,12 +44,9 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	fullNodes := &model.FullNode{}
 	found, err = fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
 	if err != nil || !found {
-		if err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("error finding full node")
-		}
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
-		d.logger.WithFields(log.Fields{"type": consts.JustWaiting, "error": err}).Warning("we are not full node, sleep for 10 seconds")
+		log.Infof("we are not full node, sleep for 10 seconds")
 		return nil
 	}
 
@@ -61,7 +56,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	prevBlock := &model.InfoBlock{}
 	found, err = prevBlock.Get()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting previous block")
+		log.Errorf("can't get block: %s", err)
 		return err
 	}
 	if !found {
@@ -71,12 +66,12 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	// calculate the next block generation time
 	sleepTime, err := model.GetSleepTime(config.DltWalletID, config.StateID, config.StateID, config.DltWalletID)
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting sleep time")
+		log.Errorf("can't get sleep time: %s", err)
 		return err
 	}
 	toSleep := int64(sleepTime) - (time.Now().Unix() - int64(prevBlock.Time))
 	if toSleep > 0 {
-		d.logger.WithFields(log.Fields{"type": consts.JustWaiting, "seconds": toSleep}).Info("sleeping n seconds")
+		log.Debugf("we need to sleep %d seconds to generate new block", toSleep)
 		d.sleepTime = time.Duration(toSleep) * time.Second
 		return nil
 	}
@@ -84,10 +79,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	nodeKey := &model.MyNodeKey{}
 	err = nodeKey.GetNodeWithMaxBlockID()
 	if err != nil || len(nodeKey.PrivateKey) < 1 {
-		if err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node with max blockID")
-		}
-		d.logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+		log.Errorf("bad node private key: %s", err)
 		return err
 	}
 
@@ -96,22 +88,26 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	// verify transactions
 	err = p.AllTxParser()
 	if err != nil {
+		log.Errorf("transactions parser error: %s", err)
 		return err
 	}
 
 	trs, err := model.GetAllUnusedTransactions()
 	if err != nil || trs == nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
 		return err
 	}
+	log.Debugf("transactions to put in new block: %+v", trs)
 
 	blockBin, err := generateNextBlock(prevBlock, *trs, nodeKey.PrivateKey, config, time.Now().Unix())
 	if err != nil {
+		log.Errorf("can't generate block: %s", err)
 		return err
 	}
 
+	log.Debugf("try to parse new transactions")
 	err = parser.InsertBlock(blockBin)
 	if err != nil {
+		log.Errorf("parser block error: %s", err)
 		return err
 	}
 

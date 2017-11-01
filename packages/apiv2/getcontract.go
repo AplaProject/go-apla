@@ -23,8 +23,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type contractField struct {
@@ -45,7 +43,7 @@ type getContractResult struct {
 	Name     string          `json:"name"`
 }
 
-func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var result getContractResult
 
 	cntname := data.params[`name`].(string)

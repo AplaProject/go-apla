@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -14,16 +13,17 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
+	logging "github.com/op/go-logging"
+
 	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/utils"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
 	DBConn         *gorm.DB
+	log            = logging.MustGetLogger("model")
 	RecordNotFound = gorm.ErrRecordNotFound
 )
 
@@ -39,7 +39,6 @@ func GormInit(user string, pass string, dbName string) error {
 	DBConn, err = gorm.Open("postgres",
 		fmt.Sprintf("host=localhost user=%s dbname=%s sslmode=disable password=%s", user, dbName, pass))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cant open connection to DB")
 		return err
 	}
 	return nil
@@ -59,7 +58,6 @@ type DbTransaction struct {
 func StartTransaction() (*DbTransaction, error) {
 	conn := DBConn.Begin()
 	if conn.Error != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": conn.Error}).Error("cannot start transaction because of connection error")
 		return nil, conn.Error
 	}
 
@@ -104,18 +102,15 @@ func GetRecordsCount(tableName string) (int64, error) {
 func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 	schema, err := static.Asset("static/schema-ecosystem-v2.sql")
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting schema from static asset")
 		return err
 	}
 	err = DBConn.Exec(fmt.Sprintf(string(schema), id, wallet, name)).Error
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err
 	}
 	if id == 1 {
 		schema, err = static.Asset("static/schema-firstecosystem-v2.sql")
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting schema for first ecosystem")
 			return err
 		}
 		err = DBConn.Exec(fmt.Sprintf(string(schema), wallet)).Error
@@ -126,7 +121,6 @@ func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 func ExecSchema() error {
 	schema, err := static.Asset("static/schema-v2.sql")
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting static/schema-v2.sql asset")
 		os.Remove(*utils.Dir + "/config.ini")
 		return err
 	}
@@ -146,23 +140,21 @@ func GetRollbackID(tblname, where, ordering string) (int64, error) {
 	query := `SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering
 	err := DBConn.Raw(query).Row().Scan(&result)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": query}).Error("selecting rollback id from table")
+		log.Errorf("can't get rollback_id: %s for query %s", err, query)
+		// TODO
 		return 0, nil
 	}
 	return result, nil
 }
 
 func GetFirstColumnName(table string) (string, error) {
-	query := `SELECT * FROM "` + table + `" LIMIT 1`
-	rows, err := DBConn.Raw(query).Rows()
+	rows, err := DBConn.Raw(`SELECT * FROM "` + table + `" LIMIT 1`).Rows()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": query}).Error("selecting rollback id from table")
 		return "", err
 	}
 	defer rows.Close()
 	columns, err := rows.Columns()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": query}).Error("getting rows columns")
 		return "", err
 	}
 	if len(columns) > 0 {
@@ -176,51 +168,43 @@ func GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
 	err := DBConn.Raw(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", query), args...).Row().Scan(&planStr)
 	switch {
 	case err == sql.ErrNoRows:
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": query}).Error("no rows while explaining query")
 		return 0, errors.New("No rows")
 	case err != nil:
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": query}).Error("error explaining query")
 		return 0, err
 	}
 	var queryPlan []map[string]interface{}
 	dec := json.NewDecoder(strings.NewReader(planStr))
 	dec.UseNumber()
 	if err := dec.Decode(&queryPlan); err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("decoding query plan from JSON")
 		return 0, err
 	}
 	if len(queryPlan) == 0 {
-		log.Error("Query plan is empty")
 		return 0, errors.New("Query plan is empty")
 	}
 	firstNode := queryPlan[0]
 	var plan interface{}
 	var ok bool
 	if plan, ok = firstNode["Plan"]; !ok {
-		log.Error("No Plan key in result")
 		return 0, errors.New("No Plan key in result")
 	}
+
 	planMap, ok := plan.(map[string]interface{})
 	if !ok {
-		log.Error("Plan is not map[string]interface{}")
 		return 0, errors.New("Plan is not map[string]interface{}")
 	}
 
 	totalCost, ok := planMap["Total Cost"]
 	if !ok {
-		log.Error("PlanMap has no TotalCost")
 		return 0, errors.New("PlanMap has no TotalCost")
 	}
 
 	totalCostNum, ok := totalCost.(json.Number)
 	if !ok {
-		log.Error("Total cost is not a number")
 		return 0, errors.New("Total cost is not a number")
 	}
 
 	totalCostF64, err := totalCostNum.Float64()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("converting query total cost from json number to float64")
 		return 0, err
 	}
 	return int64(totalCostF64), nil
@@ -231,20 +215,17 @@ func GetAllTables() ([]string, error) {
 	sql := `SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')`
 	rows, err := DBConn.Raw(sql).Rows()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": sql}).Error("executing raw query")
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var tblname string
 		if err := rows.Scan(&tblname); err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("scanning table name from row")
 			return nil, err
 		}
 		result = append(result, tblname)
 	}
 	if err := rows.Err(); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("retrieving rows from table")
 		return nil, err
 	}
 	return result, nil
@@ -257,7 +238,6 @@ func GetColumnCount(tableName string) (int64, error) {
 		return 0, nil
 	}
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing raw query")
 		return 0, err
 	}
 	return count, nil
@@ -266,7 +246,6 @@ func GetColumnCount(tableName string) (int64, error) {
 func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
 	hash, err := crypto.Hash(data)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing data")
 		return nil, err
 	}
 	ts := &TransactionStatus{
@@ -277,7 +256,6 @@ func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
 	}
 	err = ts.Create()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("transaction status create")
 		return nil, err
 	}
 	qtx := &QueueTx{
@@ -332,10 +310,10 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 
 func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int64) (int64, error) {
 	// take the list of all full_nodes
+
 	node := &FullNode{}
 	fullNodes, err := node.GetAll()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all full nodes")
 		return 0, err
 	}
 	fullNodesList := make([]map[string]string, 0, len(*fullNodes))
@@ -347,17 +325,12 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 	// determine full_node_id of the one, who had to generate a block (but could delegate this)
 	_, err = node.Get(prevBlockWalletID)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node by prev block wallet id")
 		return 0, err
 	}
 	prevBlockFullNodeID := node.ID
 	prevBlockFullNodePosition := func(fullNodesList []map[string]string, prevBlockFullNodeID int64) int {
 		for i, fullNodes := range fullNodesList {
-			id, err := strconv.ParseInt(fullNodes["id"], 10, 64)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": fullNodes["id"]}).Error("converting full nodes id from string to int")
-			}
-			if id == prevBlockFullNodeID {
+			if converter.StrToInt64(fullNodes["id"]) == prevBlockFullNodeID {
 				return i
 			}
 		}
@@ -367,15 +340,8 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 	// define our place (Including in the 'delegate')
 	myPosition := func(fullNodesList []map[string]string, myWalletID, myStateID int64) int {
 		for i, fullNodes := range fullNodesList {
-			stateID, err := strconv.ParseInt(fullNodes["state_id"], 10, 64)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": fullNodes["state_id"]}).Error("converting full nodes state_id from string to int")
-			}
-			walletID, err := strconv.ParseInt(fullNodes["wallet_id"], 10, 64)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": fullNodes["wallet_id"]}).Error("converting full nodes wallet_id from string to int")
-			}
-			if stateID == myStateID || walletID == myWalletID {
+			if converter.StrToInt64(fullNodes["state_id"]) == myStateID || converter.StrToInt64(fullNodes["wallet_id"]) == myWalletID ||
+				converter.StrToInt64(fullNodes["final_delegate_state_id"]) == myWalletID || converter.StrToInt64(fullNodes["final_delegate_wallet_id"]) == myWalletID {
 				return i
 			}
 		}
@@ -412,11 +378,7 @@ func IsNodeState(state int64, host string) bool {
 			return true
 		}
 		for _, id := range strings.Split(val, `,`) {
-			stateID, err := strconv.ParseInt(id, 10, 64)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("converting node state id from string to int")
-			}
-			if stateID == state {
+			if converter.StrToInt64(id) == state {
 				return true
 			}
 		}
@@ -479,96 +441,10 @@ func GetNextID(table string) (int64, error) {
 	var id int64
 	rows, err := DBConn.Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting next id from table")
 		return 0, err
 	}
 	rows.Next()
 	rows.Scan(&id)
 	rows.Close()
 	return id + 1, err
-}
-
-// Now returns the current time of postgresql
-func Now(vars *map[string]string, pars ...string) string {
-	var (
-		cut             int
-		query, interval string
-	)
-	if len(pars) > 1 && len(pars[1]) > 0 {
-		interval = converter.SanitizeNumber(pars[1])
-		if interval[0] != '-' && interval[0] != '+' {
-			interval = `+` + interval
-		}
-		interval = fmt.Sprintf(` %s interval '%s'`, interval[:1], strings.TrimSpace(interval[1:]))
-	}
-	if pars[0] == `` {
-		query = `select round(extract(epoch from now()` + interval + `))::integer`
-		cut = 10
-	} else {
-		query = `select now()` + interval
-		format := converter.Sanitize(pars[0], `+-: /.`)
-		switch format {
-		case `datetime`:
-			cut = 19
-		default:
-			if strings.Index(format, `HH`) >= 0 && strings.Index(format, `HH24`) < 0 {
-				format = strings.Replace(format, `HH`, `HH24`, -1)
-			}
-			query = fmt.Sprintf(`select to_char(now()%s, '%s')`, interval, format)
-		}
-	}
-	ret, err := Single(query).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing query to get now value")
-		return err.Error()
-	}
-	if cut > 0 {
-		ret = strings.Replace(ret[:cut], `T`, ` `, -1)
-	}
-	return ret
-}
-
-func GetRowVars(vars *map[string]string, pars ...string) string {
-	if len(pars) != 4 && len(pars) != 3 {
-		return ``
-	}
-	where := ``
-	if len(pars) == 4 {
-		where = ` where ` + converter.EscapeName(pars[2]) + `='` + converter.Escape(pars[3]) + `'`
-	} else if len(pars) == 3 {
-		where = ` where ` + converter.Escape(pars[2])
-	}
-	value, err := GetOneRow(`select * from ` + converter.EscapeName(pars[1]) + where).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
-		return err.Error()
-	}
-	for key, val := range value {
-		if val == `NULL` {
-			val = ``
-		}
-		(*vars)[pars[0]+`_`+key] = converter.StripTags(val)
-	}
-	return ``
-}
-
-func GetOne(vars *map[string]string, pars ...string) string {
-	if len(pars) < 2 {
-		return ``
-	}
-	where := ``
-	if len(pars) == 4 {
-		where = ` where ` + converter.EscapeName(pars[2]) + `='` + converter.Escape(pars[3]) + `'`
-	} else if len(pars) == 3 {
-		where = ` where ` + converter.Escape(pars[2])
-	}
-	value, err := Single(`select ` + converter.Escape(pars[0]) + ` from ` + converter.EscapeName(pars[1]) + where).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting single")
-		return err.Error()
-	}
-	if value == `NULL` {
-		value = ``
-	}
-	return strings.Replace(converter.StripTags(value), "\n", "\n<br>", -1)
 }

@@ -11,8 +11,6 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type signProvider int
@@ -23,7 +21,7 @@ const (
 
 func Sign(privateKey string, data string) ([]byte, error) {
 	if len(data) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(SigningEmpty.Error())
+		log.Debug(SigningEmpty.Error())
 	}
 	switch signProv {
 	case _ECDSA:
@@ -35,7 +33,7 @@ func Sign(privateKey string, data string) ([]byte, error) {
 
 func CheckSign(public []byte, data string, signature []byte) (bool, error) {
 	if len(public) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(CheckingSignEmpty.Error())
+		log.Debug(CheckingSignEmpty.Error())
 	}
 	switch signProv {
 	case _ECDSA:
@@ -61,12 +59,11 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 	case elliptic256:
 		pubkeyCurve = elliptic.P256()
 	default:
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Fatal(UnsupportedCurveSize.Error())
+		log.Fatal(UnsupportedCurveSize.Error())
 	}
 
 	b, err := hex.DecodeString(privateKey)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding private key from hex")
 		return
 	}
 	bi := new(big.Int).SetBytes(b)
@@ -76,7 +73,7 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 
 	signhash, err := Hash([]byte(data))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(HashingError.Error())
+		log.Fatal(HashingError)
 	}
 	r, s, err := ecdsa.Sign(crand.Reader, priv, signhash)
 	if err != nil {
@@ -89,15 +86,12 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 // CheckECDSA checks if forSign has been signed with corresponding to public the private key
 func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
 	if len(data) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Error("data is empty")
 		return false, fmt.Errorf("invalid parameters len(data) == 0")
 	}
 	if len(public) != consts.PubkeySizeLength {
-		log.WithFields(log.Fields{"size": len(public), "size_match": consts.PubkeySizeLength, "type": consts.SizeDoesNotMatch}).Error("invalid public key")
 		return false, fmt.Errorf("invalid parameters len(public) = %d", len(public))
 	}
 	if len(signature) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Error("invalid signature")
 		return false, fmt.Errorf("invalid parameters len(signature) == 0")
 	}
 
@@ -106,12 +100,12 @@ func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
 	case elliptic256:
 		pubkeyCurve = elliptic.P256()
 	default:
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(UnsupportedCurveSize.Error())
+		log.Fatal(UnsupportedCurveSize)
 	}
 
 	hash, err := Hash([]byte(data))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(HashingError.Error())
+		log.Fatal(HashingError)
 	}
 
 	pubkey := new(ecdsa.PublicKey)
@@ -152,27 +146,22 @@ func parseSign(sign string) (*big.Int, *big.Int, error) {
 	if len(sign) > 128 {
 		binSign, err = hex.DecodeString(sign)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding sign from string")
 			return nil, nil, err
 		}
 		left := parse(binSign[2:])
 		if left == nil || int(binSign[3])+6 > len(binSign) {
-			log.WithFields(log.Fields{"type": consts.CryptoError}).Error("wrong left parsing")
 			return nil, nil, fmt.Errorf(`wrong left parsing`)
 		}
 		right := parse(binSign[4+binSign[3]:])
 		if right == nil {
-			log.WithFields(log.Fields{"type": consts.CryptoError}).Error("wrong right parsing")
 			return nil, nil, fmt.Errorf(`wrong right parsing`)
 		}
 		sign = hex.EncodeToString(append(left, right...))
 	} else if len(sign) < 128 {
-		log.WithFields(log.Fields{"size": len(sign), "size_match": 128}).Error("wrong signature size")
 		return nil, nil, fmt.Errorf(`wrong len of signature %d`, len(sign))
 	}
 	all, err := hex.DecodeString(sign[:])
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("decoding signature to hex")
 		return nil, nil, err
 	}
 	return new(big.Int).SetBytes(all[:32]), new(big.Int).SetBytes(all[len(all)-32:]), nil

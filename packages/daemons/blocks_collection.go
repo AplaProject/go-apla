@@ -27,6 +27,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/net/context/ctxhttp"
+
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -34,9 +36,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/utils"
-
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 // BlocksCollection collects and parses blocks
@@ -46,7 +45,6 @@ func BlocksCollection(d *daemon, ctx context.Context) error {
 	}
 
 	if ctx.Err() != nil {
-		d.logger.WithFields(log.Fields{"type": consts.ContextError, "error": ctx.Err()}).Error("context error")
 		return ctx.Err()
 	}
 
@@ -54,16 +52,16 @@ func BlocksCollection(d *daemon, ctx context.Context) error {
 }
 
 func initialLoad(d *daemon, ctx context.Context) error {
+
 	// check for initial load
-	toLoad, err := needLoad(d.logger)
+	toLoad, err := needLoad()
 	if err != nil {
 		return err
 	}
 
 	if toLoad {
-		d.logger.Debug("start first block loading")
+		log.Debugf("star first block loading")
 		if err := model.UpdateConfig("current_load_clockchain", "file"); err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating current_load_blockchain in config")
 			return err
 		}
 
@@ -73,7 +71,6 @@ func initialLoad(d *daemon, ctx context.Context) error {
 	}
 
 	if err := model.UpdateConfig("current_load_clockchain", "nodes"); err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating current_load_blockchain in config")
 		return err
 	}
 
@@ -81,14 +78,16 @@ func initialLoad(d *daemon, ctx context.Context) error {
 }
 
 func blocksCollection(d *daemon, ctx context.Context) error {
+
+	// TODO: ????? remove from all tables in some test mode ?????
+
 	hosts, err := model.GetFullNodesHosts()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting full nodes hosts")
 		return err
 	}
 
 	// get a host with the biggest block id
-	host, maxBlockID, err := chooseBestHost(ctx, hosts, d.logger)
+	host, maxBlockID, err := chooseBestHost(ctx, hosts)
 	if err != nil {
 		return err
 	}
@@ -102,7 +101,7 @@ func blocksCollection(d *daemon, ctx context.Context) error {
 }
 
 // best host is a host with the biggest last block ID
-func chooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (string, int64, error) {
+func chooseBestHost(ctx context.Context, hosts []string) (string, int64, error) {
 	type blockAndHost struct {
 		host    string
 		blockID int64
@@ -113,13 +112,12 @@ func chooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 	var wg sync.WaitGroup
 	for _, h := range hosts {
 		if ctx.Err() != nil {
-			logger.WithFields(log.Fields{"error": ctx.Err(), "type": consts.ContextError}).Error("context error")
 			return "", 0, ctx.Err()
 		}
 		wg.Add(1)
 
 		go func(host string) {
-			blockID, err := getHostBlockID(host, logger)
+			blockID, err := getHostBlockID(host)
 			wg.Done()
 
 			c <- blockAndHost{
@@ -145,10 +143,9 @@ func chooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 	return bestHost, maxBlockID, nil
 }
 
-func getHostBlockID(host string, logger *log.Entry) (int64, error) {
+func getHostBlockID(host string) (int64, error) {
 	conn, err := utils.TCPConn(host)
 	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("error connecting to host")
 		return 0, err
 	}
 	defer conn.Close()
@@ -156,7 +153,6 @@ func getHostBlockID(host string, logger *log.Entry) (int64, error) {
 	// get max block request
 	_, err = conn.Write(converter.DecToBin(consts.DATA_TYPE_MAX_BLOCK_ID, 2))
 	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("writing max block id to host")
 		return 0, err
 	}
 
@@ -164,7 +160,6 @@ func getHostBlockID(host string, logger *log.Entry) (int64, error) {
 	blockIDBin := make([]byte, 4)
 	_, err = conn.Read(blockIDBin)
 	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("reading max block id from host")
 		return 0, err
 	}
 
@@ -173,6 +168,7 @@ func getHostBlockID(host string, logger *log.Entry) (int64, error) {
 
 // load from host all blocks from our last block to maxBlockID
 func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
+
 	DBLock()
 	defer DBUnlock()
 
@@ -180,7 +176,6 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	curBlock := &model.InfoBlock{}
 	found, err := curBlock.Get()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting info block")
 		return err
 	}
 	if !found {
@@ -189,13 +184,11 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID++ {
 		if ctx.Err() != nil {
-			d.logger.WithFields(log.Fields{"type": consts.ContextError, "error": ctx.Err()}).Error("context error")
 			return ctx.Err()
 		}
 
 		blockBin, err := utils.GetBlockBody(host, blockID, consts.DATA_TYPE_BLOCK_BODY)
 		if err != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
 			return err
 		}
 
@@ -203,14 +196,12 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		if err != nil {
 			// we got bad block and should ban this host
 			banNode(host, err)
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
 			return err
 		}
 
 		// hash compare could be failed in the case of fork
 		hashMatched, err := block.CheckHash()
 		if err != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
 			banNode(host, err)
 			return err
 		}
@@ -219,7 +210,6 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			// it should be fork, replace our previous blocks to ones from the host
 			err := parser.GetBlocks(blockID-1, host, "rollback_blocks_2", consts.DATA_TYPE_BLOCK_BODY)
 			if err != nil {
-				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 				banNode(host, err)
 				return err
 			}
@@ -244,13 +234,15 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	return nil
 }
 
-func downloadChain(ctx context.Context, fileName, url string, logger *log.Entry) error {
+func downloadChain(ctx context.Context, fileName, url string) error {
+
 	for i := 0; i < consts.DOWNLOAD_CHAIN_TRY_COUNT; i++ {
 		loadCtx, cancel := context.WithTimeout(ctx, time.Duration(syspar.GetUpdFullNodesPeriod())*time.Second)
 		defer cancel()
 
-		blockchainSize, err := downloadToFile(loadCtx, url, fileName, logger)
+		blockchainSize, err := downloadToFile(loadCtx, url, fileName)
 		if err != nil {
+			log.Error("%v", utils.ErrInfo(err))
 			continue
 		}
 		if blockchainSize > consts.BLOCKCHAIN_SIZE {
@@ -261,41 +253,40 @@ func downloadChain(ctx context.Context, fileName, url string, logger *log.Entry)
 }
 
 // init first block from file or from embedded value
-func loadFirstBlock(logger *log.Entry) error {
+func loadFirstBlock() error {
 	var newBlock []byte
 	var err error
 
 	if len(*utils.FirstBlockDir) > 0 {
 		fileName := *utils.FirstBlockDir + "/1block"
-		logger.WithFields(log.Fields{"file_name": fileName}).Info("loading first block from file")
-		newBlock, err = ioutil.ReadFile(fileName)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "file_name": fileName}).Error("reading first block from file")
-		}
+		log.Debugf("load first block from file: %s", fileName)
+		newBlock, _ = ioutil.ReadFile(fileName)
 	} else {
+		log.Debugf("load from assets")
 		newBlock, err = static.Asset("static/1block")
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "file_name": "static/1block"}).Error("reading first block from file")
 			return err
 		}
 	}
 
+	log.Infof("start to insert first block")
 	if err = parser.InsertBlock(newBlock); err != nil {
-		logger.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("inserting new block")
+		log.Errorf("failed to parse first block: %s", err)
 		return err
 	}
 
+	log.Infof("first block inserted")
 	return nil
 }
 
 func firstLoad(ctx context.Context, d *daemon) error {
+
 	DBLock()
 	defer DBUnlock()
 
 	nodeConfig := &model.Config{}
 	found, err := nodeConfig.Get()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
 		return err
 	}
 	if !found {
@@ -303,33 +294,33 @@ func firstLoad(ctx context.Context, d *daemon) error {
 	}
 
 	if nodeConfig.FirstLoadBlockchain == "file" {
+		log.Debugf("first load from file")
 		blockchainURL := nodeConfig.FirstLoadBlockchainURL
 		if len(blockchainURL) == 0 {
 			blockchainURL = syspar.GetBlockchainURL()
 		}
 
 		fileName := *utils.Dir + "/public/blockchain"
-		err = downloadChain(ctx, fileName, blockchainURL, d.logger)
+		err = downloadChain(ctx, fileName, blockchainURL)
 		if err != nil {
 			return err
 		}
 
-		err = loadFromFile(ctx, fileName, d.logger)
+		err = loadFromFile(ctx, fileName)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = loadFirstBlock(d.logger)
+		err = loadFirstBlock()
 	}
 
 	return err
 }
 
-func needLoad(logger *log.Entry) (bool, error) {
+func needLoad() (bool, error) {
 	infoBlock := &model.InfoBlock{}
 	found, err := infoBlock.Get()
 	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting info block")
 		return false, err
 	}
 	if !found {
@@ -338,10 +329,8 @@ func needLoad(logger *log.Entry) (bool, error) {
 
 	// we have empty blockchain, we need to load blockchain from file or other source
 	if infoBlock.BlockID == 0 || *utils.StartBlockID > 0 {
-		logger.Debug("blockchain shouls be loaded")
 		return true, nil
 	}
-	logger.Debug("blockchain should't be loaded")
 	return false, nil
 }
 
@@ -349,20 +338,18 @@ func banNode(host string, err error) {
 	// TODO
 }
 
-func loadFromFile(ctx context.Context, fileName string, logger *log.Entry) error {
+func loadFromFile(ctx context.Context, fileName string) error {
 	file, err := os.Open(fileName)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("opening file, to load blockhain from it")
 		return err
 	}
 	defer file.Close()
 	for {
 		if ctx.Err() != nil {
-			logger.WithFields(log.Fields{"type": consts.ContextError, "error": err}).Error("context error")
 			return ctx.Err()
 		}
 
-		block, err := readBlock(file, logger)
+		block, err := readBlock(file)
 		if err != nil {
 			if err == io.EOF {
 				return nil
@@ -387,17 +374,15 @@ func loadFromFile(ctx context.Context, fileName string, logger *log.Entry) error
 }
 
 // downloadToFile downloads and saves the specified file
-func downloadToFile(ctx context.Context, url, file string, logger *log.Entry) (int64, error) {
+func downloadToFile(ctx context.Context, url, file string) (int64, error) {
 	resp, err := ctxhttp.Get(ctx, &http.Client{}, url)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ContextError, "error": err, "url": url}).Error("context error")
 		return 0, utils.ErrInfo(err)
 	}
 	defer resp.Body.Close()
 
 	f, err := os.Create(file)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating file for writing downloaded blockchain")
 		return 0, utils.ErrInfo(err)
 	}
 	defer f.Close()
@@ -405,13 +390,11 @@ func downloadToFile(ctx context.Context, url, file string, logger *log.Entry) (i
 	var offset int64
 	for {
 		if ctx.Err() != nil {
-			logger.WithFields(log.Fields{"type": consts.ContextError, "error": ctx.Err()}).Error("context error")
 			return 0, ctx.Err()
 		}
 
 		data, err := ioutil.ReadAll(io.LimitReader(resp.Body, 10000))
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "url": url}).Error("downloading file from url")
 			return offset, utils.ErrInfo(err)
 		}
 

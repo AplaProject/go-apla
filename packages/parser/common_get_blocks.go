@@ -25,8 +25,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockBody int64) error {
@@ -38,7 +36,6 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 	config := &model.Config{}
 	found, err := config.Get()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
 		return utils.ErrInfo(err)
 	}
 
@@ -50,7 +47,6 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 	if len(config.BadBlocks) > 0 {
 		err = json.Unmarshal([]byte(config.BadBlocks), &badBlocks)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling config bad blocks from json")
 			return utils.ErrInfo(err)
 		}
 	}
@@ -60,12 +56,10 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 
 	for {
 		if blockID < 2 {
-			log.WithFields(log.Fields{"type": consts.BlockIsFirst}).Error("block id is smaller than 2")
 			return utils.ErrInfo(errors.New("block_id < 2"))
 		}
 		// if the limit of blocks received from the node was exaggerated
 		if count > int64(rollback) {
-			log.WithFields(log.Fields{"count": count, "max_count": int64(rollback)}).Error("limit of received from the node was exaggerated")
 			return utils.ErrInfo(errors.New("count > variables[rollback_blocks]"))
 		}
 
@@ -81,11 +75,9 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 		}
 
 		if badBlocks[block.Header.BlockID] == string(converter.BinToHex(block.Header.Sign)) {
-			log.WithFields(log.Fields{"block_id": block.Header.BlockID, "type": consts.InvalidObject}).Error("block is bad")
 			return utils.ErrInfo(errors.New("bad block"))
 		}
 		if block.Header.BlockID != blockID {
-			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
 			return utils.ErrInfo(errors.New("bad block_data['block_id']"))
 		}
 
@@ -115,7 +107,6 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 	// mark all transaction as unverified
 	_, err = model.MarkVerifiedAndNotUsedTransactionsUnverified()
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("marking verified and not used transactions unverified")
 		return utils.ErrInfo(err)
 	}
 
@@ -124,10 +115,10 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 	block := &model.Block{}
 	myRollbackBlocks, err := block.GetBlocksFrom(blockID, "desc")
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting rollback blocks from blockID")
 		return utils.ErrInfo(err)
 	}
 	for _, block := range myRollbackBlocks {
+		log.Debug("We roll away blocks before plug", blockID)
 		err := BlockRollback(block.Data)
 		if err != nil {
 			return utils.ErrInfo(err)
@@ -136,7 +127,6 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
 		return utils.ErrInfo(err)
 	}
 

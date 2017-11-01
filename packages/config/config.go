@@ -1,19 +1,17 @@
 package config
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/utils"
-
 	"github.com/astaxie/beego/config"
-	log "github.com/sirupsen/logrus"
+	"github.com/op/go-logging"
 )
 
 var (
 	ConfigIni map[string]string
+	logger    = logging.MustGetLogger("config")
 )
 
 const configFileName = "config.ini"
@@ -29,16 +27,14 @@ type DBConfig struct {
 
 func Read() error {
 	ConfigIni = map[string]string{}
-	path := fmt.Sprintf("%s/%s", *utils.Dir, configFileName)
-	fullConfigIni, err := config.NewConfig("ini", path)
+	fullConfigIni, err := config.NewConfig("ini", *utils.Dir+"/"+configFileName)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("new config")
 		return err
-	}
-	ConfigIni, err = fullConfigIni.GetSection("default")
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("getting default config section")
-		return err
+	} else {
+		ConfigIni, err = fullConfigIni.GetSection("default")
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -72,7 +68,6 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 
 	err = confIni.SaveConfigFile(path)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("saving config file")
 		Drop()
 		return utils.ErrInfo(err)
 	}
@@ -80,9 +75,5 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 }
 
 func Drop() {
-	path := fmt.Sprintf("%s/%s", *utils.Dir, configFileName)
-	err := os.Remove(path)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": path}).Error("Removing config")
-	}
+	os.Remove(*utils.Dir + "/" + configFileName)
 }

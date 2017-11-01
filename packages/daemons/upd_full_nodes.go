@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -31,8 +30,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
-
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -46,12 +43,10 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	infoBlock := &model.InfoBlock{}
 	_, err := infoBlock.Get()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		return err
 	}
 
 	if infoBlock.BlockID == 0 {
-		d.logger.Warning("info block not found, sleeping 10 seconds")
 		d.sleepTime = 10 * time.Second
 		return nil
 	}
@@ -59,7 +54,6 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	nodeConfig := &model.Config{}
 	found, err := nodeConfig.Get()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
 		return err
 	}
 
@@ -69,11 +63,11 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 
 	myStateID := nodeConfig.StateID
 	myWalletID := nodeConfig.DltWalletID
+
 	// If we are in the list of those who are able to generate the blocks
 	fullNode := &model.FullNode{}
 	found, err = fullNode.FindNode(myStateID, myWalletID, myStateID, myWalletID)
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("finding full node")
 		return err
 	}
 
@@ -83,7 +77,6 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 
 	fullNodeID := fullNode.ID
 	if fullNodeID == 0 {
-		d.logger.Warning("full node not found, sleeping 10 seconds")
 		d.sleepTime = 10 * time.Second // because 1s is too small for non-full nodes
 		return nil
 	}
@@ -94,7 +87,6 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	updFn := &model.UpdFullNode{}
 	found, err = updFn.Get(nil)
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("reading upd full node")
 		return err
 	}
 
@@ -104,14 +96,13 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 
 	updFullNodes := int64(updFn.Time)
 	if curTime-updFullNodes <= syspar.GetUpdFullNodesPeriod() {
-		d.logger.Debug("upd full nodes period is not expired")
+		log.Debugf("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO")
 		return nil
 	}
 
 	myNodeKey := &model.MyNodeKey{}
 	err = myNodeKey.GetNodeWithMaxBlockID()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node with max block id")
 		return err
 	}
 	var (
@@ -120,7 +111,6 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 
 	contract := smart.GetContract(`@0UpdFullNodes`, 0)
 	if contract == nil {
-		d.logger.WithFields(log.Fields{"contract_name": "@0UpdFullNodes", "type": consts.NotFound}).Error("Getting contract")
 		return fmt.Errorf(`there is not @0UpdFullNodes contract`)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
@@ -131,7 +121,6 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	smartTx.Header = tx.Header{Type: int(info.ID), Time: time.Now().Unix(), UserID: myWalletID, StateID: 0}
 	signature, err := crypto.Sign(myNodeKey.PrivateKey, smartTx.ForSign())
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing smart tx with node private key")
 		return err
 	}
 	toSerialize = tx.SmartContract{
@@ -141,12 +130,10 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smartContract transaction to msgpack")
 		return err
 	}
 	data = append([]byte{128}, serializedData...)
 	if hash, err = model.SendTx(int64(info.ID), myWalletID, data); err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx to the queue")
 		return err
 	}
 	p := new(parser.Parser)

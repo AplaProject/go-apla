@@ -14,8 +14,7 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
-
-	log "github.com/sirupsen/logrus"
+	logging "github.com/op/go-logging"
 )
 
 // TODO In order to add new crypto provider with another key length it will be neccecary to fix constant blocksizes like
@@ -47,6 +46,7 @@ var (
 	UnsupportedCurveSize   = errors.New("Unsupported curve size")
 	IncorrectPrivKeyLength = errors.New("Incorrect private key length")
 	IncorrectPubKeyLength  = errors.New("Incorrect public key length")
+	log                    = logging.MustGetLogger("crypto")
 )
 
 var (
@@ -59,7 +59,7 @@ var (
 
 func Encrypt(msg []byte, key []byte, iv []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(EncryptingEmpty.Error())
+		log.Debug(EncryptingEmpty.Error())
 	}
 	switch cryptoProv {
 	case _AESCBC:
@@ -71,7 +71,7 @@ func Encrypt(msg []byte, key []byte, iv []byte) ([]byte, error) {
 
 func Decrypt(msg []byte, key []byte, iv []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(DecryptingEmpty.Error())
+		log.Debug(DecryptingEmpty.Error())
 	}
 	switch cryptoProv {
 	case _AESCBC:
