@@ -19,7 +19,6 @@ package parser
 import (
 	"encoding/hex"
 	"fmt"
-	"strconv"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -113,14 +112,10 @@ func (p *DLTTransferParser) Validate() error {
 	}
 
 	systemParam := &model.SystemParameter{}
-	found, err = systemParam.Get("fuel_rate")
+	_, err = systemParam.Get("fuel_rate")
 	if err != nil {
 		log.Fatal(err)
 	}
-	if !found {
-		return p.ErrInfo("can't find fuel rate")
-	}
-
 	fuelRate, err := decimal.NewFromString(systemParam.Value)
 	if err != nil {
 		return err
@@ -159,12 +154,9 @@ func (p *DLTTransferParser) Validate() error {
 	}
 
 	wallet := &model.DltWallet{}
-	found, err = wallet.Get(nil, p.TxWalletID)
+	_, err = wallet.Get(nil, p.TxWalletID)
 	if err != nil {
 		return p.ErrInfo(err)
-	}
-	if !found {
-		return p.ErrInfo("can't find wallet: ID" + strconv.FormatInt(p.TxWalletID, 10))
 	}
 	wltAmount, err := decimal.NewFromString(wallet.Amount)
 	if err != nil {
@@ -184,14 +176,10 @@ func (p *DLTTransferParser) Validate() error {
 func (p *DLTTransferParser) Action() error {
 	log.Debug("wallet address %s", p.DLTTransfer.WalletAddress)
 	dltWallet := &model.DltWallet{}
-	found, err := dltWallet.Get(nil, p.TxWalletID)
+	_, err := dltWallet.Get(nil, p.TxWalletID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if !found {
-		return p.ErrInfo("can't find wallet. ID: " + strconv.FormatInt(p.TxWalletID, 10))
-	}
-
 	log.Debug("amount %s", p.DLTTransfer.Amount)
 	log.Debug("commission %s", p.DLTTransfer.Commission)
 	amount, err := decimal.NewFromString(p.DLTTransfer.Amount)

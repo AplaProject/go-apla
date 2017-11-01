@@ -18,7 +18,6 @@ package daemons
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -174,12 +173,8 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
-	found, err := curBlock.Get()
-	if err != nil {
+	if _, err := curBlock.Get(); err != nil {
 		return err
-	}
-	if !found {
-		return errors.New("info block not found")
 	}
 
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID++ {
@@ -285,12 +280,9 @@ func firstLoad(ctx context.Context, d *daemon) error {
 	defer DBUnlock()
 
 	nodeConfig := &model.Config{}
-	found, err := nodeConfig.Get()
+	_, err := nodeConfig.Get()
 	if err != nil {
 		return err
-	}
-	if !found {
-		return errors.New("config not found")
 	}
 
 	if nodeConfig.FirstLoadBlockchain == "file" {
@@ -319,14 +311,10 @@ func firstLoad(ctx context.Context, d *daemon) error {
 
 func needLoad() (bool, error) {
 	infoBlock := &model.InfoBlock{}
-	found, err := infoBlock.Get()
+	_, err := infoBlock.Get()
 	if err != nil {
 		return false, err
 	}
-	if !found {
-		return false, errors.New("info block not found")
-	}
-
 	// we have empty blockchain, we need to load blockchain from file or other source
 	if infoBlock.BlockID == 0 || *utils.StartBlockID > 0 {
 		return true, nil

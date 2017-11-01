@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -125,7 +124,7 @@ func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 	for _, id := range ids {
 		sp := &model.StateParameter{}
 		sp.SetTablePrefix(converter.Int64ToStr(id))
-		_, err := sp.Get(transaction, "state_name")
+		_, err = sp.Get(transaction, "state_name")
 		if err != nil {
 			return 0, err
 		}
@@ -242,11 +241,11 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	if transactions {
 		// check for duplicate transaction
 		tx := &model.Transaction{}
-		found, err := tx.GetVerified(searchedHash)
+		_, err := tx.GetVerified(searchedHash)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		if !found {
+		if len(tx.Hash) > 0 {
 			return utils.ErrInfo(fmt.Errorf("double tx in transactions %x", searchedHash))
 		}
 	}
@@ -369,14 +368,10 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	}
 
 	wallet := &model.DltWallet{}
-	found, err := wallet.Get(p.DbTransaction, walletID)
+	_, err := wallet.Get(p.DbTransaction, walletID)
 	if err != nil {
 		return err
 	}
-	if !found {
-		return errors.New("wallet not found. ID: " + strconv.FormatInt(walletID, 10))
-	}
-
 	amountAndCommission := amount
 	amountAndCommission.Add(commission)
 	wltAmount, err := decimal.NewFromString(wallet.Amount)
@@ -411,23 +406,21 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	if err != nil {
 		return err
 	}
-
 	conditions := sp.Value
 	if iscondition {
 		conditions = sp.Conditions
 	}
-	if len(conditions) == 0 {
+	if len(conditions) > 0 {
+		ret, err := p.EvalIf(conditions)
+		if err != nil {
+			return err
+		}
+		if !ret {
+			return fmt.Errorf(`Access denied`)
+		}
+	} else {
 		return fmt.Errorf(`There is not %s in state_parameters`, condition)
 	}
-
-	ret, err := p.EvalIf(conditions)
-	if err != nil {
-		return err
-	}
-	if !ret {
-		return fmt.Errorf(`Access denied`)
-	}
-
 	return nil
 }
 
@@ -534,18 +527,17 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 		conditions = menu.Conditions
 	}
 
-	if len(conditions) == 0 {
+	if len(conditions) > 0 {
+		ret, err := p.EvalIf(conditions)
+		if err != nil {
+			return err
+		}
+		if !ret {
+			return fmt.Errorf(`Access denied`)
+		}
+	} else {
 		return fmt.Errorf(`There is not conditions in %s`, prefix+`_`+table)
 	}
-
-	ret, err := p.EvalIf(conditions)
-	if err != nil {
-		return err
-	}
-	if !ret {
-		return fmt.Errorf(`Access denied`)
-	}
-
 	return nil
 }
 

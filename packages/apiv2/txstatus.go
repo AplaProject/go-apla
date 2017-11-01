@@ -37,11 +37,11 @@ func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
 	}
 	ts := &model.TransactionStatus{}
-	notFound, err := ts.Get([]byte(converter.HexToBin(data.params["hash"].(string))))
+	found, err := ts.Get([]byte(converter.HexToBin(data.params["hash"].(string))))
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	if notFound {
+	if !found {
 		return errorAPI(w, `E_HASHNOTFOUND`, http.StatusBadRequest)
 	}
 	if ts.BlockID > 0 {

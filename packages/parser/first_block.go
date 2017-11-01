@@ -55,7 +55,15 @@ func (p *FirstBlockParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
+	/*	key := &model.Key{
+			ID:        myAddress,
+			PublicKey: data.PublicKey,
+			Amount:    decimal.NewFromFloat(consts.FIRST_QDLT).String(),
+		}
+		if err = key.SetTablePrefix(consts.MainEco).Create(); err != nil {
+			fmt.Println(`KEY`, err)
+			return p.ErrInfo(err)
+		}*/
 	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
 		myAddress, data.PublicKey, decimal.NewFromFloat(consts.FIRST_QDLT).String()).Error
 	if err != nil {

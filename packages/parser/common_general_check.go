@@ -65,11 +65,11 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 	} else {
 		log.Debugf("parser general check, user_id = %d", header.UserID)
 		dltWallet := &model.DltWallet{}
-		found, err := dltWallet.Get(p.DbTransaction, header.UserID)
+		_, err := dltWallet.Get(p.DbTransaction, header.UserID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		if !found {
+		if len(dltWallet.PublicKey) == 0 {
 			return utils.ErrInfoFmt("incorrect user_id")
 		}
 		p.PublicKeys = append(p.PublicKeys, []byte(dltWallet.PublicKey))
