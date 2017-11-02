@@ -17,6 +17,7 @@
 package apiv2
 
 import (
+	//	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -330,4 +331,62 @@ func TestContracts(t *testing.T) {
 		return
 	}
 	fmt.Println(`RET`, ret)
+}
+
+var (
+	imp = `{
+		"menus": [
+			{
+				"Name": "test_menu67",
+				"Conditions": "ContractAccess(\"@1EditMenu\")",
+				"Value": "MenuItem(main, Default Ecosystem Menu)"
+			}
+		],
+		"pages": [
+			{
+				"Name": "test_page567",
+				"Conditions": "ContractAccess(\"@1EditPage\")",
+				"Menu": "default_menu",
+				"Value": "P(class, Default Ecosystem Page)\nImage().Style(width:100px;)"
+			}
+		],
+		"blocks": [
+			{
+				"Name": "test_block567",
+				"Conditions": "true",
+				"Value": "block content"
+			}
+		],
+		"parameters": [
+			{
+				"Name": "host134567",
+				"Value": "",
+				"Conditions": "ContractConditions(` + "`MainCondition`" + `)"
+			}
+		]
+	}`
+)
+
+func TestImport(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	form := url.Values{"Data": {imp}}
+	id, msg, err := postTxResult(`@1Import`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(`Import`, id, msg)
+	/*	var input map[string][]map[string]string
+
+		err := json.Unmarshal([]byte(imp), &input)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		fmt.Println(input)*/
+	t.Error(`OK`)
 }

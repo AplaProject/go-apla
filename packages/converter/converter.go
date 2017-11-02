@@ -537,6 +537,9 @@ func BytesShift(str *[]byte, index int64) (ret []byte) {
 // InterfaceToStr converts the interfaces to the string
 func InterfaceToStr(v interface{}) string {
 	var str string
+	if v == nil {
+		return ``
+	}
 	switch v.(type) {
 	case int:
 		str = IntToStr(v.(int))

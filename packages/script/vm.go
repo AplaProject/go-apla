@@ -103,7 +103,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		pars := make([]reflect.Value, in)
 		limit := 0
 		(*rt.extend)[`rt`] = rt
-		//		fmt.Println(`CALL`, finfo, count, in)
+		//fmt.Println(`CALL`, finfo, count, in)
 		auto := 0
 		for k := 0; k < in; k++ {
 			if len(finfo.Auto[k]) > 0 {
@@ -219,6 +219,8 @@ func valueToBool(v interface{}) bool {
 		return len(val) > 0
 	case []uint8:
 		return len(val) > 0
+	case []interface{}:
+		return val != nil && len(val) > 0
 	default:
 		dec, _ := decimal.NewFromString(fmt.Sprintf(`%v`, val))
 		return dec.Cmp(decimal.New(0, 0)) != 0

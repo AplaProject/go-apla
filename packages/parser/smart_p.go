@@ -103,6 +103,7 @@ var (
 		"CreateColumn":      50,
 		"RollbackColumn":    50,
 		"PermColumn":        50,
+		"JSONToMap":         50,
 	}
 )
 
@@ -185,6 +186,7 @@ func init() {
 		"FlushContract":      FlushContract,
 		"Eval":               Eval,
 		"Activate":           ActivateContract,
+		"JSONToMap":          JSONToMap,
 		"check_signature":    CheckSignature, // system function
 	}, AutoPars: map[string]string{
 		`*parser.Parser`: `parser`,
@@ -940,6 +942,9 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 
 // Len returns the length of the slice
 func Len(in []interface{}) int64 {
+	if in == nil {
+		return 0
+	}
 	return int64(len(in))
 }
 
@@ -1746,4 +1751,13 @@ func PermColumn(p *Parser, tableName, name, permissions string) error {
 	_, _, err = p.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
 		tables, []string{`name`}, []string{tableName}, true)
 	return err
+}
+
+func JSONToMap(input string) (map[string]interface{}, error) {
+	var ret map[string]interface{}
+	err := json.Unmarshal([]byte(input), &ret)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
 }
