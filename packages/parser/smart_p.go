@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -538,7 +537,6 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
 func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
 	qcost = 0
-	var isIndex bool
 	tblname = TableName(p, tblname)
 	if err = checkReport(tblname); err != nil {
 		return
@@ -548,13 +546,7 @@ func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, pa
 	if err = p.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	if isIndex, err = model.IsIndex(tblname, column); err != nil {
-		return
-	} else if !isIndex {
-		err = fmt.Errorf(`there is no index on %s`, column)
-	} else {
-		qcost, _, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, true)
-	}
+	qcost, _, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, true)
 	return
 }
 
@@ -639,11 +631,6 @@ func DBStringExt(p *Parser, tblname string, name string, id interface{}, idname 
 		}
 	}
 
-	if isIndex, err := model.IsIndex(tblname, idname); err != nil {
-		return 0, ``, err
-	} else if !isIndex {
-		return 0, ``, fmt.Errorf(`there is no index on %s`, idname)
-	}
 	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
 	if err != nil {
 		return 0, "", err
@@ -691,18 +678,6 @@ func DBStringWhere(tblname string, name string, where string, params ...interfac
 		return 0, ``, err
 	}
 
-	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
-	ret := re.FindAllStringSubmatch(where, -1)
-	for _, iret := range ret {
-		if len(iret) != 2 {
-			continue
-		}
-		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
-			return 0, ``, err
-		} else if !isIndex {
-			return 0, ``, fmt.Errorf(`there is no index on %s`, iret[1])
-		}
-	}
 	selectQuery := `select ` + converter.EscapeName(name) + ` from ` + converter.EscapeName(tblname) + ` where ` + strings.Replace(converter.Escape(where), `$`, `?`, -1)
 	qcost, err := model.GetQueryTotalCost(selectQuery, params...)
 	if err != nil {
@@ -1002,19 +977,6 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 		return 0, nil, err
 	}
 
-	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
-	ret := re.FindAllStringSubmatch(where, -1)
-
-	for _, iret := range ret {
-		if len(iret) != 2 {
-			continue
-		}
-		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
-			return 0, nil, err
-		} else if !isIndex {
-			return 0, nil, fmt.Errorf(`there is not index on %s`, iret[1])
-		}
-	}
 	if len(order) > 0 {
 		order = ` order by ` + converter.EscapeName(order)
 	}
@@ -1141,11 +1103,6 @@ func DBRowExt(p *Parser, tblname string, columns string, id interface{}, idname 
 				id = vbyte
 			}
 		}
-	}
-	if isIndex, err := model.IsIndex(tblname, idname); err != nil {
-		return 0, nil, err
-	} else if !isIndex {
-		return 0, nil, fmt.Errorf(`there is no index on %s`, idname)
 	}
 	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where ` + converter.EscapeName(idname) + `=?`
 	cost, err := model.GetQueryTotalCost(query, id)
