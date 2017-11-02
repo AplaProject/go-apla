@@ -39,6 +39,7 @@ var (
 		`LangRes`:    {langresTag, defaultTag, `langres`, `Name,Lang`},
 		`MenuGroup`:  {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
 		`MenuItem`:   {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
+		`Now`:        {nowTag, defaultTag, `now`, `Format,Interval`},
 		`SetVar`:     {setvarTag, defaultTag, `setvar`, `Name,Value`},
 		`Strong`:     {defaultTag, defaultTag, `strong`, `Body,Class`},
 	}
@@ -146,6 +147,45 @@ func langresTag(par parFunc) string {
 		lang = (*par.Vars)[`accept_lang`]
 	}
 	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Vars)[`state`])), lang)
+	return ret
+}
+
+// Now returns the current time of postgresql
+func nowTag(par parFunc) string {
+	var (
+		cut   int
+		query string
+	)
+	interval := (*par.Pars)[`Interval`]
+	format := (*par.Pars)[`Format`]
+	if len(interval) > 0 {
+		if interval[0] != '-' && interval[0] != '+' {
+			interval = `+` + interval
+		}
+		interval = fmt.Sprintf(` %s interval '%s'`, interval[:1], strings.TrimSpace(interval[1:]))
+	}
+	if format == `` {
+		query = `select round(extract(epoch from now()` + interval + `))::integer`
+		cut = 10
+	} else {
+		query = `select now()` + interval
+		switch format {
+		case `datetime`:
+			cut = 19
+		default:
+			if strings.Index(format, `HH`) >= 0 && strings.Index(format, `HH24`) < 0 {
+				format = strings.Replace(format, `HH`, `HH24`, -1)
+			}
+			query = fmt.Sprintf(`select to_char(now()%s, '%s')`, interval, format)
+		}
+	}
+	ret, err := model.Single(query).String()
+	if err != nil {
+		return err.Error()
+	}
+	if cut > 0 {
+		ret = strings.Replace(ret[:cut], `T`, ` `, -1)
+	}
 	return ret
 }
 
