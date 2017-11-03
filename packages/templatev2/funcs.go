@@ -347,7 +347,10 @@ func dbfindTag(par parFunc) string {
 					ival = ``
 				}
 			} else {
-				out, err := json.Marshal(par.Node.Attr[`custombody`].([][]*node)[i-defcol])
+				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &item)
+				root := node{}
+				process(body, &root, par.Vars)
+				out, err := json.Marshal(root.Children)
 				if err == nil {
 					ival = replace(string(out), 0, &item)
 				}
@@ -369,10 +372,10 @@ func customTag(par parFunc) string {
 	setAllAttr(par)
 	if par.Owner.Attr[`customs`] == nil {
 		par.Owner.Attr[`customs`] = make([]string, 0)
-		par.Owner.Attr[`custombody`] = make([][]*node, 0)
+		par.Owner.Attr[`custombody`] = make([]string, 0) //make([][]*node, 0)
 	}
 	par.Owner.Attr[`customs`] = append(par.Owner.Attr[`customs`].([]string), par.Node.Attr[`column`].(string))
-	par.Owner.Attr[`custombody`] = append(par.Owner.Attr[`custombody`].([][]*node), par.Node.Children)
+	par.Owner.Attr[`custombody`] = append(par.Owner.Attr[`custombody`].([]string), (*par.Pars)[`Body`])
 
 	return ``
 }
