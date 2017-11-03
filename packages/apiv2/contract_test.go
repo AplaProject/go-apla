@@ -337,14 +337,14 @@ var (
 	imp = `{
 		"menus": [
 			{
-				"Name": "test_menu67",
+				"Name": "test_menu0679",
 				"Conditions": "ContractAccess(\"@1EditMenu\")",
 				"Value": "MenuItem(main, Default Ecosystem Menu)"
 			}
 		],
 		"pages": [
 			{
-				"Name": "test_page567",
+				"Name": "test_page05679",
 				"Conditions": "ContractAccess(\"@1EditPage\")",
 				"Menu": "default_menu",
 				"Value": "P(class, Default Ecosystem Page)\nImage().Style(width:100px;)"
@@ -352,15 +352,30 @@ var (
 		],
 		"blocks": [
 			{
-				"Name": "test_block567",
+				"Name": "test_block05679",
+				"Conditions": "true",
+				"Value": "block content"
+			},
+			{
+				"Name": "test_block056790",
+				"Conditions": "true",
+				"Value": "block content"
+			},
+			{
+				"Name": "test_block056791",
 				"Conditions": "true",
 				"Value": "block content"
 			}
 		],
 		"parameters": [
 			{
-				"Name": "host134567",
+				"Name": "host01345679",
 				"Value": "",
+				"Conditions": "ContractConditions(` + "`MainCondition`" + `)"
+			},
+			{
+				"Name": "host091",
+				"Value": "Русский текст",
 				"Conditions": "ContractConditions(` + "`MainCondition`" + `)"
 			}
 		]

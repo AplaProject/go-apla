@@ -1347,7 +1347,7 @@ func RollbackEcosystem(p *Parser) error {
 	if err != nil {
 		return err
 	}
-	lastID, err := model.GetNextID(`system_states`)
+	lastID, err := model.GetNextID(p.DbTransaction, `system_states`)
 	if err != nil {
 		return err
 	}

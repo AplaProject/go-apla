@@ -67,7 +67,7 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 		if item[`name`] == `keys` {
 			err = model.DBConn.Table(fullname).Count(&maxid).Error
 		} else {
-			maxid, err = model.GetNextID(fullname)
+			maxid, err = model.GetNextID(nil, fullname)
 			maxid--
 		}
 		if err != nil {

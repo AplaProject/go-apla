@@ -437,9 +437,9 @@ func GetList(query string, args ...interface{}) *ListResult {
 	return &ListResult{result, nil}
 }
 
-func GetNextID(table string) (int64, error) {
+func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	var id int64
-	rows, err := DBConn.Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
+	rows, err := GetDB(transaction).Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
 	if err != nil {
 		return 0, err
 	}

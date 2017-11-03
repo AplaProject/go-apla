@@ -39,7 +39,7 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 		cols = `id,` + converter.EscapeName(data.params[`columns`].(string))
 	}
 
-	count, err := model.GetNextID(strings.Trim(table, `"`))
+	count, err := model.GetNextID(nil, strings.Trim(table, `"`))
 	if err != nil {
 		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
 	}
