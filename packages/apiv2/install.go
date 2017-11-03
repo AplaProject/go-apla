@@ -91,7 +91,8 @@ func installCommon(data *installParams) (err error) {
 	}
 	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 	if err != nil || model.DBConn == nil {
-		return fmt.Errorf(`E_DBNIL`)
+		err = fmt.Errorf(`E_DBNIL`)
+		return err
 	}
 	if err = model.DropTables(); err != nil {
 		return err
