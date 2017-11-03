@@ -28,7 +28,7 @@ type ecosystemsResult struct {
 
 func ecosystems(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 
-	number, err := model.GetNextID(`system_states`)
+	number, err := model.GetNextID(nil, `system_states`)
 	if err != nil {
 		return err
 	}

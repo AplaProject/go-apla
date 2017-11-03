@@ -223,7 +223,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
 		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSQLIns0+") VALUES ("+addSQLIns1+")")
 		if !isID {
-			id, err := model.GetNextID(table)
+			id, err := model.GetNextID(p.DbTransaction, table)
 			if err != nil {
 				return 0, ``, err
 			}

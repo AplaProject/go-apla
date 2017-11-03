@@ -221,7 +221,7 @@ func checkEcosystem(w http.ResponseWriter, data *apiData) (int64, error) {
 	state := data.state
 	if data.params[`ecosystem`].(int64) > 0 {
 		state = data.params[`ecosystem`].(int64)
-		count, err := model.GetNextID(`system_states`)
+		count, err := model.GetNextID(nil,`system_states`)
 		if err != nil {
 			return 0, errorAPI(w, err, http.StatusBadRequest)
 		}

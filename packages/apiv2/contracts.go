@@ -36,7 +36,7 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData) (err er
 
 	table := fmt.Sprintf(`%d_contracts`, data.state)
 
-	count, err := model.GetNextID(table)
+	count, err := model.GetNextID(nil, table)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}

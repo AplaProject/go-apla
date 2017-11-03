@@ -17,6 +17,7 @@
 package apiv2
 
 import (
+	//	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -330,4 +331,78 @@ func TestContracts(t *testing.T) {
 		return
 	}
 	fmt.Println(`RET`, ret)
+}
+
+var (
+	impcont = `{
+		 "contracts": [
+        {
+            "Name": "EditColumn_IMPORTED2",
+            "Value": "contract EditColumn_IMPORTED2 {\n    data {\n    \tTableName   string\n\t    Name        string\n\t    Permissions string\n    }\n    conditions {\n        ColumnCondition($TableName, $Name, \"\", $Permissions, \"\")\n    }\n    action {\n        PermColumn($TableName, $Name, $Permissions)\n    }\n}",
+            "Conditions": "ContractConditions(` + "`MainCondition`" + `)"
+		}
+	]
+}`
+	imp = `{
+		"menus": [
+			{
+				"Name": "test_menu0679",
+				"Conditions": "ContractAccess(\"@1EditMenu\")",
+				"Value": "MenuItem(main, Default Ecosystem Menu)"
+			}
+		],
+		"pages": [
+			{
+				"Name": "test_page05679",
+				"Conditions": "ContractAccess(\"@1EditPage\")",
+				"Menu": "default_menu",
+				"Value": "P(class, Default Ecosystem Page)\nImage().Style(width:100px;)"
+			}
+		],
+		"blocks": [
+			{
+				"Name": "test_block05679",
+				"Conditions": "true",
+				"Value": "block content"
+			},
+			{
+				"Name": "test_block056790",
+				"Conditions": "true",
+				"Value": "block content"
+			},
+			{
+				"Name": "test_block056791",
+				"Conditions": "true",
+				"Value": "block content"
+			}
+		],
+		"parameters": [
+			{
+				"Name": "host01345679",
+				"Value": "",
+				"Conditions": "ContractConditions(` + "`MainCondition`" + `)"
+			},
+			{
+				"Name": "host091",
+				"Value": "Русский текст",
+				"Conditions": "ContractConditions(` + "`MainCondition`" + `)"
+			}
+		]
+	}`
+)
+
+func TestImport(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	form := url.Values{"Data": {impcont}}
+	id, msg, err := postTxResult(`@1Import`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(`Import`, id, msg)
+	t.Error(`OK`)
 }

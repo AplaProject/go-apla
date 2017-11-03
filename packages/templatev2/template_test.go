@@ -121,8 +121,8 @@ var forTest = tplList{
 		`[{"tag":"text","text":"010010"}]`},
 	{`Address()Span(Address(-5728238900021))Address(3467347643873).(-6258391547979339691)`,
 		`[{"tag":"text","text":"unknown address"},{"tag":"span","children":[{"tag":"text","text":"1844-6738-3454-7065-1595"}]},{"tag":"text","text":"0000-0003-4673-4764-38731218-8352-5257-3021-1925"}]`},
-	{`Table(src, "id=ID,name,wallet=Wallet")`,
-		`[{"tag":"table","attr":{"columns":{"id":"ID","name":"name","wallet":"Wallet"},"source":"src"}}]`},
+	{`Table(src, "ID=id,name,Wallet=wallet")`,
+		`[{"tag":"table","attr":{"columns":[{"Name":"id","Title":"ID"},{"Name":"name","Title":"name"},{"Name":"wallet","Title":"Wallet"}],"source":"src"}}]`},
 	/*	{`Div(myclass, Include(test)Span(OK))`,
 			`[{"tag":"include","attr":{"name":"myblock"}}]`},
 			{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25).Custom(myid){

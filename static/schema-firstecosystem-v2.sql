@@ -492,4 +492,34 @@ func ConditionById(table string, validate bool) {
     action {
         PermColumn($TableName, $Name, $Permissions)
     }
+}', '%[1]d','ContractConditions(`MainCondition`)'),
+('26','func ImportList(row array, cnt string) {
+    if !row {
+        return
+    }
+    var i int
+    while i < Len(row) {
+        var idata map
+        idata = row[i]
+        CallContract(cnt, idata)
+        i = i + 1
+	}
+}
+
+contract Import {
+    data {
+        Data string
+    }
+    conditions {
+        $list = JSONToMap($Data)
+    }
+    action {
+        ImportList($list["pages"], "NewPage")
+        ImportList($list["blocks"], "NewBlock")
+        ImportList($list["menus"], "NewMenu")
+        ImportList($list["parameters"], "NewParameter")
+        ImportList($list["languages"], "NewLang")
+        ImportList($list["contracts"], "NewContract")
+        ImportList($list["tables"], "NewTable")
+    }
 }', '%[1]d','ContractConditions(`MainCondition`)');

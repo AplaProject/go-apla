@@ -184,13 +184,10 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	for _, ipar := range pars {
 		parnames[ipar] = true
 	}
-	if !cblock.Info.(*ContractInfo).Owner.Active {
-		return fmt.Errorf(`Contract %s is not active`, name)
-	}
 	var isSignature bool
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
-			if !parnames[tx.Name] {
+			if !parnames[tx.Name] && !strings.Contains(tx.Tags, `optional`) {
 				return fmt.Errorf(`%s is not defined`, tx.Name)
 			}
 			if tx.Name == `Signature` {
@@ -390,7 +387,7 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			val, ok := params[tx.Name]
-			if !ok {
+			if !ok && !strings.Contains(tx.Tags, `optional`) {
 				return fmt.Errorf(`%s is not defined`, tx.Name)
 			}
 			names = append(names, tx.Name)

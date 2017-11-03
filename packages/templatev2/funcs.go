@@ -422,13 +422,13 @@ func tableTag(par parFunc) string {
 	defaultTag(par)
 	defaultTail(par, `table`)
 	if len((*par.Pars)[`Columns`]) > 0 {
-		imap := make(map[string]string)
+		imap := make([]map[string]string, 0)
 		for _, v := range strings.Split((*par.Pars)[`Columns`], `,`) {
 			v = strings.TrimSpace(v)
 			if off := strings.IndexByte(v, '='); off == -1 {
-				imap[v] = v
+				imap = append(imap, map[string]string{`Title`: v, `Name`: v})
 			} else {
-				imap[strings.TrimSpace(v[:off])] = strings.TrimSpace(v[off+1:])
+				imap = append(imap, map[string]string{`Title`: strings.TrimSpace(v[:off]), `Name`: strings.TrimSpace(v[off+1:])})
 			}
 		}
 		if len(imap) > 0 {
