@@ -1269,14 +1269,16 @@ func ContractsList(value string) []interface{} {
 }
 
 func CompileContract(p *Parser, code string, state, id, token int64) (interface{}, error) {
-	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` {
+	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` && 
+	   p.TxContract.Name != `@1Import`{
 		return 0, fmt.Errorf(`CompileContract can be only called from NewContract or EditContract`)
 	}
 	return smart.CompileBlock(code, &script.OwnerInfo{StateID: uint32(state), WalletID: id, TokenID: token})
 }
 
 func FlushContract(p *Parser, iroot interface{}, id int64, active bool) error {
-	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` {
+	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` && 
+		p.TxContract.Name != `@1Import` {
 		return fmt.Errorf(`FlushContract can be only called from NewContract or EditContract`)
 	}
 	root := iroot.(*script.Block)

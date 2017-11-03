@@ -334,6 +334,15 @@ func TestContracts(t *testing.T) {
 }
 
 var (
+	impcont = `{
+		 "contracts": [
+        {
+            "Name": "EditColumn_IMPORTED2",
+            "Value": "contract EditColumn_IMPORTED2 {\n    data {\n    \tTableName   string\n\t    Name        string\n\t    Permissions string\n    }\n    conditions {\n        ColumnCondition($TableName, $Name, \"\", $Permissions, \"\")\n    }\n    action {\n        PermColumn($TableName, $Name, $Permissions)\n    }\n}",
+            "Conditions": "ContractConditions(` + "`MainCondition`" + `)"
+		}
+	]
+}`
 	imp = `{
 		"menus": [
 			{
@@ -388,7 +397,7 @@ func TestImport(t *testing.T) {
 		return
 	}
 
-	form := url.Values{"Data": {imp}}
+	form := url.Values{"Data": {impcont}}
 	id, msg, err := postTxResult(`@1Import`, &form)
 	if err != nil {
 		t.Error(err)
