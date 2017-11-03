@@ -404,13 +404,5 @@ func TestImport(t *testing.T) {
 		return
 	}
 	fmt.Println(`Import`, id, msg)
-	/*	var input map[string][]map[string]string
-
-		err := json.Unmarshal([]byte(imp), &input)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		fmt.Println(input)*/
 	t.Error(`OK`)
 }

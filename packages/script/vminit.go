@@ -184,9 +184,6 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	for _, ipar := range pars {
 		parnames[ipar] = true
 	}
-	/*	if !cblock.Info.(*ContractInfo).Owner.Active {
-		return fmt.Errorf(`Contract %s is not active`, name)
-	}*/
 	var isSignature bool
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
