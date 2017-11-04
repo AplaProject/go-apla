@@ -40,8 +40,8 @@ Run apla:
 ```
 ~/apla/go-apla
 ```
-Open Apla: http://localhost:7079/
 
+To work through GUI you need to install https://github.com/AplaProject/apla-front
 
 ----------
 
