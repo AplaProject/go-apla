@@ -113,6 +113,7 @@ func ProcessBlock(data []byte) (*Block, error) {
 	}
 	block.BinData = data
 
+	log.Debug("readPreviousBlock")
 	if err := block.readPreviousBlock(); err != nil {
 		return nil, err
 	}
@@ -522,11 +523,12 @@ func (block *Block) readPreviousBlock() error {
 	}
 
 	var err error
-	block.PrevHeader, err = GetBlockDataFromBlockChain(block.Header.BlockID - 1)
-	if err != nil {
-		return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
+	if block.PrevHeader == nil || block.PrevHeader.BlockID == block.Header.BlockID-1 {
+		block.PrevHeader, err = GetBlockDataFromBlockChain(block.Header.BlockID - 1)
+		if err != nil {
+			return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
+		}
 	}
-
 	return nil
 }
 
@@ -617,6 +619,10 @@ func (block *Block) CheckBlock() error {
 		}
 
 		if block.PrevHeader.Time+sleepTime-block.Header.Time > consts.ERROR_TIME {
+			fmt.Println("incorrect block time")
+			fmt.Println(block.PrevHeader.Time)
+			fmt.Println(sleepTime-block.Header.Time)
+			fmt.Println(consts.ERROR_TIME)
 			return utils.ErrInfo(fmt.Errorf("incorrect block time"))
 		}
 	}
