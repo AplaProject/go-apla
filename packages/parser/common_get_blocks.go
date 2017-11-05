@@ -78,10 +78,9 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 			return utils.ErrInfo(errors.New("bad block_data['block_id']"))
 		}
 
-		// save the block
-		blocks = append(blocks, block)
-		blockID--
-		count++
+		// TODO: add checking for MAX_BLOCK_SIZE
+
+
 
 		// the public key of the one who has generated this block
 		nodePublicKey, err := GetNodePublicKeyWalletOrCB(block.Header.WalletID, block.Header.StateID)
@@ -93,11 +92,16 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 		forSign := fmt.Sprintf("0,%v,%s,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time,
 			block.Header.WalletID, block.Header.StateID, block.MrklRoot)
 
+		// save the block
+		blocks = append(blocks, block)
+		blockID--
+		count++
+
 		// check the signature
 		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey}, forSign, block.Header.Sign, true)
 		if okSignErr == nil {
 			// this block is matched with our blockchain
-			fmt.Println("this block is matched with our blockchain")
+			log.Debug("this block is matched with our blockchain")
 			break
 		}
 	}
@@ -123,6 +127,8 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 		}
 	}
 
+	// TODO: UpdBlockInfo
+
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
 		return utils.ErrInfo(err)
@@ -132,13 +138,10 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 	for i := len(blocks) - 1; i >= 0; i-- {
 		block := blocks[i]
 
-		//fmt.Println("readPreviousBlock 2")
+		log.Debug("i:%d / block: %v", i, block)
 		// our blockchain is changing, so we should read again previous block
-		err := block.readPreviousBlock()
-		if err != nil {
-			dbTransaction.Rollback()
-			return utils.ErrInfo(err)
-		}
+
+		// TODO : need to fix readPreviousBlock
 
 		if err := block.CheckBlock(); err != nil {
 			dbTransaction.Rollback()
@@ -158,6 +161,11 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 				return utils.ErrInfo(err)
 			}
 		}
+		if err := InsertIntoBlockchain(dbTransaction, block); err != nil {
+			dbTransaction.Rollback()
+			return err
+		}
+
 	}
 
 	err = dbTransaction.Commit()
