@@ -83,6 +83,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 	}
 	err = config.Save(data.logLevel, data.installType, &dbConfig)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("saving config")
 		return err
 	}
 	defer func() {
@@ -91,6 +92,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		}
 	}()
 	if err = config.Read(); err != nil {
+		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("reading config")
 		return err
 	}
 	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
@@ -116,13 +118,15 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return err
 	}
 	if _, err = os.Stat(*utils.FirstBlockDir + "/1block"); len(*utils.FirstBlockDir) > 0 && os.IsNotExist(err) {
+		logger.WithFields(log.Fields{"path": *utils.FirstBlockDir + "/1block"}).Info("First block does not exists, generating new keys")
 		// If there is no key, this is the first run and the need to create them in the working directory.
 		if _, err = os.Stat(*utils.Dir + "/PrivateKey"); os.IsNotExist(err) {
+			log.WithFields(log.Fields{"path": *utils.Dir + "/PrivateKey"}).Info("private key is not exists, generating new one")
 			if len(*utils.FirstBlockPublicKey) == 0 {
-				logger.Info("private key not exists, creating new one")
+				log.WithFields(log.Fields{"type": consts.EmptyObject}).Info("first block public key is empty")
 				priv, pub, err := crypto.GenHexKeys()
 				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("generating hex keys")
+					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("generating hex keys")
 				}
 				err = ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
 				if err != nil {
@@ -133,11 +137,12 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 			}
 		}
 		if _, err = os.Stat(*utils.Dir + "/NodePrivateKey"); os.IsNotExist(err) {
+			logger.WithFields(log.Fields{"path": *utils.FirstBlockDir + "/1block"}).Info("First block does not exists, generating new keys")
 			if len(*utils.FirstBlockNodePublicKey) == 0 {
-				logger.Info("node private key not exists, creating new one")
+				log.WithFields(log.Fields{"type": consts.EmptyObject}).Info("first block public key is empty")
 				priv, pub, err := crypto.GenHexKeys()
 				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("generating hex keys")
+					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("generating hex keys")
 				}
 				err = ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
 				if err != nil {

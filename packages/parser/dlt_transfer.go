@@ -123,14 +123,10 @@ func (p *DLTTransferParser) Validate() error {
 	}
 
 	systemParam := &model.SystemParameter{}
-	found, err = systemParam.Get("fuel_rate")
+	_, err = systemParam.Get("fuel_rate")
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting fuel rate system param")
 	}
-	if !found {
-		return p.ErrInfo("can't find fuel rate")
-	}
-
 	fuelRate, err := decimal.NewFromString(systemParam.Value)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.ParameterExceeded, "error": err, "value": systemParam.Value}).Error("coverting fuel rate system parameter from string to decimal")
@@ -175,13 +171,10 @@ func (p *DLTTransferParser) Validate() error {
 	}
 
 	wallet := &model.DltWallet{}
-	found, err = wallet.Get(nil, p.TxWalletID)
+	_, err = wallet.Get(nil, p.TxWalletID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 		return p.ErrInfo(err)
-	}
-	if !found {
-		return p.ErrInfo("can't find wallet: ID" + strconv.FormatInt(p.TxWalletID, 10))
 	}
 	wltAmount, err := decimal.NewFromString(wallet.Amount)
 	if err != nil {
@@ -204,16 +197,11 @@ func (p *DLTTransferParser) Validate() error {
 func (p *DLTTransferParser) Action() error {
 	logger := p.GetLogger()
 	dltWallet := &model.DltWallet{}
-	found, err := dltWallet.Get(nil, p.TxWalletID)
+	_, err := dltWallet.Get(nil, p.TxWalletID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 		return p.ErrInfo(err)
 	}
-	if !found {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("wallet not found")
-		return p.ErrInfo("can't find wallet. ID: " + strconv.FormatInt(p.TxWalletID, 10))
-	}
-
 	amount, err := decimal.NewFromString(p.DLTTransfer.Amount)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": p.DLTTransfer.Amount}).Error("coverting dlt transfer amount from string to decimal")

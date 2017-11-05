@@ -36,14 +36,10 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 	}
 
 	config := &model.Config{}
-	found, err := config.Get()
+	_, err := config.Get()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
 		return utils.ErrInfo(err)
-	}
-
-	if !found {
-		return errors.New("config not found")
 	}
 
 	badBlocks := make(map[int64]string)

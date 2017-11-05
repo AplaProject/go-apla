@@ -18,7 +18,6 @@ package daemons
 
 import (
 	"context"
-	"errors"
 	"net"
 	"time"
 
@@ -49,27 +48,19 @@ func Confirmations(d *daemon, ctx context.Context) error {
 
 	// check last blocks, but not more than 5
 	confirmations := &model.Confirmation{}
-	found, err := confirmations.GetGoodBlock(consts.MIN_CONFIRMED_NODES)
+	_, err := confirmations.GetGoodBlock(consts.MIN_CONFIRMED_NODES)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting good block")
 		return err
 	}
 
-	if !found {
-		return errors.New("confirmations not found")
-	}
-
 	ConfirmedBlockID := confirmations.BlockID
 	infoBlock := &model.InfoBlock{}
-	found, err = infoBlock.Get()
+	_, err = infoBlock.Get()
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		return err
 	}
-	if !found {
-		return errors.New("info block not found")
-	}
-
 	LastBlockID := infoBlock.BlockID
 	if LastBlockID == 0 {
 		return nil
@@ -92,15 +83,11 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		}
 
 		block := model.Block{}
-		found, err := block.Get(blockID)
+		_, err := block.Get(blockID)
 		if err != nil {
 			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by ID")
 			return err
 		}
-		if !found {
-			return errors.New("info block not found")
-		}
-
 		hashStr := string(converter.BinToHex(block.Hash))
 		d.logger.WithFields(log.Fields{"hash": hashStr}).Debug("checking hash")
 		if len(hashStr) == 0 {
@@ -140,18 +127,8 @@ func Confirmations(d *daemon, ctx context.Context) error {
 			d.logger.WithFields(log.Fields{"good_count": st1, "bad_count": st0, "hash": hashStr}).Debug("checked block with hash for confirmations")
 		}
 		confirmation := &model.Confirmation{}
-		found, err = confirmation.GetConfirmation(blockID)
-		if err == nil && found {
-			confirmation.BlockID = blockID
-			confirmation.Good = int32(st1)
-			confirmation.Bad = int32(st0)
-			confirmation.Time = int32(time.Now().Unix())
-			err = confirmation.Save()
-			if err != nil {
-				d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving confirmation")
-				return err
-			}
-		} else if err == nil && !found {
+		_, err = confirmation.GetConfirmation(blockID)
+		if err == nil {
 			confirmation.BlockID = blockID
 			confirmation.Good = int32(st1)
 			confirmation.Bad = int32(st0)
@@ -162,7 +139,15 @@ func Confirmations(d *daemon, ctx context.Context) error {
 				return err
 			}
 		} else {
-			return err
+			confirmation.BlockID = blockID
+			confirmation.Good = int32(st1)
+			confirmation.Bad = int32(st0)
+			confirmation.Time = int32(time.Now().Unix())
+			err = confirmation.Save()
+			if err != nil {
+				d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving confirmation")
+				return err
+			}
 		}
 		if blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES {
 			break

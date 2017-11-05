@@ -18,7 +18,6 @@ package daemons
 
 import (
 	"context"
-	"errors"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -44,23 +43,20 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	defer DBUnlock()
 
 	infoBlock := &model.InfoBlock{}
-	found, err := infoBlock.Get()
+	_, err := infoBlock.Get()
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		return err
 	}
-	if !found {
-		return errors.New("can't find info block")
-	}
 	queueBlock := &model.QueueBlock{}
-	found, err = queueBlock.Get()
+	_, err = queueBlock.Get()
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting queue block")
 		return err
 	}
-	if !found {
+	if len(queueBlock.Hash) == 0 {
 		d.logger.WithFields(log.Fields{"type": consts.NotFound}).Debug("queue block not found")
-		return nil
+		return err
 	}
 
 	// check if the block gets in the rollback_blocks_1 limit
@@ -84,17 +80,13 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	// download blocks for check
 	fullNode := &model.FullNode{}
 
-	found, err = fullNode.FindNodeByID(queueBlock.FullNodeID)
+	_, err = fullNode.FindNodeByID(queueBlock.FullNodeID)
 	if err != nil {
 		err = queueBlock.Delete()
 		if err != nil {
 			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting queue block")
 		}
 		return utils.ErrInfo(err)
-	}
-	if !found {
-		queueBlock.Delete()
-		return errors.New("can't find queue block")
 	}
 
 	blockID := queueBlock.BlockID

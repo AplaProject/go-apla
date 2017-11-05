@@ -18,7 +18,6 @@ package daemons
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -33,22 +32,14 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	d.sleepTime = time.Second
 
 	config := &model.Config{}
-	found, err := config.Get()
-	if err != nil {
+	if _, err := config.Get(); err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cannot get config")
 		return err
 	}
 
-	if !found {
-		return errors.New("config not found")
-	}
-
 	fullNodes := &model.FullNode{}
-	found, err = fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
-	if err != nil || !found {
-		if err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("error finding full node")
-		}
+	_, err := fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	if err != nil || fullNodes.ID == 0 {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
 		d.logger.WithFields(log.Fields{"type": consts.JustWaiting, "error": err}).Warning("we are not full node, sleep for 10 seconds")
@@ -59,13 +50,10 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	defer DBUnlock()
 
 	prevBlock := &model.InfoBlock{}
-	found, err = prevBlock.Get()
+	_, err = prevBlock.Get()
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting previous block")
 		return err
-	}
-	if !found {
-		return errors.New("can't find info block")
 	}
 
 	// calculate the next block generation time

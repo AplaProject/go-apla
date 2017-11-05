@@ -17,8 +17,7 @@
 package parser
 
 import (
-	"errors"
-	"strconv"
+	"database/sql"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -58,13 +57,10 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		blocks = blocks[:0]
 	}
 	block := &model.Block{}
-	found, err := block.Get(blockID)
-	if err != nil {
+	_, err = block.Get(blockID)
+	if err != nil && err != sql.ErrNoRows {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
 		return p.ErrInfo(err)
-	}
-	if !found {
-		return errors.New("block not found: ID " + strconv.FormatInt(blockID, 10))
 	}
 	data := block.Data
 	converter.BytesShift(&data, 1)

@@ -18,7 +18,6 @@ package parser
 
 import (
 	"bytes"
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -123,7 +122,7 @@ func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 	for _, id := range ids {
 		sp := &model.StateParameter{}
 		sp.SetTablePrefix(converter.Int64ToStr(id))
-		_, err := sp.Get(transaction, "state_name")
+		_, err = sp.Get(transaction, "state_name")
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("state get by name transaction")
 			return 0, err
@@ -252,12 +251,12 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	if transactions {
 		// check for duplicate transaction
 		tx := &model.Transaction{}
-		found, err := tx.GetVerified(searchedHash)
+		_, err := tx.GetVerified(searchedHash)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting verified transaction")
 			return utils.ErrInfo(err)
 		}
-		if !found {
+		if len(tx.Hash) > 0 {
 			log.WithFields(log.Fields{"tx_hash": tx.Hash, "type": consts.DuplicateObject}).Error("double tx in transactions")
 			return utils.ErrInfo(fmt.Errorf("double tx in transactions %x", searchedHash))
 		}
@@ -383,15 +382,11 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	}
 
 	wallet := &model.DltWallet{}
-	found, err := wallet.Get(p.DbTransaction, walletID)
+	_, err := wallet.Get(p.DbTransaction, walletID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet transaction")
 		return err
 	}
-	if !found {
-		return errors.New("wallet not found. ID: " + strconv.FormatInt(walletID, 10))
-	}
-
 	amountAndCommission := amount
 	amountAndCommission.Add(commission)
 	wltAmount, err := decimal.NewFromString(wallet.Amount)
@@ -430,24 +425,24 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting state parameter by name transaction")
 		return err
 	}
-
 	conditions := sp.Value
 	if iscondition {
 		conditions = sp.Conditions
 	}
-	if len(conditions) == 0 {
-		log.WithFields(log.Fields{"conditions": condition}).Error("There is not in state_parameters")
+	if len(conditions) > 0 {
+		ret, err := p.EvalIf(conditions)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.EvalError, "error": err, "conditions": conditions}).Error("evaluating conditions")
+			return err
+		}
+		if !ret {
+			logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
+			return fmt.Errorf(`Access denied`)
+		}
+	} else {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject, "conditions": condition}).Error("No condition in state_parameters")
 		return fmt.Errorf(`There is not %s in state_parameters`, condition)
 	}
-
-	ret, err := p.EvalIf(conditions)
-	if err != nil {
-		return err
-	}
-	if !ret {
-		return fmt.Errorf(`Access denied`)
-	}
-
 	return nil
 }
 
@@ -578,21 +573,20 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 		conditions = menu.Conditions
 	}
 
-	if len(conditions) == 0 {
+	if len(conditions) > 0 {
+		ret, err := p.EvalIf(conditions)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("evaluating conditions")
+			return err
+		}
+		if !ret {
+			log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
+			return fmt.Errorf(`Access denied`)
+		}
+	} else {
 		log.WithFields(log.Fields{"type": consts.EmptyObject, "table": prefix + "_" + table}).Error("There is not conditions in")
 		return fmt.Errorf(`There is not conditions in %s`, prefix+`_`+table)
 	}
-
-	ret, err := p.EvalIf(conditions)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("evaluating conditions")
-		return err
-	}
-	if !ret {
-		log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-		return fmt.Errorf(`Access denied`)
-	}
-
 	return nil
 }
 

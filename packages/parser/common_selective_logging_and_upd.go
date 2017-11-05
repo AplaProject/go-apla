@@ -78,6 +78,9 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		addSQLFields += `,`
 	}
 	for i, field := range fields {
+		/*if p.AllPkeys[table] == field {
+			continue
+		}*/
 		field = strings.TrimSpace(field)
 		fields[i] = field
 		if field[:1] == "+" || field[:1] == "-" {
@@ -117,6 +120,10 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	cost += selectCost
 
 	if whereFields != nil && len(logData) > 0 {
+		/*	if whereFields != nil {
+			if len(logData) == 0 {
+				return tableID, fmt.Errorf(`update of the unknown record`)
+			}*/
 		jsonMap := make(map[string]string)
 		for k, v := range logData {
 			if k == p.AllPkeys[table] {

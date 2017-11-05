@@ -72,12 +72,12 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 		}
 	} else {
 		dltWallet := &model.DltWallet{}
-		found, err := dltWallet.Get(p.DbTransaction, header.UserID)
+		_, err := dltWallet.Get(p.DbTransaction, header.UserID)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet transaction")
 			return utils.ErrInfo(err)
 		}
-		if !found {
+		if len(dltWallet.PublicKey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.NotFound}).Error("transaction public key not found")
 			return utils.ErrInfoFmt("incorrect user_id")
 		}
