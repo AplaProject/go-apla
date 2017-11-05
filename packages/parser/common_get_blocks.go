@@ -51,6 +51,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 	var count int64
 
 	for {
+
 		if blockID < 2 {
 			return utils.ErrInfo(errors.New("block_id < 2"))
 		}
@@ -89,13 +90,14 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 		}
 
 		// SIGN from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time,
+		forSign := fmt.Sprintf("0,%v,%s,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time,
 			block.Header.WalletID, block.Header.StateID, block.MrklRoot)
 
 		// check the signature
 		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey}, forSign, block.Header.Sign, true)
 		if okSignErr == nil {
 			// this block is matched with our blockchain
+			fmt.Println("this block is matched with our blockchain")
 			break
 		}
 	}
@@ -130,6 +132,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 	for i := len(blocks) - 1; i >= 0; i-- {
 		block := blocks[i]
 
+		//fmt.Println("readPreviousBlock 2")
 		// our blockchain is changing, so we should read again previous block
 		err := block.readPreviousBlock()
 		if err != nil {
