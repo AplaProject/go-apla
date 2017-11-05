@@ -49,7 +49,7 @@ var forTest = tplList{
 		"1",John Silver,2
 		2,"Mark, Smith"
 	)`,
-		`[{"tag":"data","attr":{"columns":["id","name"],"data":[],"error":"line 2, column 0: wrong number of fields in line","source":"mysrc"}}]`},
+		`[{"tag":"data","attr":{"columns":["id","name"],"data":[],"error":"line 2, column 0: wrong number of fields in line","source":"mysrc","types":["text","text"]}}]`},
 	{`Select(myselect,mysrc,name,id,0,myclass)`,
 		`[{"tag":"select","attr":{"class":"myclass","name":"myselect","namecolumn":"name","source":"mysrc","value":"0","valuecolumn":"id"}}]`},
 	{`Data(mysrc,"id,name"){
@@ -57,7 +57,7 @@ var forTest = tplList{
 		2,"Mark, Smith"
 		3,"Unknown ""Person"""
 		}`,
-		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","John Silver"],["2","Mark, Smith"],["3","Unknown \"Person\""]],"source":"mysrc"}}]`},
+		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","John Silver"],["2","Mark, Smith"],["3","Unknown \"Person\""]],"source":"mysrc","types":["text","text"]}}]`},
 	{`If(true) {OK}.Else {false} Div(){test} If(false, FALSE).ElseIf(0) { Skip }.ElseIf(1) {Else OK
 		}.Else {Fourth}If(0).Else{ALL right}`,
 		`[{"tag":"text","text":"OK"},{"tag":"div","children":[{"tag":"text","text":"test"}]},{"tag":"text","text":"Else OK"},{"tag":"text","text":"ALL right"}]`},
@@ -125,11 +125,11 @@ var forTest = tplList{
 		`[{"tag":"table","attr":{"columns":[{"Name":"id","Title":"ID"},{"Name":"name","Title":"name"},{"Name":"wallet","Title":"Wallet"}],"source":"src"}}]`},
 	/*	{`Div(myclass, Include(test)Span(OK))`,
 			`[{"tag":"include","attr":{"name":"myblock"}}]`},
-			{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25).Custom(myid){
-		 			Strong(#id#, text-muted)
-		 			Div(,div element: #id#)
-		 		 }.Custom(mybtn){Button(#amount#,mypage=#id#)}`,
-			``},*/}
+		{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25).Custom(myid){
+			 			Strong(#id#, text-muted)
+			 			Div(,div element: #id#)
+			 		 }.Custom(mybtn){Button(#amount#,mypage=#id#)}`,
+			``}*/}
 
 func TestFullJSON(t *testing.T) {
 	vars := make(map[string]string)

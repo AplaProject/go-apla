@@ -227,6 +227,10 @@ func dataTag(par parFunc) string {
 
 	data := make([][]string, 0)
 	cols := strings.Split((*par.Pars)[`Columns`], `,`)
+	types := make([]string, len(cols))
+	for i := 0; i < len(types); i++ {
+		types[i] = `text`
+	}
 
 	list, err := csv.NewReader(strings.NewReader((*par.Pars)[`Data`])).ReadAll()
 	if err != nil {
@@ -240,6 +244,7 @@ func dataTag(par parFunc) string {
 			if par.Node.Attr[`customs`] != nil {
 				for _, v := range par.Node.Attr[`customs`].([]string) {
 					cols = append(cols, v)
+					types = append(types, `tags`)
 				}
 			}
 			lencol = len(cols)
@@ -268,6 +273,7 @@ func dataTag(par parFunc) string {
 	delete(par.Node.Attr, `customs`)
 	delete(par.Node.Attr, `custombody`)
 	par.Node.Attr[`columns`] = &cols
+	par.Node.Attr[`types`] = &types
 	par.Node.Attr[`data`] = &data
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
@@ -320,17 +326,20 @@ func dbfindTag(par parFunc) string {
 		fmt.Println(tblname, where, order)*/
 	data := make([][]string, 0)
 	cols := make([]string, 0)
+	types := make([]string, 0)
 	lencol := 0
 	defcol := 0
 	for _, item := range list {
 		if lencol == 0 {
 			for key := range item {
 				cols = append(cols, key)
+				types = append(types, `text`)
 			}
 			defcol = len(cols)
 			if par.Node.Attr[`customs`] != nil {
 				for _, v := range par.Node.Attr[`customs`].([]string) {
 					cols = append(cols, v)
+					types = append(types, `tags`)
 				}
 			}
 			lencol = len(cols)
@@ -363,6 +372,7 @@ func dbfindTag(par parFunc) string {
 	delete(par.Node.Attr, `customs`)
 	delete(par.Node.Attr, `custombody`)
 	par.Node.Attr[`columns`] = &cols
+	par.Node.Attr[`types`] = &types
 	par.Node.Attr[`data`] = &data
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
