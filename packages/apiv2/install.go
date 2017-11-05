@@ -65,12 +65,15 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		data.logLevel = "ERROR"
 	}
 	if data.installType == `PRIVATE_NET` {
+		logger.WithFields(log.Fields{"dir": *utils.Dir}).Info("Because install type is PRIVATE NET, first blick dir is set to dir")
 		*utils.FirstBlockDir = *utils.Dir
-		if len(data.firstBlockDir) > 0 {
+		if len(data.firstBlockDir) > 0 && data.firstBlockDir != "undefined" {
+			logger.WithFields(log.Fields{"dir": data.firstBlockDir}).Info("first block dir is sent with data, so set first block dir flag to it")
 			*utils.FirstBlockDir = data.firstBlockDir
 		}
 	}
 	if len(data.firstLoadBlockchainURL) == 0 {
+		log.WithFields(log.Fields{"url": syspar.GetBlockchainURL()}).Info("firstLoadBlockchainURL is not set throught POST data, setting it to first load blockchain url from syspar")
 		data.firstLoadBlockchainURL = syspar.GetBlockchainURL()
 	}
 	dbConfig := config.DBConfig{
@@ -135,9 +138,11 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 				}
 				*utils.FirstBlockPublicKey = pub
 			}
+		} else {
+			log.WithFields(log.Fields{"path": *utils.Dir + "/PrivateKey"}).Info("private key exists")
 		}
 		if _, err = os.Stat(*utils.Dir + "/NodePrivateKey"); os.IsNotExist(err) {
-			logger.WithFields(log.Fields{"path": *utils.FirstBlockDir + "/1block"}).Info("First block does not exists, generating new keys")
+			logger.WithFields(log.Fields{"path": *utils.FirstBlockDir + "/NodePrivateKey"}).Info("NodePrivateKey does not exists, generating new keys")
 			if len(*utils.FirstBlockNodePublicKey) == 0 {
 				log.WithFields(log.Fields{"type": consts.EmptyObject}).Info("first block public key is empty")
 				priv, pub, err := crypto.GenHexKeys()
@@ -151,6 +156,8 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 				}
 				*utils.FirstBlockNodePublicKey = pub
 			}
+		} else {
+			logger.WithFields(log.Fields{"path": *utils.FirstBlockDir + "/NodePrivateKey"}).Info("NodePrivateKey is exists")
 		}
 		*utils.GenerateFirstBlock = 1
 		parser.FirstBlock()
