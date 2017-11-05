@@ -1269,15 +1269,15 @@ func ContractsList(value string) []interface{} {
 }
 
 func CompileContract(p *Parser, code string, state, id, token int64) (interface{}, error) {
-	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` && 
-	   p.TxContract.Name != `@1Import`{
+	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` &&
+		p.TxContract.Name != `@1Import` {
 		return 0, fmt.Errorf(`CompileContract can be only called from NewContract or EditContract`)
 	}
 	return smart.CompileBlock(code, &script.OwnerInfo{StateID: uint32(state), WalletID: id, TokenID: token})
 }
 
 func FlushContract(p *Parser, iroot interface{}, id int64, active bool) error {
-	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` && 
+	if p.TxContract.Name != `@1NewContract` && p.TxContract.Name != `@1EditContract` &&
 		p.TxContract.Name != `@1Import` {
 		return fmt.Errorf(`FlushContract can be only called from NewContract or EditContract`)
 	}
@@ -1380,8 +1380,8 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 		if p.TxContract.Name != `@1EditTable` {
 			return fmt.Errorf(`TableConditions can be only called from @1EditTable`)
 		}
-	} else if p.TxContract.Name != `@1NewTable` {
-		return fmt.Errorf(`TableConditions can be only called from @1NewTable`)
+	} else if p.TxContract.Name != `@1NewTable` && p.TxContract.Name != `@1Import` {
+		return fmt.Errorf(`TableConditions can be only called from @1NewTable or @1Import`)
 	}
 
 	prefix := converter.Int64ToStr(p.TxSmart.StateID)
@@ -1473,8 +1473,8 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 
 func CreateTable(p *Parser, name string, columns, permissions string) error {
 	var err error
-	if p.TxContract.Name != `@1NewTable` {
-		return fmt.Errorf(`CreateTable can be only called from @1NewTable`)
+	if p.TxContract.Name != `@1NewTable` && p.TxContract.Name != `@1Import` {
+		return fmt.Errorf(`CreateTable can be only called from @1NewTable or @1Import`)
 	}
 	prefix := converter.Int64ToStr(p.TxSmart.StateID)
 
