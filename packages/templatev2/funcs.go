@@ -472,20 +472,6 @@ func defaultTailTag(par parFunc) string {
 
 func buttonTag(par parFunc) string {
 	defaultTag(par)
-	if len((*par.Pars)[`Params`]) > 0 {
-		imap := make(map[string]string)
-		for _, v := range strings.Split((*par.Pars)[`Params`], `,`) {
-			v = strings.TrimSpace(v)
-			if off := strings.IndexByte(v, '='); off == -1 {
-				imap[v] = v
-			} else {
-				imap[strings.TrimSpace(v[:off])] = strings.TrimSpace(v[off+1:])
-			}
-		}
-		if len(imap) > 0 {
-			par.Node.Attr[`params`] = imap
-		}
-	}
 	defaultTail(par, `button`)
 	return ``
 }

@@ -77,7 +77,22 @@ func setAttr(par parFunc, name string) {
 
 func setAllAttr(par parFunc) {
 	for key, v := range *par.Pars {
-		if key != `Body` && key != `Data` && len(v) > 0 {
+		if key == `Params` || key == `PageParams` {
+			imap := make(map[string]string)
+			for _, parval := range strings.Split(v, `,`) {
+				parval = strings.TrimSpace(parval)
+				if len(parval) > 0 {
+					if off := strings.IndexByte(parval, '='); off == -1 {
+						imap[parval] = parval
+					} else {
+						imap[strings.TrimSpace(parval[:off])] = strings.TrimSpace(parval[off+1:])
+					}
+				}
+			}
+			if len(imap) > 0 {
+				par.Node.Attr[strings.ToLower(key)] = imap
+			}
+		} else if key != `Body` && key != `Data` && len(v) > 0 {
 			par.Node.Attr[strings.ToLower(key)] = v
 		}
 	}
