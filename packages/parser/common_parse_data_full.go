@@ -713,7 +713,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 		if err != nil {
 			return nil, err
 		}
-		log.Debugf("generate block for sign: %s, key: %x, signed: %x", forSign, key, signed)
+		log.Debugf("generate block for sign: %s, key: %s, signed: %x", forSign, key, signed)
 	}
 
 	var buf bytes.Buffer
