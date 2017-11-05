@@ -171,12 +171,15 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	DBLock()
 	defer DBUnlock()
 
+	log.Debug("host", host)
+	log.Debug("maxBlockID", maxBlockID)
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
 	if _, err := curBlock.Get(); err != nil {
 		return err
 	}
 
+	log.Debug("curBlock.BlockID", curBlock.BlockID)
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID++ {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -197,11 +200,13 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		// hash compare could be failed in the case of fork
 		hashMatched, err := block.CheckHash()
 		if err != nil {
-			banNode(host, err)
-			return err
+			log.Debug("%v", err)
+			//banNode(host, err)
+			//return err
 		}
 
 		if !hashMatched {
+			log.Debug("!hashMatched")
 			// it should be fork, replace our previous blocks to ones from the host
 			err := parser.GetBlocks(blockID-1, host, "rollback_blocks_2", consts.DATA_TYPE_BLOCK_BODY)
 			if err != nil {
@@ -209,6 +214,7 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				return err
 			}
 		} else {
+			log.Debug("hashMatched")
 			/* TODO should we uncomment this ?????????????
 			_, err := model.MarkTransactionsUnverified()
 			if err != nil {
