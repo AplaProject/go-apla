@@ -71,6 +71,9 @@ var forTest = tplList{
 		`[{"tag":"text","text":"Simple "},{"tag":"strong","children":[{"tag":"text","text":"bold text"}]}]`},
 	{`EcosysParam(new_table)`,
 		`[{"tag":"text","text":"ContractConditions(` + "`MainCondition`" + `)"}]`},
+	{`DBFind(pages).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
+		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","government"]],"name":"pages","order":"id","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"government"}]}]`},
+
 	{`DBFind(contracts, smartSelect).Columns(wallet_id).Custom(customCol){
 			Address(#wallet_id#)Strong(#wallet_id#)
 		}`,

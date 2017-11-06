@@ -83,6 +83,7 @@ var (
 			`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
 			`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
 			`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+			`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
 		}},
 		`p`: {map[string]tailInfo{
 			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -309,6 +310,7 @@ func dbfindTag(par parFunc) string {
 		return ``
 	}
 	defaultTail(par, `dbfind`)
+	prefix := ``
 	where := ``
 	order := ``
 	limit := 25
@@ -333,6 +335,10 @@ func dbfindTag(par parFunc) string {
 	if limit > 250 {
 		limit = 250
 	}
+	if par.Node.Attr[`prefix`] != nil {
+		prefix = par.Node.Attr[`prefix`].(string)
+		limit = 1
+	}
 	if par.Node.Attr[`ecosystem`] != nil {
 		state = converter.StrToInt64(par.Node.Attr[`ecosystem`].(string))
 	} else {
@@ -343,6 +349,7 @@ func dbfindTag(par parFunc) string {
 	if err != nil {
 		return err.Error()
 	}
+	fmt.Println(`LIST`, limit, list)
 	/*	list := []map[string]string{{"id": "1", "amount": "200"}, {"id": "2", "amount": "300"}}
 		fmt.Println(tblname, where, order)*/
 	data := make([][]string, 0)
@@ -385,6 +392,9 @@ func dbfindTag(par parFunc) string {
 					ival = replace(string(out), 0, &item)
 				}
 			}
+			if par.Node.Attr[`prefix`] != nil {
+				(*par.Vars)[prefix+`_`+icol] = ival
+			}
 			row[i] = ival
 		}
 		data = append(data, row)
@@ -392,6 +402,7 @@ func dbfindTag(par parFunc) string {
 	setAllAttr(par)
 	delete(par.Node.Attr, `customs`)
 	delete(par.Node.Attr, `custombody`)
+	delete(par.Node.Attr, `prefix`)
 	par.Node.Attr[`columns`] = &cols
 	par.Node.Attr[`types`] = &types
 	par.Node.Attr[`data`] = &data
