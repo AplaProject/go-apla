@@ -261,7 +261,7 @@ func TestLoadFromFile(t *testing.T) {
 		t.Fatalf("can't write to file: %s", err)
 	}
 
-	err = loadFromFile(context.Background(), fileName)
+	err = LoadFromFile(context.Background(), fileName)
 	if err != nil {
 		t.Fatalf("load from file return error: %s", err)
 	}

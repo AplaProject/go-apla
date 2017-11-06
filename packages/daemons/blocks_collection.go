@@ -305,7 +305,7 @@ func firstLoad(ctx context.Context, d *daemon) error {
 			return err
 		}
 
-		err = loadFromFile(ctx, fileName)
+		err = LoadFromFile(ctx, fileName)
 		if err != nil {
 			return err
 		}
@@ -333,7 +333,7 @@ func banNode(host string, err error) {
 	// TODO
 }
 
-func loadFromFile(ctx context.Context, fileName string) error {
+func LoadFromFile(ctx context.Context, fileName string) error {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return err
