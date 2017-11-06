@@ -32,7 +32,7 @@ import (
 var (
 	funcs = map[string]tplFunc{
 		`Address`:     {addressTag, defaultTag, `address`, `Wallet`},
-		`EcosysParam`: {ecosysparTag, defaultTag, `ecosyspar`, `Name,Index`},
+		`EcosysParam`: {ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`},
 		`Em`:          {defaultTag, defaultTag, `em`, `Body,Class`},
 		`GetVar`:      {getvarTag, defaultTag, `getvar`, `Name`},
 		`ImageInput`:  {defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`},
@@ -152,7 +152,19 @@ func ecosysparTag(par parFunc) string {
 	if err != nil {
 		return err.Error()
 	}
-	if len((*par.Pars)[`Index`]) > 1 {
+	if len((*par.Pars)[`Source`]) > 0 {
+		data := make([][]string, 0)
+		cols := []string{`id`, `name`}
+		types := []string{`text`, `text`}
+		for key, item := range strings.Split(val, `,`) {
+			data = append(data, []string{converter.IntToStr(key + 1), item})
+		}
+		node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
+			`data`: &data, `source`: (*par.Pars)[`Source`]}}
+		par.Owner.Children = append(par.Owner.Children, &node)
+		return ``
+	}
+	if len((*par.Pars)[`Index`]) > 0 {
 		ind := converter.StrToInt((*par.Pars)[`Index`])
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 			val, _ = language.LangText(alist[ind-1], state, (*par.Vars)[`accept_lang`])
@@ -349,7 +361,6 @@ func dbfindTag(par parFunc) string {
 	if err != nil {
 		return err.Error()
 	}
-	fmt.Println(`LIST`, limit, list)
 	/*	list := []map[string]string{{"id": "1", "amount": "200"}, {"id": "2", "amount": "300"}}
 		fmt.Println(tblname, where, order)*/
 	data := make([][]string, 0)
