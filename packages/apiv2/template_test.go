@@ -69,6 +69,8 @@ func TestAPI(t *testing.T) {
 var forTest = tplList{
 	{`Simple Strong(bold text)`,
 		`[{"tag":"text","text":"Simple "},{"tag":"strong","children":[{"tag":"text","text":"bold text"}]}]`},
+	{`EcosysParam(new_table)`,
+		`[{"tag":"text","text":"ContractConditions(` + "`MainCondition`" + `)"}]`},
 	{`DBFind(contracts, smartSelect).Columns(wallet_id).Custom(customCol){
 			Address(#wallet_id#)Strong(#wallet_id#)
 		}`,

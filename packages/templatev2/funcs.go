@@ -31,17 +31,18 @@ import (
 
 var (
 	funcs = map[string]tplFunc{
-		`Address`:    {addressTag, defaultTag, `address`, `Wallet`},
-		`Em`:         {defaultTag, defaultTag, `em`, `Body,Class`},
-		`GetVar`:     {getvarTag, defaultTag, `getvar`, `Name`},
-		`ImageInput`: {defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`},
-		`InputErr`:   {defaultTag, defaultTag, `inputerr`, `*`},
-		`LangRes`:    {langresTag, defaultTag, `langres`, `Name,Lang`},
-		`MenuGroup`:  {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
-		`MenuItem`:   {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
-		`Now`:        {nowTag, defaultTag, `now`, `Format,Interval`},
-		`SetVar`:     {setvarTag, defaultTag, `setvar`, `Name,Value`},
-		`Strong`:     {defaultTag, defaultTag, `strong`, `Body,Class`},
+		`Address`:     {addressTag, defaultTag, `address`, `Wallet`},
+		`EcosysParam`: {ecosysparTag, defaultTag, `ecosyspar`, `Name,Index`},
+		`Em`:          {defaultTag, defaultTag, `em`, `Body,Class`},
+		`GetVar`:      {getvarTag, defaultTag, `getvar`, `Name`},
+		`ImageInput`:  {defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`},
+		`InputErr`:    {defaultTag, defaultTag, `inputerr`, `*`},
+		`LangRes`:     {langresTag, defaultTag, `langres`, `Name,Lang`},
+		`MenuGroup`:   {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
+		`MenuItem`:    {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
+		`Now`:         {nowTag, defaultTag, `now`, `Format,Interval`},
+		`SetVar`:      {setvarTag, defaultTag, `setvar`, `Name,Value`},
+		`Strong`:      {defaultTag, defaultTag, `strong`, `Body,Class`},
 	}
 	tails = map[string]forTails{
 		`button`: {map[string]tailInfo{
@@ -139,6 +140,26 @@ func addressTag(par parFunc) string {
 		return `unknown address`
 	}
 	return converter.AddressToString(id)
+}
+
+func ecosysparTag(par parFunc) string {
+	if len((*par.Pars)[`Name`]) == 0 {
+		return ``
+	}
+	state := converter.StrToInt((*par.Vars)[`state`])
+	val, err := StateParam(int64(state), (*par.Pars)[`Name`])
+	if err != nil {
+		return err.Error()
+	}
+	if len((*par.Pars)[`Index`]) > 1 {
+		ind := converter.StrToInt((*par.Pars)[`Index`])
+		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
+			val, _ = language.LangText(alist[ind-1], state, (*par.Vars)[`accept_lang`])
+		} else {
+			val = ``
+		}
+	}
+	return val
 }
 
 func langresTag(par parFunc) string {
