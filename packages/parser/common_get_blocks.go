@@ -25,6 +25,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/AplaProject/go-apla/packages/crypto"
 )
 
 func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockBody int64) error {
@@ -66,7 +67,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 			return utils.ErrInfo(err)
 		}
 
-		block, err := ProcessBlock(binaryBlock)
+		block, err := ProcessBlockWherePrevFromBlockchainTable(binaryBlock)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -89,8 +90,8 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 		}
 
 		// SIGN from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%v,%s,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time,
-			block.Header.WalletID, block.Header.StateID, block.MrklRoot)
+		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time, block.Header.WalletID, block.Header.StateID, block.MrklRoot)
+
 
 		// save the block
 		blocks = append(blocks, block)
@@ -121,27 +122,45 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 	}
 	for _, block := range myRollbackBlocks {
 		log.Debug("We roll away blocks before plug", blockID)
-		err := BlockRollback(block.Data)
+		err := RollbackTxFromBlock(block.Data)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 	}
-
-	// TODO: UpdBlockInfo
 
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
 
-	// go through new blocks in reverse order
+	// go through new blocks from the smallest block_id to the largest block_id
+	prevBlocks := make(map[int64]*Block, 0)
+
 	for i := len(blocks) - 1; i >= 0; i-- {
 		block := blocks[i]
 
-		log.Debug("i:%d / block: %v", i, block)
-		// our blockchain is changing, so we should read again previous block
+		log.Debug("i: %d / block: %v", i, block)
 
-		// TODO : need to fix readPreviousBlock
+		if prevBlocks[block.Header.BlockID-1] != nil {
+			log.Debug("prevBlock[intBlockId-1] != nil : %v", prevBlocks[block.Header.BlockID-1])
+			log.Debug("prevBlock[intBlockId-1].Header.Hash : %x", prevBlocks[block.Header.BlockID-1].Header.Hash)
+			block.PrevHeader.Hash = prevBlocks[block.Header.BlockID-1].Header.Hash
+			block.PrevHeader.Time = prevBlocks[block.Header.BlockID-1].Header.Time
+			block.PrevHeader.BlockID = prevBlocks[block.Header.BlockID-1].Header.BlockID
+			block.PrevHeader.WalletID = prevBlocks[block.Header.BlockID-1].Header.WalletID
+		}
+
+		forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d", block.Header.BlockID, block.PrevHeader.Hash, block.MrklRoot, block.Header.Time, block.Header.WalletID, block.Header.StateID)
+		log.Debug("block.Header.Time %v", block.Header.Time)
+		log.Debug("block.PrevHeader.Time %v", block.PrevHeader.Time)
+
+		hash, err := crypto.DoubleHash([]byte(forSha))
+		if err != nil {
+			log.Fatal(err)
+		}
+		block.Header.Hash = hash
+		log.Debug("hash %x", hash)
+		log.Debug("block.Header.Hash : %x", block.Header.Hash)
 
 		if err := block.CheckBlock(); err != nil {
 			dbTransaction.Rollback()
@@ -152,6 +171,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 			dbTransaction.Rollback()
 			return utils.ErrInfo(err)
 		}
+		prevBlocks[block.Header.BlockID] = block
 
 		// for last block we should update block info
 		if i == 0 {
@@ -161,11 +181,24 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 				return utils.ErrInfo(err)
 			}
 		}
+	}
+
+	// If all right we can delete old blockchain and write new
+	log.Debug("If all right we can delete old blockchain and write new")
+	for i := len(blocks) - 1; i >= 0; i-- {
+		block := blocks[i]
+		// Delete old blocks from blockchain
+		b := &model.Block{}
+		err = b.DeleteById(dbTransaction, block.Header.BlockID)
+		if err != nil {
+			dbTransaction.Rollback()
+			return err
+		}
+		// insert new blocks into blockchain
 		if err := InsertIntoBlockchain(dbTransaction, block); err != nil {
 			dbTransaction.Rollback()
 			return err
 		}
-
 	}
 
 	err = dbTransaction.Commit()

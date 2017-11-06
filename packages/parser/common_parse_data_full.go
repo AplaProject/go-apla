@@ -47,9 +47,35 @@ type Block struct {
 	BinData    []byte
 	Parsers    []*Parser
 }
-
-func InsertBlock(data []byte) error {
+/*
+func (block *Block) ParseDataFull(data []byte, blockGenerator bool) error {
 	block, err := ProcessBlock(data)
+	if err != nil {
+		log.Errorf("process block error: %s", err)
+		return err
+	}
+
+	if err := block.CheckBlock(); err != nil {
+		log.Errorf("check block error: %s", err)
+		return err
+	}
+
+	err = block.PlayBlockSafe()
+	if err != nil {
+		log.Errorf("play block failed: %s", err)
+		return err
+	}
+
+	log.Debugf("block %d was inserted successfully", block.Header.BlockID)
+	return nil
+}*/
+
+func InsertBlockWForks(data []byte) error  {
+	return nil
+}
+
+func InsertBlockWOForks(data []byte) error {
+	block, err := ProcessBlockWherePrevFromBlockchainTable(data)
 	if err != nil {
 		log.Errorf("process block error: %s", err)
 		return err
@@ -97,7 +123,7 @@ func (block *Block) PlayBlockSafe() error {
 	return nil
 }
 
-func ProcessBlock(data []byte) (*Block, error) {
+func ProcessBlockWherePrevFromMemory(data []byte) (*Block, error) {
 	if int64(len(data)) > syspar.GetMaxBlockSize() {
 		return nil, utils.ErrInfo(fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]`))
 	}
@@ -114,7 +140,30 @@ func ProcessBlock(data []byte) (*Block, error) {
 	block.BinData = data
 
 	log.Debug("readPreviousBlock")
-	if err := block.readPreviousBlock(); err != nil {
+	if err := block.readPreviousBlockFromMemory(); err != nil {
+		return nil, err
+	}
+	return block, nil
+}
+
+func ProcessBlockWherePrevFromBlockchainTable(data []byte) (*Block, error) {
+	if int64(len(data)) > syspar.GetMaxBlockSize() {
+		return nil, utils.ErrInfo(fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]`))
+	}
+
+	buf := bytes.NewBuffer(data)
+	if buf.Len() == 0 {
+		return nil, fmt.Errorf("empty buffer")
+	}
+
+	block, err := parseBlock(buf)
+	if err != nil {
+		return nil, err
+	}
+	block.BinData = data
+
+	log.Debug("readPreviousBlock")
+	if err := block.readPreviousBlockFromBlockchainTable(); err != nil {
 		return nil, err
 	}
 
@@ -516,18 +565,20 @@ func CheckTransaction(data []byte) (*tx.Header, error) {
 	return p.TxHeader, nil
 }
 
-func (block *Block) readPreviousBlock() error {
+func (block *Block) readPreviousBlockFromMemory() error {
+	return nil
+}
+
+func (block *Block) readPreviousBlockFromBlockchainTable() error {
 	if block.Header.BlockID == 1 {
 		block.PrevHeader = &utils.BlockData{}
 		return nil
 	}
 
 	var err error
-	if block.PrevHeader == nil || block.PrevHeader.BlockID == block.Header.BlockID-1 {
-		block.PrevHeader, err = GetBlockDataFromBlockChain(block.Header.BlockID - 1)
-		if err != nil {
-			return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
-		}
+	block.PrevHeader, err = GetBlockDataFromBlockChain(block.Header.BlockID - 1)
+	if err != nil {
+		return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
 	}
 	return nil
 }
@@ -605,10 +656,20 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 func (block *Block) CheckBlock() error {
 	// exclude blocks from future
 	if block.Header.Time > time.Now().Unix() {
-		utils.ErrInfo(fmt.Errorf("incorrect block time"))
+		utils.ErrInfo(fmt.Errorf("incorrect block time - block.Header.Time > time.Now().Unix()"))
+	}
+	if block.PrevHeader == nil || block.PrevHeader.BlockID != block.Header.BlockID-1 {
+		log.Debug("readPreviousBlockFromBlockchainTable")
+		log.Debug("block.PrevHeader %v", block.PrevHeader)
+		if err := block.readPreviousBlockFromBlockchainTable(); err != nil {
+			return utils.ErrInfo(err)
+		}
 	}
 	// is this block too early? Allowable error = error_time
 	if block.PrevHeader != nil {
+		log.Debug("block.PrevHeader %v", block.PrevHeader)
+		log.Debug("block.Header %v", block.Header)
+
 		if block.Header.BlockID != block.PrevHeader.BlockID+1 {
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", block.Header.BlockID, block.PrevHeader.BlockID))
 		}
@@ -619,11 +680,7 @@ func (block *Block) CheckBlock() error {
 		}
 
 		if block.PrevHeader.Time+sleepTime-block.Header.Time > consts.ERROR_TIME {
-			fmt.Println("incorrect block time")
-			fmt.Println(block.PrevHeader.Time)
-			fmt.Println(sleepTime-block.Header.Time)
-			fmt.Println(consts.ERROR_TIME)
-			return utils.ErrInfo(fmt.Errorf("incorrect block time"))
+			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", block.PrevHeader.Time, sleepTime, block.Header.Time, consts.ERROR_TIME))
 		}
 	}
 
@@ -674,14 +731,14 @@ func (block *Block) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 		// check the signature
-		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
+		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
 			block.Header.Time, block.Header.WalletID, block.Header.StateID, block.MrklRoot)
 
 		log.Debugf("check block for sign: %s, key: %x", forSign, nodePublicKey)
 
 		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, block.Header.Sign, true)
 		if err != nil {
-			return false, utils.ErrInfo(fmt.Errorf("err: %v / p.PrevBlock.BlockId: %d", err, block.PrevHeader.BlockID))
+			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, block.PrevHeader.BlockID, block.PrevHeader.Hash))
 		}
 
 		return resultCheckSign, nil
@@ -711,7 +768,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 		}
 		mrklRoot := utils.MerkleTreeRoot(mrklArray)
 
-		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s",
+		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%s",
 			header.BlockID, prevHash, header.Time, header.WalletID, header.StateID, mrklRoot)
 
 		var err error

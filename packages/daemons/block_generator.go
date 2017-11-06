@@ -96,7 +96,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 
 	log.Debugf("try to parse new transactions")
-	err = parser.InsertBlock(blockBin)
+	err = parser.InsertBlockWOForks(blockBin)
 	if err != nil {
 		log.Errorf("parser block error: %s", err)
 		return err

@@ -80,10 +80,12 @@ func blocksCollection(d *daemon, ctx context.Context) error {
 
 	// TODO: ????? remove from all tables in some test mode ?????
 
+	// TODO: use full_nodes system_parameter
 	hosts, err := model.GetFullNodesHosts()
 	if err != nil {
 		return err
 	}
+	log.Debug("hosts: %v", hosts)
 
 	// get a host with the biggest block id
 	host, maxBlockID, err := chooseBestHost(ctx, hosts)
@@ -190,7 +192,7 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			return err
 		}
 
-		block, err := parser.ProcessBlock(blockBin)
+		block, err := parser.ProcessBlockWherePrevFromBlockchainTable(blockBin)
 		if err != nil {
 			// we got bad block and should ban this host
 			banNode(host, err)
@@ -213,6 +215,7 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				banNode(host, err)
 				return err
 			}
+			log.Debug("GetBlocks OK")
 		} else {
 			log.Debug("hashMatched")
 			/* TODO should we uncomment this ?????????????
@@ -223,6 +226,11 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			*/
 		}
 
+		block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
+		if err != nil {
+			banNode(host, err)
+			return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
+		}
 		if err = block.CheckBlock(); err != nil {
 			banNode(host, err)
 			return err
@@ -271,7 +279,7 @@ func loadFirstBlock() error {
 	}
 
 	log.Infof("start to insert first block")
-	if err = parser.InsertBlock(newBlock); err != nil {
+	if err = parser.InsertBlockWOForks(newBlock); err != nil {
 		log.Errorf("failed to parse first block: %s", err)
 		return err
 	}
@@ -360,7 +368,7 @@ func loadFromFile(ctx context.Context, fileName string) error {
 		}
 
 		if *utils.StartBlockID == 0 || (*utils.StartBlockID > 0 && block.ID > *utils.StartBlockID) {
-			if err = parser.InsertBlock(block.Data); err != nil {
+			if err = parser.InsertBlockWOForks(block.Data); err != nil {
 				return err
 			}
 		}

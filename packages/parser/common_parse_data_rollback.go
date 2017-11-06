@@ -60,6 +60,35 @@ func BlockRollback(data []byte) error {
 	return err
 }
 
+
+
+func RollbackTxFromBlock(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	if buf.Len() == 0 {
+		return fmt.Errorf("empty buffer")
+	}
+
+	block, err := parseBlock(buf)
+	if err != nil {
+		return err
+	}
+
+	dbTransaction, err := model.StartTransaction()
+	if err != nil {
+		return err
+	}
+
+	err = doBlockRollback(dbTransaction, block)
+
+	if err != nil {
+		dbTransaction.Rollback()
+		return err
+	}
+
+	err = dbTransaction.Commit()
+	return err
+}
+
 func doBlockRollback(transaction *model.DbTransaction, block *Block) error {
 	// rollback transactions in reverse order
 	for i := len(block.Parsers) - 1; i >= 0; i-- {
