@@ -70,7 +70,7 @@ var forTest = tplList{
 	{`Simple Strong(bold text)`,
 		`[{"tag":"text","text":"Simple "},{"tag":"strong","children":[{"tag":"text","text":"bold text"}]}]`},
 	{`EcosysParam(gender, Source: mygender)`,
-		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","femail"],["2","mail"]],"source":"mygender","types":["text","text"]}}]`},
+		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","Femail"],["2","mail"]],"source":"mygender","types":["text","text"]}}]`},
 	{`EcosysParam(new_table)`,
 		`[{"tag":"text","text":"ContractConditions(` + "`MainCondition`" + `)"}]`},
 	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
