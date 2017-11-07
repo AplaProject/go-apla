@@ -47,28 +47,6 @@ type Block struct {
 	BinData    []byte
 	Parsers    []*Parser
 }
-/*
-func (block *Block) ParseDataFull(data []byte, blockGenerator bool) error {
-	block, err := ProcessBlock(data)
-	if err != nil {
-		log.Errorf("process block error: %s", err)
-		return err
-	}
-
-	if err := block.CheckBlock(); err != nil {
-		log.Errorf("check block error: %s", err)
-		return err
-	}
-
-	err = block.PlayBlockSafe()
-	if err != nil {
-		log.Errorf("play block failed: %s", err)
-		return err
-	}
-
-	log.Debugf("block %d was inserted successfully", block.Header.BlockID)
-	return nil
-}*/
 
 func InsertBlockWForks(data []byte) error  {
 	return nil
