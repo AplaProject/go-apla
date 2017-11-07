@@ -45,13 +45,7 @@ func Disseminator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	node := &model.FullNode{}
-	_, err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
-	if err != nil {
-		log.Errorf("can't get full_node: %s", err)
-		return err
-	}
-	fullNodeID := node.ID
+	fullNodeID := config.DltWalletID
 
 	// find out who we are, fullnode or not
 	isFullNode := func() bool {
@@ -109,7 +103,7 @@ func sendTransactions() error {
 }
 
 // send block and transactions hashes
-func sendHashes(fullNodeID int32) error {
+func sendHashes(fullNodeID int64) error {
 	block, err := model.BlockGetUnsent()
 	if err != nil {
 		return err
@@ -177,14 +171,14 @@ func sendHashesResp(resp []byte, w io.Writer) error {
 	return err
 }
 
-func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int32) []byte {
+func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int64) []byte {
 	var noBlockFlag byte
 	if block == nil {
 		noBlockFlag = 1
 	}
 
 	var buf bytes.Buffer
-	buf.Write(converter.DecToBin(nodeID, 2))
+	buf.Write(converter.DecToBin(nodeID, 8))
 	buf.WriteByte(noBlockFlag)
 	if noBlockFlag==0 {
 		buf.Write(MarshallBlock(block))

@@ -249,7 +249,7 @@ DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 
 DROP TABLE IF EXISTS "queue_blocks"; CREATE TABLE "queue_blocks" (
 "hash" bytea  NOT NULL DEFAULT '',
-"full_node_id" int NOT NULL DEFAULT '0',
+"full_node_id" bigint NOT NULL DEFAULT '0',
 "block_id" int NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "queue_blocks" ADD CONSTRAINT queue_blocks_pkey PRIMARY KEY (hash);

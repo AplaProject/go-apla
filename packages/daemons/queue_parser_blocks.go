@@ -23,6 +23,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	"context"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
 /* Take the block from the queue. If this block has the bigger block id than the last block from our chain, then find the fork
@@ -67,18 +68,12 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 		return utils.ErrInfo("old block")
 	}
 
-	// download blocks for check
-	fullNode := &model.FullNode{}
-
-	_, err = fullNode.FindNodeByID(queueBlock.FullNodeID)
-	if err != nil {
-		queueBlock.Delete()
-		return utils.ErrInfo(err)
-	}
-
+	nodeHost := syspar.GetNode(queueBlock.FullNodeID)
+	log.Debug("queueBlock.FullNodeID", queueBlock.FullNodeID)
+	log.Debug("nodeHost", nodeHost)
 	blockID := queueBlock.BlockID
 
-	host := getHostPort(fullNode.Host)
+	host := getHostPort(nodeHost.Host)
 	err = parser.GetBlocks(blockID, host, "rollback_blocks_1", 7)
 	if err != nil {
 		log.Error("v", err)
