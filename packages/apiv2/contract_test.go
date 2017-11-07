@@ -47,6 +47,12 @@ func TestNewContracts(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	/*if id, msg, err := postTxResult(`TestDBFindOK`, &url.Values{}); err != nil {
+		t.Error(err)
+		return
+	} else {
+		fmt.Println(`CALL`, id, msg)
+	}*/
 	for _, item := range contracts {
 		var ret getContractResult
 		err := sendGet(`contract/`+item.Name, nil, &ret)
@@ -92,7 +98,7 @@ var contracts = []smartContract{
 		action {
 			var ret array
 			var vals map
-			ret = DBFind("contracts")
+			ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
 			if Len(ret) {
 				Test("0",  "1")	
 			} else {

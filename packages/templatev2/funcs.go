@@ -157,6 +157,7 @@ func ecosysparTag(par parFunc) string {
 		cols := []string{`id`, `name`}
 		types := []string{`text`, `text`}
 		for key, item := range strings.Split(val, `,`) {
+			item, _ = language.LangText(item, state, (*par.Vars)[`accept_lang`])
 			data = append(data, []string{converter.IntToStr(key + 1), item})
 		}
 		node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,

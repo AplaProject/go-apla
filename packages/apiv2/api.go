@@ -136,6 +136,14 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
+func IsInstalled() bool {
+	return installed
+}
+
+func Installed() {
+	installed = true
+}
+
 // DefaultHandler is a common handle function for api requests
 func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
@@ -152,12 +160,12 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}()
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if !installed && r.URL.Path != `/api/v2/install` {
+		if !IsInstalled() && r.URL.Path != `/api/v2/install` {
 			if model.DBConn == nil && !config.IsExist() {
 				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
 				return
 			}
-			installed = true
+			Installed()
 		}
 		token, err := jwtToken(r)
 		if err != nil {
@@ -225,9 +233,9 @@ func checkEcosystem(w http.ResponseWriter, data *apiData) (int64, error) {
 		if err != nil {
 			return 0, errorAPI(w, err, http.StatusBadRequest)
 		}
-		if ecosystemID >= count {
-			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, ecosystemID)
+		if state >= count {
+			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, state)
 		}
 	}
-	return ecosystemID, nil
+	return state, nil
 }

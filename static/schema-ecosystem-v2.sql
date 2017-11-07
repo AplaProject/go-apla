@@ -166,14 +166,14 @@ INSERT INTO "%[1]d_tables" ("name", "permissions","columns", "conditions") VALUE
         '{"insert": "ContractAccess(\"@1NewMenu\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditMenu\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditMenu\")",
-    "value": "ContractAccess(\"@1EditMenu\")",
+    "value": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")",
     "conditions": "ContractAccess(\"@1EditMenu\")"
         }', 'ContractAccess("@1EditTable")'),
         ('pages', 
         '{"insert": "ContractAccess(\"@1NewPage\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditPage\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditPage\")",
-    "value": "ContractAccess(\"@1EditPage\")",
+    "value": "ContractAccess(\"@1EditPage\",\"@1AppendPage\")",
     "menu": "ContractAccess(\"@1EditPage\")",
     "conditions": "ContractAccess(\"@1EditPage\")"
         }', 'ContractAccess("@1EditTable")'),
