@@ -19,7 +19,6 @@ package apiv2
 import (
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -64,20 +63,7 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 				continue
 			}
 			var val string
-			if strings.Contains(fitem.Tags, `crypt`) {
-				var wallet string
-				if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-					wallet = r.FormValue(ret[1])
-				} else {
-					wallet = converter.Int64ToStr(data.keyId)
-				}
-				key := EncryptNewKey(wallet)
-				if len(key.Error) != 0 {
-					return errorAPI(w, key.Error, http.StatusBadRequest)
-				}
-				result.Values[fitem.Name] = key.Encrypted
-				val = key.Encrypted
-			} else if fitem.Type.String() == `[]interface {}` {
+			if fitem.Type.String() == `[]interface {}` {
 				for key, values := range r.Form {
 					if key == fitem.Name+`[]` {
 						var list []string

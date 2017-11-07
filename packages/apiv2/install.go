@@ -145,7 +145,7 @@ func installCommon(data *installParams) (err error) {
 	if err != nil {
 		return err
 	}
-	if *utils.DltWalletID == 0 {
+	if *utils.KeyID == 0 {
 		var key []byte
 		key, err = ioutil.ReadFile(*utils.Dir + "/PrivateKey")
 		if err != nil {
@@ -159,9 +159,9 @@ func installCommon(data *installParams) (err error) {
 		if err != nil {
 			return err
 		}
-		*utils.DltWalletID = crypto.Address(key)
+		*utils.KeyID = crypto.Address(key)
 	}
-	err = model.UpdateConfig("dlt_wallet_id", *utils.DltWalletID)
+	err = model.UpdateConfig("key_id", *utils.KeyID)
 	if err != nil {
 		return err
 	}

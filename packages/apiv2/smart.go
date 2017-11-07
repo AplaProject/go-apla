@@ -17,7 +17,6 @@
 package apiv2
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -25,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
@@ -116,57 +114,5 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 			}
 		}
 	}
-	return
-}
-
-// EncryptNewKey creates a shared key, generates and crypts a new private key
-func EncryptNewKey(walletID string) (result EncryptKey) {
-	var (
-		err error
-		id  int64
-	)
-
-	if len(walletID) == 0 {
-		result.Error = `unknown wallet id`
-		return result
-	}
-	id = converter.StringToAddress(walletID)
-	wallet := &model.DltWallet{}
-	found, err := wallet.Get(nil, id)
-	if err != nil {
-		result.Error = err.Error()
-		return result
-	}
-	if !found {
-		result.Error = `unknown wallet id`
-		return result
-	}
-	var private string
-
-	for result.WalletID == 0 {
-		private, result.Public, _ = crypto.GenHexKeys()
-
-		pub, _ := hex.DecodeString(result.Public)
-		idnew := crypto.Address(pub)
-
-		newWallet := &model.DltWallet{}
-		found, err := newWallet.Get(nil, idnew)
-		if err != nil {
-			result.Error = err.Error()
-			return result
-		}
-		if !found {
-			result.WalletID = idnew
-		}
-	}
-	priv, _ := hex.DecodeString(private)
-	encrypted, err := crypto.SharedEncrypt(wallet.PublicKey, priv)
-	if err != nil {
-		result.Error = err.Error()
-		return result
-	}
-	result.Encrypted = hex.EncodeToString(encrypted)
-	result.Address = converter.AddressToString(result.WalletID)
-
 	return
 }

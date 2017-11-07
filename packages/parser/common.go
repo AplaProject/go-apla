@@ -349,26 +349,6 @@ func (p *Parser) ErrInfo(verr interface{}) error {
 	return fmt.Errorf("[ERROR] %s (%s)\n%s\n%s", err, utils.Caller(1), p.FormatBlockData(), p.FormatTxMap())
 }
 
-func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
-	keyID := p.TxKeyID
-
-	wallet := &model.DltWallet{}
-	_, err := wallet.Get(p.DbTransaction, keyID)
-	if err != nil {
-		return err
-	}
-	amountAndCommission := amount
-	amountAndCommission.Add(commission)
-	wltAmount, err := decimal.NewFromString(wallet.Amount)
-	if err != nil {
-		return err
-	}
-	if wltAmount.Cmp(amountAndCommission) < 0 {
-		return fmt.Errorf("%v < %v)", wallet.Amount, amountAndCommission)
-	}
-	return nil
-}
-
 // BlockError writes the error of the transaction in the transactions_status table
 func (p *Parser) BlockError(err error) {
 	if len(p.TxHash) == 0 {
@@ -550,17 +530,4 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 		return decimal.New(0, 0), fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 	return p.TxUsedCost.Mul(fuelRate), nil
-}
-
-func (p *Parser) checkPrice(name string) error {
-	EGSPrice, err := p.getEGSPrice(name)
-	if err != nil {
-		return err
-	}
-	// Is there a correct amount on the wallet?
-	err = p.checkSenderDLT(EGSPrice, decimal.New(0, 0))
-	if err != nil {
-		return err
-	}
-	return nil
 }

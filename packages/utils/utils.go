@@ -115,7 +115,7 @@ var (
 	// LogoExt is the extension of the logotype
 	LogoExt = `png`
 	// DltWalletID is the wallet identifier
-	DltWalletID = flag.Int64("dltWalletId", 0, "DltWalletID")
+	KeyID = flag.Int64("keyID", 0, "keyID")
 
 	ReturnCh     chan string
 	CancelFunc   context.CancelFunc
