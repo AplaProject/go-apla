@@ -56,6 +56,7 @@ func Type1(r *DisRequest, rw io.ReadWriter) error {
 	// get data type (0 - block and transactions, 1 - only transactions)
 	newDataType := converter.BinToDec(buf.Next(1))
 
+	log.Debug("newDataType", newDataType)
 	if newDataType == 0 {
 		err := processBlock(buf, fullNodeID)
 		if err != nil {
@@ -97,6 +98,7 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 		return utils.ErrInfo(err)
 	}
 	if !found {
+		log.Debug("can't find info block")
 		return errors.New("can't find info block")
 	}
 
@@ -106,6 +108,7 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 
 	// get block hash
 	blockHash := buf.Next(32)
+	log.Debug("blockHash %x", blockHash)
 
 	// we accept only new blocks
 	if newBlockID >= infoBlock.BlockID {

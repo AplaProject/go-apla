@@ -30,7 +30,8 @@ import (
 )
 
 const (
-	FULL_REQUEST         = 1
+	FULL_REQUEST_BLOCK = 0
+	FULL_REQUEST_TX = 1
 	TRANSACTIONS_REQUEST = 2
 )
 
@@ -128,9 +129,16 @@ func sendHashes(fullNodeID int32) error {
 
 	buf := prepareHashReq(block, trs, fullNodeID)
 	if buf != nil || len(buf) > 0 {
-		err := sendPacketToAll(FULL_REQUEST, buf, sendHashesResp)
-		if err != nil {
-			return err
+		if block == nil {
+			err := sendPacketToAll(FULL_REQUEST_TX, buf, sendHashesResp)
+			if err != nil {
+				return err
+			}
+		} else  {
+			err := sendPacketToAll(FULL_REQUEST_BLOCK, buf, sendHashesResp)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -217,7 +225,7 @@ func MarshallTrHash(tr model.Transaction) []byte {
 
 func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer) error) error {
 	hosts := syspar.GetHosts()
-
+	log.Debug("sendPacketToAll",hosts )
 	var wg sync.WaitGroup
 
 	for _, host := range hosts {
@@ -254,6 +262,7 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 	if err != nil {
 		return err
 	}
+	log.Debug("reqType", reqType)
 
 	// data size
 	size := converter.DecToBin(len(buf), 4)
