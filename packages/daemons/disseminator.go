@@ -216,10 +216,7 @@ func MarshallTrHash(tr model.Transaction) []byte {
 }
 
 func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer) error) error {
-	hosts, err := model.GetFullNodesHosts()
-	if err != nil {
-		return err
-	}
+	hosts := syspar.GetHosts()
 
 	var wg sync.WaitGroup
 

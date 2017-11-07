@@ -81,10 +81,7 @@ func blocksCollection(d *daemon, ctx context.Context) error {
 	// TODO: ????? remove from all tables in some test mode ?????
 
 	// TODO: use full_nodes system_parameter
-	hosts, err := model.GetFullNodesHosts()
-	if err != nil {
-		return err
-	}
+	hosts := syspar.GetHosts()
 	log.Debug("hosts: %v", hosts)
 
 	// get a host with the biggest block id

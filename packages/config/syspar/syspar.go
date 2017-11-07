@@ -210,6 +210,17 @@ func GetMaxBlockUserTx() int {
 	return converter.StrToInt(SysString(MaxBlockUserTx))
 }
 
+func GetHosts() []string {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	ret := make([]string, 0)
+	for _, item := range nodes {
+		ret = append(ret, item.Host)
+	}
+	return ret
+}
+
 // SysCost returns the cost of the transaction
 func SysCost(name string) int64 {
 	return cost[name]

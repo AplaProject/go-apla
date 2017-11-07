@@ -32,7 +32,6 @@ func (fn *FullNode) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(fn).Error
 }
 
-
 // TODO: delete full_nodes table
 func GetFullNodesHosts() ([]string, error) {
 	hosts := new([]string)

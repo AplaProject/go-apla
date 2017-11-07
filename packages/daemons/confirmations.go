@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -100,11 +101,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		if config.ConfigIni["test_mode"] == "1" {
 			hosts = []string{"localhost"}
 		} else {
-			hosts, err = model.GetFullNodesHosts()
-			if err != nil {
-				log.Error("get full node error: %s", err)
-				return err
-			}
+			hosts = syspar.GetHosts()
 		}
 
 		ch := make(chan string)
