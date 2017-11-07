@@ -19,6 +19,7 @@ package templatev2
 import (
 	"encoding/json"
 	"html"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -78,14 +79,27 @@ func setAttr(par parFunc, name string) {
 func setAllAttr(par parFunc) {
 	for key, v := range *par.Pars {
 		if key == `Params` || key == `PageParams` {
-			imap := make(map[string]string)
+			imap := make(map[string]interface{})
+			re := regexp.MustCompile(`(?is)(.*)\((.*)\)`)
 			for _, parval := range strings.Split(v, `,`) {
 				parval = strings.TrimSpace(parval)
 				if len(parval) > 0 {
 					if off := strings.IndexByte(parval, '='); off == -1 {
-						imap[parval] = parval
+						imap[parval] = map[string]interface{}{
+							`type`: `text`, `text`: parval}
 					} else {
-						imap[strings.TrimSpace(parval[:off])] = strings.TrimSpace(parval[off+1:])
+						val := strings.TrimSpace(parval[off+1:])
+						if ret := re.FindStringSubmatch(val); len(ret) == 3 {
+							plist := strings.Split(ret[2], `,`)
+							for i, ilist := range plist {
+								plist[i] = strings.TrimSpace(ilist)
+							}
+							imap[strings.TrimSpace(parval[:off])] = map[string]interface{}{
+								`type`: ret[1], `params`: plist}
+						} else {
+							imap[strings.TrimSpace(parval[:off])] = map[string]interface{}{
+								`type`: `text`, `text`: val}
+						}
 					}
 				}
 			}

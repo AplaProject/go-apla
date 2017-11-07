@@ -41,8 +41,8 @@ func TestJSON(t *testing.T) {
 var forTest = tplList{
 	{`ImageInput(myimg,100,40)`,
 		`[{"tag":"imageinput","attr":{"name":"myimg","ratio":"40","width":"100"}}]`},
-	{`LinkPage(My page,mypage,,"myvar1=Value 1, myvar2=Value2")`,
-		`[{"tag":"linkpage","attr":{"page":"mypage","pageparams":{"myvar1":"Value 1","myvar2":"Value2"}},"children":[{"tag":"text","text":"My page"}]}]`},
+	{`LinkPage(My page,mypage,,"myvar1=Value 1, myvar2=Value2,myvar3=Val(myval)")`,
+		`[{"tag":"linkpage","attr":{"page":"mypage","pageparams":{"myvar1":{"text":"Value 1","type":"text"},"myvar2":{"text":"Value2","type":"text"},"myvar3":{"params":["myval"],"type":"Val"}}},"children":[{"tag":"text","text":"My page"}]}]`},
 	{`Image(/images/myimage.jpg,My photo,myclass).Style(width:100px;)`,
 		`[{"tag":"image","attr":{"alt":"My photo","class":"myclass","src":"/images/myimage.jpg","style":"width:100px;"}}]`},
 	{`Data(mysrc,"id,name",
@@ -62,7 +62,7 @@ var forTest = tplList{
 		}.Else {Fourth}If(0).Else{ALL right}`,
 		`[{"tag":"text","text":"OK"},{"tag":"div","children":[{"tag":"text","text":"test"}]},{"tag":"text","text":"Else OK"},{"tag":"text","text":"ALL right"}]`},
 	{`Button(Contract: MyContract, Body:My Contract, Class: myclass, Params:"Name=myid,Id=i10,Value")`,
-		`[{"tag":"button","attr":{"class":"myclass","contract":"MyContract","params":{"Id":"i10","Name":"myid","Value":"Value"}},"children":[{"tag":"text","text":"My Contract"}]}]`},
+		`[{"tag":"button","attr":{"class":"myclass","contract":"MyContract","params":{"Id":{"text":"i10","type":"text"},"Name":{"text":"myid","type":"text"},"Value":{"text":"Value","type":"text"}}},"children":[{"tag":"text","text":"My Contract"}]}]`},
 	{`Simple text +=<b>bold</b>`, `[{"tag":"text","text":"Simple text +=\u0026lt;b\u0026gt;bold\u0026lt;/b\u0026gt;"}]`},
 	{`Div(myclass control, Content of the Div)`, `[{"tag":"div","attr":{"class":"myclass control"},"children":[{"tag":"text","text":"Content of the Div"}]}]`},
 	{`input Div(myclass, Content Div(mypar) the Div)`,
@@ -81,7 +81,7 @@ var forTest = tplList{
 	{`Button(My Contract,, myclass, NewEcosystem, "Name=myid,Id=i10,Value").Style( .btn {
 		border: 10px 10px;
 	})`,
-		`[{"tag":"button","attr":{"class":"myclass","contract":"NewEcosystem","params":{"Id":"i10","Name":"myid","Value":"Value"},"style":".btn {\n\t\tborder: 10px 10px;\n\t}"},"children":[{"tag":"text","text":"My Contract"}]}]`},
+		`[{"tag":"button","attr":{"class":"myclass","contract":"NewEcosystem","params":{"Id":{"text":"i10","type":"text"},"Name":{"text":"myid","type":"text"},"Value":{"text":"Value","type":"text"}},"style":".btn {\n\t\tborder: 10px 10px;\n\t}"},"children":[{"tag":"text","text":"My Contract"}]}]`},
 	{`Div(myclass)Div().Style{
 		.class {
 			text-style: italic;
