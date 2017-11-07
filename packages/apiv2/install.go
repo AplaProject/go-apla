@@ -51,7 +51,7 @@ type installParams struct {
 }
 
 func installCommon(data *installParams) (err error) {
-	if installed || model.DBConn != nil || config.IsExist() {
+	if IsInstalled() || model.DBConn != nil || config.IsExist() {
 		return fmt.Errorf(`E_INSTALLED`)
 	}
 	if data.generateFirstBlock {
