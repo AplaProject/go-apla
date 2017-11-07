@@ -267,7 +267,7 @@ func ParseTransaction(buffer *bytes.Buffer, blockHeader *utils.BlockData) (*Pars
 	p.BlockData = blockHeader
 
 	txType := int64(buffer.Bytes()[0])
-	p.dataType = int(txType)
+	p.DataType = int(txType)
 
 	log.Debugf("parse transaction %s", consts.TxTypes[int(txType)])
 
@@ -445,7 +445,7 @@ func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	trParser, err := GetParser(p, consts.TxTypes[int(txType)])
 	if err != nil {
 		log.Errorf("skip unknown transaction %d", txType)
-		return nil
+		return err
 	}
 	p.txParser = trParser
 
@@ -671,9 +671,21 @@ func (block *Block) CheckHash() (bool, error) {
 	}
 	// check block signature
 	if block.PrevHeader != nil {
-		nodePublicKey, err := GetNodePublicKeyWalletOrCB(block.Header.WalletID, block.Header.StateID)
-		if err != nil {
-			return false, utils.ErrInfo(err)
+		var nodePublicKey []byte
+		var err error
+		if block.Header.Version == 0 {
+			wl := model.DltWallet{}
+			err = wl.GetWallet(block.Header.WalletID)
+			if err != nil {
+				return false, utils.ErrInfo(err)
+			}
+			nodePublicKey = wl.NodePublicKey
+
+		} else {
+			nodePublicKey, err = GetNodePublicKeyWalletOrCB(block.Header.WalletID, block.Header.StateID)
+			if err != nil {
+				return false, utils.ErrInfo(err)
+			}
 		}
 		if len(nodePublicKey) == 0 {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))

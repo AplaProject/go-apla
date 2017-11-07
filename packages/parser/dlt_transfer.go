@@ -50,7 +50,7 @@ func (p *DLTTransferParser) Init() error {
 		}
 		p.DLTTransfer = &tx.DLTTransfer{
 			Header: tx.Header{
-				Type:          int(p.TxType),
+				Type:          int(p.DataType),
 				Time:          converter.BytesToInt64(oldSlice[2]),
 				UserID:        converter.BytesToInt64(oldSlice[3]),
 				StateID:       converter.BytesToInt64(oldSlice[4]),
@@ -62,6 +62,8 @@ func (p *DLTTransferParser) Init() error {
 			Commission:    string(oldSlice[7]),
 			Comment:       string(oldSlice[8]),
 		}
+
+		log.Debugf("dllttransfer header: %+v", p.DLTTransfer)
 		return nil
 	}
 
@@ -77,8 +79,11 @@ func (p *DLTTransferParser) Init() error {
 func (p *DLTTransferParser) Validate() error {
 	err := p.generalCheck(`dlt_transfer`, &p.DLTTransfer.Header, map[string]string{})
 	if err != nil {
+		log.Debugf("general check failed: %s", err)
 		return p.ErrInfo(err)
 	}
+
+	log.Debugf("general check passed")
 
 	verifyData := map[string][]interface{}{"walletAddress": []interface{}{p.DLTTransfer.WalletAddress}, "decimal": []interface{}{p.DLTTransfer.Amount, p.DLTTransfer.Commission}, "comment": []interface{}{p.DLTTransfer.Comment}}
 	err = p.CheckInputData(verifyData)

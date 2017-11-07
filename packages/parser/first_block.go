@@ -51,10 +51,7 @@ func (p *FirstBlockParser) Validate() error {
 func (p *FirstBlockParser) Action() error {
 	if p.BlockData != nil && p.BlockData.Version == 0 {
 		// use old version of first block action
-		err := p.OldAction()
-		if err != nil {
-			return err
-		}
+		return p.OldAction()
 	}
 
 	data := p.TxPtr.(*consts.FirstBlock)

@@ -87,5 +87,10 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 		}
 	}
 
+	// for old transactions
+	if p.BlockData != nil && p.BlockData.Version == 0 {
+		return nil
+	}
+
 	return p.checkPrice(name)
 }

@@ -165,6 +165,8 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 		return &FirstBlockParser{p}, nil
 	case "DLTTransfer":
 		return &DLTTransferParser{p, nil}, nil
+	case "UpdFullNodes":
+		return &UpdFullNodesParser{p, nil}, nil
 	}
 	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }
@@ -182,7 +184,7 @@ type txMapsType struct {
 type Parser struct {
 	BlockData      *utils.BlockData
 	PrevBlock      *utils.BlockData
-	dataType       int
+	DataType       int
 	blockData      []byte
 	CurrentVersion string
 	MrklRoot       []byte
