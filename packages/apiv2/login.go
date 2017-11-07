@@ -51,12 +51,12 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if len(msg) == 0 {
 		return errorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
 	}
-	state := data.params[`ecosystem_id`].(int64)
+	state := data.params[`state`].(int64)
 	if state == 0 {
 		state = 1
 	}
-	if len(data.params[`key_id`].(string)) > 0 {
-		wallet = converter.StringToAddress(data.params[`key_id`].(string))
+	if len(data.params[`wallet`].(string)) > 0 {
+		wallet = converter.StringToAddress(data.params[`wallet`].(string))
 	} else if len(data.params[`pubkey`].([]byte)) > 0 {
 		wallet = crypto.Address(data.params[`pubkey`].([]byte))
 	}

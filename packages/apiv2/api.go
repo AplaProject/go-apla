@@ -233,9 +233,9 @@ func checkEcosystem(w http.ResponseWriter, data *apiData) (int64, error) {
 		if err != nil {
 			return 0, errorAPI(w, err, http.StatusBadRequest)
 		}
-		if state >= count {
-			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, state)
+		if ecosystemID >= count {
+			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, ecosystemID)
 		}
 	}
-	return state, nil
+	return ecosystemID, nil
 }
