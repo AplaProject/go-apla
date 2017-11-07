@@ -56,7 +56,7 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 	smartTx.TokenEcosystem = data.params[`token_ecosystem`].(int64)
 	smartTx.MaxSum = data.params[`max_sum`].(string)
 	smartTx.PayOver = data.params[`payover`].(string)
-	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, UserID: data.wallet, StateID: data.state}
+	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, EcosystemID: data.ecosystemId, KeyID: data.keyId}
 	forsign := smartTx.ForSign()
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
@@ -69,7 +69,7 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 				if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					wallet = r.FormValue(ret[1])
 				} else {
-					wallet = converter.Int64ToStr(data.wallet)
+					wallet = converter.Int64ToStr(data.keyId)
 				}
 				key := EncryptNewKey(wallet)
 				if len(key.Error) != 0 {

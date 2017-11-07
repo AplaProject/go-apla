@@ -8,6 +8,7 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
 func Monitoring(w http.ResponseWriter, r *http.Request) {
@@ -22,16 +23,10 @@ func Monitoring(w http.ResponseWriter, r *http.Request) {
 	addKey(&buf, "info_block_id", infoBlock.BlockID)
 	addKey(&buf, "info_block_hash", converter.BinToHex(infoBlock.Hash))
 	addKey(&buf, "info_block_time", infoBlock.Time)
-	addKey(&buf, "info_block_wallet", infoBlock.WalletID)
-	addKey(&buf, "info_block_state", infoBlock.StateID)
-
-	fullNode := &model.FullNode{}
-	nodes, err := fullNode.GetAll()
-	if err != nil {
-		logError(w, fmt.Errorf("can't get full nodes: %s", err))
-		return
-	}
-	addKey(&buf, "full_nodes_count", len(*nodes))
+	addKey(&buf, "info_block_key_id", infoBlock.KeyID)
+	addKey(&buf, "info_block_ecosystem_id", infoBlock.EcosystemID)
+	addKey(&buf, "info_block_node_position", infoBlock.NodePosition)
+	addKey(&buf, "full_nodes_count", syspar.GetNumberOfNodes())
 
 	block := &model.Block{}
 	_, err = block.GetMaxBlock()
@@ -42,8 +37,8 @@ func Monitoring(w http.ResponseWriter, r *http.Request) {
 	addKey(&buf, "last_block_id", block.ID)
 	addKey(&buf, "last_block_hash", converter.BinToHex(block.Hash))
 	addKey(&buf, "last_block_time", block.Time)
-	addKey(&buf, "last_block_wallet", block.WalletID)
-	addKey(&buf, "last_block_state", block.StateID)
+	addKey(&buf, "last_block_wallet", block.KeyID)
+	addKey(&buf, "last_block_state", block)
 	addKey(&buf, "last_block_transactions", block.Tx)
 
 	trCount, err := model.GetTransactionCountAll()

@@ -45,11 +45,13 @@ func Disseminator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	fullNodeID := config.DltWalletID
-
+	myNodePosition, err := syspar.GetNodePositionByKeyID(config.KeyID)
+	if err != nil  {
+		log.Error("%v", err)
+	}
 	// find out who we are, fullnode or not
 	isFullNode := func() bool {
-		if fullNodeID == 0 {
+		if myNodePosition == 0 {
 			return false
 		}
 		return true
@@ -58,7 +60,7 @@ func Disseminator(d *daemon, ctx context.Context) error {
 	if isFullNode {
 		// send blocks and transactions hashes
 		log.Debugf("we are full_node")
-		return sendHashes(fullNodeID)
+		return sendHashes(myNodePosition)
 	} else {
 		// we are not full node for this StateID and WalletID, so just send transactions
 		log.Debugf("we are not full_node")

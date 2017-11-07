@@ -40,7 +40,7 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 		limit  int
 	)
 
-	table := converter.Int64ToStr(data.state) + `_tables`
+	table := converter.Int64ToStr(data.ecosystemId) + `_tables`
 
 	count, err := model.GetRecordsCount(table)
 	if err != nil {
@@ -63,7 +63,7 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	for i, item := range list {
 		var maxid int64
 		result.List[i].Name = item[`name`]
-		fullname := converter.Int64ToStr(data.state) + `_` + item[`name`]
+		fullname := converter.Int64ToStr(data.ecosystemId) + `_` + item[`name`]
 		if item[`name`] == `keys` {
 			err = model.DBConn.Table(fullname).Count(&maxid).Error
 		} else {

@@ -249,7 +249,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	block.Time = converter.BinToDec(binaryBlock.Next(4))
 	block.Version = blockVersion
 
-	block.WalletID, err = converter.DecodeLenInt64Buf(binaryBlock)
+	block.KeyID, err = converter.DecodeLenInt64Buf(binaryBlock)
 	if err != nil {
 		return utils.BlockData{}, err
 	}
@@ -257,7 +257,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	if binaryBlock.Len() < 1 {
 		return utils.BlockData{}, fmt.Errorf("bad block format")
 	}
-	block.StateID = converter.BinToDec(binaryBlock.Next(1))
+	block.NodePosition = converter.BinToDec(binaryBlock.Next(1))
 
 	if block.BlockID > 1 {
 		signSize, err := converter.DecodeLengthBuf(binaryBlock)
@@ -340,15 +340,8 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 	p.TxPtr = nil
 	p.TxSmart = &smartTx
 	p.TxTime = smartTx.Time
-	p.TxStateID = uint32(smartTx.StateID)
-	p.TxStateIDStr = converter.UInt32ToStr(p.TxStateID)
-	if p.TxStateID > 0 {
-		p.TxCitizenID = smartTx.UserID
-		p.TxWalletID = 0
-	} else {
-		p.TxCitizenID = 0
-		p.TxWalletID = smartTx.UserID
-	}
+	p.TxEcosystemID = (smartTx.EcosystemID)
+	p.TxKeyID = smartTx.KeyID
 
 	contract := smart.GetContractByID(int32(smartTx.Type))
 	if contract == nil {
@@ -457,12 +450,9 @@ func parseStructTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	}
 
 	head := consts.Header(p.TxPtr)
-	p.TxCitizenID = head.CitizenID
-	p.TxWalletID = head.WalletID
+	p.TxKeyID = head.KeyID
 	p.TxTime = int64(head.Time)
 	p.TxType = txType
-	p.TxWalletID = head.WalletID
-	p.TxCitizenID = head.CitizenID
 	return nil
 }
 
@@ -487,8 +477,8 @@ func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	p.TxHeader = header
 	p.TxTime = header.Time
 	p.TxType = txType
-	p.TxStateID = uint32(header.StateID)
-	p.TxUserID = header.UserID
+	p.TxEcosystemID = (header.EcosystemID)
+	p.TxKeyID = header.KeyID
 
 	log.Debugf("transaction header: %+v", header)
 
@@ -519,7 +509,7 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 
 	if p.TxContract == nil {
 		if p.BlockData != nil && p.BlockData.BlockID != 1 {
-			if p.TxUserID == 0 {
+			if p.TxKeyID == 0 {
 				return utils.ErrInfo(fmt.Errorf("emtpy user id"))
 			}
 		}
@@ -652,7 +642,7 @@ func (block *Block) CheckBlock() error {
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", block.Header.BlockID, block.PrevHeader.BlockID))
 		}
 		// check time interval between blocks
-		sleepTime, err := model.GetSleepTime(block.Header.WalletID, block.Header.StateID, block.PrevHeader.StateID, block.PrevHeader.WalletID)
+		sleepTime, err := syspar.GetSleepTimeByPosition(block.Header.NodePosition, block.PrevHeader.NodePosition)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -674,8 +664,8 @@ func (block *Block) CheckBlock() error {
 		txHashes[hexHash] = struct{}{}
 
 		// check for max transaction per user in one block
-		txCounter[p.TxUserID]++
-		if txCounter[p.TxUserID] > syspar.GetMaxBlockUserTx() {
+		txCounter[p.TxKeyID]++
+		if txCounter[p.TxKeyID] > syspar.GetMaxBlockUserTx() {
 			return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
 		}
 
@@ -701,7 +691,7 @@ func (block *Block) CheckHash() (bool, error) {
 	}
 	// check block signature
 	if block.PrevHeader != nil {
-		nodePublicKey, err := GetNodePublicKeyWalletOrCB(block.Header.WalletID, block.Header.StateID)
+		nodePublicKey, err := syspar.GetNodePublicKeyByPosition(block.Header.NodePosition)
 		if err != nil {
 			return false, utils.ErrInfo(err)
 		}
@@ -710,7 +700,7 @@ func (block *Block) CheckHash() (bool, error) {
 		}
 		// check the signature
 		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
-			block.Header.Time, block.Header.WalletID, block.Header.StateID, block.MrklRoot)
+			block.Header.Time, block.Header.KeyID, block.Header.NodePosition, block.MrklRoot)
 
 		log.Debugf("check block for sign: %s, key: %x", forSign, nodePublicKey)
 
@@ -747,7 +737,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 		mrklRoot := utils.MerkleTreeRoot(mrklArray)
 
 		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%s",
-			header.BlockID, prevHash, header.Time, header.WalletID, header.StateID, mrklRoot)
+			header.BlockID, prevHash, header.Time, header.KeyID, header.NodePosition, mrklRoot)
 
 		var err error
 		signed, err = crypto.Sign(key, forSign)
@@ -762,8 +752,8 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	buf.Write(converter.DecToBin(header.Version, 1))
 	buf.Write(converter.DecToBin(header.BlockID, 4))
 	buf.Write(converter.DecToBin(header.Time, 4))
-	buf.Write(converter.EncodeLenInt64InPlace(header.WalletID))
-	buf.Write(converter.DecToBin(header.StateID, 1))
+	buf.Write(converter.EncodeLenInt64InPlace(header.KeyID))
+	buf.Write(converter.DecToBin(header.NodePosition, 1))
 	buf.Write(converter.EncodeLengthPlusData(signed))
 	// data
 	log.Debugf("block data tx: %x", blockDataTx)

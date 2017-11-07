@@ -46,8 +46,9 @@ var log = logging.MustGetLogger("daemons")
 type BlockData struct {
 	BlockID  int64
 	Time     int64
-	WalletID int64
-	StateID  int64
+	EcosystemID int64
+	KeyID int64
+	NodePosition  int64
 	Sign     []byte
 	Hash     []byte
 	Version  int
@@ -730,6 +731,7 @@ func GetCurrentDir() string {
 
 // GetBlockBody gets the block data
 func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, error) {
+	fmt.Println("host",host)
 	conn, err := TCPConn(host)
 	if err != nil {
 		return nil, ErrInfo(err)
@@ -742,34 +744,45 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
+	fmt.Println("blockID get",blockID)
 
 	log.Debug("blockID: %v", blockID)
 
 	// send the number of a block
 	_, err = conn.Write(converter.DecToBin(blockID, 4))
 	if err != nil {
+		fmt.Println("err", err)
 		return nil, ErrInfo(err)
 	}
+
+	fmt.Println("blockID get 2", blockID)
 
 	// recieve the data size as a response that server wants to transfer
 	buf := make([]byte, 4)
 	n, err := conn.Read(buf)
 	if err != nil {
+		fmt.Println("err", err)
 		return nil, ErrInfo(err)
 	}
+
+	fmt.Printf("dataSize: %x", buf)
 	log.Debug("dataSize buf: %x / get: %v", buf, n)
 
 	// if the data size is less than 10mb, we will receive them
 	dataSize := converter.BinToDec(buf)
 	var binaryBlock []byte
+	fmt.Printf("dataSize: %d", dataSize)
 	if dataSize < 10485760 && dataSize > 0 {
 		binaryBlock = make([]byte, dataSize)
 
 		_, err = io.ReadFull(conn, binaryBlock)
 		if err != nil {
+			fmt.Println("err 1", err)
 			return nil, ErrInfo(err)
 		}
+		fmt.Printf("binaryBlock: %x\n", binaryBlock)
 	} else {
+		fmt.Println("err 2", err)
 		return nil, ErrInfo("null block")
 	}
 	return binaryBlock, nil

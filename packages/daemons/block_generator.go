@@ -25,6 +25,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
 func BlockGenerator(d *daemon, ctx context.Context) error {
@@ -35,9 +36,8 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	fullNodes := &model.FullNode{}
-	_, err := fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
-	if err != nil || fullNodes.ID == 0 {
+	myNodePosition, err := syspar.GetNodePositionByKeyID(config.KeyID)
+	if err != nil || myNodePosition == 0 {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
 		log.Infof("we are not full node, sleep for 10 seconds")
@@ -47,6 +47,13 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	DBLock()
 	defer DBUnlock()
 
+	// wee need fresh myNodePosition after locking
+	myNodePosition, err = syspar.GetNodePositionByKeyID(config.KeyID)
+	if err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+	
 	prevBlock := &model.InfoBlock{}
 	_, err = prevBlock.Get()
 	if err != nil {
@@ -55,7 +62,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 
 	// calculate the next block generation time
-	sleepTime, err := model.GetSleepTime(config.DltWalletID, config.StateID, config.StateID, config.DltWalletID)
+	sleepTime, err := syspar.GetSleepTimeByKey(config.KeyID, prevBlock.NodePosition)
 	if err != nil {
 		log.Errorf("can't get sleep time: %s", err)
 		return err
@@ -89,7 +96,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 	log.Debugf("transactions to put in new block: %+v", trs)
 
-	blockBin, err := generateNextBlock(prevBlock, *trs, nodeKey.PrivateKey, config, time.Now().Unix())
+	blockBin, err := generateNextBlock(prevBlock, *trs, nodeKey.PrivateKey, config, time.Now().Unix(), myNodePosition)
 	if err != nil {
 		log.Errorf("can't generate block: %s", err)
 		return err
@@ -105,12 +112,13 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	return nil
 }
 
-func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key string, c *model.Config, blockTime int64) ([]byte, error) {
+func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key string, c *model.Config, blockTime int64, myNodePosition int64) ([]byte, error) {
 	header := &utils.BlockData{
 		BlockID:  prevBlock.BlockID + 1,
 		Time:     time.Now().Unix(),
-		WalletID: c.DltWalletID,
-		StateID:  c.StateID,
+		EcosystemID:  c.EcosystemID,
+		KeyID: c.KeyID,
+		NodePosition:  myNodePosition,
 		Version:  consts.BLOCK_VERSION,
 	}
 

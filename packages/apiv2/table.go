@@ -43,7 +43,7 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	var result tableResult
 
 	table := &model.Table{}
-	table.SetTablePrefix(converter.Int64ToStr(data.state))
+	table.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
 	_, err = table.Get(data.params[`name`].(string))
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
@@ -62,7 +62,7 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 		}
 		columns := make([]columnInfo, 0)
 		for key, value := range cols {
-			colType, err := model.GetColumnType(converter.Int64ToStr(data.state)+`_`+data.params[`name`].(string), key)
+			colType, err := model.GetColumnType(converter.Int64ToStr(data.ecosystemId)+`_`+data.params[`name`].(string), key)
 			if err != nil {
 				return errorAPI(w, err.Error(), http.StatusInternalServerError)
 			}

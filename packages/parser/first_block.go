@@ -89,11 +89,6 @@ func (p *FirstBlockParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	syspar.SysUpdate()
-	fullNode := &model.FullNode{WalletID: myAddress, Host: data.Host}
-	err = fullNode.Create(p.DbTransaction)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
 
 	return nil
 }
@@ -157,7 +152,7 @@ func FirstBlock() {
 	header := &utils.BlockData{
 		BlockID:  1,
 		Time:     now,
-		WalletID: iAddress,
+		KeyID: iAddress,
 		Version:  consts.BLOCK_VERSION,
 	}
 	var tx []byte
@@ -166,8 +161,7 @@ func FirstBlock() {
 			TxHeader: consts.TxHeader{
 				Type:      1, // FirstBlock
 				Time:      uint32(now),
-				WalletID:  iAddress,
-				CitizenID: 0,
+				KeyID:  iAddress,
 			},
 			PublicKey:     PublicKeyBytes,
 			NodePublicKey: NodePublicKeyBytes,

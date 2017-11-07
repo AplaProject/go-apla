@@ -28,20 +28,18 @@ import (
 // common check for all transactions
 func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck map[string]string) error {
 	txType := int64(header.Type)
-	if header.StateID > 0 {
-		p.TxStateID = uint32(header.StateID)
-		p.TxStateIDStr = converter.Int64ToStr(header.StateID)
-		p.TxCitizenID = header.UserID
-		p.TxWalletID = 0
+	if header.EcosystemID > 0 {
+		p.TxEcosystemID = (header.EcosystemID)
+		p.TxEcosystemIDStr = converter.Int64ToStr(header.EcosystemID)
+		p.TxKeyID = header.KeyID
 	} else {
-		p.TxStateID = 0
-		p.TxStateIDStr = ""
-		p.TxWalletID = header.UserID
-		p.TxCitizenID = 0
+		p.TxEcosystemID = 0
+		p.TxEcosystemIDStr = ""
+		p.TxKeyID = header.KeyID
 	}
 	if txType == utils.TypeInt("DLTTransfer") || txType == utils.TypeInt("NewState") || txType == utils.TypeInt("DLTChangeHostVote") || txType == utils.TypeInt("ChangeNodeKeyDLT") || txType == utils.TypeInt("CitizenRequest") || txType == utils.TypeInt("UpdFullNodes") {
 		dltWallet := &model.DltWallet{}
-		_, err := dltWallet.Get(p.DbTransaction, p.TxWalletID)
+		_, err := dltWallet.Get(p.DbTransaction, p.TxKeyID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -63,9 +61,9 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 			log.Debug("data[public_key_0]", dltWallet.PublicKey)
 		}
 	} else {
-		log.Debugf("parser general check, user_id = %d", header.UserID)
+		log.Debugf("parser general check, user_id = %d", header.KeyID)
 		dltWallet := &model.DltWallet{}
-		_, err := dltWallet.Get(p.DbTransaction, header.UserID)
+		_, err := dltWallet.Get(p.DbTransaction, header.KeyID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -82,7 +80,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 		if val, ok := conditionsCheck[cond]; ok && len(val) == 0 {
 			return utils.ErrInfoFmt("Conditions cannot be empty")
 		}
-		if err := smart.CompileEval(string(conditionsCheck[cond]), uint32(p.TxStateID)); err != nil {
+		if err := smart.CompileEval(string(conditionsCheck[cond]), uint32(p.TxEcosystemID)); err != nil {
 			return utils.ErrInfo(err)
 		}
 	}

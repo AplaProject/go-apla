@@ -26,6 +26,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
 func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockBody int64) error {
@@ -84,13 +85,13 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 
 
 		// the public key of the one who has generated this block
-		nodePublicKey, err := GetNodePublicKeyWalletOrCB(block.Header.WalletID, block.Header.StateID)
+		nodePublicKey, err := syspar.GetNodePublicKeyByPosition(block.Header.NodePosition)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 
 		// SIGN from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time, block.Header.WalletID, block.Header.StateID, block.MrklRoot)
+		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time, block.Header.KeyID, block.Header.NodePosition, block.MrklRoot)
 
 
 		// save the block
@@ -147,10 +148,11 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 			block.PrevHeader.Hash = prevBlocks[block.Header.BlockID-1].Header.Hash
 			block.PrevHeader.Time = prevBlocks[block.Header.BlockID-1].Header.Time
 			block.PrevHeader.BlockID = prevBlocks[block.Header.BlockID-1].Header.BlockID
-			block.PrevHeader.WalletID = prevBlocks[block.Header.BlockID-1].Header.WalletID
+			block.PrevHeader.KeyID = prevBlocks[block.Header.BlockID-1].Header.KeyID
+			block.PrevHeader.NodePosition = prevBlocks[block.Header.BlockID-1].Header.NodePosition
 		}
 
-		forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d", block.Header.BlockID, block.PrevHeader.Hash, block.MrklRoot, block.Header.Time, block.Header.WalletID, block.Header.StateID)
+		forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d", block.Header.BlockID, block.PrevHeader.Hash, block.MrklRoot, block.Header.Time, block.Header.KeyID, block.Header.NodePosition)
 		log.Debug("block.Header.Time %v", block.Header.Time)
 		log.Debug("block.PrevHeader.Time %v", block.PrevHeader.Time)
 

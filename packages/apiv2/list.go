@@ -33,7 +33,7 @@ type listResult struct {
 func list(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	var limit int
 
-	table := converter.EscapeName(converter.Int64ToStr(data.state) + `_` + data.params[`name`].(string))
+	table := converter.EscapeName(converter.Int64ToStr(data.ecosystemId) + `_` + data.params[`name`].(string))
 	cols := `*`
 	if len(data.params[`columns`].(string)) > 0 {
 		cols = `id,` + converter.EscapeName(data.params[`columns`].(string))

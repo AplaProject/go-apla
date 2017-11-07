@@ -208,7 +208,7 @@ func (p *Parser) GetContractLimit() (ret int64) {
 	if len(p.TxSmart.MaxSum) > 0 {
 		p.TxCost = converter.StrToInt64(p.TxSmart.MaxSum)
 	} else {
-		cost, _ := templatev2.StateParam(p.TxSmart.StateID, `max_sum`)
+		cost, _ := templatev2.StateParam(p.TxSmart.EcosystemID, `max_sum`)
 		if len(cost) > 0 {
 			p.TxCost = converter.StrToInt64(cost)
 		}
@@ -221,20 +221,19 @@ func (p *Parser) GetContractLimit() (ret int64) {
 
 func (p *Parser) getExtend() *map[string]interface{} {
 	head := p.TxSmart //consts.HeaderNew(contract.parser.TxPtr)
-	var citizenID, walletID int64
-	citizenID = int64(head.UserID)
-	walletID = int64(head.UserID)
+	var keyID int64
+	keyID = int64(head.KeyID)
 	// test
 	block := int64(0)
 	blockTime := int64(0)
-	walletBlock := int64(0)
+	blockKeyID := int64(0)
 	if p.BlockData != nil {
 		block = p.BlockData.BlockID
-		walletBlock = p.BlockData.WalletID
+		blockKeyID = p.BlockData.KeyID
 		blockTime = p.BlockData.Time
 	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `state`: head.StateID,
-		`block`: block, `citizen`: citizenID, `wallet`: walletID, `wallet_block`: walletBlock,
+	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `node_position`: head.NodePosition,`ecosystem_id`: head.EcosystemID,
+		`block`: block, `key_id`: keyID, `block_key_id`: blockKeyID,
 		`parent`: ``, `txcost`: p.GetContractLimit(), `txhash`: p.TxHash, `result`: ``,
 		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime /*, `vars`: make(map[string]interface{})*/}
 	for key, val := range p.TxData {
@@ -255,56 +254,6 @@ func StackCont(p interface{}, name string) {
 	return
 }
 
-/*func (p *Parser) payContract() error {
-	var (
-		fromID int64
-		err    error
-	)
-	//return nil
-	toID := p.BlockData.WalletID // account of node
-	fuel, err := decimal.NewFromString(syspar.GetFuelRate(p.TxSmart.TokenEcosystem))
-	if err != nil {
-		return err
-	}
-	if fuel.Cmp(decimal.New(0, 0)) <= 0 {
-		return fmt.Errorf(`fuel rate must be greater than 0`)
-	}
-
-
-	egs := p.TxUsedCost.Mul(fuel)
-	fmt.Printf("Pay fuel=%v fromID=%d toID=%d cost=%v egs=%v", fuel, fromID, toID, p.TxUsedCost, egs)
-	if egs.Cmp(decimal.New(0, 0)) == 0 { // Is it possible to pay nothing?
-		return nil
-	}
-	wallet := &model.DltWallet{}
-	if err := wallet.GetWallet(fromID); err != nil {
-		return err
-	}
-	wltAmount, err := decimal.NewFromString(wallet.Amount)
-	if err != nil {
-		return err
-	}
-
-	if wltAmount.Cmp(egs) < 0 {
-		egs = wltAmount
-	}
-	commission := egs.Mul(decimal.New(3, 0)).Div(decimal.New(100, 0)).Floor()
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(fromID)}, true); err != nil {
-		return err
-	}
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(toID)}, true); err != nil {
-		return err
-	}
-	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(syspar.GetCommissionWallet())}, true); err != nil {
-		return err
-	}
-	//	fmt.Printf(" Paid commission %v\r\n", commission)
-	return nil
-}*/
-
 // CallContract calls the contract functions according to the specified flags
 func (p *Parser) CallContract(flags int) (err error) {
 	var (
@@ -321,14 +270,14 @@ func (p *Parser) CallContract(flags int) (err error) {
 	(*p.TxContract.Extend)[`stack_cont`] = StackCont
 
 	if flags&smart.CallRollback == 0 && (flags&smart.CallAction) != 0 {
-		toID = p.BlockData.WalletID
-		fromID = p.TxSmart.UserID
+		toID = p.BlockData.KeyID
+		fromID = p.TxSmart.KeyID
 		if len(p.TxSmart.PublicKey) > 0 && string(p.TxSmart.PublicKey) != `null` {
 			public = p.TxSmart.PublicKey
 		}
 		wallet := &model.Key{}
-		wallet.SetTablePrefix(p.TxSmart.StateID)
-		err := wallet.Get(p.TxSmart.UserID)
+		wallet.SetTablePrefix(p.TxSmart.EcosystemID)
+		err := wallet.Get(p.TxSmart.KeyID)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
@@ -336,7 +285,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			public = wallet.PublicKey
 		}
 		if p.TxSmart.Type == 258 { // UpdFullNodes
-			node := syspar.GetNode(p.TxSmart.UserID)
+			node := syspar.GetNode(p.TxSmart.KeyID)
 			if node == nil {
 				return fmt.Errorf("unknown node id")
 			}
@@ -355,7 +304,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		if !CheckSignResult {
 			return fmt.Errorf("incorrect sign")
 		}
-		if p.TxSmart.StateID > 0 {
+		if p.TxSmart.EcosystemID > 0 {
 			if p.TxSmart.TokenEcosystem == 0 {
 				p.TxSmart.TokenEcosystem = 1
 			}
@@ -435,7 +384,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 	}
 	p.TxUsedCost = decimal.New(before-(*p.TxContract.Extend)[`txcost`].(int64), 0)
 	p.TxContract.TxPrice = price
-	if (flags&smart.CallAction) != 0 && p.TxSmart.StateID > 0 {
+	if (flags&smart.CallAction) != 0 && p.TxSmart.EcosystemID > 0 {
 		apl := p.TxUsedCost.Mul(fuelRate)
 		fmt.Printf("Pay fuel=%v fromID=%d toID=%d cost=%v apl=%v", fuelRate, fromID, toID, p.TxUsedCost, apl)
 		wltAmount, err := decimal.NewFromString(payWallet.Amount)
@@ -491,7 +440,7 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 	names := strings.Split(tblname, `_`)
 	if names[0] != `global` {
 		state := converter.StrToInt64(names[0])
-		if state != int64(p.TxStateID) {
+		if state != int64(p.TxEcosystemID) {
 			err = fmt.Errorf(`Wrong state in DBInsertReport`)
 			return
 		}
@@ -708,7 +657,7 @@ func DBIntWhere(tblname string, name string, where string, params ...interface{}
 
 // StateTable adds a prefix with the state number to the table name
 func StateTable(p *Parser, tblname string) string {
-	return fmt.Sprintf("%d_%s", p.TxStateID, tblname)
+	return fmt.Sprintf("%d_%s", p.TxEcosystemID, tblname)
 }
 
 func TableName(p *Parser, tblname string) string {
@@ -716,7 +665,7 @@ func TableName(p *Parser, tblname string) string {
 	if tblname[0] >= '1' && tblname[0] <= '9' && strings.Contains(tblname, `_`) {
 		return tblname
 	}
-	return fmt.Sprintf(`%d_%s`, p.TxStateID, tblname)
+	return fmt.Sprintf(`%d_%s`, p.TxEcosystemID, tblname)
 }
 
 // StateTableTx adds a prefix with the state number to the table name
@@ -729,7 +678,7 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 	for _, iname := range names {
 		name := iname.(string)
 		if len(name) > 0 {
-			contract := smart.GetContract(name, p.TxStateID)
+			contract := smart.GetContract(name, int32(p.TxEcosystemID))
 			if contract == nil {
 				contract = smart.GetContract(name, 0)
 				if contract == nil {
@@ -740,8 +689,8 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 			if block == nil {
 				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
 			}
-			_, err := smart.Run(block, []interface{}{}, &map[string]interface{}{`state`: int64(p.TxStateID),
-				`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p})
+			_, err := smart.Run(block, []interface{}{}, &map[string]interface{}{`ecosystem_id`: int64(p.TxEcosystemID),
+				`key_id`: p.TxKeyID, `parser`: p})
 			if err != nil {
 				return false, err
 			}
@@ -758,7 +707,7 @@ func ContractAccess(p *Parser, names ...interface{}) bool {
 		name := iname.(string)
 		if p.TxContract != nil && len(name) > 0 {
 			if name[0] != '@' {
-				name = fmt.Sprintf(`@%d`, p.TxStateID) + name
+				name = fmt.Sprintf(`@%d`, p.TxEcosystemID) + name
 			}
 			//		return p.TxContract.Name == name
 			if p.TxContract.StackCont[len(p.TxContract.StackCont)-1] == name {
@@ -838,14 +787,14 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 		blockTime = p.BlockData.Time
 	}
 
-	return smart.EvalIf(conditions, p.TxStateID, &map[string]interface{}{`state`: p.TxStateID,
-		`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p,
+	return smart.EvalIf(conditions, uint32(p.TxEcosystemID), &map[string]interface{}{`ecosystem_id`: p.TxEcosystemID,
+		 `key_id`: p.TxKeyID, `parser`: p,
 		`block_time`: blockTime, `time`: time})
 }
 
 // StateVal returns the value of the specified parameter for the state
 func StateVal(p *Parser, name string) string {
-	val, _ := templatev2.StateParam(int64(p.TxStateID), name)
+	val, _ := templatev2.StateParam(int64(p.TxEcosystemID), name)
 	return val
 }
 
@@ -950,7 +899,7 @@ func Len(in []interface{}) int64 {
 
 // LangRes returns the language resource
 func LangRes(p *Parser, idRes, lang string) string {
-	ret, _ := language.LangText(idRes, int(p.TxStateID), lang)
+	ret, _ := language.LangText(idRes, int(p.TxEcosystemID), lang)
 	return ret
 }
 
@@ -1051,7 +1000,7 @@ func DBSelect(p *Parser, tblname string, columns string, id int64, order string,
 		limit = 250
 	}
 	if ecosystem == 0 {
-		ecosystem = p.TxSmart.StateID
+		ecosystem = p.TxSmart.EcosystemID
 	}
 	if tblname[0] < '1' || tblname[0] > '9' || !strings.Contains(tblname, `_`) {
 		tblname = fmt.Sprintf(`%d_%s`, ecosystem, tblname)
@@ -1235,7 +1184,7 @@ func FindEcosystem(p *Parser, country string) (int64, int64, error) {
 
 // UpdateLang updates language resource
 func UpdateLang(p *Parser, name, trans string) {
-	language.UpdateLang(int(p.TxStateID), name, trans)
+	language.UpdateLang(int(p.TxEcosystemID), name, trans)
 }
 
 // Size returns the length of the string
@@ -1256,7 +1205,7 @@ func Substr(s string, off int64, slen int64) string {
 }
 
 func IsContract(name string, state int64) bool {
-	return smart.GetContract(name, uint32(state)) != nil
+	return smart.GetContract(name, int32(state)) != nil
 }
 
 func ContractsList(value string) []interface{} {
@@ -1384,7 +1333,7 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 		return fmt.Errorf(`TableConditions can be only called from @1NewTable or @1Import`)
 	}
 
-	prefix := converter.Int64ToStr(p.TxSmart.StateID)
+	prefix := converter.Int64ToStr(p.TxSmart.EcosystemID)
 
 	t := &model.Table{}
 	t.SetTablePrefix(prefix)
@@ -1412,7 +1361,7 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 		if len(perm[v]) == 0 {
 			return fmt.Errorf(`%v condition is empty`, v)
 		}
-		if err = smart.CompileEval(perm[v], uint32(p.TxSmart.StateID)); err != nil {
+		if err = smart.CompileEval(perm[v], uint32(p.TxSmart.EcosystemID)); err != nil {
 			return err
 		}
 	}
@@ -1449,7 +1398,7 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 		if len(data[`conditions`]) == 0 {
 			return fmt.Errorf(`Conditions is empty`)
 		}
-		if err = smart.CompileEval(data[`conditions`], uint32(p.TxSmart.StateID)); err != nil {
+		if err = smart.CompileEval(data[`conditions`], uint32(p.TxSmart.EcosystemID)); err != nil {
 			return err
 		}
 		if data[`index`] == `1` {
@@ -1476,7 +1425,7 @@ func CreateTable(p *Parser, name string, columns, permissions string) error {
 	if p.TxContract.Name != `@1NewTable` && p.TxContract.Name != `@1Import` {
 		return fmt.Errorf(`CreateTable can be only called from @1NewTable or @1Import`)
 	}
-	prefix := converter.Int64ToStr(p.TxSmart.StateID)
+	prefix := converter.Int64ToStr(p.TxSmart.EcosystemID)
 
 	tableName := prefix + "_" + name
 
@@ -1572,7 +1521,7 @@ func RollbackTable(p *Parser, name string) error {
 	if p.TxContract.Name != `@1NewTable` {
 		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
 	}
-	err := model.DropTable(p.DbTransaction, fmt.Sprintf("%d_%s", p.TxSmart.StateID, name))
+	err := model.DropTable(p.DbTransaction, fmt.Sprintf("%d_%s", p.TxSmart.EcosystemID, name))
 	t := &model.Table{Name: name}
 	err = t.Delete()
 	if err != nil {
@@ -1599,7 +1548,7 @@ func PermTable(p *Parser, name, permissions string) error {
 		return err
 	}
 	_, _, err = p.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
-		fmt.Sprintf(`%d_tables`, p.TxSmart.StateID), []string{`name`}, []string{name}, true)
+		fmt.Sprintf(`%d_tables`, p.TxSmart.EcosystemID), []string{`name`}, []string{name}, true)
 	return err
 }
 
@@ -1609,7 +1558,7 @@ func ColumnCondition(p *Parser, tableName, name, coltype, permissions, index str
 	}
 	isExist := p.TxContract.Name == `@1EditColumn`
 	tEx := &model.Table{}
-	tEx.SetTablePrefix(converter.Int64ToStr(p.TxSmart.StateID))
+	tEx.SetTablePrefix(converter.Int64ToStr(p.TxSmart.EcosystemID))
 	name = strings.ToLower(name)
 
 	exists, err := tEx.IsExistsByPermissionsAndTableName(name, tableName)
@@ -1626,10 +1575,10 @@ func ColumnCondition(p *Parser, tableName, name, coltype, permissions, index str
 	if len(permissions) == 0 {
 		return fmt.Errorf(`Permissions is empty`)
 	}
-	if err = smart.CompileEval(permissions, uint32(p.TxSmart.StateID)); err != nil {
+	if err = smart.CompileEval(permissions, uint32(p.TxSmart.EcosystemID)); err != nil {
 		return err
 	}
-	tblName := fmt.Sprintf("%d_%s", p.TxSmart.StateID, tableName)
+	tblName := fmt.Sprintf("%d_%s", p.TxSmart.EcosystemID, tableName)
 	if isExist {
 		return p.AccessTable(tblName, `update`)
 	}
@@ -1665,7 +1614,7 @@ func CreateColumn(p *Parser, tableName, name, coltype, permissions, index string
 		return fmt.Errorf(`CreateColumn can be only called from @1NewColumn`)
 	}
 	name = strings.ToLower(name)
-	tblname := fmt.Sprintf(`%d_%s`, p.TxSmart.StateID, tableName)
+	tblname := fmt.Sprintf(`%d_%s`, p.TxSmart.EcosystemID, tableName)
 
 	colType := ``
 	switch coltype {
@@ -1695,7 +1644,7 @@ func CreateColumn(p *Parser, tableName, name, coltype, permissions, index string
 			return err
 		}
 	}
-	tables := fmt.Sprintf(`%d_tables`, p.TxSmart.StateID)
+	tables := fmt.Sprintf(`%d_tables`, p.TxSmart.EcosystemID)
 	type cols struct {
 		Columns string
 	}
@@ -1723,7 +1672,7 @@ func RollbackColumn(p *Parser, tableName, name string) error {
 	if p.TxContract.Name != `@1NewColumn` {
 		return fmt.Errorf(`RollbackColumn can be only called from @1NewColumn`)
 	}
-	return model.AlterTableDropColumn(fmt.Sprintf(`%d_%s`, p.TxSmart.StateID, tableName), name)
+	return model.AlterTableDropColumn(fmt.Sprintf(`%d_%s`, p.TxSmart.EcosystemID, tableName), name)
 }
 
 func PermColumn(p *Parser, tableName, name, permissions string) error {
@@ -1731,7 +1680,7 @@ func PermColumn(p *Parser, tableName, name, permissions string) error {
 		return fmt.Errorf(`EditColumn can be only called from @1EditColumn`)
 	}
 	name = strings.ToLower(name)
-	tables := fmt.Sprintf(`%d_tables`, p.TxSmart.StateID)
+	tables := fmt.Sprintf(`%d_tables`, p.TxSmart.EcosystemID)
 	type cols struct {
 		Columns string
 	}

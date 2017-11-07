@@ -30,8 +30,8 @@ type getUIDResult struct {
 	UID     string `json:"uid,omitempty"`
 	Token   string `json:"token,omitempty"`
 	Expire  string `json:"expire,omitempty"`
-	State   string `json:"state,omitempty"`
-	Wallet  string `json:"wallet,omitempty"`
+	EcosystemID   string `json:"ecosystem_id,omitempty"`
+	KeyID  string `json:"key_id,omitempty"`
 	Address string `json:"address,omitempty"`
 }
 
@@ -41,10 +41,10 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	data.result = &result
 
 	if data.token != nil && data.token.Valid {
-		if claims, ok := data.token.Claims.(*JWTClaims); ok && len(claims.Wallet) > 0 {
-			result.State = claims.State
+		if claims, ok := data.token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
+			result.EcosystemID = claims.EcosystemID
 			result.Expire = converter.Int64ToStr(claims.ExpiresAt - time.Now().Unix())
-			result.Wallet = claims.Wallet
+			result.KeyID = claims.KeyID
 			return nil
 		}
 	}

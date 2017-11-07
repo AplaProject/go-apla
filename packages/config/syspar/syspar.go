@@ -23,6 +23,7 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+	"fmt"
 )
 
 const (
@@ -73,6 +74,7 @@ var (
 	}
 	cost    = make(map[string]int64)
 	nodes   = make(map[int64]*FullNode)
+	nodesByPosition   = make([][]string, 0)
 	fuels   = make(map[int64]string)
 	wallets = make(map[int64]string)
 	mutex   = &sync.RWMutex{}
@@ -95,12 +97,14 @@ func SysUpdate() error {
 	json.Unmarshal([]byte(cache[OpPrice]), &cost)
 
 	nodes = make(map[int64]*FullNode)
+	nodesByPosition = make([][]string, 0)
 	if len(cache[FullNodes]) > 0 {
 		inodes := make([][]string, 0)
 		err = json.Unmarshal([]byte(cache[FullNodes]), &inodes)
 		if err != nil {
 			return err
 		}
+		nodesByPosition = inodes
 		for _, item := range inodes {
 			if len(item) < 3 {
 				continue
@@ -142,6 +146,80 @@ func GetNode(wallet int64) *FullNode {
 		return ret
 	}
 	return nil
+}
+
+func GetNodePositionByKeyID(keyID int64) (int64, error) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	for i, item := range nodesByPosition {
+		if len(item) < 3 {
+			continue
+		}
+		if converter.StrToInt64(item[1]) == keyID {
+			return int64(i), nil
+		}
+	}
+	return 0, fmt.Errorf("Incorrect keyID")
+}
+
+func GetNumberOfNodes() (int64) {
+	return int64(len(nodesByPosition))
+}
+
+func GetNodeByPosition(position int64) (*FullNode, error) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if int64(len(nodes))<=position {
+		return nil, fmt.Errorf("incorrect position")
+	}
+	return nodes[position], nil
+}
+
+func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if int64(len(nodes))<=position {
+		return nil, fmt.Errorf("incorrect position")
+	}
+	return nodes[position].Public, nil
+}
+func GetSleepTimeByKey(myKeyID, prevBlockNodePosition int64) (int64, error) {
+
+	myPosition, err := GetNodePositionByKeyID(myKeyID)
+	if err!=nil {
+		return 0, err
+	}
+	sleepTime := int64(0)
+	if myPosition == prevBlockNodePosition {
+		sleepTime = ((GetNumberOfNodes() + myPosition) - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
+	}
+
+	if myPosition > prevBlockNodePosition {
+		sleepTime = (myPosition - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
+	}
+
+	if myPosition < prevBlockNodePosition {
+		sleepTime = (GetNumberOfNodes() - prevBlockNodePosition) * GetGapsBetweenBlocks()
+	}
+
+	return int64(sleepTime), nil
+}
+func GetSleepTimeByPosition(CurrentPosition, prevBlockNodePosition int64) (int64, error) {
+
+	sleepTime := int64(0)
+	if CurrentPosition == prevBlockNodePosition {
+		sleepTime = ((GetNumberOfNodes() + CurrentPosition) - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
+	}
+
+	if CurrentPosition > prevBlockNodePosition {
+		sleepTime = (CurrentPosition - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
+	}
+
+	if CurrentPosition < prevBlockNodePosition {
+		sleepTime = (GetNumberOfNodes() - prevBlockNodePosition) * GetGapsBetweenBlocks()
+	}
+
+	return int64(sleepTime), nil
 }
 
 func SysInt64(name string) int64 {
@@ -190,8 +268,8 @@ func GetRecoveryAddress() int64 {
 	return converter.StrToInt64(SysString(RecoveryAddress))
 }
 
-func GetGapsBetweenBlocks() int {
-	return converter.StrToInt(SysString(GapsBetweenBlocks))
+func GetGapsBetweenBlocks() int64 {
+	return converter.StrToInt64(SysString(GapsBetweenBlocks))
 }
 
 func GetMaxTxCount() int {

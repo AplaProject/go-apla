@@ -67,14 +67,14 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	walletID := converter.BinToDecBytesShift(&data, size)
-	stateID := converter.BinToDecBytesShift(&data, 1)
+	keyID := converter.BinToDecBytesShift(&data, size)
+	nodePosition := converter.BinToDecBytesShift(&data, 1)
 	ib := &model.InfoBlock{
 		Hash:     block.Hash,
 		BlockID:  iblock,
 		Time:     time,
-		WalletID: walletID,
-		StateID:  stateID}
+		KeyID: keyID,
+		NodePosition:  nodePosition}
 	err = ib.Update(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)

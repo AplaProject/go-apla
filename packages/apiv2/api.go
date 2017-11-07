@@ -45,8 +45,8 @@ type apiData struct {
 	status int
 	result interface{}
 	params map[string]interface{}
-	state  int64
-	wallet int64
+	ecosystemId  int64
+	keyId int64
 	token  *jwt.Token
 	//	sess   session.SessionStore
 }
@@ -110,12 +110,12 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 }
 
 func getPrefix(data *apiData) (prefix string) {
-	return converter.Int64ToStr(data.state)
+	return converter.Int64ToStr(data.ecosystemId)
 }
 
 func getSignHeader(txName string, data *apiData) tx.Header {
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
-		UserID: data.state, StateID: data.wallet}
+		EcosystemID: data.ecosystemId, KeyID: data.keyId}
 }
 
 func getHeader(txName string, data *apiData) (tx.Header, error) {
@@ -132,7 +132,7 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		return tx.Header{}, fmt.Errorf("signature is empty")
 	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
-		UserID: data.wallet, StateID: data.state, PublicKey: publicKey,
+		EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
@@ -172,9 +172,9 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}
 		data.token = token
 		if token != nil && token.Valid {
-			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.Wallet) > 0 {
-				data.state = converter.StrToInt64(claims.State)
-				data.wallet = converter.StrToInt64(claims.Wallet)
+			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
+				data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
+				data.keyId = converter.StrToInt64(claims.KeyID)
 			}
 		}
 		// Getting and validating request parameters
@@ -218,16 +218,16 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 }
 
 func checkEcosystem(w http.ResponseWriter, data *apiData) (int64, error) {
-	state := data.state
-	if data.params[`ecosystem`].(int64) > 0 {
-		state = data.params[`ecosystem`].(int64)
+	ecosystemID := data.ecosystemId
+	if data.params[`ecosystem_id`].(int64) > 0 {
+		ecosystemID = data.params[`ecosystem_id`].(int64)
 		count, err := model.GetNextID(nil,`system_states`)
 		if err != nil {
 			return 0, errorAPI(w, err, http.StatusBadRequest)
 		}
-		if state >= count {
-			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, state)
+		if ecosystemID >= count {
+			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, ecosystemID)
 		}
 	}
-	return state, nil
+	return ecosystemID, nil
 }

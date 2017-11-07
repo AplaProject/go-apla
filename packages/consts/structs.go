@@ -34,8 +34,7 @@ type BlockHeader struct {
 type TxHeader struct {
 	Type      byte
 	Time      uint32
-	WalletID  int64
-	CitizenID int64
+	KeyID  int64
 }
 
 // FirstBlock is the header of FirstBlock transaction

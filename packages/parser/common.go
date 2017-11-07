@@ -26,7 +26,6 @@ import (
 
 	"bytes"
 
-	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -44,14 +43,13 @@ var (
 )
 
 // GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
-func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, walletID int64, citizenID int64) {
+func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, keyID int64) {
 	tmp := binaryBlock[:]
 	txType = converter.BinToDecBytesShift(&binaryBlock, 1)
 	if consts.IsStruct(int(txType)) {
 		var txHead consts.TxHeader
 		converter.BinUnmarshal(&tmp, &txHead)
-		walletID = txHead.WalletID
-		citizenID = txHead.CitizenID
+		keyID = txHead.KeyID
 	}
 	return
 }
@@ -74,15 +72,7 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	return BlockData, nil
 }
 
-func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
-	if walletID != 0 {
-		node := syspar.GetNode(walletID)
-		if node != nil {
-			return node.Public, nil
-		}
-	}
-	return nil, fmt.Errorf(`unknown node %d`, walletID)
-}
+
 
 func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64) error {
 	txHash, err := crypto.Hash(binaryTx)
@@ -163,8 +153,6 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	switch txType {
 	case "FirstBlock":
 		return &FirstBlockParser{p}, nil
-	case "DLTTransfer":
-		return &DLTTransferParser{p, nil}, nil
 	}
 	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }
@@ -194,11 +182,10 @@ type Parser struct {
 	TxSlice       [][]byte
 	TxMap         map[string][]byte
 	TxIds         int // count of transactions
-	TxUserID      int64
-	TxCitizenID   int64
-	TxWalletID    int64
-	TxStateID     uint32
-	TxStateIDStr  string
+	TxKeyID      int64
+	TxEcosystemIDStr string
+	TxEcosystemID int64
+	TxNodePosition     uint32
 	TxTime        int64
 	TxType        int64
 	TxCost        int64           // Maximum cost of executing contract
@@ -287,8 +274,8 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		ID:       blockID,
 		Hash:     block.Header.Hash,
 		Data:     block.BinData,
-		StateID:  block.Header.StateID,
-		WalletID: block.Header.WalletID,
+		NodePosition:  block.Header.NodePosition,
+		KeyID: block.Header.KeyID,
 		Time:     block.Header.Time,
 		Tx:       int32(len(block.Parsers)),
 	}
@@ -362,13 +349,10 @@ func (p *Parser) ErrInfo(verr interface{}) error {
 }
 
 func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
-	walletID := p.TxWalletID
-	if walletID == 0 {
-		walletID = p.TxCitizenID
-	}
+	keyID := p.TxKeyID
 
 	wallet := &model.DltWallet{}
-	_, err := wallet.Get(p.DbTransaction, walletID)
+	_, err := wallet.Get(p.DbTransaction, keyID)
 	if err != nil {
 		return err
 	}
@@ -401,7 +385,7 @@ func (p *Parser) BlockError(err error) {
 // AccessRights checks the access right by executing the condition value
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(p.TxStateIDStr)
+	sp.SetTablePrefix(p.TxEcosystemIDStr)
 	_, err := sp.Get(p.DbTransaction, condition)
 	if err != nil {
 		return err
@@ -426,9 +410,9 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
-	govAccount, _ := templatev2.StateParam(int64(p.TxStateID), `founder_account`)
-	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
-		if p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
+	govAccount, _ := templatev2.StateParam(int64(p.TxEcosystemID), `founder_account`)
+	if table == fmt.Sprintf(`%d_parameters`, p.TxEcosystemID) {
+		if p.TxContract != nil && p.TxKeyID == converter.StrToInt64(govAccount) {
 			return nil
 		} else {
 			return fmt.Errorf(`Access denied`)
@@ -463,9 +447,9 @@ func (p *Parser) AccessTable(table, action string) error {
 // AccessColumns checks access rights to the columns
 func (p *Parser) AccessColumns(table string, columns []string) error {
 
-	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
-		govAccount, _ := templatev2.StateParam(int64(p.TxStateID), `founder_account`)
-		if p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
+	if table == fmt.Sprintf(`%d_parameters`, p.TxEcosystemID) {
+		govAccount, _ := templatev2.StateParam(int64(p.TxEcosystemID), `founder_account`)
+		if p.TxContract != nil && p.TxKeyID == converter.StrToInt64(govAccount) {
 			return nil
 		}
 		return fmt.Errorf(`Access denied`)

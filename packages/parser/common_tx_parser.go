@@ -32,7 +32,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	log.Debugf("transaction hex data: %x", binaryTx)
 
 	// get parameters for "struct" transactions
-	txType, walletID, citizenID := GetTxTypeAndUserID(binaryTx)
+	txType, keyID := GetTxTypeAndUserID(binaryTx)
 
 	header, err := CheckTransaction(binaryTx)
 	if err != nil {
@@ -45,12 +45,11 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		if header == nil {
 			return utils.ErrInfo(errors.New("header is nil"))
 		}
-		walletID = header.StateID
-		citizenID = header.UserID
+		keyID = header.KeyID
 	}
 
-	if walletID == 0 && citizenID == 0 {
-		errStr := "undefined walletID and citizenID"
+	if keyID == 0  {
+		errStr := "undefined keyID"
 		p.processBadTransaction(hash, errStr)
 		return errors.New(errStr)
 	}
@@ -77,8 +76,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		Hash:      hash,
 		Data:      binaryTx,
 		Type:      int8(txType),
-		WalletID:  walletID,
-		CitizenID: citizenID,
+		KeyID: keyID,
 		Counter:   counter,
 		Verified:  1,
 	}

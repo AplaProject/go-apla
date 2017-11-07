@@ -32,7 +32,7 @@ func row(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	if len(data.params[`columns`].(string)) > 0 {
 		cols = converter.EscapeName(data.params[`columns`].(string))
 	}
-	row, err := model.GetOneRow(`SELECT `+cols+` FROM "`+converter.Int64ToStr(data.state)+`_`+
+	row, err := model.GetOneRow(`SELECT `+cols+` FROM "`+converter.Int64ToStr(data.ecosystemId)+`_`+
 		data.params[`name`].(string)+`" WHERE id = ?`, data.params[`id`].(string)).String()
 	if err != nil {
 		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)

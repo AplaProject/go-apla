@@ -21,8 +21,9 @@ DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
 "id" int NOT NULL DEFAULT '0',
 "hash" bytea  NOT NULL DEFAULT '',
 "data" bytea NOT NULL DEFAULT '',
-"state_id" int  NOT NULL DEFAULT '0',
-"wallet_id" bigint  NOT NULL DEFAULT '0',
+"ecosystem_id" int  NOT NULL DEFAULT '0',
+"key_id" bigint  NOT NULL DEFAULT '0',
+"node_position" bigint  NOT NULL DEFAULT '0',
 "time" int NOT NULL DEFAULT '0',
 "tx" int NOT NULL DEFAULT '0'
 );
@@ -239,10 +240,9 @@ INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES
 DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 "hash" bytea  NOT NULL DEFAULT '',
 "block_id" int NOT NULL DEFAULT '0',
-"state_id" int  NOT NULL DEFAULT '0',
-"wallet_id" bigint NOT NULL DEFAULT '0',
+"node_position" int  NOT NULL DEFAULT '0',
+"key_id" bigint NOT NULL DEFAULT '0',
 "time" int  NOT NULL DEFAULT '0',
-"level" smallint  NOT NULL DEFAULT '0',
 "current_version" varchar(50) NOT NULL DEFAULT '0.0.1',
 "sent" smallint NOT NULL DEFAULT '0'
 );
@@ -260,9 +260,7 @@ DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
 "used" smallint NOT NULL DEFAULT '0',
 "high_rate" smallint NOT NULL DEFAULT '0',
 "type" smallint NOT NULL DEFAULT '0',
-"ecosystem" int NOT NULL DEFAULT '1',
-"wallet_id" bigint NOT NULL DEFAULT '0',
-"citizen_id" bigint NOT NULL DEFAULT '0',
+"key_id" bigint NOT NULL DEFAULT '0',
 "counter" smallint NOT NULL DEFAULT '0',
 "sent" smallint NOT NULL DEFAULT '0',
 "verified" smallint NOT NULL DEFAULT '1'

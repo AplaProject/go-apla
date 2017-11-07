@@ -34,7 +34,7 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 		}
 	}
 	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
-		block.Header.Time, block.Header.WalletID, block.Header.StateID)
+		block.Header.Time, block.Header.KeyID, block.Header.NodePosition)
 	log.Debug("forSha %v", forSha)
 
 	hash, err := crypto.DoubleHash([]byte(forSha))
@@ -48,8 +48,8 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			Hash:           hash,
 			BlockID:        blockID,
 			Time:           block.Header.Time,
-			StateID:        block.Header.StateID,
-			WalletID:       block.Header.WalletID,
+			NodePosition:        block.Header.NodePosition,
+			KeyID:       block.Header.KeyID,
 			CurrentVersion: fmt.Sprintf("%d", block.Header.Version),
 		}
 		err := ib.Create(dbTransaction)
@@ -61,8 +61,8 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			Hash:     hash,
 			BlockID:  blockID,
 			Time:     block.Header.Time,
-			StateID:  block.Header.StateID,
-			WalletID: block.Header.WalletID,
+			NodePosition:  block.Header.NodePosition,
+			KeyID: block.Header.KeyID,
 			Sent:     0,
 		}
 		if err := ibUpdate.Update(dbTransaction); err != nil {

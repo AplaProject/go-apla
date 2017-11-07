@@ -56,7 +56,7 @@ type EncryptKey struct {
 
 func validateSmartContract(r *http.Request, data *apiData, result *prepareResult) (contract *smart.Contract, parerr interface{}, err error) {
 	cntname := data.params[`name`].(string)
-	contract = smart.GetContract(cntname, uint32(data.state))
+	contract = smart.GetContract(cntname, int32(data.ecosystemId))
 	if contract == nil {
 		return nil, cntname, fmt.Errorf(`E_CONTRACT`)
 	}
@@ -84,7 +84,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 					if err != nil {
 						break
 					}
-					sign.ForSign = fmt.Sprintf(`%s,%d`, (*result).Time, uint64(data.wallet))
+					sign.ForSign = fmt.Sprintf(`%s,%d`, (*result).Time, uint64(data.keyId))
 					for _, isign := range sign.Params {
 						sign.ForSign += fmt.Sprintf(`,%v`, strings.TrimSpace(r.FormValue(isign.Param)))
 					}
