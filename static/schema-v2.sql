@@ -35,14 +35,6 @@ DROP TABLE IF EXISTS "log_transactions"; CREATE TABLE "log_transactions" (
 );
 ALTER TABLE ONLY "log_transactions" ADD CONSTRAINT log_transactions_pkey PRIMARY KEY (hash);
 
-DROP TABLE IF EXISTS "main_lock"; CREATE TABLE "main_lock" (
-"lock_time" int  NOT NULL DEFAULT '0',
-"script_name" varchar(100) NOT NULL DEFAULT '',
-"info" text NOT NULL DEFAULT '',
-"uniq" smallint NOT NULL DEFAULT '0'
-);
-CREATE UNIQUE INDEX main_lock_uniq ON "main_lock" USING btree (uniq);
-
 DROP TABLE IF EXISTS "migration_history"; CREATE TABLE "migration_history" (
 "id" int NOT NULL  DEFAULT '0',
 "version" int NOT NULL DEFAULT '0',
@@ -99,7 +91,7 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'ContractAccess("@0UpdSysParam")'),    
 ('default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'ContractAccess("@0UpdSysParam")'),
 ('default_ecosystem_contract', '', 'ContractAccess("@0UpdSysParam")'),
-('gap_between_blocks', '3', 'ContractAccess("@0UpdSysParam")'),
+('gap_between_blocks', '1', 'ContractAccess("@0UpdSysParam")'),
 ('new_version_url', 'upd.apla.io', 'ContractAccess("@0UpdSysParam")'),
 ('full_nodes', '', 'ContractAccess("@0UpdFullNodes")'),
 ('count_of_nodes', '101', 'ContractAccess("@0UpdSysParam")'),
@@ -306,26 +298,3 @@ DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 "stop_time" int NOT NULL DEFAULT '0'
 );
 
-DROP SEQUENCE IF EXISTS full_nodes_id_seq CASCADE;
-CREATE SEQUENCE full_nodes_id_seq START WITH 1;
-DROP TABLE IF EXISTS "full_nodes"; CREATE TABLE "full_nodes" (
-"id" int NOT NULL  default nextval('full_nodes_id_seq'),
-"host" varchar(100) NOT NULL DEFAULT '',
-"wallet_id" bigint  NOT NULL DEFAULT '0',
-"state_id" int NOT NULL DEFAULT '0',
-"final_delegate_wallet_id" bigint NOT NULL DEFAULT '0',
-"final_delegate_state_id" bigint NOT NULL DEFAULT '0',
-"rb_id" int NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE full_nodes_id_seq owned by full_nodes.id;
-ALTER TABLE ONLY "full_nodes" ADD CONSTRAINT full_nodes_pkey PRIMARY KEY (id);
-
-DROP SEQUENCE IF EXISTS upd_full_nodes_id_seq CASCADE;
-CREATE SEQUENCE upd_full_nodes_id_seq START WITH 1;
-DROP TABLE IF EXISTS "upd_full_nodes"; CREATE TABLE "upd_full_nodes" (
-"id" bigint NOT NULL  default nextval('upd_full_nodes_id_seq'),
-"time" int NOT NULL DEFAULT '0',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE upd_full_nodes_id_seq owned by upd_full_nodes.id;
-ALTER TABLE ONLY "upd_full_nodes" ADD CONSTRAINT upd_full_nodes_pkey PRIMARY KEY (id);
