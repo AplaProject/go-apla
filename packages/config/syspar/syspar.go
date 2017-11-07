@@ -36,7 +36,7 @@ const (
 	// OpPrice is the costs of operations
 	OpPrice = `op_price`
 	// GapsBetweenBlocks is the time between blocks
-	GapsBetweenBlocks = `gaps_between_blocks`
+	GapsBetweenBlocks = `gap_between_blocks`
 	// BlockchainURL is the address of the blockchain file.  For those who don't want to collect it from nodes
 	BlockchainURL = `blockchain_url`
 	// MaxBlockSize is the maximum size of the block

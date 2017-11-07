@@ -67,6 +67,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		log.Errorf("can't get sleep time: %s", err)
 		return err
 	}
+	log.Debug("sleepTime %d", sleepTime)
 	toSleep := int64(sleepTime) - (time.Now().Unix() - int64(prevBlock.Time))
 	if toSleep > 0 {
 		log.Debugf("we need to sleep %d seconds to generate new block", toSleep)
