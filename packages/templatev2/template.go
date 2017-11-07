@@ -443,7 +443,7 @@ main:
 		params[curp] += string(ch)
 		continue
 	}
-	return &params, off, tailpar
+	return &params, utf8.RuneCountInString(input[:off]), tailpar
 }
 
 func process(input string, owner *node, vars *map[string]string) {

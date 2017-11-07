@@ -39,6 +39,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(pref,unicode Р)Input(Name: myid, Value: #pref#)Strong(qqq)`,
+		`[{"tag":"input","attr":{"name":"myid","value":"unicode Р"}},{"tag":"strong","children":[{"tag":"text","text":"qqq"}]}]`},
 	{`ImageInput(myimg,100,40)`,
 		`[{"tag":"imageinput","attr":{"name":"myimg","ratio":"40","width":"100"}}]`},
 	{`LinkPage(My page,mypage,,"myvar1=Value 1, myvar2=Value2,myvar3=Val(myval)")`,
