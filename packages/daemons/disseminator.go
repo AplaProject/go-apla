@@ -30,9 +30,8 @@ import (
 )
 
 const (
-	FULL_REQUEST_BLOCK = 0
-	FULL_REQUEST_TX = 1
-	TRANSACTIONS_REQUEST = 2
+	I_AM_FULL_NODE = 1
+	I_AM_NOT_FULL_NODE = 2
 )
 
 // send to all nodes from nodes_connections the following data
@@ -92,7 +91,7 @@ func sendTransactions() error {
 	}
 
 	if buf.Len() > 0 {
-		err := sendPacketToAll(TRANSACTIONS_REQUEST, buf.Bytes(), nil)
+		err := sendPacketToAll(I_AM_NOT_FULL_NODE, buf.Bytes(), nil)
 		if err != nil {
 			return err
 		}
@@ -129,17 +128,10 @@ func sendHashes(fullNodeID int32) error {
 
 	buf := prepareHashReq(block, trs, fullNodeID)
 	if buf != nil || len(buf) > 0 {
-		if block == nil {
-			err := sendPacketToAll(FULL_REQUEST_TX, buf, sendHashesResp)
+			err := sendPacketToAll(I_AM_FULL_NODE, buf, sendHashesResp)
 			if err != nil {
 				return err
 			}
-		} else  {
-			err := sendPacketToAll(FULL_REQUEST_BLOCK, buf, sendHashesResp)
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	// mark all transactions and block as sent
@@ -187,14 +179,14 @@ func sendHashesResp(resp []byte, w io.Writer) error {
 
 func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int32) []byte {
 	var noBlockFlag byte
-	if block != nil {
+	if block == nil {
 		noBlockFlag = 1
 	}
 
 	var buf bytes.Buffer
 	buf.Write(converter.DecToBin(nodeID, 2))
 	buf.WriteByte(noBlockFlag)
-	if block != nil {
+	if noBlockFlag==0 {
 		buf.Write(MarshallBlock(block))
 	}
 	if trs != nil {
