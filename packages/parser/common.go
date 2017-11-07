@@ -274,8 +274,9 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		ID:       blockID,
 		Hash:     block.Header.Hash,
 		Data:     block.BinData,
-		NodePosition:  block.Header.NodePosition,
+		EcosystemID: block.Header.EcosystemID,
 		KeyID: block.Header.KeyID,
+		NodePosition:  block.Header.NodePosition,
 		Time:     block.Header.Time,
 		Tx:       int32(len(block.Parsers)),
 	}

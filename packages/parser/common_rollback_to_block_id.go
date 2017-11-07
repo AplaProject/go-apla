@@ -63,16 +63,14 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 	converter.BytesShift(&data, 1)
 	iblock := converter.BinToDecBytesShift(&data, 4)
 	time := converter.BinToDecBytesShift(&data, 4)
-	size, err := converter.DecodeLength(&data)
-	if err != nil {
-		log.Fatal(err)
-	}
-	keyID := converter.BinToDecBytesShift(&data, size)
+	ecosystemID := converter.BinToDecBytesShift(&data, 4)
+	keyID := converter.BinToDecBytesShift(&data, 8)
 	nodePosition := converter.BinToDecBytesShift(&data, 1)
 	ib := &model.InfoBlock{
 		Hash:     block.Hash,
 		BlockID:  iblock,
 		Time:     time,
+		EcosystemID: ecosystemID,
 		KeyID: keyID,
 		NodePosition:  nodePosition}
 	err = ib.Update(p.DbTransaction)

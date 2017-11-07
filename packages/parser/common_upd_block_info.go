@@ -33,8 +33,8 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			blockID = *utils.StartBlockID
 		}
 	}
-	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
-		block.Header.Time, block.Header.KeyID, block.Header.NodePosition)
+	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
+		block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition)
 	log.Debug("forSha %v", forSha)
 
 	hash, err := crypto.DoubleHash([]byte(forSha))
@@ -48,8 +48,9 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			Hash:           hash,
 			BlockID:        blockID,
 			Time:           block.Header.Time,
-			NodePosition:        block.Header.NodePosition,
+			EcosystemID:       block.Header.EcosystemID,
 			KeyID:       block.Header.KeyID,
+			NodePosition:        block.Header.NodePosition,
 			CurrentVersion: fmt.Sprintf("%d", block.Header.Version),
 		}
 		err := ib.Create(dbTransaction)
@@ -61,8 +62,9 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			Hash:     hash,
 			BlockID:  blockID,
 			Time:     block.Header.Time,
-			NodePosition:  block.Header.NodePosition,
+			EcosystemID: block.Header.EcosystemID,
 			KeyID: block.Header.KeyID,
+			NodePosition:  block.Header.NodePosition,
 			Sent:     0,
 		}
 		if err := ibUpdate.Update(dbTransaction); err != nil {

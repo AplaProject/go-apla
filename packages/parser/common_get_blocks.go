@@ -91,8 +91,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 		}
 
 		// SIGN from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time, block.Header.KeyID, block.Header.NodePosition, block.MrklRoot)
-
+		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition, block.MrklRoot)
 
 		// save the block
 		blocks = append(blocks, block)
@@ -148,11 +147,12 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 			block.PrevHeader.Hash = prevBlocks[block.Header.BlockID-1].Header.Hash
 			block.PrevHeader.Time = prevBlocks[block.Header.BlockID-1].Header.Time
 			block.PrevHeader.BlockID = prevBlocks[block.Header.BlockID-1].Header.BlockID
+			block.PrevHeader.EcosystemID = prevBlocks[block.Header.BlockID-1].Header.EcosystemID
 			block.PrevHeader.KeyID = prevBlocks[block.Header.BlockID-1].Header.KeyID
 			block.PrevHeader.NodePosition = prevBlocks[block.Header.BlockID-1].Header.NodePosition
 		}
 
-		forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d", block.Header.BlockID, block.PrevHeader.Hash, block.MrklRoot, block.Header.Time, block.Header.KeyID, block.Header.NodePosition)
+		forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", block.Header.BlockID, block.PrevHeader.Hash, block.MrklRoot, block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition)
 		log.Debug("block.Header.Time %v", block.Header.Time)
 		log.Debug("block.PrevHeader.Time %v", block.PrevHeader.Time)
 

@@ -248,15 +248,8 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	block.BlockID = converter.BinToDec(binaryBlock.Next(4))
 	block.Time = converter.BinToDec(binaryBlock.Next(4))
 	block.Version = blockVersion
-
-	block.KeyID, err = converter.DecodeLenInt64Buf(binaryBlock)
-	if err != nil {
-		return utils.BlockData{}, err
-	}
-
-	if binaryBlock.Len() < 1 {
-		return utils.BlockData{}, fmt.Errorf("bad block format")
-	}
+	block.EcosystemID = converter.BinToDec(binaryBlock.Next(4))
+	block.KeyID = converter.BinToDec(binaryBlock.Next(8))
 	block.NodePosition = converter.BinToDec(binaryBlock.Next(1))
 
 	if block.BlockID > 1 {
@@ -699,8 +692,8 @@ func (block *Block) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 		// check the signature
-		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
-			block.Header.Time, block.Header.KeyID, block.Header.NodePosition, block.MrklRoot)
+		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
+			block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition, block.MrklRoot)
 
 		log.Debugf("check block for sign: %s, key: %x", forSign, nodePublicKey)
 
@@ -736,8 +729,8 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 		}
 		mrklRoot := utils.MerkleTreeRoot(mrklArray)
 
-		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%s",
-			header.BlockID, prevHash, header.Time, header.KeyID, header.NodePosition, mrklRoot)
+		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s",
+			header.BlockID, prevHash, header.Time, header.EcosystemID, header.KeyID, header.NodePosition, mrklRoot)
 
 		var err error
 		signed, err = crypto.Sign(key, forSign)
@@ -752,7 +745,8 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	buf.Write(converter.DecToBin(header.Version, 1))
 	buf.Write(converter.DecToBin(header.BlockID, 4))
 	buf.Write(converter.DecToBin(header.Time, 4))
-	buf.Write(converter.EncodeLenInt64InPlace(header.KeyID))
+	buf.Write(converter.DecToBin(header.EcosystemID, 4))
+	buf.Write(converter.DecToBin(header.KeyID, 8))
 	buf.Write(converter.DecToBin(header.NodePosition, 1))
 	buf.Write(converter.EncodeLengthPlusData(signed))
 	// data
