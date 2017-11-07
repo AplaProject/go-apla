@@ -152,7 +152,9 @@ func FirstBlock() {
 	header := &utils.BlockData{
 		BlockID:  1,
 		Time:     now,
+		EcosystemID: 0,
 		KeyID: iAddress,
+		NodePosition: 0,
 		Version:  consts.BLOCK_VERSION,
 	}
 	var tx []byte

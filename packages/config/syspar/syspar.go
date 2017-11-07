@@ -181,7 +181,11 @@ func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
 	if int64(len(nodes))<=position {
 		return nil, fmt.Errorf("incorrect position")
 	}
-	return nodes[position].Public, nil
+	pkey, err := hex.DecodeString(nodesByPosition[position][2])
+	if err != nil {
+		return nil, err
+	}
+	return pkey, nil
 }
 func GetSleepTimeByKey(myKeyID, prevBlockNodePosition int64) (int64, error) {
 

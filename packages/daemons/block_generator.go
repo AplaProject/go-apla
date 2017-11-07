@@ -37,7 +37,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 
 	myNodePosition, err := syspar.GetNodePositionByKeyID(config.KeyID)
-	if err != nil || myNodePosition == 0 {
+	if err != nil  {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
 		log.Infof("we are not full node, sleep for 10 seconds")

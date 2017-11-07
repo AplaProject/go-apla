@@ -45,17 +45,12 @@ func Disseminator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
+	isFullNode := true
 	myNodePosition, err := syspar.GetNodePositionByKeyID(config.KeyID)
 	if err != nil  {
 		log.Error("%v", err)
+		isFullNode = false
 	}
-	// find out who we are, fullnode or not
-	isFullNode := func() bool {
-		if myNodePosition == 0 {
-			return false
-		}
-		return true
-	}()
 
 	if isFullNode {
 		// send blocks and transactions hashes

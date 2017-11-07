@@ -140,6 +140,11 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte) (*Block, error) {
 	}
 	block.BinData = data
 
+	log.Debug("block.Header.Version %v", block.Header.Version)
+	log.Debug("block.Header.BlockID %v", block.Header.BlockID)
+	log.Debug("block.Header.EcosystemID %v", block.Header.EcosystemID)
+	log.Debug("block.Header.KeyID %v", block.Header.KeyID)
+	log.Debug("block.Header.NodePosition %v", block.Header.NodePosition)
 	log.Debug("readPreviousBlock")
 	if err := block.readPreviousBlockFromBlockchainTable(); err != nil {
 		return nil, err
@@ -236,7 +241,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 		return utils.BlockData{}, fmt.Errorf("bad binary block length")
 	}
 
-	blockVersion := int(converter.BinToDec(binaryBlock.Next(1)))
+	blockVersion := int(converter.BinToDec(binaryBlock.Next(2)))
 
 	if int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
 		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
@@ -249,8 +254,18 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	block.Time = converter.BinToDec(binaryBlock.Next(4))
 	block.Version = blockVersion
 	block.EcosystemID = converter.BinToDec(binaryBlock.Next(4))
-	block.KeyID = converter.BinToDec(binaryBlock.Next(8))
+	block.KeyID, err = converter.DecodeLenInt64Buf(binaryBlock)
+	if err != nil {
+		return utils.BlockData{}, err
+	}
 	block.NodePosition = converter.BinToDec(binaryBlock.Next(1))
+
+	log.Debug("block.Version %v", block.Version)
+	log.Debug("block.BlockID %v", block.BlockID)
+	log.Debug("block.Time %v", block.Time)
+	log.Debug("block.EcosystemID %v", block.EcosystemID)
+	log.Debug("block.KeyID %v", block.KeyID)
+	log.Debug("block.NodePosition %v", block.NodePosition)
 
 	if block.BlockID > 1 {
 		signSize, err := converter.DecodeLengthBuf(binaryBlock)
@@ -742,11 +757,11 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 
 	var buf bytes.Buffer
 	// fill header
-	buf.Write(converter.DecToBin(header.Version, 1))
+	buf.Write(converter.DecToBin(header.Version, 2))
 	buf.Write(converter.DecToBin(header.BlockID, 4))
 	buf.Write(converter.DecToBin(header.Time, 4))
 	buf.Write(converter.DecToBin(header.EcosystemID, 4))
-	buf.Write(converter.DecToBin(header.KeyID, 8))
+	buf.Write(converter.EncodeLenInt64InPlace(header.KeyID))
 	buf.Write(converter.DecToBin(header.NodePosition, 1))
 	buf.Write(converter.EncodeLengthPlusData(signed))
 	// data
