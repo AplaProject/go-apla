@@ -59,9 +59,8 @@ ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
 
 DROP TABLE IF EXISTS "config"; CREATE TABLE "config" (
 "my_block_id" int NOT NULL DEFAULT '0',
-"dlt_wallet_id" bigint NOT NULL DEFAULT '0',
-"state_id" int NOT NULL DEFAULT '0',
-"citizen_id" bigint NOT NULL DEFAULT '0',
+"ecosystem_id" int NOT NULL DEFAULT '0',
+"key_id" bigint NOT NULL DEFAULT '0',
 "bad_blocks" text NOT NULL DEFAULT '',
 "auto_reload" int NOT NULL DEFAULT '0',
 "first_load_blockchain_url" varchar(255)  NOT NULL DEFAULT '',
