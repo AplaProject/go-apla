@@ -84,6 +84,7 @@ var (
 		"HasPrefix":         10,
 		"Contains":          10,
 		"Replace":           10,
+		"Join":              10,
 		"UpdateLang":        10,
 		"Size":              10,
 		"Substr":            10,
@@ -154,6 +155,7 @@ func init() {
 		"Money":              Money,
 		"Float":              Float,
 		"Len":                Len,
+		"Join":               Join,
 		"Sha256":             Sha256,
 		"PubToID":            PubToID,
 		"HexToBytes":         HexToBytes,
@@ -423,6 +425,13 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qco
 	var lastID string
 	if ind, err = model.NumIndexes(tblname); err != nil {
 		return
+	}
+	if len(val) == 0 {
+		err = fmt.Errorf(`values are undefined`)
+		return
+	}
+	if reflect.TypeOf(val[0]) == reflect.TypeOf([]interface{}{}) {
+		val = val[0].([]interface{})
 	}
 	qcost, lastID, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
 	if ind > 0 {
@@ -1701,6 +1710,17 @@ func PermColumn(p *Parser, tableName, name, permissions string) error {
 	_, _, err = p.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
 		tables, []string{`name`}, []string{tableName}, true)
 	return err
+}
+
+func Join(input []interface{}, sep string) string {
+	var ret string
+	for i, item := range input {
+		if i > 0 {
+			ret += sep
+		}
+		ret += fmt.Sprintf(`%v`, item)
+	}
+	return ret
 }
 
 func JSONToMap(input string) (map[string]interface{}, error) {

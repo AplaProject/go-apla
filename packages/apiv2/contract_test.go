@@ -395,6 +395,28 @@ var (
 			}
 		]
 	}`
+	/*
+			"tables": [
+			{
+				"Name": "members",
+				"Columns": "[{\"name\":\"name\",\"type\":\"varchar\",\"conditions\":\"true\"},{\"name\":\"birthday\",\"type\":\"datetime\",\"conditions\":\"true\"},{\"name\":\"member_id\",\"type\":\"number\",\"conditions\":\"true\"},{\"name\":\"val\",\"type\":\"text\",\"conditions\":\"true\"},{\"name\":\"name_first\",\"type\":\"text\",\"conditions\":\"true\"},{\"name\":\"name_middle\",\"type\":\"text\",\"conditions\":\"true\"}]",
+				"Permissions": "{\"insert\":\"true\",\"update\":\"true\",\"new_column\":\"true\"}"
+			}
+		],
+
+	*/
+	impdata = `{
+		"data": [
+	   {
+		   "Table": "members",
+		   "Columns": ["name","val"],
+		   "Data": [
+			   ["Bob","Richard mark"],
+			   ["Mike Winter","Alan summer"]
+			]
+	   }
+   ]
+}`
 )
 
 func TestImport(t *testing.T) {
@@ -403,7 +425,7 @@ func TestImport(t *testing.T) {
 		return
 	}
 
-	form := url.Values{"Data": {impcont}}
+	form := url.Values{"Data": {impdata}}
 	id, msg, err := postTxResult(`@1Import`, &form)
 	if err != nil {
 		t.Error(err)

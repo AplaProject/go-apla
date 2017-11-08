@@ -506,6 +506,33 @@ func ConditionById(table string, validate bool) {
 	}
 }
 
+func ImportData(row array) {
+    if !row {
+        return
+    }
+    var i int
+    while i < Len(row) {
+        var idata map
+        var list array
+        var tblname, columns string
+        idata = row[i]
+        tblname = idata[`Table`]
+        columns = Join(idata[`Columns`], `,`)
+        list = idata[`Data`] 
+        if !list {
+            continue
+        }
+        var j int
+        while j < Len(list) {
+            var ilist array
+            ilist = list[j]
+            DBInsert(tblname, columns, ilist)
+            j=j+1
+        }
+        i = i + 1
+	}
+}
+
 contract Import {
     data {
         Data string
@@ -521,5 +548,6 @@ contract Import {
         ImportList($list["languages"], "NewLang")
         ImportList($list["contracts"], "NewContract")
         ImportList($list["tables"], "NewTable")
+        ImportData($list["data"])
     }
 }', '%[1]d','ContractConditions(`MainCondition`)');
