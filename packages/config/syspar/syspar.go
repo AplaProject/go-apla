@@ -169,16 +169,26 @@ func GetNumberOfNodes() (int64) {
 func GetNodeByPosition(position int64) (*FullNode, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
-	if int64(len(nodes))<=position {
+	if int64(len(nodesByPosition))<=position {
 		return nil, fmt.Errorf("incorrect position")
 	}
-	return nodes[position], nil
+	return nodes[converter.StrToInt64(nodesByPosition[position][1])], nil
+}
+
+func GetNodeHostByPosition(position int64) (string, error) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	nodeData, err := GetNodeByPosition(position)
+	if err!=nil {
+		return "", err
+	}
+	return nodeData.Host, nil
 }
 
 func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
-	if int64(len(nodes))<=position {
+	if int64(len(nodesByPosition))<=position {
 		return nil, fmt.Errorf("incorrect position")
 	}
 	pkey, err := hex.DecodeString(nodesByPosition[position][2])

@@ -68,12 +68,17 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 		return utils.ErrInfo("old block")
 	}
 
-	nodeHost := syspar.GetNode(queueBlock.FullNodeID)
+	nodeHost, err := syspar.GetNodeHostByPosition(queueBlock.FullNodeID)
+	if err != nil {
+		log.Error("v", err)
+		queueBlock.Delete()
+		return utils.ErrInfo(err)
+	}
 	log.Debug("queueBlock.FullNodeID", queueBlock.FullNodeID)
 	log.Debug("nodeHost", nodeHost)
 	blockID := queueBlock.BlockID
 
-	host := getHostPort(nodeHost.Host)
+	host := getHostPort(nodeHost)
 	err = parser.GetBlocks(blockID, host, "rollback_blocks_1", 7)
 	if err != nil {
 		log.Error("v", err)
