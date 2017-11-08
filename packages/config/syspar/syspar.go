@@ -21,8 +21,11 @@ import (
 	"encoding/json"
 	"sync"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -83,6 +86,7 @@ func SysUpdate() error {
 	var err error
 	systemParameters, err := model.GetAllSystemParametersV2()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all system parameters")
 		return err
 	}
 	mutex.Lock()
@@ -99,6 +103,7 @@ func SysUpdate() error {
 		inodes := make([][]string, 0)
 		err = json.Unmarshal([]byte(cache[FullNodes]), &inodes)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling full nodes from json")
 			return err
 		}
 		for _, item := range inodes {
@@ -107,6 +112,7 @@ func SysUpdate() error {
 			}
 			pub, err := hex.DecodeString(item[2])
 			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": item[2]}).Error("decoding inode from string")
 				return err
 			}
 			nodes[converter.StrToInt64(item[1])] = &FullNode{Host: item[0], Public: pub}
@@ -118,6 +124,7 @@ func SysUpdate() error {
 			ifuels := make([][]string, 0)
 			err = json.Unmarshal([]byte(cache[name]), &ifuels)
 			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling params from json")
 				return res, err
 			}
 			for _, item := range ifuels {
