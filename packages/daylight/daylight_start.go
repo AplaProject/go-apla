@@ -36,6 +36,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/daemons"
 	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
 	"github.com/AplaProject/go-apla/packages/language"
+	logtools "github.com/AplaProject/go-apla/packages/log"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/smart"
@@ -46,7 +47,7 @@ import (
 	"github.com/go-thrust/lib/commands"
 	"github.com/go-thrust/thrust"
 	"github.com/julienschmidt/httprouter"
-	"github.com/op/go-logging"
+	log "github.com/sirupsen/logrus"
 )
 
 // FileAsset returns the body of the file
@@ -56,6 +57,8 @@ func FileAsset(name string) ([]byte, error) {
 		logofile := *utils.Dir + `/logo.` + utils.LogoExt
 		if fi, err := os.Stat(logofile); err == nil && fi.Size() > 0 {
 			return ioutil.ReadFile(logofile)
+		} else if err != nil {
+			log.WithFields(log.Fields{"path": logofile, "error": err, "type": consts.IOError}).Error("Reading logo file")
 		}
 	}
 	return static.Asset(name)
@@ -84,30 +87,24 @@ func readConfig() {
 }
 
 func killOld() {
-	if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
-		dat, err := ioutil.ReadFile(*utils.Dir + "/daylight.pid")
+	pidPath := *utils.Dir + "/daylight.pid"
+	if _, err := os.Stat(pidPath); err == nil {
+		dat, err := ioutil.ReadFile(pidPath)
 		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
+			log.WithFields(log.Fields{"path": pidPath, "error": err, "type": consts.IOError}).Error("reading pid file")
 		}
 		var pidMap map[string]string
 		err = json.Unmarshal(dat, &pidMap)
 		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
+			log.WithFields(log.Fields{"data": dat, "error": err, "type": consts.JSONUnmarshallError}).Error("unmarshalling pid map")
 		}
-		fmt.Println("old PID ("+*utils.Dir+"/daylight.pid"+"):", pidMap["pid"])
+		log.WithFields(log.Fields{"path": *utils.Dir + pidMap["pid"]}).Debug("old pid path")
 
-		err = KillPid(pidMap["pid"])
-		if nil != err {
-			fmt.Println(err)
-			log.Error("KillPid %v", utils.ErrInfo(err))
-		}
+		KillPid(pidMap["pid"])
 		if fmt.Sprintf("%s", err) != "null" {
-			fmt.Println(fmt.Sprintf("%s", err))
 			// give 15 sec to end the previous process
 			for i := 0; i < 15; i++ {
-				log.Debug("waiting killer %d", i)
 				if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
-					fmt.Println("waiting killer")
 					time.Sleep(time.Second)
 				} else { // if there is no daylight.pid, so it is finished
 					break
@@ -118,45 +115,49 @@ func killOld() {
 }
 
 func initLogs() error {
-	var backend *logging.LogBackend
+	var err error
 
-	if config.ConfigIni["log_output"] == "console" {
-		backend = logging.NewLogBackend(os.Stderr, "", 0)
+	if config.ConfigIni["log_output"] != "file" {
+		log.SetOutput(os.Stdout)
 	} else {
-		f, err := os.OpenFile(*utils.Dir+"/dclog.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
+		fileName := *utils.Dir + "/dclog.txt"
+		openMode := os.O_APPEND
+		if _, err := os.Stat(fileName); os.IsNotExist(err) {
+			openMode = os.O_CREATE
+		}
+
+		f, err := os.OpenFile(fileName, os.O_WRONLY|openMode, 0755)
 		if err != nil {
+			fmt.Println("Can't open log file ", fileName)
 			return err
 		}
-		backend = logging.NewLogBackend(f, "", 0)
+		log.SetOutput(f)
 	}
 
-	backendFormatter := logging.NewBackendFormatter(backend, format)
-	backendLeveled := logging.AddModuleLevel(backendFormatter)
-
-	if *utils.LogLevel == "" {
-		if level, ok := config.ConfigIni["log_level"]; ok {
-			*utils.LogLevel = level
-		} else {
-			*utils.LogLevel = "INFO"
+	if level, ok := config.ConfigIni["log_level"]; ok {
+		switch level {
+		case "Debug":
+			log.SetLevel(log.DebugLevel)
+		case "Info":
+			log.SetLevel(log.InfoLevel)
+		case "Warn":
+			log.SetLevel(log.WarnLevel)
+		case "Error":
+			log.SetLevel(log.ErrorLevel)
 		}
+	} else {
+		log.SetLevel(log.InfoLevel)
 	}
 
-	logLevel, err := logging.LogLevel(*utils.LogLevel)
-	if err != nil {
-		log.Error("bad log level - %s: %v", *utils.LogLevel, utils.ErrInfo(err))
-		return err
-	}
-
-	log.Infof("set logLevel: %v", logLevel)
-	backendLeveled.SetLevel(logLevel, "")
-	logging.SetBackend(backendLeveled)
-	return nil
+	log.AddHook(logtools.ContextHook{})
+	return err
 }
 
 func savePid() error {
 	pid := os.Getpid()
 	PidAndVer, err := json.Marshal(map[string]string{"pid": converter.IntToStr(pid), "version": consts.VERSION})
 	if err != nil {
+		log.WithFields(log.Fields{"pid": pid, "error": err, "type": consts.JSONMarshallError}).Error("marshalling pid to json")
 		return err
 	}
 	return ioutil.WriteFile(*utils.Dir+"/daylight.pid", PidAndVer, 0644)
@@ -168,20 +169,18 @@ func delPidFile() {
 
 func rollbackToBlock(blockID int64) error {
 	if err := smart.LoadContracts(nil); err != nil {
-		log.Errorf(`Load Contracts: %s`, err)
 		return err
 	}
 	parser := new(parser.Parser)
 	err := parser.RollbackToBlockID(*utils.RollbackToBlockID)
 	if err != nil {
-		log.Errorf("rollback return error: %s", err)
 		return err
 	}
 
 	// we recieve the statistics of all tables
 	allTable, err := model.GetAllTables()
 	if err != nil {
-		log.Errorf("get all tables failed: %s", err)
+		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("error getting all tables")
 		return err
 	}
 
@@ -195,13 +194,13 @@ func rollbackToBlock(blockID int64) error {
 	for _, table := range allTable {
 		count, err := model.GetRecordsCount(converter.EscapeName(table))
 		if err != nil {
-			log.Errorf("select from table %s failed: %s", table, err)
+			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting record count")
 			return err
 		}
 		if count > 0 && count > startData[table] {
-			fmt.Println(">>ALERT<<", table, count)
+			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Warn("record count in table is larger then start")
 		} else {
-			fmt.Println(table, "ok")
+			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Info("record count in table is ok")
 		}
 	}
 	return nil
@@ -217,7 +216,7 @@ func processOldFile(oldFileName string) error {
 
 	err = exec.Command(*utils.OldFileName, "-dir", *utils.Dir).Start()
 	if err != nil {
-		log.Errorf("exec command error: %v", utils.ErrInfo(err))
+		log.WithFields(log.Fields{"cmd": *utils.OldFileName + " -dir " + *utils.Dir, "error": err, "type": consts.CommandExecutionError}).Error("executing command")
 		return err
 	}
 	return nil
@@ -251,7 +250,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("Recovered", r)
+			log.WithFields(log.Fields{"panic": r, "type": consts.PanicRecoveredError}).Error("recovered panic")
 			panic(r)
 		}
 	}()
@@ -275,20 +274,20 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 		if err != nil {
-			log.Errorf("gorm init error: %s", err)
+			log.WithFields(log.Fields{"db_user": config.ConfigIni["db_user"], "db_password": config.ConfigIni["db_password"],
+				"db_name": config.ConfigIni["db_name"], "type": consts.DBError}).Error("can't init gorm")
 			Exit(1)
 		}
 	}
 
 	// create first block
 	if *utils.GenerateFirstBlock == 1 {
-		log.Infof("generate first block")
+		log.Info("Generating first block")
 		parser.FirstBlock()
 		os.Exit(0)
-
 	}
 
-	fmt.Printf("work dir = %s\ndcVersion=%s\n", *utils.Dir, consts.VERSION)
+	log.WithFields(log.Fields{"work_dir": *utils.Dir, "version": consts.VERSION}).Info("started with")
 
 	// kill previously run apla
 	if !utils.Mobile() {
@@ -302,7 +301,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	err = initLogs()
 	if err != nil {
-		log.Error("logs init failed: %v", utils.ErrInfo(err))
+		fmt.Println("logs init failed: %v", utils.ErrInfo(err))
 		Exit(1)
 	}
 
@@ -325,11 +324,13 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	// database rollback to the specified block
 	if *utils.RollbackToBlockID > 0 {
+		log.WithFields(log.Fields{"block_id": *utils.RollbackToBlockID}).Info("Rollbacking to block ID")
 		err := rollbackToBlock(*utils.RollbackToBlockID)
+		log.WithFields(log.Fields{"block_id": *utils.RollbackToBlockID}).Info("Rollback is ok")
 		if err != nil {
-			fmt.Printf("rollback error: %s\n", err)
+			log.WithError(err).Error("Rollback error")
 		} else {
-			fmt.Printf("OK\n")
+			log.Info("Rollback is OK")
 		}
 		Exit(0)
 	}
@@ -337,17 +338,16 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if _, err := os.Stat(*utils.Dir + "/public"); os.IsNotExist(err) {
 		err = os.Mkdir(*utils.Dir+"/public", 0755)
 		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
+			log.WithFields(log.Fields{"path": dir, "error": err, "type": consts.IOError}).Error("Making dir")
 			Exit(1)
 		}
 	}
 
 	BrowserHTTPHost, _, ListenHTTPHost := GetHTTPHost()
-	fmt.Printf("BrowserHTTPHost: %v, ListenHTTPHost: %v\n", BrowserHTTPHost, ListenHTTPHost)
-
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err := daemonsctl.RunAllDaemons()
+		log.Info("Daemons started")
 		if err != nil {
 			os.Exit(1)
 		}
@@ -360,7 +360,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		BrowserHTTPHost = initRoutes(ListenHTTPHost, BrowserHTTPHost)
 
 		if *utils.Console == 0 && !utils.Mobile() {
-			log.Debugf("try to start browser")
+			log.Info("starting browser")
 			time.Sleep(time.Second)
 			if thrustWindowLoder != nil {
 				thrustWindowLoder.Close()
