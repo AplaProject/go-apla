@@ -23,6 +23,7 @@ import (
 	"html"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
@@ -32,6 +33,8 @@ import (
 var (
 	funcs = map[string]tplFunc{
 		`Address`:     {addressTag, defaultTag, `address`, `Wallet`},
+		`CmpTime`:     {cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`},
+		`DateTime`:    {dateTimeTag, defaultTag, `datetime`, `DateTime,Format`},
 		`EcosysParam`: {ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`},
 		`Em`:          {defaultTag, defaultTag, `em`, `Body,Class`},
 		`GetVar`:      {getvarTag, defaultTag, `getvar`, `Name`},
@@ -593,4 +596,51 @@ func elseTag(par parFunc) string {
 func elseFull(par parFunc) string {
 	par.Owner.Tail = append(par.Owner.Tail, par.Node)
 	return ``
+}
+
+func dateTimeTag(par parFunc) string {
+	datetime := (*par.Pars)[`DateTime`]
+	if len(datetime) == 0 || len(datetime) < 19 {
+		return ``
+	}
+	itime, err := time.Parse(`2006-01-02T15:04:05`, datetime[:19])
+	if err != nil {
+		return err.Error()
+	}
+	format := (*par.Pars)[`Format`]
+	if len(format) == 0 {
+		format, _ = language.LangText(`timeformat`, converter.StrToInt((*par.Vars)[`ecosystem_id`]),
+			(*par.Vars)[`accept_lang`])
+		if format == `timeformat` {
+			format = `2006-01-02 15:04:05`
+		}
+	}
+	format = strings.Replace(format, `YYYY`, `2006`, -1)
+	format = strings.Replace(format, `YY`, `06`, -1)
+	format = strings.Replace(format, `MM`, `01`, -1)
+	format = strings.Replace(format, `DD`, `02`, -1)
+	format = strings.Replace(format, `HH`, `15`, -1)
+	format = strings.Replace(format, `MI`, `04`, -1)
+	format = strings.Replace(format, `SS`, `05`, -1)
+
+	return itime.Format(format)
+}
+
+func cmpTimeTag(par parFunc) string {
+	prepare := func(val string) string {
+		val = strings.Replace(val, `T`, ` `, -1)
+		if len(val) > 19 {
+			val = val[:19]
+		}
+		return val
+	}
+	left := prepare((*par.Pars)[`Time1`])
+	right := prepare((*par.Pars)[`Time2`])
+	if left == right {
+		return `0`
+	}
+	if left < right {
+		return `-1`
+	}
+	return `1`
 }
