@@ -990,8 +990,9 @@ func DBSelect(p *Parser, tblname string, columns string, id int64, order string,
 		order = `id`
 	}
 	where = strings.Replace(converter.Escape(where), `$`, `?`, -1)
-	if id > 0 {
+	if id != 0 {
 		where = fmt.Sprintf(`id='%d'`, id)
+		limit = 1
 	}
 	if limit == 0 {
 		limit = 25
@@ -1005,7 +1006,6 @@ func DBSelect(p *Parser, tblname string, columns string, id int64, order string,
 	if tblname[0] < '1' || tblname[0] > '9' || !strings.Contains(tblname, `_`) {
 		tblname = fmt.Sprintf(`%d_%s`, ecosystem, tblname)
 	}
-
 	rows, err = model.DBConn.Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {
