@@ -113,7 +113,7 @@ func FirstBlock() {
 			log.Error("write publick key failed: %v", utils.ErrInfo(err))
 			return
 		}
-		log.Debugf("public key: %s", pub)
+		log.Debugf("PublicKey: %s", pub)
 		*utils.FirstBlockPublicKey = pub
 	}
 	if len(*utils.FirstBlockNodePublicKey) == 0 {
@@ -124,6 +124,7 @@ func FirstBlock() {
 			log.Error("write private kery failed: %v", utils.ErrInfo(err))
 			return
 		}
+		log.Debugf("NodePublicKey: %s", pub)
 		*utils.FirstBlockNodePublicKey = pub
 	}
 
