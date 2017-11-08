@@ -47,7 +47,7 @@ func Route(route *hr.Router) {
 
 	route.Handle(`OPTIONS`, `/api/v2/*name`, optionsHandler())
 
-	get(`balance/:wallet`, `?state:int64`, authWallet, balance)
+	get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)
 	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
 	get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
@@ -66,7 +66,7 @@ func Route(route *hr.Router) {
 	post(`content/menu/:name`, ``, authWallet, getMenu)
 	post(`install`, `?first_load_blockchain_url ?first_block_dir log_level type db_host db_port 
 	db_name db_pass db_user:string,?generate_first_block:int64`, install)
-	post(`login`, `?pubkey signature:hex,?wallet:string,?state ?expire:int64`, login)
+	post(`login`, `?pubkey signature:hex,?key_id:string,?ecosystem ?expire:int64`, login)
 	postTx(`:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, prepareContract, contract)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
 	//	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)

@@ -158,7 +158,7 @@ INSERT INTO system_contracts ("id","value", "active", "conditions") VALUES
 	    if $time-prev < SysParamInt(`upd_full_nodes_period`) {
 		    warning Sprintf("txTime - upd_full_nodes < UPD_FULL_NODES_PERIOD")
 	    }
-/*	    nodekey = bytes(DBStringExt(`dlt_wallets`, `node_public_key`, $wallet, `wallet_id`))
+/*	    nodekey = bytes(DBStringExt(`dlt_wallets`, `node_public_key`, $key_id, `wallet_id`))
 	    if !nodekey {
 	        error `len(node_key) == 0`
 	    }*/

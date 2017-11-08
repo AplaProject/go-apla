@@ -72,8 +72,6 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	return BlockData, nil
 }
 
-
-
 func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64) error {
 	txHash, err := crypto.Hash(binaryTx)
 	if err != nil {
@@ -176,27 +174,27 @@ type Parser struct {
 	MrklRoot       []byte
 	PublicKeys     [][]byte
 
-	TxBinaryData  []byte // transaction binary data
-	TxFullData    []byte // full transaction, with type and data
-	TxHash        []byte
-	TxSlice       [][]byte
-	TxMap         map[string][]byte
-	TxIds         int // count of transactions
-	TxKeyID      int64
+	TxBinaryData     []byte // transaction binary data
+	TxFullData       []byte // full transaction, with type and data
+	TxHash           []byte
+	TxSlice          [][]byte
+	TxMap            map[string][]byte
+	TxIds            int // count of transactions
+	TxKeyID          int64
 	TxEcosystemIDStr string
-	TxEcosystemID int64
-	TxNodePosition     uint32
-	TxTime        int64
-	TxType        int64
-	TxCost        int64           // Maximum cost of executing contract
-	TxUsedCost    decimal.Decimal // Used cost of CPU resources
-	TxPtr         interface{}     // Pointer to the corresponding struct in consts/struct.go
-	TxData        map[string]interface{}
-	TxSmart       *tx.SmartContract
-	TxContract    *smart.Contract
-	TxHeader      *tx.Header
-	txParser      ParserInterface
-	DbTransaction *model.DbTransaction
+	TxEcosystemID    int64
+	TxNodePosition   uint32
+	TxTime           int64
+	TxType           int64
+	TxCost           int64           // Maximum cost of executing contract
+	TxUsedCost       decimal.Decimal // Used cost of CPU resources
+	TxPtr            interface{}     // Pointer to the corresponding struct in consts/struct.go
+	TxData           map[string]interface{}
+	TxSmart          *tx.SmartContract
+	TxContract       *smart.Contract
+	TxHeader         *tx.Header
+	txParser         ParserInterface
+	DbTransaction    *model.DbTransaction
 
 	AllPkeys map[string]string
 }
@@ -271,14 +269,14 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		return err
 	}
 	b := &model.Block{
-		ID:       blockID,
-		Hash:     block.Header.Hash,
-		Data:     block.BinData,
-		EcosystemID: block.Header.EcosystemID,
-		KeyID: block.Header.KeyID,
-		NodePosition:  block.Header.NodePosition,
-		Time:     block.Header.Time,
-		Tx:       int32(len(block.Parsers)),
+		ID:           blockID,
+		Hash:         block.Header.Hash,
+		Data:         block.BinData,
+		EcosystemID:  block.Header.EcosystemID,
+		KeyID:        block.Header.KeyID,
+		NodePosition: block.Header.NodePosition,
+		Time:         block.Header.Time,
+		Tx:           int32(len(block.Parsers)),
 	}
 	err = b.Create(transaction)
 	if err != nil {
@@ -366,7 +364,7 @@ func (p *Parser) BlockError(err error) {
 // AccessRights checks the access right by executing the condition value
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(p.TxEcosystemIDStr)
+	sp.SetTablePrefix(converter.Int64ToStr(p.TxSmart.EcosystemID))
 	_, err := sp.Get(p.DbTransaction, condition)
 	if err != nil {
 		return err
@@ -391,8 +389,8 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
-	govAccount, _ := templatev2.StateParam(int64(p.TxEcosystemID), `founder_account`)
-	if table == fmt.Sprintf(`%d_parameters`, p.TxEcosystemID) {
+	govAccount, _ := templatev2.StateParam(int64(p.TxSmart.EcosystemID), `founder_account`)
+	if table == fmt.Sprintf(`%d_parameters`, p.TxSmart.EcosystemID) {
 		if p.TxContract != nil && p.TxKeyID == converter.StrToInt64(govAccount) {
 			return nil
 		} else {
@@ -428,8 +426,8 @@ func (p *Parser) AccessTable(table, action string) error {
 // AccessColumns checks access rights to the columns
 func (p *Parser) AccessColumns(table string, columns []string) error {
 
-	if table == fmt.Sprintf(`%d_parameters`, p.TxEcosystemID) {
-		govAccount, _ := templatev2.StateParam(int64(p.TxEcosystemID), `founder_account`)
+	if table == fmt.Sprintf(`%d_parameters`, p.TxSmart.EcosystemID) {
+		govAccount, _ := templatev2.StateParam(int64(p.TxSmart.EcosystemID), `founder_account`)
 		if p.TxContract != nil && p.TxKeyID == converter.StrToInt64(govAccount) {
 			return nil
 		}

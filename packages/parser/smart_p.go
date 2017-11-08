@@ -232,7 +232,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 		blockKeyID = p.BlockData.KeyID
 		blockTime = p.BlockData.Time
 	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `node_position`: head.NodePosition,`ecosystem_id`: head.EcosystemID,
+	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `node_position`: head.NodePosition, `ecosystem_id`: head.EcosystemID,
 		`block`: block, `key_id`: keyID, `block_key_id`: blockKeyID,
 		`parent`: ``, `txcost`: p.GetContractLimit(), `txhash`: p.TxHash, `result`: ``,
 		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime /*, `vars`: make(map[string]interface{})*/}
@@ -788,7 +788,7 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 	}
 
 	return smart.EvalIf(conditions, uint32(p.TxEcosystemID), &map[string]interface{}{`ecosystem_id`: p.TxEcosystemID,
-		 `key_id`: p.TxKeyID, `parser`: p,
+		`key_id`: p.TxKeyID, `parser`: p,
 		`block_time`: blockTime, `time`: time})
 }
 
@@ -870,7 +870,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	if err != nil {
 		return err
 	}
-	wallet := (*i)[`wallet`].(int64)
+	wallet := (*i)[`key_id`].(int64)
 	if wallet == 0 {
 		wallet = (*i)[`citizen`].(int64)
 	}
@@ -1412,7 +1412,6 @@ func TableConditions(p *Parser, name, columns, permissions string) (err error) {
 	if indexes > syspar.GetMaxIndexes() {
 		return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
 	}
-
 	if err := p.AccessRights("new_table", false); err != nil {
 		return err
 	}

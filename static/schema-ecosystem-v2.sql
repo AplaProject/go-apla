@@ -87,7 +87,7 @@ ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY
 INSERT INTO "%[1]d_contracts" ("id", "value", "wallet_id","active", "conditions") VALUES 
 ('1','contract MainCondition {
   conditions {
-    if(StateVal("founder_account")!=$citizen)
+    if(StateVal("founder_account")!=$key_id)
     {
       warning "Sorry, you don`t have access to this action."
     }

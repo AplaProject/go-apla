@@ -39,11 +39,11 @@ func TestNewContract(t *testing.T) {
 			func conditions {
 				Println( "Front")//TxJSON())
 				//$tmp = "Test string"
-//				Println("NewCitizen Front", $tmp, $citizen, $state, $PublicKey )
+//				Println("NewCitizen Front", $tmp, $key_id, $ecosystem_id, $PublicKey )
 			}
 			func action {
-//				Println("NewCitizen Main", $tmp, $type, $wallet )
-//				DBInsert(Sprintf( "%d_citizens", $state), "public_key,block_id", $PublicKey, $block)
+//				Println("NewCitizen Main", $tmp, $type, $key_id )
+//				DBInsert(Sprintf( "%d_citizens", $ecosystem_id), "public_key,block_id", $PublicKey, $block)
 			}
 }			
 		`, ``},

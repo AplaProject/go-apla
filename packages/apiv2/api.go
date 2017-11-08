@@ -42,12 +42,12 @@ const (
 )
 
 type apiData struct {
-	status int
-	result interface{}
-	params map[string]interface{}
-	ecosystemId  int64
-	keyId int64
-	token  *jwt.Token
+	status      int
+	result      interface{}
+	params      map[string]interface{}
+	ecosystemId int64
+	keyId       int64
+	token       *jwt.Token
 	//	sess   session.SessionStore
 }
 
@@ -227,9 +227,9 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 
 func checkEcosystem(w http.ResponseWriter, data *apiData) (int64, error) {
 	ecosystemID := data.ecosystemId
-	if data.params[`ecosystem_id`].(int64) > 0 {
-		ecosystemID = data.params[`ecosystem_id`].(int64)
-		count, err := model.GetNextID(nil,`system_states`)
+	if data.params[`ecosystem`].(int64) > 0 {
+		ecosystemID = data.params[`ecosystem`].(int64)
+		count, err := model.GetNextID(nil, `system_states`)
 		if err != nil {
 			return 0, errorAPI(w, err, http.StatusBadRequest)
 		}

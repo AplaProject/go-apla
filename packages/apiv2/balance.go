@@ -32,15 +32,18 @@ type balanceResult struct {
 
 func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
-	ecosystemId := data.ecosystemId
-	keyID := converter.StringToAddress(data.params[`key_id`].(string))
+	ecosystemId, err := checkEcosystem(w, data)
+	if err != nil {
+		return err
+	}
+	keyID := converter.StringToAddress(data.params[`wallet`].(string))
 	if keyID == 0 {
-		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`key_id`].(string))
+		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
 
 	key := &model.Key{}
 	key.SetTablePrefix(ecosystemId)
-	err := key.Get(keyID)
+	err = key.Get(keyID)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}

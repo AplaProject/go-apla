@@ -269,7 +269,7 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			}
 		}
 	}
-	state := int(converter.StrToInt64((*vars)[`state`]))
+	state := int(converter.StrToInt64((*vars)[`ecosystem_id`]))
 	for i, v := range pars {
 		pars[i] = language.LangMacro(v, state, (*vars)[`accept_lang`])
 	}

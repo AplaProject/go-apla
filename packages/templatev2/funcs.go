@@ -134,7 +134,7 @@ func defaultTag(par parFunc) string {
 func addressTag(par parFunc) string {
 	idval := (*par.Pars)[`Wallet`]
 	if len(idval) == 0 {
-		idval = (*par.Vars)[`wallet`]
+		idval = (*par.Vars)[`key_id`]
 	}
 	id, _ := strconv.ParseInt(idval, 10, 64)
 	if id == 0 {
@@ -147,7 +147,7 @@ func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
 	}
-	state := converter.StrToInt((*par.Vars)[`state`])
+	state := converter.StrToInt((*par.Vars)[`ecosystem_id`])
 	val, err := StateParam(int64(state), (*par.Pars)[`Name`])
 	if err != nil {
 		return err.Error()
@@ -181,7 +181,7 @@ func langresTag(par parFunc) string {
 	if len(lang) == 0 {
 		lang = (*par.Vars)[`accept_lang`]
 	}
-	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Vars)[`state`])), lang)
+	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Vars)[`ecosystem_id`])), lang)
 	return ret
 }
 
@@ -355,7 +355,7 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`ecosystem`] != nil {
 		state = converter.StrToInt64(par.Node.Attr[`ecosystem`].(string))
 	} else {
-		state = converter.StrToInt64((*par.Vars)[`state`])
+		state = converter.StrToInt64((*par.Vars)[`ecosystem_id`])
 	}
 	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
 	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
@@ -444,7 +444,7 @@ func tailTag(par parFunc) string {
 
 func includeTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Vars)[`_include`]) < 5 {
-		pattern, err := model.Single(`select value from "`+(*par.Vars)[`state`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
+		pattern, err := model.Single(`select value from "`+(*par.Vars)[`ecosystem_id`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
 		if err != nil {
 			return err.Error()
 		}

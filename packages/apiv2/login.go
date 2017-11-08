@@ -27,12 +27,12 @@ import (
 )
 
 type loginResult struct {
-	Token     string `json:"token,omitempty"`
-	Refresh   string `json:"refresh,omitempty"`
-	EcosystemID     string `json:"ecosystem_id,omitempty"`
-	KeyID    string `json:"key_id,omitempty"`
-	Address   string `json:"address,omitempty"`
-	NotifyKey string `json:"notify_key,omitempty"`
+	Token       string `json:"token,omitempty"`
+	Refresh     string `json:"refresh,omitempty"`
+	EcosystemID string `json:"ecosystem_id,omitempty"`
+	KeyID       string `json:"key_id,omitempty"`
+	Address     string `json:"address,omitempty"`
+	NotifyKey   string `json:"notify_key,omitempty"`
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
@@ -51,12 +51,15 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if len(msg) == 0 {
 		return errorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
 	}
-	state := data.params[`state`].(int64)
+	state := data.ecosystemId
+	if data.params[`ecosystem`].(int64) > 0 {
+		state = data.params[`ecosystem`].(int64)
+	}
 	if state == 0 {
 		state = 1
 	}
-	if len(data.params[`wallet`].(string)) > 0 {
-		wallet = converter.StringToAddress(data.params[`wallet`].(string))
+	if len(data.params[`key_id`].(string)) > 0 {
+		wallet = converter.StringToAddress(data.params[`key_id`].(string))
 	} else if len(data.params[`pubkey`].([]byte)) > 0 {
 		wallet = crypto.Address(data.params[`pubkey`].([]byte))
 	}
@@ -89,8 +92,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		expire = jwtExpire
 	}
 	claims := JWTClaims{
-		KeyID: result.KeyID,
-		EcosystemID:  result.EcosystemID,
+		KeyID:       result.KeyID,
+		EcosystemID: result.EcosystemID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Second * time.Duration(expire)).Unix(),
 		},
