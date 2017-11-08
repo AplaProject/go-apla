@@ -655,10 +655,16 @@ func (block *Block) CheckBlock() error {
 			return utils.ErrInfo(err)
 		}
 
-		if block.PrevHeader.Time+sleepTime-block.Header.Time > consts.ERROR_TIME {
-			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", block.PrevHeader.Time, sleepTime, block.Header.Time, consts.ERROR_TIME))
+		errTime := syspar.GetGapsBetweenBlocks()-1
+		if errTime < 0 {
+			errTime = 0
 		}
+		if block.PrevHeader.Time+sleepTime-block.Header.Time > errTime {
+			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", block.PrevHeader.Time, sleepTime, block.Header.Time, errTime))
+		}
+		log.Debug("check block time %d + %d - %d > %d", block.PrevHeader.Time, sleepTime, block.Header.Time, errTime)
 	}
+	log.Debug("block.PrevHeader == nil")
 
 	// check each transaction
 	txCounter := make(map[int64]int)
