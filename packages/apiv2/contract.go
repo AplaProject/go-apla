@@ -21,11 +21,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -33,7 +35,7 @@ type contractResult struct {
 	Hash string `json:"hash"`
 }
 
-func contract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var (
 		hash, publicKey []byte
 		toSerialize     interface{}
@@ -51,6 +53,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	key.SetTablePrefix(data.state)
 	err = key.Get(data.wallet)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if len(key.PublicKey) == 0 {
@@ -62,13 +65,16 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 			}
 		}
 		if len(publicKey) == 0 {
+			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
 			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 		}
 	} else {
+		logger.Warning("public key for wallet not found")
 		publicKey = []byte("null")
 	}
 	signature := data.params[`signature`].([]byte)
 	if len(signature) == 0 {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signature is empty")
 		return errorAPI(w, `E_EMPTYSIGN`, http.StatusBadRequest)
 	}
 	idata := make([]byte, 0)
@@ -106,6 +112,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 				var bytes []byte
 				bytes, err = hex.DecodeString(val)
 				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("decoding value from hex")
 					break fields
 				}
 				idata = append(append(idata, converter.EncodeLength(int64(len(bytes)))...), bytes...)
@@ -123,6 +130,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if hash, err = model.SendTx(int64(info.ID), data.wallet,

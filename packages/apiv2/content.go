@@ -19,9 +19,12 @@ package apiv2
 import (
 	"net/http"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/templatev2"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type contentResult struct {
@@ -42,15 +45,17 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 	return &vars
 }
 
-func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 
 	page := &model.Page{}
 	page.SetTablePrefix(converter.Int64ToStr(data.state))
 	found, err := page.Get(data.params[`name`].(string))
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
 		return err
 	}
 	if !found {
+		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("page not found")
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 
@@ -64,15 +69,17 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	return nil
 }
 
-func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	menu := &model.Menu{}
 	menu.SetTablePrefix(converter.Int64ToStr(data.state))
 	found, err := menu.Get(data.params[`name`].(string))
 
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	if !found {
+		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("menu not found")
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 
@@ -81,7 +88,7 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	return nil
 }
 
-func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	ret := templatev2.Template2JSON(data.params[`template`].(string), false, initVars(r, data))
 	data.result = &contentResult{Tree: string(ret)}
 	return nil

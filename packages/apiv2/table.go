@@ -20,8 +20,11 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type columnInfo struct {
@@ -39,13 +42,14 @@ type tableResult struct {
 	Columns    []columnInfo `json:"columns"`
 }
 
-func table(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
+func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	var result tableResult
 
 	table := &model.Table{}
 	table.SetTablePrefix(converter.Int64ToStr(data.state))
 	_, err = table.Get(data.params[`name`].(string))
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -53,17 +57,20 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 		var perm map[string]string
 		err := json.Unmarshal([]byte(table.Permissions), &perm)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table permissions to json")
 			return errorAPI(w, err.Error(), http.StatusInternalServerError)
 		}
 		var cols map[string]string
 		err = json.Unmarshal([]byte(table.Columns), &cols)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table columns to json")
 			return errorAPI(w, err.Error(), http.StatusInternalServerError)
 		}
 		columns := make([]columnInfo, 0)
 		for key, value := range cols {
 			colType, err := model.GetColumnType(converter.Int64ToStr(data.state)+`_`+data.params[`name`].(string), key)
 			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column type from db")
 				return errorAPI(w, err.Error(), http.StatusInternalServerError)
 			}
 			columns = append(columns, columnInfo{Name: key, Perm: value,

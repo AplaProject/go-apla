@@ -20,9 +20,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type contractField struct {
@@ -43,12 +46,13 @@ type getContractResult struct {
 	Name     string          `json:"name"`
 }
 
-func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var result getContractResult
 
 	cntname := data.params[`name`].(string)
 	contract := smart.GetContract(cntname, uint32(data.state))
 	if contract == nil {
+		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": cntname}).Error("contract name")
 		return errorAPI(w, `E_CONTRACT`, http.StatusBadRequest, cntname)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
