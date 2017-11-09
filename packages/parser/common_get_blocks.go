@@ -29,7 +29,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
-func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockBody int64) error {
+func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
 	rollback := consts.RB_BLOCKS_1
 	if rollbackBlocks == "rollback_blocks_2" {
 		rollback = consts.RB_BLOCKS_2
@@ -63,7 +63,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 		}
 
 		// load the block body from the host
-		binaryBlock, err := utils.GetBlockBody(host, blockID, dataTypeBlockBody)
+		binaryBlock, err := utils.GetBlockBody(host, blockID, consts.DATA_TYPE_BLOCK_BODY)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

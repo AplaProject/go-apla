@@ -44,13 +44,13 @@ func init() {
 }
 
 var daemonsList = map[string]func(*daemon, context.Context) error{
+	"BlocksCollection":BlocksCollection,
+	"BlockGenerator":BlockGenerator,
 	"CreatingBlockchain": CreatingBlockchain,
 	"Disseminator":       Disseminator,
-	"BlockGenerator":     BlockGenerator,
 	"QueueParserTx":      QueueParserTx,
 	"QueueParserBlocks":  QueueParserBlocks,
 	"Confirmations":      Confirmations,
-	"BlocksCollection":   BlocksCollection,
 }
 
 var serverList = []string{

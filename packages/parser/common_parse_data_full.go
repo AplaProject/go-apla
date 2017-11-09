@@ -662,7 +662,7 @@ func (block *Block) CheckBlock() error {
 		if block.PrevHeader.Time+sleepTime-block.Header.Time > errTime {
 			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", block.PrevHeader.Time, sleepTime, block.Header.Time, errTime))
 		}
-		log.Debug("check block time %d + %d - %d > %d", block.PrevHeader.Time, sleepTime, block.Header.Time, errTime)
+		log.Debug("check block time %d + %d - %d > %d / %d %d %d %d", block.PrevHeader.Time, sleepTime, block.Header.Time, errTime, block.Header.KeyID, block.Header.NodePosition, block.PrevHeader.KeyID, block.PrevHeader.NodePosition)
 	}
 	log.Debug("block.PrevHeader == nil")
 

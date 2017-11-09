@@ -49,7 +49,7 @@ const READ_TIMEOUT = 20
 const WRITE_TIMEOUT = 20
 
 const TCP_PORT = "7078"
-const RB_BLOCKS_1 = 30
+const RB_BLOCKS_1 = 3000
 const RB_BLOCKS_2 = 144000
 
 const DATA_TYPE_MAX_BLOCK_ID = 10

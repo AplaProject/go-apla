@@ -19,11 +19,11 @@ package daemons
 import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	"context"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"fmt"
 )
 
 /* Take the block from the queue. If this block has the bigger block id than the last block from our chain, then find the fork
@@ -58,20 +58,21 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 
 	// check if the block gets in the rollback_blocks_1 limit
 	if queueBlock.BlockID > infoBlock.BlockID+consts.RB_BLOCKS_1 {
-		queueBlock.Delete()
+		queueBlock.DeleteOldBlocks()
 		return utils.ErrInfo("rollback_blocks_1")
 	}
 
 	// is it old block in queue ?
 	if queueBlock.BlockID <= infoBlock.BlockID {
-		queueBlock.Delete()
-		return utils.ErrInfo("old block")
+		queueBlock.DeleteOldBlocks()
+		return utils.ErrInfo(fmt.Errorf("old block %d <= %d", queueBlock.BlockID, infoBlock.BlockID))
 	}
+	log.Debug(" compare blocks: %d > %d ", queueBlock.BlockID, infoBlock.BlockID)
 
 	nodeHost, err := syspar.GetNodeHostByPosition(queueBlock.FullNodeID)
 	if err != nil {
 		log.Error("v", err)
-		queueBlock.Delete()
+		queueBlock.DeleteQueueBlockByHash()
 		return utils.ErrInfo(err)
 	}
 	log.Debug("queueBlock.FullNodeID", queueBlock.FullNodeID)
@@ -79,11 +80,9 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	blockID := queueBlock.BlockID
 
 	host := getHostPort(nodeHost)
-	err = parser.GetBlocks(blockID, host, "rollback_blocks_1", 7)
-	if err != nil {
-		log.Error("v", err)
-		queueBlock.Delete()
-		return utils.ErrInfo(err)
+	// update our chain till maxBlockID from the host
+	if err := UpdateChain(ctx, d, host, blockID, "rollback_blocks_1"); err != nil {
+		return err
 	}
 	return nil
 }
