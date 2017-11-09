@@ -26,7 +26,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"fmt"
 	"github.com/AplaProject/go-apla/packages/converter"
 )
 
