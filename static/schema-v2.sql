@@ -94,7 +94,6 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('gap_between_blocks', '1', 'ContractAccess("@0UpdSysParam")'),
 ('rb_blocks_1', '60', 'ContractAccess("@0UpdSysParam")'),
 ('rb_blocks_2', '3600', 'ContractAccess("@0UpdSysParam")'),
-('gap_between_blocks', '1', 'ContractAccess("@0UpdSysParam")'),
 ('new_version_url', 'upd.apla.io', 'ContractAccess("@0UpdSysParam")'),
 ('full_nodes', '', 'ContractAccess("@0UpdFullNodes")'),
 ('count_of_nodes', '101', 'ContractAccess("@0UpdSysParam")'),
