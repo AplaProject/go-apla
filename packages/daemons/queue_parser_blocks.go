@@ -17,7 +17,6 @@
 package daemons
 
 import (
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 
@@ -57,7 +56,7 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	}
 
 	// check if the block gets in the rollback_blocks_1 limit
-	if queueBlock.BlockID > infoBlock.BlockID+consts.RB_BLOCKS_1 {
+	if queueBlock.BlockID > infoBlock.BlockID+syspar.GetRbBlocks1() {
 		queueBlock.DeleteOldBlocks()
 		return utils.ErrInfo("rollback_blocks_1")
 	}

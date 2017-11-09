@@ -61,6 +61,10 @@ const (
 	RecoveryAddress = `recovery_address`
 	// CommissionWallet is the address for commissions
 	CommissionWallet = `commission_wallet`
+	// rollback from queue_bocks
+	RbBlocks1 = `rb_blocks_1`
+	// rollback from blocks_collection
+	RbBlocks2 = `rb_blocks_2`
 )
 
 type FullNode struct {
@@ -239,6 +243,9 @@ func GetSleepTimeByPosition(CurrentPosition, prevBlockNodePosition int64) (int64
 func SysInt64(name string) int64 {
 	return converter.StrToInt64(SysString(name))
 }
+func SysInt(name string) int {
+	return converter.StrToInt(SysString(name))
+}
 
 func GetSizeFuel() int64 {
 	return SysInt64(SizeFuel)
@@ -324,4 +331,12 @@ func SysString(name string) string {
 	ret := cache[name]
 	mutex.RUnlock()
 	return ret
+}
+
+func GetRbBlocks1() int64 {
+	return SysInt64(RbBlocks1)
+}
+
+func GetRbBlocks2() int64 {
+	return SysInt64(RbBlocks2)
 }

@@ -30,9 +30,9 @@ import (
 )
 
 func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
-	rollback := consts.RB_BLOCKS_1
+	rollback := syspar.GetRbBlocks1()
 	if rollbackBlocks == "rollback_blocks_2" {
-		rollback = consts.RB_BLOCKS_2
+		rollback = syspar.GetRbBlocks2()
 	}
 
 	config := &model.Config{}

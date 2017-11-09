@@ -1,7 +1,6 @@
 package daemons
 
 import (
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -16,10 +15,10 @@ import (
 
 func CreatingBlockchain(d *daemon, ctx context.Context) error {
 	d.sleepTime = 10 * time.Second
-	return writeNextBlocks(*utils.Dir+"/public/blockchain", consts.COUNT_BLOCK_BEFORE_SAVE)
+	return writeNextBlocks(*utils.Dir+"/public/blockchain", syspar.GetRbBlocks2())
 }
 
-func writeNextBlocks(fileName string, minToSave int) error {
+func writeNextBlocks(fileName string, minToSave int64) error {
 	lastSavedBlockID, err := getLastBlockID(fileName)
 	if err != nil {
 		return err
@@ -33,7 +32,7 @@ func writeNextBlocks(fileName string, minToSave int) error {
 
 	curBlockID := infoBlock.BlockID
 
-	if curBlockID-int64(minToSave) < lastSavedBlockID {
+	if curBlockID - minToSave < lastSavedBlockID {
 		// not enough blocks to save, just return
 		return nil
 	}
