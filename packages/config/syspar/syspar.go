@@ -219,12 +219,6 @@ func GetSleepTimeByKey(myKeyID, prevBlockNodePosition int64) (int64, error) {
 	if myPosition < prevBlockNodePosition {
 		sleepTime = (GetNumberOfNodes() - prevBlockNodePosition) * GetGapsBetweenBlocks()
 	}
-	fmt.Println("myPosition", myPosition)
-	fmt.Println("myKeyID", myKeyID)
-	fmt.Println("sleepTime", sleepTime)
-	fmt.Println("GetNumberOfNodes()", GetNumberOfNodes())
-	fmt.Println("prevBlockNodePosition", prevBlockNodePosition)
-	fmt.Println("GetGapsBetweenBlocks()", GetGapsBetweenBlocks())
 
 	return int64(sleepTime), nil
 }
