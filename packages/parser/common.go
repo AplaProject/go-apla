@@ -35,12 +35,9 @@ import (
 	"github.com/AplaProject/go-apla/packages/templatev2"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
-	"github.com/op/go-logging"
-	"github.com/shopspring/decimal"
-)
 
-var (
-	log = logging.MustGetLogger("parser")
+	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 // GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
@@ -61,6 +58,7 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	block := &model.Block{}
 	_, err := block.Get(blockID)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting block by ID")
 		return BlockData, utils.ErrInfo(err)
 	}
 
@@ -81,18 +79,19 @@ func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
 			return node.Public, nil
 		}
 	}
+	log.WithFields(log.Fields{"type": consts.NotFound, "wallet_id": walletID}).Error("Cannot find node by wallet id")
 	return nil, fmt.Errorf(`unknown node %d`, walletID)
 }
 
 func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64) error {
 	txHash, err := crypto.Hash(binaryTx)
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("hashing binary tx")
 	}
 	ltx := &model.LogTransaction{Hash: txHash, Time: time}
 	err = ltx.Create(transaction)
 	if err != nil {
-		log.Errorf("error insert transaction into log: %s", err)
+		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("insert logged transaction")
 		return utils.ErrInfo(err)
 	}
 	return nil
@@ -106,6 +105,7 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 			tables.SetTablePrefix(prefix)
 			found, err := tables.Get(table[off+1:])
 			if err != nil {
+				log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting table")
 				return false, err
 			}
 			if found {
@@ -119,6 +119,7 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 	ids, err := model.GetAllSystemStatesIDs()
 	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("get all system states ids")
 		return 0, err
 	}
 	for _, id := range ids {
@@ -126,6 +127,7 @@ func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 		sp.SetTablePrefix(converter.Int64ToStr(id))
 		_, err = sp.Get(transaction, "state_name")
 		if err != nil {
+			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("state get by name transaction")
 			return 0, err
 		}
 		if strings.ToLower(sp.Name) == strings.ToLower(country) {
@@ -150,6 +152,7 @@ type ParserInterface interface {
 func GetTablePrefix(global string, stateId int64) (string, error) {
 	globalInt, err := strconv.Atoi(global)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.ConvertionError}).Error("converting global to int")
 		return "", err
 	}
 	stateIdStr := converter.Int64ToStr(stateId)
@@ -166,6 +169,7 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	case "DLTTransfer":
 		return &DLTTransferParser{p, nil}, nil
 	}
+	log.WithFields(log.Fields{"tx_type": txType, "type": consts.UnknownObject}).Error("unknown txType")
 	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }
 
@@ -214,6 +218,23 @@ type Parser struct {
 	AllPkeys map[string]string
 }
 
+func (p Parser) GetLogger() *log.Entry {
+	if p.BlockData != nil && p.PrevBlock != nil {
+		logger := log.WithFields(log.Fields{"block_id": p.BlockData.BlockID, "block_time": p.BlockData.Time, "block_wallet_id": p.BlockData.WalletID, "block_state_id": p.BlockData.StateID, "block_hash": p.BlockData.Hash, "block_version": p.BlockData.Version, "prev_block_id": p.PrevBlock.BlockID, "prev_block_time": p.PrevBlock.Time, "prev_block_wallet_id": p.PrevBlock.WalletID, "prev_block_state_id": p.PrevBlock.StateID, "prev_block_hash": p.PrevBlock.Hash, "prev_block_version": p.PrevBlock.Version, "tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxStateID, "tx_wallet_id": p.TxWalletID})
+		return logger
+	}
+	if p.BlockData != nil {
+		logger := log.WithFields(log.Fields{"block_id": p.BlockData.BlockID, "block_time": p.BlockData.Time, "block_wallet_id": p.BlockData.WalletID, "block_state_id": p.BlockData.StateID, "block_hash": p.BlockData.Hash, "block_version": p.BlockData.Version, "tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxStateID, "tx_wallet_id": p.TxWalletID})
+		return logger
+	}
+	if p.PrevBlock != nil {
+		logger := log.WithFields(log.Fields{"prev_block_id": p.PrevBlock.BlockID, "prev_block_time": p.PrevBlock.Time, "prev_block_wallet_id": p.PrevBlock.WalletID, "prev_block_state_id": p.PrevBlock.StateID, "prev_block_hash": p.PrevBlock.Hash, "prev_block_version": p.PrevBlock.Version, "tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxStateID, "tx_wallet_id": p.TxWalletID})
+		return logger
+	}
+	logger := log.WithFields(log.Fields{"tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxStateID, "tx_wallet_id": p.TxWalletID})
+	return logger
+}
+
 // ClearTmp deletes temporary files
 func ClearTmp(blocks map[int64]string) {
 	for _, tmpFileName := range blocks {
@@ -226,15 +247,16 @@ func ClearTmp(blocks map[int64]string) {
 func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	searchedHash, err := crypto.Hash(txBinary)
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal(err)
 	}
 	logTx := &model.LogTransaction{}
 	found, err := logTx.GetByHash(searchedHash)
 	if err != nil {
-		log.Error("get transaction from log error: %s", utils.ErrInfo(err))
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting log transaction by hash")
 		return utils.ErrInfo(err)
 	}
 	if found {
+		log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in log transactions")
 		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %x", searchedHash))
 	}
 
@@ -243,9 +265,11 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		tx := &model.Transaction{}
 		_, err := tx.GetVerified(searchedHash)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting verified transaction")
 			return utils.ErrInfo(err)
 		}
 		if len(tx.Hash) > 0 {
+			log.WithFields(log.Fields{"tx_hash": tx.Hash, "type": consts.DuplicateObject}).Error("double tx in transactions")
 			return utils.ErrInfo(fmt.Errorf("double tx in transactions %x", searchedHash))
 		}
 	}
@@ -255,10 +279,11 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		qtx := &model.QueueTx{}
 		found, err := qtx.GetByHash(searchedHash)
 		if found {
+			log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in queue")
 			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %x", searchedHash))
 		}
 		if err != nil {
-			log.Error("get from transaction queue error: %s", utils.ErrInfo(err))
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting transaction from queue")
 			return utils.ErrInfo(err)
 		}
 	}
@@ -281,6 +306,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	bl := &model.Block{}
 	err := bl.DeleteById(transaction, blockID)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
 		return err
 	}
 	b := &model.Block{
@@ -294,7 +320,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	}
 	err = b.Create(transaction)
 	if err != nil {
-		log.Errorf("can't create block: %s", err)
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
 		return err
 	}
 	return nil
@@ -362,6 +388,7 @@ func (p *Parser) ErrInfo(verr interface{}) error {
 }
 
 func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
+	logger := p.GetLogger()
 	walletID := p.TxWalletID
 	if walletID == 0 {
 		walletID = p.TxCitizenID
@@ -370,15 +397,18 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	wallet := &model.DltWallet{}
 	_, err := wallet.Get(p.DbTransaction, walletID)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet transaction")
 		return err
 	}
 	amountAndCommission := amount
 	amountAndCommission.Add(commission)
 	wltAmount, err := decimal.NewFromString(wallet.Amount)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": wallet.Amount}).Error("convertion wallet amount to decimal from string")
 		return err
 	}
 	if wltAmount.Cmp(amountAndCommission) < 0 {
+		logger.Error("wallet amount is less than amount and commisssion")
 		return fmt.Errorf("%v < %v)", wallet.Amount, amountAndCommission)
 	}
 	return nil
@@ -400,10 +430,12 @@ func (p *Parser) BlockError(err error) {
 
 // AccessRights checks the access right by executing the condition value
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
+	logger := p.GetLogger()
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(p.TxStateIDStr)
 	_, err := sp.Get(p.DbTransaction, condition)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting state parameter by name transaction")
 		return err
 	}
 	conditions := sp.Value
@@ -413,12 +445,15 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	if len(conditions) > 0 {
 		ret, err := p.EvalIf(conditions)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.EvalError, "error": err, "conditions": conditions}).Error("evaluating conditions")
 			return err
 		}
 		if !ret {
+			logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
 			return fmt.Errorf(`Access denied`)
 		}
 	} else {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject, "conditions": condition}).Error("No condition in state_parameters")
 		return fmt.Errorf(`There is not %s in state_parameters`, condition)
 	}
 	return nil
@@ -426,11 +461,13 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
+	logger := p.GetLogger()
 	govAccount, _ := templatev2.StateParam(int64(p.TxStateID), `founder_account`)
 	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
 		if p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
 			return nil
 		} else {
+			logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
 			return fmt.Errorf(`Access denied`)
 		}
 	}
@@ -439,6 +476,7 @@ func (p *Parser) AccessTable(table, action string) error {
 		return err
 		// TODO: table != ... is left for compatibility temporarily. Remove it
 	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
+		logger.WithFields(log.Fields{"table": table, "type": consts.InvalidObject}).Error("is not custom table")
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
 	prefix := table[:strings.IndexByte(table, '_')]
@@ -446,14 +484,17 @@ func (p *Parser) AccessTable(table, action string) error {
 	tables.SetTablePrefix(prefix)
 	tablePermission, err := tables.GetPermissions(table[strings.IndexByte(table, '_')+1:], "")
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table permissions")
 		return err
 	}
 	if len(tablePermission[action]) > 0 {
 		ret, err := p.EvalIf(tablePermission[action])
 		if err != nil {
+			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "error": err, "type": consts.EvalError}).Error("evaluating table permissions for action")
 			return err
 		}
 		if !ret {
+			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "type": consts.EvalError}).Error("access denied")
 			return fmt.Errorf(`Access denied`)
 		}
 	}
@@ -462,17 +503,19 @@ func (p *Parser) AccessTable(table, action string) error {
 
 // AccessColumns checks access rights to the columns
 func (p *Parser) AccessColumns(table string, columns []string) error {
-
+	logger := p.GetLogger()
 	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
 		govAccount, _ := templatev2.StateParam(int64(p.TxStateID), `founder_account`)
 		if p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
 			return nil
 		}
+		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access Denied")
 		return fmt.Errorf(`Access denied`)
 	}
 	if isCustom, err := IsCustomTable(table); err != nil {
 		return err
 	} else if !isCustom && !strings.HasSuffix(table, `_parameters`) {
+		logger.WithFields(log.Fields{"table": table, "type": consts.InvalidObject}).Error("is not custom table")
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
 	prefix := table[:strings.IndexByte(table, '_')]
@@ -480,6 +523,7 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 	tables.SetTablePrefix(prefix)
 	columnsAndPermissions, err := tables.GetColumns(table, "")
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table columns")
 		return err
 	}
 	for _, col := range columns {
@@ -494,9 +538,11 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 		if ok && len(cond) > 0 {
 			ret, err := p.EvalIf(cond)
 			if err != nil {
+				logger.WithFields(log.Fields{"condition": cond, "column": col, "type": consts.EvalError}).Error("evaluating condition")
 				return err
 			}
 			if !ret {
+				logger.WithFields(log.Fields{"condition": cond, "column": col, "type": consts.AccessDenied}).Error("action denied")
 				return fmt.Errorf(`Access denied`)
 			}
 		}
@@ -505,6 +551,7 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 }
 
 func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
+	logger := p.GetLogger()
 	prefix, err := GetTablePrefix(global, stateId)
 	if err != nil {
 		return err
@@ -515,6 +562,7 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 		page := &model.Page{}
 		page.SetTablePrefix(prefix)
 		if _, err := page.Get(name); err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
 			return err
 		}
 		conditions = page.Conditions
@@ -522,6 +570,7 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 		menu := &model.Menu{}
 		menu.SetTablePrefix(prefix)
 		if _, err := menu.Get(name); err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
 			return err
 		}
 		conditions = menu.Conditions
@@ -530,21 +579,26 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 	if len(conditions) > 0 {
 		ret, err := p.EvalIf(conditions)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("evaluating conditions")
 			return err
 		}
 		if !ret {
+			log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
 			return fmt.Errorf(`Access denied`)
 		}
 	} else {
+		log.WithFields(log.Fields{"type": consts.EmptyObject, "table": prefix + "_" + table}).Error("There is not conditions in")
 		return fmt.Errorf(`There is not conditions in %s`, prefix+`_`+table)
 	}
 	return nil
 }
 
 func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
+	logger := p.GetLogger()
 	syspar := &model.SystemParameter{}
 	fPrice, err := syspar.GetValueParameterByName("op_price", name)
 	if err != nil {
+		logger.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting value parameter by name")
 		return decimal.New(0, 0), p.ErrInfo(err)
 	}
 	if fPrice == nil {
@@ -555,13 +609,15 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 	systemParam := &model.SystemParameter{}
 	_, err = systemParam.Get("fuel_rate")
 	if err != nil {
-		log.Fatal(err)
+		logger.WithFields(log.Fields{"error": err, "type": consts.DBError}).Fatal("getting system parameter")
 	}
 	fuelRate, err := decimal.NewFromString(systemParam.Value)
 	if err != nil {
+		logger.WithFields(log.Fields{"error": err, "type": consts.ConvertionError, "value": systemParam.Value}).Error("converting fuel rate system parameter from string to decimal")
 		return decimal.New(0, 0), p.ErrInfo(err)
 	}
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
+		logger.Error("fuel rate is less than zero")
 		return decimal.New(0, 0), fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 	return p.TxUsedCost.Mul(fuelRate), nil

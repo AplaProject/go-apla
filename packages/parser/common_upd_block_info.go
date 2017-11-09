@@ -19,9 +19,12 @@ package parser
 import (
 	"fmt"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // UpdBlockInfo updates info_block table
@@ -35,11 +38,10 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 	}
 	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
 		block.Header.Time, block.Header.WalletID, block.Header.StateID)
-	log.Debug("forSha %v", forSha)
 
 	hash, err := crypto.DoubleHash([]byte(forSha))
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("double hashing block")
 	}
 
 	block.Header.Hash = hash
@@ -54,6 +56,7 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 		}
 		err := ib.Create(dbTransaction)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating info block")
 			return fmt.Errorf("error insert into info_block %s", err)
 		}
 	} else {
@@ -66,12 +69,14 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			Sent:     0,
 		}
 		if err := ibUpdate.Update(dbTransaction); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating info block")
 			return fmt.Errorf("error while updating info_block: %s", err)
 		}
 
 		config := &model.Config{}
 		err = config.ChangeBlockIDBatch(dbTransaction, blockID, blockID)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("changing block id batch in config")
 			return err
 		}
 	}

@@ -20,16 +20,19 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/logging"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // RollbackToBlockID rollbacks blocks till blockID
 func (p *Parser) RollbackToBlockID(blockID int64) error {
+	logger := p.GetLogger()
 	_, err := model.MarkVerifiedAndNotUsedTransactionsUnverified()
 	if err != nil {
-		logging.WriteSelectiveLog(err)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marking verified and not used transactions unverified")
 		return p.ErrInfo(err)
 	}
 
@@ -39,6 +42,7 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		block := &model.Block{}
 		blocks, err := block.GetBlocks(blockID, int32(limit))
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting blocks")
 			return p.ErrInfo(err)
 		}
 		if len(blocks) == 0 {
@@ -57,6 +61,7 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 	block := &model.Block{}
 	_, err = block.Get(blockID)
 	if err != nil && err != sql.ErrNoRows {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
 		return p.ErrInfo(err)
 	}
 	data := block.Data
@@ -65,6 +70,7 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 	time := converter.BinToDecBytesShift(&data, 4)
 	size, err := converter.DecodeLength(&data)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Fatal("decoding block size")
 		log.Fatal(err)
 	}
 	walletID := converter.BinToDecBytesShift(&data, size)
@@ -77,10 +83,12 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		StateID:  stateID}
 	err = ib.Update(p.DbTransaction)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating info block")
 		return p.ErrInfo(err)
 	}
 	err = model.UpdateConfig("my_block_id", converter.Int64ToStr(iblock))
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating config.myBlockID")
 		return p.ErrInfo(err)
 	}
 	return nil
