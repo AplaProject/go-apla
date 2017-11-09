@@ -91,7 +91,7 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'ContractAccess("@0UpdSysParam")'),    
 ('default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'ContractAccess("@0UpdSysParam")'),
 ('default_ecosystem_contract', '', 'ContractAccess("@0UpdSysParam")'),
-('gap_between_blocks', '1', 'ContractAccess("@0UpdSysParam")'),
+('gap_between_blocks', '2', 'ContractAccess("@0UpdSysParam")'),
 ('rb_blocks_1', '60', 'ContractAccess("@0UpdSysParam")'),
 ('rb_blocks_2', '3600', 'ContractAccess("@0UpdSysParam")'),
 ('new_version_url', 'upd.apla.io', 'ContractAccess("@0UpdSysParam")'),
