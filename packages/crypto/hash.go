@@ -3,6 +3,8 @@ package crypto
 import (
 	"crypto/sha256"
 
+	"github.com/AplaProject/go-apla/packages/consts"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -14,7 +16,7 @@ const (
 
 func Hash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.Debug(HashingEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": HashingEmpty.Error()}).Debug(HashingEmpty.Error())
 	}
 	switch hashProv {
 	case _SHA256:
@@ -26,7 +28,7 @@ func Hash(msg []byte) ([]byte, error) {
 
 func DoubleHash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.Debug(HashingEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": HashingEmpty.Error()}).Debug(HashingEmpty.Error())
 	}
 	switch hashProv {
 	case _SHA256:
