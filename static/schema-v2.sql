@@ -96,7 +96,7 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('rb_blocks_2', '3600', 'ContractAccess("@0UpdSysParam")'),
 ('new_version_url', 'upd.apla.io', 'ContractAccess("@0UpdSysParam")'),
 ('full_nodes', '', 'ContractAccess("@0UpdFullNodes")'),
-('count_of_nodes', '101', 'ContractAccess("@0UpdSysParam")'),
+('number_of_nodes', '101', 'ContractAccess("@0UpdSysParam")'),
 ('op_price', '', 'ContractAccess("@0UpdSysParam")'),
 ('ecosystem_price', '1000', 'ContractAccess("@0UpdSysParam")'),
 ('contract_price', '200', 'ContractAccess("@0UpdSysParam")'),

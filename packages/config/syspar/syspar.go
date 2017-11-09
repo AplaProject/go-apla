@@ -28,7 +28,7 @@ import (
 
 const (
 	// NumberNodes is the number of nodes
-	NumberNodes = `number_of_dlt_nodes`
+	NumberNodes = `number_of_nodes`
 	// FuelRate is the rate
 	FuelRate = `fuel_rate`
 	// FullNodes is the list of nodes
