@@ -116,7 +116,7 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 		queueBlock := &model.QueueBlock{Hash: blockHash, FullNodeID: fullNodeID, BlockID: newBlockID}
 		err = queueBlock.Create()
 		if err != nil {
-			log.Debug("Inserting into QueueBlock %v", err)
+			return utils.ErrInfo(err)
 		}
 	}
 
