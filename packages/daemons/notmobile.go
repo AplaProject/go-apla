@@ -17,14 +17,16 @@
 package daemons
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/system"
 	"github.com/AplaProject/go-apla/packages/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 /*
@@ -67,17 +69,15 @@ func WaitForSignals() {
 	go func() {
 		signal.Notify(SigChan, os.Interrupt, os.Kill, Term)
 		<-SigChan
-		fmt.Println("got kill signal")
 
 		if utils.CancelFunc != nil {
 			utils.CancelFunc()
 			for i := 0; i < utils.DaemonsCount; i++ {
 				name := <-utils.ReturnCh
-				log.Debugf("daemon %s stopped", name)
+				log.WithFields(log.Fields{"daemon_name": name}).Debug("daemon stopped")
 			}
 
 			log.Debug("Daemons killed")
-			fmt.Println("Daemons killed")
 		}
 
 		system.FinishThrust()
@@ -85,15 +85,13 @@ func WaitForSignals() {
 		if model.DBConn != nil {
 			err := model.GormClose()
 			if err != nil {
-				log.Error("gorm close error: %s", utils.ErrInfo(err).Error())
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("closing gorm")
 			}
 		}
 
 		err := os.Remove(*utils.Dir + "/daylight.pid")
 		if err != nil {
-			log.Error("can't remove pid file: %s", err)
-		} else {
-			fmt.Println("removed " + *utils.Dir + "/daylight.pid")
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": *utils.Dir + "/daylight.pid"}).Error("removing file")
 		}
 
 		os.Exit(1)
