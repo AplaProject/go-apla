@@ -42,7 +42,6 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("block.Header.NodePosition",block.Header.NodePosition)
 
 	block.Header.Hash = hash
 	if block.Header.BlockID == 1 {

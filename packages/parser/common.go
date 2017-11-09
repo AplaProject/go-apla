@@ -268,7 +268,6 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	if err != nil {
 		return err
 	}
-	fmt.Println("block.Header.NodePosition",block.Header.NodePosition)
 	b := &model.Block{
 		ID:           blockID,
 		Hash:         block.Header.Hash,
