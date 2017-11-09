@@ -62,7 +62,6 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		log.Errorf("can't get block: %s", err)
 		return err
 	}
-	fmt.Println(" prevBlock.NodePosition",  prevBlock.NodePosition)
 
 	// calculate the next block generation time
 	sleepTime, err := syspar.GetSleepTimeByKey(config.KeyID, converter.StrToInt64(prevBlock.NodePosition))
