@@ -23,7 +23,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/consts"
+
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -82,6 +85,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		if cmd == cmdCallVari {
 			parcount := count + 1 - in
 			if parcount < 0 {
+				log.WithFields(log.Fields{"type": consts.VMError}).Error("wrong count of parameters")
 				return fmt.Errorf(`wrong count of parameters`)
 			}
 			pars := make([]interface{}, parcount)
@@ -148,6 +152,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 					cost := iret.Int()
 					if cost > rt.cost {
 						rt.cost = 0
+						rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Error("paid CPU resource is over")
 						return fmt.Errorf("paid CPU resource is over")
 					} else {
 						rt.cost -= cost
@@ -229,35 +234,47 @@ func valueToBool(v interface{}) bool {
 
 // ValueToInt converts interface (string or int64) to int64
 func ValueToInt(v interface{}) (ret int64) {
+	var err error
 	switch val := v.(type) {
 	case int64:
 		ret = val
 	case string:
-		ret, _ = strconv.ParseInt(val, 10, 64)
+		ret, err = strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting value from string to int")
+		}
 	}
 	return
 }
 
 // ValueToFloat converts interface (string, float64 or int64) to float64
 func ValueToFloat(v interface{}) (ret float64) {
+	var err error
 	switch val := v.(type) {
 	case float64:
 		ret = val
 	case int64:
 		ret = float64(val)
 	case string:
-		ret, _ = strconv.ParseFloat(val, 64)
+		ret, err = strconv.ParseFloat(val, 64)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting value from string to float")
+		}
 	}
 	return
 }
 
 // ValueToDecimal converts interface (string, float64, Decimal or int64) to Decimal
 func ValueToDecimal(v interface{}) (ret decimal.Decimal) {
+	var err error
 	switch val := v.(type) {
 	case float64:
 		ret = decimal.NewFromFloat(val)
 	case string:
-		ret, _ = decimal.NewFromString(val)
+		ret, err = decimal.NewFromString(val)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting value from string to decimal")
+		}
 	case int64:
 		ret = decimal.New(val, 0)
 	default:
@@ -335,12 +352,14 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	for ci := 0; ci < len(block.Code); ci++ { //_, cmd := range block.Code {
 		rt.cost--
 		if rt.cost <= 0 {
+			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Warn("paid CPU resource is over")
 			return 0, fmt.Errorf(`paid CPU resource is over`)
 		}
 		cmd := block.Code[ci]
 		var bin interface{}
 		size := len(rt.stack)
 		if size < int(cmd.Cmd>>8) {
+			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Error("stack is empty")
 			return 0, fmt.Errorf(`stack is empty`)
 		}
 		for i := 1; i <= int(cmd.Cmd>>8); i++ {
@@ -438,6 +457,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					cost := rt.vm.ExtCost(finfo.Name)
 					if cost > rt.cost {
 						rt.cost = 0
+						rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Warning("paid CPU resource is over")
 						return 0, fmt.Errorf(`paid CPU resource is over`)
 					} else if cost == -1 {
 						rt.cost -= CostCall
@@ -460,6 +480,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 			}
 			if i < 0 {
+				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "var": ivar.Obj.Value}).Error("wrong var")
 				return 0, fmt.Errorf(`wrong var %v`, ivar.Obj.Value)
 			}
 			//rt.stack = append(rt.stack, rt.vars[voff+ivar.Obj.Value.(int)])
@@ -469,6 +490,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				if cmd.Cmd == cmdCallExtend {
 					err = rt.extendFunc(cmd.Value.(string))
 					if err != nil {
+						rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "error": err, "cmd": cmd.Value.(string)}).Error("executing extended function")
 						return 0, fmt.Errorf(`extend function %s %s`, cmd.Value.(string), err.Error())
 					}
 				} else {
@@ -479,6 +501,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					rt.stack = append(rt.stack, val)
 				}
 			} else {
+				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "cmd": cmd.Value.(string)}).Error("unknown extend identifier")
 				err = fmt.Errorf(`unknown extend identifier %s`, cmd.Value.(string))
 			}
 		case cmdIndex:
@@ -499,6 +522,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 				rt.stack = rt.stack[:size-1]
 			default:
+				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_type": itype}).Error("type does not support indexing")
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
 			}
 		case cmdSetIndex:
@@ -537,6 +561,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 				rt.stack = rt.stack[:size-2]
 			default:
+				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_type": itype}).Error("type does not support indexing")
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
 			}
 		case cmdSign:
@@ -645,6 +670,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(float64) / ValueToFloat(top[0])
 			case int64:
 				if top[0].(int64) == 0 {
+					log.WithFields(log.Fields{"type": consts.DivisionByZero}).Error("divided by zero")
 					return 0, fmt.Errorf(`divided by zero`)
 				}
 				bin = top[1].(int64) / top[0].(int64)
@@ -734,6 +760,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = !bin.(bool)
 			}
 		default:
+			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_cmd": cmd.Cmd}).Error("Unknown command")
 			err = fmt.Errorf(`Unknown command %d`, cmd.Cmd)
 		}
 		if err != nil {
@@ -763,6 +790,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		}
 	}
 	rt.stack = rt.stack[:start]
+	if err != nil {
+		rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("error in vm")
+	}
 	return
 }
 
@@ -770,7 +800,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println(string(debug.Stack()))
+			rt.vm.logger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "stack": string(debug.Stack())}).Error("runtime panic error")
 			err = fmt.Errorf(`runtime panic error`)
 		}
 	}()
