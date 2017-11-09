@@ -127,7 +127,7 @@ func sendHashes(fullNodeID int64) error {
 
 	// mark all transactions and block as sent
 	if block != nil {
-		err = block.MarkSent()
+		//err = block.MarkSent()
 		if err != nil {
 			return err
 		}

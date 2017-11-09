@@ -731,7 +731,6 @@ func GetCurrentDir() string {
 
 // GetBlockBody gets the block data
 func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, error) {
-	fmt.Println("host",host)
 	conn, err := TCPConn(host)
 	if err != nil {
 		return nil, ErrInfo(err)
@@ -744,18 +743,14 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
-	fmt.Println("blockID get",blockID)
 
 	log.Debug("blockID: %v", blockID)
 
 	// send the number of a block
 	_, err = conn.Write(converter.DecToBin(blockID, 4))
 	if err != nil {
-		fmt.Println("err", err)
 		return nil, ErrInfo(err)
 	}
-
-	fmt.Println("blockID get 2", blockID)
 
 	// recieve the data size as a response that server wants to transfer
 	buf := make([]byte, 4)

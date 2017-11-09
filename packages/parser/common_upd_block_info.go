@@ -22,6 +22,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/AplaProject/go-apla/packages/converter"
 )
 
 // UpdBlockInfo updates info_block table
@@ -41,6 +42,7 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("block.Header.NodePosition",block.Header.NodePosition)
 
 	block.Header.Hash = hash
 	if block.Header.BlockID == 1 {
@@ -50,7 +52,7 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			Time:           block.Header.Time,
 			EcosystemID:       block.Header.EcosystemID,
 			KeyID:       block.Header.KeyID,
-			NodePosition:        block.Header.NodePosition,
+			NodePosition:        converter.Int64ToStr(block.Header.NodePosition),
 			CurrentVersion: fmt.Sprintf("%d", block.Header.Version),
 		}
 		err := ib.Create(dbTransaction)
@@ -64,7 +66,7 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			Time:     block.Header.Time,
 			EcosystemID: block.Header.EcosystemID,
 			KeyID: block.Header.KeyID,
-			NodePosition:  block.Header.NodePosition,
+			NodePosition:  converter.Int64ToStr(block.Header.NodePosition),
 			Sent:     0,
 		}
 		if err := ibUpdate.Update(dbTransaction); err != nil {

@@ -4,7 +4,7 @@ type InfoBlock struct {
 	Hash           []byte `gorm:"not null"`
 	EcosystemID       int64  `gorm:"not null default 0"`
 	KeyID       int64  `gorm:"not null default 0"`
-	NodePosition        int64  `gorm:"not null default 0"`
+	NodePosition        string  `gorm:"not null default 0"`
 	BlockID        int64  `gorm:"not null"`
 	Time           int64  `gorm:"not null"`
 	CurrentVersion string `gorm:"not null"`

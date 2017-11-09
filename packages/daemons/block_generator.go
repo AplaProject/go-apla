@@ -26,6 +26,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"fmt"
+	"github.com/AplaProject/go-apla/packages/converter"
 )
 
 func BlockGenerator(d *daemon, ctx context.Context) error {
@@ -60,9 +62,10 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		log.Errorf("can't get block: %s", err)
 		return err
 	}
+	fmt.Println(" prevBlock.NodePosition",  prevBlock.NodePosition)
 
 	// calculate the next block generation time
-	sleepTime, err := syspar.GetSleepTimeByKey(config.KeyID, prevBlock.NodePosition)
+	sleepTime, err := syspar.GetSleepTimeByKey(config.KeyID, converter.StrToInt64(prevBlock.NodePosition))
 	if err != nil {
 		log.Errorf("can't get sleep time: %s", err)
 		return err
