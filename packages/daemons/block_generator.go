@@ -17,16 +17,17 @@
 package daemons
 
 import (
+	"context"
 	"time"
 
-	"context"
-
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/converter"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func BlockGenerator(d *daemon, ctx context.Context) error {
@@ -34,14 +35,15 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 
 	config := &model.Config{}
 	if _, err := config.Get(); err != nil {
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cannot get config")
 		return err
 	}
 
 	myNodePosition, err := syspar.GetNodePositionByKeyID(config.KeyID)
-	if err != nil  {
+	if err != nil {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
-		log.Infof("we are not full node, sleep for 10 seconds")
+		d.logger.WithFields(log.Fields{"type": consts.JustWaiting, "error": err}).Warning("we are not full node, sleep for 10 seconds")
 		return nil
 	}
 
@@ -54,24 +56,24 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		log.Errorf("%v", err)
 		return err
 	}
-	
+
 	prevBlock := &model.InfoBlock{}
 	_, err = prevBlock.Get()
 	if err != nil {
-		log.Errorf("can't get block: %s", err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting previous block")
 		return err
 	}
 
 	// calculate the next block generation time
 	sleepTime, err := syspar.GetSleepTimeByKey(config.KeyID, converter.StrToInt64(prevBlock.NodePosition))
 	if err != nil {
-		log.Errorf("can't get sleep time: %s", err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting sleep time")
 		return err
 	}
 	log.Debug("sleepTime %d", sleepTime)
 	toSleep := int64(sleepTime) - (time.Now().Unix() - int64(prevBlock.Time))
 	if toSleep > 0 {
-		log.Debugf("we need to sleep %d seconds to generate new block", toSleep)
+		d.logger.WithFields(log.Fields{"type": consts.JustWaiting, "seconds": toSleep}).Debug("sleeping n seconds")
 		d.sleepTime = time.Duration(toSleep) * time.Second
 		return nil
 	}
@@ -79,7 +81,10 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	nodeKey := &model.MyNodeKey{}
 	err = nodeKey.GetNodeWithMaxBlockID()
 	if err != nil || len(nodeKey.PrivateKey) < 1 {
-		log.Errorf("bad node private key: %s", err)
+		if err != nil {
+			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node with max blockID")
+		}
+		d.logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
 		return err
 	}
 
@@ -88,26 +93,22 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	// verify transactions
 	err = p.AllTxParser()
 	if err != nil {
-		log.Errorf("transactions parser error: %s", err)
 		return err
 	}
 
 	trs, err := model.GetAllUnusedTransactions()
 	if err != nil || trs == nil {
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
 		return err
 	}
-	log.Debugf("transactions to put in new block: %+v", trs)
 
 	blockBin, err := generateNextBlock(prevBlock, *trs, nodeKey.PrivateKey, config, time.Now().Unix(), myNodePosition)
 	if err != nil {
-		log.Errorf("can't generate block: %s", err)
 		return err
 	}
 
-	log.Debugf("try to parse new transactions")
 	err = parser.InsertBlockWOForks(blockBin)
 	if err != nil {
-		log.Errorf("parser block error: %s", err)
 		return err
 	}
 
@@ -116,12 +117,12 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 
 func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key string, c *model.Config, blockTime int64, myNodePosition int64) ([]byte, error) {
 	header := &utils.BlockData{
-		BlockID:  prevBlock.BlockID + 1,
-		Time:     time.Now().Unix(),
+		BlockID:      prevBlock.BlockID + 1,
+		Time:         time.Now().Unix(),
 		EcosystemID:  c.EcosystemID,
-		KeyID: c.KeyID,
-		NodePosition:  myNodePosition,
-		Version:  consts.BLOCK_VERSION,
+		KeyID:        c.KeyID,
+		NodePosition: myNodePosition,
+		Version:      consts.BLOCK_VERSION,
 	}
 
 	trData := make([][]byte, 0, len(trs))

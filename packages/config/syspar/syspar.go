@@ -19,11 +19,14 @@ package syspar
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"sync"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
-	"fmt"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -76,12 +79,12 @@ var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
 	}
-	cost    = make(map[string]int64)
-	nodes   = make(map[int64]*FullNode)
-	nodesByPosition   = make([][]string, 0)
-	fuels   = make(map[int64]string)
-	wallets = make(map[int64]string)
-	mutex   = &sync.RWMutex{}
+	cost            = make(map[string]int64)
+	nodes           = make(map[int64]*FullNode)
+	nodesByPosition = make([][]string, 0)
+	fuels           = make(map[int64]string)
+	wallets         = make(map[int64]string)
+	mutex           = &sync.RWMutex{}
 )
 
 // SysUpdate reloads/updates values of system parameters
@@ -89,6 +92,7 @@ func SysUpdate() error {
 	var err error
 	systemParameters, err := model.GetAllSystemParametersV2()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all system parameters")
 		return err
 	}
 	mutex.Lock()
@@ -106,6 +110,7 @@ func SysUpdate() error {
 		inodes := make([][]string, 0)
 		err = json.Unmarshal([]byte(cache[FullNodes]), &inodes)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling full nodes from json")
 			return err
 		}
 		nodesByPosition = inodes
@@ -115,6 +120,7 @@ func SysUpdate() error {
 			}
 			pub, err := hex.DecodeString(item[2])
 			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": item[2]}).Error("decoding inode from string")
 				return err
 			}
 			nodes[converter.StrToInt64(item[1])] = &FullNode{Host: item[0], Public: pub}
@@ -126,6 +132,7 @@ func SysUpdate() error {
 			ifuels := make([][]string, 0)
 			err = json.Unmarshal([]byte(cache[name]), &ifuels)
 			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling params from json")
 				return res, err
 			}
 			for _, item := range ifuels {
@@ -166,14 +173,14 @@ func GetNodePositionByKeyID(keyID int64) (int64, error) {
 	return 0, fmt.Errorf("Incorrect keyID")
 }
 
-func GetNumberOfNodes() (int64) {
+func GetNumberOfNodes() int64 {
 	return int64(len(nodesByPosition))
 }
 
 func GetNodeByPosition(position int64) (*FullNode, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
-	if int64(len(nodesByPosition))<=position {
+	if int64(len(nodesByPosition)) <= position {
 		return nil, fmt.Errorf("incorrect position")
 	}
 	return nodes[converter.StrToInt64(nodesByPosition[position][1])], nil
@@ -183,7 +190,7 @@ func GetNodeHostByPosition(position int64) (string, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
 	nodeData, err := GetNodeByPosition(position)
-	if err!=nil {
+	if err != nil {
 		return "", err
 	}
 	return nodeData.Host, nil
@@ -192,7 +199,7 @@ func GetNodeHostByPosition(position int64) (string, error) {
 func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
-	if int64(len(nodesByPosition))<=position {
+	if int64(len(nodesByPosition)) <= position {
 		return nil, fmt.Errorf("incorrect position")
 	}
 	pkey, err := hex.DecodeString(nodesByPosition[position][2])
@@ -204,7 +211,7 @@ func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
 func GetSleepTimeByKey(myKeyID, prevBlockNodePosition int64) (int64, error) {
 
 	myPosition, err := GetNodePositionByKeyID(myKeyID)
-	if err!=nil {
+	if err != nil {
 		return 0, err
 	}
 	sleepTime := int64(0)

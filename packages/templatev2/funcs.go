@@ -25,9 +25,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -219,6 +222,7 @@ func nowTag(par parFunc) string {
 	}
 	ret, err := model.Single(query).String()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting single from DB")
 		return err.Error()
 	}
 	if cut > 0 {
@@ -363,6 +367,7 @@ func dbfindTag(par parFunc) string {
 	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
 	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
 	}
 	/*	list := []map[string]string{{"id": "1", "amount": "200"}, {"id": "2", "amount": "300"}}
@@ -404,6 +409,7 @@ func dbfindTag(par parFunc) string {
 				process(body, &root, par.Vars)
 				out, err := json.Marshal(root.Children)
 				if err == nil {
+					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling root children to JSON")
 					ival = replace(string(out), 0, &item)
 				}
 			}
@@ -449,6 +455,7 @@ func includeTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Vars)[`_include`]) < 5 {
 		pattern, err := model.Single(`select value from "`+(*par.Vars)[`ecosystem_id`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by name")
 			return err.Error()
 		}
 		if len(pattern) > 0 {

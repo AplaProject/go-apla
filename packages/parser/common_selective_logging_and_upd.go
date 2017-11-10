@@ -22,13 +22,17 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // selectiveLoggingAndUpd changes DB and writes all DB changes for rollbacks
 // do not use for comments
 func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (int64, string, error) {
+	logger := p.GetLogger()
 	var (
 		tableID string
 		err     error
@@ -36,6 +40,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	)
 
 	if generalRollback && p.BlockData == nil {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Block is undefined")
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
@@ -58,6 +63,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 				if isCustom, err := IsCustomTable(table); err != nil {
 					return 0, ``, err
 				} else if isCustom {
+					log.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("hash value cannot be larger than 64 bytes")
 					return 0, ``, fmt.Errorf(`hash value cannot be larger than 64 bytes`)
 				}
 			}
@@ -70,11 +76,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	if len(addSQLFields) > 0 {
 		addSQLFields += `,`
 	}
-	log.Debug("addSQLFields %s", addSQLFields)
 	for i, field := range fields {
-		/*if p.AllPkeys[table] == field {
-			continue
-		}*/
 		field = strings.TrimSpace(field)
 		fields[i] = field
 		if field[:1] == "+" || field[:1] == "-" {
@@ -85,7 +87,6 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			addSQLFields += field + ","
 		}
 	}
-	log.Debug("addSQLFields %s", addSQLFields)
 
 	addSQLWhere := ""
 	if whereFields != nil && whereValues != nil {
@@ -103,23 +104,19 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 
 	// if there is something to log
 	selectQuery := `SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere
-	//	fmt.Println(`Select`, selectQuery)
 	selectCost, err := model.GetQueryTotalCost(selectQuery)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting query total cost")
 		return 0, tableID, err
 	}
 	logData, err := model.GetOneRowTransaction(p.DbTransaction, selectQuery).String()
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting one row transaction")
 		return 0, tableID, err
 	}
 	cost += selectCost
 
-	log.Debug(`SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere)
 	if whereFields != nil && len(logData) > 0 {
-		/*	if whereFields != nil {
-			if len(logData) == 0 {
-				return tableID, fmt.Errorf(`update of the unknown record`)
-			}*/
 		jsonMap := make(map[string]string)
 		for k, v := range logData {
 			if k == p.AllPkeys[table] {
@@ -143,17 +140,17 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 		jsonData, _ := json.Marshal(jsonMap)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback info to json")
 			return 0, tableID, err
 		}
 		rollback := &model.Rollback{Data: string(jsonData), BlockID: p.BlockData.BlockID}
 		err = rollback.Create(p.DbTransaction)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating rollback")
 			return 0, tableID, err
 		}
-		log.Debug("string(jsonData) %s / rbID %d", string(jsonData), rollback.RbID)
 		addSQLUpdate := ""
 		for i := 0; i < len(fields); i++ {
-			// utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}
 			if isBytea[fields[i]] && len(values[i]) != 0 {
 				addSQLUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if fields[i][:1] == "+" {
@@ -171,14 +168,15 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			}
 		}
 		updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere
-		//		fmt.Println(`Update`, updateQuery)
 		updateCost, err := model.GetQueryTotalCost(updateQuery, rollback.RbID)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
 			return 0, tableID, err
 		}
 		cost += updateCost
 		err = model.Update(p.DbTransaction, table, addSQLUpdate+fmt.Sprintf("rb_id = %d", rollback.RbID), addSQLWhere)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting update query")
 			return 0, tableID, err
 		}
 		tableID = logData[p.AllPkeys[table]]
@@ -221,10 +219,10 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 		addSQLIns0 = addSQLIns0[0 : len(addSQLIns0)-1]
 		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
-		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSQLIns0+") VALUES ("+addSQLIns1+")")
 		if !isID {
 			id, err := model.GetNextID(p.DbTransaction, table)
 			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id for table")
 				return 0, ``, err
 			}
 			tableID = converter.Int64ToStr(id)
@@ -233,14 +231,16 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 
 		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0 + `) VALUES (` + addSQLIns1 + `)`
-		//		fmt.Println(`Insert`, insertQuery)
-
 		insertCost, err := model.GetQueryTotalCost(insertQuery)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")
 			return 0, tableID, err
 		}
 		cost += insertCost
 		err = model.GetDB(p.DbTransaction).Exec(insertQuery).Error
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("executing insert query")
+		}
 	}
 	if err != nil {
 		return 0, tableID, err
@@ -256,6 +256,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 
 		err = rollbackTx.Create(p.DbTransaction)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating rollback tx")
 			return 0, tableID, err
 		}
 	}

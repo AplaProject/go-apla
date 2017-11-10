@@ -19,10 +19,12 @@ package apiv2
 import (
 	"net/http"
 
-	"github.com/jinzhu/gorm"
-
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	"github.com/jinzhu/gorm"
+	log "github.com/sirupsen/logrus"
 )
 
 type balanceResult struct {
@@ -30,14 +32,14 @@ type balanceResult struct {
 	Money  string `json:"money"`
 }
 
-func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
-	ecosystemId, err := checkEcosystem(w, data)
+func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	ecosystemId, err := checkEcosystem(w, data, logger)
 	if err != nil {
 		return err
 	}
 	keyID := converter.StringToAddress(data.params[`wallet`].(string))
 	if keyID == 0 {
+		logger.WithFields(log.Fields{"type": consts.ConvertionError, "value": data.params["wallet"].(string)}).Error("converting wallet to address")
 		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
 
@@ -45,6 +47,7 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	key.SetTablePrefix(ecosystemId)
 	err = key.Get(keyID)
 	if err != nil && err != gorm.ErrRecordNotFound {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting Key for wallet")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	data.result = &balanceResult{Amount: key.Amount, Money: converter.EGSMoney(key.Amount)}

@@ -27,13 +27,14 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 	"github.com/dgrijalva/jwt-go"
 	hr "github.com/julienschmidt/httprouter"
-	"github.com/op/go-logging"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -68,11 +69,10 @@ const (
 	pOptional = 0x100
 )
 
-type apiHandle func(http.ResponseWriter, *http.Request, *apiData) error
+type apiHandle func(http.ResponseWriter, *http.Request, *apiData, *log.Entry) error
 
 var (
 	installed bool
-	log       = logging.MustGetLogger("api")
 )
 
 func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
@@ -129,6 +129,7 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 	}
 	signature := data.params[`signature`].([]byte)
 	if len(signature) == 0 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject, "params": data.params}).Error("signature is empty")
 		return tx.Header{}, fmt.Errorf("signature is empty")
 	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
@@ -151,11 +152,13 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			err  error
 			data apiData
 		)
+		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
+		requestLogger.Info("received http request")
 		defer func() {
 			if r := recover(); r != nil {
+				requestLogger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r, "stack": string(debug.Stack())}).Error("panic recovered error")
 				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
 				errorAPI(w, `E_RECOVERED`, http.StatusInternalServerError)
-				log.Error("API Recovered", r)
 			}
 		}()
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -169,6 +172,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}
 		token, err := jwtToken(r)
 		if err != nil {
+			requestLogger.WithFields(log.Fields{"type": consts.JWTError, "params": params, "error": err}).Error("starting session")
 			errmsg := err.Error()
 			expired := `token is expired by`
 			if strings.HasPrefix(errmsg, expired) {
@@ -194,6 +198,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {
+				requestLogger.WithFields(log.Fields{"type": consts.RouteError, "error": fmt.Sprintf("undefined val %s", key)}).Error("undefined val")
 				errorAPI(w, `E_UNDEFINEVAL`, http.StatusBadRequest, key)
 				return
 			}
@@ -203,6 +208,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			case pHex:
 				bin, err := hex.DecodeString(val)
 				if err != nil {
+					requestLogger.WithFields(log.Fields{"type": consts.ConvertionError, "value": val, "error": err}).Error("decoding http parameter from hex")
 					errorAPI(w, err, http.StatusBadRequest)
 					return
 				}
@@ -212,12 +218,13 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			}
 		}
 		for _, handler := range handlers {
-			if handler(w, r, &data) != nil {
+			if handler(w, r, &data, requestLogger) != nil {
 				return
 			}
 		}
 		jsonResult, err := json.Marshal(data.result)
 		if err != nil {
+			requestLogger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marhsalling http response to json")
 			errorAPI(w, err, http.StatusInternalServerError)
 			return
 		}
@@ -225,15 +232,17 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 	})
 }
 
-func checkEcosystem(w http.ResponseWriter, data *apiData) (int64, error) {
+func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (int64, error) {
 	ecosystemID := data.ecosystemId
 	if data.params[`ecosystem`].(int64) > 0 {
 		ecosystemID = data.params[`ecosystem`].(int64)
 		count, err := model.GetNextID(nil, `system_states`)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id system states")
 			return 0, errorAPI(w, err, http.StatusBadRequest)
 		}
 		if ecosystemID >= count {
+			logger.WithFields(log.Fields{"state_id": ecosystemID, "count": count, "type": consts.ParameterExceeded}).Error("state_id is larger then max count")
 			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, ecosystemID)
 		}
 	}

@@ -25,6 +25,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type prepareResult struct {
@@ -34,7 +36,7 @@ type prepareResult struct {
 	Time    string            `json:"time"`
 }
 
-func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var (
 		result  prepareResult
 		timeNow int64
@@ -87,7 +89,6 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 		}
 	}
 	result.ForSign = forsign
-	fmt.Println(`PREPARE`, forsign)
 	data.result = result
 	return nil
 }

@@ -18,6 +18,9 @@ package parser
 
 import (
 	"encoding/hex"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
@@ -29,11 +32,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 type FirstBlockParser struct {
@@ -49,34 +49,30 @@ func (p *FirstBlockParser) Validate() error {
 }
 
 func (p *FirstBlockParser) Action() error {
+	logger := p.GetLogger()
 	data := p.TxPtr.(*consts.FirstBlock)
 	myAddress := crypto.Address(data.PublicKey)
 	err := model.ExecSchemaEcosystem(1, myAddress, ``)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return p.ErrInfo(err)
 	}
-	/*	key := &model.Key{
-			ID:        myAddress,
-			PublicKey: data.PublicKey,
-			Amount:    decimal.NewFromFloat(consts.FIRST_QDLT).String(),
-		}
-		if err = key.SetTablePrefix(consts.MainEco).Create(); err != nil {
-			fmt.Println(`KEY`, err)
-			return p.ErrInfo(err)
-		}*/
 	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
 		myAddress, data.PublicKey, decimal.NewFromFloat(consts.FIRST_QDLT).String()).Error
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return p.ErrInfo(err)
 	}
 	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_pages" (id,name,menu,value,conditions) values('1', 'default_page',
 		  'default_menu', ?, 'ContractAccess("@1EditPage")')`, syspar.SysString(`default_ecosystem_page`)).Error
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return p.ErrInfo(err)
 	}
 	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_menu" (id,name,value,title,conditions) values('1', 'default_menu', ?, ?, 'ContractAccess("@1EditMenu")')`,
 		syspar.SysString(`default_ecosystem_menu`), `default`).Error
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default menu")
 		return p.ErrInfo(err)
 	}
 	err = smart.LoadContract(p.DbTransaction, `1`)
@@ -86,10 +82,10 @@ func (p *FirstBlockParser) Action() error {
 	node := &model.SystemParameterV2{Name: `full_nodes`}
 	if err = node.SaveArray([][]string{{data.Host, converter.Int64ToStr(myAddress),
 		hex.EncodeToString(data.NodePublicKey)}}); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving node array")
 		return p.ErrInfo(err)
 	}
 	syspar.SysUpdate()
-
 	return nil
 }
 
@@ -103,47 +99,42 @@ func (p FirstBlockParser) Header() *tx.Header {
 
 // FirstBlock generates the first block
 func FirstBlock() {
-	log.Debug("FirstBlock")
-
 	if len(*utils.FirstBlockPublicKey) == 0 {
-		log.Debug("len(*FirstBlockPublicKey) == 0")
 		priv, pub, _ := crypto.GenHexKeys()
 		err := ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
 		if err != nil {
-			log.Error("write publick key failed: %v", utils.ErrInfo(err))
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing private key file")
 			return
 		}
-		log.Debugf("PublicKey: %s", pub)
 		*utils.FirstBlockPublicKey = pub
 	}
 	if len(*utils.FirstBlockNodePublicKey) == 0 {
-		log.Debug("len(*FirstBlockNodePublicKey) == 0")
 		priv, pub, _ := crypto.GenHexKeys()
 		err := ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
 		if err != nil {
-			log.Error("write private kery failed: %v", utils.ErrInfo(err))
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node private key file")
 			return
 		}
-		log.Debugf("NodePublicKey: %s", pub)
 		*utils.FirstBlockNodePublicKey = pub
 	}
 
 	PublicKey := *utils.FirstBlockPublicKey
 	PublicKeyBytes, err := hex.DecodeString(string(PublicKey))
 	if err != nil {
-		log.Errorf("can't generate key, decode string failed: %s", err)
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding public key from hex to string")
 		return
 	}
 
 	NodePublicKey := *utils.FirstBlockNodePublicKey
 	NodePublicKeyBytes, err := hex.DecodeString(string(NodePublicKey))
 	if err != nil {
-		log.Errorf("can't generate key, decode string failed: %s", err)
+		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding node public key from hex to string")
 		return
 	}
 
 	Host := *utils.FirstBlockHost
 	if len(Host) == 0 {
+		log.Info("first block host is empty, using localhost as host")
 		Host = "127.0.0.1"
 	}
 
@@ -151,20 +142,20 @@ func FirstBlock() {
 	now := time.Now().Unix()
 
 	header := &utils.BlockData{
-		BlockID:  1,
-		Time:     now,
-		EcosystemID: 0,
-		KeyID: iAddress,
+		BlockID:      1,
+		Time:         now,
+		EcosystemID:  0,
+		KeyID:        iAddress,
 		NodePosition: 0,
-		Version:  consts.BLOCK_VERSION,
+		Version:      consts.BLOCK_VERSION,
 	}
 	var tx []byte
 	_, err = converter.BinMarshal(&tx,
 		&consts.FirstBlock{
 			TxHeader: consts.TxHeader{
-				Type:      1, // FirstBlock
-				Time:      uint32(now),
-				KeyID:  iAddress,
+				Type:  1, // FirstBlock
+				Time:  uint32(now),
+				KeyID: iAddress,
 			},
 			PublicKey:     PublicKeyBytes,
 			NodePublicKey: NodePublicKeyBytes,
@@ -172,14 +163,12 @@ func FirstBlock() {
 		},
 	)
 	if err != nil {
-		log.Errorf("first block body marshal error: %v", utils.ErrInfo(err))
+		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("first block body bin marshalling")
 		return
 	}
 
-	log.Debugf("start marshalling first block")
 	block, err := MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
 	if err != nil {
-		log.Errorf("block marshalling failed: %s", err)
 		return
 	}
 
@@ -190,11 +179,10 @@ func FirstBlock() {
 		firstBlockDir = filepath.Join("", *utils.FirstBlockDir)
 		if _, err := os.Stat(firstBlockDir); os.IsNotExist(err) {
 			if err = os.Mkdir(firstBlockDir, 0755); err != nil {
-				log.Error("can't create directory for 1block: %v", utils.ErrInfo(err))
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating first block dir directory")
 				return
 			}
 		}
 	}
-	log.Debugf("write first block to: %s/1block", firstBlockDir)
 	ioutil.WriteFile(filepath.Join(firstBlockDir, "1block"), block, 0644)
 }

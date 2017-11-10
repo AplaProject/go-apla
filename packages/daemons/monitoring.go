@@ -1,14 +1,16 @@
 package daemons
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 
-	"bytes"
-
+	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/config/syspar"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func Monitoring(w http.ResponseWriter, r *http.Request) {
@@ -17,6 +19,7 @@ func Monitoring(w http.ResponseWriter, r *http.Request) {
 	infoBlock := &model.InfoBlock{}
 	_, err := infoBlock.Get()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		logError(w, fmt.Errorf("can't get info block: %s", err))
 		return
 	}
@@ -31,6 +34,7 @@ func Monitoring(w http.ResponseWriter, r *http.Request) {
 	block := &model.Block{}
 	_, err = block.GetMaxBlock()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max block")
 		logError(w, fmt.Errorf("can't get max block: %s", err))
 		return
 	}
@@ -43,6 +47,7 @@ func Monitoring(w http.ResponseWriter, r *http.Request) {
 
 	trCount, err := model.GetTransactionCountAll()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting transaction count all")
 		logError(w, fmt.Errorf("can't get transactions count: %s", err))
 		return
 	}
@@ -57,7 +62,6 @@ func addKey(buf *bytes.Buffer, key string, value interface{}) {
 }
 
 func logError(w http.ResponseWriter, err error) {
-	log.Errorf("monitoring error: %s", err)
 	w.Write([]byte(err.Error()))
 	return
 }

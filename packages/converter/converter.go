@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"math"
 	"reflect"
 	"regexp"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 func FillLeft(slice []byte) []byte {
@@ -79,6 +79,7 @@ func DecodeLenInt64(data *[]byte) (int64, error) {
 	}
 	length := int((*data)[0]) + 1
 	if len(*data) < length {
+		log.WithFields(log.Fields{"data_length": len(*data), "length": length, "type": consts.UnmarshallingError}).Error("length of data is smaller then encoded length")
 		return 0, fmt.Errorf(`length of data %d < %d`, len(*data), length)
 	}
 	buf := make([]byte, 8)
@@ -95,11 +96,13 @@ func DecodeLenInt64Buf(buf *bytes.Buffer) (int64, error) {
 
 	val, err := buf.ReadByte()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("cannot read bytes from buffer")
 		return 0, err
 	}
 
 	length := int(val)
 	if buf.Len() < length {
+		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "data_length": buf.Len(), "length": length}).Error("length of data is smaller then encoded length")
 		return 0, fmt.Errorf(`length of data %d < %d`, buf.Len(), length)
 	}
 	data := make([]byte, 8)
@@ -123,6 +126,7 @@ func DecodeLength(buf *[]byte) (ret int64, err error) {
 	if (length & 0x80) != 0 {
 		length &= 0x7F
 		if len(*buf) < int(length+1) {
+			log.WithFields(log.Fields{"data_length": len(*buf), "length": int(length + 1)}).Error("length of data is smaller then encoded length")
 			return 0, fmt.Errorf(`input slice has small size`)
 		}
 		ret = int64(binary.BigEndian.Uint64(append(make([]byte, 8-length), (*buf)[1:length+1]...)))
@@ -141,6 +145,7 @@ func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
 
 	length, err := buf.ReadByte()
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("cannot read bytes from buffer")
 		return 0, err
 	}
 
@@ -150,6 +155,7 @@ func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
 
 	length &= 0x7F
 	if buf.Len() < int(length) {
+		log.WithFields(log.Fields{"data_length": buf.Len(), "length": int(length), "type": consts.UnmarshallingError}).Error("length of data is smaller then encoded length")
 		return 0, fmt.Errorf(`input slice has small size`)
 	}
 	return int(binary.BigEndian.Uint64(append(make([]byte, 8-length), buf.Next(int(length))...))), nil
@@ -221,6 +227,7 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
 		t = t.Elem()
 	}
 	if buf.Len() == 0 {
+		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": "input slice is empty"}).Error("input slice is empty")
 		return fmt.Errorf(`input slice is empty`)
 	}
 	switch t.Kind() {
@@ -237,6 +244,7 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
 	case reflect.Int32:
 		val, err := buf.ReadByte()
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading bytes from buffer")
 			return err
 		}
 		if val < 128 {
@@ -246,11 +254,13 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
 			size := val - 128
 			tmp := make([]byte, 4)
 			if buf.Len() <= int(size) || size > 4 {
+				log.WithFields(log.Fields{"type": consts.UnmarshallingError, "data_length": buf.Len(), "length": int(size)}).Error("bin unmarshalling int32")
 				return fmt.Errorf(`wrong input data`)
 			}
 			for ; i < size; i++ {
 				byteVal, err := buf.ReadByte()
 				if err != nil {
+					log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading bytes from buffer")
 					return err
 				}
 				tmp[4-size+i] = byteVal
@@ -276,6 +286,7 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
 			return err
 		}
 		if buf.Len() < int(val) {
+			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "data_length": buf.Len(), "length": int(val)}).Error("bin unmarshalling string")
 			return fmt.Errorf(`input slice is short`)
 		}
 		t.SetString(string(buf.Next(val)))
@@ -292,11 +303,13 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
 			return err
 		}
 		if buf.Len() < int(val) {
+			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "data_length": buf.Len(), "length": int(val)}).Error("bin unmarshalling slice")
 			return fmt.Errorf(`input slice is short`)
 		}
 		t.SetBytes(buf.Next(int(val)))
 
 	default:
+		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "value_type": t.Kind()}).Error("BinUnmrashal unsupported type")
 		return fmt.Errorf(`unsupported type of BinUnmarshal %v`, t.Kind())
 	}
 	return nil
@@ -356,6 +369,7 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 			return err
 		}
 		if len(*out) < int(val) {
+			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "data_length": len(*out), "length": int(val)}).Error("input slice is short")
 			return fmt.Errorf(`input slice is short`)
 		}
 		t.SetString(string((*out)[:val]))
@@ -377,6 +391,7 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 		t.SetBytes((*out)[:val])
 		*out = (*out)[val:]
 	default:
+		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "value_type": t.Kind()}).Error("BinUnmrashal unsupported type")
 		return fmt.Errorf(`unsupported type of BinUnmarshal %v`, t.Kind())
 	}
 	return nil
@@ -503,6 +518,7 @@ func HexToBin(ihexdata interface{}) []byte {
 	var str []byte
 	str, err := hex.DecodeString(hexdata)
 	if err != nil {
+		log.WithFields(log.Fields{"data": hexdata, "error": err, "type": consts.ConvertionError}).Error("decoding string to hex")
 		log.Printf("HexToBin error: %s", err)
 	}
 	return str

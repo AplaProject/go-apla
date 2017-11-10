@@ -17,12 +17,15 @@
 package daemons
 
 import (
+	"context"
+	"fmt"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
+
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 
-	"context"
-	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 )
 
 /* Take the block from the queue. If this block has the bigger block id than the last block from our chain, then find the fork
@@ -44,14 +47,17 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	infoBlock := &model.InfoBlock{}
 	_, err := infoBlock.Get()
 	if err != nil {
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		return err
 	}
 	queueBlock := &model.QueueBlock{}
 	_, err = queueBlock.Get()
 	if err != nil {
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting queue block")
 		return err
 	}
 	if len(queueBlock.Hash) == 0 {
+		d.logger.WithFields(log.Fields{"type": consts.NotFound}).Debug("queue block not found")
 		return err
 	}
 
@@ -66,16 +72,11 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 		queueBlock.DeleteOldBlocks()
 		return utils.ErrInfo(fmt.Errorf("old block %d <= %d", queueBlock.BlockID, infoBlock.BlockID))
 	}
-	log.Debug(" compare blocks: %d > %d ", queueBlock.BlockID, infoBlock.BlockID)
-
 	nodeHost, err := syspar.GetNodeHostByPosition(queueBlock.FullNodeID)
 	if err != nil {
-		log.Error("v", err)
 		queueBlock.DeleteQueueBlockByHash()
 		return utils.ErrInfo(err)
 	}
-	log.Debug("queueBlock.FullNodeID", queueBlock.FullNodeID)
-	log.Debug("nodeHost", nodeHost)
 	blockID := queueBlock.BlockID
 
 	host := getHostPort(nodeHost)

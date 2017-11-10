@@ -17,14 +17,19 @@
 package parser
 
 import (
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func (p *Parser) autoRollback() error {
+	logger := p.GetLogger()
 	rollbackTx := &model.RollbackTx{}
 	txs, err := rollbackTx.GetRollbackTransactions(p.TxHash)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback transactions")
 		return utils.ErrInfo(err)
 	}
 	for _, tx := range txs {
@@ -36,6 +41,7 @@ func (p *Parser) autoRollback() error {
 	txForDelete := &model.RollbackTx{TxHash: p.TxHash}
 	err = txForDelete.DeleteByHash()
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback transaction by hash")
 		return p.ErrInfo(err)
 	}
 	return nil

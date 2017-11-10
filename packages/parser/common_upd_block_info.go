@@ -19,10 +19,13 @@ package parser
 import (
 	"fmt"
 
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/AplaProject/go-apla/packages/converter"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // UpdBlockInfo updates info_block table
@@ -36,11 +39,10 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 	}
 	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
 		block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition)
-	log.Debug("forSha %v", forSha)
 
 	hash, err := crypto.DoubleHash([]byte(forSha))
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("double hashing block")
 	}
 
 	block.Header.Hash = hash
@@ -49,32 +51,35 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			Hash:           hash,
 			BlockID:        blockID,
 			Time:           block.Header.Time,
-			EcosystemID:       block.Header.EcosystemID,
-			KeyID:       block.Header.KeyID,
-			NodePosition:        converter.Int64ToStr(block.Header.NodePosition),
+			EcosystemID:    block.Header.EcosystemID,
+			KeyID:          block.Header.KeyID,
+			NodePosition:   converter.Int64ToStr(block.Header.NodePosition),
 			CurrentVersion: fmt.Sprintf("%d", block.Header.Version),
 		}
 		err := ib.Create(dbTransaction)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating info block")
 			return fmt.Errorf("error insert into info_block %s", err)
 		}
 	} else {
 		ibUpdate := &model.InfoBlock{
-			Hash:     hash,
-			BlockID:  blockID,
-			Time:     block.Header.Time,
-			EcosystemID: block.Header.EcosystemID,
-			KeyID: block.Header.KeyID,
-			NodePosition:  converter.Int64ToStr(block.Header.NodePosition),
-			Sent:     0,
+			Hash:         hash,
+			BlockID:      blockID,
+			Time:         block.Header.Time,
+			EcosystemID:  block.Header.EcosystemID,
+			KeyID:        block.Header.KeyID,
+			NodePosition: converter.Int64ToStr(block.Header.NodePosition),
+			Sent:         0,
 		}
 		if err := ibUpdate.Update(dbTransaction); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating info block")
 			return fmt.Errorf("error while updating info_block: %s", err)
 		}
 
 		config := &model.Config{}
 		err = config.ChangeBlockIDBatch(dbTransaction, blockID, blockID)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("changing block id batch in config")
 			return err
 		}
 	}

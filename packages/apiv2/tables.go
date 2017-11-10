@@ -20,8 +20,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type tableInfo struct {
@@ -34,7 +37,7 @@ type tablesResult struct {
 	List  []tableInfo `json:"list"`
 }
 
-func tables(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
+func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	var (
 		result tablesResult
 		limit  int
@@ -44,6 +47,7 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 
 	count, err := model.GetRecordsCount(table)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting records count from tables")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	if data.params[`limit`].(int64) > 0 {
@@ -54,6 +58,7 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	list, err := model.GetAll(`select name from "`+table+`" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting names from tables")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -66,8 +71,14 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 		fullname := converter.Int64ToStr(data.ecosystemId) + `_` + item[`name`]
 		if item[`name`] == `keys` {
 			err = model.DBConn.Table(fullname).Count(&maxid).Error
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table")
+			}
 		} else {
 			maxid, err = model.GetNextID(nil, fullname)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id from table")
+			}
 			maxid--
 		}
 		if err != nil {

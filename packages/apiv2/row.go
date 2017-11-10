@@ -19,15 +19,18 @@ package apiv2
 import (
 	"net/http"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type rowResult struct {
 	Value map[string]string `json:"value"`
 }
 
-func row(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
+func row(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	cols := `*`
 	if len(data.params[`columns`].(string)) > 0 {
 		cols = converter.EscapeName(data.params[`columns`].(string))
@@ -35,6 +38,7 @@ func row(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	row, err := model.GetOneRow(`SELECT `+cols+` FROM "`+converter.Int64ToStr(data.ecosystemId)+`_`+
 		data.params[`name`].(string)+`" WHERE id = ?`, data.params[`id`].(string)).String()
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": data.params["name"].(string), "id": data.params["id"].(string)}).Error("getting one row")
 		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)
 	}
 
