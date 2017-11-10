@@ -19,7 +19,6 @@ package apiv2
 import (
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -58,7 +57,7 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 	smartTx.TokenEcosystem = data.params[`token_ecosystem`].(int64)
 	smartTx.MaxSum = data.params[`max_sum`].(string)
 	smartTx.PayOver = data.params[`payover`].(string)
-	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, UserID: data.wallet, StateID: data.state}
+	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, EcosystemID: data.ecosystemId, KeyID: data.keyId}
 	forsign := smartTx.ForSign()
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
@@ -66,20 +65,7 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 				continue
 			}
 			var val string
-			if strings.Contains(fitem.Tags, `crypt`) {
-				var wallet string
-				if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-					wallet = r.FormValue(ret[1])
-				} else {
-					wallet = converter.Int64ToStr(data.wallet)
-				}
-				key := EncryptNewKey(wallet)
-				if len(key.Error) != 0 {
-					return errorAPI(w, key.Error, http.StatusBadRequest)
-				}
-				result.Values[fitem.Name] = key.Encrypted
-				val = key.Encrypted
-			} else if fitem.Type.String() == `[]interface {}` {
+			if fitem.Type.String() == `[]interface {}` {
 				for key, values := range r.Form {
 					if key == fitem.Name+`[]` {
 						var list []string

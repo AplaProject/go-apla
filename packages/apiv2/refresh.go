@@ -45,7 +45,7 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		return errorAPI(w, `E_TOKEN`, http.StatusBadRequest)
 	}
 	claims, ok := data.token.Claims.(*JWTClaims)
-	if !ok || converter.StrToInt64(claims.Wallet) == 0 {
+	if !ok || converter.StrToInt64(claims.KeyID) == 0 {
 		logger.WithFields(log.Fields{"type": consts.JWTError}).Error("getting jwt claims")
 		return errorAPI(w, `E_TOKEN`, http.StatusBadRequest)
 	}
@@ -71,7 +71,7 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		return errorAPI(w, `E_REFRESHTOKEN`, http.StatusBadRequest)
 	}
 	refClaims, ok := token.Claims.(*JWTClaims)
-	if !ok || refClaims.Wallet != claims.Wallet || refClaims.State != claims.State {
+	if !ok || refClaims.KeyID != claims.KeyID || refClaims.EcosystemID != claims.EcosystemID {
 		logger.WithFields(log.Fields{"type": consts.JWTError}).Error("token wallet or state is invalid")
 		return errorAPI(w, `E_REFRESHTOKEN`, http.StatusBadRequest)
 	}

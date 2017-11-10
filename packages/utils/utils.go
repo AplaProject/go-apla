@@ -42,13 +42,14 @@ import (
 
 // BlockData is a structure of the block's header
 type BlockData struct {
-	BlockID  int64
-	Time     int64
-	WalletID int64
-	StateID  int64
-	Sign     []byte
-	Hash     []byte
-	Version  int
+	BlockID      int64
+	Time         int64
+	EcosystemID  int64
+	KeyID        int64
+	NodePosition int64
+	Sign         []byte
+	Hash         []byte
+	Version      int
 }
 
 type Update struct {
@@ -112,7 +113,7 @@ var (
 	// LogoExt is the extension of the logotype
 	LogoExt = `png`
 	// DltWalletID is the wallet identifier
-	DltWalletID = flag.Int64("dltWalletId", 0, "DltWalletID")
+	KeyID = flag.Int64("keyID", 0, "keyID")
 
 	ReturnCh     chan string
 	CancelFunc   context.CancelFunc
@@ -771,6 +772,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	// if the data size is less than 10mb, we will receive them
 	dataSize := converter.BinToDec(buf)
 	var binaryBlock []byte
+	fmt.Printf("dataSize: %d", dataSize)
 	if dataSize < 10485760 && dataSize > 0 {
 		binaryBlock = make([]byte, dataSize)
 
@@ -779,6 +781,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data from connection")
 			return nil, ErrInfo(err)
 		}
+		fmt.Printf("binaryBlock: %x\n", binaryBlock)
 	} else {
 		log.Error("null block")
 		return nil, ErrInfo("null block")

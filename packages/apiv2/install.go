@@ -54,8 +54,7 @@ type installParams struct {
 }
 
 func installCommon(data *installParams, logger *log.Entry) (err error) {
-	if installed || model.DBConn != nil || config.IsExist() {
-		logger.Warning("Already installed")
+	if IsInstalled() || model.DBConn != nil || config.IsExist() {
 		return fmt.Errorf(`E_INSTALLED`)
 	}
 	if data.generateFirstBlock {
@@ -169,7 +168,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating MyNodeKey")
 		return err
 	}
-	if *utils.DltWalletID == 0 {
+	if *utils.KeyID == 0 {
 		logger.Info("dltWallet is not set from command line, retrieving it from private key file")
 		var key []byte
 		key, err = ioutil.ReadFile(*utils.Dir + "/PrivateKey")
@@ -187,9 +186,9 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
 			return err
 		}
-		*utils.DltWalletID = crypto.Address(key)
+		*utils.KeyID = crypto.Address(key)
 	}
-	err = model.UpdateConfig("dlt_wallet_id", *utils.DltWalletID)
+	err = model.UpdateConfig("key_id", *utils.KeyID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("setting config.dlt_wallet_id")
 		return err

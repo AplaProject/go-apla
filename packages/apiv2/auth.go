@@ -33,9 +33,9 @@ var (
 )
 
 type JWTClaims struct {
-	UID    string `json:"uid,omitempty"`
-	State  string `json:"state,omitempty"`
-	Wallet string `json:"wallet,omitempty"`
+	UID         string `json:"uid,omitempty"`
+	EcosystemID string `json:"ecosystem_id,omitempty"`
+	KeyID       string `json:"key_id,omitempty"`
 	jwt.StandardClaims
 }
 
@@ -64,7 +64,7 @@ func jwtGenerateToken(w http.ResponseWriter, claims JWTClaims) (string, error) {
 }
 
 func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if data.wallet == 0 {
+	if data.keyId == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
 		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}
@@ -72,7 +72,7 @@ func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *l
 }
 
 func authState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if data.wallet == 0 || data.state <= 1 {
+	if data.keyId == 0 || data.ecosystemId <= 1 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("state is empty")
 		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}

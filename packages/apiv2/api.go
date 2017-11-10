@@ -43,12 +43,12 @@ const (
 )
 
 type apiData struct {
-	status int
-	result interface{}
-	params map[string]interface{}
-	state  int64
-	wallet int64
-	token  *jwt.Token
+	status      int
+	result      interface{}
+	params      map[string]interface{}
+	ecosystemId int64
+	keyId       int64
+	token       *jwt.Token
 	//	sess   session.SessionStore
 }
 
@@ -110,12 +110,12 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 }
 
 func getPrefix(data *apiData) (prefix string) {
-	return converter.Int64ToStr(data.state)
+	return converter.Int64ToStr(data.ecosystemId)
 }
 
 func getSignHeader(txName string, data *apiData) tx.Header {
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
-		UserID: data.state, StateID: data.wallet}
+		EcosystemID: data.ecosystemId, KeyID: data.keyId}
 }
 
 func getHeader(txName string, data *apiData) (tx.Header, error) {
@@ -133,8 +133,16 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		return tx.Header{}, fmt.Errorf("signature is empty")
 	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
-		UserID: data.wallet, StateID: data.state, PublicKey: publicKey,
+		EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
+}
+
+func IsInstalled() bool {
+	return installed
+}
+
+func Installed() {
+	installed = true
 }
 
 // DefaultHandler is a common handle function for api requests
@@ -155,12 +163,12 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}()
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if !installed && r.URL.Path != `/api/v2/install` {
+		if !IsInstalled() && r.URL.Path != `/api/v2/install` {
 			if model.DBConn == nil && !config.IsExist() {
 				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
 				return
 			}
-			installed = true
+			Installed()
 		}
 		token, err := jwtToken(r)
 		if err != nil {
@@ -176,9 +184,9 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}
 		data.token = token
 		if token != nil && token.Valid {
-			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.Wallet) > 0 {
-				data.state = converter.StrToInt64(claims.State)
-				data.wallet = converter.StrToInt64(claims.Wallet)
+			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
+				data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
+				data.keyId = converter.StrToInt64(claims.KeyID)
 			}
 		}
 		// Getting and validating request parameters
@@ -225,18 +233,18 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 }
 
 func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (int64, error) {
-	state := data.state
+	ecosystemID := data.ecosystemId
 	if data.params[`ecosystem`].(int64) > 0 {
-		state = data.params[`ecosystem`].(int64)
+		ecosystemID = data.params[`ecosystem`].(int64)
 		count, err := model.GetNextID(nil, `system_states`)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id system states")
 			return 0, errorAPI(w, err, http.StatusBadRequest)
 		}
-		if state >= count {
-			logger.WithFields(log.Fields{"state_id": state, "count": count, "type": consts.ParameterExceeded}).Error("state_id is larger then max count")
-			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, state)
+		if ecosystemID >= count {
+			logger.WithFields(log.Fields{"state_id": ecosystemID, "count": count, "type": consts.ParameterExceeded}).Error("state_id is larger then max count")
+			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, ecosystemID)
 		}
 	}
-	return state, nil
+	return ecosystemID, nil
 }

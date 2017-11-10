@@ -17,7 +17,6 @@
 package apiv2
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -26,7 +25,6 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
@@ -59,7 +57,7 @@ type EncryptKey struct {
 
 func validateSmartContract(r *http.Request, data *apiData, result *prepareResult) (contract *smart.Contract, parerr interface{}, err error) {
 	cntname := data.params[`name`].(string)
-	contract = smart.GetContract(cntname, uint32(data.state))
+	contract = smart.GetContract(cntname, int32(data.ecosystemId))
 	if contract == nil {
 		return nil, cntname, fmt.Errorf(`E_CONTRACT`)
 	}
@@ -90,7 +88,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 						log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling sign from json")
 						break
 					}
-					sign.ForSign = fmt.Sprintf(`%s,%d`, (*result).Time, uint64(data.wallet))
+					sign.ForSign = fmt.Sprintf(`%s,%d`, (*result).Time, uint64(data.keyId))
 					for _, isign := range sign.Params {
 						sign.ForSign += fmt.Sprintf(`,%v`, strings.TrimSpace(r.FormValue(isign.Param)))
 					}
@@ -125,61 +123,5 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 			}
 		}
 	}
-	return
-}
-
-// EncryptNewKey creates a shared key, generates and crypts a new private key
-func EncryptNewKey(walletID string) (result EncryptKey) {
-	var (
-		err error
-		id  int64
-	)
-
-	if len(walletID) == 0 {
-		result.Error = `unknown wallet id`
-		return result
-	}
-	id = converter.StringToAddress(walletID)
-	wallet := &model.DltWallet{}
-	found, err := wallet.Get(nil, id)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from dlt_wallets")
-		result.Error = err.Error()
-		return result
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("unknown wallet id")
-		result.Error = `unknown wallet id`
-		return result
-	}
-	var private string
-
-	for result.WalletID == 0 {
-		private, result.Public, _ = crypto.GenHexKeys()
-
-		pub, _ := hex.DecodeString(result.Public)
-		idnew := crypto.Address(pub)
-
-		newWallet := &model.DltWallet{}
-		found, err := newWallet.Get(nil, idnew)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting wallet_id from dlt_wallets")
-			result.Error = err.Error()
-			return result
-		}
-		if !found {
-			result.WalletID = idnew
-		}
-	}
-	priv, _ := hex.DecodeString(private)
-	encrypted, err := crypto.SharedEncrypt(wallet.PublicKey, priv)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("shared encrypting public key")
-		result.Error = err.Error()
-		return result
-	}
-	result.Encrypted = hex.EncodeToString(encrypted)
-	result.Address = converter.AddressToString(result.WalletID)
-
 	return
 }

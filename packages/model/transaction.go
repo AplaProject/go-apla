@@ -6,8 +6,7 @@ type Transaction struct {
 	Used      int8   `gorm:"not null"`
 	HighRate  int8   `gorm:"not null"`
 	Type      int8   `gorm:"not null"`
-	WalletID  int64  `gorm:"not null"`
-	CitizenID int64  `gorm:"not null"`
+	KeyID  int64  `gorm:"not null"`
 	Counter   int8   `gorm:"not null"`
 	Sent      int8   `gorm:"not null"`
 	Verified  int8   `gorm:"not null;default:1"`

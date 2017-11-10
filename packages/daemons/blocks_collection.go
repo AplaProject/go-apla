@@ -84,7 +84,6 @@ func blocksCollection(d *daemon, ctx context.Context) error {
 
 	// TODO: ????? remove from all tables in some test mode ?????
 
-	// TODO: use full_nodes system_parameter
 	hosts := syspar.GetHosts()
 
 	// get a host with the biggest block id
@@ -93,8 +92,10 @@ func blocksCollection(d *daemon, ctx context.Context) error {
 		return err
 	}
 
+	DBLock()
+	defer DBUnlock()
 	// update our chain till maxBlockID from the host
-	if err := updateChain(ctx, d, host, maxBlockID); err != nil {
+	if err := UpdateChain(ctx, d, host, maxBlockID, "rollback_blocks_2"); err != nil {
 		return err
 	}
 
@@ -172,10 +173,7 @@ func getHostBlockID(host string, logger *log.Entry) (int64, error) {
 }
 
 // load from host all blocks from our last block to maxBlockID
-func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
-
-	DBLock()
-	defer DBUnlock()
+func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64, rollbackBlocks string) error {
 
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
@@ -205,14 +203,15 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		}
 
 		// hash compare could be failed in the case of fork
-		hashMatched, err := block.CheckHash()
-		if err != nil {
+		hashMatched, thisErrIsOk := block.CheckHash()
+		if thisErrIsOk != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
+			log.Debug("%v", thisErrIsOk)
 		}
 
 		if !hashMatched {
 			// it should be fork, replace our previous blocks to ones from the host
-			err := parser.GetBlocks(blockID-1, host, "rollback_blocks_2", consts.DATA_TYPE_BLOCK_BODY)
+			err := parser.GetBlocks(blockID-1, host, rollbackBlocks)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 				banNode(host, err)

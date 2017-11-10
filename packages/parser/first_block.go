@@ -86,13 +86,6 @@ func (p *FirstBlockParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	syspar.SysUpdate()
-	fullNode := &model.FullNode{WalletID: myAddress, Host: data.Host}
-	err = fullNode.Create(p.DbTransaction)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating full node")
-		return p.ErrInfo(err)
-	}
-
 	return nil
 }
 
@@ -107,7 +100,6 @@ func (p FirstBlockParser) Header() *tx.Header {
 // FirstBlock generates the first block
 func FirstBlock() {
 	if len(*utils.FirstBlockPublicKey) == 0 {
-		log.Debug("len(*FirstBlockPublicKey) == 0")
 		priv, pub, _ := crypto.GenHexKeys()
 		err := ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
 		if err != nil {
@@ -150,19 +142,20 @@ func FirstBlock() {
 	now := time.Now().Unix()
 
 	header := &utils.BlockData{
-		BlockID:  1,
-		Time:     now,
-		WalletID: iAddress,
-		Version:  consts.BLOCK_VERSION,
+		BlockID:      1,
+		Time:         now,
+		EcosystemID:  0,
+		KeyID:        iAddress,
+		NodePosition: 0,
+		Version:      consts.BLOCK_VERSION,
 	}
 	var tx []byte
 	_, err = converter.BinMarshal(&tx,
 		&consts.FirstBlock{
 			TxHeader: consts.TxHeader{
-				Type:      1, // FirstBlock
-				Time:      uint32(now),
-				WalletID:  iAddress,
-				CitizenID: 0,
+				Type:  1, // FirstBlock
+				Time:  uint32(now),
+				KeyID: iAddress,
 			},
 			PublicKey:     PublicKeyBytes,
 			NodePublicKey: NodePublicKeyBytes,

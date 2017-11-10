@@ -30,7 +30,8 @@ import (
 func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	// get parameters for "struct" transactions
 	logger := p.GetLogger()
-	txType, walletID, citizenID := GetTxTypeAndUserID(binaryTx)
+	txType, keyID := GetTxTypeAndUserID(binaryTx)
+
 	header, err := CheckTransaction(binaryTx)
 	if err != nil {
 		p.processBadTransaction(hash, err.Error())
@@ -42,12 +43,11 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("tx header is nil")
 			return utils.ErrInfo(errors.New("header is nil"))
 		}
-		walletID = header.StateID
-		citizenID = header.UserID
+		keyID = header.KeyID
 	}
 
-	if walletID == 0 && citizenID == 0 {
-		errStr := "undefined walletID and citizenID"
+	if keyID == 0 {
+		errStr := "undefined keyID"
 		p.processBadTransaction(hash, errStr)
 		return errors.New(errStr)
 	}
@@ -68,13 +68,12 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 
 	// put with verified=1
 	newTx := &model.Transaction{
-		Hash:      hash,
-		Data:      binaryTx,
-		Type:      int8(txType),
-		WalletID:  walletID,
-		CitizenID: citizenID,
-		Counter:   counter,
-		Verified:  1,
+		Hash:     hash,
+		Data:     binaryTx,
+		Type:     int8(txType),
+		KeyID:    keyID,
+		Counter:  counter,
+		Verified: 1,
 	}
 	err = newTx.Create()
 	if err != nil {

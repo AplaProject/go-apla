@@ -17,10 +17,10 @@ import (
 
 func CreatingBlockchain(d *daemon, ctx context.Context) error {
 	d.sleepTime = 10 * time.Second
-	return writeNextBlocks(*utils.Dir+"/public/blockchain", consts.COUNT_BLOCK_BEFORE_SAVE, d.logger)
+	return writeNextBlocks(*utils.Dir+"/public/blockchain", syspar.GetRbBlocks2(), d.logger)
 }
 
-func writeNextBlocks(fileName string, minToSave int, logger *log.Entry) error {
+func writeNextBlocks(fileName string, minToSave int64, logger *log.Entry) error {
 	lastSavedBlockID, err := getLastBlockID(fileName, logger)
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func writeNextBlocks(fileName string, minToSave int, logger *log.Entry) error {
 
 	curBlockID := infoBlock.BlockID
 
-	if curBlockID-int64(minToSave) < lastSavedBlockID {
+	if curBlockID-minToSave < lastSavedBlockID {
 		// not enough blocks to save, just return
 		return nil
 	}

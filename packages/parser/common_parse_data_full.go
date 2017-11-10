@@ -48,8 +48,8 @@ type Block struct {
 }
 
 func (b Block) GetLogger() *log.Entry {
-	return log.WithFields(log.Fields{"block_id": b.Header.BlockID, "block_time": b.Header.Time, "block_wallet_id": b.Header.WalletID,
-		"block_state_id": b.Header.StateID, "block_hash": b.Header.Hash, "block_version": b.Header.Version})
+	return log.WithFields(log.Fields{"block_id": b.Header.BlockID, "block_time": b.Header.Time, "block_wallet_id": b.Header.KeyID,
+		"block_state_id": b.Header.EcosystemID, "block_hash": b.Header.Hash, "block_version": b.Header.Version})
 }
 
 func InsertBlockWForks(data []byte) error {
@@ -176,8 +176,8 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 		return nil, err
 	}
 
-	logger := log.WithFields(log.Fields{"block_id": header.BlockID, "block_time": header.Time, "block_wallet_id": header.WalletID,
-		"block_state_id": header.StateID, "block_hash": header.Hash, "block_version": header.Version})
+	logger := log.WithFields(log.Fields{"block_id": header.BlockID, "block_time": header.Time, "block_wallet_id": header.KeyID,
+		"block_state_id": header.EcosystemID, "block_hash": header.Hash, "block_version": header.Version})
 	allKeys, err := getAllTables()
 	if err != nil {
 		return nil, err
@@ -248,7 +248,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 		return utils.BlockData{}, fmt.Errorf("bad binary block length")
 	}
 
-	blockVersion := int(converter.BinToDec(binaryBlock.Next(1)))
+	blockVersion := int(converter.BinToDec(binaryBlock.Next(2)))
 
 	if int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
 		log.WithFields(log.Fields{"size": binaryBlock.Len(), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
@@ -261,28 +261,22 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	block.BlockID = converter.BinToDec(binaryBlock.Next(4))
 	block.Time = converter.BinToDec(binaryBlock.Next(4))
 	block.Version = blockVersion
-
-	block.WalletID, err = converter.DecodeLenInt64Buf(binaryBlock)
+	block.EcosystemID = converter.BinToDec(binaryBlock.Next(4))
+	block.KeyID, err = converter.DecodeLenInt64Buf(binaryBlock)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "block_time": block.Time, "block_version": block.Version, "error": err}).Error("decoding binary block walletID")
 		return utils.BlockData{}, err
 	}
-
-	if binaryBlock.Len() < 1 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("bad block format, len is < 1")
-		return utils.BlockData{}, fmt.Errorf("bad block format")
-	}
-	block.StateID = converter.BinToDec(binaryBlock.Next(1))
-	logger := log.WithFields(log.Fields{"block_id": block.BlockID, "block_time": block.Time, "block_version": block.Version, "block_state_id": block.StateID})
+	block.NodePosition = converter.BinToDec(binaryBlock.Next(1))
 
 	if block.BlockID > 1 {
 		signSize, err := converter.DecodeLengthBuf(binaryBlock)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign size")
+			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign size")
 			return utils.BlockData{}, err
 		}
 		if binaryBlock.Len() < signSize {
-			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign")
+			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign")
 			return utils.BlockData{}, fmt.Errorf("bad block format (no sign)")
 		}
 		block.Sign = binaryBlock.Next(int(signSize))
@@ -359,20 +353,12 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 	p.TxPtr = nil
 	p.TxSmart = &smartTx
 	p.TxTime = smartTx.Time
-	p.TxStateID = uint32(smartTx.StateID)
-	p.TxStateIDStr = converter.UInt32ToStr(p.TxStateID)
-	if p.TxStateID > 0 {
-		p.TxCitizenID = smartTx.UserID
-		p.TxWalletID = 0
-	} else {
-		p.TxCitizenID = 0
-		p.TxWalletID = smartTx.UserID
-	}
-	logger := log.WithFields(log.Fields{"tx_type": p.dataType, "tx_hash": p.TxHash, "tx_time": p.TxTime, "tx_state_id": p.TxStateID, "tx_citizen_id": p.TxWalletID})
+	p.TxEcosystemID = (smartTx.EcosystemID)
+	p.TxKeyID = smartTx.KeyID
 
 	contract := smart.GetContractByID(int32(smartTx.Type))
 	if contract == nil {
-		logger.WithFields(log.Fields{"contract_type": smartTx.Type, "type": consts.NotFound}).Error("unknown contract")
+		log.WithFields(log.Fields{"contract_type": smartTx.Type, "type": consts.NotFound}).Error("unknown contract")
 		return fmt.Errorf(`unknown contract %d`, smartTx.Type)
 	}
 	forsign := smartTx.ForSign()
@@ -403,28 +389,28 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 			case script.Decimal:
 				var s string
 				if err := converter.BinUnmarshal(&input, &s); err != nil {
-					logger.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling script.Decimal")
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling script.Decimal")
 					return err
 				}
 				v, err = decimal.NewFromString(s)
 			case `string`:
 				var s string
 				if err := converter.BinUnmarshal(&input, &s); err != nil {
-					logger.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
 					return err
 				}
 				v = s
 			case `[]uint8`:
 				var b []byte
 				if err := converter.BinUnmarshal(&input, &b); err != nil {
-					logger.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
 					return err
 				}
 				v = hex.EncodeToString(b)
 			case `[]interface {}`:
 				count, err := converter.DecodeLength(&input)
 				if err != nil {
-					logger.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling []interface{}")
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling []interface{}")
 					return err
 				}
 				isforv = true
@@ -432,11 +418,11 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 				for count > 0 {
 					length, err := converter.DecodeLength(&input)
 					if err != nil {
-						logger.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling tx length")
+						log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling tx length")
 						return err
 					}
 					if len(input) < int(length) {
-						logger.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError, "length": int(length), "slice length": len(input)}).Error("incorrect tx size")
+						log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError, "length": int(length), "slice length": len(input)}).Error("incorrect tx size")
 						return fmt.Errorf(`input slice is short`)
 					}
 					list = append(list, string(input[:length]))
@@ -485,12 +471,9 @@ func parseStructTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	}
 
 	head := consts.Header(p.TxPtr)
-	p.TxCitizenID = head.CitizenID
-	p.TxWalletID = head.WalletID
+	p.TxKeyID = head.KeyID
 	p.TxTime = int64(head.Time)
 	p.TxType = txType
-	p.TxWalletID = head.WalletID
-	p.TxCitizenID = head.CitizenID
 	return nil
 }
 
@@ -515,8 +498,8 @@ func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	p.TxHeader = header
 	p.TxTime = header.Time
 	p.TxType = txType
-	p.TxStateID = uint32(header.StateID)
-	p.TxUserID = header.UserID
+	p.TxEcosystemID = (header.EcosystemID)
+	p.TxKeyID = header.KeyID
 
 	err = trParser.Validate()
 	if _, ok := err.(error); ok {
@@ -531,7 +514,7 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-	logger := log.WithFields(log.Fields{"tx_type": p.dataType, "tx_time": p.TxTime, "tx_state_id": p.TxStateID, "tx_user_id": p.TxUserID})
+	logger := log.WithFields(log.Fields{"tx_type": p.dataType, "tx_time": p.TxTime, "tx_state_id": p.TxEcosystemID})
 	// time in the transaction cannot be more than MAX_TX_FORW seconds of block time
 	if p.TxTime-consts.MAX_TX_FORW > checkTime {
 		logger.WithFields(log.Fields{"tx_max_forw": consts.MAX_TX_FORW, "type": consts.ParameterExceeded}).Error("time in the tx cannot be more than MAX_TX_FORW seconds of block time ")
@@ -546,7 +529,7 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 
 	if p.TxContract == nil {
 		if p.BlockData != nil && p.BlockData.BlockID != 1 {
-			if p.TxUserID == 0 {
+			if p.TxKeyID == 0 {
 				logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Empty user id")
 				return utils.ErrInfo(fmt.Errorf("emtpy user id"))
 			}
@@ -678,15 +661,18 @@ func (block *Block) CheckBlock() error {
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", block.Header.BlockID, block.PrevHeader.BlockID))
 		}
 		// check time interval between blocks
-		sleepTime, err := model.GetSleepTime(block.Header.WalletID, block.Header.StateID, block.PrevHeader.StateID, block.PrevHeader.WalletID)
+		sleepTime, err := syspar.GetSleepTimeByPosition(block.Header.NodePosition, block.PrevHeader.NodePosition)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting sleep time")
 			return utils.ErrInfo(err)
 		}
 
-		if block.PrevHeader.Time+sleepTime-block.Header.Time > consts.ERROR_TIME {
-			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect block time")
-			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", block.PrevHeader.Time, sleepTime, block.Header.Time, consts.ERROR_TIME))
+		errTime := syspar.GetGapsBetweenBlocks() - 1
+		if errTime < 0 {
+			errTime = 0
+		}
+		if block.PrevHeader.Time+sleepTime-block.Header.Time > errTime {
+			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", block.PrevHeader.Time, sleepTime, block.Header.Time, errTime))
 		}
 	}
 
@@ -703,9 +689,8 @@ func (block *Block) CheckBlock() error {
 		txHashes[hexHash] = struct{}{}
 
 		// check for max transaction per user in one block
-		txCounter[p.TxUserID]++
-		if txCounter[p.TxUserID] > syspar.GetMaxBlockUserTx() {
-			logger.WithFields(log.Fields{"user_tx": txCounter[p.TxUserID], "max_user_tx": syspar.GetMaxBlockUserTx(), "tx_user_id": p.TxUserID, "type": consts.ParameterExceeded}).Error("user with id exceed max user transactions per block")
+		txCounter[p.TxKeyID]++
+		if txCounter[p.TxKeyID] > syspar.GetMaxBlockUserTx() {
 			return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
 		}
 
@@ -733,7 +718,7 @@ func (block *Block) CheckHash() (bool, error) {
 	}
 	// check block signature
 	if block.PrevHeader != nil {
-		nodePublicKey, err := GetNodePublicKeyWalletOrCB(block.Header.WalletID, block.Header.StateID)
+		nodePublicKey, err := syspar.GetNodePublicKeyByPosition(block.Header.NodePosition)
 		if err != nil {
 			return false, utils.ErrInfo(err)
 		}
@@ -742,8 +727,8 @@ func (block *Block) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 		// check the signature
-		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
-			block.Header.Time, block.Header.WalletID, block.Header.StateID, block.MrklRoot)
+		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
+			block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition, block.MrklRoot)
 
 		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, block.Header.Sign, true)
 		if err != nil {
@@ -761,7 +746,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	var mrklArray [][]byte
 	var blockDataTx []byte
 	var signed []byte
-	logger := log.WithFields(log.Fields{"block_id": header.BlockID, "block_hash": header.Hash, "block_time": header.Time, "block_version": header.Version, "block_wallet_id": header.WalletID, "block_state_id": header.StateID})
+	logger := log.WithFields(log.Fields{"block_id": header.BlockID, "block_hash": header.Hash, "block_time": header.Time, "block_version": header.Version, "block_wallet_id": header.KeyID, "block_state_id": header.EcosystemID})
 
 	for _, tr := range trData {
 		doubleHash, err := crypto.DoubleHash(tr)
@@ -779,8 +764,8 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 		}
 		mrklRoot := utils.MerkleTreeRoot(mrklArray)
 
-		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%s",
-			header.BlockID, prevHash, header.Time, header.WalletID, header.StateID, mrklRoot)
+		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s",
+			header.BlockID, prevHash, header.Time, header.EcosystemID, header.KeyID, header.NodePosition, mrklRoot)
 
 		var err error
 		signed, err = crypto.Sign(key, forSign)
@@ -792,11 +777,12 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 
 	var buf bytes.Buffer
 	// fill header
-	buf.Write(converter.DecToBin(header.Version, 1))
+	buf.Write(converter.DecToBin(header.Version, 2))
 	buf.Write(converter.DecToBin(header.BlockID, 4))
 	buf.Write(converter.DecToBin(header.Time, 4))
-	buf.Write(converter.EncodeLenInt64InPlace(header.WalletID))
-	buf.Write(converter.DecToBin(header.StateID, 1))
+	buf.Write(converter.DecToBin(header.EcosystemID, 4))
+	buf.Write(converter.EncodeLenInt64InPlace(header.KeyID))
+	buf.Write(converter.DecToBin(header.NodePosition, 1))
 	buf.Write(converter.EncodeLengthPlusData(signed))
 	// data
 	buf.Write(blockDataTx)

@@ -21,8 +21,9 @@ DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
 "id" int NOT NULL DEFAULT '0',
 "hash" bytea  NOT NULL DEFAULT '',
 "data" bytea NOT NULL DEFAULT '',
-"state_id" int  NOT NULL DEFAULT '0',
-"wallet_id" bigint  NOT NULL DEFAULT '0',
+"ecosystem_id" int  NOT NULL DEFAULT '0',
+"key_id" bigint  NOT NULL DEFAULT '0',
+"node_position" bigint  NOT NULL DEFAULT '0',
 "time" int NOT NULL DEFAULT '0',
 "tx" int NOT NULL DEFAULT '0'
 );
@@ -33,14 +34,6 @@ DROP TABLE IF EXISTS "log_transactions"; CREATE TABLE "log_transactions" (
 "time" int NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "log_transactions" ADD CONSTRAINT log_transactions_pkey PRIMARY KEY (hash);
-
-DROP TABLE IF EXISTS "main_lock"; CREATE TABLE "main_lock" (
-"lock_time" int  NOT NULL DEFAULT '0',
-"script_name" varchar(100) NOT NULL DEFAULT '',
-"info" text NOT NULL DEFAULT '',
-"uniq" smallint NOT NULL DEFAULT '0'
-);
-CREATE UNIQUE INDEX main_lock_uniq ON "main_lock" USING btree (uniq);
 
 DROP TABLE IF EXISTS "migration_history"; CREATE TABLE "migration_history" (
 "id" int NOT NULL  DEFAULT '0',
@@ -58,9 +51,8 @@ ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
 
 DROP TABLE IF EXISTS "config"; CREATE TABLE "config" (
 "my_block_id" int NOT NULL DEFAULT '0',
-"dlt_wallet_id" bigint NOT NULL DEFAULT '0',
-"state_id" int NOT NULL DEFAULT '0',
-"citizen_id" bigint NOT NULL DEFAULT '0',
+"ecosystem_id" int NOT NULL DEFAULT '0',
+"key_id" bigint NOT NULL DEFAULT '0',
 "bad_blocks" text NOT NULL DEFAULT '',
 "auto_reload" int NOT NULL DEFAULT '0',
 "first_load_blockchain_url" varchar(255)  NOT NULL DEFAULT '',
@@ -99,10 +91,12 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'ContractAccess("@0UpdSysParam")'),    
 ('default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'ContractAccess("@0UpdSysParam")'),
 ('default_ecosystem_contract', '', 'ContractAccess("@0UpdSysParam")'),
-('gap_between_blocks', '3', 'ContractAccess("@0UpdSysParam")'),
+('gap_between_blocks', '2', 'ContractAccess("@0UpdSysParam")'),
+('rb_blocks_1', '60', 'ContractAccess("@0UpdSysParam")'),
+('rb_blocks_2', '3600', 'ContractAccess("@0UpdSysParam")'),
 ('new_version_url', 'upd.apla.io', 'ContractAccess("@0UpdSysParam")'),
 ('full_nodes', '', 'ContractAccess("@0UpdFullNodes")'),
-('count_of_nodes', '101', 'ContractAccess("@0UpdSysParam")'),
+('number_of_nodes', '101', 'ContractAccess("@0UpdSysParam")'),
 ('op_price', '', 'ContractAccess("@0UpdSysParam")'),
 ('ecosystem_price', '1000', 'ContractAccess("@0UpdSysParam")'),
 ('contract_price', '200', 'ContractAccess("@0UpdSysParam")'),
@@ -166,7 +160,7 @@ INSERT INTO system_contracts ("id","value", "active", "conditions") VALUES
 	    if $time-prev < SysParamInt(`upd_full_nodes_period`) {
 		    warning Sprintf("txTime - upd_full_nodes < UPD_FULL_NODES_PERIOD")
 	    }
-/*	    nodekey = bytes(DBStringExt(`dlt_wallets`, `node_public_key`, $wallet, `wallet_id`))
+/*	    nodekey = bytes(DBStringExt(`dlt_wallets`, `node_public_key`, $key_id, `wallet_id`))
 	    if !nodekey {
 	        error `len(node_key) == 0`
 	    }*/
@@ -239,17 +233,17 @@ INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES
 DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 "hash" bytea  NOT NULL DEFAULT '',
 "block_id" int NOT NULL DEFAULT '0',
-"state_id" int  NOT NULL DEFAULT '0',
-"wallet_id" bigint NOT NULL DEFAULT '0',
+"node_position" int  NOT NULL DEFAULT '0',
+"ecosystem_id" bigint NOT NULL DEFAULT '0',
+"key_id" bigint NOT NULL DEFAULT '0',
 "time" int  NOT NULL DEFAULT '0',
-"level" smallint  NOT NULL DEFAULT '0',
 "current_version" varchar(50) NOT NULL DEFAULT '0.0.1',
 "sent" smallint NOT NULL DEFAULT '0'
 );
 
 DROP TABLE IF EXISTS "queue_blocks"; CREATE TABLE "queue_blocks" (
 "hash" bytea  NOT NULL DEFAULT '',
-"full_node_id" int NOT NULL DEFAULT '0',
+"full_node_id" bigint NOT NULL DEFAULT '0',
 "block_id" int NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "queue_blocks" ADD CONSTRAINT queue_blocks_pkey PRIMARY KEY (hash);
@@ -260,9 +254,7 @@ DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
 "used" smallint NOT NULL DEFAULT '0',
 "high_rate" smallint NOT NULL DEFAULT '0',
 "type" smallint NOT NULL DEFAULT '0',
-"ecosystem" int NOT NULL DEFAULT '1',
-"wallet_id" bigint NOT NULL DEFAULT '0',
-"citizen_id" bigint NOT NULL DEFAULT '0',
+"key_id" bigint NOT NULL DEFAULT '0',
 "counter" smallint NOT NULL DEFAULT '0',
 "sent" smallint NOT NULL DEFAULT '0',
 "verified" smallint NOT NULL DEFAULT '1'
@@ -308,26 +300,3 @@ DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 "stop_time" int NOT NULL DEFAULT '0'
 );
 
-DROP SEQUENCE IF EXISTS full_nodes_id_seq CASCADE;
-CREATE SEQUENCE full_nodes_id_seq START WITH 1;
-DROP TABLE IF EXISTS "full_nodes"; CREATE TABLE "full_nodes" (
-"id" int NOT NULL  default nextval('full_nodes_id_seq'),
-"host" varchar(100) NOT NULL DEFAULT '',
-"wallet_id" bigint  NOT NULL DEFAULT '0',
-"state_id" int NOT NULL DEFAULT '0',
-"final_delegate_wallet_id" bigint NOT NULL DEFAULT '0',
-"final_delegate_state_id" bigint NOT NULL DEFAULT '0',
-"rb_id" int NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE full_nodes_id_seq owned by full_nodes.id;
-ALTER TABLE ONLY "full_nodes" ADD CONSTRAINT full_nodes_pkey PRIMARY KEY (id);
-
-DROP SEQUENCE IF EXISTS upd_full_nodes_id_seq CASCADE;
-CREATE SEQUENCE upd_full_nodes_id_seq START WITH 1;
-DROP TABLE IF EXISTS "upd_full_nodes"; CREATE TABLE "upd_full_nodes" (
-"id" bigint NOT NULL  default nextval('upd_full_nodes_id_seq'),
-"time" int NOT NULL DEFAULT '0',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE upd_full_nodes_id_seq owned by upd_full_nodes.id;
-ALTER TABLE ONLY "upd_full_nodes" ADD CONSTRAINT upd_full_nodes_pkey PRIMARY KEY (id);

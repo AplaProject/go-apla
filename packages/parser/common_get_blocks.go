@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -30,10 +31,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockBody int64) error {
-	rollback := consts.RB_BLOCKS_1
+func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
+	rollback := syspar.GetRbBlocks1()
 	if rollbackBlocks == "rollback_blocks_2" {
-		rollback = consts.RB_BLOCKS_2
+		rollback = syspar.GetRbBlocks2()
 	}
 
 	config := &model.Config{}
@@ -67,7 +68,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 		}
 
 		// load the block body from the host
-		binaryBlock, err := utils.GetBlockBody(host, blockID, dataTypeBlockBody)
+		binaryBlock, err := utils.GetBlockBody(host, blockID, consts.DATA_TYPE_BLOCK_BODY)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -89,14 +90,14 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 		// TODO: add checking for MAX_BLOCK_SIZE
 
 		// the public key of the one who has generated this block
-		nodePublicKey, err := GetNodePublicKeyWalletOrCB(block.Header.WalletID, block.Header.StateID)
+		nodePublicKey, err := syspar.GetNodePublicKeyByPosition(block.Header.NodePosition)
 		if err != nil {
 			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
 			return utils.ErrInfo(err)
 		}
 
 		// SIGN from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time, block.Header.WalletID, block.Header.StateID, block.MrklRoot)
+		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition, block.MrklRoot)
 
 		// save the block
 		blocks = append(blocks, block)
@@ -148,10 +149,12 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string, dataTypeBlockB
 			block.PrevHeader.Hash = prevBlocks[block.Header.BlockID-1].Header.Hash
 			block.PrevHeader.Time = prevBlocks[block.Header.BlockID-1].Header.Time
 			block.PrevHeader.BlockID = prevBlocks[block.Header.BlockID-1].Header.BlockID
-			block.PrevHeader.WalletID = prevBlocks[block.Header.BlockID-1].Header.WalletID
+			block.PrevHeader.EcosystemID = prevBlocks[block.Header.BlockID-1].Header.EcosystemID
+			block.PrevHeader.KeyID = prevBlocks[block.Header.BlockID-1].Header.KeyID
+			block.PrevHeader.NodePosition = prevBlocks[block.Header.BlockID-1].Header.NodePosition
 		}
 
-		forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d", block.Header.BlockID, block.PrevHeader.Hash, block.MrklRoot, block.Header.Time, block.Header.WalletID, block.Header.StateID)
+		forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", block.Header.BlockID, block.PrevHeader.Hash, block.MrklRoot, block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition)
 		hash, err := crypto.DoubleHash([]byte(forSha))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("double hashing block")

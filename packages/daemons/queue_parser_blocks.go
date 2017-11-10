@@ -18,10 +18,11 @@ package daemons
 
 import (
 	"context"
+	"fmt"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -61,46 +62,27 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	}
 
 	// check if the block gets in the rollback_blocks_1 limit
-	if queueBlock.BlockID > infoBlock.BlockID+consts.RB_BLOCKS_1 {
-		err = queueBlock.Delete()
-		if err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting queue block")
-		}
+	if queueBlock.BlockID > infoBlock.BlockID+syspar.GetRbBlocks1() {
+		queueBlock.DeleteOldBlocks()
 		return utils.ErrInfo("rollback_blocks_1")
 	}
 
 	// is it old block in queue ?
 	if queueBlock.BlockID <= infoBlock.BlockID {
-		err = queueBlock.Delete()
-		if err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting queue block")
-		}
-		return utils.ErrInfo("old block")
+		queueBlock.DeleteOldBlocks()
+		return utils.ErrInfo(fmt.Errorf("old block %d <= %d", queueBlock.BlockID, infoBlock.BlockID))
 	}
-
-	// download blocks for check
-	fullNode := &model.FullNode{}
-
-	_, err = fullNode.FindNodeByID(queueBlock.FullNodeID)
+	nodeHost, err := syspar.GetNodeHostByPosition(queueBlock.FullNodeID)
 	if err != nil {
-		err = queueBlock.Delete()
-		if err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting queue block")
-		}
+		queueBlock.DeleteQueueBlockByHash()
 		return utils.ErrInfo(err)
 	}
-
 	blockID := queueBlock.BlockID
 
-	host := getHostPort(fullNode.Host)
-	err = parser.GetBlocks(blockID, host, "rollback_blocks_1", 7)
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback_blocks")
-		err = queueBlock.Delete()
-		if err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting queue block")
-		}
-		return utils.ErrInfo(err)
+	host := getHostPort(nodeHost)
+	// update our chain till maxBlockID from the host
+	if err := UpdateChain(ctx, d, host, blockID, "rollback_blocks_1"); err != nil {
+		return err
 	}
 	return nil
 }

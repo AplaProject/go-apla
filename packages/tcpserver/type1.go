@@ -53,11 +53,13 @@ func Type1(r *DisRequest, rw io.ReadWriter) error {
 	 * */
 
 	// full_node_id of the sender to know where to take a data when it will be downloaded by another daemon
-	fullNodeID := converter.BinToDec(buf.Next(2))
+	fullNodeID := converter.BinToDec(buf.Next(8))
+	log.Debug("fullNodeID", fullNodeID)
 
 	// get data type (0 - block and transactions, 1 - only transactions)
 	newDataType := converter.BinToDec(buf.Next(1))
 
+	log.Debug("newDataType", newDataType)
 	if newDataType == 0 {
 		err := processBlock(buf, fullNodeID)
 		if err != nil {
@@ -110,6 +112,7 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 
 	// get block hash
 	blockHash := buf.Next(32)
+	log.Debug("blockHash %x", blockHash)
 
 	// we accept only new blocks
 	if newBlockID >= infoBlock.BlockID {

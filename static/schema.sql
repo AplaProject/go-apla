@@ -19,28 +19,6 @@ CREATE INDEX dlt_transactions_index_recipient ON "dlt_transactions" (recipient_w
 
 
 
-DROP TYPE IF EXISTS "my_keys_enum_status" CASCADE;
-CREATE TYPE "my_keys_enum_status" AS ENUM ('my_pending','approved');
-DROP SEQUENCE IF EXISTS my_keys_id_seq CASCADE;
-CREATE SEQUENCE my_keys_id_seq START WITH 1;
-DROP TABLE IF EXISTS "my_keys"; CREATE TABLE "my_keys" (
-"id" int NOT NULL  default nextval('my_keys_id_seq'),
-"add_time" int NOT NULL DEFAULT '0',
-"notification" smallint NOT NULL DEFAULT '0',
-"public_key" bytea  NOT NULL DEFAULT '',
-"private_key" bytea NOT NULL DEFAULT '',
-"password_hash" varchar(64) NOT NULL DEFAULT '',
-"status" my_keys_enum_status  NOT NULL DEFAULT 'my_pending',
-"my_time" int  NOT NULL DEFAULT '0',
-"time" int  NOT NULL DEFAULT '0',
-"block_id" int NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE my_keys_id_seq owned by my_keys.id;
-ALTER TABLE ONLY "my_keys" ADD CONSTRAINT my_keys_pkey PRIMARY KEY (id);
-
-
-
-
 DROP TYPE IF EXISTS "my_node_keys_enum_status" CASCADE;
 CREATE TYPE "my_node_keys_enum_status" AS ENUM ('my_pending','approved');
 DROP SEQUENCE IF EXISTS my_node_keys_id_seq CASCADE;

@@ -11,6 +11,6 @@ type SmartContract struct {
 }
 
 func (s SmartContract) ForSign() string {
-	return fmt.Sprintf("%d,%d,%d,%d,%d,%s,%s", s.Type, s.Time, s.UserID, s.StateID,
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s", s.Type, s.Time, s.KeyID,
 		s.TokenEcosystem, s.MaxSum, s.PayOver)
 }

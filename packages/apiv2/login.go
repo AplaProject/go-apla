@@ -30,12 +30,12 @@ import (
 )
 
 type loginResult struct {
-	Token     string `json:"token,omitempty"`
-	Refresh   string `json:"refresh,omitempty"`
-	State     string `json:"state,omitempty"`
-	Wallet    string `json:"wallet,omitempty"`
-	Address   string `json:"address,omitempty"`
-	NotifyKey string `json:"notify_key,omitempty"`
+	Token       string `json:"token,omitempty"`
+	Refresh     string `json:"refresh,omitempty"`
+	EcosystemID string `json:"ecosystem_id,omitempty"`
+	KeyID       string `json:"key_id,omitempty"`
+	Address     string `json:"address,omitempty"`
+	NotifyKey   string `json:"notify_key,omitempty"`
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
@@ -55,13 +55,16 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("UID is empty")
 		return errorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
 	}
-	state := data.params[`state`].(int64)
+	state := data.ecosystemId
+	if data.params[`ecosystem`].(int64) > 0 {
+		state = data.params[`ecosystem`].(int64)
+	}
 	if state == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Warning("state is empty, using 1 as a state")
 		state = 1
 	}
-	if len(data.params[`wallet`].(string)) > 0 {
-		wallet = converter.StringToAddress(data.params[`wallet`].(string))
+	if len(data.params[`key_id`].(string)) > 0 {
+		wallet = converter.StringToAddress(data.params[`key_id`].(string))
 	} else if len(data.params[`pubkey`].([]byte)) > 0 {
 		wallet = crypto.Address(data.params[`pubkey`].([]byte))
 	}
@@ -91,7 +94,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, `E_SIGNATURE`, http.StatusBadRequest)
 	}
 	address := crypto.KeyToAddress(pubkey)
-	result := loginResult{State: converter.Int64ToStr(state), Wallet: converter.Int64ToStr(wallet),
+	result := loginResult{EcosystemID: converter.Int64ToStr(state), KeyID: converter.Int64ToStr(wallet),
 		Address: address}
 	data.result = &result
 	expire := data.params[`expire`].(int64)
@@ -100,8 +103,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		expire = jwtExpire
 	}
 	claims := JWTClaims{
-		Wallet: result.Wallet,
-		State:  result.State,
+		KeyID:       result.KeyID,
+		EcosystemID: result.EcosystemID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Second * time.Duration(expire)).Unix(),
 		},

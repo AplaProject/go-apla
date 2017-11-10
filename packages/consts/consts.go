@@ -26,7 +26,6 @@ const EGS_DIGIT = 18 //money_digit for EGS 1000000000000000000
 // is used in confirmations
 const WAIT_CONFIRMED_NODES = 10
 const MAX_TX_SIZE = 32 << 20
-const GAPS_BETWEEN_BLOCKS = 3
 
 // The number of nodes which should have the same block as we have for regarding this block belongs to the major part of DC-net. For get_confirmed_block_id()
 const MIN_CONFIRMED_NODES = 0
@@ -50,13 +49,9 @@ const READ_TIMEOUT = 20
 const WRITE_TIMEOUT = 20
 
 const TCP_PORT = "7078"
-const RB_BLOCKS_1 = 30
-const RB_BLOCKS_2 = 1440
 
 const DATA_TYPE_MAX_BLOCK_ID = 10
 const DATA_TYPE_BLOCK_BODY = 7
-
-const COUNT_BLOCK_BEFORE_SAVE = RB_BLOCKS_2
 
 const UPD_AND_VER_URL = "http://apla.io"
 

@@ -50,8 +50,8 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	info := (*contract).Block.Info.(*script.ContractInfo)
 
 	key := &model.Key{}
-	key.SetTablePrefix(data.state)
-	err = key.Get(data.wallet)
+	key.SetTablePrefix(data.ecosystemId)
+	err = key.Get(data.keyId)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		return errorAPI(w, err, http.StatusInternalServerError)
@@ -121,7 +121,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	}
 	toSerialize = tx.SmartContract{
 		Header: tx.Header{Type: int(info.ID), Time: converter.StrToInt64(data.params[`time`].(string)),
-			UserID: data.wallet, StateID: data.state, PublicKey: publicKey,
+			EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
 			BinSignatures: converter.EncodeLengthPlusData(signature)},
 		TokenEcosystem: data.params[`token_ecosystem`].(int64),
 		MaxSum:         data.params[`max_sum`].(string),
@@ -133,7 +133,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 		logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	if hash, err = model.SendTx(int64(info.ID), data.wallet,
+	if hash, err = model.SendTx(int64(info.ID), data.keyId,
 		append([]byte{128}, serializedData...)); err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}

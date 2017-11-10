@@ -30,7 +30,7 @@ func ConditionById(table string, validate bool) {
     }
     Eval(cond)
     if validate {
-        ValidateCondition($Conditions,$state)
+        ValidateCondition($Conditions,$ecosystem_id)
     }
 }
 
@@ -51,16 +51,16 @@ func ConditionById(table string, validate bool) {
         if $amount == 0 {
             error "Amount is zero"
         }
-        total = Money(DBString(`keys`, `amount`, $wallet))
+        total = Money(DBString(`keys`, `amount`, $key_id))
         if $amount >= total {
             error Sprintf("Money is not enough %%v < %%v",total, $amount)
         }
     }
     action {
-        DBUpdate(`keys`, $wallet,`-amount`, $amount)
+        DBUpdate(`keys`, $key_id,`-amount`, $amount)
         DBUpdate(`keys`, $recipient,`+amount`, $amount)
         DBInsert(`history`, `sender_id,recipient_id,amount,comment,block_id,txhash`, 
-            $wallet, $recipient, $amount, $Comment, $block, $txhash)
+            $key_id, $recipient, $amount, $Comment, $block, $txhash)
     }
 }', '%[1]d', 'ContractConditions(`MainCondition`)'),
 ('4','contract NewContract {
@@ -71,8 +71,8 @@ func ConditionById(table string, validate bool) {
     	TokenEcosystem int "optional"
     }
     conditions {
-        ValidateCondition($Conditions,$state)
-        $walletContract = $wallet
+        ValidateCondition($Conditions,$ecosystem_id)
+        $walletContract = $key_id
        	if $Wallet {
 		    $walletContract = AddressToId($Wallet)
 		    if $walletContract == 0 {
@@ -83,7 +83,7 @@ func ConditionById(table string, validate bool) {
 	    list = ContractsList($Value)
 	    var i int
 	    while i < Len(list) {
-	        if IsContract(list[i], $state) {
+	        if IsContract(list[i], $ecosystem_id) {
 	            warning Sprintf(`Contract %%s exists`, list[i] )
 	        }
 	        i = i + 1
@@ -98,7 +98,7 @@ func ConditionById(table string, validate bool) {
     }
     action {
         var root, id int
-        root = CompileContract($Value, $state, $walletContract, $TokenEcosystem)
+        root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
         id = DBInsert(`contracts`, `value,conditions, wallet_id, token_id`, 
                $Value, $Conditions, $walletContract, $TokenEcosystem)
         FlushContract(root, id, false)
@@ -119,7 +119,7 @@ func ConditionById(table string, validate bool) {
             error Sprintf(`Contract %%d does not exist`, $Id)
         }
         Eval($cur[`conditions`])
-        ValidateCondition($Conditions,$state)
+        ValidateCondition($Conditions,$ecosystem_id)
 	    var list, curlist array
 	    list = ContractsList($Value)
 	    curlist = ContractsList($cur[`value`])
@@ -145,7 +145,7 @@ func ConditionById(table string, validate bool) {
     }
     action {
         var root int
-        root = CompileContract($Value, $state, Int($cur[`wallet_id`]), Int($cur[`token_id`]))
+        root = CompileContract($Value, $ecosystem_id, Int($cur[`wallet_id`]), Int($cur[`token_id`]))
         DBUpdate(`contracts`, $Id, `value,conditions`, $Value, $Conditions)
         FlushContract(root, $Id, Int($cur[`active`]) == 1)
     }
@@ -163,13 +163,13 @@ func ConditionById(table string, validate bool) {
             error Sprintf(`The contract %%d has been already activated`, $Id)
         }
         Eval($cur[`conditions`])
-        if $wallet != Int($cur[`wallet_id`]) {
-            error Sprintf(`Wallet %%d cannot activate the contract`, $wallet)
+        if $key_id != Int($cur[`wallet_id`]) {
+            error Sprintf(`Wallet %%d cannot activate the contract`, $key_id)
         }
     }
     action {
         DBUpdate(`contracts`, $Id, `active`, 1)
-        Activate($Id, $state)
+        Activate($Id, $ecosystem_id)
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
 ('7','contract NewEcosystem {
@@ -183,12 +183,12 @@ func ConditionById(table string, validate bool) {
     }
     action {
         var id int
-        id = CreateEcosystem($wallet, $Name)
+        id = CreateEcosystem($key_id, $Name)
     	DBInsert(Str(id) + "_pages", "name,value,menu,conditions", `default_page`, 
               SysParamString(`default_ecosystem_page`), `default_menu`, "ContractConditions(`MainCondition`)")
     	DBInsert(Str(id) + "_menu", "name,value,title,conditions", `default_menu`, 
               SysParamString(`default_ecosystem_menu`), "default", "ContractConditions(`MainCondition`)")
-    	DBInsert(Str(id) + "_keys", "id,pub", $wallet, DBString("1_keys", "pub", $wallet))
+    	DBInsert(Str(id) + "_keys", "id,pub", $key_id, DBString("1_keys", "pub", $key_id))
         $result = id
     }
     func price() int {
@@ -205,7 +205,7 @@ func ConditionById(table string, validate bool) {
         Conditions string
     }
     conditions {
-        ValidateCondition($Conditions, $state)
+        ValidateCondition($Conditions, $ecosystem_id)
         if DBIntExt(`parameters`, `id`, $Name, `name`) {
             warning Sprintf( `Parameter %%s already exists`, $Name)
         }
@@ -222,11 +222,11 @@ func ConditionById(table string, validate bool) {
     }
     conditions {
         EvalCondition(`parameters`, $Name, `conditions`)
-        ValidateCondition($Conditions, $state)
+        ValidateCondition($Conditions, $ecosystem_id)
         var exist int
        	if $Name == `ecosystem_name` {
     		exist = FindEcosystem($Value)
-    		if exist > 0 && exist != $state {
+    		if exist > 0 && exist != $ecosystem_id {
     			warning Sprintf(`Ecosystem %%s already exists`, $Value)
     		}
     	}
@@ -234,7 +234,7 @@ func ConditionById(table string, validate bool) {
     action {
         DBUpdateExt(`parameters`, `name`, $Name, `value,conditions`, $Value, $Conditions )
        	if $Name == `ecosystem_name` {
-            DBUpdate(`system_states`, $state, `name`, $Value)
+            DBUpdate(`system_states`, $ecosystem_id, `name`, $Value)
         }
     }
 }', '%[1]d','ContractConditions(`MainCondition`)'),
@@ -246,7 +246,7 @@ func ConditionById(table string, validate bool) {
     	Conditions string
     }
     conditions {
-        ValidateCondition($Conditions,$state)
+        ValidateCondition($Conditions,$ecosystem_id)
         if DBIntExt(`menu`, `id`, $Name, `name`) {
             warning Sprintf( `Menu %%s already exists`, $Name)
         }
@@ -292,7 +292,7 @@ func ConditionById(table string, validate bool) {
     	Conditions string
     }
     conditions {
-        ValidateCondition($Conditions,$state)
+        ValidateCondition($Conditions,$ecosystem_id)
         if DBIntExt(`pages`, `id`, $Name, `name`) {
             warning Sprintf( `Page %%s already exists`, $Name)
         }
@@ -375,7 +375,7 @@ func ConditionById(table string, validate bool) {
     	Conditions string
     }
     conditions {
-        ValidateCondition($Conditions,$state)
+        ValidateCondition($Conditions,$ecosystem_id)
         var exist string
         exist = DBStringExt(`signatures`, `name`, $Name, `name`)
         if exist {
@@ -406,7 +406,7 @@ func ConditionById(table string, validate bool) {
     	Conditions string
     }
     conditions {
-        ValidateCondition($Conditions,$state)
+        ValidateCondition($Conditions,$ecosystem_id)
         if DBIntExt(`blocks`, `id`, $Name, `name`) {
             warning Sprintf( `Block %%s aready exists`, $Name)
         }
@@ -506,6 +506,33 @@ func ConditionById(table string, validate bool) {
 	}
 }
 
+func ImportData(row array) {
+    if !row {
+        return
+    }
+    var i int
+    while i < Len(row) {
+        var idata map
+        var list array
+        var tblname, columns string
+        idata = row[i]
+        tblname = idata[`Table`]
+        columns = Join(idata[`Columns`], `,`)
+        list = idata[`Data`] 
+        if !list {
+            continue
+        }
+        var j int
+        while j < Len(list) {
+            var ilist array
+            ilist = list[j]
+            DBInsert(tblname, columns, ilist)
+            j=j+1
+        }
+        i = i + 1
+	}
+}
+
 contract Import {
     data {
         Data string
@@ -521,5 +548,6 @@ contract Import {
         ImportList($list["languages"], "NewLang")
         ImportList($list["contracts"], "NewContract")
         ImportList($list["tables"], "NewTable")
+        ImportData($list["data"])
     }
 }', '%[1]d','ContractConditions(`MainCondition`)');

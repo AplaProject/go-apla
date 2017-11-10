@@ -87,7 +87,7 @@ ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY
 INSERT INTO "%[1]d_contracts" ("id", "value", "wallet_id","active", "conditions") VALUES 
 ('1','contract MainCondition {
   conditions {
-    if(StateVal("founder_account")!=$citizen)
+    if(StateVal("founder_account")!=$key_id)
     {
       warning "Sorry, you don`t have access to this action."
     }
@@ -166,14 +166,14 @@ INSERT INTO "%[1]d_tables" ("name", "permissions","columns", "conditions") VALUE
         '{"insert": "ContractAccess(\"@1NewMenu\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditMenu\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditMenu\")",
-    "value": "ContractAccess(\"@1EditMenu\")",
+    "value": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")",
     "conditions": "ContractAccess(\"@1EditMenu\")"
         }', 'ContractAccess("@1EditTable")'),
         ('pages', 
         '{"insert": "ContractAccess(\"@1NewPage\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditPage\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditPage\")",
-    "value": "ContractAccess(\"@1EditPage\")",
+    "value": "ContractAccess(\"@1EditPage\",\"@1AppendPage\")",
     "menu": "ContractAccess(\"@1EditPage\")",
     "conditions": "ContractAccess(\"@1EditPage\")"
         }', 'ContractAccess("@1EditTable")'),

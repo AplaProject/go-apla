@@ -277,7 +277,7 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			}
 		}
 	}
-	state := int(converter.StrToInt64((*vars)[`state`]))
+	state := int(converter.StrToInt64((*vars)[`ecosystem_id`]))
 	for i, v := range pars {
 		pars[i] = language.LangMacro(v, state, (*vars)[`accept_lang`])
 	}
@@ -451,7 +451,7 @@ main:
 		params[curp] += string(ch)
 		continue
 	}
-	return &params, off, tailpar
+	return &params, utf8.RuneCountInString(input[:off]), tailpar
 }
 
 func process(input string, owner *node, vars *map[string]string) {

@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -36,8 +37,8 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			blockID = *utils.StartBlockID
 		}
 	}
-	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
-		block.Header.Time, block.Header.WalletID, block.Header.StateID)
+	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
+		block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition)
 
 	hash, err := crypto.DoubleHash([]byte(forSha))
 	if err != nil {
@@ -50,8 +51,9 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			Hash:           hash,
 			BlockID:        blockID,
 			Time:           block.Header.Time,
-			StateID:        block.Header.StateID,
-			WalletID:       block.Header.WalletID,
+			EcosystemID:    block.Header.EcosystemID,
+			KeyID:          block.Header.KeyID,
+			NodePosition:   converter.Int64ToStr(block.Header.NodePosition),
 			CurrentVersion: fmt.Sprintf("%d", block.Header.Version),
 		}
 		err := ib.Create(dbTransaction)
@@ -61,12 +63,13 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 		}
 	} else {
 		ibUpdate := &model.InfoBlock{
-			Hash:     hash,
-			BlockID:  blockID,
-			Time:     block.Header.Time,
-			StateID:  block.Header.StateID,
-			WalletID: block.Header.WalletID,
-			Sent:     0,
+			Hash:         hash,
+			BlockID:      blockID,
+			Time:         block.Header.Time,
+			EcosystemID:  block.Header.EcosystemID,
+			KeyID:        block.Header.KeyID,
+			NodePosition: converter.Int64ToStr(block.Header.NodePosition),
+			Sent:         0,
 		}
 		if err := ibUpdate.Update(dbTransaction); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating info block")

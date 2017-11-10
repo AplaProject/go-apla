@@ -161,8 +161,8 @@ func ActivateContract(tblid, state int64, active bool) {
 }
 
 // GetContract returns true if the contract exists in smartVM
-func GetContract(name string, state uint32) *Contract {
-	name = script.StateName(state, name)
+func GetContract(name string, state int32) *Contract {
+	name = script.StateName(uint32(state), name)
 	obj, ok := smartVM.Objects[name]
 	if ok && obj.Type == script.ObjContract {
 		return &Contract{Name: name, Block: obj.Value.(*script.Block)}
@@ -172,7 +172,7 @@ func GetContract(name string, state uint32) *Contract {
 
 // GetUsedContracts returns the list of contracts which are called from the specified contract
 func GetUsedContracts(name string, state uint32, full bool) []string {
-	contract := GetContract(name, state)
+	contract := GetContract(name, int32(state))
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Used == nil {
 		return nil
 	}

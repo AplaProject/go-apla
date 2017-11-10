@@ -133,7 +133,7 @@ func keyLogin(state int64) (err error) {
 		return
 	}
 	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
-		`state`: {converter.Int64ToStr(state)}}
+		`ecosystem`: {converter.Int64ToStr(state)}}
 	var logret loginResult
 	err = sendPost(`login`, &form, &logret)
 	if err != nil {

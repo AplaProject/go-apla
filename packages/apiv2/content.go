@@ -39,8 +39,8 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 	for name := range r.Form {
 		vars[name] = r.FormValue(name)
 	}
-	vars[`state`] = converter.Int64ToStr(data.state)
-	vars[`wallet`] = converter.Int64ToStr(data.wallet)
+	vars[`ecosystem_id`] = converter.Int64ToStr(data.ecosystemId)
+	vars[`key_id`] = converter.Int64ToStr(data.keyId)
 	vars[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	return &vars
 }
@@ -48,7 +48,7 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 
 	page := &model.Page{}
-	page.SetTablePrefix(converter.Int64ToStr(data.state))
+	page.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
 	found, err := page.Get(data.params[`name`].(string))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
@@ -61,7 +61,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 
 	ret := templatev2.Template2JSON(page.Value, false, initVars(r, data))
 
-	menu, err := model.Single(`SELECT value FROM "`+converter.Int64ToStr(data.state)+
+	menu, err := model.Single(`SELECT value FROM "`+converter.Int64ToStr(data.ecosystemId)+
 		`_menu" WHERE name = ?`, page.Menu).String()
 	retmenu := templatev2.Template2JSON(menu, false, initVars(r, data))
 
@@ -71,7 +71,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 
 func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	menu := &model.Menu{}
-	menu.SetTablePrefix(converter.Int64ToStr(data.state))
+	menu.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
 	found, err := menu.Get(data.params[`name`].(string))
 
 	if err != nil {

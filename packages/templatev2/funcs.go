@@ -23,6 +23,7 @@ import (
 	"html"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -35,6 +36,8 @@ import (
 var (
 	funcs = map[string]tplFunc{
 		`Address`:     {addressTag, defaultTag, `address`, `Wallet`},
+		`CmpTime`:     {cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`},
+		`DateTime`:    {dateTimeTag, defaultTag, `datetime`, `DateTime,Format`},
 		`EcosysParam`: {ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`},
 		`Em`:          {defaultTag, defaultTag, `em`, `Body,Class`},
 		`GetVar`:      {getvarTag, defaultTag, `getvar`, `Name`},
@@ -137,7 +140,7 @@ func defaultTag(par parFunc) string {
 func addressTag(par parFunc) string {
 	idval := (*par.Pars)[`Wallet`]
 	if len(idval) == 0 {
-		idval = (*par.Vars)[`wallet`]
+		idval = (*par.Vars)[`key_id`]
 	}
 	id, _ := strconv.ParseInt(idval, 10, 64)
 	if id == 0 {
@@ -150,7 +153,7 @@ func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
 	}
-	state := converter.StrToInt((*par.Vars)[`state`])
+	state := converter.StrToInt((*par.Vars)[`ecosystem_id`])
 	val, err := StateParam(int64(state), (*par.Pars)[`Name`])
 	if err != nil {
 		return err.Error()
@@ -160,6 +163,7 @@ func ecosysparTag(par parFunc) string {
 		cols := []string{`id`, `name`}
 		types := []string{`text`, `text`}
 		for key, item := range strings.Split(val, `,`) {
+			item, _ = language.LangText(item, state, (*par.Vars)[`accept_lang`])
 			data = append(data, []string{converter.IntToStr(key + 1), item})
 		}
 		node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
@@ -183,7 +187,7 @@ func langresTag(par parFunc) string {
 	if len(lang) == 0 {
 		lang = (*par.Vars)[`accept_lang`]
 	}
-	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Vars)[`state`])), lang)
+	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Vars)[`ecosystem_id`])), lang)
 	return ret
 }
 
@@ -358,7 +362,7 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`ecosystem`] != nil {
 		state = converter.StrToInt64(par.Node.Attr[`ecosystem`].(string))
 	} else {
-		state = converter.StrToInt64((*par.Vars)[`state`])
+		state = converter.StrToInt64((*par.Vars)[`ecosystem_id`])
 	}
 	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
 	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
@@ -449,7 +453,7 @@ func tailTag(par parFunc) string {
 
 func includeTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Vars)[`_include`]) < 5 {
-		pattern, err := model.Single(`select value from "`+(*par.Vars)[`state`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
+		pattern, err := model.Single(`select value from "`+(*par.Vars)[`ecosystem_id`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by name")
 			return err.Error()
@@ -599,4 +603,51 @@ func elseTag(par parFunc) string {
 func elseFull(par parFunc) string {
 	par.Owner.Tail = append(par.Owner.Tail, par.Node)
 	return ``
+}
+
+func dateTimeTag(par parFunc) string {
+	datetime := (*par.Pars)[`DateTime`]
+	if len(datetime) == 0 || len(datetime) < 19 {
+		return ``
+	}
+	itime, err := time.Parse(`2006-01-02T15:04:05`, datetime[:19])
+	if err != nil {
+		return err.Error()
+	}
+	format := (*par.Pars)[`Format`]
+	if len(format) == 0 {
+		format, _ = language.LangText(`timeformat`, converter.StrToInt((*par.Vars)[`ecosystem_id`]),
+			(*par.Vars)[`accept_lang`])
+		if format == `timeformat` {
+			format = `2006-01-02 15:04:05`
+		}
+	}
+	format = strings.Replace(format, `YYYY`, `2006`, -1)
+	format = strings.Replace(format, `YY`, `06`, -1)
+	format = strings.Replace(format, `MM`, `01`, -1)
+	format = strings.Replace(format, `DD`, `02`, -1)
+	format = strings.Replace(format, `HH`, `15`, -1)
+	format = strings.Replace(format, `MI`, `04`, -1)
+	format = strings.Replace(format, `SS`, `05`, -1)
+
+	return itime.Format(format)
+}
+
+func cmpTimeTag(par parFunc) string {
+	prepare := func(val string) string {
+		val = strings.Replace(val, `T`, ` `, -1)
+		if len(val) > 19 {
+			val = val[:19]
+		}
+		return val
+	}
+	left := prepare((*par.Pars)[`Time1`])
+	right := prepare((*par.Pars)[`Time2`])
+	if left == right {
+		return `0`
+	}
+	if left < right {
+		return `-1`
+	}
+	return `1`
 }

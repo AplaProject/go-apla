@@ -26,7 +26,6 @@ import (
 
 	"bytes"
 
-	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -41,14 +40,13 @@ import (
 )
 
 // GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
-func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, walletID int64, citizenID int64) {
+func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, keyID int64) {
 	tmp := binaryBlock[:]
 	txType = converter.BinToDecBytesShift(&binaryBlock, 1)
 	if consts.IsStruct(int(txType)) {
 		var txHead consts.TxHeader
 		converter.BinUnmarshal(&tmp, &txHead)
-		walletID = txHead.WalletID
-		citizenID = txHead.CitizenID
+		keyID = txHead.KeyID
 	}
 	return
 }
@@ -70,17 +68,6 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	BlockData = &header
 	BlockData.Hash = block.Hash
 	return BlockData, nil
-}
-
-func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
-	if walletID != 0 {
-		node := syspar.GetNode(walletID)
-		if node != nil {
-			return node.Public, nil
-		}
-	}
-	log.WithFields(log.Fields{"type": consts.NotFound, "wallet_id": walletID}).Error("Cannot find node by wallet id")
-	return nil, fmt.Errorf(`unknown node %d`, walletID)
 }
 
 func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64) error {
@@ -166,8 +153,6 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	switch txType {
 	case "FirstBlock":
 		return &FirstBlockParser{p}, nil
-	case "DLTTransfer":
-		return &DLTTransferParser{p, nil}, nil
 	}
 	log.WithFields(log.Fields{"tx_type": txType, "type": consts.UnknownObject}).Error("unknown txType")
 	return nil, fmt.Errorf("Unknown txType: %s", txType)
@@ -192,46 +177,45 @@ type Parser struct {
 	MrklRoot       []byte
 	PublicKeys     [][]byte
 
-	TxBinaryData  []byte // transaction binary data
-	TxFullData    []byte // full transaction, with type and data
-	TxHash        []byte
-	TxSlice       [][]byte
-	TxMap         map[string][]byte
-	TxIds         int // count of transactions
-	TxUserID      int64
-	TxCitizenID   int64
-	TxWalletID    int64
-	TxStateID     uint32
-	TxStateIDStr  string
-	TxTime        int64
-	TxType        int64
-	TxCost        int64           // Maximum cost of executing contract
-	TxUsedCost    decimal.Decimal // Used cost of CPU resources
-	TxPtr         interface{}     // Pointer to the corresponding struct in consts/struct.go
-	TxData        map[string]interface{}
-	TxSmart       *tx.SmartContract
-	TxContract    *smart.Contract
-	TxHeader      *tx.Header
-	txParser      ParserInterface
-	DbTransaction *model.DbTransaction
+	TxBinaryData     []byte // transaction binary data
+	TxFullData       []byte // full transaction, with type and data
+	TxHash           []byte
+	TxSlice          [][]byte
+	TxMap            map[string][]byte
+	TxIds            int // count of transactions
+	TxKeyID          int64
+	TxEcosystemIDStr string
+	TxEcosystemID    int64
+	TxNodePosition   uint32
+	TxTime           int64
+	TxType           int64
+	TxCost           int64           // Maximum cost of executing contract
+	TxUsedCost       decimal.Decimal // Used cost of CPU resources
+	TxPtr            interface{}     // Pointer to the corresponding struct in consts/struct.go
+	TxData           map[string]interface{}
+	TxSmart          *tx.SmartContract
+	TxContract       *smart.Contract
+	TxHeader         *tx.Header
+	txParser         ParserInterface
+	DbTransaction    *model.DbTransaction
 
 	AllPkeys map[string]string
 }
 
 func (p Parser) GetLogger() *log.Entry {
 	if p.BlockData != nil && p.PrevBlock != nil {
-		logger := log.WithFields(log.Fields{"block_id": p.BlockData.BlockID, "block_time": p.BlockData.Time, "block_wallet_id": p.BlockData.WalletID, "block_state_id": p.BlockData.StateID, "block_hash": p.BlockData.Hash, "block_version": p.BlockData.Version, "prev_block_id": p.PrevBlock.BlockID, "prev_block_time": p.PrevBlock.Time, "prev_block_wallet_id": p.PrevBlock.WalletID, "prev_block_state_id": p.PrevBlock.StateID, "prev_block_hash": p.PrevBlock.Hash, "prev_block_version": p.PrevBlock.Version, "tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxStateID, "tx_wallet_id": p.TxWalletID})
+		logger := log.WithFields(log.Fields{"block_id": p.BlockData.BlockID, "block_time": p.BlockData.Time, "block_wallet_id": p.BlockData.KeyID, "block_state_id": p.BlockData.EcosystemID, "block_hash": p.BlockData.Hash, "block_version": p.BlockData.Version, "prev_block_id": p.PrevBlock.BlockID, "prev_block_time": p.PrevBlock.Time, "prev_block_wallet_id": p.PrevBlock.KeyID, "prev_block_state_id": p.PrevBlock.EcosystemID, "prev_block_hash": p.PrevBlock.Hash, "prev_block_version": p.PrevBlock.Version, "tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxEcosystemID, "tx_wallet_id": p.TxKeyID})
 		return logger
 	}
 	if p.BlockData != nil {
-		logger := log.WithFields(log.Fields{"block_id": p.BlockData.BlockID, "block_time": p.BlockData.Time, "block_wallet_id": p.BlockData.WalletID, "block_state_id": p.BlockData.StateID, "block_hash": p.BlockData.Hash, "block_version": p.BlockData.Version, "tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxStateID, "tx_wallet_id": p.TxWalletID})
+		logger := log.WithFields(log.Fields{"block_id": p.BlockData.BlockID, "block_time": p.BlockData.Time, "block_wallet_id": p.BlockData.KeyID, "block_state_id": p.BlockData.EcosystemID, "block_hash": p.BlockData.Hash, "block_version": p.BlockData.Version, "tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxEcosystemID, "tx_wallet_id": p.TxKeyID})
 		return logger
 	}
 	if p.PrevBlock != nil {
-		logger := log.WithFields(log.Fields{"prev_block_id": p.PrevBlock.BlockID, "prev_block_time": p.PrevBlock.Time, "prev_block_wallet_id": p.PrevBlock.WalletID, "prev_block_state_id": p.PrevBlock.StateID, "prev_block_hash": p.PrevBlock.Hash, "prev_block_version": p.PrevBlock.Version, "tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxStateID, "tx_wallet_id": p.TxWalletID})
+		logger := log.WithFields(log.Fields{"prev_block_id": p.PrevBlock.BlockID, "prev_block_time": p.PrevBlock.Time, "prev_block_wallet_id": p.PrevBlock.KeyID, "prev_block_state_id": p.PrevBlock.EcosystemID, "prev_block_hash": p.PrevBlock.Hash, "prev_block_version": p.PrevBlock.Version, "tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxEcosystemID, "tx_wallet_id": p.TxKeyID})
 		return logger
 	}
-	logger := log.WithFields(log.Fields{"tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxStateID, "tx_wallet_id": p.TxWalletID})
+	logger := log.WithFields(log.Fields{"tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxEcosystemID, "tx_wallet_id": p.TxKeyID})
 	return logger
 }
 
@@ -310,13 +294,14 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		return err
 	}
 	b := &model.Block{
-		ID:       blockID,
-		Hash:     block.Header.Hash,
-		Data:     block.BinData,
-		StateID:  block.Header.StateID,
-		WalletID: block.Header.WalletID,
-		Time:     block.Header.Time,
-		Tx:       int32(len(block.Parsers)),
+		ID:           blockID,
+		Hash:         block.Header.Hash,
+		Data:         block.BinData,
+		EcosystemID:  block.Header.EcosystemID,
+		KeyID:        block.Header.KeyID,
+		NodePosition: block.Header.NodePosition,
+		Time:         block.Header.Time,
+		Tx:           int32(len(block.Parsers)),
 	}
 	err = b.Create(transaction)
 	if err != nil {
@@ -387,33 +372,6 @@ func (p *Parser) ErrInfo(verr interface{}) error {
 	return fmt.Errorf("[ERROR] %s (%s)\n%s\n%s", err, utils.Caller(1), p.FormatBlockData(), p.FormatTxMap())
 }
 
-func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
-	logger := p.GetLogger()
-	walletID := p.TxWalletID
-	if walletID == 0 {
-		walletID = p.TxCitizenID
-	}
-
-	wallet := &model.DltWallet{}
-	_, err := wallet.Get(p.DbTransaction, walletID)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet transaction")
-		return err
-	}
-	amountAndCommission := amount
-	amountAndCommission.Add(commission)
-	wltAmount, err := decimal.NewFromString(wallet.Amount)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": wallet.Amount}).Error("convertion wallet amount to decimal from string")
-		return err
-	}
-	if wltAmount.Cmp(amountAndCommission) < 0 {
-		logger.Error("wallet amount is less than amount and commisssion")
-		return fmt.Errorf("%v < %v)", wallet.Amount, amountAndCommission)
-	}
-	return nil
-}
-
 // BlockError writes the error of the transaction in the transactions_status table
 func (p *Parser) BlockError(err error) {
 	if len(p.TxHash) == 0 {
@@ -432,7 +390,7 @@ func (p *Parser) BlockError(err error) {
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	logger := p.GetLogger()
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(p.TxStateIDStr)
+	sp.SetTablePrefix(converter.Int64ToStr(p.TxSmart.EcosystemID))
 	_, err := sp.Get(p.DbTransaction, condition)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting state parameter by name transaction")
@@ -462,9 +420,9 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
 	logger := p.GetLogger()
-	govAccount, _ := templatev2.StateParam(int64(p.TxStateID), `founder_account`)
-	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
-		if p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
+	govAccount, _ := templatev2.StateParam(int64(p.TxSmart.EcosystemID), `founder_account`)
+	if table == fmt.Sprintf(`%d_parameters`, p.TxSmart.EcosystemID) {
+		if p.TxContract != nil && p.TxKeyID == converter.StrToInt64(govAccount) {
 			return nil
 		} else {
 			logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
@@ -504,9 +462,10 @@ func (p *Parser) AccessTable(table, action string) error {
 // AccessColumns checks access rights to the columns
 func (p *Parser) AccessColumns(table string, columns []string) error {
 	logger := p.GetLogger()
-	if table == fmt.Sprintf(`%d_parameters`, p.TxStateID) {
-		govAccount, _ := templatev2.StateParam(int64(p.TxStateID), `founder_account`)
-		if p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
+
+	if table == fmt.Sprintf(`%d_parameters`, p.TxSmart.EcosystemID) {
+		govAccount, _ := templatev2.StateParam(int64(p.TxSmart.EcosystemID), `founder_account`)
+		if p.TxContract != nil && p.TxKeyID == converter.StrToInt64(govAccount) {
 			return nil
 		}
 		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access Denied")
@@ -621,17 +580,4 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 		return decimal.New(0, 0), fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 	return p.TxUsedCost.Mul(fuelRate), nil
-}
-
-func (p *Parser) checkPrice(name string) error {
-	EGSPrice, err := p.getEGSPrice(name)
-	if err != nil {
-		return err
-	}
-	// Is there a correct amount on the wallet?
-	err = p.checkSenderDLT(EGSPrice, decimal.New(0, 0))
-	if err != nil {
-		return err
-	}
-	return nil
 }

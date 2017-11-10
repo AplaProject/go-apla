@@ -19,6 +19,7 @@ package syspar
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -30,7 +31,7 @@ import (
 
 const (
 	// NumberNodes is the number of nodes
-	NumberNodes = `number_of_dlt_nodes`
+	NumberNodes = `number_of_nodes`
 	// FuelRate is the rate
 	FuelRate = `fuel_rate`
 	// FullNodes is the list of nodes
@@ -38,7 +39,7 @@ const (
 	// OpPrice is the costs of operations
 	OpPrice = `op_price`
 	// GapsBetweenBlocks is the time between blocks
-	GapsBetweenBlocks = `gaps_between_blocks`
+	GapsBetweenBlocks = `gap_between_blocks`
 	// BlockchainURL is the address of the blockchain file.  For those who don't want to collect it from nodes
 	BlockchainURL = `blockchain_url`
 	// MaxBlockSize is the maximum size of the block
@@ -63,6 +64,10 @@ const (
 	RecoveryAddress = `recovery_address`
 	// CommissionWallet is the address for commissions
 	CommissionWallet = `commission_wallet`
+	// rollback from queue_bocks
+	RbBlocks1 = `rb_blocks_1`
+	// rollback from blocks_collection
+	RbBlocks2 = `rb_blocks_2`
 )
 
 type FullNode struct {
@@ -74,11 +79,12 @@ var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
 	}
-	cost    = make(map[string]int64)
-	nodes   = make(map[int64]*FullNode)
-	fuels   = make(map[int64]string)
-	wallets = make(map[int64]string)
-	mutex   = &sync.RWMutex{}
+	cost            = make(map[string]int64)
+	nodes           = make(map[int64]*FullNode)
+	nodesByPosition = make([][]string, 0)
+	fuels           = make(map[int64]string)
+	wallets         = make(map[int64]string)
+	mutex           = &sync.RWMutex{}
 )
 
 // SysUpdate reloads/updates values of system parameters
@@ -99,6 +105,7 @@ func SysUpdate() error {
 	json.Unmarshal([]byte(cache[OpPrice]), &cost)
 
 	nodes = make(map[int64]*FullNode)
+	nodesByPosition = make([][]string, 0)
 	if len(cache[FullNodes]) > 0 {
 		inodes := make([][]string, 0)
 		err = json.Unmarshal([]byte(cache[FullNodes]), &inodes)
@@ -106,6 +113,7 @@ func SysUpdate() error {
 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling full nodes from json")
 			return err
 		}
+		nodesByPosition = inodes
 		for _, item := range inodes {
 			if len(item) < 3 {
 				continue
@@ -151,8 +159,99 @@ func GetNode(wallet int64) *FullNode {
 	return nil
 }
 
+func GetNodePositionByKeyID(keyID int64) (int64, error) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	for i, item := range nodesByPosition {
+		if len(item) < 3 {
+			continue
+		}
+		if converter.StrToInt64(item[1]) == keyID {
+			return int64(i), nil
+		}
+	}
+	return 0, fmt.Errorf("Incorrect keyID")
+}
+
+func GetNumberOfNodes() int64 {
+	return int64(len(nodesByPosition))
+}
+
+func GetNodeByPosition(position int64) (*FullNode, error) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if int64(len(nodesByPosition)) <= position {
+		return nil, fmt.Errorf("incorrect position")
+	}
+	return nodes[converter.StrToInt64(nodesByPosition[position][1])], nil
+}
+
+func GetNodeHostByPosition(position int64) (string, error) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	nodeData, err := GetNodeByPosition(position)
+	if err != nil {
+		return "", err
+	}
+	return nodeData.Host, nil
+}
+
+func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if int64(len(nodesByPosition)) <= position {
+		return nil, fmt.Errorf("incorrect position")
+	}
+	pkey, err := hex.DecodeString(nodesByPosition[position][2])
+	if err != nil {
+		return nil, err
+	}
+	return pkey, nil
+}
+func GetSleepTimeByKey(myKeyID, prevBlockNodePosition int64) (int64, error) {
+
+	myPosition, err := GetNodePositionByKeyID(myKeyID)
+	if err != nil {
+		return 0, err
+	}
+	sleepTime := int64(0)
+	if myPosition == prevBlockNodePosition {
+		sleepTime = ((GetNumberOfNodes() + myPosition) - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
+	}
+
+	if myPosition > prevBlockNodePosition {
+		sleepTime = (myPosition - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
+	}
+
+	if myPosition < prevBlockNodePosition {
+		sleepTime = (GetNumberOfNodes() - prevBlockNodePosition) * GetGapsBetweenBlocks()
+	}
+
+	return int64(sleepTime), nil
+}
+func GetSleepTimeByPosition(CurrentPosition, prevBlockNodePosition int64) (int64, error) {
+
+	sleepTime := int64(0)
+	if CurrentPosition == prevBlockNodePosition {
+		sleepTime = ((GetNumberOfNodes() + CurrentPosition) - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
+	}
+
+	if CurrentPosition > prevBlockNodePosition {
+		sleepTime = (CurrentPosition - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
+	}
+
+	if CurrentPosition < prevBlockNodePosition {
+		sleepTime = (GetNumberOfNodes() - prevBlockNodePosition) * GetGapsBetweenBlocks()
+	}
+
+	return int64(sleepTime), nil
+}
+
 func SysInt64(name string) int64 {
 	return converter.StrToInt64(SysString(name))
+}
+func SysInt(name string) int {
+	return converter.StrToInt(SysString(name))
 }
 
 func GetSizeFuel() int64 {
@@ -197,8 +296,8 @@ func GetRecoveryAddress() int64 {
 	return converter.StrToInt64(SysString(RecoveryAddress))
 }
 
-func GetGapsBetweenBlocks() int {
-	return converter.StrToInt(SysString(GapsBetweenBlocks))
+func GetGapsBetweenBlocks() int64 {
+	return converter.StrToInt64(SysString(GapsBetweenBlocks))
 }
 
 func GetMaxTxCount() int {
@@ -239,4 +338,12 @@ func SysString(name string) string {
 	ret := cache[name]
 	mutex.RUnlock()
 	return ret
+}
+
+func GetRbBlocks1() int64 {
+	return SysInt64(RbBlocks1)
+}
+
+func GetRbBlocks2() int64 {
+	return SysInt64(RbBlocks2)
 }

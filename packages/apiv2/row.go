@@ -35,7 +35,7 @@ func row(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entr
 	if len(data.params[`columns`].(string)) > 0 {
 		cols = converter.EscapeName(data.params[`columns`].(string))
 	}
-	row, err := model.GetOneRow(`SELECT `+cols+` FROM "`+converter.Int64ToStr(data.state)+`_`+
+	row, err := model.GetOneRow(`SELECT `+cols+` FROM "`+converter.Int64ToStr(data.ecosystemId)+`_`+
 		data.params[`name`].(string)+`" WHERE id = ?`, data.params[`id`].(string)).String()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": data.params["name"].(string), "id": data.params["id"].(string)}).Error("getting one row")

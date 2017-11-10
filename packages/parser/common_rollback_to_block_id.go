@@ -68,19 +68,16 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 	converter.BytesShift(&data, 1)
 	iblock := converter.BinToDecBytesShift(&data, 4)
 	time := converter.BinToDecBytesShift(&data, 4)
-	size, err := converter.DecodeLength(&data)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Fatal("decoding block size")
-		log.Fatal(err)
-	}
-	walletID := converter.BinToDecBytesShift(&data, size)
-	stateID := converter.BinToDecBytesShift(&data, 1)
+	ecosystemID := converter.BinToDecBytesShift(&data, 4)
+	keyID := converter.BinToDecBytesShift(&data, 8)
+	nodePosition := converter.BinToDecBytesShift(&data, 1)
 	ib := &model.InfoBlock{
-		Hash:     block.Hash,
-		BlockID:  iblock,
-		Time:     time,
-		WalletID: walletID,
-		StateID:  stateID}
+		Hash:         block.Hash,
+		BlockID:      iblock,
+		Time:         time,
+		EcosystemID:  ecosystemID,
+		KeyID:        keyID,
+		NodePosition: converter.Int64ToStr(nodePosition)}
 	err = ib.Update(p.DbTransaction)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating info block")

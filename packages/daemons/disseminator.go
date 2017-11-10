@@ -32,8 +32,8 @@ import (
 )
 
 const (
-	FULL_REQUEST         = 1
-	TRANSACTIONS_REQUEST = 2
+	I_AM_FULL_NODE     = 1
+	I_AM_NOT_FULL_NODE = 2
 )
 
 // send to all nodes from nodes_connections the following data
@@ -47,26 +47,17 @@ func Disseminator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	node := &model.FullNode{}
-	_, err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	isFullNode := true
+	myNodePosition, err := syspar.GetNodePositionByKeyID(config.KeyID)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("finding node")
-		return err
+		isFullNode = false
 	}
-	fullNodeID := node.ID
-
-	// find out who we are, fullnode or not
-	isFullNode := func() bool {
-		if fullNodeID == 0 {
-			return false
-		}
-		return true
-	}()
 
 	if isFullNode {
 		// send blocks and transactions hashes
 		d.logger.Debug("we are full_node, sending hashes")
-		return sendHashes(fullNodeID, d.logger)
+		return sendHashes(myNodePosition, d.logger)
 	} else {
 		// we are not full node for this StateID and WalletID, so just send transactions
 		d.logger.Debug("we are full_node, sending transactions")
@@ -93,7 +84,7 @@ func sendTransactions(logger *log.Entry) error {
 	}
 
 	if buf.Len() > 0 {
-		err := sendPacketToAll(TRANSACTIONS_REQUEST, buf.Bytes(), nil, logger)
+		err := sendPacketToAll(I_AM_NOT_FULL_NODE, buf.Bytes(), nil, logger)
 		if err != nil {
 			return err
 		}
@@ -111,7 +102,7 @@ func sendTransactions(logger *log.Entry) error {
 }
 
 // send block and transactions hashes
-func sendHashes(fullNodeID int32, logger *log.Entry) error {
+func sendHashes(fullNodeID int64, logger *log.Entry) error {
 	block, err := model.BlockGetUnsent()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting unsent blocks")
@@ -132,7 +123,7 @@ func sendHashes(fullNodeID int32, logger *log.Entry) error {
 
 	buf := prepareHashReq(block, trs, fullNodeID)
 	if buf != nil || len(buf) > 0 {
-		err := sendPacketToAll(FULL_REQUEST, buf, sendHashesResp, logger)
+		err := sendPacketToAll(I_AM_FULL_NODE, buf, sendHashesResp, logger)
 		if err != nil {
 			return err
 		}
@@ -187,16 +178,16 @@ func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
 	return err
 }
 
-func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int32) []byte {
+func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int64) []byte {
 	var noBlockFlag byte
-	if block != nil {
+	if block == nil {
 		noBlockFlag = 1
 	}
 
 	var buf bytes.Buffer
-	buf.Write(converter.DecToBin(nodeID, 2))
+	buf.Write(converter.DecToBin(nodeID, 8))
 	buf.WriteByte(noBlockFlag)
-	if block != nil {
+	if noBlockFlag == 0 {
 		buf.Write(MarshallBlock(block))
 	}
 	if trs != nil {
@@ -227,7 +218,7 @@ func MarshallTrHash(tr model.Transaction) []byte {
 
 func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer, logger *log.Entry) error, logger *log.Entry) error {
 	hosts := syspar.GetHosts()
-
+	log.Debug("sendPacketToAll", hosts)
 	var wg sync.WaitGroup
 
 	for _, host := range hosts {
@@ -263,6 +254,7 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("writing request type to host")
 		return err
 	}
+	log.Debug("reqType", reqType)
 
 	// data size
 	size := converter.DecToBin(len(buf), 4)
