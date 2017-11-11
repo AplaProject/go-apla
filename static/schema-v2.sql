@@ -97,7 +97,6 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('new_version_url', 'upd.apla.io', 'true'),
 ('full_nodes', '', 'true'),
 ('number_of_nodes', '101', 'true'),
-('op_price', '', 'true'),
 ('ecosystem_price', '1000', 'true'),
 ('contract_price', '200', 'true'),
 ('column_price', '200', 'true'),

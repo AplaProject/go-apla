@@ -36,8 +36,6 @@ const (
 	FuelRate = `fuel_rate`
 	// FullNodes is the list of nodes
 	FullNodes = `full_nodes`
-	// OpPrice is the costs of operations
-	OpPrice = `op_price`
 	// GapsBetweenBlocks is the time between blocks
 	GapsBetweenBlocks = `gap_between_blocks`
 	// BlockchainURL is the address of the blockchain file.  For those who don't want to collect it from nodes
@@ -73,7 +71,6 @@ var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
 	}
-	cost            = make(map[string]int64)
 	nodes           = make(map[int64]*FullNode)
 	nodesByPosition = make([][]string, 0)
 	fuels           = make(map[int64]string)
@@ -95,8 +92,6 @@ func SysUpdate() error {
 		cache[param.Name] = param.Value
 	}
 
-	cost = make(map[string]int64)
-	json.Unmarshal([]byte(cache[OpPrice]), &cost)
 
 	nodes = make(map[int64]*FullNode)
 	nodesByPosition = make([][]string, 0)
@@ -316,10 +311,7 @@ func GetHosts() []string {
 	return ret
 }
 
-// SysCost returns the cost of the transaction
-func SysCost(name string) int64 {
-	return cost[name]
-}
+
 
 // SysString returns string value of the system parameter
 func SysString(name string) string {

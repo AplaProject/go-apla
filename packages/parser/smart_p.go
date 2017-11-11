@@ -149,7 +149,6 @@ func init() {
 		"StateVal":           StateVal,
 		"SysParamString":     SysParamString,
 		"SysParamInt":        SysParamInt,
-		"SysCost":            SysCost,
 		"SysFuel":            SysFuel,
 		"Int":                Int,
 		"Str":                Str,
@@ -854,10 +853,7 @@ func SysParamInt(name string) int64 {
 	return syspar.SysInt64(name)
 }
 
-// SysCost returns the cost of the transaction from the system parameter
-func SysCost(name string) int64 {
-	return syspar.SysCost(name)
-}
+
 
 // SysFuel returns the fuel rate
 func SysFuel(state int64) string {
