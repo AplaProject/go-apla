@@ -27,6 +27,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/utils"
 )
 
 const (
@@ -306,6 +307,9 @@ func GetHosts() []string {
 
 	ret := make([]string, 0)
 	for _, item := range nodes {
+		if item.Host == *utils.TCPHost {
+			continue
+		}
 		ret = append(ret, item.Host)
 	}
 	return ret
