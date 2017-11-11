@@ -30,8 +30,6 @@ const MAX_TX_SIZE = 32 << 20
 // The number of nodes which should have the same block as we have for regarding this block belongs to the major part of DC-net. For get_confirmed_block_id()
 const MIN_CONFIRMED_NODES = 0
 
-// Approximate blockchain size
-const BLOCKCHAIN_SIZE = 1000
 const DOWNLOAD_CHAIN_TRY_COUNT = 10
 
 // How fast could the time of transaction pass

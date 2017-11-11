@@ -113,14 +113,10 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('max_block_user_tx', '100', 'true'),
 ('max_fuel_tx', '1000', 'true'),
 ('max_fuel_block', '100000', 'true'),
-('upd_full_nodes_period', '3600', 'true'),
-('last_upd_full_nodes', '23672372', 'true'),
 ('size_price', '100', 'true'),
 ('commission_size', '3', 'true'),
 ('commission_wallet', '[["1","8275283526439353759"]]', 'true'),
-('sys_currencies', '[1]', 'true'),
-('fuel_rate', '[["1","1000000000000000"]]', 'true'),
-('recovery_address', '[["1","8275283526439353759"]]', 'true');
+('fuel_rate', '[["1","1000000000000000"]]', 'true');
 
 CREATE TABLE "system_tables" (
 "name" varchar(100)  NOT NULL DEFAULT '',

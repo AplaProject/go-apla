@@ -24,7 +24,6 @@ import (
 	"net/http"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -246,15 +245,12 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64, 
 func downloadChain(ctx context.Context, fileName, url string, logger *log.Entry) error {
 
 	for i := 0; i < consts.DOWNLOAD_CHAIN_TRY_COUNT; i++ {
-		loadCtx, cancel := context.WithTimeout(ctx, time.Duration(syspar.GetUpdFullNodesPeriod())*time.Second)
+		loadCtx, cancel := context.WithTimeout(ctx, 30)
 		defer cancel()
 
-		blockchainSize, err := downloadToFile(loadCtx, url, fileName, logger)
+		_, err := downloadToFile(loadCtx, url, fileName, logger)
 		if err != nil {
 			continue
-		}
-		if blockchainSize > consts.BLOCKCHAIN_SIZE {
-			return nil
 		}
 	}
 	return fmt.Errorf("can't download blockchain from %s", url)

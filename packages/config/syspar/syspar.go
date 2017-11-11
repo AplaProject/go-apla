@@ -56,12 +56,6 @@ const (
 	MaxBlockUserTx = `max_block_user_tx`
 	// SizeFuel is the fuel cost of 1024 bytes of the transaction data
 	SizeFuel = `size_fuel`
-	// SysCurrencies is the list of system currencies
-	SysCurrencies = `sys_currencies`
-	// UpdFullNodesPeriod is the maximum number of user's transactions in one block
-	UpdFullNodesPeriod = `upd_full_nodes_period`
-	// RecoveryAddress is the recovery address
-	RecoveryAddress = `recovery_address`
 	// CommissionWallet is the address for commissions
 	CommissionWallet = `commission_wallet`
 	// rollback from queue_bocks
@@ -280,9 +274,6 @@ func GetCommissionWallet(ecosystem int64) string {
 	return wallets[1]
 }
 
-func GetUpdFullNodesPeriod() int64 {
-	return converter.StrToInt64(SysString(UpdFullNodesPeriod))
-}
 
 func GetMaxBlockSize() int64 {
 	return converter.StrToInt64(SysString(MaxBlockSize))
@@ -292,9 +283,7 @@ func GetMaxTxSize() int64 {
 	return converter.StrToInt64(SysString(MaxTxSize))
 }
 
-func GetRecoveryAddress() int64 {
-	return converter.StrToInt64(SysString(RecoveryAddress))
-}
+
 
 func GetGapsBetweenBlocks() int64 {
 	return converter.StrToInt64(SysString(GapsBetweenBlocks))
