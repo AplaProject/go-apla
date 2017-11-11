@@ -115,13 +115,19 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 	blockHash := buf.Next(32)
 	log.Debug("blockHash %x", blockHash)
 
+	qb := &model.QueueBlock{}
+	found, err = qb.GetQueueBlockByHash(blockHash)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting QueueBlock")
+		return utils.ErrInfo(err)
+	}
 	// we accept only new blocks
-	if newBlockID >= infoBlock.BlockID {
+	if  !found && newBlockID >= infoBlock.BlockID {
 		queueBlock := &model.QueueBlock{Hash: blockHash, FullNodeID: fullNodeID, BlockID: newBlockID}
 		err = queueBlock.Create()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Creating QueueBlock")
-			return utils.ErrInfo(err)
+			return nil
 		}
 	}
 
