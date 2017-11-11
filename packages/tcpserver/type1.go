@@ -28,6 +28,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
 // get the list of transactions which belong to the sender from 'disseminator' daemon
@@ -197,8 +198,8 @@ func saveNewTransactions(r *DisRequest) error {
 			return utils.ErrInfo(errors.New("len(txBinData) == 0"))
 		}
 
-		if int64(len(txBinData)) > consts.MAX_TX_SIZE {
-			log.WithFields(log.Fields{"type": consts.ParameterExceeded, "len": len(txBinData), "size": consts.MAX_TX_SIZE}).Error("len of tx data exceeds max size")
+		if int64(len(txBinData)) > syspar.GetMaxTxSize() {
+			log.WithFields(log.Fields{"type": consts.ParameterExceeded, "len": len(txBinData), "size": syspar.GetMaxTxSize()}).Error("len of tx data exceeds max size")
 			return utils.ErrInfo("len(txBinData) > max_tx_size")
 		}
 

@@ -113,7 +113,6 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('max_block_user_tx', '100', 'true'),
 ('max_fuel_tx', '1000', 'true'),
 ('max_fuel_block', '100000', 'true'),
-('size_price', '100', 'true'),
 ('commission_size', '3', 'true'),
 ('commission_wallet', '', 'true'),
 ('fuel_rate', '[["1","1000000000000000"]]', 'true');

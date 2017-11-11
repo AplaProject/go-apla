@@ -25,7 +25,6 @@ const EGS_DIGIT = 18 //money_digit for EGS 1000000000000000000
 
 // is used in confirmations
 const WAIT_CONFIRMED_NODES = 10
-const MAX_TX_SIZE = 32 << 20
 
 // The number of nodes which should have the same block as we have for regarding this block belongs to the major part of DC-net. For get_confirmed_block_id()
 const MIN_CONFIRMED_NODES = 0
