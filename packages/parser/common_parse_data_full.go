@@ -646,7 +646,7 @@ func (block *Block) CheckBlock() error {
 	// exclude blocks from future
 	if block.Header.Time > time.Now().Unix() {
 		logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("block time is larger than now")
-		utils.ErrInfo(fmt.Errorf("incorrect block time - block.Header.Time > time.Now().Unix()"))
+		return utils.ErrInfo(fmt.Errorf("incorrect block time - block.Header.Time > time.Now().Unix()"))
 	}
 	if block.PrevHeader == nil || block.PrevHeader.BlockID != block.Header.BlockID-1 {
 		if err := block.readPreviousBlockFromBlockchainTable(); err != nil {
