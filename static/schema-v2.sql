@@ -88,7 +88,7 @@ CREATE TABLE "system_parameters" (
 ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
 
 INSERT INTO system_parameters ("name", "value", "conditions") VALUES 
-('default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'true'),    
+('default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'true'),
 ('default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'true'),
 ('default_ecosystem_contract', '', 'true'),
 ('gap_between_blocks', '2', 'true'),
@@ -109,14 +109,26 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('max_tx_size', '33554432', 'true'),
 ('max_tx_count', '1000', 'true'),
 ('max_columns', '50', 'true'),
-('max_indexes', '1', 'true'),
+('max_indexes', '5', 'true'),
 ('max_block_user_tx', '100', 'true'),
 ('max_fuel_tx', '1000', 'true'),
 ('max_fuel_block', '100000', 'true'),
 ('size_price', '100', 'true'),
 ('commission_size', '3', 'true'),
-('commission_wallet', '[["1","8275283526439353759"]]', 'true'),
+('commission_wallet', '', 'true'),
 ('fuel_rate', '[["1","1000000000000000"]]', 'true');
+
+CREATE TABLE "system_contracts" (
+"id" bigint NOT NULL  DEFAULT '0',
+"value" text  NOT NULL DEFAULT '',
+"wallet_id" bigint NOT NULL DEFAULT '0',
+"token_id" bigint NOT NULL DEFAULT '0',
+"active" character(1) NOT NULL DEFAULT '0',
+"conditions" text  NOT NULL DEFAULT '',
+"rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "system_contracts" ADD CONSTRAINT system_contracts_pkey PRIMARY KEY (id);
+
 
 CREATE TABLE "system_tables" (
 "name" varchar(100)  NOT NULL DEFAULT '',
@@ -127,12 +139,11 @@ CREATE TABLE "system_tables" (
 );
 ALTER TABLE ONLY "system_tables" ADD CONSTRAINT system_tables_pkey PRIMARY KEY (name);
 
-INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES
-        ('system_states', 
-        '{"insert": "false", "update": "true",
+INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES  ('system_states',
+        '{"insert": "false", "update": "ContractAccess(\"@1EditParameter\")",
           "new_column": "false"}',
-        '{"name": "true"}',
-        'true');
+        '{"name": "ContractAccess(\"@1EditParameter\")"}',
+        'ContractAccess(\"@0UpdSysContract\")');
 
 
 DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
@@ -204,4 +215,3 @@ ALTER TABLE ONLY "my_node_keys" ADD CONSTRAINT my_node_keys_pkey PRIMARY KEY (id
 DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 "stop_time" int NOT NULL DEFAULT '0'
 );
-
