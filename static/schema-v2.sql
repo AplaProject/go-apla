@@ -88,119 +88,39 @@ CREATE TABLE "system_parameters" (
 ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
 
 INSERT INTO system_parameters ("name", "value", "conditions") VALUES 
-('default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'ContractAccess("@0UpdSysParam")'),    
-('default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'ContractAccess("@0UpdSysParam")'),
-('default_ecosystem_contract', '', 'ContractAccess("@0UpdSysParam")'),
-('gap_between_blocks', '2', 'ContractAccess("@0UpdSysParam")'),
-('rb_blocks_1', '60', 'ContractAccess("@0UpdSysParam")'),
-('rb_blocks_2', '3600', 'ContractAccess("@0UpdSysParam")'),
-('new_version_url', 'upd.apla.io', 'ContractAccess("@0UpdSysParam")'),
-('full_nodes', '', 'ContractAccess("@0UpdFullNodes")'),
-('number_of_nodes', '101', 'ContractAccess("@0UpdSysParam")'),
-('op_price', '', 'ContractAccess("@0UpdSysParam")'),
-('ecosystem_price', '1000', 'ContractAccess("@0UpdSysParam")'),
-('contract_price', '200', 'ContractAccess("@0UpdSysParam")'),
-('column_price', '200', 'ContractAccess("@0UpdSysParam")'),
-('table_price', '200', 'ContractAccess("@0UpdSysParam")'),
-('menu_price', '100', 'ContractAccess("@0UpdSysParam")'),
-('page_price', '100', 'ContractAccess("@0UpdSysParam")'),
-('blockchain_url', '', 'ContractAccess("@0UpdSysParam")'),
-('max_block_size', '67108864', 'ContractAccess("@0UpdSysParam")'),
-('max_tx_size', '33554432', 'ContractAccess("@0UpdSysParam")'),
-('max_tx_count', '1000', 'ContractAccess("@0UpdSysParam")'),
-('max_columns', '50', 'ContractAccess("@0UpdSysParam")'),
-('max_indexes', '1', 'ContractAccess("@0UpdSysParam")'),
-('max_block_user_tx', '100', 'ContractAccess("@0UpdSysParam")'),
-('max_fuel_tx', '1000', 'ContractAccess("@0UpdSysParam")'),
-('max_fuel_block', '100000', 'ContractAccess("@0UpdSysParam")'),
-('upd_full_nodes_period', '3600', 'ContractAccess("@0UpdSysParam")'),
-('last_upd_full_nodes', '23672372', 'ContractAccess("@0UpdSysParam")'),
-('size_price', '100', 'ContractAccess("@0UpdSysParam")'),
-('commission_size', '3', 'ContractAccess("@0UpdSysParam")'),
-('commission_wallet', '[["1","8275283526439353759"]]', 'ContractAccess("@0UpdSysParam")'),
-('sys_currencies', '[1]', 'ContractAccess("@0UpdSysParam")'),
-('fuel_rate', '[["1","1000000000000000"]]', 'ContractAccess("@0UpdSysParam")'),
-('recovery_address', '[["1","8275283526439353759"]]', 'ContractAccess("@0UpdSysParam")');
-
-CREATE TABLE "system_contracts" (
-"id" bigint NOT NULL  DEFAULT '0',
-"value" text  NOT NULL DEFAULT '',
-"wallet_id" bigint NOT NULL DEFAULT '0',
-"token_id" bigint NOT NULL DEFAULT '0',
-"active" character(1) NOT NULL DEFAULT '0',
-"conditions" text  NOT NULL DEFAULT '',
-"rb_id" bigint NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "system_contracts" ADD CONSTRAINT system_contracts_pkey PRIMARY KEY (id);
-
-INSERT INTO system_contracts ("id","value", "active", "conditions") VALUES 
-('1','contract UpdSysParam {
-    data {
-    }
-    conditions {
-    }
-    action {
-    }
-}', '0','ContractAccess("@0UpdSysContract")'),
-('2','contract UpdSysContract {
-    data {
-    }
-    conditions {
-    }
-    action {
-    }
-}', '0','ContractAccess("@0UpdSysContract")'),
-('3','contract UpdFullNodes {
-     data {
-    }
-    conditions {
-      var prev int
-      var nodekey bytes
-      prev = DBInt(`upd_full_nodes`, `time`, 1)
-	    if $time-prev < SysParamInt(`upd_full_nodes_period`) {
-		    warning Sprintf("txTime - upd_full_nodes < UPD_FULL_NODES_PERIOD")
-	    }
-/*	    nodekey = bytes(DBStringExt(`dlt_wallets`, `node_public_key`, $key_id, `wallet_id`))
-	    if !nodekey {
-	        error `len(node_key) == 0`
-	    }*/
-    }
-    action {
-/*      var list array
-        list = DBGetList("dlt_wallets", "address_vote", 0, SysParamInt(`number_of_dlt_nodes`), "sum(amount) DESC", "address_vote != ? and amount > ? GROUP BY address_vote", ``, `10000000000000000000000`)
-        var i int
-        var out string
-        while i<Len(list) {
-            var row, item map
-            item = list[i]
-            row = DBRowExt(`dlt_wallets`, `host, wallet_id`, item[`address_vote`], `wallet_id`)
-            if i > 0 {
-                out = out + `,`
-            }
-            out = out + Sprintf(`[%q,%q]`, row[`host`],row[`wallet_id`])
-            i = i+1
-        }
-        UpdateSysParam(`full_nodes`, `[`+out+`]`, ``)*/
-    }
-}', '0','ContractAccess("@0UpdSysContract")');
-
-CREATE TABLE "upd_contracts" (
-"id" bigint NOT NULL  DEFAULT '0',
-"id_contract" bigint  NOT NULL DEFAULT '0',
-"value" text  NOT NULL DEFAULT '',
-"votes" bigint  NOT NULL DEFAULT '0',
-"rb_id" bigint NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "upd_contracts" ADD CONSTRAINT upd_contracts_pkey PRIMARY KEY (id);
-
-CREATE TABLE "upd_system_parameters" (
-"id" bigint NOT NULL DEFAULT '0',
-"name" varchar(255)  NOT NULL DEFAULT '',
-"value" text  NOT NULL DEFAULT '',
-"votes" bigint  NOT NULL DEFAULT '0',
-"rb_id" bigint NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "upd_system_parameters" ADD CONSTRAINT upd_system_parameters_pkey PRIMARY KEY (id);
+('default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'true'),    
+('default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'true'),
+('default_ecosystem_contract', '', 'true'),
+('gap_between_blocks', '2', 'true'),
+('rb_blocks_1', '60', 'true'),
+('rb_blocks_2', '3600', 'true'),
+('new_version_url', 'upd.apla.io', 'true'),
+('full_nodes', '', 'true'),
+('number_of_nodes', '101', 'true'),
+('op_price', '', 'true'),
+('ecosystem_price', '1000', 'true'),
+('contract_price', '200', 'true'),
+('column_price', '200', 'true'),
+('table_price', '200', 'true'),
+('menu_price', '100', 'true'),
+('page_price', '100', 'true'),
+('blockchain_url', '', 'true'),
+('max_block_size', '67108864', 'true'),
+('max_tx_size', '33554432', 'true'),
+('max_tx_count', '1000', 'true'),
+('max_columns', '50', 'true'),
+('max_indexes', '1', 'true'),
+('max_block_user_tx', '100', 'true'),
+('max_fuel_tx', '1000', 'true'),
+('max_fuel_block', '100000', 'true'),
+('upd_full_nodes_period', '3600', 'true'),
+('last_upd_full_nodes', '23672372', 'true'),
+('size_price', '100', 'true'),
+('commission_size', '3', 'true'),
+('commission_wallet', '[["1","8275283526439353759"]]', 'true'),
+('sys_currencies', '[1]', 'true'),
+('fuel_rate', '[["1","1000000000000000"]]', 'true'),
+('recovery_address', '[["1","8275283526439353759"]]', 'true');
 
 CREATE TABLE "system_tables" (
 "name" varchar(100)  NOT NULL DEFAULT '',
@@ -211,23 +131,12 @@ CREATE TABLE "system_tables" (
 );
 ALTER TABLE ONLY "system_tables" ADD CONSTRAINT system_tables_pkey PRIMARY KEY (name);
 
-INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES ('upd_contracts', 
-        '{"insert": "ContractAccess(\"@0UpdSysContract\")", "update": "ContractAccess(\"@0UpdSysContract\")", 
-          "new_column": "ContractAccess(\"@0UpdSysContract\")"}',
-        '{"id_contract": "ContractAccess(\"@0UpdSysContract\")", "value": "ContractAccess(\"@0UpdSysContract\")", 
-          "votes": "ContractAccess(\"@0UpdSysContract\")"}',          
-        'ContractAccess(\"@0UpdSysContract\")'),
-        ('upd_system_parameters', 
-        '{"insert": "ContractAccess(\"@0UpdSysContract\")", "update": "ContractAccess(\"@0UpdSysContract\")", 
-          "new_column": "ContractAccess(\"@0UpdSysContract\")"}',
-        '{"name": "ContractAccess(\"@0UpdSysContract\")", "value": "ContractAccess(\"@0UpdSysContract\")", 
-          "votes": "ContractAccess(\"@0UpdSysContract\")"}',          
-        'ContractAccess(\"@0UpdSysContract\")'),
+INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES
         ('system_states', 
-        '{"insert": "false", "update": "ContractAccess(\"@1EditParameter\")", 
+        '{"insert": "false", "update": "true",
           "new_column": "false"}',
-        '{"name": "ContractAccess(\"@1EditParameter\")"}',          
-        'ContractAccess(\"@0UpdSysContract\")');
+        '{"name": "true"}',
+        'true');
 
 
 DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
