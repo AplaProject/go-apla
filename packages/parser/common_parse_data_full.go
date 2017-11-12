@@ -316,9 +316,11 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 		if err := parseContractTransaction(p, buffer); err != nil {
 			return nil, err
 		}
-		if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
+
+		// TODO: check for what it was here:
+		/*if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
 			return nil, err
-		}
+		}*/
 
 		// struct transaction (only first block transaction for now)
 	} else if consts.IsStruct(int(txType)) {
