@@ -415,6 +415,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			[]string{converter.Int64ToStr(fromID)}, true); err != nil {
 			return err
 		}
+		// TODO: add checking for key_id "toID". If key not exists it led to fork
 		if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
 			[]string{converter.Int64ToStr(toID)}, true); err != nil {
 			return err
