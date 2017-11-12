@@ -27,19 +27,19 @@ import (
 func (p *Parser) autoRollback() error {
 	logger := p.GetLogger()
 	rollbackTx := &model.RollbackTx{}
-	txs, err := rollbackTx.GetRollbackTransactions(p.TxHash)
+	txs, err := rollbackTx.GetRollbackTransactions(p.DbTransaction, p.TxHash)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback transactions")
 		return utils.ErrInfo(err)
 	}
 	for _, tx := range txs {
-		err := p.selectiveRollback(tx.NameTable, p.AllPkeys[tx.NameTable]+"='"+tx.TableID+`'`)
+		err := p.selectiveRollback(tx["table_name"], p.AllPkeys[tx["table_name"]]+"='"+tx["table_id"]+`'`)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	}
 	txForDelete := &model.RollbackTx{TxHash: p.TxHash}
-	err = txForDelete.DeleteByHash()
+	err = txForDelete.DeleteByHash(p.DbTransaction)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback transaction by hash")
 		return p.ErrInfo(err)
