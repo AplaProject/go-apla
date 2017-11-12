@@ -192,6 +192,7 @@ func rollbackToBlock(blockID int64) error {
 
 	// check blocks related tables
 	startData := map[string]int64{"1_menu":1,"1_pages":1,"1_contracts":26,"1_parameters":11,"1_keys":1,"1_tables":8,"stop_daemons":1,"queue_blocks":9999999,"system_tables":1, "system_parameters":27,"system_states":1, "install": 1, "config": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1,"confirmations": 9999999, "my_node_keys": 9999999, "transactions": 9999999}
+	warn:=0
 	for _, table := range allTable {
 		count, err := model.GetRecordsCount(table)
 		if err != nil {
@@ -200,8 +201,16 @@ func rollbackToBlock(blockID int64) error {
 		}
 		if count > 0 && count > startData[table] {
 			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Warn("record count in table is larger then start")
+			warn++
 		} else {
 			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Info("record count in table is ok")
+		}
+	}
+	if warn == 0 {
+		ioutil.WriteFile(*utils.Dir+"rollback_result", []byte("1"), 0644)
+		if err != nil {
+			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile}).Error("write to the rollback_result")
+			return err
 		}
 	}
 	return nil
