@@ -48,6 +48,8 @@ type apiData struct {
 	params      map[string]interface{}
 	ecosystemId int64
 	keyId       int64
+	vde    bool
+	vm     *script.VM
 	token       *jwt.Token
 	//	sess   session.SessionStore
 }
@@ -110,7 +112,11 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 }
 
 func getPrefix(data *apiData) (prefix string) {
-	return converter.Int64ToStr(data.ecosystemId)
+	prefix = converter.Int64ToStr(data.state)
+	if data.vde {
+		prefix += `_vde`
+	}
+	return
 }
 
 func getSignHeader(txName string, data *apiData) tx.Header {
@@ -195,6 +201,17 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		for _, par := range ps {
 			data.params[par.Key] = par.Value
 		}
+		vde := r.FormValue(`vde`)
+		if vde == `1` || vde == `true` {
+			data.vm = smart.GetVM(true, data.state)
+			if data.vm == nil {
+				errorAPI(w, `E_VDE`, http.StatusBadRequest, data.state)
+				return
+			}
+			data.vde = true
+		} else {
+			data.vm = smart.GetVM(false, 0)
+		}
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {
@@ -232,19 +249,23 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 	})
 }
 
-func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (int64, error) {
+func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (int64, string, error) {
 	ecosystemID := data.ecosystemId
 	if data.params[`ecosystem`].(int64) > 0 {
 		ecosystemID = data.params[`ecosystem`].(int64)
 		count, err := model.GetNextID(nil, `system_states`)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id system states")
-			return 0, errorAPI(w, err, http.StatusBadRequest)
+			return 0, ``, errorAPI(w, err, http.StatusBadRequest)
 		}
 		if ecosystemID >= count {
 			logger.WithFields(log.Fields{"state_id": ecosystemID, "count": count, "type": consts.ParameterExceeded}).Error("state_id is larger then max count")
-			return 0, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, ecosystemID)
+			return 0, ``, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, ecosystemID)
 		}
 	}
-	return ecosystemID, nil
+	prefix := converter.Int64ToStr(ecosystemID)
+	if data.vde {
+		prefix += `_vde`
+	}
+	return ecosystemID, prefix, nil
 }

@@ -45,8 +45,9 @@ type tableResult struct {
 func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	var result tableResult
 
+	prefix := getPrefix(data)
 	table := &model.Table{}
-	table.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
+	table.SetTablePrefix(prefix)
 	_, err = table.Get(data.params[`name`].(string))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table")
@@ -68,7 +69,7 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 		columns := make([]columnInfo, 0)
 		for key, value := range cols {
-			colType, err := model.GetColumnType(converter.Int64ToStr(data.ecosystemId)+`_`+data.params[`name`].(string), key)
+			colType, err := model.GetColumnType(prefix+`_`+data.params[`name`].(string), key)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column type from db")
 				return errorAPI(w, err.Error(), http.StatusInternalServerError)

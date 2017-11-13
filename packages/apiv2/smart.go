@@ -57,7 +57,7 @@ type EncryptKey struct {
 
 func validateSmartContract(r *http.Request, data *apiData, result *prepareResult) (contract *smart.Contract, parerr interface{}, err error) {
 	cntname := data.params[`name`].(string)
-	contract = smart.GetContract(cntname, int32(data.ecosystemId))
+	contract = smart.VMGetContract(data.vm, cntname, uint32(data.state))
 	if contract == nil {
 		return nil, cntname, fmt.Errorf(`E_CONTRACT`)
 	}

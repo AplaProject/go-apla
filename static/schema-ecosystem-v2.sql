@@ -126,15 +126,17 @@ INSERT INTO "%[1]d_parameters" ("id","name", "value", "conditions") VALUES
 }', 'ContractConditions(`MainCondition`)');
 
 CREATE TABLE "%[1]d_tables" (
+"id" bigint NOT NULL  DEFAULT '0',
 "name" varchar(100) UNIQUE NOT NULL DEFAULT '',
 "permissions" jsonb,
 "columns" jsonb,
 "conditions" text  NOT NULL DEFAULT '',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY (name);
+ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
+CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
 
-INSERT INTO "%[1]d_tables" ("name", "permissions","columns", "conditions") VALUES ('contracts', 
+INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts', 
         '{"insert": "ContractAccess(\"@1NewContract\")", "update": "ContractAccess(\"@1EditContract\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"value": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")",
@@ -142,12 +144,12 @@ INSERT INTO "%[1]d_tables" ("name", "permissions","columns", "conditions") VALUE
           "token_id": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")",
           "active": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")",
           "conditions": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")"}', 'ContractAccess("@1EditTable")'),
-        ('keys', 
+        ('2', 'keys', 
         '{"insert": "ContractAccess(\"@1MoneyTransfer\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1MoneyTransfer\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"pub": "ContractAccess(\"@1MoneyTransfer\")",
           "amount": "ContractAccess(\"@1MoneyTransfer\")"}', 'ContractAccess("@1EditTable")'),
-        ('history', 
+        ('3', 'history', 
         '{"insert": "ContractAccess(\"@1MoneyTransfer\")", "update": "false", 
           "new_column": "false"}',
         '{"sender_id": "ContractAccess(\"@1MoneyTransfer\")",
@@ -156,35 +158,35 @@ INSERT INTO "%[1]d_tables" ("name", "permissions","columns", "conditions") VALUE
           "comment": "ContractAccess(\"@1MoneyTransfer\")",
           "block_id":  "ContractAccess(\"@1MoneyTransfer\")",
           "txhash": "ContractAccess(\"@1MoneyTransfer\")"}', 'ContractAccess("@1EditTable")'),        
-        ('languages', 
+        ('4', 'languages', 
         '{"insert": "ContractAccess(\"@1NewLang\")", "update": "ContractAccess(\"@1EditLang\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{ "name": "ContractAccess(\"@1EditLang\")",
           "res": "ContractAccess(\"@1EditLang\")",
           "conditions": "ContractAccess(\"@1EditLang\")"}', 'ContractAccess("@1EditTable")'),
-        ('menu', 
+        ('5', 'menu', 
         '{"insert": "ContractAccess(\"@1NewMenu\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditMenu\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditMenu\")",
-    "value": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")",
+    "value": "ContractAccess(\"@1EditMenu\")",
     "conditions": "ContractAccess(\"@1EditMenu\")"
         }', 'ContractAccess("@1EditTable")'),
-        ('pages', 
+        ('6', 'pages', 
         '{"insert": "ContractAccess(\"@1NewPage\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditPage\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditPage\")",
-    "value": "ContractAccess(\"@1EditPage\",\"@1AppendPage\")",
+    "value": "ContractAccess(\"@1EditPage\")",
     "menu": "ContractAccess(\"@1EditPage\")",
     "conditions": "ContractAccess(\"@1EditPage\")"
         }', 'ContractAccess("@1EditTable")'),
-        ('blocks', 
+        ('7', 'blocks', 
         '{"insert": "ContractAccess(\"@1NewBlock\")", "update": "ContractAccess(\"@1EditBlock\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditBlock\")",
     "value": "ContractAccess(\"@1EditBlock\")",
     "conditions": "ContractAccess(\"@1EditBlock\")"
         }', 'ContractAccess("@1EditTable")'),
-        ('signatures', 
+        ('8', 'signatures', 
         '{"insert": "ContractAccess(\"@1NewSign\")", "update": "ContractAccess(\"@1EditSign\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditSign\")",

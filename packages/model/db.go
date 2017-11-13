@@ -123,6 +123,14 @@ func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 	return err
 }
 
+func ExecSchemaLocalData(id int, wallet int64) error {
+	schema, err := static.Asset("static/schema-vde.sql")
+	if err != nil {
+		return err
+	}
+	return DBConn.Exec(fmt.Sprintf(string(schema), id, wallet)).Error
+}
+
 func ExecSchema() error {
 	schema, err := static.Asset("static/schema-v2.sql")
 	if err != nil {

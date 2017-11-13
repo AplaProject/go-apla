@@ -345,8 +345,12 @@ func (p *Parser) CallContract(flags int) (err error) {
 			}
 			payWallet.SetTablePrefix(p.TxSmart.TokenEcosystem)
 			if err = payWallet.Get(fromID); err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
-				return err
+				if err == gorm.ErrRecordNotFound {
+					return fmt.Errorf(`current balance is not enough`)
+				} else {
+					logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
+					return err
+				}
 			}
 			if !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(p.TxSmart.PublicKey, payWallet.PublicKey) {
 				return fmt.Errorf(`Token and user public keys are different`)
@@ -1380,6 +1384,29 @@ func RollbackEcosystem(p *Parser) error {
 		log.WithFields(log.Fields{"table_id": rollbackTx.TableID, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
 		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
 	}
+	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, rollbackTx.TableID)) {
+		// Drop all _local_ tables
+		table := &model.Table{}
+		prefix := fmt.Sprintf(`%d_vde`, rollbackTx.TableID)
+		table.SetTablePrefix(prefix)
+		list, err := table.GetAll(prefix)
+		if err != nil {
+			return err
+		}
+		for _, item := range list {
+			err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", prefix, item.Name))
+			if err != nil {
+				return err
+			}
+		}
+		for _, name := range []string{`tables`, `parameters`} {
+			err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", prefix, name))
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
 		`contracts`, `parameters`, `blocks`, `history`, `keys`} {
 		err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
@@ -1603,7 +1630,13 @@ func CreateTable(p *Parser, name string, columns, permissions string) error {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("unmarshalling permissions")
 		return err
 	}
+	id, err := model.GetNextID(prefix + `_tables`)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get next id")
+		return err
+	}
 	t := &model.Table{
+		ID:          id,
 		Name:        name,
 		Columns:     string(colout),
 		Permissions: string(permout),

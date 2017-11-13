@@ -280,6 +280,13 @@ func TestVMCompile(t *testing.T) {
 			100).Limit(10) + DBFind( "table").Where("request")
 		return out
 	}`, `names`, `mytable   0 0=keys name,value  0 0=keys qqmy  0 199=table name id=? 10 0=table  request 0 0=`},
+		{`contract seterr {
+				func getset string {
+					var i int
+					i = MyFunc("qqq", 10)
+					return "OK"
+				}
+			}`, `seterr.getset`, `unknown identifier MyFunc`},
 	}
 	vm := NewVM()
 	vm.Extern = true
@@ -289,8 +296,10 @@ func TestVMCompile(t *testing.T) {
 	for ikey, item := range test {
 		source := []rune(item.Input)
 		if err := vm.Compile(source, &OwnerInfo{StateID: uint32(ikey) + 22, Active: true, TableID: 1}); err != nil {
-			t.Error(err)
-			break
+			if err.Error() != item.Output {
+				t.Error(err)
+				break
+			}
 		} else {
 			if out, err := vm.Call(item.Func, nil, &map[string]interface{}{
 				`rt_state`: uint32(ikey) + 22,
