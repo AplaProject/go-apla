@@ -126,6 +126,11 @@ func LangText(in string, state int, accept string) (string, bool) {
 				break
 			}
 		}
+		if len((*lres)[lng]) == 0 {
+			for _, val := range *lres {
+				return val, true
+			}
+		}
 		return (*lres)[lng], true
 	}
 	return in, false

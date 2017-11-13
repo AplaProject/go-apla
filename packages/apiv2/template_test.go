@@ -30,14 +30,20 @@ type tplItem struct {
 type tplList []tplItem
 
 func TestAPI(t *testing.T) {
+	var ret contentResult
+
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
 
-	for _, item := range forTest {
-		var ret contentResult
+	err := sendPost(`content/page/default_page`, &url.Values{}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
+	for _, item := range forTest {
 		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
 		if err != nil {
 			t.Error(err)
@@ -48,8 +54,7 @@ func TestAPI(t *testing.T) {
 			return
 		}
 	}
-	var ret contentResult
-	err := sendPost(`content/page/mypage`, &url.Values{}, &ret)
+	err = sendPost(`content/page/mypage`, &url.Values{}, &ret)
 	if err != nil && err.Error() != `404 {"error": "E_NOTFOUND", "msg": "Page not found" }` {
 		t.Error(err)
 		return
@@ -59,14 +64,13 @@ func TestAPI(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = sendPost(`content/page/default_page`, &url.Values{}, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
 }
 
 var forTest = tplList{
+	{`Button(Body: LangRes(save), Class: btn btn-primary, Contract: EditProfile, 
+		Page:members_list,).Alert(Text: $want_save_changes$, 
+		ConfirmButton: $yes$, CancelButton: $no$, Icon: question)`,
+		`[]`},
 	{`Simple Strong(bold text)`,
 		`[{"tag":"text","text":"Simple "},{"tag":"strong","children":[{"tag":"text","text":"bold text"}]}]`},
 	{`EcosysParam(gender, Source: mygender)`,
