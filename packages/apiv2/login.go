@@ -20,6 +20,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/notificator"
+	"github.com/AplaProject/go-apla/packages/publisher"
+
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -101,10 +104,14 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	result.Refresh, err = jwtGenerateToken(w, claims)
-	result.NotifyKey = `0`
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
+	result.NotifyKey, err = publisher.GetHMACSign(wallet)
+	if err != nil {
+		return errorAPI(w, err, http.StatusInternalServerError)
+	}
+	notificator.AddUser(wallet, state)
 
 	return nil
 }

@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"crypto/hmac"
 	"crypto/sha256"
 
 	"golang.org/x/crypto/sha3"
@@ -11,6 +12,17 @@ type hashProvider int
 const (
 	_SHA256 hashProvider = iota
 )
+
+func GetHMAC(secret string, message string) ([]byte, error) {
+	switch hmacProv {
+	case _SHA256:
+		mac := hmac.New(sha256.New, []byte(secret))
+		mac.Write([]byte(message))
+		return mac.Sum(nil), nil
+	default:
+		return nil, UnknownProviderError
+	}
+}
 
 func Hash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {

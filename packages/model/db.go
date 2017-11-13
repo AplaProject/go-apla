@@ -39,6 +39,7 @@ func GormInit(user string, pass string, dbName string) error {
 	DBConn, err = gorm.Open("postgres",
 		fmt.Sprintf("host=localhost user=%s dbname=%s sslmode=disable password=%s", user, dbName, pass))
 	if err != nil {
+		DBConn = nil
 		return err
 	}
 	return nil

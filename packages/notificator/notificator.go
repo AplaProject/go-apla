@@ -1,0 +1,82 @@
+package notificator
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/publisher"
+)
+
+type EcosystemID int64
+type UserID int64
+
+type NotificationStats struct {
+	UserIDs     map[UserID]int64
+	lastNotifID *int64
+}
+
+var notifications map[EcosystemID]NotificationStats
+
+func init() {
+	notifications = make(map[EcosystemID]NotificationStats)
+}
+
+func SendNotifications() {
+	for ecosystemID, ecosystemStats := range notifications {
+		notifs := getEcosystemNotifications(ecosystemID, *ecosystemStats.lastNotifID, ecosystemStats)
+		for _, notif := range notifs {
+			userID, err := strconv.ParseInt(notif["recepient_id"], 10, 64)
+			if err != nil {
+				//TODO add logs
+				return
+			}
+			ok, err := publisher.Write(userID, mapToString(notif))
+			if err != nil {
+				fmt.Println("err: ", err)
+				//TODO add logs
+				return
+			}
+
+			if !ok {
+				fmt.Println("can't write to centrifugo")
+				//TODO add logs
+				return
+			}
+			id, _ := strconv.ParseInt(notif["id"], 10, 64)
+			if *notifications[ecosystemID].lastNotifID < id {
+				*notifications[ecosystemID].lastNotifID = id
+			}
+		}
+	}
+}
+
+func mapToString(value map[string]string) string {
+	result := "{"
+	for key, value := range value {
+		result += fmt.Sprintf(`"%s": "%s",`, key, value)
+	}
+	result = result[:len(result)-1]
+	result += "}"
+	return result
+}
+
+func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64, userIDs NotificationStats) []map[string]string {
+	users := make([]int64, 0)
+	for userID := range userIDs.UserIDs {
+		users = append(users, int64(userID))
+	}
+	rows, err := model.GetAllNotifications(int64(ecosystemID), lastNotificationID, users)
+	if err != nil || len(rows) == 0 {
+		// TODO add logs
+		return nil
+	}
+	return rows
+}
+
+func AddUser(userID int64, ecosystemID int64) {
+	if _, ok := notifications[EcosystemID(ecosystemID)]; !ok {
+		notifications[EcosystemID(ecosystemID)] = NotificationStats{UserIDs: make(map[UserID]int64), lastNotifID: new(int64)}
+	}
+	notifications[EcosystemID(ecosystemID)].UserIDs[UserID(userID)] = 0
+}
