@@ -43,7 +43,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	if err != nil {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
-		d.logger.WithFields(log.Fields{"type": consts.JustWaiting, "error": err}).Warning("we are not full node, sleep for 10 seconds")
+		d.logger.WithFields(log.Fields{"type": consts.JustWaiting, "error": err}).Debug("we are not full node, sleep for 10 seconds")
 		return nil
 	}
 

@@ -183,6 +183,10 @@ func GetAll(query string, countRows int, args ...interface{}) ([]map[string]stri
 	return GetAllTransaction(nil, query, countRows, args)
 }
 
+func GetAllTx(transaction *DbTransaction, query string, countRows int, args ...interface{}) ([]map[string]string, error) {
+	return GetAllTransaction(transaction, query, countRows, args)
+}
+
 func GetOneRowTransaction(transaction *DbTransaction, query string, args ...interface{}) *OneRow {
 	result := make(map[string]string)
 	all, err := GetAllTransaction(transaction, query, 1, args...)

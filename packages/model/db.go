@@ -141,17 +141,7 @@ func Delete(tblname, where string) error {
 	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
 }
 
-func GetRollbackID(tblname, where, ordering string) (int64, error) {
-	var result int64
-	query := `SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering
-	err := DBConn.Raw(query).Row().Scan(&result)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": query}).Error("selecting rollback id from table")
-		// TODO
-		return 0, nil
-	}
-	return result, nil
-}
+
 
 func GetFirstColumnName(table string) (string, error) {
 	rows, err := DBConn.Raw(`SELECT * FROM "` + table + `" LIMIT 1`).Rows()
@@ -414,4 +404,14 @@ func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	rows.Scan(&id)
 	rows.Close()
 	return id + 1, err
+}
+
+func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) (int64, error) {
+	var result int64
+	err := GetDB(transaction).Raw( `SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering).Row().Scan(&result)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(fmt.Errorf("GetRollbackID from table %s where %s order by rb_id", tblname, where, ordering))
+		return 0, err
+	}
+	return result, nil
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/utils"
 )
 
 const (
@@ -36,8 +37,6 @@ const (
 	FuelRate = `fuel_rate`
 	// FullNodes is the list of nodes
 	FullNodes = `full_nodes`
-	// OpPrice is the costs of operations
-	OpPrice = `op_price`
 	// GapsBetweenBlocks is the time between blocks
 	GapsBetweenBlocks = `gap_between_blocks`
 	// BlockchainURL is the address of the blockchain file.  For those who don't want to collect it from nodes
@@ -56,12 +55,6 @@ const (
 	MaxBlockUserTx = `max_block_user_tx`
 	// SizeFuel is the fuel cost of 1024 bytes of the transaction data
 	SizeFuel = `size_fuel`
-	// SysCurrencies is the list of system currencies
-	SysCurrencies = `sys_currencies`
-	// UpdFullNodesPeriod is the maximum number of user's transactions in one block
-	UpdFullNodesPeriod = `upd_full_nodes_period`
-	// RecoveryAddress is the recovery address
-	RecoveryAddress = `recovery_address`
 	// CommissionWallet is the address for commissions
 	CommissionWallet = `commission_wallet`
 	// rollback from queue_bocks
@@ -79,7 +72,6 @@ var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
 	}
-	cost            = make(map[string]int64)
 	nodes           = make(map[int64]*FullNode)
 	nodesByPosition = make([][]string, 0)
 	fuels           = make(map[int64]string)
@@ -101,8 +93,6 @@ func SysUpdate() error {
 		cache[param.Name] = param.Value
 	}
 
-	cost = make(map[string]int64)
-	json.Unmarshal([]byte(cache[OpPrice]), &cost)
 
 	nodes = make(map[int64]*FullNode)
 	nodesByPosition = make([][]string, 0)
@@ -280,9 +270,6 @@ func GetCommissionWallet(ecosystem int64) string {
 	return wallets[1]
 }
 
-func GetUpdFullNodesPeriod() int64 {
-	return converter.StrToInt64(SysString(UpdFullNodesPeriod))
-}
 
 func GetMaxBlockSize() int64 {
 	return converter.StrToInt64(SysString(MaxBlockSize))
@@ -292,9 +279,7 @@ func GetMaxTxSize() int64 {
 	return converter.StrToInt64(SysString(MaxTxSize))
 }
 
-func GetRecoveryAddress() int64 {
-	return converter.StrToInt64(SysString(RecoveryAddress))
-}
+
 
 func GetGapsBetweenBlocks() int64 {
 	return converter.StrToInt64(SysString(GapsBetweenBlocks))
@@ -322,15 +307,15 @@ func GetHosts() []string {
 
 	ret := make([]string, 0)
 	for _, item := range nodes {
+		if item.Host == *utils.TCPHost {
+			continue
+		}
 		ret = append(ret, item.Host)
 	}
 	return ret
 }
 
-// SysCost returns the cost of the transaction
-func SysCost(name string) int64 {
-	return cost[name]
-}
+
 
 // SysString returns string value of the system parameter
 func SysString(name string) string {

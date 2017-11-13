@@ -772,7 +772,6 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	// if the data size is less than 10mb, we will receive them
 	dataSize := converter.BinToDec(buf)
 	var binaryBlock []byte
-	fmt.Printf("dataSize: %d", dataSize)
 	if dataSize < 10485760 && dataSize > 0 {
 		binaryBlock = make([]byte, dataSize)
 
@@ -781,7 +780,6 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data from connection")
 			return nil, ErrInfo(err)
 		}
-		fmt.Printf("binaryBlock: %x\n", binaryBlock)
 	} else {
 		log.Error("null block")
 		return nil, ErrInfo("null block")

@@ -11,6 +11,10 @@ func (qb *QueueBlock) Get() (bool, error) {
 	return isFound(DBConn.First(qb))
 }
 
+func (qb *QueueBlock) GetQueueBlockByHash(hash []byte) (bool, error) {
+	return isFound(DBConn.Where("hash = ?", hash).First(qb))
+}
+
 func (qb *QueueBlock) Delete() error {
 	return DBConn.Delete(qb).Error
 }

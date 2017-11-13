@@ -38,7 +38,7 @@ func Type4(r *ConfirmRequest) (*ConfirmResponse, error) {
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_id": r.BlockID}).Error("Getting block")
 	} else if len(block.Hash) == 0 {
-		log.WithFields(log.Fields{"type": consts.DBError, "block_id": r.BlockID}).Warning("Block wih id not found")
+		log.WithFields(log.Fields{"type": consts.DBError, "block_id": r.BlockID}).Warning("Block not found")
 	}
 	return resp, nil
 }

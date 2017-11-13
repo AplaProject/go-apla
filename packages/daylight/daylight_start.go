@@ -48,6 +48,7 @@ import (
 	"github.com/go-thrust/thrust"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
 // FileAsset returns the body of the file
@@ -190,17 +191,26 @@ func rollbackToBlock(blockID int64) error {
 	}
 
 	// check blocks related tables
-	startData := map[string]int64{"install": 1, "config": 1, "queue_tx": 99999, "log_transactions": 1, "transactions_status": 99999, "block_chain": 1, "info_block": 1, "dlt_wallets": 1, "confirmations": 9999999, "full_nodes": 1, "system_parameters": 4, "my_node_keys": 99999, "transactions": 999999}
+	startData := map[string]int64{"1_menu":1,"1_pages":1,"1_contracts":26,"1_parameters":11,"1_keys":1,"1_tables":8,"stop_daemons":1,"queue_blocks":9999999,"system_tables":1, "system_parameters":27,"system_states":1, "install": 1, "config": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1,"confirmations": 9999999, "my_node_keys": 9999999, "transactions": 9999999}
+	warn:=0
 	for _, table := range allTable {
-		count, err := model.GetRecordsCount(converter.EscapeName(table))
+		count, err := model.GetRecordsCount(table)
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting record count")
 			return err
 		}
 		if count > 0 && count > startData[table] {
 			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Warn("record count in table is larger then start")
+			warn++
 		} else {
 			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Info("record count in table is ok")
+		}
+	}
+	if warn == 0 {
+		ioutil.WriteFile(*utils.Dir+"rollback_result", []byte("1"), 0644)
+		if err != nil {
+			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile}).Error("write to the rollback_result")
+			return err
 		}
 	}
 	return nil
@@ -324,6 +334,10 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	// database rollback to the specified block
 	if *utils.RollbackToBlockID > 0 {
+		err = syspar.SysUpdate()
+		if err != nil {
+			log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
+		}
 		log.WithFields(log.Fields{"block_id": *utils.RollbackToBlockID}).Info("Rollbacking to block ID")
 		err := rollbackToBlock(*utils.RollbackToBlockID)
 		log.WithFields(log.Fields{"block_id": *utils.RollbackToBlockID}).Info("Rollback is ok")

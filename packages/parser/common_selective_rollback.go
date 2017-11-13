@@ -35,7 +35,7 @@ func (p *Parser) selectiveRollback(table string, where string) error {
 		where = " WHERE " + where
 	}
 	// we obtain rb_id with help of that it is possible to find the data which was before
-	rbID, err := model.GetRollbackID(table, where, "desc")
+	rbID, err := model.GetRollbackID(p.DbTransaction, table, where, "desc")
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback id")
 		return p.ErrInfo(err)

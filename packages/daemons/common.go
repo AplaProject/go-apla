@@ -62,7 +62,6 @@ var serverList = []string{
 	"QueueParserBlocks",
 	"Disseminator",
 	"Confirmations",
-	"UpdFullNodes",
 }
 
 var mobileList = []string{
