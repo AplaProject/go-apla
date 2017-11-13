@@ -58,6 +58,7 @@ func Route(route *hr.Router) {
 	get(`getuid`, ``, getUID)
 	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
 	get(`row/:name/:id`, `?columns:string`, authWallet, row)
+	get(`systemparams`, `?names:string`, authWallet, systemParams)
 	get(`table/:name`, ``, authWallet, table)
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
 	get(`txstatus/:hash`, ``, authWallet, txstatus)
