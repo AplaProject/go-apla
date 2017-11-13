@@ -167,8 +167,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 				addSQLUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
-		updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere
-		updateCost, err := model.GetQueryTotalCost(updateQuery, rollback.RbID)
+		updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + fmt.Sprintf(` rb_id = '%d'`, rollback.RbID) + addSQLWhere
+		updateCost, err := model.GetQueryTotalCost(updateQuery)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
 			return 0, tableID, err

@@ -47,12 +47,6 @@ func TestNewContracts(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	/*if id, msg, err := postTxResult(`TestDBFindOK`, &url.Values{}); err != nil {
-		t.Error(err)
-		return
-	} else {
-		fmt.Println(`CALL`, id, msg)
-	}*/
 	for _, item := range contracts {
 		var ret getContractResult
 		err := sendGet(`contract/`+item.Name, nil, &ret)
@@ -71,6 +65,14 @@ func TestNewContracts(t *testing.T) {
 				return
 			}
 		}
+		/*if strings.HasPrefix(item.Name, `EditProfile`) {
+			form := url.Values{"Id": {`62`}, "Value": {item.Value},
+				"Conditions": {`true`}}
+			if err := postTx(`EditContract`, &form); err != nil {
+				t.Error(err)
+				return
+			}
+		}*/
 		if strings.HasSuffix(item.Name, `testUpd`) {
 			continue
 		}
@@ -93,6 +95,20 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`EditProfile6`, `contract EditProfile6 {
+		data {
+		}
+		conditions {
+		}
+		action {
+			$ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
+			Test("edit",  "edit value 0")
+		}
+	}`,
+		[]smartParams{
+			{nil, map[string]string{`edit`: `edit value 0`}},
+		}},
+
 	{`TestDBFindOK`, `
 		contract TestDBFindOK {
 		action {
