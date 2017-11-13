@@ -57,11 +57,11 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	for ind, val := range list {
-		if val[`key_id`] == `NULL` {
-			list[ind][`key_id`] = ``
+		if val[`wallet_id`] == `NULL` {
+			list[ind][`wallet_id`] = ``
 			list[ind][`address`] = ``
 		} else {
-			list[ind][`address`] = converter.AddressToString(converter.StrToInt64(val[`key_id`]))
+			list[ind][`address`] = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
 		}
 		if val[`active`] == `NULL` {
 			list[ind][`active`] = ``

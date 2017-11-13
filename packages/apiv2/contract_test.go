@@ -228,8 +228,14 @@ func TestEditContracts(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	var cntlist contractsResult
+	err := sendGet(`contracts`, nil, &cntlist)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	var ret getContractResult
-	err := sendGet(`contract/testUpd`, nil, &ret)
+	err = sendGet(`contract/testUpd`, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return
