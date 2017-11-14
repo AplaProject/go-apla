@@ -33,12 +33,15 @@ import (
 
 type contractResult struct {
 	Hash string `json:"hash"`
+	// These fields are used for VDE
+	Message string `json:"errmsg,omitempty"`
+	Result  string `json:"result,omitempty"`
 }
 
 func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var (
 		hash, publicKey []byte
-		toSerialize     interface{}
+		toSerialize               interface{}
 	)
 	contract, parerr, err := validateSmartContract(r, data, nil)
 	if err != nil {
@@ -132,6 +135,14 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
 		return errorAPI(w, err, http.StatusInternalServerError)
+	}
+	if data.vde {
+		ret, err := VDEContract(serializedData)
+		if err != nil {
+			return errorAPI(w, err, http.StatusInternalServerError)
+		}
+		data.result = ret
+		return nil
 	}
 	if hash, err = model.SendTx(int64(info.ID), data.keyId,
 		append([]byte{128}, serializedData...)); err != nil {

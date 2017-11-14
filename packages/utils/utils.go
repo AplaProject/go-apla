@@ -722,7 +722,7 @@ func TypeInt(txType string) int64 {
 func TCPConn(Addr string) (net.Conn, error) {
 	conn, err := net.DialTimeout("tcp", Addr, 10*time.Second)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "address": Addr}).Error("dialing tcp")
+		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "address": Addr}).Debug("dialing tcp")
 		return nil, ErrInfo(err)
 	}
 	conn.SetReadDeadline(time.Now().Add(consts.READ_TIMEOUT * time.Second))

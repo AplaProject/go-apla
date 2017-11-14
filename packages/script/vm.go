@@ -136,7 +136,9 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		if i > 0 {
 			pars[in-1] = reflect.ValueOf(rt.stack[size-i : size])
 		}
-		//fmt.Println(`Pars`, shift, count, limit, i, size, pars)
+		if finfo.Name == `ExecContract` && (pars[2].Type().String() != `string` || !pars[3].IsValid()) {
+			return fmt.Errorf(`unknown function %v`, pars[1])
+		}
 		if finfo.Variadic {
 			result = foo.CallSlice(pars)
 		} else {
