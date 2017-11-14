@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -44,12 +45,15 @@ func vdeCreate(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
 	if _, err := sp.Get(nil, `founder_account`); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	if converter.StrToInt64(sp.Value) != data.keyId {
+		logger.WithFields(log.Fields{"type": consts.AccessDenied, "error": fmt.Errorf(`Access denied`)}).Error("creating vde")
 		return errorAPI(w, `E_PERMISSION`, http.StatusUnauthorized)
 	}
 	if err := model.ExecSchemaLocalData(int(data.ecosystemId), data.keyId); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	smart.LoadVDEContracts(nil, converter.Int64ToStr(data.ecosystemId))
@@ -169,6 +173,5 @@ func VDEContract(data []byte) (result *contractResult, err error) {
 	if err != nil {
 		result.Message = err.Error()
 	}
-	fmt.Println(`VDECONTRACT`, result)
 	return
 }

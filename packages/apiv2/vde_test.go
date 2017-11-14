@@ -176,8 +176,6 @@ func TestVDECreate(t *testing.T) {
 		t.Error(err)
 		return
 	}
-
-	fmt.Println(`OK`)
 }
 
 func TestVDEParams(t *testing.T) {

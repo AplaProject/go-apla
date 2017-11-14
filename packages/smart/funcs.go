@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
@@ -32,6 +33,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 type SmartContract struct {
@@ -215,6 +217,7 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	var cols []map[string]string
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns to JSON")
 		return err
 	}
 	indexes := make([]string, 0)
@@ -259,17 +262,20 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	}
 	colout, err := json.Marshal(colperm)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling columns to JSON")
 		return err
 	}
 	//	colsSQL2 = colsSQL2[:len(colsSQL2)-1]
 	err = model.CreateVDETable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE tables")
 		return err
 	}
 
 	for _, index := range indexes {
 		err := model.CreateIndex(sc.DbTransaction, tableName+"_"+index, tableName, index)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE indexes")
 			return err
 		}
 	}
@@ -277,6 +283,7 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	permlist := make(map[string]string)
 	err = json.Unmarshal([]byte(permissions), &perm)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling permissions to JSON")
 		return err
 	}
 	for _, v := range []string{`insert`, `update`, `new_column`} {
@@ -284,6 +291,7 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	}
 	permout, err := json.Marshal(permlist)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling permissions to JSON")
 		return err
 	}
 	prefix, name := PrefixName(tableName)
@@ -293,6 +301,7 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	}
 	id, err := model.GetNextID(sc.DbTransaction, getDefTableName(sc, `tables`))
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next ID")
 		return err
 	}
 
@@ -306,7 +315,7 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	t.SetTablePrefix(prefix)
 	err = t.Create(sc.DbTransaction)
 	if err != nil {
-
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert vde table info")
 		return err
 	}
 	return nil
