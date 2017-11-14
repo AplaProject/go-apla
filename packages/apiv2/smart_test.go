@@ -102,7 +102,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 	err = postTx(`NewParameter`, &form)
-	if err.Error() != fmt.Sprintf(`!Parameter %s already exists`, name) {
+	if cutErr(err) != fmt.Sprintf(`!Parameter %s already exists`, name) {
 		t.Error(err)
 		return
 	}
@@ -116,7 +116,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 	err = postTx(`NewMenu`, &form)
-	if err.Error() != fmt.Sprintf(`!Menu %s already exists`, menuname) {
+	if cutErr(err) != fmt.Sprintf(`!Menu %s already exists`, menuname) {
 		t.Error(err)
 		return
 	}
@@ -124,7 +124,7 @@ func TestPage(t *testing.T) {
 	form = url.Values{"Name": {name + `23`}, "Value": {`New Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	id, msg, err = postTxResult(`EditParameter`, &form)
-	if err.Error() != fmt.Sprintf(`Record %s23 has not been found`, name) {
+	if cutErr(err) != fmt.Sprintf(`Record %s23 has not been found`, name) {
 		t.Error(err)
 		return
 	}
@@ -138,7 +138,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 	err = postTx(`NewPage`, &form)
-	if err.Error() != fmt.Sprintf(`!Page %s already exists`, name) {
+	if cutErr(err) != fmt.Sprintf(`!Page %s already exists`, name) {
 		t.Error(err)
 		return
 	}
@@ -151,7 +151,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 	err = postTx(`NewBlock`, &form)
-	if err.Error() != fmt.Sprintf(`!Block %s aready exists`, name) {
+	if cutErr(err) != fmt.Sprintf(`!Block %s aready exists`, name) {
 		t.Error(err)
 		return
 	}
@@ -173,7 +173,7 @@ func TestPage(t *testing.T) {
 	form = url.Values{"Id": {`1112`}, "Value": {value + `Span(Test)`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	err = postTx(`EditPage`, &form)
-	if err.Error() != `Item 1112 has not been found` {
+	if cutErr(err) != `Item 1112 has not been found` {
 		t.Error(err)
 		return
 	}

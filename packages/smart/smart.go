@@ -453,8 +453,8 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		walletBlock = sc.BlockData.KeyID
 		blockTime = sc.BlockData.Time
 	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `state`: head.EcosystemID,
-		`block`: block, `citizen`: citizenID, `wallet`: walletID, `wallet_block`: walletBlock,
+	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `ecosystem_id`: head.EcosystemID,
+		`block`: block, `citizen`: citizenID, `key_id`: walletID, `wallet_block`: walletBlock,
 		`parent`: ``, `txcost`: sc.GetContractLimit(), `txhash`: sc.TxHash, `result`: ``,
 		`parser`: sc, `sc`: sc, `contract`: sc.TxContract, `block_time`: blockTime}
 	for key, val := range sc.TxData {
@@ -698,8 +698,8 @@ func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
 	if sc.BlockData != nil {
 		blockTime = sc.BlockData.Time
 	}
-	return VMEvalIf(sc.VM, conditions, uint32(sc.TxSmart.EcosystemID), &map[string]interface{}{`state`: sc.TxSmart.EcosystemID,
-		`citizen`: sc.TxSmart.KeyID, `wallet`: sc.TxSmart.KeyID, `parser`: sc, `sc`: sc,
+	return VMEvalIf(sc.VM, conditions, uint32(sc.TxSmart.EcosystemID), &map[string]interface{}{`ecosystem_id`: sc.TxSmart.EcosystemID,
+		`citizen`: sc.TxSmart.KeyID, `key_id`: sc.TxSmart.KeyID, `parser`: sc, `sc`: sc,
 		`block_time`: blockTime, `time`: time})
 }
 

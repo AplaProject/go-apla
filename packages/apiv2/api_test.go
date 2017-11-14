@@ -232,3 +232,11 @@ func postTx(txname string, form *url.Values) error {
 	_, _, err := postTxResult(txname, form)
 	return err
 }
+
+func cutErr(err error) string {
+	out := err.Error()
+	if off := strings.IndexByte(out, '('); off != -1 {
+		out = out[:off]
+	}
+	return strings.TrimSpace(out)
+}

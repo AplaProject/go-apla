@@ -184,8 +184,8 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			if block == nil {
 				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
 			}
-			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`state`: int64(sc.TxSmart.EcosystemID),
-				`citizen`: sc.TxSmart.KeyID, `wallet`: sc.TxSmart.KeyID, `parser`: sc, `sc`: sc})
+			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
+				`citizen`: sc.TxSmart.KeyID, `key_id`: sc.TxSmart.KeyID, `parser`: sc, `sc`: sc})
 			if err != nil {
 				return false, err
 			}
