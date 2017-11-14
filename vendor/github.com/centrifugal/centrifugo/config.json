@@ -1,0 +1,19 @@
+{
+  "secret": "secret",
+  "web": true,
+  "admin_password": "password",
+  "admin_secret": "secret",
+  "namespaces": [
+    {
+      "name": "public",
+      "anonymous": true,
+      "publish": true,
+      "watch": true,
+      "presence": true,
+      "join_leave": true,
+      "history_size": 10,
+      "history_lifetime": 30,
+      "recover": true
+    }  
+  ]
+}
