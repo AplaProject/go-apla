@@ -29,6 +29,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/smart"
 
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -36,21 +37,22 @@ type vdeCreateResult struct {
 	Result bool `json:"result"`
 }
 
-func vdeCreate(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, data.state)) {
+func vdeCreate(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, data.ecosystemId)) {
 		return errorAPI(w, `E_VDECREATED`, http.StatusBadRequest)
 	}
 	sp := &model.StateParameter{}
-	if err := sp.SetTablePrefix(converter.Int64ToStr(data.state)).GetByName(`founder_account`); err != nil {
+	sp.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
+	if _, err := sp.Get(nil, `founder_account`); err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
-	if converter.StrToInt64(sp.Value) != data.wallet {
+	if converter.StrToInt64(sp.Value) != data.keyId {
 		return errorAPI(w, `E_PERMISSION`, http.StatusUnauthorized)
 	}
-	if err := model.ExecSchemaLocalData(int(data.state), data.wallet); err != nil {
+	if err := model.ExecSchemaLocalData(int(data.ecosystemId), data.keyId); err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	smart.LoadVDEContracts(nil, converter.Int64ToStr(data.state))
+	smart.LoadVDEContracts(nil, converter.Int64ToStr(data.ecosystemId))
 	data.result = vdeCreateResult{Result: true}
 	return nil
 }

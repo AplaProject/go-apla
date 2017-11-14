@@ -420,3 +420,13 @@ func IsTable(tblname string) bool {
 
 	return name == tblname
 }
+
+func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) (int64, error) {
+	var result int64
+	err := GetDB(transaction).Raw(`SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering).Row().Scan(&result)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(fmt.Errorf("GetRollbackID from table %s where %s order by rb_id", tblname, where, ordering))
+		return 0, err
+	}
+	return result, nil
+}

@@ -33,7 +33,7 @@ type balanceResult struct {
 }
 
 func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	ecosystemId, err := checkEcosystem(w, data, logger)
+	ecosystemId, _, err := checkEcosystem(w, data, logger)
 	if err != nil {
 		return err
 	}

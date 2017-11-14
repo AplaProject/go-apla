@@ -30,6 +30,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 	"github.com/dgrijalva/jwt-go"
@@ -48,8 +50,8 @@ type apiData struct {
 	params      map[string]interface{}
 	ecosystemId int64
 	keyId       int64
-	vde    bool
-	vm     *script.VM
+	vde         bool
+	vm          *script.VM
 	token       *jwt.Token
 	//	sess   session.SessionStore
 }
@@ -203,9 +205,9 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}
 		vde := r.FormValue(`vde`)
 		if vde == `1` || vde == `true` {
-			data.vm = smart.GetVM(true, data.state)
+			data.vm = smart.GetVM(true, data.ecosystemId)
 			if data.vm == nil {
-				errorAPI(w, `E_VDE`, http.StatusBadRequest, data.state)
+				errorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemId)
 				return
 			}
 			data.vde = true
