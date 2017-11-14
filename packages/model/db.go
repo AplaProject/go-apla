@@ -149,8 +149,6 @@ func Delete(tblname, where string) error {
 	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
 }
 
-
-
 func GetFirstColumnName(table string) (string, error) {
 	rows, err := DBConn.Raw(`SELECT * FROM "` + table + `" LIMIT 1`).Rows()
 	if err != nil {
@@ -412,4 +410,13 @@ func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	rows.Scan(&id)
 	rows.Close()
 	return id + 1, err
+}
+
+func IsTable(tblname string) bool {
+	var name string
+	DBConn.Table("information_schema.tables").
+		Where("table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema') AND table_name=?", tblname).
+		Select("table_name").Row().Scan(&name)
+
+	return name == tblname
 }

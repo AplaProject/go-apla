@@ -25,12 +25,15 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/templatev2"
 	"github.com/AplaProject/go-apla/packages/utils"
 
+	"github.com/jinzhu/gorm"
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -426,7 +429,7 @@ func (sc *SmartContract) GetContractLimit() (ret int64) {
 	if len(sc.TxSmart.MaxSum) > 0 {
 		sc.TxCost = converter.StrToInt64(sc.TxSmart.MaxSum)
 	} else {
-		cost, _ := templatev2.StateParam(sc.TxSmart.StateID, `max_sum`)
+		cost, _ := templatev2.StateParam(sc.TxSmart.EcosystemID, `max_sum`)
 		if len(cost) > 0 {
 			sc.TxCost = converter.StrToInt64(cost)
 		}
@@ -440,17 +443,17 @@ func (sc *SmartContract) GetContractLimit() (ret int64) {
 func (sc *SmartContract) getExtend() *map[string]interface{} {
 	head := sc.TxSmart
 	var citizenID, walletID int64
-	citizenID = int64(head.UserID)
-	walletID = int64(head.UserID)
+	citizenID = int64(head.KeyID)
+	walletID = int64(head.KeyID)
 	block := int64(0)
 	blockTime := int64(0)
 	walletBlock := int64(0)
 	if sc.BlockData != nil {
 		block = sc.BlockData.BlockID
-		walletBlock = sc.BlockData.WalletID
+		walletBlock = sc.BlockData.KeyID
 		blockTime = sc.BlockData.Time
 	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `state`: head.StateID,
+	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `state`: head.EcosystemID,
 		`block`: block, `citizen`: citizenID, `wallet`: walletID, `wallet_block`: walletBlock,
 		`parent`: ``, `txcost`: sc.GetContractLimit(), `txhash`: sc.TxHash, `result`: ``,
 		`parser`: sc, `sc`: sc, `contract`: sc.TxContract, `block_time`: blockTime}
@@ -483,15 +486,15 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
 	sc.TxContract.StackCont = []string{sc.TxContract.Name}
 	(*sc.TxContract.Extend)[`stack_cont`] = StackCont
-	sc.VM = GetVM(sc.VDE, sc.TxSmart.StateID)
+	sc.VM = GetVM(sc.VDE, sc.TxSmart.EcosystemID)
 	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 {
 		// TODO: insert getting toID fromID from p.CallContract
 		if len(sc.TxSmart.PublicKey) > 0 && string(sc.TxSmart.PublicKey) != `null` {
 			public = sc.TxSmart.PublicKey
 		}
 		wallet := &model.Key{}
-		wallet.SetTablePrefix(sc.TxSmart.StateID)
-		err = wallet.Get(sc.TxSmart.UserID)
+		wallet.SetTablePrefix(sc.TxSmart.EcosystemID)
+		err = wallet.Get(sc.TxSmart.KeyID)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return
 		}
@@ -499,7 +502,7 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 			public = wallet.PublicKey
 		}
 		if sc.TxSmart.Type == 258 { // UpdFullNodes
-			node := syspar.GetNode(sc.TxSmart.UserID)
+			node := syspar.GetNode(sc.TxSmart.KeyID)
 			if node == nil {
 				return ``, fmt.Errorf("unknown node id")
 			}
@@ -518,7 +521,7 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 		if !CheckSignResult {
 			return ``, fmt.Errorf("incorrect sign")
 		}
-		// TODO: Insert calculating balance from p.CallContract	if sc.TxSmart.StateID > 0
+		// TODO: Insert calculating balance from p.CallContract	if sc.TxSmart.EcosystemID > 0
 	}
 	before := (*sc.TxContract.Extend)[`txcost`].(int64) + price
 
@@ -552,7 +555,7 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 	default:
 		err = fmt.Errorf("bad transaction result")
 	}
-	// TODO: Insert payment from p.CallContract	if (flags&CallAction) != 0 && sc.TxSmart.StateID > 0 && !sc.VDE
+	// TODO: Insert payment from p.CallContract	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE
 	return
 }
 
@@ -588,7 +591,7 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 // AccessTable checks the access right to the table
 func (sc *SmartContract) AccessTable(table, action string) error {
 	if table == getDefTableName(sc, `parameters`) {
-		if sc.TxSmart.UserID == converter.StrToInt64(EcosystemParam(sc, `founder_account`)) {
+		if sc.TxSmart.KeyID == converter.StrToInt64(EcosystemParam(sc, `founder_account`)) {
 			return nil
 		}
 		return fmt.Errorf(`Access denied`)
@@ -621,7 +624,7 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 // AccessColumns checks access rights to the columns
 func (sc *SmartContract) AccessColumns(table string, columns []string) error {
 	if table == getDefTableName(sc, `parameters`) {
-		if sc.TxSmart.UserID == converter.StrToInt64(EcosystemParam(sc, `founder_account`)) {
+		if sc.TxSmart.KeyID == converter.StrToInt64(EcosystemParam(sc, `founder_account`)) {
 			return nil
 		}
 		return fmt.Errorf(`Access denied`)
@@ -660,13 +663,13 @@ func (sc *SmartContract) AccessColumns(table string, columns []string) error {
 // AccessRights checks the access right by executing the condition value
 func (sc *SmartContract) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameter{}
-	prefix := converter.Int64ToStr(sc.TxSmart.StateID)
+	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	if sc.VDE {
 		prefix += `_vde`
 	}
 
 	sp.SetTablePrefix(prefix)
-	err := sp.GetByNameTransaction(sc.DbTransaction, condition)
+	_, err := sp.Get(sc.DbTransaction, condition)
 	if err != nil {
 		return err
 	}
@@ -695,8 +698,8 @@ func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
 	if sc.BlockData != nil {
 		blockTime = sc.BlockData.Time
 	}
-	return VMEvalIf(sc.VM, conditions, uint32(sc.TxSmart.StateID), &map[string]interface{}{`state`: sc.TxSmart.StateID,
-		`citizen`: sc.TxSmart.UserID, `wallet`: sc.TxSmart.UserID, `parser`: sc, `sc`: sc,
+	return VMEvalIf(sc.VM, conditions, uint32(sc.TxSmart.EcosystemID), &map[string]interface{}{`state`: sc.TxSmart.EcosystemID,
+		`citizen`: sc.TxSmart.KeyID, `wallet`: sc.TxSmart.KeyID, `parser`: sc, `sc`: sc,
 		`block_time`: blockTime, `time`: time})
 }
 
@@ -910,7 +913,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
 		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSQLIns0+") VALUES ("+addSQLIns1+")")
 		if !isID {
-			id, err := model.GetNextID(table)
+			id, err := model.GetNextID(sc.DbTransaction, table)
 			if err != nil {
 				return 0, ``, err
 			}

@@ -59,7 +59,7 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 	if err := msgpack.Unmarshal(data, &sc.TxSmart); err != nil {
 		return err
 	}
-	sc.TxContract = smart.VMGetContractByID(smart.GetVM(sc.VDE, sc.TxSmart.StateID),
+	sc.TxContract = smart.VMGetContractByID(smart.GetVM(sc.VDE, sc.TxSmart.EcosystemID),
 		int32(sc.TxSmart.Type))
 	if sc.TxContract == nil {
 		return fmt.Errorf(`unknown contract %d`, sc.TxSmart.Type)

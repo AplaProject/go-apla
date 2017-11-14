@@ -1,8 +1,10 @@
 package model
 
+import "strconv"
+
 type Table struct {
 	tableName   string
-	ID        int64  `gorm:"primary_key;not null"`
+	ID          int64  `gorm:"primary_key;not null"`
 	Name        string `gorm:"not null;size:100"`
 	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
 	Columns     string `gorm:"not null;type:jsonb(PostgreSQL)"`
@@ -12,7 +14,7 @@ type Table struct {
 
 type TableVDE struct {
 	tableName   string
-	ID        int64  `gorm:"primary_key;not null"`
+	ID          int64  `gorm:"primary_key;not null"`
 	Name        string `gorm:"not null;size:100"`
 	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
 	Columns     string `gorm:"not null;type:jsonb(PostgreSQL)"`
@@ -152,4 +154,10 @@ func GetTableWhereUpdatePermissionAndTableName(table, columnName, tableName stri
 	result["columns_and_permissions"] = temp.ColumnsAndPermissions
 	result["rb_id"] = strconv.FormatInt(temp.RbID, 10)
 	return result, nil
+}
+
+func (t *Table) GetAll(prefix string) ([]Table, error) {
+	result := make([]Table, 0)
+	err := DBConn.Table(prefix + "_tables").Find(&result).Error
+	return result, err
 }

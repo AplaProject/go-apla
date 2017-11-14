@@ -125,7 +125,7 @@ func getTableName(sc *SmartContract, tblname string, ecosystem int64) string {
 }
 
 func getDefTableName(sc *SmartContract, tblname string) string {
-	return getTableName(sc, tblname, sc.TxSmart.StateID)
+	return getTableName(sc, tblname, sc.TxSmart.EcosystemID)
 }
 
 func accessContracts(sc *SmartContract, names ...string) bool {
@@ -133,7 +133,7 @@ func accessContracts(sc *SmartContract, names ...string) bool {
 	if !sc.VDE {
 		prefix = `@1`
 	} else {
-		prefix = fmt.Sprintf(`@%d`, sc.TxSmart.StateID)
+		prefix = fmt.Sprintf(`@%d`, sc.TxSmart.EcosystemID)
 	}
 	for _, item := range names {
 		if sc.TxContract.Name == prefix+item {
@@ -157,7 +157,7 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 		case string:
 			if len(name) > 0 {
 				if name[0] != '@' {
-					name = fmt.Sprintf(`@%d`, sc.TxSmart.StateID) + name
+					name = fmt.Sprintf(`@%d`, sc.TxSmart.EcosystemID) + name
 				}
 				if sc.TxContract.StackCont[len(sc.TxContract.StackCont)-1] == name {
 					return true
@@ -173,7 +173,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 	for _, iname := range names {
 		name := iname.(string)
 		if len(name) > 0 {
-			contract := VMGetContract(sc.VM, name, uint32(sc.TxSmart.StateID))
+			contract := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID))
 			if contract == nil {
 				contract = VMGetContract(sc.VM, name, 0)
 				if contract == nil {
@@ -184,8 +184,8 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			if block == nil {
 				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
 			}
-			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`state`: int64(sc.TxSmart.StateID),
-				`citizen`: sc.TxSmart.UserID, `wallet`: sc.TxSmart.UserID, `parser`: sc, `sc`: sc})
+			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`state`: int64(sc.TxSmart.EcosystemID),
+				`citizen`: sc.TxSmart.KeyID, `wallet`: sc.TxSmart.KeyID, `parser`: sc, `sc`: sc})
 			if err != nil {
 				return false, err
 			}
@@ -291,7 +291,7 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	if !sc.VDE {
 		state = `@1`
 	}
-	id, err := model.GetNextID(getDefTableName(sc, `tables`))
+	id, err := model.GetNextID(sc.DbTransaction, getDefTableName(sc, `tables`))
 	if err != nil {
 		return err
 	}
@@ -358,7 +358,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		limit = 250
 	}
 	if ecosystem == 0 {
-		ecosystem = sc.TxSmart.StateID
+		ecosystem = sc.TxSmart.EcosystemID
 	}
 	tblname = getTableName(sc, tblname, ecosystem)
 
@@ -493,7 +493,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		return fmt.Errorf(`TableConditions can be only called from NewTable`)
 	}
 
-	prefix := converter.Int64ToStr(sc.TxSmart.StateID)
+	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	if sc.VDE {
 		prefix += `_vde`
 	}
@@ -524,7 +524,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		if len(perm[v]) == 0 {
 			return fmt.Errorf(`%v condition is empty`, v)
 		}
-		if err = VMCompileEval(sc.VM, perm[v], uint32(sc.TxSmart.StateID)); err != nil {
+		if err = VMCompileEval(sc.VM, perm[v], uint32(sc.TxSmart.EcosystemID)); err != nil {
 			return err
 		}
 	}
@@ -561,7 +561,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		if len(data[`conditions`]) == 0 {
 			return fmt.Errorf(`Conditions is empty`)
 		}
-		if err = VMCompileEval(sc.VM, data[`conditions`], uint32(sc.TxSmart.StateID)); err != nil {
+		if err = VMCompileEval(sc.VM, data[`conditions`], uint32(sc.TxSmart.EcosystemID)); err != nil {
 			return err
 		}
 		if data[`index`] == `1` {
@@ -597,7 +597,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 	}
 	isExist := strings.HasSuffix(sc.TxContract.Name, `EditColumn`)
 	tEx := &model.Table{}
-	prefix := converter.Int64ToStr(sc.TxSmart.StateID)
+	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	if sc.VDE {
 		prefix += `_vde`
 	}
@@ -618,7 +618,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 	if len(permissions) == 0 {
 		return fmt.Errorf(`Permissions is empty`)
 	}
-	if err = VMCompileEval(sc.VM, permissions, uint32(sc.TxSmart.StateID)); err != nil {
+	if err = VMCompileEval(sc.VM, permissions, uint32(sc.TxSmart.EcosystemID)); err != nil {
 		return err
 	}
 	tblName := getDefTableName(sc, tableName)

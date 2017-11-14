@@ -727,7 +727,7 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 	for _, iname := range names {
 		name := iname.(string)
 		if len(name) > 0 {
-			contract := smart.GetContract(name, int32(p.TxEcosystemID))
+			contract := smart.GetContract(name, uint32(p.TxEcosystemID))
 			if contract == nil {
 				contract = smart.GetContract(name, 0)
 				if contract == nil {
@@ -857,8 +857,6 @@ func SysParamString(name string) string {
 func SysParamInt(name string) int64 {
 	return syspar.SysInt64(name)
 }
-
-
 
 // SysFuel returns the fuel rate
 func SysFuel(state int64) string {
@@ -1268,7 +1266,7 @@ func Substr(s string, off int64, slen int64) string {
 }
 
 func IsContract(name string, state int64) bool {
-	return smart.GetContract(name, int32(state)) != nil
+	return smart.GetContract(name, uint32(state)) != nil
 }
 
 func ContractsList(value string) []interface{} {
@@ -1627,7 +1625,7 @@ func CreateTable(p *Parser, name string, columns, permissions string) error {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("unmarshalling permissions")
 		return err
 	}
-	id, err := model.GetNextID(prefix + `_tables`)
+	id, err := model.GetNextID(p.DbTransaction, prefix+`_tables`)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get next id")
 		return err
