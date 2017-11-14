@@ -107,21 +107,17 @@ CREATE INDEX "%[1]d_parameters_index_name" ON "%[1]d_parameters" (name);
 
 INSERT INTO "%[1]d_parameters" ("id","name", "value", "conditions") VALUES 
 ('1','founder_account', '%[2]d', 'ContractConditions(`MainCondition`)'),
-('2','full_node_wallet_id', '%[2]d', 'ContractConditions(`MainCondition`)'),
-('3','host', '', 'ContractConditions(`MainCondition`)'),
-('4','new_table', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('5','new_column', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('6','changing_tables', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('7','changing_language', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('8','changing_signature', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('9','changing_page', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('10','changing_menu', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('11','changing_contracts', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
-('12','ecosystem_name', '%[3]s', 'ContractConditions(`MainCondition`)'),
-('13','max_sum', '1000000', 'ContractConditions(`MainCondition`)'),
-('14','citizenship_cost', '1', 'ContractConditions(`MainCondition`)'),
-('15','money_digit', '2', 'ContractConditions(`MainCondition`)'),
-('16','stylesheet', 'body { 
+('2','new_table', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('3','changing_tables', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('4','changing_language', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('5','changing_signature', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('6','changing_page', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('7','changing_menu', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('8','changing_contracts', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('9','ecosystem_name', '%[3]s', 'ContractConditions(`MainCondition`)'),
+('10','max_sum', '1000000', 'ContractConditions(`MainCondition`)'),
+('11','money_digit', '2', 'ContractConditions(`MainCondition`)'),
+('12','stylesheet', 'body {
   /* You can define your custom styles here or create custom CSS rules */
 }', 'ContractConditions(`MainCondition`)');
 
@@ -168,14 +164,14 @@ INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions")
         '{"insert": "ContractAccess(\"@1NewMenu\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditMenu\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditMenu\")",
-    "value": "ContractAccess(\"@1EditMenu\")",
+    "value": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")",
     "conditions": "ContractAccess(\"@1EditMenu\")"
         }', 'ContractAccess("@1EditTable")'),
         ('6', 'pages', 
         '{"insert": "ContractAccess(\"@1NewPage\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditPage\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditPage\")",
-    "value": "ContractAccess(\"@1EditPage\")",
+    "value": "ContractAccess(\"@1EditPage\",\"@1AppendPage\")",
     "menu": "ContractAccess(\"@1EditPage\")",
     "conditions": "ContractAccess(\"@1EditPage\")"
         }', 'ContractAccess("@1EditTable")'),

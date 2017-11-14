@@ -43,4 +43,5 @@ const (
 	NoFunds                  = "NoFunds"
 	BlockIsFirst             = "BlockIsFirst"
 	IncorrectCallingContract = "IncorrectCallingContract"
+	WritingFile = "WritingFile"
 )

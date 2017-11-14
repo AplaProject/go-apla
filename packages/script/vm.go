@@ -171,11 +171,6 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			}
 		}
 	}
-	/*	if
-		if result[len(result)-1].Interface() != nil {
-			return result[len(result)-1].Interface().(error)
-		}
-	*/
 	return
 }
 

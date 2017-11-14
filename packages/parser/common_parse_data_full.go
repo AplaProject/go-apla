@@ -316,9 +316,11 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 		if err := parseContractTransaction(p, buffer); err != nil {
 			return nil, err
 		}
-		if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
+
+		// TODO: check for what it was here:
+		/*if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
 			return nil, err
-		}
+		}*/
 
 		// struct transaction (only first block transaction for now)
 	} else if consts.IsStruct(int(txType)) {
@@ -646,7 +648,7 @@ func (block *Block) CheckBlock() error {
 	// exclude blocks from future
 	if block.Header.Time > time.Now().Unix() {
 		logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("block time is larger than now")
-		utils.ErrInfo(fmt.Errorf("incorrect block time - block.Header.Time > time.Now().Unix()"))
+		return utils.ErrInfo(fmt.Errorf("incorrect block time - block.Header.Time > time.Now().Unix()"))
 	}
 	if block.PrevHeader == nil || block.PrevHeader.BlockID != block.Header.BlockID-1 {
 		if err := block.readPreviousBlockFromBlockchainTable(); err != nil {

@@ -50,7 +50,7 @@ func Disseminator(d *daemon, ctx context.Context) error {
 	isFullNode := true
 	myNodePosition, err := syspar.GetNodePositionByKeyID(config.KeyID)
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("finding node")
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Debug("finding node")
 		isFullNode = false
 	}
 

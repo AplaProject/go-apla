@@ -85,6 +85,11 @@ func (p *FirstBlockParser) Action() error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving node array")
 		return p.ErrInfo(err)
 	}
+	commission := &model.SystemParameterV2{Name: `commission_wallet`}
+	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(myAddress)}}); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
+		return p.ErrInfo(err)
+	}
 	syspar.SysUpdate()
 	return nil
 }

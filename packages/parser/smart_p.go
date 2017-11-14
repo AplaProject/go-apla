@@ -149,7 +149,6 @@ func init() {
 		"StateVal":           StateVal,
 		"SysParamString":     SysParamString,
 		"SysParamInt":        SysParamInt,
-		"SysCost":            SysCost,
 		"SysFuel":            SysFuel,
 		"Int":                Int,
 		"Str":                Str,
@@ -420,6 +419,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			[]string{converter.Int64ToStr(fromID)}, true); err != nil {
 			return err
 		}
+		// TODO: add checking for key_id "toID". If key not exists it led to fork
 		if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
 			[]string{converter.Int64ToStr(toID)}, true); err != nil {
 			return err
@@ -858,10 +858,7 @@ func SysParamInt(name string) int64 {
 	return syspar.SysInt64(name)
 }
 
-// SysCost returns the cost of the transaction from the system parameter
-func SysCost(name string) int64 {
-	return syspar.SysCost(name)
-}
+
 
 // SysFuel returns the fuel rate
 func SysFuel(state int64) string {

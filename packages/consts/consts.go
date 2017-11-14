@@ -25,13 +25,10 @@ const EGS_DIGIT = 18 //money_digit for EGS 1000000000000000000
 
 // is used in confirmations
 const WAIT_CONFIRMED_NODES = 10
-const MAX_TX_SIZE = 32 << 20
 
 // The number of nodes which should have the same block as we have for regarding this block belongs to the major part of DC-net. For get_confirmed_block_id()
 const MIN_CONFIRMED_NODES = 0
 
-// Approximate blockchain size
-const BLOCKCHAIN_SIZE = 1000
 const DOWNLOAD_CHAIN_TRY_COUNT = 10
 
 // How fast could the time of transaction pass
@@ -63,40 +60,6 @@ var BlockSize = 16
 // TxTypes is the list of the embedded transactions
 var TxTypes = map[int]string{
 	1:  "FirstBlock",
-	2:  "Reserved1",
-	3:  "Reserved2",
-	4:  "Reserved3",
-	5:  "DLTTransfer",
-	6:  "DLTChangeHostVote",
-	7:  "UpdFullNodes",
-	8:  "ChangeNodeKey",
-	9:  "NewState",
-	10: "NewColumn",
-	11: "NewTable",
-	12: "EditPage",
-	13: "EditMenu",
-	14: "EditContract",
-	15: "NewContract",
-	16: "EditColumn",
-	17: "EditTable",
-	18: "EditStateParameters",
-	19: "NewStateParameters",
-	20: "NewPage",
-	21: "NewMenu",
-	22: "ChangeNodeKeyDLT",
-	23: "AppendPage",
-	24: "RestoreAccessActive",
-	25: "RestoreAccessClose",
-	26: "RestoreAccessRequest",
-	27: "RestoreAccess",
-	28: "NewLang",
-	29: "EditLang",
-	30: "AppendMenu",
-	31: "NewSign",
-	32: "EditSign",
-	33: "EditWallet",
-	34: "ActivateContract",
-	35: "NewAccount",
 }
 
 func init() {

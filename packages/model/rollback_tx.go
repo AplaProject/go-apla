@@ -12,17 +12,12 @@ func (RollbackTx) TableName() string {
 	return "rollback_tx"
 }
 
-func (rt *RollbackTx) GetRollbackTransactions(transactionHash []byte) ([]RollbackTx, error) {
-	transactions := make([]RollbackTx, 0)
-	err := DBConn.Where("tx_hash =  ?", transactionHash).Order("id desc").Find(&transactions).Error
-	if err != nil {
-		return nil, err
-	}
-	return transactions, err
+func (rt *RollbackTx) GetRollbackTransactions(dbTransaction *DbTransaction, transactionHash []byte) ([]map[string]string, error) {
+	return GetAllTx(dbTransaction, "SELECT * from rollback_tx WHERE tx_hash = ?", -1, transactionHash)
 }
 
-func (rt *RollbackTx) DeleteByHash() error {
-	return DBConn.Where("tx_hash = ?", rt.TxHash).Delete(rt).Error
+func (rt *RollbackTx) DeleteByHash(dbTransaction *DbTransaction) error {
+	return GetDB(dbTransaction).Exec("DELETE FROM rollback_tx WHERE tx_hash = ?", rt.TxHash).Error
 }
 
 func (rt *RollbackTx) DeleteByHashAndTableName(transaction *DbTransaction) error {

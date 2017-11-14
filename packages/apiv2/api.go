@@ -112,7 +112,7 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 }
 
 func getPrefix(data *apiData) (prefix string) {
-	prefix = converter.Int64ToStr(data.state)
+	prefix = converter.Int64ToStr(data.ecosystemId)
 	if data.vde {
 		prefix += `_vde`
 	}

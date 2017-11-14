@@ -28,6 +28,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
 // get the list of transactions which belong to the sender from 'disseminator' daemon
@@ -114,13 +115,19 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 	blockHash := buf.Next(32)
 	log.Debug("blockHash %x", blockHash)
 
+	qb := &model.QueueBlock{}
+	found, err = qb.GetQueueBlockByHash(blockHash)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting QueueBlock")
+		return utils.ErrInfo(err)
+	}
 	// we accept only new blocks
-	if newBlockID >= infoBlock.BlockID {
+	if  !found && newBlockID >= infoBlock.BlockID {
 		queueBlock := &model.QueueBlock{Hash: blockHash, FullNodeID: fullNodeID, BlockID: newBlockID}
 		err = queueBlock.Create()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Creating QueueBlock")
-			return utils.ErrInfo(err)
+			return nil
 		}
 	}
 
@@ -197,8 +204,8 @@ func saveNewTransactions(r *DisRequest) error {
 			return utils.ErrInfo(errors.New("len(txBinData) == 0"))
 		}
 
-		if int64(len(txBinData)) > consts.MAX_TX_SIZE {
-			log.WithFields(log.Fields{"type": consts.ParameterExceeded, "len": len(txBinData), "size": consts.MAX_TX_SIZE}).Error("len of tx data exceeds max size")
+		if int64(len(txBinData)) > syspar.GetMaxTxSize() {
+			log.WithFields(log.Fields{"type": consts.ParameterExceeded, "len": len(txBinData), "size": syspar.GetMaxTxSize()}).Error("len of tx data exceeds max size")
 			return utils.ErrInfo("len(txBinData) > max_tx_size")
 		}
 
