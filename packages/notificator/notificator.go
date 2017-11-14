@@ -2,11 +2,12 @@ package notificator
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/publisher"
+	log "github.com/sirupsen/logrus"
 )
 
 type EcosystemID int64
@@ -29,24 +30,22 @@ func SendNotifications() {
 		for _, notif := range notifs {
 			userID, err := strconv.ParseInt(notif["recepient_id"], 10, 64)
 			if err != nil {
-				//TODO add logs
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "value": notif["recepient_id"], "error": err}).Error("getting recepient_id")
 				return
 			}
 			data, err := mapToString(notif)
 			if err != nil {
-				//TODO add logs
+				log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling notification")
 				return
 			}
 			ok, err := publisher.Write(userID, data)
 			if err != nil {
-				fmt.Println("err: ", err)
-				//TODO add logs
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
 				return
 			}
 
 			if !ok {
-				fmt.Println("can't write to centrifugo")
-				//TODO add logs
+				log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
 				return
 			}
 			id, _ := strconv.ParseInt(notif["id"], 10, 64)
@@ -72,7 +71,9 @@ func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64
 	}
 	rows, err := model.GetAllNotifications(int64(ecosystemID), lastNotificationID, users)
 	if err != nil || len(rows) == 0 {
-		// TODO add logs
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all notifications")
+		}
 		return nil
 	}
 	return rows

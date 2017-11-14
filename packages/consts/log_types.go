@@ -43,5 +43,6 @@ const (
 	NoFunds                  = "NoFunds"
 	BlockIsFirst             = "BlockIsFirst"
 	IncorrectCallingContract = "IncorrectCallingContract"
-	WritingFile = "WritingFile"
+	WritingFile              = "WritingFile"
+	CentrifugoError          = "CentrifugoError"
 )
