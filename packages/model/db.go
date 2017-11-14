@@ -33,10 +33,10 @@ func isFound(db *gorm.DB) (bool, error) {
 	return true, db.Error
 }
 
-func GormInit(user string, pass string, dbName string) error {
+func GormInit(host string, port string, user string, pass string, dbName string) error {
 	var err error
 	DBConn, err = gorm.Open("postgres",
-		fmt.Sprintf("host=localhost user=%s dbname=%s sslmode=disable password=%s", user, dbName, pass))
+		fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", host, port, user, dbName, pass))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cant open connection to DB")
 		DBConn = nil
@@ -140,8 +140,6 @@ func Update(transaction *DbTransaction, tblname, set, where string) error {
 func Delete(tblname, where string) error {
 	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
 }
-
-
 
 func GetFirstColumnName(table string) (string, error) {
 	rows, err := DBConn.Raw(`SELECT * FROM "` + table + `" LIMIT 1`).Rows()
@@ -408,7 +406,7 @@ func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 
 func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) (int64, error) {
 	var result int64
-	err := GetDB(transaction).Raw( `SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering).Row().Scan(&result)
+	err := GetDB(transaction).Raw(`SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering).Row().Scan(&result)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(fmt.Errorf("GetRollbackID from table %s where %s order by rb_id", tblname, where, ordering))
 		return 0, err
