@@ -1,6 +1,7 @@
 package notificator
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -31,7 +32,12 @@ func SendNotifications() {
 				//TODO add logs
 				return
 			}
-			ok, err := publisher.Write(userID, mapToString(notif))
+			data, err := mapToString(notif)
+			if err != nil {
+				//TODO add logs
+				return
+			}
+			ok, err := publisher.Write(userID, data)
 			if err != nil {
 				fmt.Println("err: ", err)
 				//TODO add logs
@@ -51,14 +57,12 @@ func SendNotifications() {
 	}
 }
 
-func mapToString(value map[string]string) string {
-	result := "{"
-	for key, value := range value {
-		result += fmt.Sprintf(`"%s": "%s",`, key, value)
+func mapToString(value map[string]string) (string, error) {
+	bytes, err := json.Marshal(value)
+	if err != nil {
+		return "", err
 	}
-	result = result[:len(result)-1]
-	result += "}"
-	return result
+	return string(bytes), nil
 }
 
 func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64, userIDs NotificationStats) []map[string]string {
