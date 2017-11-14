@@ -52,6 +52,7 @@ var daemonsList = map[string]func(*daemon, context.Context) error{
 	"QueueParserTx":      QueueParserTx,
 	"QueueParserBlocks":  QueueParserBlocks,
 	"Confirmations":      Confirmations,
+	"Notificator":        Notificate,
 }
 
 var serverList = []string{
@@ -62,6 +63,7 @@ var serverList = []string{
 	"QueueParserBlocks",
 	"Disseminator",
 	"Confirmations",
+	"Notificator",
 }
 
 var mobileList = []string{
