@@ -336,7 +336,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if *utils.RollbackToBlockID > 0 {
 		err = syspar.SysUpdate()
 		if err != nil {
-			log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
+			log.WithError(err).Error("can't read system parameters")
 		}
 		log.WithFields(log.Fields{"block_id": *utils.RollbackToBlockID}).Info("Rollbacking to block ID")
 		err := rollbackToBlock(*utils.RollbackToBlockID)
