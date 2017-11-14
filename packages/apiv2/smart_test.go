@@ -77,7 +77,7 @@ func TestMoneyTransfer(t *testing.T) {
 		return
 	}
 	form = url.Values{`Amount`: {`53330000`}, `Recipient`: {`0005207000`}}
-	if err := postTx(`MoneyTransfer`, &form); err.Error() != `Recipient 0005207000 is invalid` {
+	if err := postTx(`MoneyTransfer`, &form); cutErr(err) != `Recipient 0005207000 is invalid` {
 		t.Error(err)
 		return
 	}

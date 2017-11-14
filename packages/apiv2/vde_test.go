@@ -36,6 +36,7 @@ func TestVDECreate(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
 	if err = sendPost(`vde/create`, nil, &ret); err != nil &&
 		err.Error() != `400 {"error": "E_VDECREATED", "msg": "Virtual Dedicated Ecosystem is already created" }` {
 		t.Error(err)
@@ -143,7 +144,7 @@ func TestVDECreate(t *testing.T) {
 	}
 
 	name := randName(`tbl`)
-	form = url.Values{"Name": {name}, `vde`: {`1`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1",
+	form = url.Values{"Name": {name}, `vde`: {`true`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1",
 			  "conditions":"true"},
 			{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
 			{"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
@@ -153,7 +154,7 @@ func TestVDECreate(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Name": {name}, `vde`: {`1`},
+	form = url.Values{"Name": {name}, `vde`: {`true`},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")",
 						"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
 	err = postTx(`EditTable`, &form)
