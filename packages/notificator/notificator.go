@@ -28,9 +28,9 @@ func SendNotifications() {
 	for ecosystemID, ecosystemStats := range notifications {
 		notifs := getEcosystemNotifications(ecosystemID, *ecosystemStats.lastNotifID, ecosystemStats)
 		for _, notif := range notifs {
-			userID, err := strconv.ParseInt(notif["recepient_id"], 10, 64)
+			userID, err := strconv.ParseInt(notif["recipient_id"], 10, 64)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConvertionError, "value": notif["recepient_id"], "error": err}).Error("getting recepient_id")
+				log.WithFields(log.Fields{"type": consts.ConvertionError, "value": notif["recipient_id"], "error": err}).Error("getting recipient_id")
 				return
 			}
 			data, err := mapToString(notif)
