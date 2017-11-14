@@ -78,7 +78,7 @@ func TestEditEcosystem(t *testing.T) {
 		return
 	}
 	err = postTx(`@1NewPage`, &form)
-	if err.Error() != fmt.Sprintf(`!Page %s already exists`, name) {
+	if cutErr(err) != fmt.Sprintf(`!Page %s already exists`, name) {
 		t.Error(err)
 		return
 	}

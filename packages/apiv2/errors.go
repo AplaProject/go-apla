@@ -29,6 +29,7 @@ var (
 		`E_INVALIDWALLET`: `Wallet %s is not valid`,
 		`E_NOTFOUND`:      `Page not found`,
 		`E_NOTINSTALLED`:  `Apla is not installed`,
+		`E_PERMISSION`:    `Permission denied`,
 		`E_QUERY`:         `DB query is wrong`,
 		`E_RECOVERED`:     `API recovered`,
 		`E_REFRESHTOKEN`:  `Refresh token is not valid`,
@@ -41,5 +42,7 @@ var (
 		`E_UNAUTHORIZED`:  `Unauthorized`,
 		`E_UNDEFINEVAL`:   `Value %s is undefined`,
 		`E_UNKNOWNUID`:    `Unknown uid`,
+		`E_VDE`:           `Virtual Dedicated Ecosystem %s doesn't exist`,
+		`E_VDECREATED`:    `Virtual Dedicated Ecosystem is already created`,
 	}
 )

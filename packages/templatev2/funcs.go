@@ -156,6 +156,7 @@ func ecosysparTag(par parFunc) string {
 	state := converter.StrToInt((*par.Vars)[`ecosystem_id`])
 	val, err := StateParam(int64(state), (*par.Pars)[`Name`])
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
 		return err.Error()
 	}
 	if len((*par.Pars)[`Source`]) > 0 {
@@ -305,6 +306,8 @@ func dataTag(par parFunc) string {
 				out, err := json.Marshal(par.Node.Attr[`custombody`].([][]*node)[i-defcol])
 				if err == nil {
 					ival = replace(string(out), 0, &vals)
+				} else {
+					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling custombody to JSON")
 				}
 			}
 			row[i] = ival
@@ -409,8 +412,9 @@ func dbfindTag(par parFunc) string {
 				process(body, &root, par.Vars)
 				out, err := json.Marshal(root.Children)
 				if err == nil {
-					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling root children to JSON")
 					ival = replace(string(out), 0, &item)
+				} else {
+					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling root children to JSON")
 				}
 			}
 			if par.Node.Attr[`prefix`] != nil {

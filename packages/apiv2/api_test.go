@@ -214,6 +214,12 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 	if err != nil {
 		return
 	}
+	if len((*form)[`vde`]) > 0 {
+		if ret[`result`] != nil {
+			id = converter.StrToInt64(ret[`result`].(string))
+		}
+		return
+	}
 	id, err = waitTx(ret[`hash`].(string))
 	if id != 0 && err != nil {
 		msg = err.Error()
@@ -225,4 +231,12 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 func postTx(txname string, form *url.Values) error {
 	_, _, err := postTxResult(txname, form)
 	return err
+}
+
+func cutErr(err error) string {
+	out := err.Error()
+	if off := strings.IndexByte(out, '('); off != -1 {
+		out = out[:off]
+	}
+	return strings.TrimSpace(out)
 }

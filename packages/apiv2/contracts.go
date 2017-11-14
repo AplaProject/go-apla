@@ -37,7 +37,7 @@ type contractsResult struct {
 func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	var limit int
 
-	table := fmt.Sprintf(`%d_contracts`, data.ecosystemId)
+	table := getPrefix(data) + `_contracts`
 
 	count, err := model.GetNextID(nil, table)
 	if err != nil {

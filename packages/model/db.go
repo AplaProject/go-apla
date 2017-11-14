@@ -123,6 +123,14 @@ func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 	return err
 }
 
+func ExecSchemaLocalData(id int, wallet int64) error {
+	schema, err := static.Asset("static/schema-vde.sql")
+	if err != nil {
+		return err
+	}
+	return DBConn.Exec(fmt.Sprintf(string(schema), id, wallet)).Error
+}
+
 func ExecSchema() error {
 	schema, err := static.Asset("static/schema-v2.sql")
 	if err != nil {
@@ -140,8 +148,6 @@ func Update(transaction *DbTransaction, tblname, set, where string) error {
 func Delete(tblname, where string) error {
 	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
 }
-
-
 
 func GetFirstColumnName(table string) (string, error) {
 	rows, err := DBConn.Raw(`SELECT * FROM "` + table + `" LIMIT 1`).Rows()
@@ -406,9 +412,18 @@ func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	return id + 1, err
 }
 
+func IsTable(tblname string) bool {
+	var name string
+	DBConn.Table("information_schema.tables").
+		Where("table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema') AND table_name=?", tblname).
+		Select("table_name").Row().Scan(&name)
+
+	return name == tblname
+}
+
 func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) (int64, error) {
 	var result int64
-	err := GetDB(transaction).Raw( `SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering).Row().Scan(&result)
+	err := GetDB(transaction).Raw(`SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering).Row().Scan(&result)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(fmt.Errorf("GetRollbackID from table %s where %s order by rb_id", tblname, where, ordering))
 		return 0, err

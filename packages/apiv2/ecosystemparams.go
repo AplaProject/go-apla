@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
 	log "github.com/sirupsen/logrus"
@@ -42,12 +41,12 @@ func ecosystemParams(w http.ResponseWriter, r *http.Request, data *apiData, logg
 		result ecosystemParamsResult
 		names  map[string]bool
 	)
-	state, err := checkEcosystem(w, data, logger)
+	_, prefix, err := checkEcosystem(w, data, logger)
 	if err != nil {
 		return err
 	}
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(converter.Int64ToStr(state))
+	sp.SetTablePrefix(prefix)
 	list, err := sp.GetAllStateParameters()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting all state parameters")

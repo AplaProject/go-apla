@@ -344,8 +344,12 @@ func (p *Parser) CallContract(flags int) (err error) {
 			}
 			payWallet.SetTablePrefix(p.TxSmart.TokenEcosystem)
 			if err = payWallet.Get(fromID); err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
-				return err
+				if err == gorm.ErrRecordNotFound {
+					return fmt.Errorf(`current balance is not enough`)
+				} else {
+					logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
+					return err
+				}
 			}
 			if !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(p.TxSmart.PublicKey, payWallet.PublicKey) {
 				return fmt.Errorf(`Token and user public keys are different`)
@@ -723,7 +727,7 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 	for _, iname := range names {
 		name := iname.(string)
 		if len(name) > 0 {
-			contract := smart.GetContract(name, int32(p.TxEcosystemID))
+			contract := smart.GetContract(name, uint32(p.TxEcosystemID))
 			if contract == nil {
 				contract = smart.GetContract(name, 0)
 				if contract == nil {
@@ -853,8 +857,6 @@ func SysParamString(name string) string {
 func SysParamInt(name string) int64 {
 	return syspar.SysInt64(name)
 }
-
-
 
 // SysFuel returns the fuel rate
 func SysFuel(state int64) string {
@@ -1264,7 +1266,7 @@ func Substr(s string, off int64, slen int64) string {
 }
 
 func IsContract(name string, state int64) bool {
-	return smart.GetContract(name, int32(state)) != nil
+	return smart.GetContract(name, uint32(state)) != nil
 }
 
 func ContractsList(value string) []interface{} {
@@ -1377,6 +1379,29 @@ func RollbackEcosystem(p *Parser) error {
 		log.WithFields(log.Fields{"table_id": rollbackTx.TableID, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
 		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
 	}
+	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, rollbackTx.TableID)) {
+		// Drop all _local_ tables
+		table := &model.Table{}
+		prefix := fmt.Sprintf(`%d_vde`, rollbackTx.TableID)
+		table.SetTablePrefix(prefix)
+		list, err := table.GetAll(prefix)
+		if err != nil {
+			return err
+		}
+		for _, item := range list {
+			err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", prefix, item.Name))
+			if err != nil {
+				return err
+			}
+		}
+		for _, name := range []string{`tables`, `parameters`} {
+			err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", prefix, name))
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
 		`contracts`, `parameters`, `blocks`, `history`, `keys`} {
 		err = model.DropTable(p.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
@@ -1600,7 +1625,13 @@ func CreateTable(p *Parser, name string, columns, permissions string) error {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("unmarshalling permissions")
 		return err
 	}
+	id, err := model.GetNextID(p.DbTransaction, prefix+`_tables`)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get next id")
+		return err
+	}
 	t := &model.Table{
+		ID:          id,
 		Name:        name,
 		Columns:     string(colout),
 		Permissions: string(permout),
