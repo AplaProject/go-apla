@@ -159,7 +159,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 func checkConf(host string, blockID int64, logger *log.Entry) string {
 	conn, err := net.DialTimeout("tcp", host, 5*time.Second)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host, "block_id": blockID}).Error("dialing to host")
+		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host, "block_id": blockID}).Debug("dialing to host")
 		return "0"
 	}
 	defer conn.Close()
