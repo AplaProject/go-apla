@@ -2,7 +2,6 @@ package publisher
 
 import (
 	"encoding/hex"
-	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -50,10 +49,6 @@ func GetHMACSign(userID int64) (string, string, error) {
 		return "", "", err
 	}
 	result := hex.EncodeToString(secret)
-	fmt.Println("secret: ", centrifugoSecret)
-	fmt.Println("user: ", userID)
-	fmt.Println("timestamp: ", timestamp)
-	fmt.Println("token: ", result)
 	clientsChannels[userID] = result
 	return result, timestamp, nil
 }
