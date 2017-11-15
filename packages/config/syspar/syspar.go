@@ -26,8 +26,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/AplaProject/go-apla/packages/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -92,7 +92,6 @@ func SysUpdate() error {
 	for _, param := range systemParameters {
 		cache[param.Name] = param.Value
 	}
-
 
 	nodes = make(map[int64]*FullNode)
 	nodesByPosition = make([][]string, 0)
@@ -270,7 +269,6 @@ func GetCommissionWallet(ecosystem int64) string {
 	return wallets[1]
 }
 
-
 func GetMaxBlockSize() int64 {
 	return converter.StrToInt64(SysString(MaxBlockSize))
 }
@@ -278,8 +276,6 @@ func GetMaxBlockSize() int64 {
 func GetMaxTxSize() int64 {
 	return converter.StrToInt64(SysString(MaxTxSize))
 }
-
-
 
 func GetGapsBetweenBlocks() int64 {
 	return converter.StrToInt64(SysString(GapsBetweenBlocks))
@@ -301,21 +297,25 @@ func GetMaxBlockUserTx() int {
 	return converter.StrToInt(SysString(MaxBlockUserTx))
 }
 
+// GetHosts returns array of hostnames excluding *utils.TCPHost
 func GetHosts() []string {
 	mutex.RLock()
 	defer mutex.RUnlock()
 
+	thisHost := *utils.TCPHost
+	if thisHost == "" {
+		thisHost = "127.0.0.1"
+	}
 	ret := make([]string, 0)
 	for _, item := range nodes {
-		if item.Host == *utils.TCPHost {
+		if item.Host == thisHost {
+			log.Debugln("GetHosts: it's me")
 			continue
 		}
 		ret = append(ret, item.Host)
 	}
 	return ret
 }
-
-
 
 // SysString returns string value of the system parameter
 func SysString(name string) string {
