@@ -2,6 +2,7 @@ package publisher
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -42,15 +43,19 @@ func InitCentrifugo(cfg conf.CentrifugoConfig) {
 }
 
 func GetHMACSign(userID int64) (string, string, error) {
-	timestamp := time.Now().Unix()
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 	secret, err := crypto.GetHMAC(centrifugoSecret, strconv.FormatInt(userID, 10), timestamp)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("HMAC getting error")
 		return "", "", err
 	}
 	result := hex.EncodeToString(secret)
+	fmt.Println("secret: ", centrifugoSecret)
+	fmt.Println("user: ", userID)
+	fmt.Println("timestamp: ", timestamp)
+	fmt.Println("token: ", result)
 	clientsChannels[userID] = result
-	return result, strconv.FormatInt(timestamp, 10), nil
+	return result, timestamp, nil
 }
 
 // Write is publishing data to server
