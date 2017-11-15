@@ -25,6 +25,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -44,27 +45,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
-	isBytea := getBytea(table)
+	isBytea := smart.GetBytea(table)
 	for i, v := range ivalues {
 		if len(fields) > i && isBytea[fields[i]] {
-			var vlen int
 			switch v.(type) {
-			case []byte:
-				vlen = len(v.([]byte))
 			case string:
 				if vbyte, err := hex.DecodeString(v.(string)); err == nil {
 					ivalues[i] = vbyte
-					vlen = len(vbyte)
-				} else {
-					vlen = len(v.(string))
-				}
-			}
-			if vlen > 64 {
-				if isCustom, err := IsCustomTable(table); err != nil {
-					return 0, ``, err
-				} else if isCustom {
-					log.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("hash value cannot be larger than 64 bytes")
-					return 0, ``, fmt.Errorf(`hash value cannot be larger than 64 bytes`)
 				}
 			}
 		}

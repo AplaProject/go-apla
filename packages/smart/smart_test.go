@@ -37,7 +37,7 @@ func TestNewContract(t *testing.T) {
 				MyVal  string
 			}
 			func conditions {
-				Println( "Front")//TxJSON())
+				Println( "Front")
 				//$tmp = "Test string"
 //				Println("NewCitizen Front", $tmp, $key_id, $ecosystem_id, $PublicKey )
 			}

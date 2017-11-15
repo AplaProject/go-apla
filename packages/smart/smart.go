@@ -77,13 +77,16 @@ func GetTestValue(name string) string {
 	return smartTest[name]
 }
 
+func (sc SmartContract) GetLogger() *log.Entry {
+	return log.WithFields(log.Fields{"vde": sc.VDE, "name": sc.TxContract.Name})
+}
+
 func newVM() *script.VM {
 	vm := script.NewVM()
 	vm.Extern = true
 	vm.Extend(&script.ExtendData{Objects: map[string]interface{}{
 		"Println": fmt.Println,
 		"Sprintf": fmt.Sprintf,
-		"TxJson":  TxJSON,
 		"Float":   Float,
 		"Money":   script.ValueToDecimal,
 		`Test`:    testValue,
@@ -294,38 +297,6 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 		return block.Value.(*script.Block)
 	}
 	return nil
-}
-
-// TxJSON returns JSON data which has been generated from Tx data and extended variables
-func TxJSON(contract *Contract) string {
-	lines := make([]string, 0)
-	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-		switch fitem.Type.String() {
-		case `string`:
-			lines = append(lines, fmt.Sprintf(`"%s": "%s"`, fitem.Name, (*(*contract).Extend)[fitem.Name]))
-		case `int64`:
-			lines = append(lines, fmt.Sprintf(`"%s": %d`, fitem.Name, (*(*contract).Extend)[fitem.Name]))
-		case `[]uint8`:
-			lines = append(lines, fmt.Sprintf(`"%s": "%s"`, fitem.Name,
-				hex.EncodeToString((*(*contract).Extend)[fitem.Name].([]byte))))
-		}
-	}
-	return `{` + strings.Join(lines, ",\r\n") + `}`
-}
-
-// Float converts int64, string to float64
-func Float(v interface{}) (ret float64) {
-	switch value := v.(type) {
-	case int64:
-		ret = float64(value)
-	case string:
-		if val, err := strconv.ParseFloat(value, 64); err == nil {
-			ret = val
-		} else {
-			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": value}).Error("converting value from string to float")
-		}
-	}
-	return
 }
 
 func ContractsList(value string) []string {
@@ -590,31 +561,39 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 
 // AccessTable checks the access right to the table
 func (sc *SmartContract) AccessTable(table, action string) error {
+	logger := sc.GetLogger()
+
 	if table == getDefTableName(sc, `parameters`) {
-		if sc.TxSmart.KeyID == converter.StrToInt64(EcosystemParam(sc, `founder_account`)) {
+		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return nil
 		}
+		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
 		return fmt.Errorf(`Access denied`)
 	}
 
 	if isCustom, err := IsCustomTable(table); err != nil {
+		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
 		return err
 	} else if !isCustom {
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
+
 	prefix, name := PrefixName(table)
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
 	tablePermission, err := tables.GetPermissions(name, "")
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table permissions")
 		return err
 	}
 	if len(tablePermission[action]) > 0 {
 		ret, err := sc.EvalIf(tablePermission[action])
 		if err != nil {
+			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "error": err, "type": consts.EvalError}).Error("evaluating table permissions for action")
 			return err
 		}
 		if !ret {
+			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "type": consts.EvalError}).Error("access denied")
 			return fmt.Errorf(`Access denied`)
 		}
 	}
@@ -623,8 +602,10 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 
 // AccessColumns checks access rights to the columns
 func (sc *SmartContract) AccessColumns(table string, columns []string) error {
+	logger := sc.GetLogger()
+
 	if table == getDefTableName(sc, `parameters`) {
-		if sc.TxSmart.KeyID == converter.StrToInt64(EcosystemParam(sc, `founder_account`)) {
+		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return nil
 		}
 		return fmt.Errorf(`Access denied`)
@@ -636,8 +617,10 @@ func (sc *SmartContract) AccessColumns(table string, columns []string) error {
 	tables.SetTablePrefix(prefix)
 	columnsAndPermissions, err := tables.GetColumns(name, "")
 	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table columns")
 		return err
 	}
+
 	for _, col := range columns {
 		var (
 			cond string
@@ -650,6 +633,7 @@ func (sc *SmartContract) AccessColumns(table string, columns []string) error {
 		if ok && len(cond) > 0 {
 			ret, err := sc.EvalIf(cond)
 			if err != nil {
+				logger.WithFields(log.Fields{"condition": cond, "column": col, "type": consts.EvalError}).Error("evaluating condition")
 				return err
 			}
 			if !ret {
@@ -699,14 +683,15 @@ func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
 		blockTime = sc.BlockData.Time
 	}
 	return VMEvalIf(sc.VM, conditions, uint32(sc.TxSmart.EcosystemID), &map[string]interface{}{`ecosystem_id`: sc.TxSmart.EcosystemID,
-		`citizen`: sc.TxSmart.KeyID, `key_id`: sc.TxSmart.KeyID, `parser`: sc, `sc`: sc,
+		`key_id`: sc.TxSmart.KeyID, `parser`: sc, `sc`: sc,
 		`block_time`: blockTime, `time`: time})
 }
 
-func getBytea(table string) map[string]bool {
+func GetBytea(table string) map[string]bool {
 	isBytea := make(map[string]bool)
 	colTypes, err := model.GetAll(`select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
 		return isBytea
 	}
 	for _, icol := range colTypes {
@@ -727,24 +712,14 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
-	// TODO: Insert ??? getBytea from parser
-	isBytea := getBytea(table)
+	isBytea := GetBytea(table)
 	for i, v := range ivalues {
 		if len(fields) > i && isBytea[fields[i]] {
-			var vlen int
 			switch v.(type) {
-			case []byte:
-				vlen = len(v.([]byte))
 			case string:
 				if vbyte, err := hex.DecodeString(v.(string)); err == nil {
 					ivalues[i] = vbyte
-					vlen = len(vbyte)
-				} else {
-					vlen = len(v.(string))
 				}
-			}
-			if vlen > 64 {
-				// TODO: Insert ?? from parser vlen > 64
 			}
 		}
 	}
