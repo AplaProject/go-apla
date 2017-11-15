@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/binary"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	log "github.com/sirupsen/logrus"
@@ -15,11 +16,14 @@ const (
 	_SHA256 hashProvider = iota
 )
 
-func GetHMAC(secret string, message string) ([]byte, error) {
+func GetHMAC(secret string, message string, timestamp int64) ([]byte, error) {
 	switch hmacProv {
 	case _SHA256:
 		mac := hmac.New(sha256.New, []byte(secret))
 		mac.Write([]byte(message))
+		b := make([]byte, 8)
+		binary.LittleEndian.PutUint64(b, uint64(timestamp))
+		mac.Write(b)
 		return mac.Sum(nil), nil
 	default:
 		return nil, ErrUnknownProvider
