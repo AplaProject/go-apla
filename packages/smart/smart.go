@@ -99,15 +99,6 @@ func init() {
 	smartVDE = make(map[int64]*script.VM)
 }
 
-/*func pref2state(prefix string) (state uint32) {
-	if prefix != `global` {
-		if val, err := strconv.ParseUint(prefix, 10, 32); err == nil {
-			state = uint32(val)
-		}
-	}
-	return
-}*/
-
 func GetVM(vde bool, ecosystemID int64) *script.VM {
 	if vde {
 		if v, ok := smartVDE[ecosystemID]; ok {

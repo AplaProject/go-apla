@@ -105,10 +105,6 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	cost += selectCost
 
 	if whereFields != nil && len(logData) > 0 {
-		/*	if whereFields != nil {
-			if len(logData) == 0 {
-				return tableID, fmt.Errorf(`update of the unknown record`)
-			}*/
 		jsonMap := make(map[string]string)
 		for k, v := range logData {
 			if k == `id` {
@@ -195,7 +191,6 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			} else {
 				addSQLIns0 += fields[i] + `,`
 			}
-			// || utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "node_public_key"}))
 			if isBytea[fields[i]] && len(values[i]) != 0 {
 				addSQLIns1 += `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if values[i] == `NULL` {

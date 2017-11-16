@@ -32,9 +32,9 @@ type BlockHeader struct {
 
 // TxHeader is the old version of the transaction header
 type TxHeader struct {
-	Type      byte
-	Time      uint32
-	KeyID  int64
+	Type  byte
+	Time  uint32
+	KeyID int64
 }
 
 // FirstBlock is the header of FirstBlock transaction
@@ -65,7 +65,7 @@ func MakeStruct(name string) interface{} {
 
 // IsStruct is only used for FirstBlock now
 func IsStruct(tx int) bool {
-	return tx == 1 // > 0 && tx <= 4 /*TXNewCitizen*/
+	return tx == 1
 }
 
 // Header returns TxHeader

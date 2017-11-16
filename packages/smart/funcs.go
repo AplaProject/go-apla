@@ -227,7 +227,6 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	indexes := make([]string, 0)
 
 	colsSQL := ""
-	//	colsSQL2 := ""
 	colperm := make(map[string]string)
 	colList := make(map[string]bool)
 	for _, data := range cols {
@@ -258,7 +257,6 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 			colType = data[`type`]
 		}
 		colsSQL += `"` + colname + `" ` + colType + " " + colDef + " ,\n"
-		//colsSQL2 += `"` + data[`name`] + `": "ContractConditions(\"MainCondition\")",`
 		colperm[colname] = data[`conditions`]
 		if data[`index`] == "1" {
 			indexes = append(indexes, colname)
@@ -269,7 +267,6 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling columns to JSON")
 		return err
 	}
-	//	colsSQL2 = colsSQL2[:len(colsSQL2)-1]
 	if sc.VDE {
 		err = model.CreateVDETable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
 	} else {

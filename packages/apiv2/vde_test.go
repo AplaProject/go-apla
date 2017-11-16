@@ -316,5 +316,4 @@ func TestVDEParams(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	//	t.Error(`OK`)
 }

@@ -32,15 +32,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
 
-	/*	"bytes"
-		"database/sql"
-		"reflect"
-
-
-		"github.com/AplaProject/go-apla/packages/templatev2"
-		"github.com/AplaProject/go-apla/packages/utils"
-
-		"github.com/jinzhu/gorm"*/
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -248,7 +239,8 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 }
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{}, params string, val ...interface{}) (qcost int64, err error) { // map[string]interface{}) {
+func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{}, 
+	params string, val ...interface{}) (qcost int64, err error) { 
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return

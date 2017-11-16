@@ -17,7 +17,6 @@
 package apiv2
 
 import (
-	//	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -65,14 +64,6 @@ func TestNewContracts(t *testing.T) {
 				return
 			}
 		}
-		/*if strings.HasPrefix(item.Name, `EditProfile`) {
-			form := url.Values{"Id": {`62`}, "Value": {item.Value},
-				"Conditions": {`true`}}
-			if err := postTx(`EditContract`, &form); err != nil {
-				t.Error(err)
-				return
-			}
-		}*/
 		if strings.HasSuffix(item.Name, `testUpd`) {
 			continue
 		}
@@ -404,6 +395,13 @@ var (
 				"Value": "block content"
 			}
 		],
+		"tables": [
+			{
+				"Name": "members",
+				"Columns": "[{\"name\":\"name\",\"type\":\"varchar\",\"conditions\":\"true\"},{\"name\":\"birthday\",\"type\":\"datetime\",\"conditions\":\"true\"},{\"name\":\"member_id\",\"type\":\"number\",\"conditions\":\"true\"},{\"name\":\"val\",\"type\":\"text\",\"conditions\":\"true\"},{\"name\":\"name_first\",\"type\":\"text\",\"conditions\":\"true\"},{\"name\":\"name_middle\",\"type\":\"text\",\"conditions\":\"true\"}]",
+				"Permissions": "{\"insert\":\"true\",\"update\":\"true\",\"new_column\":\"true\"}"
+			}
+		],
 		"parameters": [
 			{
 				"Name": "host01345679",
@@ -417,16 +415,6 @@ var (
 			}
 		]
 	}`
-	/*
-			"tables": [
-			{
-				"Name": "members",
-				"Columns": "[{\"name\":\"name\",\"type\":\"varchar\",\"conditions\":\"true\"},{\"name\":\"birthday\",\"type\":\"datetime\",\"conditions\":\"true\"},{\"name\":\"member_id\",\"type\":\"number\",\"conditions\":\"true\"},{\"name\":\"val\",\"type\":\"text\",\"conditions\":\"true\"},{\"name\":\"name_first\",\"type\":\"text\",\"conditions\":\"true\"},{\"name\":\"name_middle\",\"type\":\"text\",\"conditions\":\"true\"}]",
-				"Permissions": "{\"insert\":\"true\",\"update\":\"true\",\"new_column\":\"true\"}"
-			}
-		],
-
-	*/
 	impdata = `{
 		"data": [
 	   {
@@ -448,11 +436,10 @@ func TestImport(t *testing.T) {
 	}
 
 	form := url.Values{"Data": {impdata}}
-	id, msg, err := postTxResult(`@1Import`, &form)
+	_, _, err := postTxResult(`@1Import`, &form)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	fmt.Println(`Import`, id, msg)
-	t.Error(`OK`)
+
 }

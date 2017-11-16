@@ -41,7 +41,7 @@ type contractResult struct {
 func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var (
 		hash, publicKey []byte
-		toSerialize               interface{}
+		toSerialize     interface{}
 	)
 	contract, parerr, err := validateSmartContract(r, data, nil)
 	if err != nil {
@@ -148,6 +148,6 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 		append([]byte{128}, serializedData...)); err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	data.result = &contractResult{Hash: hex.EncodeToString(hash)} // !!! string(converter.BinToHex(hash))}
+	data.result = &contractResult{Hash: hex.EncodeToString(hash)}
 	return nil
 }

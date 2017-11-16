@@ -128,13 +128,7 @@ var forTest = tplList{
 		`[{"tag":"text","text":"unknown address"},{"tag":"span","children":[{"tag":"text","text":"1844-6738-3454-7065-1595"}]},{"tag":"text","text":"0000-0003-4673-4764-38731218-8352-5257-3021-1925"}]`},
 	{`Table(src, "ID=id,name,Wallet=wallet")`,
 		`[{"tag":"table","attr":{"columns":[{"Name":"id","Title":"ID"},{"Name":"name","Title":"name"},{"Name":"wallet","Title":"Wallet"}],"source":"src"}}]`},
-	/*	{`Div(myclass, Include(test)Span(OK))`,
-			`[{"tag":"include","attr":{"name":"myblock"}}]`},
-		{`DBFind(1_keys).Columns(id,amount).WhereId(10).Limit(25).Custom(myid){
-			 			Strong(#id#, text-muted)
-			 			Div(,div element: #id#)
-			 		 }.Custom(mybtn){Button(#amount#,mypage=#id#)}`,
-			``}*/}
+}
 
 func TestFullJSON(t *testing.T) {
 	vars := make(map[string]string)

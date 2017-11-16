@@ -31,7 +31,6 @@ func TestContent(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	//	fmt.Println(`RET`, ret.Tree)
 	if ret.Tree != `[{"tag":"text","text":"input "},{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"text","text":"test value "},{"tag":"div","attr":{"class":"mypar"}},{"tag":"text","text":" the Div"}]}]` {
 		t.Error(fmt.Errorf(`wrong tree`, ret.Tree))
 		return
