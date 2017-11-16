@@ -490,6 +490,7 @@ func IsContract(sc *SmartContract, name string, state int64) bool {
 
 // Len returns the length of the slice
 func Len(in []interface{}) int64 {
+	fmt.Println(`Len`, in)
 	if in == nil {
 		return 0
 	}

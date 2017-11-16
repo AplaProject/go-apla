@@ -180,7 +180,7 @@ func init() {
 		"JSONToMap":          JSONToMap,
 		"check_signature":    CheckSignature, // system function
 	}, AutoPars: map[string]string{
-		`*parser.SmartContract`: `parser`,
+		`*smart.SmartContract`: `sc`,
 	}})
 	ExtendCost(getCostP)
 	FuncCallsDB(funcCallsDBP)

@@ -73,7 +73,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		count = in
 	}
 	if obj.Type == ObjFunc {
-		//		fmt.Println(`Func`, cmd == cmdCallVari, in, count, obj.Value.(*Block).Info.(*FuncInfo))
+		//      fmt.Println(`Func`, cmd == cmdCallVari, in, count, obj.Value.(*Block).Info.(*FuncInfo))
 		//		fmt.Println(`Stack`, len(rt.stack), rt.stack, size)
 		var imap map[string][]interface{}
 		if obj.Value.(*Block).Info.(*FuncInfo).Names != nil {
@@ -113,6 +113,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 				auto++
 			}
 		}
+
 		//		fmt.Println(`Extend`, auto, *rt.extend, finfo.Auto)
 		shift := size - count + auto
 		if finfo.Variadic {
@@ -121,11 +122,14 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			limit = count - in + 1
 		}
 		i := count
+		fmt.Println(`Func`, finfo, in, count, size, auto, limit, rt.stack)
 		for ; i > limit; i-- {
+			fmt.Println(`Pars`, i, pars)
 			if len(finfo.Auto[count-i]) > 0 {
 				pars[count-i] = reflect.ValueOf((*rt.extend)[finfo.Auto[count-i]])
 				auto--
 			} else {
+				fmt.Println(`i`, count-i, len(pars), size-i+auto, len(rt.stack))
 				pars[count-i] = reflect.ValueOf(rt.stack[size-i+auto])
 			}
 			if !pars[count-i].IsValid() {
@@ -142,6 +146,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		if finfo.Variadic {
 			result = foo.CallSlice(pars)
 		} else {
+			fmt.Println(`Foo`, foo.Elem(), pars)
 			result = foo.Call(pars)
 		}
 		rt.stack = rt.stack[:shift]

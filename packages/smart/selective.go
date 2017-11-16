@@ -164,7 +164,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		}
 		if !sc.VDE {
 			updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + fmt.Sprintf(` rb_id = '%d'`, rollback.RbID) + addSQLWhere
-			updateCost, err := model.GetQueryTotalCost(updateQuery, rollback.RbID)
+			updateCost, err := model.GetQueryTotalCost(updateQuery)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
 				return 0, tableID, err
