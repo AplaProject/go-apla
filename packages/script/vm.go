@@ -123,12 +123,10 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		}
 		i := count
 		for ; i > limit; i-- {
-			fmt.Println(`Pars`, i, pars)
 			if len(finfo.Auto[count-i]) > 0 {
 				pars[count-i] = reflect.ValueOf((*rt.extend)[finfo.Auto[count-i]])
 				auto--
 			} else {
-				fmt.Println(`i`, count-i, len(pars), size-i+auto, len(rt.stack))
 				pars[count-i] = reflect.ValueOf(rt.stack[size-i+auto])
 			}
 			if !pars[count-i].IsValid() {
@@ -149,7 +147,6 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		}
 		rt.stack = rt.stack[:shift]
 
-		//	fmt.Println(`Result`, result)
 		for i, iret := range result {
 			// first return value of every extend function that makes queries to DB is cost
 			if i == 0 && rt.vm.FuncCallsDB != nil {
