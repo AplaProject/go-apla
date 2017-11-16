@@ -35,20 +35,22 @@ import (
 
 var (
 	funcs = map[string]tplFunc{
-		`Address`:     {addressTag, defaultTag, `address`, `Wallet`},
-		`CmpTime`:     {cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`},
-		`DateTime`:    {dateTimeTag, defaultTag, `datetime`, `DateTime,Format`},
-		`EcosysParam`: {ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`},
-		`Em`:          {defaultTag, defaultTag, `em`, `Body,Class`},
-		`GetVar`:      {getvarTag, defaultTag, `getvar`, `Name`},
-		`ImageInput`:  {defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`},
-		`InputErr`:    {defaultTag, defaultTag, `inputerr`, `*`},
-		`LangRes`:     {langresTag, defaultTag, `langres`, `Name,Lang`},
-		`MenuGroup`:   {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
-		`MenuItem`:    {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
-		`Now`:         {nowTag, defaultTag, `now`, `Format,Interval`},
-		`SetVar`:      {setvarTag, defaultTag, `setvar`, `Name,Value`},
-		`Strong`:      {defaultTag, defaultTag, `strong`, `Body,Class`},
+		`AddToolButton`: {defaultTag, defaultTag, `addtoolbutton`, `Title,Icon,Page,PageParams`},
+		`Address`:       {addressTag, defaultTag, `address`, `Wallet`},
+		`CmpTime`:       {cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`},
+		`DateTime`:      {dateTimeTag, defaultTag, `datetime`, `DateTime,Format`},
+		`EcosysParam`:   {ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`},
+		`Em`:            {defaultTag, defaultTag, `em`, `Body,Class`},
+		`GetVar`:        {getvarTag, defaultTag, `getvar`, `Name`},
+		`ImageInput`:    {defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`},
+		`InputErr`:      {defaultTag, defaultTag, `inputerr`, `*`},
+		`LangRes`:       {langresTag, defaultTag, `langres`, `Name,Lang`},
+		`MenuGroup`:     {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
+		`MenuItem`:      {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
+		`Now`:           {nowTag, defaultTag, `now`, `Format,Interval`},
+		`SetTitle`:      {defaultTag, defaultTag, `settitle`, `Title`},
+		`SetVar`:        {setvarTag, defaultTag, `setvar`, `Name,Value`},
+		`Strong`:        {defaultTag, defaultTag, `strong`, `Body,Class`},
 	}
 	tails = map[string]forTails{
 		`button`: {map[string]tailInfo{
