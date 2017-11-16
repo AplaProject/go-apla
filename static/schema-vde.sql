@@ -128,7 +128,7 @@ INSERT INTO "%[1]d_vde_tables" ("id", "name", "permissions","columns", "conditio
 INSERT INTO "%[1]d_vde_contracts" ("id", "value", "conditions") VALUES 
 ('1','contract MainCondition {
   conditions {
-    if(EcosysParam("founder_account")!=$key_id)
+    if EcosysParam("founder_account")!=$key_id
     {
       warning "Sorry, you don`t have access to this action."
     }

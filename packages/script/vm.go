@@ -122,7 +122,6 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			limit = count - in + 1
 		}
 		i := count
-		fmt.Println(`Func`, finfo, in, count, size, auto, limit, rt.stack)
 		for ; i > limit; i-- {
 			fmt.Println(`Pars`, i, pars)
 			if len(finfo.Auto[count-i]) > 0 {
@@ -146,7 +145,6 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		if finfo.Variadic {
 			result = foo.CallSlice(pars)
 		} else {
-			fmt.Println(`Foo`, foo.Elem(), pars)
 			result = foo.Call(pars)
 		}
 		rt.stack = rt.stack[:shift]

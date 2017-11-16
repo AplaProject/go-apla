@@ -87,7 +87,7 @@ ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY
 INSERT INTO "%[1]d_contracts" ("id", "value", "wallet_id","active", "conditions") VALUES 
 ('1','contract MainCondition {
   conditions {
-    if(EcosysParam("founder_account")!=$key_id)
+    if EcosysParam("founder_account")!=$key_id
     {
       warning "Sorry, you don`t have access to this action."
     }
@@ -161,14 +161,14 @@ INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions")
           "res": "ContractAccess(\"@1EditLang\")",
           "conditions": "ContractAccess(\"@1EditLang\")"}', 'ContractAccess("@1EditTable")'),
         ('5', 'menu', 
-        '{"insert": "ContractAccess(\"@1NewMenu\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditMenu\")", 
+        '{"insert": "ContractAccess(\"@1NewMenu\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditMenu\")",
     "value": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")",
     "conditions": "ContractAccess(\"@1EditMenu\")"
         }', 'ContractAccess("@1EditTable")'),
         ('6', 'pages', 
-        '{"insert": "ContractAccess(\"@1NewPage\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditPage\")", 
+        '{"insert": "ContractAccess(\"@1NewPage\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditPage\",\"@1AppendPage\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"name": "ContractAccess(\"@1EditPage\")",
     "value": "ContractAccess(\"@1EditPage\",\"@1AppendPage\")",
