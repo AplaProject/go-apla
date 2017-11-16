@@ -31,6 +31,7 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/apiv2"
 	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/daemons"
@@ -40,30 +41,13 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
 	"github.com/go-thrust/thrust"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
-	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
-
-// FileAsset returns the body of the file
-func FileAsset(name string) ([]byte, error) {
-
-	if name := strings.Replace(name, "\\", "/", -1); name == `static/img/logo.`+utils.LogoExt {
-		logofile := *utils.Dir + `/logo.` + utils.LogoExt
-		if fi, err := os.Stat(logofile); err == nil && fi.Size() > 0 {
-			return ioutil.ReadFile(logofile)
-		} else if err != nil {
-			log.WithFields(log.Fields{"path": logofile, "error": err, "type": consts.IOError}).Error("Reading logo file")
-		}
-	}
-	return static.Asset(name)
-}
 
 func readConfig() {
 	// read the config.ini
@@ -191,8 +175,8 @@ func rollbackToBlock(blockID int64) error {
 	}
 
 	// check blocks related tables
-	startData := map[string]int64{"1_menu":1,"1_pages":1,"1_contracts":26,"1_parameters":11,"1_keys":1,"1_tables":8,"stop_daemons":1,"queue_blocks":9999999,"system_tables":1, "system_parameters":27,"system_states":1, "install": 1, "config": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1,"confirmations": 9999999, "my_node_keys": 9999999, "transactions": 9999999}
-	warn:=0
+	startData := map[string]int64{"1_menu": 1, "1_pages": 1, "1_contracts": 26, "1_parameters": 11, "1_keys": 1, "1_tables": 8, "stop_daemons": 1, "queue_blocks": 9999999, "system_tables": 1, "system_parameters": 27, "system_states": 1, "install": 1, "config": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1, "confirmations": 9999999, "my_node_keys": 9999999, "transactions": 9999999}
+	warn := 0
 	for _, table := range allTable {
 		count, err := model.GetRecordsCount(table)
 		if err != nil {
@@ -241,7 +225,6 @@ func initRoutes(listenHost, browserHost string) string {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	apiv2.Route(route)
-	route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
 	if len(*utils.TLS) > 0 {
 		go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, route)

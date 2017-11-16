@@ -17,14 +17,12 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"runtime"
 
 	"github.com/AplaProject/go-apla/packages/daylight"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/system"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/go-thrust/lib/bindings/window"
@@ -32,14 +30,6 @@ import (
 	"github.com/go-thrust/thrust"
 )
 
-func main_loader(w http.ResponseWriter, r *http.Request) {
-	data, _ := static.Asset("static/img/main_loader.gif")
-	fmt.Fprint(w, string(data))
-}
-func main_loader_html(w http.ResponseWriter, r *http.Request) {
-	html := `<html><title>Apla</title><body  bgcolor="#4DC3FD" style="margin:0;padding:0;overflow:hidden; text-align:center"><img src="static/img/main_loader.gif"/></body></html>`
-	fmt.Fprint(w, html)
-}
 func main() {
 	runtime.LockOSThread()
 
@@ -74,8 +64,6 @@ func main() {
 		thrustWindow.Show()
 		thrustWindow.Focus()
 		go func() {
-			http.HandleFunc("/static/img/main_loader.gif", main_loader)
-			http.HandleFunc("/loader.html", main_loader_html)
 			http.ListenAndServe(":7979", nil)
 		}()
 	}
