@@ -133,7 +133,7 @@ ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY (
 CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
 
 INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts', 
-        '{"insert": "ContractAccess(\"@1NewContract\")", "update": "ContractAccess(\"@1EditContract\")", 
+        '{"insert": "ContractAccess(\"@1NewContract\")", "update": "ContractAccess(\"@1EditContract\",\"@1ActivateContract\")", 
           "new_column": "ContractAccess(\"@1NewColumn\")"}',
         '{"value": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")",
           "wallet_id": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")",
