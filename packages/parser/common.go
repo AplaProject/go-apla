@@ -31,7 +31,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/templatev2"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 
@@ -199,7 +198,8 @@ type Parser struct {
 	txParser         ParserInterface
 	DbTransaction    *model.DbTransaction
 
-	AllPkeys map[string]string
+	SmartContract smart.SmartContract
+	AllPkeys      map[string]string
 }
 
 func (p Parser) GetLogger() *log.Entry {
@@ -401,7 +401,7 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 		conditions = sp.Conditions
 	}
 	if len(conditions) > 0 {
-		ret, err := p.EvalIf(conditions)
+		ret, err := p.SmartContract.EvalIf(conditions)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.EvalError, "error": err, "conditions": conditions}).Error("evaluating conditions")
 			return err
@@ -413,98 +413,6 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	} else {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject, "conditions": condition}).Error("No condition in state_parameters")
 		return fmt.Errorf(`There is not %s in state_parameters`, condition)
-	}
-	return nil
-}
-
-// AccessTable checks the access right to the table
-func (p *Parser) AccessTable(table, action string) error {
-	logger := p.GetLogger()
-	govAccount, _ := templatev2.StateParam(int64(p.TxSmart.EcosystemID), `founder_account`)
-	if table == fmt.Sprintf(`%d_parameters`, p.TxSmart.EcosystemID) {
-		if p.TxContract != nil && p.TxKeyID == converter.StrToInt64(govAccount) {
-			return nil
-		} else {
-			logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-			return fmt.Errorf(`Access denied`)
-		}
-	}
-
-	if isCustom, err := IsCustomTable(table); err != nil {
-		return err
-		// TODO: table != ... is left for compatibility temporarily. Remove it
-	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
-		logger.WithFields(log.Fields{"table": table, "type": consts.InvalidObject}).Error("is not custom table")
-		return fmt.Errorf(table + ` is not a custom table`)
-	}
-	prefix := table[:strings.IndexByte(table, '_')]
-	tables := &model.Table{}
-	tables.SetTablePrefix(prefix)
-	tablePermission, err := tables.GetPermissions(table[strings.IndexByte(table, '_')+1:], "")
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table permissions")
-		return err
-	}
-	if len(tablePermission[action]) > 0 {
-		ret, err := p.EvalIf(tablePermission[action])
-		if err != nil {
-			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "error": err, "type": consts.EvalError}).Error("evaluating table permissions for action")
-			return err
-		}
-		if !ret {
-			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "type": consts.EvalError}).Error("access denied")
-			return fmt.Errorf(`Access denied`)
-		}
-	}
-	return nil
-}
-
-// AccessColumns checks access rights to the columns
-func (p *Parser) AccessColumns(table string, columns []string) error {
-	logger := p.GetLogger()
-
-	if table == fmt.Sprintf(`%d_parameters`, p.TxSmart.EcosystemID) {
-		govAccount, _ := templatev2.StateParam(int64(p.TxSmart.EcosystemID), `founder_account`)
-		if p.TxContract != nil && p.TxKeyID == converter.StrToInt64(govAccount) {
-			return nil
-		}
-		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access Denied")
-		return fmt.Errorf(`Access denied`)
-	}
-	if isCustom, err := IsCustomTable(table); err != nil {
-		return err
-	} else if !isCustom && !strings.HasSuffix(table, `_parameters`) {
-		logger.WithFields(log.Fields{"table": table, "type": consts.InvalidObject}).Error("is not custom table")
-		return fmt.Errorf(table + ` is not a custom table`)
-	}
-	prefix := table[:strings.IndexByte(table, '_')]
-	tables := &model.Table{}
-	tables.SetTablePrefix(prefix)
-	columnsAndPermissions, err := tables.GetColumns(table, "")
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table columns")
-		return err
-	}
-	for _, col := range columns {
-		var (
-			cond string
-			ok   bool
-		)
-		cond, ok = columnsAndPermissions[converter.Sanitize(col, ``)]
-		if !ok {
-			cond, ok = columnsAndPermissions[`*`]
-		}
-		if ok && len(cond) > 0 {
-			ret, err := p.EvalIf(cond)
-			if err != nil {
-				logger.WithFields(log.Fields{"condition": cond, "column": col, "type": consts.EvalError}).Error("evaluating condition")
-				return err
-			}
-			if !ret {
-				logger.WithFields(log.Fields{"condition": cond, "column": col, "type": consts.AccessDenied}).Error("action denied")
-				return fmt.Errorf(`Access denied`)
-			}
-		}
 	}
 	return nil
 }
@@ -536,7 +444,7 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 	}
 
 	if len(conditions) > 0 {
-		ret, err := p.EvalIf(conditions)
+		ret, err := p.SmartContract.EvalIf(conditions)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("evaluating conditions")
 			return err
@@ -580,4 +488,22 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 		return decimal.New(0, 0), fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 	return p.TxUsedCost.Mul(fuelRate), nil
+}
+
+func (p *Parser) CallContract(flags int) error {
+	sc := smart.SmartContract{
+		VDE:           false,
+		VM:            smart.GetVM(false, 0),
+		TxSmart:       *p.TxSmart,
+		TxData:        p.TxData,
+		TxContract:    p.TxContract,
+		TxCost:        p.TxCost,
+		TxUsedCost:    p.TxUsedCost,
+		BlockData:     p.BlockData,
+		TxHash:        p.TxHash,
+		PublicKeys:    p.PublicKeys,
+		DbTransaction: p.DbTransaction,
+	}
+	_, err := sc.CallContract(flags)
+	return err
 }

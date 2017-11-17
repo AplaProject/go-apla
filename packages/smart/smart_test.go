@@ -17,10 +17,9 @@
 package smart
 
 import (
-	//	"encoding/hex"
-	"fmt"
 	"testing"
-	//	"time"
+
+	"github.com/AplaProject/go-apla/packages/script"
 )
 
 type TestSmart struct {
@@ -29,7 +28,6 @@ type TestSmart struct {
 }
 
 func TestNewContract(t *testing.T) {
-	//	var err error
 	test := []TestSmart{
 		{`contract NewCitizen {
 			data {
@@ -37,7 +35,7 @@ func TestNewContract(t *testing.T) {
 				MyVal  string
 			}
 			func conditions {
-				Println( "Front")//TxJSON())
+				Println( "Front")
 				//$tmp = "Test string"
 //				Println("NewCitizen Front", $tmp, $key_id, $ecosystem_id, $PublicKey )
 			}
@@ -48,31 +46,22 @@ func TestNewContract(t *testing.T) {
 }			
 		`, ``},
 	}
+	owner := script.OwnerInfo{
+		StateID:  1,
+		Active:   false,
+		TableID:  1,
+		WalletID: 0,
+		TokenID:  0,
+	}
 	for _, item := range test {
-		if err := Compile(item.Input, `1`, true, 1); err != nil {
+		if err := Compile(item.Input, &owner); err != nil {
 			t.Error(err)
 		}
 	}
 	cnt := GetContract(`NewCitizen`, 1)
 	cfunc := cnt.GetFunc(`conditions`)
 	_, err := Run(cfunc, nil, &map[string]interface{}{})
-	fmt.Println(`Err`, err)
-	//
-	/*	if err = cnt.Call(CallInit | CallCondition | CallAction); err != nil {
-			t.Error(err.Error())
-	}*/
-	//	sign, _ := hex.DecodeString(`3276233276237115`)
-	//	public, _ := hex.DecodeString(`12456788999900087676`)
-	//	p := Parser{BlockData: &utils.BlockData{BlockId: 133}}
-	/*	p.TxPtr = &consts.TXNewCitizen{
-			consts.TXHeader{4, uint32(time.Now().Unix()), 1, 1, sign}, public,
-		}
-		//	fmt.Println(`Data`, data)
-		cnt := GetContract(`NewCitizen`, &p)
-		if cnt == nil {
-			t.Error(`GetContract error`)
-		}
-		if err = cnt.Call(CallInit | CallCondition | CallAction); err != nil {
-			t.Error(err.Error())
-		}*/
+	if err != nil {
+		t.Error(err)
+	}
 }

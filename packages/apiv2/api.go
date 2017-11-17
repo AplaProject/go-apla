@@ -53,7 +53,6 @@ type apiData struct {
 	vde         bool
 	vm          *script.VM
 	token       *jwt.Token
-	//	sess   session.SessionStore
 }
 
 type forSign struct {

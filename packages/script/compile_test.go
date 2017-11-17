@@ -320,9 +320,4 @@ func TestVMCompile(t *testing.T) {
 
 		}
 	}
-	//fmt.Println(`VM`, *vm)
-	//	vm.Call(`Println`, []interface{}{"Qwerty", 100, `OOOPS`}, nil)
-	//ret, _ := vm.Call(`Sprintf`, []interface{}{"Value %d %s OK", 100, `String value`}, nil)
-	//fmt.Println(ret[0].(string))
-	//	fmt.Println(`Result`, err)
 }

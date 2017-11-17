@@ -375,8 +375,6 @@ func dbfindTag(par parFunc) string {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
 	}
-	/*	list := []map[string]string{{"id": "1", "amount": "200"}, {"id": "2", "amount": "300"}}
-		fmt.Println(tblname, where, order)*/
 	data := make([][]string, 0)
 	cols := make([]string, 0)
 	types := make([]string, 0)
@@ -441,7 +439,7 @@ func customTag(par parFunc) string {
 	setAllAttr(par)
 	if par.Owner.Attr[`customs`] == nil {
 		par.Owner.Attr[`customs`] = make([]string, 0)
-		par.Owner.Attr[`custombody`] = make([]string, 0) //make([][]*node, 0)
+		par.Owner.Attr[`custombody`] = make([]string, 0)
 	}
 	par.Owner.Attr[`customs`] = append(par.Owner.Attr[`customs`].([]string), par.Node.Attr[`column`].(string))
 	par.Owner.Attr[`custombody`] = append(par.Owner.Attr[`custombody`].([]string), (*par.Pars)[`Body`])

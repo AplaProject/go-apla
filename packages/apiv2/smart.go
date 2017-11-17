@@ -113,7 +113,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 					}
 				}
 				if fitem.Type.String() == script.Decimal {
-					re := regexp.MustCompile(`^\d+$`) //`^\d+\.?\d+?$`
+					re := regexp.MustCompile(`^\d+$`)
 					if !re.Match([]byte(val)) {
 						log.WithFields(log.Fields{"type": consts.InvalidObject, "value": val}).Error("The value of money is not valid")
 						err = fmt.Errorf(`The value of money %s is not valid`, val)

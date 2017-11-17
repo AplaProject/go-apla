@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package parser
+package smart
 
 import (
 	"encoding/hex"
@@ -25,27 +25,25 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/smart"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// selectiveLoggingAndUpd changes DB and writes all DB changes for rollbacks
-// do not use for comments
-func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (int64, string, error) {
-	logger := p.GetLogger()
+func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
+	table string, whereFields, whereValues []string, generalRollback bool) (int64, string, error) {
 	var (
 		tableID string
 		err     error
 		cost    int64
 	)
+	logger := sc.GetLogger()
 
-	if generalRollback && p.BlockData == nil {
+	if generalRollback && sc.BlockData == nil {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Block is undefined")
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
-	isBytea := smart.GetBytea(table)
+	isBytea := GetBytea(table)
 	for i, v := range ivalues {
 		if len(fields) > i && isBytea[fields[i]] {
 			switch v.(type) {
@@ -59,7 +57,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 
 	values := converter.InterfaceSliceToStr(ivalues)
 
-	addSQLFields := p.AllPkeys[table]
+	addSQLFields := `id`
 	if len(addSQLFields) > 0 {
 		addSQLFields += `,`
 	}
@@ -88,15 +86,18 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	if len(addSQLWhere) > 0 {
 		addSQLWhere = " WHERE " + addSQLWhere[0:len(addSQLWhere)-5]
 	}
-
-	// if there is something to log
-	selectQuery := `SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere
+	if sc.VDE {
+		addSQLFields = strings.TrimRight(addSQLFields, ",")
+	} else {
+		addSQLFields += `rb_id`
+	}
+	selectQuery := `SELECT ` + addSQLFields + ` FROM "` + table + `" ` + addSQLWhere
 	selectCost, err := model.GetQueryTotalCost(selectQuery)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting query total cost")
 		return 0, tableID, err
 	}
-	logData, err := model.GetOneRowTransaction(p.DbTransaction, selectQuery).String()
+	logData, err := model.GetOneRowTransaction(sc.DbTransaction, selectQuery).String()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting one row transaction")
 		return 0, tableID, err
@@ -106,7 +107,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	if whereFields != nil && len(logData) > 0 {
 		jsonMap := make(map[string]string)
 		for k, v := range logData {
-			if k == p.AllPkeys[table] {
+			if k == `id` {
 				continue
 			}
 			if (isBytea[k] || converter.InSliceString(k, []string{"hash", "tx_hash", "pub", "tx_hash", "public_key_0", "node_public_key"})) && v != "" {
@@ -130,11 +131,14 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback info to json")
 			return 0, tableID, err
 		}
-		rollback := &model.Rollback{Data: string(jsonData), BlockID: p.BlockData.BlockID}
-		err = rollback.Create(p.DbTransaction)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating rollback")
-			return 0, tableID, err
+		var rollback *model.Rollback
+		if !sc.VDE {
+			rollback = &model.Rollback{Data: string(jsonData), BlockID: sc.BlockData.BlockID}
+			err = rollback.Create(sc.DbTransaction)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating rollback")
+				return 0, tableID, err
+			}
 		}
 		addSQLUpdate := ""
 		for i := 0; i < len(fields); i++ {
@@ -154,19 +158,24 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 				addSQLUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
-		updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + fmt.Sprintf(` rb_id = '%d'`, rollback.RbID) + addSQLWhere
-		updateCost, err := model.GetQueryTotalCost(updateQuery)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
-			return 0, tableID, err
+		if !sc.VDE {
+			updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + fmt.Sprintf(` rb_id = '%d'`, rollback.RbID) + addSQLWhere
+			updateCost, err := model.GetQueryTotalCost(updateQuery)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
+				return 0, tableID, err
+			}
+			cost += updateCost
+			addSQLUpdate += fmt.Sprintf("rb_id = %d", rollback.RbID)
+		} else {
+			addSQLUpdate = strings.TrimRight(addSQLUpdate, `,`)
 		}
-		cost += updateCost
-		err = model.Update(p.DbTransaction, table, addSQLUpdate+fmt.Sprintf("rb_id = %d", rollback.RbID), addSQLWhere)
+		err = model.Update(sc.DbTransaction, table, addSQLUpdate, addSQLWhere)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting update query")
 			return 0, tableID, err
 		}
-		tableID = logData[p.AllPkeys[table]]
+		tableID = logData[`id`]
 	} else {
 		isID := false
 		addSQLIns0 := ""
@@ -182,7 +191,6 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			} else {
 				addSQLIns0 += fields[i] + `,`
 			}
-			// || utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "node_public_key"}))
 			if isBytea[fields[i]] && len(values[i]) != 0 {
 				addSQLIns1 += `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if values[i] == `NULL` {
@@ -207,7 +215,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		addSQLIns0 = addSQLIns0[0 : len(addSQLIns0)-1]
 		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
 		if !isID {
-			id, err := model.GetNextID(p.DbTransaction, table)
+			id, err := model.GetNextID(sc.DbTransaction, table)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id for table")
 				return 0, ``, err
@@ -224,7 +232,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			return 0, tableID, err
 		}
 		cost += insertCost
-		err = model.GetDB(p.DbTransaction).Exec(insertQuery).Error
+		err = model.GetDB(sc.DbTransaction).Exec(insertQuery).Error
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("executing insert query")
 		}
@@ -235,13 +243,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 
 	if generalRollback {
 		rollbackTx := &model.RollbackTx{
-			BlockID:   p.BlockData.BlockID,
-			TxHash:    p.TxHash,
+			BlockID:   sc.BlockData.BlockID,
+			TxHash:    sc.TxHash,
 			NameTable: table,
 			TableID:   tableID,
 		}
 
-		err = rollbackTx.Create(p.DbTransaction)
+		err = rollbackTx.Create(sc.DbTransaction)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating rollback tx")
 			return 0, tableID, err

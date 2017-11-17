@@ -364,8 +364,7 @@ func fFuncResult(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func fReturn(buf *[]*Block, state int, lexem *Lexem) error {
-	//	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdReturn, 0}) //len(fblock.Results)})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdReturn, 0})
 	return nil
 }
 
@@ -529,7 +528,6 @@ func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 			logger.WithFields(log.Fields{"type": consts.ParseError, "lex_value": lexem.Value.(string)}).Error("unknown variable")
 			return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 		}
-		//		fmt.Println(`Assign Var`, lexem.Value.(string), objInfo, objInfo.Type, reflect.TypeOf(objInfo.Value), tobj)
 		ivar = VarInfo{objInfo, tobj}
 	}
 	if len(block.Code) > 0 {
@@ -652,7 +650,7 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 		itype = ObjContract
 		name = StateName((*buf)[0].Info.(uint32), name)
 		fblock.Info = &ContractInfo{ID: uint32(len(prev.Children) - 1), Name: name,
-			Owner: (*buf)[0].Owner} //lexem.Value.(string)}
+			Owner: (*buf)[0].Owner}
 	default:
 		itype = ObjFunc
 		fblock.Info = &FuncInfo{}
@@ -684,21 +682,17 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 			ok       bool
 		)
 		lexem := lexems[i]
-		//		fmt.Println(`LEXEM`, lexem.Type, lexem.Value, curState)
 		if newState, ok = states[curState][int(lexem.Type)]; !ok {
 			newState = states[curState][0]
 		}
 		nextState := newState.NewState & 0xff
 		if (newState.NewState & stateFork) > 0 {
 			fork = i
-			//			continue
 		}
 		if (newState.NewState & stateToFork) > 0 {
 			i = fork
 			fork = 0
 			lexem = lexems[i]
-			//			fmt.Printf("State %x %x %v %v\r\n", curState, newState.NewState, lexem, stack)
-			//			continue
 		}
 
 		if (newState.NewState & stateStay) > 0 {
@@ -719,7 +713,6 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 				return nil, fmt.Errorf("there is not eval expression")
 			}
 			nextState = curState
-			//			fmt.Println(`Block`, *blockstack[len(blockstack)-1], len(blockstack)-1)
 		}
 		if (newState.NewState & statePush) > 0 {
 			stack = append(stack, curState)
@@ -754,7 +747,6 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 		if (newState.NewState & stateToBody) > 0 {
 			nextState = stateBody
 		}
-		//fmt.Println(`LEX`, curState, lexem, stack)
 		if newState.Func > 0 {
 			if err := funcs[newState.Func](&blockstack, nextState, lexem); err != nil {
 				return nil, err
@@ -765,9 +757,6 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 	if len(stack) > 0 {
 		return nil, fError(&blockstack, errMustRCurly, lexems[len(lexems)-1])
 	}
-	//	shift := len(vm.Children)
-	//	fmt.Println(`Root`, blockstack[0])
-	//	fmt.Println(`VM`, vm)
 	return root, nil
 }
 
@@ -847,14 +836,12 @@ func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
 	bytecode := make(ByteCodes, 0, 100)
 	parcount := make([]int, 0, 20)
 	setIndex := false
-	//	mode := 0
 main:
 	for ; i < len(*lexems); i++ {
 		var cmd *ByteCode
 		var call bool
 		lexem := (*lexems)[i]
 		logger := lexem.GetLogger()
-		//fmt.Println(i, parcount, lexem)
 		switch lexem.Type {
 		case isRCurly, isLCurly:
 			i--

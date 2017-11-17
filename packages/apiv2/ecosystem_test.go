@@ -65,7 +65,6 @@ func TestEditEcosystem(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	//	menuname := randName(`menu`)
 	menu := `government`
 	value := `P(test,test paragraph)`
 

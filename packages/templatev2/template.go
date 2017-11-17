@@ -288,7 +288,6 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			process(pars[`Body`], &curNode, vars)
 		}
 		parFunc.Owner = owner
-		//		owner.Children = append(owner.Children, &curNode)
 		parFunc.Node = &curNode
 		parFunc.Tails = tailpars
 	}

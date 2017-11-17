@@ -62,7 +62,6 @@ func Route(route *hr.Router) {
 	get(`table/:name`, ``, authWallet, table)
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
 	get(`txstatus/:hash`, ``, authWallet, txstatus)
-	//	get(`smartcontract/:name`, ``, authState, getSmartContract)
 	get(`test/:name`, ``, getTest)
 
 	post(`content/page/:name`, ``, authWallet, getPage)
@@ -73,7 +72,6 @@ func Route(route *hr.Router) {
 	post(`login`, `?pubkey signature:hex,?key_id:string,?ecosystem ?expire:int64`, login)
 	postTx(`:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, prepareContract, contract)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
-	//	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
 	post(`signtest/`, `forsign private:string`, signTest)
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template:string`, jsonContent)
