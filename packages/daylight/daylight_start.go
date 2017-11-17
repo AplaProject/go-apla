@@ -25,7 +25,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -43,9 +42,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/go-bindata-assetfs"
-	"github.com/go-thrust/lib/bindings/window"
-	"github.com/go-thrust/lib/commands"
-	"github.com/go-thrust/thrust"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
@@ -254,7 +250,7 @@ func initRoutes(listenHost, browserHost string) string {
 }
 
 // Start starts the main code of the program
-func Start(dir string, thrustWindowLoder *window.Window) {
+func Start() {
 
 	var err error
 
@@ -266,16 +262,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}()
 
 	Exit := func(code int) {
-		if thrustWindowLoder != nil {
-			thrustWindowLoder.Close()
-		}
 		model.GormClose()
 		delPidFile()
 		os.Exit(code)
-	}
-
-	if dir != "" {
-		*utils.Dir = dir
 	}
 
 	readConfig()
@@ -352,7 +341,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if _, err := os.Stat(*utils.Dir + "/public"); os.IsNotExist(err) {
 		err = os.Mkdir(*utils.Dir+"/public", 0755)
 		if err != nil {
-			log.WithFields(log.Fields{"path": dir, "error": err, "type": consts.IOError}).Error("Making dir")
+			log.WithFields(log.Fields{"path": *utils.Dir, "error": err, "type": consts.IOError}).Error("Making dir")
 			Exit(1)
 		}
 	}
@@ -376,42 +365,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		if *utils.Console == 0 && !utils.Mobile() {
 			log.Info("starting browser")
 			time.Sleep(time.Second)
-			if thrustWindowLoder != nil {
-				thrustWindowLoder.Close()
-				thrustWindow := thrust.NewWindow(thrust.WindowOptions{
-					RootUrl: BrowserHTTPHost,
-					Size:    commands.SizeHW{Width: 1024, Height: 700},
-				})
-				if *utils.DevTools != 0 {
-					thrustWindow.OpenDevtools()
-				}
-				thrustWindow.HandleEvent("*", func(cr commands.EventResult) {
-					fmt.Println("HandleEvent", cr)
-				})
-				thrustWindow.HandleRemote(func(er commands.EventResult, this *window.Window) {
-					//					fmt.Println("RemoteMessage Recieved:", er.Message.Payload)
-					if len(er.Message.Payload) > 7 && er.Message.Payload[:7] == `mailto:` && runtime.GOOS == `windows` {
-						utils.ShellExecute(er.Message.Payload)
-					} else if len(er.Message.Payload) > 7 && er.Message.Payload[:2] == `[{` {
-						ioutil.WriteFile(filepath.Join(*utils.Dir, `accounts.txt`), []byte(er.Message.Payload), 0644)
-						//					} else if len(er.Message.Payload) >= 7 && er.Message.Payload[:7] == `USERID=` {
-						// for Lite version - do nothing
-					} else if er.Message.Payload == `ACCOUNTS` {
-						accounts, _ := ioutil.ReadFile(filepath.Join(*utils.Dir, `accounts.txt`))
-						this.SendRemoteMessage(string(accounts))
-					} else {
-						openBrowser(er.Message.Payload)
-					}
-					// Keep in mind once we have the message, lets say its json of some new type we made,
-					// We can unmarshal it to that type.
-					// Same goes for the other way around.
-					//					this.SendRemoteMessage("boop")
-				})
-				thrustWindow.Show()
-				thrustWindow.Focus()
-			} else {
-				//				openBrowser(BrowserHTTPHost)
-			}
 		}
 	}()
 
