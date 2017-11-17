@@ -29,7 +29,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/apiv2"
+	"github.com/AplaProject/go-apla/packages/api"
 	"github.com/AplaProject/go-apla/packages/config"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -240,7 +240,7 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 func initRoutes(listenHost, browserHost string) string {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
-	apiv2.Route(route)
+	api.Route(route)
 	route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
 	if len(*utils.TLS) > 0 {
