@@ -113,6 +113,7 @@ var (
 func init() {
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
+	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Body`}
 	funcs[`Form`] = tplFunc{defaultTailTag, defaultTailTag, `form`, `Class,Body`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Image`] = tplFunc{defaultTailTag, defaultTailTag, `image`, `Src,Alt,Class`}
@@ -139,10 +140,36 @@ func defaultTag(par parFunc) string {
 	return ``
 }
 
+func forlistTag(par parFunc) (ret string) {
+	setAllAttr(par)
+	name := par.Node.Attr[`source`].(string)
+	if len(name) == 0 || par.Workspace.Sources == nil {
+		return
+	}
+	source := (*par.Workspace.Sources)[name]
+	if source.Data == nil {
+		return
+	}
+	//	data := make([]string, 0)
+	root := node{}
+	for _, item := range *source.Data {
+		//var ival string
+		vals := make(map[string]string)
+		for i, icol := range *source.Columns {
+			vals[icol] = item[i]
+		}
+		body := replace((*par.Pars)[`Body`], 0, &vals)
+		process(body, &root, par.Workspace)
+	}
+	par.Node.Children = root.Children
+	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return
+}
+
 func addressTag(par parFunc) string {
 	idval := (*par.Pars)[`Wallet`]
 	if len(idval) == 0 {
-		idval = (*par.Vars)[`key_id`]
+		idval = (*par.Workspace.Vars)[`key_id`]
 	}
 	id, _ := strconv.ParseInt(idval, 10, 64)
 	if id == 0 {
@@ -155,7 +182,7 @@ func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
 	}
-	state := converter.StrToInt((*par.Vars)[`ecosystem_id`])
+	state := converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`])
 	val, err := StateParam(int64(state), (*par.Pars)[`Name`])
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
@@ -166,7 +193,7 @@ func ecosysparTag(par parFunc) string {
 		cols := []string{`id`, `name`}
 		types := []string{`text`, `text`}
 		for key, item := range strings.Split(val, `,`) {
-			item, _ = language.LangText(item, state, (*par.Vars)[`accept_lang`])
+			item, _ = language.LangText(item, state, (*par.Workspace.Vars)[`accept_lang`])
 			data = append(data, []string{converter.IntToStr(key + 1), item})
 		}
 		node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
@@ -177,7 +204,7 @@ func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Index`]) > 0 {
 		ind := converter.StrToInt((*par.Pars)[`Index`])
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
-			val, _ = language.LangText(alist[ind-1], state, (*par.Vars)[`accept_lang`])
+			val, _ = language.LangText(alist[ind-1], state, (*par.Workspace.Vars)[`accept_lang`])
 		} else {
 			val = ``
 		}
@@ -188,9 +215,9 @@ func ecosysparTag(par parFunc) string {
 func langresTag(par parFunc) string {
 	lang := (*par.Pars)[`Lang`]
 	if len(lang) == 0 {
-		lang = (*par.Vars)[`accept_lang`]
+		lang = (*par.Workspace.Vars)[`accept_lang`]
 	}
-	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Vars)[`ecosystem_id`])), lang)
+	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])), lang)
 	return ret
 }
 
@@ -237,7 +264,7 @@ func nowTag(par parFunc) string {
 func andTag(par parFunc) string {
 	count := len(*par.Pars)
 	for i := 0; i < count; i++ {
-		if !ifValue((*par.Pars)[strconv.Itoa(i)], par.Vars) {
+		if !ifValue((*par.Pars)[strconv.Itoa(i)], par.Workspace) {
 			return `0`
 		}
 	}
@@ -247,7 +274,7 @@ func andTag(par parFunc) string {
 func orTag(par parFunc) string {
 	count := len(*par.Pars)
 	for i := 0; i < count; i++ {
-		if ifValue((*par.Pars)[strconv.Itoa(i)], par.Vars) {
+		if ifValue((*par.Pars)[strconv.Itoa(i)], par.Workspace) {
 			return `1`
 		}
 	}
@@ -322,6 +349,7 @@ func dataTag(par parFunc) string {
 	par.Node.Attr[`columns`] = &cols
 	par.Node.Attr[`types`] = &types
 	par.Node.Attr[`data`] = &data
+	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
 }
@@ -367,7 +395,7 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`ecosystem`] != nil {
 		state = converter.StrToInt64(par.Node.Attr[`ecosystem`].(string))
 	} else {
-		state = converter.StrToInt64((*par.Vars)[`ecosystem_id`])
+		state = converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])
 	}
 	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
 	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
@@ -409,16 +437,16 @@ func dbfindTag(par parFunc) string {
 			} else {
 				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &item)
 				root := node{}
-				process(body, &root, par.Vars)
+				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
 				if err == nil {
-					ival = replace(string(out), 0, &item)
+					ival = string(out)
 				} else {
 					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling root children to JSON")
 				}
 			}
 			if par.Node.Attr[`prefix`] != nil {
-				(*par.Vars)[prefix+`_`+icol] = ival
+				(*par.Workspace.Vars)[prefix+`_`+icol] = ival
 			}
 			row[i] = ival
 		}
@@ -431,6 +459,7 @@ func dbfindTag(par parFunc) string {
 	par.Node.Attr[`columns`] = &cols
 	par.Node.Attr[`types`] = &types
 	par.Node.Attr[`data`] = &data
+	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
 }
@@ -456,17 +485,17 @@ func tailTag(par parFunc) string {
 }
 
 func includeTag(par parFunc) string {
-	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Vars)[`_include`]) < 5 {
-		pattern, err := model.Single(`select value from "`+(*par.Vars)[`ecosystem_id`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
+	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Workspace.Vars)[`_include`]) < 5 {
+		pattern, err := model.Single(`select value from "`+(*par.Workspace.Vars)[`ecosystem_id`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by name")
 			return err.Error()
 		}
 		if len(pattern) > 0 {
 			root := node{}
-			(*par.Vars)[`_include`] += `1`
-			process(pattern, &root, par.Vars)
-			(*par.Vars)[`_include`] = (*par.Vars)[`_include`][:len((*par.Vars)[`_include`])-1]
+			(*par.Workspace.Vars)[`_include`] += `1`
+			process(pattern, &root, par.Workspace)
+			(*par.Workspace.Vars)[`_include`] = (*par.Workspace.Vars)[`_include`][:len((*par.Workspace.Vars)[`_include`])-1]
 			for _, item := range root.Children {
 				par.Owner.Children = append(par.Owner.Children, item)
 			}
@@ -477,14 +506,14 @@ func includeTag(par parFunc) string {
 
 func setvarTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) > 0 {
-		(*par.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
+		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
 	}
 	return ``
 }
 
 func getvarTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) > 0 {
-		return macro((*par.Vars)[(*par.Pars)[`Name`]], par.Vars)
+		return macro((*par.Workspace.Vars)[(*par.Pars)[`Name`]], par.Workspace.Vars)
 	}
 	return ``
 }
@@ -527,7 +556,7 @@ func defaultTail(par parFunc, tag string) {
 			name := (*v)[len(*v)-1]
 			curFunc := tails[tag].Tails[name].tplFunc
 			pars := (*v)[:len(*v)-1]
-			callFunc(&curFunc, par.Node, par.Vars, &pars, nil)
+			callFunc(&curFunc, par.Node, par.Workspace, &pars, nil)
 		}
 	}
 }
@@ -545,7 +574,7 @@ func buttonTag(par parFunc) string {
 }
 
 func ifTag(par parFunc) string {
-	cond := ifValue((*par.Pars)[`Condition`], par.Vars)
+	cond := ifValue((*par.Pars)[`Condition`], par.Workspace)
 	if cond {
 		for _, item := range par.Node.Children {
 			par.Owner.Children = append(par.Owner.Children, item)
@@ -556,9 +585,9 @@ func ifTag(par parFunc) string {
 			name := (*v)[len(*v)-1]
 			curFunc := tails[`if`].Tails[name].tplFunc
 			pars := (*v)[:len(*v)-1]
-			callFunc(&curFunc, par.Owner, par.Vars, &pars, nil)
-			if (*par.Vars)[`_cond`] == `1` {
-				(*par.Vars)[`_cond`] = `0`
+			callFunc(&curFunc, par.Owner, par.Workspace, &pars, nil)
+			if (*par.Workspace.Vars)[`_cond`] == `1` {
+				(*par.Workspace.Vars)[`_cond`] = `0`
 				break
 			}
 		}
@@ -574,19 +603,19 @@ func ifFull(par parFunc) string {
 			name := (*v)[len(*v)-1]
 			curFunc := tails[`if`].Tails[name].tplFunc
 			pars := (*v)[:len(*v)-1]
-			callFunc(&curFunc, par.Node, par.Vars, &pars, nil)
+			callFunc(&curFunc, par.Node, par.Workspace, &pars, nil)
 		}
 	}
 	return ``
 }
 
 func elseifTag(par parFunc) string {
-	cond := ifValue((*par.Pars)[`Condition`], par.Vars)
+	cond := ifValue((*par.Pars)[`Condition`], par.Workspace)
 	if cond {
 		for _, item := range par.Node.Children {
 			par.Owner.Children = append(par.Owner.Children, item)
 		}
-		(*par.Vars)[`_cond`] = `1`
+		(*par.Workspace.Vars)[`_cond`] = `1`
 	}
 	return ``
 }
@@ -620,8 +649,8 @@ func dateTimeTag(par parFunc) string {
 	}
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
-		format, _ = language.LangText(`timeformat`, converter.StrToInt((*par.Vars)[`ecosystem_id`]),
-			(*par.Vars)[`accept_lang`])
+		format, _ = language.LangText(`timeformat`, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			(*par.Workspace.Vars)[`accept_lang`])
 		if format == `timeformat` {
 			format = `2006-01-02 15:04:05`
 		}

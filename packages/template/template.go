@@ -46,12 +46,23 @@ type node struct {
 	Tail     []*node                `json:"tail,omitempty"`
 }
 
+// Source describes dbfind or data source
+type Source struct {
+	Columns *[]string
+	Data    *[][]string
+}
+
+type Workspace struct {
+	Sources *map[string]Source
+	Vars    *map[string]string
+}
+
 type parFunc struct {
-	Owner *node
-	Node  *node
-	Vars  *map[string]string
-	Pars  *map[string]string
-	Tails *[]*[]string
+	Owner     *node
+	Node      *node
+	Workspace *Workspace
+	Pars      *map[string]string
+	Tails     *[]*[]string
 }
 
 type nodeFunc func(par parFunc) string
@@ -70,6 +81,17 @@ type tailInfo struct {
 
 type forTails struct {
 	Tails map[string]tailInfo
+}
+
+func newSource(par parFunc) {
+	if par.Workspace.Sources == nil {
+		sources := make(map[string]Source)
+		par.Workspace.Sources = &sources
+	}
+	(*par.Workspace.Sources)[par.Node.Attr[`source`].(string)] = Source{
+		Columns: par.Node.Attr[`columns`].(*[]string),
+		Data:    par.Node.Attr[`data`].(*[][]string),
+	}
 }
 
 func setAttr(par parFunc, name string) {
@@ -114,14 +136,14 @@ func setAllAttr(par parFunc) {
 	}
 }
 
-func ifValue(val string, vars *map[string]string) bool {
+func ifValue(val string, workspace *Workspace) bool {
 	var (
 		sep   string
 		owner node
 	)
 
 	if strings.IndexByte(val, '(') != -1 {
-		process(val, &owner, vars)
+		process(val, &owner, workspace)
 		if len(owner.Children) > 0 {
 			inode := owner.Children[0]
 			if inode.Tag == tagText {
@@ -239,29 +261,29 @@ func appendText(owner *node, text string) {
 	}
 }
 
-func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]string, tailpars *[]*[]string) {
+func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[]string, tailpars *[]*[]string) {
 	var (
 		out     string
 		curNode node
 	)
 	pars := make(map[string]string)
 	parFunc := parFunc{
-		Vars: vars,
+		Workspace: workspace,
 	}
 	if curFunc.Params == `*` {
 		for i, v := range *params {
 			val := strings.TrimSpace(v)
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
-				pars[val[:off]] = macro(strings.Trim(val[off+1:], "\t\r\n \"`"), vars)
+				pars[val[:off]] = macro(strings.Trim(val[off+1:], "\t\r\n \"`"), workspace.Vars)
 			} else {
-				pars[strconv.Itoa(i)] = macro(val, vars)
+				pars[strconv.Itoa(i)] = macro(val, workspace.Vars)
 			}
 		}
 	} else {
 		for i, v := range strings.Split(curFunc.Params, `,`) {
 			if i < len(*params) {
-				val := macro(strings.TrimSpace((*params)[i]), vars)
+				val := macro(strings.TrimSpace((*params)[i]), workspace.Vars)
 				off := strings.IndexByte(val, ':')
 				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
 					cut := "\t\r\n \"`"
@@ -277,22 +299,22 @@ func callFunc(curFunc *tplFunc, owner *node, vars *map[string]string, params *[]
 			}
 		}
 	}
-	state := int(converter.StrToInt64((*vars)[`ecosystem_id`]))
+	state := int(converter.StrToInt64((*workspace.Vars)[`ecosystem_id`]))
 	for i, v := range pars {
-		pars[i] = language.LangMacro(v, state, (*vars)[`accept_lang`])
+		pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`accept_lang`])
 	}
 	if len(curFunc.Tag) > 0 {
 		curNode.Tag = curFunc.Tag
 		curNode.Attr = make(map[string]interface{})
 		if len(pars[`Body`]) > 0 {
-			process(pars[`Body`], &curNode, vars)
+			process(pars[`Body`], &curNode, workspace)
 		}
 		parFunc.Owner = owner
 		parFunc.Node = &curNode
 		parFunc.Tails = tailpars
 	}
 	parFunc.Pars = &pars
-	if (*vars)[`_full`] == `1` {
+	if (*workspace.Vars)[`_full`] == `1` {
 		out = curFunc.Full(parFunc)
 	} else {
 		out = curFunc.Func(parFunc)
@@ -453,7 +475,7 @@ main:
 	return &params, utf8.RuneCountInString(input[:off]), tailpar
 }
 
-func process(input string, owner *node, vars *map[string]string) {
+func process(input string, owner *node, workspace *Workspace) {
 	var (
 		nameOff, shift int
 		curFunc        tplFunc
@@ -473,11 +495,11 @@ func process(input string, owner *node, vars *map[string]string) {
 				name = name[:0]
 				nameOff = 0
 				params, shift, tailpars = getFunc(input[off:], curFunc)
-				callFunc(&curFunc, owner, vars, params, tailpars)
+				callFunc(&curFunc, owner, workspace, params, tailpars)
 				for off+shift+3 < len(input) && input[off+shift+1:off+shift+3] == `.(` {
 					var next int
 					params, next, tailpars = getFunc(input[off+shift+2:], curFunc)
-					callFunc(&curFunc, owner, vars, params, tailpars)
+					callFunc(&curFunc, owner, workspace, params, tailpars)
 					shift += next + 2
 				}
 				continue
@@ -499,7 +521,7 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 		(*vars)[`_full`] = `0`
 	}
 	root := node{}
-	process(input, &root, vars)
+	process(input, &root, &Workspace{Vars: vars})
 	if root.Children == nil {
 		return []byte(`[]`)
 	}
