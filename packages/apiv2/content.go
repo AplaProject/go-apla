@@ -22,7 +22,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/templatev2"
+	"github.com/AplaProject/go-apla/packages/template"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -59,11 +59,11 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 
-	ret := templatev2.Template2JSON(page.Value, false, initVars(r, data))
+	ret := template.Template2JSON(page.Value, false, initVars(r, data))
 
 	menu, err := model.Single(`SELECT value FROM "`+getPrefix(data)+
 		`_menu" WHERE name = ?`, page.Menu).String()
-	retmenu := templatev2.Template2JSON(menu, false, initVars(r, data))
+	retmenu := template.Template2JSON(menu, false, initVars(r, data))
 
 	data.result = &contentResult{Tree: string(ret), Menu: page.Menu, MenuTree: string(retmenu)}
 	return nil
@@ -83,13 +83,13 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 
-	ret := templatev2.Template2JSON(menu.Value, false, initVars(r, data))
+	ret := template.Template2JSON(menu.Value, false, initVars(r, data))
 	data.result = &contentResult{Tree: string(ret), Title: menu.Title}
 	return nil
 }
 
 func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	ret := templatev2.Template2JSON(data.params[`template`].(string), false, initVars(r, data))
+	ret := template.Template2JSON(data.params[`template`].(string), false, initVars(r, data))
 	data.result = &contentResult{Tree: string(ret)}
 	return nil
 }

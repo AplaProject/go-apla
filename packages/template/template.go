@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package templatev2
+package template
 
 import (
 	"encoding/json"
