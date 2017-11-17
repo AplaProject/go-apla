@@ -681,7 +681,8 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 				}
 				fuelRate = fuelRate.Add(payOver)
 			}
-			if sc.TxContract.Block.Info.(*script.ContractInfo).Owner.Active {
+			isActive := sc.TxContract.Block.Info.(*script.ContractInfo).Owner.Active
+			if isActive {
 				fromID = sc.TxContract.Block.Info.(*script.ContractInfo).Owner.WalletID
 				sc.TxSmart.TokenEcosystem = sc.TxContract.Block.Info.(*script.ContractInfo).Owner.TokenID
 			} else if len(sc.TxSmart.PayOver) > 0 {
@@ -696,12 +697,12 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 			if err = payWallet.Get(fromID); err != nil {
 				if err == gorm.ErrRecordNotFound {
 					return ``, fmt.Errorf(`current balance is not enough`)
-				} else {
-					logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
-					return ``, err
-				}
+				} 
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
+				return ``, err
 			}
-			if !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) {
+			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) &&
+				!bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) {
 				return ``, fmt.Errorf(`Token and user public keys are different`)
 			}
 			amount, err := decimal.NewFromString(payWallet.Amount)
