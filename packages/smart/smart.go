@@ -697,7 +697,7 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 			if err = payWallet.Get(fromID); err != nil {
 				if err == gorm.ErrRecordNotFound {
 					return ``, fmt.Errorf(`current balance is not enough`)
-				} 
+				}
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 				return ``, err
 			}
