@@ -106,6 +106,12 @@ func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 		return err
 	}
 	if id == 1 {
+		// schema, err := static.Asset("static/schema-firstecosystem-v2.sql")
+		// if err != nil {
+		// 	log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting schema for first ecosystem")
+		// 	return err
+		// }
+		// err = DBConn.Exec(fmt.Sprintf(string(schema), wallet)).Error
 		err = DBConn.Exec(fmt.Sprintf(migration.SchemaFirstEcosystem, wallet)).Error
 	}
 	return err
