@@ -27,6 +27,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/template"
 
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
@@ -99,8 +100,18 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, `E_SIGNATURE`, http.StatusBadRequest)
 	}
 	address := crypto.KeyToAddress(pubkey)
+	founder, err := template.StateParam(state, "founder_account")
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder_account parameter")
+		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
+	}
+	var cfg model.Config
+	if _, err := cfg.Get(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting key_id parameter")
+		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
+	}
 	result := loginResult{EcosystemID: converter.Int64ToStr(state), KeyID: converter.Int64ToStr(wallet),
-		Address: address}
+		Address: address, IsOwner: converter.StrToInt64(founder) == wallet, IsNode: cfg.KeyID == wallet}
 	data.result = &result
 	expire := data.params[`expire`].(int64)
 	if expire == 0 {
