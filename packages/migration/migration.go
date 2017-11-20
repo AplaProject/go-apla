@@ -1045,9 +1045,9 @@ var (
 			var id int
 			id = CreateEcosystem($key_id, $Name)
 			DBInsert(Str(id) + "_pages", "name,value,menu,conditions", "default_page", 
-				  SysParamString("default_ecosystem_page"), "default_menu", "ContractConditions("MainCondition")")
+				  SysParamString("default_ecosystem_page"), "default_menu", "ContractConditions(\"MainCondition\")")
 			DBInsert(Str(id) + "_menu", "name,value,title,conditions", "default_menu", 
-				  SysParamString("default_ecosystem_menu"), "default", "ContractConditions("MainCondition")")
+				  SysParamString("default_ecosystem_menu"), "default", "ContractConditions(\"MainCondition\")")
 			DBInsert(Str(id) + "_keys", "id,pub", $key_id, DBString("1_keys", "pub", $key_id))
 			$result = id
 		}
