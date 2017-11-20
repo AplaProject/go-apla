@@ -34,7 +34,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/lib"
 	"github.com/AplaProject/go-apla/packages/utils"
 )
 
