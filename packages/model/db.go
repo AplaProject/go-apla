@@ -425,7 +425,7 @@ func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) 
 	var result int64
 	err := GetDB(transaction).Raw(`SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering).Row().Scan(&result)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(fmt.Errorf("GetRollbackID from table %s where %s order by rb_id", tblname, where, ordering))
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(fmt.Errorf("GetRollbackID from table %s where %s order by rb_id %s", tblname, where, ordering))
 		return 0, err
 	}
 	return result, nil

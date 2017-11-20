@@ -666,7 +666,7 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 			}
 			fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(sc.TxSmart.TokenEcosystem))
 			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting ecosystem fuel rate from string to decimal")
+				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting ecosystem fuel rate from string to decimal")
 				return ``, err
 			}
 			if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
@@ -676,7 +676,7 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 			if len(sc.TxSmart.PayOver) > 0 {
 				payOver, err := decimal.NewFromString(sc.TxSmart.PayOver)
 				if err != nil {
-					log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
+					log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
 					return ``, err
 				}
 				fuelRate = fuelRate.Add(payOver)
@@ -688,7 +688,7 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 			} else if len(sc.TxSmart.PayOver) > 0 {
 				payOver, err := decimal.NewFromString(sc.TxSmart.PayOver)
 				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
+					logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
 					return ``, err
 				}
 				fuelRate = fuelRate.Add(payOver)
@@ -707,7 +707,7 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 			}
 			amount, err := decimal.NewFromString(payWallet.Amount)
 			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
+				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
 				return ``, err
 			}
 			if cprice := sc.TxContract.GetFunc(`price`); cprice != nil {
@@ -769,7 +769,7 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 		apl := sc.TxUsedCost.Mul(fuelRate)
 		wltAmount, err := decimal.NewFromString(payWallet.Amount)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
+			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
 			return ``, err
 		}
 		if wltAmount.Cmp(apl) < 0 {

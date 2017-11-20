@@ -52,9 +52,9 @@ type SmartContract struct {
 
 var (
 	funcCallsDB = map[string]struct{}{
-		"DBInsert": struct{}{},
-		"DBSelect": struct{}{},
-		"DBUpdate": struct{}{},
+		"DBInsert": {},
+		"DBSelect": {},
+		"DBUpdate": {},
 	}
 	extendCost = map[string]int64{
 		"AddressToId":        10,
@@ -480,7 +480,7 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 	return nil
 }
 
-// IsContract returns true if there is teh specified contract
+// IsContract returns true if there is the specified contract
 func IsContract(sc *SmartContract, name string, state int64) bool {
 	return VMGetContract(sc.VM, name, uint32(state)) != nil
 }

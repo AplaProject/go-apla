@@ -282,7 +282,7 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 
 		respSize := converter.BinToDec(buf)
 		if respSize > syspar.GetMaxTxSize() {
-			logger.WithFields(log.Fields{"size": respSize, "max_size": syspar.GetMaxTxSize(), "type": consts.ParameterExceeded}).Warning("reponse size is larger than max tx size")
+			logger.WithFields(log.Fields{"size": respSize, "max_size": syspar.GetMaxTxSize(), "type": consts.ParameterExceeded}).Warning("response size is larger than max tx size")
 			return nil
 		}
 		// read the data

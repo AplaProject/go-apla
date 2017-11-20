@@ -59,7 +59,7 @@ var BlockSize = 16
 
 // TxTypes is the list of the embedded transactions
 var TxTypes = map[int]string{
-	1:  "FirstBlock",
+	1: "FirstBlock",
 }
 
 func init() {

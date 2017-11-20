@@ -7,7 +7,7 @@ const (
 	JSONMarshallError        = "JSONMarshall"
 	JSONUnmarshallError      = "JSONUnmarshall"
 	CommandExecutionError    = "CommandExecution"
-	ConvertionError          = "Convertion"
+	ConversionError          = "Conversion"
 	TypeError                = "Type"
 	ProtocolError            = "Protocol"
 	MarshallingError         = "Marshall"

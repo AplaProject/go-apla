@@ -138,7 +138,7 @@ type ParserInterface interface {
 func GetTablePrefix(global string, stateId int64) (string, error) {
 	globalInt, err := strconv.Atoi(global)
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.ConvertionError}).Error("converting global to int")
+		log.WithFields(log.Fields{"error": err, "type": consts.ConversionError}).Error("converting global to int")
 		return "", err
 	}
 	stateIdStr := converter.Int64ToStr(stateId)
@@ -480,7 +480,7 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 	}
 	fuelRate, err := decimal.NewFromString(systemParam.Value)
 	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConvertionError, "value": systemParam.Value}).Error("converting fuel rate system parameter from string to decimal")
+		logger.WithFields(log.Fields{"error": err, "type": consts.ConversionError, "value": systemParam.Value}).Error("converting fuel rate system parameter from string to decimal")
 		return decimal.New(0, 0), p.ErrInfo(err)
 	}
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {

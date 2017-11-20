@@ -39,7 +39,7 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	}
 	keyID := converter.StringToAddress(data.params[`wallet`].(string))
 	if keyID == 0 {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "value": data.params["wallet"].(string)}).Error("converting wallet to address")
+		logger.WithFields(log.Fields{"type": consts.ConversionError, "value": data.params["wallet"].(string)}).Error("converting wallet to address")
 		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
 

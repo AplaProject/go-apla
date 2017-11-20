@@ -518,7 +518,7 @@ func HexToBin(ihexdata interface{}) []byte {
 	var str []byte
 	str, err := hex.DecodeString(hexdata)
 	if err != nil {
-		log.WithFields(log.Fields{"data": hexdata, "error": err, "type": consts.ConvertionError}).Error("decoding string to hex")
+		log.WithFields(log.Fields{"data": hexdata, "error": err, "type": consts.ConversionError}).Error("decoding string to hex")
 		log.Printf("HexToBin error: %s", err)
 	}
 	return str

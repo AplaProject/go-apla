@@ -26,6 +26,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+	hr "github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/AplaProject/go-apla/packages/config"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -34,9 +38,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
-	"github.com/dgrijalva/jwt-go"
-	hr "github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -226,7 +227,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			case pHex:
 				bin, err := hex.DecodeString(val)
 				if err != nil {
-					requestLogger.WithFields(log.Fields{"type": consts.ConvertionError, "value": val, "error": err}).Error("decoding http parameter from hex")
+					requestLogger.WithFields(log.Fields{"type": consts.ConversionError, "value": val, "error": err}).Error("decoding http parameter from hex")
 					errorAPI(w, err, http.StatusBadRequest)
 					return
 				}

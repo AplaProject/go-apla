@@ -27,8 +27,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
+	log "github.com/sirupsen/logrus"
 )
 
 // get the list of transactions which belong to the sender from 'disseminator' daemon
@@ -122,7 +122,7 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 		return utils.ErrInfo(err)
 	}
 	// we accept only new blocks
-	if  !found && newBlockID >= infoBlock.BlockID {
+	if !found && newBlockID >= infoBlock.BlockID {
 		queueBlock := &model.QueueBlock{Hash: blockHash, FullNodeID: fullNodeID, BlockID: newBlockID}
 		err = queueBlock.Create()
 		if err != nil {

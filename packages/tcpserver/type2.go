@@ -28,8 +28,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
+	log "github.com/sirupsen/logrus"
 )
 
 // Type2 serves requests from disseminator

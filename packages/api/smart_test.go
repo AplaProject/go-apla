@@ -150,7 +150,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 	err = postTx(`NewBlock`, &form)
-	if cutErr(err) != fmt.Sprintf(`!Block %s aready exists`, name) {
+	if cutErr(err) != fmt.Sprintf(`!Block %s already exists`, name) {
 		t.Error(err)
 		return
 	}

@@ -29,12 +29,12 @@ import (
 )
 
 type getUIDResult struct {
-	UID     string `json:"uid,omitempty"`
-	Token   string `json:"token,omitempty"`
-	Expire  string `json:"expire,omitempty"`
-	EcosystemID   string `json:"ecosystem_id,omitempty"`
-	KeyID  string `json:"key_id,omitempty"`
-	Address string `json:"address,omitempty"`
+	UID         string `json:"uid,omitempty"`
+	Token       string `json:"token,omitempty"`
+	Expire      string `json:"expire,omitempty"`
+	EcosystemID string `json:"ecosystem_id,omitempty"`
+	KeyID       string `json:"key_id,omitempty"`
+	Address     string `json:"address,omitempty"`
 }
 
 func getUID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {

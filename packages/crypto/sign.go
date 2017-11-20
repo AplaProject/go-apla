@@ -66,7 +66,7 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 
 	b, err := hex.DecodeString(privateKey)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding private key from hex")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
 		return
 	}
 	bi := new(big.Int).SetBytes(b)
@@ -152,7 +152,7 @@ func parseSign(sign string) (*big.Int, *big.Int, error) {
 	if len(sign) > 128 {
 		binSign, err = hex.DecodeString(sign)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding sign from string")
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding sign from string")
 			return nil, nil, err
 		}
 		left := parse(binSign[2:])

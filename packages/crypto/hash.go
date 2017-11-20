@@ -70,7 +70,7 @@ func hashDoubleSHA3(msg []byte) ([]byte, error) {
 //First, hash has been calculated from input data
 //Second, obtained hash has been converted to hex
 //Third, hex value has been hashed once more time
-//In this variant second step is omited.
+//In this variant second step is omitted.
 func hashDoubleSHA256(msg []byte) []byte {
 	firstHash := sha256.Sum256(msg)
 	secondHash := sha256.Sum256(firstHash[:])

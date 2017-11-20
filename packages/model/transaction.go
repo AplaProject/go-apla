@@ -1,15 +1,15 @@
 package model
 
 type Transaction struct {
-	Hash      []byte `gorm:"private_key;not null"`
-	Data      []byte `gorm:"not null"`
-	Used      int8   `gorm:"not null"`
-	HighRate  int8   `gorm:"not null"`
-	Type      int8   `gorm:"not null"`
-	KeyID  int64  `gorm:"not null"`
-	Counter   int8   `gorm:"not null"`
-	Sent      int8   `gorm:"not null"`
-	Verified  int8   `gorm:"not null;default:1"`
+	Hash     []byte `gorm:"private_key;not null"`
+	Data     []byte `gorm:"not null"`
+	Used     int8   `gorm:"not null"`
+	HighRate int8   `gorm:"not null"`
+	Type     int8   `gorm:"not null"`
+	KeyID    int64  `gorm:"not null"`
+	Counter  int8   `gorm:"not null"`
+	Sent     int8   `gorm:"not null"`
+	Verified int8   `gorm:"not null;default:1"`
 }
 
 func GetAllTransactions(limit int) (*[]Transaction, error) {

@@ -237,7 +237,7 @@ func ValueToInt(v interface{}) (ret int64) {
 	case string:
 		ret, err = strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting value from string to int")
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting value from string to int")
 		}
 	}
 	return
@@ -254,7 +254,7 @@ func ValueToFloat(v interface{}) (ret float64) {
 	case string:
 		ret, err = strconv.ParseFloat(val, 64)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting value from string to float")
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting value from string to float")
 		}
 	}
 	return
@@ -269,7 +269,7 @@ func ValueToDecimal(v interface{}) (ret decimal.Decimal) {
 	case string:
 		ret, err = decimal.NewFromString(val)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting value from string to decimal")
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting value from string to decimal")
 		}
 	case int64:
 		ret = decimal.New(val, 0)
