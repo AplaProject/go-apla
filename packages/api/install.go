@@ -97,7 +97,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("reading config")
 		return err
 	}
-	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
+	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"], *utils.LogSQL)
 	if err != nil || model.DBConn == nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("initializing DB")
 		err = fmt.Errorf(`E_DBNIL`)

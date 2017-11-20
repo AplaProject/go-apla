@@ -76,6 +76,8 @@ var (
 	ListenHTTPPort = flag.String("listenHttpPort", "7079", "ListenHTTPPort")
 	// GenerateFirstBlock show if the first block must be generated
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
+	// LogSQL show if we should display sql queries in logs
+	LogSQL = flag.Int64("logSQL", 0, "log sql")
 	// OldVersion is the number of the old version
 	OldVersion = flag.String("oldVersion", "", "")
 	// TestRollBack equals 1 for testing rollback
