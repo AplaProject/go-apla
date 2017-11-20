@@ -39,6 +39,8 @@ type loginResult struct {
 	KeyID       string `json:"key_id,omitempty"`
 	Address     string `json:"address,omitempty"`
 	NotifyKey   string `json:"notify_key,omitempty"`
+	IsNode      bool   `json:"isnode,omitempty"`
+	IsOwner     bool   `json:"isowner,omitempty"`
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {

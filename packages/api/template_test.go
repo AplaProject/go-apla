@@ -36,13 +36,11 @@ func TestAPI(t *testing.T) {
 		t.Error(err)
 		return
 	}
-
 	err := sendPost(`content/page/default_page`, &url.Values{}, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-
 	for _, item := range forTest {
 		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
 		if err != nil {

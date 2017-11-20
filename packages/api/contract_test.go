@@ -433,6 +433,17 @@ var (
 	   }
    ]
 }`
+	imppage = `{
+	"pages": [
+        {
+            "Name": "profile_view",
+            "Conditions": "ContractAccess(\"@1EditPage\")",
+            "Menu": "default_menu",
+            "Value": "Div(Class: content-wrapper){\r\n    Div(Class: content-heading, Body: LangRes(user_info))\r\n\r\n    If(#v_member_id# > 0){\r\n        DBFind(members, mysrc).Where(member_id=#v_member_id#).Vars(prefix)\r\n    }.Else{\r\n        DBFind(members, mysrc).Where(member_id=#key_id#).Vars(prefix)\r\n    }\r\n\r\n    If(#prefix_id#>0){\r\n    }.Else{\r\n        SetVar(prefix_username, \"\")\r\n        SetVar(prefix_name_last, \"\")\r\n        SetVar(prefix_name_first, \"\")\r\n        SetVar(prefix_name_middle, \"\")\r\n        SetVar(prefix_birthdate, \"01.01.1990\")\r\n    }\r\n\r\nDiv(row df f-valign){\r\n        Div(col-md-3)\r\n        Div(col-md-6){\r\n            Div(panel panel-default){\r\n                Form(){ \r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tSpan(Class: h3, Body: LangRes(user_info))\t\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-12 mt-sm  text-center){\r\n\r\n\t\t\t\t\t\t\t\tIf(#prefix_id#>0){\r\n\t\t\t\t\t\t\t\t\tIf(#prefix_member_id# == #key_id#){\r\n\t\t\t\t\t\t\t\t\t\tButton(Class: btn btn-link, Page:profile_edit, PageParams:\"v_member_id=#member_id#\"){\r\n\t\t\t\t\t\t\t\t\t\t\tImage(\"#prefix_avatar#\",,img-circle).Style(width: 100px;  border: 1px solid #5A5D63; margin-bottom: 15px;)\r\n\t\t\t\t\t\t\t\t\t\t\tDiv(,Span(Class: h3 text-bold, Body: #prefix_username#))\r\n\t\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t\t}.Else{\r\n\t\t\t\t\t\t\t\t\t\tImage(\"#prefix_avatar#\",,img-circle).Style(width: 100px;  border: 1px solid #5A5D63; margin-bottom: 15px;)\r\n\t\t\t\t\t\t\t\t\t\tDiv(,Span(Class: h3 text-bold, Body: #prefix_username#))\r\n\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t}.Else{\r\n\t\t\t\t\t\t\t\t\tButton(Class: btn btn-link, Page:profile_edit){\r\n\t\t\t\t\t\t\t\t\t\tSpan(Class: h3 text-bold, Body: LangRes(editing_profile))\r\n\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t}\r\n\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm  text-right){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: LangRes(name_last))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm text-left){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: #prefix_name_last#)\r\n\t\t\t\t\t\t\t} \r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm  text-right){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: LangRes(name_first))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm text-left){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: #prefix_name_first#)\r\n\t\t\t\t\t\t\t} \r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm  text-right){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: LangRes(name_middle))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm text-left){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: #prefix_name_middle#)\r\n\t\t\t\t\t\t\t} \r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm  text-right){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: LangRes(gender))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm text-left){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: EcosysParam(gender_list, #prefix_gender#))\r\n\t\t\t\t\t\t\t} \r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm  text-right){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: LangRes(birthdate))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm text-left){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: DateTime(#prefix_birthdate#, \"DD.MM.YYYY\"))\r\n\t\t\t\t\t\t\t} \r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-12 mt-sm  text-center){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4 text-bold, Body: Address(#prefix_member_id#))\r\n\t\t\t\t\t\t\t\tDiv(,Span(Class: h5, Body: LangRes(member_id)))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\t\t\t\t\t\r\n\r\n                }\r\n            }\r\n        }\r\n        Div(col-md-3)\r\n    }\r\n}"
+        }
+	]
+	}
+`
 )
 
 func TestImport(t *testing.T) {
@@ -441,7 +452,7 @@ func TestImport(t *testing.T) {
 		return
 	}
 
-	form := url.Values{"Data": {impdata}}
+	form := url.Values{"Data": {imppage}}
 	_, _, err := postTxResult(`@1Import`, &form)
 	if err != nil {
 		t.Error(err)
