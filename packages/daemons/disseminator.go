@@ -218,7 +218,7 @@ func MarshallTrHash(tr model.Transaction) []byte {
 
 func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer, logger *log.Entry) error, logger *log.Entry) error {
 
-	hosts := syspar.GetHosts()
+	hosts := syspar.GetRemoteHosts()
 	log.Debug("sendPacketToAll", hosts)
 	var wg sync.WaitGroup
 
