@@ -17,9 +17,10 @@
 package main
 
 import (
+	"runtime"
+
 	"github.com/AplaProject/go-apla/packages/daylight"
 	"github.com/AplaProject/go-apla/packages/system"
-	"runtime"
 )
 
 func main() {

@@ -126,14 +126,14 @@ func FirstBlock() {
 	PublicKey := *utils.FirstBlockPublicKey
 	PublicKeyBytes, err := hex.DecodeString(string(PublicKey))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding public key from hex to string")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex to string")
 		return
 	}
 
 	NodePublicKey := *utils.FirstBlockNodePublicKey
 	NodePublicKeyBytes, err := hex.DecodeString(string(NodePublicKey))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding node public key from hex to string")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding node public key from hex to string")
 		return
 	}
 

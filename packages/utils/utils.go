@@ -762,7 +762,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 		return nil, ErrInfo(err)
 	}
 
-	// recieve the data size as a response that server wants to transfer
+	// receive the data size as a response that server wants to transfer
 	buf := make([]byte, 4)
 	_, err = conn.Read(buf)
 	if err != nil {

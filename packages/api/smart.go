@@ -107,7 +107,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 				if strings.Contains(fitem.Tags, `address`) {
 					addr := converter.StringToAddress(val)
 					if addr == 0 {
-						log.WithFields(log.Fields{"type": consts.ConvertionError, "value": val}).Error("converting string to address")
+						log.WithFields(log.Fields{"type": consts.ConversionError, "value": val}).Error("converting string to address")
 						err = fmt.Errorf(`Address %s is not valid`, val)
 						break
 					}

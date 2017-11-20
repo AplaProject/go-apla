@@ -63,8 +63,12 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 
 	menu, err := model.Single(`SELECT value FROM "`+getPrefix(data)+
 		`_menu" WHERE name = ?`, page.Menu).String()
-	retmenu := template.Template2JSON(menu, false, initVars(r, data))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting single from DB")
+		return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
+	}
 
+	retmenu := template.Template2JSON(menu, false, initVars(r, data))
 	data.result = &contentResult{Tree: string(ret), Menu: page.Menu, MenuTree: string(retmenu)}
 	return nil
 }

@@ -21,9 +21,10 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"fmt"
+	"testing"
+
 	"github.com/AplaProject/go-apla/packages/lib"
 	"github.com/shopspring/decimal"
-	"testing"
 )
 
 func TestInterface(t *testing.T) {

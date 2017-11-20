@@ -67,7 +67,7 @@ func ReadRequest(request interface{}, r io.Reader) error {
 			if sizeVal != "" {
 				size, err = strconv.ParseUint(sizeVal, 10, 0)
 				if err != nil {
-					log.WithFields(log.Fields{"value": sizeVal, "type": consts.ConvertionError, "error": err}).Error("parsing uint")
+					log.WithFields(log.Fields{"value": sizeVal, "type": consts.ConversionError, "error": err}).Error("parsing uint")
 				}
 			} else {
 				size, err = readUint(r, 4) // read size
@@ -118,7 +118,7 @@ func SendRequest(request interface{}, w io.Writer) error {
 			if sizeVal != "" {
 				size, err := strconv.Atoi(sizeVal)
 				if err != nil {
-					log.WithFields(log.Fields{"value": sizeVal, "type": consts.ConvertionError, "error": err}).Error("Converting str to int")
+					log.WithFields(log.Fields{"value": sizeVal, "type": consts.ConversionError, "error": err}).Error("Converting str to int")
 					panic("bad size tag")
 				}
 				if size != len(value) {

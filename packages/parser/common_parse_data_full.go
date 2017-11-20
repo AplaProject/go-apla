@@ -533,7 +533,7 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 		if p.BlockData != nil && p.BlockData.BlockID != 1 {
 			if p.TxKeyID == 0 {
 				logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Empty user id")
-				return utils.ErrInfo(fmt.Errorf("emtpy user id"))
+				return utils.ErrInfo(fmt.Errorf("empty user id"))
 			}
 		}
 	}

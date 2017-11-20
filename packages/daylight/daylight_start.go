@@ -30,6 +30,7 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/api"
 	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/daemons"
@@ -44,7 +45,6 @@ import (
 	"github.com/go-bindata-assetfs"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
-	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
 // FileAsset returns the body of the file
@@ -174,7 +174,7 @@ func rollbackToBlock(blockID int64) error {
 		return err
 	}
 
-	// we recieve the statistics of all tables
+	// we receive the statistics of all tables
 	allTable, err := model.GetAllTables()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("error getting all tables")
@@ -187,8 +187,8 @@ func rollbackToBlock(blockID int64) error {
 	}
 
 	// check blocks related tables
-	startData := map[string]int64{"1_menu":1,"1_pages":1,"1_contracts":26,"1_parameters":11,"1_keys":1,"1_tables":8,"stop_daemons":1,"queue_blocks":9999999,"system_tables":1, "system_parameters":27,"system_states":1, "install": 1, "config": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1,"confirmations": 9999999, "my_node_keys": 9999999, "transactions": 9999999}
-	warn:=0
+	startData := map[string]int64{"1_menu": 1, "1_pages": 1, "1_contracts": 26, "1_parameters": 11, "1_keys": 1, "1_tables": 8, "stop_daemons": 1, "queue_blocks": 9999999, "system_tables": 1, "system_parameters": 27, "system_states": 1, "install": 1, "config": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1, "confirmations": 9999999, "my_node_keys": 9999999, "transactions": 9999999}
+	warn := 0
 	for _, table := range allTable {
 		count, err := model.GetRecordsCount(table)
 		if err != nil {
@@ -300,7 +300,7 @@ func Start() {
 
 	err = initLogs()
 	if err != nil {
-		fmt.Println("logs init failed: %v", utils.ErrInfo(err))
+		fmt.Printf("logs init failed: %v", utils.ErrInfo(err))
 		Exit(1)
 	}
 

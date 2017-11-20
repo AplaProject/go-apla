@@ -38,22 +38,22 @@ import (
 
 var (
 	funcCallsDBP = map[string]struct{}{
-		"DBInsert":       struct{}{},
-		"DBUpdate":       struct{}{},
-		"DBUpdateExt":    struct{}{},
-		"DBSelect":       struct{}{},
-		"DBInt":          struct{}{},
-		"DBRowExt":       struct{}{},
-		"DBRow":          struct{}{},
-		"DBStringExt":    struct{}{},
-		"DBIntExt":       struct{}{},
-		"DBFreeRequest":  struct{}{},
-		"DBStringWhere":  struct{}{},
-		"DBIntWhere":     struct{}{},
-		"DBAmount":       struct{}{},
-		"DBInsertReport": struct{}{},
-		"UpdateSysParam": struct{}{},
-		"FindEcosystem":  struct{}{},
+		"DBInsert":       {},
+		"DBUpdate":       {},
+		"DBUpdateExt":    {},
+		"DBSelect":       {},
+		"DBInt":          {},
+		"DBRowExt":       {},
+		"DBRow":          {},
+		"DBStringExt":    {},
+		"DBIntExt":       {},
+		"DBFreeRequest":  {},
+		"DBStringWhere":  {},
+		"DBIntWhere":     {},
+		"DBAmount":       {},
+		"DBInsertReport": {},
+		"UpdateSysParam": {},
+		"FindEcosystem":  {},
 	}
 	extendCostP = map[string]int64{
 		"AddressToId":       10,
@@ -239,8 +239,8 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 }
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{}, 
-	params string, val ...interface{}) (qcost int64, err error) { 
+func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
+	params string, val ...interface{}) (qcost int64, err error) {
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
@@ -360,7 +360,7 @@ func DBIntExt(sc *SmartContract, tblname string, name string, id interface{}, id
 	}
 	res, err := strconv.ParseInt(val, 10, 64)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting DBStringExt result from string to int")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting DBStringExt result from string to int")
 	}
 	return qcost, res, err
 }
@@ -413,7 +413,7 @@ func DBIntWhere(sc *SmartContract, tblname string, name string, where string, pa
 	}
 	res, err := strconv.ParseInt(val, 10, 64)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("convertion DBStringWhere result from string to int")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("conversion DBStringWhere result from string to int")
 	}
 	return cost, res, err
 }
@@ -430,7 +430,7 @@ func DBAmount(sc *SmartContract, tblname, column string, id int64) (int64, decim
 	}
 	val, err := decimal.NewFromString(balance)
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.ConvertionError}).Error("converting balance from string to decimal")
+		log.WithFields(log.Fields{"error": err, "type": consts.ConversionError}).Error("converting balance from string to decimal")
 	}
 	return 0, val
 }
@@ -737,7 +737,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	}
 	hexsign, err := hex.DecodeString((*i)[`Signature`].(string))
 	if len(hexsign) == 0 || err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("comverting signature to hex")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("comverting signature to hex")
 		return fmt.Errorf(`wrong signature`)
 	}
 

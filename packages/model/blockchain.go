@@ -1,14 +1,14 @@
 package model
 
 type Block struct {
-	ID       int64  `gorm:"primary_key;not_null"`
-	Hash     []byte `gorm:"not null"`
-	Data     []byte `gorm:"not null"`
-	EcosystemID int64  `gorm:"not null"`
-	KeyID int64  `gorm:"not null"`
-	NodePosition  int64  `gorm:"not null"`
-	Time     int64  `gorm:"not null"`
-	Tx       int32  `gorm:"not null"`
+	ID           int64  `gorm:"primary_key;not_null"`
+	Hash         []byte `gorm:"not null"`
+	Data         []byte `gorm:"not null"`
+	EcosystemID  int64  `gorm:"not null"`
+	KeyID        int64  `gorm:"not null"`
+	NodePosition int64  `gorm:"not null"`
+	Time         int64  `gorm:"not null"`
+	Tx           int32  `gorm:"not null"`
 }
 
 func (Block) TableName() string {

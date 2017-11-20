@@ -1,6 +1,5 @@
 package model
 
-
 type QueueBlock struct {
 	Hash       []byte `gorm:"primary_key;not null"`
 	BlockID    int64  `gorm:"not null"`

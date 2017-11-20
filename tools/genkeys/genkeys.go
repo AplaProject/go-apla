@@ -7,9 +7,10 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"github.com/AplaProject/go-apla/packages/lib"
 	"io/ioutil"
 	"math/big"
+
+	"github.com/AplaProject/go-apla/packages/lib"
 )
 
 func main() {

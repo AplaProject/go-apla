@@ -26,8 +26,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/AplaProject/go-apla/packages/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -93,7 +93,6 @@ func SysUpdate() error {
 		cache[param.Name] = param.Value
 	}
 
-
 	nodes = make(map[int64]*FullNode)
 	nodesByPosition = make([][]string, 0)
 	if len(cache[FullNodes]) > 0 {
@@ -110,7 +109,7 @@ func SysUpdate() error {
 			}
 			pub, err := hex.DecodeString(item[2])
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": item[2]}).Error("decoding inode from string")
+				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": item[2]}).Error("decoding inode from string")
 				return err
 			}
 			nodes[converter.StrToInt64(item[1])] = &FullNode{Host: item[0], Public: pub}
@@ -270,7 +269,6 @@ func GetCommissionWallet(ecosystem int64) string {
 	return wallets[1]
 }
 
-
 func GetMaxBlockSize() int64 {
 	return converter.StrToInt64(SysString(MaxBlockSize))
 }
@@ -278,8 +276,6 @@ func GetMaxBlockSize() int64 {
 func GetMaxTxSize() int64 {
 	return converter.StrToInt64(SysString(MaxTxSize))
 }
-
-
 
 func GetGapsBetweenBlocks() int64 {
 	return converter.StrToInt64(SysString(GapsBetweenBlocks))
@@ -314,8 +310,6 @@ func GetHosts() []string {
 	}
 	return ret
 }
-
-
 
 // SysString returns string value of the system parameter
 func SysString(name string) string {

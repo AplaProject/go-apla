@@ -30,7 +30,7 @@ func SendNotifications() {
 		for _, notif := range notifs {
 			userID, err := strconv.ParseInt(notif["recipient_id"], 10, 64)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConvertionError, "value": notif["recipient_id"], "error": err}).Error("getting recipient_id")
+				log.WithFields(log.Fields{"type": consts.ConversionError, "value": notif["recipient_id"], "error": err}).Error("getting recipient_id")
 				return
 			}
 			data, err := mapToString(notif)

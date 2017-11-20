@@ -2,8 +2,8 @@ package model
 
 type Config struct {
 	MyBlockID              int32  `gorm:"not null"`
-	KeyID            int64  `gorm:"not null"`
-	EcosystemID                int64  `gorm:"not null"`
+	KeyID                  int64  `gorm:"not null"`
+	EcosystemID            int64  `gorm:"not null"`
 	BadBlocks              string `gorm:"not null"`
 	AutoReload             int    `gorm:"not null"`
 	FirstLoadBlockchainURL string `gorm:"column:first_load_blockchain_url;not null"`
