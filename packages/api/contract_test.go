@@ -54,7 +54,7 @@ func TestNewContracts(t *testing.T) {
 				form := url.Values{"Name": {item.Name}, "Value": {item.Value},
 					"Conditions": {`true`}}
 				if err := postTx(`NewContract`, &form); err != nil {
-					if item.Name != `errTest` || !strings.HasPrefix(err.Error(), `must be type 7d01 125 [Ln:4 Col:22]`) {
+					if item.Name != `errTestMessage` || !strings.HasPrefix(err.Error(), `{"type":"panic","error":"unknown variable qvar"}`) {
 						t.Error(err)
 						return
 					}
@@ -86,6 +86,12 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`errTestMessage`, `contract errTestMessage {
+		conditions {
+		}
+		action { qvar ivar int}
+	}`,
+		nil},
 	{`EditProfile6`, `contract EditProfile6 {
 		data {
 		}
