@@ -348,7 +348,7 @@ var (
 	  INSERT INTO "%[1]d_vde_contracts" ("id", "value", "conditions") VALUES 
 	  ('1','contract MainCondition {
 		conditions {
-		  if(EcosystemParam("founder_account")!=$key_id)
+		  if EcosysParam("founder_account")!=$key_id
 		  {
 			warning "Sorry, you do not have access to this action."
 		  }
@@ -753,7 +753,7 @@ var (
 		INSERT INTO "%[1]d_contracts" ("id", "value", "wallet_id","active", "conditions") VALUES 
 		('1','contract MainCondition {
 		  conditions {
-			if(StateVal("founder_account")!=$key_id)
+			if EcosysParam("founder_account")!=$key_id
 			{
 			  warning "Sorry, you do not have access to this action."
 			}
@@ -799,7 +799,7 @@ var (
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
 		
 		INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts', 
-				'{"insert": "ContractAccess(\"@1NewContract\")", "update": "ContractAccess(\"@1EditContract\")", 
+			'{"insert": "ContractAccess(\"@1NewContract\")", "update": "ContractAccess(\"@1EditContract\",\"@1ActivateContract\")",
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
 				'{"value": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")",
 				  "wallet_id": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")",
@@ -827,14 +827,14 @@ var (
 				  "res": "ContractAccess(\"@1EditLang\")",
 				  "conditions": "ContractAccess(\"@1EditLang\")"}', 'ContractAccess("@1EditTable")'),
 				('5', 'menu', 
-				'{"insert": "ContractAccess(\"@1NewMenu\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditMenu\")", 
+					'{"insert": "ContractAccess(\"@1NewMenu\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")", 
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
 				'{"name": "ContractAccess(\"@1EditMenu\")",
 			"value": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")",
 			"conditions": "ContractAccess(\"@1EditMenu\")"
 				}', 'ContractAccess("@1EditTable")'),
 				('6', 'pages', 
-				'{"insert": "ContractAccess(\"@1NewPage\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditPage\")", 
+					'{"insert": "ContractAccess(\"@1NewPage\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1EditPage\",\"@1AppendPage\")", 
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
 				'{"name": "ContractAccess(\"@1EditPage\")",
 			"value": "ContractAccess(\"@1EditPage\",\"@1AppendPage\")",
