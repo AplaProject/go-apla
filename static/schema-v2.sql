@@ -191,25 +191,6 @@ DROP TABLE IF EXISTS "install"; CREATE TABLE "install" (
 "progress" varchar(10) NOT NULL DEFAULT ''
 );
 
-
-DROP TYPE IF EXISTS "my_node_keys_enum_status" CASCADE;
-CREATE TYPE "my_node_keys_enum_status" AS ENUM ('my_pending','approved');
-DROP SEQUENCE IF EXISTS my_node_keys_id_seq CASCADE;
-CREATE SEQUENCE my_node_keys_id_seq START WITH 1;
-DROP TABLE IF EXISTS "my_node_keys"; CREATE TABLE "my_node_keys" (
-"id" int NOT NULL  default nextval('my_node_keys_id_seq'),
-"add_time" int NOT NULL DEFAULT '0',
-"public_key" bytea  NOT NULL DEFAULT '',
-"private_key" varchar(3096) NOT NULL DEFAULT '',
-"status" my_node_keys_enum_status  NOT NULL DEFAULT 'my_pending',
-"my_time" int NOT NULL DEFAULT '0',
-"time" bigint NOT NULL DEFAULT '0',
-"block_id" int NOT NULL DEFAULT '0',
-"rb_id" int NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE my_node_keys_id_seq owned by my_node_keys.id;
-ALTER TABLE ONLY "my_node_keys" ADD CONSTRAINT my_node_keys_pkey PRIMARY KEY (id);
-
 DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 "stop_time" int NOT NULL DEFAULT '0'
 );
