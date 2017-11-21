@@ -18,40 +18,49 @@ type TransactionType struct {
 	Type uint16
 }
 
-// type 10
+// MaxBlockRequest is max block request
 type MaxBlockRequest struct{}
+
+// MaxBlockResponse is max block response
 type MaxBlockResponse struct {
 	BlockID uint32
 }
 
-// type 7
+// GetBodyRequest contains BlockID
 type GetBodyRequest struct {
 	BlockID uint32
 }
+
+// GetBodyResponse is Data []bytes
 type GetBodyResponse struct {
 	Data []byte
 }
 
-// type 4
+// ConfirmRequest contains request data
 type ConfirmRequest struct {
 	BlockID uint32
 }
+
+// ConfirmResponse contains response data
 type ConfirmResponse struct {
 	ConfType uint8
 	Hash     []byte `size:"32"`
 }
 
-// type 2
+// DisRequest contains request data
 type DisRequest struct {
 	Data []byte
 }
+
+// DisTrResponse contains response data
 type DisTrResponse struct{}
 
-// type 1
+// DisHashResponse contains response data
 type DisHashResponse struct {
 	Data []byte
 }
 
+// ReadRequest is reading request
 func ReadRequest(request interface{}, r io.Reader) error {
 	if reflect.ValueOf(request).Elem().Kind() != reflect.Struct {
 		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("bad request type")

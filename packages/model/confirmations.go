@@ -13,7 +13,7 @@ func (c *Confirmation) GetGoodBlock(goodCount int) (bool, error) {
 	return isFound(DBConn.Where("good >= ?", goodCount).Last(&c))
 }
 
-// GetConfirmations returns if block with blockID exists
+// GetConfirmation returns if block with blockID exists
 func (c *Confirmation) GetConfirmation(blockID int64) (bool, error) {
 	return isFound(DBConn.Where("block_id= ?", blockID).First(&c))
 }

@@ -28,7 +28,7 @@ func (qb *QueueBlock) DeleteQueueBlockByHash() error {
 	return query.Error
 }
 
-// DeleteOldBlock is deleting old blocks
+// DeleteOldBlocks is deleting old blocks
 func (qb *QueueBlock) DeleteOldBlocks() error {
 	query := DBConn.Exec("DELETE FROM queue_blocks WHERE block_id <= ?", qb.BlockID)
 	return query.Error

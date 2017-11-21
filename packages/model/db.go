@@ -352,7 +352,7 @@ func DropTable(transaction *DbTransaction, tableName string) error {
 	return GetDB(transaction).DropTable(tableName).Error
 }
 
-// Because of import cycle utils and config
+// IsNodeState :Because of import cycle utils and config
 func IsNodeState(state int64, host string) bool {
 	if strings.HasPrefix(host, `localhost`) {
 		return true

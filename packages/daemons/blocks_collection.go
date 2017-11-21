@@ -171,7 +171,7 @@ func getHostBlockID(host string, logger *log.Entry) (int64, error) {
 	return converter.BinToDec(blockIDBin), nil
 }
 
-// load from host all blocks from our last block to maxBlockID
+// UpdateChain load from host all blocks from our last block to maxBlockID
 func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64, rollbackBlocks string) error {
 
 	// get current block id from our blockchain

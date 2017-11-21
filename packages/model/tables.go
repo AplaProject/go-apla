@@ -13,7 +13,7 @@ type Table struct {
 	RbID        int64  `gorm:"not null"`
 }
 
-// TableVDE
+// TableVDE is model
 type TableVDE struct {
 	tableName   string
 	ID          int64  `gorm:"primary_key;not null"`

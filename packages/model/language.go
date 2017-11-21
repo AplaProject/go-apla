@@ -21,7 +21,7 @@ func (l *Language) TableName() string {
 	return l.tableName
 }
 
-// Get is retrieving all records from database
+// GetAll is retrieving all records from database
 func (l *Language) GetAll(prefix string) ([]Language, error) {
 	result := new([]Language)
 	err := DBConn.Table(prefix + "_languages").Order("name").Find(&result).Error

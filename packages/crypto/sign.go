@@ -21,6 +21,7 @@ const (
 	_ECDSA signProvider = iota
 )
 
+// Sign in signing data with private key
 func Sign(privateKey string, data string) ([]byte, error) {
 	if len(data) == 0 {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(SigningEmpty.Error())
@@ -33,6 +34,7 @@ func Sign(privateKey string, data string) ([]byte, error) {
 	}
 }
 
+// CheckSign is checking sign
 func CheckSign(public []byte, data string, signature []byte) (bool, error) {
 	if len(public) == 0 {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(CheckingSignEmpty.Error())

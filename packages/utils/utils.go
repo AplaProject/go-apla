@@ -52,6 +52,7 @@ type BlockData struct {
 	Version      int
 }
 
+// Update is contains update data
 type Update struct {
 	Version string
 	Hash    string
@@ -112,9 +113,10 @@ var (
 
 	// LogoExt is the extension of the logotype
 	LogoExt = `png`
-	// DltWalletID is the wallet identifier
+	// KeyID is the wallet identifier
 	KeyID = flag.Int64("keyID", 0, "keyID")
 
+	// ReturnCh is chan for returns
 	ReturnCh     chan string
 	CancelFunc   context.CancelFunc
 	DaemonsCount int
@@ -819,6 +821,7 @@ func GetParent() string {
 	return parent
 }
 
+// GetTcpPort is returns tcp port
 func GetTcpPort(config map[string]string) string {
 	if port, ok := config["tcp_port"]; ok {
 		return port

@@ -28,6 +28,7 @@ type DBConfig struct {
 	Name     string
 }
 
+// Read is reading config
 func Read() error {
 	ConfigIni = map[string]string{}
 	path := fmt.Sprintf("%s/%s", *utils.Dir, configFileName)
@@ -45,12 +46,14 @@ func Read() error {
 	return nil
 }
 
+// IsExist checking config file existence
 func IsExist() bool {
 	path := *utils.Dir + "/" + configFileName
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
 }
 
+// Save is saving config to file
 func Save(logLevel, installType string, dbConf *DBConfig) error {
 	path := *utils.Dir + "/" + configFileName
 	if !IsExist() {
@@ -81,6 +84,7 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 	return nil
 }
 
+// Drop is removing config file
 func Drop() {
 	path := fmt.Sprintf("%s/%s", *utils.Dir, configFileName)
 	err := os.Remove(path)

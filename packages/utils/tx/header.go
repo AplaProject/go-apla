@@ -1,5 +1,6 @@
 package tx
 
+// Header is contain header data
 type Header struct {
 	Type          int
 	Time          int64
