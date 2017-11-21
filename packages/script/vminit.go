@@ -178,7 +178,6 @@ func ParseContract(in string) (id uint64, name string) {
 // ExecContract runs the name contract where txs contains the list of parameters and
 // params are the values of parameters
 func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
-	//fmt.Println(`ExecContract`, rt, name, txs, params)
 
 	contract, ok := rt.vm.Objects[name]
 	if !ok {
@@ -214,7 +213,6 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	}
 	(*rt.extend)[`loop_`+name] = true
 	defer delete(*rt.extend, `loop_`+name)
-	//	fmt.Println(`ExecContract`, name, *rt.extend)
 	for i, ipar := range pars {
 		(*rt.extend)[ipar] = params[i]
 	}
@@ -281,7 +279,6 @@ func NewVM() *VM {
 		map[string]string{
 			`*script.RunTime`: `rt`,
 		}})
-	//	vm.Extend(&ExtendData{map[string]interface{}{"Bool": valueToBool}, nil})
 	vm.logger = log.WithFields(log.Fields{"extern": vm.Extern, "vm_block_type": vm.Block.Type})
 	return &vm
 }
@@ -304,7 +301,6 @@ func (vm *VM) Extend(ext *ExtendData) {
 			for i := 0; i < fobj.NumOut(); i++ {
 				data.Results[i] = fobj.Out(i)
 			}
-			//			fmt.Println(`Extend`, data)
 			vm.Objects[key] = &ObjInfo{ObjExtFunc, data}
 		}
 	}
@@ -314,7 +310,6 @@ func (vm *VM) getObjByName(name string) (ret *ObjInfo) {
 	var ok bool
 	names := strings.Split(name, `.`)
 	block := &vm.Block
-	//fmt.Println(block.Objects)
 	for i, name := range names {
 		ret, ok = block.Objects[name]
 		if !ok {
@@ -419,7 +414,6 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 	if len(vals) == 0 {
 		vals = append(vals, ``)
 	}
-	//	fmt.Println(`ExContract`, name, params, names, vals)
 	return ExecContract(rt, name, strings.Join(names, `,`), vals...)
 }
 
