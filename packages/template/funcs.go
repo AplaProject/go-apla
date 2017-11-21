@@ -147,10 +147,8 @@ func forlistTag(par parFunc) (ret string) {
 	if source.Data == nil {
 		return
 	}
-	//	data := make([]string, 0)
 	root := node{}
 	for _, item := range *source.Data {
-		//var ival string
 		vals := make(map[string]string)
 		for i, icol := range *source.Columns {
 			vals[icol] = item[i]
