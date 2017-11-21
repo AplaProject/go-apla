@@ -42,7 +42,7 @@ func GormInit(host string, port string, user string, pass string, dbName string)
 		DBConn = nil
 		return err
 	}
-	if logSQL == 1 {
+	if *utils.LogSQL == 1 {
 		DBConn.LogMode(true)
 		DBConn.SetLogger(log.New())
 	}

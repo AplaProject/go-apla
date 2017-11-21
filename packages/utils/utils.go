@@ -78,6 +78,8 @@ var (
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
 	// LogSQL show if we should display sql queries in logs
 	LogSQL = flag.Int64("logSQL", 0, "log sql")
+	// LogStackTrace show if we should display stack trace in logs
+	LogStackTrace = flag.Int64("logStackTrace", 0, "log stack trace")
 	// OldVersion is the number of the old version
 	OldVersion = flag.String("oldVersion", "", "")
 	// TestRollBack equals 1 for testing rollback
