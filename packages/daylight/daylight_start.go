@@ -30,6 +30,7 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/api"
 	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/daemons"
@@ -44,7 +45,6 @@ import (
 	"github.com/go-bindata-assetfs"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
-	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
 // FileAsset returns the body of the file
@@ -187,8 +187,8 @@ func rollbackToBlock(blockID int64) error {
 	}
 
 	// check blocks related tables
-	startData := map[string]int64{"1_menu":1,"1_pages":1,"1_contracts":26,"1_parameters":11,"1_keys":1,"1_tables":8,"stop_daemons":1,"queue_blocks":9999999,"system_tables":1, "system_parameters":27,"system_states":1, "install": 1, "config": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1,"confirmations": 9999999, "my_node_keys": 9999999, "transactions": 9999999}
-	warn:=0
+	startData := map[string]int64{"1_menu": 1, "1_pages": 1, "1_contracts": 26, "1_parameters": 11, "1_keys": 1, "1_tables": 8, "stop_daemons": 1, "queue_blocks": 9999999, "system_tables": 1, "system_parameters": 27, "system_states": 1, "install": 1, "config": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1, "confirmations": 9999999, "my_node_keys": 9999999, "transactions": 9999999}
+	warn := 0
 	for _, table := range allTable {
 		count, err := model.GetRecordsCount(table)
 		if err != nil {
@@ -271,7 +271,9 @@ func Start() {
 
 	if len(config.ConfigIni["db_type"]) > 0 {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
+		err = model.GormInit(
+			config.ConfigIni["db_host"], config.ConfigIni["db_port"],
+			config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 		if err != nil {
 			log.WithFields(log.Fields{"db_user": config.ConfigIni["db_user"], "db_password": config.ConfigIni["db_password"],
 				"db_name": config.ConfigIni["db_name"], "type": consts.DBError}).Error("can't init gorm")
