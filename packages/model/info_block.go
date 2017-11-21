@@ -1,5 +1,6 @@
 package model
 
+// InfoBlock is model
 type InfoBlock struct {
 	Hash           []byte `gorm:"not null"`
 	EcosystemID    int64  `gorm:"not null default 0"`
@@ -11,6 +12,7 @@ type InfoBlock struct {
 	Sent           int8   `gorm:"not null"`
 }
 
+// TableName returns name of table
 func (ib *InfoBlock) TableName() string {
 	return "info_block"
 }
@@ -27,6 +29,7 @@ func (ib *InfoBlock) GetUnsent() (bool, error) {
 	return isFound(DBConn.Where("sent = ?", "0").First(&ib))
 }
 
+// Create is creating record of model
 func (ib *InfoBlock) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(ib).Error
 }

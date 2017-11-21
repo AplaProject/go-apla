@@ -30,6 +30,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// BlockGenerator is daemon that generates blocks
 func BlockGenerator(d *daemon, ctx context.Context) error {
 	d.sleepTime = time.Second
 

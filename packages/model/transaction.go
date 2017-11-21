@@ -1,5 +1,6 @@
 package model
 
+// Transaction is model
 type Transaction struct {
 	Hash     []byte `gorm:"private_key;not null"`
 	Data     []byte `gorm:"not null"`
@@ -96,6 +97,7 @@ func (t *Transaction) Read(hash []byte) (bool, error) {
 	return isFound(DBConn.Where("hash = ?", hash).First(t))
 }
 
+// Get is retrieving model from database
 func (t *Transaction) Get(transactionHash []byte) (bool, error) {
 	return isFound(DBConn.Where("hash = ?", transactionHash).First(t))
 }
@@ -104,6 +106,7 @@ func (t *Transaction) GetVerified(transactionHash []byte) (bool, error) {
 	return isFound(DBConn.Where("hash = ? AND verified = 1", transactionHash).First(t))
 }
 
+// Create is creating record of model
 func (t *Transaction) Create() error {
 	return DBConn.Create(t).Error
 }

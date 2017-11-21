@@ -5,6 +5,7 @@ import (
 	"strconv"
 )
 
+// SystemParameter is model
 type SystemParameter struct {
 	Name       string `gorm:"primary_key;not null;size:255"`
 	Value      string `gorm:"not null;type:jsonb(PostgreSQL)"`
@@ -12,10 +13,12 @@ type SystemParameter struct {
 	RbID       int64  `gorm:"not null"`
 }
 
+// TableName returns name of table
 func (sp SystemParameter) TableName() string {
 	return "system_parameters"
 }
 
+// Get is retrieving model from database
 func (sp *SystemParameter) Get(name string) (bool, error) {
 	return isFound(DBConn.Where("name = ?", name).First(sp))
 }
@@ -52,6 +55,7 @@ func (sp *SystemParameter) ToMap() map[string]string {
 	return result
 }
 
+// SystemParameterV2 is second version model
 type SystemParameterV2 struct {
 	Name       string `gorm:"primary_key;not null;size:255"`
 	Value      string `gorm:"not null"`
@@ -59,6 +63,7 @@ type SystemParameterV2 struct {
 	RbID       int64  `gorm:"not null"`
 }
 
+// Returns name of table
 func (sp SystemParameterV2) TableName() string {
 	return "system_parameters"
 }
@@ -75,6 +80,7 @@ func (sp *SystemParameterV2) SaveArray(list [][]string) error {
 	return sp.Update(string(ret))
 }
 
+// Get is retrieving model from database
 func (sp *SystemParameterV2) Get(name string) (bool, error) {
 	return isFound(DBConn.Where("name = ?", name).First(sp))
 }

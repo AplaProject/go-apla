@@ -1,5 +1,6 @@
 package model
 
+// LogTransaction is model
 type LogTransaction struct {
 	Hash []byte `gorm:"primary_key;not null"`
 	Time int64  `gorm:"not null"`
@@ -9,6 +10,7 @@ func (lt *LogTransaction) GetByHash(hash []byte) (bool, error) {
 	return isFound(DBConn.Where("hash = ?", hash).First(lt))
 }
 
+// Create is creating record of model
 func (lt *LogTransaction) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(lt).Error
 }

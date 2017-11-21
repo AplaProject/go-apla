@@ -2,6 +2,7 @@ package model
 
 import "strconv"
 
+// Table is model
 type Table struct {
 	tableName   string
 	ID          int64  `gorm:"primary_key;not null"`
@@ -12,6 +13,7 @@ type Table struct {
 	RbID        int64  `gorm:"not null"`
 }
 
+// TableVDE
 type TableVDE struct {
 	tableName   string
 	ID          int64  `gorm:"primary_key;not null"`
@@ -29,22 +31,27 @@ func (t *TableVDE) SetTablePrefix(prefix string) {
 	t.tableName = prefix + "_tables"
 }
 
+// TableName returns name of table
 func (t *Table) TableName() string {
 	return t.tableName
 }
 
+// TableName returns name of table
 func (t *TableVDE) TableName() string {
 	return t.tableName
 }
 
+// Get is retrieving model from database
 func (t *Table) Get(name string) (bool, error) {
 	return isFound(DBConn.Where("name = ?", name).First(t))
 }
 
+// Create is creating record of model
 func (t *Table) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(t).Error
 }
 
+// Create is creating record of model
 func (t *TableVDE) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(t).Error
 }

@@ -18,6 +18,7 @@ var (
 
 const configFileName = "config.ini"
 
+// DBConfig is storing database config
 type DBConfig struct {
 	Type     string
 	User     string

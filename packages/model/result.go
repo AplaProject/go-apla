@@ -13,6 +13,7 @@ type SingleResult struct {
 	err    error
 }
 
+// Single is retrieving single result
 func Single(query string, args ...interface{}) *SingleResult {
 	var result []byte
 	err := DBConn.Raw(query, args...).Row().Scan(&result)
@@ -70,6 +71,7 @@ type OneRow struct {
 	err    error
 }
 
+// String is extracts result from OneRow as string
 func (r *OneRow) String() (map[string]string, error) {
 	if r.err != nil {
 		return r.result, r.err
@@ -77,6 +79,7 @@ func (r *OneRow) String() (map[string]string, error) {
 	return r.result, nil
 }
 
+// Bytes is extracts result from OneRow as []byte
 func (r *OneRow) Bytes() (map[string][]byte, error) {
 	result := make(map[string][]byte)
 	if r.err != nil {
@@ -88,6 +91,7 @@ func (r *OneRow) Bytes() (map[string][]byte, error) {
 	return result, nil
 }
 
+// Bytes is extracts result from OneRow as int64
 func (r *OneRow) Int64() (map[string]int64, error) {
 	result := make(map[string]int64)
 	if r.err != nil {
@@ -99,6 +103,7 @@ func (r *OneRow) Int64() (map[string]int64, error) {
 	return result, nil
 }
 
+// Bytes is extracts result from OneRow as float64
 func (r *OneRow) Float64() (map[string]float64, error) {
 	result := make(map[string]float64)
 	if r.err != nil {
@@ -110,6 +115,7 @@ func (r *OneRow) Float64() (map[string]float64, error) {
 	return result, nil
 }
 
+// Bytes is extracts result from OneRow as int
 func (r *OneRow) Int() (map[string]int, error) {
 	result := make(map[string]int)
 	if r.err != nil {
@@ -179,14 +185,17 @@ func GetAllTransaction(transaction *DbTransaction, query string, countRows int, 
 	return result, nil
 }
 
+// GetAll returns all transaction
 func GetAll(query string, countRows int, args ...interface{}) ([]map[string]string, error) {
 	return GetAllTransaction(nil, query, countRows, args)
 }
 
+// GetAllTx returns all tx's
 func GetAllTx(transaction *DbTransaction, query string, countRows int, args ...interface{}) ([]map[string]string, error) {
 	return GetAllTransaction(transaction, query, countRows, args)
 }
 
+// GetOneRowTransaction returns one row from transactions
 func GetOneRowTransaction(transaction *DbTransaction, query string, args ...interface{}) *OneRow {
 	result := make(map[string]string)
 	all, err := GetAllTransaction(transaction, query, 1, args...)
@@ -199,6 +208,7 @@ func GetOneRowTransaction(transaction *DbTransaction, query string, args ...inte
 	return &OneRow{all[0], nil}
 }
 
+// GetOneRow returns one row
 func GetOneRow(query string, args ...interface{}) *OneRow {
 	return GetOneRowTransaction(nil, query, args...)
 }

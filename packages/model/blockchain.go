@@ -1,5 +1,6 @@
 package model
 
+// Block is model
 type Block struct {
 	ID           int64  `gorm:"primary_key;not_null"`
 	Hash         []byte `gorm:"not null"`
@@ -11,14 +12,17 @@ type Block struct {
 	Tx           int32  `gorm:"not null"`
 }
 
+// TableName returns name of table
 func (Block) TableName() string {
 	return "block_chain"
 }
 
+// Create is creating record of model
 func (b *Block) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(b).Error
 }
 
+// Get is retrieving model from database
 func (b *Block) Get(blockID int64) (bool, error) {
 	return isFound(DBConn.Where("id = ?", blockID).First(b))
 }
