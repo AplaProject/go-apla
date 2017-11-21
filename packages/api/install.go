@@ -157,19 +157,6 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		parser.FirstBlock()
 	}
 
-	NodePrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")
-	var npubkey []byte
-	npubkey, err = crypto.PrivateToPublic(NodePrivateKey)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
-		return err
-	}
-	nodeKeys := &model.MyNodeKey{PrivateKey: string(NodePrivateKey), PublicKey: npubkey, BlockID: 1}
-	err = nodeKeys.Create()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating MyNodeKey")
-		return err
-	}
 	if *utils.KeyID == 0 {
 		logger.Info("dltWallet is not set from command line, retrieving it from private key file")
 		var key []byte
