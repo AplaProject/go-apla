@@ -134,6 +134,23 @@ func setAllAttr(par parFunc) {
 			par.Node.Attr[strings.ToLower(key)] = v
 		}
 	}
+	for key := range *par.Pars {
+		if key[0] == '@' {
+			var out string
+			key = strings.ToLower(key[1:])
+			root := node{}
+			if par.Node.Attr[key] == nil {
+				continue
+			}
+			process(par.Node.Attr[key].(string), &root, par.Workspace)
+			for _, item := range root.Children {
+				if item.Tag == `text` {
+					out += item.Text
+				}
+			}
+			par.Node.Attr[key] = out
+		}
+	}
 }
 
 func ifValue(val string, workspace *Workspace) bool {

@@ -34,83 +34,28 @@ import (
 )
 
 var (
-	funcs = map[string]tplFunc{
-		`AddToolButton`: {defaultTag, defaultTag, `addtoolbutton`, `Title,Icon,Page,PageParams`},
-		`Address`:       {addressTag, defaultTag, `address`, `Wallet`},
-		`CmpTime`:       {cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`},
-		`DateTime`:      {dateTimeTag, defaultTag, `datetime`, `DateTime,Format`},
-		`EcosysParam`:   {ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`},
-		`Em`:            {defaultTag, defaultTag, `em`, `Body,Class`},
-		`GetVar`:        {getvarTag, defaultTag, `getvar`, `Name`},
-		`ImageInput`:    {defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`},
-		`InputErr`:      {defaultTag, defaultTag, `inputerr`, `*`},
-		`LangRes`:       {langresTag, defaultTag, `langres`, `Name,Lang`},
-		`MenuGroup`:     {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
-		`MenuItem`:      {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
-		`Now`:           {nowTag, defaultTag, `now`, `Format,Interval`},
-		`SetTitle`:      {defaultTag, defaultTag, `settitle`, `Title`},
-		`SetVar`:        {setvarTag, defaultTag, `setvar`, `Name,Value`},
-		`Strong`:        {defaultTag, defaultTag, `strong`, `Body,Class`},
-	}
-	tails = map[string]forTails{
-		`button`: {map[string]tailInfo{
-			`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`div`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`form`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`if`: {map[string]tailInfo{
-			`Else`: {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
-		}},
-		`image`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`input`: {map[string]tailInfo{
-			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
-			`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`label`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`linkpage`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`data`: {map[string]tailInfo{
-			`Custom`: {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
-		}},
-		`dbfind`: {map[string]tailInfo{
-			`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
-			`Where`:     {tplFunc{tailTag, defaultTailFull, `where`, `Where`}, false},
-			`WhereId`:   {tplFunc{tailTag, defaultTailFull, `whereid`, `WhereId`}, false},
-			`Order`:     {tplFunc{tailTag, defaultTailFull, `order`, `Order`}, false},
-			`Limit`:     {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
-			`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
-			`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
-			`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
-			`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
-		}},
-		`p`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`span`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`table`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`select`: {map[string]tailInfo{
-			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
-			`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-	}
+	funcs = make(map[string]tplFunc)
+	tails = make(map[string]forTails)
 	modes = [][]rune{{'(', ')'}, {'{', '}'}}
 )
 
 func init() {
+	funcs[`AddToolButton`] = tplFunc{defaultTag, defaultTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
+	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
+	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
+	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format`}
+	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
+	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
+	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
+	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`}
+	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
+	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
+	funcs[`MenuGroup`] = tplFunc{defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`}
+	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`}
+	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
+	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
+	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
+	funcs[`Strong`] = tplFunc{defaultTag, defaultTag, `strong`, `Body,Class`}
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
 	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Body`}
@@ -118,7 +63,7 @@ func init() {
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Image`] = tplFunc{defaultTailTag, defaultTailTag, `image`, `Src,Alt,Class`}
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
-	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,Value`}
+	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,@Value`}
 	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
 	funcs[`LinkPage`] = tplFunc{defaultTailTag, defaultTailTag, `linkpage`, `Body,Page,Class,PageParams`}
 	funcs[`Data`] = tplFunc{dataTag, defaultTailTag, `data`, `Source,Columns,Data`}
@@ -130,8 +75,60 @@ func init() {
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
 	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
 
-	tails[`if`].Tails[`ElseIf`] = tailInfo{tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false}
-
+	tails[`button`] = forTails{map[string]tailInfo{
+		`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`div`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`form`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`if`] = forTails{map[string]tailInfo{
+		`Else`:   {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
+		`ElseIf`: {tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false},
+	}}
+	tails[`image`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`input`] = forTails{map[string]tailInfo{
+		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
+		`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`label`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`linkpage`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`data`] = forTails{map[string]tailInfo{
+		`Custom`: {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+	}}
+	tails[`dbfind`] = forTails{map[string]tailInfo{
+		`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
+		`Where`:     {tplFunc{tailTag, defaultTailFull, `where`, `Where`}, false},
+		`WhereId`:   {tplFunc{tailTag, defaultTailFull, `whereid`, `WhereId`}, false},
+		`Order`:     {tplFunc{tailTag, defaultTailFull, `order`, `Order`}, false},
+		`Limit`:     {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
+		`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
+		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
+		`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
+	}}
+	tails[`p`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`span`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`table`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`select`] = forTails{map[string]tailInfo{
+		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
+		`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
 }
 
 func defaultTag(par parFunc) string {

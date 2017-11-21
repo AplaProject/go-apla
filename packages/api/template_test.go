@@ -65,27 +65,30 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Input(Type: text, Value: OK Now(YY)+Strong(Ooops))`,
+		`[{"tag":"input","attr":{"type":"text","value":"OK 17+"}}]`},
 	{`Button(Body: LangRes(save), Class: btn btn-primary, Contract: EditProfile, 
 		Page:members_list,).Alert(Text: $want_save_changes$, 
 		ConfirmButton: $yes$, CancelButton: $no$, Icon: question)`,
-		`[]`},
+		`[{"tag":"button","attr":{"alert":{"cancelbutton":"$no$","confirmbutton":"$yes$","icon":"question","text":"$want_save_changes$"},"class":"btn btn-primary","contract":"EditProfile","page":"members_list"},"children":[{"tag":"text","text":"save"}]}]`},
 	{`Simple Strong(bold text)`,
 		`[{"tag":"text","text":"Simple "},{"tag":"strong","children":[{"tag":"text","text":"bold text"}]}]`},
 	{`EcosysParam(gender, Source: mygender)`,
-		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","Femail"],["2","mail"]],"source":"mygender","types":["text","text"]}}]`},
+		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1",""]],"source":"mygender","types":["text","text"]}}]`},
 	{`EcosysParam(new_table)`,
 		`[{"tag":"text","text":"ContractConditions(` + "`MainCondition`" + `)"}]`},
 	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
-		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","government"]],"name":"pages","order":"id","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"government"}]}]`},
+		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","government"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"government"}]}]`},
 
-	{`DBFind(contracts, smartSelect).Columns(wallet_id).Custom(customCol){
-			Address(#wallet_id#)Strong(#wallet_id#)
-		}`,
-		``},
-	{`Now()=Now(datetime)=Now(datetime,+5 days)`,
-		`[{"tag":"text","text":"1509598386"},{"tag":"text","text":"=2017-11-02 09:53:05"},{"tag":"text","text":"=2017-11-07 09:53:05"}]`},
-	{`DBFind(parameters, mysrc)`,
-		`[]`},
-	{`DBFind(parameters).Columns(name,value)`,
-		`[]`},
+	/*	These cases are for manual testing
+		{`DBFind(contracts, smartSelect).Columns(wallet_id).Custom(customCol){
+					Address(#wallet_id#)Strong(#wallet_id#)
+				}`,
+				``},
+			{`Now()=Now(datetime)=Now(datetime,+5 days)`,
+				`[{"tag":"text","text":"1509598386"},{"tag":"text","text":"=2017-11-02 09:53:05"},{"tag":"text","text":"=2017-11-07 09:53:05"}]`},
+			{`DBFind(parameters, mysrc)`,
+				`[]`},
+			{`DBFind(parameters).Columns(name,value)`,
+				`[]`},*/
 }
