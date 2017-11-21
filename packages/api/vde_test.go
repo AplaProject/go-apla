@@ -326,20 +326,30 @@ func TestHTTPRequest(t *testing.T) {
 	rnd := `rnd` + crypto.RandSeq(6)
 	form := url.Values{`Value`: {`contract ` + rnd + ` {
 		    data {
-				Par string
+				Auth string
 			}
 			action {
 				var ret string 
-				var pars, heads map
+				var pars, heads, json map
 				ret = HTTPRequest("http://www.instagram.com/", "GET", heads, pars)
 				if !Contains(ret, "react-root") {
 					error "instagram error"
 				}
-//				pars["q"] = "exotic"
-				ret = HTTPRequest("https://www.google.com/search?q=test", "GET", heads, pars)
-				Println(ret)
-				if !Contains(ret, "react-root") {
+				ret = HTTPRequest("http://www.google.com/search?q=exotic", "GET", heads, pars)
+				if !Contains(ret, "exotic") {
 					error "google error"
+				}
+				heads["Authorization"] = "Bearer " + $Auth
+				pars["vde"] = "true"
+				ret = HTTPRequest("http://localhost:7079/api/v2/content/page/` + rnd + `", "POST", heads, pars)
+				json = JSONToMap(ret)
+				if json["menu"] != "myvdemenu" {
+					error "Wrong vde menu"
+				}
+				ret = HTTPRequest("http://localhost:7079/api/v2/contract/VDEFunctions?vde=true", "GET", heads, pars)
+				json = JSONToMap(ret)
+				if json["name"] != "@1VDEFunctions" {
+					error "Wrong vde contract"
 				}
 			}}`}, `Conditions`: {`true`}, `vde`: {`true`}}
 
@@ -347,7 +357,13 @@ func TestHTTPRequest(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if err := postTx(rnd, &url.Values{`vde`: {`true`}, `Par`: {`Test`}}); err != nil {
+	form = url.Values{"Name": {rnd}, "Value": {`Page`}, "Menu": {`myvdemenu`},
+		"Conditions": {`true`}, `vde`: {`true`}}
+	if err := postTx(`NewPage`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(rnd, &url.Values{`vde`: {`true`}, `Auth`: {gAuth}}); err != nil {
 		t.Error(err)
 		return
 	}

@@ -73,11 +73,13 @@ var (
 		"EcosysParam":        10,
 		"Eval":               10,
 		"FlushContract":      50,
+		"JSONToMap":          50,
 		"IdToAddress":        10,
 		"IsContract":         10,
 		"Len":                5,
 		"PermColumn":         50,
 		"PermTable":          100,
+		"Substr":             10,
 		"TableConditions":    100,
 		"ValidateCondition":  30,
 	}
@@ -106,12 +108,18 @@ func EmbedFuncs(vm *script.VM) {
 		"DBUpdate":           DBUpdate,
 		"EcosysParam":        EcosysParam,
 		"Eval":               Eval,
+		"Float":              Float,
 		"FlushContract":      FlushContract,
+		"JSONToMap":          JSONToMap,
 		"IdToAddress":        IDToAddress,
+		"Int":                Int,
 		"IsContract":         IsContract,
 		"Len":                Len,
+		"Money":              Money,
 		"PermColumn":         PermColumn,
 		"PermTable":          PermTable,
+		"Str":                Str,
+		"Substr":             Substr,
 		"TableConditions":    TableConditions,
 		"ValidateCondition":  ValidateCondition,
 		//   VDE functions only
@@ -854,18 +862,19 @@ func HTTPRequest(requrl, method string, headers map[string]interface{},
 
 	var ioform io.Reader
 
-	form := url.Values{}
+	form := &url.Values{}
 	client := &http.Client{}
 	for key, v := range params {
 		form.Set(key, fmt.Sprint(v))
 	}
-	if len(form) > 0 {
+	if len(*form) > 0 {
 		ioform = strings.NewReader(form.Encode())
 	}
 	req, err := http.NewRequest(method, requrl, ioform)
 	if err != nil {
 		return ``, err
 	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	for key, v := range headers {
 		req.Header.Set(key, fmt.Sprint(v))
 	}
