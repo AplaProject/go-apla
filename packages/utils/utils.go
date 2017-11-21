@@ -825,3 +825,17 @@ func GetTcpPort(config map[string]string) string {
 	}
 	return consts.TCP_PORT
 }
+
+func GetNodeKeys() (string, string, error) {
+	nprivkey, err := ioutil.ReadFile(*Dir + "/NodePrivateKey")
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
+		return "", "", err
+	}
+	npubkey, err := crypto.PrivateToPublic(nprivkey)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting node private key to public")
+		return "", "", err
+	}
+	return string(nprivkey), string(npubkey), nil
+}

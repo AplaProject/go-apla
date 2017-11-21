@@ -28,8 +28,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
+	log "github.com/sirupsen/logrus"
 )
 
 // Type2 serves requests from disseminator
@@ -102,18 +102,16 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 		return nil, nil, nil, utils.ErrInfo("len(*binaryTx) == 0")
 	}
 
-	nodeKey := &model.MyNodeKey{}
-	err = nodeKey.GetNodeWithMaxBlockID()
+	nodeKeyPrivate, _, err := utils.GetNodeKeys()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting node with max blockID")
 		return nil, nil, nil, utils.ErrInfo(err)
 	}
-	if len(nodeKey.PrivateKey) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("node with max blockID not found")
+	if len(nodeKeyPrivate) == 0 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
 		return nil, nil, nil, utils.ErrInfo("len(nodePrivateKey) == 0")
 	}
 
-	block, _ := pem.Decode([]byte(nodeKey.PrivateKey))
+	block, _ := pem.Decode([]byte(nodeKeyPrivate))
 	if block == nil || block.Type != "RSA PRIVATE KEY" {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Error("No valid PEM data found")
 		return nil, nil, nil, utils.ErrInfo("No valid PEM data found")
