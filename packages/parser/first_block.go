@@ -36,18 +36,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// FirstBlockParser is parser wrapper
 type FirstBlockParser struct {
 	*Parser
 }
 
+// Init first block
 func (p *FirstBlockParser) Init() error {
 	return nil
 }
 
+// Validate first block
 func (p *FirstBlockParser) Validate() error {
 	return nil
 }
 
+// Action is fires first block
 func (p *FirstBlockParser) Action() error {
 	logger := p.GetLogger()
 	data := p.TxPtr.(*consts.FirstBlock)
@@ -94,10 +98,12 @@ func (p *FirstBlockParser) Action() error {
 	return nil
 }
 
+// Rollback first block
 func (p *FirstBlockParser) Rollback() error {
 	return nil
 }
 
+// Header is returns first block header
 func (p FirstBlockParser) Header() *tx.Header {
 	return nil
 }

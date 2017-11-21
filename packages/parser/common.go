@@ -319,6 +319,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	return nil
 }
 
+// CheckInputData is checking input data
 func (p *Parser) CheckInputData(data map[string][]interface{}) error {
 	for k, list := range data {
 		for _, v := range list {
@@ -425,6 +426,7 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	return nil
 }
 
+// AccessChange is changing access
 func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 	logger := p.GetLogger()
 	prefix, err := GetTablePrefix(global, stateId)
@@ -498,7 +500,7 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 	return p.TxUsedCost.Mul(fuelRate), nil
 }
 
-// CalContracts calls the contract functions according to the specified flags
+// CallContract calls the contract functions according to the specified flags
 func (p *Parser) CallContract(flags int) error {
 	sc := smart.SmartContract{
 		VDE:           false,

@@ -913,13 +913,14 @@ func Round(num float64) int64 {
 	return int64(num + math.Copysign(0.5, num))
 }
 
-// Round rounds float64 value
+// RoundWithPrecision rounds float64 value
 func RoundWithPrecision(num float64, precision int) float64 {
 	num += consts.ROUND_FIX
 	output := math.Pow(10, float64(precision))
 	return float64(Round(num*output)) / output
 }
 
+// RoundWithoutPrecision is round float64 without precision
 func RoundWithoutPrecision(num float64) int64 {
 	//log.Debug("num", num)
 	//num += ROUND_FIX

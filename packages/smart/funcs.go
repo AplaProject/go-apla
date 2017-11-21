@@ -444,7 +444,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	return
 }
 
-// EcosystemParam returns the value of the specified parameter for the ecosystem
+// EcosysParam returns the value of the specified parameter for the ecosystem
 func EcosysParam(sc *SmartContract, name string) string {
 	val, _ := model.Single(`SELECT value FROM "`+getDefTableName(sc, `parameters`)+`" WHERE name = ?`, name).String()
 	return val

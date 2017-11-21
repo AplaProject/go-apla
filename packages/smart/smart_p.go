@@ -476,6 +476,7 @@ func Float(v interface{}) (ret float64) {
 	return script.ValueToFloat(v)
 }
 
+// Join is joining input with separator
 func Join(input []interface{}, sep string) string {
 	var ret string
 	for i, item := range input {
@@ -709,7 +710,7 @@ func Substr(s string, off int64, slen int64) string {
 	return s[off : off+slen]
 }
 
-// ActivateContract sets Active status of the contract in smartVM
+// Activate sets Active status of the contract in smartVM
 func Activate(sc *SmartContract, tblid int64, state int64) error {
 	if sc.TxContract.Name != `@1ActivateContract` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ActivateContract can be only called from @1ActivateContract")

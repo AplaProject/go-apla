@@ -31,6 +31,7 @@ import (
 )
 
 var (
+	// MonitorDaemonCh is monitor daemon channel
 	MonitorDaemonCh = make(chan []string, 100)
 )
 

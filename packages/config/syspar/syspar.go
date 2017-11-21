@@ -311,7 +311,7 @@ func GetMaxColumns() int {
 	return converter.StrToInt(SysString(MaxColumns))
 }
 
-// getMaxIndexes is returns max indexes
+// GetMaxIndexes is returns max indexes
 func GetMaxIndexes() int {
 	return converter.StrToInt(SysString(MaxIndexes))
 }

@@ -28,6 +28,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// BlockRollback is blocking rollback
 func BlockRollback(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	if buf.Len() == 0 {
@@ -65,6 +66,7 @@ func BlockRollback(data []byte) error {
 	return err
 }
 
+// RollbackTxFromBlock is rollback tx from block
 func RollbackTxFromBlock(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	if buf.Len() == 0 {
