@@ -310,7 +310,7 @@ func GetRemoteHosts() []string {
 
 	ret := make([]string, 0)
 	for nodeID, item := range nodes {
-		log.Infoln("nodeId:", nodeID, keyID)
+		log.Debugln("nodeId:", nodeID, keyID)
 		if nodeID != keyID {
 			ret = append(ret, item.Host)
 		}
