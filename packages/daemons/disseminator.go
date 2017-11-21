@@ -244,7 +244,7 @@ data  len bytes
 func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte, io.Writer, *log.Entry) error, logger *log.Entry) error {
 	conn, err := utils.TCPConn(host)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host}).Error("tcp connection to host")
+		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host}).Debug("tcp connection to host")
 		return err
 	}
 	defer conn.Close()

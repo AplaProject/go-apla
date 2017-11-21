@@ -123,6 +123,14 @@ func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 	return err
 }
 
+func ExecSchemaLocalData(id int, wallet int64) error {
+	schema, err := static.Asset("static/schema-vde.sql")
+	if err != nil {
+		return err
+	}
+	return DBConn.Exec(fmt.Sprintf(string(schema), id, wallet)).Error
+}
+
 func ExecSchema() error {
 	schema, err := static.Asset("static/schema-v2.sql")
 	if err != nil {
@@ -402,6 +410,15 @@ func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	rows.Scan(&id)
 	rows.Close()
 	return id + 1, err
+}
+
+func IsTable(tblname string) bool {
+	var name string
+	DBConn.Table("information_schema.tables").
+		Where("table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema') AND table_name=?", tblname).
+		Select("table_name").Row().Scan(&name)
+
+	return name == tblname
 }
 
 func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) (int64, error) {

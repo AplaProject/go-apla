@@ -160,7 +160,7 @@ func chooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 func getHostBlockID(host string, logger *log.Entry) (int64, error) {
 	conn, err := utils.TCPConn(host)
 	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("error connecting to host")
+		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Debug("error connecting to host")
 		return 0, err
 	}
 	defer conn.Close()
