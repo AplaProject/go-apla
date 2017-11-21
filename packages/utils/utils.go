@@ -71,11 +71,15 @@ var (
 	// WalletAddress is a wallet address for forging
 	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
 	// TCPHost is the tcp host
-	TCPHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
+	TCPHost = flag.String("tcpHost", "127.0.0.1", "tcpHost (e.g. 127.0.0.1)")
 	// ListenHTTPPort is HTTP port
 	ListenHTTPPort = flag.String("listenHttpPort", "7079", "ListenHTTPPort")
 	// GenerateFirstBlock show if the first block must be generated
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
+	// LogSQL show if we should display sql queries in logs
+	LogSQL = flag.Int64("logSQL", 0, "log sql")
+	// LogStackTrace show if we should display stack trace in logs
+	LogStackTrace = flag.Int64("logStackTrace", 0, "log stack trace")
 	// OldVersion is the number of the old version
 	OldVersion = flag.String("oldVersion", "", "")
 	// TestRollBack equals 1 for testing rollback
@@ -824,4 +828,18 @@ func GetTcpPort(config map[string]string) string {
 		return port
 	}
 	return consts.TCP_PORT
+}
+
+func GetNodeKeys() (string, string, error) {
+	nprivkey, err := ioutil.ReadFile(*Dir + "/NodePrivateKey")
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
+		return "", "", err
+	}
+	npubkey, err := crypto.PrivateToPublic(nprivkey)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting node private key to public")
+		return "", "", err
+	}
+	return string(nprivkey), string(npubkey), nil
 }

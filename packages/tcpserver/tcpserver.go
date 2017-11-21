@@ -20,6 +20,7 @@ import (
 	"flag"
 	"io"
 	"net"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -105,6 +106,11 @@ func HandleTCPRequest(rw io.ReadWriter) {
 }
 
 func TcpListener(laddr string) error {
+
+	if strings.HasPrefix(laddr, "127.") {
+		log.Warn("Listening at local address: ", laddr)
+	}
+
 	l, err := net.Listen("tcp4", laddr)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": laddr}).Error("Error listening")

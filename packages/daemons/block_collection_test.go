@@ -111,11 +111,6 @@ func initGorm(t *testing.T) *gorm.DB {
 		t.Fatalf("can't create table: %s", err)
 	}
 
-	err = model.MyNodeKeysCreateTable()
-	if err != nil {
-		t.Fatalf("can't create table: %s", err)
-	}
-
 	err = model.InfoBlockCreateTable()
 	if err != nil {
 		t.Fatalf("can't create table: %s", err)

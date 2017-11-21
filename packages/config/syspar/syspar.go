@@ -26,7 +26,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
-	"github.com/AplaProject/go-apla/packages/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -297,16 +296,24 @@ func GetMaxBlockUserTx() int {
 	return converter.StrToInt(SysString(MaxBlockUserTx))
 }
 
-func GetHosts() []string {
+// GetRemoteHosts returns array of hostnames excluding myself
+func GetRemoteHosts() []string {
+
+	ret := make([]string, 0)
+
+	cfg, err := model.GetConfig()
+	if err != nil {
+		// error logged inside GetConfig()
+		return ret
+	}
+
 	mutex.RLock()
 	defer mutex.RUnlock()
 
-	ret := make([]string, 0)
-	for _, item := range nodes {
-		if item.Host == *utils.TCPHost {
-			continue
+	for nodeID, item := range nodes {
+		if nodeID != cfg.KeyID {
+			ret = append(ret, item.Host)
 		}
-		ret = append(ret, item.Host)
 	}
 	return ret
 }
