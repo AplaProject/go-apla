@@ -177,7 +177,7 @@ func main() {
 		}
 	}
 	out := `package script
-	// This file was generated with /tools/lextable.go
+	// This file was generated with lextable.go
 	
 var (
 		alphabet = []byte{`
@@ -263,7 +263,7 @@ var (
 			out += "\r\n\t\t\t},\r\n"
 		}
 		out += "\t\t\t}\r\n)\r\n"
-		err = ioutil.WriteFile("../../packages/script/lex_table.go", []byte(out), 0644)
+		err = ioutil.WriteFile("../lex_table.go", []byte(out), 0644)
 		if err != nil {
 			fmt.Println(err.Error())
 		}

@@ -25,12 +25,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/api"
 	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/daemons"
@@ -43,12 +43,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/go-bindata-assetfs"
-	"github.com/go-thrust/lib/bindings/window"
-	"github.com/go-thrust/lib/commands"
-	"github.com/go-thrust/thrust"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
-	"github.com/AplaProject/go-apla/packages/config/syspar"
 )
 
 // FileAsset returns the body of the file
@@ -191,8 +187,8 @@ func rollbackToBlock(blockID int64) error {
 	}
 
 	// check blocks related tables
-	startData := map[string]int64{"1_menu":1,"1_pages":1,"1_contracts":26,"1_parameters":11,"1_keys":1,"1_tables":8,"stop_daemons":1,"queue_blocks":9999999,"system_tables":1, "system_parameters":27,"system_states":1, "install": 1, "config": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1,"confirmations": 9999999, "my_node_keys": 9999999, "transactions": 9999999}
-	warn:=0
+	startData := map[string]int64{"1_menu": 1, "1_pages": 1, "1_contracts": 26, "1_parameters": 11, "1_keys": 1, "1_tables": 8, "stop_daemons": 1, "queue_blocks": 9999999, "system_tables": 1, "system_parameters": 27, "system_states": 1, "install": 1, "config": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1, "confirmations": 9999999, "transactions": 9999999}
+	warn := 0
 	for _, table := range allTable {
 		count, err := model.GetRecordsCount(table)
 		if err != nil {
@@ -254,7 +250,7 @@ func initRoutes(listenHost, browserHost string) string {
 }
 
 // Start starts the main code of the program
-func Start(dir string, thrustWindowLoder *window.Window) {
+func Start() {
 
 	var err error
 
@@ -266,23 +262,18 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}()
 
 	Exit := func(code int) {
-		if thrustWindowLoder != nil {
-			thrustWindowLoder.Close()
-		}
 		model.GormClose()
 		delPidFile()
 		os.Exit(code)
-	}
-
-	if dir != "" {
-		*utils.Dir = dir
 	}
 
 	readConfig()
 
 	if len(config.ConfigIni["db_type"]) > 0 {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
+		err = model.GormInit(
+			config.ConfigIni["db_host"], config.ConfigIni["db_port"],
+			config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 		if err != nil {
 			log.WithFields(log.Fields{"db_user": config.ConfigIni["db_user"], "db_password": config.ConfigIni["db_password"],
 				"db_name": config.ConfigIni["db_name"], "type": consts.DBError}).Error("can't init gorm")
@@ -352,7 +343,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if _, err := os.Stat(*utils.Dir + "/public"); os.IsNotExist(err) {
 		err = os.Mkdir(*utils.Dir+"/public", 0755)
 		if err != nil {
-			log.WithFields(log.Fields{"path": dir, "error": err, "type": consts.IOError}).Error("Making dir")
+			log.WithFields(log.Fields{"path": *utils.Dir, "error": err, "type": consts.IOError}).Error("Making dir")
 			Exit(1)
 		}
 	}
@@ -376,42 +367,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		if *utils.Console == 0 && !utils.Mobile() {
 			log.Info("starting browser")
 			time.Sleep(time.Second)
-			if thrustWindowLoder != nil {
-				thrustWindowLoder.Close()
-				thrustWindow := thrust.NewWindow(thrust.WindowOptions{
-					RootUrl: BrowserHTTPHost,
-					Size:    commands.SizeHW{Width: 1024, Height: 700},
-				})
-				if *utils.DevTools != 0 {
-					thrustWindow.OpenDevtools()
-				}
-				thrustWindow.HandleEvent("*", func(cr commands.EventResult) {
-					fmt.Println("HandleEvent", cr)
-				})
-				thrustWindow.HandleRemote(func(er commands.EventResult, this *window.Window) {
-					//					fmt.Println("RemoteMessage Recieved:", er.Message.Payload)
-					if len(er.Message.Payload) > 7 && er.Message.Payload[:7] == `mailto:` && runtime.GOOS == `windows` {
-						utils.ShellExecute(er.Message.Payload)
-					} else if len(er.Message.Payload) > 7 && er.Message.Payload[:2] == `[{` {
-						ioutil.WriteFile(filepath.Join(*utils.Dir, `accounts.txt`), []byte(er.Message.Payload), 0644)
-						//					} else if len(er.Message.Payload) >= 7 && er.Message.Payload[:7] == `USERID=` {
-						// for Lite version - do nothing
-					} else if er.Message.Payload == `ACCOUNTS` {
-						accounts, _ := ioutil.ReadFile(filepath.Join(*utils.Dir, `accounts.txt`))
-						this.SendRemoteMessage(string(accounts))
-					} else {
-						openBrowser(er.Message.Payload)
-					}
-					// Keep in mind once we have the message, lets say its json of some new type we made,
-					// We can unmarshal it to that type.
-					// Same goes for the other way around.
-					//					this.SendRemoteMessage("boop")
-				})
-				thrustWindow.Show()
-				thrustWindow.Focus()
-			} else {
-				//				openBrowser(BrowserHTTPHost)
-			}
 		}
 	}()
 
