@@ -23,12 +23,14 @@ func (sp *SystemParameter) Get(name string) (bool, error) {
 	return isFound(DBConn.Where("name = ?", name).First(sp))
 }
 
+// GetJSONField returns fields as json
 func (sp *SystemParameter) GetJSONField(jsonField string, name string) (string, error) {
 	var result string
 	err := DBConn.Table("system_parameters").Where("name = ?", name).Select(jsonField).Row().Scan(&result)
 	return result, err
 }
 
+// GetValueParameterByName returns value parameter by name
 func (sp *SystemParameter) GetValueParameterByName(name, value string) (*string, error) {
 	var result *string
 	err := DBConn.Raw(`SELECT value->'`+value+`' FROM system_parameters WHERE name = ?`, name).Row().Scan(&result)
@@ -38,6 +40,7 @@ func (sp *SystemParameter) GetValueParameterByName(name, value string) (*string,
 	return result, nil
 }
 
+// GetAllSystemParameters returns all system parameters
 func GetAllSystemParameters() ([]SystemParameter, error) {
 	parameters := new([]SystemParameter)
 	if err := DBConn.Find(&parameters).Error; err != nil {
@@ -46,6 +49,7 @@ func GetAllSystemParameters() ([]SystemParameter, error) {
 	return *parameters, nil
 }
 
+// ToMap is converting SystemParameter to map
 func (sp *SystemParameter) ToMap() map[string]string {
 	result := make(map[string]string, 0)
 	result["name"] = sp.Name
@@ -63,15 +67,17 @@ type SystemParameterV2 struct {
 	RbID       int64  `gorm:"not null"`
 }
 
-// Returns name of table
+// TableName returns name of table
 func (sp SystemParameterV2) TableName() string {
 	return "system_parameters"
 }
 
+// Update is update model
 func (sp SystemParameterV2) Update(value string) error {
 	return DBConn.Model(sp).Where("name = ?", sp.Name).Update(`value`, value).Error
 }
 
+// SaveArray is saving array
 func (sp *SystemParameterV2) SaveArray(list [][]string) error {
 	ret, err := json.Marshal(list)
 	if err != nil {
@@ -85,6 +91,7 @@ func (sp *SystemParameterV2) Get(name string) (bool, error) {
 	return isFound(DBConn.Where("name = ?", name).First(sp))
 }
 
+// GetAllSystemParametersV2 is is retrieving all SystemParameterV2 models from database
 func GetAllSystemParametersV2() ([]SystemParameterV2, error) {
 	parameters := new([]SystemParameterV2)
 	if err := DBConn.Find(&parameters).Error; err != nil {

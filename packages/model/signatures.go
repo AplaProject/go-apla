@@ -9,6 +9,7 @@ type Signature struct {
 	RbID       int64  `gorm:"not null"`
 }
 
+// SetTablePrefix is setting table prefix
 func (s *Signature) SetTablePrefix(prefix string) {
 	s.tableName = prefix + "_signatures"
 }

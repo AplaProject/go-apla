@@ -13,6 +13,7 @@ type Transaction struct {
 	Verified int8   `gorm:"not null;default:1"`
 }
 
+// GetAllTransactions is retrieving all transactions with limit
 func GetAllTransactions(limit int) (*[]Transaction, error) {
 	transactions := new([]Transaction)
 	if err := DBConn.Limit(limit).Find(&transactions).Error; err != nil {
@@ -21,6 +22,7 @@ func GetAllTransactions(limit int) (*[]Transaction, error) {
 	return transactions, nil
 }
 
+// GetAllUnusedTransactions is retrieving all unused transactions
 func GetAllUnusedTransactions() (*[]Transaction, error) {
 	transactions := new([]Transaction)
 	if err := DBConn.Where("used = ?", "0").Find(&transactions).Error; err != nil {
@@ -29,6 +31,7 @@ func GetAllUnusedTransactions() (*[]Transaction, error) {
 	return transactions, nil
 }
 
+// GetAllUnsentTransactions is retrieving all unset transactions
 func GetAllUnsentTransactions() (*[]Transaction, error) {
 	transactions := new([]Transaction)
 	if err := DBConn.Where("sent = ?", "0").Find(transactions).Error; err != nil {
@@ -37,6 +40,7 @@ func GetAllUnsentTransactions() (*[]Transaction, error) {
 	return transactions, nil
 }
 
+// GetTransactionCountAll count all transactions
 func GetTransactionCountAll() (int64, error) {
 	var rowsCount int64
 	if err := DBConn.Table("transactions").Count(&rowsCount).Error; err != nil {
@@ -45,6 +49,7 @@ func GetTransactionCountAll() (int64, error) {
 	return rowsCount, nil
 }
 
+// GetTransactionsCount count all transactions by hash
 func GetTransactionsCount(hash []byte) (int64, error) {
 	var rowsCount int64
 	if err := DBConn.Table("transactions").Where("hash = ?", hash).Count(&rowsCount).Error; err != nil {
@@ -53,46 +58,55 @@ func GetTransactionsCount(hash []byte) (int64, error) {
 	return rowsCount, nil
 }
 
+// DeleteLoopedTransactions deleting lopped transactions
 func DeleteLoopedTransactions() (int64, error) {
 	query := DBConn.Exec("DELETE FROM transactions WHERE used = 0 AND counter > 10")
 	return query.RowsAffected, query.Error
 }
 
+// DeleteTransactionByHash deleting transaction by hash
 func DeleteTransactionByHash(hash []byte) (int64, error) {
 	query := DBConn.Exec("DELETE FROM transactions WHERE hash = ?", hash)
 	return query.RowsAffected, query.Error
 }
 
+// DeleteUsedTransactions deleting used transaction
 func DeleteUsedTransactions(transaction *DbTransaction) (int64, error) {
 	query := GetDB(transaction).Exec("DELETE FROM transactions WHERE used = 1")
 	return query.RowsAffected, query.Error
 }
 
+// DeleteTransactionIfUnused deleting unused transaction
 func DeleteTransactionIfUnused(transactionHash []byte) (int64, error) {
 	query := DBConn.Exec("DELETE FROM transactions WHERE hash = ? and used = 0 and verified = 0", transactionHash)
 	return query.RowsAffected, query.Error
 }
 
+// MarkTransactionSent is marking transaction as sent
 func MarkTransactionSent(transactionHash []byte) (int64, error) {
 	query := DBConn.Exec("UPDATE transactions SET sent = 1 WHERE hash = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
 
+// MarkTransactionUsed is marking transaction as used
 func MarkTransactionUsed(transaction *DbTransaction, transactionHash []byte) (int64, error) {
 	query := GetDB(transaction).Exec("UPDATE transactions SET used = 1 WHERE hash = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
 
+// MarkTransactionUnusedAndUnverified is marking transaction unused and unverified
 func MarkTransactionUnusedAndUnverified(transaction *DbTransaction, transactionHash []byte) (int64, error) {
 	query := GetDB(transaction).Exec("UPDATE transactions SET used = 0, verified = 0 WHERE hash = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
 
+// MarkVerifiedAndNotUsedTransactionsUnverified is marking verified and unused transaction as unverified
 func MarkVerifiedAndNotUsedTransactionsUnverified() (int64, error) {
 	query := DBConn.Exec("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 	return query.RowsAffected, query.Error
 }
 
+// Read is checking transaction existence by hash
 func (t *Transaction) Read(hash []byte) (bool, error) {
 	return isFound(DBConn.Where("hash = ?", hash).First(t))
 }
@@ -102,6 +116,7 @@ func (t *Transaction) Get(transactionHash []byte) (bool, error) {
 	return isFound(DBConn.Where("hash = ?", transactionHash).First(t))
 }
 
+// GetVerified is checking transaction verification by hash
 func (t *Transaction) GetVerified(transactionHash []byte) (bool, error) {
 	return isFound(DBConn.Where("hash = ? AND verified = 1", transactionHash).First(t))
 }

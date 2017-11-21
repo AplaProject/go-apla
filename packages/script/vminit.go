@@ -90,7 +90,7 @@ type ContractInfo struct {
 	Settings map[string]interface{}
 }
 
-// for cmdFuncName
+// FuncNameCmd for cmdFuncName
 type FuncNameCmd struct {
 	Name  string
 	Count int
@@ -122,6 +122,7 @@ type ObjInfo struct {
 	Value interface{}
 }
 
+// OwnerInfo storing info about owner
 type OwnerInfo struct {
 	StateID  uint32 `json:"state"`
 	Active   bool   `json:"active"`

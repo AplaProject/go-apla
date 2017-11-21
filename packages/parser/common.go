@@ -50,6 +50,7 @@ func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, keyID int64) {
 	return
 }
 
+// GetBlockDataFromBlockChain is retrieving block data from blockchain
 func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	BlockData := new(utils.BlockData)
 	block := &model.Block{}
@@ -69,6 +70,7 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	return BlockData, nil
 }
 
+// InsertInLogTx is inserting tx in log
 func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64) error {
 	txHash, err := crypto.Hash(binaryTx)
 	if err != nil {
@@ -83,6 +85,7 @@ func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64
 	return nil
 }
 
+// IsCustomTable returns is table custom
 func IsCustomTable(table string) (isCustom bool, err error) {
 	if table[0] >= '0' && table[0] <= '9' {
 		if off := strings.IndexByte(table, '_'); off > 0 {
@@ -102,6 +105,7 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 	return false, nil
 }
 
+// IsState returns if country is state
 func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 	ids, err := model.GetAllSystemStatesIDs()
 	if err != nil {
@@ -127,6 +131,7 @@ func init() {
 	flag.Parse()
 }
 
+// ParserInterface is parsing transactions
 type ParserInterface interface {
 	Init() error
 	Validate() error
@@ -135,6 +140,7 @@ type ParserInterface interface {
 	Header() *tx.Header
 }
 
+// GetTablePrefix returns table prefix
 func GetTablePrefix(global string, stateId int64) (string, error) {
 	globalInt, err := strconv.Atoi(global)
 	if err != nil {
@@ -148,6 +154,7 @@ func GetTablePrefix(global string, stateId int64) (string, error) {
 	return stateIdStr, nil
 }
 
+// GetParser returns ParserInterface
 func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	switch txType {
 	case "FirstBlock":
@@ -202,6 +209,7 @@ type Parser struct {
 	AllPkeys      map[string]string
 }
 
+// GetLogger returns logger
 func (p Parser) GetLogger() *log.Entry {
 	if p.BlockData != nil && p.PrevBlock != nil {
 		logger := log.WithFields(log.Fields{"block_id": p.BlockData.BlockID, "block_time": p.BlockData.Time, "block_wallet_id": p.BlockData.KeyID, "block_state_id": p.BlockData.EcosystemID, "block_hash": p.BlockData.Hash, "block_version": p.BlockData.Version, "prev_block_id": p.PrevBlock.BlockID, "prev_block_time": p.PrevBlock.Time, "prev_block_wallet_id": p.PrevBlock.KeyID, "prev_block_state_id": p.PrevBlock.EcosystemID, "prev_block_hash": p.PrevBlock.Hash, "prev_block_version": p.PrevBlock.Version, "tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxEcosystemID, "tx_wallet_id": p.TxKeyID})
@@ -490,6 +498,7 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 	return p.TxUsedCost.Mul(fuelRate), nil
 }
 
+// CalContracts calls the contract functions according to the specified flags
 func (p *Parser) CallContract(flags int) error {
 	sc := smart.SmartContract{
 		VDE:           false,

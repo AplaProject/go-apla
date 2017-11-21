@@ -17,14 +17,17 @@ func (ib *InfoBlock) TableName() string {
 	return "info_block"
 }
 
+// Get is retrieving model from database
 func (ib *InfoBlock) Get() (bool, error) {
 	return isFound(DBConn.Last(ib))
 }
 
+// Update is update model
 func (ib *InfoBlock) Update(transaction *DbTransaction) error {
 	return GetDB(transaction).Model(&InfoBlock{}).Updates(ib).Error
 }
 
+// GetUnsent is retrieving model from database
 func (ib *InfoBlock) GetUnsent() (bool, error) {
 	return isFound(DBConn.Where("sent = ?", "0").First(&ib))
 }
@@ -34,10 +37,12 @@ func (ib *InfoBlock) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(ib).Error
 }
 
+// MarkSent update model sent field
 func (ib *InfoBlock) MarkSent() error {
 	return DBConn.Model(ib).Update("sent", "1").Error
 }
 
+// BlockGetUnsent returns InfoBlock
 func BlockGetUnsent() (*InfoBlock, error) {
 	ib := &InfoBlock{}
 	found, err := ib.GetUnsent()

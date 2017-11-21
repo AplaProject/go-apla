@@ -11,6 +11,7 @@ type Language struct {
 	RbID       int64  `gotm:"not null"`
 }
 
+// SetTablePrefix is setting table prefix
 func (l *Language) SetTablePrefix(tablePrefix string) {
 	l.tableName = tablePrefix + "_languages"
 }
@@ -27,6 +28,7 @@ func (l *Language) GetAll(prefix string) ([]Language, error) {
 	return *result, err
 }
 
+// ToMap is converting model to map
 func (l *Language) ToMap() map[string]string {
 	result := make(map[string]string, 0)
 	result["name"] = l.Name

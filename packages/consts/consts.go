@@ -16,35 +16,40 @@
 
 package consts
 
-// Current version
+// VERSION is current version
 const VERSION = "0.1.6b9"
+
+// BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
 
 const FIRST_QDLT = 1e+26
 const EGS_DIGIT = 18 //money_digit for EGS 1000000000000000000
 
-// is used in confirmations
+// WAIT_CONFIRMED_NODES is used in confirmations
 const WAIT_CONFIRMED_NODES = 10
 
-// The number of nodes which should have the same block as we have for regarding this block belongs to the major part of DC-net. For get_confirmed_block_id()
+// MIN_CONFIRMED_NODES The number of nodes which should have the same block as we have for regarding this block belongs to the major part of DC-net. For get_confirmed_block_id()
 const MIN_CONFIRMED_NODES = 0
 
 const DOWNLOAD_CHAIN_TRY_COUNT = 10
 
-// How fast could the time of transaction pass
+// MAX_TX_FORW How fast could the time of transaction pass
 const MAX_TX_FORW = 0
 
-// transaction may wander in the net for a day and then get into a block
+// MAX_TX_BACK transaction may wander in the net for a day and then get into a block
 const MAX_TX_BACK = 86400
 
 const ERROR_TIME = 1
 
 const ROUND_FIX = 0.00000000001
 
-// timeouts for TCP
+// READ_TIMEOUT is timeout for TCP
 const READ_TIMEOUT = 20
+
+// WRITE_TIMEOUT is timeout for TCP
 const WRITE_TIMEOUT = 20
 
+// TCP_PORT is tcp port
 const TCP_PORT = "7078"
 
 const DATA_TYPE_MAX_BLOCK_ID = 10

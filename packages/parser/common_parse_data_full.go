@@ -39,6 +39,7 @@ import (
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
+// Block is storing block data
 type Block struct {
 	Header     utils.BlockData
 	PrevHeader *utils.BlockData
@@ -47,6 +48,7 @@ type Block struct {
 	Parsers    []*Parser
 }
 
+// GetLogger is returns logger
 func (b Block) GetLogger() *log.Entry {
 	return log.WithFields(log.Fields{"block_id": b.Header.BlockID, "block_time": b.Header.Time, "block_wallet_id": b.Header.KeyID,
 		"block_state_id": b.Header.EcosystemID, "block_hash": b.Header.Hash, "block_version": b.Header.Version})
@@ -239,6 +241,7 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 	}, nil
 }
 
+// ParseBlockHeader is parses block header
 func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	var block utils.BlockData
 	var err error
@@ -287,6 +290,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	return block, nil
 }
 
+// ParseTransaction is parsing transaction
 func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 	if buffer.Len() == 0 {
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty transaction buffer")
@@ -342,6 +346,7 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 	return p, nil
 }
 
+// IsContractTransaction checks txType
 func IsContractTransaction(txType int) bool {
 	return txType > 127
 }
@@ -541,6 +546,7 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 	return nil
 }
 
+// CheckTransaction is checking transaction
 func CheckTransaction(data []byte) (*tx.Header, error) {
 	trBuff := bytes.NewBuffer(data)
 	p, err := ParseTransaction(trBuff)
@@ -643,6 +649,7 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 	return nil
 }
 
+// CheckBlock is checking block
 func (block *Block) CheckBlock() error {
 	logger := block.GetLogger()
 	// exclude blocks from future
@@ -713,6 +720,7 @@ func (block *Block) CheckBlock() error {
 	return nil
 }
 
+// CheckHash is checking hash
 func (block *Block) CheckHash() (bool, error) {
 	logger := block.GetLogger()
 	if block.Header.BlockID == 1 {
@@ -744,6 +752,7 @@ func (block *Block) CheckHash() (bool, error) {
 	return true, nil
 }
 
+// MarshallBlock is marshalling block
 func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, key string) ([]byte, error) {
 	var mrklArray [][]byte
 	var blockDataTx []byte

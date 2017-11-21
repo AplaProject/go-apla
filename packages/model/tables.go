@@ -23,10 +23,12 @@ type TableVDE struct {
 	Conditions  string `gorm:"not null"`
 }
 
+// SetTablePrefix is setting table prefix
 func (t *Table) SetTablePrefix(prefix string) {
 	t.tableName = prefix + "_tables"
 }
 
+// SetTablePrefix is setting table prefix
 func (t *TableVDE) SetTablePrefix(prefix string) {
 	t.tableName = prefix + "_tables"
 }
@@ -56,18 +58,22 @@ func (t *TableVDE) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(t).Error
 }
 
+// Delete is deleting model from database
 func (t *Table) Delete() error {
 	return DBConn.Delete(t).Error
 }
 
+// ExistsByName finding table existence by name
 func (t *Table) ExistsByName(name string) (bool, error) {
 	return isFound(DBConn.Where("name = ?", name).First(t))
 }
 
+// IsExistsByPermissionsAndTableName returns columns existence by permission and table name
 func (t *Table) IsExistsByPermissionsAndTableName(columnName, tableName string) (bool, error) {
 	return isFound(DBConn.Where(`(columns-> ? ) is not null AND name = ?`, columnName, tableName).First(t))
 }
 
+// GetColumns returns columns from database
 func (t *Table) GetColumns(name, jsonKey string) (map[string]string, error) {
 	keyStr := ""
 	if jsonKey != "" {
@@ -91,6 +97,7 @@ func (t *Table) GetColumns(name, jsonKey string) (map[string]string, error) {
 	return result, nil
 }
 
+// GetPermissions returns table permissions by name
 func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) {
 	keyStr := ""
 	if jsonKey != "" {
@@ -114,6 +121,7 @@ func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) 
 	return result, nil
 }
 
+// CreateTable is creating table
 func CreateTable(transaction *DbTransaction, tableName, colsSQL string) error {
 	return GetDB(transaction).Exec(`CREATE TABLE "` + tableName + `" (
 				"id" bigint NOT NULL DEFAULT '0',
@@ -123,6 +131,7 @@ func CreateTable(transaction *DbTransaction, tableName, colsSQL string) error {
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`).Error
 }
 
+// CreateVDETable is creating VDE table
 func CreateVDETable(transaction *DbTransaction, tableName, colsSQL string) error {
 	return GetDB(transaction).Exec(`CREATE TABLE "` + tableName + `" (
 				"id" bigint NOT NULL DEFAULT '0',
@@ -131,6 +140,7 @@ func CreateVDETable(transaction *DbTransaction, tableName, colsSQL string) error
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`).Error
 }
 
+// GetColumnsAndPermissionsAndRbIDWhereTable returns columns and permissions
 func GetColumnsAndPermissionsAndRbIDWhereTable(transaction *DbTransaction, table, tableName string) (map[string]string, error) {
 	type proxy struct {
 		ColumnsAndPermissions string
@@ -147,6 +157,7 @@ func GetColumnsAndPermissionsAndRbIDWhereTable(transaction *DbTransaction, table
 	return result, nil
 }
 
+// GetTableWhereUpdatePermissionAndTableName returns tables
 func GetTableWhereUpdatePermissionAndTableName(table, columnName, tableName string) (map[string]string, error) {
 	type proxy struct {
 		ColumnsAndPermissions string
@@ -163,6 +174,7 @@ func GetTableWhereUpdatePermissionAndTableName(table, columnName, tableName stri
 	return result, nil
 }
 
+// GetAll returns all tables
 func (t *Table) GetAll(prefix string) ([]Table, error) {
 	result := make([]Table, 0)
 	err := DBConn.Table(prefix + "_tables").Find(&result).Error
