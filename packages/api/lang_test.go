@@ -44,7 +44,7 @@ func TestLang(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if ret.Tree != `[{"tag":"table","attr":{"columns":{"My test":"name"},"source":"mysrc"}},{"tag":"span","children":[{"tag":"text","text":"Text Spanish text"},{"tag":"text","text":" My test"}]},{"tag":"input","attr":{"class":"form-control","name":"Name","placeholder":"My test","type":"text"}}]` {
+	if ret.Tree != `[{"tag":"span","children":[{"tag":"text","text":"Text My test"},{"tag":"text","text":"+French string"}]}]` {
 		t.Error(fmt.Errorf(`wrong tree %s`, ret.Tree))
 		return
 	}
@@ -63,7 +63,7 @@ func TestLang(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if ret.Tree != `[{"tag":"span","children":[{"tag":"text","text":"Text Spanish text"},{"tag":"text","text":" My test"}]},{"tag":"input","attr":{"class":"form-control","name":"Name","placeholder":"My test","type":"text"}}]` {
+	if ret.Tree != `[{"tag":"table","attr":{"columns":[{"Name":"name","Title":"My test"}],"source":"mysrc"}},{"tag":"span","children":[{"tag":"text","text":"Text Spanish text"},{"tag":"text","text":" My test"}]},{"tag":"input","attr":{"class":"form-control","name":"Name","placeholder":"My test","type":"text"}}]` {
 		t.Error(fmt.Errorf(`wrong tree %s`, ret.Tree))
 		return
 	}

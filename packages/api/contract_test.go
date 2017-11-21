@@ -452,7 +452,7 @@ func TestImport(t *testing.T) {
 		return
 	}
 
-	form := url.Values{"Data": {imppage}}
+	form := url.Values{"Data": {imp}}
 	_, _, err := postTxResult(`@1Import`, &form)
 	if err != nil {
 		t.Error(err)
