@@ -317,3 +317,38 @@ func TestVDEParams(t *testing.T) {
 		return
 	}
 }
+
+func TestHTTPRequest(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(6)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+				Par string
+			}
+			action {
+				var ret string 
+				var pars, heads map
+				ret = HTTPRequest("http://www.instagram.com/", "GET", heads, pars)
+				if !Contains(ret, "react-root") {
+					error "instagram error"
+				}
+//				pars["q"] = "exotic"
+				ret = HTTPRequest("https://www.google.com/search?q=test", "GET", heads, pars)
+				Println(ret)
+				if !Contains(ret, "react-root") {
+					error "google error"
+				}
+			}}`}, `Conditions`: {`true`}, `vde`: {`true`}}
+
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(rnd, &url.Values{`vde`: {`true`}, `Par`: {`Test`}}); err != nil {
+		t.Error(err)
+		return
+	}
+}

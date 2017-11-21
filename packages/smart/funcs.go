@@ -20,6 +20,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -60,6 +64,7 @@ var (
 		"AddressToId":        10,
 		"ColumnCondition":    50,
 		"CompileContract":    100,
+		"Contains":           10,
 		"ContractAccess":     50,
 		"ContractConditions": 50,
 		"ContractsList":      10,
@@ -90,6 +95,7 @@ func EmbedFuncs(vm *script.VM) {
 		"AddressToId":        AddressToID,
 		"ColumnCondition":    ColumnCondition,
 		"CompileContract":    CompileContract,
+		"Contains":           strings.Contains,
 		"ContractAccess":     ContractAccess,
 		"ContractConditions": ContractConditions,
 		"ContractsList":      contractsList,
@@ -108,6 +114,8 @@ func EmbedFuncs(vm *script.VM) {
 		"PermTable":          PermTable,
 		"TableConditions":    TableConditions,
 		"ValidateCondition":  ValidateCondition,
+		//   VDE functions only
+		"HTTPRequest": HTTPRequest,
 	}, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
 	}})
@@ -838,4 +846,40 @@ func IDToAddress(id int64) (out string) {
 		out = `invalid`
 	}
 	return
+}
+
+// HTTPRequest sends http request
+func HTTPRequest(requrl, method string, headers map[string]interface{},
+	params map[string]interface{}) (string, error) {
+
+	var ioform io.Reader
+
+	form := url.Values{}
+	client := &http.Client{}
+	for key, v := range params {
+		form.Set(key, fmt.Sprint(v))
+	}
+	if len(form) > 0 {
+		ioform = strings.NewReader(form.Encode())
+	}
+	req, err := http.NewRequest(method, requrl, ioform)
+	if err != nil {
+		return ``, err
+	}
+	for key, v := range headers {
+		req.Header.Set(key, fmt.Sprint(v))
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return ``, err
+	}
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return ``, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return ``, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
+	}
+	return string(data), nil
 }

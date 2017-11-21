@@ -72,7 +72,7 @@ func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64
 	rows, err := model.GetAllNotifications(int64(ecosystemID), lastNotificationID, users)
 	if err != nil || len(rows) == 0 {
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all notifications")
+			//	TORESTORE		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all notifications")
 		}
 		return nil
 	}

@@ -173,7 +173,7 @@ func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
 	}
 	_, err = w.Write(buf.Bytes())
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing tx data")
+		//	TORESTORE	logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing tx data")
 	}
 	return err
 }
@@ -289,12 +289,12 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 		resp := make([]byte, respSize)
 		_, err = io.ReadFull(conn, resp)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data")
+			//	TORESTORE		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data")
 			return err
 		}
 		err = respHandler(resp, conn, logger)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data")
+			//	TORESTORE		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data")
 			return err
 		}
 	}
