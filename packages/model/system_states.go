@@ -23,6 +23,7 @@ func GetAllSystemStatesIDs() ([]int64, error) {
 	return ids, nil
 }
 
+// Delete is deleting record
 func (ss *SystemState) Delete(transaction *DbTransaction) error {
 	return GetDB(transaction).Delete(ss).Error
 }

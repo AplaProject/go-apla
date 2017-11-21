@@ -36,6 +36,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// SmartContract is storing smart contract data
 type SmartContract struct {
 	VDE           bool
 	VM            *script.VM
@@ -85,6 +86,7 @@ func getCost(name string) int64 {
 	return -1
 }
 
+// EmbedFuncs is extending vm with embedded functions
 func EmbedFuncs(vm *script.VM) {
 	vmExtend(vm, &script.ExtendData{Objects: map[string]interface{}{
 		"AddressToId":        AddressToID,
@@ -145,6 +147,7 @@ func accessContracts(sc *SmartContract, names ...string) bool {
 	return false
 }
 
+// CompileContract is compiling contract
 func CompileContract(sc *SmartContract, code string, state, id, token int64) (interface{}, error) {
 	if !accessContracts(sc, `NewContract`, `EditContract`, `Import`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CompileContract can be only called from NewContract or EditContract")
@@ -211,6 +214,7 @@ func contractsList(value string) []interface{} {
 	return result
 }
 
+// CreateTable is creating smart contract table
 func CreateTable(sc *SmartContract, name string, columns, permissions string) error {
 	var err error
 	if !accessContracts(sc, `NewTable`, `Import`) {

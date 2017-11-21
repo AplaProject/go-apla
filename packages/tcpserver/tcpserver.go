@@ -104,6 +104,7 @@ func HandleTCPRequest(rw io.ReadWriter) {
 	}
 }
 
+// TcpListener is listening tcp address
 func TcpListener(laddr string) error {
 	l, err := net.Listen("tcp4", laddr)
 	if err != nil {

@@ -132,6 +132,7 @@ type Lexem struct {
 	Column uint32      // Position inside the line
 }
 
+// GetLogger returns logger
 func (l Lexem) GetLogger() *log.Entry {
 	return log.WithFields(log.Fields{"lex_type": l.Type, "lex_line": l.Line, "lex_column": l.Column})
 }

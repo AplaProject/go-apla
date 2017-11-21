@@ -13,6 +13,7 @@ type Key struct {
 	RbID      int64  `gorm:"not null"`
 }
 
+// SetTablePrefix is setting table prefix
 func (m *Key) SetTablePrefix(prefix int64) *Key {
 	if prefix == 0 {
 		prefix = 1

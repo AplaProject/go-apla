@@ -10,9 +10,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// EcosystemID is ecosystem id
 type EcosystemID int64
+
+// UserID is user id
 type UserID int64
 
+// NotificationStats storing notification stats data
 type NotificationStats struct {
 	UserIDs     map[UserID]int64
 	lastNotifID *int64
@@ -24,6 +28,7 @@ func init() {
 	notifications = make(map[EcosystemID]NotificationStats)
 }
 
+// SendNotifications is sending notifications
 func SendNotifications() {
 	for ecosystemID, ecosystemStats := range notifications {
 		notifs := getEcosystemNotifications(ecosystemID, *ecosystemStats.lastNotifID, ecosystemStats)
@@ -79,6 +84,7 @@ func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64
 	return rows
 }
 
+// AddUser is subscribing user to notifications
 func AddUser(userID int64, ecosystemID int64) {
 	if _, ok := notifications[EcosystemID(ecosystemID)]; !ok {
 		notifications[EcosystemID(ecosystemID)] = NotificationStats{UserIDs: make(map[UserID]int64), lastNotifID: new(int64)}

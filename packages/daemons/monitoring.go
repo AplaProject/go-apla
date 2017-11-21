@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Monitoring starts monitoring
 func Monitoring(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 

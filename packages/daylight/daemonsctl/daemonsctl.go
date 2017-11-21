@@ -15,6 +15,7 @@ var (
 	format = logging.MustStringFormatter("%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{message}")
 )
 
+// RunAllDaemons is starting all daemons
 func RunAllDaemons() error {
 	err := syspar.SysUpdate()
 	if err != nil {

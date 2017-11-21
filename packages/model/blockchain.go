@@ -27,10 +27,12 @@ func (b *Block) Get(blockID int64) (bool, error) {
 	return isFound(DBConn.Where("id = ?", blockID).First(b))
 }
 
+// GetMaxBlock returns last block existence
 func (b *Block) GetMaxBlock() (bool, error) {
 	return isFound(DBConn.Last(b))
 }
 
+// GetBlockchain is retrieving chain of blocks from database
 func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
@@ -45,6 +47,7 @@ func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
 	return *blockchain, nil
 }
 
+// GetBlocks is retrieving limited chain of blocks from database
 func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
@@ -56,6 +59,7 @@ func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {
 	return *blockchain, err
 }
 
+// GetBlocksFrom is retrieving ordered chain of blocks from database
 func (b *Block) GetBlocksFrom(startFromID int64, ordering string) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
@@ -63,6 +67,7 @@ func (b *Block) GetBlocksFrom(startFromID int64, ordering string) ([]Block, erro
 	return *blockchain, err
 }
 
+// DeleteById is deleting block by ID
 func (b *Block) DeleteById(transaction *DbTransaction, id int64) error {
 	return GetDB(transaction).Where("id = ?", id).Delete(Block{}).Error
 }

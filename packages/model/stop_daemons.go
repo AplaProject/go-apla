@@ -17,6 +17,7 @@ func (sd *StopDaemon) Create() error {
 	return DBConn.Create(sd).Error
 }
 
+// Delete is deleting record
 func (sd *StopDaemon) Delete() error {
 	return DBConn.Delete(&StopDaemon{}).Error
 }
@@ -26,6 +27,7 @@ func (sd *StopDaemon) Get() (bool, error) {
 	return isFound(DBConn.First(sd))
 }
 
+// SetStopNow is updating daemon stopping time to now
 func SetStopNow() error {
 	stopTime := &StopDaemon{StopTime: time.Now().Unix()}
 	return stopTime.Create()

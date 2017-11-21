@@ -33,7 +33,8 @@ func isFound(db *gorm.DB) (bool, error) {
 	return true, db.Error
 }
 
-func GormInit(user string, pass string, dbName string) error {
+// GormInit is initializes Gorm connection
+func GormInit(host string, port string, user string, pass string, dbName string) error {
 	var err error
 	DBConn, err = gorm.Open("postgres",
 		fmt.Sprintf("host=localhost user=%s dbname=%s sslmode=disable password=%s", user, dbName, pass))
@@ -45,6 +46,7 @@ func GormInit(user string, pass string, dbName string) error {
 	return nil
 }
 
+// GormClose is closing Gorm connection
 func GormClose() error {
 	if DBConn != nil {
 		return DBConn.Close()
@@ -52,7 +54,7 @@ func GormClose() error {
 	return nil
 }
 
-// DbTransactions is gorm.DB wrapper
+// DbTransaction is gorm.DB wrapper
 type DbTransaction struct {
 	conn *gorm.DB
 }
@@ -445,7 +447,7 @@ func IsTable(tblname string) bool {
 	return name == tblname
 }
 
-// GetRollBackID returns rollback id
+// GetRollbackID returns rollback id
 func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) (int64, error) {
 	var result int64
 	err := GetDB(transaction).Raw(`SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering).Row().Scan(&result)

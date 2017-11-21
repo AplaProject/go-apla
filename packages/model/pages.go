@@ -10,6 +10,7 @@ type Page struct {
 	RbID       int64  `gorm:"not null"`
 }
 
+// SetTablePrefix is setting table prefix
 func (p *Page) SetTablePrefix(prefix string) {
 	p.tableName = prefix + "_pages"
 }

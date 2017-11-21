@@ -9,12 +9,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// ContextHook storing nothing but behavior
 type ContextHook struct{}
 
+// Levels returns all log levels
 func (hook ContextHook) Levels() []logrus.Level {
 	return logrus.AllLevels
 }
 
+// Fire the log entry
 func (hook ContextHook) Fire(entry *logrus.Entry) error {
 	pc := make([]uintptr, 3, 3)
 	cnt := runtime.Callers(6, pc)

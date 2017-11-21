@@ -36,7 +36,7 @@ const (
 	I_AM_NOT_FULL_NODE = 2
 )
 
-// send to all nodes from nodes_connections the following data
+// Disseminator is send to all nodes from nodes_connections the following data
 // if we are full node(miner): sends blocks and transactions hashes
 // else send the full transactions
 func Disseminator(d *daemon, ctx context.Context) error {
@@ -58,11 +58,11 @@ func Disseminator(d *daemon, ctx context.Context) error {
 		// send blocks and transactions hashes
 		d.logger.Debug("we are full_node, sending hashes")
 		return sendHashes(myNodePosition, d.logger)
-	} else {
-		// we are not full node for this StateID and WalletID, so just send transactions
-		d.logger.Debug("we are full_node, sending transactions")
-		return sendTransactions(d.logger)
 	}
+
+	// we are not full node for this StateID and WalletID, so just send transactions
+	d.logger.Debug("we are full_node, sending transactions")
+	return sendTransactions(d.logger)
 }
 
 func sendTransactions(logger *log.Entry) error {
@@ -199,11 +199,12 @@ func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int
 	return buf.Bytes()
 }
 
+// MarshallTr returns transaction data
 func MarshallTr(tr model.Transaction) []byte {
 	return tr.Data
-
 }
 
+// MarshallBlock returns block as []byte
 func MarshallBlock(block *model.InfoBlock) []byte {
 	if block != nil {
 		toBeSent := converter.DecToBin(block.BlockID, 3)
@@ -212,6 +213,7 @@ func MarshallBlock(block *model.InfoBlock) []byte {
 	return []byte{}
 }
 
+// MarshallTrHash returns transaction hash
 func MarshallTrHash(tr model.Transaction) []byte {
 	return tr.Hash
 }

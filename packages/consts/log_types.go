@@ -1,5 +1,6 @@
 package consts
 
+// LogEventType is storing numeric event type
 type LogEventType int
 
 const (

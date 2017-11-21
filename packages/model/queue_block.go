@@ -12,19 +12,23 @@ func (qb *QueueBlock) Get() (bool, error) {
 	return isFound(DBConn.First(qb))
 }
 
+// GetQueueBlockByHash is retrieving blocks queue by hash
 func (qb *QueueBlock) GetQueueBlockByHash(hash []byte) (bool, error) {
 	return isFound(DBConn.Where("hash = ?", hash).First(qb))
 }
 
+// Delete is deleting queue
 func (qb *QueueBlock) Delete() error {
 	return DBConn.Delete(qb).Error
 }
 
+// DeleteQueueBlockByHash is deleting queue by hash
 func (qb *QueueBlock) DeleteQueueBlockByHash() error {
 	query := DBConn.Exec("DELETE FROM queue_blocks WHERE hash = ?", qb.Hash)
 	return query.Error
 }
 
+// DeleteOldBlock is deleting old blocks
 func (qb *QueueBlock) DeleteOldBlocks() error {
 	query := DBConn.Exec("DELETE FROM queue_blocks WHERE block_id <= ?", qb.BlockID)
 	return query.Error

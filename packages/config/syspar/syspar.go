@@ -57,12 +57,13 @@ const (
 	SizeFuel = `size_fuel`
 	// CommissionWallet is the address for commissions
 	CommissionWallet = `commission_wallet`
-	// rollback from queue_bocks
+	// RbBlocks1 rollback from queue_bocks
 	RbBlocks1 = `rb_blocks_1`
-	// rollback from blocks_collection
+	// RbBlocks2 rollback from blocks_collection
 	RbBlocks2 = `rb_blocks_2`
 )
 
+// FullNode is storing full node data
 type FullNode struct {
 	Host   string
 	Public []byte
@@ -139,6 +140,7 @@ func SysUpdate() error {
 	return err
 }
 
+// GetNode is retrieving node by wallet
 func GetNode(wallet int64) *FullNode {
 	mutex.RLock()
 	defer mutex.RUnlock()
@@ -148,6 +150,7 @@ func GetNode(wallet int64) *FullNode {
 	return nil
 }
 
+// GetNodePositionByKeyID is returning node position by key id
 func GetNodePositionByKeyID(keyID int64) (int64, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
@@ -162,10 +165,12 @@ func GetNodePositionByKeyID(keyID int64) (int64, error) {
 	return 0, fmt.Errorf("Incorrect keyID")
 }
 
+// GetNumberOfNodes is count number of nodes
 func GetNumberOfNodes() int64 {
 	return int64(len(nodesByPosition))
 }
 
+// GetNodeByPosition is retrieving node by position
 func GetNodeByPosition(position int64) (*FullNode, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
@@ -175,6 +180,7 @@ func GetNodeByPosition(position int64) (*FullNode, error) {
 	return nodes[converter.StrToInt64(nodesByPosition[position][1])], nil
 }
 
+// GetNodeHostByPosition is retrieving node host by position
 func GetNodeHostByPosition(position int64) (string, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
@@ -185,6 +191,7 @@ func GetNodeHostByPosition(position int64) (string, error) {
 	return nodeData.Host, nil
 }
 
+// GetNodePublicKeyByPosition is retrieving node public key by position
 func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
@@ -197,6 +204,8 @@ func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
 	}
 	return pkey, nil
 }
+
+// GetSleepTimeByKey is returns sleep time by key
 func GetSleepTimeByKey(myKeyID, prevBlockNodePosition int64) (int64, error) {
 
 	myPosition, err := GetNodePositionByKeyID(myKeyID)
@@ -218,6 +227,8 @@ func GetSleepTimeByKey(myKeyID, prevBlockNodePosition int64) (int64, error) {
 
 	return int64(sleepTime), nil
 }
+
+// GetSleepTimeByPosition is returns sleep time by position
 func GetSleepTimeByPosition(CurrentPosition, prevBlockNodePosition int64) (int64, error) {
 
 	sleepTime := int64(0)
@@ -236,21 +247,27 @@ func GetSleepTimeByPosition(CurrentPosition, prevBlockNodePosition int64) (int64
 	return int64(sleepTime), nil
 }
 
+// SysInt64 is converting sys string to int64
 func SysInt64(name string) int64 {
 	return converter.StrToInt64(SysString(name))
 }
+
+// SysInt is converting sys string to int
 func SysInt(name string) int {
 	return converter.StrToInt(SysString(name))
 }
 
+// GetSizeFuel is returns fuel size
 func GetSizeFuel() int64 {
 	return SysInt64(SizeFuel)
 }
 
+// GetBlockchainURL is retrieving blockchain url
 func GetBlockchainURL() string {
 	return SysString(BlockchainURL)
 }
 
+// GetFuelRate is returning fuel rate
 func GetFuelRate(ecosystem int64) string {
 	mutex.RLock()
 	defer mutex.RUnlock()
@@ -260,6 +277,7 @@ func GetFuelRate(ecosystem int64) string {
 	return ``
 }
 
+// GetCommissionWallet is returns commission wallet
 func GetCommissionWallet(ecosystem int64) string {
 	mutex.RLock()
 	defer mutex.RUnlock()
@@ -269,30 +287,37 @@ func GetCommissionWallet(ecosystem int64) string {
 	return wallets[1]
 }
 
+// GetMaxBlockSize is returns max block size
 func GetMaxBlockSize() int64 {
 	return converter.StrToInt64(SysString(MaxBlockSize))
 }
 
+// GetMaxTxSize is returns max tx size
 func GetMaxTxSize() int64 {
 	return converter.StrToInt64(SysString(MaxTxSize))
 }
 
+// GetGapsBetweenBlocks is returns gaps between blocks
 func GetGapsBetweenBlocks() int64 {
 	return converter.StrToInt64(SysString(GapsBetweenBlocks))
 }
 
+// GetMaxTxCount is returns max tx count
 func GetMaxTxCount() int {
 	return converter.StrToInt(SysString(MaxTxCount))
 }
 
+// GetMaxColumns is returns max columns
 func GetMaxColumns() int {
 	return converter.StrToInt(SysString(MaxColumns))
 }
 
+// getMaxIndexes is returns max indexes
 func GetMaxIndexes() int {
 	return converter.StrToInt(SysString(MaxIndexes))
 }
 
+// GetMaxBlockUserTx is returns max tx block user
 func GetMaxBlockUserTx() int {
 	return converter.StrToInt(SysString(MaxBlockUserTx))
 }
@@ -319,10 +344,12 @@ func SysString(name string) string {
 	return ret
 }
 
+// GetRbBlocks1 is returns RbBlocks1
 func GetRbBlocks1() int64 {
 	return SysInt64(RbBlocks1)
 }
 
+// GetRbBlocks2 is returns RbBlocks2
 func GetRbBlocks2() int64 {
 	return SysInt64(RbBlocks2)
 }

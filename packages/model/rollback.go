@@ -22,6 +22,7 @@ func (r *Rollback) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(r).Error
 }
 
+// Delete is deleting record
 func (r *Rollback) Delete() error {
 	return DBConn.Delete(r).Error
 }

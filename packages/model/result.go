@@ -66,6 +66,7 @@ func (r *SingleResult) Bytes() ([]byte, error) {
 	return r.result, nil
 }
 
+// OneRow is storing one row result
 type OneRow struct {
 	result map[string]string
 	err    error
@@ -91,7 +92,7 @@ func (r *OneRow) Bytes() (map[string][]byte, error) {
 	return result, nil
 }
 
-// Bytes is extracts result from OneRow as int64
+// Int64 is extracts result from OneRow as int64
 func (r *OneRow) Int64() (map[string]int64, error) {
 	result := make(map[string]int64)
 	if r.err != nil {
@@ -103,7 +104,7 @@ func (r *OneRow) Int64() (map[string]int64, error) {
 	return result, nil
 }
 
-// Bytes is extracts result from OneRow as float64
+// Float64 is extracts result from OneRow as float64
 func (r *OneRow) Float64() (map[string]float64, error) {
 	result := make(map[string]float64)
 	if r.err != nil {
@@ -115,7 +116,7 @@ func (r *OneRow) Float64() (map[string]float64, error) {
 	return result, nil
 }
 
-// Bytes is extracts result from OneRow as int
+// Int is extracts result from OneRow as int
 func (r *OneRow) Int() (map[string]int, error) {
 	result := make(map[string]int)
 	if r.err != nil {
@@ -127,6 +128,7 @@ func (r *OneRow) Int() (map[string]int, error) {
 	return result, nil
 }
 
+// GetAllTransaction is retrieve all query result rows
 func GetAllTransaction(transaction *DbTransaction, query string, countRows int, args ...interface{}) ([]map[string]string, error) {
 	var result []map[string]string
 	rows, err := GetDB(transaction).Raw(query, args...).Rows()
