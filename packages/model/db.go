@@ -33,10 +33,10 @@ func isFound(db *gorm.DB) (bool, error) {
 	return true, db.Error
 }
 
-func GormInit(user string, pass string, dbName string, logSQL int64) error {
+func GormInit(host string, port string, user string, pass string, dbName string) error {
 	var err error
 	DBConn, err = gorm.Open("postgres",
-		fmt.Sprintf("host=localhost user=%s dbname=%s sslmode=disable password=%s", user, dbName, pass))
+		fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", host, port, user, dbName, pass))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cant open connection to DB")
 		DBConn = nil

@@ -271,7 +271,9 @@ func Start() {
 
 	if len(config.ConfigIni["db_type"]) > 0 {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"], *utils.LogSQL)
+		err = model.GormInit(
+			config.ConfigIni["db_host"], config.ConfigIni["db_port"],
+			config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 		if err != nil {
 			log.WithFields(log.Fields{"db_user": config.ConfigIni["db_user"], "db_password": config.ConfigIni["db_password"],
 				"db_name": config.ConfigIni["db_name"], "type": consts.DBError}).Error("can't init gorm")

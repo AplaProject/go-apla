@@ -77,7 +77,7 @@ func TestGetUID(t *testing.T) {
 }
 
 func TestHashID(t *testing.T) {
-	err := model.GormInit(`postgres`, `postgres`, `v2`) // v2 - specify your database
+	err := model.GormInit(`localhost`, `5432`, `postgres`, `postgres`, `v2`) // v2 - specify your database
 	if err != nil {
 		t.Error(err)
 	}
@@ -105,7 +105,7 @@ func TestHashID(t *testing.T) {
 }
 
 func TestMaxID(t *testing.T) {
-	err := model.GormInit(`postgres`, `postgres`, `v2`) // v2 - specify your database
+	err := model.GormInit(`localhost`, `5432`, `postgres`, `postgres`, `v2`) // v2 - specify your database
 	if err != nil {
 		t.Error(err)
 	}
