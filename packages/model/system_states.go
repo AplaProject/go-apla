@@ -1,10 +1,12 @@
 package model
 
+// SystemState is model
 type SystemState struct {
 	ID   int64 `gorm:"primary_key;not null"`
 	RbID int64 `gorm:"not null"`
 }
 
+// TableName returns name of table
 func (ss *SystemState) TableName() string {
 	return "system_states"
 }

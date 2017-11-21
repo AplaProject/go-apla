@@ -1,11 +1,13 @@
 package model
 
+// QueueTx is model
 type QueueTx struct {
 	Hash     []byte `gorm:"primary_key;not null"`
 	Data     []byte `gorm:"not null"`
 	FromGate int    `gorm:"not null"`
 }
 
+// TableName returns name of table
 func (qt *QueueTx) TableName() string {
 	return "queue_tx"
 }
@@ -18,10 +20,12 @@ func (qt *QueueTx) Save(transaction *DbTransaction) error {
 	return GetDB(transaction).Save(qt).Error
 }
 
+// Create is creating record of model
 func (qt *QueueTx) Create() error {
 	return DBConn.Create(qt).Error
 }
 
+// GetByHash is retrieving model from database by hash
 func (qt *QueueTx) GetByHash(hash []byte) (bool, error) {
 	return isFound(DBConn.Where("hash = ?", hash).First(qt))
 }

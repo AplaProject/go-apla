@@ -1,5 +1,6 @@
 package model
 
+// StateParameter is model
 type StateParameter struct {
 	tableName  string
 	Name       string `gorm:"primary_key;not null;size:100"`
@@ -8,6 +9,7 @@ type StateParameter struct {
 	RbID       int64  `gorm:"not null"`
 }
 
+// TableName returns name of table
 func (sp *StateParameter) TableName() string {
 	return sp.tableName
 }
@@ -16,6 +18,7 @@ func (sp *StateParameter) SetTablePrefix(tablePrefix string) {
 	sp.tableName = tablePrefix + "_parameters"
 }
 
+// Get is retrieving model from database
 func (sp *StateParameter) Get(transaction *DbTransaction, name string) (bool, error) {
 	return isFound(GetDB(transaction).Where("name = ?", name).First(sp))
 }

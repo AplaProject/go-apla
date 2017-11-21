@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// Key is model
 type Key struct {
 	tableName string
 	ID        int64  `gorm:"primary_key;not null"`
@@ -20,10 +21,12 @@ func (m *Key) SetTablePrefix(prefix int64) *Key {
 	return m
 }
 
+// TableName returns name of table
 func (m Key) TableName() string {
 	return m.tableName
 }
 
+// Get is retrieving model from database
 func (m *Key) Get(wallet int64) error {
 	return DBConn.Where("id = ?", wallet).First(m).Error
 }
