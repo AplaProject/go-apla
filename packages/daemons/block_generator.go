@@ -78,13 +78,11 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		return nil
 	}
 
-	nodeKey := &model.MyNodeKey{}
-	err = nodeKey.GetNodeWithMaxBlockID()
-	if err != nil || len(nodeKey.PrivateKey) < 1 {
-		if err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node with max blockID")
+	NodePrivateKey, _, err := utils.GetNodeKeys()
+	if err != nil || len(NodePrivateKey) < 1 {
+		if err == nil {
+			d.logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
 		}
-		d.logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
 		return err
 	}
 
@@ -102,7 +100,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	blockBin, err := generateNextBlock(prevBlock, *trs, nodeKey.PrivateKey, config, time.Now().Unix(), myNodePosition)
+	blockBin, err := generateNextBlock(prevBlock, *trs, NodePrivateKey, config, time.Now().Unix(), myNodePosition)
 	if err != nil {
 		return err
 	}
