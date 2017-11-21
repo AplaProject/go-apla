@@ -36,15 +36,15 @@ func (c *Config) ChangeBlockIDBatch(transaction *DbTransaction, oldBlockID int64
 	return GetDB(transaction).Model(c).Where("my_block_id < ?", oldBlockID).Update("my_block_id", newBlockID).Error
 }
 
-// GetConfig returns config record or nil
-func GetConfig() *Config {
+// GetConfig returns config record
+func GetConfig() (*Config, error) {
 	config := &Config{}
 	_, err := config.Get()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get config")
-		return nil
+		return nil, err
 	}
-	return config
+	return config, nil
 }
 
 //.

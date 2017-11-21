@@ -299,19 +299,19 @@ func GetMaxBlockUserTx() int {
 // GetRemoteHosts returns array of hostnames excluding myself
 func GetRemoteHosts() []string {
 
-	c := model.GetConfig()
-	if c == nil {
-		return nil
+	ret := make([]string, 0)
+
+	cfg, err := model.GetConfig()
+	if err != nil {
+		// error logged inside GetConfig()
+		return ret
 	}
-	keyID := c.KeyID
 
 	mutex.RLock()
 	defer mutex.RUnlock()
 
-	ret := make([]string, 0)
 	for nodeID, item := range nodes {
-		log.Debugln("nodeId:", nodeID, keyID)
-		if nodeID != keyID {
+		if nodeID != cfg.KeyID {
 			ret = append(ret, item.Host)
 		}
 	}

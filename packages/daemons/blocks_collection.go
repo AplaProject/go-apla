@@ -98,12 +98,12 @@ func blocksCollection(d *daemon, ctx context.Context) error {
 		return err
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Info block not found")
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("Info block not found")
 		return errors.New("Info block not found")
 	}
 
 	if infoBlock.BlockID >= maxBlockID {
-		log.Debugln("maxBlockID is already on our host:", infoBlock.BlockID, maxBlockID)
+		log.WithFields(log.Fields{"blockID": infoBlock.BlockID, "maxBlockID": maxBlockID}).Debug("Max block is already in the host")
 		return nil
 	}
 
