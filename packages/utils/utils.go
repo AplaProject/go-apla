@@ -71,7 +71,7 @@ var (
 	// WalletAddress is a wallet address for forging
 	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
 	// TCPHost is the tcp host
-	TCPHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
+	TCPHost = flag.String("tcpHost", "127.0.0.1", "tcpHost (e.g. 127.0.0.1)")
 	// ListenHTTPPort is HTTP port
 	ListenHTTPPort = flag.String("listenHttpPort", "7079", "ListenHTTPPort")
 	// GenerateFirstBlock show if the first block must be generated

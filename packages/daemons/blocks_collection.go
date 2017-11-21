@@ -18,6 +18,7 @@ package daemons
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -81,9 +82,7 @@ func initialLoad(d *daemon, ctx context.Context) error {
 
 func blocksCollection(d *daemon, ctx context.Context) error {
 
-	// TODO: ????? remove from all tables in some test mode ?????
-
-	hosts := syspar.GetHosts()
+	hosts := syspar.GetRemoteHosts()
 
 	// get a host with the biggest block id
 	host, maxBlockID, err := chooseBestHost(ctx, hosts, d.logger)
@@ -91,14 +90,27 @@ func blocksCollection(d *daemon, ctx context.Context) error {
 		return err
 	}
 
+	// NOTE: should be generalized in separate method
+	infoBlock := &model.InfoBlock{}
+	found, err := infoBlock.Get()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur blockID")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("Info block not found")
+		return errors.New("Info block not found")
+	}
+
+	if infoBlock.BlockID >= maxBlockID {
+		log.WithFields(log.Fields{"blockID": infoBlock.BlockID, "maxBlockID": maxBlockID}).Debug("Max block is already in the host")
+		return nil
+	}
+
 	DBLock()
 	defer DBUnlock()
 	// update our chain till maxBlockID from the host
-	if err := UpdateChain(ctx, d, host, maxBlockID, "rollback_blocks_2"); err != nil {
-		return err
-	}
-
-	return nil
+	return UpdateChain(ctx, d, host, maxBlockID, "rollback_blocks_2")
 }
 
 // best host is a host with the biggest last block ID
