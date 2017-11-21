@@ -872,6 +872,7 @@ func HTTPRequest(requrl, method string, headers map[string]interface{},
 	}
 	req, err := http.NewRequest(method, requrl, ioform)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("new http request")
 		return ``, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -880,14 +881,17 @@ func HTTPRequest(requrl, method string, headers map[string]interface{},
 	}
 	resp, err := client.Do(req)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http request")
 		return ``, err
 	}
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading http answer")
 		return ``, err
 	}
 	if resp.StatusCode != http.StatusOK {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http status code")
 		return ``, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
 	}
 	return string(data), nil
