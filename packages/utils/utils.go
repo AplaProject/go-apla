@@ -74,8 +74,10 @@ var (
 	TCPHost = flag.String("tcpHost", "127.0.0.1", "tcpHost (e.g. 127.0.0.1)")
 	// ListenHTTPPort is HTTP port
 	ListenHTTPPort = flag.String("listenHttpPort", "7079", "ListenHTTPPort")
-	// GenerateFirstBlock show if the first block must be generated
-	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
+
+	// GenerateFirstBlock force regenerate first block
+	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock and exit")
+
 	// OldVersion is the number of the old version
 	OldVersion = flag.String("oldVersion", "", "")
 	// TestRollBack equals 1 for testing rollback

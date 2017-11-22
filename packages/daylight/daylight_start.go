@@ -272,8 +272,10 @@ func Start() {
 
 	if *utils.ReInstall {
 		err := api.ReInstall()
-		log.WithFields(log.Fields{"error":err}).Error("ReInstall failed")
-		Exit(1)
+		if err != nil {
+			log.WithFields(log.Fields{"error": err}).Error("ReInstall failed")
+			Exit(1)
+		}
 	}
 
 	if len(config.ConfigIni["db_type"]) > 0 {
@@ -288,7 +290,7 @@ func Start() {
 		}
 	}
 
-	// create first block
+	// create first block and exit
 	if *utils.GenerateFirstBlock == 1 {
 		log.Info("Generating first block")
 		parser.FirstBlock()
@@ -309,7 +311,7 @@ func Start() {
 
 	err = initLogs()
 	if err != nil {
-		fmt.Println("logs init failed: %v", utils.ErrInfo(err))
+		log.WithFields(log.Fields{"error": err}).Error("logs init failed")
 		Exit(1)
 	}
 
@@ -359,10 +361,11 @@ func Start() {
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err := daemonsctl.RunAllDaemons()
-		log.Info("Daemons started")
 		if err != nil {
+			log.Error("RunAllDaemons", err)
 			os.Exit(1)
 		}
+		log.Info("Daemons started")
 	}
 
 	daemons.WaitForSignals()

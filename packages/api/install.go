@@ -73,6 +73,8 @@ func ReInstall() error {
 	// version2=true
 	// log_level=ERROR
 
+	// TODO: check mandatory parameters
+
 	params := installParams{
 		generateFirstBlock: true,
 		installType:        config.ConfigIni["install_type"],
@@ -98,9 +100,10 @@ func installCommon(data *installParams, logger *log.Entry, existingConfig bool) 
 		return fmt.Errorf(`E_INSTALLED`)
 	}
 
-	if data.generateFirstBlock {
-		*utils.GenerateFirstBlock = 1
-	}
+	// NOTE: it caused os.Exit() in daylight_start
+	// if data.generateFirstBlock {
+	// 	*utils.GenerateFirstBlock = 1
+	// }
 	if data.logLevel != "DEBUG" {
 		data.logLevel = "ERROR"
 	}
@@ -194,7 +197,8 @@ func installCommon(data *installParams, logger *log.Entry, existingConfig bool) 
 				*utils.FirstBlockNodePublicKey = pub
 			}
 		}
-		*utils.GenerateFirstBlock = 1
+		// NOTE: it caused os.Exit() in daylight_start
+		// *utils.GenerateFirstBlock = 1
 		parser.FirstBlock()
 	}
 
@@ -224,7 +228,10 @@ func installCommon(data *installParams, logger *log.Entry, existingConfig bool) 
 		return err
 	}
 
-	return daemonsctl.RunAllDaemons()
+	if !existingConfig {
+		return daemonsctl.RunAllDaemons()
+	}
+	return nil
 }
 
 func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
