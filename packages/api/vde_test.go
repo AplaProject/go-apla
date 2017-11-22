@@ -317,3 +317,54 @@ func TestVDEParams(t *testing.T) {
 		return
 	}
 }
+
+func TestHTTPRequest(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(6)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+				Auth string
+			}
+			action {
+				var ret string 
+				var pars, heads, json map
+				ret = HTTPRequest("http://www.instagram.com/", "GET", heads, pars)
+				if !Contains(ret, "react-root") {
+					error "instagram error"
+				}
+				ret = HTTPRequest("http://www.google.com/search?q=exotic", "GET", heads, pars)
+				if !Contains(ret, "exotic") {
+					error "google error"
+				}
+				heads["Authorization"] = "Bearer " + $Auth
+				pars["vde"] = "true"
+				ret = HTTPRequest("http://localhost:7079/api/v2/content/page/` + rnd + `", "POST", heads, pars)
+				json = JSONToMap(ret)
+				if json["menu"] != "myvdemenu" {
+					error "Wrong vde menu"
+				}
+				ret = HTTPRequest("http://localhost:7079/api/v2/contract/VDEFunctions?vde=true", "GET", heads, pars)
+				json = JSONToMap(ret)
+				if json["name"] != "@1VDEFunctions" {
+					error "Wrong vde contract"
+				}
+			}}`}, `Conditions`: {`true`}, `vde`: {`true`}}
+
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {rnd}, "Value": {`Page`}, "Menu": {`myvdemenu`},
+		"Conditions": {`true`}, `vde`: {`true`}}
+	if err := postTx(`NewPage`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(rnd, &url.Values{`vde`: {`true`}, `Auth`: {gAuth}}); err != nil {
+		t.Error(err)
+		return
+	}
+}
