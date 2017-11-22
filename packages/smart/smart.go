@@ -762,7 +762,7 @@ func (sc *SmartContract) CallContract(flags int) (result string, err error) {
 	case string:
 		result = v
 	default:
-		err = fmt.Errorf("bad transaction result")
+		result = fmt.Sprint(v)
 	}
 
 	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE {
