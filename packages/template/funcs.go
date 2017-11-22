@@ -34,90 +34,36 @@ import (
 )
 
 var (
-	funcs = map[string]tplFunc{
-		`AddToolButton`: {defaultTag, defaultTag, `addtoolbutton`, `Title,Icon,Page,PageParams`},
-		`Address`:       {addressTag, defaultTag, `address`, `Wallet`},
-		`CmpTime`:       {cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`},
-		`DateTime`:      {dateTimeTag, defaultTag, `datetime`, `DateTime,Format`},
-		`EcosysParam`:   {ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`},
-		`Em`:            {defaultTag, defaultTag, `em`, `Body,Class`},
-		`GetVar`:        {getvarTag, defaultTag, `getvar`, `Name`},
-		`ImageInput`:    {defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`},
-		`InputErr`:      {defaultTag, defaultTag, `inputerr`, `*`},
-		`LangRes`:       {langresTag, defaultTag, `langres`, `Name,Lang`},
-		`MenuGroup`:     {defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`},
-		`MenuItem`:      {defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`},
-		`Now`:           {nowTag, defaultTag, `now`, `Format,Interval`},
-		`SetTitle`:      {defaultTag, defaultTag, `settitle`, `Title`},
-		`SetVar`:        {setvarTag, defaultTag, `setvar`, `Name,Value`},
-		`Strong`:        {defaultTag, defaultTag, `strong`, `Body,Class`},
-	}
-	tails = map[string]forTails{
-		`button`: {map[string]tailInfo{
-			`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`div`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`form`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`if`: {map[string]tailInfo{
-			`Else`: {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
-		}},
-		`image`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`input`: {map[string]tailInfo{
-			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
-			`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`label`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`linkpage`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`data`: {map[string]tailInfo{
-			`Custom`: {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
-		}},
-		`dbfind`: {map[string]tailInfo{
-			`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
-			`Where`:     {tplFunc{tailTag, defaultTailFull, `where`, `Where`}, false},
-			`WhereId`:   {tplFunc{tailTag, defaultTailFull, `whereid`, `WhereId`}, false},
-			`Order`:     {tplFunc{tailTag, defaultTailFull, `order`, `Order`}, false},
-			`Limit`:     {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
-			`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
-			`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
-			`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
-			`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
-		}},
-		`p`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`span`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`table`: {map[string]tailInfo{
-			`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-		`select`: {map[string]tailInfo{
-			`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
-			`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
-		}},
-	}
+	funcs = make(map[string]tplFunc)
+	tails = make(map[string]forTails)
 	modes = [][]rune{{'(', ')'}, {'{', '}'}}
 )
 
 func init() {
+	funcs[`AddToolButton`] = tplFunc{defaultTag, defaultTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
+	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
+	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
+	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format`}
+	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
+	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
+	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
+	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`}
+	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
+	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
+	funcs[`MenuGroup`] = tplFunc{defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`}
+	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`}
+	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
+	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
+	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
+	funcs[`Strong`] = tplFunc{defaultTag, defaultTag, `strong`, `Body,Class`}
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
+	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Body`}
 	funcs[`Form`] = tplFunc{defaultTailTag, defaultTailTag, `form`, `Class,Body`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Image`] = tplFunc{defaultTailTag, defaultTailTag, `image`, `Src,Alt,Class`}
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
-	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,Value`}
+	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,@Value`}
 	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
 	funcs[`LinkPage`] = tplFunc{defaultTailTag, defaultTailTag, `linkpage`, `Body,Page,Class,PageParams`}
 	funcs[`Data`] = tplFunc{dataTag, defaultTailTag, `data`, `Source,Columns,Data`}
@@ -129,8 +75,60 @@ func init() {
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
 	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
 
-	tails[`if`].Tails[`ElseIf`] = tailInfo{tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false}
-
+	tails[`button`] = forTails{map[string]tailInfo{
+		`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`div`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`form`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`if`] = forTails{map[string]tailInfo{
+		`Else`:   {tplFunc{elseTag, elseFull, `else`, `Body`}, true},
+		`ElseIf`: {tplFunc{elseifTag, elseifFull, `elseif`, `Condition,Body`}, false},
+	}}
+	tails[`image`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`input`] = forTails{map[string]tailInfo{
+		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
+		`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`label`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`linkpage`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`data`] = forTails{map[string]tailInfo{
+		`Custom`: {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+	}}
+	tails[`dbfind`] = forTails{map[string]tailInfo{
+		`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
+		`Where`:     {tplFunc{tailTag, defaultTailFull, `where`, `Where`}, false},
+		`WhereId`:   {tplFunc{tailTag, defaultTailFull, `whereid`, `WhereId`}, false},
+		`Order`:     {tplFunc{tailTag, defaultTailFull, `order`, `Order`}, false},
+		`Limit`:     {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
+		`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
+		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
+		`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
+	}}
+	tails[`p`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`span`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`table`] = forTails{map[string]tailInfo{
+		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`select`] = forTails{map[string]tailInfo{
+		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
+		`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
 }
 
 func defaultTag(par parFunc) string {
@@ -139,10 +137,34 @@ func defaultTag(par parFunc) string {
 	return ``
 }
 
+func forlistTag(par parFunc) (ret string) {
+	setAllAttr(par)
+	name := par.Node.Attr[`source`].(string)
+	if len(name) == 0 || par.Workspace.Sources == nil {
+		return
+	}
+	source := (*par.Workspace.Sources)[name]
+	if source.Data == nil {
+		return
+	}
+	root := node{}
+	for _, item := range *source.Data {
+		vals := make(map[string]string)
+		for i, icol := range *source.Columns {
+			vals[icol] = item[i]
+		}
+		body := replace((*par.Pars)[`Body`], 0, &vals)
+		process(body, &root, par.Workspace)
+	}
+	par.Node.Children = root.Children
+	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return
+}
+
 func addressTag(par parFunc) string {
 	idval := (*par.Pars)[`Wallet`]
 	if len(idval) == 0 {
-		idval = (*par.Vars)[`key_id`]
+		idval = (*par.Workspace.Vars)[`key_id`]
 	}
 	id, _ := strconv.ParseInt(idval, 10, 64)
 	if id == 0 {
@@ -155,7 +177,7 @@ func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
 	}
-	state := converter.StrToInt((*par.Vars)[`ecosystem_id`])
+	state := converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`])
 	val, err := StateParam(int64(state), (*par.Pars)[`Name`])
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
@@ -166,7 +188,7 @@ func ecosysparTag(par parFunc) string {
 		cols := []string{`id`, `name`}
 		types := []string{`text`, `text`}
 		for key, item := range strings.Split(val, `,`) {
-			item, _ = language.LangText(item, state, (*par.Vars)[`accept_lang`])
+			item, _ = language.LangText(item, state, (*par.Workspace.Vars)[`accept_lang`])
 			data = append(data, []string{converter.IntToStr(key + 1), item})
 		}
 		node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
@@ -177,7 +199,7 @@ func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Index`]) > 0 {
 		ind := converter.StrToInt((*par.Pars)[`Index`])
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
-			val, _ = language.LangText(alist[ind-1], state, (*par.Vars)[`accept_lang`])
+			val, _ = language.LangText(alist[ind-1], state, (*par.Workspace.Vars)[`accept_lang`])
 		} else {
 			val = ``
 		}
@@ -188,9 +210,9 @@ func ecosysparTag(par parFunc) string {
 func langresTag(par parFunc) string {
 	lang := (*par.Pars)[`Lang`]
 	if len(lang) == 0 {
-		lang = (*par.Vars)[`accept_lang`]
+		lang = (*par.Workspace.Vars)[`accept_lang`]
 	}
-	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Vars)[`ecosystem_id`])), lang)
+	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])), lang)
 	return ret
 }
 
@@ -237,7 +259,7 @@ func nowTag(par parFunc) string {
 func andTag(par parFunc) string {
 	count := len(*par.Pars)
 	for i := 0; i < count; i++ {
-		if !ifValue((*par.Pars)[strconv.Itoa(i)], par.Vars) {
+		if !ifValue((*par.Pars)[strconv.Itoa(i)], par.Workspace) {
 			return `0`
 		}
 	}
@@ -247,7 +269,7 @@ func andTag(par parFunc) string {
 func orTag(par parFunc) string {
 	count := len(*par.Pars)
 	for i := 0; i < count; i++ {
-		if ifValue((*par.Pars)[strconv.Itoa(i)], par.Vars) {
+		if ifValue((*par.Pars)[strconv.Itoa(i)], par.Workspace) {
 			return `1`
 		}
 	}
@@ -322,6 +344,7 @@ func dataTag(par parFunc) string {
 	par.Node.Attr[`columns`] = &cols
 	par.Node.Attr[`types`] = &types
 	par.Node.Attr[`data`] = &data
+	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
 }
@@ -367,7 +390,7 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`ecosystem`] != nil {
 		state = converter.StrToInt64(par.Node.Attr[`ecosystem`].(string))
 	} else {
-		state = converter.StrToInt64((*par.Vars)[`ecosystem_id`])
+		state = converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])
 	}
 	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
 	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
@@ -409,16 +432,16 @@ func dbfindTag(par parFunc) string {
 			} else {
 				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &item)
 				root := node{}
-				process(body, &root, par.Vars)
+				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
 				if err == nil {
-					ival = replace(string(out), 0, &item)
+					ival = string(out)
 				} else {
 					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling root children to JSON")
 				}
 			}
 			if par.Node.Attr[`prefix`] != nil {
-				(*par.Vars)[prefix+`_`+icol] = ival
+				(*par.Workspace.Vars)[prefix+`_`+icol] = ival
 			}
 			row[i] = ival
 		}
@@ -431,6 +454,7 @@ func dbfindTag(par parFunc) string {
 	par.Node.Attr[`columns`] = &cols
 	par.Node.Attr[`types`] = &types
 	par.Node.Attr[`data`] = &data
+	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
 }
@@ -456,17 +480,17 @@ func tailTag(par parFunc) string {
 }
 
 func includeTag(par parFunc) string {
-	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Vars)[`_include`]) < 5 {
-		pattern, err := model.Single(`select value from "`+(*par.Vars)[`ecosystem_id`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
+	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Workspace.Vars)[`_include`]) < 5 {
+		pattern, err := model.Single(`select value from "`+(*par.Workspace.Vars)[`ecosystem_id`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by name")
 			return err.Error()
 		}
 		if len(pattern) > 0 {
 			root := node{}
-			(*par.Vars)[`_include`] += `1`
-			process(pattern, &root, par.Vars)
-			(*par.Vars)[`_include`] = (*par.Vars)[`_include`][:len((*par.Vars)[`_include`])-1]
+			(*par.Workspace.Vars)[`_include`] += `1`
+			process(pattern, &root, par.Workspace)
+			(*par.Workspace.Vars)[`_include`] = (*par.Workspace.Vars)[`_include`][:len((*par.Workspace.Vars)[`_include`])-1]
 			for _, item := range root.Children {
 				par.Owner.Children = append(par.Owner.Children, item)
 			}
@@ -477,14 +501,14 @@ func includeTag(par parFunc) string {
 
 func setvarTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) > 0 {
-		(*par.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
+		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
 	}
 	return ``
 }
 
 func getvarTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) > 0 {
-		return macro((*par.Vars)[(*par.Pars)[`Name`]], par.Vars)
+		return macro((*par.Workspace.Vars)[(*par.Pars)[`Name`]], par.Workspace.Vars)
 	}
 	return ``
 }
@@ -527,7 +551,7 @@ func defaultTail(par parFunc, tag string) {
 			name := (*v)[len(*v)-1]
 			curFunc := tails[tag].Tails[name].tplFunc
 			pars := (*v)[:len(*v)-1]
-			callFunc(&curFunc, par.Node, par.Vars, &pars, nil)
+			callFunc(&curFunc, par.Node, par.Workspace, &pars, nil)
 		}
 	}
 }
@@ -545,7 +569,7 @@ func buttonTag(par parFunc) string {
 }
 
 func ifTag(par parFunc) string {
-	cond := ifValue((*par.Pars)[`Condition`], par.Vars)
+	cond := ifValue((*par.Pars)[`Condition`], par.Workspace)
 	if cond {
 		for _, item := range par.Node.Children {
 			par.Owner.Children = append(par.Owner.Children, item)
@@ -556,9 +580,9 @@ func ifTag(par parFunc) string {
 			name := (*v)[len(*v)-1]
 			curFunc := tails[`if`].Tails[name].tplFunc
 			pars := (*v)[:len(*v)-1]
-			callFunc(&curFunc, par.Owner, par.Vars, &pars, nil)
-			if (*par.Vars)[`_cond`] == `1` {
-				(*par.Vars)[`_cond`] = `0`
+			callFunc(&curFunc, par.Owner, par.Workspace, &pars, nil)
+			if (*par.Workspace.Vars)[`_cond`] == `1` {
+				(*par.Workspace.Vars)[`_cond`] = `0`
 				break
 			}
 		}
@@ -574,19 +598,19 @@ func ifFull(par parFunc) string {
 			name := (*v)[len(*v)-1]
 			curFunc := tails[`if`].Tails[name].tplFunc
 			pars := (*v)[:len(*v)-1]
-			callFunc(&curFunc, par.Node, par.Vars, &pars, nil)
+			callFunc(&curFunc, par.Node, par.Workspace, &pars, nil)
 		}
 	}
 	return ``
 }
 
 func elseifTag(par parFunc) string {
-	cond := ifValue((*par.Pars)[`Condition`], par.Vars)
+	cond := ifValue((*par.Pars)[`Condition`], par.Workspace)
 	if cond {
 		for _, item := range par.Node.Children {
 			par.Owner.Children = append(par.Owner.Children, item)
 		}
-		(*par.Vars)[`_cond`] = `1`
+		(*par.Workspace.Vars)[`_cond`] = `1`
 	}
 	return ``
 }
@@ -620,8 +644,8 @@ func dateTimeTag(par parFunc) string {
 	}
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
-		format, _ = language.LangText(`timeformat`, converter.StrToInt((*par.Vars)[`ecosystem_id`]),
-			(*par.Vars)[`accept_lang`])
+		format, _ = language.LangText(`timeformat`, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			(*par.Workspace.Vars)[`accept_lang`])
 		if format == `timeformat` {
 			format = `2006-01-02 15:04:05`
 		}

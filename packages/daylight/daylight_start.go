@@ -40,26 +40,10 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/go-bindata-assetfs"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
-
-// FileAsset returns the body of the file
-func FileAsset(name string) ([]byte, error) {
-
-	if name := strings.Replace(name, "\\", "/", -1); name == `static/img/logo.`+utils.LogoExt {
-		logofile := *utils.Dir + `/logo.` + utils.LogoExt
-		if fi, err := os.Stat(logofile); err == nil && fi.Size() > 0 {
-			return ioutil.ReadFile(logofile)
-		} else if err != nil {
-			log.WithFields(log.Fields{"path": logofile, "error": err, "type": consts.IOError}).Error("Reading logo file")
-		}
-	}
-	return static.Asset(name)
-}
 
 func readConfig() {
 	// read the config.ini
@@ -238,7 +222,6 @@ func initRoutes(listenHost, browserHost string) string {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
-	route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
 	if len(*utils.TLS) > 0 {
 		go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, route)
