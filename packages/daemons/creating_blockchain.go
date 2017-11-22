@@ -16,7 +16,7 @@ import (
 )
 
 // CreatingBlockchain is writing block to blockchain
-func CreatingBlockchain(d *daemon, ctx context.Context) error {
+func CreatingBlockchain(ctx context.Context, d *daemon) error {
 	d.sleepTime = 10 * time.Second
 	return writeNextBlocks(*utils.Dir+"/public/blockchain", syspar.GetRbBlocks2(), d.logger)
 }

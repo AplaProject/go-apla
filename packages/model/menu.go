@@ -10,6 +10,7 @@ type Menu struct {
 	RbID       int64  `gorm:"not null"`
 }
 
+// SetTablePrefix is setting table prefix
 func (m *Menu) SetTablePrefix(prefix string) {
 	m.tableName = prefix + "_menu"
 }

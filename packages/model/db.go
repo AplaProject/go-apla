@@ -22,8 +22,11 @@ import (
 )
 
 var (
-	DBConn         *gorm.DB
-	RecordNotFound = gorm.ErrRecordNotFound
+	// DBConn is orm connection
+	DBConn *gorm.DB
+
+	// ErrRecordNotFound is Not Found Record wrapper
+	ErrRecordNotFound = gorm.ErrRecordNotFound
 )
 
 func isFound(db *gorm.DB) (bool, error) {
@@ -110,6 +113,7 @@ func GetRecordsCount(tableName string) (int64, error) {
 	return count, err
 }
 
+// ExecSchemaEcosystem is executing ecosystem schema
 func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 	schema, err := static.Asset("static/schema-ecosystem-v2.sql")
 	if err != nil {
@@ -132,6 +136,7 @@ func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 	return err
 }
 
+// ExecSchemaLocalData is executing schema with local data
 func ExecSchemaLocalData(id int, wallet int64) error {
 	schema, err := static.Asset("static/schema-vde.sql")
 	if err != nil {
@@ -140,6 +145,7 @@ func ExecSchemaLocalData(id int, wallet int64) error {
 	return DBConn.Exec(fmt.Sprintf(string(schema), id, wallet)).Error
 }
 
+// ExecSchema is executing schema
 func ExecSchema() error {
 	schema, err := static.Asset("static/schema-v2.sql")
 	if err != nil {

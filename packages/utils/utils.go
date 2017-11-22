@@ -117,8 +117,10 @@ var (
 	KeyID = flag.Int64("keyID", 0, "keyID")
 
 	// ReturnCh is chan for returns
-	ReturnCh     chan string
-	CancelFunc   context.CancelFunc
+	ReturnCh chan string
+	// CancelFunc is represents cancel func
+	CancelFunc context.CancelFunc
+	// DaemonsCount is number of daemons
 	DaemonsCount int
 	// Thrust is true for thrust shell
 	Thrust bool
@@ -807,7 +809,7 @@ func ShellExecute(cmdline string) {
 func GetParent() string {
 	parent := ""
 	for i := 2; ; i++ {
-		name := ""
+		var name string
 		if pc, _, num, ok := runtime.Caller(i); ok {
 			name = filepath.Base(runtime.FuncForPC(pc).Name())
 			file, line := runtime.FuncForPC(pc).FileLine(pc)

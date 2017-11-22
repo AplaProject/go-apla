@@ -40,7 +40,7 @@ import (
  * */
 
 // QueueParserBlocks parses and applies blocks from the queue
-func QueueParserBlocks(d *daemon, ctx context.Context) error {
+func QueueParserBlocks(ctx context.Context, d *daemon) error {
 
 	DBLock()
 	defer DBUnlock()

@@ -50,7 +50,7 @@ func TestSmartFields(t *testing.T) {
 		return
 	}
 	if cntResult.Name != `@1MainCondition` {
-		t.Error(fmt.Sprintf(`MainCondition name is wrong: %s`, cntResult.Name))
+		t.Errorf(`MainCondition name is wrong: %s`, cntResult.Name)
 		return
 	}
 	if err := postTx(`MainCondition`, &url.Values{}); err != nil {
@@ -95,7 +95,8 @@ func TestPage(t *testing.T) {
 
 	form := url.Values{"Name": {name}, "Value": {`Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	id, msg, err := postTxResult(`NewParameter`, &form)
+
+	_, _, err := postTxResult(`NewParameter`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -105,6 +106,7 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
 	form = url.Values{"Name": {menuname}, "Value": {`first
 			second
 			third`}, "Title": {`My Menu`},
@@ -122,7 +124,7 @@ func TestPage(t *testing.T) {
 
 	form = url.Values{"Name": {name + `23`}, "Value": {`New Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	id, msg, err = postTxResult(`EditParameter`, &form)
+	_, _, err = postTxResult(`EditParameter`, &form)
 	if cutErr(err) != fmt.Sprintf(`Record %s23 has not been found`, name) {
 		t.Error(err)
 		return
@@ -131,7 +133,7 @@ func TestPage(t *testing.T) {
 	name = randName(`page`)
 	form = url.Values{"Name": {name}, "Value": {value},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
-	id, msg, err = postTxResult(`NewPage`, &form)
+	_, _, err = postTxResult(`NewPage`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -144,7 +146,7 @@ func TestPage(t *testing.T) {
 
 	form = url.Values{"Name": {name}, "Value": {value},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
-	id, msg, err = postTxResult(`NewBlock`, &form)
+	_, _, err = postTxResult(`NewBlock`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -164,7 +166,7 @@ func TestPage(t *testing.T) {
 
 	form = url.Values{"Id": {`1`}, "Value": {value + `Span(Test)`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
-	id, msg, err = postTxResult(`EditPage`, &form)
+	_, _, err = postTxResult(`EditPage`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -178,13 +180,11 @@ func TestPage(t *testing.T) {
 	}
 
 	form = url.Values{"Id": {`2`}, "Value": {`Span(Append)`}}
-	id, msg, err = postTxResult(`AppendPage`, &form)
+	_, _, err = postTxResult(`AppendPage`, &form)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-
-	fmt.Println(`RET`, id, msg)
 }
 
 func TestNewTable(t *testing.T) {

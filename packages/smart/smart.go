@@ -75,6 +75,7 @@ func GetTestValue(name string) string {
 	return smartTest[name]
 }
 
+// GetLogger is returning logger
 func (sc SmartContract) GetLogger() *log.Entry {
 	return log.WithFields(log.Fields{"vde": sc.VDE, "name": sc.TxContract.Name})
 }
@@ -99,6 +100,7 @@ func init() {
 	smartVDE = make(map[int64]*script.VM)
 }
 
+// GetVM is returning smart vm
 func GetVM(vde bool, ecosystemID int64) *script.VM {
 	if vde {
 		if v, ok := smartVDE[ecosystemID]; ok {
@@ -117,6 +119,7 @@ func vmCompile(vm *script.VM, src string, owner *script.OwnerInfo) error {
 	return vm.Compile([]rune(src), owner)
 }
 
+// VMCompileBlock is compiling block
 func VMCompileBlock(vm *script.VM, src string, owner *script.OwnerInfo) (*script.Block, error) {
 	return vm.CompileBlock([]rune(src), owner)
 }

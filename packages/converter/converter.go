@@ -18,6 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// FillLeft is filling slice
 func FillLeft(slice []byte) []byte {
 	if len(slice) >= 32 {
 		return slice
@@ -672,7 +673,7 @@ func BytesToInt(s []byte) int {
 // StrToMoney rounds money string to float64
 func StrToMoney(str string) float64 {
 	ind := strings.Index(str, ".")
-	new := ""
+	var new string
 	if ind != -1 {
 		end := 2
 		if len(str[ind+1:]) > 1 {

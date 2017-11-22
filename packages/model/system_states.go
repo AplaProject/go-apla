@@ -11,6 +11,7 @@ func (ss *SystemState) TableName() string {
 	return "system_states"
 }
 
+// GetAllSystemStatesIDs is retrieving all system states ids
 func GetAllSystemStatesIDs() ([]int64, error) {
 	states := new([]SystemState)
 	if err := DBConn.Find(&states).Order("id").Error; err != nil {

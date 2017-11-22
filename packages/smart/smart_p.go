@@ -603,6 +603,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	return converter.StrToInt64(id), err
 }
 
+// RollbackEcosystem is rolling back ecosystem
 func RollbackEcosystem(sc *SmartContract) error {
 	if sc.TxContract.Name != `@1NewEcosystem` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackEcosystem can be only called from @1NewEcosystem")
@@ -665,14 +666,15 @@ func RollbackEcosystem(sc *SmartContract) error {
 	return ssToDel.Delete(sc.DbTransaction)
 }
 
+// RollbackTable is rolling back table
 func RollbackTable(sc *SmartContract, name string) error {
 	if sc.TxContract.Name != `@1NewTable` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from @1NewTable")
 		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
 	}
-	err := model.DropTable(sc.DbTransaction, fmt.Sprintf("%d_%s", sc.TxSmart.EcosystemID, name))
+	model.DropTable(sc.DbTransaction, fmt.Sprintf("%d_%s", sc.TxSmart.EcosystemID, name))
 	t := &model.Table{Name: name}
-	err = t.Delete()
+	err := t.Delete()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
 		return err
@@ -680,6 +682,7 @@ func RollbackTable(sc *SmartContract, name string) error {
 	return nil
 }
 
+// RollbackColumn is rolling back column
 func RollbackColumn(sc *SmartContract, tableName, name string) error {
 	if sc.TxContract.Name != `@1NewColumn` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackColumn can be only called from @1NewColumn")
@@ -768,6 +771,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	return nil
 }
 
+// JSONToMap is converting json to map
 func JSONToMap(input string) (map[string]interface{}, error) {
 	var ret map[string]interface{}
 	err := json.Unmarshal([]byte(input), &ret)

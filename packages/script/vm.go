@@ -150,9 +150,9 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 						rt.cost = 0
 						rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Error("paid CPU resource is over")
 						return fmt.Errorf("paid CPU resource is over")
-					} else {
-						rt.cost -= cost
 					}
+
+					rt.cost -= cost
 					continue
 				}
 			}

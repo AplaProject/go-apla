@@ -96,6 +96,7 @@ type FuncNameCmd struct {
 	Count int
 }
 
+// FuncName is storing param of FuncName
 type FuncName struct {
 	Params   []reflect.Type
 	Offset   []int

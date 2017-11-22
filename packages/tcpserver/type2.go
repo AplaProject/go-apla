@@ -74,6 +74,7 @@ func Type2(r *DisRequest) (*DisTrResponse, error) {
 	return &DisTrResponse{}, nil
 }
 
+// DecryptData is decrypting data
 func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 	if len(*binaryTx) == 0 {
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("binary tx is empty")

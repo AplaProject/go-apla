@@ -145,10 +145,12 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
+// IsInstalled returns installed flag
 func IsInstalled() bool {
 	return installed
 }
 
+// Installed is setting turning installed flag on
 func Installed() {
 	installed = true
 }

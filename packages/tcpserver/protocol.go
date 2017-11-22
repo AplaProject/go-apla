@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// TransactionType is type of transaction
 type TransactionType struct {
 	Type uint16
 }
@@ -70,7 +71,7 @@ func ReadRequest(request interface{}, r io.Reader) error {
 		t := reflect.ValueOf(request).Elem().Field(i)
 		switch t.Kind() {
 		case reflect.Slice:
-			size := uint64(0)
+			var size uint64
 			var err error
 			sizeVal := reflect.TypeOf(request).Elem().Field(i).Tag.Get("size")
 			if sizeVal != "" {
@@ -112,6 +113,7 @@ func ReadRequest(request interface{}, r io.Reader) error {
 	return nil
 }
 
+// SendRequest in sending request
 func SendRequest(request interface{}, w io.Writer) error {
 	if reflect.ValueOf(request).Elem().Kind() != reflect.Struct {
 		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("bad request type")

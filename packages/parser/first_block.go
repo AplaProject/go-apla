@@ -183,7 +183,7 @@ func FirstBlock() {
 		return
 	}
 
-	firstBlockDir := ""
+	var firstBlockDir string
 	if len(*utils.FirstBlockDir) == 0 {
 		firstBlockDir = *utils.Dir
 	} else {

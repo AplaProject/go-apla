@@ -45,7 +45,7 @@ func init() {
 	flag.Parse()
 }
 
-var daemonsList = map[string]func(*daemon, context.Context) error{
+var daemonsList = map[string]func(context.Context, *daemon) error{
 	"BlocksCollection":   BlocksCollection,
 	"BlockGenerator":     BlockGenerator,
 	"CreatingBlockchain": CreatingBlockchain,
@@ -79,7 +79,7 @@ var rollbackList = []string{
 	"Confirmations",
 }
 
-func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon, context.Context) error, retCh chan string) {
+func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.Context, *daemon) error, retCh chan string) {
 	logger := log.WithFields(log.Fields{"daemon_name": goRoutineName})
 	defer func() {
 		if r := recover(); r != nil {
@@ -99,7 +99,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 		logger:        logger,
 	}
 
-	handler(d, ctx)
+	handler(ctx, d)
 
 	for {
 		select {
@@ -110,7 +110,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 
 		case <-time.After(d.sleepTime):
 			MonitorDaemonCh <- []string{d.goRoutineName, converter.Int64ToStr(time.Now().Unix())}
-			handler(d, ctx)
+			handler(ctx, d)
 		}
 	}
 }
