@@ -36,7 +36,7 @@ var tick int
 
 // Confirmations gets and checks blocks from nodes
 // Getting amount of nodes, which has the same hash as we do
-func Confirmations(d *daemon, ctx context.Context) error {
+func Confirmations(ctx context.Context, d *daemon) error {
 
 	// the first 2 minutes we sleep for 10 sec for blocks to be collected
 	tick++

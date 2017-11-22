@@ -34,19 +34,32 @@ const (
 )
 
 var (
-	HashingError           = errors.New("Hashing error")
-	EncryptingError        = errors.New("Encoding error")
-	DecryptingError        = errors.New("Decrypting error")
-	UnknownProviderError   = errors.New("Unknown provider")
-	HashingEmpty           = errors.New("Hashing empty value")
-	EncryptingEmpty        = errors.New("Encrypting empty value")
-	DecryptingEmpty        = errors.New("Decrypting empty value")
-	SigningEmpty           = errors.New("Signing empty value")
-	CheckingSignEmpty      = errors.New("Cheking sign of empty")
-	IncorrectSign          = errors.New("Incorrect sign")
-	UnsupportedCurveSize   = errors.New("Unsupported curve size")
-	IncorrectPrivKeyLength = errors.New("Incorrect private key length")
-	IncorrectPubKeyLength  = errors.New("Incorrect public key length")
+	// ErrHashing is Hashing error
+	ErrHashing = errors.New("Hashing error")
+	// ErrEncrypting is Encoding error
+	ErrEncrypting = errors.New("Encoding error")
+	// ErrDecrypting is Decrypting error
+	ErrDecrypting = errors.New("Decrypting error")
+	// ErrUnknownProvider is Unknown provider error
+	ErrUnknownProvider = errors.New("Unknown provider")
+	// ErrHashingEmpty is Hashing empty value error
+	ErrHashingEmpty = errors.New("Hashing empty value")
+	// ErrEncryptingEmpty is Encrypting empty value error
+	ErrEncryptingEmpty = errors.New("Encrypting empty value")
+	// ErrDecryptingEmpty is Decrypting empty value error
+	ErrDecryptingEmpty = errors.New("Decrypting empty value")
+	// ErrSigningEmpty is Signing empty value error
+	ErrSigningEmpty = errors.New("Signing empty value")
+	// ErrCheckingSignEmpty is Checking sign of empty error
+	ErrCheckingSignEmpty = errors.New("Cheking sign of empty")
+	// ErrIncorrectSign is Incorrect sign
+	ErrIncorrectSign = errors.New("Incorrect sign")
+	// ErrUnsupportedCurveSize is Unsupported curve size error
+	ErrUnsupportedCurveSize = errors.New("Unsupported curve size")
+	// ErrIncorrectPrivKeyLength is Incorrect private key length error
+	ErrIncorrectPrivKeyLength = errors.New("Incorrect private key length")
+	// ErrIncorrectPubKeyLength is Incorrect public key length
+	ErrIncorrectPubKeyLength = errors.New("Incorrect public key length")
 )
 
 var (
@@ -58,27 +71,29 @@ var (
 	hmacProv     = _SHA256
 )
 
+// Encrypt is encrypting
 func Encrypt(msg []byte, key []byte, iv []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(EncryptingEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(ErrEncryptingEmpty.Error())
 	}
 	switch cryptoProv {
 	case _AESCBC:
 		return encryptCBC(msg, key, iv)
 	default:
-		return nil, UnknownProviderError
+		return nil, ErrUnknownProvider
 	}
 }
 
+// Decrypt is decrypting
 func Decrypt(msg []byte, key []byte, iv []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(DecryptingEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(ErrDecryptingEmpty.Error())
 	}
 	switch cryptoProv {
 	case _AESCBC:
 		return decryptCBC(msg, key, iv)
 	default:
-		return nil, UnknownProviderError
+		return nil, ErrUnknownProvider
 	}
 }
 
@@ -104,7 +119,7 @@ func GenBytesKeys() ([]byte, []byte, error) {
 	case elliptic256:
 		curve = elliptic.P256()
 	default:
-		return nil, nil, UnsupportedCurveSize
+		return nil, nil, ErrUnsupportedCurveSize
 	}
 	private, err := ecdsa.GenerateKey(curve, crand.Reader)
 	if err != nil {
@@ -198,16 +213,16 @@ func getSharedKey(private, public []byte) (shared []byte, err error) {
 	case elliptic256:
 		pubkeyCurve = elliptic.P256()
 	default:
-		return nil, UnknownProviderError
+		return nil, ErrUnknownProvider
 	}
 
 	switch signProv {
 	case _ECDSA:
 		if len(private) != consts.PubkeySizeLength/2 {
-			return nil, IncorrectPrivKeyLength
+			return nil, ErrIncorrectPrivKeyLength
 		}
 		if len(public) != consts.PubkeySizeLength {
-			return nil, IncorrectPubKeyLength
+			return nil, ErrIncorrectPubKeyLength
 		}
 
 		pub := new(ecdsa.PublicKey)
@@ -227,14 +242,14 @@ func getSharedKey(private, public []byte) (shared []byte, err error) {
 			bytes = append(bytes, y.Bytes()...)
 			key, err := Hash(bytes)
 			if err != nil {
-				return nil, UnknownProviderError
+				return nil, ErrUnknownProvider
 			}
 			shared = key
 		} else {
 			err = fmt.Errorf("Not IsOnCurve")
 		}
 	default:
-		return nil, UnknownProviderError
+		return nil, ErrUnknownProvider
 	}
 
 	return

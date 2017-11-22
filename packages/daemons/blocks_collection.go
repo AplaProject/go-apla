@@ -39,8 +39,8 @@ import (
 )
 
 // BlocksCollection collects and parses blocks
-func BlocksCollection(d *daemon, ctx context.Context) error {
-	if err := initialLoad(d, ctx); err != nil {
+func BlocksCollection(ctx context.Context, d *daemon) error {
+	if err := initialLoad(ctx, d); err != nil {
 		return err
 	}
 
@@ -49,10 +49,10 @@ func BlocksCollection(d *daemon, ctx context.Context) error {
 		return ctx.Err()
 	}
 
-	return blocksCollection(d, ctx)
+	return blocksCollection(ctx, d)
 }
 
-func initialLoad(d *daemon, ctx context.Context) error {
+func initialLoad(ctx context.Context, d *daemon) error {
 
 	// check for initial load
 	toLoad, err := needLoad(d.logger)
@@ -80,7 +80,7 @@ func initialLoad(d *daemon, ctx context.Context) error {
 	return nil
 }
 
-func blocksCollection(d *daemon, ctx context.Context) error {
+func blocksCollection(ctx context.Context, d *daemon) error {
 
 	hosts := syspar.GetRemoteHosts()
 

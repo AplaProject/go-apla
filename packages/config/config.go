@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	// ConfigIni is storing parsed config in map
 	ConfigIni map[string]string
 )
 
@@ -36,12 +37,12 @@ func Read() error {
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("new config")
 		return err
-	} else {
-		ConfigIni, err = fullConfigIni.GetSection("default")
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("getting default config section")
-			return err
-		}
+	}
+
+	ConfigIni, err = fullConfigIni.GetSection("default")
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("getting default config section")
+		return err
 	}
 	return nil
 }
@@ -59,7 +60,7 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 	if !IsExist() {
 		ioutil.WriteFile(path, []byte(``), 0644)
 	}
-	confIni, err := config.NewConfig("ini", path)
+	confIni, _ := config.NewConfig("ini", path)
 	confIni.Set("log_level", logLevel)
 	confIni.Set("install_type", installType)
 	confIni.Set("dir", *utils.Dir)
@@ -75,7 +76,7 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 	confIni.Set("db_name", dbConf.Name)
 	confIni.Set("node_state_id", `*`)
 
-	err = confIni.SaveConfigFile(path)
+	err := confIni.SaveConfigFile(path)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("saving config file")
 		Drop()

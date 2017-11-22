@@ -7,7 +7,7 @@ import (
 )
 
 // Notificate is sending notifications
-func Notificate(d *daemon, ctx context.Context) error {
+func Notificate(ctx context.Context, d *daemon) error {
 	notificator.SendNotifications()
 	return nil
 }

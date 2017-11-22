@@ -32,14 +32,16 @@ import (
 )
 
 const (
-	I_AM_FULL_NODE     = 1
+	// I_AM_FULL_NODE is full node flag
+	I_AM_FULL_NODE = 1
+	// I_AM_NOT_FULL_NODE is not full node flag
 	I_AM_NOT_FULL_NODE = 2
 )
 
 // Disseminator is send to all nodes from nodes_connections the following data
 // if we are full node(miner): sends blocks and transactions hashes
 // else send the full transactions
-func Disseminator(d *daemon, ctx context.Context) error {
+func Disseminator(ctx context.Context, d *daemon) error {
 	config := &model.Config{}
 	_, err := config.Get()
 	if err != nil {
