@@ -74,7 +74,7 @@ func TestVDECreate(t *testing.T) {
 	form = url.Values{`Name`: {`new_table`}, `Value`: {`Test value`}, `Conditions`: {`ContractConditions("MainCondition")`},
 		`vde`: {`1`}}
 	if err = postTx(`NewParameter`, &form); err != nil && err.Error() !=
-		`500 {"error": "E_SERVER", "msg": "!Parameter new_table already exists" }` {
+		`500 {"error": "E_SERVER", "msg": "{\"type\":\"warning\",\"error\":\"Parameter new_table already exists\"}" }` {
 		t.Error(err)
 		return
 	}

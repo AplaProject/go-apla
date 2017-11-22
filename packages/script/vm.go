@@ -17,6 +17,7 @@
 package script
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"runtime/debug"
@@ -42,6 +43,11 @@ const (
 
 	brackets = `[]`
 )
+
+type VMError struct {
+	Type  string `json:"type"`
+	Error string `json:"error"`
+}
 
 type blockStack struct {
 	Block  *Block
@@ -295,6 +301,15 @@ func (vm *VM) RunInit(cost int64) *RunTime {
 	return &rt
 }
 
+func SetVMError(eType string, eText interface{}) error {
+	out, err := json.Marshal(&VMError{Type: eType, Error: fmt.Sprintf(`%v`, eText)})
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling VMError")
+		out = []byte(`{"type": "panic", "error": "marshalling VMError"}`)
+	}
+	return fmt.Errorf(string(out))
+}
+
 // RunCode executes Block
 func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	top := make([]interface{}, 8)
@@ -423,13 +438,13 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		case cmdReturn:
 			status = statusReturn
 		case cmdError:
-			pattern := `%v`
+			eType := msgError
 			if cmd.Value.(uint32) == keyWarning {
-				pattern = `!%v`
+				eType = msgWarning
 			} else if cmd.Value.(uint32) == keyInfo {
-				pattern = `*%v`
+				eType = msgInfo
 			}
-			err = fmt.Errorf(pattern, rt.stack[len(rt.stack)-1])
+			err = SetVMError(eType, rt.stack[len(rt.stack)-1])
 		case cmdFuncName:
 			ifunc := cmd.Value.(FuncNameCmd)
 			mapoff := len(rt.stack) - 1 - ifunc.Count

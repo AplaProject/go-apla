@@ -176,7 +176,7 @@ func TestVMCompile(t *testing.T) {
 							error "Error message err_test"
 						}
 						return "OK"
-					}`, `err_test`, `Error message err_test`},
+					}`, `err_test`, `{"type":"error","error":"Error message err_test"}`},
 		{`contract my {
 					data {
 						PublicKey  bytes
