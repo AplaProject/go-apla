@@ -53,10 +53,51 @@ type installParams struct {
 	dbUsername             string
 }
 
-func installCommon(data *installParams, logger *log.Entry) (err error) {
-	if IsInstalled() || model.DBConn != nil || config.IsExist() {
+// ReInstall recreate config, keys, block, database
+func ReInstall() error {
+
+	// real config.ini sample:
+	//
+	// first_block_dir=/home/maxp/apla/go/apla
+	// install_type=PRIVATE_NET
+	// http_port=7079
+	// db_user=apla
+	// db_host=localhost
+	// db_port=5432
+	// db_password=123456
+	// dir=/home/user/go/apla
+	// db_type=postgresql
+	// db_name=apla
+	// node_state_id=*
+	// tcp_host=
+	// version2=true
+	// log_level=ERROR
+
+	params := installParams{
+		generateFirstBlock: true,
+		installType:        config.ConfigIni["install_type"],
+		logLevel:           config.ConfigIni["log_level"],
+		dbHost:             config.ConfigIni["db_host"],
+		dbPort:             config.ConfigIni["db_port"],
+		dbName:             config.ConfigIni["db_name"],
+		dbPassword:         config.ConfigIni["db_password"],
+		dbUsername:         config.ConfigIni["db_user"],
+		// NOTE: there is no such parameter in config.Save()
+		firstLoadBlockchainURL: config.ConfigIni["first_block_chain_url"],
+		firstBlockDir:          config.ConfigIni["first_block_dir"],
+	}
+
+	// NOTE: those files should be removed manually on new install
+	// *utils.FirstBlockDir + "/1block", *utils.Dir+"/PrivateKey", *utils.Dir+"/NodePrivateKey",
+
+	return installCommon(&params, log.WithFields(log.Fields{}), true)
+}
+
+func installCommon(data *installParams, logger *log.Entry, existingConfig bool) (err error) {
+	if IsInstalled() || model.DBConn != nil || (config.IsExist() && !existingConfig) {
 		return fmt.Errorf(`E_INSTALLED`)
 	}
+
 	if data.generateFirstBlock {
 		*utils.GenerateFirstBlock = 1
 	}
@@ -183,12 +224,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return err
 	}
 
-	err = daemonsctl.RunAllDaemons()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return daemonsctl.RunAllDaemons()
 }
 
 func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
@@ -196,7 +232,8 @@ func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 
 	data.result = &result
 
-	params := installParams{installType: data.params["type"].(string),
+	params := installParams{
+		installType:            data.params["type"].(string),
 		logLevel:               data.params["log_level"].(string),
 		firstLoadBlockchainURL: data.params["first_load_blockchain_url"].(string),
 		dbHost:                 data.params["db_host"].(string),
@@ -209,7 +246,7 @@ func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	if val := data.params["generate_first_block"]; val.(int64) == 1 {
 		params.generateFirstBlock = true
 	}
-	err := installCommon(&params, logger)
+	err := installCommon(&params, logger, false)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), `E_`) {
 			return errorAPI(w, err.Error(), http.StatusInternalServerError)

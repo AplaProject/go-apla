@@ -233,6 +233,7 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 		route.HandlerFunc(method, path, handle)
 	}
 }
+
 func initRoutes(listenHost, browserHost string) string {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
@@ -268,6 +269,12 @@ func Start() {
 	}
 
 	readConfig()
+
+	if *utils.ReInstall {
+		err := api.ReInstall()
+		log.WithFields(log.Fields{"error":err}).Error("ReInstall failed")
+		Exit(1)
+	}
 
 	if len(config.ConfigIni["db_type"]) > 0 {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)

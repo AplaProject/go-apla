@@ -104,6 +104,10 @@ var (
 	BoltPsw = flag.String("boltPsw", "", "Bolt password")
 	// APIToken is an api token for exchange api
 	APIToken = flag.String("apiToken", "", "API Token")
+
+	// ReInstall recreate application data from scratch
+	ReInstall = flag.Bool("reinstall", false, "reset keys and database using existing config.ini")
+
 	// OneCountry is the country which is supported
 	OneCountry int64
 	// PrivCountry is protect system from registering
