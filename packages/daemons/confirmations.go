@@ -102,7 +102,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		if config.ConfigIni["test_mode"] == "1" {
 			hosts = []string{"localhost"}
 		} else {
-			hosts = syspar.GetHosts()
+			hosts = syspar.GetRemoteHosts()
 		}
 
 		ch := make(chan string)
