@@ -304,7 +304,7 @@ func (vm *VM) RunInit(cost int64) *RunTime {
 func SetVMError(eType string, eText interface{}) error {
 	out, err := json.Marshal(&VMError{Type: eType, Error: fmt.Sprintf(`%v`, eText)})
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling VMError")
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling VMError")
 		out = []byte(`{"type": "panic", "error": "marshalling VMError"}`)
 	}
 	return fmt.Errorf(string(out))
@@ -438,11 +438,11 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		case cmdReturn:
 			status = statusReturn
 		case cmdError:
-			eType := `error`
+			eType := msgError
 			if cmd.Value.(uint32) == keyWarning {
-				eType = `warning`
+				eType = msgWarning
 			} else if cmd.Value.(uint32) == keyInfo {
-				eType = `info`
+				eType = msgInfo
 			}
 			err = SetVMError(eType, rt.stack[len(rt.stack)-1])
 		case cmdFuncName:

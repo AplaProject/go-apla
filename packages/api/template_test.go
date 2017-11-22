@@ -79,16 +79,4 @@ var forTest = tplList{
 		`[{"tag":"text","text":"ContractConditions(` + "`MainCondition`" + `)"}]`},
 	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
 		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","government"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"government"}]}]`},
-
-	/*	These cases are for manual testing
-		{`DBFind(contracts, smartSelect).Columns(wallet_id).Custom(customCol){
-					Address(#wallet_id#)Strong(#wallet_id#)
-				}`,
-				``},
-			{`Now()=Now(datetime)=Now(datetime,+5 days)`,
-				`[{"tag":"text","text":"1509598386"},{"tag":"text","text":"=2017-11-02 09:53:05"},{"tag":"text","text":"=2017-11-07 09:53:05"}]`},
-			{`DBFind(parameters, mysrc)`,
-				`[]`},
-			{`DBFind(parameters).Columns(name,value)`,
-				`[]`},*/
 }

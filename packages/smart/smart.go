@@ -18,9 +18,9 @@ package smart
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
@@ -64,6 +64,14 @@ var (
 	smartVM   *script.VM
 	smartVDE  map[int64]*script.VM
 	smartTest = make(map[string]string)
+
+	ErrCurrentBalance = errors.New(`current balance is not enough`)
+	ErrDiffKeys       = errors.New(`Contract and user public keys are different`)
+	ErrEmptyPublicKey = errors.New(`empty public key`)
+	ErrFuelRate       = errors.New(`Fuel rate must be greater than 0`)
+	ErrIncorrectSign  = errors.New(`incorrect sign`)
+	ErrUnknownNodeID  = errors.New(`Unknown node id`)
+	ErrWrongPriceFunc = errors.New(`Wrong type of price function`)
 )
 
 func testValue(name string, v ...interface{}) {
@@ -618,18 +626,12 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	payWallet := &model.Key{}
 	sc.TxContract.Extend = sc.getExtend()
 
-	retResult := func() (string, error) {
-		if err != nil {
-			eText := err.Error()
-			if !strings.HasPrefix(eText, `{`) {
-				err = script.SetVMError(`panic`, eText)
-			}
+	retError := func(err error) (string, error) {
+		eText := err.Error()
+		if !strings.HasPrefix(eText, `{`) {
+			err = script.SetVMError(`panic`, eText)
 		}
-		return result, err
-	}
-	retError := func(errMessage string) (string, error) {
-		err = fmt.Errorf(errMessage)
-		return retResult()
+		return ``, err
 	}
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
@@ -649,7 +651,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		err = wallet.Get(sc.TxSmart.KeyID)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
-			return retResult()
+			return retError(err)
 		}
 		if len(wallet.PublicKey) > 0 {
 			public = wallet.PublicKey
@@ -658,24 +660,24 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			node := syspar.GetNode(sc.TxSmart.KeyID)
 			if node == nil {
 				logger.WithFields(log.Fields{"user_id": sc.TxSmart.KeyID, "type": consts.NotFound}).Error("unknown node id")
-				return retError("unknown node id")
+				return retError(ErrUnknownNodeID)
 			}
 			public = node.Public
 		}
 		if len(public) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty public key")
-			return retError("empty public key")
+			return retError(ErrEmptyPublicKey)
 		}
 		sc.PublicKeys = append(sc.PublicKeys, public)
 		var CheckSignResult bool
 		CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.BinSignatures, false)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("checking tx data sign")
-			return retResult()
+			return retError(err)
 		}
 		if !CheckSignResult {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
-			return retError("incorrect sign")
+			return retError(ErrIncorrectSign)
 		}
 		if sc.TxSmart.EcosystemID > 0 && !sc.VDE {
 			if sc.TxSmart.TokenEcosystem == 0 {
@@ -684,18 +686,18 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(sc.TxSmart.TokenEcosystem))
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting ecosystem fuel rate from string to decimal")
-				return retResult()
+				return retError(err)
 			}
 			if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 				logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("Fuel rate must be greater than 0")
-				return retError(`Fuel rate must be greater than 0`)
+				return retError(ErrFuelRate)
 			}
 			var payOver decimal.Decimal
 			if len(sc.TxSmart.PayOver) > 0 {
 				payOver, err = decimal.NewFromString(sc.TxSmart.PayOver)
 				if err != nil {
 					log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
-					return retResult()
+					return retError(err)
 				}
 				fuelRate = fuelRate.Add(payOver)
 			}
@@ -707,49 +709,46 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				payOver, err = decimal.NewFromString(sc.TxSmart.PayOver)
 				if err != nil {
 					logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
-					return retResult()
+					return retError(err)
 				}
 				fuelRate = fuelRate.Add(payOver)
 			}
 			payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
 			if err = payWallet.Get(fromID); err != nil {
 				if err == gorm.ErrRecordNotFound {
-					return retError(`current balance is not enough`)
-				} else {
-					logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
-					return retResult()
+					return retError(ErrCurrentBalance)
 				}
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
-				return ``, err
+				return retError(err)
 			}
 			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) {
-				return retError(`Token and user public keys are different`)
+				return retError(ErrDiffKeys)
 			}
 			var amount decimal.Decimal
 			amount, err = decimal.NewFromString(payWallet.Amount)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
-				return retResult()
+				return retError(err)
 			}
 			if cprice := sc.TxContract.GetFunc(`price`); cprice != nil {
 				var ret []interface{}
 				if ret, err = VMRun(sc.VM, cprice, nil, sc.TxContract.Extend); err != nil {
-					return retResult()
+					return retError(err)
 				} else if len(ret) == 1 {
 					if _, ok := ret[0].(int64); !ok {
 						logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong result type of price function")
-						return retError(`Wrong result type of price function`)
+						return retError(ErrWrongPriceFunc)
 					}
 					price = ret[0].(int64)
 				} else {
 					logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong type of price function")
-					return retError(`Wrong type of price function`)
+					return retError(ErrWrongPriceFunc)
 				}
 			}
 			sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024
 			if amount.Cmp(decimal.New(sizeFuel+price, 0).Mul(fuelRate)) <= 0 {
 				logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")
-				return retError(`current balance is not enough`)
+				return retError(ErrCurrentBalance)
 			}
 		}
 	}
@@ -775,23 +774,15 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	}
 	sc.TxUsedCost = decimal.New(before-(*sc.TxContract.Extend)[`txcost`].(int64), 0)
 	sc.TxContract.TxPrice = price
-
-	resVal := (*sc.TxContract.Extend)[`result`]
-	switch v := resVal.(type) {
-	case int64:
-		result = strconv.FormatInt(v, 10)
-	case string:
-		result = v
-	default:
-		err = fmt.Errorf("bad transaction result")
+	if (*sc.TxContract.Extend)[`result`] != nil {
+		result = fmt.Sprint((*sc.TxContract.Extend)[`result`])
 	}
-
 	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE {
 		apl := sc.TxUsedCost.Mul(fuelRate)
 		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
 		if ierr != nil {
 			logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": ierr, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
-			return retError(ierr.Error())
+			return retError(ierr)
 		}
 		if wltAmount.Cmp(apl) < 0 {
 			apl = wltAmount
@@ -800,18 +791,21 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		walletTable := fmt.Sprintf(`%d_keys`, sc.TxSmart.TokenEcosystem)
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
 			[]string{converter.Int64ToStr(fromID)}, true); ierr != nil {
-			return retError(ierr.Error())
+			return retError(ierr)
 		}
 		// TODO: add checking for key_id "toID". If key not exists it led to fork
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
 			[]string{converter.Int64ToStr(toID)}, true); ierr != nil {
-			return retError(ierr.Error())
+			return retError(ierr)
 		}
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
 			[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true); ierr != nil {
-			return retError(ierr.Error())
+			return retError(ierr)
 		}
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")
 	}
-	return retResult()
+	if err != nil {
+		return retError(err)
+	}
+	return result, nil
 }

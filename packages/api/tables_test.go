@@ -59,5 +59,4 @@ func TestTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	fmt.Println(`RET`, ret)
 }
