@@ -45,4 +45,5 @@ const (
 	IncorrectCallingContract = "IncorrectCallingContract"
 	WritingFile              = "WritingFile"
 	CentrifugoError          = "CentrifugoError"
+	StatsdError              = "StatsdError"
 )

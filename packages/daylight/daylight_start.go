@@ -41,6 +41,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/parser"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/static"
+	"github.com/AplaProject/go-apla/packages/statsd"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/go-bindata-assetfs"
 	"github.com/julienschmidt/httprouter"
@@ -80,6 +81,24 @@ func readConfig() {
 	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
 	if len(config.ConfigIni["lang"]) > 0 {
 		language.LangList = strings.Split(config.ConfigIni["lang"], `,`)
+	}
+}
+
+func initStatsd() {
+	var host string = "127.0.0.1"
+	var port int = 8125
+	var name = "apla"
+	if config.ConfigIni["stastd_host"] != "" {
+		host = config.ConfigIni["statsd_host"]
+	}
+	if config.ConfigIni["stastd_port"] != "" {
+		port = converter.StrToInt(config.ConfigIni["statsd_port"])
+	}
+	if config.ConfigIni["statsd_client_name"] != "" {
+		name = config.ConfigIni["statsd_client_name"]
+	}
+	if err := statsd.Init(host, port, name); err != nil {
+		log.WithFields(log.Fields{"type": consts.StatsdError, "error": err}).Fatal("cannot initialize statsd")
 	}
 }
 
@@ -265,6 +284,7 @@ func Start() {
 		model.GormClose()
 		delPidFile()
 		os.Exit(code)
+		statsd.Close()
 	}
 
 	readConfig()
@@ -300,6 +320,7 @@ func Start() {
 		utils.LogoExt = `png`
 	}
 
+	initStatsd()
 	err = initLogs()
 	if err != nil {
 		fmt.Println("logs init failed: %v", utils.ErrInfo(err))
