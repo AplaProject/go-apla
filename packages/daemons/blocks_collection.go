@@ -217,7 +217,6 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64, 
 		hashMatched, thisErrIsOk := block.CheckHash()
 		if thisErrIsOk != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
-			log.Debug("%v", thisErrIsOk)
 		}
 
 		if !hashMatched {
