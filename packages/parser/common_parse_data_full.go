@@ -579,7 +579,7 @@ func playTransaction(p *Parser) (string, error) {
 	if p.TxContract != nil {
 		// check that there are enough money in CallContract
 		if err := p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err != nil {
-			return "", utils.ErrInfo(err)
+			return "", err
 		}
 
 		var result string

@@ -12,20 +12,12 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 ## Requirements
 
 * Go >=1.9
-* git
 
 ## Build
 
-Clone:
-```
-git clone https://github.com/AplaProject/go-apla.git $GOPATH/src/github.com/AplaProject/go-apla
-```
-
 Build Apla:
 ```
-go get -u github.com/jteeuwen/go-bindata/...
-$GOPATH/bin/go-bindata -o="$GOPATH/src/github.com/AplaProject/go-apla/packages/static/static.go" -pkg="static" -prefix="$GOPATH/src/github.com/AplaProject/go-apla/" $GOPATH/src/github.com/AplaProject/go-apla/static/...
-go install github.com/AplaProject/go-apla
+go get github.com/AplaProject/go-apla
 ```
 
 # Running
@@ -36,7 +28,7 @@ mkdir ~/apla
 cp $GOPATH/bin/go-apla ~/apla
 ```
 
-Run apla:
+Run Apla:
 ```
 ~/apla/go-apla
 ```
