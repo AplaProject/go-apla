@@ -29,7 +29,11 @@ func Close() {
 	}
 }
 
-func APIRouteToCounterName(method, pattern string) string {
+func APIRouteCounterName(method, pattern string) string {
 	routeCounterName := strings.Replace(strings.Replace(pattern, ":", "", -1), "/", ".", -1)
-	return "api" + "." + strings.ToLower(method) + "." + routeCounterName
+	return "api." + strings.ToLower(method) + "." + routeCounterName
+}
+
+func DaemonCounterName(daemonName string) string {
+	return "daemon." + daemonName
 }

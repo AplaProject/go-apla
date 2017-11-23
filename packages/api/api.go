@@ -156,7 +156,7 @@ func Installed() {
 // DefaultHandler is a common handle function for api requests
 func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
-		counterName := statsd.APIRouteToCounterName(method, pattern)
+		counterName := statsd.APIRouteCounterName(method, pattern)
 		statsd.Client.Inc(counterName+statsd.Count, 1, 1.0)
 		startTime := time.Now()
 		var (
