@@ -94,7 +94,6 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		d.logger.WithFields(log.Fields{"hash": hashStr}).Debug("checking hash")
 		if len(hashStr) == 0 {
 			d.logger.WithFields(log.Fields{"hash": hashStr, "type": consts.NotFound}).Debug("hash not found")
-			log.Debug("len(hash) == 0")
 			continue
 		}
 

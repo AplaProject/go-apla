@@ -254,7 +254,6 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("writing request type to host")
 		return err
 	}
-	log.Debug("reqType", reqType)
 
 	// data size
 	size := converter.DecToBin(len(buf), 4)

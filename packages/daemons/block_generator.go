@@ -53,7 +53,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	// wee need fresh myNodePosition after locking
 	myNodePosition, err = syspar.GetNodePositionByKeyID(config.KeyID)
 	if err != nil {
-		log.Errorf("%v", err)
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node position by key id")
 		return err
 	}
 
@@ -70,7 +70,6 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting sleep time")
 		return err
 	}
-	log.Debug("sleepTime %d", sleepTime)
 	toSleep := int64(sleepTime) - (time.Now().Unix() - int64(prevBlock.Time))
 	if toSleep > 0 {
 		d.logger.WithFields(log.Fields{"type": consts.JustWaiting, "seconds": toSleep}).Debug("sleeping n seconds")
