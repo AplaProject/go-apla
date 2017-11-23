@@ -61,6 +61,7 @@ func vdeCreate(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	return nil
 }
 
+// InitSmartContract is initializes smart contract
 func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 	if err := msgpack.Unmarshal(data, &sc.TxSmart); err != nil {
 		return err
@@ -155,6 +156,7 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 	return nil
 }
 
+// VDEContract is init VDE contract
 func VDEContract(data []byte) (result *contractResult, err error) {
 	var ret string
 	hash, err := crypto.Hash(data)

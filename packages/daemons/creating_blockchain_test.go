@@ -2,12 +2,12 @@ package daemons
 
 import (
 	"database/sql"
-	"io/ioutil"
-	"os"
-	"testing"
-	"regexp"
-	"log"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"regexp"
+	"testing"
 
 	"github.com/AplaProject/go-apla/packages/static"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -24,7 +24,7 @@ func getTmpFile(t *testing.T) string {
 }
 
 func TestEmptyFile(t *testing.T) {
-	fileName  := getTmpFile(t)
+	fileName := getTmpFile(t)
 	defer os.Remove(fileName)
 
 	err := writeNextBlocks(fileName, 1)

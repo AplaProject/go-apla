@@ -15,7 +15,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func CreatingBlockchain(d *daemon, ctx context.Context) error {
+// CreatingBlockchain is writing block to blockchain
+func CreatingBlockchain(ctx context.Context, d *daemon) error {
 	d.sleepTime = 10 * time.Second
 	return writeNextBlocks(*utils.Dir+"/public/blockchain", syspar.GetRbBlocks2(), d.logger)
 }
@@ -78,7 +79,8 @@ Block record format:
 */
 
 const (
-	WordSize = 5 // size of word in file
+	// WordSize is size of word in file
+	WordSize = 5
 )
 
 type blockData struct {

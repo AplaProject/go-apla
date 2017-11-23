@@ -32,6 +32,7 @@ var (
 	jwtSecret = crypto.RandSeq(15)
 )
 
+// JWTClaims is storing jwt claims
 type JWTClaims struct {
 	UID         string `json:"uid,omitempty"`
 	EcosystemID string `json:"ecosystem_id,omitempty"`

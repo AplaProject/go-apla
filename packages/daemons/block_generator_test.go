@@ -82,7 +82,7 @@ func TestBlockGenerator(t *testing.T) {
 		t.Fatalf("can't create prevBlock value: %s", err)
 	}
 
-	priv, public, err := crypto.GenBytesKeys()
+	_, public, err := crypto.GenBytesKeys()
 	if err != nil {
 		t.Fatalf("can't gen keys: %s", err)
 	}

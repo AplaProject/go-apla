@@ -90,12 +90,13 @@ type ContractInfo struct {
 	Settings map[string]interface{}
 }
 
-// for cmdFuncName
+// FuncNameCmd for cmdFuncName
 type FuncNameCmd struct {
 	Name  string
 	Count int
 }
 
+// FuncName is storing param of FuncName
 type FuncName struct {
 	Params   []reflect.Type
 	Offset   []int
@@ -122,6 +123,7 @@ type ObjInfo struct {
 	Value interface{}
 }
 
+// OwnerInfo storing info about owner
 type OwnerInfo struct {
 	StateID  uint32 `json:"state"`
 	Active   bool   `json:"active"`
@@ -168,7 +170,7 @@ func ParseContract(in string) (id uint64, name string) {
 	if len(ret) == 3 {
 		id, err = strconv.ParseUint(ret[1], 10, 32)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": ret[1]}).Error("converting state identifier from string to int while parsing contract")
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": ret[1]}).Error("converting state identifier from string to int while parsing contract")
 		}
 		name = ret[2]
 	}

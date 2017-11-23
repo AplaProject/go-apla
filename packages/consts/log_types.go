@@ -1,5 +1,6 @@
 package consts
 
+// LogEventType is storing numeric event type
 type LogEventType int
 
 const (
@@ -7,7 +8,7 @@ const (
 	JSONMarshallError        = "JSONMarshall"
 	JSONUnmarshallError      = "JSONUnmarshall"
 	CommandExecutionError    = "CommandExecution"
-	ConvertionError          = "Convertion"
+	ConversionError          = "Conversion"
 	TypeError                = "Type"
 	ProtocolError            = "Protocol"
 	MarshallingError         = "Marshall"

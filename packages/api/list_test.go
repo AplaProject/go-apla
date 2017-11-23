@@ -35,7 +35,7 @@ func TestList(t *testing.T) {
 		return
 	}
 	if converter.StrToInt64(ret.Count) < 7 {
-		t.Error(fmt.Errorf(`The number of records %d < 7`, ret.Count))
+		t.Error(fmt.Errorf(`The number of records %s < 7`, ret.Count))
 		return
 	}
 	err = sendGet(`list/qwert`, nil, &ret)

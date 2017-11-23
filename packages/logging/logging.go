@@ -9,6 +9,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/utils"
 )
 
+// WriteSelectiveLog is writing selective log
 func WriteSelectiveLog(text interface{}) error {
 	if *utils.LogLevel == "DEBUG" {
 		var stext string

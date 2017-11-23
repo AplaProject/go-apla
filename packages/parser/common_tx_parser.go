@@ -141,9 +141,9 @@ func (p *Parser) DeleteQueueTx(hash []byte) error {
 // AllTxParser parses new transactions
 func (p *Parser) AllTxParser() error {
 	logger := p.GetLogger()
-	all, err := model.GetAllUnverifiedAndUnusedTransactions()
+	all, _ := model.GetAllUnverifiedAndUnusedTransactions()
 	for _, data := range all {
-		err = p.TxParser(data.Hash, data.Data, false)
+		err := p.TxParser(data.Hash, data.Data, false)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

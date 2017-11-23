@@ -177,7 +177,7 @@ func rollbackToBlock(blockID int64) error {
 		return err
 	}
 
-	// we recieve the statistics of all tables
+	// we receive the statistics of all tables
 	allTable, err := model.GetAllTables()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("error getting all tables")
@@ -306,7 +306,7 @@ func Start() {
 	initStatsd()
 	err = initLogs()
 	if err != nil {
-		fmt.Println("logs init failed: %v", utils.ErrInfo(err))
+		fmt.Printf("logs init failed: %v", utils.ErrInfo(err))
 		Exit(1)
 	}
 

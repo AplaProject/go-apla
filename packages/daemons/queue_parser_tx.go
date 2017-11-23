@@ -27,7 +27,7 @@ import (
 )
 
 // QueueParserTx parses transaction from the queue
-func QueueParserTx(d *daemon, ctx context.Context) error {
+func QueueParserTx(ctx context.Context, d *daemon) error {
 	DBLock()
 	defer DBUnlock()
 
