@@ -3,7 +3,8 @@ package model
 // StateParameter is model
 type StateParameter struct {
 	tableName  string
-	Name       string `gorm:"primary_key;not null;size:100"`
+	ID         int64  `gorm:"primary_key;not null"`
+	Name       string `gorm:"not null;size:100"`
 	Value      string `gorm:"not null"`
 	Conditions string `gorm:"not null"`
 	RbID       int64  `gorm:"not null"`

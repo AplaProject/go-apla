@@ -18,6 +18,7 @@ package daemons
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -30,7 +31,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
-	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -81,9 +81,7 @@ func initialLoad(ctx context.Context, d *daemon) error {
 
 func blocksCollection(ctx context.Context, d *daemon) error {
 
-	// TODO: ????? remove from all tables in some test mode ?????
-
-	hosts := syspar.GetHosts()
+	hosts := syspar.GetRemoteHosts()
 
 	// get a host with the biggest block id
 	host, maxBlockID, err := chooseBestHost(ctx, hosts, d.logger)
@@ -91,14 +89,27 @@ func blocksCollection(ctx context.Context, d *daemon) error {
 		return err
 	}
 
+	// NOTE: should be generalized in separate method
+	infoBlock := &model.InfoBlock{}
+	found, err := infoBlock.Get()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur blockID")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("Info block not found")
+		return errors.New("Info block not found")
+	}
+
+	if infoBlock.BlockID >= maxBlockID {
+		log.WithFields(log.Fields{"blockID": infoBlock.BlockID, "maxBlockID": maxBlockID}).Debug("Max block is already in the host")
+		return nil
+	}
+
 	DBLock()
 	defer DBUnlock()
 	// update our chain till maxBlockID from the host
-	if err := UpdateChain(ctx, d, host, maxBlockID, "rollback_blocks_2"); err != nil {
-		return err
-	}
-
-	return nil
+	return UpdateChain(ctx, d, host, maxBlockID, "rollback_blocks_2")
 }
 
 // best host is a host with the biggest last block ID
@@ -205,7 +216,6 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64, 
 		hashMatched, thisErrIsOk := block.CheckHash()
 		if thisErrIsOk != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
-			log.Debug("%v", thisErrIsOk)
 		}
 
 		if !hashMatched {
@@ -269,11 +279,7 @@ func loadFirstBlock(logger *log.Entry) error {
 			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "file_name": fileName}).Error("reading first block from file")
 		}
 	} else {
-		newBlock, err = static.Asset("static/1block")
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "file_name": "static/1block"}).Error("reading first block from file")
-			return err
-		}
+		logger.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("FirstBlockDir doesn't set")
 	}
 
 	if err = parser.InsertBlockWOForks(newBlock); err != nil {

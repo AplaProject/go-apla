@@ -39,6 +39,8 @@ type loginResult struct {
 	KeyID       string `json:"key_id,omitempty"`
 	Address     string `json:"address,omitempty"`
 	NotifyKey   string `json:"notify_key,omitempty"`
+	IsNode      bool   `json:"isnode,omitempty"`
+	IsOwner     bool   `json:"isowner,omitempty"`
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
@@ -97,8 +99,24 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, `E_SIGNATURE`, http.StatusBadRequest)
 	}
 	address := crypto.KeyToAddress(pubkey)
+	var (
+		sp      model.StateParameter
+		founder int64
+	)
+	sp.SetTablePrefix(converter.Int64ToStr(state))
+	if ok, err := sp.Get(nil, "founder_account"); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder_account parameter")
+		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
+	} else if ok {
+		founder = converter.StrToInt64(sp.Value)
+	}
+	var cfg model.Config
+	if _, err := cfg.Get(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting key_id parameter")
+		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
+	}
 	result := loginResult{EcosystemID: converter.Int64ToStr(state), KeyID: converter.Int64ToStr(wallet),
-		Address: address}
+		Address: address, IsOwner: founder == wallet, IsNode: cfg.KeyID == wallet}
 	data.result = &result
 	expire := data.params[`expire`].(int64)
 	if expire == 0 {

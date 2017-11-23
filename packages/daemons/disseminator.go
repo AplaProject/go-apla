@@ -221,8 +221,8 @@ func MarshallTrHash(tr model.Transaction) []byte {
 }
 
 func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer, logger *log.Entry) error, logger *log.Entry) error {
-	hosts := syspar.GetHosts()
-	log.Debug("sendPacketToAll", hosts)
+
+	hosts := syspar.GetRemoteHosts()
 	var wg sync.WaitGroup
 
 	for _, host := range hosts {
@@ -258,7 +258,6 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("writing request type to host")
 		return err
 	}
-	log.Debug("reqType", reqType)
 
 	// data size
 	size := converter.DecToBin(len(buf), 4)

@@ -20,6 +20,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -61,6 +65,7 @@ var (
 		"AddressToId":        10,
 		"ColumnCondition":    50,
 		"CompileContract":    100,
+		"Contains":           10,
 		"ContractAccess":     50,
 		"ContractConditions": 50,
 		"ContractsList":      10,
@@ -69,11 +74,13 @@ var (
 		"EcosysParam":        10,
 		"Eval":               10,
 		"FlushContract":      50,
+		"JSONToMap":          50,
 		"IdToAddress":        10,
 		"IsContract":         10,
 		"Len":                5,
 		"PermColumn":         50,
 		"PermTable":          100,
+		"Substr":             10,
 		"TableConditions":    100,
 		"ValidateCondition":  30,
 	}
@@ -92,6 +99,7 @@ func EmbedFuncs(vm *script.VM) {
 		"AddressToId":        AddressToID,
 		"ColumnCondition":    ColumnCondition,
 		"CompileContract":    CompileContract,
+		"Contains":           strings.Contains,
 		"ContractAccess":     ContractAccess,
 		"ContractConditions": ContractConditions,
 		"ContractsList":      contractsList,
@@ -102,14 +110,22 @@ func EmbedFuncs(vm *script.VM) {
 		"DBUpdate":           DBUpdate,
 		"EcosysParam":        EcosysParam,
 		"Eval":               Eval,
+		"Float":              Float,
 		"FlushContract":      FlushContract,
+		"JSONToMap":          JSONToMap,
 		"IdToAddress":        IDToAddress,
+		"Int":                Int,
 		"IsContract":         IsContract,
 		"Len":                Len,
+		"Money":              Money,
 		"PermColumn":         PermColumn,
 		"PermTable":          PermTable,
+		"Str":                Str,
+		"Substr":             Substr,
 		"TableConditions":    TableConditions,
 		"ValidateCondition":  ValidateCondition,
+		//   VDE functions only
+		"HTTPRequest": HTTPRequest,
 	}, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
 	}})
@@ -848,4 +864,45 @@ func IDToAddress(id int64) (out string) {
 		out = `invalid`
 	}
 	return
+}
+
+// HTTPRequest sends http request
+func HTTPRequest(requrl, method string, headers map[string]interface{},
+	params map[string]interface{}) (string, error) {
+
+	var ioform io.Reader
+
+	form := &url.Values{}
+	client := &http.Client{}
+	for key, v := range params {
+		form.Set(key, fmt.Sprint(v))
+	}
+	if len(*form) > 0 {
+		ioform = strings.NewReader(form.Encode())
+	}
+	req, err := http.NewRequest(method, requrl, ioform)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("new http request")
+		return ``, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	for key, v := range headers {
+		req.Header.Set(key, fmt.Sprint(v))
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http request")
+		return ``, err
+	}
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading http answer")
+		return ``, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http status code")
+		return ``, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
+	}
+	return string(data), nil
 }

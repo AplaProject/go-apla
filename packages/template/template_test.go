@@ -39,6 +39,14 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Data(myforlist,"id,name",
+		"1",Test message 1
+		2,"Test message 2"
+		3,"Test message 3"
+		)ForList(nolist){Problem}ForList(myforlist){
+			Div(){#id#. Em(#name#)}
+		}`,
+		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","Test message 1"],["2","Test message 2"],["3","Test message 3"]],"source":"myforlist","types":["text","text"]}},{"tag":"forlist","attr":{"source":"myforlist"},"children":[{"tag":"div","children":[{"tag":"text","text":"1. "},{"tag":"em","children":[{"tag":"text","text":"Test message 1"}]}]},{"tag":"div","children":[{"tag":"text","text":"2. "},{"tag":"em","children":[{"tag":"text","text":"Test message 2"}]}]},{"tag":"div","children":[{"tag":"text","text":"3. "},{"tag":"em","children":[{"tag":"text","text":"Test message 3"}]}]}]}]`},
 	{`SetTitle(My pageР)AddToolButton(Title: Open, Page: default)`,
 		`[{"tag":"settitle","attr":{"title":"My pageР"}},{"tag":"addtoolbutton","attr":{"page":"default","title":"Open"}}]`},
 	{`DateTime(2017-11-07T17:51:08)+DateTime(2015-08-27T09:01:00,HH:MI DD.MM.YYYY)

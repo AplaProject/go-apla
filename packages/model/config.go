@@ -1,5 +1,10 @@
 package model
 
+import (
+	"github.com/AplaProject/go-apla/packages/consts"
+	log "github.com/sirupsen/logrus"
+)
+
 type Config struct {
 	MyBlockID              int32  `gorm:"not null"`
 	KeyID                  int64  `gorm:"not null"`
@@ -35,3 +40,16 @@ func (c *Config) Create() error {
 func (c *Config) ChangeBlockIDBatch(transaction *DbTransaction, oldBlockID int64, newBlockID int64) error {
 	return GetDB(transaction).Model(c).Where("my_block_id < ?", oldBlockID).Update("my_block_id", newBlockID).Error
 }
+
+// GetConfig returns config record
+func GetConfig() (*Config, error) {
+	config := &Config{}
+	_, err := config.Get()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get config")
+		return nil, err
+	}
+	return config, nil
+}
+
+//.

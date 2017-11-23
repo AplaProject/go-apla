@@ -87,16 +87,6 @@ func TestBlockGenerator(t *testing.T) {
 		t.Fatalf("can't gen keys: %s", err)
 	}
 
-	keys := &model.MyNodeKey{
-		ID:         1,
-		BlockID:    1,
-		PublicKey:  []byte(public),
-		PrivateKey: []byte(priv),
-	}
-	if err := keys.Create(); err != nil {
-		t.Fatalf("can't create my_node_keys table: %s", err)
-	}
-
 	wallet := &model.DltWallet{
 		WalletID:      1000,
 		PublicKey:     public,

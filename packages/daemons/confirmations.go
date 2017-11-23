@@ -94,7 +94,6 @@ func Confirmations(ctx context.Context, d *daemon) error {
 		d.logger.WithFields(log.Fields{"hash": hashStr}).Debug("checking hash")
 		if len(hashStr) == 0 {
 			d.logger.WithFields(log.Fields{"hash": hashStr, "type": consts.NotFound}).Debug("hash not found")
-			log.Debug("len(hash) == 0")
 			continue
 		}
 
@@ -102,7 +101,7 @@ func Confirmations(ctx context.Context, d *daemon) error {
 		if config.ConfigIni["test_mode"] == "1" {
 			hosts = []string{"localhost"}
 		} else {
-			hosts = syspar.GetHosts()
+			hosts = syspar.GetRemoteHosts()
 		}
 
 		ch := make(chan string)

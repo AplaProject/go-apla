@@ -6,9 +6,8 @@ go:
 
 go_import_path: github.com/AplaProject/go-apla
 
-install: make go-bindata
 
-before_script: make static-files
+install: true
 
-script: make build
+script: go build github.com/AplaProject/go-apla
 
