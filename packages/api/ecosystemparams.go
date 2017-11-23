@@ -21,12 +21,14 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type paramValue struct {
+	ID         string `json:"id"`
 	Name       string `json:"name"`
 	Value      string `json:"value"`
 	Conditions string `json:"conditions"`
@@ -62,8 +64,8 @@ func ecosystemParams(w http.ResponseWriter, r *http.Request, data *apiData, logg
 		if names != nil && !names[item.Name] {
 			continue
 		}
-		result.List = append(result.List, paramValue{Name: item.Name, Value: item.Value,
-			Conditions: item.Conditions})
+		result.List = append(result.List, paramValue{ID: converter.Int64ToStr(item.ID),
+			Name: item.Name, Value: item.Value, Conditions: item.Conditions})
 	}
 	data.result = &result
 	return
