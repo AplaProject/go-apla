@@ -9,6 +9,12 @@
 			"revisionTime": "2017-10-14T08:28:56Z"
 		},
 		{
+			"checksumSHA1": "H8zNInPqap5+VK4VOBjBtQX78c0=",
+			"path": "github.com/cactus/go-statsd-client/statsd",
+			"revision": "ce77ca9ecdee1c3ffd097e32f9bb832825ccb203",
+			"revisionTime": "2017-08-31T18:00:57Z"
+		},
+		{
 			"checksumSHA1": "h9ZhlKWBV0qLL7dhQtr+xljMJA8=",
 			"path": "github.com/centrifugal/centrifugo/libcentrifugo/auth",
 			"revision": "3c27a7f35be21b083288744ce562080fec1efddc",
@@ -31,12 +37,6 @@
 			"path": "github.com/dgrijalva/jwt-go",
 			"revision": "dbeaa9332f19a944acb5736b4456cfcc02140e29",
 			"revisionTime": "2017-10-19T21:57:19Z"
-		},
-		{
-			"checksumSHA1": "7DxViusFRJ7UPH0jZqYatwDrOkY=",
-			"path": "github.com/elazarl/go-bindata-assetfs",
-			"revision": "30f82fa23fd844bd5bb1e5f216db87fd77b5eb43",
-			"revisionTime": "2017-02-27T21:27:28Z"
 		},
 		{
 			"checksumSHA1": "yqF125xVSkmfLpIVGrLlfE05IUk=",
