@@ -31,7 +31,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
-	"github.com/AplaProject/go-apla/packages/static"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -217,7 +216,6 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64, 
 		hashMatched, thisErrIsOk := block.CheckHash()
 		if thisErrIsOk != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
-			log.Debug("%v", thisErrIsOk)
 		}
 
 		if !hashMatched {
@@ -281,11 +279,7 @@ func loadFirstBlock(logger *log.Entry) error {
 			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "file_name": fileName}).Error("reading first block from file")
 		}
 	} else {
-		newBlock, err = static.Asset("static/1block")
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "file_name": "static/1block"}).Error("reading first block from file")
-			return err
-		}
+		logger.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("FirstBlockDir doesn't set")
 	}
 
 	if err = parser.InsertBlockWOForks(newBlock); err != nil {

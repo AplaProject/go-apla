@@ -25,7 +25,6 @@ import (
 
 func main() {
 	runtime.LockOSThread()
-
 	daylight.Start()
 	system.Finish()
 }

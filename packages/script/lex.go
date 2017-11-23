@@ -108,10 +108,16 @@ const (
 	keyError
 )
 
+const (
+	msgWarning = `warning`
+	msgError   = `error`
+	msgInfo    = `info`
+)
+
 var (
 	// The list of key words
 	keywords = map[string]uint32{`contract`: keyContract, `func`: keyFunc, `return`: keyReturn,
-		`if`: keyIf, `else`: keyElse, `error`: keyError, `warning`: keyWarning, `info`: keyInfo,
+		`if`: keyIf, `else`: keyElse, msgError: keyError, msgWarning: keyWarning, msgInfo: keyInfo,
 		`while`: keyWhile, `data`: keyTX, `settings`: keySettings, `nil`: keyNil, `action`: keyAction, `conditions`: keyCond,
 		`true`: keyTrue, `false`: keyFalse, `break`: keyBreak, `continue`: keyContinue,
 		`var`: keyVar, `...`: keyTail}

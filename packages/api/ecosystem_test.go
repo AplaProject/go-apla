@@ -77,7 +77,7 @@ func TestEditEcosystem(t *testing.T) {
 		return
 	}
 	err = postTx(`@1NewPage`, &form)
-	if cutErr(err) != fmt.Sprintf(`!Page %s already exists`, name) {
+	if cutErr(err) != fmt.Sprintf(`{"type":"warning","error":"Page %s already exists"}`, name) {
 		t.Error(err)
 		return
 	}
@@ -141,22 +141,22 @@ func TestEcosystemParam(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	var ret paramValue
+	var ret, ret1 paramValue
 	err := sendGet(`ecosystemparam/changing_menu`, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if ret.Value != "ContractConditions(`MainCondition`)" {
+	if ret.Value != `ContractConditions("MainCondition")` {
 		t.Error(err)
 		return
 	}
-	err = sendGet(`ecosystemparam/myval`, nil, &ret)
-	if err != nil {
+	err = sendGet(`ecosystemparam/myval`, nil, &ret1)
+	if err != nil && err.Error() != `400 {"error": "", "msg": "" }` {
 		t.Error(err)
 		return
 	}
-	if len(ret.Value) != 0 {
+	if len(ret1.Value) != 0 {
 		t.Error(err)
 		return
 	}

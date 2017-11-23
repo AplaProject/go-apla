@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -13,9 +12,9 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
-
-	"github.com/AplaProject/go-apla/packages/static"
+	"github.com/AplaProject/go-apla/packages/migration"
 	"github.com/AplaProject/go-apla/packages/utils"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	log "github.com/sirupsen/logrus"
@@ -119,45 +118,28 @@ func GetRecordsCount(tableName string) (int64, error) {
 
 // ExecSchemaEcosystem is executing ecosystem schema
 func ExecSchemaEcosystem(id int, wallet int64, name string) error {
-	schema, err := static.Asset("static/schema-ecosystem-v2.sql")
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting schema from static asset")
-		return err
-	}
-	err = DBConn.Exec(fmt.Sprintf(string(schema), id, wallet, name)).Error
+	err := DBConn.Exec(fmt.Sprintf(migration.SchemaEcosystem, id, wallet, name)).Error
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err
 	}
 	if id == 1 {
-		schema, err = static.Asset("static/schema-firstecosystem-v2.sql")
+		err = DBConn.Exec(fmt.Sprintf(migration.SchemaFirstEcosystem, wallet)).Error
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting schema for first ecosystem")
-			return err
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first ecosystem schema")
 		}
-		err = DBConn.Exec(fmt.Sprintf(string(schema), wallet)).Error
 	}
 	return err
 }
 
 // ExecSchemaLocalData is executing schema with local data
 func ExecSchemaLocalData(id int, wallet int64) error {
-	schema, err := static.Asset("static/schema-vde.sql")
-	if err != nil {
-		return err
-	}
-	return DBConn.Exec(fmt.Sprintf(string(schema), id, wallet)).Error
+	return DBConn.Exec(fmt.Sprintf(migration.SchemaVDE, id, wallet)).Error
 }
 
 // ExecSchema is executing schema
 func ExecSchema() error {
-	schema, err := static.Asset("static/schema-v2.sql")
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting static/schema-v2.sql asset")
-		os.Remove(*utils.Dir + "/config.ini")
-		return err
-	}
-	return DBConn.Exec(string(schema)).Error
+	return DBConn.Exec(migration.Schema).Error
 }
 
 // Update is updating table rows
