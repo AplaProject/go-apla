@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -578,22 +577,7 @@ func playTransaction(p *Parser) (string, error) {
 	// smart-contract
 	if p.TxContract != nil {
 		// check that there are enough money in CallContract
-		if err := p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err != nil {
-			return "", err
-		}
-
-		var result string
-		resVal := (*p.TxContract.Extend)[`result`]
-		switch v := resVal.(type) {
-		case int64:
-			result = strconv.FormatInt(v, 10)
-		case string:
-			result = v
-		default:
-			return "", fmt.Errorf("bad transaction result")
-		}
-		return result, nil
-
+		return p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
 	} else {
 		if p.txParser == nil {
 			return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))

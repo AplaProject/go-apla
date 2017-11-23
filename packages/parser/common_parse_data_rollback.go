@@ -132,7 +132,7 @@ func doBlockRollback(transaction *model.DbTransaction, block *Block) error {
 		}
 
 		if p.TxContract != nil {
-			if err := p.CallContract(smart.CallInit | smart.CallRollback); err != nil {
+			if _, err := p.CallContract(smart.CallInit | smart.CallRollback); err != nil {
 				return err
 			}
 			if err = p.autoRollback(); err != nil {

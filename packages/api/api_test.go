@@ -168,7 +168,19 @@ func getTestSign(forSign string) (string, error) {
 }
 
 func appendSign(ret map[string]interface{}, form *url.Values) error {
-	sign, err := getSign(ret[`forsign`].(string))
+	forsign := ret[`forsign`].(string)
+	if ret[`signs`] != nil {
+		for _, item := range ret[`signs`].([]interface{}) {
+			v := item.(map[string]interface{})
+			vsign, err := getSign(v[`forsign`].(string))
+			if err != nil {
+				return err
+			}
+			(*form)[v[`field`].(string)] = []string{vsign}
+			forsign += `,` + vsign
+		}
+	}
+	sign, err := getSign(forsign)
 	if err != nil {
 		return err
 	}
@@ -206,9 +218,11 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 	if err != nil {
 		return
 	}
+	fmt.Println(`POST`, ret)
 	if err = appendSign(ret, form); err != nil {
 		return
 	}
+	fmt.Println(`POST PREPARE`, form)
 	ret = map[string]interface{}{}
 	err = sendPost(`contract/`+txname, form, &ret)
 	if err != nil {

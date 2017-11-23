@@ -239,8 +239,8 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 }
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{}, 
-	params string, val ...interface{}) (qcost int64, err error) { 
+func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
+	params string, val ...interface{}) (qcost int64, err error) {
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
@@ -723,9 +723,6 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 func CheckSignature(i *map[string]interface{}, name string) error {
 	state, name := script.ParseContract(name)
 	pref := converter.Int64ToStr(int64(state))
-	if state == 0 {
-		pref = `global`
-	}
 	p := (*i)[`parser`].(*SmartContract)
 	value, err := model.Single(`select value from "`+pref+`_signatures" where name=?`, name).String()
 	if err != nil {
@@ -748,12 +745,13 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 		return err
 	}
 	wallet := (*i)[`key_id`].(int64)
-	if wallet == 0 {
-		wallet = (*i)[`citizen`].(int64)
-	}
 	forsign := fmt.Sprintf(`%d,%d`, uint64((*i)[`time`].(int64)), uint64(wallet))
 	for _, isign := range sign.Params {
-		forsign += fmt.Sprintf(`,%v`, (*i)[isign.Param])
+		val := (*i)[isign.Param]
+		if val == nil {
+			val = ``
+		}
+		forsign += fmt.Sprintf(`,%v`, val)
 	}
 
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forsign, hexsign, true)
