@@ -196,7 +196,6 @@ func waitTx(hash string) (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		fmt.Println(`STATUS`, err, ret)
 		if len(ret.BlockID) > 0 {
 			return converter.StrToInt64(ret.BlockID), fmt.Errorf(ret.Result)
 		}
@@ -218,11 +217,9 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 	if err != nil {
 		return
 	}
-	fmt.Println(`POST`, ret)
 	if err = appendSign(ret, form); err != nil {
 		return
 	}
-	fmt.Println(`POST PREPARE`, form)
 	ret = map[string]interface{}{}
 	err = sendPost(`contract/`+txname, form, &ret)
 	if err != nil {
