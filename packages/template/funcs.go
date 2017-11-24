@@ -120,6 +120,10 @@ func init() {
 	tails[`p`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 	}}
+	tails[`radiogroup`] = forTails{map[string]tailInfo{
+		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
+		`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
 	tails[`span`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 	}}
