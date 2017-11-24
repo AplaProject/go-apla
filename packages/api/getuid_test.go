@@ -38,8 +38,8 @@ func TestGetUID(t *testing.T) {
 				`db_pass`: {`postgres`}, `db_user`: {`postgres`}}, &instRes)
 			if err != nil {
 				t.Error(err)
-				return
 			}
+			return
 		} else {
 			t.Error(err)
 			return

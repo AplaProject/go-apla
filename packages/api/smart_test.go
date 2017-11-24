@@ -95,7 +95,7 @@ func TestPage(t *testing.T) {
 
 	form := url.Values{"Name": {name}, "Value": {`Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	id, msg, err := postTxResult(`NewParameter`, &form)
+	err := postTx(`NewParameter`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -122,7 +122,7 @@ func TestPage(t *testing.T) {
 
 	form = url.Values{"Name": {name + `23`}, "Value": {`New Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	id, msg, err = postTxResult(`EditParameter`, &form)
+	err = postTx(`EditParameter`, &form)
 	if cutErr(err) != fmt.Sprintf(`{"type":"panic","error":"Record %s23 has not been found"}`, name) {
 		t.Error(err)
 		return
@@ -131,7 +131,7 @@ func TestPage(t *testing.T) {
 	name = randName(`page`)
 	form = url.Values{"Name": {name}, "Value": {value},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
-	id, msg, err = postTxResult(`NewPage`, &form)
+	err = postTx(`NewPage`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -144,7 +144,7 @@ func TestPage(t *testing.T) {
 
 	form = url.Values{"Name": {name}, "Value": {value},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
-	id, msg, err = postTxResult(`NewBlock`, &form)
+	err = postTx(`NewBlock`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -164,7 +164,7 @@ func TestPage(t *testing.T) {
 
 	form = url.Values{"Id": {`1`}, "Value": {value + `Span(Test)`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
-	id, msg, err = postTxResult(`EditPage`, &form)
+	err = postTx(`EditPage`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -177,14 +177,12 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	form = url.Values{"Id": {`2`}, "Value": {`Span(Append)`}}
-	id, msg, err = postTxResult(`AppendPage`, &form)
+	form = url.Values{"Id": {`1`}, "Value": {`Span(Append)`}}
+	err = postTx(`AppendPage`, &form)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-
-	fmt.Println(`RET`, id, msg)
 }
 
 func TestNewTable(t *testing.T) {

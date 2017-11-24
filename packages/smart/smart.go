@@ -405,7 +405,7 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`node_position`: head.NodePosition,
 		`block`:         block, `key_id`: keyID, `block_key_id`: blockKeyID,
 		`parent`: ``, `txcost`: sc.GetContractLimit(), `txhash`: sc.TxHash, `result`: ``,
-		`parser`: sc, `sc`: sc, `contract`: sc.TxContract, `block_time`: blockTime}
+		`sc`: sc, `contract`: sc.TxContract, `block_time`: blockTime}
 	for key, val := range sc.TxData {
 		extend[key] = val
 	}
@@ -577,7 +577,7 @@ func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
 		blockTime = sc.BlockData.Time
 	}
 	return VMEvalIf(sc.VM, conditions, uint32(sc.TxSmart.EcosystemID), &map[string]interface{}{`ecosystem_id`: sc.TxSmart.EcosystemID,
-		`key_id`: sc.TxSmart.KeyID, `parser`: sc, `sc`: sc,
+		`key_id`: sc.TxSmart.KeyID, `sc`: sc,
 		`block_time`: blockTime, `time`: time})
 }
 

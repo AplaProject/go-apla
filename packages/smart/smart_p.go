@@ -704,7 +704,7 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 func CheckSignature(i *map[string]interface{}, name string) error {
 	state, name := script.ParseContract(name)
 	pref := converter.Int64ToStr(int64(state))
-	p := (*i)[`parser`].(*SmartContract)
+	sc := (*i)[`sc`].(*SmartContract)
 	value, err := model.Single(`select value from "`+pref+`_signatures" where name=?`, name).String()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
@@ -735,7 +735,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 		forsign += fmt.Sprintf(`,%v`, val)
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forsign, hexsign, true)
+	CheckSignResult, err := utils.CheckSign(sc.PublicKeys, forsign, hexsign, true)
 	if err != nil {
 		return err
 	}
