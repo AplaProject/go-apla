@@ -1076,15 +1076,15 @@ var (
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('9','contract EditParameter {
 		data {
-			Name string
+			Id int
 			Value string
 			Conditions string
 		}
 		conditions {
-			EvalCondition("parameters", $Name, "conditions")
+			ConditionById("parameters", true)
 			ValidateCondition($Conditions, $ecosystem_id)
 			var exist int
-			   if $Name == "ecosystem_name" {
+			if DBString("parameters", "name", $Id) == "ecosystem_name" {
 				exist = FindEcosystem($Value)
 				if exist > 0 && exist != $ecosystem_id {
 					warning Sprintf("Ecosystem %%s already exists", $Value)
@@ -1092,8 +1092,8 @@ var (
 			}
 		}
 		action {
-			DBUpdateExt("parameters", "name", $Name, "value,conditions", $Value, $Conditions )
-			   if $Name == "ecosystem_name" {
+			DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
+            if DBString("parameters", "name", $Id) == "ecosystem_name" {
 				DBUpdate("system_states", $ecosystem_id, "name", $Value)
 			}
 		}

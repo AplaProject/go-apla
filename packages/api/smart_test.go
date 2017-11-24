@@ -120,10 +120,17 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	form = url.Values{"Name": {name + `23`}, "Value": {`New Param Value`},
+	form = url.Values{"Id": {`7123`}, "Value": {`New Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx(`EditParameter`, &form)
-	if cutErr(err) != fmt.Sprintf(`{"type":"panic","error":"Record %s23 has not been found"}`, name) {
+	if cutErr(err) != `{"type":"error","error":"Item 7123 has not been found"}` {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Id": {`13`}, "Value": {`Changed Param Value`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	err = postTx(`EditParameter`, &form)
+	if err != nil {
 		t.Error(err)
 		return
 	}

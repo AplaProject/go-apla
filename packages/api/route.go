@@ -25,7 +25,7 @@ import (
 )
 
 func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(method, `/api/v2/`+pattern, DefaultHandler(processParams(pars), handler...))
+	route.Handle(method, `/api/v2/`+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
 }
 
 // Route sets routing pathes

@@ -32,6 +32,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/statsd"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 	"github.com/dgrijalva/jwt-go"
@@ -153,8 +154,11 @@ func Installed() {
 }
 
 // DefaultHandler is a common handle function for api requests
-func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
+func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
+		counterName := statsd.APIRouteCounterName(method, pattern)
+		statsd.Client.Inc(counterName+statsd.Count, 1, 1.0)
+		startTime := time.Now()
 		var (
 			err  error
 			data apiData
@@ -162,6 +166,8 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
 		requestLogger.Info("received http request")
 		defer func() {
+			endTime := time.Now()
+			statsd.Client.TimingDuration(counterName+statsd.Time, endTime.Sub(startTime), 1.0)
 			if r := recover(); r != nil {
 				requestLogger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r, "stack": string(debug.Stack())}).Error("panic recovered error")
 				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))

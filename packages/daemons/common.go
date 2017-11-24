@@ -25,6 +25,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/config"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/statsd"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -45,8 +46,8 @@ func init() {
 }
 
 var daemonsList = map[string]func(*daemon, context.Context) error{
-	"BlocksCollection":BlocksCollection,
-	"BlockGenerator":BlockGenerator,
+	"BlocksCollection":   BlocksCollection,
+	"BlockGenerator":     BlockGenerator,
 	"CreatingBlockchain": CreatingBlockchain,
 	"Disseminator":       Disseminator,
 	"QueueParserTx":      QueueParserTx,
@@ -98,7 +99,10 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 		logger:        logger,
 	}
 
+	startTime := time.Now()
+	counterName := statsd.DaemonCounterName(goRoutineName)
 	handler(d, ctx)
+	statsd.Client.TimingDuration(counterName+statsd.Time, time.Now().Sub(startTime), 1.0)
 
 	for {
 		select {
@@ -109,7 +113,10 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 
 		case <-time.After(d.sleepTime):
 			MonitorDaemonCh <- []string{d.goRoutineName, converter.Int64ToStr(time.Now().Unix())}
+			startTime := time.Now()
+			counterName := statsd.DaemonCounterName(goRoutineName)
 			handler(d, ctx)
+			statsd.Client.TimingDuration(counterName+statsd.Time, time.Now().Sub(startTime), 1.0)
 		}
 	}
 }

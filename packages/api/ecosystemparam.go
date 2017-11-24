@@ -20,6 +20,7 @@ import (
 	"net/http"
 
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
 	log "github.com/sirupsen/logrus"
@@ -42,6 +43,6 @@ func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData, logge
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 
-	data.result = &paramValue{Name: sp.Name, Value: sp.Value, Conditions: sp.Conditions}
+	data.result = &paramValue{ID: converter.Int64ToStr(sp.ID), Name: sp.Name, Value: sp.Value, Conditions: sp.Conditions}
 	return
 }
