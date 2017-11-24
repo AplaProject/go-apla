@@ -47,7 +47,6 @@ var (
 		"DBRow":          struct{}{},
 		"DBStringExt":    struct{}{},
 		"DBIntExt":       struct{}{},
-		"DBFreeRequest":  struct{}{},
 		"DBStringWhere":  struct{}{},
 		"DBIntWhere":     struct{}{},
 		"DBAmount":       struct{}{},
@@ -119,7 +118,6 @@ func init() {
 		"DBRowExt":           DBRowExt,
 		"DBRow":              DBRow,
 		"DBStringExt":        DBStringExt,
-		"DBFreeRequest":      DBFreeRequest,
 		"DBIntExt":           DBIntExt,
 		"DBStringWhere":      DBStringWhere,
 		"DBIntWhere":         DBIntWhere,
@@ -363,23 +361,6 @@ func DBIntExt(sc *SmartContract, tblname string, name string, id interface{}, id
 		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting DBStringExt result from string to int")
 	}
 	return qcost, res, err
-}
-
-// DBFreeRequest is a free function that is needed to find the record with the specified value in the 'idname' column.
-func DBFreeRequest(sc *SmartContract, tblname string, id interface{}, idname string) (int64, error) {
-	if sc.TxContract.FreeRequest {
-		log.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("DBFreeRequest can be executed only once")
-		return 0, fmt.Errorf(`DBFreeRequest can be executed only once`)
-	}
-	sc.TxContract.FreeRequest = true
-	cost, ret, err := DBStringExt(sc, tblname, idname, id, idname)
-	if err != nil {
-		return 0, err
-	}
-	if len(ret) > 0 || ret == fmt.Sprintf(`%v`, id) {
-		return 0, nil
-	}
-	return cost, fmt.Errorf(`DBFreeRequest: cannot find %v in %s of %s`, id, idname, tblname)
 }
 
 // DBStringWhere returns the column value based on the 'where' condition and 'params' values for this condition

@@ -376,7 +376,6 @@ func TestSignature(t *testing.T) {
 			}
 			action { 
 				$result = "OK " + Str($Amount)
-				Println("TRANSFER CONTRACT", $result)
 			}}
 			
 			contract ` + rnd + `Test {
@@ -388,7 +387,6 @@ func TestSignature(t *testing.T) {
 				func action {
 					` + rnd + `Transfer("Recipient,Amount,Signature",$Recipient,$Amount,$Signature )
 					$result = "OOOPS " + Str($Amount)
-					Println("TEST CONTRACT", $result)
 				}
 			  }
 			`}, `Conditions`: {`true`}}
