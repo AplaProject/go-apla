@@ -346,6 +346,95 @@ func TestActivateContracts(t *testing.T) {
 	}
 }
 
+func TestDeactivateContracts(t *testing.T) {
+
+	wanted := func(name, want string) bool {
+		var ret getTestResult
+		err := sendPost(`test/`+name, nil, &ret)
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+		if ret.Value != want {
+			t.Error(fmt.Errorf(`%s != %s`, ret.Value, want))
+			return false
+		}
+		return true
+	}
+
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(6)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+				Par string
+			}
+			action { Test("active",  $Par)}}`}, `Conditions`: {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	var ret getContractResult
+	err := sendGet(`contract/`+rnd, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`contract/`+rnd, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !ret.Active {
+		t.Error(fmt.Errorf(`Not activate ` + rnd))
+	}
+	var row rowResult
+	err = sendGet(`row/contracts/`+ret.TableID, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value[`active`] != `1` {
+		t.Error(fmt.Errorf(`row not activate ` + rnd))
+	}
+
+	if err := postTx(rnd, &url.Values{`Par`: {rnd}}); err != nil {
+		t.Error(err)
+		return
+	}
+	if !wanted(`active`, rnd) {
+		return
+	}
+
+	if err := postTx(`DeactivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`contract/`+rnd, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Active {
+		t.Error(fmt.Errorf(`Not deactivate ` + rnd))
+	}
+	var row2 rowResult
+	err = sendGet(`row/contracts/`+ret.TableID, nil, &row2)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row2.Value[`active`] != `0` {
+		t.Error(fmt.Errorf(`row not deactivate ` + rnd))
+	}
+}
+
 func TestContracts(t *testing.T) {
 
 	if err := keyLogin(1); err != nil {
