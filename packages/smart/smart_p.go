@@ -239,8 +239,8 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 }
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{}, 
-	params string, val ...interface{}) (qcost int64, err error) { 
+func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
+	params string, val ...interface{}) (qcost int64, err error) {
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
@@ -261,7 +261,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 func DBInt(sc *SmartContract, tblname string, name string, id int64) (int64, int64, error) {
 	tblname = getDefTableName(sc, tblname)
 
-	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
+	cost, err := model.GetQueryTotalCost(sc.DbTransaction, `select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, 0, err
@@ -288,7 +288,7 @@ func DBRowExt(sc *SmartContract, tblname string, columns string, id interface{},
 		}
 	}
 	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where ` + converter.EscapeName(idname) + `=?`
-	cost, err := model.GetQueryTotalCost(query, id)
+	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, id)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, nil, err
@@ -306,7 +306,7 @@ func DBRow(sc *SmartContract, tblname string, columns string, id int64) (int64, 
 	tblname = getDefTableName(sc, tblname)
 
 	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where id=?`
-	cost, err := model.GetQueryTotalCost(query, id)
+	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, id)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, nil, err
@@ -333,7 +333,7 @@ func DBStringExt(sc *SmartContract, tblname string, name string, id interface{},
 		}
 	}
 
-	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
+	cost, err := model.GetQueryTotalCost(sc.DbTransaction, `select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, "", err
@@ -388,7 +388,7 @@ func DBStringWhere(sc *SmartContract, tblname string, name string, where string,
 	tblname = getDefTableName(sc, tblname)
 
 	selectQuery := `select ` + converter.EscapeName(name) + ` from ` + converter.EscapeName(tblname) + ` where ` + strings.Replace(converter.Escape(where), `$`, `?`, -1)
-	qcost, err := model.GetQueryTotalCost(selectQuery, params...)
+	qcost, err := model.GetQueryTotalCost(sc.DbTransaction, selectQuery, params...)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, "", err
@@ -564,7 +564,7 @@ func Replace(s, old, new string) string {
 // FindEcosystem checks if there is an ecosystem with the specified name
 func FindEcosystem(sc *SmartContract, country string) (int64, int64, error) {
 	query := `SELECT id FROM system_states where name=?`
-	cost, err := model.GetQueryTotalCost(query, country)
+	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, country)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, 0, err
