@@ -554,7 +554,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 
 	t := &model.Table{}
 	t.SetTablePrefix(prefix)
-	exists, err := t.ExistsByName(name)
+	exists, err := t.ExistsByName(sc.DbTransaction, name)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("table is exists")
 		return err

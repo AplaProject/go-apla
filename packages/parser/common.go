@@ -83,25 +83,6 @@ func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64
 	return nil
 }
 
-func IsCustomTable(table string) (isCustom bool, err error) {
-	if table[0] >= '0' && table[0] <= '9' {
-		if off := strings.IndexByte(table, '_'); off > 0 {
-			prefix := table[:off]
-			tables := &model.Table{}
-			tables.SetTablePrefix(prefix)
-			found, err := tables.Get(table[off+1:])
-			if err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting table")
-				return false, err
-			}
-			if found {
-				return true, nil
-			}
-		}
-	}
-	return false, nil
-}
-
 func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 	ids, err := model.GetAllSystemStatesIDs()
 	if err != nil {

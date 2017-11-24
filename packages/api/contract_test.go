@@ -359,30 +359,27 @@ func TestContracts(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	fmt.Println(`RET`, ret)
 }
 
 var (
-	impcont = `{
-		 "contracts": [
-        {
-            "Name": "EditColumn_IMPORTED2",
-            "Value": "contract EditColumn_IMPORTED2 {\n    data {\n    \tTableName   string\n\t    Name        string\n\t    Permissions string\n    }\n    conditions {\n        ColumnCondition($TableName, $Name, \"\", $Permissions, \"\")\n    }\n    action {\n        PermColumn($TableName, $Name, $Permissions)\n    }\n}",
-            "Conditions": "ContractConditions(` + "`MainCondition`" + `)"
-		}
-	]
-}`
 	imp = `{
 		"menus": [
 			{
-				"Name": "test_menu0679",
+				"Name": "test_%s",
 				"Conditions": "ContractAccess(\"@1EditMenu\")",
 				"Value": "MenuItem(main, Default Ecosystem Menu)"
 			}
 		],
+		"contracts": [
+			{
+				"Name": "testContract%[1]s",
+				"Value": "contract testContract%[1]s {\n    data {}\n    conditions {}\n    action {\n        var res array\n        res = DBFind(\"pages\").Columns(\"name\").Where(\"id=?\", 1).Order(\"id\")\n        $result = res\n    }\n    }",
+				"Conditions": "ContractConditions(` + "`MainCondition`" + `)"
+			}
+		],
 		"pages": [
 			{
-				"Name": "test_page05679",
+				"Name": "test_%[1]s",
 				"Conditions": "ContractAccess(\"@1EditPage\")",
 				"Menu": "default_menu",
 				"Value": "P(class, Default Ecosystem Page)\nImage().Style(width:100px;)"
@@ -390,64 +387,51 @@ var (
 		],
 		"blocks": [
 			{
-				"Name": "test_block05679",
+				"Name": "test_%[1]s",
 				"Conditions": "true",
 				"Value": "block content"
 			},
 			{
-				"Name": "test_block056790",
+				"Name": "test_a%[1]s",
 				"Conditions": "true",
 				"Value": "block content"
 			},
 			{
-				"Name": "test_block056791",
+				"Name": "test_b%[1]s",
 				"Conditions": "true",
 				"Value": "block content"
 			}
 		],
 		"tables": [
 			{
-				"Name": "members",
+				"Name": "members%[1]s",
 				"Columns": "[{\"name\":\"name\",\"type\":\"varchar\",\"conditions\":\"true\"},{\"name\":\"birthday\",\"type\":\"datetime\",\"conditions\":\"true\"},{\"name\":\"member_id\",\"type\":\"number\",\"conditions\":\"true\"},{\"name\":\"val\",\"type\":\"text\",\"conditions\":\"true\"},{\"name\":\"name_first\",\"type\":\"text\",\"conditions\":\"true\"},{\"name\":\"name_middle\",\"type\":\"text\",\"conditions\":\"true\"}]",
 				"Permissions": "{\"insert\":\"true\",\"update\":\"true\",\"new_column\":\"true\"}"
 			}
 		],
 		"parameters": [
 			{
-				"Name": "host01345679",
+				"Name": "host%[1]s",
 				"Value": "",
 				"Conditions": "ContractConditions(` + "`MainCondition`" + `)"
 			},
 			{
-				"Name": "host091",
+				"Name": "host0%[1]s",
 				"Value": "Русский текст",
 				"Conditions": "ContractConditions(` + "`MainCondition`" + `)"
 			}
-		]
-	}`
-	impdata = `{
+		],
 		"data": [
-	   {
-		   "Table": "members",
-		   "Columns": ["name","val"],
-		   "Data": [
-			   ["Bob","Richard mark"],
-			   ["Mike Winter","Alan summer"]
-			]
-	   }
-   ]
+			{
+				"Table": "members%[1]s",
+				"Columns": ["name","val"],
+				"Data": [
+					["Bob","Richard mark"],
+					["Mike Winter","Alan summer"]
+				 ]
+			}
+		]
 }`
-	imppage = `{
-	"pages": [
-        {
-            "Name": "profile_view",
-            "Conditions": "ContractAccess(\"@1EditPage\")",
-            "Menu": "default_menu",
-            "Value": "Div(Class: content-wrapper){\r\n    Div(Class: content-heading, Body: LangRes(user_info))\r\n\r\n    If(#v_member_id# > 0){\r\n        DBFind(members, mysrc).Where(member_id=#v_member_id#).Vars(prefix)\r\n    }.Else{\r\n        DBFind(members, mysrc).Where(member_id=#key_id#).Vars(prefix)\r\n    }\r\n\r\n    If(#prefix_id#>0){\r\n    }.Else{\r\n        SetVar(prefix_username, \"\")\r\n        SetVar(prefix_name_last, \"\")\r\n        SetVar(prefix_name_first, \"\")\r\n        SetVar(prefix_name_middle, \"\")\r\n        SetVar(prefix_birthdate, \"01.01.1990\")\r\n    }\r\n\r\nDiv(row df f-valign){\r\n        Div(col-md-3)\r\n        Div(col-md-6){\r\n            Div(panel panel-default){\r\n                Form(){ \r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tSpan(Class: h3, Body: LangRes(user_info))\t\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-12 mt-sm  text-center){\r\n\r\n\t\t\t\t\t\t\t\tIf(#prefix_id#>0){\r\n\t\t\t\t\t\t\t\t\tIf(#prefix_member_id# == #key_id#){\r\n\t\t\t\t\t\t\t\t\t\tButton(Class: btn btn-link, Page:profile_edit, PageParams:\"v_member_id=#member_id#\"){\r\n\t\t\t\t\t\t\t\t\t\t\tImage(\"#prefix_avatar#\",,img-circle).Style(width: 100px;  border: 1px solid #5A5D63; margin-bottom: 15px;)\r\n\t\t\t\t\t\t\t\t\t\t\tDiv(,Span(Class: h3 text-bold, Body: #prefix_username#))\r\n\t\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t\t}.Else{\r\n\t\t\t\t\t\t\t\t\t\tImage(\"#prefix_avatar#\",,img-circle).Style(width: 100px;  border: 1px solid #5A5D63; margin-bottom: 15px;)\r\n\t\t\t\t\t\t\t\t\t\tDiv(,Span(Class: h3 text-bold, Body: #prefix_username#))\r\n\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t}.Else{\r\n\t\t\t\t\t\t\t\t\tButton(Class: btn btn-link, Page:profile_edit){\r\n\t\t\t\t\t\t\t\t\t\tSpan(Class: h3 text-bold, Body: LangRes(editing_profile))\r\n\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t}\r\n\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm  text-right){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: LangRes(name_last))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm text-left){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: #prefix_name_last#)\r\n\t\t\t\t\t\t\t} \r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm  text-right){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: LangRes(name_first))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm text-left){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: #prefix_name_first#)\r\n\t\t\t\t\t\t\t} \r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm  text-right){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: LangRes(name_middle))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm text-left){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: #prefix_name_middle#)\r\n\t\t\t\t\t\t\t} \r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm  text-right){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: LangRes(gender))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm text-left){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: EcosysParam(gender_list, #prefix_gender#))\r\n\t\t\t\t\t\t\t} \r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm  text-right){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: LangRes(birthdate))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tDiv(col-md-6 mt-sm text-left){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4, Body: DateTime(#prefix_birthdate#, \"DD.MM.YYYY\"))\r\n\t\t\t\t\t\t\t} \r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tDiv(list-group-item){\r\n\t\t\t\t\t\tDiv(row df f-valign){\r\n\t\t\t\t\t\t\tDiv(col-md-12 mt-sm  text-center){\r\n\t\t\t\t\t\t\t\tSpan(Class: h4 text-bold, Body: Address(#prefix_member_id#))\r\n\t\t\t\t\t\t\t\tDiv(,Span(Class: h5, Body: LangRes(member_id)))\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\t\t\t\t\t\r\n\r\n                }\r\n            }\r\n        }\r\n        Div(col-md-3)\r\n    }\r\n}"
-        }
-	]
-	}
-`
 )
 
 func TestImport(t *testing.T) {
@@ -455,9 +439,9 @@ func TestImport(t *testing.T) {
 		t.Error(err)
 		return
 	}
-
-	form := url.Values{"Data": {imp}}
-	_, _, err := postTxResult(`@1Import`, &form)
+	name := crypto.RandSeq(4)
+	form := url.Values{"Data": {fmt.Sprintf(imp, name)}}
+	err := postTx(`@1Import`, &form)
 	if err != nil {
 		t.Error(err)
 		return
