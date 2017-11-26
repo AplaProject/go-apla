@@ -60,7 +60,12 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 	if !IsExist() {
 		ioutil.WriteFile(path, []byte(``), 0644)
 	}
-	confIni, _ := config.NewConfig("ini", path)
+	confIni, err := config.NewConfig("ini", path)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.WritingFile, "error": err, "path": path}).Error("writing to config.ini")
+		return err
+	}
+
 	confIni.Set("log_level", logLevel)
 	confIni.Set("install_type", installType)
 	confIni.Set("dir", *utils.Dir)
@@ -76,7 +81,7 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 	confIni.Set("db_name", dbConf.Name)
 	confIni.Set("node_state_id", `*`)
 
-	err := confIni.SaveConfigFile(path)
+	err = confIni.SaveConfigFile(path)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("saving config file")
 		Drop()

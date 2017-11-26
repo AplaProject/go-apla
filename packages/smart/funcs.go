@@ -709,7 +709,10 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 	if isExist {
 		return sc.AccessTable(tblName, `update`)
 	}
-	count, _ := model.GetColumnCount(tblName)
+	count, err := model.GetColumnCount(tblName)
+	if err != nil {
+		return err
+	}
 	if count >= int64(syspar.GetMaxColumns()) {
 		log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
@@ -798,8 +801,12 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, inde
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns to json")
 		return err
 	}
-	sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
+	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
 		tables, []string{`name`}, []string{tableName}, !sc.VDE)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
