@@ -7,7 +7,7 @@ type Table struct {
 	ID          int64  `gorm:"primary_key;not null"`
 	Name        string `gorm:"not null;size:100"`
 	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
-	Columns     string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	Columns     string `gorm:"not null"`
 	Conditions  string `gorm:"not null"`
 	RbID        int64  `gorm:"not null"`
 }
@@ -17,7 +17,7 @@ type TableVDE struct {
 	ID          int64  `gorm:"primary_key;not null"`
 	Name        string `gorm:"not null;size:100"`
 	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
-	Columns     string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	Columns     string `gorm:"not null"`
 	Conditions  string `gorm:"not null"`
 }
 

@@ -18,6 +18,7 @@ package smart
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -495,43 +496,64 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 }
 
 // AccessColumns checks access rights to the columns
-func (sc *SmartContract) AccessColumns(table string, columns []string) error {
+func (sc *SmartContract) AccessColumns(table string, columns []string, update bool) error {
 	logger := sc.GetLogger()
 
-	if table == getDefTableName(sc, `parameters`) {
+	if update && table == getDefTableName(sc, `parameters`) {
 		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return nil
 		}
 		return fmt.Errorf(`Access denied`)
 	}
-	// We don't check IsCustomTable because we calls it in AccessTable
 	prefix, name := PrefixName(table)
-
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	columnsAndPermissions, err := tables.GetColumns(name, "")
+	found, err := tables.Get(name)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table columns")
 		return err
 	}
+	if !found {
+		return fmt.Errorf(eTableNotFound, table)
+	}
+	var cols map[string]string
 
+	err = json.Unmarshal([]byte(tables.Columns), &cols)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("getting table columns")
+		return err
+	}
 	for _, col := range columns {
 		var (
+			perm permColumn
 			cond string
-			ok   bool
 		)
-		cond, ok = columnsAndPermissions[converter.Sanitize(col, ``)]
-		if !ok {
-			cond, ok = columnsAndPermissions[`*`]
+		cond = cols[converter.Sanitize(col, ``)]
+		if len(cond) == 0 {
+			return errAccessDenied
 		}
-		if ok && len(cond) > 0 {
+		if strings.HasPrefix(cond, `{`) {
+			err = json.Unmarshal([]byte(cond), &perm)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("getting columns permissions")
+				return err
+			}
+		} else {
+			perm.Update = cond
+		}
+		if update {
+			cond = perm.Update
+		} else {
+			cond = perm.Read
+		}
+		if len(cond) > 0 {
 			ret, err := sc.EvalIf(cond)
 			if err != nil {
 				logger.WithFields(log.Fields{"condition": cond, "column": col, "type": consts.EvalError}).Error("evaluating condition")
 				return err
 			}
 			if !ret {
-				return fmt.Errorf(`Access denied`)
+				return errAccessDenied
 			}
 		}
 	}

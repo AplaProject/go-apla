@@ -248,7 +248,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 		return
 	}
 	columns := strings.Split(params, `,`)
-	if err = sc.AccessColumns(tblname, columns); err != nil {
+	if err = sc.AccessColumns(tblname, columns, true); err != nil {
 		return
 	}
 	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE)

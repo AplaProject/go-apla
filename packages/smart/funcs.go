@@ -40,6 +40,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type permTable struct {
+	Insert    string `json:"insert"`
+	Update    string `json:"update"`
+	NewColumn string `json:"new_column"`
+	Read      string `json:"read,omitempty"`
+}
+
+type permColumn struct {
+	Update string `json:"update"`
+	Read   string `json:"read,omitempty"`
+}
+
 type SmartContract struct {
 	VDE           bool
 	VM            *script.VM
@@ -300,17 +312,13 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 			return err
 		}
 	}
-	var perm map[string]string
-	permlist := make(map[string]string)
+	var perm permTable
 	err = json.Unmarshal([]byte(permissions), &perm)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling permissions to JSON")
 		return err
 	}
-	for _, v := range []string{`insert`, `update`, `new_column`} {
-		permlist[v] = perm[v]
-	}
-	permout, err := json.Marshal(permlist)
+	permout, err := json.Marshal(perm)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling permissions to JSON")
 		return err
@@ -449,7 +457,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 		return
 	}
 	columns := strings.Split(params, `,`)
-	if err = sc.AccessColumns(tblname, columns); err != nil {
+	if err = sc.AccessColumns(tblname, columns, true); err != nil {
 		return
 	}
 	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE)
@@ -514,17 +522,13 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditTable can be only called from @1EditTable")
 		return fmt.Errorf(`PermTable can be only called from EditTable`)
 	}
-	var perm map[string]string
-	permlist := make(map[string]string)
+	var perm permTable
 	err := json.Unmarshal([]byte(permissions), &perm)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling table permissions to json")
 		return err
 	}
-	for _, v := range []string{`insert`, `update`, `new_column`} {
-		permlist[v] = perm[v]
-	}
-	permout, err := json.Marshal(permlist)
+	permout, err := json.Marshal(perm)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling permission list to json")
 		return err
@@ -569,26 +573,26 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		return fmt.Errorf(`table %s exists`, name)
 	}
 
-	var perm map[string]string
+	var perm permTable
 	err = json.Unmarshal([]byte(permissions), &perm)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling permissions from json")
 		return
 	}
-	if len(perm) != 3 {
-		log.WithFields(log.Fields{"size": len(perm), "type": consts.InvalidObject}).Error("permissions must contain insert, new_column, and update")
-		return fmt.Errorf(`Permissions must contain "insert", "new_column", "update"`)
-	}
-	for _, v := range []string{`insert`, `update`, `new_column`} {
-		if len(perm[v]) == 0 {
-			log.WithFields(log.Fields{"condition_type": v, "type": consts.EmptyObject}).Error("condition is empty")
-			return fmt.Errorf(`%v condition is empty`, v)
+	v := reflect.ValueOf(perm)
+	for i := 0; i < v.NumField(); i++ {
+		cond := v.Field(i).Interface().(string)
+		name := v.Type().Field(i).Name
+		if len(cond) == 0 && name != `Read` {
+			log.WithFields(log.Fields{"condition_type": name, "type": consts.EmptyObject}).Error("condition is empty")
+			return fmt.Errorf(`%v condition is empty`, name)
 		}
-		if err = VMCompileEval(sc.VM, perm[v], uint32(sc.TxSmart.EcosystemID)); err != nil {
+		if err = VMCompileEval(sc.VM, cond, uint32(sc.TxSmart.EcosystemID)); err != nil {
 			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("compile evaluating permissions")
 			return err
 		}
 	}
+
 	if isEdit {
 		if err = sc.AccessTable(name, `update`); err != nil {
 			if err = sc.AccessRights(`changing_tables`, false); err != nil {
