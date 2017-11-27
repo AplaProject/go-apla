@@ -177,12 +177,13 @@ func ParseContract(in string) (id uint64, name string) {
 
 // ExecContract runs the name contract where txs contains the list of parameters and
 // params are the values of parameters
-func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
+func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (string, error) {
+	var result string
 
 	contract, ok := rt.vm.Objects[name]
 	if !ok {
 		log.WithFields(log.Fields{"contract_name": name, "type": consts.ContractError}).Error("unknown contract")
-		return fmt.Errorf(`unknown contract %s`, name)
+		return ``, fmt.Errorf(eUnknownContract, name)
 	}
 	logger := log.WithFields(log.Fields{"contract_name": name, "type": consts.ContractError})
 	cblock := contract.Value.(*Block)
@@ -190,7 +191,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	pars := strings.Split(txs, `,`)
 	if len(pars) != len(params) {
 		logger.WithFields(log.Fields{"contract_params_len": len(pars), "contract_params_len_needed": len(params), "type": consts.ContractError}).Error("wrong contract parameters pars")
-		return fmt.Errorf(`wrong contract parameters`)
+		return ``, errContractPars
 	}
 	for _, ipar := range pars {
 		parnames[ipar] = true
@@ -200,7 +201,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			if !parnames[tx.Name] && !strings.Contains(tx.Tags, `optional`) {
 				logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
-				return fmt.Errorf(`%s is not defined`, tx.Name)
+				return ``, fmt.Errorf(eUndefinedParam, tx.Name)
 			}
 			if tx.Name == `Signature` {
 				isSignature = true
@@ -209,7 +210,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	}
 	if _, ok := (*rt.extend)[`loop_`+name]; ok {
 		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": name}).Error("there is loop in contract")
-		return fmt.Errorf(`there is loop in %s contract`, name)
+		return ``, fmt.Errorf(eContractLoop, name)
 	}
 	(*rt.extend)[`loop_`+name] = true
 	defer delete(*rt.extend, `loop_`+name)
@@ -245,7 +246,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		finfo := obj.Value.(ExtFuncInfo)
 		if err := finfo.Func.(func(*map[string]interface{}, string) error)(rt.extend, name); err != nil {
 			logger.WithFields(log.Fields{"error": err, "func_name": finfo.Name, "type": consts.ContractError}).Error("executing exended function")
-			return err
+			return ``, err
 		}
 	}
 	for _, method := range []string{`init`, `conditions`, `action`} {
@@ -256,7 +257,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 			rt.cost = rtemp.cost
 			if err != nil {
 				logger.WithFields(log.Fields{"error": err, "method_name": method, "type": consts.ContractError}).Error("executing contract method")
-				return err
+				return ``, err
 			}
 		}
 	}
@@ -264,8 +265,10 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		stackCont((*rt.extend)[`sc`], ``)
 	}
 	(*rt.extend)[`parent`] = prevparent
-
-	return nil
+	if (*rt.extend)[`result`] != nil {
+		result = (*rt.extend)[`result`].(string)
+	}
+	return result, nil
 }
 
 // NewVM creates a new virtual machine
@@ -385,13 +388,13 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 }
 
 // ExContract executes the name contract in the state with spoecified parameters
-func ExContract(rt *RunTime, state uint32, name string, params map[string]interface{}) error {
+func ExContract(rt *RunTime, state uint32, name string, params map[string]interface{}) (string, error) {
 
 	name = StateName(state, name)
 	contract, ok := rt.vm.Objects[name]
 	if !ok {
 		log.WithFields(log.Fields{"contract_name": name, "type": consts.ContractError}).Error("unknown contract")
-		return fmt.Errorf(`unknown contract %s`, name)
+		return ``, fmt.Errorf(eUnknownContract, name)
 	}
 	if params == nil {
 		params = make(map[string]interface{})
@@ -405,7 +408,7 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 			val, ok := params[tx.Name]
 			if !ok && !strings.Contains(tx.Tags, `optional`) {
 				logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
-				return fmt.Errorf(`%s is not defined`, tx.Name)
+				return ``, fmt.Errorf(eUndefinedParam, tx.Name)
 			}
 			names = append(names, tx.Name)
 			vals = append(vals, val)
