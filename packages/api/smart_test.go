@@ -184,7 +184,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	form = url.Values{"Id": {`2`}, "Value": {`Span(Append)`}}
+	form = url.Values{"Id": {`1`}, "Value": {`Span(Append)`}}
 	err = postTx(`AppendPage`, &form)
 	if err != nil {
 		t.Error(err)

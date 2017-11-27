@@ -47,7 +47,6 @@ var (
 		"DBRow":          struct{}{},
 		"DBStringExt":    struct{}{},
 		"DBIntExt":       struct{}{},
-		"DBFreeRequest":  struct{}{},
 		"DBStringWhere":  struct{}{},
 		"DBIntWhere":     struct{}{},
 		"DBAmount":       struct{}{},
@@ -119,7 +118,6 @@ func init() {
 		"DBRowExt":           DBRowExt,
 		"DBRow":              DBRow,
 		"DBStringExt":        DBStringExt,
-		"DBFreeRequest":      DBFreeRequest,
 		"DBIntExt":           DBIntExt,
 		"DBStringWhere":      DBStringWhere,
 		"DBIntWhere":         DBIntWhere,
@@ -239,8 +237,8 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 }
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{}, 
-	params string, val ...interface{}) (qcost int64, err error) { 
+func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
+	params string, val ...interface{}) (qcost int64, err error) {
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
@@ -363,23 +361,6 @@ func DBIntExt(sc *SmartContract, tblname string, name string, id interface{}, id
 		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting DBStringExt result from string to int")
 	}
 	return qcost, res, err
-}
-
-// DBFreeRequest is a free function that is needed to find the record with the specified value in the 'idname' column.
-func DBFreeRequest(sc *SmartContract, tblname string, id interface{}, idname string) (int64, error) {
-	if sc.TxContract.FreeRequest {
-		log.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("DBFreeRequest can be executed only once")
-		return 0, fmt.Errorf(`DBFreeRequest can be executed only once`)
-	}
-	sc.TxContract.FreeRequest = true
-	cost, ret, err := DBStringExt(sc, tblname, idname, id, idname)
-	if err != nil {
-		return 0, err
-	}
-	if len(ret) > 0 || ret == fmt.Sprintf(`%v`, id) {
-		return 0, nil
-	}
-	return cost, fmt.Errorf(`DBFreeRequest: cannot find %v in %s of %s`, id, idname, tblname)
 }
 
 // DBStringWhere returns the column value based on the 'where' condition and 'params' values for this condition
@@ -723,10 +704,7 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 func CheckSignature(i *map[string]interface{}, name string) error {
 	state, name := script.ParseContract(name)
 	pref := converter.Int64ToStr(int64(state))
-	if state == 0 {
-		pref = `global`
-	}
-	p := (*i)[`parser`].(*SmartContract)
+	sc := (*i)[`sc`].(*SmartContract)
 	value, err := model.Single(`select value from "`+pref+`_signatures" where name=?`, name).String()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
@@ -748,15 +726,16 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 		return err
 	}
 	wallet := (*i)[`key_id`].(int64)
-	if wallet == 0 {
-		wallet = (*i)[`citizen`].(int64)
-	}
 	forsign := fmt.Sprintf(`%d,%d`, uint64((*i)[`time`].(int64)), uint64(wallet))
 	for _, isign := range sign.Params {
-		forsign += fmt.Sprintf(`,%v`, (*i)[isign.Param])
+		val := (*i)[isign.Param]
+		if val == nil {
+			val = ``
+		}
+		forsign += fmt.Sprintf(`,%v`, val)
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forsign, hexsign, true)
+	CheckSignResult, err := utils.CheckSign(sc.PublicKeys, forsign, hexsign, true)
 	if err != nil {
 		return err
 	}
