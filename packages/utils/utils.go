@@ -74,8 +74,10 @@ var (
 	TCPHost = flag.String("tcpHost", "127.0.0.1", "tcpHost (e.g. 127.0.0.1)")
 	// ListenHTTPPort is HTTP port
 	ListenHTTPPort = flag.String("listenHttpPort", "7079", "ListenHTTPPort")
-	// GenerateFirstBlock show if the first block must be generated
-	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
+
+	// GenerateFirstBlock force regenerate first block
+	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock and exit")
+
 	// LogSQL show if we should display sql queries in logs
 	LogSQL = flag.Int64("logSQL", 0, "log sql")
 	// LogStackTrace show if we should display stack trace in logs
@@ -108,6 +110,10 @@ var (
 	BoltPsw = flag.String("boltPsw", "", "Bolt password")
 	// APIToken is an api token for exchange api
 	APIToken = flag.String("apiToken", "", "API Token")
+
+	// ReInstall recreate application data from scratch
+	ReInstall = flag.Bool("reinstall", false, "reset keys and database using existing config.ini")
+
 	// OneCountry is the country which is supported
 	OneCountry int64
 	// PrivCountry is protect system from registering

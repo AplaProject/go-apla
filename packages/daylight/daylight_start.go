@@ -236,6 +236,7 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 		route.HandlerFunc(method, path, handle)
 	}
 }
+
 func initRoutes(listenHost, browserHost string) string {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
@@ -272,6 +273,14 @@ func Start() {
 
 	readConfig()
 
+	if *utils.ReInstall {
+		err := api.ReInstall()
+		if err != nil {
+			log.WithFields(log.Fields{"error": err}).Error("ReInstall failed")
+			Exit(1)
+		}
+	}
+
 	if len(config.ConfigIni["db_type"]) > 0 {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err = model.GormInit(
@@ -284,7 +293,7 @@ func Start() {
 		}
 	}
 
-	// create first block
+	// create first block and exit
 	if *utils.GenerateFirstBlock == 1 {
 		log.Info("Generating first block")
 		parser.FirstBlock()
@@ -306,7 +315,7 @@ func Start() {
 	initStatsd()
 	err = initLogs()
 	if err != nil {
-		fmt.Println("logs init failed: %v", utils.ErrInfo(err))
+		log.WithFields(log.Fields{"error": err}).Error("logs init failed")
 		Exit(1)
 	}
 
@@ -356,10 +365,11 @@ func Start() {
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err := daemonsctl.RunAllDaemons()
-		log.Info("Daemons started")
 		if err != nil {
+			log.Error("RunAllDaemons", err)
 			os.Exit(1)
 		}
+		log.Info("Daemons started")
 	}
 
 	daemons.WaitForSignals()
