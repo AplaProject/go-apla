@@ -495,6 +495,15 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 	return nil
 }
 
+func getPermColumns(input string) (perm permColumn, err error) {
+	if strings.HasPrefix(input, `{`) {
+		err = json.Unmarshal([]byte(input), &perm)
+	} else {
+		perm.Update = input
+	}
+	return
+}
+
 // AccessColumns checks access rights to the columns
 func (sc *SmartContract) AccessColumns(table string, columns []string, update bool) error {
 	logger := sc.GetLogger()
@@ -532,14 +541,9 @@ func (sc *SmartContract) AccessColumns(table string, columns []string, update bo
 		if len(cond) == 0 {
 			return errAccessDenied
 		}
-		if strings.HasPrefix(cond, `{`) {
-			err = json.Unmarshal([]byte(cond), &perm)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("getting columns permissions")
-				return err
-			}
-		} else {
-			perm.Update = cond
+		perm, err = getPermColumns(cond)
+		if err != nil {
+			return err
 		}
 		if update {
 			cond = perm.Update

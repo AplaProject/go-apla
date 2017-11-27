@@ -566,7 +566,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	if isEdit {
 		if !exists {
 			log.WithFields(log.Fields{"table_name": name, "type": consts.NotFound}).Error("table does not exists")
-			return fmt.Errorf(`table %s doesn't exist`, name)
+			return fmt.Errorf(eTableNotFound, name)
 		}
 	} else if exists {
 		log.WithFields(log.Fields{"table_name": name, "type": consts.Found}).Error("table exists")
@@ -628,13 +628,24 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect type")
 			return fmt.Errorf(`incorrect type`)
 		}
-		if len(data[`conditions`]) == 0 {
+		perm, err := getPermColumns(data[`conditions`])
+		if err != nil {
 			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Conditions is empty")
-			return fmt.Errorf(`Conditions is empty`)
-		}
-		if err = VMCompileEval(sc.VM, data[`conditions`], uint32(sc.TxSmart.EcosystemID)); err != nil {
-			log.WithFields(log.Fields{"type": consts.EvalError}).Error("compile eval conditions")
 			return err
+		}
+		if len(perm.Update) == 0 {
+			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Update condition is empty")
+			return errConditionEmpty
+		}
+		if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
+			log.WithFields(log.Fields{"type": consts.EvalError}).Error("compile update conditions")
+			return err
+		}
+		if len(perm.Read) > 0 {
+			if err = VMCompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.EcosystemID)); err != nil {
+				log.WithFields(log.Fields{"type": consts.EvalError}).Error("compile read conditions")
+				return err
+			}
 		}
 		if data[`index`] == `1` {
 			if itype != `varchar` && itype != `number` && itype != `datetime` {
@@ -698,8 +709,14 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Permissions are empty")
 		return fmt.Errorf(`Permissions is empty`)
 	}
-	if err = VMCompileEval(sc.VM, permissions, uint32(sc.TxSmart.EcosystemID)); err != nil {
+	perm, err := getPermColumns(permissions)
+	if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
 		return err
+	}
+	if len(perm.Read) > 0 {
+		if err = VMCompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.EcosystemID)); err != nil {
+			return err
+		}
 	}
 	tblName := getDefTableName(sc, tableName)
 	if isExist {

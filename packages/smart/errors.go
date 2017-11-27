@@ -23,5 +23,6 @@ const (
 )
 
 var (
-	errAccessDenied = errors.New(`Access denied`)
+	errAccessDenied   = errors.New(`Access denied`)
+	errConditionEmpty = errors.New(`Conditions is empty`)
 )
