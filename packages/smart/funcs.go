@@ -17,8 +17,6 @@
 package smart
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
@@ -34,6 +32,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -885,9 +884,12 @@ func HMac(hexkey, data string) (ret string, err error) {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("decoding key")
 		return ``, err
 	}
-	hash := hmac.New(sha256.New, key)
-	hash.Write([]byte(data))
-	return hex.EncodeToString(hash.Sum(nil)), nil
+	hash, err := crypto.GetHMAC(string(key), data)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting HMAC")
+		return ``, err
+	}
+	return hex.EncodeToString(hash), nil
 }
 
 // HTTPRequest sends http request
