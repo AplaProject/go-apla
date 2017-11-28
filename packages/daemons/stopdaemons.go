@@ -22,7 +22,6 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/system"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -53,7 +52,6 @@ func WaitStopTime() {
 				name := <-utils.ReturnCh
 				log.WithFields(log.Fields{"daemon_name": name}).Debug("daemon stopped")
 			}
-			system.FinishThrust()
 
 			err := model.GormClose()
 			if err != nil {
