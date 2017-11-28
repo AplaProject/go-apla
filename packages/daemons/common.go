@@ -32,6 +32,7 @@ import (
 )
 
 var (
+	// MonitorDaemonCh is monitor daemon channel
 	MonitorDaemonCh = make(chan []string, 100)
 )
 
@@ -45,7 +46,7 @@ func init() {
 	flag.Parse()
 }
 
-var daemonsList = map[string]func(*daemon, context.Context) error{
+var daemonsList = map[string]func(context.Context, *daemon) error{
 	"BlocksCollection":   BlocksCollection,
 	"BlockGenerator":     BlockGenerator,
 	"CreatingBlockchain": CreatingBlockchain,
@@ -79,7 +80,7 @@ var rollbackList = []string{
 	"Confirmations",
 }
 
-func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon, context.Context) error, retCh chan string) {
+func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.Context, *daemon) error, retCh chan string) {
 	logger := log.WithFields(log.Fields{"daemon_name": goRoutineName})
 	defer func() {
 		if r := recover(); r != nil {
@@ -101,7 +102,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 
 	startTime := time.Now()
 	counterName := statsd.DaemonCounterName(goRoutineName)
-	handler(d, ctx)
+	handler(ctx, d)
 	statsd.Client.TimingDuration(counterName+statsd.Time, time.Now().Sub(startTime), 1.0)
 
 	for {
@@ -115,7 +116,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 			MonitorDaemonCh <- []string{d.goRoutineName, converter.Int64ToStr(time.Now().Unix())}
 			startTime := time.Now()
 			counterName := statsd.DaemonCounterName(goRoutineName)
-			handler(d, ctx)
+			handler(ctx, d)
 			statsd.Client.TimingDuration(counterName+statsd.Time, time.Now().Sub(startTime), 1.0)
 		}
 	}

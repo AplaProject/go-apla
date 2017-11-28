@@ -38,8 +38,8 @@ import (
 )
 
 // BlocksCollection collects and parses blocks
-func BlocksCollection(d *daemon, ctx context.Context) error {
-	if err := initialLoad(d, ctx); err != nil {
+func BlocksCollection(ctx context.Context, d *daemon) error {
+	if err := initialLoad(ctx, d); err != nil {
 		return err
 	}
 
@@ -48,10 +48,10 @@ func BlocksCollection(d *daemon, ctx context.Context) error {
 		return ctx.Err()
 	}
 
-	return blocksCollection(d, ctx)
+	return blocksCollection(ctx, d)
 }
 
-func initialLoad(d *daemon, ctx context.Context) error {
+func initialLoad(ctx context.Context, d *daemon) error {
 
 	// check for initial load
 	toLoad, err := needLoad(d.logger)
@@ -79,7 +79,7 @@ func initialLoad(d *daemon, ctx context.Context) error {
 	return nil
 }
 
-func blocksCollection(d *daemon, ctx context.Context) error {
+func blocksCollection(ctx context.Context, d *daemon) error {
 
 	hosts := syspar.GetRemoteHosts()
 
@@ -182,7 +182,7 @@ func getHostBlockID(host string, logger *log.Entry) (int64, error) {
 	return converter.BinToDec(blockIDBin), nil
 }
 
-// load from host all blocks from our last block to maxBlockID
+// UpdateChain load from host all blocks from our last block to maxBlockID
 func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64, rollbackBlocks string) error {
 
 	// get current block id from our blockchain

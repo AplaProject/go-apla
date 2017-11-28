@@ -115,7 +115,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 				var bytes []byte
 				bytes, err = hex.DecodeString(val)
 				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("decoding value from hex")
+					logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("decoding value from hex")
 					break fields
 				}
 				idata = append(append(idata, converter.EncodeLength(int64(len(bytes)))...), bytes...)

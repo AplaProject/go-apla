@@ -16,22 +16,27 @@ type Config struct {
 	CurrentLoadBlockchain  string `gorm:"not null"`
 }
 
+// TableName returns name of table
 func (c *Config) TableName() string {
 	return "config"
 }
 
+// UpdateConfig is updates config
 func UpdateConfig(field string, value interface{}) error {
 	return DBConn.Model(&Config{}).Update(field, value).Error
 }
 
+// Get is retrieving model from database
 func (c *Config) Get() (bool, error) {
 	return isFound(DBConn.First(&c))
 }
 
+// Create is creating record of model
 func (c *Config) Create() error {
 	return DBConn.Create(c).Error
 }
 
+// ChangeBlockIDBatch is bulk changing block ids
 func (c *Config) ChangeBlockIDBatch(transaction *DbTransaction, oldBlockID int64, newBlockID int64) error {
 	return GetDB(transaction).Model(c).Where("my_block_id < ?", oldBlockID).Update("my_block_id", newBlockID).Error
 }

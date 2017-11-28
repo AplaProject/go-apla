@@ -61,7 +61,7 @@ func waitSig() {
 	C.waitSig()
 }
 
-// Signals waits for Interrupt os.Kill signals
+// WaitForSignals waits for Interrupt os.Kill signals
 func WaitForSignals() {
 	SigChan = make(chan os.Signal, 1)
 	waitSig()

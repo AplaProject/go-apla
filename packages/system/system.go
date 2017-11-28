@@ -16,10 +16,9 @@
 
 package system
 
-import (
-	//	"time"
-	"github.com/go-thrust/thrust"
-)
+import "github.com/miketheprogrammer/go-thrust/thrust"
+
+//	"time"
 
 func finish(isthrust bool) {
 	killChildProc()

@@ -67,7 +67,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		field = strings.TrimSpace(field)
 		fields[i] = field
 		if field[:1] == "+" || field[:1] == "-" {
-			addSQLFields += field[1:len(field)] + ","
+			addSQLFields += field[1:] + ","
 		} else if strings.HasPrefix(field, `timestamp `) {
 			addSQLFields += field[len(`timestamp `):] + `,`
 		} else {
@@ -118,7 +118,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 				k = "prev_rb_id"
 			}
 			if k[:1] == "+" || k[:1] == "-" {
-				addSQLFields += k[1:len(k)] + ","
+				addSQLFields += k[1:] + ","
 			} else if strings.HasPrefix(k, `timestamp `) {
 				addSQLFields += k[len(`timestamp `):] + `,`
 			} else {

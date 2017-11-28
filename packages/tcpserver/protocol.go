@@ -14,44 +14,54 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// TransactionType is type of transaction
 type TransactionType struct {
 	Type uint16
 }
 
-// type 10
+// MaxBlockRequest is max block request
 type MaxBlockRequest struct{}
+
+// MaxBlockResponse is max block response
 type MaxBlockResponse struct {
 	BlockID uint32
 }
 
-// type 7
+// GetBodyRequest contains BlockID
 type GetBodyRequest struct {
 	BlockID uint32
 }
+
+// GetBodyResponse is Data []bytes
 type GetBodyResponse struct {
 	Data []byte
 }
 
-// type 4
+// ConfirmRequest contains request data
 type ConfirmRequest struct {
 	BlockID uint32
 }
+
+// ConfirmResponse contains response data
 type ConfirmResponse struct {
 	ConfType uint8
 	Hash     []byte `size:"32"`
 }
 
-// type 2
+// DisRequest contains request data
 type DisRequest struct {
 	Data []byte
 }
+
+// DisTrResponse contains response data
 type DisTrResponse struct{}
 
-// type 1
+// DisHashResponse contains response data
 type DisHashResponse struct {
 	Data []byte
 }
 
+// ReadRequest is reading request
 func ReadRequest(request interface{}, r io.Reader) error {
 	if reflect.ValueOf(request).Elem().Kind() != reflect.Struct {
 		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("bad request type")
@@ -61,13 +71,13 @@ func ReadRequest(request interface{}, r io.Reader) error {
 		t := reflect.ValueOf(request).Elem().Field(i)
 		switch t.Kind() {
 		case reflect.Slice:
-			size := uint64(0)
+			var size uint64
 			var err error
 			sizeVal := reflect.TypeOf(request).Elem().Field(i).Tag.Get("size")
 			if sizeVal != "" {
 				size, err = strconv.ParseUint(sizeVal, 10, 0)
 				if err != nil {
-					log.WithFields(log.Fields{"value": sizeVal, "type": consts.ConvertionError, "error": err}).Error("parsing uint")
+					log.WithFields(log.Fields{"value": sizeVal, "type": consts.ConversionError, "error": err}).Error("parsing uint")
 				}
 			} else {
 				size, err = readUint(r, 4) // read size
@@ -103,6 +113,7 @@ func ReadRequest(request interface{}, r io.Reader) error {
 	return nil
 }
 
+// SendRequest in sending request
 func SendRequest(request interface{}, w io.Writer) error {
 	if reflect.ValueOf(request).Elem().Kind() != reflect.Struct {
 		log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("bad request type")
@@ -118,7 +129,7 @@ func SendRequest(request interface{}, w io.Writer) error {
 			if sizeVal != "" {
 				size, err := strconv.Atoi(sizeVal)
 				if err != nil {
-					log.WithFields(log.Fields{"value": sizeVal, "type": consts.ConvertionError, "error": err}).Error("Converting str to int")
+					log.WithFields(log.Fields{"value": sizeVal, "type": consts.ConversionError, "error": err}).Error("Converting str to int")
 					panic("bad size tag")
 				}
 				if size != len(value) {

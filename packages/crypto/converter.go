@@ -32,7 +32,7 @@ func PrivateToPublic(key []byte) ([]byte, error) {
 	case elliptic256:
 		pubkeyCurve = elliptic.P256()
 	default:
-		return nil, UnsupportedCurveSize
+		return nil, ErrUnsupportedCurveSize
 	}
 
 	bi := new(big.Int).SetBytes(key)
