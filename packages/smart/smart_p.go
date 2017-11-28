@@ -77,6 +77,7 @@ var (
 		"IsContract":        10,
 		"CompileContract":   100,
 		"FlushContract":     50,
+		"HMac":              50,
 		"Eval":              10,
 		"Len":               5,
 		"Activate":          10,
@@ -168,6 +169,7 @@ func init() {
 		"Eval":               Eval,
 		"Activate":           Activate,
 		"JSONToMap":          JSONToMap,
+		"HMac":               HMac,
 		"check_signature":    CheckSignature, // system function
 	}, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
