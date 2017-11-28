@@ -501,7 +501,7 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 }
 
 // CallContract calls the contract functions according to the specified flags
-func (p *Parser) CallContract(flags int) error {
+func (p *Parser) CallContract(flags int) (string, error) {
 	sc := smart.SmartContract{
 		VDE:           false,
 		VM:            smart.GetVM(false, 0),
@@ -515,6 +515,5 @@ func (p *Parser) CallContract(flags int) error {
 		PublicKeys:    p.PublicKeys,
 		DbTransaction: p.DbTransaction,
 	}
-	_, err := sc.CallContract(flags)
-	return err
+	return sc.CallContract(flags)
 }

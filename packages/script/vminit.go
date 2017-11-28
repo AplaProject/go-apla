@@ -238,11 +238,11 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	}
 	rt.cost -= CostContract
 	var stackCont func(interface{}, string)
-	if stack, ok := (*rt.extend)[`stack_cont`]; ok && (*rt.extend)[`parser`] != nil {
+	if stack, ok := (*rt.extend)[`stack_cont`]; ok && (*rt.extend)[`sc`] != nil {
 		stackCont = stack.(func(interface{}, string))
-		stackCont((*rt.extend)[`parser`], name)
+		stackCont((*rt.extend)[`sc`], name)
 	}
-	if (*rt.extend)[`parser`] != nil && isSignature {
+	if (*rt.extend)[`sc`] != nil && isSignature {
 		obj := rt.vm.Objects[`check_signature`]
 		finfo := obj.Value.(ExtFuncInfo)
 		if err := finfo.Func.(func(*map[string]interface{}, string) error)(rt.extend, name); err != nil {
@@ -263,7 +263,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		}
 	}
 	if stackCont != nil {
-		stackCont((*rt.extend)[`parser`], ``)
+		stackCont((*rt.extend)[`sc`], ``)
 	}
 	(*rt.extend)[`parent`] = prevparent
 

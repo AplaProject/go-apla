@@ -362,6 +362,54 @@ func TestContracts(t *testing.T) {
 	fmt.Println(`RET`, ret)
 }
 
+func TestSignature(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(6)
+	form := url.Values{`Value`: {`contract ` + rnd + `Transfer {
+		    data {
+				Recipient int
+				Amount    money
+				Signature string "optional hidden"
+			}
+			action { 
+				$result = "OK " + Str($Amount)
+			}}
+			
+			contract ` + rnd + `Test {
+				data {
+					Recipient int "hidden"
+					Amount  money
+					Signature string "signature:` + rnd + `Transfer"
+				}
+				func action {
+					` + rnd + `Transfer("Recipient,Amount,Signature",$Recipient,$Amount,$Signature )
+					$result = "OOOPS " + Str($Amount)
+				}
+			  }
+			`}, `Conditions`: {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Name`: {rnd + `Transfer`}, `Value`: {`{"title": "Would you like to sign",
+		"params":[
+			{"name": "Receipient", "text": "Wallet"},
+			{"name": "Amount", "text": "Amount(EGS)"}
+			]}`}, `Conditions`: {`true`}}
+	if err := postTx(`NewSign`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	err := postTx(rnd+`Test`, &url.Values{`Amount`: {`12345`}, `Recipient`: {`98765`}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
 var (
 	impcont = `{
 		 "contracts": [

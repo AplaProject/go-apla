@@ -17,6 +17,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -41,6 +42,7 @@ type loginResult struct {
 	NotifyKey   string `json:"notify_key,omitempty"`
 	IsNode      bool   `json:"isnode,omitempty"`
 	IsOwner     bool   `json:"isowner,omitempty"`
+	IsVDE       bool   `json:"vde,omitempty"`
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
@@ -115,8 +117,10 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting key_id parameter")
 		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
 	}
+
 	result := loginResult{EcosystemID: converter.Int64ToStr(state), KeyID: converter.Int64ToStr(wallet),
-		Address: address, IsOwner: founder == wallet, IsNode: cfg.KeyID == wallet}
+		Address: address, IsOwner: founder == wallet, IsNode: cfg.KeyID == wallet,
+		IsVDE: model.IsTable(fmt.Sprintf(`%d_vde_tables`, state))}
 	data.result = &result
 	expire := data.params[`expire`].(int64)
 	if expire == 0 {
