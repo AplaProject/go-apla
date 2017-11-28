@@ -691,6 +691,64 @@ var (
 			DBUpdateExt("languages", "name", $Name, "res", $Trans )
 			UpdateLang($Name, $Trans)
 		}
+	}', 'ContractConditions("MainCondition")'),
+	('21','func ImportList(row array, cnt string) {
+		if !row {
+			return
+		}
+		var i int
+		while i < Len(row) {
+			var idata map
+			idata = row[i]
+			CallContract(cnt, idata)
+			i = i + 1
+		}
+	}
+	
+	func ImportData(row array) {
+		if !row {
+			return
+		}
+		var i int
+		while i < Len(row) {
+			var idata map
+			var list array
+			var tblname, columns string
+			idata = row[i]
+			tblname = idata["Table"]
+			columns = Join(idata["Columns"], ",")
+			list = idata["Data"] 
+			if !list {
+				continue
+			}
+			var j int
+			while j < Len(list) {
+				var ilist array
+				ilist = list[j]
+				DBInsert(tblname, columns, ilist)
+				j=j+1
+			}
+			i = i + 1
+		}
+	}
+	
+	contract Import {
+		data {
+			Data string
+		}
+		conditions {
+			$list = JSONToMap($Data)
+		}
+		action {
+			ImportList($list["pages"], "NewPage")
+			ImportList($list["blocks"], "NewBlock")
+			ImportList($list["menus"], "NewMenu")
+			ImportList($list["parameters"], "NewParameter")
+			ImportList($list["languages"], "NewLang")
+			ImportList($list["contracts"], "NewContract")
+			ImportList($list["tables"], "NewTable")
+			ImportData($list["data"])
+		}
 	}', 'ContractConditions("MainCondition")');
 	  `
 

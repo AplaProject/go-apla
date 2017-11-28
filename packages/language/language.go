@@ -66,7 +66,7 @@ func UpdateLang(state int, name, value string, vde bool) {
 		state = -state
 	}
 	if _, ok := lang[state]; !ok {
-		return
+		lang[state] = &cacheLang{make(map[string]*map[string]string)}
 	}
 	var ires map[string]string
 	err := json.Unmarshal([]byte(value), &ires)
@@ -116,15 +116,16 @@ func LangText(in string, state int, accept string, vde bool) (string, bool) {
 	if strings.IndexByte(in, ' ') >= 0 || state == 0 {
 		return in, false
 	}
+	istate := state
 	if vde {
-		state = -state
+		istate = -state
 	}
-	if _, ok := lang[state]; !ok {
+	if _, ok := lang[istate]; !ok {
 		if err := loadLang(state, vde); err != nil {
 			return err.Error(), false
 		}
 	}
-	if lres, ok := (*lang[state]).res[in]; ok {
+	if lres, ok := (*lang[istate]).res[in]; ok {
 		langs := strings.Split(accept, `,`)
 		lng := DefLang()
 		for _, val := range langs {
