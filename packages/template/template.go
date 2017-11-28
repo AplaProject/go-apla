@@ -28,6 +28,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -53,8 +54,9 @@ type Source struct {
 }
 
 type Workspace struct {
-	Sources *map[string]Source
-	Vars    *map[string]string
+	Sources       *map[string]Source
+	Vars          *map[string]string
+	SmartContract *smart.SmartContract
 }
 
 type parFunc struct {
@@ -318,7 +320,8 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[]str
 	}
 	state := int(converter.StrToInt64((*workspace.Vars)[`ecosystem_id`]))
 	for i, v := range pars {
-		pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`accept_lang`])
+		pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`accept_lang`],
+			workspace.SmartContract.VDE)
 	}
 	if len(curFunc.Tag) > 0 {
 		curNode.Tag = curFunc.Tag
@@ -538,7 +541,12 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 		(*vars)[`_full`] = `0`
 	}
 	root := node{}
-	process(input, &root, &Workspace{Vars: vars})
+	isvde := (*vars)[`vde`] == `true` || (*vars)[`vde`] == `1`
+	sc := smart.SmartContract{
+		VDE: isvde,
+		VM:  smart.GetVM(isvde, converter.StrToInt64((*vars)[`ecosystem_id`])),
+	}
+	process(input, &root, &Workspace{Vars: vars, SmartContract: &sc})
 	if root.Children == nil {
 		return []byte(`[]`)
 	}

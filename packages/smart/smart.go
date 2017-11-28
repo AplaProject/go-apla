@@ -84,7 +84,11 @@ func GetTestValue(name string) string {
 }
 
 func (sc SmartContract) GetLogger() *log.Entry {
-	return log.WithFields(log.Fields{"vde": sc.VDE, "name": sc.TxContract.Name})
+	var name string
+	if sc.TxContract != nil {
+		name = sc.TxContract.Name
+	}
+	return log.WithFields(log.Fields{"vde": sc.VDE, "name": name})
 }
 
 func newVM() *script.VM {

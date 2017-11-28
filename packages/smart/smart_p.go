@@ -495,7 +495,7 @@ func HexToBytes(hexdata string) ([]byte, error) {
 
 // LangRes returns the language resource
 func LangRes(sc *SmartContract, idRes, lang string) string {
-	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang)
+	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang, sc.VDE)
 	return ret
 }
 
