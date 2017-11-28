@@ -153,9 +153,9 @@ func GetFirstColumnName(table string) (string, error) {
 	return "", nil
 }
 
-func GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
+func GetQueryTotalCost(transaction *DbTransaction, query string, args ...interface{}) (int64, error) {
 	var planStr string
-	err := DBConn.Raw(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", query), args...).Row().Scan(&planStr)
+	err := GetDB(transaction).Raw(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", query), args...).Row().Scan(&planStr)
 	switch {
 	case err == sql.ErrNoRows:
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": query}).Error("no rows while explaining query")

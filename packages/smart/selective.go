@@ -92,7 +92,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		addSQLFields += `rb_id`
 	}
 	selectQuery := `SELECT ` + addSQLFields + ` FROM "` + table + `" ` + addSQLWhere
-	selectCost, err := model.GetQueryTotalCost(selectQuery)
+	selectCost, err := model.GetQueryTotalCost(sc.DbTransaction, selectQuery)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting query total cost")
 		return 0, tableID, err
@@ -160,7 +160,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		}
 		if !sc.VDE {
 			updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + fmt.Sprintf(` rb_id = '%d'`, rollback.RbID) + addSQLWhere
-			updateCost, err := model.GetQueryTotalCost(updateQuery)
+			updateCost, err := model.GetQueryTotalCost(sc.DbTransaction, updateQuery)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
 				return 0, tableID, err
@@ -226,7 +226,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		}
 
 		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0 + `) VALUES (` + addSQLIns1 + `)`
-		insertCost, err := model.GetQueryTotalCost(insertQuery)
+		insertCost, err := model.GetQueryTotalCost(sc.DbTransaction, insertQuery)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")
 			return 0, tableID, err

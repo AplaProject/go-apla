@@ -962,6 +962,7 @@ var (
 			id = DBInsert("contracts", "value,conditions, wallet_id, token_id", 
 				   $Value, $Conditions, $walletContract, $TokenEcosystem)
 			FlushContract(root, id, false)
+			$result = id
 		}
 		func price() int {
 			return  SysParamInt("contract_price")

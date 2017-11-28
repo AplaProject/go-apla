@@ -436,12 +436,12 @@ func PrefixName(table string) (prefix, name string) {
 	return
 }
 
-func IsCustomTable(table string) (isCustom bool, err error) {
+func (sc *SmartContract) IsCustomTable(table string) (isCustom bool, err error) {
 	prefix, name := PrefixName(table)
 	if len(prefix) > 0 {
 		tables := &model.Table{}
 		tables.SetTablePrefix(prefix)
-		found, err := tables.Get(name)
+		found, err := tables.Get(sc.DbTransaction, name)
 		if err != nil {
 			return false, err
 		}
@@ -464,7 +464,7 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 		return fmt.Errorf(`Access denied`)
 	}
 
-	if isCustom, err := IsCustomTable(table); err != nil {
+	if isCustom, err := sc.IsCustomTable(table); err != nil {
 		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
 		return err
 	} else if !isCustom {
@@ -474,7 +474,7 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 	prefix, name := PrefixName(table)
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	tablePermission, err := tables.GetPermissions(name, "")
+	tablePermission, err := tables.GetPermissions(sc.DbTransaction, name, "")
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table permissions")
 		return err
@@ -508,7 +508,7 @@ func (sc *SmartContract) AccessColumns(table string, columns []string) error {
 
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	columnsAndPermissions, err := tables.GetColumns(name, "")
+	columnsAndPermissions, err := tables.GetColumns(sc.DbTransaction, name, "")
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table columns")
 		return err
