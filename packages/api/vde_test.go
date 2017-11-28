@@ -316,6 +316,28 @@ func TestVDEParams(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
+	name := randName(`lng`)
+	value := `{"en": "My VDE test", "fr": "French VDE test"}`
+
+	form = url.Values{"Name": {name}, "Trans": {value}, "vde": {`true`}}
+	err = postTx(`NewLang`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	input := fmt.Sprintf(`$%s$+LangRes(%[1]s,fr))`, name)
+	var lret contentResult
+	err = sendPost(`content`, &url.Values{`template`: {input}}, &lret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if lret.Tree != `[{"tag":"span","children":[{"tag":"text","text":"Text My test"},{"tag":"text","text":"+French string"}]}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, lret.Tree))
+		return
+	}
+
 }
 
 func TestHTTPRequest(t *testing.T) {

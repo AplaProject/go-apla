@@ -660,8 +660,38 @@ var (
 		  action {
 			  PermColumn($TableName, $Name, $Permissions)
 		  }
-	  }', 'ContractConditions("MainCondition")');
-	  
+	  }', 'ContractConditions("MainCondition")'),
+	  ('19','contract NewLang {
+		data {
+			Name  string
+			Trans string
+		}
+		conditions {
+			EvalCondition("parameters", "changing_language", "value")
+			var row array
+			row = DBFind("languages").Columns("name").Where("name=?", $Name).Limit(1)
+			if Len(row) > 0 {
+				error Sprintf("The language resource %%s already exists", $Name)
+			}
+		}
+		action {
+			DBInsert("languages", "name,res", $Name, $Trans )
+			UpdateLang($Name, $Trans)
+		}
+	}', 'ContractConditions("MainCondition")'),
+	('20','contract EditLang {
+		data {
+			Name  string
+			Trans string
+		}
+		conditions {
+			EvalCondition("parameters", "changing_language", "value")
+		}
+		action {
+			DBUpdateExt("languages", "name", $Name, "res", $Trans )
+			UpdateLang($Name, $Trans)
+		}
+	}', 'ContractConditions("MainCondition")');
 	  `
 
 	SchemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (

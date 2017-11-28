@@ -670,7 +670,7 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 
 // UpdateLang updates language resource
 func UpdateLang(sc *SmartContract, name, trans string) {
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans)
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans, sc.VDE)
 }
 
 // Size returns the length of the string

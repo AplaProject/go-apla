@@ -56,9 +56,10 @@ type SmartContract struct {
 
 var (
 	funcCallsDB = map[string]struct{}{
-		"DBInsert": struct{}{},
-		"DBSelect": struct{}{},
-		"DBUpdate": struct{}{},
+		"DBInsert":    struct{}{},
+		"DBSelect":    struct{}{},
+		"DBUpdate":    struct{}{},
+		"DBUpdateExt": struct{}{},
 	}
 	extendCost = map[string]int64{
 		"AddressToId":        10,
@@ -72,6 +73,7 @@ var (
 		"CreateTable":        100,
 		"EcosysParam":        10,
 		"Eval":               10,
+		"EvalCondition":      20,
 		"FlushContract":      50,
 		"JSONToMap":          50,
 		"IdToAddress":        10,
@@ -81,6 +83,7 @@ var (
 		"PermTable":          100,
 		"Substr":             10,
 		"TableConditions":    100,
+		"UpdateLang":         10,
 		"ValidateCondition":  30,
 	}
 )
@@ -106,8 +109,10 @@ func EmbedFuncs(vm *script.VM) {
 		"DBInsert":           DBInsert,
 		"DBSelect":           DBSelect,
 		"DBUpdate":           DBUpdate,
+		"DBUpdateExt":        DBUpdateExt,
 		"EcosysParam":        EcosysParam,
 		"Eval":               Eval,
+		"EvalCondition":      EvalCondition,
 		"Float":              Float,
 		"FlushContract":      FlushContract,
 		"JSONToMap":          JSONToMap,
@@ -121,6 +126,7 @@ func EmbedFuncs(vm *script.VM) {
 		"Str":                Str,
 		"Substr":             Substr,
 		"TableConditions":    TableConditions,
+		"UpdateLang":         UpdateLang,
 		"ValidateCondition":  ValidateCondition,
 		//   VDE functions only
 		"HTTPRequest": HTTPRequest,
