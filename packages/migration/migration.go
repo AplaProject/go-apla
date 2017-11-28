@@ -416,6 +416,7 @@ var (
 			  Id         int
 			  Value      string
 			  Conditions string
+			  WalletId   string
 		  }
 		  conditions {
 			  var row array
@@ -452,7 +453,7 @@ var (
 		  action {
 			  var root int
 			  root = CompileContract($Value, $ecosystem_id, 0, 0)
-			  DBUpdate("contracts", $Id, "value,conditions", $Value, $Conditions)
+			  DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $WalletId)
 			  FlushContract(root, $Id, false)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
@@ -973,6 +974,7 @@ var (
 			Id         int
 			Value      string
 			Conditions string
+			WalletId   string
 		}
 		conditions {
 			$cur = DBRow("contracts", "id,value,conditions,active,wallet_id,token_id", $Id)
@@ -1007,7 +1009,7 @@ var (
 		action {
 			var root int
 			root = CompileContract($Value, $ecosystem_id, Int($cur["wallet_id"]), Int($cur["token_id"]))
-			DBUpdate("contracts", $Id, "value,conditions", $Value, $Conditions)
+			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $WalletId)
 			FlushContract(root, $Id, Int($cur["active"]) == 1)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
