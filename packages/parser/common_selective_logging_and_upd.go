@@ -91,7 +91,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 
 	// if there is something to log
 	selectQuery := `SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere
-	selectCost, err := model.GetQueryTotalCost(selectQuery)
+	selectCost, err := model.GetQueryTotalCost(p.DbTransaction, selectQuery)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting query total cost")
 		return 0, tableID, err
@@ -155,7 +155,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			}
 		}
 		updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + fmt.Sprintf(` rb_id = '%d'`, rollback.RbID) + addSQLWhere
-		updateCost, err := model.GetQueryTotalCost(updateQuery)
+		updateCost, err := model.GetQueryTotalCost(p.DbTransaction, updateQuery)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
 			return 0, tableID, err
@@ -218,7 +218,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 
 		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0 + `) VALUES (` + addSQLIns1 + `)`
-		insertCost, err := model.GetQueryTotalCost(insertQuery)
+		insertCost, err := model.GetQueryTotalCost(p.DbTransaction, insertQuery)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")
 			return 0, tableID, err

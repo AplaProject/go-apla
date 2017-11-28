@@ -44,8 +44,8 @@ func (t *TableVDE) TableName() string {
 }
 
 // Get is retrieving model from database
-func (t *Table) Get(name string) (bool, error) {
-	return isFound(DBConn.Where("name = ?", name).First(t))
+func (t *Table) Get(transaction *DbTransaction, name string) (bool, error) {
+	return isFound(GetDB(transaction).Where("name = ?", name).First(t))
 }
 
 // Create is creating record of model
@@ -64,8 +64,8 @@ func (t *Table) Delete() error {
 }
 
 // ExistsByName finding table existence by name
-func (t *Table) ExistsByName(name string) (bool, error) {
-	return isFound(DBConn.Where("name = ?", name).First(t))
+func (t *Table) ExistsByName(transaction *DbTransaction, name string) (bool, error) {
+	return isFound(GetDB(transaction).Where("name = ?", name).First(t))
 }
 
 // IsExistsByPermissionsAndTableName returns columns existence by permission and table name
@@ -74,12 +74,12 @@ func (t *Table) IsExistsByPermissionsAndTableName(columnName, tableName string) 
 }
 
 // GetColumns returns columns from database
-func (t *Table) GetColumns(name, jsonKey string) (map[string]string, error) {
+func (t *Table) GetColumns(transaction *DbTransaction, name, jsonKey string) (map[string]string, error) {
 	keyStr := ""
 	if jsonKey != "" {
 		keyStr = `->'` + jsonKey + `'`
 	}
-	rows, err := DBConn.Raw(`SELECT data.* FROM "`+t.tableName+`", jsonb_each_text(columns`+keyStr+`) AS data WHERE name = ?`, name).Rows()
+	rows, err := GetDB(transaction).Raw(`SELECT data.* FROM "`+t.tableName+`", jsonb_each_text(columns`+keyStr+`) AS data WHERE name = ?`, name).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -98,12 +98,12 @@ func (t *Table) GetColumns(name, jsonKey string) (map[string]string, error) {
 }
 
 // GetPermissions returns table permissions by name
-func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) {
+func (t *Table) GetPermissions(transaction *DbTransaction, name, jsonKey string) (map[string]string, error) {
 	keyStr := ""
 	if jsonKey != "" {
 		keyStr = `->'` + jsonKey + `'`
 	}
-	rows, err := DBConn.Raw(`SELECT data.* FROM "`+t.tableName+`", jsonb_each_text(permissions`+keyStr+`) AS data WHERE name = ?`, name).Rows()
+	rows, err := GetDB(transaction).Raw(`SELECT data.* FROM "`+t.tableName+`", jsonb_each_text(permissions`+keyStr+`) AS data WHERE name = ?`, name).Rows()
 	if err != nil {
 		return nil, err
 	}

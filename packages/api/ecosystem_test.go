@@ -88,14 +88,16 @@ func TestEditEcosystem(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Value": {`contract testEmpty {
+	name = randName(`test`)
+	form = url.Values{"Value": {`contract ` + name + ` {
 		action { Test("empty",  "empty value")}}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	if err := postTx(`@1NewContract`, &form); err != nil {
+	_, id, err := postTxResult(`@1NewContract`, &form)
+	if err != nil {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Id": {`2`}, "Value": {`contract testEmpty {
+	form = url.Values{"Id": {id}, "Value": {`contract ` + name + ` {
 		action { Test("empty3",  "empty value")}}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	if err := postTx(`@1EditContract`, &form); err != nil {
