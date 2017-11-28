@@ -85,7 +85,11 @@ func GetTestValue(name string) string {
 }
 
 func (sc SmartContract) GetLogger() *log.Entry {
-	return log.WithFields(log.Fields{"vde": sc.VDE, "name": sc.TxContract.Name})
+	var name string
+	if sc.TxContract != nil {
+		name = sc.TxContract.Name
+	}
+	return log.WithFields(log.Fields{"vde": sc.VDE, "name": name})
 }
 
 func newVM() *script.VM {
@@ -507,12 +511,14 @@ func getPermColumns(input string) (perm permColumn, err error) {
 // AccessColumns checks access rights to the columns
 func (sc *SmartContract) AccessColumns(table string, columns []string, update bool) error {
 	logger := sc.GetLogger()
-
-	if update && table == getDefTableName(sc, `parameters`) {
-		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
-			return nil
+	if table == getDefTableName(sc, `parameters`) {
+		if update {
+			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
+				return nil
+			}
+			return errAccessDenied
 		}
-		return fmt.Errorf(`Access denied`)
+		return nil
 	}
 	prefix, name := PrefixName(table)
 	tables := &model.Table{}
@@ -526,23 +532,22 @@ func (sc *SmartContract) AccessColumns(table string, columns []string, update bo
 		return fmt.Errorf(eTableNotFound, table)
 	}
 	var cols map[string]string
-
+	hcolumns := make(map[string]bool)
+	for _, col := range columns {
+		hcolumns[converter.Sanitize(col, `*`)] = true
+	}
 	err = json.Unmarshal([]byte(tables.Columns), &cols)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("getting table columns")
 		return err
 	}
-	for _, col := range columns {
-		var (
-			perm permColumn
-			cond string
-		)
-		cond = cols[converter.Sanitize(col, ``)]
-		if len(cond) == 0 {
-			return errAccessDenied
+	for column, cond := range cols {
+		if !hcolumns[column] && !hcolumns[`*`] {
+			continue
 		}
-		perm, err = getPermColumns(cond)
+		perm, err := getPermColumns(cond)
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting access columns")
 			return err
 		}
 		if update {
@@ -553,7 +558,8 @@ func (sc *SmartContract) AccessColumns(table string, columns []string, update bo
 		if len(cond) > 0 {
 			ret, err := sc.EvalIf(cond)
 			if err != nil {
-				logger.WithFields(log.Fields{"condition": cond, "column": col, "type": consts.EvalError}).Error("evaluating condition")
+				logger.WithFields(log.Fields{"condition": cond, "column": column,
+					"type": consts.EvalError}).Error("evaluating condition")
 				return err
 			}
 			if !ret {

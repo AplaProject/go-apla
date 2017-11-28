@@ -143,7 +143,7 @@ func EmbedFuncs(vm *script.VM) {
 	vmFuncCallsDB(vm, funcCallsDB)
 }
 
-func getTableName(sc *SmartContract, tblname string, ecosystem int64) string {
+func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
 	if tblname[0] < '1' || tblname[0] > '9' || !strings.Contains(tblname, `_`) {
 		prefix := converter.Int64ToStr(ecosystem)
 		if sc.VDE {
@@ -155,7 +155,7 @@ func getTableName(sc *SmartContract, tblname string, ecosystem int64) string {
 }
 
 func getDefTableName(sc *SmartContract, tblname string) string {
-	return getTableName(sc, tblname, sc.TxSmart.EcosystemID)
+	return GetTableName(sc, tblname, sc.TxSmart.EcosystemID)
 }
 
 func accessContracts(sc *SmartContract, names ...string) bool {
@@ -407,7 +407,10 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	if ecosystem == 0 {
 		ecosystem = sc.TxSmart.EcosystemID
 	}
-	tblname = getTableName(sc, tblname, ecosystem)
+	tblname = GetTableName(sc, tblname, ecosystem)
+	if err = sc.AccessColumns(tblname, strings.Split(columns, `,`), false); err != nil {
+		return 0, nil, err
+	}
 	rows, err = model.DBConn.Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {

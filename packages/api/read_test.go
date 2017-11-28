@@ -19,7 +19,6 @@ package api
 import (
 	"fmt"
 	"net/url"
-	//	"strings"
 	"testing"
 )
 
@@ -32,8 +31,8 @@ func TestRead(t *testing.T) {
 	name := randName(`tbl`)
 	form := url.Values{"Name": {name}, "Columns": {`[{"name":"my","type":"varchar", "index": "1", 
 	  "conditions":"true"},
-	{"name":"amount", "type":"number","index": "0", "conditions":"true"},
-	{"name":"active", "type":"character","index": "0", "conditions":"true"}]`},
+	{"name":"amount", "type":"number","index": "0", "conditions":"{\"update\":\"true\", \"read\":\"true\"}"},
+	{"name":"active", "type":"character","index": "0", "conditions":"{\"update\":\"true\", \"read\":\"false\"}"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "read": "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
 	if err != nil {
@@ -55,18 +54,21 @@ func TestRead(t *testing.T) {
 	contract Get%[1]s {
 		action {
 			var row array
-			Println("GET Start")
 			row = DBFind("%[1]s").Where("id>= ? and id<= ?", 2, 5)
-			Println("ROW", row)
+		}
+	}
+
+	contract GetOK%[1]s {
+		action {
+			var row array
+			row = DBFind("%[1]s").Columns("my,amount").Where("id>= ? and id<= ?", 2, 5)
 		}
 	}
 
 	contract GetData%[1]s {
 		action {
 			var row array
-			Println("GET Start")
 			row = DBFind("%[1]s").Columns("my").Where("id>= ? and id<= ?", 2, 5)
-			Println("ROW", row)
 		}
 	}
 
@@ -96,26 +98,21 @@ func TestRead(t *testing.T) {
 		t.Error(err)
 		return
 	}
-
+	if err := postTx(`Get`+name, &url.Values{}); err.Error() != `{"type":"panic","error":"Access denied"}` {
+		t.Errorf(`access problem`)
+		return
+	}
+	if err := postTx(`GetOK`+name, &url.Values{}); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(`EditColumn`, &url.Values{`TableName`: {name}, `Name`: {`active`},
+		`Permissions`: {`{"update":"true", "read":"ContractConditions(\"MainCondition\")"}`}}); err != nil {
+		t.Error(err)
+		return
+	}
 	if err := postTx(`Get`+name, &url.Values{}); err != nil {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Name": {name},
-		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
-			"update" : "true", 
-			"read": "ContractConditions(\"MyRead` + name + `\")",
-			"new_column": "ContractConditions(\"MainCondition\")"}`}}
-	err = postTx(`EditTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	if err := postTx(`Get`+name, &url.Values{}); err != nil {
-		t.Error(err)
-		return
-	}
-
-	t.Error(`OK`)
 }

@@ -29,6 +29,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -182,12 +183,19 @@ func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
 	}
-	state := converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`])
-	val, err := StateParam(int64(state), (*par.Pars)[`Name`])
+	prefix := (*par.Workspace.Vars)[`ecosystem_id`]
+	state := converter.StrToInt(prefix)
+	if par.Workspace.SmartContract.VDE {
+		prefix += `_vde`
+	}
+	sp := &model.StateParameter{}
+	sp.SetTablePrefix(prefix)
+	_, err := sp.Get(nil, (*par.Pars)[`Name`])
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
 		return err.Error()
 	}
+	val := sp.Value
 	if len((*par.Pars)[`Source`]) > 0 {
 		data := make([][]string, 0)
 		cols := []string{`id`, `name`}
@@ -397,8 +405,12 @@ func dbfindTag(par parFunc) string {
 	} else {
 		state = converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])
 	}
-	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
-	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
+	sc := par.Workspace.SmartContract
+	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
+	if err := sc.AccessColumns(tblname, strings.Split(fields, `,`), false); err != nil {
+		return `Access denied`
+	}
+	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
