@@ -711,6 +711,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 	}
 	count, err := model.GetColumnCount(tblName)
 	if err != nil {
+		log.WithFields(log.Fields{"table": tblName, "type": consts.DBError}).Error("counting table columns")
 		return err
 	}
 	if count >= int64(syspar.GetMaxColumns()) {
