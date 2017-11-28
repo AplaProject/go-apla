@@ -381,10 +381,9 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 			TokenID:  0,
 		}
 		if err = vmCompile(vm, item[`value`], &owner); err != nil {
-			log.Error("Load VDE Contract", names, err)
-			fmt.Println("Error Load VDE Contract", names, err)
+			log.WithFields(log.Fields{"names": names, "error": err}).Error("Load VDE Contract")
 		} else {
-			fmt.Println("OK Load VDE Contract", names, item[`id`])
+			log.WithFields(log.Fields{"names": names, "contract_id": item["id"]}).Info("OK Load VDE Conctract")
 		}
 	}
 

@@ -55,7 +55,6 @@ func GetHTTPHost() (string, string, string) {
 	HandleHTTPHost := ""
 	ListenHTTPHost := ":" + *utils.ListenHTTPPort
 	if len(*utils.TCPHost) > 0 {
-		fmt.Println(*utils.TCPHost)
 		ListenHTTPHost = *utils.TCPHost + ":" + *utils.ListenHTTPPort
 		BrowserHTTPHost = "http://" + *utils.TCPHost + ":" + *utils.ListenHTTPPort
 	}

@@ -18,7 +18,6 @@ package parser
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -48,7 +47,6 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		if len(blocks) == 0 {
 			break
 		}
-		fmt.Printf(`%s `, blocks[0].ID)
 		for _, block := range blocks {
 			// roll back our blocks to the block blockID
 			err = BlockRollback(block.Data)
