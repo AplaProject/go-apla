@@ -80,6 +80,7 @@ var (
 		"Eval":              10,
 		"Len":               5,
 		"Activate":          10,
+		"Deactivate":        10,
 		"CreateEcosystem":   100,
 		"RollbackEcosystem": 100,
 		"TableConditions":   100,
@@ -167,6 +168,7 @@ func init() {
 		"FlushContract":      FlushContract,
 		"Eval":               Eval,
 		"Activate":           Activate,
+		"Deactivate":         Deactivate,
 		"JSONToMap":          JSONToMap,
 		"check_signature":    CheckSignature, // system function
 	}, AutoPars: map[string]string{
@@ -706,6 +708,16 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract`)
 	}
 	ActivateContract(tblid, state, true)
+	return nil
+}
+
+// DeactivateContract sets Active status of the contract in smartVM
+func Deactivate(sc *SmartContract, tblid int64, state int64) error {
+	if sc.TxContract.Name != `@1DeactivateContract` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1DeactivateContract")
+		return fmt.Errorf(`DeactivateContract can be only called from @1DeactivateContract`)
+	}
+	ActivateContract(tblid, state, false)
 	return nil
 }
 
