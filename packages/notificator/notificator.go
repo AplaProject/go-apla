@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strconv"
 
+	"sync"
+
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/publisher"
@@ -22,15 +24,20 @@ type NotificationStats struct {
 	lastNotifID *int64
 }
 
-var notifications map[EcosystemID]NotificationStats
+type ConcurrentNotifications struct {
+	storage map[EcosystemID]NotificationStats
+	sync.Mutex
+}
+
+var notifications ConcurrentNotifications
 
 func init() {
-	notifications = make(map[EcosystemID]NotificationStats)
+	notifications = ConcurrentNotifications{storage: make(map[EcosystemID]NotificationStats)}
 }
 
 // SendNotifications is sending notifications
 func SendNotifications() {
-	for ecosystemID, ecosystemStats := range notifications {
+	for ecosystemID, ecosystemStats := range notifications.storage {
 		notifs := getEcosystemNotifications(ecosystemID, *ecosystemStats.lastNotifID, ecosystemStats)
 		for _, notif := range notifs {
 			userID, err := strconv.ParseInt(notif["recipient_id"], 10, 64)
@@ -54,8 +61,10 @@ func SendNotifications() {
 				return
 			}
 			id, _ := strconv.ParseInt(notif["id"], 10, 64)
-			if *notifications[ecosystemID].lastNotifID < id {
-				*notifications[ecosystemID].lastNotifID = id
+			if *notifications.storage[ecosystemID].lastNotifID < id {
+				notifications.Lock()
+				*notifications.storage[ecosystemID].lastNotifID = id
+				notifications.Unlock()
 			}
 		}
 	}
@@ -86,8 +95,10 @@ func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64
 
 // AddUser is subscribing user to notifications
 func AddUser(userID int64, ecosystemID int64) {
-	if _, ok := notifications[EcosystemID(ecosystemID)]; !ok {
-		notifications[EcosystemID(ecosystemID)] = NotificationStats{UserIDs: make(map[UserID]int64), lastNotifID: new(int64)}
+	if _, ok := notifications.storage[EcosystemID(ecosystemID)]; !ok {
+		notifications.Lock()
+		notifications.storage[EcosystemID(ecosystemID)] = NotificationStats{UserIDs: make(map[UserID]int64), lastNotifID: new(int64)}
+		notifications.Unlock()
 	}
-	notifications[EcosystemID(ecosystemID)].UserIDs[UserID(userID)] = 0
+	notifications.storage[EcosystemID(ecosystemID)].UserIDs[UserID(userID)] = 0
 }
