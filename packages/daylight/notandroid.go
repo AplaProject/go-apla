@@ -22,9 +22,9 @@ import (
 	"net"
 	"net/http"
 
+	conf "github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -67,7 +67,7 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Han
 // For ipv6 on the server
 func httpListenerV6(route http.Handler) {
 	i := 0
-	port := *utils.ListenHTTPPort
+	port := conf.Config.HTTPPort
 	var l net.Listener
 	var err error
 	for {

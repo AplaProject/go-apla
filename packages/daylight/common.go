@@ -21,8 +21,8 @@ import (
 	"os/exec"
 	"runtime"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -50,14 +50,23 @@ func openBrowser(BrowserHTTPHost string) {
 }
 
 // GetHTTPHost returns program's hosts
-func GetHTTPHost() (string, string, string) {
-	BrowserHTTPHost := "http://localhost:" + *utils.ListenHTTPPort
-	HandleHTTPHost := ""
-	ListenHTTPHost := ":" + *utils.ListenHTTPPort
-	if len(*utils.TCPHost) > 0 {
-		fmt.Println(*utils.TCPHost)
-		ListenHTTPHost = *utils.TCPHost + ":" + *utils.ListenHTTPPort
-		BrowserHTTPHost = "http://" + *utils.TCPHost + ":" + *utils.ListenHTTPPort
+func GetHTTPHost() (string, string) {
+	// !!!
+	// BrowserHTTPHost := "http://localhost:" + *utils.ListenHTTPPort
+	// HandleHTTPHost := ""
+	// ListenHTTPHost := ":" + *utils.ListenHTTPPort
+	// if len(*utils.TCPHost) > 0 {
+	// 	fmt.Println(*utils.TCPHost)
+	// 	ListenHTTPHost = *utils.TCPHost + ":" + *utils.ListenHTTPPort
+	// 	BrowserHTTPHost = "http://" + *utils.TCPHost + ":" + *utils.ListenHTTPPort
+	// }
+	host := "localhost"
+	if len(conf.Config.HTTPHost) > 0 && conf.Config.HTTPHost != "0.0.0.0" {
+		host = conf.Config.HTTPHost
 	}
-	return BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost
+
+	BrowserHTTPHost := "http://" + host + ":" + conf.Config.HTTPPort
+	ListenHTTPHost := conf.Config.HTTPHost + ":" + conf.Config.HTTPPort
+
+	return BrowserHTTPHost, ListenHTTPHost
 }

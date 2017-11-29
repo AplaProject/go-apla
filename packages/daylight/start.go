@@ -25,17 +25,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/api"
+	conf "github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/daemons"
 	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
-	"github.com/AplaProject/go-apla/packages/language"
 	logtools "github.com/AplaProject/go-apla/packages/log"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
@@ -46,42 +45,44 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func readConfig() {
-	// read the config.ini
-	config.Read()
-	if *utils.TCPHost == "" {
-		*utils.TCPHost = config.ConfigIni["tcp_host"]
-	}
-	if *utils.FirstBlockDir == "" {
-		*utils.FirstBlockDir = config.ConfigIni["first_block_dir"]
-	}
-	if *utils.ListenHTTPPort == "" {
-		*utils.ListenHTTPPort = config.ConfigIni["http_port"]
-	}
-	if *utils.Dir == "" {
-		*utils.Dir = config.ConfigIni["dir"]
-	}
-	utils.OneCountry = converter.StrToInt64(config.ConfigIni["one_country"])
-	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
-	if len(config.ConfigIni["lang"]) > 0 {
-		language.LangList = strings.Split(config.ConfigIni["lang"], `,`)
-	}
-}
+// !!! remove
+// func readConfig() {
+// 	// read the config.ini
+// 	config.Read()
+// 	if *utils.TCPHost == "" {
+// 		*utils.TCPHost = config.ConfigIni["tcp_host"]
+// 	}
+// 	if *utils.FirstBlockDir == "" {
+// 		*utils.FirstBlockDir = config.ConfigIni["first_block_dir"]
+// 	}
+// 	if *utils.ListenHTTPPort == "" {
+// 		*utils.ListenHTTPPort = config.ConfigIni["http_port"]
+// 	}
+// 	if *utils.Dir == "" {
+// 		*utils.Dir = config.ConfigIni["dir"]
+// 	}
+// 	utils.OneCountry = converter.StrToInt64(config.ConfigIni["one_country"])
+// 	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
+// 	if len(config.ConfigIni["lang"]) > 0 {
+// 		language.LangList = strings.Split(config.ConfigIni["lang"], `,`)
+// 	}
+// }
 
 func initStatsd() {
-	var host string = "127.0.0.1"
-	var port int = 8125
-	var name = "apla"
-	if config.ConfigIni["stastd_host"] != "" {
-		host = config.ConfigIni["statsd_host"]
-	}
-	if config.ConfigIni["stastd_port"] != "" {
-		port = converter.StrToInt(config.ConfigIni["statsd_port"])
-	}
-	if config.ConfigIni["statsd_client_name"] != "" {
-		name = config.ConfigIni["statsd_client_name"]
-	}
-	if err := statsd.Init(host, port, name); err != nil {
+	// host := "127.0.0.1"
+	// port := 8125
+	// var name = "apla"
+	// if config.ConfigIni["stastd_host"] != "" {
+	// 	host = config.ConfigIni["statsd_host"]
+	// }
+	// if config.ConfigIni["stastd_port"] != "" {
+	// 	port = converter.StrToInt(config.ConfigIni["statsd_port"])
+	// }
+	// if config.ConfigIni["statsd_client_name"] != "" {
+	// 	name = config.ConfigIni["statsd_client_name"]
+	// }
+	cfg := conf.Config.StatsD
+	if err := statsd.Init(cfg.Host, converter.StrToInt(cfg.Port), cfg.Name); err != nil {
 		log.WithFields(log.Fields{"type": consts.StatsdError, "error": err}).Fatal("cannot initialize statsd")
 	}
 }
@@ -270,7 +271,33 @@ func Start() {
 		statsd.Close()
 	}
 
-	readConfig()
+	// // // // // // // // // // // // //
+
+	fmt.Println("Start.") // !!!
+
+	conf.ParseFlags()
+
+	// parse flags
+
+	// if initConfig
+
+	// load toml config
+	// apply flags
+
+	if err := conf.LoadConfig(); err != nil {
+		log.Error("loadConfig:", err)
+		return
+	}
+
+	if err := conf.SaveConfig(); err != nil {
+		log.Error("saveConfig:", err)
+		return
+	}
+	return // !!!
+
+	//	readConfig()
+
+	// // // // // // // // // // // // //
 
 	if len(config.ConfigIni["db_type"]) > 0 {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
@@ -306,7 +333,7 @@ func Start() {
 	initStatsd()
 	err = initLogs()
 	if err != nil {
-		fmt.Println("logs init failed: %v", utils.ErrInfo(err))
+		fmt.Printf("logs init failed: %v\n", utils.ErrInfo(err))
 		Exit(1)
 	}
 
@@ -352,7 +379,7 @@ func Start() {
 		}
 	}
 
-	BrowserHTTPHost, _, ListenHTTPHost := GetHTTPHost()
+	BrowserHTTPHost, ListenHTTPHost := GetHTTPHost()
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err := daemonsctl.RunAllDaemons()
@@ -366,7 +393,7 @@ func Start() {
 
 	go func() {
 		time.Sleep(time.Second)
-		BrowserHTTPHost = initRoutes(ListenHTTPHost, BrowserHTTPHost)
+		BrowserHTTPHost = initRoutes(ListenHTTPHost, BrowserHTTPHost) // !!! BrowserHTTPHost unused
 
 		if *utils.Console == 0 && !utils.Mobile() {
 			log.Info("starting browser")

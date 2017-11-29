@@ -33,9 +33,7 @@ import (
 	//	"runtime"
 	"strings"
 	"time"
-
-	"github.com/AplaProject/go-apla/packages/lib"
-	"github.com/AplaProject/go-apla/packages/utils"
+	// "github.com/AplaProject/go-apla/packages/lib"		// !!! does not exist anymore
 )
 
 const (
@@ -58,6 +56,14 @@ type Settings struct {
 	File     string
 	ZipFile  string
 	JSONPath string
+}
+
+// !!! moved from utils
+type update struct {
+	Version string
+	Hash    string
+	Sign    string
+	URL     string
 }
 
 func exit(err error) {
@@ -89,7 +95,7 @@ func main() {
 		settings map[string]Settings
 	)
 
-	out := make(map[string]utils.Update)
+	out := make(map[string]update)
 
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {

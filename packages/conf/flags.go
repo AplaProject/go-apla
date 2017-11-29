@@ -1,0 +1,91 @@
+package conf
+
+import (
+	"flag"
+)
+
+var (
+	// FlagInitConfig - reset config
+	FlagInitConfig = flag.Bool("initConfig", false, "reset config to initial values")
+
+	// TCPHost is the tcp host
+	FlagTCPHost = flag.String("tcpHost", "127.0.0.1", "tcpHost (e.g. 127.0.0.1)")
+	// TCPHost is the tcp host
+	FlagTCPPort = flag.Int("tcpPort", 7078, "tcpPort 7080 by default")
+
+	//
+	FlagHTTPHost = flag.String("httpHost", "127.0.0.1", "http api bound to that host, use 0.0.0.0 to bind all addresses")
+	// ListenHTTPPort is HTTP port
+	FlagHTTPPort = flag.Int("httpPort", 7079, "http api port (7079)")
+
+	// // FirstBlockDir is a folder where 1block file will be stored
+	// FirstBlockDir = flag.String("firstBlockDir", "", "FirstBlockDir")
+	// // FirstBlockPublicKey is the private key
+	// FirstBlockPublicKey = flag.String("firstBlockPublicKey", "", "FirstBlockPublicKey")
+	// // FirstBlockNodePublicKey is the node private key
+	// FirstBlockNodePublicKey = flag.String("firstBlockNodePublicKey", "", "FirstBlockNodePublicKey")
+	// // FirstBlockHost is the host of the first block
+	// FirstBlockHost = flag.String("firstBlockHost", "", "FirstBlockHost")
+	// // WalletAddress is a wallet address for forging
+	// WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
+
+	// // GenerateFirstBlock show if the first block must be generated
+	// GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
+	// // LogSQL show if we should display sql queries in logs
+	// LogSQL = flag.Int64("logSQL", 0, "log sql")
+	// // LogStackTrace show if we should display stack trace in logs
+	// LogStackTrace = flag.Int64("logStackTrace", 0, "log stack trace")
+	// // OldVersion is the number of the old version
+	// OldVersion = flag.String("oldVersion", "", "")
+	// // TestRollBack equals 1 for testing rollback
+	// TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
+
+	// // Dir is apla folder
+	// // Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
+
+	// // OldFileName is the old file name
+	// OldFileName = flag.String("oldFileName", "", "")
+	// // LogLevel is the log level
+	// LogLevel = flag.String("logLevel", "", "DayLight LogLevel")
+
+	// // Console equals 1 for starting in console
+	// Console = flag.Int64("console", 0, "Start from console")
+
+	// // StartBlockID is the start block
+	// StartBlockID = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
+	// // EndBlockID is the end block
+	// EndBlockID = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
+	// // RollbackToBlockID is the target block for rollback
+	// RollbackToBlockID = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
+	// // TLS is a directory for .well-known and keys. It is required for https
+	// TLS = flag.String("tls", "", "Support https. Specify directory for .well-known")
+	// // DevTools switches on dev tools in thrust shell
+	// DevTools = flag.Int64("devtools", 0, "Devtools in thrust-shell")
+	// // BoltDir is the edir for BoltDb folder
+	// // BoltDir = flag.String("boltDir", GetCurrentDir(), "Bolt directory")
+	// // BoltPsw is the password for BoltDB
+	// BoltPsw = flag.String("boltPsw", "", "Bolt password")
+	// // APIToken is an api token for exchange api
+	// APIToken = flag.String("apiToken", "", "API Token")
+	// // OneCountry is the country which is supported
+	// OneCountry int64
+	// // PrivCountry is protect system from registering
+	// PrivCountry bool
+	// //	OutFile            *os.File
+
+	// // LogoExt is the extension of the logotype
+	// LogoExt = `png`
+	// // DltWalletID is the wallet identifier
+	// KeyID = flag.Int64("keyID", 0, "keyID")
+
+	// ReturnCh     chan string
+	// CancelFunc   context.CancelFunc
+	// DaemonsCount int
+)
+
+// ParseFlags from command line
+func ParseFlags() {
+	flag.Parse()
+}
+
+//.

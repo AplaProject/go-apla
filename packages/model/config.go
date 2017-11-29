@@ -6,14 +6,14 @@ import (
 )
 
 type Config struct {
-	MyBlockID              int32  `gorm:"not null"`
+	MyBlockID              int32  `gorm:"not null"` // !!! remove
 	KeyID                  int64  `gorm:"not null"`
 	EcosystemID            int64  `gorm:"not null"`
-	BadBlocks              string `gorm:"not null"`
-	AutoReload             int    `gorm:"not null"`
-	FirstLoadBlockchainURL string `gorm:"column:first_load_blockchain_url;not null"`
-	FirstLoadBlockchain    string `gorm:"not null"`
-	CurrentLoadBlockchain  string `gorm:"not null"`
+	BadBlocks              string `gorm:"not null"`                                  // only read
+	AutoReload             int    `gorm:"not null"`                                  // not used
+	FirstLoadBlockchainURL string `gorm:"column:first_load_blockchain_url;not null"` // install -> blocks_colletcion
+	FirstLoadBlockchain    string `gorm:"not null"`                                  // install -> blocks_collection == 'file'
+	CurrentLoadBlockchain  string `gorm:"not null"`                                  // not used
 }
 
 func (c *Config) TableName() string {

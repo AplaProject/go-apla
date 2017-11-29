@@ -52,14 +52,21 @@ type BlockData struct {
 	Version      int
 }
 
-type Update struct {
-	Version string
-	Hash    string
-	Sign    string
-	URL     string
-}
-
 var (
+
+	// !!! moved to conf/flags
+	//
+	// FlagInitConfig = flag.Bool("initConfig", false, "reset config to initial values")
+
+	// // TCPHost is the tcp host
+	// FlagTCPHost = flag.String("tcpHost", "127.0.0.1", "tcpHost (e.g. 127.0.0.1)")
+	// // TCPHost is the tcp host
+	// FlagTCPPort = flag.Int("tcpPort", 7078, "tcpPort 7080 by default")
+
+	// FlagHTTPHost = flag.String("httpHost", "127.0.0.1", "http api bound to that host, use 0.0.0.0 to bind all addresses")
+	// // ListenHTTPPort is HTTP port
+	// FlagHTTPPort = flag.Int("httpPort", 7079, "http api port (7079)")
+
 	// FirstBlockDir is a folder where 1block file will be stored
 	FirstBlockDir = flag.String("firstBlockDir", "", "FirstBlockDir")
 	// FirstBlockPublicKey is the private key
@@ -70,10 +77,7 @@ var (
 	FirstBlockHost = flag.String("firstBlockHost", "", "FirstBlockHost")
 	// WalletAddress is a wallet address for forging
 	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
-	// TCPHost is the tcp host
-	TCPHost = flag.String("tcpHost", "127.0.0.1", "tcpHost (e.g. 127.0.0.1)")
-	// ListenHTTPPort is HTTP port
-	ListenHTTPPort = flag.String("listenHttpPort", "7079", "ListenHTTPPort")
+
 	// GenerateFirstBlock show if the first block must be generated
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
 	// LogSQL show if we should display sql queries in logs
@@ -84,14 +88,17 @@ var (
 	OldVersion = flag.String("oldVersion", "", "")
 	// TestRollBack equals 1 for testing rollback
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
+
 	// Dir is apla folder
 	Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
 	// OldFileName is the old file name
 	OldFileName = flag.String("oldFileName", "", "")
 	// LogLevel is the log level
 	LogLevel = flag.String("logLevel", "", "DayLight LogLevel")
+
 	// Console equals 1 for starting in console
 	Console = flag.Int64("console", 0, "Start from console")
+
 	// StartBlockID is the start block
 	StartBlockID = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
 	// EndBlockID is the end block
@@ -122,13 +129,15 @@ var (
 	ReturnCh     chan string
 	CancelFunc   context.CancelFunc
 	DaemonsCount int
+
 	// Thrust is true for thrust shell
-	Thrust bool
+	// Thrust bool	// !!! unused
 )
 
-func init() {
-	flag.Parse()
-}
+// !!! flsg.Parse runs explicitly on start
+// func init() {
+// 	flag.Parse()
+// }
 
 // IOS checks if the app runs on iOS
 func IOS() bool {
