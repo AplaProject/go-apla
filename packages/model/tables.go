@@ -2,6 +2,7 @@ package model
 
 import "strconv"
 
+// Table is model
 type Table struct {
 	tableName   string
 	ID          int64  `gorm:"primary_key;not null"`
@@ -12,6 +13,7 @@ type Table struct {
 	RbID        int64  `gorm:"not null"`
 }
 
+// TableVDE is model
 type TableVDE struct {
 	tableName   string
 	ID          int64  `gorm:"primary_key;not null"`
@@ -21,46 +23,57 @@ type TableVDE struct {
 	Conditions  string `gorm:"not null"`
 }
 
+// SetTablePrefix is setting table prefix
 func (t *Table) SetTablePrefix(prefix string) {
 	t.tableName = prefix + "_tables"
 }
 
+// SetTablePrefix is setting table prefix
 func (t *TableVDE) SetTablePrefix(prefix string) {
 	t.tableName = prefix + "_tables"
 }
 
+// TableName returns name of table
 func (t *Table) TableName() string {
 	return t.tableName
 }
 
+// TableName returns name of table
 func (t *TableVDE) TableName() string {
 	return t.tableName
 }
 
+// Get is retrieving model from database
 func (t *Table) Get(transaction *DbTransaction, name string) (bool, error) {
 	return isFound(GetDB(transaction).Where("name = ?", name).First(t))
 }
 
+// Create is creating record of model
 func (t *Table) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(t).Error
 }
 
+// Create is creating record of model
 func (t *TableVDE) Create(transaction *DbTransaction) error {
 	return GetDB(transaction).Create(t).Error
 }
 
+// Delete is deleting model from database
 func (t *Table) Delete() error {
 	return DBConn.Delete(t).Error
 }
 
+// ExistsByName finding table existence by name
 func (t *Table) ExistsByName(transaction *DbTransaction, name string) (bool, error) {
 	return isFound(GetDB(transaction).Where("name = ?", name).First(t))
 }
 
+// IsExistsByPermissionsAndTableName returns columns existence by permission and table name
 func (t *Table) IsExistsByPermissionsAndTableName(columnName, tableName string) (bool, error) {
 	return isFound(DBConn.Where(`(columns-> ? ) is not null AND name = ?`, columnName, tableName).First(t))
 }
 
+// GetColumns returns columns from database
 func (t *Table) GetColumns(transaction *DbTransaction, name, jsonKey string) (map[string]string, error) {
 	keyStr := ""
 	if jsonKey != "" {
@@ -84,6 +97,7 @@ func (t *Table) GetColumns(transaction *DbTransaction, name, jsonKey string) (ma
 	return result, nil
 }
 
+// GetPermissions returns table permissions by name
 func (t *Table) GetPermissions(transaction *DbTransaction, name, jsonKey string) (map[string]string, error) {
 	keyStr := ""
 	if jsonKey != "" {
@@ -107,6 +121,7 @@ func (t *Table) GetPermissions(transaction *DbTransaction, name, jsonKey string)
 	return result, nil
 }
 
+// CreateTable is creating table
 func CreateTable(transaction *DbTransaction, tableName, colsSQL string) error {
 	return GetDB(transaction).Exec(`CREATE TABLE "` + tableName + `" (
 				"id" bigint NOT NULL DEFAULT '0',
@@ -116,6 +131,7 @@ func CreateTable(transaction *DbTransaction, tableName, colsSQL string) error {
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`).Error
 }
 
+// CreateVDETable is creating VDE table
 func CreateVDETable(transaction *DbTransaction, tableName, colsSQL string) error {
 	return GetDB(transaction).Exec(`CREATE TABLE "` + tableName + `" (
 				"id" bigint NOT NULL DEFAULT '0',
@@ -124,6 +140,7 @@ func CreateVDETable(transaction *DbTransaction, tableName, colsSQL string) error
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`).Error
 }
 
+// GetColumnsAndPermissionsAndRbIDWhereTable returns columns and permissions
 func GetColumnsAndPermissionsAndRbIDWhereTable(transaction *DbTransaction, table, tableName string) (map[string]string, error) {
 	type proxy struct {
 		ColumnsAndPermissions string
@@ -140,6 +157,7 @@ func GetColumnsAndPermissionsAndRbIDWhereTable(transaction *DbTransaction, table
 	return result, nil
 }
 
+// GetTableWhereUpdatePermissionAndTableName returns tables
 func GetTableWhereUpdatePermissionAndTableName(table, columnName, tableName string) (map[string]string, error) {
 	type proxy struct {
 		ColumnsAndPermissions string
@@ -156,6 +174,7 @@ func GetTableWhereUpdatePermissionAndTableName(table, columnName, tableName stri
 	return result, nil
 }
 
+// GetAll returns all tables
 func (t *Table) GetAll(prefix string) ([]Table, error) {
 	result := make([]Table, 0)
 	err := DBConn.Table(prefix + "_tables").Find(&result).Error

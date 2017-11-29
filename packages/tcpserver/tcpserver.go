@@ -105,6 +105,7 @@ func HandleTCPRequest(rw io.ReadWriter) {
 	}
 }
 
+// TcpListener is listening tcp address
 func TcpListener(laddr string) error {
 
 	if strings.HasPrefix(laddr, "127.") {

@@ -6,7 +6,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/notificator"
 )
 
-func Notificate(d *daemon, ctx context.Context) error {
+// Notificate is sending notifications
+func Notificate(ctx context.Context, d *daemon) error {
 	notificator.SendNotifications()
 	return nil
 }

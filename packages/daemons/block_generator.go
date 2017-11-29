@@ -30,7 +30,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func BlockGenerator(d *daemon, ctx context.Context) error {
+// BlockGenerator is daemon that generates blocks
+func BlockGenerator(ctx context.Context, d *daemon) error {
 	d.sleepTime = time.Second
 
 	config := &model.Config{}
@@ -39,7 +40,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	myNodePosition, err := syspar.GetNodePositionByKeyID(config.KeyID)
+	_, err := syspar.GetNodePositionByKeyID(config.KeyID)
 	if err != nil {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
@@ -51,7 +52,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	defer DBUnlock()
 
 	// wee need fresh myNodePosition after locking
-	myNodePosition, err = syspar.GetNodePositionByKeyID(config.KeyID)
+	myNodePosition, err := syspar.GetNodePositionByKeyID(config.KeyID)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node position by key id")
 		return err

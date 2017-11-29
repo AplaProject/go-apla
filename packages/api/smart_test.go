@@ -50,7 +50,7 @@ func TestSmartFields(t *testing.T) {
 		return
 	}
 	if cntResult.Name != `@1MainCondition` {
-		t.Error(fmt.Sprintf(`MainCondition name is wrong: %s`, cntResult.Name))
+		t.Errorf(`MainCondition name is wrong: %s`, cntResult.Name)
 		return
 	}
 	if err := postTx(`MainCondition`, &url.Values{}); err != nil {
@@ -105,6 +105,7 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
 	form = url.Values{"Name": {menuname}, "Value": {`first
 			second
 			third`}, "Title": {`My Menu`},
@@ -157,7 +158,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 	err = postTx(`NewBlock`, &form)
-	if cutErr(err) != fmt.Sprintf(`{"type":"warning","error":"Block %s aready exists"}`, name) {
+	if cutErr(err) != fmt.Sprintf(`{"type":"warning","error":"Block %s already exists"}`, name) {
 		t.Error(err)
 		return
 	}

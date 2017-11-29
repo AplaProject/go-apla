@@ -23,7 +23,6 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/system"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -61,7 +60,7 @@ func waitSig() {
 	C.waitSig()
 }
 
-// Signals waits for Interrupt os.Kill signals
+// WaitForSignals waits for Interrupt os.Kill signals
 func WaitForSignals() {
 	SigChan = make(chan os.Signal, 1)
 	waitSig()
@@ -79,8 +78,6 @@ func WaitForSignals() {
 
 			log.Debug("Daemons killed")
 		}
-
-		system.FinishThrust()
 
 		if model.DBConn != nil {
 			err := model.GormClose()

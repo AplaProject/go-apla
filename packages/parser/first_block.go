@@ -36,18 +36,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// FirstBlockParser is parser wrapper
 type FirstBlockParser struct {
 	*Parser
 }
 
+// Init first block
 func (p *FirstBlockParser) Init() error {
 	return nil
 }
 
+// Validate first block
 func (p *FirstBlockParser) Validate() error {
 	return nil
 }
 
+// Action is fires first block
 func (p *FirstBlockParser) Action() error {
 	logger := p.GetLogger()
 	data := p.TxPtr.(*consts.FirstBlock)
@@ -94,10 +98,12 @@ func (p *FirstBlockParser) Action() error {
 	return nil
 }
 
+// Rollback first block
 func (p *FirstBlockParser) Rollback() error {
 	return nil
 }
 
+// Header is returns first block header
 func (p FirstBlockParser) Header() *tx.Header {
 	return nil
 }
@@ -126,14 +132,14 @@ func FirstBlock() {
 	PublicKey := *utils.FirstBlockPublicKey
 	PublicKeyBytes, err := hex.DecodeString(string(PublicKey))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding public key from hex to string")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex to string")
 		return
 	}
 
 	NodePublicKey := *utils.FirstBlockNodePublicKey
 	NodePublicKeyBytes, err := hex.DecodeString(string(NodePublicKey))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding node public key from hex to string")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding node public key from hex to string")
 		return
 	}
 
@@ -177,7 +183,7 @@ func FirstBlock() {
 		return
 	}
 
-	firstBlockDir := ""
+	var firstBlockDir string
 	if len(*utils.FirstBlockDir) == 0 {
 		firstBlockDir = *utils.Dir
 	} else {

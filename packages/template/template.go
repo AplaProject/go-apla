@@ -196,11 +196,11 @@ func ifValue(val string, workspace *Workspace) bool {
 	case `>`, `<`, `<=`, `>=`:
 		ret0, err := decimal.NewFromString(strings.TrimSpace(cond[0]))
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strings.TrimSpace(cond[0])}).Error("converting left condition from string to decimal")
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": strings.TrimSpace(cond[0])}).Error("converting left condition from string to decimal")
 		}
 		ret1, err := decimal.NewFromString(strings.TrimSpace(cond[1]))
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": strings.TrimSpace(cond[1])}).Error("converting right condition from string to decimal")
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": strings.TrimSpace(cond[1])}).Error("converting right condition from string to decimal")
 		}
 		if len(cond) == 2 {
 			var bin bool
