@@ -26,7 +26,19 @@ type NotificationStats struct {
 
 type ConcurrentNotifications struct {
 	storage map[EcosystemID]NotificationStats
-	sync.Mutex
+	sync.RWMutex
+}
+
+func (cn *ConcurrentNotifications) Set(id EcosystemID, s NotificationStats) {
+	cn.Lock()
+	defer cn.Unlock()
+	cn.storage[id] = s
+}
+
+func (cn *ConcurrentNotifications) Get(id EcosystemID) NotificationStats {
+	cn.RLock()
+	defer cn.RUnlock()
+	return cn.storage[id]
 }
 
 var notifications ConcurrentNotifications
@@ -61,10 +73,9 @@ func SendNotifications() {
 				return
 			}
 			id, _ := strconv.ParseInt(notif["id"], 10, 64)
-			if *notifications.storage[ecosystemID].lastNotifID < id {
-				notifications.Lock()
-				*notifications.storage[ecosystemID].lastNotifID = id
-				notifications.Unlock()
+			if ln := notifications.Get(ecosystemID); *ln.lastNotifID < id {
+				*ln.lastNotifID = id
+				notifications.Set(ecosystemID, ln)
 			}
 		}
 	}
@@ -95,10 +106,13 @@ func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64
 
 // AddUser is subscribing user to notifications
 func AddUser(userID int64, ecosystemID int64) {
-	if _, ok := notifications.storage[EcosystemID(ecosystemID)]; !ok {
-		notifications.Lock()
-		notifications.storage[EcosystemID(ecosystemID)] = NotificationStats{UserIDs: make(map[UserID]int64), lastNotifID: new(int64)}
-		notifications.Unlock()
+	eId := EcosystemID(ecosystemID)
+	ns := notifications.Get(eId)
+
+	if len(ns.UserIDs) == 0 {
+		ns = NotificationStats{UserIDs: make(map[UserID]int64), lastNotifID: new(int64)}
 	}
-	notifications.storage[EcosystemID(ecosystemID)].UserIDs[UserID(userID)] = 0
+
+	ns.UserIDs[UserID(userID)] = 0
+	notifications.Set(eId, ns)
 }
