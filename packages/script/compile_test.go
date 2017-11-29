@@ -63,10 +63,15 @@ func TestVMCompile(t *testing.T) {
 				rate = 100000000000
 				name="Name parameter"
 			}
-			func getset string {
-				return Settings("@22sets","name")
+			action {
+				$result = Settings("@22sets","name")
 			}
-		}`, `sets.getset`, `Name parameter`},
+		}
+		func result() string {
+			var par map
+			return CallContract("@22sets", par) + "=" + sets()
+		}
+		`, `result`, `Name parameter=Name parameter`},
 
 		{`func proc(par string) string {
 					return par + "proc"
