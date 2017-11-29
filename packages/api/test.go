@@ -50,7 +50,7 @@ func signTest(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	}
 	private, err := hex.DecodeString(data.params[`private`].(string))
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": data.params["private"].(string)}).Error("decoding private from hex")
+		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": data.params["private"].(string)}).Error("decoding private from hex")
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	pub, err := crypto.PrivateToPublic(private)

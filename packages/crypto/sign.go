@@ -21,27 +21,29 @@ const (
 	_ECDSA signProvider = iota
 )
 
+// Sign in signing data with private key
 func Sign(privateKey string, data string) ([]byte, error) {
 	if len(data) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(SigningEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(ErrSigningEmpty.Error())
 	}
 	switch signProv {
 	case _ECDSA:
 		return signECDSA(privateKey, data)
 	default:
-		return nil, UnknownProviderError
+		return nil, ErrUnknownProvider
 	}
 }
 
+// CheckSign is checking sign
 func CheckSign(public []byte, data string, signature []byte) (bool, error) {
 	if len(public) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(CheckingSignEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(ErrCheckingSignEmpty.Error())
 	}
 	switch signProv {
 	case _ECDSA:
 		return checkECDSA(public, data, signature)
 	default:
-		return false, UnknownProviderError
+		return false, ErrUnknownProvider
 	}
 }
 
@@ -61,12 +63,12 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 	case elliptic256:
 		pubkeyCurve = elliptic.P256()
 	default:
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Fatal(UnsupportedCurveSize.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Fatal(ErrUnsupportedCurveSize.Error())
 	}
 
 	b, err := hex.DecodeString(privateKey)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding private key from hex")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
 		return
 	}
 	bi := new(big.Int).SetBytes(b)
@@ -76,7 +78,7 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 
 	signhash, err := Hash([]byte(data))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Fatal(HashingError.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Fatal(ErrHashing.Error())
 	}
 	r, s, err := ecdsa.Sign(crand.Reader, priv, signhash)
 	if err != nil {
@@ -106,12 +108,12 @@ func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
 	case elliptic256:
 		pubkeyCurve = elliptic.P256()
 	default:
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(UnsupportedCurveSize.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(ErrUnsupportedCurveSize.Error())
 	}
 
 	hash, err := Hash([]byte(data))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(HashingError.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(ErrHashing.Error())
 	}
 
 	pubkey := new(ecdsa.PublicKey)
@@ -124,7 +126,7 @@ func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
 	}
 	verifystatus := ecdsa.Verify(pubkey, hash, r, s)
 	if !verifystatus {
-		return false, IncorrectSign
+		return false, ErrIncorrectSign
 	}
 	return true, nil
 }
@@ -152,7 +154,7 @@ func parseSign(sign string) (*big.Int, *big.Int, error) {
 	if len(sign) > 128 {
 		binSign, err = hex.DecodeString(sign)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding sign from string")
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding sign from string")
 			return nil, nil, err
 		}
 		left := parse(binSign[2:])
