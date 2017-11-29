@@ -64,7 +64,7 @@ type parFunc struct {
 	Node      *node
 	Workspace *Workspace
 	Pars      *map[string]string
-	Tails     *[]*[]string
+	Tails     *[]*[][]rune
 }
 
 type nodeFunc func(par parFunc) string
@@ -280,7 +280,7 @@ func appendText(owner *node, text string) {
 	}
 }
 
-func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[]string, tailpars *[]*[]string) {
+func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]rune, tailpars *[]*[][]rune) {
 	var (
 		out     string
 		curNode node
@@ -291,7 +291,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[]str
 	}
 	if curFunc.Params == `*` {
 		for i, v := range *params {
-			val := strings.TrimSpace(v)
+			val := strings.TrimSpace(string(v))
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
 				pars[val[:off]] = macro(strings.Trim(val[off+1:], "\t\r\n \"`"), workspace.Vars)
@@ -302,7 +302,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[]str
 	} else {
 		for i, v := range strings.Split(curFunc.Params, `,`) {
 			if i < len(*params) {
-				val := macro(strings.TrimSpace((*params)[i]), workspace.Vars)
+				val := macro(strings.TrimSpace(string((*params)[i])), workspace.Vars)
 				off := strings.IndexByte(val, ':')
 				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
 					cut := "\t\r\n \"`"
@@ -348,14 +348,16 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[]str
 	}
 }
 
-func getFunc(input string, curFunc tplFunc) (*[]string, int, *[]*[]string) {
+func getFunc(input string, curFunc tplFunc) (*[][]rune, int, *[]*[][]rune) {
 	var (
 		curp, skip, off, mode, lenParams int
 		quote                            bool
 		pair, ch                         rune
-		tailpar                          *[]*[]string
+		tailpar                          *[]*[][]rune
 	)
-	params := make([]string, 1)
+	var params [][]rune
+	sizeParam := 32 + len(input)/2
+	params = append(params, make([]rune, 0, sizeParam))
 	if curFunc.Params == `*` {
 		lenParams = 0xff
 	} else {
@@ -374,16 +376,16 @@ main:
 		}
 		if pair > 0 {
 			if ch != pair {
-				params[curp] += string(ch)
+				params[curp] = append(params[curp], ch)
 			} else {
 				if off+1 == len(input) || rune(input[off+1]) != pair {
 					pair = 0
 					if quote {
-						params[curp] += string(ch)
+						params[curp] = append(params[curp], ch)
 						quote = false
 					}
 				} else {
-					params[curp] += string(ch)
+					params[curp] = append(params[curp], ch)
 					skip = 1
 				}
 			}
@@ -394,7 +396,7 @@ main:
 				if ch == '"' || ch == '`' {
 					pair = ch
 				} else {
-					params[curp] += string(ch)
+					params[curp] = append(params[curp], ch)
 				}
 			}
 			continue
@@ -408,7 +410,7 @@ main:
 			}
 		case ',':
 			if mode == 0 && level == 1 && len(params) < lenParams {
-				params = append(params, ``)
+				params = append(params, make([]rune, 0, sizeParam))
 				curp++
 				continue
 			}
@@ -437,7 +439,9 @@ main:
 						mode = 1
 						for _, keyp := range []string{`Body`, `Data`} {
 							if strings.Contains(curFunc.Params, keyp) {
-								params = append(params, keyp+`:`)
+								irune := make([]rune, 0, sizeParam)
+								s := keyp + `:`
+								params = append(params, append(irune, []rune(s)...))
 								break
 							}
 						}
@@ -469,10 +473,10 @@ main:
 								parTail, shift, _ := getFunc(input[next:], tailFunc.tplFunc)
 								off = shift + next
 								if tailpar == nil {
-									fortail := make([]*[]string, 0)
+									fortail := make([]*[][]rune, 0)
 									tailpar = &fortail
 								}
-								*parTail = append(*parTail, key)
+								*parTail = append(*parTail, []rune(key))
 								*tailpar = append(*tailpar, parTail)
 								found = true
 								if tailFunc.Last {
@@ -489,7 +493,7 @@ main:
 				break main
 			}
 		}
-		params[curp] += string(ch)
+		params[curp] = append(params[curp], ch)
 		continue
 	}
 	return &params, utf8.RuneCountInString(input[:off]), tailpar
@@ -500,8 +504,8 @@ func process(input string, owner *node, workspace *Workspace) {
 		nameOff, shift int
 		curFunc        tplFunc
 		isFunc         bool
-		params         *[]string
-		tailpars       *[]*[]string
+		params         *[][]rune
+		tailpars       *[]*[][]rune
 	)
 	name := make([]rune, 0, 128)
 	for off, ch := range input {
