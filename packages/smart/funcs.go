@@ -17,7 +17,9 @@
 package smart
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,12 +27,15 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -74,13 +79,20 @@ var (
 		"EcosysParam":        10,
 		"Eval":               10,
 		"FlushContract":      50,
+		"HMac":               50,
 		"JSONToMap":          50,
+		"Sha256":             50,
 		"IdToAddress":        10,
 		"IsContract":         10,
 		"Len":                5,
+		"Join":               10,
+		"Replace":            10,
 		"PermColumn":         50,
 		"PermTable":          100,
 		"Substr":             10,
+		"Size":               10,
+		"ToLower":            10,
+		"TrimSpace":          10,
 		"TableConditions":    100,
 		"ValidateCondition":  30,
 	}
@@ -112,9 +124,11 @@ func EmbedFuncs(vm *script.VM) {
 		"Eval":               Eval,
 		"Float":              Float,
 		"FlushContract":      FlushContract,
+		"HMac":               HMac,
 		"JSONToMap":          JSONToMap,
 		"IdToAddress":        IDToAddress,
 		"Int":                Int,
+		"Join":               Join,
 		"IsContract":         IsContract,
 		"Len":                Len,
 		"Money":              Money,
@@ -122,10 +136,19 @@ func EmbedFuncs(vm *script.VM) {
 		"PermTable":          PermTable,
 		"Str":                Str,
 		"Substr":             Substr,
+		"Replace":            Replace,
+		"Size":               Size,
+		"Sha256":             Sha256,
+		"ToLower":            strings.ToLower,
+		"TrimSpace":          strings.TrimSpace,
 		"TableConditions":    TableConditions,
 		"ValidateCondition":  ValidateCondition,
 		//   VDE functions only
-		"HTTPRequest": HTTPRequest,
+		"HTTPRequest":  HTTPRequest,
+		"GetMapKeys":   GetMapKeys,
+		"SortedKeys":   SortedKeys,
+		"Date":         Date,
+		"HTTPPostJSON": HTTPPostJSON,
 	}, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
 	}})
@@ -874,6 +897,50 @@ func IDToAddress(id int64) (out string) {
 	return
 }
 
+func HMac(key, data string, raw_output bool) (ret string, err error) {
+	hash, err := crypto.GetHMAC(key, data)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting HMAC")
+		return ``, err
+	}
+	if raw_output {
+		return string(hash), nil
+	} else {
+		return hex.EncodeToString(hash), nil
+	}
+}
+
+//Returns the array of keys of the map
+func GetMapKeys(in map[string]interface{}) []interface{} {
+	keys := make([]interface{}, 0, len(in))
+	for k := range in {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+//Returns the sorted array of keys of the map
+func SortedKeys(m map[string]interface{}) []interface{} {
+	i, sorted := 0, make([]string, len(m))
+	for k := range m {
+		sorted[i] = k
+		i++
+	}
+	sort.Strings(sorted)
+
+	ret := make([]interface{}, len(sorted))
+	for k, v := range sorted {
+		ret[k] = v
+	}
+	return ret
+}
+
+//Formats timestamp to specified date format
+func Date(time_format string, timestamp int64) string {
+	t := time.Unix(timestamp, 0)
+	return t.Format(time_format)
+}
+
 // HTTPRequest sends http request
 func HTTPRequest(requrl, method string, headers map[string]interface{},
 	params map[string]interface{}) (string, error) {
@@ -894,6 +961,38 @@ func HTTPRequest(requrl, method string, headers map[string]interface{},
 		return ``, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	for key, v := range headers {
+		req.Header.Set(key, fmt.Sprint(v))
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http request")
+		return ``, err
+	}
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading http answer")
+		return ``, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http status code")
+		return ``, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
+	}
+	return string(data), nil
+}
+
+// HTTPPostJSON sends post http request with json
+func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string) (string, error) {
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest("POST", requrl, bytes.NewBuffer([]byte(json_str)))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("new http request")
+		return ``, err
+	}
+
 	for key, v := range headers {
 		req.Header.Set(key, fmt.Sprint(v))
 	}
