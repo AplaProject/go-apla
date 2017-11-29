@@ -47,7 +47,7 @@ func init() {
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
-	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`}
+	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`}
@@ -193,7 +193,8 @@ func ecosysparTag(par parFunc) string {
 		cols := []string{`id`, `name`}
 		types := []string{`text`, `text`}
 		for key, item := range strings.Split(val, `,`) {
-			item, _ = language.LangText(item, state, (*par.Workspace.Vars)[`accept_lang`])
+			item, _ = language.LangText(item, state, (*par.Workspace.Vars)[`accept_lang`],
+				par.Workspace.SmartContract.VDE)
 			data = append(data, []string{converter.IntToStr(key + 1), item})
 		}
 		node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
@@ -204,7 +205,8 @@ func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Index`]) > 0 {
 		ind := converter.StrToInt((*par.Pars)[`Index`])
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
-			val, _ = language.LangText(alist[ind-1], state, (*par.Workspace.Vars)[`accept_lang`])
+			val, _ = language.LangText(alist[ind-1], state, (*par.Workspace.Vars)[`accept_lang`],
+				par.Workspace.SmartContract.VDE)
 		} else {
 			val = ``
 		}
@@ -217,7 +219,8 @@ func langresTag(par parFunc) string {
 	if len(lang) == 0 {
 		lang = (*par.Workspace.Vars)[`accept_lang`]
 	}
-	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])), lang)
+	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
+		lang, par.Workspace.SmartContract.VDE)
 	return ret
 }
 
@@ -554,7 +557,7 @@ func defaultTail(par parFunc, tag string) {
 	if par.Tails != nil {
 		for _, v := range *par.Tails {
 			name := (*v)[len(*v)-1]
-			curFunc := tails[tag].Tails[name].tplFunc
+			curFunc := tails[tag].Tails[string(name)].tplFunc
 			pars := (*v)[:len(*v)-1]
 			callFunc(&curFunc, par.Node, par.Workspace, &pars, nil)
 		}
@@ -583,7 +586,7 @@ func ifTag(par parFunc) string {
 	if !cond && par.Tails != nil {
 		for _, v := range *par.Tails {
 			name := (*v)[len(*v)-1]
-			curFunc := tails[`if`].Tails[name].tplFunc
+			curFunc := tails[`if`].Tails[string(name)].tplFunc
 			pars := (*v)[:len(*v)-1]
 			callFunc(&curFunc, par.Owner, par.Workspace, &pars, nil)
 			if (*par.Workspace.Vars)[`_cond`] == `1` {
@@ -601,7 +604,7 @@ func ifFull(par parFunc) string {
 	if par.Tails != nil {
 		for _, v := range *par.Tails {
 			name := (*v)[len(*v)-1]
-			curFunc := tails[`if`].Tails[name].tplFunc
+			curFunc := tails[`if`].Tails[string(name)].tplFunc
 			pars := (*v)[:len(*v)-1]
 			callFunc(&curFunc, par.Node, par.Workspace, &pars, nil)
 		}
@@ -650,7 +653,7 @@ func dateTimeTag(par parFunc) string {
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
 		format, _ = language.LangText(`timeformat`, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
-			(*par.Workspace.Vars)[`accept_lang`])
+			(*par.Workspace.Vars)[`accept_lang`], par.Workspace.SmartContract.VDE)
 		if format == `timeformat` {
 			format = `2006-01-02 15:04:05`
 		}
