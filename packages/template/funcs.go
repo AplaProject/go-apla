@@ -554,7 +554,7 @@ func defaultTail(par parFunc, tag string) {
 	if par.Tails != nil {
 		for _, v := range *par.Tails {
 			name := (*v)[len(*v)-1]
-			curFunc := tails[tag].Tails[name].tplFunc
+			curFunc := tails[tag].Tails[string(name)].tplFunc
 			pars := (*v)[:len(*v)-1]
 			callFunc(&curFunc, par.Node, par.Workspace, &pars, nil)
 		}
@@ -583,7 +583,7 @@ func ifTag(par parFunc) string {
 	if !cond && par.Tails != nil {
 		for _, v := range *par.Tails {
 			name := (*v)[len(*v)-1]
-			curFunc := tails[`if`].Tails[name].tplFunc
+			curFunc := tails[`if`].Tails[string(name)].tplFunc
 			pars := (*v)[:len(*v)-1]
 			callFunc(&curFunc, par.Owner, par.Workspace, &pars, nil)
 			if (*par.Workspace.Vars)[`_cond`] == `1` {
@@ -601,7 +601,7 @@ func ifFull(par parFunc) string {
 	if par.Tails != nil {
 		for _, v := range *par.Tails {
 			name := (*v)[len(*v)-1]
-			curFunc := tails[`if`].Tails[name].tplFunc
+			curFunc := tails[`if`].Tails[string(name)].tplFunc
 			pars := (*v)[:len(*v)-1]
 			callFunc(&curFunc, par.Node, par.Workspace, &pars, nil)
 		}
