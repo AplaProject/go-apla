@@ -268,7 +268,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (string,
 	}
 	(*rt.extend)[`parent`] = prevparent
 	if (*rt.extend)[`result`] != nil {
-		result = (*rt.extend)[`result`].(string)
+		result = fmt.Sprint((*rt.extend)[`result`])
 	}
 	return result, nil
 }
