@@ -18,6 +18,7 @@ package smart
 
 import (
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -31,6 +32,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -74,6 +76,7 @@ var (
 		"EcosysParam":        10,
 		"Eval":               10,
 		"FlushContract":      50,
+		"HMac":               50,
 		"JSONToMap":          50,
 		"IdToAddress":        10,
 		"IsContract":         10,
@@ -112,6 +115,7 @@ func EmbedFuncs(vm *script.VM) {
 		"Eval":               Eval,
 		"Float":              Float,
 		"FlushContract":      FlushContract,
+		"HMac":               HMac,
 		"JSONToMap":          JSONToMap,
 		"IdToAddress":        IDToAddress,
 		"Int":                Int,
@@ -872,6 +876,20 @@ func IDToAddress(id int64) (out string) {
 		out = `invalid`
 	}
 	return
+}
+
+func HMac(hexkey, data string) (ret string, err error) {
+	key, err := hex.DecodeString(hexkey)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("decoding key")
+		return ``, err
+	}
+	hash, err := crypto.GetHMAC(string(key), data)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting HMAC")
+		return ``, err
+	}
+	return hex.EncodeToString(hash), nil
 }
 
 // HTTPRequest sends http request
