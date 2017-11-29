@@ -22,29 +22,42 @@ type UserID int64
 type NotificationStats struct {
 	UserIDs     map[UserID]int64
 	lastNotifID *int64
+	sync.RWMutex
 }
 
-type ConcurrentNotifications struct {
+func (ns *NotificationStats) Set(id UserID, s int64) {
+	ns.Lock()
+	defer ns.Unlock()
+	ns.UserIDs[id] = s
+}
+
+func (ns *NotificationStats) Get(id UserID) int64 {
+	ns.RLock()
+	defer ns.RUnlock()
+	return ns.UserIDs[id]
+}
+
+type Notifications struct {
 	storage map[EcosystemID]NotificationStats
 	sync.RWMutex
 }
 
-func (cn *ConcurrentNotifications) Set(id EcosystemID, s NotificationStats) {
+func (cn *Notifications) Set(id EcosystemID, s NotificationStats) {
 	cn.Lock()
 	defer cn.Unlock()
 	cn.storage[id] = s
 }
 
-func (cn *ConcurrentNotifications) Get(id EcosystemID) NotificationStats {
+func (cn *Notifications) Get(id EcosystemID) NotificationStats {
 	cn.RLock()
 	defer cn.RUnlock()
 	return cn.storage[id]
 }
 
-var notifications ConcurrentNotifications
+var notifications Notifications
 
 func init() {
-	notifications = ConcurrentNotifications{storage: make(map[EcosystemID]NotificationStats)}
+	notifications = Notifications{storage: make(map[EcosystemID]NotificationStats)}
 }
 
 // SendNotifications is sending notifications
@@ -113,6 +126,6 @@ func AddUser(userID int64, ecosystemID int64) {
 		ns = NotificationStats{UserIDs: make(map[UserID]int64), lastNotifID: new(int64)}
 	}
 
-	ns.UserIDs[UserID(userID)] = 0
+	ns.Set(UserID(userID), 0)
 	notifications.Set(eId, ns)
 }
