@@ -338,6 +338,12 @@ func TestVDEParams(t *testing.T) {
 		return
 	}
 
+	name = crypto.RandSeq(4)
+	err = postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {fmt.Sprintf(imp, name)}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }
 
 func TestHTTPRequest(t *testing.T) {
