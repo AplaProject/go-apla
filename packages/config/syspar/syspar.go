@@ -333,3 +333,11 @@ func GetRbBlocks1() int64 {
 func GetRbBlocks2() int64 {
 	return SysInt64(RbBlocks2)
 }
+
+// HasSys returns boolean whether this system parameter exists
+func HasSys(name string) bool {
+	mutex.RLock()
+	_, ok := cache[name]
+	mutex.RUnlock()
+	return ok
+}
