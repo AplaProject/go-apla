@@ -17,14 +17,7 @@
 package daylight
 
 import (
-	"fmt"
-	"os/exec"
-	"runtime"
-
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/utils"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // GetHTTPHost returns program's hosts
