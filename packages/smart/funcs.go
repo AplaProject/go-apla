@@ -115,7 +115,7 @@ func EmbedFuncs(vm *script.VM) {
 		"JSONToMap":          JSONToMap,
 		"IdToAddress":        IDToAddress,
 		"Int":                Int,
-		"IsContract":         IsContract,
+		"IsContract":         IsObject,
 		"Len":                Len,
 		"Money":              Money,
 		"PermColumn":         PermColumn,
@@ -501,9 +501,9 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 	return nil
 }
 
-// IsContract returns true if there is the specified contract
-func IsContract(sc *SmartContract, name string, state int64) bool {
-	return VMGetContract(sc.VM, name, uint32(state)) != nil
+// IsObject returns true if there is the specified contract
+func IsObject(sc *SmartContract, name string, state int64) bool {
+	return VMObjectExists(sc.VM, name, uint32(state))
 }
 
 // Len returns the length of the slice

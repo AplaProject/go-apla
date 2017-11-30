@@ -444,7 +444,7 @@ var (
 					  j = j + 1 
 				  }
 				  if !ok {
-					  error "Contracts names cannot be changed"
+					  error "Contracts or functions names cannot be changed"
 				  }
 				  i = i + 1
 			  }
@@ -999,7 +999,7 @@ var (
 					j = j + 1 
 				}
 				if !ok {
-					error "Contracts names cannot be changed"
+					error "Contracts or functions names cannot be changed"
 				}
 				i = i + 1
 			}

@@ -163,7 +163,7 @@ func init() {
 		"Size":               Size,
 		"Substr":             Substr,
 		"ContractsList":      contractsList,
-		"IsContract":         IsContract,
+		"IsContract":         IsObject,
 		"CompileContract":    CompileContract,
 		"FlushContract":      FlushContract,
 		"Eval":               Eval,
