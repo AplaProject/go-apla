@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/centrifugal/gocent"
@@ -13,26 +13,32 @@ import (
 )
 
 var (
-	clientsChannels   = map[int64]string{}
-	centrifugoSecret  = ""
-	centrifugoURL     = ""
+	clientsChannels = map[int64]string{}
+	// centrifugoSecret  = ""
+	// centrifugoURL     = ""
 	centrifugoTimeout = time.Second * 5
 	publisher         *gocent.Client
 )
 
-func init() {
-	err := config.Read()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConfigError, "errror": err}).Error("reading config")
-	}
-	centrifugoSecret = config.ConfigIni["centrifugo_secret"]
-	centrifugoURL = config.ConfigIni["centrifugo_url"]
-	publisher = gocent.NewClient(centrifugoURL, centrifugoSecret, centrifugoTimeout)
+// InitCentrifugo client
+func InitCentrifugo(cfg conf.CentrifugoConfig) {
+	publisher = gocent.NewClient(cfg.URL, cfg.Secret, centrifugoTimeout)
 }
+
+// func gocntClient(cfg conf.CentrifugoConfig) *gocent.Client {
+// 	// !!!
+// 	// err := config.Read()
+// 	// if err != nil {
+// 	// 	log.WithFields(log.Fields{"type": consts.ConfigError, "errror": err}).Error("reading config")
+// 	// }
+// 	// centrifugoSecret = config.ConfigIni["centrifugo_secret"]
+// 	// centrifugoURL = config.ConfigIni["centrifugo_url"]
+// 	// publisher = gocent.NewClient(centrifugoURL, centrifugoSecret, centrifugoTimeout)
+// }
 
 // GetHMACSign returns HMACS sign for userID
 func GetHMACSign(userID int64) (string, error) {
-	secret, err := crypto.GetHMAC(centrifugoSecret, strconv.FormatInt(userID, 10))
+	secret, err := crypto.GetHMAC(conf.Config.Centrifugo.Secret, strconv.FormatInt(userID, 10))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("HMAC getting error")
 		return "", err

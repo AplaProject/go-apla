@@ -24,7 +24,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/converter"
+
+	"github.com/AplaProject/go-apla/packages/conf"
+
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -54,7 +57,9 @@ type installParams struct {
 }
 
 func installCommon(data *installParams, logger *log.Entry) (err error) {
-	if IsInstalled() || model.DBConn != nil || config.IsExist() {
+	// !!!
+	// if IsInstalled() || model.DBConn != nil || config.IsExist() {
+	if IsInstalled() || model.DBConn != nil {
 		return fmt.Errorf(`E_INSTALLED`)
 	}
 	if data.generateFirstBlock {
@@ -75,31 +80,33 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		log.WithFields(log.Fields{"url": syspar.GetBlockchainURL()}).Info("firstLoadBlockchainURL is not set through POST data, setting it to first load blockchain url from syspar")
 		data.firstLoadBlockchainURL = syspar.GetBlockchainURL()
 	}
-	dbConfig := config.DBConfig{
-		Type:     `postgresql`,
-		User:     data.dbUsername,
-		Host:     data.dbHost,
-		Port:     data.dbPort,
-		Password: data.dbPassword,
-		Name:     data.dbName,
-	}
-	err = config.Save(data.logLevel, data.installType, &dbConfig)
+
+	cfg := conf.Config.DB
+	cfg.Host = data.dbHost
+	cfg.Port = converter.StrToInt(data.dbPort)
+	cfg.Name = data.dbName
+	cfg.User = data.dbUsername
+	cfg.Password = data.dbPassword
+
+	err = conf.SaveConfig()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("saving config")
 		return err
 	}
-	defer func() {
-		if err != nil {
-			config.Drop()
-		}
-	}()
-	if err = config.Read(); err != nil {
-		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("reading config")
-		return err
-	}
-	err = model.GormInit(
-		config.ConfigIni["db_host"], config.ConfigIni["db_port"],
-		config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
+
+	// !!!
+	// defer func() {
+	// 	if err != nil {
+	// 		config.Drop()
+	// 	}
+	// }()
+	// !!!
+	// if err = config.Read(); err != nil {
+	// 	log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("reading config")
+	// 	return err
+	// }
+
+	err = model.GormInit(cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name)
 	if err != nil || model.DBConn == nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("initializing DB")
 		err = fmt.Errorf(`E_DBNIL`)

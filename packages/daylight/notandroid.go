@@ -68,7 +68,7 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Han
 // For ipv6 on the server
 func httpListenerV6(route http.Handler) {
 	i := 0
-	port := strconv.Itoa(conf.Config.API.Port)
+	port := strconv.Itoa(conf.Config.HTTP.Port)
 	var l net.Listener
 	var err error
 	for {

@@ -30,7 +30,6 @@ import (
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/AplaProject/go-apla/packages/config"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -180,10 +179,11 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if !IsInstalled() && r.URL.Path != `/api/v2/install` {
-			if model.DBConn == nil && !config.IsExist() {
-				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
-				return
-			}
+			// !!!
+			// if model.DBConn == nil && !config.IsExist() {
+			// 	errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
+			// 	return
+			// }
 			Installed()
 		}
 		token, err := jwtToken(r)

@@ -62,12 +62,12 @@ func GetHTTPHost() (string, string) {
 	// 	BrowserHTTPHost = "http://" + *utils.TCPHost + ":" + *utils.ListenHTTPPort
 	// }
 	host := "localhost"
-	if len(conf.Config.API.Host) > 0 && conf.Config.API.Host != "0.0.0.0" {
-		host = conf.Config.API.Host
+	if len(conf.Config.HTTP.Host) > 0 && conf.Config.HTTP.Host != "0.0.0.0" {
+		host = conf.Config.HTTP.Host
 	}
 
-	BrowserHTTPHost := "http://" + host + ":" + strconv.Itoa(conf.Config.API.Port)
-	ListenHTTPHost := conf.Config.API.Str()
+	BrowserHTTPHost := "http://" + host + ":" + strconv.Itoa(conf.Config.HTTP.Port)
+	ListenHTTPHost := conf.Config.HTTP.Str()
 
 	return BrowserHTTPHost, ListenHTTPHost
 }

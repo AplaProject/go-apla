@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/statsd"
@@ -125,7 +125,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.
 
 // StartDaemons starts daemons
 func StartDaemons() {
-	if config.ConfigIni["daemons"] == "null" {
+	if conf.Config.StartDaemons == "null" {
 		return
 	}
 
@@ -147,15 +147,14 @@ func StartDaemons() {
 	utils.ReturnCh = make(chan string)
 
 	daemonsToStart := serverList
-	if utils.Mobile() {
+	if len(conf.Config.StartDaemons) > 0 {
+		daemonsToStart = strings.Split(conf.Config.StartDaemons, ",")
+	} else if utils.Mobile() {
 		daemonsToStart = mobileList
 	} else if *utils.TestRollBack == 1 {
 		daemonsToStart = rollbackList
 	}
 
-	if len(config.ConfigIni["daemons"]) > 0 {
-		daemonsToStart = strings.Split(config.ConfigIni["daemons"], ",")
-	}
 	log.WithFields(log.Fields{"daemons_to_start": daemonsToStart}).Info("starting daemons")
 
 	for _, name := range daemonsToStart {

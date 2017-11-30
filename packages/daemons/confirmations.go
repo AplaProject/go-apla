@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -98,7 +98,7 @@ func Confirmations(ctx context.Context, d *daemon) error {
 		}
 
 		var hosts []string
-		if config.ConfigIni["test_mode"] == "1" {
+		if conf.Config.TestMode {
 			hosts = []string{"localhost"}
 		} else {
 			hosts = syspar.GetRemoteHosts()

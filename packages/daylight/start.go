@@ -29,7 +29,6 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/api"
 	conf "github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/config"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -38,6 +37,7 @@ import (
 	logtools "github.com/AplaProject/go-apla/packages/log"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
+	"github.com/AplaProject/go-apla/packages/publisher"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/statsd"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -118,10 +118,10 @@ func killOld() {
 func initLogs() error {
 	var err error
 
-	if config.ConfigIni["log_output"] != "file" {
+	if len(conf.Config.LogFileName) == 0 {
 		log.SetOutput(os.Stdout)
 	} else {
-		fileName := *utils.Dir + "/dclog.txt"
+		fileName := filepath.Join(conf.Config.WorkDir, conf.Config.LogFileName)
 		openMode := os.O_APPEND
 		if _, err := os.Stat(fileName); os.IsNotExist(err) {
 			openMode = os.O_CREATE
@@ -135,18 +135,16 @@ func initLogs() error {
 		log.SetOutput(f)
 	}
 
-	if level, ok := config.ConfigIni["log_level"]; ok {
-		switch level {
-		case "Debug":
-			log.SetLevel(log.DebugLevel)
-		case "Info":
-			log.SetLevel(log.InfoLevel)
-		case "Warn":
-			log.SetLevel(log.WarnLevel)
-		case "Error":
-			log.SetLevel(log.ErrorLevel)
-		}
-	} else {
+	switch conf.Config.LogLevel {
+	case "DEBUG":
+		log.SetLevel(log.DebugLevel)
+	case "INFO":
+		log.SetLevel(log.InfoLevel)
+	case "WARN":
+		log.SetLevel(log.WarnLevel)
+	case "ERROR":
+		log.SetLevel(log.ErrorLevel)
+	default:
 		log.SetLevel(log.InfoLevel)
 	}
 
@@ -300,14 +298,14 @@ func Start() {
 
 	// // // // // // // // // // // // //
 
-	if len(config.ConfigIni["db_type"]) > 0 {
+	dbCfg := conf.Config.DB
+	if len(dbCfg.Type) > 0 { // !!! incorrect check !!! FIXIT !!!
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err = model.GormInit(
-			config.ConfigIni["db_host"], config.ConfigIni["db_port"],
-			config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
+		err = model.GormInit(dbCfg.Host, dbCfg.Port, dbCfg.User, dbCfg.Password, dbCfg.Name)
 		if err != nil {
-			log.WithFields(log.Fields{"db_user": config.ConfigIni["db_user"], "db_password": config.ConfigIni["db_password"],
-				"db_name": config.ConfigIni["db_name"], "type": consts.DBError}).Error("can't init gorm")
+			log.WithFields(log.Fields{
+				"db_user": dbCfg.User, "db_password": dbCfg.Password, "db_name": dbCfg.Name, "type": consts.DBError,
+			}).Error("can't init gorm")
 			Exit(1)
 		}
 	}
@@ -330,6 +328,8 @@ func Start() {
 	if fi, err := os.Stat(*utils.Dir + `/logo.png`); err == nil && fi.Size() > 0 {
 		utils.LogoExt = `png`
 	}
+
+	publisher.InitCentrifugo(conf.Config.Centrifugo)
 
 	initStatsd()
 	err = initLogs()

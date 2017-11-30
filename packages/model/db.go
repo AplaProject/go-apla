@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -36,10 +36,10 @@ func isFound(db *gorm.DB) (bool, error) {
 }
 
 // GormInit is initializes Gorm connection
-func GormInit(host string, port string, user string, pass string, dbName string) error {
+func GormInit(host string, port int, user string, pass string, dbName string) error {
 	var err error
 	DBConn, err = gorm.Open("postgres",
-		fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", host, port, user, dbName, pass))
+		fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable password=%s", host, port, user, dbName, pass))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cant open connection to DB")
 		DBConn = nil
@@ -349,14 +349,13 @@ func IsNodeState(state int64, host string) bool {
 	if strings.HasPrefix(host, `localhost`) {
 		return true
 	}
-	if val, ok := config.ConfigIni[`node_state_id`]; ok {
-		if val == `*` {
+	val := conf.Config.NodeStateID
+	if val == `*` {
+		return true
+	}
+	for _, id := range strings.Split(val, `,`) {
+		if converter.StrToInt64(id) == state {
 			return true
-		}
-		for _, id := range strings.Split(val, `,`) {
-			if converter.StrToInt64(id) == state {
-				return true
-			}
 		}
 	}
 	return false
