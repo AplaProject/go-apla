@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -39,6 +38,7 @@ import (
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
+// Block is storing block data
 type Block struct {
 	Header     utils.BlockData
 	PrevHeader *utils.BlockData
@@ -47,15 +47,13 @@ type Block struct {
 	Parsers    []*Parser
 }
 
+// GetLogger is returns logger
 func (b Block) GetLogger() *log.Entry {
 	return log.WithFields(log.Fields{"block_id": b.Header.BlockID, "block_time": b.Header.Time, "block_wallet_id": b.Header.KeyID,
 		"block_state_id": b.Header.EcosystemID, "block_hash": b.Header.Hash, "block_version": b.Header.Version})
 }
 
-func InsertBlockWForks(data []byte) error {
-	return nil
-}
-
+// InsertBlockWOForks is inserting blocks
 func InsertBlockWOForks(data []byte) error {
 	block, err := ProcessBlockWherePrevFromBlockchainTable(data)
 	if err != nil {
@@ -75,26 +73,27 @@ func InsertBlockWOForks(data []byte) error {
 	return nil
 }
 
-func (block *Block) PlayBlockSafe() error {
-	logger := block.GetLogger()
+// PlayBlockSafe is inserting block safely
+func (b *Block) PlayBlockSafe() error {
+	logger := b.GetLogger()
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting db transaction")
 		return err
 	}
 
-	err = block.playBlock(dbTransaction)
+	err = b.playBlock(dbTransaction)
 	if err != nil {
 		dbTransaction.Rollback()
 		return err
 	}
 
-	if err := UpdBlockInfo(dbTransaction, block); err != nil {
+	if err := UpdBlockInfo(dbTransaction, b); err != nil {
 		dbTransaction.Rollback()
 		return err
 	}
 
-	if err := InsertIntoBlockchain(dbTransaction, block); err != nil {
+	if err := InsertIntoBlockchain(dbTransaction, b); err != nil {
 		dbTransaction.Rollback()
 		return err
 	}
@@ -103,6 +102,7 @@ func (block *Block) PlayBlockSafe() error {
 	return nil
 }
 
+// ProcessBlockWherePrevFromMemory is processing block with in memory previous block
 func ProcessBlockWherePrevFromMemory(data []byte) (*Block, error) {
 	if int64(len(data)) > syspar.GetMaxBlockSize() {
 		log.WithFields(log.Fields{"size": len(data), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
@@ -127,6 +127,7 @@ func ProcessBlockWherePrevFromMemory(data []byte) (*Block, error) {
 	return block, nil
 }
 
+// ProcessBlockWherePrevFromBlockchainTable is processing block with in table previous block
 func ProcessBlockWherePrevFromBlockchainTable(data []byte) (*Block, error) {
 	if int64(len(data)) > syspar.GetMaxBlockSize() {
 		log.WithFields(log.Fields{"size": len(data), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
@@ -239,6 +240,7 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 	}, nil
 }
 
+// ParseBlockHeader is parses block header
 func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	var block utils.BlockData
 	var err error
@@ -287,6 +289,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 	return block, nil
 }
 
+// ParseTransaction is parsing transaction
 func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 	if buffer.Len() == 0 {
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty transaction buffer")
@@ -342,6 +345,7 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 	return p, nil
 }
 
+// IsContractTransaction checks txType
 func IsContractTransaction(txType int) bool {
 	return txType > 127
 }
@@ -533,7 +537,7 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 		if p.BlockData != nil && p.BlockData.BlockID != 1 {
 			if p.TxKeyID == 0 {
 				logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Empty user id")
-				return utils.ErrInfo(fmt.Errorf("emtpy user id"))
+				return utils.ErrInfo(fmt.Errorf("empty user id"))
 			}
 		}
 	}
@@ -541,6 +545,7 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 	return nil
 }
 
+// CheckTransaction is checking transaction
 func CheckTransaction(data []byte) (*tx.Header, error) {
 	trBuff := bytes.NewBuffer(data)
 	p, err := ParseTransaction(trBuff)
@@ -556,20 +561,20 @@ func CheckTransaction(data []byte) (*tx.Header, error) {
 	return p.TxHeader, nil
 }
 
-func (block *Block) readPreviousBlockFromMemory() error {
+func (b *Block) readPreviousBlockFromMemory() error {
 	return nil
 }
 
-func (block *Block) readPreviousBlockFromBlockchainTable() error {
-	if block.Header.BlockID == 1 {
-		block.PrevHeader = &utils.BlockData{}
+func (b *Block) readPreviousBlockFromBlockchainTable() error {
+	if b.Header.BlockID == 1 {
+		b.PrevHeader = &utils.BlockData{}
 		return nil
 	}
 
 	var err error
-	block.PrevHeader, err = GetBlockDataFromBlockChain(block.Header.BlockID - 1)
+	b.PrevHeader, err = GetBlockDataFromBlockChain(b.Header.BlockID - 1)
 	if err != nil {
-		return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
+		return utils.ErrInfo(fmt.Errorf("can't get block %d", b.Header.BlockID-1))
 	}
 	return nil
 }
@@ -578,22 +583,7 @@ func playTransaction(p *Parser) (string, error) {
 	// smart-contract
 	if p.TxContract != nil {
 		// check that there are enough money in CallContract
-		if err := p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err != nil {
-			return "", err
-		}
-
-		var result string
-		resVal := (*p.TxContract.Extend)[`result`]
-		switch v := resVal.(type) {
-		case int64:
-			result = strconv.FormatInt(v, 10)
-		case string:
-			result = v
-		default:
-			return "", fmt.Errorf("bad transaction result")
-		}
-		return result, nil
-
+		return p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
 	} else {
 		if p.txParser == nil {
 			return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
@@ -607,14 +597,14 @@ func playTransaction(p *Parser) (string, error) {
 	return "", nil
 }
 
-func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
-	logger := block.GetLogger()
+func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
+	logger := b.GetLogger()
 	if _, err := model.DeleteUsedTransactions(dbTransaction); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
 		return err
 	}
 
-	for _, p := range block.Parsers {
+	for _, p := range b.Parsers {
 		p.DbTransaction = dbTransaction
 
 		msg, err := playTransaction(p)
@@ -632,7 +622,7 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 
 		// update status
 		ts := &model.TransactionStatus{}
-		if err := ts.UpdateBlockMsg(p.DbTransaction, block.Header.BlockID, msg, p.TxHash); err != nil {
+		if err := ts.UpdateBlockMsg(p.DbTransaction, b.Header.BlockID, msg, p.TxHash); err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("updating transaction status block id")
 			return err
 		}
@@ -643,27 +633,28 @@ func (block *Block) playBlock(dbTransaction *model.DbTransaction) error {
 	return nil
 }
 
-func (block *Block) CheckBlock() error {
-	logger := block.GetLogger()
+// CheckBlock is checking block
+func (b *Block) CheckBlock() error {
+	logger := b.GetLogger()
 	// exclude blocks from future
-	if block.Header.Time > time.Now().Unix() {
+	if b.Header.Time > time.Now().Unix() {
 		logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("block time is larger than now")
 		return utils.ErrInfo(fmt.Errorf("incorrect block time - block.Header.Time > time.Now().Unix()"))
 	}
-	if block.PrevHeader == nil || block.PrevHeader.BlockID != block.Header.BlockID-1 {
-		if err := block.readPreviousBlockFromBlockchainTable(); err != nil {
+	if b.PrevHeader == nil || b.PrevHeader.BlockID != b.Header.BlockID-1 {
+		if err := b.readPreviousBlockFromBlockchainTable(); err != nil {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("block id is larger then previous more than on 1")
 			return utils.ErrInfo(err)
 		}
 	}
 	// is this block too early? Allowable error = error_time
-	if block.PrevHeader != nil {
-		if block.Header.BlockID != block.PrevHeader.BlockID+1 {
+	if b.PrevHeader != nil {
+		if b.Header.BlockID != b.PrevHeader.BlockID+1 {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("block id is larger then previous more than on 1")
-			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", block.Header.BlockID, block.PrevHeader.BlockID))
+			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", b.Header.BlockID, b.PrevHeader.BlockID))
 		}
 		// check time interval between blocks
-		sleepTime, err := syspar.GetSleepTimeByPosition(block.Header.NodePosition, block.PrevHeader.NodePosition)
+		sleepTime, err := syspar.GetSleepTimeByPosition(b.Header.NodePosition, b.PrevHeader.NodePosition)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting sleep time")
 			return utils.ErrInfo(err)
@@ -673,15 +664,15 @@ func (block *Block) CheckBlock() error {
 		if errTime < 0 {
 			errTime = 0
 		}
-		if block.PrevHeader.Time+sleepTime-block.Header.Time > errTime {
-			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", block.PrevHeader.Time, sleepTime, block.Header.Time, errTime))
+		if b.PrevHeader.Time+sleepTime-b.Header.Time > errTime {
+			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", b.PrevHeader.Time, sleepTime, b.Header.Time, errTime))
 		}
 	}
 
 	// check each transaction
 	txCounter := make(map[int64]int)
 	txHashes := make(map[string]struct{})
-	for _, p := range block.Parsers {
+	for _, p := range b.Parsers {
 		hexHash := string(converter.BinToHex(p.TxHash))
 		// check for duplicate transactions
 		if _, ok := txHashes[hexHash]; ok {
@@ -696,31 +687,32 @@ func (block *Block) CheckBlock() error {
 			return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
 		}
 
-		if err := checkTransaction(p, block.Header.Time, false); err != nil {
+		if err := checkTransaction(p, b.Header.Time, false); err != nil {
 			return utils.ErrInfo(err)
 		}
 
 	}
 
-	result, err := block.CheckHash()
+	result, err := b.CheckHash()
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
 	if !result {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect signature")
-		return fmt.Errorf("incorrect signature / p.PrevBlock.BlockId: %d", block.PrevHeader.BlockID)
+		return fmt.Errorf("incorrect signature / p.PrevBlock.BlockId: %d", b.PrevHeader.BlockID)
 	}
 	return nil
 }
 
-func (block *Block) CheckHash() (bool, error) {
-	logger := block.GetLogger()
-	if block.Header.BlockID == 1 {
+// CheckHash is checking hash
+func (b *Block) CheckHash() (bool, error) {
+	logger := b.GetLogger()
+	if b.Header.BlockID == 1 {
 		return true, nil
 	}
 	// check block signature
-	if block.PrevHeader != nil {
-		nodePublicKey, err := syspar.GetNodePublicKeyByPosition(block.Header.NodePosition)
+	if b.PrevHeader != nil {
+		nodePublicKey, err := syspar.GetNodePublicKeyByPosition(b.Header.NodePosition)
 		if err != nil {
 			return false, utils.ErrInfo(err)
 		}
@@ -729,13 +721,13 @@ func (block *Block) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 		// check the signature
-		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s", block.Header.BlockID, block.PrevHeader.Hash,
-			block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition, block.MrklRoot)
+		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s", b.Header.BlockID, b.PrevHeader.Hash,
+			b.Header.Time, b.Header.EcosystemID, b.Header.KeyID, b.Header.NodePosition, b.MrklRoot)
 
-		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, block.Header.Sign, true)
+		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, b.Header.Sign, true)
 		if err != nil {
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
-			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, block.PrevHeader.BlockID, block.PrevHeader.Hash))
+			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHeader.Hash))
 		}
 
 		return resultCheckSign, nil
@@ -744,6 +736,7 @@ func (block *Block) CheckHash() (bool, error) {
 	return true, nil
 }
 
+// MarshallBlock is marshalling block
 func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, key string) ([]byte, error) {
 	var mrklArray [][]byte
 	var blockDataTx []byte

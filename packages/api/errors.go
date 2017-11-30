@@ -35,6 +35,7 @@ var (
 		`E_REFRESHTOKEN`:  `Refresh token is not valid`,
 		`E_SERVER`:        `Server error`,
 		`E_SIGNATURE`:     `Signature is incorrect`,
+		`E_UNKNOWNSIGN`:   `Unknown signature`,
 		`E_STATELOGIN`:    `%s is not a membership of ecosystem %s`,
 		`E_TABLENOTFOUND`: `Table %s has not been found`,
 		`E_TOKEN`:         `Token is not valid`,
@@ -42,7 +43,7 @@ var (
 		`E_UNAUTHORIZED`:  `Unauthorized`,
 		`E_UNDEFINEVAL`:   `Value %s is undefined`,
 		`E_UNKNOWNUID`:    `Unknown uid`,
-		`E_VDE`:           `Virtual Dedicated Ecosystem %s doesn't exist`,
+		`E_VDE`:           `Virtual Dedicated Ecosystem %d doesn't exist`,
 		`E_VDECREATED`:    `Virtual Dedicated Ecosystem is already created`,
 	}
 )

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
+	"strconv"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -61,12 +62,12 @@ func GetHTTPHost() (string, string) {
 	// 	BrowserHTTPHost = "http://" + *utils.TCPHost + ":" + *utils.ListenHTTPPort
 	// }
 	host := "localhost"
-	if len(conf.Config.HTTPHost) > 0 && conf.Config.HTTPHost != "0.0.0.0" {
-		host = conf.Config.HTTPHost
+	if len(conf.Config.API.Host) > 0 && conf.Config.API.Host != "0.0.0.0" {
+		host = conf.Config.API.Host
 	}
 
-	BrowserHTTPHost := "http://" + host + ":" + conf.Config.HTTPPort
-	ListenHTTPHost := conf.Config.HTTPHost + ":" + conf.Config.HTTPPort
+	BrowserHTTPHost := "http://" + host + ":" + strconv.Itoa(conf.Config.API.Port)
+	ListenHTTPHost := conf.Config.API.Str()
 
 	return BrowserHTTPHost, ListenHTTPHost
 }

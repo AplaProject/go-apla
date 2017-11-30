@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"fmt"
 	"os"
 
 	// go get github.com/BurntSushi/toml
@@ -9,36 +10,44 @@ import (
 
 const configFileName = "config.toml"
 
+// HostPort tcp endpoint in form "host:port"
+type HostPort struct {
+	Host string // ipaddr, hostname, or "0.0.0.0"
+	Port int    // must be in range 1..65535
+}
+
+// Str converts HostPort pair to string format
+func (h HostPort) Str() string {
+	return fmt.Sprintf("%s:%d", h.Host, h.Port)
+}
+
 // DBConfig database connection parameters
 type DBConfig struct {
 	Type     string
 	Name     string
 	Host     string
-	Port     string
+	Port     int
 	User     string
 	Password string
 }
 
 // StatsDConfig statd connection parameters
 type StatsDConfig struct {
-	Host string // default "127.0.0.1"
-	Port string // default 8125
-	Name string // default "apla"
+	Name     string // default "apla"
+	HostPort        // 127.0.0.1:8125
 }
 
 // SavedConfig config parameters saved in "config.toml"
 type SavedConfig struct {
-	Version     string
 	LogLevel    string // ERROR, INFO, WARN, DEBUG
 	InstallType string
 	NodeStateID string // default "*"
 
-	TCPHost  string
-	TCPPort  string // must be in range 1..65535
-	HTTPHost string
-	HTTPPort string // must be in range 1..65535
-	DB       DBConfig
-	StatsD   StatsDConfig
+	Daemon HostPort
+	API    HostPort
+
+	DB     DBConfig
+	StatsD StatsDConfig
 
 	WorkDir        string // application work dir (cwd by default)
 	FirstBlockPath string // path to the first block file
@@ -47,13 +56,19 @@ type SavedConfig struct {
 
 // Config - global immutable parameters
 var Config = SavedConfig{
-	Version:  "v0.1",
 	LogLevel: "INFO",
 
-	StatsD: StatsDConfig{
-		Host: "127.0.0.1",
-		Port: "8125",
-		Name: "apla",
+	Daemon: HostPort{Host: "127.0.0.1", Port: 7078},
+	API:    HostPort{Host: "127.0.0.1", Port: 7079},
+	StatsD: StatsDConfig{Name: "apla", HostPort: HostPort{Host: "127.0.0.1", Port: 8125}},
+
+	DB: DBConfig{
+		Type:     "postgresql",
+		Name:     "apla",
+		Host:     "127.0.0.1",
+		Port:     5432,
+		User:     "",
+		Password: "",
 	},
 }
 

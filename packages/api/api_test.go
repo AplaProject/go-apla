@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -168,7 +167,19 @@ func getTestSign(forSign string) (string, error) {
 }
 
 func appendSign(ret map[string]interface{}, form *url.Values) error {
-	sign, err := getSign(ret[`forsign`].(string))
+	forsign := ret[`forsign`].(string)
+	if ret[`signs`] != nil {
+		for _, item := range ret[`signs`].([]interface{}) {
+			v := item.(map[string]interface{})
+			vsign, err := getSign(v[`forsign`].(string))
+			if err != nil {
+				return err
+			}
+			(*form)[v[`field`].(string)] = []string{vsign}
+			forsign += `,` + vsign
+		}
+	}
+	sign, err := getSign(forsign)
 	if err != nil {
 		return err
 	}
@@ -184,7 +195,6 @@ func waitTx(hash string) (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		fmt.Println(`STATUS`, err, ret)
 		if len(ret.BlockID) > 0 {
 			return converter.StrToInt64(ret.BlockID), fmt.Errorf(ret.Result)
 		}

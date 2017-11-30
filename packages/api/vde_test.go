@@ -80,7 +80,7 @@ func TestVDECreate(t *testing.T) {
 	}
 	form = url.Values{`Id`: {converter.Int64ToStr(retid)}, `Value`: {`Test edit value`}, `Conditions`: {`true`},
 		`vde`: {`1`}}
-	if retid, _, err = postTxResult(`EditParameter`, &form); err != nil {
+	if _, _, err = postTxResult(`EditParameter`, &form); err != nil {
 		t.Error(err)
 		return
 	}

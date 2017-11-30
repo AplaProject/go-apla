@@ -799,13 +799,13 @@ var (
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
 		
 		INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts', 
-			'{"insert": "ContractAccess(\"@1NewContract\")", "update": "ContractAccess(\"@1EditContract\",\"@1ActivateContract\")",
+			'{"insert": "ContractAccess(\"@1NewContract\")", "update": "ContractAccess(\"@1EditContract\",\"@1ActivateContract\", \"@1DeactivateContract\")",
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
-				'{"value": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")",
-				  "wallet_id": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")",
-				  "token_id": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")",
-				  "active": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")",
-				  "conditions": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\")"}', 'ContractAccess("@1EditTable")'),
+				'{"value": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\", \"@1DeactivateContract\")",
+				  "wallet_id": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\", \"@1DeactivateContract\")",
+				  "token_id": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\", \"@1DeactivateContract\")",
+				  "active": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\", \"@1DeactivateContract\")",
+				  "conditions": "ContractAccess(\"@1EditContract\", \"@1ActivateContract\", \"@1DeactivateContract\")"}', 'ContractAccess("@1EditTable")'),
 				('2', 'keys', 
 				'{"insert": "ContractAccess(\"@1MoneyTransfer\", \"@1NewEcosystem\")", "update": "ContractAccess(\"@1MoneyTransfer\")", 
 				  "new_column": "ContractAccess(\"@1NewColumn\")"}',
@@ -962,6 +962,7 @@ var (
 			id = DBInsert("contracts", "value,conditions, wallet_id, token_id", 
 				   $Value, $Conditions, $walletContract, $TokenEcosystem)
 			FlushContract(root, id, false)
+			$result = id
 		}
 		func price() int {
 			return  SysParamInt("contract_price")
@@ -1409,6 +1410,28 @@ var (
 			ImportList($list["contracts"], "NewContract")
 			ImportList($list["tables"], "NewTable")
 			ImportData($list["data"])
+		}
+	}', '%[1]d','ContractConditions("MainCondition")'),
+	('27','contract DeactivateContract {
+		data {
+			Id         int
+		}
+		conditions {
+			$cur = DBRow("contracts", "id,conditions,active,wallet_id", $Id)
+			if Int($cur["id"]) != $Id {
+				error Sprintf("Contract %%d does not exist", $Id)
+			}
+			if Int($cur["active"]) == 0 {
+				error Sprintf("The contract %%d has been already deactivated", $Id)
+			}
+			Eval($cur["conditions"])
+			if $key_id != Int($cur["wallet_id"]) {
+				error Sprintf("Wallet %%d cannot deactivate the contract", $key_id)
+			}
+		}
+		action {
+			DBUpdate("contracts", $Id, "active", 0)
+			Deactivate($Id, $ecosystem_id)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")');`
 )

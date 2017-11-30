@@ -21,6 +21,7 @@ package daylight
 import (
 	"net"
 	"net/http"
+	"strconv"
 
 	conf "github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -67,7 +68,7 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Han
 // For ipv6 on the server
 func httpListenerV6(route http.Handler) {
 	i := 0
-	port := conf.Config.HTTPPort
+	port := strconv.Itoa(conf.Config.API.Port)
 	var l net.Listener
 	var err error
 	for {

@@ -79,8 +79,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 					}
 					if !found {
 						log.WithFields(log.Fields{"type": consts.NotFound, "signature": ret[1]}).Error("unknown signature")
-						err = fmt.Errorf(`%s is unknown signature`, ret[1])
-						break
+						return contract, ret[1], fmt.Errorf(errors["E_UNKNOWNSIGN"])
 					}
 					var sign TxSignJSON
 					err = json.Unmarshal([]byte(signature.Value), &sign)
@@ -99,7 +98,8 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 				var val string
 
 				val = strings.TrimSpace(r.FormValue(fitem.Name))
-				if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
+				if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) &&
+					!strings.Contains(fitem.Tags, `signature`) {
 					log.WithFields(log.Fields{"type": consts.EmptyObject, "item_name": fitem.Name}).Error("route item is empty")
 					err = fmt.Errorf(`%s is empty`, fitem.Name)
 					break
@@ -107,7 +107,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 				if strings.Contains(fitem.Tags, `address`) {
 					addr := converter.StringToAddress(val)
 					if addr == 0 {
-						log.WithFields(log.Fields{"type": consts.ConvertionError, "value": val}).Error("converting string to address")
+						log.WithFields(log.Fields{"type": consts.ConversionError, "value": val}).Error("converting string to address")
 						err = fmt.Errorf(`Address %s is not valid`, val)
 						break
 					}

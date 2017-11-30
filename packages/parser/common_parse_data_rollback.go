@@ -28,6 +28,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// BlockRollback is blocking rollback
 func BlockRollback(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	if buf.Len() == 0 {
@@ -65,6 +66,7 @@ func BlockRollback(data []byte) error {
 	return err
 }
 
+// RollbackTxFromBlock is rollback tx from block
 func RollbackTxFromBlock(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	if buf.Len() == 0 {
@@ -132,7 +134,7 @@ func doBlockRollback(transaction *model.DbTransaction, block *Block) error {
 		}
 
 		if p.TxContract != nil {
-			if err := p.CallContract(smart.CallInit | smart.CallRollback); err != nil {
+			if _, err := p.CallContract(smart.CallInit | smart.CallRollback); err != nil {
 				return err
 			}
 			if err = p.autoRollback(); err != nil {

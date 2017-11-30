@@ -31,6 +31,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// GetBlocks is returning blocks
 func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
 	rollback := syspar.GetRbBlocks1()
 	if rollbackBlocks == "rollback_blocks_2" {

@@ -18,6 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// FillLeft is filling slice
 func FillLeft(slice []byte) []byte {
 	if len(slice) >= 32 {
 		return slice
@@ -518,7 +519,7 @@ func HexToBin(ihexdata interface{}) []byte {
 	var str []byte
 	str, err := hex.DecodeString(hexdata)
 	if err != nil {
-		log.WithFields(log.Fields{"data": hexdata, "error": err, "type": consts.ConvertionError}).Error("decoding string to hex")
+		log.WithFields(log.Fields{"data": hexdata, "error": err, "type": consts.ConversionError}).Error("decoding string to hex")
 		log.Printf("HexToBin error: %s", err)
 	}
 	return str
@@ -672,7 +673,7 @@ func BytesToInt(s []byte) int {
 // StrToMoney rounds money string to float64
 func StrToMoney(str string) float64 {
 	ind := strings.Index(str, ".")
-	new := ""
+	var new string
 	if ind != -1 {
 		end := 2
 		if len(str[ind+1:]) > 1 {
@@ -913,13 +914,14 @@ func Round(num float64) int64 {
 	return int64(num + math.Copysign(0.5, num))
 }
 
-// Round rounds float64 value
+// RoundWithPrecision rounds float64 value
 func RoundWithPrecision(num float64, precision int) float64 {
 	num += consts.ROUND_FIX
 	output := math.Pow(10, float64(precision))
 	return float64(Round(num*output)) / output
 }
 
+// RoundWithoutPrecision is round float64 without precision
 func RoundWithoutPrecision(num float64) int64 {
 	//log.Debug("num", num)
 	//num += ROUND_FIX

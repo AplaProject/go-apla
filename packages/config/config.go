@@ -13,11 +13,13 @@ import (
 )
 
 var (
+	// ConfigIni is storing parsed config in map
 	ConfigIni map[string]string
 )
 
 const configFileName = "config.ini"
 
+// DBConfig is storing database config
 type DBConfig struct {
 	Type     string
 	User     string
@@ -27,6 +29,7 @@ type DBConfig struct {
 	Name     string
 }
 
+// Read is reading config
 func Read() error {
 	ConfigIni = map[string]string{}
 	path := fmt.Sprintf("%s/%s", *utils.Dir, configFileName)
@@ -34,28 +37,35 @@ func Read() error {
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("new config")
 		return err
-	} else {
-		ConfigIni, err = fullConfigIni.GetSection("default")
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("getting default config section")
-			return err
-		}
+	}
+
+	ConfigIni, err = fullConfigIni.GetSection("default")
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err, "path": path}).Error("getting default config section")
+		return err
 	}
 	return nil
 }
 
+// IsExist checking config file existence
 func IsExist() bool {
 	path := *utils.Dir + "/" + configFileName
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
 }
 
+// Save is saving config to file
 func Save(logLevel, installType string, dbConf *DBConfig) error {
 	path := *utils.Dir + "/" + configFileName
 	if !IsExist() {
 		ioutil.WriteFile(path, []byte(``), 0644)
 	}
 	confIni, err := config.NewConfig("ini", path)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.WritingFile, "error": err, "path": path}).Error("writing to config.ini")
+		return err
+	}
+
 	confIni.Set("log_level", logLevel)
 	confIni.Set("install_type", installType)
 	confIni.Set("dir", *utils.Dir)
@@ -80,6 +90,7 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 	return nil
 }
 
+// Drop is removing config file
 func Drop() {
 	path := fmt.Sprintf("%s/%s", *utils.Dir, configFileName)
 	err := os.Remove(path)
