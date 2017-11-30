@@ -17,37 +17,8 @@
 package daylight
 
 import (
-	"fmt"
-	"os/exec"
-	"runtime"
-
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/utils"
-
-	log "github.com/sirupsen/logrus"
 )
-
-func openBrowser(BrowserHTTPHost string) {
-	var err error
-	cmd := ""
-	switch runtime.GOOS {
-	case "linux":
-		cmd = "xdg-open"
-		err = exec.Command("xdg-open", BrowserHTTPHost).Start()
-	case "windows", "darwin":
-		cmd = "open"
-		err = exec.Command("open", BrowserHTTPHost).Start()
-		if err != nil {
-			cmd = "cmd /c start"
-			exec.Command("cmd", "/c", "start", BrowserHTTPHost).Start()
-		}
-	default:
-		err = fmt.Errorf("unsupported platform")
-	}
-	if err != nil {
-		log.WithFields(log.Fields{"command": cmd, "type": consts.CommandExecutionError, "error": err}).Error("Error executing command opening browser")
-	}
-}
 
 // GetHTTPHost returns program's hosts
 func GetHTTPHost() (string, string, string) {
