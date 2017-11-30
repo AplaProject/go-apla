@@ -25,17 +25,6 @@ func InitCentrifugo(cfg conf.CentrifugoConfig) {
 	publisher = gocent.NewClient(cfg.URL, cfg.Secret, centrifugoTimeout)
 }
 
-// func gocntClient(cfg conf.CentrifugoConfig) *gocent.Client {
-// 	// !!!
-// 	// err := config.Read()
-// 	// if err != nil {
-// 	// 	log.WithFields(log.Fields{"type": consts.ConfigError, "errror": err}).Error("reading config")
-// 	// }
-// 	// centrifugoSecret = config.ConfigIni["centrifugo_secret"]
-// 	// centrifugoURL = config.ConfigIni["centrifugo_url"]
-// 	// publisher = gocent.NewClient(centrifugoURL, centrifugoSecret, centrifugoTimeout)
-// }
-
 // GetHMACSign returns HMACS sign for userID
 func GetHMACSign(userID int64) (string, error) {
 	secret, err := crypto.GetHMAC(conf.Config.Centrifugo.Secret, strconv.FormatInt(userID, 10))

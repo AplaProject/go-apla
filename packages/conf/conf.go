@@ -98,13 +98,13 @@ func initialValues() *SavedConfig {
 		},
 
 		WorkDir: cwd,
-		// !!!
-		// FirstBlockPath
-		// PrivateDir
+		//
+		FirstBlockPath: "",
+		PrivateDir:     "",
 
 		Centrifugo: CentrifugoConfig{
-			Secret: "", // ???
-			URL:    "", // ???
+			Secret: "",
+			URL:    "",
 		},
 	}
 
@@ -126,9 +126,3 @@ func SaveConfig() error {
 	defer cf.Close()
 	return toml.NewEncoder(cf).Encode(Config)
 }
-
-// !!!
-/*
-confIni.Set("version2", `true`)
-confIni.Set("node_state_id", `*`)
-*/

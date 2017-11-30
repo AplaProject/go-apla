@@ -236,7 +236,7 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 		route.HandlerFunc(method, path, handle)
 	}
 }
-func initRoutes(listenHost, browserHost string) string {
+func initRoutes(listenHost string) {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
@@ -245,10 +245,8 @@ func initRoutes(listenHost, browserHost string) string {
 		go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, route)
 	}
 
-	httpListener(listenHost, &browserHost, route)
-	// for ipv6 server
+	httpListener(listenHost, route)
 	httpListenerV6(route)
-	return browserHost
 }
 
 // Start starts the main code of the program
@@ -381,7 +379,6 @@ func Start() {
 		}
 	}
 
-	BrowserHTTPHost, ListenHTTPHost := GetHTTPHost()
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err := daemonsctl.RunAllDaemons()
@@ -393,19 +390,7 @@ func Start() {
 
 	daemons.WaitForSignals()
 
-	go func() {
-		time.Sleep(time.Second)
-		BrowserHTTPHost = initRoutes(ListenHTTPHost, BrowserHTTPHost) // !!! BrowserHTTPHost unused
-
-		if *utils.Console == 0 && !utils.Mobile() {
-			log.Info("starting browser")
-			time.Sleep(time.Second)
-		}
-	}()
-
-	// waits for new records in chat, then waits for connect
-	// (they are entered from the 'connections' daemon and from those who connected to the node by their own)
-	// go utils.ChatOutput(utils.ChatNewTx)
+	initRoutes(conf.Config.HTTP.Str())
 
 	select {}
 }

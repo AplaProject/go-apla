@@ -16,58 +16,36 @@
 
 package daylight
 
-import (
-	"fmt"
-	"os/exec"
-	"runtime"
-	"strconv"
+// ???
 
-	"github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/consts"
+// import (
+// 	"fmt"
+// 	"os/exec"
+// 	"runtime"
 
-	log "github.com/sirupsen/logrus"
-)
+// 	"github.com/AplaProject/go-apla/packages/consts"
 
-func openBrowser(BrowserHTTPHost string) {
-	var err error
-	cmd := ""
-	switch runtime.GOOS {
-	case "linux":
-		cmd = "xdg-open"
-		err = exec.Command("xdg-open", BrowserHTTPHost).Start()
-	case "windows", "darwin":
-		cmd = "open"
-		err = exec.Command("open", BrowserHTTPHost).Start()
-		if err != nil {
-			cmd = "cmd /c start"
-			exec.Command("cmd", "/c", "start", BrowserHTTPHost).Start()
-		}
-	default:
-		err = fmt.Errorf("unsupported platform")
-	}
-	if err != nil {
-		log.WithFields(log.Fields{"command": cmd, "type": consts.CommandExecutionError, "error": err}).Error("Error executing command opening browser")
-	}
-}
+// 	log "github.com/sirupsen/logrus"
+// )
 
-// GetHTTPHost returns program's hosts
-func GetHTTPHost() (string, string) {
-	// !!!
-	// BrowserHTTPHost := "http://localhost:" + *utils.ListenHTTPPort
-	// HandleHTTPHost := ""
-	// ListenHTTPHost := ":" + *utils.ListenHTTPPort
-	// if len(*utils.TCPHost) > 0 {
-	// 	fmt.Println(*utils.TCPHost)
-	// 	ListenHTTPHost = *utils.TCPHost + ":" + *utils.ListenHTTPPort
-	// 	BrowserHTTPHost = "http://" + *utils.TCPHost + ":" + *utils.ListenHTTPPort
-	// }
-	host := "localhost"
-	if len(conf.Config.HTTP.Host) > 0 && conf.Config.HTTP.Host != "0.0.0.0" {
-		host = conf.Config.HTTP.Host
-	}
-
-	BrowserHTTPHost := "http://" + host + ":" + strconv.Itoa(conf.Config.HTTP.Port)
-	ListenHTTPHost := conf.Config.HTTP.Str()
-
-	return BrowserHTTPHost, ListenHTTPHost
-}
+// func openBrowser(BrowserHTTPHost string) {
+// 	var err error
+// 	cmd := ""
+// 	switch runtime.GOOS {
+// 	case "linux":
+// 		cmd = "xdg-open"
+// 		err = exec.Command("xdg-open", BrowserHTTPHost).Start()
+// 	case "windows", "darwin":
+// 		cmd = "open"
+// 		err = exec.Command("open", BrowserHTTPHost).Start()
+// 		if err != nil {
+// 			cmd = "cmd /c start"
+// 			exec.Command("cmd", "/c", "start", BrowserHTTPHost).Start()
+// 		}
+// 	default:
+// 		err = fmt.Errorf("unsupported platform")
+// 	}
+// 	if err != nil {
+// 		log.WithFields(log.Fields{"command": cmd, "type": consts.CommandExecutionError, "error": err}).Error("Error executing command opening browser")
+// 	}
+// }

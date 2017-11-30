@@ -94,18 +94,6 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return err
 	}
 
-	// !!!
-	// defer func() {
-	// 	if err != nil {
-	// 		config.Drop()
-	// 	}
-	// }()
-	// !!!
-	// if err = config.Read(); err != nil {
-	// 	log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("reading config")
-	// 	return err
-	// }
-
 	err = model.GormInit(cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name)
 	if err != nil || model.DBConn == nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("initializing DB")
@@ -120,12 +108,6 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing db schema")
 		return err
 	}
-
-	// !!!
-	// conf := &model.Config{FirstLoadBlockchain: data.installType, FirstLoadBlockchainURL: data.firstLoadBlockchainURL, AutoReload: 259200}
-	// if err = conf.Create(); err != nil {
-	// 	return err
-	// }
 
 	install := &model.Install{Progress: "complete"}
 	if err = install.Create(); err != nil {

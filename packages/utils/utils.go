@@ -96,10 +96,6 @@ var (
 	TLS = flag.String("tls", "", "Support https. Specify directory for .well-known")
 	// DevTools switches on dev tools in thrust shell
 	DevTools = flag.Int64("devtools", 0, "Devtools in thrust-shell")
-	// BoltDir is the edir for BoltDb folder
-	BoltDir = flag.String("boltDir", GetCurrentDir(), "Bolt directory")
-	// BoltPsw is the password for BoltDB
-	BoltPsw = flag.String("boltPsw", "", "Bolt password")
 	// APIToken is an api token for exchange api
 	APIToken = flag.String("apiToken", "", "API Token")
 	// OneCountry is the country which is supported
@@ -119,15 +115,7 @@ var (
 	CancelFunc context.CancelFunc
 	// DaemonsCount is number of daemons
 	DaemonsCount int
-
-	// Thrust is true for thrust shell
-	// Thrust bool	// !!! unused
 )
-
-// !!! flsg.Parse runs explicitly on start
-// func init() {
-// 	flag.Parse()
-// }
 
 // IOS checks if the app runs on iOS
 func IOS() bool {
@@ -821,15 +809,6 @@ func GetParent() string {
 	}
 	return parent
 }
-
-// !!!
-// GetTcpPort is returns tcp port
-// func GetTcpPort(config map[string]string) string {
-// 	if port, ok := config["tcp_port"]; ok {
-// 		return port
-// 	}
-// 	return consts.TCP_PORT
-// }
 
 func GetNodeKeys() (string, string, error) {
 	nprivkey, err := ioutil.ReadFile(*Dir + "/NodePrivateKey")
