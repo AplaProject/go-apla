@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/notificator"
 	"github.com/AplaProject/go-apla/packages/publisher"
@@ -112,14 +113,15 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	} else if ok {
 		founder = converter.StrToInt64(sp.Value)
 	}
-	var cfg model.Config
-	if _, err := cfg.Get(); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting key_id parameter")
-		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
-	}
+
+	// var cfg model.Config
+	// if _, err := cfg.Get(); err != nil {
+	// 	log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting key_id parameter")
+	// 	return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
+	// }
 
 	result := loginResult{EcosystemID: converter.Int64ToStr(state), KeyID: converter.Int64ToStr(wallet),
-		Address: address, IsOwner: founder == wallet, IsNode: cfg.KeyID == wallet,
+		Address: address, IsOwner: founder == wallet, IsNode: conf.Config.KeyID == wallet,
 		IsVDE: model.IsTable(fmt.Sprintf(`%d_vde_tables`, state))}
 	data.result = &result
 	expire := data.params[`expire`].(int64)

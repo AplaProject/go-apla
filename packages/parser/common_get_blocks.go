@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -38,22 +37,22 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
 		rollback = syspar.GetRbBlocks2()
 	}
 
-	config := &model.Config{}
-	_, err := config.Get()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
-		return utils.ErrInfo(err)
-	}
+	// config := &model.Config{}
+	// _, err := config.Get()
+	// if err != nil {
+	// 	log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
+	// 	return utils.ErrInfo(err)
+	// }
 
 	// !!! should be refactored to use different 'badblock' source
 	badBlocks := make(map[int64]string)
-	if len(config.BadBlocks) > 0 {
-		err = json.Unmarshal([]byte(config.BadBlocks), &badBlocks)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling config bad blocks from json")
-			return utils.ErrInfo(err)
-		}
-	}
+	// if len(config.BadBlocks) > 0 {
+	// 	err = json.Unmarshal([]byte(config.BadBlocks), &badBlocks)
+	// 	if err != nil {
+	// 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling config bad blocks from json")
+	// 		return utils.ErrInfo(err)
+	// 	}
+	// }
 
 	blocks := make([]*Block, 0)
 	var count int64
@@ -80,7 +79,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
 			return utils.ErrInfo(err)
 		}
 
-		// !!! refactor: make a function to check good block or bad 
+		// !!! refactor: make a function to check good block or bad
 		if badBlocks[block.Header.BlockID] == string(converter.BinToHex(block.Header.Sign)) {
 			log.WithFields(log.Fields{"block_id": block.Header.BlockID, "type": consts.InvalidObject}).Error("block is bad")
 			return utils.ErrInfo(errors.New("bad block"))
@@ -115,7 +114,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
 	}
 
 	// mark all transaction as unverified
-	_, err = model.MarkVerifiedAndNotUsedTransactionsUnverified()
+	_, err := model.MarkVerifiedAndNotUsedTransactionsUnverified()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("marking verified and not used transactions unverified")
 		return utils.ErrInfo(err)

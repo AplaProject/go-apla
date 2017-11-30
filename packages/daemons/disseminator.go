@@ -22,6 +22,7 @@ import (
 	"io"
 	"sync"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -42,15 +43,15 @@ const (
 // if we are full node(miner): sends blocks and transactions hashes
 // else send the full transactions
 func Disseminator(ctx context.Context, d *daemon) error {
-	config := &model.Config{}
-	_, err := config.Get()
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get config")
-		return err
-	}
+	// config := &model.Config{}
+	// _, err := config.Get()
+	// if err != nil {
+	// 	d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get config")
+	// 	return err
+	// }
 
 	isFullNode := true
-	myNodePosition, err := syspar.GetNodePositionByKeyID(config.KeyID)
+	myNodePosition, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Debug("finding node")
 		isFullNode = false

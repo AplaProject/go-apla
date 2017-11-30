@@ -81,10 +81,12 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating info block")
 		return p.ErrInfo(err)
 	}
-	err = model.UpdateConfig("my_block_id", converter.Int64ToStr(iblock))
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating config.myBlockID")
-		return p.ErrInfo(err)
-	}
+
+	// !!! my_block_id was removed ???
+	// err = model.UpdateConfig("my_block_id", converter.Int64ToStr(iblock))
+	// if err != nil {
+	// 	logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating config.myBlockID")
+	// 	return p.ErrInfo(err)
+	// }
 	return nil
 }

@@ -26,6 +26,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -61,20 +62,23 @@ func initialLoad(ctx context.Context, d *daemon) error {
 
 	if toLoad {
 		d.logger.Debug("start first block loading")
-		if err := model.UpdateConfig("current_load_clockchain", "file"); err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating current_load_blockchain in config")
-			return err
-		}
+
+		// !!! current_load_clockchain ???
+		// if err := model.UpdateConfig("current_load_clockchain", "file"); err != nil {
+		// 	d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating current_load_blockchain in config")
+		// 	return err
+		// }
 
 		if err := firstLoad(ctx, d); err != nil {
 			return err
 		}
 	}
 
-	if err := model.UpdateConfig("current_load_clockchain", "nodes"); err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating current_load_blockchain in config")
-		return err
-	}
+	// !!! current_load_clockchain ???
+	// if err := model.UpdateConfig("current_load_clockchain", "nodes"); err != nil {
+	// 	d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating current_load_blockchain in config")
+	// 	return err
+	// }
 
 	return nil
 }
@@ -295,34 +299,28 @@ func firstLoad(ctx context.Context, d *daemon) error {
 	DBLock()
 	defer DBUnlock()
 
-	nodeConfig := &model.Config{}
-	_, err := nodeConfig.Get()
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
-		return err
-	}
+	// nodeConfig := &model.Config{}
+	// _, err := nodeConfig.Get()
+	// if err != nil {
+	// 	d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
+	// 	return err
+	// }
 
-	if nodeConfig.FirstLoadBlockchain == "file" {
-		blockchainURL := nodeConfig.FirstLoadBlockchainURL
+	if conf.Config.FirstLoadBlockchain == "file" {
+		blockchainURL := conf.Config.FirstLoadBlockchainURL
 		if len(blockchainURL) == 0 {
 			blockchainURL = syspar.GetBlockchainURL()
 		}
 
 		fileName := *utils.Dir + "/public/blockchain"
-		err = downloadChain(ctx, fileName, blockchainURL, d.logger)
-		if err != nil {
+		if err := downloadChain(ctx, fileName, blockchainURL, d.logger); err != nil {
 			return err
 		}
 
-		err = loadFromFile(ctx, fileName, d.logger)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = loadFirstBlock(d.logger)
+		return loadFromFile(ctx, fileName, d.logger)
 	}
 
-	return err
+	return loadFirstBlock(d.logger)
 }
 
 func needLoad(logger *log.Entry) (bool, error) {

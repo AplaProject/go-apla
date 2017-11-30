@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -326,17 +327,17 @@ func GetRemoteHosts() []string {
 
 	ret := make([]string, 0)
 
-	cfg, err := model.GetConfig()
-	if err != nil {
-		// error logged inside GetConfig()
-		return ret
-	}
+	// cfg, err := model.GetConfig()
+	// if err != nil {
+	// 	// error logged inside GetConfig()
+	// 	return ret
+	// }
 
 	mutex.RLock()
 	defer mutex.RUnlock()
 
 	for nodeID, item := range nodes {
-		if nodeID != cfg.KeyID {
+		if nodeID != conf.Config.KeyID {
 			ret = append(ret, item.Host)
 		}
 	}

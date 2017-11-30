@@ -20,6 +20,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
+
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -34,13 +36,13 @@ import (
 func BlockGenerator(ctx context.Context, d *daemon) error {
 	d.sleepTime = time.Second
 
-	config := &model.Config{}
-	if _, err := config.Get(); err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cannot get config")
-		return err
-	}
+	// config := &model.Config{}
+	// if _, err := config.Get(); err != nil {
+	// 	d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cannot get config")
+	// 	return err
+	// }
 
-	_, err := syspar.GetNodePositionByKeyID(config.KeyID)
+	_, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
 	if err != nil {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
@@ -52,7 +54,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	defer DBUnlock()
 
 	// wee need fresh myNodePosition after locking
-	myNodePosition, err := syspar.GetNodePositionByKeyID(config.KeyID)
+	myNodePosition, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node position by key id")
 		return err
@@ -66,7 +68,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 
 	// calculate the next block generation time
-	sleepTime, err := syspar.GetSleepTimeByKey(config.KeyID, converter.StrToInt64(prevBlock.NodePosition))
+	sleepTime, err := syspar.GetSleepTimeByKey(conf.Config.KeyID, converter.StrToInt64(prevBlock.NodePosition))
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting sleep time")
 		return err
@@ -100,25 +102,20 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	blockBin, err := generateNextBlock(prevBlock, *trs, NodePrivateKey, config, time.Now().Unix(), myNodePosition)
+	blockBin, err := generateNextBlock(prevBlock, *trs, NodePrivateKey, time.Now().Unix(), myNodePosition)
 	if err != nil {
 		return err
 	}
 
-	err = parser.InsertBlockWOForks(blockBin)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return parser.InsertBlockWOForks(blockBin)
 }
 
-func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key string, c *model.Config, blockTime int64, myNodePosition int64) ([]byte, error) {
+func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key string, blockTime int64, myNodePosition int64) ([]byte, error) {
 	header := &utils.BlockData{
 		BlockID:      prevBlock.BlockID + 1,
 		Time:         time.Now().Unix(),
-		EcosystemID:  c.EcosystemID,
-		KeyID:        c.KeyID,
+		EcosystemID:  conf.Config.EcosystemID,
+		KeyID:        conf.Config.KeyID,
 		NodePosition: myNodePosition,
 		Version:      consts.BLOCK_VERSION,
 	}

@@ -120,10 +120,13 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing db schema")
 		return err
 	}
-	conf := &model.Config{FirstLoadBlockchain: data.installType, FirstLoadBlockchainURL: data.firstLoadBlockchainURL, AutoReload: 259200}
-	if err = conf.Create(); err != nil {
-		return err
-	}
+
+	// !!!
+	// conf := &model.Config{FirstLoadBlockchain: data.installType, FirstLoadBlockchainURL: data.firstLoadBlockchainURL, AutoReload: 259200}
+	// if err = conf.Create(); err != nil {
+	// 	return err
+	// }
+
 	install := &model.Install{Progress: "complete"}
 	if err = install.Create(); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating install")
@@ -184,11 +187,13 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		}
 		*utils.KeyID = crypto.Address(key)
 	}
-	err = model.UpdateConfig("key_id", *utils.KeyID)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("setting config.dlt_wallet_id")
-		return err
-	}
+
+	// !!!
+	// err = model.UpdateConfig("key_id", *utils.KeyID)
+	// if err != nil {
+	// 	logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("setting config.dlt_wallet_id")
+	// 	return err
+	// }
 
 	err = daemonsctl.RunAllDaemons()
 	if err != nil {

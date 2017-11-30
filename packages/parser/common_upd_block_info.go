@@ -76,12 +76,13 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 			return fmt.Errorf("error while updating info_block: %s", err)
 		}
 
-		config := &model.Config{}
-		err = config.ChangeBlockIDBatch(dbTransaction, blockID, blockID)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("changing block id batch in config")
-			return err
-		}
+		// !!!
+		// config := &model.Config{}
+		// err = config.ChangeBlockIDBatch(dbTransaction, blockID, blockID)
+		// if err != nil {
+		// 	log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("changing block id batch in config")
+		// 	return err
+		// }
 	}
 
 	return nil

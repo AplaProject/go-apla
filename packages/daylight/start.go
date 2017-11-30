@@ -116,7 +116,6 @@ func killOld() {
 }
 
 func initLogs() error {
-	var err error
 
 	if len(conf.Config.LogFileName) == 0 {
 		log.SetOutput(os.Stdout)
@@ -129,6 +128,7 @@ func initLogs() error {
 
 		f, err := os.OpenFile(fileName, os.O_WRONLY|openMode, 0755)
 		if err != nil {
+			// NOTE: STDERR should be used
 			fmt.Println("Can't open log file ", fileName)
 			return err
 		}
@@ -149,7 +149,8 @@ func initLogs() error {
 	}
 
 	log.AddHook(logtools.ContextHook{})
-	return err
+
+	return nil
 }
 
 func savePid() error {
