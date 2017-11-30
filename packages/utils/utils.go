@@ -54,19 +54,6 @@ type BlockData struct {
 
 var (
 
-	// !!! moved to conf/flags
-	//
-	// FlagInitConfig = flag.Bool("initConfig", false, "reset config to initial values")
-
-	// // TCPHost is the tcp host
-	// FlagTCPHost = flag.String("tcpHost", "127.0.0.1", "tcpHost (e.g. 127.0.0.1)")
-	// // TCPHost is the tcp host
-	// FlagTCPPort = flag.Int("tcpPort", 7078, "tcpPort 7080 by default")
-
-	// FlagHTTPHost = flag.String("httpHost", "127.0.0.1", "http api bound to that host, use 0.0.0.0 to bind all addresses")
-	// // ListenHTTPPort is HTTP port
-	// FlagHTTPPort = flag.Int("httpPort", 7079, "http api port (7079)")
-
 	// FirstBlockDir is a folder where 1block file will be stored
 	FirstBlockDir = flag.String("firstBlockDir", "", "FirstBlockDir")
 	// FirstBlockPublicKey is the private key

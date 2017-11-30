@@ -195,12 +195,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 	// 	return err
 	// }
 
-	err = daemonsctl.RunAllDaemons()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return daemonsctl.RunAllDaemons()
 }
 
 func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
@@ -208,7 +203,8 @@ func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 
 	data.result = &result
 
-	params := installParams{installType: data.params["type"].(string),
+	params := installParams{
+		installType:            data.params["type"].(string),
 		logLevel:               data.params["log_level"].(string),
 		firstLoadBlockchainURL: data.params["first_load_blockchain_url"].(string),
 		dbHost:                 data.params["db_host"].(string),

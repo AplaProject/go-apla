@@ -6,7 +6,7 @@ package model
 // )
 
 // type Config struct {
-// 	MyBlockID              int32  `gorm:"not null"` // !!! remove
+// 	MyBlockID              int32  `gorm:"not null"` // remove ???
 // 	KeyID                  int64  `gorm:"not null"`
 // 	EcosystemID            int64  `gorm:"not null"`
 // 	BadBlocks              string `gorm:"not null"`                                  // only read
