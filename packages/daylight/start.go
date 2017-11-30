@@ -277,6 +277,7 @@ func Start() {
 
 	conf.ParseFlags()
 
+	fmt.Println("tcpPort: ", *conf.FlagTCPPort)
 	// parse flags
 
 	// if initConfig
