@@ -669,15 +669,24 @@ func RollbackTable(sc *SmartContract, name string) error {
 	}
 	err := model.DropTable(sc.DbTransaction, fmt.Sprintf("%d_%s", sc.TxSmart.EcosystemID, name))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
 		return err
 	}
-
-	t := &model.Table{Name: name}
-	err = t.Delete()
+	t := model.Table{}
+	t.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	found, err := t.Get(sc.DbTransaction, name)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
 		return err
+	}
+	if found {
+		err = t.Delete(sc.DbTransaction)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
+			return err
+		}
+	} else {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
 	}
 	return nil
 }
