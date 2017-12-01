@@ -47,7 +47,7 @@ func init() {
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
-	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio`}
+	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`}
@@ -554,7 +554,7 @@ func defaultTail(par parFunc, tag string) {
 	if par.Tails != nil {
 		for _, v := range *par.Tails {
 			name := (*v)[len(*v)-1]
-			curFunc := tails[tag].Tails[name].tplFunc
+			curFunc := tails[tag].Tails[string(name)].tplFunc
 			pars := (*v)[:len(*v)-1]
 			callFunc(&curFunc, par.Node, par.Workspace, &pars, nil)
 		}
@@ -583,7 +583,7 @@ func ifTag(par parFunc) string {
 	if !cond && par.Tails != nil {
 		for _, v := range *par.Tails {
 			name := (*v)[len(*v)-1]
-			curFunc := tails[`if`].Tails[name].tplFunc
+			curFunc := tails[`if`].Tails[string(name)].tplFunc
 			pars := (*v)[:len(*v)-1]
 			callFunc(&curFunc, par.Owner, par.Workspace, &pars, nil)
 			if (*par.Workspace.Vars)[`_cond`] == `1` {
@@ -601,7 +601,7 @@ func ifFull(par parFunc) string {
 	if par.Tails != nil {
 		for _, v := range *par.Tails {
 			name := (*v)[len(*v)-1]
-			curFunc := tails[`if`].Tails[name].tplFunc
+			curFunc := tails[`if`].Tails[string(name)].tplFunc
 			pars := (*v)[:len(*v)-1]
 			callFunc(&curFunc, par.Node, par.Workspace, &pars, nil)
 		}

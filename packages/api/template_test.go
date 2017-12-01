@@ -18,8 +18,10 @@ package api
 
 import (
 	"fmt"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"net/url"
 	"testing"
+	"time"
 )
 
 type tplItem struct {
@@ -79,4 +81,59 @@ var forTest = tplList{
 		`[{"tag":"text","text":"ContractConditions(` + "`MainCondition`" + `)"}]`},
 	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
 		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","government"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"government"}]}]`},
+}
+
+func TestImage(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	name := randName(`tbl`)
+	form := url.Values{"Name": {name}, "Columns": {`[{"name":"name","type":"varchar", "index": "1", 
+	  "conditions":"true"},
+	{"name":"image", "type":"text","index": "0", "conditions":"true"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		 data {
+			 Image string
+		 }
+		 action {
+			 DBInsert("` + name + `", "name,image", "myimage", $Image)
+		 }
+		}`},
+		"Conditions": {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	var mydata string
+
+	mydata = crypto.RandSeq(300000)
+	err = postTx(name, &url.Values{`Image`: {mydata}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret contentResult
+	template := `DBFind(Name: ` + name + `, Source: srcimage).Custom(custom_image){
+        Div(Body: Image(Src: "#image#").Style(width: 100px;  border: 1px solid #5A5D63 ;))
+	}
+	Table(Source: srcimage, Columns: "Name=name, Image=#custom_image#")
+	`
+	start := time.Now()
+	err = sendPost(`content`, &url.Values{`template`: {template}}, &ret)
+	duration := time.Since(start)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if int(duration.Seconds()) > 0 {
+		t.Errorf(`Too much time for template parsing`)
+		return
+	}
 }
