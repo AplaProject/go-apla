@@ -793,14 +793,14 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		walletTable := fmt.Sprintf(`%d_keys`, sc.TxSmart.TokenEcosystem)
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
 			[]string{converter.Int64ToStr(toID)}, true, true); ierr != nil {
-			if err != errUpdNotExistRecord {
+			if ierr != errUpdNotExistRecord {
 				return retError(ierr)
 			}
 			apl = commission
 		}
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
 			[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true, true); ierr != nil {
-			if err != errUpdNotExistRecord {
+			if ierr != errUpdNotExistRecord {
 				return retError(ierr)
 			}
 			apl = apl.Sub(commission)
