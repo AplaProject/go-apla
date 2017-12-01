@@ -59,8 +59,8 @@ func (t *TableVDE) Create(transaction *DbTransaction) error {
 }
 
 // Delete is deleting model from database
-func (t *Table) Delete() error {
-	return DBConn.Delete(t).Error
+func (t *Table) Delete(transaction *DbTransaction) error {
+	return GetDB(transaction).Delete(t).Error
 }
 
 // ExistsByName finding table existence by name
