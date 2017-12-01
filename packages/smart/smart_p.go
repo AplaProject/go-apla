@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -161,6 +162,7 @@ func init() {
 		"PermColumn":         PermColumn,
 		"UpdateLang":         UpdateLang,
 		"Size":               Size,
+		"Split":              Split,
 		"Substr":             Substr,
 		"ContractsList":      contractsList,
 		"IsContract":         IsContract,
@@ -469,6 +471,16 @@ func Join(input []interface{}, sep string) string {
 		ret += fmt.Sprintf(`%v`, item)
 	}
 	return ret
+}
+
+// Split splits the input string to array
+func Split(input, sep string) []interface{} {
+	out := strings.Split(input, sep)
+	result := make([]interface{}, len(out))
+	for i, val := range out {
+		result[i] = reflect.ValueOf(val).Interface()
+	}
+	return result
 }
 
 // Sha256 returns SHA256 hash value
