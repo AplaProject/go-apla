@@ -29,6 +29,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
+	"github.com/tevino/abool"
 
 	"github.com/AplaProject/go-apla/packages/config"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -76,9 +77,11 @@ const (
 
 type apiHandle func(http.ResponseWriter, *http.Request, *apiData, *log.Entry) error
 
-var (
-	installed bool
-)
+var installed *abool.AtomicBool
+
+func init() {
+	installed = abool.New()
+}
 
 func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
 	var (
@@ -148,12 +151,12 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 
 // IsInstalled returns installed flag
 func IsInstalled() bool {
-	return installed
+	return installed.IsSet()
 }
 
 // Installed is setting turning installed flag on
 func Installed() {
-	installed = true
+	installed.Set()
 }
 
 // DefaultHandler is a common handle function for api requests
