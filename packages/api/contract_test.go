@@ -672,7 +672,4 @@ func TestUpdateFunc(t *testing.T) {
 	if msg != `Y=finishY=OK` {
 		t.Errorf(`wrong result %s`, msg)
 	}
-
-	t.Errorf(msg)
-
 }

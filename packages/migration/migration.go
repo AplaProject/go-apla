@@ -397,8 +397,8 @@ var (
 			  list = ContractsList($Value)
 			  var i int
 			  while i < Len(list) {
-				  if IsContract(list[i], $ecosystem_id) {
-					  warning Sprintf("Contract %%s exists", list[i] )
+				  if IsObject(list[i], $ecosystem_id) {
+					  warning Sprintf("Contract or function %%s exists", list[i] )
 				  }
 				  i = i + 1
 			  }
@@ -943,8 +943,8 @@ var (
 			list = ContractsList($Value)
 			var i int
 			while i < Len(list) {
-				if IsContract(list[i], $ecosystem_id) {
-					warning Sprintf("Contract %%s exists", list[i] )
+				if IsObject(list[i], $ecosystem_id) {
+					warning Sprintf("Contract or function %%s exists", list[i] )
 				}
 				i = i + 1
 			}
@@ -1269,7 +1269,7 @@ var (
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
 			if DBIntExt("blocks", "id", $Name, "name") {
-				warning Sprintf( "Block %%s aready exists", $Name)
+				warning Sprintf( "Block %%s already exists", $Name)
 			}
 		}
 		action {
