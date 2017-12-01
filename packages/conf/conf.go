@@ -3,11 +3,12 @@ package conf
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	toml "github.com/BurntSushi/toml"
 )
 
-const configFileName = "config.toml"
+const defaultConfigFile = "config.toml"
 
 // HostPort endpoint in form "str:int"
 type HostPort struct {
@@ -72,6 +73,9 @@ type SavedConfig struct {
 	Centrifugo CentrifugoConfig
 }
 
+// InstallMode - init db/config, daemons stopped
+var InstallMode bool
+
 // Config - global immutable parameters
 var Config = *initialValues()
 
@@ -110,19 +114,69 @@ func initialValues() *SavedConfig {
 
 }
 
-// LoadConfig from configFileName ("config.toml")
+// GetConfigPath returns path from command line arg or default
+func GetConfigPath() string {
+	if *FlagConfigPath != "" {
+		return *FlagConfigPath
+	}
+	return defaultConfigFile
+}
+
+// GetPidFile returns path to pid file
+func GetPidFile() string {
+	return filepath.Join(Config.WorkDir, "apla.pid")
+}
+
+// LoadConfig from configFile
 // the function has side effect updating global var Config
 func LoadConfig() error {
-	_, err := toml.DecodeFile(configFileName, &Config)
+	_, err := toml.DecodeFile(GetConfigPath(), &Config)
 	return err
 }
 
-// SaveConfig save global parameters to configFileName ("config.toml")
+// SaveConfig save global parameters to configFile
 func SaveConfig() error {
-	cf, err := os.Create(configFileName)
+	cf, err := os.Create(GetConfigPath())
 	if err != nil {
 		return err
 	}
 	defer cf.Close()
 	return toml.NewEncoder(cf).Encode(Config)
+}
+
+// NoConfig - config file does not exist
+func NoConfig() bool {
+	_, err := os.Stat(GetConfigPath())
+	return os.IsNotExist(err)
+}
+
+// MergeFlags override default config values by environment or args
+func MergeFlags() {
+
+	Config.DB.Name = *FlagDbName
+	Config.DB.Host = *FlagDbHost
+	Config.DB.Port = *FlagDbPort
+	Config.DB.User = *FlagDbUser
+
+	p := os.Getenv("PG_PASSWORD")
+	if p != "" {
+		Config.DB.Password = p
+	}
+	if *FlagDbPassword != "" {
+		Config.DB.Password = *FlagDbPassword
+	}
+
+	if *FlagWorkDir != "" {
+		Config.WorkDir = *FlagWorkDir
+	} else if *FlagDir != "" {
+		// NOTE: old flag deprecated!
+		Config.WorkDir = *FlagDir
+	}
+
+	fb := Config.WorkDir
+	if *FlagFirstBlockDir != "" {
+		fb = *FlagFirstBlockDir
+	}
+	Config.FirstBlockPath = filepath.Join(fb, "1block")
+
 }

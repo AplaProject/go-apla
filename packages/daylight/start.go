@@ -45,42 +45,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// !!! remove
-// func readConfig() {
-// 	// read the config.ini
-// 	config.Read()
-// 	if *utils.TCPHost == "" {
-// 		*utils.TCPHost = config.ConfigIni["tcp_host"]
-// 	}
-// 	if *utils.FirstBlockDir == "" {
-// 		*utils.FirstBlockDir = config.ConfigIni["first_block_dir"]
-// 	}
-// 	if *utils.ListenHTTPPort == "" {
-// 		*utils.ListenHTTPPort = config.ConfigIni["http_port"]
-// 	}
-// 	if *utils.Dir == "" {
-// 		*utils.Dir = config.ConfigIni["dir"]
-// 	}
-// 	utils.OneCountry = converter.StrToInt64(config.ConfigIni["one_country"])
-// 	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
-// 	if len(config.ConfigIni["lang"]) > 0 {
-// 		language.LangList = strings.Split(config.ConfigIni["lang"], `,`)
-// 	}
-// }
-
 func initStatsd() {
-	// host := "127.0.0.1"
-	// port := 8125
-	// var name = "apla"
-	// if config.ConfigIni["stastd_host"] != "" {
-	// 	host = config.ConfigIni["statsd_host"]
-	// }
-	// if config.ConfigIni["stastd_port"] != "" {
-	// 	port = converter.StrToInt(config.ConfigIni["statsd_port"])
-	// }
-	// if config.ConfigIni["statsd_client_name"] != "" {
-	// 	name = config.ConfigIni["statsd_client_name"]
-	// }
 	cfg := conf.Config.StatsD
 	if err := statsd.Init(cfg.Host, cfg.Port, cfg.Name); err != nil {
 		log.WithFields(log.Fields{"type": consts.StatsdError, "error": err}).Fatal("cannot initialize statsd")
@@ -88,7 +53,7 @@ func initStatsd() {
 }
 
 func killOld() {
-	pidPath := *utils.Dir + "/daylight.pid"
+	pidPath := conf.GetPidFile()
 	if _, err := os.Stat(pidPath); err == nil {
 		dat, err := ioutil.ReadFile(pidPath)
 		if err != nil {
@@ -99,13 +64,13 @@ func killOld() {
 		if err != nil {
 			log.WithFields(log.Fields{"data": dat, "error": err, "type": consts.JSONUnmarshallError}).Error("unmarshalling pid map")
 		}
-		log.WithFields(log.Fields{"path": *utils.Dir + pidMap["pid"]}).Debug("old pid path")
+		log.WithFields(log.Fields{"path": conf.Config.WorkDir + pidMap["pid"]}).Debug("old pid path")
 
 		KillPid(pidMap["pid"])
 		if fmt.Sprintf("%s", err) != "null" {
 			// give 15 sec to end the previous process
 			for i := 0; i < 15; i++ {
-				if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
+				if _, err := os.Stat(conf.GetPidFile()); err == nil {
 					time.Sleep(time.Second)
 				} else { // if there is no daylight.pid, so it is finished
 					break
@@ -160,11 +125,11 @@ func savePid() error {
 		log.WithFields(log.Fields{"pid": pid, "error": err, "type": consts.JSONMarshallError}).Error("marshalling pid to json")
 		return err
 	}
-	return ioutil.WriteFile(*utils.Dir+"/daylight.pid", PidAndVer, 0644)
+	return ioutil.WriteFile(conf.GetPidFile(), PidAndVer, 0644)
 }
 
 func delPidFile() {
-	os.Remove(filepath.Join(*utils.Dir, "daylight.pid"))
+	os.Remove(conf.GetPidFile())
 }
 
 func rollbackToBlock(blockID int64) error {
@@ -205,8 +170,9 @@ func rollbackToBlock(blockID int64) error {
 			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Info("record count in table is ok")
 		}
 	}
-	if warn == 0 {
-		ioutil.WriteFile(*utils.Dir+"rollback_result", []byte("1"), 0644)
+
+	if warn == 0 { // ???
+		ioutil.WriteFile(conf.Config.WorkDir+"/rollback_result", []byte("1"), 0644)
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile}).Error("write to the rollback_result")
 			return err
@@ -215,7 +181,7 @@ func rollbackToBlock(blockID int64) error {
 	return nil
 }
 
-func processOldFile(oldFileName string) error {
+func processOldFile(oldFileName string) error { /// ???
 
 	err := utils.CopyFileContents(os.Args[0], oldFileName)
 	if err != nil {
@@ -223,9 +189,9 @@ func processOldFile(oldFileName string) error {
 		return err
 	}
 
-	err = exec.Command(*utils.OldFileName, "-dir", *utils.Dir).Start()
+	err = exec.Command(*utils.OldFileName, "-dir", conf.Config.WorkDir).Start()
 	if err != nil {
-		log.WithFields(log.Fields{"cmd": *utils.OldFileName + " -dir " + *utils.Dir, "error": err, "type": consts.CommandExecutionError}).Error("executing command")
+		log.WithFields(log.Fields{"cmd": *utils.OldFileName + " -dir " + conf.Config.WorkDir, "error": err, "type": consts.CommandExecutionError}).Error("executing command")
 		return err
 	}
 	return nil
@@ -240,7 +206,7 @@ func initRoutes(listenHost string) {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
-	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
+	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS))) // ???
 	if len(*utils.TLS) > 0 {
 		go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, route)
 	}
@@ -262,44 +228,42 @@ func Start() {
 	}()
 
 	Exit := func(code int) {
-		model.GormClose()
 		delPidFile()
-		os.Exit(code)
+		model.GormClose()
 		statsd.Close()
+		os.Exit(code)
 	}
 
-	// // // // // // // // // // // // //
-
-	fmt.Println("Start.") // !!!
+	fmt.Printf("Start: %s\n", consts.VERSION)
 
 	conf.ParseFlags()
 
-	fmt.Println("tcpPort: ", *conf.FlagTCPPort)
-	// parse flags
-
-	// if initConfig
-
-	// load toml config
-	// apply flags
-
-	if err := conf.LoadConfig(); err != nil {
-		log.Error("loadConfig:", err)
-		return
+	if conf.NoConfig() {
+		conf.InstallMode = true
+	} else {
+		// override default data
+		if err := conf.LoadConfig(); err != nil {
+			log.Error("loadConfig:", err)
+			return
+		}
 	}
 
-	if err := conf.SaveConfig(); err != nil {
-		log.Error("saveConfig:", err)
-		return
+	conf.MergeFlags()
+
+	if *conf.FlagReinstall {
+		if err := conf.SaveConfig(); err != nil {
+			log.Error("saveConfig:", err)
+			Exit(1)
+		}
 	}
+
+	fmt.Printf("Config: %v\n", conf.Config)
+
 	return // !!!
 
-	//	readConfig()
+	if !conf.InstallMode {
+		dbCfg := conf.Config.DB
 
-	// // // // // // // // // // // // //
-
-	dbCfg := conf.Config.DB
-	if len(dbCfg.Type) > 0 { // !!! incorrect check !!! FIXIT !!!
-		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err = model.GormInit(dbCfg.Host, dbCfg.Port, dbCfg.User, dbCfg.Password, dbCfg.Name)
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -316,21 +280,22 @@ func Start() {
 		os.Exit(0)
 	}
 
-	log.WithFields(log.Fields{"work_dir": *utils.Dir, "version": consts.VERSION}).Info("started with")
+	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
 
 	// kill previously run apla
-	if !utils.Mobile() {
+	if !utils.Mobile() { // ???
 		killOld()
 	}
 
-	// TODO: ??
-	if fi, err := os.Stat(*utils.Dir + `/logo.png`); err == nil && fi.Size() > 0 {
+	// TODO: ???
+	if fi, err := os.Stat(conf.Config.WorkDir + `/logo.png`); err == nil && fi.Size() > 0 {
 		utils.LogoExt = `png`
 	}
 
 	publisher.InitCentrifugo(conf.Config.Centrifugo)
 
 	initStatsd()
+
 	err = initLogs()
 	if err != nil {
 		fmt.Printf("logs init failed: %v\n", utils.ErrInfo(err))
@@ -341,12 +306,12 @@ func Start() {
 
 	// if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
 	if *utils.OldFileName != "" {
-		processOldFile(*utils.OldFileName)
+		processOldFile(*utils.OldFileName) // ???
 		Exit(1)
 	}
 
 	// save the current pid and version
-	if !utils.Mobile() {
+	if !utils.Mobile() { // ???
 		if err := savePid(); err != nil {
 			log.Errorf("can't create pid: %s", err)
 			Exit(1)
@@ -371,10 +336,11 @@ func Start() {
 		Exit(0)
 	}
 
-	if _, err := os.Stat(*utils.Dir + "/public"); os.IsNotExist(err) {
-		err = os.Mkdir(*utils.Dir+"/public", 0755)
+	// ???
+	if _, err := os.Stat(conf.Config.WorkDir + "/public"); os.IsNotExist(err) {
+		err = os.Mkdir(conf.Config.WorkDir+"/public", 0755)
 		if err != nil {
-			log.WithFields(log.Fields{"path": *utils.Dir, "error": err, "type": consts.IOError}).Error("Making dir")
+			log.WithFields(log.Fields{"path": conf.Config.WorkDir, "error": err, "type": consts.IOError}).Error("Making dir")
 			Exit(1)
 		}
 	}

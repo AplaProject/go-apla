@@ -20,6 +20,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
+
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -57,9 +59,11 @@ func WaitStopTime() {
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("gorm close")
 			}
-			err = os.Remove(*utils.Dir + "/daylight.pid")
+			err = os.Remove(conf.Config.WorkDir + "/daylight.pid")
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": *utils.Dir + "/daylight.pid"}).Error("removing file")
+				log.WithFields(log.Fields{
+					"type": consts.IOError, "error": err, "path": conf.Config.WorkDir + "/daylight.pid",
+				}).Error("removing file")
 				panic(err)
 			}
 		}

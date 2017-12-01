@@ -63,22 +63,10 @@ func initialLoad(ctx context.Context, d *daemon) error {
 	if toLoad {
 		d.logger.Debug("start first block loading")
 
-		// !!! current_load_clockchain ???
-		// if err := model.UpdateConfig("current_load_clockchain", "file"); err != nil {
-		// 	d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating current_load_blockchain in config")
-		// 	return err
-		// }
-
 		if err := firstLoad(ctx, d); err != nil {
 			return err
 		}
 	}
-
-	// !!! current_load_clockchain ???
-	// if err := model.UpdateConfig("current_load_clockchain", "nodes"); err != nil {
-	// 	d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating current_load_blockchain in config")
-	// 	return err
-	// }
 
 	return nil
 }
@@ -275,15 +263,22 @@ func loadFirstBlock(logger *log.Entry) error {
 	var newBlock []byte
 	var err error
 
-	if len(*utils.FirstBlockDir) > 0 {
-		fileName := *utils.FirstBlockDir + "/1block"
-		logger.WithFields(log.Fields{"file_name": fileName}).Info("loading first block from file")
-		newBlock, err = ioutil.ReadFile(fileName)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "file_name": fileName}).Error("reading first block from file")
-		}
-	} else {
-		logger.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("FirstBlockDir doesn't set")
+	// if len(*utils.FirstBlockDir) > 0 {
+	// 	fileName := *utils.FirstBlockDir + "/1block"
+	// 	logger.WithFields(log.Fields{"file_name": fileName}).Info("loading first block from file")
+	// 	newBlock, err = ioutil.ReadFile(fileName)
+	// 	if err != nil {
+	// 		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "file_name": fileName}).Error("reading first block from file")
+	// 	}
+	// } else {
+	// 	logger.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("FirstBlockDir doesn't set")
+	// }
+
+	newBlock, err = ioutil.ReadFile(conf.Config.FirstBlockPath)
+	if err != nil {
+		logger.WithFields(log.Fields{
+			"type": consts.IOError, "error": err, "file_name": conf.Config.FirstBlockPath,
+		}).Error("reading first block from file")
 	}
 
 	if err = parser.InsertBlockWOForks(newBlock); err != nil {
@@ -299,26 +294,19 @@ func firstLoad(ctx context.Context, d *daemon) error {
 	DBLock()
 	defer DBUnlock()
 
-	// nodeConfig := &model.Config{}
-	// _, err := nodeConfig.Get()
-	// if err != nil {
-	// 	d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
-	// 	return err
+	// if conf.Config.FirstLoadBlockchain == "file" {
+	// 	blockchainURL := conf.Config.FirstLoadBlockchainURL
+	// 	if len(blockchainURL) == 0 {
+	// 		blockchainURL = syspar.GetBlockchainURL()
+	// 	}
+
+	// 	fileName := conf.Config.WorkDir + "/public/blockchain" // !!! filepath.Join()
+	// 	if err := downloadChain(ctx, fileName, blockchainURL, d.logger); err != nil {
+	// 		return err
+	// 	}
+
+	// 	return loadFromFile(ctx, fileName, d.logger)
 	// }
-
-	if conf.Config.FirstLoadBlockchain == "file" {
-		blockchainURL := conf.Config.FirstLoadBlockchainURL
-		if len(blockchainURL) == 0 {
-			blockchainURL = syspar.GetBlockchainURL()
-		}
-
-		fileName := *utils.Dir + "/public/blockchain"
-		if err := downloadChain(ctx, fileName, blockchainURL, d.logger); err != nil {
-			return err
-		}
-
-		return loadFromFile(ctx, fileName, d.logger)
-	}
 
 	return loadFirstBlock(d.logger)
 }

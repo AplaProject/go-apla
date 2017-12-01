@@ -34,6 +34,8 @@ import (
 	"strings"
 	"time"
 
+	//	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -54,8 +56,6 @@ type BlockData struct {
 
 var (
 
-	// FirstBlockDir is a folder where 1block file will be stored
-	FirstBlockDir = flag.String("firstBlockDir", "", "FirstBlockDir")
 	// FirstBlockPublicKey is the private key
 	FirstBlockPublicKey = flag.String("firstBlockPublicKey", "", "FirstBlockPublicKey")
 	// FirstBlockNodePublicKey is the node private key
@@ -76,8 +76,9 @@ var (
 	// TestRollBack equals 1 for testing rollback
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
 
-	// Dir is apla folder
-	Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
+	// // Dir is apla folder !!!
+	// Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
+
 	// OldFileName is the old file name
 	OldFileName = flag.String("oldFileName", "", "")
 	// LogLevel is the log level
@@ -126,18 +127,18 @@ func IOS() bool {
 }
 
 // Desktop checks if the app runs on the desktop with thrust_shell
-func Desktop() bool {
-	thrustShell := "thrust_shell"
-	if runtime.GOOS == "windows" {
-		thrustShell = "thrust_shell.exe"
-	} else if runtime.GOOS == "darwin" {
-		thrustShell = "ThrustShell"
-	}
-	if _, err := os.Stat(*Dir + "/" + thrustShell); err == nil {
-		return true
-	}
-	return false
-}
+// func Desktop() bool {
+// 	thrustShell := "thrust_shell"
+// 	if runtime.GOOS == "windows" {
+// 		thrustShell = "thrust_shell.exe"
+// 	} else if runtime.GOOS == "darwin" {
+// 		thrustShell = "ThrustShell"
+// 	}
+// 	if _, err := os.Stat(*Dir + "/" + thrustShell); err == nil {
+// 		return true
+// 	}
+// 	return false
+// }
 
 // Mobile checks if the app runs on Android or iOS
 func Mobile() bool {
@@ -811,7 +812,7 @@ func GetParent() string {
 }
 
 func GetNodeKeys() (string, string, error) {
-	nprivkey, err := ioutil.ReadFile(*Dir + "/NodePrivateKey")
+	nprivkey, err := ioutil.ReadFile(conf.Config.WorkDir + "/NodePrivateKey")
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
 		return "", "", err

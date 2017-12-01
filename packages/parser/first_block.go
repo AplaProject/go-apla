@@ -19,9 +19,9 @@ package parser
 import (
 	"encoding/hex"
 	"io/ioutil"
-	"os"
-	"path/filepath"
 	"time"
+
+	"github.com/AplaProject/go-apla/packages/conf"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -112,7 +112,7 @@ func (p FirstBlockParser) Header() *tx.Header {
 func FirstBlock() {
 	if len(*utils.FirstBlockPublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
-		err := ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
+		err := ioutil.WriteFile(conf.Config.WorkDir+"/PrivateKey", []byte(priv), 0644) // !!!
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing private key file")
 			return
@@ -121,7 +121,7 @@ func FirstBlock() {
 	}
 	if len(*utils.FirstBlockNodePublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
-		err := ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
+		err := ioutil.WriteFile(conf.Config.WorkDir+"/NodePrivateKey", []byte(priv), 0644) // !!!
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node private key file")
 			return
@@ -183,17 +183,19 @@ func FirstBlock() {
 		return
 	}
 
-	var firstBlockDir string
-	if len(*utils.FirstBlockDir) == 0 {
-		firstBlockDir = *utils.Dir
-	} else {
-		firstBlockDir = filepath.Join("", *utils.FirstBlockDir)
-		if _, err := os.Stat(firstBlockDir); os.IsNotExist(err) {
-			if err = os.Mkdir(firstBlockDir, 0755); err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating first block dir directory")
-				return
-			}
-		}
-	}
-	ioutil.WriteFile(filepath.Join(firstBlockDir, "1block"), block, 0644)
+	// var firstBlockDir string
+	// if len(*utils.FirstBlockDir) == 0 {
+	// 	firstBlockDir = *utils.Dir
+	// } else {
+	// 	firstBlockDir = filepath.Join("", *utils.FirstBlockDir)
+	// 	if _, err := os.Stat(firstBlockDir); os.IsNotExist(err) {
+	// 		if err = os.Mkdir(firstBlockDir, 0755); err != nil {
+	// 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating first block dir directory")
+	// 			return
+	// 		}
+	// 	}
+	// }
+	// ioutil.WriteFile(filepath.Join(firstBlockDir, "1block"), block, 0644)
+
+	ioutil.WriteFile(conf.Config.FirstBlockPath, block, 0644)
 }

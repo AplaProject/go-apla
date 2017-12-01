@@ -5,21 +5,41 @@ import (
 )
 
 var (
+	// run mode flags:
+
+	// FlagReinstall rewrite config using comandline args
+	FlagReinstall = flag.Bool("reinstall", false, "rewrite config, init database")
+
+	// config flags:
+
+	// FlagConfigPath - path to config file
+	FlagConfigPath = flag.String("configPath", "", "full path to config file in toml format'")
+
 	// FlagInitConfig - reset config
 	FlagInitConfig = flag.Bool("initConfig", false, "reset config to initial values")
 
-	// TCPHost is the tcp host
+	FlagDbName     = flag.String("dbName", "apla", "database name")
+	FlagDbHost     = flag.String("dbHost", "localhost", "database host")
+	FlagDbPort     = flag.Int("dbPort", 5432, "database port")
+	FlagDbUser     = flag.String("dbUser", "", "database user")
+	FlagDbPassword = flag.String("dbPassword", "", "database password") // insecure! use env.PG_PASSWORD instead
+
+	// FlagTCPHost daemon's host
 	FlagTCPHost = flag.String("tcpHost", "127.0.0.1", "tcpHost (e.g. 127.0.0.1)")
-	// TCPHost is the tcp host
+	// FlagTCPPort daemins's port bind to
 	FlagTCPPort = flag.Int("tcpPort", 7078, "tcpPort 7080 by default")
 
-	//
+	// FlagHTTPHost http api endpoint host
 	FlagHTTPHost = flag.String("httpHost", "127.0.0.1", "http api bound to that host, use 0.0.0.0 to bind all addresses")
-	// ListenHTTPPort is HTTP port
+	// FlagHTTPPort http api endpoint port
 	FlagHTTPPort = flag.Int("httpPort", 7079, "http api port (7079)")
 
-	// // FirstBlockDir is a folder where 1block file will be stored
-	// FirstBlockDir = flag.String("firstBlockDir", "", "FirstBlockDir")
+	FlagWorkDir = flag.String("workDir", "", "work directory")
+	FlagDir     = flag.String("dDir", "", "work directory (deprecated")
+
+	// FlagFirstBlockDir is a folder where 1block file will be stored
+	FlagFirstBlockDir = flag.String("firstBlockDir", "", "FirstBlockDir")
+
 	// // FirstBlockPublicKey is the private key
 	// FirstBlockPublicKey = flag.String("firstBlockPublicKey", "", "FirstBlockPublicKey")
 	// // FirstBlockNodePublicKey is the node private key

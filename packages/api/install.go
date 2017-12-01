@@ -68,16 +68,18 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 	if data.logLevel != "DEBUG" {
 		data.logLevel = "ERROR"
 	}
-	if data.installType == `PRIVATE_NET` {
-		logger.WithFields(log.Fields{"dir": *utils.Dir}).Info("Because install type is PRIVATE NET, first block dir is set to dir")
-		*utils.FirstBlockDir = *utils.Dir
-		if len(data.firstBlockDir) > 0 && data.firstBlockDir != "undefined" {
-			logger.WithFields(log.Fields{"dir": data.firstBlockDir}).Info("first block dir is sent with data, so set first block dir flag to it")
-			*utils.FirstBlockDir = data.firstBlockDir
-		}
-	}
+	// if data.installType == `PRIVATE_NET` {
+	// 	logger.WithFields(log.Fields{"dir": conf.Config.WorkDir}).Info("Because install type is PRIVATE NET, first block dir is set to dir")
+	// 	*utils.FirstBlockDir = *utils.Dir
+	// 	if len(data.firstBlockDir) > 0 && data.firstBlockDir != "undefined" {
+	// 		logger.WithFields(log.Fields{"dir": data.firstBlockDir}).Info("first block dir is sent with data, so set first block dir flag to it")
+	// 		*utils.FirstBlockDir = data.firstBlockDir
+	// 	}
+	// }
 	if len(data.firstLoadBlockchainURL) == 0 {
-		log.WithFields(log.Fields{"url": syspar.GetBlockchainURL()}).Info("firstLoadBlockchainURL is not set through POST data, setting it to first load blockchain url from syspar")
+		log.WithFields(log.Fields{
+			"url": syspar.GetBlockchainURL(),
+		}).Info("firstLoadBlockchainURL is not set through POST data, setting it to first load blockchain url from syspar")
 		data.firstLoadBlockchainURL = syspar.GetBlockchainURL()
 	}
 
@@ -114,18 +116,20 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating install")
 		return err
 	}
-	if _, err = os.Stat(*utils.FirstBlockDir + "/1block"); len(*utils.FirstBlockDir) > 0 && os.IsNotExist(err) {
-		logger.WithFields(log.Fields{"path": *utils.FirstBlockDir + "/1block"}).Info("First block does not exists, generating new keys")
+
+	// !!!
+	if _, err = os.Stat(conf.Config.FirstBlockPath); len(conf.Config.FirstBlockPath) > 0 && os.IsNotExist(err) {
+		logger.WithFields(log.Fields{"path": conf.Config.FirstBlockPath}).Info("First block does not exists, generating new keys")
 		// If there is no key, this is the first run and the need to create them in the working directory.
-		if _, err = os.Stat(*utils.Dir + "/PrivateKey"); os.IsNotExist(err) {
-			log.WithFields(log.Fields{"path": *utils.Dir + "/PrivateKey"}).Info("private key is not exists, generating new one")
+		if _, err = os.Stat(conf.Config.WorkDir + "/PrivateKey"); os.IsNotExist(err) { // !!!
+			log.WithFields(log.Fields{"path": conf.Config.WorkDir + "/PrivateKey"}).Info("private key is not exists, generating new one")
 			if len(*utils.FirstBlockPublicKey) == 0 {
 				log.WithFields(log.Fields{"type": consts.EmptyObject}).Info("first block public key is empty")
 				priv, pub, err := crypto.GenHexKeys()
 				if err != nil {
 					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("generating hex keys")
 				}
-				err = ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
+				err = ioutil.WriteFile(conf.Config.WorkDir+"/PrivateKey", []byte(priv), 0644) // !!!
 				if err != nil {
 					logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating private key file")
 					return err
@@ -133,11 +137,11 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 				*utils.FirstBlockPublicKey = pub
 			}
 		}
-		if _, err = os.Stat(*utils.Dir + "/NodePrivateKey"); os.IsNotExist(err) {
-			logger.WithFields(log.Fields{"path": *utils.FirstBlockDir + "/NodePrivateKey"}).Info("NodePrivateKey does not exists, generating new keys")
+		if _, err = os.Stat(conf.Config.WorkDir + "/NodePrivateKey"); os.IsNotExist(err) {
+			logger.WithFields(log.Fields{"path": conf.Config.WorkDir + "/NodePrivateKey"}).Info("NodePrivateKey does not exists, generating new keys")
 			if len(*utils.FirstBlockNodePublicKey) == 0 {
 				priv, pub, _ := crypto.GenHexKeys()
-				err = ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
+				err = ioutil.WriteFile(conf.Config.WorkDir+"/NodePrivateKey", []byte(priv), 0644)
 				if err != nil {
 					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("generating hex keys")
 					return err
@@ -152,7 +156,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 	if *utils.KeyID == 0 {
 		logger.Info("dltWallet is not set from command line, retrieving it from private key file")
 		var key []byte
-		key, err = ioutil.ReadFile(*utils.Dir + "/PrivateKey")
+		key, err = ioutil.ReadFile(conf.Config.WorkDir + "/PrivateKey")
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading private key file")
 			return err
