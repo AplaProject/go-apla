@@ -281,6 +281,7 @@ func Start() {
 	if *utils.GenerateFirstBlock == 1 {
 		log.Info("Generating first block")
 		parser.FirstBlock()
+		fmt.Println(*utils.FirstBlockNodePublicKey)
 		os.Exit(0)
 	}
 

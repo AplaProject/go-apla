@@ -15,24 +15,3 @@
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
 package system
-
-import "github.com/miketheprogrammer/go-thrust/thrust"
-
-//	"time"
-
-func finish(isthrust bool) {
-	killChildProc()
-	if isthrust {
-		thrust.Exit()
-	}
-}
-
-// Finish closes the program
-func Finish() {
-	finish(false)
-}
-
-// FinishThrust closes thrust shell program
-func FinishThrust() {
-	finish(true)
-}
