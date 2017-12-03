@@ -449,6 +449,9 @@ var (
 				  }
 				  i = i + 1
 			  }
+			  if Int($cur["wallet_id"]) != 0 && Int($cur["active"]) == 1 {
+			  	  error "Contract must be deactivated before wallet changing"
+			  }
 		  }
 		  action {
 			  var root int
@@ -1004,6 +1007,9 @@ var (
 					error "Contracts names cannot be changed"
 				}
 				i = i + 1
+			}
+			if Int($cur["wallet_id"]) != 0 && Int($cur["active"]) == 1 {
+				error "Contract must be deactivated before wallet changing"
 			}
 		}
 		action {

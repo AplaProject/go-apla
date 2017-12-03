@@ -585,3 +585,54 @@ func TestImport(t *testing.T) {
 	}
 
 }
+
+func TestEditContracts_ChangeWallet(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	var cntlist contractsResult
+	err := sendGet(`contracts`, nil, &cntlist)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret getContractResult
+	err = sendGet(`contract/testUpd`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	sid := ret.TableID
+	var row rowResult
+	err = sendGet(`row/contracts/`+sid, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err := postTx(`ActivateContract`, &url.Values{`Id`: {sid}}); err != nil {
+		t.Error(err)
+		return
+	}
+
+	code := row.Value[`value`]
+	off := strings.IndexByte(code, '-')
+	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
+	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"01231234123412341234"}}
+	err = postTx(`EditContract`, &form)
+	if err == nil {
+		t.Error("Expected `Contract activated` error")
+		return
+	}
+
+	if err := postTx(`DeactivateContract`, &url.Values{`Id`: {sid}}); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err := postTx(`EditContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+}
