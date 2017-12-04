@@ -183,6 +183,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		for i := 0; i < len(fields); i++ {
 			if fields[i] == `id` {
 				isID = true
+				tableID = fmt.Sprint(values[i])
 			}
 			if fields[i][:1] == "+" || fields[i][:1] == "-" {
 				addSQLIns0 += fields[i][1:len(fields[i])] + `,`
@@ -207,6 +208,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			for i := 0; i < len(whereFields); i++ {
 				if whereFields[i] == `id` {
 					isID = true
+					tableID = fmt.Sprint(whereValues[i])
 				}
 				addSQLIns0 += `` + whereFields[i] + `,`
 				addSQLIns1 += `'` + whereValues[i] + `',`

@@ -228,7 +228,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"name"}, []string{name}, !sc.VDE)
+	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"name"}, []string{name}, !sc.VDE && !sc.NotRollback)
 	if err != nil {
 		return 0, err
 	}
@@ -255,7 +255,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if err = sc.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && !sc.NotRollback)
 	return
 }
 
@@ -530,7 +530,8 @@ func DBInsertReport(sc *SmartContract, tblname string, params string, val ...int
 		return
 	}
 	var lastID string
-	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, !sc.VDE)
+	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil,
+		nil, !sc.VDE && !sc.NotRollback)
 	if err == nil {
 		ret, _ = strconv.ParseInt(lastID, 10, 64)
 	}
@@ -581,7 +582,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 	_, id, err := sc.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
 		name,
-	}, `system_states`, nil, nil, !sc.VDE)
+	}, `system_states`, nil, nil, !sc.VDE && !sc.NotRollback)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError}).Error("CreateEcosystem")
 		return 0, err
@@ -593,6 +594,36 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 	err = LoadContract(sc.DbTransaction, id)
 	if err != nil {
+		return 0, err
+	}
+	sc.NotRollback = true
+	_, _, err = DBInsert(sc, id+"_pages", "name,value,menu,conditions", "default_page",
+		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return 0, err
+	}
+	_, _, err = DBInsert(sc, id+"_menu", "name,value,title,conditions", "default_menu",
+		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return 0, err
+	}
+	var (
+		ret []interface{}
+		pub string
+	)
+	_, ret, err = DBSelect(sc, "1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting pub key")
+		return 0, err
+	}
+	if Len(ret) > 0 {
+		pub = ret[0].(map[string]string)[`pub`]
+	}
+	_, _, err = DBInsert(sc, id+"_keys", "id,pub", wallet, pub)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
 	return converter.StrToInt64(id), err
@@ -620,6 +651,18 @@ func RollbackEcosystem(sc *SmartContract) error {
 		log.WithFields(log.Fields{"table_id": rollbackTx.TableID, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
 		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
 	}
+	for _, item := range []string{`menu`, `pages`} {
+		count, err := model.GetNextID(sc.DbTransaction, fmt.Sprintf(`%d_%s`, lastID, item))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting count")
+			return err
+		}
+		// it menu, pages, keys have more than one item then NewEcosystem was faulty
+		if count != 2 {
+			return nil
+		}
+	}
+
 	if model.IsTable(fmt.Sprintf(`%s_vde_tables`, rollbackTx.TableID)) {
 		// Drop all _local_ tables
 		table := &model.Table{}
