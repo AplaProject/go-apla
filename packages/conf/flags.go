@@ -9,7 +9,7 @@ var (
 	FlagReinstall = flag.Bool("reinstall", false, "reset config, init database")
 
 	// FlagConfigPath - path to config file
-	FlagConfigPath = flag.String("configPath", "", "full path to config file in toml format'")
+	FlagConfigPath = flag.String("configPath", "", "full path to config file (toml format)")
 
 	// FlagDbName database name
 	FlagDbName = flag.String("dbName", "", "database name (default apla)")
