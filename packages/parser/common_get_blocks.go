@@ -37,15 +37,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
 		rollback = syspar.GetRbBlocks2()
 	}
 
-	// TODO: should be refactored to use different 'badblock' source
-	badBlocks := make(map[int64]string)
-	// if len(config.BadBlocks) > 0 {
-	// 	err = json.Unmarshal([]byte(config.BadBlocks), &badBlocks)
-	// 	if err != nil {
-	// 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling config bad blocks from json")
-	// 		return utils.ErrInfo(err)
-	// 	}
-	// }
+	badBlocks := make(map[int64]string) // NOTE: badblock source not implemented
 
 	blocks := make([]*Block, 0)
 	var count int64
