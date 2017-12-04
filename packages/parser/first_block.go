@@ -120,6 +120,7 @@ func FirstBlock() error {
 		}
 		*utils.FirstBlockPublicKey = pub
 	}
+
 	if len(*utils.FirstBlockNodePublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
 		err := ioutil.WriteFile(conf.Config.PrivateDir+"/NodePrivateKey", []byte(priv), 0644)
@@ -184,4 +185,26 @@ func FirstBlock() error {
 	}
 
 	return ioutil.WriteFile(conf.Config.FirstBlockPath, block, 0644)
+}
+
+// GetKeyIDFromPublicKey load KeyID fron PrivateKey file
+func GetKeyIDFromPublicKey() (int64, error) {
+
+	key, err := ioutil.ReadFile(conf.Config.PrivateDir + "/PrivateKey")
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading private key file")
+		return 0, err
+	}
+	key, err = hex.DecodeString(string(key))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		return 0, err
+	}
+	key, err = crypto.PrivateToPublic(key)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
+		return 0, err
+	}
+
+	return crypto.Address(key), nil
 }

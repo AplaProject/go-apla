@@ -17,7 +17,6 @@
 package api
 
 import (
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -122,24 +121,29 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 	}
 
 	if conf.Config.KeyID == 0 {
-		logger.Info("dltWallet is not set from command line, retrieving it from private key file")
-		var key []byte
-		key, err = ioutil.ReadFile(conf.Config.PrivateDir + "/PrivateKey")
+
+		// var key []byte
+		// key, err = ioutil.ReadFile(conf.Config.PrivateDir + "/PrivateKey")
+		// if err != nil {
+		// 	logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading private key file")
+		// 	return err
+		// }
+		// key, err = hex.DecodeString(string(key))
+		// if err != nil {
+		// 	logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		// 	return err
+		// }
+		// key, err = crypto.PrivateToPublic(key)
+		// if err != nil {
+		// 	logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
+		// 	return err
+		// }
+
+		key, err := parser.GetKeyIDFromPublicKey()
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading private key file")
 			return err
 		}
-		key, err = hex.DecodeString(string(key))
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
-			return err
-		}
-		key, err = crypto.PrivateToPublic(key)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
-			return err
-		}
-		conf.Config.KeyID = crypto.Address(key)
+		conf.Config.KeyID = key
 	}
 
 	err = conf.SaveConfig()

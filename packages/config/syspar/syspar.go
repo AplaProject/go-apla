@@ -327,12 +327,6 @@ func GetRemoteHosts() []string {
 
 	ret := make([]string, 0)
 
-	// cfg, err := model.GetConfig()
-	// if err != nil {
-	// 	// error logged inside GetConfig()
-	// 	return ret
-	// }
-
 	mutex.RLock()
 	defer mutex.RUnlock()
 

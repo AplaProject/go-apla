@@ -236,10 +236,6 @@ func Start() {
 	conf.OverrideFlags()
 
 	if *conf.FlagReinstall {
-		if err := conf.SaveConfig(); err != nil {
-			log.Error("saveConfig:", err)
-			Exit(1)
-		}
 
 		if err := model.InitDB(conf.Config.DB); err != nil {
 			log.Error("initDB:", err)
@@ -249,6 +245,17 @@ func Start() {
 		if err := parser.FirstBlock(); err != nil {
 			log.Error("firstBlock:", err)
 			Exit(3)
+		}
+
+		key, err := parser.GetKeyIDFromPublicKey()
+		if err != nil {
+			Exit(4)
+		}
+		conf.Config.KeyID = key
+
+		if err := conf.SaveConfig(); err != nil {
+			log.Error("saveConfig:", err)
+			Exit(1)
 		}
 
 		conf.WebInstall = false
