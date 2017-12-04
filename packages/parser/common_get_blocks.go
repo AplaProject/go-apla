@@ -72,7 +72,6 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
 			return utils.ErrInfo(err)
 		}
 
-		// !!! refactor: make a function to check good block or bad
 		if badBlocks[block.Header.BlockID] == string(converter.BinToHex(block.Header.Sign)) {
 			log.WithFields(log.Fields{"block_id": block.Header.BlockID, "type": consts.InvalidObject}).Error("block is bad")
 			return utils.ErrInfo(errors.New("bad block"))

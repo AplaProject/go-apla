@@ -163,7 +163,7 @@ func rollbackToBlock(blockID int64) error {
 		}
 	}
 
-	if warn == 0 { // ???
+	if warn == 0 {
 		ioutil.WriteFile(conf.Config.WorkDir+"/rollback_result", []byte("1"), 0644)
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile}).Error("write to the rollback_result")
@@ -172,22 +172,6 @@ func rollbackToBlock(blockID int64) error {
 	}
 	return nil
 }
-
-// func processOldFile(oldFileName string) error { /// ???
-
-// 	err := utils.CopyFileContents(os.Args[0], oldFileName)
-// 	if err != nil {
-// 		log.Errorf("can't copy from %s %v", oldFileName, utils.ErrInfo(err))
-// 		return err
-// 	}
-
-// 	err = exec.Command(*utils.OldFileName, "-dir", conf.Config.WorkDir).Start()
-// 	if err != nil {
-// 		log.WithFields(log.Fields{"cmd": *utils.OldFileName + " -dir " + conf.Config.WorkDir, "error": err, "type": consts.CommandExecutionError}).Error("executing command")
-// 		return err
-// 	}
-// 	return nil
-// }
 
 func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
 	for _, method := range methods {
@@ -249,9 +233,7 @@ func Start() {
 		}
 	}
 
-	conf.MergeFlags()
-
-	fmt.Printf("Config: %v\n", conf.Config) // !!!
+	conf.OverrideFlags()
 
 	if *conf.FlagReinstall {
 		if err := conf.SaveConfig(); err != nil {
@@ -276,21 +258,9 @@ func Start() {
 		}
 	}
 
-	// // create first block
-	// if *utils.GenerateFirstBlock == 1 {
-	// 	log.Info("Generating first block")
-	// 	parser.FirstBlock()
-	// 	os.Exit(0)
-	// }
-
 	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
 
-	// kill previously run apla
 	killOld()
-
-	// if !utils.Mobile() { // ???
-	// 	killOld()
-	// }
 
 	publisher.InitCentrifugo(conf.Config.Centrifugo)
 
@@ -303,12 +273,6 @@ func Start() {
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
-
-	// // if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
-	// if *utils.OldFileName != "" {
-	// 	processOldFile(*utils.OldFileName) // ???
-	// 	Exit(1)
-	// }
 
 	// save the current pid and version
 	if err := savePid(); err != nil {
@@ -333,15 +297,6 @@ func Start() {
 		}
 		Exit(0)
 	}
-
-	// // ???
-	// if _, err := os.Stat(conf.Config.WorkDir + "/public"); os.IsNotExist(err) {
-	// 	err = os.Mkdir(conf.Config.WorkDir+"/public", 0755)
-	// 	if err != nil {
-	// 		log.WithFields(log.Fields{"path": conf.Config.WorkDir, "error": err, "type": consts.IOError}).Error("Making dir")
-	// 		Exit(1)
-	// 	}
-	// }
 
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)

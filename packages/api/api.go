@@ -77,12 +77,6 @@ const (
 
 type apiHandle func(http.ResponseWriter, *http.Request, *apiData, *log.Entry) error
 
-// var installed *abool.AtomicBool
-
-// func init() {
-// 	installed = abool.New()
-// }
-
 func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
 	var (
 		msg, errCode, errParams string

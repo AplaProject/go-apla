@@ -34,7 +34,6 @@ import (
 	"strings"
 	"time"
 
-	//	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -66,18 +65,12 @@ var (
 	// WalletAddress is a wallet address for forging
 	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
 
-	// // GenerateFirstBlock show if the first block must be generated
-	// GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
-
 	// LogSQL show if we should display sql queries in logs
 	LogSQL = flag.Int64("logSQL", 0, "log sql")
 	// LogStackTrace show if we should display stack trace in logs
 	LogStackTrace = flag.Int64("logStackTrace", 0, "log stack trace")
 	// TestRollBack equals 1 for testing rollback
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
-
-	// // OldFileName is the old file name
-	// OldFileName = flag.String("oldFileName", "", "")
 
 	// StartBlockID is the start block
 	StartBlockID = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
@@ -88,9 +81,6 @@ var (
 	// TLS is a directory for .well-known and keys. It is required for https
 	TLS = flag.String("tls", "", "Support https. Specify directory for .well-known")
 
-	// // KeyID is the wallet identifier
-	// KeyID = flag.Int64("keyID", 0, "keyID")
-
 	// ReturnCh is chan for returns
 	ReturnCh chan string
 	// CancelFunc is represents cancel func
@@ -98,44 +88,6 @@ var (
 	// DaemonsCount is number of daemons
 	DaemonsCount int
 )
-
-// IOS checks if the app runs on iOS
-// func IOS() bool {
-// 	if (runtime.GOARCH == "arm" || runtime.GOARCH == "arm64") && runtime.GOOS == "darwin" {
-// 		return true
-// 	}
-// 	return false
-// }
-
-// Desktop checks if the app runs on the desktop with thrust_shell
-// func Desktop() bool {
-// 	thrustShell := "thrust_shell"
-// 	if runtime.GOOS == "windows" {
-// 		thrustShell = "thrust_shell.exe"
-// 	} else if runtime.GOOS == "darwin" {
-// 		thrustShell = "ThrustShell"
-// 	}
-// 	if _, err := os.Stat(*Dir + "/" + thrustShell); err == nil {
-// 		return true
-// 	}
-// 	return false
-// }
-
-// Mobile checks if the app runs on Android or iOS
-// func Mobile() bool {
-// 	if IOS() || runtime.GOOS == "android" {
-// 		return true
-// 	}
-// 	return false
-// }
-
-// // Android checks if the app runs on Android
-// func Android() bool {
-// 	if runtime.GOOS == "android" {
-// 		return true
-// 	}
-// 	return false
-// }
 
 // CheckInputData checks the input data
 func CheckInputData(idata interface{}, dataType string) bool {
@@ -792,6 +744,7 @@ func GetParent() string {
 	return parent
 }
 
+// GetNodeKeys returns node private key and public key
 func GetNodeKeys() (string, string, error) {
 	nprivkey, err := ioutil.ReadFile(conf.Config.PrivateDir + "/NodePrivateKey")
 	if err != nil {

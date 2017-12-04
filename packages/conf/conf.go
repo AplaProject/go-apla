@@ -102,7 +102,7 @@ func initialValues() *SavedConfig {
 		},
 
 		WorkDir: cwd,
-		//
+
 		FirstBlockPath: "",
 		PrivateDir:     "",
 
@@ -150,8 +150,8 @@ func NoConfig() bool {
 	return os.IsNotExist(err)
 }
 
-// MergeFlags override default config values by environment or args
-func MergeFlags() {
+// OverrideFlags override default config values by environment or args
+func OverrideFlags() {
 
 	if *FlagDbName != "" {
 		Config.DB.Name = *FlagDbName
@@ -193,11 +193,13 @@ func MergeFlags() {
 		Config.HTTP.Port = *FlagHTTPPort
 	}
 
+	// cwd
 	if *FlagWorkDir != "" {
 		Config.WorkDir = *FlagWorkDir
-	} else if *FlagDir != "" {
-		// NOTE: old flag deprecated!
-		Config.WorkDir = *FlagDir
+	}
+
+	if *FlagKeyID != 0 {
+		Config.KeyID = *FlagKeyID
 	}
 
 	if *FlagFirstBlockPath == "" {
@@ -215,4 +217,8 @@ func MergeFlags() {
 	if *FlagLogLevel != "" {
 		Config.LogLevel = *FlagLogLevel
 	}
+	if *FlagLogFile != "" {
+		Config.LogFileName = *FlagLogFile
+	}
+
 }

@@ -63,20 +63,10 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return fmt.Errorf(`E_INSTALLED`)
 	}
 
-	// if data.generateFirstBlock {
-	// 	*utils.GenerateFirstBlock = 1
-	// }
 	if data.logLevel != "DEBUG" {
 		data.logLevel = "ERROR"
 	}
-	// if data.installType == `PRIVATE_NET` {
-	// 	logger.WithFields(log.Fields{"dir": conf.Config.WorkDir}).Info("Because install type is PRIVATE NET, first block dir is set to dir")
-	// 	*utils.FirstBlockDir = *utils.Dir
-	// 	if len(data.firstBlockDir) > 0 && data.firstBlockDir != "undefined" {
-	// 		logger.WithFields(log.Fields{"dir": data.firstBlockDir}).Info("first block dir is sent with data, so set first block dir flag to it")
-	// 		*utils.FirstBlockDir = data.firstBlockDir
-	// 	}
-	// }
+
 	if len(data.firstLoadBlockchainURL) == 0 {
 		log.WithFields(log.Fields{
 			"url": syspar.GetBlockchainURL(),
@@ -95,7 +85,6 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return err
 	}
 
-	// !!!
 	if _, err = os.Stat(conf.Config.FirstBlockPath); len(conf.Config.FirstBlockPath) > 0 && os.IsNotExist(err) {
 		logger.WithFields(log.Fields{"path": conf.Config.FirstBlockPath}).Info("First block does not exists, generating new keys")
 		// If there is no key, this is the first run and the need to create them in the working directory.
@@ -129,7 +118,6 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 				*utils.FirstBlockNodePublicKey = pub
 			}
 		}
-		// *utils.GenerateFirstBlock = 1
 		parser.FirstBlock()
 	}
 
@@ -191,7 +179,6 @@ func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	}
 
 	conf.WebInstall = false
-
 	result.Success = true
 	return nil
 }
