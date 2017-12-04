@@ -153,10 +153,21 @@ func NoConfig() bool {
 // MergeFlags override default config values by environment or args
 func MergeFlags() {
 
-	Config.DB.Name = *FlagDbName
-	Config.DB.Host = *FlagDbHost
-	Config.DB.Port = *FlagDbPort
-	Config.DB.User = *FlagDbUser
+	if *FlagDbName != "" {
+		Config.DB.Name = *FlagDbName
+	}
+
+	if *FlagDbHost != "" {
+		Config.DB.Host = *FlagDbHost
+	}
+
+	if *FlagDbPort != 0 {
+		Config.DB.Port = *FlagDbPort
+	}
+
+	if *FlagDbUser != "" {
+		Config.DB.User = *FlagDbUser
+	}
 
 	p := os.Getenv("PG_PASSWORD")
 	if p != "" {

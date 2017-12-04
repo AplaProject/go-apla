@@ -15,9 +15,9 @@ var (
 	// FlagConfigPath - path to config file
 	FlagConfigPath = flag.String("configPath", "", "full path to config file in toml format'")
 
-	FlagDbName     = flag.String("dbName", "apla", "database name")
-	FlagDbHost     = flag.String("dbHost", "localhost", "database host")
-	FlagDbPort     = flag.Int("dbPort", 5432, "database port")
+	FlagDbName     = flag.String("dbName", "", "database name (default apla)")
+	FlagDbHost     = flag.String("dbHost", "", "database host (default localhost)")
+	FlagDbPort     = flag.Int("dbPort", 0, "database port (default 5432)")
 	FlagDbUser     = flag.String("dbUser", "", "database user")
 	FlagDbPassword = flag.String("dbPassword", "", "database password") // insecure! use env.PG_PASSWORD instead
 
