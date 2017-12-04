@@ -73,8 +73,6 @@ var (
 	LogSQL = flag.Int64("logSQL", 0, "log sql")
 	// LogStackTrace show if we should display stack trace in logs
 	LogStackTrace = flag.Int64("logStackTrace", 0, "log stack trace")
-	// OldVersion is the number of the old version
-	OldVersion = flag.String("oldVersion", "", "")
 	// TestRollBack equals 1 for testing rollback
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
 

@@ -49,27 +49,19 @@ var (
 	// // WalletAddress is a wallet address for forging
 	// WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
 
+	// FlagLogLevel set log level
+	FlagLogLevel = flag.String("logLevel", "", "apla LogLevel")
+
 	// // GenerateFirstBlock show if the first block must be generated
 	// GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
+
 	// // LogSQL show if we should display sql queries in logs
 	// LogSQL = flag.Int64("logSQL", 0, "log sql")
 	// // LogStackTrace show if we should display stack trace in logs
 	// LogStackTrace = flag.Int64("logStackTrace", 0, "log stack trace")
-	// // OldVersion is the number of the old version
-	// OldVersion = flag.String("oldVersion", "", "")
+
 	// // TestRollBack equals 1 for testing rollback
 	// TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
-
-	// // Dir is apla folder
-	// // Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
-
-	// // OldFileName is the old file name
-	// OldFileName = flag.String("oldFileName", "", "")
-	// // LogLevel is the log level
-	// LogLevel = flag.String("logLevel", "", "DayLight LogLevel")
-
-	// // Console equals 1 for starting in console
-	// Console = flag.Int64("console", 0, "Start from console")
 
 	// // StartBlockID is the start block
 	// StartBlockID = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
@@ -80,14 +72,7 @@ var (
 	// // TLS is a directory for .well-known and keys. It is required for https
 	// TLS = flag.String("tls", "", "Support https. Specify directory for .well-known")
 	// // DevTools switches on dev tools in thrust shell
-	// DevTools = flag.Int64("devtools", 0, "Devtools in thrust-shell")
-	// // BoltDir is the edir for BoltDb folder
-	// // BoltDir = flag.String("boltDir", GetCurrentDir(), "Bolt directory")
-	// // BoltPsw is the password for BoltDB
-	// APIToken = flag.String("apiToken", "", "API Token")
 
-	// // LogoExt is the extension of the logotype
-	// LogoExt = `png`
 	// // DltWalletID is the wallet identifier
 	// KeyID = flag.Int64("keyID", 0, "keyID")
 

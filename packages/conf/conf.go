@@ -177,6 +177,22 @@ func MergeFlags() {
 		Config.DB.Password = *FlagDbPassword
 	}
 
+	// tcp
+	if *FlagTCPHost != "" {
+		Config.Daemon.Host = *FlagTCPHost
+	}
+	if *FlagTCPPort != 0 {
+		Config.Daemon.Port = *FlagTCPPort
+	}
+
+	// http
+	if *FlagHTTPHost != "" {
+		Config.HTTP.Host = *FlagHTTPHost
+	}
+	if *FlagHTTPPort != 0 {
+		Config.HTTP.Port = *FlagHTTPPort
+	}
+
 	if *FlagWorkDir != "" {
 		Config.WorkDir = *FlagWorkDir
 	} else if *FlagDir != "" {
@@ -196,4 +212,7 @@ func MergeFlags() {
 		Config.PrivateDir = Config.WorkDir
 	}
 
+	if *FlagLogLevel != "" {
+		Config.LogLevel = *FlagLogLevel
+	}
 }
