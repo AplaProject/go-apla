@@ -639,7 +639,8 @@ func RollbackEcosystem(sc *SmartContract) error {
 	err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, "system_states")
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback tx")
-		return err
+		// if there is not such hash then NewEcosystem was faulty. Do nothing.
+		return nil
 	}
 	lastID, err := model.GetNextID(sc.DbTransaction, `system_states`)
 	if err != nil {
@@ -650,17 +651,6 @@ func RollbackEcosystem(sc *SmartContract) error {
 	if converter.StrToInt64(rollbackTx.TableID) != lastID {
 		log.WithFields(log.Fields{"table_id": rollbackTx.TableID, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
 		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
-	}
-	for _, item := range []string{`menu`, `pages`} {
-		count, err := model.GetNextID(sc.DbTransaction, fmt.Sprintf(`%d_%s`, lastID, item))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting count")
-			return err
-		}
-		// it menu, pages, keys have more than one item then NewEcosystem was faulty
-		if count != 2 {
-			return nil
-		}
 	}
 
 	if model.IsTable(fmt.Sprintf(`%s_vde_tables`, rollbackTx.TableID)) {
