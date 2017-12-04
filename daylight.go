@@ -20,11 +20,9 @@ import (
 	"runtime"
 
 	"github.com/AplaProject/go-apla/packages/daylight"
-	"github.com/AplaProject/go-apla/packages/system"
 )
 
 func main() {
 	runtime.LockOSThread()
 	daylight.Start()
-	system.Finish()
 }

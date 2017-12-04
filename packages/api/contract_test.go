@@ -96,18 +96,21 @@ var contracts = []smartContract{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"unknown variable qvar"}`}},
 		}},
 
-	{`EditProfile6`, `contract EditProfile6 {
+	{`EditProfile9`, `contract EditProfile9 {
 		data {
 		}
 		conditions {
 		}
 		action {
+			var ar array
+			ar = Split("point 1,point 2", ",")
+			Test("split",  Str(ar[1]))
 			$ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
 			Test("edit",  "edit value 0")
 		}
 	}`,
 		[]smartParams{
-			{nil, map[string]string{`edit`: `edit value 0`}},
+			{nil, map[string]string{`edit`: `edit value 0`, `split`: `point 2`}},
 		}},
 
 	{`TestDBFindOK`, `

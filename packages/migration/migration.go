@@ -1277,7 +1277,7 @@ var (
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
 			if DBIntExt("blocks", "id", $Name, "name") {
-				warning Sprintf( "Block %%s aready exists", $Name)
+				warning Sprintf( "Block %%s already exists", $Name)
 			}
 		}
 		action {

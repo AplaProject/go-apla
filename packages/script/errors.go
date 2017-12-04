@@ -14,20 +14,16 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package daylight
+package script
 
-import (
-	"github.com/AplaProject/go-apla/packages/utils"
+import "errors"
+
+const (
+	eContractLoop    = `there is loop in %s contract`
+	eUndefinedParam  = `%s is not defined`
+	eUnknownContract = `unknown contract %s`
 )
 
-// GetHTTPHost returns program's hosts
-func GetHTTPHost() (string, string, string) {
-	BrowserHTTPHost := "http://localhost:" + *utils.ListenHTTPPort
-	HandleHTTPHost := ""
-	ListenHTTPHost := ":" + *utils.ListenHTTPPort
-	if len(*utils.TCPHost) > 0 {
-		ListenHTTPHost = *utils.TCPHost + ":" + *utils.ListenHTTPPort
-		BrowserHTTPHost = "http://" + *utils.TCPHost + ":" + *utils.ListenHTTPPort
-	}
-	return BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost
-}
+var (
+	errContractPars = errors.New(`wrong contract parameters`)
+)
