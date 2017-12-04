@@ -71,7 +71,7 @@ func killOld() {
 			for i := 0; i < 15; i++ {
 				if _, err := os.Stat(conf.GetPidFile()); err == nil {
 					time.Sleep(time.Second)
-				} else { // if there is no daylight.pid, so it is finished
+				} else { // if there is no apla.pid, so it is finished
 					break
 				}
 			}

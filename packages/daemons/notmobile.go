@@ -87,10 +87,10 @@ func WaitForSignals() {
 			}
 		}
 
-		err := os.Remove(conf.Config.WorkDir + "/daylight.pid") // ??? duplicated
+		err := os.Remove(conf.GetPidFile())
 		if err != nil {
 			log.WithFields(log.Fields{
-				"type": consts.IOError, "error": err, "path": conf.Config.WorkDir + "/daylight.pid",
+				"type": consts.IOError, "error": err, "path": conf.GetPidFile(),
 			}).Error("removing file")
 		}
 

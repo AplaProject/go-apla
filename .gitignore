@@ -110,6 +110,7 @@ config.ini
 dclog.txt
 exchangeapi.db
 daylight.pid
+apla.pid
 
 packages/static/
 public/
