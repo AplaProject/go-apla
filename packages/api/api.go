@@ -77,9 +77,11 @@ const (
 
 type apiHandle func(http.ResponseWriter, *http.Request, *apiData, *log.Entry) error
 
-var (
-	installed bool
-)
+// var installed *abool.AtomicBool
+
+// func init() {
+// 	installed = abool.New()
+// }
 
 func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
 	var (
@@ -147,15 +149,15 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
-// IsInstalled returns installed flag
-func IsInstalled() bool {
-	return installed
-}
+// // IsInstalled returns installed flag
+// func IsInstalled() bool {
+// 	return installed.IsSet()
+// }
 
-// Installed is setting turning installed flag on
-func Installed() {
-	installed = true
-}
+// // Installed is setting turning installed flag on
+// func Installed() {
+// 	installed.Set()
+// }
 
 // DefaultHandler is a common handle function for api requests
 func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
