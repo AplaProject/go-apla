@@ -69,12 +69,12 @@ var serverList = []string{
 	"Notificator",
 }
 
-var mobileList = []string{
-	"QueueParserTx",
-	"Disseminator",
-	"Confirmations",
-	"BlocksCollection",
-}
+// var mobileList = []string{
+// 	"QueueParserTx",
+// 	"Disseminator",
+// 	"Confirmations",
+// 	"BlocksCollection",
+// }
 
 var rollbackList = []string{
 	"BlocksCollection",
@@ -149,8 +149,8 @@ func StartDaemons() {
 	daemonsToStart := serverList
 	if len(conf.Config.StartDaemons) > 0 {
 		daemonsToStart = strings.Split(conf.Config.StartDaemons, ",")
-	} else if utils.Mobile() {
-		daemonsToStart = mobileList
+		// } else if utils.Mobile() {
+		// 	daemonsToStart = mobileList
 	} else if *utils.TestRollBack == 1 {
 		daemonsToStart = rollbackList
 	}

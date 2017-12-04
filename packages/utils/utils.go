@@ -61,12 +61,14 @@ var (
 	// FirstBlockNodePublicKey is the node private key
 	FirstBlockNodePublicKey = flag.String("firstBlockNodePublicKey", "", "FirstBlockNodePublicKey")
 	// FirstBlockHost is the host of the first block
-	FirstBlockHost = flag.String("firstBlockHost", "", "FirstBlockHost")
+	FirstBlockHost = flag.String("firstBlockHost", "127.0.0.1", "FirstBlockHost")
+
 	// WalletAddress is a wallet address for forging
 	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
 
-	// GenerateFirstBlock show if the first block must be generated
-	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
+	// // GenerateFirstBlock show if the first block must be generated
+	// GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
+
 	// LogSQL show if we should display sql queries in logs
 	LogSQL = flag.Int64("logSQL", 0, "log sql")
 	// LogStackTrace show if we should display stack trace in logs
@@ -76,16 +78,8 @@ var (
 	// TestRollBack equals 1 for testing rollback
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
 
-	// // Dir is apla folder !!!
-	// Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
-
-	// OldFileName is the old file name
-	OldFileName = flag.String("oldFileName", "", "")
-	// LogLevel is the log level
-	LogLevel = flag.String("logLevel", "", "DayLight LogLevel")
-
-	// Console equals 1 for starting in console
-	Console = flag.Int64("console", 0, "Start from console")
+	// // OldFileName is the old file name
+	// OldFileName = flag.String("oldFileName", "", "")
 
 	// StartBlockID is the start block
 	StartBlockID = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
@@ -95,20 +89,9 @@ var (
 	RollbackToBlockID = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
 	// TLS is a directory for .well-known and keys. It is required for https
 	TLS = flag.String("tls", "", "Support https. Specify directory for .well-known")
-	// DevTools switches on dev tools in thrust shell
-	DevTools = flag.Int64("devtools", 0, "Devtools in thrust-shell")
-	// APIToken is an api token for exchange api
-	APIToken = flag.String("apiToken", "", "API Token")
-	// OneCountry is the country which is supported
-	OneCountry int64
-	// PrivCountry is protect system from registering
-	PrivCountry bool
-	//	OutFile            *os.File
 
-	// LogoExt is the extension of the logotype
-	LogoExt = `png`
-	// KeyID is the wallet identifier
-	KeyID = flag.Int64("keyID", 0, "keyID")
+	// // KeyID is the wallet identifier
+	// KeyID = flag.Int64("keyID", 0, "keyID")
 
 	// ReturnCh is chan for returns
 	ReturnCh chan string
@@ -119,12 +102,12 @@ var (
 )
 
 // IOS checks if the app runs on iOS
-func IOS() bool {
-	if (runtime.GOARCH == "arm" || runtime.GOARCH == "arm64") && runtime.GOOS == "darwin" {
-		return true
-	}
-	return false
-}
+// func IOS() bool {
+// 	if (runtime.GOARCH == "arm" || runtime.GOARCH == "arm64") && runtime.GOOS == "darwin" {
+// 		return true
+// 	}
+// 	return false
+// }
 
 // Desktop checks if the app runs on the desktop with thrust_shell
 // func Desktop() bool {
@@ -141,20 +124,20 @@ func IOS() bool {
 // }
 
 // Mobile checks if the app runs on Android or iOS
-func Mobile() bool {
-	if IOS() || runtime.GOOS == "android" {
-		return true
-	}
-	return false
-}
+// func Mobile() bool {
+// 	if IOS() || runtime.GOOS == "android" {
+// 		return true
+// 	}
+// 	return false
+// }
 
-// Android checks if the app runs on Android
-func Android() bool {
-	if runtime.GOOS == "android" {
-		return true
-	}
-	return false
-}
+// // Android checks if the app runs on Android
+// func Android() bool {
+// 	if runtime.GOOS == "android" {
+// 		return true
+// 	}
+// 	return false
+// }
 
 // CheckInputData checks the input data
 func CheckInputData(idata interface{}, dataType string) bool {
@@ -812,7 +795,7 @@ func GetParent() string {
 }
 
 func GetNodeKeys() (string, string, error) {
-	nprivkey, err := ioutil.ReadFile(conf.Config.WorkDir + "/NodePrivateKey")
+	nprivkey, err := ioutil.ReadFile(conf.Config.PrivateDir + "/NodePrivateKey")
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
 		return "", "", err

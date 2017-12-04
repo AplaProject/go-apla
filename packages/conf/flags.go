@@ -8,15 +8,12 @@ var (
 	// run mode flags:
 
 	// FlagReinstall rewrite config using comandline args
-	FlagReinstall = flag.Bool("reinstall", false, "rewrite config, init database")
+	FlagReinstall = flag.Bool("reinstall", false, "reset config, init database")
 
 	// config flags:
 
 	// FlagConfigPath - path to config file
 	FlagConfigPath = flag.String("configPath", "", "full path to config file in toml format'")
-
-	// FlagInitConfig - reset config
-	FlagInitConfig = flag.Bool("initConfig", false, "reset config to initial values")
 
 	FlagDbName     = flag.String("dbName", "apla", "database name")
 	FlagDbHost     = flag.String("dbHost", "localhost", "database host")
@@ -37,8 +34,11 @@ var (
 	FlagWorkDir = flag.String("workDir", "", "work directory")
 	FlagDir     = flag.String("dDir", "", "work directory (deprecated")
 
-	// FlagFirstBlockDir is a folder where 1block file will be stored
-	FlagFirstBlockDir = flag.String("firstBlockDir", "", "FirstBlockDir")
+	// FlagFirstBlockPath is a file (1block) where first block file will be stored
+	FlagFirstBlockPath = flag.String("firstBlockPath", "", "pathname of '1block' file")
+
+	// FlagPrivateDir - dirctory to store PrivateKey and NodePrivateKey
+	FlagPrivateDir = flag.String("privateDir", "", "where privatekeys are stored")
 
 	// // FirstBlockPublicKey is the private key
 	// FirstBlockPublicKey = flag.String("firstBlockPublicKey", "", "FirstBlockPublicKey")
@@ -84,23 +84,13 @@ var (
 	// // BoltDir is the edir for BoltDb folder
 	// // BoltDir = flag.String("boltDir", GetCurrentDir(), "Bolt directory")
 	// // BoltPsw is the password for BoltDB
-	// BoltPsw = flag.String("boltPsw", "", "Bolt password")
-	// // APIToken is an api token for exchange api
 	// APIToken = flag.String("apiToken", "", "API Token")
-	// // OneCountry is the country which is supported
-	// OneCountry int64
-	// // PrivCountry is protect system from registering
-	// PrivCountry bool
-	// //	OutFile            *os.File
 
 	// // LogoExt is the extension of the logotype
 	// LogoExt = `png`
 	// // DltWalletID is the wallet identifier
 	// KeyID = flag.Int64("keyID", 0, "keyID")
 
-	// ReturnCh     chan string
-	// CancelFunc   context.CancelFunc
-	// DaemonsCount int
 )
 
 // ParseFlags from command line

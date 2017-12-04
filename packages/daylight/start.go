@@ -23,7 +23,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -181,27 +180,28 @@ func rollbackToBlock(blockID int64) error {
 	return nil
 }
 
-func processOldFile(oldFileName string) error { /// ???
+// func processOldFile(oldFileName string) error { /// ???
 
-	err := utils.CopyFileContents(os.Args[0], oldFileName)
-	if err != nil {
-		log.Errorf("can't copy from %s %v", oldFileName, utils.ErrInfo(err))
-		return err
-	}
+// 	err := utils.CopyFileContents(os.Args[0], oldFileName)
+// 	if err != nil {
+// 		log.Errorf("can't copy from %s %v", oldFileName, utils.ErrInfo(err))
+// 		return err
+// 	}
 
-	err = exec.Command(*utils.OldFileName, "-dir", conf.Config.WorkDir).Start()
-	if err != nil {
-		log.WithFields(log.Fields{"cmd": *utils.OldFileName + " -dir " + conf.Config.WorkDir, "error": err, "type": consts.CommandExecutionError}).Error("executing command")
-		return err
-	}
-	return nil
-}
+// 	err = exec.Command(*utils.OldFileName, "-dir", conf.Config.WorkDir).Start()
+// 	if err != nil {
+// 		log.WithFields(log.Fields{"cmd": *utils.OldFileName + " -dir " + conf.Config.WorkDir, "error": err, "type": consts.CommandExecutionError}).Error("executing command")
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
 	for _, method := range methods {
 		route.HandlerFunc(method, path, handle)
 	}
 }
+
 func initRoutes(listenHost string) {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
@@ -234,12 +234,20 @@ func Start() {
 		os.Exit(code)
 	}
 
-	fmt.Printf("Start: %s\n", consts.VERSION)
+	initGorm := func(dbCfg conf.DBConfig) {
+		err = model.GormInit(dbCfg.Host, dbCfg.Port, dbCfg.User, dbCfg.Password, dbCfg.Name)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"db_user": dbCfg.User, "db_password": dbCfg.Password, "db_name": dbCfg.Name, "type": consts.DBError,
+			}).Error("can't init gorm")
+			Exit(1)
+		}
+	}
 
 	conf.ParseFlags()
 
 	if conf.NoConfig() {
-		conf.InstallMode = true
+		conf.WebInstall = true
 	} else {
 		// override default data
 		if err := conf.LoadConfig(); err != nil {
@@ -250,47 +258,46 @@ func Start() {
 
 	conf.MergeFlags()
 
+	fmt.Printf("Config: %v\n", conf.Config) // !!!
+
 	if *conf.FlagReinstall {
 		if err := conf.SaveConfig(); err != nil {
 			log.Error("saveConfig:", err)
 			Exit(1)
 		}
-	}
 
-	fmt.Printf("Config: %v\n", conf.Config)
+		if err := model.InitDB(conf.Config.DB); err != nil {
+			log.Error("initDB:", err)
+			Exit(2)
+		}
 
-	return // !!!
+		if err := parser.FirstBlock(); err != nil {
+			log.Error("firstBlock:", err)
+			Exit(3)
+		}
 
-	if !conf.InstallMode {
-		dbCfg := conf.Config.DB
-
-		err = model.GormInit(dbCfg.Host, dbCfg.Port, dbCfg.User, dbCfg.Password, dbCfg.Name)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"db_user": dbCfg.User, "db_password": dbCfg.Password, "db_name": dbCfg.Name, "type": consts.DBError,
-			}).Error("can't init gorm")
-			Exit(1)
+		conf.WebInstall = false
+	} else {
+		if !conf.WebInstall {
+			initGorm(conf.Config.DB)
 		}
 	}
 
-	// create first block
-	if *utils.GenerateFirstBlock == 1 {
-		log.Info("Generating first block")
-		parser.FirstBlock()
-		os.Exit(0)
-	}
+	// // create first block
+	// if *utils.GenerateFirstBlock == 1 {
+	// 	log.Info("Generating first block")
+	// 	parser.FirstBlock()
+	// 	os.Exit(0)
+	// }
 
 	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
 
 	// kill previously run apla
-	if !utils.Mobile() { // ???
-		killOld()
-	}
+	killOld()
 
-	// TODO: ???
-	if fi, err := os.Stat(conf.Config.WorkDir + `/logo.png`); err == nil && fi.Size() > 0 {
-		utils.LogoExt = `png`
-	}
+	// if !utils.Mobile() { // ???
+	// 	killOld()
+	// }
 
 	publisher.InitCentrifugo(conf.Config.Centrifugo)
 
@@ -304,20 +311,18 @@ func Start() {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	// if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
-	if *utils.OldFileName != "" {
-		processOldFile(*utils.OldFileName) // ???
-		Exit(1)
-	}
+	// // if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
+	// if *utils.OldFileName != "" {
+	// 	processOldFile(*utils.OldFileName) // ???
+	// 	Exit(1)
+	// }
 
 	// save the current pid and version
-	if !utils.Mobile() { // ???
-		if err := savePid(); err != nil {
-			log.Errorf("can't create pid: %s", err)
-			Exit(1)
-		}
-		defer delPidFile()
+	if err := savePid(); err != nil {
+		log.Errorf("can't create pid: %s", err)
+		Exit(1)
 	}
+	defer delPidFile()
 
 	// database rollback to the specified block
 	if *utils.RollbackToBlockID > 0 {
@@ -336,14 +341,14 @@ func Start() {
 		Exit(0)
 	}
 
-	// ???
-	if _, err := os.Stat(conf.Config.WorkDir + "/public"); os.IsNotExist(err) {
-		err = os.Mkdir(conf.Config.WorkDir+"/public", 0755)
-		if err != nil {
-			log.WithFields(log.Fields{"path": conf.Config.WorkDir, "error": err, "type": consts.IOError}).Error("Making dir")
-			Exit(1)
-		}
-	}
+	// // ???
+	// if _, err := os.Stat(conf.Config.WorkDir + "/public"); os.IsNotExist(err) {
+	// 	err = os.Mkdir(conf.Config.WorkDir+"/public", 0755)
+	// 	if err != nil {
+	// 		log.WithFields(log.Fields{"path": conf.Config.WorkDir, "error": err, "type": consts.IOError}).Error("Making dir")
+	// 		Exit(1)
+	// 	}
+	// }
 
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)

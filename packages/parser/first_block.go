@@ -18,6 +18,7 @@ package parser
 
 import (
 	"encoding/hex"
+	"errors"
 	"io/ioutil"
 	"time"
 
@@ -109,22 +110,22 @@ func (p FirstBlockParser) Header() *tx.Header {
 }
 
 // FirstBlock generates the first block
-func FirstBlock() {
+func FirstBlock() error {
 	if len(*utils.FirstBlockPublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
-		err := ioutil.WriteFile(conf.Config.WorkDir+"/PrivateKey", []byte(priv), 0644) // !!!
+		err := ioutil.WriteFile(conf.Config.PrivateDir+"/PrivateKey", []byte(priv), 0644)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing private key file")
-			return
+			return err
 		}
 		*utils.FirstBlockPublicKey = pub
 	}
 	if len(*utils.FirstBlockNodePublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
-		err := ioutil.WriteFile(conf.Config.WorkDir+"/NodePrivateKey", []byte(priv), 0644) // !!!
+		err := ioutil.WriteFile(conf.Config.PrivateDir+"/NodePrivateKey", []byte(priv), 0644)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node private key file")
-			return
+			return err
 		}
 		*utils.FirstBlockNodePublicKey = pub
 	}
@@ -133,20 +134,19 @@ func FirstBlock() {
 	PublicKeyBytes, err := hex.DecodeString(string(PublicKey))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex to string")
-		return
+		return err
 	}
 
 	NodePublicKey := *utils.FirstBlockNodePublicKey
 	NodePublicKeyBytes, err := hex.DecodeString(string(NodePublicKey))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding node public key from hex to string")
-		return
+		return err
 	}
 
 	Host := *utils.FirstBlockHost
 	if len(Host) == 0 {
-		log.Info("first block host is empty, using localhost as host")
-		Host = "127.0.0.1"
+		return errors.New("FirstBlockHost is empty")
 	}
 
 	iAddress := int64(crypto.Address(PublicKeyBytes))
@@ -175,27 +175,13 @@ func FirstBlock() {
 	)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("first block body bin marshalling")
-		return
+		return err
 	}
 
 	block, err := MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
 	if err != nil {
-		return
+		return err
 	}
 
-	// var firstBlockDir string
-	// if len(*utils.FirstBlockDir) == 0 {
-	// 	firstBlockDir = *utils.Dir
-	// } else {
-	// 	firstBlockDir = filepath.Join("", *utils.FirstBlockDir)
-	// 	if _, err := os.Stat(firstBlockDir); os.IsNotExist(err) {
-	// 		if err = os.Mkdir(firstBlockDir, 0755); err != nil {
-	// 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating first block dir directory")
-	// 			return
-	// 		}
-	// 	}
-	// }
-	// ioutil.WriteFile(filepath.Join(firstBlockDir, "1block"), block, 0644)
-
-	ioutil.WriteFile(conf.Config.FirstBlockPath, block, 0644)
+	return ioutil.WriteFile(conf.Config.FirstBlockPath, block, 0644)
 }

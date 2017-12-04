@@ -73,8 +73,8 @@ type SavedConfig struct {
 	Centrifugo CentrifugoConfig
 }
 
-// InstallMode - init db/config, daemons stopped
-var InstallMode bool
+// WebInstall web UI installation mode
+var WebInstall bool
 
 // Config - global immutable parameters
 var Config = *initialValues()
@@ -173,10 +173,16 @@ func MergeFlags() {
 		Config.WorkDir = *FlagDir
 	}
 
-	fb := Config.WorkDir
-	if *FlagFirstBlockDir != "" {
-		fb = *FlagFirstBlockDir
+	if *FlagFirstBlockPath == "" {
+		Config.FirstBlockPath = filepath.Join(Config.WorkDir, "1block")
+	} else {
+		Config.FirstBlockPath = *FlagFirstBlockPath
 	}
-	Config.FirstBlockPath = filepath.Join(fb, "1block")
+
+	if *FlagPrivateDir != "" {
+		Config.PrivateDir = *FlagPrivateDir
+	} else {
+		Config.PrivateDir = Config.WorkDir
+	}
 
 }

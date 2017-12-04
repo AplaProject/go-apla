@@ -5,13 +5,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
+
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 )
 
 // WriteSelectiveLog is writing selective log
 func WriteSelectiveLog(text interface{}) error {
-	if *utils.LogLevel == "DEBUG" {
+	if conf.Config.LogLevel == "DEBUG" {
 		var stext string
 		switch text.(type) {
 		case string:
@@ -31,7 +33,7 @@ func WriteSelectiveLog(text interface{}) error {
 		}
 		t := time.Now()
 		data := allTransactionsStr + utils.GetParent() + " ### " + t.Format(time.StampMicro) + " ### " + stext + "\n\n"
-		f, err := os.OpenFile(*utils.Dir+"/SelectiveLog.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		f, err := os.OpenFile(conf.Config.LogFileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 		if err != nil {
 			return err
 		}

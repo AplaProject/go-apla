@@ -294,20 +294,6 @@ func firstLoad(ctx context.Context, d *daemon) error {
 	DBLock()
 	defer DBUnlock()
 
-	// if conf.Config.FirstLoadBlockchain == "file" {
-	// 	blockchainURL := conf.Config.FirstLoadBlockchainURL
-	// 	if len(blockchainURL) == 0 {
-	// 		blockchainURL = syspar.GetBlockchainURL()
-	// 	}
-
-	// 	fileName := conf.Config.WorkDir + "/public/blockchain" // !!! filepath.Join()
-	// 	if err := downloadChain(ctx, fileName, blockchainURL, d.logger); err != nil {
-	// 		return err
-	// 	}
-
-	// 	return loadFromFile(ctx, fileName, d.logger)
-	// }
-
 	return loadFirstBlock(d.logger)
 }
 

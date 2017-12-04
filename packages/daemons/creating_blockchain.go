@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf"
-
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"

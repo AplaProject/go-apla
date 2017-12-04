@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
+
 	"github.com/dgrijalva/jwt-go"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
@@ -167,6 +169,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		)
 		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
 		requestLogger.Info("received http request")
+
 		defer func() {
 			endTime := time.Now()
 			statsd.Client.TimingDuration(counterName+statsd.Time, endTime.Sub(startTime), 1.0)
@@ -176,16 +179,15 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 				errorAPI(w, `E_RECOVERED`, http.StatusInternalServerError)
 			}
 		}()
+
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if !IsInstalled() && r.URL.Path != `/api/v2/install` {
-			// !!!
-			// if model.DBConn == nil && !config.IsExist() {
-			// 	errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
-			// 	return
-			// }
-			Installed()
+
+		if !conf.WebInstall && r.URL.Path != `/api/v2/install` {
+			errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
+			return
 		}
+
 		token, err := jwtToken(r)
 		if err != nil {
 			requestLogger.WithFields(log.Fields{"type": consts.JWTError, "params": params, "error": err}).Error("starting session")
