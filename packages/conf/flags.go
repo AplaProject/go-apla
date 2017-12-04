@@ -22,14 +22,14 @@ var (
 	FlagDbPassword = flag.String("dbPassword", "", "database password") // insecure! use env.PG_PASSWORD instead
 
 	// FlagTCPHost daemon's host
-	FlagTCPHost = flag.String("tcpHost", "127.0.0.1", "tcpHost (e.g. 127.0.0.1)")
+	FlagTCPHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
 	// FlagTCPPort daemins's port bind to
-	FlagTCPPort = flag.Int("tcpPort", 7078, "tcpPort 7080 by default")
+	FlagTCPPort = flag.Int("tcpPort", 0, "tcpPort 7080 by default")
 
 	// FlagHTTPHost http api endpoint host
-	FlagHTTPHost = flag.String("httpHost", "127.0.0.1", "http api bound to that host, use 0.0.0.0 to bind all addresses")
+	FlagHTTPHost = flag.String("httpHost", "", "http api bound to that host, use 0.0.0.0 to bind all addresses")
 	// FlagHTTPPort http api endpoint port
-	FlagHTTPPort = flag.Int("httpPort", 7079, "http api port (7079)")
+	FlagHTTPPort = flag.Int("httpPort", 0, "http api port (7079)")
 
 	FlagWorkDir = flag.String("workDir", "", "work directory")
 	FlagDir     = flag.String("dDir", "", "work directory (deprecated")
