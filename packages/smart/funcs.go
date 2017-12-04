@@ -346,6 +346,19 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert vde table info")
 		return err
 	}
+	if !sc.VDE {
+		rollbackTx := &model.RollbackTx{
+			BlockID:   sc.BlockData.BlockID,
+			TxHash:    sc.TxHash,
+			NameTable: tableName,
+			TableID:   converter.Int64ToStr(id),
+		}
+		err = rollbackTx.Create(sc.DbTransaction)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating CreateTable rollback")
+			return err
+		}
+	}
 	return nil
 }
 
@@ -687,7 +700,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 	tEx.SetTablePrefix(prefix)
 	name = strings.ToLower(name)
 
-	exists, err := tEx.IsExistsByPermissionsAndTableName(name, tableName)
+	exists, err := tEx.IsExistsByPermissionsAndTableName(sc.DbTransaction, name, tableName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("querying that table is exists by permissions and table name")
 		return err
