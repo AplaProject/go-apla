@@ -95,40 +95,76 @@ func getCost(name string) int64 {
 }
 
 // EmbedFuncs is extending vm with embedded functions
-func EmbedFuncs(vm *script.VM) {
-	vmExtend(vm, &script.ExtendData{Objects: map[string]interface{}{
+func EmbedFuncs(vm *script.VM, vt script.VMType) {
+	f := map[string]interface{}{
+		"DBInsert":           DBInsert,
+		"DBUpdate":           DBUpdate,
+		"DBUpdateExt":        DBUpdateExt,
+		"DBSelect":           DBSelect,
+		"DBInt":              DBInt,
+		"DBRowExt":           DBRowExt,
+		"DBRow":              DBRow,
+		"DBStringExt":        DBStringExt,
+		"DBIntExt":           DBIntExt,
+		"DBStringWhere":      DBStringWhere,
+		"DBIntWhere":         DBIntWhere,
 		"AddressToId":        AddressToID,
-		"ColumnCondition":    ColumnCondition,
-		"CompileContract":    CompileContract,
-		"Contains":           strings.Contains,
+		"IdToAddress":        IDToAddress,
+		"DBAmount":           DBAmount,
 		"ContractAccess":     ContractAccess,
 		"ContractConditions": ContractConditions,
-		"ContractsList":      contractsList,
-		"CreateColumn":       CreateColumn,
-		"CreateTable":        CreateTable,
-		"DBInsert":           DBInsert,
-		"DBSelect":           DBSelect,
-		"DBUpdate":           DBUpdate,
 		"EcosysParam":        EcosysParam,
-		"Eval":               Eval,
-		"Float":              Float,
-		"FlushContract":      FlushContract,
-		"JSONToMap":          JSONToMap,
-		"IdToAddress":        IDToAddress,
+		"SysParamString":     SysParamString,
+		"SysParamInt":        SysParamInt,
+		"SysFuel":            SysFuel,
 		"Int":                Int,
-		"IsContract":         IsContract,
-		"Len":                Len,
-		"Money":              Money,
-		"PermColumn":         PermColumn,
-		"PermTable":          PermTable,
-		"Split":              Split,
 		"Str":                Str,
-		"Substr":             Substr,
-		"TableConditions":    TableConditions,
+		"Money":              Money,
+		"Float":              Float,
+		"Len":                Len,
+		"Join":               Join,
+		"Sha256":             Sha256,
+		"PubToID":            PubToID,
+		"HexToBytes":         HexToBytes,
+		"LangRes":            LangRes,
+		"DBInsertReport":     DBInsertReport,
+		"UpdateSysParam":     UpdateSysParam,
 		"ValidateCondition":  ValidateCondition,
-		//   VDE functions only
-		"HTTPRequest": HTTPRequest,
-	}, AutoPars: map[string]string{
+		"EvalCondition":      EvalCondition,
+		"HasPrefix":          strings.HasPrefix,
+		"Contains":           strings.Contains,
+		"Replace":            Replace,
+		"FindEcosystem":      FindEcosystem,
+		"CreateEcosystem":    CreateEcosystem,
+		"RollbackEcosystem":  RollbackEcosystem,
+		"CreateTable":        CreateTable,
+		"RollbackTable":      RollbackTable,
+		"PermTable":          PermTable,
+		"TableConditions":    TableConditions,
+		"ColumnCondition":    ColumnCondition,
+		"CreateColumn":       CreateColumn,
+		"RollbackColumn":     RollbackColumn,
+		"PermColumn":         PermColumn,
+		"UpdateLang":         UpdateLang,
+		"Size":               Size,
+		"Split":              Split,
+		"Substr":             Substr,
+		"ContractsList":      contractsList,
+		"IsContract":         IsContract,
+		"CompileContract":    CompileContract,
+		"FlushContract":      FlushContract,
+		"Eval":               Eval,
+		"Activate":           Activate,
+		"Deactivate":         Deactivate,
+		"JSONToMap":          JSONToMap,
+		"check_signature":    CheckSignature, // system function
+	}
+	switch vt {
+	case script.VMTypeVDE:
+		f["HTTPRequest"] = HTTPRequest
+	}
+
+	vmExtend(vm, &script.ExtendData{Objects: f, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
 	}})
 	vmExtendCost(vm, getCost)
