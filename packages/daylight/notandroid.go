@@ -31,36 +31,19 @@ import (
 )
 
 func httpListener(ListenHTTPHost string, route http.Handler) {
-	i := 0
-	host := ListenHTTPHost
-	var l net.Listener
-	var err error
-	for {
-		i++
-		if i > 7 {
-			log.Warning("tried to listen ipV4 at all ports")
-			panic("Error listening ")
-		}
-		// ???
-		// if i > 1 {
-		// 	host = ":7" + converter.IntToStr(i) + "79"
-		// 	*BrowserHTTPHost = "http://" + host
-		// }
-		l, err = net.Listen("tcp4", host)
-		log.WithFields(log.Fields{"host": host, "type": consts.NetworkError}).Debug("trying to listen at")
-		if err == nil {
-			log.WithFields(log.Fields{"host": host}).Info("listening at")
-			break
-		} else {
-			log.WithFields(log.Fields{"host": host, "error": err, "type": consts.NetworkError}).Debug("cannot listen at host")
-		}
+	l, err := net.Listen("tcp4", ListenHTTPHost)
+	log.WithFields(log.Fields{"host": ListenHTTPHost, "type": consts.NetworkError}).Debug("trying to listen at")
+	if err == nil {
+		log.WithFields(log.Fields{"host": ListenHTTPHost}).Info("listening at")
+	} else {
+		log.WithFields(log.Fields{"host": ListenHTTPHost, "error": err, "type": consts.NetworkError}).Debug("cannot listen at host")
 	}
 
 	go func() {
 		srv := &http.Server{Handler: route}
 		err = srv.Serve(l)
 		if err != nil {
-			log.WithFields(log.Fields{"host": host, "error": err, "type": consts.NetworkError}).Fatal("serving http at host")
+			log.WithFields(log.Fields{"host": ListenHTTPHost, "error": err, "type": consts.NetworkError}).Fatal("serving http at host")
 			panic(err)
 		}
 	}()
