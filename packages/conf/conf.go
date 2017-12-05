@@ -116,7 +116,7 @@ func GetConfigPath() string {
 	if *ConfigPath != "" {
 		return *ConfigPath
 	}
-	return defaultConfigFile
+	return filepath.Join(Config.WorkDir, defaultConfigFile)
 }
 
 // GetPidFile returns path to pid file
