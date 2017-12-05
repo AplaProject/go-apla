@@ -40,6 +40,9 @@ var (
 	// FlagLogFile log file
 	FlagLogFile = flag.String("logFile", "", "log file")
 
+	// FlagKeyID wallet id
+	FlagKeyID = flag.Int64("keyID", 0, "wallet id")
+
 	// // //
 
 	// runtime paramters
@@ -60,16 +63,8 @@ var (
 	GenerateFirstBlock = flag.Bool("generateFirstBlock", false, "force init first block")
 )
 
-// global application state variable
-var (
-	// KeyID is the wallet identifier
-	KeyID int64
-)
-
 // ParseFlags from command line
 func ParseFlags() {
-	flag.Int64Var(&KeyID, "keyID", 0, "keyID")
-
 	flag.Parse()
 }
 

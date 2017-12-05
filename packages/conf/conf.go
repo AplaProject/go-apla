@@ -55,6 +55,7 @@ type SavedConfig struct {
 	//
 	StartDaemons string // comma separated list of daemons to start or empty for all or 'null'
 	//
+	KeyID       int64
 	EcosystemID int64
 	//
 	BadBlocks              string // ??? accessed once as json map
@@ -216,8 +217,8 @@ func OverrideFlags() {
 		Config.WorkDir = *FlagWorkDir
 	}
 
-	if *FirstBlockPath == "" {
-		*FirstBlockPath = filepath.Join(Config.WorkDir, "1block")
+	if *FlagKeyID != 0 {
+		Config.KeyID = *FlagKeyID
 	}
 
 	if *FlagPrivateDir != "" {

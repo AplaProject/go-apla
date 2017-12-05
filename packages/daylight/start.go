@@ -258,12 +258,12 @@ func Start() {
 	}
 
 	if !conf.WebInstall {
-		if conf.KeyID == 0 {
+		if conf.Config.KeyID == 0 {
 			key, err := parser.GetKeyIDFromPublicKey()
 			if err != nil {
 				Exit(4)
 			}
-			conf.KeyID = key
+			conf.Config.KeyID = key
 		}
 		initGorm(conf.Config.DB)
 	}

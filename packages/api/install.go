@@ -135,12 +135,12 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		parser.GenerateFirstBlock()
 	}
 
-	if conf.KeyID == 0 {
+	if conf.Config.KeyID == 0 {
 		key, err := parser.GetKeyIDFromPublicKey()
 		if err != nil {
 			return err
 		}
-		conf.KeyID = key
+		conf.Config.KeyID = key
 	}
 
 	if err := conf.SaveConfig(); err != nil {

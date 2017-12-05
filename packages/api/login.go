@@ -115,7 +115,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	}
 
 	result := loginResult{EcosystemID: converter.Int64ToStr(state), KeyID: converter.Int64ToStr(wallet),
-		Address: address, IsOwner: founder == wallet, IsNode: conf.KeyID == wallet,
+		Address: address, IsOwner: founder == wallet, IsNode: conf.Config.KeyID == wallet,
 		IsVDE: model.IsTable(fmt.Sprintf(`%d_vde_tables`, state))}
 	data.result = &result
 	expire := data.params[`expire`].(int64)
