@@ -235,26 +235,26 @@ func Start() {
 	conf.OverrideFlags()
 
 	// process directives
-	if *conf.InitConfig {
-		if err := conf.SaveConfig(); err != nil {
-			log.Error("saveConfig:", err)
-			Exit(1)
-		}
-		conf.WebInstall = false
-	}
-
 	if *conf.GenerateFirstBlock {
 		if err := parser.GenerateFirstBlock(); err != nil {
 			log.Error("firstBlock:", err)
-			Exit(2)
+			Exit(1)
 		}
 	}
 
 	if *conf.InitDatabase {
 		if err := model.InitDB(conf.Config.DB); err != nil {
 			log.Error("initDB:", err)
+			Exit(2)
+		}
+	}
+
+	if *conf.InitConfig {
+		if err := conf.SaveConfig(); err != nil {
+			log.Error("saveConfig:", err)
 			Exit(3)
 		}
+		conf.WebInstall = false
 	}
 
 	if !conf.WebInstall {

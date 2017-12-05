@@ -234,4 +234,8 @@ func OverrideFlags() {
 		Config.LogFileName = *FlagLogFile
 	}
 
+	if *FirstBlockPath == "" {
+		*FirstBlockPath = filepath.Join(Config.PrivateDir, "1block")
+	}
+
 }

@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"io/ioutil"
+	"path/filepath"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf"
@@ -113,11 +114,13 @@ func (p FirstBlockParser) Header() *tx.Header {
 func GenerateFirstBlock() error {
 	if len(*utils.FirstBlockPublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
-		if err := ioutil.WriteFile(conf.Config.PrivateDir+"/PrivateKey", []byte(priv), 0644); err != nil {
+		pk := filepath.Join(conf.Config.PrivateDir, "/PrivateKey")
+		if err := ioutil.WriteFile(pk, []byte(priv), 0644); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing private key file")
 			return err
 		}
-		if err := ioutil.WriteFile(conf.Config.PrivateDir+"/PublicKey", []byte(pub), 0644); err != nil {
+		pubk := filepath.Join(conf.Config.PrivateDir, "/PublicKey")
+		if err := ioutil.WriteFile(pubk, []byte(pub), 0644); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing public key file")
 			return err
 		}
@@ -126,11 +129,13 @@ func GenerateFirstBlock() error {
 
 	if len(*utils.FirstBlockNodePublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
-		if err := ioutil.WriteFile(conf.Config.PrivateDir+"/NodePrivateKey", []byte(priv), 0644); err != nil {
+		nvk := filepath.Join(conf.Config.PrivateDir, "/NodePrivateKey")
+		if err := ioutil.WriteFile(nvk, []byte(priv), 0644); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node private key file")
 			return err
 		}
-		if err := ioutil.WriteFile(conf.Config.PrivateDir+"/NodePublicKey", []byte(pub), 0644); err != nil {
+		npk := filepath.Join(conf.Config.PrivateDir, "/NodePublicKey")
+		if err := ioutil.WriteFile(npk, []byte(pub), 0644); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node public key file")
 			return err
 		}
@@ -157,6 +162,8 @@ func GenerateFirstBlock() error {
 	}
 
 	iAddress := int64(crypto.Address(PublicKeyBytes))
+	conf.Config.KeyID = iAddress
+
 	now := time.Now().Unix()
 
 	header := &utils.BlockData{
@@ -190,7 +197,12 @@ func GenerateFirstBlock() error {
 		return err
 	}
 
-	return ioutil.WriteFile(*conf.FirstBlockPath, block, 0644)
+	if err := ioutil.WriteFile(*conf.FirstBlockPath, block, 0644); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err, "file": *conf.FirstBlockPath}).Error("first block write")
+		return err
+	}
+
+	return nil
 }
 
 // GetKeyIDFromPrivateKey load KeyID fron PrivateKey file
