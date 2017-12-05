@@ -274,10 +274,10 @@ func loadFirstBlock(logger *log.Entry) error {
 	// 	logger.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("FirstBlockDir doesn't set")
 	// }
 
-	newBlock, err = ioutil.ReadFile(conf.Config.FirstBlockPath)
+	newBlock, err = ioutil.ReadFile(*conf.FirstBlockPath)
 	if err != nil {
 		logger.WithFields(log.Fields{
-			"type": consts.IOError, "error": err, "file_name": conf.Config.FirstBlockPath,
+			"type": consts.IOError, "error": err, "file_name": *conf.FirstBlockPath,
 		}).Error("reading first block from file")
 	}
 

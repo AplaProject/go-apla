@@ -66,6 +66,8 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		data.logLevel = "ERROR"
 	}
 
+	conf.Config.LogLevel = data.logLevel
+
 	if len(data.firstLoadBlockchainURL) == 0 {
 		log.WithFields(log.Fields{
 			"url": syspar.GetBlockchainURL(),
@@ -73,19 +75,22 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		data.firstLoadBlockchainURL = syspar.GetBlockchainURL()
 	}
 
-	cfg := conf.Config.DB
-	cfg.Host = data.dbHost
-	cfg.Port = converter.StrToInt(data.dbPort)
-	cfg.Name = data.dbName
-	cfg.User = data.dbUsername
-	cfg.Password = data.dbPassword
+	conf.Config.DB.Host = data.dbHost
+	conf.Config.DB.Port = converter.StrToInt(data.dbPort)
+	conf.Config.DB.Name = data.dbName
+	conf.Config.DB.User = data.dbUsername
+	conf.Config.DB.Password = data.dbPassword
 
-	if err := model.InitDB(cfg); err != nil {
+	if err := model.InitDB(conf.Config.DB); err != nil {
 		return err
 	}
 
-	if _, err = os.Stat(conf.Config.FirstBlockPath); len(conf.Config.FirstBlockPath) > 0 && os.IsNotExist(err) {
-		logger.WithFields(log.Fields{"path": conf.Config.FirstBlockPath}).Info("First block does not exists, generating new keys")
+	fb := *conf.FirstBlockPath
+	if data.firstBlockDir != "" {
+		fb = filepath.Join(data.firstBlockDir, "1block")
+	}
+	if _, err = os.Stat(fb); len(fb) > 0 && os.IsNotExist(err) {
+		logger.WithFields(log.Fields{"path": fb}).Info("First block does not exists, generating new keys")
 		// If there is no key, this is the first run and the need to create them in the working directory.
 		pkf := filepath.Join(conf.Config.PrivateDir, "/PrivateKey")
 		if _, err = os.Stat(pkf); os.IsNotExist(err) {
@@ -101,6 +106,11 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 					logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating private key file")
 					return err
 				}
+				err = ioutil.WriteFile(filepath.Join(conf.Config.PrivateDir, "/PublicKey"), []byte(pub), 0644)
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating public key file")
+					return err
+				}
 				*utils.FirstBlockPublicKey = pub
 			}
 		}
@@ -111,43 +121,29 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 				priv, pub, _ := crypto.GenHexKeys()
 				err = ioutil.WriteFile(npkFile, []byte(priv), 0644)
 				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("generating hex keys")
+					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("creating NodePrivateKey")
+					return err
+				}
+				err = ioutil.WriteFile(filepath.Join(conf.Config.PrivateDir, "/NodePublicKey"), []byte(pub), 0644)
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("creating NodePublicKey")
 					return err
 				}
 				*utils.FirstBlockNodePublicKey = pub
 			}
 		}
-		parser.FirstBlock()
+		parser.GenerateFirstBlock()
 	}
 
-	if conf.Config.KeyID == 0 {
-
-		// var key []byte
-		// key, err = ioutil.ReadFile(conf.Config.PrivateDir + "/PrivateKey")
-		// if err != nil {
-		// 	logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading private key file")
-		// 	return err
-		// }
-		// key, err = hex.DecodeString(string(key))
-		// if err != nil {
-		// 	logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
-		// 	return err
-		// }
-		// key, err = crypto.PrivateToPublic(key)
-		// if err != nil {
-		// 	logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
-		// 	return err
-		// }
-
+	if conf.KeyID == 0 {
 		key, err := parser.GetKeyIDFromPublicKey()
 		if err != nil {
 			return err
 		}
-		conf.Config.KeyID = key
+		conf.KeyID = key
 	}
 
-	err = conf.SaveConfig()
-	if err != nil {
+	if err := conf.SaveConfig(); err != nil {
 		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("saving config")
 		return err
 	}
@@ -176,6 +172,7 @@ func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	}
 	err := installCommon(&params, logger)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("installCommon")
 		if strings.HasPrefix(err.Error(), `E_`) {
 			return errorAPI(w, err.Error(), http.StatusInternalServerError)
 		}

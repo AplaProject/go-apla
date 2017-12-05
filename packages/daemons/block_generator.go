@@ -42,7 +42,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	// 	return err
 	// }
 
-	_, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
+	_, err := syspar.GetNodePositionByKeyID(conf.KeyID)
 	if err != nil {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
@@ -54,7 +54,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	defer DBUnlock()
 
 	// wee need fresh myNodePosition after locking
-	myNodePosition, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
+	myNodePosition, err := syspar.GetNodePositionByKeyID(conf.KeyID)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node position by key id")
 		return err
@@ -68,7 +68,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 
 	// calculate the next block generation time
-	sleepTime, err := syspar.GetSleepTimeByKey(conf.Config.KeyID, converter.StrToInt64(prevBlock.NodePosition))
+	sleepTime, err := syspar.GetSleepTimeByKey(conf.KeyID, converter.StrToInt64(prevBlock.NodePosition))
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting sleep time")
 		return err
@@ -115,7 +115,7 @@ func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key 
 		BlockID:      prevBlock.BlockID + 1,
 		Time:         time.Now().Unix(),
 		EcosystemID:  conf.Config.EcosystemID,
-		KeyID:        conf.Config.KeyID,
+		KeyID:        conf.KeyID,
 		NodePosition: myNodePosition,
 		Version:      consts.BLOCK_VERSION,
 	}

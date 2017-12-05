@@ -5,11 +5,7 @@ import (
 )
 
 var (
-	// FlagReinstall rewrite config using comandline args
-	FlagReinstall = flag.Bool("reinstall", false, "reset config, init database")
-
-	// FlagConfigPath - path to config file
-	FlagConfigPath = flag.String("configPath", "", "full path to config file (toml format)")
+	// // // Config.toml // // //
 
 	// FlagDbName database name
 	FlagDbName = flag.String("dbName", "", "database name (default apla)")
@@ -35,24 +31,45 @@ var (
 	// FlagWorkDir application working directory
 	FlagWorkDir = flag.String("workDir", "", "work directory")
 
-	// FlagFirstBlockPath is a file (1block) where first block file will be stored
-	FlagFirstBlockPath = flag.String("firstBlockPath", "", "pathname of '1block' file")
-
 	// FlagPrivateDir - dirctory to store PrivateKey and NodePrivateKey
 	FlagPrivateDir = flag.String("privateDir", "", "where privatekeys are stored")
-
-	// FlagKeyID is the wallet identifier
-	FlagKeyID = flag.Int64("keyID", 0, "keyID")
 
 	// FlagLogLevel set log level
 	FlagLogLevel = flag.String("logLevel", "", "LogLevel")
 
 	// FlagLogFile log file
 	FlagLogFile = flag.String("logFile", "", "log file")
+
+	// // //
+
+	// runtime paramters
+
+	// ConfigPath - path to config file
+	ConfigPath = flag.String("configPath", "", "full path to config file (toml format)")
+
+	// FirstBlockPath is a file (1block) where first block file will be stored
+	FirstBlockPath = flag.String("firstBlockPath", "", "pathname of '1block' file")
+
+	// InitConfig rewrite config using comandline args
+	InitConfig = flag.Bool("initConfig", false, "reset config")
+
+	// InitDatabase recreate database
+	InitDatabase = flag.Bool("initDatabase", false, "recreate database")
+
+	// GenerateFirstBlock force regeneration of first block
+	GenerateFirstBlock = flag.Bool("generateFirstBlock", false, "force init first block")
+)
+
+// global application state variable
+var (
+	// KeyID is the wallet identifier
+	KeyID int64
 )
 
 // ParseFlags from command line
 func ParseFlags() {
+	flag.Int64Var(&KeyID, "keyID", 0, "keyID")
+
 	flag.Parse()
 }
 

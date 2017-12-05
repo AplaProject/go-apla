@@ -221,8 +221,8 @@ func Start() {
 		}
 	}
 
+	// load config file and flags
 	conf.ParseFlags()
-
 	if conf.NoConfig() {
 		conf.WebInstall = true
 	} else {
@@ -232,37 +232,40 @@ func Start() {
 			return
 		}
 	}
-
 	conf.OverrideFlags()
 
-	if *conf.FlagReinstall {
-
-		if err := model.InitDB(conf.Config.DB); err != nil {
-			log.Error("initDB:", err)
-			Exit(2)
-		}
-
-		if err := parser.FirstBlock(); err != nil {
-			log.Error("firstBlock:", err)
-			Exit(3)
-		}
-
-		key, err := parser.GetKeyIDFromPublicKey()
-		if err != nil {
-			Exit(4)
-		}
-		conf.Config.KeyID = key
-
+	// process directives
+	if *conf.InitConfig {
 		if err := conf.SaveConfig(); err != nil {
 			log.Error("saveConfig:", err)
 			Exit(1)
 		}
-
 		conf.WebInstall = false
-	} else {
-		if !conf.WebInstall {
-			initGorm(conf.Config.DB)
+	}
+
+	if *conf.GenerateFirstBlock {
+		if err := parser.GenerateFirstBlock(); err != nil {
+			log.Error("firstBlock:", err)
+			Exit(2)
 		}
+	}
+
+	if *conf.InitDatabase {
+		if err := model.InitDB(conf.Config.DB); err != nil {
+			log.Error("initDB:", err)
+			Exit(3)
+		}
+	}
+
+	if !conf.WebInstall {
+		if conf.KeyID == 0 {
+			key, err := parser.GetKeyIDFromPublicKey()
+			if err != nil {
+				Exit(4)
+			}
+			conf.KeyID = key
+		}
+		initGorm(conf.Config.DB)
 	}
 
 	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")

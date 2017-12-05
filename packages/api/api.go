@@ -143,18 +143,9 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
-// // IsInstalled returns installed flag
-// func IsInstalled() bool {
-// 	return installed.IsSet()
-// }
-
-// // Installed is setting turning installed flag on
-// func Installed() {
-// 	installed.Set()
-// }
-
 // DefaultHandler is a common handle function for api requests
 func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
+
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 		counterName := statsd.APIRouteCounterName(method, pattern)
 		statsd.Client.Inc(counterName+statsd.Count, 1, 1.0)
@@ -179,9 +170,18 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-		if !conf.WebInstall && r.URL.Path != `/api/v2/install` {
-			errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
-			return
+		if conf.WebInstall {
+			if r.URL.Path == `/api/v2/install` {
+				// only install url allowed
+			} else {
+				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
+				return
+			}
+		} else {
+			if r.URL.Path == `/api/v2/install` {
+				errorAPI(w, `E_INSTALLED`, http.StatusInternalServerError)
+				return
+			}
 		}
 
 		token, err := jwtToken(r)

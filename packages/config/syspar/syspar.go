@@ -331,7 +331,7 @@ func GetRemoteHosts() []string {
 	defer mutex.RUnlock()
 
 	for nodeID, item := range nodes {
-		if nodeID != conf.Config.KeyID {
+		if nodeID != conf.KeyID {
 			ret = append(ret, item.Host)
 		}
 	}

@@ -48,14 +48,14 @@ func init() {
 }
 
 var daemonsList = map[string]func(context.Context, *daemon) error{
-	"BlocksCollection":   BlocksCollection,
-	"BlockGenerator":     BlockGenerator,
-	"CreatingBlockchain": CreatingBlockchain,
-	"Disseminator":       Disseminator,
-	"QueueParserTx":      QueueParserTx,
-	"QueueParserBlocks":  QueueParserBlocks,
-	"Confirmations":      Confirmations,
-	"Notificator":        Notificate,
+	"BlocksCollection": BlocksCollection,
+	"BlockGenerator":   BlockGenerator,
+	// "CreatingBlockchain": CreatingBlockchain,
+	"Disseminator":      Disseminator,
+	"QueueParserTx":     QueueParserTx,
+	"QueueParserBlocks": QueueParserBlocks,
+	"Confirmations":     Confirmations,
+	"Notificator":       Notificate,
 }
 
 var serverList = []string{
@@ -68,13 +68,6 @@ var serverList = []string{
 	"Confirmations",
 	"Notificator",
 }
-
-// var mobileList = []string{
-// 	"QueueParserTx",
-// 	"Disseminator",
-// 	"Confirmations",
-// 	"BlocksCollection",
-// }
 
 var rollbackList = []string{
 	"BlocksCollection",

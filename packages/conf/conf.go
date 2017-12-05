@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	toml "github.com/BurntSushi/toml"
 )
@@ -54,7 +55,6 @@ type SavedConfig struct {
 	//
 	StartDaemons string // comma separated list of daemons to start or empty for all or 'null'
 	//
-	KeyID       int64
 	EcosystemID int64
 	//
 	BadBlocks              string // ??? accessed once as json map
@@ -66,9 +66,8 @@ type SavedConfig struct {
 	DB     DBConfig
 	StatsD StatsDConfig
 	//
-	WorkDir        string // application work dir (cwd by default)
-	FirstBlockPath string // path to the first block file
-	PrivateDir     string // place for private keys files: NodePrivateKey, PrivateKey
+	WorkDir    string // application work dir (cwd by default)
+	PrivateDir string // place for private keys files: NodePrivateKey, PrivateKey
 	//
 	Centrifugo CentrifugoConfig
 }
@@ -101,10 +100,8 @@ func initialValues() *SavedConfig {
 			Password: "",
 		},
 
-		WorkDir: cwd,
-
-		FirstBlockPath: "",
-		PrivateDir:     "",
+		WorkDir:    cwd,
+		PrivateDir: "",
 
 		Centrifugo: CentrifugoConfig{
 			Secret: "",
@@ -116,8 +113,8 @@ func initialValues() *SavedConfig {
 
 // GetConfigPath returns path from command line arg or default
 func GetConfigPath() string {
-	if *FlagConfigPath != "" {
-		return *FlagConfigPath
+	if *ConfigPath != "" {
+		return *ConfigPath
 	}
 	return defaultConfigFile
 }
@@ -155,26 +152,47 @@ func OverrideFlags() {
 
 	if *FlagDbName != "" {
 		Config.DB.Name = *FlagDbName
+	} else {
+		p := os.Getenv("PGDATABASE")
+		if p != "" {
+			Config.DB.Name = p
+		}
 	}
 
 	if *FlagDbHost != "" {
 		Config.DB.Host = *FlagDbHost
+	} else {
+		p := os.Getenv("PGHOST")
+		if p != "" {
+			Config.DB.Host = p
+		}
 	}
 
 	if *FlagDbPort != 0 {
 		Config.DB.Port = *FlagDbPort
+	} else {
+		p, _ := strconv.Atoi(os.Getenv("PGPORT"))
+		if p != 0 {
+			Config.DB.Port = p
+		}
 	}
 
 	if *FlagDbUser != "" {
 		Config.DB.User = *FlagDbUser
+	} else {
+		p := os.Getenv("PGUSER")
+		if p != "" {
+			Config.DB.User = p
+		}
 	}
 
-	p := os.Getenv("PG_PASSWORD")
-	if p != "" {
-		Config.DB.Password = p
-	}
 	if *FlagDbPassword != "" {
 		Config.DB.Password = *FlagDbPassword
+	} else {
+		p := os.Getenv("PGPASSWORD")
+		if p != "" {
+			Config.DB.Password = p
+		}
 	}
 
 	// tcp
@@ -198,14 +216,8 @@ func OverrideFlags() {
 		Config.WorkDir = *FlagWorkDir
 	}
 
-	if *FlagKeyID != 0 {
-		Config.KeyID = *FlagKeyID
-	}
-
-	if *FlagFirstBlockPath == "" {
-		Config.FirstBlockPath = filepath.Join(Config.WorkDir, "1block")
-	} else {
-		Config.FirstBlockPath = *FlagFirstBlockPath
+	if *FirstBlockPath == "" {
+		*FirstBlockPath = filepath.Join(Config.WorkDir, "1block")
 	}
 
 	if *FlagPrivateDir != "" {
