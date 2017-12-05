@@ -84,6 +84,7 @@ var (
 		"Substr":             10,
 		"TableConditions":    100,
 		"ValidateCondition":  30,
+		"EvalResult":         10,
 	}
 )
 
@@ -126,6 +127,7 @@ func EmbedFuncs(vm *script.VM) {
 		"Substr":             Substr,
 		"TableConditions":    TableConditions,
 		"ValidateCondition":  ValidateCondition,
+		"EvalResult":         EvalResult,
 		//   VDE functions only
 		"HTTPRequest": HTTPRequest,
 	}, AutoPars: map[string]string{
@@ -468,8 +470,7 @@ func EcosysParam(sc *SmartContract, name string) string {
 	return val
 }
 
-// Eval evaluates the condition
-func Eval(sc *SmartContract, condition string) error {
+func eval(sc *SmartContract, condition string) error {
 	if len(condition) == 0 {
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("The condition is empty")
 		return fmt.Errorf(`The condition is empty`)
@@ -484,6 +485,20 @@ func Eval(sc *SmartContract, condition string) error {
 		return fmt.Errorf(`Access denied`)
 	}
 	return nil
+}
+
+// Eval evaluates the condition
+func Eval(sc *SmartContract, condition string) error {
+	return eval(sc, condition)
+}
+
+// EvalResult return result of evaluates the condition
+func EvalResult(sc *SmartContract, condition string) string {
+	err := eval(sc, condition)
+	if err != nil {
+		return err.Error()
+	}
+	return ""
 }
 
 // FlushContract is flushing contract

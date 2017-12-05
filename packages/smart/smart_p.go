@@ -93,6 +93,7 @@ var (
 		"RollbackColumn":    50,
 		"PermColumn":        50,
 		"JSONToMap":         50,
+		"EvalResult":        10,
 	}
 )
 
@@ -173,6 +174,7 @@ func init() {
 		"Deactivate":         Deactivate,
 		"JSONToMap":          JSONToMap,
 		"check_signature":    CheckSignature, // system function
+		"EvalResult":         EvalResult,
 	}, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
 	}})

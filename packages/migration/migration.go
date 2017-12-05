@@ -374,17 +374,28 @@ var (
 		  }
 		  return result
 	  }
-	  
-	  func ConditionById(table string, validate bool) {
-		  var cond string
-		  cond = DBString(table, "conditions", $Id)
-		  if !cond {
-			  error Sprintf("Item %%d has not been found", $Id)
-		  }
-		  Eval(cond)
-		  if validate {
-			  ValidateCondition($Conditions,$ecosystem_id)
-		  }
+
+	  func ConditionById(table string, validate bool, param string) {
+		var cond string
+		cond = DBString(table, "conditions", $Id)
+		if !cond {
+			error Sprintf("Item %%d has not been found", $Id)
+		}
+
+		var message string
+		message = EvalResult(cond)
+
+		if message {
+			if param {
+				EvalCondition("parameters", param, "value")
+			} else {
+				error message
+			}
+		}
+
+		if validate {
+			ValidateCondition($Conditions,$ecosystem_id)
+		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('3','contract NewContract {
 		  data {
@@ -424,7 +435,13 @@ var (
 				  error Sprintf("Contract %%d does not exist", $Id)
 			  }
 			  $cur = row[0]
-			  Eval($cur["conditions"])
+
+			  var message string
+			  message = EvalResult($cur["conditions"])
+			  if message {
+				  EvalCondition("parameters", "changing_contracts", "value")
+			  }
+
 			  ValidateCondition($Conditions,$ecosystem_id)
 			  var list, curlist array
 			  list = ContractsList($Value)
@@ -514,7 +531,7 @@ var (
 			  Conditions string
 		  }
 		  conditions {
-			  ConditionById("menu", true)
+			  ConditionById("menu", true, "changing_menu")
 		  }
 		  action {
 			  DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
@@ -526,7 +543,7 @@ var (
 			  Value      string
 		  }
 		  conditions {
-			  ConditionById("menu", false)
+			  ConditionById("menu", false, "changing_menu")
 		  }
 		  action {
 			  DBUpdate("menu", $Id, "value", DBString("menu", "value", $Id) + "\r\n" + $Value )
@@ -559,7 +576,7 @@ var (
 			  Conditions string
 		  }
 		  conditions {
-			  ConditionById("pages", true)
+			  ConditionById("pages", true, "changing_page")
 		  }
 		  action {
 			  DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
@@ -571,7 +588,7 @@ var (
 			  Value      string
 		  }
 		  conditions {
-			  ConditionById("pages", false)
+			  ConditionById("pages", false, "changing_page")
 		  }
 		  action {
 			  DBUpdate("pages", $Id, "value",  DBString("pages", "value", $Id) + "\r\n" + $Value )
@@ -882,13 +899,24 @@ var (
 		return result
 	}
 	
-	func ConditionById(table string, validate bool) {
+	func ConditionById(table string, validate bool, param string) {
 		var cond string
 		cond = DBString(table, "conditions", $Id)
 		if !cond {
 			error Sprintf("Item %%d has not been found", $Id)
 		}
-		Eval(cond)
+
+		var message string
+		message = EvalResult(cond)
+
+		if message {
+			if param {
+				EvalCondition("parameters", param, "value")
+			} else {
+				error message
+			}
+		}
+
 		if validate {
 			ValidateCondition($Conditions,$ecosystem_id)
 		}
@@ -979,7 +1007,13 @@ var (
 			if Int($cur["id"]) != $Id {
 				error Sprintf("Contract %%d does not exist", $Id)
 			}
-			Eval($cur["conditions"])
+			
+			var message string
+			message = EvalResult($cur["conditions"])
+			if message {
+				EvalCondition("parameters", "changing_contracts", "value")
+			}
+
 			ValidateCondition($Conditions,$ecosystem_id)
 			var list, curlist array
 			list = ContractsList($Value)
@@ -1127,7 +1161,7 @@ var (
 			Conditions string
 		}
 		conditions {
-			ConditionById("menu", true)
+			ConditionById("menu", true, "changing_menu")
 		}
 		action {
 			DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
@@ -1139,7 +1173,7 @@ var (
 			Value      string
 		}
 		conditions {
-			ConditionById("menu", false)
+			ConditionById("menu", false, "changing_menu")
 		}
 		action {
 			DBUpdate("menu", $Id, "value", DBString("menu", "value", $Id) + "\r\n" + $Value )
@@ -1173,7 +1207,7 @@ var (
 			Conditions string
 		}
 		conditions {
-			ConditionById("pages", true)
+			ConditionById("pages", true, "changing_page")
 		}
 		action {
 			DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
@@ -1185,7 +1219,7 @@ var (
 			Value      string
 		}
 		conditions {
-			ConditionById("pages", false)
+			ConditionById("pages", false, "changing_page")
 		}
 		action {
 			var value string
@@ -1254,7 +1288,7 @@ var (
 			Conditions string
 		}
 		conditions {
-			ConditionById("signatures", true)
+			ConditionById("signatures", true, "changing_signature")
 		}
 		action {
 			DBUpdate("signatures", $Id, "value,conditions", $Value, $Conditions)
