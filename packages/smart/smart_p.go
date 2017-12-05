@@ -53,7 +53,6 @@ var (
 		"DBAmount":       {},
 		"DBInsertReport": {},
 		"UpdateSysParam": {},
-		"FindEcosystem":  {},
 	}
 	extendCostP = map[string]int64{
 		"AddressToId":       10,
@@ -149,7 +148,6 @@ func init() {
 		"HasPrefix":          strings.HasPrefix,
 		"Contains":           strings.Contains,
 		"Replace":            Replace,
-		"FindEcosystem":      FindEcosystem,
 		"CreateEcosystem":    CreateEcosystem,
 		"RollbackEcosystem":  RollbackEcosystem,
 		"CreateTable":        CreateTable,
@@ -557,31 +555,13 @@ func Replace(s, old, new string) string {
 	return strings.Replace(s, old, new, -1)
 }
 
-// FindEcosystem checks if there is an ecosystem with the specified name
-func FindEcosystem(sc *SmartContract, country string) (int64, int64, error) {
-	query := `SELECT id FROM system_states where name=?`
-	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, country)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, 0, err
-	}
-	id, err := model.Single(query, country).Int64()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
-		return 0, 0, err
-	}
-	return cost, id, nil
-}
-
 // CreateEcosystem creates a new ecosystem
 func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error) {
 	if sc.TxContract.Name != `@1NewEcosystem` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateEcosystem can be only called from @1NewEcosystem")
 		return 0, fmt.Errorf(`CreateEcosystem can be only called from @1NewEcosystem`)
 	}
-	_, id, err := sc.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
-		name,
-	}, `system_states`, nil, nil, !sc.VDE)
+	_, id, err := sc.selectiveLoggingAndUpd(nil, nil, `system_states`, nil, nil, !sc.VDE)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError}).Error("CreateEcosystem")
 		return 0, err

@@ -75,11 +75,9 @@ var (
 		
 		DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
 		"id" bigint NOT NULL DEFAULT '0',
-		"name" varchar(255) NOT NULL DEFAULT '',
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
-		CREATE INDEX "system_states_index_name" ON "system_states" (name);
 		
 		DROP TABLE IF EXISTS "system_parameters";
 		CREATE TABLE "system_parameters" (
@@ -142,9 +140,7 @@ var (
 		
 		INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES  ('system_states',
 				'{"insert": "false", "update": "ContractAccess(\"@1EditParameter\")",
-				  "new_column": "false"}',
-				'{"name": "ContractAccess(\"@1EditParameter\")"}',
-				'ContractAccess(\"@0UpdSysContract\")');
+				  "new_column": "false"}','{}', 'ContractAccess(\"@0UpdSysContract\")');
 		
 		
 		DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
@@ -1037,11 +1033,6 @@ var (
 		data {
 			Name  string "optional"
 		}
-		conditions {
-			if $Name && FindEcosystem($Name) {
-				error Sprintf("Ecosystem %%s is already existed", $Name)
-			}
-		}
 		action {
 			var id int
 			id = CreateEcosystem($key_id, $Name)
@@ -1084,19 +1075,9 @@ var (
 		conditions {
 			ConditionById("parameters", true)
 			ValidateCondition($Conditions, $ecosystem_id)
-			var exist int
-			if DBString("parameters", "name", $Id) == "ecosystem_name" {
-				exist = FindEcosystem($Value)
-				if exist > 0 && exist != $ecosystem_id {
-					warning Sprintf("Ecosystem %%s already exists", $Value)
-				}
-			}
 		}
 		action {
 			DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
-            if DBString("parameters", "name", $Id) == "ecosystem_name" {
-				DBUpdate("system_states", $ecosystem_id, "name", $Value)
-			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('10', 'contract NewMenu {

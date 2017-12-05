@@ -212,8 +212,6 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 				addSQLIns1 += `'` + whereValues[i] + `',`
 			}
 		}
-		addSQLIns0 = addSQLIns0[0 : len(addSQLIns0)-1]
-		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
 		if !isID {
 			id, err := model.GetNextID(sc.DbTransaction, table)
 			if err != nil {
@@ -221,11 +219,11 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 				return 0, ``, err
 			}
 			tableID = converter.Int64ToStr(id)
-			addSQLIns0 += `,id`
-			addSQLIns1 += `,'` + tableID + `'`
+			addSQLIns0 += `id,`
+			addSQLIns1 += `'` + tableID + `',`
 		}
-
-		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0 + `) VALUES (` + addSQLIns1 + `)`
+		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0[:len(addSQLIns0)-1] +
+			`) VALUES (` + addSQLIns1[:len(addSQLIns1)-1] + `)`
 		insertCost, err := model.GetQueryTotalCost(sc.DbTransaction, insertQuery)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")
