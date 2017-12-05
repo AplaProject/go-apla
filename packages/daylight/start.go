@@ -189,7 +189,7 @@ func initRoutes(listenHost string) {
 	}
 
 	httpListener(listenHost, route)
-	httpListenerV6(route)
+	// httpListenerV6(route) // !!!
 }
 
 // Start starts the main code of the program
