@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
+	"fmt"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf"
@@ -30,6 +31,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/migration"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -62,7 +64,7 @@ func (p *FirstBlockParser) Action() error {
 	logger := p.GetLogger()
 	data := p.TxPtr.(*consts.FirstBlock)
 	myAddress := crypto.Address(data.PublicKey)
-	err := model.ExecSchemaEcosystem(1, myAddress, ``)
+	err := model.Exec(fmt.Sprintf(migration.SchemaEcosystem, 1, myAddress, ``))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return p.ErrInfo(err)

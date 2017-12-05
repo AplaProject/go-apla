@@ -1545,41 +1545,20 @@ type migrationData struct {
 	migration string
 }
 
-var versionedMigrations []migrationData
+var VersionedMigrations []migrationData
 
 func init() {
-	versionedMigrations = make([]migrationData, 0)
-	/*
-		version1, _ := version.NewVersion("1.0.1")
-		migration1 := migrationData{version1, `CREATE TABLE "migration_test" (
-			"name" varchar(100)  NOT NULL DEFAULT '',
-			"permissions" jsonb,
-			"columns" jsonb,
-			"conditions" text  NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
-			);`}
-
-		version2, _ := version.NewVersion("2.0.1")
-		migration2 := migrationData{version2, `CREATE TABLE "migrations_test_2" (
-			"name" varchar(100)  NOT NULL DEFAULT '',
-			"permissions" jsonb,
-			"columns" jsonb,
-			"conditions" text  NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
-			);`}
-	*/
-	versionedMigrations = append(versionedMigrations, migration1)
-	versionedMigrations = append(versionedMigrations, migration2)
+	VersionedMigrations = make([]migrationData, 0)
 }
 
-func Migrate(vers *version.Version) err {
-	for _, migration := range versionedMigrations {
-		if migration.Vers.LessThan(vers) {
-			err := model.DBConn.Exec(migration.migration)
+func Migrate(vers *version.Version) error {
+	for _, migrate := range VersionedMigrations {
+		if migrate.vers.LessThan(vers) {
+			err := model.Exec(migrate.migration)
 			if err != nil {
 				return err
 			}
-			dbMigration := &model.MigrationHistory{Version: migration.vers.String(), DateApplied: time.Date().Now()}
+			dbMigration := &model.MigrationHistory{Version: migrate.vers.String(), DateApplied: time.Now().Unix()}
 			err = dbMigration.Save()
 			if err != nil {
 				return err

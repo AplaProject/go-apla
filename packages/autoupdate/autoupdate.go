@@ -78,10 +78,7 @@ func (u *Updater) CheckUpdates(pubKeyPath string) error {
 }
 
 func (u *Updater) Migrate(vers *version.Version) error {
-	if model.DBConn == nil {
-		return errors.New("database disconnected")
-	}
-	return model.DBConn.Exec(migration.VersionedMigrations[vers.String()]).Error
+	return migration.Migrate(vers)
 }
 
 func (u *Updater) getNeededVersionsUpdates(updateAddr string) ([]*version.Version, error) {
@@ -109,7 +106,7 @@ func (u *Updater) getNeededVersionsUpdates(updateAddr string) ([]*version.Versio
 		if err != nil {
 			return nil, err
 		}
-		if testVersion.GreaterThan(currentVersion) {
+		if testVersion.GreaterThan(softwareVersion) {
 			neededVersions = append(neededVersions, testVersion)
 		}
 	}
