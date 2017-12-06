@@ -53,6 +53,7 @@ type permColumn struct {
 	Read   string `json:"read,omitempty"`
 }
 
+// SmartContract is storing smart contract data
 type SmartContract struct {
 	VDE           bool
 	VM            *script.VM
@@ -69,9 +70,9 @@ type SmartContract struct {
 
 var (
 	funcCallsDB = map[string]struct{}{
-		"DBInsert": struct{}{},
-		"DBSelect": struct{}{},
-		"DBUpdate": struct{}{},
+		"DBInsert": {},
+		"DBSelect": {},
+		"DBUpdate": {},
 	}
 	extendCost = map[string]int64{
 		"AddressToId":        10,
@@ -91,6 +92,7 @@ var (
 		"IsContract":         10,
 		"Len":                5,
 		"PermColumn":         50,
+		"Split":              50,
 		"PermTable":          100,
 		"Substr":             10,
 		"TableConditions":    100,
@@ -105,6 +107,7 @@ func getCost(name string) int64 {
 	return -1
 }
 
+// EmbedFuncs is extending vm with embedded functions
 func EmbedFuncs(vm *script.VM) {
 	vmExtend(vm, &script.ExtendData{Objects: map[string]interface{}{
 		"AddressToId":        AddressToID,
@@ -131,6 +134,7 @@ func EmbedFuncs(vm *script.VM) {
 		"Money":              Money,
 		"PermColumn":         PermColumn,
 		"PermTable":          PermTable,
+		"Split":              Split,
 		"Str":                Str,
 		"Substr":             Substr,
 		"TableConditions":    TableConditions,
@@ -174,6 +178,7 @@ func accessContracts(sc *SmartContract, names ...string) bool {
 	return false
 }
 
+// CompileContract is compiling contract
 func CompileContract(sc *SmartContract, code string, state, id, token int64) (interface{}, error) {
 	if !accessContracts(sc, `NewContract`, `EditContract`, `Import`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CompileContract can be only called from NewContract or EditContract")
@@ -240,6 +245,7 @@ func contractsList(value string) []interface{} {
 	return result
 }
 
+// CreateTable is creating smart contract table
 func CreateTable(sc *SmartContract, name string, columns, permissions string) error {
 	var err error
 	if !accessContracts(sc, `NewTable`, `Import`) {
@@ -264,7 +270,7 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 			return fmt.Errorf(`There are the same columns`)
 		}
 		colList[colname] = true
-		colType := ``
+		var colType string
 		colDef := ``
 		switch data[`type`] {
 		case "varchar":
@@ -491,7 +497,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	return
 }
 
-// EcosystemParam returns the value of the specified parameter for the ecosystem
+// EcosysParam returns the value of the specified parameter for the ecosystem
 func EcosysParam(sc *SmartContract, name string) string {
 	val, _ := model.Single(`SELECT value FROM "`+getDefTableName(sc, `parameters`)+`" WHERE name = ?`, name).String()
 	return val
@@ -515,6 +521,7 @@ func Eval(sc *SmartContract, condition string) error {
 	return nil
 }
 
+// FlushContract is flushing contract
 func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) error {
 	if !accessContracts(sc, `NewContract`, `EditContract`, `Import`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("FlushContract can be only called from NewContract or EditContract")
@@ -531,7 +538,7 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 	return nil
 }
 
-// IsContract returns true if there is teh specified contract
+// IsContract returns true if there is the specified contract
 func IsContract(sc *SmartContract, name string, state int64) bool {
 	return VMGetContract(sc.VM, name, uint32(state)) != nil
 }
@@ -544,6 +551,7 @@ func Len(in []interface{}) int64 {
 	return int64(len(in))
 }
 
+// PermTable is changing permission of table
 func PermTable(sc *SmartContract, name, permissions string) error {
 	if !accessContracts(sc, `EditTable`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditTable can be only called from @1EditTable")
@@ -565,6 +573,7 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 	return err
 }
 
+// TableConditions is contract func
 func TableConditions(sc *SmartContract, name, columns, permissions string) (err error) {
 	isEdit := len(columns) == 0
 
@@ -585,7 +594,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 
 	t := &model.Table{}
 	t.SetTablePrefix(prefix)
-	exists, err := t.ExistsByName(name)
+	exists, err := t.ExistsByName(sc.DbTransaction, name)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("table is exists")
 		return err
@@ -704,6 +713,7 @@ func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 	return VMCompileEval(sc.VM, condition, uint32(state))
 }
 
+// ColumnCondition is contract func
 func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, index string) error {
 	if !accessContracts(sc, `NewColumn`, `EditColumn`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ColumnConditions can be only called from @1NewColumn")
@@ -750,6 +760,10 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 		return sc.AccessTable(tblName, `update`)
 	}
 	count, err := model.GetColumnCount(tblName)
+	if err != nil {
+		log.WithFields(log.Fields{"table": tblName, "type": consts.DBError}).Error("counting table columns")
+		return err
+	}
 	if count >= int64(syspar.GetMaxColumns()) {
 		log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
@@ -778,6 +792,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 	return sc.AccessTable(tblName, "new_column")
 }
 
+// CreateColumn is creating column
 func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, index string) error {
 	if !accessContracts(sc, `NewColumn`) {
 		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("CreateColumn can be only called from @1NewColumn")
@@ -786,7 +801,7 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, inde
 	name = strings.ToLower(name)
 	tblname := getDefTableName(sc, tableName)
 
-	colType := ``
+	var colType string
 	switch coltype {
 	case "varchar":
 		colType = `varchar(102400)`
@@ -839,9 +854,14 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, inde
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
 		tables, []string{`name`}, []string{tableName}, !sc.VDE)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
+// PermColumn is contract func
 func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 	if !accessContracts(sc, `EditColumn`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditColumn can be only called from @1EditColumn")

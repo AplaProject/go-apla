@@ -32,108 +32,15 @@ func createTables(t *testing.T, db *sql.DB) {
 	}
 }
 
-func TestLock(t *testing.T) {
-	db := initGorm(t)
-	createTables(t, db.DB())
-
-	ctx, _ := context.WithTimeout(context.Background(), 200*time.Millisecond)
-	defer ctx.Done()
-
-	ok, err := DBLock(ctx, "test")
-	if err != nil {
-		t.Errorf("lock returned %s", err)
-	}
-	if !ok {
-		t.Errorf("can't lock")
-	}
-
-	ok, err = tryLock("test2")
-	if err != nil {
-		t.Errorf("lock returned %s", err)
-	}
-	if ok {
-		t.Errorf("lock should fail")
-	}
-
-	ml := &model.MainLock{}
-	err = ml.Get()
-	if err != nil {
-		t.Fatalf("Get main_lock failed: %s", err)
-	}
-	if ml.ScriptName != "test" {
-		t.Errorf("bad script_name: want test, got %s", ml.ScriptName)
-	}
-
-	time.Sleep(1 * time.Second)
-	err = UpdMainLock()
-	if err != nil {
-		t.Fatalf("update main lock failed: %s", err)
-	}
-	ml2 := &model.MainLock{}
-	err = ml2.Get()
-	if err != nil {
-		t.Fatalf("Get main_lock failed: %s", err)
-	}
-	if ml2.ScriptName != "test" {
-		t.Errorf("bad script_name: want test, got %s", ml.ScriptName)
-	}
-	if ml2.LockTime == ml.LockTime {
-		t.Errorf("UpdMainLock didn't change the lock time")
-	}
-
-}
-
-func TestUnlock(t *testing.T) {
-	db := initGorm(t)
-	createTables(t, db.DB())
-
-	ok, err := tryLock("test")
-	if err != nil {
-		t.Errorf("lock returned %s", err)
-	}
-
-	if !ok {
-		t.Errorf("can't lock")
-	}
-
-	// try another goroutine name
-	err = DBUnlock("some_another_name")
-	if err != nil {
-		t.Errorf("DBUnlock error: %s", err)
-	}
-
-	ok, err = tryLock("some_another_name")
-	if err != nil {
-		t.Errorf("lock returned %s", err)
-	}
-
-	if ok {
-		t.Errorf("incorrect lock")
-	}
-
-	// try unlock
-	err = DBUnlock("test")
-	if err != nil {
-		t.Errorf("DBUnlock error: %s", err)
-	}
-
-	ok, err = tryLock("some_another_name")
-	if err != nil {
-		t.Errorf("lock returned %s", err)
-	}
-
-	if !ok {
-		t.Errorf("lock failed")
-	}
-
-}
-
 func TestWait(t *testing.T) {
 	db := initGorm(t)
 	createTables(t, db.DB())
 
-	ctx, _ := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer ctx.Done()
+	ctx, cf := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer func() {
+		ctx.Done()
+		cf()
+	}()
 
 	err := WaitDB(ctx)
 	if err == nil {
@@ -142,13 +49,16 @@ func TestWait(t *testing.T) {
 
 	install := &model.Install{}
 	install.Progress = "complete"
-	err = install.Save()
+	err = install.Create()
 	if err != nil {
 		t.Fatalf("save failed: %s", err)
 	}
 
-	ctx, _ = context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer ctx.Done()
+	ctx, scf := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer func() {
+		ctx.Done()
+		scf()
+	}()
 
 	err = WaitDB(ctx)
 	if err != nil {

@@ -22,37 +22,37 @@ func GetHMAC(secret string, message string) ([]byte, error) {
 		mac.Write([]byte(message))
 		return mac.Sum(nil), nil
 	default:
-		return nil, UnknownProviderError
+		return nil, ErrUnknownProvider
 	}
 }
 
 func Hash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": HashingEmpty.Error()}).Debug(HashingEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": ErrHashingEmpty.Error()}).Debug(ErrHashingEmpty.Error())
 	}
 	switch hashProv {
 	case _SHA256:
 		return hashSHA256(msg), nil
 	default:
-		return nil, UnknownProviderError
+		return nil, ErrUnknownProvider
 	}
 }
 
 func DoubleHash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": HashingEmpty.Error()}).Debug(HashingEmpty.Error())
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": ErrHashingEmpty.Error()}).Debug(ErrHashingEmpty.Error())
 	}
 	switch hashProv {
 	case _SHA256:
 		return hashDoubleSHA256(msg), nil
 	default:
-		return nil, UnknownProviderError
+		return nil, ErrUnknownProvider
 	}
 }
 
 func hashSHA256(msg []byte) []byte {
 	if len(msg) == 0 {
-		log.Debug(HashingEmpty.Error())
+		log.Debug(ErrHashingEmpty.Error())
 	}
 	hash := sha256.Sum256(msg)
 	return hash[:]
@@ -61,7 +61,7 @@ func hashSHA256(msg []byte) []byte {
 //TODO Replace hashDoubleSHA256 with this method
 func hashDoubleSHA3(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.Debug(HashingEmpty.Error())
+		log.Debug(ErrHashingEmpty.Error())
 	}
 	return hashSHA3256(msg), nil
 }
@@ -70,7 +70,7 @@ func hashDoubleSHA3(msg []byte) ([]byte, error) {
 //First, hash has been calculated from input data
 //Second, obtained hash has been converted to hex
 //Third, hex value has been hashed once more time
-//In this variant second step is omited.
+//In this variant second step is omitted.
 func hashDoubleSHA256(msg []byte) []byte {
 	firstHash := sha256.Sum256(msg)
 	secondHash := sha256.Sum256(firstHash[:])

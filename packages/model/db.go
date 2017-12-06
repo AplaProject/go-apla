@@ -21,8 +21,11 @@ import (
 )
 
 var (
-	DBConn         *gorm.DB
-	RecordNotFound = gorm.ErrRecordNotFound
+	// DBConn is orm connection
+	DBConn *gorm.DB
+
+	// ErrRecordNotFound is Not Found Record wrapper
+	ErrRecordNotFound = gorm.ErrRecordNotFound
 )
 
 func isFound(db *gorm.DB) (bool, error) {
@@ -32,6 +35,7 @@ func isFound(db *gorm.DB) (bool, error) {
 	return true, db.Error
 }
 
+// GormInit is initializes Gorm connection
 func GormInit(host string, port string, user string, pass string, dbName string) error {
 	var err error
 	DBConn, err = gorm.Open("postgres",
@@ -48,6 +52,7 @@ func GormInit(host string, port string, user string, pass string, dbName string)
 	return nil
 }
 
+// GormClose is closing Gorm connection
 func GormClose() error {
 	if DBConn != nil {
 		return DBConn.Close()
@@ -55,10 +60,12 @@ func GormClose() error {
 	return nil
 }
 
+// DbTransaction is gorm.DB wrapper
 type DbTransaction struct {
 	conn *gorm.DB
 }
 
+// StartTransaction is beginning transaction
 func StartTransaction() (*DbTransaction, error) {
 	conn := DBConn.Begin()
 	if conn.Error != nil {
@@ -71,14 +78,17 @@ func StartTransaction() (*DbTransaction, error) {
 	}, nil
 }
 
+// Rollback is transaction rollback
 func (tr *DbTransaction) Rollback() {
 	tr.conn.Rollback()
 }
 
+// Commit is transaction commit
 func (tr *DbTransaction) Commit() error {
 	return tr.conn.Commit().Error
 }
 
+// GetDB is returning gorm.DB
 func GetDB(tr *DbTransaction) *gorm.DB {
 	if tr != nil && tr.conn != nil {
 		return tr.conn
@@ -86,6 +96,7 @@ func GetDB(tr *DbTransaction) *gorm.DB {
 	return DBConn
 }
 
+// DropTables is dropping all of the tables
 func DropTables() error {
 	return DBConn.Exec(`
 	DO $$ DECLARE
@@ -98,12 +109,14 @@ func DropTables() error {
 	`).Error
 }
 
+// GetRecordsCount is counting all records of table
 func GetRecordsCount(tableName string) (int64, error) {
 	var count int64
 	err := DBConn.Table(tableName).Count(&count).Error
 	return count, err
 }
 
+// ExecSchemaEcosystem is executing ecosystem schema
 func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 	err := DBConn.Exec(fmt.Sprintf(migration.SchemaEcosystem, id, wallet, name)).Error
 	if err != nil {
@@ -119,43 +132,30 @@ func ExecSchemaEcosystem(id int, wallet int64, name string) error {
 	return err
 }
 
+// ExecSchemaLocalData is executing schema with local data
 func ExecSchemaLocalData(id int, wallet int64) error {
 	return DBConn.Exec(fmt.Sprintf(migration.SchemaVDE, id, wallet)).Error
 }
 
+// ExecSchema is executing schema
 func ExecSchema() error {
 	return DBConn.Exec(migration.Schema).Error
 }
 
+// Update is updating table rows
 func Update(transaction *DbTransaction, tblname, set, where string) error {
 	return GetDB(transaction).Exec(`UPDATE "` + strings.Trim(tblname, `"`) + `" SET ` + set + " " + where).Error
 }
 
+// Delete is deleting table rows
 func Delete(tblname, where string) error {
 	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
 }
 
-func GetFirstColumnName(table string) (string, error) {
-	rows, err := DBConn.Raw(`SELECT * FROM "` + table + `" LIMIT 1`).Rows()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting rollback id from table")
-		return "", err
-	}
-	defer rows.Close()
-	columns, err := rows.Columns()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rows columns")
-		return "", err
-	}
-	if len(columns) > 0 {
-		return columns[0], nil
-	}
-	return "", nil
-}
-
-func GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
+// GetQueryTotalCost is counting query execution time
+func GetQueryTotalCost(transaction *DbTransaction, query string, args ...interface{}) (int64, error) {
 	var planStr string
-	err := DBConn.Raw(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", query), args...).Row().Scan(&planStr)
+	err := GetDB(transaction).Raw(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", query), args...).Row().Scan(&planStr)
 	switch {
 	case err == sql.ErrNoRows:
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": query}).Error("no rows while explaining query")
@@ -208,30 +208,7 @@ func GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
 	return int64(totalCostF64), nil
 }
 
-func GetAllTables() ([]string, error) {
-	var result []string
-	sql := `SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')`
-	rows, err := DBConn.Raw(sql).Rows()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": sql}).Error("executing raw query")
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var tblname string
-		if err := rows.Scan(&tblname); err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("scanning table name from row")
-			return nil, err
-		}
-		result = append(result, tblname)
-	}
-	if err := rows.Err(); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("retrieving rows from table")
-		return nil, err
-	}
-	return result, nil
-}
-
+// GetColumnCount is counting rows in table
 func GetColumnCount(tableName string) (int64, error) {
 	var count int64
 	err := DBConn.Raw("SELECT count(*) FROM information_schema.columns WHERE table_name=?", tableName).Row().Scan(&count)
@@ -245,6 +222,7 @@ func GetColumnCount(tableName string) (int64, error) {
 	return count, nil
 }
 
+// SendTx is creates transaction
 func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
 	hash, err := crypto.Hash(data)
 	if err != nil {
@@ -270,24 +248,29 @@ func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
 	return hash, err
 }
 
+// AlterTableAddColumn is adding column to table
 func AlterTableAddColumn(transaction *DbTransaction, tableName, columnName, columnType string) error {
 	return GetDB(transaction).Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
 }
 
+// AlterTableDropColumn is dropping column from table
 func AlterTableDropColumn(tableName, columnName string) error {
 	return DBConn.Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN ` + columnName).Error
 }
 
+// CreateIndex is creating index on table column
 func CreateIndex(transaction *DbTransaction, indexName, tableName, onColumn string) error {
 	return GetDB(transaction).Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
 }
 
+// GetColumnDataTypeCharMaxLength is returns max length of table column
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
 	return GetOneRow(`select data_type,character_maximum_length from
 			 information_schema.columns where table_name = ? AND column_name = ?`,
 		tableName, columnName).String()
 }
 
+// GetColumnType is returns type of column
 func GetColumnType(tblname, column string) (itype string, err error) {
 	coltype, err := GetColumnDataTypeCharMaxLength(tblname, column)
 	if err != nil {
@@ -312,11 +295,12 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 	return
 }
 
+// DropTable is dropping table
 func DropTable(transaction *DbTransaction, tableName string) error {
 	return GetDB(transaction).DropTable(tableName).Error
 }
 
-// Because of import cycle utils and config
+// IsNodeState :Because of import cycle utils and config
 func IsNodeState(state int64, host string) bool {
 	if strings.HasPrefix(host, `localhost`) {
 		return true
@@ -334,6 +318,7 @@ func IsNodeState(state int64, host string) bool {
 	return false
 }
 
+// NumIndexes is counting table indexes
 func NumIndexes(tblname string) (int, error) {
 	var indexes int64
 	err := DBConn.Raw(fmt.Sprintf(`select count( i.relname) from pg_class t, pg_class i, pg_index ix, pg_attribute a
@@ -348,6 +333,7 @@ func NumIndexes(tblname string) (int, error) {
 	return int(indexes - 1), nil
 }
 
+// IsIndex returns is table column is an index
 func IsIndex(tblname, column string) (bool, error) {
 	row, err := GetOneRow(`select t.relname as table_name, i.relname as index_name, a.attname as column_name
 	 from pg_class t, pg_class i, pg_index ix, pg_attribute a 
@@ -385,6 +371,7 @@ func GetList(query string, args ...interface{}) *ListResult {
 	return &ListResult{result, nil}
 }
 
+// GetNextID returns next ID of table
 func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	var id int64
 	rows, err := GetDB(transaction).Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
@@ -398,6 +385,7 @@ func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	return id + 1, err
 }
 
+// IsTable returns is table exists
 func IsTable(tblname string) bool {
 	var name string
 	DBConn.Table("information_schema.tables").
@@ -407,11 +395,12 @@ func IsTable(tblname string) bool {
 	return name == tblname
 }
 
+// GetRollbackID returns rollback id
 func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) (int64, error) {
 	var result int64
 	err := GetDB(transaction).Raw(`SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering).Row().Scan(&result)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(fmt.Errorf("GetRollbackID from table %s where %s order by rb_id", tblname, where, ordering))
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(fmt.Errorf("GetRollbackID from table %s where %s order by rb_id %s", tblname, where, ordering))
 		return 0, err
 	}
 	return result, nil

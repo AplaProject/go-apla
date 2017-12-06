@@ -4,56 +4,80 @@ import (
 	"encoding/json"
 	"strconv"
 
+	"sync"
+
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/publisher"
 	log "github.com/sirupsen/logrus"
 )
 
+// EcosystemID is ecosystem id
 type EcosystemID int64
+
+// UserID is user id
 type UserID int64
 
+// NotificationStats storing notification stats data
 type NotificationStats struct {
-	UserIDs     map[UserID]int64
+	userIDs     sync.Map
 	lastNotifID *int64
 }
 
-var notifications map[EcosystemID]NotificationStats
-
-func init() {
-	notifications = make(map[EcosystemID]NotificationStats)
+type Notifications struct {
+	sync.Map
 }
 
+//var notifications Notifications
+var notifications Notifications
+
+// SendNotifications is sending notifications
 func SendNotifications() {
-	for ecosystemID, ecosystemStats := range notifications {
+	notifications.Range(func(key, value interface{}) bool {
+		ecosystemID := key.(EcosystemID)
+		ecosystemStats := value.(NotificationStats)
+
 		notifs := getEcosystemNotifications(ecosystemID, *ecosystemStats.lastNotifID, ecosystemStats)
 		for _, notif := range notifs {
 			userID, err := strconv.ParseInt(notif["recipient_id"], 10, 64)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConvertionError, "value": notif["recipient_id"], "error": err}).Error("getting recipient_id")
-				return
+				log.WithFields(log.Fields{"type": consts.ConversionError, "value": notif["recipient_id"], "error": err}).Error("getting recipient_id")
+				return false
 			}
+
 			data, err := mapToString(notif)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling notification")
-				return
+				return false
 			}
+
 			ok, err := publisher.Write(userID, data)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
-				return
+				return false
 			}
 
 			if !ok {
 				log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
-				return
+				return false
 			}
-			id, _ := strconv.ParseInt(notif["id"], 10, 64)
-			if *notifications[ecosystemID].lastNotifID < id {
-				*notifications[ecosystemID].lastNotifID = id
+
+			id, err := strconv.ParseInt(notif["id"], 10, 64)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("conversion string to int64")
+				return false
+			}
+
+			lni, ok := notifications.Load(ecosystemID)
+			ln := lni.(NotificationStats)
+			if ok && *ln.lastNotifID < id {
+				*ln.lastNotifID = id
+				notifications.Store(ecosystemID, ln)
 			}
 		}
-	}
+
+		return true
+	})
 }
 
 func mapToString(value map[string]string) (string, error) {
@@ -66,9 +90,11 @@ func mapToString(value map[string]string) (string, error) {
 
 func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64, userIDs NotificationStats) []map[string]string {
 	users := make([]int64, 0)
-	for userID := range userIDs.UserIDs {
-		users = append(users, int64(userID))
-	}
+	userIDs.userIDs.Range(func(key, value interface{}) bool {
+		users = append(users, int64(key.(UserID)))
+		return true
+	})
+
 	rows, err := model.GetAllNotifications(int64(ecosystemID), lastNotificationID, users)
 	if err != nil || len(rows) == 0 {
 		if err != nil {
@@ -79,9 +105,19 @@ func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64
 	return rows
 }
 
+// AddUser is subscribing user to notifications
 func AddUser(userID int64, ecosystemID int64) {
-	if _, ok := notifications[EcosystemID(ecosystemID)]; !ok {
-		notifications[EcosystemID(ecosystemID)] = NotificationStats{UserIDs: make(map[UserID]int64), lastNotifID: new(int64)}
+	eId := EcosystemID(ecosystemID)
+
+	var ns NotificationStats
+	ins, ok := notifications.Load(eId)
+
+	if !ok {
+		ns = NotificationStats{userIDs: sync.Map{}, lastNotifID: new(int64)}
+	} else {
+		ns = ins.(NotificationStats)
 	}
-	notifications[EcosystemID(ecosystemID)].UserIDs[UserID(userID)] = 0
+
+	ns.userIDs.Store(UserID(userID), 0)
+	notifications.Store(eId, ns)
 }

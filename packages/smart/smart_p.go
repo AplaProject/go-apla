@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -38,21 +39,21 @@ import (
 
 var (
 	funcCallsDBP = map[string]struct{}{
-		"DBInsert":       struct{}{},
-		"DBUpdate":       struct{}{},
-		"DBUpdateExt":    struct{}{},
-		"DBSelect":       struct{}{},
-		"DBInt":          struct{}{},
-		"DBRowExt":       struct{}{},
-		"DBRow":          struct{}{},
-		"DBStringExt":    struct{}{},
-		"DBIntExt":       struct{}{},
-		"DBStringWhere":  struct{}{},
-		"DBIntWhere":     struct{}{},
-		"DBAmount":       struct{}{},
-		"DBInsertReport": struct{}{},
-		"UpdateSysParam": struct{}{},
-		"FindEcosystem":  struct{}{},
+		"DBInsert":       {},
+		"DBUpdate":       {},
+		"DBUpdateExt":    {},
+		"DBSelect":       {},
+		"DBInt":          {},
+		"DBRowExt":       {},
+		"DBRow":          {},
+		"DBStringExt":    {},
+		"DBIntExt":       {},
+		"DBStringWhere":  {},
+		"DBIntWhere":     {},
+		"DBAmount":       {},
+		"DBInsertReport": {},
+		"UpdateSysParam": {},
+		"FindEcosystem":  {},
 	}
 	extendCostP = map[string]int64{
 		"AddressToId":       10,
@@ -80,6 +81,7 @@ var (
 		"Eval":              10,
 		"Len":               5,
 		"Activate":          10,
+		"Deactivate":        10,
 		"CreateEcosystem":   100,
 		"RollbackEcosystem": 100,
 		"TableConditions":   100,
@@ -160,6 +162,7 @@ func init() {
 		"PermColumn":         PermColumn,
 		"UpdateLang":         UpdateLang,
 		"Size":               Size,
+		"Split":              Split,
 		"Substr":             Substr,
 		"ContractsList":      contractsList,
 		"IsContract":         IsContract,
@@ -167,6 +170,7 @@ func init() {
 		"FlushContract":      FlushContract,
 		"Eval":               Eval,
 		"Activate":           Activate,
+		"Deactivate":         Deactivate,
 		"JSONToMap":          JSONToMap,
 		"check_signature":    CheckSignature, // system function
 	}, AutoPars: map[string]string{
@@ -259,7 +263,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 func DBInt(sc *SmartContract, tblname string, name string, id int64) (int64, int64, error) {
 	tblname = getDefTableName(sc, tblname)
 
-	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
+	cost, err := model.GetQueryTotalCost(sc.DbTransaction, `select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, 0, err
@@ -286,7 +290,7 @@ func DBRowExt(sc *SmartContract, tblname string, columns string, id interface{},
 		}
 	}
 	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where ` + converter.EscapeName(idname) + `=?`
-	cost, err := model.GetQueryTotalCost(query, id)
+	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, id)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, nil, err
@@ -304,7 +308,7 @@ func DBRow(sc *SmartContract, tblname string, columns string, id int64) (int64, 
 	tblname = getDefTableName(sc, tblname)
 
 	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where id=?`
-	cost, err := model.GetQueryTotalCost(query, id)
+	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, id)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, nil, err
@@ -331,7 +335,7 @@ func DBStringExt(sc *SmartContract, tblname string, name string, id interface{},
 		}
 	}
 
-	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
+	cost, err := model.GetQueryTotalCost(sc.DbTransaction, `select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, "", err
@@ -358,7 +362,7 @@ func DBIntExt(sc *SmartContract, tblname string, name string, id interface{}, id
 	}
 	res, err := strconv.ParseInt(val, 10, 64)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("converting DBStringExt result from string to int")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting DBStringExt result from string to int")
 	}
 	return qcost, res, err
 }
@@ -369,7 +373,7 @@ func DBStringWhere(sc *SmartContract, tblname string, name string, where string,
 	tblname = getDefTableName(sc, tblname)
 
 	selectQuery := `select ` + converter.EscapeName(name) + ` from ` + converter.EscapeName(tblname) + ` where ` + strings.Replace(converter.Escape(where), `$`, `?`, -1)
-	qcost, err := model.GetQueryTotalCost(selectQuery, params...)
+	qcost, err := model.GetQueryTotalCost(sc.DbTransaction, selectQuery, params...)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, "", err
@@ -394,7 +398,7 @@ func DBIntWhere(sc *SmartContract, tblname string, name string, where string, pa
 	}
 	res, err := strconv.ParseInt(val, 10, 64)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err, "value": val}).Error("convertion DBStringWhere result from string to int")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("conversion DBStringWhere result from string to int")
 	}
 	return cost, res, err
 }
@@ -411,7 +415,7 @@ func DBAmount(sc *SmartContract, tblname, column string, id int64) (int64, decim
 	}
 	val, err := decimal.NewFromString(balance)
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.ConvertionError}).Error("converting balance from string to decimal")
+		log.WithFields(log.Fields{"error": err, "type": consts.ConversionError}).Error("converting balance from string to decimal")
 	}
 	return 0, val
 }
@@ -457,6 +461,7 @@ func Float(v interface{}) (ret float64) {
 	return script.ValueToFloat(v)
 }
 
+// Join is joining input with separator
 func Join(input []interface{}, sep string) string {
 	var ret string
 	for i, item := range input {
@@ -466,6 +471,16 @@ func Join(input []interface{}, sep string) string {
 		ret += fmt.Sprintf(`%v`, item)
 	}
 	return ret
+}
+
+// Split splits the input string to array
+func Split(input, sep string) []interface{} {
+	out := strings.Split(input, sep)
+	result := make([]interface{}, len(out))
+	for i, val := range out {
+		result[i] = reflect.ValueOf(val).Interface()
+	}
+	return result
 }
 
 // Sha256 returns SHA256 hash value
@@ -545,7 +560,7 @@ func Replace(s, old, new string) string {
 // FindEcosystem checks if there is an ecosystem with the specified name
 func FindEcosystem(sc *SmartContract, country string) (int64, int64, error) {
 	query := `SELECT id FROM system_states where name=?`
-	cost, err := model.GetQueryTotalCost(query, country)
+	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, country)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
 		return 0, 0, err
@@ -583,6 +598,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	return converter.StrToInt64(id), err
 }
 
+// RollbackEcosystem is rolling back ecosystem
 func RollbackEcosystem(sc *SmartContract) error {
 	if sc.TxContract.Name != `@1NewEcosystem` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackEcosystem can be only called from @1NewEcosystem")
@@ -645,21 +661,37 @@ func RollbackEcosystem(sc *SmartContract) error {
 	return ssToDel.Delete(sc.DbTransaction)
 }
 
+// RollbackTable is rolling back table
 func RollbackTable(sc *SmartContract, name string) error {
 	if sc.TxContract.Name != `@1NewTable` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from @1NewTable")
 		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
 	}
 	err := model.DropTable(sc.DbTransaction, fmt.Sprintf("%d_%s", sc.TxSmart.EcosystemID, name))
-	t := &model.Table{Name: name}
-	err = t.Delete()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
 		return err
+	}
+	t := model.Table{}
+	t.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	found, err := t.Get(sc.DbTransaction, name)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
+		return err
+	}
+	if found {
+		err = t.Delete(sc.DbTransaction)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
+			return err
+		}
+	} else {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
 	}
 	return nil
 }
 
+// RollbackColumn is rolling back column
 func RollbackColumn(sc *SmartContract, tableName, name string) error {
 	if sc.TxContract.Name != `@1NewColumn` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackColumn can be only called from @1NewColumn")
@@ -690,13 +722,23 @@ func Substr(s string, off int64, slen int64) string {
 	return s[off : off+slen]
 }
 
-// ActivateContract sets Active status of the contract in smartVM
+// Activate sets Active status of the contract in smartVM
 func Activate(sc *SmartContract, tblid int64, state int64) error {
 	if sc.TxContract.Name != `@1ActivateContract` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ActivateContract can be only called from @1ActivateContract")
 		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract`)
 	}
 	ActivateContract(tblid, state, true)
+	return nil
+}
+
+// DeactivateContract sets Active status of the contract in smartVM
+func Deactivate(sc *SmartContract, tblid int64, state int64) error {
+	if sc.TxContract.Name != `@1DeactivateContract` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1DeactivateContract")
+		return fmt.Errorf(`DeactivateContract can be only called from @1DeactivateContract`)
+	}
+	ActivateContract(tblid, state, false)
 	return nil
 }
 
@@ -715,7 +757,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	}
 	hexsign, err := hex.DecodeString((*i)[`Signature`].(string))
 	if len(hexsign) == 0 || err != nil {
-		log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("comverting signature to hex")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("comverting signature to hex")
 		return fmt.Errorf(`wrong signature`)
 	}
 
@@ -746,6 +788,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	return nil
 }
 
+// JSONToMap is converting json to map
 func JSONToMap(input string) (map[string]interface{}, error) {
 	var ret map[string]interface{}
 	err := json.Unmarshal([]byte(input), &ret)

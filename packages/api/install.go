@@ -72,7 +72,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		}
 	}
 	if len(data.firstLoadBlockchainURL) == 0 {
-		log.WithFields(log.Fields{"url": syspar.GetBlockchainURL()}).Info("firstLoadBlockchainURL is not set throught POST data, setting it to first load blockchain url from syspar")
+		log.WithFields(log.Fields{"url": syspar.GetBlockchainURL()}).Info("firstLoadBlockchainURL is not set through POST data, setting it to first load blockchain url from syspar")
 		data.firstLoadBlockchainURL = syspar.GetBlockchainURL()
 	}
 	dbConfig := config.DBConfig{
@@ -167,7 +167,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		}
 		key, err = hex.DecodeString(string(key))
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error("decoding private key from hex")
+			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
 			return err
 		}
 		key, err = crypto.PrivateToPublic(key)

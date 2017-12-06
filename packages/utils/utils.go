@@ -52,6 +52,7 @@ type BlockData struct {
 	Version      int
 }
 
+// Update is contains update data
 type Update struct {
 	Version string
 	Hash    string
@@ -116,11 +117,14 @@ var (
 
 	// LogoExt is the extension of the logotype
 	LogoExt = `png`
-	// DltWalletID is the wallet identifier
+	// KeyID is the wallet identifier
 	KeyID = flag.Int64("keyID", 0, "keyID")
 
-	ReturnCh     chan string
-	CancelFunc   context.CancelFunc
+	// ReturnCh is chan for returns
+	ReturnCh chan string
+	// CancelFunc is represents cancel func
+	CancelFunc context.CancelFunc
+	// DaemonsCount is number of daemons
 	DaemonsCount int
 	// Thrust is true for thrust shell
 	Thrust bool
@@ -766,7 +770,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 		return nil, ErrInfo(err)
 	}
 
-	// recieve the data size as a response that server wants to transfer
+	// receive the data size as a response that server wants to transfer
 	buf := make([]byte, 4)
 	_, err = conn.Read(buf)
 	if err != nil {
@@ -809,7 +813,7 @@ func ShellExecute(cmdline string) {
 func GetParent() string {
 	parent := ""
 	for i := 2; ; i++ {
-		name := ""
+		var name string
 		if pc, _, num, ok := runtime.Caller(i); ok {
 			name = filepath.Base(runtime.FuncForPC(pc).Name())
 			file, line := runtime.FuncForPC(pc).FileLine(pc)
@@ -823,6 +827,7 @@ func GetParent() string {
 	return parent
 }
 
+// GetTcpPort is returns tcp port
 func GetTcpPort(config map[string]string) string {
 	if port, ok := config["tcp_port"]; ok {
 		return port

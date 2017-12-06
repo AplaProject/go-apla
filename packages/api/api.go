@@ -26,6 +26,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+	hr "github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
+	"github.com/tevino/abool"
+
 	"github.com/AplaProject/go-apla/packages/config"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -35,9 +40,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/statsd"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
-	"github.com/dgrijalva/jwt-go"
-	hr "github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -75,9 +77,11 @@ const (
 
 type apiHandle func(http.ResponseWriter, *http.Request, *apiData, *log.Entry) error
 
-var (
-	installed bool
-)
+var installed *abool.AtomicBool
+
+func init() {
+	installed = abool.New()
+}
 
 func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
 	var (
@@ -145,12 +149,14 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
+// IsInstalled returns installed flag
 func IsInstalled() bool {
-	return installed
+	return installed.IsSet()
 }
 
+// Installed is setting turning installed flag on
 func Installed() {
-	installed = true
+	installed.Set()
 }
 
 // DefaultHandler is a common handle function for api requests
@@ -232,7 +238,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 			case pHex:
 				bin, err := hex.DecodeString(val)
 				if err != nil {
-					requestLogger.WithFields(log.Fields{"type": consts.ConvertionError, "value": val, "error": err}).Error("decoding http parameter from hex")
+					requestLogger.WithFields(log.Fields{"type": consts.ConversionError, "value": val, "error": err}).Error("decoding http parameter from hex")
 					errorAPI(w, err, http.StatusBadRequest)
 					return
 				}

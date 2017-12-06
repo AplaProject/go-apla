@@ -17,13 +17,12 @@
 package main
 
 import (
-	"github.com/AplaProject/go-apla/packages/daylight"
-	"github.com/AplaProject/go-apla/packages/system"
 	"runtime"
+
+	"github.com/AplaProject/go-apla/packages/daylight"
 )
 
 func main() {
 	runtime.LockOSThread()
 	daylight.Start()
-	system.Finish()
 }
