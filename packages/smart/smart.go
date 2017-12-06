@@ -72,6 +72,7 @@ var (
 	ErrIncorrectSign  = errors.New(`incorrect sign`)
 	ErrUnknownNodeID  = errors.New(`Unknown node id`)
 	ErrWrongPriceFunc = errors.New(`Wrong type of price function`)
+	ErrAccessDenied   = errors.New(`Access denied`)
 )
 
 func testValue(name string, v ...interface{}) {
@@ -464,7 +465,7 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 			return nil
 		}
 		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-		return fmt.Errorf(`Access denied`)
+		return ErrAccessDenied
 	}
 
 	if isCustom, err := sc.IsCustomTable(table); err != nil {
@@ -490,7 +491,7 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 		}
 		if !ret {
 			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "type": consts.EvalError}).Error("access denied")
-			return fmt.Errorf(`Access denied`)
+			return ErrAccessDenied
 		}
 	}
 	return nil
@@ -504,7 +505,7 @@ func (sc *SmartContract) AccessColumns(table string, columns []string) error {
 		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return nil
 		}
-		return fmt.Errorf(`Access denied`)
+		return ErrAccessDenied
 	}
 	// We don't check IsCustomTable because we calls it in AccessTable
 	prefix, name := PrefixName(table)
@@ -533,7 +534,7 @@ func (sc *SmartContract) AccessColumns(table string, columns []string) error {
 				return err
 			}
 			if !ret {
-				return fmt.Errorf(`Access denied`)
+				return ErrAccessDenied
 			}
 		}
 	}
@@ -563,7 +564,7 @@ func (sc *SmartContract) AccessRights(condition string, iscondition bool) error 
 			return err
 		}
 		if !ret {
-			return fmt.Errorf(`Access denied`)
+			return ErrAccessDenied
 		}
 	} else {
 		return fmt.Errorf(`There is not %s in parameters`, condition)

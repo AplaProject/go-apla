@@ -124,7 +124,7 @@ func TestPage(t *testing.T) {
 	form = url.Values{"Id": {`7123`}, "Value": {`New Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx(`EditParameter`, &form)
-	if cutErr(err) != `{"type":"error","error":"Item 7123 has not been found"}` {
+	if cutErr(err) != `{"type":"panic","error":"Item 7123 has not been found"}` {
 		t.Error(err)
 		return
 	}
@@ -180,7 +180,7 @@ func TestPage(t *testing.T) {
 	form = url.Values{"Id": {`1112`}, "Value": {value + `Span(Test)`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	err = postTx(`EditPage`, &form)
-	if cutErr(err) != `{"type":"error","error":"Item 1112 has not been found"}` {
+	if cutErr(err) != `{"type":"panic","error":"Item 1112 has not been found"}` {
 		t.Error(err)
 		return
 	}

@@ -84,7 +84,13 @@ var (
 		"Substr":             10,
 		"TableConditions":    100,
 		"ValidateCondition":  30,
-		"EvalResult":         10,
+	}
+	// map for table name to parameter with conditions
+	tableParamConditions = map[string]string{
+		"pages":      "changing_page",
+		"menu":       "changing_menu",
+		"signatures": "changing_signature",
+		"contracts":  "changing_contracts",
 	}
 )
 
@@ -127,7 +133,7 @@ func EmbedFuncs(vm *script.VM) {
 		"Substr":             Substr,
 		"TableConditions":    TableConditions,
 		"ValidateCondition":  ValidateCondition,
-		"EvalResult":         EvalResult,
+		"RowConditions":      RowConditions,
 		//   VDE functions only
 		"HTTPRequest": HTTPRequest,
 	}, AutoPars: map[string]string{
@@ -470,7 +476,8 @@ func EcosysParam(sc *SmartContract, name string) string {
 	return val
 }
 
-func eval(sc *SmartContract, condition string) error {
+// Eval evaluates the condition
+func Eval(sc *SmartContract, condition string) error {
 	if len(condition) == 0 {
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("The condition is empty")
 		return fmt.Errorf(`The condition is empty`)
@@ -482,23 +489,9 @@ func eval(sc *SmartContract, condition string) error {
 	}
 	if !ret {
 		log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-		return fmt.Errorf(`Access denied`)
+		return ErrAccessDenied
 	}
 	return nil
-}
-
-// Eval evaluates the condition
-func Eval(sc *SmartContract, condition string) error {
-	return eval(sc, condition)
-}
-
-// EvalResult return result of evaluates the condition
-func EvalResult(sc *SmartContract, condition string) string {
-	err := eval(sc, condition)
-	if err != nil {
-		return err.Error()
-	}
-	return ""
 }
 
 // FlushContract is flushing contract
@@ -757,6 +750,40 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 	}
 
 	return sc.AccessTable(tblName, "new_column")
+}
+
+// RowConditions checks conditions for table row by id
+func RowConditions(sc *SmartContract, tblname string, id int64, validate bool) error {
+	sql := `SELECT conditions FROM ` + converter.EscapeName(getDefTableName(sc, tblname)) + ` WHERE id = ?`
+	condition, err := model.Single(sql, id).String()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
+		return err
+	}
+
+	if len(condition) == 0 {
+		return fmt.Errorf("Item %d has not been found", id)
+	}
+
+	if validate {
+		err = ValidateCondition(sc, condition, sc.TxSmart.EcosystemID)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = Eval(sc, condition)
+	if err != nil {
+		if err == ErrAccessDenied {
+			if param, ok := tableParamConditions[tblname]; ok {
+				return sc.AccessRights(param, true)
+			}
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 // CreateColumn is creating column

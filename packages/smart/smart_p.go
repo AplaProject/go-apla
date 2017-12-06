@@ -93,7 +93,6 @@ var (
 		"RollbackColumn":    50,
 		"PermColumn":        50,
 		"JSONToMap":         50,
-		"EvalResult":        10,
 	}
 )
 
@@ -174,7 +173,7 @@ func init() {
 		"Deactivate":         Deactivate,
 		"JSONToMap":          JSONToMap,
 		"check_signature":    CheckSignature, // system function
-		"EvalResult":         EvalResult,
+		"RowConditions":      RowConditions,
 	}, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
 	}})
@@ -211,7 +210,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		}
 		if !ret {
 			log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-			return 0, fmt.Errorf(`Access denied`)
+			return 0, ErrAccessDenied
 		}
 	}
 	if len(value) > 0 {
