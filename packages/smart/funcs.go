@@ -762,6 +762,7 @@ func RowConditions(sc *SmartContract, tblname string, id int64, validate bool) e
 	}
 
 	if len(condition) == 0 {
+		log.WithFields(log.Fields{"type": consts.NotFound, "name": tblname, "id": id}).Error("record not found")
 		return fmt.Errorf("Item %d has not been found", id)
 	}
 
