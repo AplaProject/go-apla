@@ -29,9 +29,6 @@ func (b *Binary) MakeSign(private []byte) error {
 	priv.PublicKey.Curve = pubkeyCurve
 	priv.D = bi
 
-	fmt.Println(len(b.Body))
-	fmt.Println(b.Date)
-	fmt.Println(b.Version)
 	data := b.Body
 	data = append(data, []byte(b.Date.String())...)
 	data = append(data, []byte(b.Version)...)
