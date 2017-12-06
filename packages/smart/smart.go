@@ -486,7 +486,7 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 	prefix, name := PrefixName(table)
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	tablePermission, err = tables.GetPermissions(name, "")
+	tablePermission, err = tables.GetPermissions(sc.DbTransaction, name, "")
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table permissions")
 		return tablePermission, err
@@ -534,7 +534,7 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 	prefix, name := PrefixName(table)
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	found, err := tables.Get(name)
+	found, err := tables.Get(sc.DbTransaction, name)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table columns")
 		return err
