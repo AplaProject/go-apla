@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/AplaProject/go-apla/packages/utils"
+)
 
 // StopDaemon is model
 type StopDaemon struct {
@@ -31,4 +35,16 @@ func (sd *StopDaemon) Get() (bool, error) {
 func SetStopNow() error {
 	stopTime := &StopDaemon{StopTime: time.Now().Unix()}
 	return stopTime.Create()
+}
+
+func StopAll() {
+	log.Debug("Stop()")
+	log.Debug("DayLight Stop : %v", DBConn)
+
+	stopDaemons := &StopDaemon{StopTime: time.Now().Unix()}
+	err := stopDaemons.Create()
+	if err != nil {
+		log.Error("%v", utils.ErrInfo(err))
+	}
+	log.Debug("DayLight Stop")
 }

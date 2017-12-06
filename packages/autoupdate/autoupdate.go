@@ -11,12 +11,12 @@ import (
 	"sort"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/migration"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/tools/update_client/client"
 	"github.com/AplaProject/go-apla/tools/update_client/structs"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	version "github.com/hashicorp/go-version"
 )
 
@@ -38,7 +38,7 @@ func NewUpdater(updateAddr string, pubkeyPath string) *Updater {
 func (u *Updater) TryUpdate(currentBlockNumber int64) {
 	for _, update := range u.UpdateTimes {
 		if update.blockNumber == -1 || currentBlockNumber+1 == update.blockNumber {
-			utils.Stop()
+			model.StopAll()
 			clientName, err := filepath.Glob("update_client*")
 			if err != nil {
 				//TODO add log
