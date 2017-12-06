@@ -260,21 +260,8 @@ func downloadChain(ctx context.Context, fileName, url string, logger *log.Entry)
 
 // init first block from file or from embedded value
 func loadFirstBlock(logger *log.Entry) error {
-	var newBlock []byte
-	var err error
 
-	// if len(*utils.FirstBlockDir) > 0 {
-	// 	fileName := *utils.FirstBlockDir + "/1block"
-	// 	logger.WithFields(log.Fields{"file_name": fileName}).Info("loading first block from file")
-	// 	newBlock, err = ioutil.ReadFile(fileName)
-	// 	if err != nil {
-	// 		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "file_name": fileName}).Error("reading first block from file")
-	// 	}
-	// } else {
-	// 	logger.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("FirstBlockDir doesn't set")
-	// }
-
-	newBlock, err = ioutil.ReadFile(*conf.FirstBlockPath)
+	newBlock, err := ioutil.ReadFile(*conf.FirstBlockPath)
 	if err != nil {
 		logger.WithFields(log.Fields{
 			"type": consts.IOError, "error": err, "file_name": *conf.FirstBlockPath,
@@ -305,7 +292,7 @@ func needLoad(logger *log.Entry) (bool, error) {
 		return false, err
 	}
 	// we have empty blockchain, we need to load blockchain from file or other source
-	if infoBlock.BlockID == 0 || *utils.StartBlockID > 0 {
+	if infoBlock.BlockID == 0 || *conf.StartBlockID > 0 {
 		logger.Debug("blockchain should be loaded")
 		return true, nil
 	}
@@ -341,11 +328,11 @@ func loadFromFile(ctx context.Context, fileName string, logger *log.Entry) error
 			return nil
 		}
 
-		if *utils.EndBlockID > 0 && block.ID == *utils.EndBlockID {
+		if *conf.EndBlockID > 0 && block.ID == *conf.EndBlockID {
 			return nil
 		}
 
-		if *utils.StartBlockID == 0 || (*utils.StartBlockID > 0 && block.ID > *utils.StartBlockID) {
+		if *conf.StartBlockID == 0 || (*conf.StartBlockID > 0 && block.ID > *conf.StartBlockID) {
 			if err = parser.InsertBlockWOForks(block.Data); err != nil {
 				return err
 			}

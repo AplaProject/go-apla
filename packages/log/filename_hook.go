@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/AplaProject/go-apla/packages/conf"
 
 	"github.com/sirupsen/logrus"
 )
@@ -22,7 +22,7 @@ func (hook ContextHook) Levels() []logrus.Level {
 // Fire the log entry
 func (hook ContextHook) Fire(entry *logrus.Entry) error {
 	var pc []uintptr
-	if *utils.LogStackTrace == 1 {
+	if *conf.LogStackTrace == 1 {
 		pc = make([]uintptr, 15, 15)
 	} else {
 		pc = make([]uintptr, 4, 4)
@@ -40,7 +40,7 @@ func (hook ContextHook) Fire(entry *logrus.Entry) error {
 				entry.Data["func"] = path.Base(name)
 				entry.Data["line"] = line
 				entry.Data["time"] = time.Now().Format(time.RFC3339)
-				if *utils.LogStackTrace == 0 {
+				if *conf.LogStackTrace == 0 {
 					break
 				}
 			}

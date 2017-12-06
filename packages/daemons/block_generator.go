@@ -36,12 +36,6 @@ import (
 func BlockGenerator(ctx context.Context, d *daemon) error {
 	d.sleepTime = time.Second
 
-	// config := &model.Config{}
-	// if _, err := config.Get(); err != nil {
-	// 	d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cannot get config")
-	// 	return err
-	// }
-
 	_, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
 	if err != nil {
 		// we are not full node and can't generate new blocks

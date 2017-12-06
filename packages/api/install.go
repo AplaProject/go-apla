@@ -34,7 +34,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
-	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -85,17 +84,17 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return err
 	}
 
-	fb := *conf.FirstBlockPath
+	firstBlockFileName := *conf.FirstBlockPath
 	if data.firstBlockDir != "" {
-		fb = filepath.Join(data.firstBlockDir, "1block")
+		firstBlockFileName = filepath.Join(data.firstBlockDir, "1block")
 	}
-	if _, err = os.Stat(fb); len(fb) > 0 && os.IsNotExist(err) {
-		logger.WithFields(log.Fields{"path": fb}).Info("First block does not exists, generating new keys")
+	if _, err = os.Stat(firstBlockFileName); len(firstBlockFileName) > 0 && os.IsNotExist(err) {
+		logger.WithFields(log.Fields{"path": firstBlockFileName}).Info("First block does not exists, generating new keys")
 		// If there is no key, this is the first run and the need to create them in the working directory.
 		pkf := filepath.Join(conf.Config.PrivateDir, "/PrivateKey")
 		if _, err = os.Stat(pkf); os.IsNotExist(err) {
 			log.WithFields(log.Fields{"path": pkf}).Info("private key is not exists, generating new one")
-			if len(*utils.FirstBlockPublicKey) == 0 {
+			if len(*conf.FirstBlockPublicKey) == 0 {
 				log.WithFields(log.Fields{"type": consts.EmptyObject}).Info("first block public key is empty")
 				priv, pub, err := crypto.GenHexKeys()
 				if err != nil {
@@ -111,15 +110,15 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 					logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating public key file")
 					return err
 				}
-				*utils.FirstBlockPublicKey = pub
+				*conf.FirstBlockPublicKey = pub
 			}
 		}
-		npkFile := filepath.Join(conf.Config.PrivateDir, "/NodePrivateKey")
-		if _, err = os.Stat(npkFile); os.IsNotExist(err) {
-			logger.WithFields(log.Fields{"path": npkFile}).Info("NodePrivateKey does not exists, generating new keys")
-			if len(*utils.FirstBlockNodePublicKey) == 0 {
+		nodePrivateKeyFileName := filepath.Join(conf.Config.PrivateDir, "/NodePrivateKey")
+		if _, err = os.Stat(nodePrivateKeyFileName); os.IsNotExist(err) {
+			logger.WithFields(log.Fields{"path": nodePrivateKeyFileName}).Info("NodePrivateKey does not exists, generating new keys")
+			if len(*conf.FirstBlockNodePublicKey) == 0 {
 				priv, pub, _ := crypto.GenHexKeys()
-				err = ioutil.WriteFile(npkFile, []byte(priv), 0644)
+				err = ioutil.WriteFile(nodePrivateKeyFileName, []byte(priv), 0644)
 				if err != nil {
 					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("creating NodePrivateKey")
 					return err
@@ -129,7 +128,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("creating NodePublicKey")
 					return err
 				}
-				*utils.FirstBlockNodePublicKey = pub
+				*conf.FirstBlockNodePublicKey = pub
 			}
 		}
 		parser.GenerateFirstBlock()

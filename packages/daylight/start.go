@@ -136,7 +136,7 @@ func rollbackToBlock(blockID int64) error {
 		return err
 	}
 	parser := new(parser.Parser)
-	err := parser.RollbackToBlockID(*utils.RollbackToBlockID)
+	err := parser.RollbackToBlockID(*conf.RollbackToBlockID)
 	if err != nil {
 		return err
 	}
@@ -183,13 +183,12 @@ func initRoutes(listenHost string) {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
-	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS))) // ???
-	if len(*utils.TLS) > 0 {
-		go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, route)
+	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*conf.TLS))) // ???
+	if len(*conf.TLS) > 0 {
+		go http.ListenAndServeTLS(":443", *conf.TLS+`/fullchain.pem`, *conf.TLS+`/privkey.pem`, route)
 	}
 
 	httpListener(listenHost, route)
-	// httpListenerV6(route) // !!!
 }
 
 // Start starts the main code of the program
@@ -228,7 +227,7 @@ func Start() {
 	} else {
 		// override default data
 		if err := conf.LoadConfig(); err != nil {
-			log.Error("loadConfig:", err)
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
 			return
 		}
 	}
@@ -237,21 +236,21 @@ func Start() {
 	// process directives
 	if *conf.GenerateFirstBlock {
 		if err := parser.GenerateFirstBlock(); err != nil {
-			log.Error("firstBlock:", err)
+			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("GenerateFirstBlock")
 			Exit(1)
 		}
 	}
 
 	if *conf.InitDatabase {
 		if err := model.InitDB(conf.Config.DB); err != nil {
-			log.Error("initDB:", err)
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("InitDB")
 			Exit(2)
 		}
 	}
 
 	if *conf.InitConfig {
 		if err := conf.SaveConfig(); err != nil {
-			log.Error("saveConfig:", err)
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("SaveConfig")
 			Exit(3)
 		}
 		conf.WebInstall = false
@@ -292,14 +291,14 @@ func Start() {
 	defer delPidFile()
 
 	// database rollback to the specified block
-	if *utils.RollbackToBlockID > 0 {
+	if *conf.RollbackToBlockID > 0 {
 		err = syspar.SysUpdate()
 		if err != nil {
 			log.WithError(err).Error("can't read system parameters")
 		}
-		log.WithFields(log.Fields{"block_id": *utils.RollbackToBlockID}).Info("Rollbacking to block ID")
-		err := rollbackToBlock(*utils.RollbackToBlockID)
-		log.WithFields(log.Fields{"block_id": *utils.RollbackToBlockID}).Info("Rollback is ok")
+		log.WithFields(log.Fields{"block_id": *conf.RollbackToBlockID}).Info("Rollbacking to block ID")
+		err := rollbackToBlock(*conf.RollbackToBlockID)
+		log.WithFields(log.Fields{"block_id": *conf.RollbackToBlockID}).Info("Rollback is ok")
 		if err != nil {
 			log.WithError(err).Error("Rollback error")
 		} else {

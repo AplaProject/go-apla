@@ -26,6 +26,7 @@ import (
 
 	"bytes"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -259,8 +260,8 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	// for local tests
 	blockID := block.Header.BlockID
 	if block.Header.BlockID == 1 {
-		if *utils.StartBlockID != 0 {
-			blockID = *utils.StartBlockID
+		if *conf.StartBlockID != 0 {
+			blockID = *conf.StartBlockID
 		}
 	}
 

@@ -61,6 +61,34 @@ var (
 
 	// GenerateFirstBlock force regeneration of first block
 	GenerateFirstBlock = flag.Bool("generateFirstBlock", false, "force init first block")
+
+	// other flags
+
+	// FirstBlockPublicKey is the private key
+	FirstBlockPublicKey = flag.String("firstBlockPublicKey", "", "FirstBlockPublicKey")
+	// FirstBlockNodePublicKey is the node private key
+	FirstBlockNodePublicKey = flag.String("firstBlockNodePublicKey", "", "FirstBlockNodePublicKey")
+	// FirstBlockHost is the host of the first block
+	FirstBlockHost = flag.String("firstBlockHost", "127.0.0.1", "FirstBlockHost")
+
+	// WalletAddress is a wallet address for forging
+	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
+
+	// LogSQL show if we should display sql queries in logs
+	LogSQL = flag.Int64("logSQL", 0, "log sql")
+	// LogStackTrace show if we should display stack trace in logs
+	LogStackTrace = flag.Int64("logStackTrace", 0, "log stack trace")
+	// TestRollBack equals 1 for testing rollback
+	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
+
+	// StartBlockID is the start block
+	StartBlockID = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
+	// EndBlockID is the end block
+	EndBlockID = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
+	// RollbackToBlockID is the target block for rollback
+	RollbackToBlockID = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
+	// TLS is a directory for .well-known and keys. It is required for https
+	TLS = flag.String("tls", "", "Support https. Specify directory for .well-known")
 )
 
 // ParseFlags from command line

@@ -103,7 +103,6 @@ go-apla
 1block
 NodePrivateKey
 PrivateKey
-exchangeapi.db
 apla.pid
 
 packages/static/

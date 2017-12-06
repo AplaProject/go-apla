@@ -43,12 +43,6 @@ const (
 // if we are full node(miner): sends blocks and transactions hashes
 // else send the full transactions
 func Disseminator(ctx context.Context, d *daemon) error {
-	// config := &model.Config{}
-	// _, err := config.Get()
-	// if err != nil {
-	// 	d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get config")
-	// 	return err
-	// }
 
 	isFullNode := true
 	myNodePosition, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)

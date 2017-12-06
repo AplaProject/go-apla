@@ -48,9 +48,8 @@ func init() {
 }
 
 var daemonsList = map[string]func(context.Context, *daemon) error{
-	"BlocksCollection": BlocksCollection,
-	"BlockGenerator":   BlockGenerator,
-	// "CreatingBlockchain": CreatingBlockchain,
+	"BlocksCollection":  BlocksCollection,
+	"BlockGenerator":    BlockGenerator,
 	"Disseminator":      Disseminator,
 	"QueueParserTx":     QueueParserTx,
 	"QueueParserBlocks": QueueParserBlocks,
@@ -142,9 +141,7 @@ func StartDaemons() {
 	daemonsToStart := serverList
 	if len(conf.Config.StartDaemons) > 0 {
 		daemonsToStart = strings.Split(conf.Config.StartDaemons, ",")
-		// } else if utils.Mobile() {
-		// 	daemonsToStart = mobileList
-	} else if *utils.TestRollBack == 1 {
+	} else if *conf.TestRollBack == 1 {
 		daemonsToStart = rollbackList
 	}
 

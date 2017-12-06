@@ -6,7 +6,9 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	toml "github.com/BurntSushi/toml"
+	log "github.com/sirupsen/logrus"
 )
 
 const defaultConfigFile = "config.toml"
@@ -24,9 +26,9 @@ func (h HostPort) Str() string {
 
 // DBConfig database connection parameters
 type DBConfig struct {
-	Type     string
-	Name     string
-	Host     string
+	Type string
+	Name string
+	HostPort
 	Port     int
 	User     string
 	Password string
@@ -38,7 +40,7 @@ type StatsDConfig struct {
 	HostPort        // 127.0.0.1:8125
 }
 
-// Centrifugo connection params
+// CentrifugoConfig connection params
 type CentrifugoConfig struct {
 	Secret string
 	URL    string
@@ -80,7 +82,10 @@ var WebInstall bool
 var Config = *initialValues()
 
 func initialValues() *SavedConfig {
-	cwd, _ := os.Getwd()
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("Getcwd failed")
+	}
 
 	return &SavedConfig{
 		LogLevel:     "INFO",
@@ -95,8 +100,7 @@ func initialValues() *SavedConfig {
 		DB: DBConfig{
 			Type:     "postgresql", // the only one supported
 			Name:     "apla",
-			Host:     "127.0.0.1",
-			Port:     5432,
+			HostPort: HostPort{Host: "127.0.0.1", Port: 5432},
 			User:     "",
 			Password: "",
 		},
@@ -136,6 +140,7 @@ func LoadConfig() error {
 func SaveConfig() error {
 	cf, err := os.Create(GetConfigPath())
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("Create config file failed")
 		return err
 	}
 	defer cf.Close()

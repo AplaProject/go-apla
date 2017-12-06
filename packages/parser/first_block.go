@@ -112,7 +112,7 @@ func (p FirstBlockParser) Header() *tx.Header {
 
 // GenerateFirstBlock generates the first block
 func GenerateFirstBlock() error {
-	if len(*utils.FirstBlockPublicKey) == 0 {
+	if len(*conf.FirstBlockPublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
 		pk := filepath.Join(conf.Config.PrivateDir, "/PrivateKey")
 		if err := ioutil.WriteFile(pk, []byte(priv), 0644); err != nil {
@@ -124,10 +124,10 @@ func GenerateFirstBlock() error {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing public key file")
 			return err
 		}
-		*utils.FirstBlockPublicKey = pub
+		*conf.FirstBlockPublicKey = pub
 	}
 
-	if len(*utils.FirstBlockNodePublicKey) == 0 {
+	if len(*conf.FirstBlockNodePublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
 		nvk := filepath.Join(conf.Config.PrivateDir, "/NodePrivateKey")
 		if err := ioutil.WriteFile(nvk, []byte(priv), 0644); err != nil {
@@ -139,24 +139,24 @@ func GenerateFirstBlock() error {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node public key file")
 			return err
 		}
-		*utils.FirstBlockNodePublicKey = pub
+		*conf.FirstBlockNodePublicKey = pub
 	}
 
-	PublicKey := *utils.FirstBlockPublicKey
+	PublicKey := *conf.FirstBlockPublicKey
 	PublicKeyBytes, err := hex.DecodeString(string(PublicKey))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex to string")
 		return err
 	}
 
-	NodePublicKey := *utils.FirstBlockNodePublicKey
+	NodePublicKey := *conf.FirstBlockNodePublicKey
 	NodePublicKeyBytes, err := hex.DecodeString(string(NodePublicKey))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding node public key from hex to string")
 		return err
 	}
 
-	Host := *utils.FirstBlockHost
+	Host := *conf.FirstBlockHost
 	if len(Host) == 0 {
 		return errors.New("FirstBlockHost is empty")
 	}
