@@ -19,22 +19,33 @@ package api
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"testing"
 )
 
 func TestRead(t *testing.T) {
+	var (
+		err error
+		ret vdeCreateResult
+	)
 
-	if err := keyLogin(1); err != nil {
+	if err = keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err = sendPost(`vde/create`, nil, &ret); err != nil &&
+		err.Error() != `400 {"error": "E_VDECREATED", "msg": "Virtual Dedicated Ecosystem is already created" }` {
 		t.Error(err)
 		return
 	}
 	name := randName(`tbl`)
-	form := url.Values{"Name": {name}, "Columns": {`[{"name":"my","type":"varchar", "index": "1", 
+	form := url.Values{"vde": {`true`}, "Name": {name}, "Columns": {`[{"name":"my","type":"varchar", "index": "1", 
 	  "conditions":"true"},
 	{"name":"amount", "type":"number","index": "0", "conditions":"{\"update\":\"true\", \"read\":\"true\"}"},
 	{"name":"active", "type":"character","index": "0", "conditions":"{\"update\":\"true\", \"read\":\"false\"}"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "read": "true", "new_column": "true"}`}}
-	err := postTx(`NewTable`, &form)
+	err = postTx(`NewTable`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -72,47 +83,64 @@ func TestRead(t *testing.T) {
 		}
 	}
 
-	contract MyRead%[1]s {
-		conditions {
-			Println("MYREAD", $key_id)
-			Println("MYREAD=", $table)
-			if $access == "read" {
-				var i int
-				while i < Len($columns) {
-					if $columns[i] == "*" || $columns[i] == "amount" {
-						error "Access denied to amount"
-					}
-					i = i + 1
-				}
-		    }
+	func ReadFilter%[1]s bool {
+		var i int
+		var row map
+		while i < Len($data) {
+			row = $data[i]
+			if i == 1 || i == 3 {
+				row["my"] = "No name"
+				$data[i] = row
+			}
+			i = i+ 1
 		}
+		return true
 	}
 	`, name)
 	form = url.Values{"Value": {contFill},
-		"Conditions": {`true`}}
+		"Conditions": {`true`}, "vde": {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := postTx(name, &url.Values{}); err != nil {
+	if err := postTx(name, &url.Values{"vde": {`true`}}); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`Get`+name, &url.Values{}); err.Error() != `{"type":"panic","error":"Access denied"}` {
+	if err := postTx(`Get`+name, &url.Values{"vde": {`true`}}); err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"Access denied\"}" }` {
 		t.Errorf(`access problem`)
 		return
 	}
-	if err := postTx(`GetOK`+name, &url.Values{}); err != nil {
+	if err := postTx(`GetOK`+name, &url.Values{"vde": {`true`}}); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`EditColumn`, &url.Values{`TableName`: {name}, `Name`: {`active`},
+	if err := postTx(`EditColumn`, &url.Values{"vde": {`true`}, `TableName`: {name}, `Name`: {`active`},
 		`Permissions`: {`{"update":"true", "read":"ContractConditions(\"MainCondition\")"}`}}); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`Get`+name, &url.Values{}); err != nil {
+	if err := postTx(`Get`+name, &url.Values{"vde": {`true`}}); err != nil {
 		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {name}, "vde": {`true`},
+		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
+		"update" : "true", "filter": "ReadFilter` + name + `()", "new_column": "ContractConditions(\"MainCondition\")"}`}}
+	err = postTx(`EditTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var retCont contentResult
+	err = sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
+		`DBFind(` + name + `, src).Limit(2)`}}, &retCont)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !strings.Contains(retCont.Tree, `No name`) {
+		t.Errorf(`wrong tree %s`, retCont.Tree)
 		return
 	}
 }

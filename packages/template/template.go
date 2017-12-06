@@ -28,6 +28,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -544,6 +545,8 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 	sc := smart.SmartContract{
 		VDE: isvde,
 		VM:  smart.GetVM(isvde, converter.StrToInt64((*vars)[`ecosystem_id`])),
+		TxSmart: tx.SmartContract{Header: tx.Header{EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
+			KeyID: converter.StrToInt64((*vars)[`key_id`])}},
 	}
 	process(input, &root, &Workspace{Vars: vars, SmartContract: &sc})
 	if root.Children == nil {

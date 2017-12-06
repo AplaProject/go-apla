@@ -459,44 +459,53 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 }
 
 // AccessTable checks the access right to the table
-func (sc *SmartContract) AccessTable(table, action string) error {
+func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]string, error) {
+	var (
+		err             error
+		tablePermission map[string]string
+	)
 	logger := sc.GetLogger()
 
 	if table == getDefTableName(sc, `parameters`) {
 		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
-			return nil
+			return tablePermission, nil
 		}
 		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-		return fmt.Errorf(`Access denied`)
+		return tablePermission, errAccessDenied
 	}
 
 	if isCustom, err := IsCustomTable(table); err != nil {
 		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
-		return err
+		return tablePermission, err
 	} else if !isCustom {
-		return fmt.Errorf(table + ` is not a custom table`)
+		return tablePermission, fmt.Errorf(table + ` is not a custom table`)
 	}
 
 	prefix, name := PrefixName(table)
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	tablePermission, err := tables.GetPermissions(name, "")
+	tablePermission, err = tables.GetPermissions(name, "")
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table permissions")
-		return err
+		return tablePermission, err
 	}
 	if len(tablePermission[action]) > 0 {
 		ret, err := sc.EvalIf(tablePermission[action])
 		if err != nil {
 			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "error": err, "type": consts.EvalError}).Error("evaluating table permissions for action")
-			return err
+			return tablePermission, err
 		}
 		if !ret {
 			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "type": consts.EvalError}).Error("access denied")
-			return fmt.Errorf(`Access denied`)
+			return tablePermission, errAccessDenied
 		}
 	}
-	return nil
+	return tablePermission, nil
+}
+
+func (sc *SmartContract) AccessTable(table, action string) error {
+	_, err := sc.AccessTablePerm(table, action)
+	return err
 }
 
 func getPermColumns(input string) (perm permColumn, err error) {

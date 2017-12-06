@@ -45,6 +45,7 @@ type permTable struct {
 	Update    string `json:"update"`
 	NewColumn string `json:"new_column"`
 	Read      string `json:"read,omitempty"`
+	Filter    string `json:"filter,omitempty"`
 }
 
 type permColumn struct {
@@ -386,6 +387,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	var (
 		err  error
 		rows *sql.Rows
+		perm map[string]string
 	)
 	if len(columns) == 0 {
 		columns = `*`
@@ -408,8 +410,14 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		ecosystem = sc.TxSmart.EcosystemID
 	}
 	tblname = GetTableName(sc, tblname, ecosystem)
-	if err = sc.AccessColumns(tblname, strings.Split(columns, `,`), false); err != nil {
-		return 0, nil, err
+	if sc.VDE {
+		perm, err = sc.AccessTablePerm(tblname, `read`)
+		if err != nil {
+			return 0, nil, err
+		}
+		if err = sc.AccessColumns(tblname, strings.Split(columns, `,`), false); err != nil {
+			return 0, nil, err
+		}
 	}
 	rows, err = model.DBConn.Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
@@ -445,6 +453,20 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 			row[cols[i]] = value
 		}
 		result = append(result, reflect.ValueOf(row).Interface())
+	}
+	if sc.VDE && perm != nil && len(perm[`filter`]) > 0 {
+		fltResult, err := VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
+			&map[string]interface{}{
+				`data`:         result,
+				`ecosystem_id`: sc.TxSmart.EcosystemID,
+				`key_id`:       sc.TxSmart.KeyID, `sc`: sc,
+				`block_time`: 0, `time`: sc.TxSmart.Time})
+		if err != nil {
+			return 0, nil, err
+		}
+		if !fltResult {
+			return 0, nil, errAccessDenied
+		}
 	}
 	return 0, result, nil
 }
@@ -586,7 +608,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	for i := 0; i < v.NumField(); i++ {
 		cond := v.Field(i).Interface().(string)
 		name := v.Type().Field(i).Name
-		if len(cond) == 0 && name != `Read` {
+		if len(cond) == 0 && name != `Read` && name != `Filter` {
 			log.WithFields(log.Fields{"condition_type": name, "type": consts.EmptyObject}).Error("condition is empty")
 			return fmt.Errorf(`%v condition is empty`, name)
 		}

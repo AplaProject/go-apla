@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -366,6 +367,8 @@ func dbfindTag(par parFunc) string {
 	var (
 		fields string
 		state  int64
+		err    error
+		perm   map[string]string
 	)
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
@@ -407,8 +410,11 @@ func dbfindTag(par parFunc) string {
 	}
 	sc := par.Workspace.SmartContract
 	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
-	if err := sc.AccessColumns(tblname, strings.Split(fields, `,`), false); err != nil {
-		return `Access denied`
+	if sc.VDE {
+		perm, err = sc.AccessTablePerm(tblname, `read`)
+		if err != nil || sc.AccessColumns(tblname, strings.Split(fields, `,`), false) != nil {
+			return `Access denied`
+		}
 	}
 	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order, limit)
 	if err != nil {
@@ -463,6 +469,30 @@ func dbfindTag(par parFunc) string {
 			row[i] = ival
 		}
 		data = append(data, row)
+	}
+	if sc.VDE && perm != nil && len(perm[`filter`]) > 0 {
+		result := make([]interface{}, len(data))
+		for i, item := range data {
+			row := make(map[string]string)
+			for j, col := range cols {
+				row[col] = item[j]
+			}
+			result[i] = reflect.ValueOf(row).Interface()
+		}
+		fltResult, err := smart.VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
+			&map[string]interface{}{
+				`data`:         result,
+				`ecosystem_id`: sc.TxSmart.EcosystemID,
+				`key_id`:       sc.TxSmart.KeyID, `sc`: sc,
+				`block_time`: 0, `time`: sc.TxSmart.Time})
+		if err != nil || !fltResult {
+			return `Access denied`
+		}
+		for i := range data {
+			for j, col := range cols {
+				data[i][j] = result[i].(map[string]string)[col]
+			}
+		}
 	}
 	setAllAttr(par)
 	delete(par.Node.Attr, `customs`)
