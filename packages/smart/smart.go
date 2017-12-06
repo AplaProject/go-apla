@@ -518,7 +518,7 @@ func getPermColumns(input string) (perm permColumn, err error) {
 }
 
 // AccessColumns checks access rights to the columns
-func (sc *SmartContract) AccessColumns(table string, columns []string, update bool) error {
+func (sc *SmartContract) AccessColumns(table string, columns *[]string, update bool) error {
 	logger := sc.GetLogger()
 	if table == getDefTableName(sc, `parameters`) {
 		if update {
@@ -542,13 +542,20 @@ func (sc *SmartContract) AccessColumns(table string, columns []string, update bo
 	}
 	var cols map[string]string
 	hcolumns := make(map[string]bool)
-	for _, col := range columns {
-		hcolumns[converter.Sanitize(col, `*`)] = true
-	}
 	err = json.Unmarshal([]byte(tables.Columns), &cols)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("getting table columns")
 		return err
+	}
+	for _, col := range *columns {
+		colname := converter.Sanitize(col, `*`)
+		if !update && colname == `*` {
+			for column := range cols {
+				hcolumns[column] = true
+			}
+			break
+		}
+		hcolumns[colname] = true
 	}
 	for column, cond := range cols {
 		if !hcolumns[column] && !hcolumns[`*`] {
@@ -572,9 +579,24 @@ func (sc *SmartContract) AccessColumns(table string, columns []string, update bo
 				return err
 			}
 			if !ret {
-				return errAccessDenied
+				if update {
+					return errAccessDenied
+				}
+				hcolumns[column] = false
 			}
 		}
+	}
+	if !update {
+		retColumn := make([]string, 0)
+		for key, val := range hcolumns {
+			if val && key != `*` {
+				retColumn = append(retColumn, key)
+			}
+		}
+		if len(retColumn) == 0 {
+			return errAccessDenied
+		}
+		*columns = retColumn
 	}
 	return nil
 }

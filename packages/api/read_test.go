@@ -25,8 +25,9 @@ import (
 
 func TestRead(t *testing.T) {
 	var (
-		err error
-		ret vdeCreateResult
+		err     error
+		ret     vdeCreateResult
+		retCont contentResult
 	)
 
 	if err = keyLogin(1); err != nil {
@@ -79,7 +80,7 @@ func TestRead(t *testing.T) {
 	contract GetData%[1]s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Columns("my").Where("id>= ? and id<= ?", 2, 5)
+			row = DBFind("%[1]s").Columns("active").Where("id>= ? and id<= ?", 2, 5)
 		}
 	}
 
@@ -107,10 +108,21 @@ func TestRead(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`Get`+name, &url.Values{"vde": {`true`}}); err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"Access denied\"}" }` {
+	if err := postTx(`GetData`+name, &url.Values{"vde": {`true`}}); err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"Access denied\"}" }` {
 		t.Errorf(`access problem`)
 		return
 	}
+	err = sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
+		`DBFind(` + name + `, src).Limit(2)`}}, &retCont)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if strings.Contains(retCont.Tree, `active`) {
+		t.Errorf(`wrong tree %s`, retCont.Tree)
+		return
+	}
+
 	if err := postTx(`GetOK`+name, &url.Values{"vde": {`true`}}); err != nil {
 		t.Error(err)
 		return
@@ -132,7 +144,6 @@ func TestRead(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	var retCont contentResult
 	err = sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
 		`DBFind(` + name + `, src).Limit(2)`}}, &retCont)
 	if err != nil {

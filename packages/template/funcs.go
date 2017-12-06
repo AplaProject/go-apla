@@ -412,9 +412,11 @@ func dbfindTag(par parFunc) string {
 	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
 	if sc.VDE {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
-		if err != nil || sc.AccessColumns(tblname, strings.Split(fields, `,`), false) != nil {
+		cols := strings.Split(fields, `,`)
+		if err != nil || sc.AccessColumns(tblname, &cols, false) != nil {
 			return `Access denied`
 		}
+		fields = strings.Join(cols, `,`)
 	}
 	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order, limit)
 	if err != nil {

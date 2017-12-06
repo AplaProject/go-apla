@@ -415,9 +415,11 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		if err != nil {
 			return 0, nil, err
 		}
-		if err = sc.AccessColumns(tblname, strings.Split(columns, `,`), false); err != nil {
+		cols := strings.Split(columns, `,`)
+		if err = sc.AccessColumns(tblname, &cols, false); err != nil {
 			return 0, nil, err
 		}
+		columns = strings.Join(cols, `,`)
 	}
 	rows, err = model.DBConn.Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
@@ -482,7 +484,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 		return
 	}
 	columns := strings.Split(params, `,`)
-	if err = sc.AccessColumns(tblname, columns, true); err != nil {
+	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
 	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE)
