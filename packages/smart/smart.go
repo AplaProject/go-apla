@@ -154,6 +154,9 @@ func VMRun(vm *script.VM, block *script.Block, params []interface{}, extend *map
 	if ecost, ok := (*extend)[`txcost`]; ok {
 		cost = ecost.(int64)
 	}
+	if *utils.PrivateBlockchain {
+		cost = 0
+	}
 	rt := vm.RunInit(cost)
 	ret, err = rt.Run(block, params, extend)
 	if err != nil {

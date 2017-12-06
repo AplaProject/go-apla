@@ -128,6 +128,8 @@ var (
 	DaemonsCount int
 	// Thrust is true for thrust shell
 	Thrust bool
+
+	PrivateBlockchain = flag.Bool("privateBlockchain", false, "Is blockchain private")
 )
 
 func init() {
