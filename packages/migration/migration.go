@@ -83,41 +83,43 @@ var (
 		
 		DROP TABLE IF EXISTS "system_parameters";
 		CREATE TABLE "system_parameters" (
+		"id" bigint NOT NULL DEFAULT '0',
 		"name" varchar(255)  NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
 		"conditions" text  NOT NULL DEFAULT '',
 		"rb_id" bigint  NOT NULL DEFAULT '0'
 		);
-		ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
+		ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY (id);
+		CREATE INDEX "system_parameters_index_name" ON "system_parameters" (name);
 		
-		INSERT INTO system_parameters ("name", "value", "conditions") VALUES 
-		('default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'true'),
-		('default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'true'),
-		('default_ecosystem_contract', '', 'true'),
-		('gap_between_blocks', '2', 'true'),
-		('rb_blocks_1', '60', 'true'),
-		('rb_blocks_2', '3600', 'true'),
-		('new_version_url', 'upd.apla.io', 'true'),
-		('full_nodes', '', 'true'),
-		('number_of_nodes', '101', 'true'),
-		('ecosystem_price', '1000', 'true'),
-		('contract_price', '200', 'true'),
-		('column_price', '200', 'true'),
-		('table_price', '200', 'true'),
-		('menu_price', '100', 'true'),
-		('page_price', '100', 'true'),
-		('blockchain_url', '', 'true'),
-		('max_block_size', '67108864', 'true'),
-		('max_tx_size', '33554432', 'true'),
-		('max_tx_count', '1000', 'true'),
-		('max_columns', '50', 'true'),
-		('max_indexes', '5', 'true'),
-		('max_block_user_tx', '100', 'true'),
-		('max_fuel_tx', '1000', 'true'),
-		('max_fuel_block', '100000', 'true'),
-		('commission_size', '3', 'true'),
-		('commission_wallet', '', 'true'),
-		('fuel_rate', '[["1","1000000000000000"]]', 'true');
+		INSERT INTO system_parameters ("id","name", "value", "conditions") VALUES 
+		('1','default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'true'),
+		('2','default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'true'),
+		('3','default_ecosystem_contract', '', 'true'),
+		('4','gap_between_blocks', '2', 'true'),
+		('5','rb_blocks_1', '60', 'true'),
+		('6','rb_blocks_2', '3600', 'true'),
+		('7','new_version_url', 'upd.apla.io', 'true'),
+		('8','full_nodes', '', 'true'),
+		('9','number_of_nodes', '101', 'true'),
+		('10','ecosystem_price', '1000', 'true'),
+		('11','contract_price', '200', 'true'),
+		('12','column_price', '200', 'true'),
+		('13','table_price', '200', 'true'),
+		('14','menu_price', '100', 'true'),
+		('15','page_price', '100', 'true'),
+		('16','blockchain_url', '', 'true'),
+		('17','max_block_size', '67108864', 'true'),
+		('18','max_tx_size', '33554432', 'true'),
+		('19','max_tx_count', '1000', 'true'),
+		('20','max_columns', '50', 'true'),
+		('21','max_indexes', '5', 'true'),
+		('22','max_block_user_tx', '100', 'true'),
+		('23','max_fuel_tx', '1000', 'true'),
+		('24','max_fuel_block', '100000', 'true'),
+		('25','commission_size', '3', 'true'),
+		('26','commission_wallet', '', 'true'),
+		('27','fuel_rate', '[["1","1000000000000000"]]', 'true');
 		
 		CREATE TABLE "system_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
@@ -1432,6 +1434,16 @@ var (
 		action {
 			DBUpdate("contracts", $Id, "active", 0)
 			Deactivate($Id, $ecosystem_id)
+		}
+	}', '%[1]d','ContractConditions("MainCondition")'),
+	('28','contract UpdateSysParam {
+		data {
+			Name  string
+			Value string
+			Conditions string "optional"
+		}
+		action {
+			DBUpdateSysParam($Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")');`
 )

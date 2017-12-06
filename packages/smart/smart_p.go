@@ -39,21 +39,21 @@ import (
 
 var (
 	funcCallsDBP = map[string]struct{}{
-		"DBInsert":       {},
-		"DBUpdate":       {},
-		"DBUpdateExt":    {},
-		"DBSelect":       {},
-		"DBInt":          {},
-		"DBRowExt":       {},
-		"DBRow":          {},
-		"DBStringExt":    {},
-		"DBIntExt":       {},
-		"DBStringWhere":  {},
-		"DBIntWhere":     {},
-		"DBAmount":       {},
-		"DBInsertReport": {},
-		"UpdateSysParam": {},
-		"FindEcosystem":  {},
+		"DBInsert":         {},
+		"DBUpdate":         {},
+		"DBUpdateSysParam": {},
+		"DBUpdateExt":      {},
+		"DBSelect":         {},
+		"DBInt":            {},
+		"DBRowExt":         {},
+		"DBRow":            {},
+		"DBStringExt":      {},
+		"DBIntExt":         {},
+		"DBStringWhere":    {},
+		"DBIntWhere":       {},
+		"DBAmount":         {},
+		"DBInsertReport":   {},
+		"FindEcosystem":    {},
 	}
 	extendCostP = map[string]int64{
 		"AddressToId":       10,
@@ -114,6 +114,7 @@ func init() {
 	Extend(&script.ExtendData{Objects: map[string]interface{}{
 		"DBInsert":           DBInsert,
 		"DBUpdate":           DBUpdate,
+		"DBUpdateSysParam":   UpdateSysParam,
 		"DBUpdateExt":        DBUpdateExt,
 		"DBSelect":           DBSelect,
 		"DBInt":              DBInt,
@@ -143,7 +144,6 @@ func init() {
 		"HexToBytes":         HexToBytes,
 		"LangRes":            LangRes,
 		"DBInsertReport":     DBInsertReport,
-		"UpdateSysParam":     UpdateSysParam,
 		"ValidateCondition":  ValidateCondition,
 		"EvalCondition":      EvalCondition,
 		"HasPrefix":          strings.HasPrefix,
@@ -193,12 +193,19 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		fields []string
 		values []interface{}
 	)
-
+	if sc.TxContract.Name != `@1UpdateSysParam` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SysParams can be only changed from @1UpdateSysParam")
+		return 0, fmt.Errorf(`SysParams can be only changed from @1UpdateSysParam`)
+	}
 	par := &model.SystemParameter{}
-	_, err := par.Get(name)
+	found, err := par.Get(name)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("system parameter get")
 		return 0, err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("system parameter get")
+		return 0, fmt.Errorf(`Parameter %s has not been found`, name)
 	}
 	cond := par.Conditions
 	if len(cond) > 0 {
@@ -228,7 +235,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"name"}, []string{name}, !sc.VDE)
+	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE)
 	if err != nil {
 		return 0, err
 	}
