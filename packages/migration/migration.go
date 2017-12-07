@@ -137,7 +137,7 @@ var (
 		('extend_cost_size', '10', 'true'),
 		('extend_cost_substr', '10', 'true'),
 		('extend_cost_contracts_list', '10', 'true'),
-		('extend_cost_is_contract', '10', 'true'),
+		('extend_cost_is_object', '10', 'true'),
 		('extend_cost_compile_contract', '100', 'true'),
 		('extend_cost_flush_contract', '50', 'true'),
 		('extend_cost_eval', '10', 'true'),
@@ -434,8 +434,8 @@ var (
 			  list = ContractsList($Value)
 			  var i int
 			  while i < Len(list) {
-				  if IsContract(list[i], $ecosystem_id) {
-					  warning Sprintf("Contract %%s exists", list[i] )
+				  if IsObject(list[i], $ecosystem_id) {
+					  warning Sprintf("Contract or function %%s exists", list[i] )
 				  }
 				  i = i + 1
 			  }
@@ -481,7 +481,7 @@ var (
 					  j = j + 1 
 				  }
 				  if !ok {
-					  error "Contracts names cannot be changed"
+					  error "Contracts or functions names cannot be changed"
 				  }
 				  i = i + 1
 			  }
@@ -980,8 +980,8 @@ var (
 			list = ContractsList($Value)
 			var i int
 			while i < Len(list) {
-				if IsContract(list[i], $ecosystem_id) {
-					warning Sprintf("Contract %%s exists", list[i] )
+				if IsObject(list[i], $ecosystem_id) {
+					warning Sprintf("Contract or function %%s exists", list[i] )
 				}
 				i = i + 1
 			}
@@ -1036,7 +1036,7 @@ var (
 					j = j + 1 
 				}
 				if !ok {
-					error "Contracts names cannot be changed"
+					error "Contracts or functions names cannot be changed"
 				}
 				i = i + 1
 			}
@@ -1306,7 +1306,7 @@ var (
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
 			if DBIntExt("blocks", "id", $Name, "name") {
-				warning Sprintf( "Block %%s aready exists", $Name)
+				warning Sprintf( "Block %%s already exists", $Name)
 			}
 		}
 		action {

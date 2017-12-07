@@ -144,15 +144,6 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }
 
-type txMapsType struct {
-	Int64   map[string]int64
-	String  map[string]string
-	Bytes   map[string][]byte
-	Float64 map[string]float64
-	Money   map[string]float64
-	Decimal map[string]decimal.Decimal
-}
-
 // Parser is a structure for parsing transactions
 type Parser struct {
 	BlockData      *utils.BlockData
@@ -186,7 +177,6 @@ type Parser struct {
 	DbTransaction    *model.DbTransaction
 
 	SmartContract smart.SmartContract
-	AllPkeys      map[string]string
 }
 
 // GetLogger returns logger

@@ -33,7 +33,7 @@ func (p *Parser) autoRollback() error {
 		return utils.ErrInfo(err)
 	}
 	for _, tx := range txs {
-		err := p.selectiveRollback(tx["table_name"], p.AllPkeys[tx["table_name"]]+"='"+tx["table_id"]+`'`)
+		err := p.selectiveRollback(tx["table_name"], "id='"+tx["table_id"]+`'`)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
