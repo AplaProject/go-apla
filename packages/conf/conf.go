@@ -29,7 +29,6 @@ func (h HostPort) Str() string {
 
 // DBConfig database connection parameters
 type DBConfig struct {
-	Type string
 	Name string
 	HostPort
 	User     string
@@ -100,7 +99,6 @@ func initialValues() *SavedConfig {
 		StatsD: StatsDConfig{Name: "apla", HostPort: HostPort{Host: "127.0.0.1", Port: 8125}},
 
 		DB: DBConfig{
-			Type:     "postgresql", // the only one supported
 			Name:     "apla",
 			HostPort: HostPort{Host: "127.0.0.1", Port: 5432},
 			User:     "",
