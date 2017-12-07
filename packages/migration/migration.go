@@ -397,8 +397,8 @@ var (
 			  list = ContractsList($Value)
 			  var i int
 			  while i < Len(list) {
-				  if IsContract(list[i], $ecosystem_id) {
-					  warning Sprintf("Contract %%s exists", list[i] )
+				  if IsObject(list[i], $ecosystem_id) {
+					  warning Sprintf("Contract or function %%s exists", list[i] )
 				  }
 				  i = i + 1
 			  }
@@ -444,7 +444,7 @@ var (
 					  j = j + 1 
 				  }
 				  if !ok {
-					  error "Contracts names cannot be changed"
+					  error "Contracts or functions names cannot be changed"
 				  }
 				  i = i + 1
 			  }
@@ -943,8 +943,8 @@ var (
 			list = ContractsList($Value)
 			var i int
 			while i < Len(list) {
-				if IsContract(list[i], $ecosystem_id) {
-					warning Sprintf("Contract %%s exists", list[i] )
+				if IsObject(list[i], $ecosystem_id) {
+					warning Sprintf("Contract or function %%s exists", list[i] )
 				}
 				i = i + 1
 			}
@@ -999,7 +999,7 @@ var (
 					j = j + 1 
 				}
 				if !ok {
-					error "Contracts names cannot be changed"
+					error "Contracts or functions names cannot be changed"
 				}
 				i = i + 1
 			}
