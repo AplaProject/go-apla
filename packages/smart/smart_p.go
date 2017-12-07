@@ -55,44 +55,45 @@ var (
 		"DBInsertReport":   {},
 		"FindEcosystem":    {},
 	}
-	extendCostP = map[string]int64{
-		"AddressToId":       10,
-		"IdToAddress":       10,
-		"NewState":          1000, // ?? What cost must be?
-		"Sha256":            50,
-		"PubToID":           10,
-		"EcosysParam":       10,
-		"SysParamString":    10,
-		"SysParamInt":       10,
-		"SysFuel":           10,
-		"ValidateCondition": 30,
-		"EvalCondition":     20,
-		"HasPrefix":         10,
-		"Contains":          10,
-		"Replace":           10,
-		"Join":              10,
-		"UpdateLang":        10,
-		"Size":              10,
-		"Substr":            10,
-		"ContractsList":     10,
-		"IsContract":        10,
-		"CompileContract":   100,
-		"FlushContract":     50,
-		"Eval":              10,
-		"Len":               5,
-		"Activate":          10,
-		"Deactivate":        10,
-		"CreateEcosystem":   100,
-		"RollbackEcosystem": 100,
-		"TableConditions":   100,
-		"CreateTable":       100,
-		"RollbackTable":     100,
-		"PermTable":         100,
-		"ColumnCondition":   50,
-		"CreateColumn":      50,
-		"RollbackColumn":    50,
-		"PermColumn":        50,
-		"JSONToMap":         50,
+
+	extendCostSysParams = map[string]string{
+		"AddressToId":       "extend_cost_address_to_id",
+		"IdToAddress":       "extend_cost_id_to_address",
+		"NewState":          "extend_cost_new_state",
+		"Sha256":            "extend_cost_sha256",
+		"PubToID":           "extend_cost_pub_to_id",
+		"EcosysParam":       "extend_cost_ecosys_param",
+		"SysParamString":    "extend_cost_sys_param_string",
+		"SysParamInt":       "extend_cost_sys_param_int",
+		"SysFuel":           "extend_cost_sys_fuel",
+		"ValidateCondition": "extend_cost_validate_condition",
+		"EvalCondition":     "extend_cost_eval_condition",
+		"HasPrefix":         "extend_cost_has_prefix",
+		"Contains":          "extend_cost_contains",
+		"Replace":           "extend_cost_replace",
+		"Join":              "extend_cost_join",
+		"UpdateLang":        "extend_cost_update_lang",
+		"Size":              "extend_cost_size",
+		"Substr":            "extend_cost_substr",
+		"ContractsList":     "extend_cost_contracts_list",
+		"IsObject":          "extend_cost_is_object",
+		"CompileContract":   "extend_cost_compile_contract",
+		"FlushContract":     "extend_cost_flush_contract",
+		"Eval":              "extend_cost_eval",
+		"Len":               "extend_cost_len",
+		"Activate":          "extend_cost_activate",
+		"Deactivate":        "extend_cost_deactivate",
+		"CreateEcosystem":   "extend_cost_create_ecosystem",
+		"RollbackEcosystem": "extend_cost_rollback_ecosystem",
+		"TableConditions":   "extend_cost_table_conditions",
+		"CreateTable":       "extend_cost_create_table",
+		"RollbackTable":     "extend_cost_rollback_table",
+		"PermTable":         "extend_cost_perm_table",
+		"ColumnCondition":   "extend_cost_column_condition",
+		"CreateColumn":      "extend_cost_create_column",
+		"RollbackColumn":    "extend_cost_rollback_column",
+		"PermColumn":        "extend_cost_perm_column",
+		"JSONToMap":         "extend_cost_json_to_map",
 	}
 )
 
@@ -165,7 +166,7 @@ func init() {
 		"Split":              Split,
 		"Substr":             Substr,
 		"ContractsList":      contractsList,
-		"IsContract":         IsContract,
+		"IsObject":           IsObject,
 		"CompileContract":    CompileContract,
 		"FlushContract":      FlushContract,
 		"Eval":               Eval,
@@ -181,8 +182,8 @@ func init() {
 }
 
 func getCostP(name string) int64 {
-	if val, ok := extendCostP[name]; ok {
-		return val
+	if key, ok := extendCostSysParams[name]; ok && syspar.HasSys(key) {
+		return syspar.SysInt64(key)
 	}
 	return -1
 }
