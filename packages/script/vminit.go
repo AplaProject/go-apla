@@ -117,6 +117,7 @@ type FuncInfo struct {
 	Results  []reflect.Type
 	Names    *map[string]FuncName
 	Variadic bool
+	ID       uint32
 }
 
 // VarInfo contains the variable information

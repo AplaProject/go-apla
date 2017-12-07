@@ -76,7 +76,7 @@ var (
 		"FlushContract":      50,
 		"JSONToMap":          50,
 		"IdToAddress":        10,
-		"IsContract":         10,
+		"IsObject":           10,
 		"Len":                5,
 		"PermColumn":         50,
 		"Split":              50,
@@ -99,6 +99,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 	f := map[string]interface{}{
 		"DBInsert":           DBInsert,
 		"DBUpdate":           DBUpdate,
+		"DBUpdateSysParam":   UpdateSysParam,
 		"DBUpdateExt":        DBUpdateExt,
 		"DBSelect":           DBSelect,
 		"DBInt":              DBInt,
@@ -128,7 +129,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"HexToBytes":         HexToBytes,
 		"LangRes":            LangRes,
 		"DBInsertReport":     DBInsertReport,
-		"UpdateSysParam":     UpdateSysParam,
 		"ValidateCondition":  ValidateCondition,
 		"EvalCondition":      EvalCondition,
 		"HasPrefix":          strings.HasPrefix,
@@ -150,25 +150,28 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Split":              Split,
 		"Substr":             Substr,
 		"ContractsList":      contractsList,
-		"IsContract":         IsContract,
+		"IsObject":           IsObject,
 		"CompileContract":    CompileContract,
 		"FlushContract":      FlushContract,
 		"Eval":               Eval,
 		"Activate":           Activate,
 		"Deactivate":         Deactivate,
 		"JSONToMap":          JSONToMap,
-		"check_signature":    CheckSignature, // system function
+		"check_signature":    CheckSignature,
 	}
 	switch vt {
 	case script.VMTypeVDE:
 		f["HTTPRequest"] = HTTPRequest
+		vmExtendCost(vm, getCost)
+		vmFuncCallsDB(vm, funcCallsDB)
+	case script.VMTypeSmart:
+		ExtendCost(getCostP)
+		FuncCallsDB(funcCallsDBP)
 	}
 
 	vmExtend(vm, &script.ExtendData{Objects: f, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
 	}})
-	vmExtendCost(vm, getCost)
-	vmFuncCallsDB(vm, funcCallsDB)
 }
 
 func getTableName(sc *SmartContract, tblname string, ecosystem int64) string {
@@ -539,9 +542,9 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 	return nil
 }
 
-// IsContract returns true if there is the specified contract
-func IsContract(sc *SmartContract, name string, state int64) bool {
-	return VMGetContract(sc.VM, name, uint32(state)) != nil
+// IsObject returns true if there is the specified contract
+func IsObject(sc *SmartContract, name string, state int64) bool {
+	return VMObjectExists(sc.VM, name, uint32(state))
 }
 
 // Len returns the length of the slice
