@@ -96,18 +96,21 @@ var contracts = []smartContract{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"unknown variable qvar"}`}},
 		}},
 
-	{`EditProfile6`, `contract EditProfile6 {
+	{`EditProfile9`, `contract EditProfile9 {
 		data {
 		}
 		conditions {
 		}
 		action {
+			var ar array
+			ar = Split("point 1,point 2", ",")
+			Test("split",  Str(ar[1]))
 			$ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
 			Test("edit",  "edit value 0")
 		}
 	}`,
 		[]smartParams{
-			{nil, map[string]string{`edit`: `edit value 0`}},
+			{nil, map[string]string{`edit`: `edit value 0`, `split`: `point 2`}},
 		}},
 
 	{`TestDBFindOK`, `
@@ -584,4 +587,92 @@ func TestImport(t *testing.T) {
 		return
 	}
 
+}
+
+func TestUpdateFunc(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	rnd := `rnd` + crypto.RandSeq(6)
+	form := url.Values{`Value`: {`
+		func MyTest(input string) string {
+			return "X="+input
+		}`}, `Conditions`: {`true`}}
+	_, id, err := postTxResult(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`
+		contract ` + rnd + ` {
+		    data {
+				Par string
+			}
+			action { 
+				$result = MyTest($Par)
+			}}
+		`}, `Conditions`: {`true`}}
+	_, idcnt, err := postTxResult(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err := postTxResult(rnd, &url.Values{`Par`: {`my param`}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `X=my param` {
+		t.Error(fmt.Errorf(`wrong result %s`, msg))
+	}
+	form = url.Values{`Id`: {id}, `Value`: {`
+		func MyTest2(input string) string {
+			return "Y="+input
+		}`}, `Conditions`: {`true`}}
+	err = postTx(`EditContract`, &form)
+	if err.Error() != `{"type":"error","error":"Contracts or functions names cannot be changed"}` {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Id`: {id}, `Value`: {`
+		func MyTest(input string) string {
+			return "Y="+input
+		}`}, `Conditions`: {`true`}}
+	err = postTx(`EditContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`new param`}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `Y=new param` {
+		t.Errorf(`wrong result %s`, msg)
+	}
+	form = url.Values{`Id`: {idcnt}, `Value`: {`
+		contract ` + rnd + ` {
+		    data {
+				Par string
+			}
+			action { 
+				$result = MyTest($Par) + MyTest("OK")
+			}}
+		`}, `Conditions`: {`true`}}
+	_, idcnt, err = postTxResult(`EditContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`finish`}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `Y=finishY=OK` {
+		t.Errorf(`wrong result %s`, msg)
+	}
 }

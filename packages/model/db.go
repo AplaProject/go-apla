@@ -152,25 +152,6 @@ func Delete(tblname, where string) error {
 	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
 }
 
-// GetFirstColumnName is returning name of first column
-func GetFirstColumnName(table string) (string, error) {
-	rows, err := DBConn.Raw(`SELECT * FROM "` + table + `" LIMIT 1`).Rows()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting rollback id from table")
-		return "", err
-	}
-	defer rows.Close()
-	columns, err := rows.Columns()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rows columns")
-		return "", err
-	}
-	if len(columns) > 0 {
-		return columns[0], nil
-	}
-	return "", nil
-}
-
 // GetQueryTotalCost is counting query execution time
 func GetQueryTotalCost(transaction *DbTransaction, query string, args ...interface{}) (int64, error) {
 	var planStr string
@@ -225,31 +206,6 @@ func GetQueryTotalCost(transaction *DbTransaction, query string, args ...interfa
 		return 0, err
 	}
 	return int64(totalCostF64), nil
-}
-
-// GetAllTables returning a slice of table names
-func GetAllTables() ([]string, error) {
-	var result []string
-	sql := `SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')`
-	rows, err := DBConn.Raw(sql).Rows()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": sql}).Error("executing raw query")
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var tblname string
-		if err := rows.Scan(&tblname); err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("scanning table name from row")
-			return nil, err
-		}
-		result = append(result, tblname)
-	}
-	if err := rows.Err(); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("retrieving rows from table")
-		return nil, err
-	}
-	return result, nil
 }
 
 // GetColumnCount is counting rows in table
