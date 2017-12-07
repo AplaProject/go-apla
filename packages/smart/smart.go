@@ -154,9 +154,6 @@ func VMRun(vm *script.VM, block *script.Block, params []interface{}, extend *map
 	if ecost, ok := (*extend)[`txcost`]; ok {
 		cost = ecost.(int64)
 	}
-	if *utils.PrivateBlockchain {
-		cost = 0
-	}
 	rt := vm.RunInit(cost)
 	ret, err = rt.Run(block, params, extend)
 	if err != nil {
@@ -684,7 +681,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 			return retError(ErrIncorrectSign)
 		}
-		if sc.TxSmart.EcosystemID > 0 && !sc.VDE {
+		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !*utils.PrivateBlockchain {
 			if sc.TxSmart.TokenEcosystem == 0 {
 				sc.TxSmart.TokenEcosystem = 1
 			}
@@ -782,7 +779,8 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	if (*sc.TxContract.Extend)[`result`] != nil {
 		result = fmt.Sprint((*sc.TxContract.Extend)[`result`])
 	}
-	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE {
+
+	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !*utils.PrivateBlockchain {
 		apl := sc.TxUsedCost.Mul(fuelRate)
 		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
 		if ierr != nil {
