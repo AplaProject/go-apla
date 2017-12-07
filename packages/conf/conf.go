@@ -11,7 +11,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const defaultConfigFile = "config.toml"
+const (
+	defaultConfigFile = "config.toml"
+	firstBlocFilename = "1block"
+)
 
 // HostPort endpoint in form "str:int"
 type HostPort struct {
@@ -152,52 +155,44 @@ func NoConfig() bool {
 	return os.IsNotExist(err)
 }
 
+func flagOrEnv(flagValue string, envName string) string {
+	if flagValue != "" {
+		return flagValue
+	}
+	return os.Getenv("PGDATABASE")
+}
+
+func intFlagOrEnv(flagValue int, envName string) int {
+	if flagValue != 0 {
+		return flagValue
+	}
+	i, err := strconv.Atoi(os.Getenv(envName))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"type":  consts.ConfigError,
+			"error": err,
+		}).Error("Incorrect value in environment: " + envName)
+	}
+	return i
+}
+
 // OverrideFlags override default config values by environment or args
 func OverrideFlags() {
 
-	if *FlagDbName != "" {
-		Config.DB.Name = *FlagDbName
-	} else {
-		p := os.Getenv("PGDATABASE")
-		if p != "" {
-			Config.DB.Name = p
-		}
+	if val := flagOrEnv(*FlagDbName, "PGDATABASE"); val != "" {
+		Config.DB.Name = val
 	}
-
-	if *FlagDbHost != "" {
-		Config.DB.Host = *FlagDbHost
-	} else {
-		p := os.Getenv("PGHOST")
-		if p != "" {
-			Config.DB.Host = p
-		}
+	if val := flagOrEnv(*FlagDbHost, "PGHOST"); val != "" {
+		Config.DB.Host = val
 	}
-
-	if *FlagDbPort != 0 {
-		Config.DB.Port = *FlagDbPort
-	} else {
-		p, _ := strconv.Atoi(os.Getenv("PGPORT"))
-		if p != 0 {
-			Config.DB.Port = p
-		}
+	if ival := intFlagOrEnv(*FlagDbPort, "PGPORT"); ival != 0 {
+		Config.DB.Port = ival
 	}
-
-	if *FlagDbUser != "" {
-		Config.DB.User = *FlagDbUser
-	} else {
-		p := os.Getenv("PGUSER")
-		if p != "" {
-			Config.DB.User = p
-		}
+	if val := flagOrEnv(*FlagDbUser, "PGUSER"); val != "" {
+		Config.DB.User = val
 	}
-
-	if *FlagDbPassword != "" {
-		Config.DB.Password = *FlagDbPassword
-	} else {
-		p := os.Getenv("PGPASSWORD")
-		if p != "" {
-			Config.DB.Password = p
-		}
+	if val := flagOrEnv(*FlagDbPassword, "PGPASSWORD"); val != "" {
+		Config.DB.Password = val
 	}
 
 	// tcp
@@ -239,7 +234,7 @@ func OverrideFlags() {
 	}
 
 	if *FirstBlockPath == "" {
-		*FirstBlockPath = filepath.Join(Config.PrivateDir, "1block")
+		*FirstBlockPath = filepath.Join(Config.PrivateDir, firstBlocFilename)
 	}
 
 }
