@@ -22,7 +22,7 @@ func (hook ContextHook) Levels() []logrus.Level {
 // Fire the log entry
 func (hook ContextHook) Fire(entry *logrus.Entry) error {
 	var pc []uintptr
-	if *conf.LogStackTrace == 1 {
+	if *conf.LogStackTrace {
 		pc = make([]uintptr, 15, 15)
 	} else {
 		pc = make([]uintptr, 4, 4)
@@ -40,7 +40,7 @@ func (hook ContextHook) Fire(entry *logrus.Entry) error {
 				entry.Data["func"] = path.Base(name)
 				entry.Data["line"] = line
 				entry.Data["time"] = time.Now().Format(time.RFC3339)
-				if *conf.LogStackTrace == 0 {
+				if !*conf.LogStackTrace {
 					break
 				}
 			}

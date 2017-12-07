@@ -29,7 +29,6 @@ type DBConfig struct {
 	Type string
 	Name string
 	HostPort
-	Port     int
 	User     string
 	Password string
 }

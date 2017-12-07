@@ -96,20 +96,36 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	blockBin, err := generateNextBlock(prevBlock, *trs, NodePrivateKey, time.Now().Unix(), myNodePosition)
+	blockBin, err := generateNextBlock(
+		prevBlock,
+		*trs,
+		NodePrivateKey,
+		time.Now().Unix(),
+		myNodePosition,
+		conf.Config.EcosystemID,
+		conf.Config.KeyID,
+	)
 	if err != nil {
 		return err
 	}
-
 	return parser.InsertBlockWOForks(blockBin)
 }
 
-func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key string, blockTime int64, myNodePosition int64) ([]byte, error) {
+func generateNextBlock(
+	prevBlock *model.InfoBlock,
+	trs []model.Transaction,
+	key string,
+	blockTime int64,
+	myNodePosition int64,
+	ecosystemID int64,
+	keyID int64,
+) ([]byte, error) {
+
 	header := &utils.BlockData{
 		BlockID:      prevBlock.BlockID + 1,
 		Time:         time.Now().Unix(),
-		EcosystemID:  conf.Config.EcosystemID,
-		KeyID:        conf.Config.KeyID,
+		EcosystemID:  ecosystemID,
+		KeyID:        keyID,
 		NodePosition: myNodePosition,
 		Version:      consts.BLOCK_VERSION,
 	}

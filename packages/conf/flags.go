@@ -75,11 +75,11 @@ var (
 	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
 
 	// LogSQL show if we should display sql queries in logs
-	LogSQL = flag.Int64("logSQL", 0, "log sql")
+	LogSQL = flag.Bool("logSQL", false, "set DBConn.LogMode")
 	// LogStackTrace show if we should display stack trace in logs
-	LogStackTrace = flag.Int64("logStackTrace", 0, "log stack trace")
-	// TestRollBack equals 1 for testing rollback
-	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
+	LogStackTrace = flag.Bool("logStackTrace", false, "log stack trace")
+	// TestRollBack starts special set of daemons
+	TestRollBack = flag.Bool("testRollBack", false, "starts special set of daemons")
 
 	// StartBlockID is the start block
 	StartBlockID = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")

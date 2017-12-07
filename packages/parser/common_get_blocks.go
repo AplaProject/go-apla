@@ -37,7 +37,7 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
 		rollback = syspar.GetRbBlocks2()
 	}
 
-	badBlocks := make(map[int64]string) // NOTE: badblock source not implemented
+	badBlocks := make(map[int64]string)
 
 	blocks := make([]*Block, 0)
 	var count int64
@@ -83,7 +83,11 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
 		}
 
 		// SIGN from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s", block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition, block.MrklRoot)
+		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
+			block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time,
+			block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition,
+			block.MrklRoot,
+		)
 
 		// save the block
 		blocks = append(blocks, block)
@@ -100,7 +104,10 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
 	// mark all transaction as unverified
 	_, err := model.MarkVerifiedAndNotUsedTransactionsUnverified()
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("marking verified and not used transactions unverified")
+		log.WithFields(log.Fields{
+			"error": err,
+			"type":  consts.DBError,
+		}).Error("marking verified and not used transactions unverified")
 		return utils.ErrInfo(err)
 	}
 

@@ -46,7 +46,7 @@ const (
 	jwtPrefix = "Bearer "
 	jwtExpire = 36000 // By default, seconds
 
-	apiV2Install = `/api/v2/install`
+	apiInstallRoute = `/api/v2/install`
 )
 
 type apiData struct {
@@ -173,12 +173,12 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 		if conf.WebInstall {
-			if r.URL.Path != apiV2Install {
+			if r.URL.Path != apiInstallRoute {
 				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
 				return
 			}
 		} else {
-			if r.URL.Path == apiV2Install {
+			if r.URL.Path == apiInstallRoute {
 				errorAPI(w, `E_INSTALLED`, http.StatusInternalServerError)
 				return
 			}

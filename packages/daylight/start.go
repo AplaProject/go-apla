@@ -71,7 +71,7 @@ func killOld() {
 			for i := 0; i < 15; i++ {
 				if _, err := os.Stat(conf.GetPidFile()); err == nil {
 					time.Sleep(time.Second)
-				} else { // if there is no apla.pid, so it is finished
+				} else {
 					break
 				}
 			}
@@ -92,8 +92,7 @@ func initLogs() error {
 
 		f, err := os.OpenFile(fileName, os.O_WRONLY|openMode, 0755)
 		if err != nil {
-			// NOTE: STDERR should be used
-			fmt.Println("Can't open log file ", fileName)
+			fmt.Fprintln(os.Stderr, "Can't open log file: ", fileName)
 			return err
 		}
 		log.SetOutput(f)
@@ -183,7 +182,7 @@ func initRoutes(listenHost string) {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
-	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*conf.TLS))) // ???
+	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*conf.TLS)))
 	if len(*conf.TLS) > 0 {
 		go http.ListenAndServeTLS(":443", *conf.TLS+`/fullchain.pem`, *conf.TLS+`/privkey.pem`, route)
 	}

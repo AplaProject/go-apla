@@ -141,7 +141,7 @@ func StartDaemons() {
 	daemonsToStart := serverList
 	if len(conf.Config.StartDaemons) > 0 {
 		daemonsToStart = strings.Split(conf.Config.StartDaemons, ",")
-	} else if *conf.TestRollBack == 1 {
+	} else if *conf.TestRollBack {
 		daemonsToStart = rollbackList
 	}
 
