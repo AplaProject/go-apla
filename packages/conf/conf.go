@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	toml "github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
@@ -198,5 +199,13 @@ func OverrideFlags() {
 
 	if *FlagKeyID != 0 {
 		Config.KeyID = *FlagKeyID
+	}
+
+	if Config.PrivateDir != "" {
+		conf.Config.PrivateDir = conf.Config.WorkDir
+	}
+
+	if *FirstBlockPath == "" {
+		*FirstBlockPath = filepath.Join(Config.PrivateDir, consts.FirstBlockFilename)
 	}
 }
