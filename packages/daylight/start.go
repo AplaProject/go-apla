@@ -223,6 +223,7 @@ func Start() {
 	conf.ParseFlags()
 	if conf.NoConfig() {
 		conf.Installed = false
+		log.Info("Config file missing. Starting web install...")
 	} else {
 		// override default data
 		if err := conf.LoadConfig(); err != nil {
