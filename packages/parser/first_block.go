@@ -114,13 +114,14 @@ func (p FirstBlockParser) Header() *tx.Header {
 func GenerateFirstBlock() error {
 	if len(*conf.FirstBlockPublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
-		pk := filepath.Join(conf.Config.PrivateDir, "/PrivateKey")
-		if err := ioutil.WriteFile(pk, []byte(priv), 0644); err != nil {
+
+		privFile := filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename)
+		if err := ioutil.WriteFile(privFile, []byte(priv), 0644); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing private key file")
 			return err
 		}
-		pubk := filepath.Join(conf.Config.PrivateDir, "/PublicKey")
-		if err := ioutil.WriteFile(pubk, []byte(pub), 0644); err != nil {
+		pubFile := filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename)
+		if err := ioutil.WriteFile(pubFile, []byte(pub), 0644); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing public key file")
 			return err
 		}
@@ -129,13 +130,13 @@ func GenerateFirstBlock() error {
 
 	if len(*conf.FirstBlockNodePublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
-		nvk := filepath.Join(conf.Config.PrivateDir, "/NodePrivateKey")
-		if err := ioutil.WriteFile(nvk, []byte(priv), 0644); err != nil {
+		nodePrivFile := filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename)
+		if err := ioutil.WriteFile(nodePrivFile, []byte(priv), 0644); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node private key file")
 			return err
 		}
-		npk := filepath.Join(conf.Config.PrivateDir, "/NodePublicKey")
-		if err := ioutil.WriteFile(npk, []byte(pub), 0644); err != nil {
+		nodePubFile := filepath.Join(conf.Config.PrivateDir, consts.NodePublicKeyFilename)
+		if err := ioutil.WriteFile(nodePubFile, []byte(pub), 0644); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node public key file")
 			return err
 		}
@@ -208,7 +209,7 @@ func GenerateFirstBlock() error {
 // GetKeyIDFromPrivateKey load KeyID fron PrivateKey file
 func GetKeyIDFromPrivateKey() (int64, error) {
 
-	key, err := ioutil.ReadFile(conf.Config.PrivateDir + "/PrivateKey")
+	key, err := ioutil.ReadFile(filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading private key file")
 		return 0, err
@@ -230,7 +231,7 @@ func GetKeyIDFromPrivateKey() (int64, error) {
 // GetKeyIDFromPublicKey load KeyID fron PublicKey file
 func GetKeyIDFromPublicKey() (int64, error) {
 
-	key, err := ioutil.ReadFile(conf.Config.PrivateDir + "/PublicKey")
+	key, err := ioutil.ReadFile(filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading public key file")
 		return 0, err

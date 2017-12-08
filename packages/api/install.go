@@ -38,13 +38,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	privateKeyFilename     = "/PrivateKey"
-	publicKeyFilename      = "/PublicKey"
-	nodePrivateKeyFilename = "/NodePrivateKey"
-	nodePublicKeyFilename  = "/NodePublicKey"
-)
-
 type installResult struct {
 	Success bool `json:"success"`
 }
@@ -98,7 +91,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 	if _, err = os.Stat(firstBlockFileName); len(firstBlockFileName) > 0 && os.IsNotExist(err) {
 		logger.WithFields(log.Fields{"path": firstBlockFileName}).Info("First block does not exists, generating new keys")
 		// If there is no key, this is the first run and the need to create them in the working directory.
-		privateKeyPath := filepath.Join(conf.Config.PrivateDir, privateKeyFilename)
+		privateKeyPath := filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename)
 		if _, err = os.Stat(privateKeyPath); os.IsNotExist(err) {
 			log.WithFields(log.Fields{"path": privateKeyPath}).Info("private key is not exists, generating new one")
 
@@ -115,7 +108,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 					return err
 				}
 
-				err = ioutil.WriteFile(filepath.Join(conf.Config.PrivateDir, publicKeyFilename), []byte(pub), 0644)
+				err = ioutil.WriteFile(filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename), []byte(pub), 0644)
 				if err != nil {
 					logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating public key file")
 					return err
@@ -123,7 +116,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 				*conf.FirstBlockPublicKey = pub
 			}
 		}
-		nodePrivateKeyPath := filepath.Join(conf.Config.PrivateDir, nodePrivateKeyFilename)
+		nodePrivateKeyPath := filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename)
 		if _, err = os.Stat(nodePrivateKeyPath); os.IsNotExist(err) {
 			logger.WithFields(log.Fields{"path": nodePrivateKeyPath}).Info("NodePrivateKey does not exists, generating new keys")
 			if len(*conf.FirstBlockNodePublicKey) == 0 {
@@ -138,7 +131,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 					return err
 				}
 
-				err = ioutil.WriteFile(filepath.Join(conf.Config.PrivateDir, nodePublicKeyFilename), []byte(pub), 0644)
+				err = ioutil.WriteFile(filepath.Join(conf.Config.PrivateDir, consts.NodePublicKeyFilename), []byte(pub), 0644)
 				if err != nil {
 					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("creating NodePublicKey")
 					return err

@@ -30,7 +30,7 @@ func (i *Install) Create() error {
 	return DBConn.Create(i).Error
 }
 
-// InitDB drop/create model
+// InitDB drop all tables and exec db schema
 func InitDB(cfg conf.DBConfig) error {
 
 	err := GormInit(cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name)

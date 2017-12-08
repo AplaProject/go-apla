@@ -68,21 +68,36 @@ const DATA_TYPE_BLOCK_BODY = 7
 const UPD_AND_VER_URL = "http://apla.io"
 
 // AddressLength is length of address
-var AddressLength = 20
+const AddressLength = 20
 
 // PubkeySizeLength is pubkey length
-var PubkeySizeLength = 64
+const PubkeySizeLength = 64
 
 // PrivkeyLength is privkey length
-var PrivkeyLength = 32
+const PrivkeyLength = 32
 
 // BlockSize is size of block
-var BlockSize = 16
+const BlockSize = 16
 
 // TxTypes is the list of the embedded transactions
 var TxTypes = map[int]string{
 	1: "FirstBlock",
 }
 
-func init() {
-}
+// DefaultConfigFile name of config file (toml format)
+const DefaultConfigFile = "config.toml"
+
+// FirstBlockFilename name of first block binary file
+const FirstBlockFilename = "1block"
+
+// PrivateKeyFilename name of wallet private key file
+const PrivateKeyFilename = "PrivateKey"
+
+// PublicKeyFilename name of wallet public key file
+const PublicKeyFilename = "PublicKey"
+
+// NodePrivateKeyFilename name of node private key file
+const NodePrivateKeyFilename = "NodePrivateKey"
+
+// NodePublicKeyFilename name of node public key file
+const NodePublicKeyFilename = "NodePublicKey"

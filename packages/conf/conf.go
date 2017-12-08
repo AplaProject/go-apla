@@ -11,11 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	defaultConfigFile  = "config.toml"
-	firstBlockFilename = "1block"
-)
-
 // HostPort endpoint in form "str:int"
 type HostPort struct {
 	Host string // ipaddr, hostname, or "0.0.0.0"
@@ -121,7 +116,7 @@ func GetConfigPath() string {
 	if *ConfigPath != "" {
 		return *ConfigPath
 	}
-	return filepath.Join(Config.WorkDir, defaultConfigFile)
+	return filepath.Join(Config.WorkDir, consts.DefaultConfigFile)
 }
 
 // GetPidFile returns path to pid file
@@ -189,45 +184,27 @@ func OverrideFlags() {
 	flagOrEnv(&Config.DB.User, *FlagDbUser, "PGUSER")
 	flagOrEnv(&Config.DB.Password, *FlagDbPassword, "PGPASSWORD")
 
-	// tcp
-	if *FlagTCPHost != "" {
-		Config.TCPServer.Host = *FlagTCPHost
-	}
-	if *FlagTCPPort != 0 {
-		Config.TCPServer.Port = *FlagTCPPort
-	}
+	flagOrEnv(&Config.TCPServer.Host, *FlagTCPHost, "")
+	intFlagOrEnv(&Config.TCPServer.Port, *FlagTCPPort, "")
 
-	// http
-	if *FlagHTTPHost != "" {
-		Config.HTTP.Host = *FlagHTTPHost
-	}
-	if *FlagHTTPPort != 0 {
-		Config.HTTP.Port = *FlagHTTPPort
-	}
+	flagOrEnv(&Config.HTTP.Host, *FlagHTTPHost, "")
+	intFlagOrEnv(&Config.HTTP.Port, *FlagHTTPPort, "")
 
-	// cwd
-	if *FlagWorkDir != "" {
-		Config.WorkDir = *FlagWorkDir
-	}
+	flagOrEnv(&Config.LogLevel, *FlagLogLevel, "")
+	flagOrEnv(&Config.LogFileName, *FlagLogFile, "")
+
+	flagOrEnv(&Config.WorkDir, *FlagWorkDir, "")
+	flagOrEnv(&Config.PrivateDir, *FlagPrivateDir, "")
 
 	if *FlagKeyID != 0 {
 		Config.KeyID = *FlagKeyID
 	}
 
-	if *FlagPrivateDir != "" {
-		Config.PrivateDir = *FlagPrivateDir
-	} else {
+	if Config.PrivateDir != "" {
 		Config.PrivateDir = Config.WorkDir
 	}
 
-	if *FlagLogLevel != "" {
-		Config.LogLevel = *FlagLogLevel
-	}
-	if *FlagLogFile != "" {
-		Config.LogFileName = *FlagLogFile
-	}
-
 	if *FirstBlockPath == "" {
-		*FirstBlockPath = filepath.Join(Config.PrivateDir, firstBlockFilename)
+		*FirstBlockPath = filepath.Join(Config.PrivateDir, consts.FirstBlockFilename)
 	}
 }
