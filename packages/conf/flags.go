@@ -8,15 +8,15 @@ var (
 	// // // Config.toml // // //
 
 	// FlagDbName database name
-	FlagDbName = flag.String("dbName", "", "database name (default apla)")
+	FlagDbName = flag.String("dbName", "", "database name (default apla) or environment PGDATABASE")
 	// FlagDbHost database host name
-	FlagDbHost = flag.String("dbHost", "", "database host (default localhost)")
+	FlagDbHost = flag.String("dbHost", "", "database host (default localhost) or environment PGHOST")
 	// FlagDbPort database port
-	FlagDbPort = flag.Int("dbPort", 0, "database port (default 5432)")
+	FlagDbPort = flag.Int("dbPort", 0, "database port (default 5432) or environment PGPORT")
 	// FlagDbUser database user name
-	FlagDbUser = flag.String("dbUser", "", "database user")
+	FlagDbUser = flag.String("dbUser", "", "database user or environment PGUSER")
 	// FlagDbPassword database password
-	FlagDbPassword = flag.String("dbPassword", "", "database password, use PG_PASSWORD env to be more secure")
+	FlagDbPassword = flag.String("dbPassword", "", "database password, use PGPASSWORD environment to be more secure")
 
 	// FlagTCPHost daemon's host
 	FlagTCPHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
