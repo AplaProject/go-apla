@@ -127,6 +127,7 @@ func GetPidFile() string {
 // LoadConfig from configFile
 // the function has side effect updating global var Config
 func LoadConfig() error {
+	log.Info("Loading config: " + GetConfigPath())
 	_, err := toml.DecodeFile(GetConfigPath(), &Config)
 	return err
 }

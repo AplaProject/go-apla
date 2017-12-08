@@ -270,7 +270,7 @@ func Start() {
 
 	err = initLogs()
 	if err != nil {
-		fmt.Printf("logs init failed: %v\n", utils.ErrInfo(err))
+		fmt.Fprintf(os.Stderr, "logs init failed: %v\n", utils.ErrInfo(err))
 		Exit(1)
 	}
 
