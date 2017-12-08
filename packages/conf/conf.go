@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	defaultConfigFile = "config.toml"
-	firstBlocFilename = "1block"
+	defaultConfigFile  = "config.toml"
+	firstBlockFilename = "1block"
 )
 
 // HostPort endpoint in form "str:int"
@@ -65,10 +65,10 @@ type SavedConfig struct {
 	FirstLoadBlockchainURL string // ??? install -> blocks_colletcion
 	FirstLoadBlockchain    string // ??? install -> blocks_collection == 'file'
 	//
-	Daemon HostPort
-	HTTP   HostPort
-	DB     DBConfig
-	StatsD StatsDConfig
+	TCPServer HostPort
+	HTTP      HostPort
+	DB        DBConfig
+	StatsD    StatsDConfig
 	//
 	WorkDir    string // application work dir (cwd by default)
 	PrivateDir string // place for private keys files: NodePrivateKey, PrivateKey
@@ -76,8 +76,8 @@ type SavedConfig struct {
 	Centrifugo CentrifugoConfig
 }
 
-// WebInstall web UI installation mode
-var WebInstall bool
+// Installed web UI installation mode
+var Installed bool
 
 // Config - global immutable parameters
 var Config = *initialValues()
@@ -94,9 +94,9 @@ func initialValues() *SavedConfig {
 		NodeStateID:  "*",
 		StartDaemons: "",
 		//
-		Daemon: HostPort{Host: "127.0.0.1", Port: 7078},
-		HTTP:   HostPort{Host: "127.0.0.1", Port: 7079},
-		StatsD: StatsDConfig{Name: "apla", HostPort: HostPort{Host: "127.0.0.1", Port: 8125}},
+		TCPServer: HostPort{Host: "127.0.0.1", Port: 7078},
+		HTTP:      HostPort{Host: "127.0.0.1", Port: 7079},
+		StatsD:    StatsDConfig{Name: "apla", HostPort: HostPort{Host: "127.0.0.1", Port: 8125}},
 
 		DB: DBConfig{
 			Name:     "apla",
@@ -153,52 +153,48 @@ func NoConfig() bool {
 	return os.IsNotExist(err)
 }
 
-func flagOrEnv(flagValue string, envName string) string {
+func flagOrEnv(confValue *string, flagValue string, envName string) {
 	if flagValue != "" {
-		return flagValue
+		*confValue = flagValue
+		return
 	}
-	return os.Getenv("PGDATABASE")
+	if env, ok := os.LookupEnv(envName); ok {
+		*confValue = env
+	}
 }
 
-func intFlagOrEnv(flagValue int, envName string) int {
+func intFlagOrEnv(confValue *int, flagValue int, envName string) {
 	if flagValue != 0 {
-		return flagValue
+		*confValue = flagValue
+		return
 	}
-	i, err := strconv.Atoi(os.Getenv(envName))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"type":  consts.ConfigError,
-			"error": err,
-		}).Error("Incorrect value in environment: " + envName)
+	if env, ok := os.LookupEnv(envName); ok {
+		i, err := strconv.Atoi(env)
+		if err != nil {
+			log.WithFields(
+				log.Fields{"type": consts.ConfigError, "error": err},
+			).Error("Incorrect value in environment: " + envName)
+			return
+		}
+		*confValue = i
 	}
-	return i
 }
 
 // OverrideFlags override default config values by environment or args
 func OverrideFlags() {
 
-	if val := flagOrEnv(*FlagDbName, "PGDATABASE"); val != "" {
-		Config.DB.Name = val
-	}
-	if val := flagOrEnv(*FlagDbHost, "PGHOST"); val != "" {
-		Config.DB.Host = val
-	}
-	if ival := intFlagOrEnv(*FlagDbPort, "PGPORT"); ival != 0 {
-		Config.DB.Port = ival
-	}
-	if val := flagOrEnv(*FlagDbUser, "PGUSER"); val != "" {
-		Config.DB.User = val
-	}
-	if val := flagOrEnv(*FlagDbPassword, "PGPASSWORD"); val != "" {
-		Config.DB.Password = val
-	}
+	flagOrEnv(&Config.DB.Name, *FlagDbName, "PGDATABASE")
+	flagOrEnv(&Config.DB.Host, *FlagDbHost, "PGHOST")
+	intFlagOrEnv(&Config.DB.Port, *FlagDbPort, "PGPORT")
+	flagOrEnv(&Config.DB.User, *FlagDbUser, "PGUSER")
+	flagOrEnv(&Config.DB.Password, *FlagDbPassword, "PGPASSWORD")
 
 	// tcp
 	if *FlagTCPHost != "" {
-		Config.Daemon.Host = *FlagTCPHost
+		Config.TCPServer.Host = *FlagTCPHost
 	}
 	if *FlagTCPPort != 0 {
-		Config.Daemon.Port = *FlagTCPPort
+		Config.TCPServer.Port = *FlagTCPPort
 	}
 
 	// http
@@ -232,7 +228,6 @@ func OverrideFlags() {
 	}
 
 	if *FirstBlockPath == "" {
-		*FirstBlockPath = filepath.Join(Config.PrivateDir, firstBlocFilename)
+		*FirstBlockPath = filepath.Join(Config.PrivateDir, firstBlockFilename)
 	}
-
 }

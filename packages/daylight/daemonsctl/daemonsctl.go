@@ -31,7 +31,7 @@ func RunAllDaemons() error {
 		return err
 	}
 
-	err = tcpserver.TcpListener(conf.Config.Daemon.Str())
+	err = tcpserver.TcpListener(conf.Config.TCPServer.Str())
 	if err != nil {
 		log.Errorf("can't start tcp servers, stop")
 		return err

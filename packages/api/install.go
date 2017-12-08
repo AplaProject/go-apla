@@ -64,7 +64,7 @@ type installParams struct {
 
 func installCommon(data *installParams, logger *log.Entry) (err error) {
 
-	if !conf.WebInstall {
+	if conf.Installed {
 		return fmt.Errorf(`E_INSTALLED`)
 	}
 
@@ -127,7 +127,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		if _, err = os.Stat(nodePrivateKeyPath); os.IsNotExist(err) {
 			logger.WithFields(log.Fields{"path": nodePrivateKeyPath}).Info("NodePrivateKey does not exists, generating new keys")
 			if len(*conf.FirstBlockNodePublicKey) == 0 {
-				priv, pub, _ := crypto.GenHexKeys()
+				priv, pub, err := crypto.GenHexKeys()
 				if err != nil {
 					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("generating hex keys")
 				}
@@ -193,7 +193,7 @@ func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 
-	conf.WebInstall = false
+	conf.Installed = true
 	result.Success = true
 	return nil
 }

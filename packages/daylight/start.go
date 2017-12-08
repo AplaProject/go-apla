@@ -222,13 +222,14 @@ func Start() {
 	// load config file and flags
 	conf.ParseFlags()
 	if conf.NoConfig() {
-		conf.WebInstall = true
+		conf.Installed = false
 	} else {
 		// override default data
 		if err := conf.LoadConfig(); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
 			return
 		}
+		conf.Installed = true
 	}
 	conf.OverrideFlags()
 
@@ -243,23 +244,16 @@ func Start() {
 	if *conf.InitDatabase {
 		if err := model.InitDB(conf.Config.DB); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("InitDB")
-			Exit(2)
+			Exit(1)
 		}
 	}
 
-	if *conf.InitConfig {
-		if err := conf.SaveConfig(); err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("SaveConfig")
-			Exit(3)
-		}
-		conf.WebInstall = false
-	}
-
-	if !conf.WebInstall {
+	if conf.Installed {
 		if conf.Config.KeyID == 0 {
 			key, err := parser.GetKeyIDFromPublicKey()
 			if err != nil {
-				Exit(4)
+				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Unable to get KeyID")
+				Exit(1)
 			}
 			conf.Config.KeyID = key
 		}

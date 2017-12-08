@@ -172,14 +172,14 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-		if conf.WebInstall {
-			if r.URL.Path != apiInstallRoute {
-				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
+		if conf.Installed {
+			if r.URL.Path == apiInstallRoute {
+				errorAPI(w, `E_INSTALLED`, http.StatusInternalServerError)
 				return
 			}
 		} else {
-			if r.URL.Path == apiInstallRoute {
-				errorAPI(w, `E_INSTALLED`, http.StatusInternalServerError)
+			if r.URL.Path != apiInstallRoute {
+				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
 				return
 			}
 		}
