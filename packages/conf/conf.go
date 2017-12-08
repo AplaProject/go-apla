@@ -201,7 +201,7 @@ func OverrideFlags() {
 		Config.KeyID = *FlagKeyID
 	}
 
-	if Config.PrivateDir != "" {
+	if Config.PrivateDir == "" {
 		Config.PrivateDir = Config.WorkDir
 	}
 
