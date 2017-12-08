@@ -199,12 +199,4 @@ func OverrideFlags() {
 	if *FlagKeyID != 0 {
 		Config.KeyID = *FlagKeyID
 	}
-
-	if Config.PrivateDir != "" {
-		Config.PrivateDir = Config.WorkDir
-	}
-
-	if *FirstBlockPath == "" {
-		*FirstBlockPath = filepath.Join(Config.PrivateDir, consts.FirstBlockFilename)
-	}
 }

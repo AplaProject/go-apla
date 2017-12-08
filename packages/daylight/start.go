@@ -233,6 +233,14 @@ func Start() {
 	}
 	conf.OverrideFlags()
 
+	if conf.Config.PrivateDir != "" {
+		conf.Config.PrivateDir = conf.Config.WorkDir
+	}
+
+	if *conf.FirstBlockPath == "" {
+		*conf.FirstBlockPath = filepath.Join(conf.Config.PrivateDir, consts.FirstBlockFilename)
+	}
+
 	// process directives
 	if *conf.GenerateFirstBlock {
 		if err := parser.GenerateFirstBlock(); err != nil {
