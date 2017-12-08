@@ -292,6 +292,21 @@ func TestVMCompile(t *testing.T) {
 					return "OK"
 				}
 			}`, `seterr.getset`, `unknown identifier MyFunc`},
+		{
+			`func ifMap string {
+				var m map
+				if m {
+					return "empty"
+				}
+				
+				m["test"]=1
+				if m {
+					return "not empty"
+				}
+
+				return error "error"
+			}`, "ifMap", "not empty",
+		},
 	}
 	vm := NewVM()
 	vm.Extern = true

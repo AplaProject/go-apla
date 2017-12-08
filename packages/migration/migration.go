@@ -393,38 +393,52 @@ var (
 		  }
 		}
 	  }', 'ContractConditions("MainCondition")'),
-	  ('2','contract VDEFunctions {
-	  }
+	  ('2','contract VDEFunctions {}
 	  
-	  func DBFind(table string).Columns(columns string).Where(where string, params ...)
-		   .WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
-		  return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
-	  }
-	  
-	  func DBString(table, column string, id int) string {
-		  var ret array
-		  var result string
-		  
-		  ret = DBFind(table).Columns(column).WhereId(id)
-		  if Len(ret) > 0 {
-			  var vmap map
-			  vmap = ret[0]
-			  result = vmap[column]
-		  }
-		  return result
-	  }
-	  
-	  func ConditionById(table string, validate bool) {
-		  var cond string
-		  cond = DBString(table, "conditions", $Id)
-		  if !cond {
-			  error Sprintf("Item %%d has not been found", $Id)
-		  }
-		  Eval(cond)
-		  if validate {
-			  ValidateCondition($Conditions,$ecosystem_id)
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+		func DBFind(table string).Columns(columns string).Where(where string, params ...)
+			.WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
+			return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
+		}
+
+		func DBRow(table string).Columns(columns string).Where(where string, params ...)
+			.WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
+			
+			var result array
+			result = DBFind(table).Columns(columns).Where(where, params ...).WhereId(id).Order(order).Ecosystem(ecosystem)
+
+			var row map
+			if Len(result) > 0 {
+				row = result[0]
+			}
+
+			return row
+		}
+
+		func DBString(table, column string, id int) string {
+			var ret array
+			var result string
+			
+			ret = DBFind(table).Columns(column).WhereId(id)
+			if Len(ret) > 0 {
+				var vmap map
+				vmap = ret[0]
+				result = vmap[column]
+			}
+			return result
+		}
+	
+		func ConditionById(table string, validate bool) {
+			var cond string
+			cond = DBString(table, "conditions", $Id)
+			if !cond {
+				error Sprintf("Item %%d has not been found", $Id)
+			}
+			Eval(cond)
+			if validate {
+				ValidateCondition($Conditions,$ecosystem_id)
+			}
+		}
+	  ', 'ContractConditions("MainCondition")'),
 	  ('3','contract NewContract {
 		  data {
 			  Value      string
@@ -907,6 +921,20 @@ var (
 		 .WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
 		return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
 	}
+
+	func DBRow(table string).Columns(columns string).Where(where string, params ...)
+		.WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
+		
+		var result array
+		result = DBFind(table).Columns(columns).Where(where, params ...).WhereId(id).Order(order).Ecosystem(ecosystem)
+
+		var row map
+		if Len(result) > 0 {
+			row = result[0]
+		}
+
+		return row
+	}
 	
 	func DBString(table, column string, id int) string {
 		var ret array
@@ -1014,7 +1042,7 @@ var (
 			Conditions string
 		}
 		conditions {
-			$cur = DBRow("contracts", "id,value,conditions,active,wallet_id,token_id", $Id)
+			$cur = DBRow("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id)
 			if Int($cur["id"]) != $Id {
 				error Sprintf("Contract %%d does not exist", $Id)
 			}
@@ -1055,7 +1083,7 @@ var (
 			Id         int
 		}
 		conditions {
-			$cur = DBRow("contracts", "id,conditions,active,wallet_id", $Id)
+			$cur = DBRow("contracts").Columns("id,conditions,active,wallet_id").WhereId($Id)
 			if Int($cur["id"]) != $Id {
 				error Sprintf("Contract %%d does not exist", $Id)
 			}
@@ -1106,7 +1134,11 @@ var (
 		}
 		conditions {
 			ValidateCondition($Conditions, $ecosystem_id)
-			if DBIntExt("parameters", "id", $Name, "name") {
+
+			var row map
+			row = DBRow("parameters").Columns("id").Where("name = ?", $Name)
+
+			if row {
 				warning Sprintf( "Parameter %%s already exists", $Name)
 			}
 		}
@@ -1147,7 +1179,11 @@ var (
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
-			if DBIntExt("menu", "id", $Name, "name") {
+
+			var row map
+			row = DBRow("menu").Columns("id").Where("name = ?", $Name)
+
+			if row {
 				warning Sprintf( "Menu %%s already exists", $Name)
 			}
 		}
@@ -1193,7 +1229,11 @@ var (
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
-			if DBIntExt("pages", "id", $Name, "name") {
+
+			var row map
+			row = DBRow("pages").Columns("id").Where("name = ?", $Name)
+
+			if row {
 				warning Sprintf( "Page %%s already exists", $Name)
 			}
 		}
@@ -1244,9 +1284,11 @@ var (
 		}
 		conditions {
 			EvalCondition("parameters", "changing_language", "value")
-			var exist string
-			exist = DBStringExt("languages", "name", $Name, "name")
-			if exist {
+
+			var row map
+			row = DBRow("languages").Columns("id").Where("name = ?", $Name)
+			
+			if row {
 				error Sprintf("The language resource %%s already exists", $Name)
 			}
 		}
@@ -1277,8 +1319,11 @@ var (
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
 			var exist string
-			exist = DBStringExt("signatures", "name", $Name, "name")
-			if exist {
+
+			var row map
+			row = DBRow("signatures").Columns("id").Where("name = ?", $Name)
+
+			if row {
 				error Sprintf("The signature %%s already exists", $Name)
 			}
 		}
@@ -1307,7 +1352,11 @@ var (
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
-			if DBIntExt("blocks", "id", $Name, "name") {
+
+			var row map
+			row = DBRow("blocks").Columns("id").Where("name = ?", $Name)
+
+			if row {
 				warning Sprintf( "Block %%s already exists", $Name)
 			}
 		}
@@ -1456,7 +1505,7 @@ var (
 			Id         int
 		}
 		conditions {
-			$cur = DBRow("contracts", "id,conditions,active,wallet_id", $Id)
+			$cur = DBRow("contracts").Columns("id,conditions,active,wallet_id").WhereId($Id)
 			if Int($cur["id"]) != $Id {
 				error Sprintf("Contract %%d does not exist", $Id)
 			}
