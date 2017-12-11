@@ -101,6 +101,8 @@ const (
 	stateToFork   = 0x4000
 	stateLabel    = 0x8000
 	stateMustEval = 0x010000
+
+	flushMark = 0x100000
 )
 
 const (
@@ -764,21 +766,37 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 func (vm *VM) FlushBlock(root *Block) {
 	shift := len(vm.Children)
 	for key, item := range root.Objects {
-		if cur, ok := vm.Objects[key]; ok && item.Type == ObjContract {
-			root.Objects[key].Value.(*Block).Info.(*ContractInfo).ID = cur.Value.(*Block).Info.(*ContractInfo).ID + 0xFFFF
+		if cur, ok := vm.Objects[key]; ok {
+			switch item.Type {
+			case ObjContract:
+				root.Objects[key].Value.(*Block).Info.(*ContractInfo).ID = cur.Value.(*Block).Info.(*ContractInfo).ID + flushMark
+			case ObjFunc:
+				root.Objects[key].Value.(*Block).Info.(*FuncInfo).ID = cur.Value.(*Block).Info.(*FuncInfo).ID + flushMark
+				vm.Objects[key].Value = root.Objects[key].Value
+			}
 		}
 		vm.Objects[key] = item
 	}
 	for _, item := range root.Children {
-		if item.Type == ObjContract {
-			if item.Info.(*ContractInfo).ID > 0xFFFF {
-				item.Info.(*ContractInfo).ID -= 0xFFFF
+		switch item.Type {
+		case ObjContract:
+			if item.Info.(*ContractInfo).ID > flushMark {
+				item.Info.(*ContractInfo).ID -= flushMark
 				vm.Children[item.Info.(*ContractInfo).ID] = item
 				shift--
 				continue
 			}
 			item.Parent = &vm.Block
 			item.Info.(*ContractInfo).ID += uint32(shift)
+		case ObjFunc:
+			if item.Info.(*FuncInfo).ID > flushMark {
+				item.Info.(*FuncInfo).ID -= flushMark
+				vm.Children[item.Info.(*FuncInfo).ID] = item
+				shift--
+				continue
+			}
+			item.Parent = &vm.Block
+			item.Info.(*FuncInfo).ID += uint32(shift)
 		}
 		vm.Children = append(vm.Children, item)
 	}

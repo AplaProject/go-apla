@@ -113,3 +113,5 @@ daylight.pid
 
 packages/static/
 public/
+
+.vscode/

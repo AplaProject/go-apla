@@ -85,7 +85,11 @@ func GetTestValue(name string) string {
 
 // GetLogger is returning logger
 func (sc SmartContract) GetLogger() *log.Entry {
-	return log.WithFields(log.Fields{"vde": sc.VDE, "name": sc.TxContract.Name})
+	var name string
+	if sc.TxContract != nil {
+		name = sc.TxContract.Name
+	}
+	return log.WithFields(log.Fields{"vde": sc.VDE, "name": name})
 }
 
 func newVM() *script.VM {
@@ -173,6 +177,12 @@ func VMGetContract(vm *script.VM, name string, state uint32) *Contract {
 		return &Contract{Name: name, Block: obj.Value.(*script.Block)}
 	}
 	return nil
+}
+
+func VMObjectExists(vm *script.VM, name string, state uint32) bool {
+	name = script.StateName(state, name)
+	_, ok := vm.Objects[name]
+	return ok
 }
 
 func vmGetUsedContracts(vm *script.VM, name string, state uint32, full bool) []string {
@@ -307,6 +317,12 @@ func ContractsList(value string) []string {
 			list = append(list, item[1])
 		}
 	}
+	re = regexp.MustCompile(`func[\s]*([\d\w_]+)`)
+	for _, item := range re.FindAllStringSubmatch(value, -1) {
+		if len(item) > 1 && item[1] != `settings` && item[1] != `price` && item[1] != `rollback` {
+			list = append(list, item[1])
+		}
+	}
 	return list
 }
 
@@ -386,7 +402,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 		if err = vmCompile(vm, item[`value`], &owner); err != nil {
 			log.WithFields(log.Fields{"names": names, "error": err}).Error("Load VDE Contract")
 		} else {
-			log.WithFields(log.Fields{"names": names, "contract_id": item["id"]}).Info("OK Load VDE Conctract")
+			log.WithFields(log.Fields{"names": names, "contract_id": item["id"]}).Info("OK Load VDE Contract")
 		}
 	}
 
