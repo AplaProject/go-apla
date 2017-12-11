@@ -61,10 +61,6 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return fmt.Errorf(`E_INSTALLED`)
 	}
 
-	if data.logLevel != "DEBUG" {
-		data.logLevel = "ERROR"
-	}
-
 	conf.Config.LogLevel = data.logLevel
 
 	if len(data.firstLoadBlockchainURL) == 0 {
@@ -86,7 +82,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 
 	firstBlockFileName := *conf.FirstBlockPath
 	if data.firstBlockDir != "" {
-		firstBlockFileName = filepath.Join(data.firstBlockDir, "1block")
+		firstBlockFileName = filepath.Join(data.firstBlockDir, consts.FirstBlockFilename)
 	}
 	if _, err = os.Stat(firstBlockFileName); len(firstBlockFileName) > 0 && os.IsNotExist(err) {
 		logger.WithFields(log.Fields{"path": firstBlockFileName}).Info("First block does not exists, generating new keys")

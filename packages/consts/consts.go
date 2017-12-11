@@ -87,6 +87,9 @@ var TxTypes = map[int]string{
 // DefaultConfigFile name of config file (toml format)
 const DefaultConfigFile = "config.toml"
 
+// PidFilename name of pid file
+const PidFilename = "apla.pid"
+
 // FirstBlockFilename name of first block binary file
 const FirstBlockFilename = "1block"
 

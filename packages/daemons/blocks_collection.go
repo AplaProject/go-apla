@@ -264,7 +264,7 @@ func loadFirstBlock(logger *log.Entry) error {
 	newBlock, err := ioutil.ReadFile(*conf.FirstBlockPath)
 	if err != nil {
 		logger.WithFields(log.Fields{
-			"type": consts.IOError, "error": err, "file_name": *conf.FirstBlockPath,
+			"type": consts.IOError, "error": err, "path": *conf.FirstBlockPath,
 		}).Error("reading first block from file")
 	}
 

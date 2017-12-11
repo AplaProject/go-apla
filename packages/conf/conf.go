@@ -121,13 +121,13 @@ func GetConfigPath() string {
 
 // GetPidFile returns path to pid file
 func GetPidFile() string {
-	return filepath.Join(Config.WorkDir, "apla.pid")
+	return filepath.Join(Config.WorkDir, consts.PidFilename)
 }
 
 // LoadConfig from configFile
 // the function has side effect updating global var Config
 func LoadConfig() error {
-	log.Info("Loading config: " + GetConfigPath())
+	log.WithFields(log.Fields{"path": GetConfigPath()}).Info("Loading config")
 	_, err := toml.DecodeFile(GetConfigPath(), &Config)
 	return err
 }
@@ -168,7 +168,7 @@ func intFlagOrEnv(confValue *int, flagValue int, envName string) {
 		i, err := strconv.Atoi(env)
 		if err != nil {
 			log.WithFields(
-				log.Fields{"type": consts.ConfigError, "error": err},
+				log.Fields{"type": consts.ConfigError, "envName": envName, "error": err},
 			).Error("Incorrect value in environment: " + envName)
 			return
 		}

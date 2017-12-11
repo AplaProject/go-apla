@@ -21,7 +21,7 @@ var (
 	// FlagTCPHost daemon's host
 	FlagTCPHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
 	// FlagTCPPort daemins's port bind to
-	FlagTCPPort = flag.Int("tcpPort", 0, "tcpPort 7080 by default")
+	FlagTCPPort = flag.Int("tcpPort", 0, "tcpPort 7078 by default")
 
 	// FlagHTTPHost http api endpoint host
 	FlagHTTPHost = flag.String("httpHost", "", "http api bound to that host, use 0.0.0.0 to bind all addresses")
@@ -53,11 +53,11 @@ var (
 	// FirstBlockPath is a file (1block) where first block file will be stored
 	FirstBlockPath = flag.String("firstBlockPath", "", "pathname of '1block' file")
 
-	// InitConfig recreate database
+	// InitConfig initialize config
 	InitConfig = flag.Bool("initConfig", false, "write config parameters to file")
 
-	// InitDatabase recreate database
-	InitDatabase = flag.Bool("initDatabase", false, "recreate database")
+	// InitDatabase initialize database
+	InitDatabase = flag.Bool("initDatabase", false, "initialize database")
 
 	// GenerateFirstBlock force regeneration of first block
 	GenerateFirstBlock = flag.Bool("generateFirstBlock", false, "force init first block")
