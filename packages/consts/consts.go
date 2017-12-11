@@ -101,3 +101,6 @@ const NodePrivateKeyFilename = "NodePrivateKey"
 
 // NodePublicKeyFilename name of node public key file
 const NodePublicKeyFilename = "NodePublicKey"
+
+// KeyIDFilename generated KeyID
+const KeyIDFilename = "KeyID"

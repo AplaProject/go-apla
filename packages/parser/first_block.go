@@ -21,6 +21,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf"
@@ -165,8 +166,13 @@ func GenerateFirstBlock() error {
 	iAddress := int64(crypto.Address(PublicKeyBytes))
 	conf.Config.KeyID = iAddress
 
-	now := time.Now().Unix()
+	keyIDFile := filepath.Join(conf.Config.PrivateDir, consts.KeyIDFilename)
+	if err := ioutil.WriteFile(keyIDFile, []byte(strconv.FormatInt(iAddress, 10)), 0644); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing keyID file")
+		return err
+	}
 
+	now := time.Now().Unix()
 	header := &utils.BlockData{
 		BlockID:      1,
 		Time:         now,
