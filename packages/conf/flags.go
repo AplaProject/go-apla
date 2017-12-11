@@ -53,6 +53,9 @@ var (
 	// FirstBlockPath is a file (1block) where first block file will be stored
 	FirstBlockPath = flag.String("firstBlockPath", "", "pathname of '1block' file")
 
+	// InitConfig recreate database
+	InitConfig = flag.Bool("initConfig", false, "write config parameters to file")
+
 	// InitDatabase recreate database
 	InitDatabase = flag.Bool("initDatabase", false, "recreate database")
 

@@ -223,9 +223,8 @@ func Start() {
 	conf.ParseFlags()
 	if conf.NoConfig() {
 		conf.Installed = false
-		log.Info("Config file missing. Starting web install...")
+		log.Info("Config file missing.")
 	} else {
-		// override default data
 		if err := conf.LoadConfig(); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
 			return
@@ -249,6 +248,15 @@ func Start() {
 		}
 	}
 
+	if *conf.InitConfig {
+		if err := conf.SaveConfig(); err != nil {
+			log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
+			Exit(1)
+		}
+		log.Info("Config file created.")
+		conf.Installed = true
+	}
+
 	if conf.Installed {
 		if conf.Config.KeyID == 0 {
 			key, err := parser.GetKeyIDFromPrivateKey()
@@ -257,6 +265,10 @@ func Start() {
 				Exit(1)
 			}
 			conf.Config.KeyID = key
+			if err := conf.SaveConfig(); err != nil {
+				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
+				Exit(1)
+			}
 		}
 		initGorm(conf.Config.DB)
 	}
