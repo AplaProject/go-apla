@@ -327,14 +327,14 @@ func TestVDEParams(t *testing.T) {
 		return
 	}
 	input := fmt.Sprintf(`Span($%s$)+LangRes(%[1]s,fr)`, name)
-	var lret contentResult
-	err = sendPost(`content`, &url.Values{`template`: {input}, `vde`: {`true`}}, &lret)
+	var retContent contentResult
+	err = sendPost(`content`, &url.Values{`template`: {input}, `vde`: {`true`}}, &retContent)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if lret.Tree != `[{"tag":"span","children":[{"tag":"text","text":"My VDE test"}]},{"tag":"text","text":"+French VDE test"}]` {
-		t.Error(fmt.Errorf(`wrong tree %s`, lret.Tree))
+	if retContent.Tree != `[{"tag":"span","children":[{"tag":"text","text":"My VDE test"}]},{"tag":"text","text":"+French VDE test"}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, retContent.Tree))
 		return
 	}
 
