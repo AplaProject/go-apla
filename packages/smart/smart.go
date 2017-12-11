@@ -175,6 +175,12 @@ func VMGetContract(vm *script.VM, name string, state uint32) *Contract {
 	return nil
 }
 
+func VMObjectExists(vm *script.VM, name string, state uint32) bool {
+	name = script.StateName(state, name)
+	_, ok := vm.Objects[name]
+	return ok
+}
+
 func vmGetUsedContracts(vm *script.VM, name string, state uint32, full bool) []string {
 	contract := VMGetContract(vm, name, state)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Used == nil {
@@ -304,6 +310,12 @@ func ContractsList(value string) []string {
 	re := regexp.MustCompile(`contract[\s]*([\d\w_]+)[\s]*{`)
 	for _, item := range re.FindAllStringSubmatch(value, -1) {
 		if len(item) > 1 {
+			list = append(list, item[1])
+		}
+	}
+	re = regexp.MustCompile(`func[\s]*([\d\w_]+)`)
+	for _, item := range re.FindAllStringSubmatch(value, -1) {
+		if len(item) > 1 && item[1] != `settings` && item[1] != `price` && item[1] != `rollback` {
 			list = append(list, item[1])
 		}
 	}
