@@ -251,7 +251,7 @@ func Start() {
 
 	if conf.Installed {
 		if conf.Config.KeyID == 0 {
-			key, err := parser.GetKeyIDFromPublicKey()
+			key, err := parser.GetKeyIDFromPrivateKey()
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Unable to get KeyID")
 				Exit(1)

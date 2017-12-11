@@ -143,7 +143,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 	}
 
 	if conf.Config.KeyID == 0 {
-		key, err := parser.GetKeyIDFromPublicKey()
+		key, err := parser.GetKeyIDFromPrivateKey()
 		if err != nil {
 			return err
 		}

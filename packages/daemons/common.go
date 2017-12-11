@@ -59,7 +59,6 @@ var daemonsList = map[string]func(context.Context, *daemon) error{
 
 var serverList = []string{
 	"BlocksCollection",
-	"CreatingBlockchain",
 	"BlockGenerator",
 	"QueueParserTx",
 	"QueueParserBlocks",

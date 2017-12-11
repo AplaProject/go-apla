@@ -227,14 +227,3 @@ func GetKeyIDFromPrivateKey() (int64, error) {
 
 	return crypto.Address(key), nil
 }
-
-// GetKeyIDFromPublicKey load KeyID fron PublicKey file
-func GetKeyIDFromPublicKey() (int64, error) {
-
-	key, err := ioutil.ReadFile(filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading public key file")
-		return 0, err
-	}
-	return crypto.Address(key), nil
-}
