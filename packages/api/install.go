@@ -77,6 +77,9 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 	conf.Config.DB.Password = data.dbPassword
 
 	if err := model.InitDB(conf.Config.DB); err != nil {
+		if err == model.ErrDBConn {
+			return fmt.Errorf(`E_DBNIL`)
+		}
 		return err
 	}
 

@@ -25,6 +25,9 @@ var (
 
 	// ErrRecordNotFound is Not Found Record wrapper
 	ErrRecordNotFound = gorm.ErrRecordNotFound
+
+	// ErrDBConn database connection error
+	ErrDBConn = errors.New("Database connection error")
 )
 
 func isFound(db *gorm.DB) (bool, error) {
@@ -403,4 +406,30 @@ func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) 
 		return 0, err
 	}
 	return result, nil
+}
+
+// InitDB drop all tables and exec db schema
+func InitDB(cfg conf.DBConfig) error {
+
+	err := GormInit(cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name)
+	if err != nil || DBConn == nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("initializing DB")
+		return ErrDBConn
+	}
+	if err = DropTables(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping all tables")
+		return err
+	}
+	if err = ExecSchema(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing db schema")
+		return err
+	}
+
+	install := &Install{Progress: ProgressComplete}
+	if err = install.Create(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating install")
+		return err
+	}
+
+	return nil
 }
