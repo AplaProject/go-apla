@@ -35,7 +35,7 @@ var (
 )
 
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
-	table string, whereFields, whereValues []string, generalRollback bool, ifexist bool) (int64, string, error) {
+	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
 	var (
 		tableID string
 		err     error
@@ -108,7 +108,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, tableID, err
 	}
 	cost += selectCost
-	if ifexist && len(logData) == 0 {
+	if exists && len(logData) == 0 {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "query": selectQuery}).Error("updating for not existing record")
 		return 0, tableID, errUpdNotExistRecord
 	}
