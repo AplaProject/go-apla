@@ -412,53 +412,59 @@ var (
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('4','contract EditContract {
-		  data {
-			  Id         int
-			  Value      string
-			  Conditions string
-			  WalletId   string
-		  }
-		  conditions {
-			  var row array
-			  row = DBFind("contracts").Columns("id,value,conditions").WhereId($Id)
-			  if !Len(row) {
-				  error Sprintf("Contract %%d does not exist", $Id)
-			  }
-			  $cur = row[0]
-			  Eval($cur["conditions"])
-			  ValidateCondition($Conditions,$ecosystem_id)
-			  var list, curlist array
-			  list = ContractsList($Value)
-			  curlist = ContractsList($cur["value"])
-			  if Len(list) != Len(curlist) {
-				  error "Contracts cannot be removed or inserted"
-			  }
-			  var i int
-			  while i < Len(list) {
-				  var j int
-				  var ok bool
-				  while j < Len(curlist) {
-					  if curlist[j] == list[i] {
-						  ok = true
-						  break
-					  }
-					  j = j + 1 
-				  }
-				  if !ok {
-					  error "Contracts names cannot be changed"
-				  }
-				  i = i + 1
-			  }
-			  if Int($cur["wallet_id"]) != 0 && Int($cur["active"]) == 1 {
-			  	  error "Contract must be deactivated before wallet changing"
-			  }
-		  }
-		  action {
-			  var root int
-			  root = CompileContract($Value, $ecosystem_id, 0, 0)
-			  DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $WalletId)
-			  FlushContract(root, $Id, false)
-		  }
+		  	data {
+			Id         int
+			Value      string
+			Conditions string
+			WalletId   string "optional"
+		}
+		conditions {
+			$cur = DBRow("contracts", "id,value,conditions,active,wallet_id,token_id", $Id)
+			if Int($cur["id"]) != $Id {
+				error Sprintf("Contract %%d does not exist", $Id)
+			}
+			Eval($cur["conditions"])
+			ValidateCondition($Conditions,$ecosystem_id)
+			var list, curlist array
+			list = ContractsList($Value)
+			curlist = ContractsList($cur["value"])
+			if Len(list) != Len(curlist) {
+				error "Contracts cannot be removed or inserted"
+			}
+			var i int
+			while i < Len(list) {
+				var j int
+				var ok bool
+				while j < Len(curlist) {
+					if curlist[j] == list[i] {
+						ok = true
+						break
+					}
+					j = j + 1
+				}
+				if !ok {
+					error "Contracts names cannot be changed"
+				}
+				i = i + 1
+			}
+			if $WalletId != "" {
+				$recipient = AddressToId($WalletId)
+				if $recipient == 0 {
+					error Sprintf("New contract owner %%s is invalid", $Recipient)
+				}
+				if Int($cur["active"]) == 1 {
+					error "Contract must be deactivated before wallet changing"
+				}
+			} else {
+				$recipient = $WalletId
+			}
+		}
+		action {
+			var root int
+			root = CompileContract($Value, $ecosystem_id, Int($cur["wallet_id"]), Int($cur["token_id"]))
+			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
+			FlushContract(root, $Id, Int($cur["active"]) == 1)
+		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('5','contract NewParameter {
 		  data {
@@ -977,7 +983,7 @@ var (
 			Id         int
 			Value      string
 			Conditions string
-			WalletId   string
+			WalletId   string "optional"
 		}
 		conditions {
 			$cur = DBRow("contracts", "id,value,conditions,active,wallet_id,token_id", $Id)
@@ -1008,14 +1014,22 @@ var (
 				}
 				i = i + 1
 			}
-			if Int($cur["wallet_id"]) != 0 && Int($cur["active"]) == 1 {
-				error "Contract must be deactivated before wallet changing"
+			if $WalletId != "" {
+				$recipient = AddressToId($WalletId)
+				if $recipient == 0 {
+					error Sprintf("New contract owner %%s is invalid", $Recipient)
+				}
+				if Int($cur["active"]) == 1 {
+					error "Contract must be deactivated before wallet changing"
+				}
+			} else {
+				$recipient = $WalletId
 			}
 		}
 		action {
 			var root int
 			root = CompileContract($Value, $ecosystem_id, Int($cur["wallet_id"]), Int($cur["token_id"]))
-			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $WalletId)
+			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
 			FlushContract(root, $Id, Int($cur["active"]) == 1)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),

@@ -622,7 +622,7 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 	code := row.Value[`value`]
 	off := strings.IndexByte(code, '-')
 	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
-	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"01231234123412341234"}}
+	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"1248-5499-7861-4204-5166"}}
 	err = postTx(`EditContract`, &form)
 	if err == nil {
 		t.Error("Expected `Contract activated` error")
