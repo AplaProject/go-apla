@@ -396,7 +396,8 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 	if reflect.TypeOf(val[0]) == reflect.TypeOf([]interface{}{}) {
 		val = val[0].([]interface{})
 	}
-	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, !sc.VDE)
+	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil,
+		nil, !sc.VDE, false)
 	if ind > 0 {
 		qcost *= int64(ind)
 	}
@@ -487,7 +488,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	if err = sc.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE, false)
 	return
 }
 
@@ -567,7 +568,7 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
-		getDefTableName(sc, `tables`), []string{`name`}, []string{name}, !sc.VDE)
+		getDefTableName(sc, `tables`), []string{`name`}, []string{name}, !sc.VDE, false)
 	return err
 }
 
@@ -834,7 +835,7 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, inde
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
-		tables, []string{`name`}, []string{tableName}, !sc.VDE)
+		tables, []string{`name`}, []string{tableName}, !sc.VDE, false)
 	if err != nil {
 		return err
 	}
@@ -872,7 +873,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
-		tables, []string{`name`}, []string{tableName}, !sc.VDE)
+		tables, []string{`name`}, []string{tableName}, !sc.VDE, false)
 	return err
 }
 
