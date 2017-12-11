@@ -85,7 +85,11 @@ func GetTestValue(name string) string {
 
 // GetLogger is returning logger
 func (sc SmartContract) GetLogger() *log.Entry {
-	return log.WithFields(log.Fields{"vde": sc.VDE, "name": sc.TxContract.Name})
+	var name string
+	if sc.TxContract != nil {
+		name = sc.TxContract.Name
+	}
+	return log.WithFields(log.Fields{"vde": sc.VDE, "name": name})
 }
 
 func newVM() *script.VM {
@@ -398,7 +402,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 		if err = vmCompile(vm, item[`value`], &owner); err != nil {
 			log.WithFields(log.Fields{"names": names, "error": err}).Error("Load VDE Contract")
 		} else {
-			log.WithFields(log.Fields{"names": names, "contract_id": item["id"]}).Info("OK Load VDE Conctract")
+			log.WithFields(log.Fields{"names": names, "contract_id": item["id"]}).Info("OK Load VDE Contract")
 		}
 	}
 
