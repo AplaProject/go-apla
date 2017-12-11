@@ -346,6 +346,84 @@ func TestVDEParams(t *testing.T) {
 	}
 }
 
+var vdeimp = `{
+    "pages": [
+        {
+            "Name": "imp_page2",
+            "Conditions": "true",
+            "Menu": "imp",
+            "Value": "imp"
+        }
+    ],
+    "blocks": [
+        {
+            "Name": "imp2",
+            "Conditions": "true",
+            "Value": "imp"
+        }
+    ],
+    "menus": [
+        {
+            "Name": "imp2",
+            "Conditions": "true",
+            "Value": "imp"
+        }
+    ],
+    "parameters": [
+        {
+            "Name": "founder_account2",
+            "Value": "-6457397116804798941",
+            "Conditions": "ContractConditions(\"MainCondition\")"
+        },
+        {
+            "Name": "test_pa2",
+            "Value": "1",
+            "Conditions": "true"
+        }
+    ],
+    "languages": [
+        {
+            "Name": "est2",
+            "Trans": "{\"en\":\"yeye\",\"te\":\"knfek\"}"
+        }
+    ],
+    "contracts": [
+        {
+            "Name": "testCont2",
+            "Value": "contract testCont2 {\n    data {\n\n    }\n\n    conditions {\n\n    }\n\n    action {\n        $result=\"privet\"\n    }\n}",
+            "Conditions": "true"
+        }
+    ],
+    "tables": [
+        {
+            "Name": "tests2",
+            "Columns": "[{\"name\":\"name\",\"type\":\"text\",\"conditions\":\"true\"}]",
+            "Permissions": "{\"insert\":\"true\",\"update\":\"true\",\"new_column\":\"true\"}"
+        }
+    ],
+    "data": [
+        {
+            "Table": "tests2",
+            "Columns": [
+                "name"
+            ],
+            "Data": []
+        }
+    ]
+}`
+
+func TestVDEImport(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	err := postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {vdeimp}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
 func TestHTTPRequest(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)

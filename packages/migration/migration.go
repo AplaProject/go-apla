@@ -715,6 +715,7 @@ var (
 			var list array
 			var tblname, columns string
 			idata = row[i]
+			i = i + 1
 			tblname = idata["Table"]
 			columns = Join(idata["Columns"], ",")
 			list = idata["Data"] 
@@ -728,7 +729,6 @@ var (
 				DBInsert(tblname, columns, ilist)
 				j=j+1
 			}
-			i = i + 1
 		}
 	}
 	
@@ -1465,6 +1465,7 @@ var (
 			var list array
 			var tblname, columns string
 			idata = row[i]
+			i = i + 1
 			tblname = idata["Table"]
 			columns = Join(idata["Columns"], ",")
 			list = idata["Data"] 
@@ -1478,7 +1479,6 @@ var (
 				DBInsert(tblname, columns, ilist)
 				j=j+1
 			}
-			i = i + 1
 		}
 	}
 	
