@@ -38,8 +38,7 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	if data.token == nil || !data.token.Valid {
 		if data.token == nil {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("token is nil")
-		}
-		if !data.token.Valid {
+		} else if !data.token.Valid {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("token is invalid")
 		}
 		return errorAPI(w, `E_TOKEN`, http.StatusBadRequest)
