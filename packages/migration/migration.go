@@ -147,16 +147,13 @@ var (
 		('52','extend_cost_activate', '10', 'true'),
 		('53','extend_cost_deactivate', '10', 'true'),
 		('54','extend_cost_create_ecosystem', '100', 'true'),
-		('55','extend_cost_rollback_ecosystem', '100', 'true'),
-		('56','extend_cost_table_conditions', '100', 'true'),
-		('57','extend_cost_create_table', '100', 'true'),
-		('58','extend_cost_rollback_table', '100', 'true'),
-		('59','extend_cost_perm_table', '100', 'true'),
-		('60','extend_cost_column_condition', '50', 'true'),
-		('61','extend_cost_create_column', '50', 'true'),
-		('62','extend_cost_rollback_column', '50', 'true'),
-		('63','extend_cost_perm_column', '50', 'true'),
-		('64','extend_cost_json_to_map', '50', 'true');
+		('55','extend_cost_table_conditions', '100', 'true'),
+		('56','extend_cost_create_table', '100', 'true'),
+		('57','extend_cost_perm_table', '100', 'true'),
+		('58','extend_cost_column_condition', '50', 'true'),
+		('59','extend_cost_create_column', '50', 'true'),
+		('60','extend_cost_perm_column', '50', 'true'),
+		('61','extend_cost_json_to_map', '50', 'true');
 		
 		CREATE TABLE "system_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
