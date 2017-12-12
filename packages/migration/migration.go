@@ -1115,7 +1115,7 @@ var (
 		}
 		conditions {
 			$cur = DBRow("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id)
-			if Int($cur["id"]) != $Id {
+			if !$cur {
 				error Sprintf("Contract %%d does not exist", $Id)
 			}
 			Eval($cur["conditions"])
@@ -1152,11 +1152,11 @@ var (
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('6','contract ActivateContract {
 		data {
-			Id         int
+			Id  int
 		}
 		conditions {
 			$cur = DBRow("contracts").Columns("id,conditions,active,wallet_id").WhereId($Id)
-			if Int($cur["id"]) != $Id {
+			if !$cur {
 				error Sprintf("Contract %%d does not exist", $Id)
 			}
 			if Int($cur["active"]) == 1 {
@@ -1589,7 +1589,7 @@ var (
 		}
 		conditions {
 			$cur = DBRow("contracts").Columns("id,conditions,active,wallet_id").WhereId($Id)
-			if Int($cur["id"]) != $Id {
+			if !$cur {
 				error Sprintf("Contract %%d does not exist", $Id)
 			}
 			if Int($cur["active"]) == 0 {
