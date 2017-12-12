@@ -18,7 +18,6 @@ package daemons
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"strings"
 	"time"
@@ -41,10 +40,6 @@ type daemon struct {
 	goRoutineName string
 	sleepTime     time.Duration
 	logger        *log.Entry
-}
-
-func init() {
-	flag.Parse()
 }
 
 var daemonsList = map[string]func(context.Context, *daemon) error{

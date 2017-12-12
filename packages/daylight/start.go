@@ -219,19 +219,20 @@ func Start() {
 		}
 	}
 
-	// load config file and flags
-	conf.ParseFlags()
+	conf.InitConfigFlags()
 	if conf.NoConfig() {
 		conf.Installed = false
 		log.Info("Config file missing.")
 	} else {
-		if err := conf.LoadConfig(); err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
-			return
+		if !*conf.InitConfig {
+			if err := conf.LoadConfig(); err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
+				return
+			}
+			conf.Installed = true
 		}
-		conf.Installed = true
 	}
-	conf.OverrideFlags()
+	conf.SetConfigParams()
 
 	// process directives
 	if *conf.GenerateFirstBlock {

@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"reflect"
@@ -106,10 +105,6 @@ func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 		}
 	}
 	return 0, nil
-}
-
-func init() {
-	flag.Parse()
 }
 
 // ParserInterface is parsing transactions
