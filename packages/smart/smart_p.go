@@ -642,6 +642,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 		return err
 	}
 	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("system states roollback")
 		// if there is not such hash then NewEcosystem was faulty. Do nothing.
 		return nil
 	}
@@ -711,6 +712,7 @@ func RollbackTable(sc *SmartContract, name string) error {
 		return err
 	}
 	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("table roollback")
 		// if there is not such hash then NewTable was faulty. Do nothing.
 		return nil
 	}
@@ -757,6 +759,7 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 		return err
 	}
 	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("column roollback")
 		// if there is not such hash then NewColumn was faulty. Do nothing.
 		return nil
 	}
