@@ -413,27 +413,16 @@ var (
 
 			return row
 		}
-
-		func DBString(table, column string, id int) string {
-			var ret array
-			var result string
-			
-			ret = DBFind(table).Columns(column).WhereId(id)
-			if Len(ret) > 0 {
-				var vmap map
-				vmap = ret[0]
-				result = vmap[column]
-			}
-			return result
-		}
 	
 		func ConditionById(table string, validate bool) {
-			var cond string
-			cond = DBString(table, "conditions", $Id)
-			if !cond {
+			var row map
+			row = DBFind(table).Columns("conditions").WhereId($Id)
+			if !row["conditions"] {
 				error Sprintf("Item %%d has not been found", $Id)
 			}
-			Eval(cond)
+
+			Eval(row["conditions"])
+			
 			if validate {
 				ValidateCondition($Conditions,$ecosystem_id)
 			}
@@ -574,16 +563,18 @@ var (
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('9','contract AppendMenu {
-		  data {
-			  Id     int
-			  Value      string
-		  }
-		  conditions {
-			  ConditionById("menu", false)
-		  }
-		  action {
-			  DBUpdate("menu", $Id, "value", DBString("menu", "value", $Id) + "\r\n" + $Value )
-		  }
+		data {
+			Id     int
+			Value  string
+		}
+		conditions {
+			ConditionById("menu", false)
+		}
+		action {
+			var row map
+			row = DBRow("menu").Columns("value").WhereId($Id)
+			DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
+		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('10','contract NewPage {
 		  data {
@@ -627,7 +618,9 @@ var (
 			  ConditionById("pages", false)
 		  }
 		  action {
-			  DBUpdate("pages", $Id, "value",  DBString("pages", "value", $Id) + "\r\n" + $Value )
+			  var row map
+			  row = DBRow("pages").Columns("value").WhereId($Id)
+			  DBUpdate("pages", $Id, "value", row["value"] + "\r\n" + $Value)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('13','contract NewBlock {
@@ -936,26 +929,15 @@ var (
 		return row
 	}
 	
-	func DBString(table, column string, id int) string {
-		var ret array
-		var result string
-		
-		ret = DBFind(table).Columns(column).WhereId(id)
-		if Len(ret) > 0 {
-			var vmap map
-			vmap = ret[0]
-			result = vmap[column]
-		}
-		return result
-	}
-	
 	func ConditionById(table string, validate bool) {
-		var cond string
-		cond = DBString(table, "conditions", $Id)
-		if !cond {
+		var row map
+		row = DBRow(table).Columns("conditions").WhereId($Id)
+		if !row["conditions"] {
 			error Sprintf("Item %%d has not been found", $Id)
 		}
-		Eval(cond)
+
+		Eval(row["conditions"])
+		
 		if validate {
 			ValidateCondition($Conditions,$ecosystem_id)
 		}
@@ -978,7 +960,9 @@ var (
 			if $amount == 0 {
 				error "Amount is zero"
 			}
-			total = Money(DBString("keys", "amount", $key_id))
+			var row map
+			row = DBRow("keys").Columns("amount").WhereId($key_id)
+			total = Money(row["amount"])
 			if $amount >= total {
 				error Sprintf("Money is not enough %%v < %%v",total, $amount)
 			}
@@ -1116,7 +1100,10 @@ var (
 				  SysParamString("default_ecosystem_page"), "default_menu", "ContractConditions(\"MainCondition\")")
 			DBInsert(Str(id) + "_menu", "name,value,title,conditions", "default_menu", 
 				  SysParamString("default_ecosystem_menu"), "default", "ContractConditions(\"MainCondition\")")
-			DBInsert(Str(id) + "_keys", "id,pub", $key_id, DBString("1_keys", "pub", $key_id))
+			
+			var row map
+			row = DBRow("1_keys").Columns("pub").WhereId($key_id)
+			DBInsert(Str(id) + "_keys", "id,pub", $key_id, row["pub"])
 			$result = id
 		}
 		func price() int {
@@ -1156,7 +1143,9 @@ var (
 			ConditionById("parameters", true)
 			ValidateCondition($Conditions, $ecosystem_id)
 			var exist int
-			if DBString("parameters", "name", $Id) == "ecosystem_name" {
+			var row map
+			row = DBRow("parameters").Columns("name").WhereId($Id)
+			if row["name"] == "ecosystem_name" {
 				exist = FindEcosystem($Value)
 				if exist > 0 && exist != $ecosystem_id {
 					warning Sprintf("Ecosystem %%s already exists", $Value)
@@ -1165,7 +1154,9 @@ var (
 		}
 		action {
 			DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
-            if DBString("parameters", "name", $Id) == "ecosystem_name" {
+			var row map
+			row = DBRow("parameters").Columns("name").WhereId($Id)
+			if row["name"] == "ecosystem_name" {
 				DBUpdate("system_states", $ecosystem_id, "name", $Value)
 			}
 		}
@@ -1217,7 +1208,9 @@ var (
 			ConditionById("menu", false)
 		}
 		action {
-			DBUpdate("menu", $Id, "value", DBString("menu", "value", $Id) + "\r\n" + $Value )
+			var row map
+			row = DBRow("menu").Columns("value").WhereId($Id)
+			DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('13','contract NewPage {
@@ -1268,9 +1261,11 @@ var (
 		}
 		action {
 			var value string
-			value = DBString("pages", "value", $Id)
-			   if Contains(value, "PageEnd:") {
-			   value = Replace(value, "PageEnd:", $Value) + "\r\nPageEnd:"
+			var row map
+			row = DBRow("pages").Columns("value").WhereId($Id)
+			value = row["value"]
+			if Contains(value, "PageEnd:") {
+				value = Replace(value, "PageEnd:", $Value) + "\r\nPageEnd:"
 			} else {
 				value = value + "\r\n" + $Value
 			}

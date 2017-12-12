@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
@@ -39,14 +38,12 @@ import (
 
 var (
 	funcCallsDBP = map[string]struct{}{
-		"DBInsert":       {},
-		"DBUpdate":       {},
+		"DBInsert":         {},
+		"DBUpdate":         {},
 		"DBUpdateSysParam": {},
-		"DBUpdateExt":    {},
-		"DBSelect":       {},
-		"DBAmount":       {},
-		"DBInsertReport": {},
-		"FindEcosystem":  {},
+		"DBUpdateExt":      {},
+		"DBSelect":         {},
+		"FindEcosystem":    {},
 	}
 
 	extendCostSysParams = map[string]string{
@@ -108,12 +105,11 @@ func init() {
 	Extend(&script.ExtendData{Objects: map[string]interface{}{
 		"DBInsert":           DBInsert,
 		"DBUpdate":           DBUpdate,
-		"DBUpdateSysParam": UpdateSysParam,
+		"DBUpdateSysParam":   UpdateSysParam,
 		"DBUpdateExt":        DBUpdateExt,
 		"DBSelect":           DBSelect,
 		"AddressToId":        AddressToID,
 		"IdToAddress":        IDToAddress,
-		"DBAmount":           DBAmount,
 		"ContractAccess":     ContractAccess,
 		"ContractConditions": ContractConditions,
 		"EcosysParam":        EcosysParam,
@@ -130,7 +126,6 @@ func init() {
 		"PubToID":            PubToID,
 		"HexToBytes":         HexToBytes,
 		"LangRes":            LangRes,
-		"DBInsertReport":     DBInsertReport,
 		"ValidateCondition":  ValidateCondition,
 		"EvalCondition":      EvalCondition,
 		"HasPrefix":          strings.HasPrefix,
@@ -253,23 +248,6 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	return
 }
 
-// DBAmount returns the value of the 'amount' column for the record with the 'id' value in the 'column' column
-func DBAmount(sc *SmartContract, tblname, column string, id int64) (int64, decimal.Decimal) {
-
-	tblname = getDefTableName(sc, tblname)
-
-	balance, err := model.Single("SELECT amount FROM "+converter.EscapeName(tblname)+" WHERE "+converter.EscapeName(column)+" = ?", id).String()
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("executing single query")
-		return 0, decimal.New(0, 0)
-	}
-	val, err := decimal.NewFromString(balance)
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.ConversionError}).Error("converting balance from string to decimal")
-	}
-	return 0, val
-}
-
 // SysParamString returns the value of the system parameter
 func SysParamString(name string) string {
 	return syspar.SysString(name)
@@ -362,29 +340,6 @@ func HexToBytes(hexdata string) ([]byte, error) {
 func LangRes(sc *SmartContract, idRes, lang string) string {
 	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang)
 	return ret
-}
-
-// DBInsertReport inserts a record into the specified report table
-func DBInsertReport(sc *SmartContract, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
-	names := strings.Split(getDefTableName(sc, tblname), `_`)
-	state := converter.StrToInt64(names[0])
-	if state != int64(sc.TxSmart.EcosystemID) {
-		err = fmt.Errorf(`Wrong state in DBInsertReport`)
-		return
-	}
-	if !model.IsNodeState(state, ``) {
-		return
-	}
-	tblname = names[0] + `_reports_` + strings.Join(names[1:], `_`)
-	if err = sc.AccessTable(tblname, "insert"); err != nil {
-		return
-	}
-	var lastID string
-	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, !sc.VDE)
-	if err == nil {
-		ret, _ = strconv.ParseInt(lastID, 10, 64)
-	}
-	return
 }
 
 // EvalCondition gets the condition and check it
