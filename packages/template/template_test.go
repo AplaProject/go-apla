@@ -44,9 +44,9 @@ var forTest = tplList{
 		2,second
 		3,third
 	).Custom("synthetic"){
-		Div(text-muted, TESTING)
+		Div(text-muted, #name#)
 	}
-	Table(Source: mysrc)`, `[{"tag":"data","attr":{"columns":["id","name","synthetic"],"data":[["1","first","\"Div(text-muted, TESTING)\""],["2","second","\"Div(text-muted, TESTING)\""],["3","third","\"Div(text-muted, TESTING)\""]],"source":"mysrc","types":["text","text","tags"]}},{"tag":"table","attr":{"source":"mysrc"}}]`},
+	Table(Source: mysrc)`, `[{"tag":"data","attr":{"columns":["id","name","synthetic"],"data":[["1","first","[{\"tag\":\"div\",\"attr\":{\"class\":\"text-muted\"},\"children\":[{\"tag\":\"text\",\"text\":\"first\"}]}]"],["2","second","[{\"tag\":\"div\",\"attr\":{\"class\":\"text-muted\"},\"children\":[{\"tag\":\"text\",\"text\":\"second\"}]}]"],["3","third","[{\"tag\":\"div\",\"attr\":{\"class\":\"text-muted\"},\"children\":[{\"tag\":\"text\",\"text\":\"third\"}]}]"]],"source":"mysrc","types":["text","text","tags"]}},{"tag":"table","attr":{"source":"mysrc"}}]`},
 	{`Data(myforlist,"id,name",
 		"1",Test message 1
 		2,"Test message 2"

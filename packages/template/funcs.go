@@ -335,9 +335,12 @@ func dataTag(par parFunc) string {
 				}
 				vals[icol] = ival
 			} else {
-				out, err := json.Marshal(par.Node.Attr[`custombody`].([]string)[i-defcol])
+				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
+				root := node{}
+				process(body, &root, par.Workspace)
+				out, err := json.Marshal(root.Children)
 				if err == nil {
-					ival = replace(string(out), 0, &vals)
+					ival = string(out)
 				} else {
 					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling custombody to JSON")
 				}
