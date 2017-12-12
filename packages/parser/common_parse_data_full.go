@@ -153,24 +153,6 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte) (*Block, error) {
 	return block, nil
 }
 
-func getAllTables() (map[string]string, error) {
-	allTables, err := model.GetAllTables()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all tables")
-		return nil, utils.ErrInfo(err)
-	}
-	AllPkeys := make(map[string]string)
-	for _, table := range allTables {
-		col, err := model.GetFirstColumnName(table)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table first column name")
-			return nil, utils.ErrInfo(err)
-		}
-		AllPkeys[table] = col
-	}
-	return AllPkeys, nil
-}
-
 func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 	header, err := ParseBlockHeader(blockBuffer)
 	if err != nil {
@@ -179,10 +161,6 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 
 	logger := log.WithFields(log.Fields{"block_id": header.BlockID, "block_time": header.Time, "block_wallet_id": header.KeyID,
 		"block_state_id": header.EcosystemID, "block_hash": header.Hash, "block_version": header.Version})
-	allKeys, err := getAllTables()
-	if err != nil {
-		return nil, err
-	}
 	parsers := make([]*Parser, 0)
 
 	var mrklSlice [][]byte
@@ -213,7 +191,6 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 			return nil, fmt.Errorf("parse transaction error(%s)", err)
 		}
 		p.BlockData = &header
-		p.AllPkeys = allKeys
 
 		parsers = append(parsers, p)
 

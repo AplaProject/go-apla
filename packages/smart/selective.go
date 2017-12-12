@@ -19,6 +19,7 @@ package smart
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -29,8 +30,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	errUpdNotExistRecord = errors.New(`Update for not existing record`)
+)
+
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
-	table string, whereFields, whereValues []string, generalRollback bool) (int64, string, error) {
+	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
 	var (
 		tableID string
 		err     error
@@ -103,7 +108,10 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, tableID, err
 	}
 	cost += selectCost
-
+	if exists && len(logData) == 0 {
+		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "query": selectQuery}).Error("updating for not existing record")
+		return 0, tableID, errUpdNotExistRecord
+	}
 	if whereFields != nil && len(logData) > 0 {
 		jsonMap := make(map[string]string)
 		for k, v := range logData {

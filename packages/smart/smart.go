@@ -179,6 +179,12 @@ func VMGetContract(vm *script.VM, name string, state uint32) *Contract {
 	return nil
 }
 
+func VMObjectExists(vm *script.VM, name string, state uint32) bool {
+	name = script.StateName(state, name)
+	_, ok := vm.Objects[name]
+	return ok
+}
+
 func vmGetUsedContracts(vm *script.VM, name string, state uint32, full bool) []string {
 	contract := VMGetContract(vm, name, state)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Used == nil {
@@ -308,6 +314,12 @@ func ContractsList(value string) []string {
 	re := regexp.MustCompile(`contract[\s]*([\d\w_]+)[\s]*{`)
 	for _, item := range re.FindAllStringSubmatch(value, -1) {
 		if len(item) > 1 {
+			list = append(list, item[1])
+		}
+	}
+	re = regexp.MustCompile(`func[\s]*([\d\w_]+)`)
+	for _, item := range re.FindAllStringSubmatch(value, -1) {
+		if len(item) > 1 && item[1] != `settings` && item[1] != `price` && item[1] != `rollback` {
 			list = append(list, item[1])
 		}
 	}
@@ -795,17 +807,22 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
 		walletTable := fmt.Sprintf(`%d_keys`, sc.TxSmart.TokenEcosystem)
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(fromID)}, true); ierr != nil {
-			return retError(ierr)
-		}
-		// TODO: add checking for key_id "toID". If key not exists it led to fork
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(toID)}, true); ierr != nil {
-			return retError(ierr)
+			[]string{converter.Int64ToStr(toID)}, true, true); ierr != nil {
+			if ierr != errUpdNotExistRecord {
+				return retError(ierr)
+			}
+			apl = commission
 		}
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
-			[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true); ierr != nil {
+			[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true, true); ierr != nil {
+			if ierr != errUpdNotExistRecord {
+				return retError(ierr)
+			}
+			apl = apl.Sub(commission)
+		}
+		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
+			[]string{converter.Int64ToStr(fromID)}, true, true); ierr != nil {
 			return retError(ierr)
 		}
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")

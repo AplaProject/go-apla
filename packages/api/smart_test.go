@@ -158,7 +158,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 	err = postTx(`NewBlock`, &form)
-	if cutErr(err) != fmt.Sprintf(`{"type":"warning","error":"Block %s already exists"}`, name) {
+	if err.Error() != fmt.Sprintf(`{"type":"warning","error":"Block %s already exists"}`, name) {
 		t.Error(err)
 		return
 	}
@@ -227,6 +227,19 @@ func TestNewTable(t *testing.T) {
 	form = url.Values{"TableName": {name}, "Name": {`newCol`},
 		"Permissions": {"ContractConditions(\"MainCondition\")"}}
 	err = postTx(`EditColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestUpdateSysParam(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	form := url.Values{"Name": {`max_columns`}, "Value": {`49`}}
+	err := postTx(`UpdateSysParam`, &form)
 	if err != nil {
 		t.Error(err)
 		return
