@@ -1,8 +1,9 @@
-package structs
+package crypto
 
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/sha256"
 	"fmt"
 	"math/big"
@@ -16,6 +17,29 @@ type Binary struct {
 	Sign       []byte
 	Name       string
 	StartBlock int64
+}
+
+func (b *Binary) MakeSign(private []byte) error {
+	var pubkeyCurve elliptic.Curve
+
+	pubkeyCurve = elliptic.P256()
+
+	bi := new(big.Int).SetBytes(private)
+	priv := new(ecdsa.PrivateKey)
+	priv.PublicKey.Curve = pubkeyCurve
+	priv.D = bi
+
+	data := b.Body
+	data = append(data, []byte(b.Date.String())...)
+	data = append(data, []byte(b.Version)...)
+
+	signhash := sha256.Sum256(data)
+	r, s, err := ecdsa.Sign(rand.Reader, priv, signhash[:])
+	if err != nil {
+		return err
+	}
+	b.Sign = append(r.Bytes(), s.Bytes()...)
+	return nil
 }
 
 func (b *Binary) CheckSign(public []byte) (bool, error) {

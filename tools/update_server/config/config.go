@@ -1,11 +1,11 @@
 package config
 
 import (
-	"github.com/astaxie/beego/config"
+	config "github.com/astaxie/beego/config"
+	"github.com/pkg/errors"
 )
 
-const configFileName = "config.ini"
-
+// Config is storing web & database credentials, public key for checking sign on apla's binary
 type Config struct {
 	Login      string
 	Pass       string
@@ -15,22 +15,31 @@ type Config struct {
 	PubkeyPath string
 }
 
-var ConfigIni map[string]string
+type Parser struct {
+	filepath string
+}
 
-func (dbc *Config) Read() error {
-	fullConfigIni, err := config.NewConfig("ini", "./config.ini")
+func NewParser(filepath string) Parser {
+	return Parser{filepath: filepath}
+}
+
+func (p *Parser) Do() (Config, error) {
+	var c Config
+	cc, err := config.NewConfig("ini", p.filepath)
 	if err != nil {
-		return err
+		return c, errors.Wrapf(err, "opening %s ini config", p.filepath)
 	}
-	configIni, err := fullConfigIni.GetSection("default")
+
+	configIni, err := cc.GetSection("default")
 	if err != nil {
-		return err
+		return c, errors.Wrapf(err, "getting default section of config")
 	}
-	dbc.Login = configIni["login"]
-	dbc.Pass = configIni["pass"]
-	dbc.Host = configIni["host"]
-	dbc.Port = configIni["port"]
-	dbc.DBPath = configIni["dbpath"]
-	dbc.PubkeyPath = configIni["pubkeypath"]
-	return nil
+
+	c.Login = configIni["login"]
+	c.Pass = configIni["pass"]
+	c.Host = configIni["host"]
+	c.Port = configIni["port"]
+	c.DBPath = configIni["dbpath"]
+	c.PubkeyPath = configIni["pubkeypath"]
+	return c, nil
 }

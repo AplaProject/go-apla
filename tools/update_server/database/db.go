@@ -1,31 +1,45 @@
 package database
 
 import (
-	"errors"
-
 	"github.com/boltdb/bolt"
+	"github.com/pkg/errors"
 )
 
 type Database struct {
-	Database *bolt.DB
-	open     bool
+	storage *bolt.DB
+	open    bool
 }
 
 var bucketName = []byte("updateDB")
 
-func (db *Database) Open(filename string) error {
+func NewDatabase(filename string) (Database, error) {
 	var err error
-	db.Database, err = bolt.Open(filename, 0600, nil)
+	var db Database
+
+	db.storage, err = bolt.Open(filename, 0600, nil)
 	if err != nil {
-		return err
+		return db, errors.Wrapf(err, "opening boltdb file storage")
 	}
+
 	db.open = true
-	return nil
+	// We need to check all buckets to availability before doing some stuff
+	err = db.storage.Update(func(tx *bolt.Tx) error {
+		_, err := tx.Bucket(bucketName).CreateBucketIfNotExists(bucketName)
+		if err != nil {
+			return errors.Wrapf(err, "creating bucket")
+		}
+		return nil
+	})
+	if err != nil {
+		return db, errors.Wrapf(err, "updating storage")
+	}
+
+	return db, nil
 }
 
 func (db *Database) GetVersionsList() ([]string, error) {
 	var result []string
-	err := db.Database.View(func(tx *bolt.Tx) error {
+	err := db.storage.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket(bucketName).Cursor()
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
 			result = append(result, string(k))
@@ -40,7 +54,7 @@ func (db *Database) GetVersionsList() ([]string, error) {
 
 func (db *Database) GetBinary(version string) ([]byte, error) {
 	var binary []byte
-	err := db.Database.View(func(tx *bolt.Tx) error {
+	err := db.storage.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucketName)
 		binary = b.Get([]byte(version))
 		return nil
@@ -52,13 +66,10 @@ func (db *Database) GetBinary(version string) ([]byte, error) {
 }
 
 func (db *Database) AddBinary(binary []byte, version string) error {
-	return db.Database.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists(bucketName)
-		if err != nil {
-			return errors.New("can't create bucket")
-		}
+	return db.storage.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(bucketName)
 
-		err = b.Put([]byte(version), binary)
+		err := b.Put([]byte(version), binary)
 		if err != nil {
 			return err
 		}
@@ -67,7 +78,7 @@ func (db *Database) AddBinary(binary []byte, version string) error {
 }
 
 func (db *Database) DeleteBinary(version string) error {
-	return db.Database.View(func(tx *bolt.Tx) error {
+	return db.storage.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucketName)
 		return b.Delete([]byte(version))
 	})
