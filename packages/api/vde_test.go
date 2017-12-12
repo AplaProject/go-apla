@@ -447,12 +447,12 @@ func TestHTTPRequest(t *testing.T) {
 				}
 				heads["Authorization"] = "Bearer " + $Auth
 				pars["vde"] = "true"
-				ret = HTTPRequest("http://localhost:7079/api/v2/content/page/` + rnd + `", "POST", heads, pars)
+				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `content/page/` + rnd + `", "POST", heads, pars)
 				json = JSONToMap(ret)
 				if json["menu"] != "myvdemenu" {
 					error "Wrong vde menu"
 				}
-				ret = HTTPRequest("http://localhost:7079/api/v2/contract/VDEFunctions?vde=true", "GET", heads, pars)
+				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `contract/VDEFunctions?vde=true", "GET", heads, pars)
 				json = JSONToMap(ret)
 				if json["name"] != "@1VDEFunctions" {
 					error "Wrong vde contract"

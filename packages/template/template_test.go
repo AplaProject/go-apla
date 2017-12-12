@@ -39,6 +39,14 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Data(Source: mysrc, Columns: "id,name", Data:
+		1,first
+		2,second
+		3,third
+	).Custom("synthetic"){
+		Div(text-muted, TESTING)
+	}
+	Table(Source: mysrc)`, `[{"tag":"data","attr":{"columns":["id","name","synthetic"],"data":[["1","first","\"Div(text-muted, TESTING)\""],["2","second","\"Div(text-muted, TESTING)\""],["3","third","\"Div(text-muted, TESTING)\""]],"source":"mysrc","types":["text","text","tags"]}},{"tag":"table","attr":{"source":"mysrc"}}]`},
 	{`Data(myforlist,"id,name",
 		"1",Test message 1
 		2,"Test message 2"

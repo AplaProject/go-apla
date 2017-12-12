@@ -84,5 +84,8 @@ var TxTypes = map[int]string{
 	1: "FirstBlock",
 }
 
+// ApiPath is the beginning of the api url
+var ApiPath = `/api/v2/`
+
 func init() {
 }

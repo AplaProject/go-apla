@@ -335,7 +335,7 @@ func dataTag(par parFunc) string {
 				}
 				vals[icol] = ival
 			} else {
-				out, err := json.Marshal(par.Node.Attr[`custombody`].([][]*node)[i-defcol])
+				out, err := json.Marshal(par.Node.Attr[`custombody`].([]string)[i-defcol])
 				if err == nil {
 					ival = replace(string(out), 0, &vals)
 				} else {
@@ -401,6 +401,9 @@ func dbfindTag(par parFunc) string {
 		state = converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])
 	}
 	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
+	if fields != `*` && !strings.Contains(fields, `id`) {
+		fields += `, id`
+	}
 	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
@@ -436,6 +439,10 @@ func dbfindTag(par parFunc) string {
 				}
 				if ival == `NULL` {
 					ival = ``
+				}
+				if strings.HasPrefix(ival, `data:image/`) {
+					ival = fmt.Sprintf(consts.ApiPath+`data/%s/%s/%s`, tblname, item[`id`], icol)
+					item[icol] = ival
 				}
 			} else {
 				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &item)

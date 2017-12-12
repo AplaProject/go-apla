@@ -182,7 +182,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		}()
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if !IsInstalled() && r.URL.Path != `/api/v2/install` {
+		if !IsInstalled() && r.URL.Path != consts.ApiPath+`install` {
 			if model.DBConn == nil && !config.IsExist() {
 				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
 				return
