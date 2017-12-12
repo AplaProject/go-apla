@@ -147,16 +147,13 @@ var (
 		('52','extend_cost_activate', '10', 'true'),
 		('53','extend_cost_deactivate', '10', 'true'),
 		('54','extend_cost_create_ecosystem', '100', 'true'),
-		('55','extend_cost_rollback_ecosystem', '100', 'true'),
-		('56','extend_cost_table_conditions', '100', 'true'),
-		('57','extend_cost_create_table', '100', 'true'),
-		('58','extend_cost_rollback_table', '100', 'true'),
-		('59','extend_cost_perm_table', '100', 'true'),
-		('60','extend_cost_column_condition', '50', 'true'),
-		('61','extend_cost_create_column', '50', 'true'),
-		('62','extend_cost_rollback_column', '50', 'true'),
-		('63','extend_cost_perm_column', '50', 'true'),
-		('64','extend_cost_json_to_map', '50', 'true');
+		('55','extend_cost_table_conditions', '100', 'true'),
+		('56','extend_cost_create_table', '100', 'true'),
+		('57','extend_cost_perm_table', '100', 'true'),
+		('58','extend_cost_column_condition', '50', 'true'),
+		('59','extend_cost_create_column', '50', 'true'),
+		('60','extend_cost_perm_column', '50', 'true'),
+		('61','extend_cost_json_to_map', '50', 'true');
 		
 		CREATE TABLE "system_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
@@ -402,7 +399,7 @@ var (
 
 		func DBRow(table string).Columns(columns string).Where(where string, params ...)
 			.WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
-			
+
 			var result array
 			result = DBFind(table).Columns(columns).Where(where, params ...).WhereId(id).Order(order).Ecosystem(ecosystem)
 
@@ -413,7 +410,7 @@ var (
 
 			return row
 		}
-	
+
 		func ConditionById(table string, validate bool) {
 			var row map
 			row = DBFind(table).Columns("conditions").WhereId($Id)
@@ -422,7 +419,7 @@ var (
 			}
 
 			Eval(row["conditions"])
-			
+
 			if validate {
 				ValidateCondition($Conditions,$ecosystem_id)
 			}
@@ -1025,7 +1022,7 @@ var (
 		}
 
 		Eval(row["conditions"])
-		
+
 		if validate {
 			ValidateCondition($Conditions,$ecosystem_id)
 		}
@@ -1182,17 +1179,7 @@ var (
 			}
 		}
 		action {
-			var id int
-			id = CreateEcosystem($key_id, $Name)
-			DBInsert(Str(id) + "_pages", "name,value,menu,conditions", "default_page", 
-				  SysParamString("default_ecosystem_page"), "default_menu", "ContractConditions(\"MainCondition\")")
-			DBInsert(Str(id) + "_menu", "name,value,title,conditions", "default_menu", 
-				  SysParamString("default_ecosystem_menu"), "default", "ContractConditions(\"MainCondition\")")
-			
-			var row map
-			row = DBRow("1_keys").Columns("pub").WhereId($key_id)
-			DBInsert(Str(id) + "_keys", "id,pub", $key_id, row["pub"])
-			$result = id
+			$result = CreateEcosystem($key_id, $Name)
 		}
 		func price() int {
 			return  SysParamInt("ecosystem_price")
@@ -1370,7 +1357,7 @@ var (
 
 			var row map
 			row = DBRow("languages").Columns("id").Where("name = ?", $Name)
-			
+
 			if row {
 				error Sprintf("The language resource %%s already exists", $Name)
 			}

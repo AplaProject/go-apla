@@ -48,6 +48,7 @@ import (
 // SmartContract is storing smart contract data
 type SmartContract struct {
 	VDE           bool
+	Rollback      bool
 	VM            *script.VM
 	TxSmart       tx.SmartContract
 	TxData        map[string]interface{}
@@ -374,6 +375,19 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert vde table info")
 		return err
 	}
+	if !sc.VDE {
+		rollbackTx := &model.RollbackTx{
+			BlockID:   sc.BlockData.BlockID,
+			TxHash:    sc.TxHash,
+			NameTable: tableName,
+			TableID:   converter.Int64ToStr(id),
+		}
+		err = rollbackTx.Create(sc.DbTransaction)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating CreateTable rollback")
+			return err
+		}
+	}
 	return nil
 }
 
@@ -397,7 +411,7 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 		val = val[0].([]interface{})
 	}
 	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil,
-		nil, !sc.VDE, false)
+		nil, !sc.VDE && sc.Rollback, false)
 	if ind > 0 {
 		qcost *= int64(ind)
 	}
@@ -488,7 +502,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	if err = sc.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE, false)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, false)
 	return
 }
 
@@ -568,7 +582,7 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
-		getDefTableName(sc, `tables`), []string{`name`}, []string{name}, !sc.VDE, false)
+		getDefTableName(sc, `tables`), []string{`name`}, []string{name}, !sc.VDE && sc.Rollback, false)
 	return err
 }
 
@@ -716,7 +730,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 	tEx.SetTablePrefix(prefix)
 	name = strings.ToLower(name)
 
-	exists, err := tEx.IsExistsByPermissionsAndTableName(name, tableName)
+	exists, err := tEx.IsExistsByPermissionsAndTableName(sc.DbTransaction, name, tableName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("querying that table is exists by permissions and table name")
 		return err
@@ -835,7 +849,7 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, inde
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
-		tables, []string{`name`}, []string{tableName}, !sc.VDE, false)
+		tables, []string{`name`}, []string{tableName}, !sc.VDE && sc.Rollback, false)
 	if err != nil {
 		return err
 	}
@@ -873,7 +887,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
-		tables, []string{`name`}, []string{tableName}, !sc.VDE, false)
+		tables, []string{`name`}, []string{tableName}, !sc.VDE && sc.Rollback, false)
 	return err
 }
 

@@ -209,6 +209,11 @@ func TestNewTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	err = postTx(`NewTable`, &form)
+	if err.Error() != fmt.Sprintf(`{"type":"panic","error":"table %s exists"}`, name) {
+		t.Error(err)
+		return
+	}
 	form = url.Values{"Name": {name},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
 			"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
@@ -221,6 +226,11 @@ func TestNewTable(t *testing.T) {
 		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
 	err = postTx(`NewColumn`, &form)
 	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`NewColumn`, &form)
+	if err.Error() != `{"type":"panic","error":"column newcol exists"}` {
 		t.Error(err)
 		return
 	}

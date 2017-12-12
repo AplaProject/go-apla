@@ -474,6 +474,7 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 func (p *Parser) CallContract(flags int) (string, error) {
 	sc := smart.SmartContract{
 		VDE:           false,
+		Rollback:      true,
 		VM:            smart.GetVM(false, 0),
 		TxSmart:       *p.TxSmart,
 		TxData:        p.TxData,
