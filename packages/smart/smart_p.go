@@ -642,7 +642,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 		return err
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("system states rollback")
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("system states in rollback table")
 		// if there is not such hash then NewEcosystem was faulty. Do nothing.
 		return nil
 	}
@@ -712,13 +712,13 @@ func RollbackTable(sc *SmartContract, name string) error {
 		return err
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("table rollback")
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("table record in rollback table")
 		// if there is not such hash then NewTable was faulty. Do nothing.
 		return nil
 	}
 	err = rollbackTx.DeleteByHashAndTableName(sc.DbTransaction)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback table")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting record from rollback table")
 		return err
 	}
 
@@ -755,11 +755,11 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.EcosystemID))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback column")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column from rollback table")
 		return err
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("column rollback")
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("column record in rollback table")
 		// if there is not such hash then NewColumn was faulty. Do nothing.
 		return nil
 	}
