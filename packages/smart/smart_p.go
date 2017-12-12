@@ -130,7 +130,9 @@ func init() {
 		"EvalCondition":      EvalCondition,
 		"HasPrefix":          strings.HasPrefix,
 		"Contains":           strings.Contains,
+		"TrimSpace":          strings.TrimSpace,
 		"Replace":            Replace,
+		"ToLower":            strings.ToLower,
 		"FindEcosystem":      FindEcosystem,
 		"CreateEcosystem":    CreateEcosystem,
 		"RollbackEcosystem":  RollbackEcosystem,
@@ -154,6 +156,7 @@ func init() {
 		"Activate":           Activate,
 		"Deactivate":         Deactivate,
 		"JSONToMap":          JSONToMap,
+		"HMac":               HMac,
 		"check_signature":    CheckSignature, // system function
 	}, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
@@ -217,7 +220,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE)
+	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE, false)
 	if err != nil {
 		return 0, err
 	}
@@ -244,7 +247,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if err = sc.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE, false)
 	return
 }
 
@@ -338,7 +341,7 @@ func HexToBytes(hexdata string) ([]byte, error) {
 
 // LangRes returns the language resource
 func LangRes(sc *SmartContract, idRes, lang string) string {
-	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang)
+	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang, sc.VDE)
 	return ret
 }
 
@@ -386,7 +389,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 	_, id, err := sc.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
 		name,
-	}, `system_states`, nil, nil, !sc.VDE)
+	}, `system_states`, nil, nil, !sc.VDE, false)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError}).Error("CreateEcosystem")
 		return 0, err
@@ -507,7 +510,7 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 
 // UpdateLang updates language resource
 func UpdateLang(sc *SmartContract, name, trans string) {
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans)
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans, sc.VDE)
 }
 
 // Size returns the length of the string
