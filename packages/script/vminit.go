@@ -109,6 +109,7 @@ type FuncInfo struct {
 	Results  []reflect.Type
 	Names    *map[string]FuncName
 	Variadic bool
+	ID       uint32
 }
 
 // VarInfo contains the variable information
@@ -268,7 +269,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (string,
 	}
 	(*rt.extend)[`parent`] = prevparent
 	if (*rt.extend)[`result`] != nil {
-		result = (*rt.extend)[`result`].(string)
+		result = fmt.Sprint((*rt.extend)[`result`])
 	}
 	return result, nil
 }

@@ -242,3 +242,16 @@ func TestNewTable(t *testing.T) {
 		return
 	}
 }
+
+func TestUpdateSysParam(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	form := url.Values{"Name": {`max_columns`}, "Value": {`49`}}
+	err := postTx(`UpdateSysParam`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}

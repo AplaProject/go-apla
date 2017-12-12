@@ -61,9 +61,12 @@ func DefLang() string {
 }
 
 // UpdateLang updates language sources for the specified state
-func UpdateLang(state int, name, value string) {
+func UpdateLang(state int, name, value string, vde bool) {
+	if vde {
+		state = -state
+	}
 	if _, ok := lang[state]; !ok {
-		return
+		lang[state] = &cacheLang{make(map[string]*map[string]string)}
 	}
 	var ires map[string]string
 	err := json.Unmarshal([]byte(value), &ires)
@@ -76,9 +79,13 @@ func UpdateLang(state int, name, value string) {
 }
 
 // loadLang download the language sources from database for the state
-func loadLang(state int) error {
+func loadLang(state int, vde bool) error {
 	language := &model.Language{}
-	languages, err := language.GetAll(strconv.FormatInt(int64(state), 10))
+	prefix := strconv.FormatInt(int64(state), 10)
+	if vde {
+		prefix += `_vde`
+	}
+	languages, err := language.GetAll(prefix)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error querying all languages")
 		return err
@@ -96,22 +103,29 @@ func loadLang(state int) error {
 		}
 		(*res).res[ilist[`name`]] = &ires
 	}
+	if vde {
+		state = -state
+	}
 	lang[state] = res
 	return nil
 }
 
 // LangText looks for the specified word through language sources and returns the meaning of the source
 // if it is found. Search goes according to the languages specified in 'accept'
-func LangText(in string, state int, accept string) (string, bool) {
+func LangText(in string, state int, accept string, vde bool) (string, bool) {
 	if strings.IndexByte(in, ' ') >= 0 || state == 0 {
 		return in, false
 	}
-	if _, ok := lang[state]; !ok {
-		if err := loadLang(state); err != nil {
+	istate := state
+	if vde {
+		istate = -state
+	}
+	if _, ok := lang[istate]; !ok {
+		if err := loadLang(state, vde); err != nil {
 			return err.Error(), false
 		}
 	}
-	if lres, ok := (*lang[state]).res[in]; ok {
+	if lres, ok := (*lang[istate]).res[in]; ok {
 		langs := strings.Split(accept, `,`)
 		lng := DefLang()
 		for _, val := range langs {
@@ -138,7 +152,7 @@ func LangText(in string, state int, accept string) (string, bool) {
 
 // LangMacro replaces all inclusions of $resname$ in the incoming text with the corresponding language resources,
 // if they exist
-func LangMacro(input string, state int, accept string) string {
+func LangMacro(input string, state int, accept string, vde bool) string {
 	if !strings.ContainsRune(input, '$') {
 		return input
 	}
@@ -165,7 +179,7 @@ func LangMacro(input string, state int, accept string) string {
 			continue
 		}
 		if isName {
-			value, ok := LangText(string(name), state, accept)
+			value, ok := LangText(string(name), state, accept, vde)
 			if ok {
 				result = append(result, []rune(value)...)
 				isName = false
