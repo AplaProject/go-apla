@@ -228,7 +228,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"name"}, []string{name}, !sc.VDE && !sc.NotRollback)
+	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"name"}, []string{name}, !sc.VDE && sc.Rollback)
 	if err != nil {
 		return 0, err
 	}
@@ -255,7 +255,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if err = sc.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && !sc.NotRollback)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && sc.Rollback)
 	return
 }
 
@@ -531,7 +531,7 @@ func DBInsertReport(sc *SmartContract, tblname string, params string, val ...int
 	}
 	var lastID string
 	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil,
-		nil, !sc.VDE && !sc.NotRollback)
+		nil, !sc.VDE && sc.Rollback)
 	if err == nil {
 		ret, _ = strconv.ParseInt(lastID, 10, 64)
 	}
@@ -582,7 +582,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 	_, id, err := sc.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
 		name,
-	}, `system_states`, nil, nil, !sc.VDE && !sc.NotRollback)
+	}, `system_states`, nil, nil, !sc.VDE && sc.Rollback)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError}).Error("CreateEcosystem")
 		return 0, err
@@ -596,7 +596,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if err != nil {
 		return 0, err
 	}
-	sc.NotRollback = true
+	sc.Rollback = false
 	_, _, err = DBInsert(sc, id+"_pages", "name,value,menu,conditions", "default_page",
 		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`)
 	if err != nil {
