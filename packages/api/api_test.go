@@ -226,7 +226,7 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 	}
 	if len((*form)[`vde`]) > 0 {
 		if ret[`result`] != nil {
-			id = converter.StrToInt64(ret[`result`].(string))
+			id = converter.StrToInt64(fmt.Sprint(ret[`result`]))
 		}
 		return
 	}
