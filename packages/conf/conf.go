@@ -74,7 +74,6 @@ var Installed bool
 
 // Config global parameters
 var Config = SavedConfig{
-	LogLevel:     "INFO",
 	InstallType:  "PRIVATE_NET",
 	NodeStateID:  "*",
 	StartDaemons: "",

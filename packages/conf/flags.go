@@ -63,7 +63,7 @@ var (
 	InitDatabase = flag.Bool("initDatabase", false, "initialize database")
 
 	// GenerateFirstBlock force regeneration of first block
-	GenerateFirstBlock = flag.Bool("generateFirstBlock", false, "force init first block")
+	GenerateFirstBlock = flag.Bool("generateFirstBlock", false, "generate firstblock and keys")
 
 	// keyID wallet id
 	keyID = flag.Int64("keyID", 0, "wallet id")
@@ -99,7 +99,7 @@ var (
 	RollbackToBlockID = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
 
 	// TLS is a directory for .well-known and keys. It is required for https
-	TLS = flag.String("tls", "", "Support https. Specify directory for .well-known")
+	TLS = flag.String("tls", "", "Enable https. Ddirectory for .well-known and keys")
 )
 
 func envStr(envName string, val *string) bool {

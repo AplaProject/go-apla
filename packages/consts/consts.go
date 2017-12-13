@@ -107,3 +107,15 @@ const NodePublicKeyFilename = "NodePublicKey"
 
 // KeyIDFilename generated KeyID
 const KeyIDFilename = "KeyID"
+
+// RollbackResultFilename rollback result file
+const RollbackResultFilename = "rollback_result"
+
+// WellKnownRoute TLS route
+const WellKnownRoute = "/.well-known/*filepath"
+
+// TLSFullchainPem fullchain pem file
+const TLSFullchainPem = "/fullchain.pem"
+
+// TLSPrivkeyPem privkey pem file
+const TLSPrivkeyPem = "/privkey.pem"

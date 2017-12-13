@@ -44,6 +44,9 @@ type FirstBlockParser struct {
 	*Parser
 }
 
+// ErrFirstBlockHostIsEmpty host for first block is not specified
+var ErrFirstBlockHostIsEmpty = errors.New("FirstBlockHost is empty")
+
 // Init first block
 func (p *FirstBlockParser) Init() error {
 	return nil
@@ -160,7 +163,7 @@ func GenerateFirstBlock() error {
 
 	Host := *conf.FirstBlockHost
 	if len(Host) == 0 {
-		return errors.New("FirstBlockHost is empty")
+		return ErrFirstBlockHostIsEmpty
 	}
 
 	iAddress := int64(crypto.Address(PublicKeyBytes))

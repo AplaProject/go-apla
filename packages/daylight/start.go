@@ -163,9 +163,10 @@ func rollbackToBlock(blockID int64) error {
 	}
 
 	if warn == 0 {
-		ioutil.WriteFile(conf.Config.WorkDir+"/rollback_result", []byte("1"), 0644)
+		rbFile := filepath.Join(conf.Config.WorkDir, consts.RollbackResultFilename)
+		ioutil.WriteFile(rbFile, []byte("1"), 0644)
 		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile}).Error("write to the rollback_result")
+			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile, "path": rbFile}).Error("rollback result flag")
 			return err
 		}
 	}
@@ -182,9 +183,9 @@ func initRoutes(listenHost string) {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
-	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*conf.TLS)))
+	route.Handler(`GET`, consts.WellKnownRoute, http.FileServer(http.Dir(*conf.TLS)))
 	if len(*conf.TLS) > 0 {
-		go http.ListenAndServeTLS(":443", *conf.TLS+`/fullchain.pem`, *conf.TLS+`/privkey.pem`, route)
+		go http.ListenAndServeTLS(":443", *conf.TLS+consts.TLSFullchainPem, *conf.TLS+consts.TLSPrivkeyPem, route)
 	}
 
 	httpListener(listenHost, route)
