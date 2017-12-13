@@ -131,9 +131,11 @@ func InitConfigFlags() {
 	for name, paramsPtr := range configFlagMap {
 		switch flagParams := paramsPtr.(type) {
 		case *flagStr:
+			*flagParams.confVar = flagParams.defVal
 			envStr(flagParams.env, flagParams.confVar)
 			flag.StringVar(&flagParams.flagVar, name, flagParams.defVal, flagParams.help)
 		case *flagInt:
+			*flagParams.confVar = flagParams.defVal
 			envInt(flagParams.env, flagParams.confVar)
 			flag.IntVar(&flagParams.flagVar, name, flagParams.defVal, flagParams.help)
 		default:
