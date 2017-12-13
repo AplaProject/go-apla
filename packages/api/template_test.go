@@ -136,4 +136,10 @@ func TestImage(t *testing.T) {
 		t.Errorf(`Too much time for template parsing`)
 		return
 	}
+	mydata = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
+	err = postTx(name, &url.Values{`Image`: {mydata}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }
