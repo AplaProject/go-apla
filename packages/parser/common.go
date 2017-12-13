@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"reflect"
@@ -26,6 +25,7 @@ import (
 
 	"bytes"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -105,10 +105,6 @@ func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 		}
 	}
 	return 0, nil
-}
-
-func init() {
-	flag.Parse()
 }
 
 // ParserInterface is parsing transactions
@@ -259,8 +255,8 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	// for local tests
 	blockID := block.Header.BlockID
 	if block.Header.BlockID == 1 {
-		if *utils.StartBlockID != 0 {
-			blockID = *utils.StartBlockID
+		if *conf.StartBlockID != 0 {
+			blockID = *conf.StartBlockID
 		}
 	}
 
