@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/AplaProject/go-apla/tools/update_server/config"
-	"github.com/AplaProject/go-apla/tools/update_server/database"
+	"github.com/AplaProject/go-apla/tools/update_server/storage"
 	"github.com/AplaProject/go-apla/tools/update_server/web"
 )
 
@@ -17,7 +17,7 @@ func main() {
 		log.Fatalf("Config parsing error: %s", err.Error())
 	}
 
-	db, err := database.NewDatabase(c.DBPath)
+	db, err := storage.NewBoltStorage(c.DBPath)
 	if err != nil {
 		log.Fatalf("Creation database error: %s", err.Error())
 	}

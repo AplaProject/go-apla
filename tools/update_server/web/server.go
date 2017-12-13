@@ -13,12 +13,12 @@ import (
 
 	"github.com/AplaProject/go-apla/tools/update_client/structs"
 	"github.com/AplaProject/go-apla/tools/update_server/config"
-	"github.com/AplaProject/go-apla/tools/update_server/database"
+	"github.com/AplaProject/go-apla/tools/update_server/storage"
 )
 
 // Server is storing web dependencies
 type Server struct {
-	Db   *database.Database
+	Db   *storage.BoltStorage
 	Conf *config.Config
 }
 
