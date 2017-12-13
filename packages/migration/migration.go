@@ -52,17 +52,6 @@ var (
 		);
 		ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
 		
-		DROP TABLE IF EXISTS "config"; CREATE TABLE "config" (
-		"my_block_id" int NOT NULL DEFAULT '0',
-		"ecosystem_id" int NOT NULL DEFAULT '0',
-		"key_id" bigint NOT NULL DEFAULT '0',
-		"bad_blocks" text NOT NULL DEFAULT '',
-		"auto_reload" int NOT NULL DEFAULT '0',
-		"first_load_blockchain_url" varchar(255)  NOT NULL DEFAULT '',
-		"first_load_blockchain"  varchar(255)  NOT NULL DEFAULT '',
-		"current_load_blockchain"  varchar(255)  NOT NULL DEFAULT ''
-		);
-		
 		DROP SEQUENCE IF EXISTS rollback_rb_id_seq CASCADE;
 		CREATE SEQUENCE rollback_rb_id_seq START WITH 1;
 		DROP TABLE IF EXISTS "rollback"; CREATE TABLE "rollback" (
