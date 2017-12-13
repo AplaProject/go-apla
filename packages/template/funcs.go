@@ -17,6 +17,7 @@
 package template
 
 import (
+	"crypto/md5"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -444,8 +445,8 @@ func dbfindTag(par parFunc) string {
 					ival = ``
 				}
 				if strings.HasPrefix(ival, `data:image/`) {
-					ival = fmt.Sprintf(consts.ApiPath+`data/%s/%s/%s`, strings.Trim(tblname, `"`),
-						item[`id`], icol)
+					ival = fmt.Sprintf(consts.ApiPath+`data/%s/%s/%s/%x`, strings.Trim(tblname, `"`),
+						item[`id`], icol, md5.Sum([]byte(ival)))
 					item[icol] = ival
 				}
 			} else {
