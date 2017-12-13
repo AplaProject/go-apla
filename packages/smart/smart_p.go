@@ -194,10 +194,6 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		fields []string
 		values []interface{}
 	)
-	if sc.TxContract.Name != `@1UpdateSysParam` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SysParams can be only changed from @1UpdateSysParam")
-		return 0, fmt.Errorf(`SysParams can be only changed from @1UpdateSysParam`)
-	}
 	par := &model.SystemParameter{}
 	found, err := par.Get(name)
 	if err != nil {
