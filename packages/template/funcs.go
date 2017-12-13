@@ -444,7 +444,8 @@ func dbfindTag(par parFunc) string {
 					ival = ``
 				}
 				if strings.HasPrefix(ival, `data:image/`) {
-					ival = fmt.Sprintf(consts.ApiPath+`data/%s/%s/%s`, tblname, item[`id`], icol)
+					ival = fmt.Sprintf(consts.ApiPath+`data/%s/%s/%s`, strings.Trim(tblname, `"`),
+						item[`id`], icol)
 					item[icol] = ival
 				}
 			} else {
