@@ -53,7 +53,6 @@ var (
 		"DBIntWhere":       {},
 		"DBAmount":         {},
 		"DBInsertReport":   {},
-		"FindEcosystem":    {},
 	}
 
 	extendCostSysParams = map[string]string{
@@ -149,7 +148,6 @@ func init() {
 		"TrimSpace":          strings.TrimSpace,
 		"Replace":            Replace,
 		"ToLower":            strings.ToLower,
-		"FindEcosystem":      FindEcosystem,
 		"CreateEcosystem":    CreateEcosystem,
 		"RollbackEcosystem":  RollbackEcosystem,
 		"CreateTable":        CreateTable,
@@ -567,9 +565,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateEcosystem can be only called from @1NewEcosystem")
 		return 0, fmt.Errorf(`CreateEcosystem can be only called from @1NewEcosystem`)
 	}
-	_, id, err := sc.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
-		name,
-	}, `system_states`, nil, nil, !sc.VDE && sc.Rollback, false)
+	_, id, err := sc.selectiveLoggingAndUpd(nil, nil, `system_states`, nil, nil, !sc.VDE && sc.Rollback, false)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError}).Error("CreateEcosystem")
 		return 0, err
