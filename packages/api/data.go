@@ -33,9 +33,7 @@ import (
 
 func dataHandler() hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
-		var data string
-		err := model.DBConn.Table(ps.ByName(`table`)).Select(ps.ByName(`column`)).Where(`id=?`,
-			ps.ByName(`id`)).Row().Scan(&data)
+		data, err := model.GetColumnByID(ps.ByName(`table`), ps.ByName(`column`), ps.ByName(`id`))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting data from table")
 			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
