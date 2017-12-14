@@ -445,7 +445,7 @@ func dbfindTag(par parFunc) string {
 					ival = ``
 				}
 				if strings.HasPrefix(ival, `data:image/`) {
-					ival = fmt.Sprintf(consts.ApiPath+`data/%s/%s/%s/%x`, strings.Trim(tblname, `"`),
+					ival = fmt.Sprintf(`/data/%s/%s/%s/%x`, strings.Trim(tblname, `"`),
 						item[`id`], icol, md5.Sum([]byte(ival)))
 					item[icol] = ival
 				}
