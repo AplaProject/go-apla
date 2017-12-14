@@ -1,5 +1,7 @@
 package model
 
+const ProgressComplete = "complete"
+
 // Install is model
 type Install struct {
 	Progress string `gorm:"not null;size:10"`

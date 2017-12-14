@@ -23,22 +23,20 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/api"
-	"github.com/AplaProject/go-apla/packages/config"
+	conf "github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/daemons"
 	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
-	"github.com/AplaProject/go-apla/packages/language"
 	logtools "github.com/AplaProject/go-apla/packages/log"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
+	"github.com/AplaProject/go-apla/packages/publisher"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/statsd"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -46,48 +44,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func readConfig() {
-	// read the config.ini
-	config.Read()
-	if *utils.TCPHost == "" {
-		*utils.TCPHost = config.ConfigIni["tcp_host"]
-	}
-	if *utils.FirstBlockDir == "" {
-		*utils.FirstBlockDir = config.ConfigIni["first_block_dir"]
-	}
-	if *utils.ListenHTTPPort == "" {
-		*utils.ListenHTTPPort = config.ConfigIni["http_port"]
-	}
-	if *utils.Dir == "" {
-		*utils.Dir = config.ConfigIni["dir"]
-	}
-	utils.OneCountry = converter.StrToInt64(config.ConfigIni["one_country"])
-	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
-	if len(config.ConfigIni["lang"]) > 0 {
-		language.LangList = strings.Split(config.ConfigIni["lang"], `,`)
-	}
-}
-
 func initStatsd() {
-	var host string = "127.0.0.1"
-	var port int = 8125
-	var name = "apla"
-	if config.ConfigIni["stastd_host"] != "" {
-		host = config.ConfigIni["statsd_host"]
-	}
-	if config.ConfigIni["stastd_port"] != "" {
-		port = converter.StrToInt(config.ConfigIni["statsd_port"])
-	}
-	if config.ConfigIni["statsd_client_name"] != "" {
-		name = config.ConfigIni["statsd_client_name"]
-	}
-	if err := statsd.Init(host, port, name); err != nil {
+	cfg := conf.Config.StatsD
+	if err := statsd.Init(cfg.Host, cfg.Port, cfg.Name); err != nil {
 		log.WithFields(log.Fields{"type": consts.StatsdError, "error": err}).Fatal("cannot initialize statsd")
 	}
 }
 
 func killOld() {
-	pidPath := *utils.Dir + "/daylight.pid"
+	pidPath := conf.GetPidFile()
 	if _, err := os.Stat(pidPath); err == nil {
 		dat, err := ioutil.ReadFile(pidPath)
 		if err != nil {
@@ -98,15 +63,15 @@ func killOld() {
 		if err != nil {
 			log.WithFields(log.Fields{"data": dat, "error": err, "type": consts.JSONUnmarshallError}).Error("unmarshalling pid map")
 		}
-		log.WithFields(log.Fields{"path": *utils.Dir + pidMap["pid"]}).Debug("old pid path")
+		log.WithFields(log.Fields{"path": conf.Config.WorkDir + pidMap["pid"]}).Debug("old pid path")
 
 		KillPid(pidMap["pid"])
 		if fmt.Sprintf("%s", err) != "null" {
 			// give 15 sec to end the previous process
 			for i := 0; i < 15; i++ {
-				if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
+				if _, err := os.Stat(conf.GetPidFile()); err == nil {
 					time.Sleep(time.Second)
-				} else { // if there is no daylight.pid, so it is finished
+				} else {
 					break
 				}
 			}
@@ -115,12 +80,11 @@ func killOld() {
 }
 
 func initLogs() error {
-	var err error
 
-	if config.ConfigIni["log_output"] != "file" {
+	if len(conf.Config.LogFileName) == 0 {
 		log.SetOutput(os.Stdout)
 	} else {
-		fileName := *utils.Dir + "/dclog.txt"
+		fileName := filepath.Join(conf.Config.WorkDir, conf.Config.LogFileName)
 		openMode := os.O_APPEND
 		if _, err := os.Stat(fileName); os.IsNotExist(err) {
 			openMode = os.O_CREATE
@@ -128,29 +92,28 @@ func initLogs() error {
 
 		f, err := os.OpenFile(fileName, os.O_WRONLY|openMode, 0755)
 		if err != nil {
-			fmt.Println("Can't open log file ", fileName)
+			fmt.Fprintln(os.Stderr, "Can't open log file: ", fileName)
 			return err
 		}
 		log.SetOutput(f)
 	}
 
-	if level, ok := config.ConfigIni["log_level"]; ok {
-		switch level {
-		case "Debug":
-			log.SetLevel(log.DebugLevel)
-		case "Info":
-			log.SetLevel(log.InfoLevel)
-		case "Warn":
-			log.SetLevel(log.WarnLevel)
-		case "Error":
-			log.SetLevel(log.ErrorLevel)
-		}
-	} else {
+	switch conf.Config.LogLevel {
+	case "DEBUG":
+		log.SetLevel(log.DebugLevel)
+	case "INFO":
+		log.SetLevel(log.InfoLevel)
+	case "WARN":
+		log.SetLevel(log.WarnLevel)
+	case "ERROR":
+		log.SetLevel(log.ErrorLevel)
+	default:
 		log.SetLevel(log.InfoLevel)
 	}
 
 	log.AddHook(logtools.ContextHook{})
-	return err
+
+	return nil
 }
 
 func savePid() error {
@@ -160,11 +123,11 @@ func savePid() error {
 		log.WithFields(log.Fields{"pid": pid, "error": err, "type": consts.JSONMarshallError}).Error("marshalling pid to json")
 		return err
 	}
-	return ioutil.WriteFile(*utils.Dir+"/daylight.pid", PidAndVer, 0644)
+	return ioutil.WriteFile(conf.GetPidFile(), PidAndVer, 0644)
 }
 
 func delPidFile() {
-	os.Remove(filepath.Join(*utils.Dir, "daylight.pid"))
+	os.Remove(conf.GetPidFile())
 }
 
 func rollbackToBlock(blockID int64) error {
@@ -172,7 +135,7 @@ func rollbackToBlock(blockID int64) error {
 		return err
 	}
 	parser := new(parser.Parser)
-	err := parser.RollbackToBlockID(*utils.RollbackToBlockID)
+	err := parser.RollbackToBlockID(*conf.RollbackToBlockID)
 	if err != nil {
 		return err
 	}
@@ -198,28 +161,14 @@ func rollbackToBlock(blockID int64) error {
 			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Info("record count in table is ok")
 		}
 	}
+
 	if warn == 0 {
-		ioutil.WriteFile(*utils.Dir+"rollback_result", []byte("1"), 0644)
+		rbFile := filepath.Join(conf.Config.WorkDir, consts.RollbackResultFilename)
+		ioutil.WriteFile(rbFile, []byte("1"), 0644)
 		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile}).Error("write to the rollback_result")
+			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile, "path": rbFile}).Error("rollback result flag")
 			return err
 		}
-	}
-	return nil
-}
-
-func processOldFile(oldFileName string) error {
-
-	err := utils.CopyFileContents(os.Args[0], oldFileName)
-	if err != nil {
-		log.Errorf("can't copy from %s %v", oldFileName, utils.ErrInfo(err))
-		return err
-	}
-
-	err = exec.Command(*utils.OldFileName, "-dir", *utils.Dir).Start()
-	if err != nil {
-		log.WithFields(log.Fields{"cmd": *utils.OldFileName + " -dir " + *utils.Dir, "error": err, "type": consts.CommandExecutionError}).Error("executing command")
-		return err
 	}
 	return nil
 }
@@ -229,19 +178,17 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 		route.HandlerFunc(method, path, handle)
 	}
 }
-func initRoutes(listenHost, browserHost string) string {
+
+func initRoutes(listenHost string) {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
-	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
-	if len(*utils.TLS) > 0 {
-		go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, route)
+	route.Handler(`GET`, consts.WellKnownRoute, http.FileServer(http.Dir(*conf.TLS)))
+	if len(*conf.TLS) > 0 {
+		go http.ListenAndServeTLS(":443", *conf.TLS+consts.TLSFullchainPem, *conf.TLS+consts.TLSPrivkeyPem, route)
 	}
 
-	httpListener(listenHost, &browserHost, route)
-	// for ipv6 server
-	httpListenerV6(route)
-	return browserHost
+	httpListener(listenHost, route)
 }
 
 // Start starts the main code of the program
@@ -257,79 +204,109 @@ func Start() {
 	}()
 
 	Exit := func(code int) {
-		model.GormClose()
 		delPidFile()
-		os.Exit(code)
+		model.GormClose()
 		statsd.Close()
+		os.Exit(code)
 	}
 
-	readConfig()
-
-	if len(config.ConfigIni["db_type"]) > 0 {
-		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err = model.GormInit(
-			config.ConfigIni["db_host"], config.ConfigIni["db_port"],
-			config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
+	initGorm := func(dbCfg conf.DBConfig) {
+		err = model.GormInit(dbCfg.Host, dbCfg.Port, dbCfg.User, dbCfg.Password, dbCfg.Name)
 		if err != nil {
-			log.WithFields(log.Fields{"db_user": config.ConfigIni["db_user"], "db_password": config.ConfigIni["db_password"],
-				"db_name": config.ConfigIni["db_name"], "type": consts.DBError}).Error("can't init gorm")
+			log.WithFields(log.Fields{
+				"db_user": dbCfg.User, "db_password": dbCfg.Password, "db_name": dbCfg.Name, "type": consts.DBError,
+			}).Error("can't init gorm")
 			Exit(1)
 		}
 	}
 
-	// create first block
-	if *utils.GenerateFirstBlock == 1 {
-		log.Info("Generating first block")
-		parser.FirstBlock()
-		fmt.Println(*utils.FirstBlockNodePublicKey)
-		os.Exit(0)
+	conf.InitConfigFlags()
+	if conf.NoConfig() {
+		conf.Installed = false
+		log.Info("Config file missing.")
+	} else {
+		if !*conf.InitConfig {
+			if err := conf.LoadConfig(); err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
+				return
+			}
+			conf.Installed = true
+		}
+	}
+	conf.SetConfigParams()
+
+	// process directives
+	if *conf.GenerateFirstBlock {
+		if err := parser.GenerateFirstBlock(); err != nil {
+			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("GenerateFirstBlock")
+			Exit(1)
+		}
 	}
 
-	log.WithFields(log.Fields{"work_dir": *utils.Dir, "version": consts.VERSION}).Info("started with")
-
-	// kill previously run apla
-	if !utils.Mobile() {
-		killOld()
+	if *conf.InitDatabase {
+		if err := model.InitDB(conf.Config.DB); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("InitDB")
+			Exit(1)
+		}
 	}
 
-	// TODO: ??
-	if fi, err := os.Stat(*utils.Dir + `/logo.png`); err == nil && fi.Size() > 0 {
-		utils.LogoExt = `png`
+	if *conf.InitConfig {
+		if err := conf.SaveConfig(); err != nil {
+			log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
+			Exit(1)
+		}
+		log.Info("Config file created.")
+		conf.Installed = true
 	}
+
+	if conf.Installed {
+		if conf.Config.KeyID == 0 {
+			key, err := parser.GetKeyIDFromPrivateKey()
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Unable to get KeyID")
+				Exit(1)
+			}
+			conf.Config.KeyID = key
+			if err := conf.SaveConfig(); err != nil {
+				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
+				Exit(1)
+			}
+		}
+		initGorm(conf.Config.DB)
+	}
+
+	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
+
+	killOld()
+
+	publisher.InitCentrifugo(conf.Config.Centrifugo)
 
 	initStatsd()
+
 	err = initLogs()
 	if err != nil {
-		fmt.Printf("logs init failed: %v", utils.ErrInfo(err))
+		fmt.Fprintf(os.Stderr, "logs init failed: %v\n", utils.ErrInfo(err))
 		Exit(1)
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	// if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
-	if *utils.OldFileName != "" {
-		processOldFile(*utils.OldFileName)
+	// save the current pid and version
+	if err := savePid(); err != nil {
+		log.Errorf("can't create pid: %s", err)
 		Exit(1)
 	}
-
-	// save the current pid and version
-	if !utils.Mobile() {
-		if err := savePid(); err != nil {
-			log.Errorf("can't create pid: %s", err)
-			Exit(1)
-		}
-		defer delPidFile()
-	}
+	defer delPidFile()
 
 	// database rollback to the specified block
-	if *utils.RollbackToBlockID > 0 {
+	if *conf.RollbackToBlockID > 0 {
 		err = syspar.SysUpdate()
 		if err != nil {
 			log.WithError(err).Error("can't read system parameters")
 		}
-		log.WithFields(log.Fields{"block_id": *utils.RollbackToBlockID}).Info("Rollbacking to block ID")
-		err := rollbackToBlock(*utils.RollbackToBlockID)
-		log.WithFields(log.Fields{"block_id": *utils.RollbackToBlockID}).Info("Rollback is ok")
+		log.WithFields(log.Fields{"block_id": *conf.RollbackToBlockID}).Info("Rollbacking to block ID")
+		err := rollbackToBlock(*conf.RollbackToBlockID)
+		log.WithFields(log.Fields{"block_id": *conf.RollbackToBlockID}).Info("Rollback is ok")
 		if err != nil {
 			log.WithError(err).Error("Rollback error")
 		} else {
@@ -338,15 +315,6 @@ func Start() {
 		Exit(0)
 	}
 
-	if _, err := os.Stat(*utils.Dir + "/public"); os.IsNotExist(err) {
-		err = os.Mkdir(*utils.Dir+"/public", 0755)
-		if err != nil {
-			log.WithFields(log.Fields{"path": *utils.Dir, "error": err, "type": consts.IOError}).Error("Making dir")
-			Exit(1)
-		}
-	}
-
-	BrowserHTTPHost, _, ListenHTTPHost := GetHTTPHost()
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err := daemonsctl.RunAllDaemons()
@@ -358,19 +326,7 @@ func Start() {
 
 	daemons.WaitForSignals()
 
-	go func() {
-		time.Sleep(time.Second)
-		BrowserHTTPHost = initRoutes(ListenHTTPHost, BrowserHTTPHost)
-
-		if *utils.Console == 0 && !utils.Mobile() {
-			log.Info("starting browser")
-			time.Sleep(time.Second)
-		}
-	}()
-
-	// waits for new records in chat, then waits for connect
-	// (they are entered from the 'connections' daemon and from those who connected to the node by their own)
-	// go utils.ChatOutput(utils.ChatNewTx)
+	initRoutes(conf.Config.HTTP.Str())
 
 	select {}
 }
