@@ -58,8 +58,7 @@ func dataHandler() hr.Handle {
 			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 		}
 		w.Header().Set("Content-Type", datatype)
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Cache-Control", "immutable")
+		w.Header().Set("Cache-Control", "public,max-age=604800,immutable")
 		w.Write(bin)
 		return
 	})
