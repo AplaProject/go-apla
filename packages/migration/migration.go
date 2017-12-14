@@ -439,7 +439,8 @@ var (
 			  Conditions string
 		  }
 		  conditions {
-			  RowConditions("contracts", $Id, true)
+			  RowConditions("contracts", $Id)
+			  ValidateCondition($Conditions, $ecosystem_id)
 
 			  var row array
 			  row = DBFind("contracts").Columns("id,value,conditions").WhereId($Id)
@@ -503,7 +504,8 @@ var (
 			  Conditions string
 		  }
 		  conditions {
-			  RowConditions("parameters", $Id, true)
+			  RowConditions("parameters", $Id)
+			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
 			  DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
@@ -536,7 +538,8 @@ var (
 			  Conditions string
 		  }
 		  conditions {
-			  RowConditions("menu", $Id, true)
+			  RowConditions("menu", $Id)
+			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
 			  DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
@@ -548,7 +551,7 @@ var (
 			  Value      string
 		  }
 		  conditions {
-			  RowConditions("menu", $Id, false)
+			  RowConditions("menu", $Id)
 		  }
 		  action {
 			  DBUpdate("menu", $Id, "value", DBString("menu", "value", $Id) + "\r\n" + $Value )
@@ -581,7 +584,8 @@ var (
 			  Conditions string
 		  }
 		  conditions {
-			  RowConditions("pages", $Id, true)
+			  RowConditions("pages", $Id)
+			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
 			  DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
@@ -593,7 +597,7 @@ var (
 			  Value      string
 		  }
 		  conditions {
-			  RowConditions("pages", $Id, false)
+			  RowConditions("pages", $Id)
 		  }
 		  action {
 			  DBUpdate("pages", $Id, "value",  DBString("pages", "value", $Id) + "\r\n" + $Value )
@@ -624,7 +628,8 @@ var (
 			  Conditions string
 		  }
 		  conditions {
-			  RowConditions("blocks", $Id, true)
+			  RowConditions("blocks", $Id)
+			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
 			  DBUpdate("blocks", $Id, "value,conditions", $Value, $Conditions)
@@ -1085,7 +1090,8 @@ var (
 			Conditions string
 		}
 		conditions {
-			RowConditions("contracts", $Id, true)
+			RowConditions("contracts", $Id)
+			ValidateCondition($Conditions, $ecosystem_id)
 
 			$cur = DBRow("contracts", "id,value,conditions,active,wallet_id,token_id", $Id)
 			if Int($cur["id"]) != $Id {
@@ -1181,7 +1187,7 @@ var (
 			Conditions string
 		}
 		conditions {
-			RowConditions("parameters", $Id, true)
+			RowConditions("parameters", $Id)
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
@@ -1216,7 +1222,8 @@ var (
 			Conditions string
 		}
 		conditions {
-			RowConditions("menu", $Id, true)
+			RowConditions("menu", $Id)
+			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
 			DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
@@ -1228,7 +1235,7 @@ var (
 			Value      string
 		}
 		conditions {
-			RowConditions("menu", $Id, false)
+			RowConditions("menu", $Id)
 		}
 		action {
 			DBUpdate("menu", $Id, "value", DBString("menu", "value", $Id) + "\r\n" + $Value )
@@ -1262,7 +1269,8 @@ var (
 			Conditions string
 		}
 		conditions {
-			RowConditions("pages", $Id, true)
+			RowConditions("pages", $Id)
+			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
 			DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
@@ -1274,7 +1282,7 @@ var (
 			Value      string
 		}
 		conditions {
-			RowConditions("pages", $Id, false)
+			RowConditions("pages", $Id)
 		}
 		action {
 			var value string
@@ -1343,7 +1351,8 @@ var (
 			Conditions string
 		}
 		conditions {
-			RowConditions("signatures", $Id, true)
+			RowConditions("signatures", $Id)
+			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
 			DBUpdate("signatures", $Id, "value,conditions", $Value, $Conditions)
@@ -1372,7 +1381,8 @@ var (
 			Conditions string
 		}
 		conditions {
-			RowConditions("blocks", $Id, true)
+			RowConditions("blocks", $Id)
+			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
 			DBUpdate("blocks", $Id, "value,conditions", $Value, $Conditions)

@@ -797,7 +797,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 }
 
 // RowConditions checks conditions for table row by id
-func RowConditions(sc *SmartContract, tblname string, id int64, validate bool) error {
+func RowConditions(sc *SmartContract, tblname string, id int64) error {
 	esсapedTable := converter.EscapeName(getDefTableName(sc, tblname))
 	condition, err := model.GetRowConditionsByTableNameAndID(esсapedTable, id)
 	if err != nil {
@@ -808,13 +808,6 @@ func RowConditions(sc *SmartContract, tblname string, id int64, validate bool) e
 	if len(condition) == 0 {
 		log.WithFields(log.Fields{"type": consts.NotFound, "name": tblname, "id": id}).Error("record not found")
 		return fmt.Errorf("Item %d has not been found", id)
-	}
-
-	if validate {
-		err = ValidateCondition(sc, condition, sc.TxSmart.EcosystemID)
-		if err != nil {
-			return err
-		}
 	}
 
 	err = Eval(sc, condition)

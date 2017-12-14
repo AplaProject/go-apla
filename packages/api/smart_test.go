@@ -300,3 +300,27 @@ func TestUpdateSysParam(t *testing.T) {
 		return
 	}
 }
+
+func TestValidateConditions(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	baseForm := url.Values{"Id": {"1"}, "Value": {"Test"}, "Conditions": {"incorrectConditions"}}
+	contracts := map[string]url.Values{
+		"EditContract":  baseForm,
+		"EditParameter": baseForm,
+		"EditMenu":      baseForm,
+		"EditPage":      url.Values{"Id": {"1"}, "Value": {"Test"}, "Conditions": {"incorrectConditions"}, "Menu": {"1"}},
+	}
+	expectedErr := `{"type":"panic","error":"unknown identifier incorrectConditions"}`
+
+	for contract, form := range contracts {
+		err := postTx(contract, &form)
+		if err.Error() != expectedErr {
+			t.Errorf("contract %s expected '%s' got '%s'", contract, expectedErr, err)
+			return
+		}
+	}
+}
