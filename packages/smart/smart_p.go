@@ -234,11 +234,12 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 	if err != nil {
 		return 0, err
 	}
-	err = syspar.SysUpdate()
+	err = syspar.SysUpdate(sc.DbTransaction)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 		return 0, err
 	}
+	sc.SysUpdate = true
 	return 0, nil
 }
 

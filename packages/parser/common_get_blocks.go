@@ -173,6 +173,12 @@ func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
 				return utils.ErrInfo(err)
 			}
 		}
+		if block.SysUpdate {
+			if err := syspar.SysUpdate(dbTransaction); err != nil {
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
+				return utils.ErrInfo(err)
+			}
+		}
 	}
 
 	// If all right we can delete old blockchain and write new

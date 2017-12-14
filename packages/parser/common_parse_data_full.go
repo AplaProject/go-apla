@@ -45,6 +45,7 @@ type Block struct {
 	MrklRoot   []byte
 	BinData    []byte
 	Parsers    []*Parser
+	SysUpdate  bool
 }
 
 // GetLogger is returns logger
@@ -99,6 +100,13 @@ func (b *Block) PlayBlockSafe() error {
 	}
 
 	dbTransaction.Commit()
+	if b.SysUpdate {
+		b.SysUpdate = false
+		if err = syspar.SysUpdate(nil); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
+			return err
+		}
+	}
 	return nil
 }
 
@@ -589,7 +597,17 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			// skip this transaction
 			model.MarkTransactionUsed(nil, p.TxHash)
 			p.processBadTransaction(p.TxHash, err.Error())
+			if p.SysUpdate {
+				if err = syspar.SysUpdate(p.DbTransaction); err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
+				}
+				p.SysUpdate = false
+			}
 			continue
+		}
+		if p.SysUpdate {
+			b.SysUpdate = true
+			p.SysUpdate = false
 		}
 
 		if _, err := model.MarkTransactionUsed(p.DbTransaction, p.TxHash); err != nil {
