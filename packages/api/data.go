@@ -44,11 +44,15 @@ func dataHandler() hr.Handle {
 		mark := `base64,`
 		offset := strings.Index(data, mark)
 		if offset == -1 || fmt.Sprintf(`%x`, md5.Sum([]byte(data))) != strings.ToLower(ps.ByName(`hash`)) {
+			log.WithFields(log.Fields{"type": consts.InvalidObject, "error": fmt.Errorf("wrong hash or data")}).Error("wrong hash or data")
+			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 			return
 		}
 		re := regexp.MustCompile(`(?is)^data:([a-z0-9-]+\/[a-z0-9-]+);base64,$`)
 		ret := re.FindStringSubmatch(data[:offset+len(mark)])
 		if len(ret) != 2 {
+			log.WithFields(log.Fields{"type": consts.InvalidObject, "error": fmt.Errorf("wrong image data")}).Error("wrong image data")
+			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 			return
 		}
 		datatype := ret[1]
