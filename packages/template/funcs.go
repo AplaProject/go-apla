@@ -51,7 +51,7 @@ func init() {
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`}
-	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`}
+	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
 	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
