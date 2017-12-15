@@ -17,6 +17,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -28,10 +29,10 @@ import (
 )
 
 type contentResult struct {
-	Menu     string `json:"menu,omitempty"`
-	MenuTree string `json:"menutree,omitempty"`
-	Title    string `json:"title,omitempty"`
-	Tree     string `json:"tree"`
+	Menu     string          `json:"menu,omitempty"`
+	MenuTree json.RawMessage `json:"menutree,omitempty"`
+	Title    string          `json:"title,omitempty"`
+	Tree     json.RawMessage `json:"tree"`
 }
 
 func initVars(r *http.Request, data *apiData) *map[string]string {
@@ -69,7 +70,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	}
 
 	retmenu := template.Template2JSON(menu, false, initVars(r, data))
-	data.result = &contentResult{Tree: string(ret), Menu: page.Menu, MenuTree: string(retmenu)}
+	data.result = &contentResult{Tree: ret, Menu: page.Menu, MenuTree: retmenu}
 	return nil
 }
 
@@ -88,12 +89,12 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	}
 
 	ret := template.Template2JSON(menu.Value, false, initVars(r, data))
-	data.result = &contentResult{Tree: string(ret), Title: menu.Title}
+	data.result = &contentResult{Tree: ret, Title: menu.Title}
 	return nil
 }
 
 func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	ret := template.Template2JSON(data.params[`template`].(string), false, initVars(r, data))
-	data.result = &contentResult{Tree: string(ret)}
+	data.result = &contentResult{Tree: ret}
 	return nil
 }
