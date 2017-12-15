@@ -64,6 +64,7 @@ type parFunc struct {
 	Node      *node
 	Workspace *Workspace
 	Pars      *map[string]string
+	RawPars   *map[string]string
 	Tails     *[]*[][]rune
 }
 
@@ -319,9 +320,18 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		}
 	}
 	state := int(converter.StrToInt64((*workspace.Vars)[`ecosystem_id`]))
-	for i, v := range pars {
-		pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`accept_lang`],
-			workspace.SmartContract.VDE)
+	if (*workspace.Vars)[`_full`] != `1` {
+		for i, v := range pars {
+			pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`accept_lang`],
+				workspace.SmartContract.VDE)
+			if pars[i] != v {
+				if parFunc.RawPars == nil {
+					rawpars := make(map[string]string)
+					parFunc.RawPars = &rawpars
+				}
+				(*parFunc.RawPars)[i] = v
+			}
+		}
 	}
 	if len(curFunc.Tag) > 0 {
 		curNode.Tag = curFunc.Tag
