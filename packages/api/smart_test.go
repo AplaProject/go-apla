@@ -267,9 +267,15 @@ func TestUpdateSysParam(t *testing.T) {
 	name := randName(`test`)
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
+			var costlen int
+			costlen = SysParamInt("extend_cost_len") + 1
 			UpdateSysParam("Name,Value","max_columns","51")
+			DBUpdateSysParam("extend_cost_len", Str(costlen), "true" )
+			if SysParamInt("extend_cost_len") != costlen {
+				error "Incorrect updated value"
+			}
 			DBUpdateSysParam("max_indexes", "4", "false" )
-		  }
+		}
 		}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx("NewContract", &form)

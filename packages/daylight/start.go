@@ -300,7 +300,7 @@ func Start() {
 
 	// database rollback to the specified block
 	if *conf.RollbackToBlockID > 0 {
-		err = syspar.SysUpdate()
+		err = syspar.SysUpdate(nil)
 		if err != nil {
 			log.WithError(err).Error("can't read system parameters")
 		}
