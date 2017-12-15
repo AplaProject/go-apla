@@ -18,10 +18,7 @@ package api
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -30,10 +27,9 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
+	"github.com/AplaProject/go-apla/packages/install"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/parser"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -83,70 +79,12 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return err
 	}
 
-	firstBlockFileName := *conf.FirstBlockPath
-	if data.firstBlockDir != "" {
-		firstBlockFileName = filepath.Join(data.firstBlockDir, consts.FirstBlockFilename)
-	}
-	if _, err = os.Stat(firstBlockFileName); len(firstBlockFileName) > 0 && os.IsNotExist(err) {
-		logger.WithFields(log.Fields{"path": firstBlockFileName}).Info("First block does not exists, generating new keys")
-		// If there is no key, this is the first run and the need to create them in the working directory.
-		privateKeyPath := filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename)
-		if _, err = os.Stat(privateKeyPath); os.IsNotExist(err) {
-			log.WithFields(log.Fields{"path": privateKeyPath}).Info("private key is not exists, generating new one")
-
-			if len(*conf.FirstBlockPublicKey) == 0 {
-				log.WithFields(log.Fields{"type": consts.EmptyObject}).Info("first block public key is empty")
-				priv, pub, err := crypto.GenHexKeys()
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("generating hex keys")
-				}
-
-				err = ioutil.WriteFile(privateKeyPath, []byte(priv), 0644)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating private key file")
-					return err
-				}
-
-				err = ioutil.WriteFile(filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename), []byte(pub), 0644)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating public key file")
-					return err
-				}
-				*conf.FirstBlockPublicKey = pub
-			}
-		}
-		nodePrivateKeyPath := filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename)
-		if _, err = os.Stat(nodePrivateKeyPath); os.IsNotExist(err) {
-			logger.WithFields(log.Fields{"path": nodePrivateKeyPath}).Info("NodePrivateKey does not exists, generating new keys")
-			if len(*conf.FirstBlockNodePublicKey) == 0 {
-				priv, pub, err := crypto.GenHexKeys()
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("generating hex keys")
-				}
-
-				err = ioutil.WriteFile(nodePrivateKeyPath, []byte(priv), 0644)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("creating NodePrivateKey")
-					return err
-				}
-
-				err = ioutil.WriteFile(filepath.Join(conf.Config.PrivateDir, consts.NodePublicKeyFilename), []byte(pub), 0644)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("creating NodePublicKey")
-					return err
-				}
-				*conf.FirstBlockNodePublicKey = pub
-			}
-		}
-		parser.GenerateFirstBlock()
-	}
-
-	if conf.Config.KeyID == 0 {
-		key, err := parser.GetKeyIDFromPrivateKey()
+	if install.IsNotExistFirstBlock() {
+		err = install.GenerateFirstBlock()
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("GenerateFirstBlock")
 			return err
 		}
-		conf.Config.KeyID = key
 	}
 
 	if err := conf.SaveConfig(); err != nil {
@@ -157,7 +95,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 	return daemonsctl.RunAllDaemons()
 }
 
-func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func doInstall(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var result installResult
 
 	data.result = &result
