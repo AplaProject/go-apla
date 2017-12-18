@@ -79,7 +79,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return err
 	}
 
-	if install.IsNotExistFirstBlock() {
+	if !install.IsExistFirstBlock() {
 		err = install.GenerateFirstBlock()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("GenerateFirstBlock")
