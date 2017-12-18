@@ -18,6 +18,7 @@ package script
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -292,11 +293,31 @@ func TestVMCompile(t *testing.T) {
 					return "OK"
 				}
 			}`, `seterr.getset`, `unknown identifier MyFunc`},
+		{`func exttest() string {
+				return Replace("text", "t")
+			}
+			`, `exttest`, `function Replace must have 4 parameters`},
+		{`func myvariadic(first string, second ...) string {
+				return Sprintf("%s %d", first, lenArray(second))
+			}
+			func test() string {
+				myvariadic("one", "two", "second")
+				myvariadic("one", "two")
+				return myvariadic()
+			}
+			`, `test`, `function myvariadic must have 2 parameters`},
+		{`func mytest(first string, second int) string {
+					return Sprintf("%s %d", first, second)
+			}
+			func test() {
+				mytest("one")
+			}
+			`, `test`, `function mytest must have 2 parameters`},
 	}
 	vm := NewVM()
 	vm.Extern = true
 	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
-		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray}, nil})
+		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray, "Replace": strings.Replace}, nil})
 
 	for ikey, item := range test {
 		source := []rune(item.Input)

@@ -940,6 +940,31 @@ main:
 					}
 					count := parcount[len(parcount)-1]
 					parcount = parcount[:len(parcount)-1]
+					var errtext string
+					switch prev.Value.(*ObjInfo).Type {
+					case ObjFunc:
+						finfo := prev.Value.(*ObjInfo).Value.(*Block).Info.(*FuncInfo)
+						if count != len(finfo.Params) && (!finfo.Variadic ||
+							count < len(finfo.Params)-1) {
+							errtext = fmt.Sprintf(eWrongParams, getNameByObj(prev.Value.(*ObjInfo)),
+								len(finfo.Params))
+						}
+					case ObjExtFunc:
+						extinfo := prev.Value.(*ObjInfo).Value.(ExtFuncInfo)
+						wantlen := len(extinfo.Params)
+						for _, v := range extinfo.Auto {
+							if len(v) > 0 {
+								wantlen--
+							}
+						}
+						if count != wantlen && (!extinfo.Variadic || count < wantlen) {
+							errtext = fmt.Sprintf(eWrongParams, extinfo.Name, wantlen)
+						}
+					}
+					if len(errtext) > 0 {
+						logger.WithFields(log.Fields{"error": errtext, "type": consts.ParseError}).Error(errtext)
+						return fmt.Errorf(errtext)
+					}
 					if prev.Cmd == cmdCallVari {
 						bytecode = append(bytecode, &ByteCode{cmdPush, count})
 					}
@@ -1079,6 +1104,7 @@ main:
 						count++
 					}
 					if lexem.Value.(string) == `CallContract` {
+						count++
 						bytecode = append(bytecode, &ByteCode{cmdPush, (*block)[0].Info.(uint32)})
 					}
 					parcount = append(parcount, count)
