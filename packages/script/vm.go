@@ -88,8 +88,8 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		if cmd == cmdCallVari {
 			parcount := count + 1 - in
 			if parcount < 0 {
-				log.WithFields(log.Fields{"type": consts.VMError}).Error("wrong count of parameters")
-				return fmt.Errorf(`wrong count of parameters`)
+				log.WithFields(log.Fields{"type": consts.VMError}).Error(errWrongCountPars.Error())
+				return errWrongCountPars
 			}
 			pars := make([]interface{}, parcount)
 			shift := size - parcount
@@ -98,6 +98,20 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			}
 			rt.stack = rt.stack[:shift]
 			rt.stack = append(rt.stack, pars)
+		}
+		finfo := obj.Value.(*Block).Info.(*FuncInfo)
+		if len(rt.stack) < len(finfo.Params) {
+			log.WithFields(log.Fields{"type": consts.VMError}).Error(errWrongCountPars.Error())
+			return errWrongCountPars
+		}
+		for i, v := range finfo.Params {
+			switch v.String() {
+			case `string`, `int64`:
+				if reflect.TypeOf(rt.stack[len(rt.stack)-in+i]) != v {
+					log.WithFields(log.Fields{"type": consts.VMError}).Error(eTypeParam)
+					return fmt.Errorf(eTypeParam, i+1)
+				}
+			}
 		}
 		if obj.Value.(*Block).Info.(*FuncInfo).Names != nil {
 			rt.stack = append(rt.stack, imap)

@@ -297,22 +297,20 @@ func TestVMCompile(t *testing.T) {
 				return Replace("text", "t")
 			}
 			`, `exttest`, `function Replace must have 4 parameters`},
-		{`func myvariadic(first string, second ...) string {
-				return Sprintf("%s %d", first, lenArray(second))
-			}
-			func test() string {
-				myvariadic("one", "two", "second")
-				myvariadic("one", "two")
-				return myvariadic()
-			}
-			`, `test`, `function myvariadic must have 2 parameters`},
 		{`func mytest(first string, second int) string {
-					return Sprintf("%s %d", first, second)
-			}
-			func test() {
-				mytest("one")
-			}
-			`, `test`, `function mytest must have 2 parameters`},
+				return Sprintf("%s %d", first, second)
+		}
+		func test() {
+			return mytest("one", "two")
+		}
+		`, `test`, `parameter 2 has wrong type`},
+		{`func mytest(first string, second int) string {
+								return Sprintf("%s %d", first, second)
+						}
+						func test() string {
+							return mytest("one")
+						}
+						`, `test`, `wrong count of parameters`},
 	}
 	vm := NewVM()
 	vm.Extern = true
@@ -340,6 +338,7 @@ func TestVMCompile(t *testing.T) {
 					break
 				}
 			} else if err.Error() != item.Output {
+				fmt.Println(`OK`, item.Output)
 				t.Error(err)
 				break
 			}
