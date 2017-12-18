@@ -8,30 +8,48 @@ import (
 	"os"
 	"sort"
 
+	"github.com/go-chi/chi"
 	"github.com/gorilla/mux"
 	version "github.com/hashicorp/go-version"
 
 	"github.com/AplaProject/go-apla/tools/update_client/structs"
 	"github.com/AplaProject/go-apla/tools/update_server/config"
 	"github.com/AplaProject/go-apla/tools/update_server/storage"
+	"github.com/AplaProject/go-apla/tools/update_server/web/middleware"
 )
 
 // Server is storing web dependencies
 type Server struct {
-	Db   *storage.BoltStorage
+	Db   storage.Engine
 	Conf *config.Config
 }
 
+// Run is running web server
 func (s *Server) Run() error {
-	r := mux.NewRouter()
-	r.HandleFunc("/v1/binary", s.addBinary).Methods("POST")
-	r.HandleFunc("/v1/binary/{version}/{GOOS}/{GOARCH}", s.getBinary).Methods("GET")
-	r.HandleFunc("/v1/binary/{version}", s.removeBinary).Methods("DELETE")
-	r.HandleFunc("/v1/last", s.getLastVersion).Methods("GET")
+	return http.ListenAndServe(s.Conf.Host+":"+s.Conf.Port, s.GetRoutes())
+}
 
-	r.HandleFunc("/v1/version", s.getVersions).Methods("GET")
-	http.Handle("/", r)
-	return http.ListenAndServe(s.Conf.Host+":"+s.Conf.Port, r)
+// GetRoutes returning all web server routes
+func (s *Server) GetRoutes() *chi.Mux {
+	r := chi.NewRouter()
+
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Get("/last", s.getLastVersion)
+		r.Get("/version", s.getVersions)
+
+		r.Route("/binary", func(r chi.Router) {
+			r.Use(middleware.Auth(s.Conf.Login, s.Conf.Pass))
+
+			r.Post("/", s.addBinary)
+
+			r.Route("/{version}", func(r chi.Router) {
+				r.Delete("/", s.removeBinary)
+				r.Get("/{GOOS}/{GOARCH}", s.getBinary)
+			})
+		})
+	})
+
+	return r
 }
 
 func getLast(versions []string) (string, error) {

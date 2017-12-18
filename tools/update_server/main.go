@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	p := config.NewParser(filepath.Join(".", "resources"))
+	p := config.NewParser(filepath.Join(".", "resources", "config.ini"))
 	c, err := p.Do()
 	if err != nil {
 		log.Fatalf("Config parsing error: %s", err.Error())
