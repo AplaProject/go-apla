@@ -17,6 +17,7 @@
 package api
 
 import (
+	"crypto/md5"
 	"fmt"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"net/url"
@@ -113,7 +114,7 @@ func TestImage(t *testing.T) {
 	}
 	var mydata string
 
-	mydata = crypto.RandSeq(300000)
+	mydata = `data:image/png;base64,` + crypto.RandSeq(30000)
 	err = postTx(name, &url.Values{`Image`: {mydata}})
 	if err != nil {
 		t.Error(err)
@@ -135,5 +136,27 @@ func TestImage(t *testing.T) {
 	if int(duration.Seconds()) > 0 {
 		t.Errorf(`Too much time for template parsing`)
 		return
+	}
+
+	template = `Div(Class: list-group-item){
+		Div(panel-body){
+		   DBFind("` + name + `", mysrc).Custom(leftImg){
+			   Image(Src: "#image#")
+		   }
+		   }
+		   Table(mysrc,"Image=leftImg")
+		}
+	 Form(){
+	   ImageInput(Name: img, Width: 400, Ratio: 2/1)
+				Button(Body: Add, Contract: UploadImage){ Upload! }
+	  }`
+	err = sendPost(`content`, &url.Values{`template`: {template}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	md := fmt.Sprintf(`%x`, md5.Sum([]byte(mydata)))
+	if ret.Tree != `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","rb_id","leftImg"],"data":[["1","myimage","/data/1_`+name+`/1/image/`+md+`","0","[{\"tag\":\"image\",\"attr\":{\"src\":\"/data/1_`+name+`/1/image/`+md+`\"}}]"]],"name":"`+name+`","source":"mysrc","types":["text","text","text","text","tags"]}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}}]},{"tag":"form","children":[{"tag":"imageinput","attr":{"name":"img","ratio":"2/1","width":"400"}},{"tag":"button","attr":{"contract":"UploadImage"},"children":[{"tag":"text","text":"Upload!"}]}]}]` {
+		t.Errorf(`Wrong image tree`)
 	}
 }
