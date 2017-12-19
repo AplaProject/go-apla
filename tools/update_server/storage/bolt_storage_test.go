@@ -7,6 +7,7 @@ import (
 
 	"math/rand"
 
+	"github.com/AplaProject/go-apla/tools/update_server/model"
 	"github.com/AplaProject/go-apla/tools/update_server/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,27 +27,32 @@ func cleanUpFile(t *testing.T, storagePath string) {
 	require.NoError(t, os.Remove(storagePath))
 }
 
+//TODO make this whole tests for all storage implementations, not just for boltDb
 func TestBoltStorage_AddBinary(t *testing.T) {
 	cases := []struct {
 		version  string
+		os       string
+		arch     string
 		binary   []byte
 		expError bool
 	}{
 		{expError: true},
 		{binary: []byte{1}, expError: true},
 		{version: "0.0.1", expError: true},
-		{version: "0.0.1", binary: []byte{1}, expError: false},
+		{version: "0.0.2", binary: []byte{1}, expError: true},
+		{version: "0.0.3", os: "linux", arch: "amd64", binary: []byte{1}, expError: false},
 	}
 
 	bs, spath := newTempBoltStorage(t)
 	var wr []string // added versions
 	for _, c := range cases {
-		err := bs.AddBinary(c.binary, c.version)
+		bu := model.Build{Version: c.version, OS: c.os, Arch: c.arch, Body: c.binary}
+		err := bs.Add(bu)
 		if c.expError {
 			assert.Error(t, err)
 		} else {
 			assert.NoError(t, err)
-			wr = append(wr, c.version)
+			wr = append(wr, bu.GetSystem())
 		}
 	}
 
@@ -58,27 +64,28 @@ func TestBoltStorage_AddBinary(t *testing.T) {
 
 }
 
-func TestBoltStorage_GetVersionsList(t *testing.T) {
-	cases := []struct {
-		versionsList []string
-	}{
-		{versionsList: []string{"0.0.1"}},
-		{versionsList: []string{"0.9", "0.9.5", "0.9.9", "1", "1.0.5", "2.0"}},
-	}
-
-	for _, c := range cases {
-		bs, spath := newTempBoltStorage(t)
-		for _, v := range c.versionsList {
-			require.NoError(t, bs.AddBinary([]byte{1}, v))
-		}
-
-		rs, err := bs.GetVersionsList()
-		require.NoError(t, err)
-		assert.Equal(t, c.versionsList, rs)
-
-		cleanUpFile(t, spath)
-	}
-}
+//func TestBoltStorage_GetVersionsList(t *testing.T) {
+//	cases := []struct {
+//		versionsList []string
+//	}{
+//		{versionsList: []string{"0.0.1"}},
+//		{versionsList: []string{"0.9", "0.9.5", "0.9.9", "1", "1.0.5", "2.0"}},
+//	}
+//
+//	for _, c := range cases {
+//		bs, spath := newTempBoltStorage(t)
+//		for _, v := range c.versionsList {
+//			bu := model.Build{Version: v, Body: []byte{1}}
+//			require.NoError(t, bs.Add(bu))
+//		}
+//
+//		rs, err := bs.GetVersionsList()
+//		require.NoError(t, err)
+//		assert.Equal(t, c.versionsList, rs)
+//
+//		cleanUpFile(t, spath)
+//	}
+//}
 
 func TestBoltStorage_GetBinary(t *testing.T) {
 	// generating 0 - 4 mb byte slice
@@ -106,59 +113,69 @@ func TestBoltStorage_GetBinary(t *testing.T) {
 
 	bs, spath := newTempBoltStorage(t)
 	for _, c := range cases {
-		require.NoError(t, bs.AddBinary(c.binary, c.version))
+		bu := model.Build{Version: c.version, OS: "linux", Arch: "amd64", Body: c.binary}
+		require.NoError(t, bs.Add(bu))
 	}
 
 	for _, c := range cases {
-		b, err := bs.GetBinary(c.version)
+		cb := model.Build{Version: c.version, OS: "linux", Arch: "amd64"}
+		b, err := bs.Get(cb)
 		if c.expError {
 			require.Error(t, err)
 		} else {
 			assert.NoError(t, err)
 		}
 
-		assert.Equal(t, c.binary, b)
+		assert.Equal(t, c.binary, b.Body)
 	}
 	cleanUpFile(t, spath)
 }
 
 func TestBoltStorage_DeleteBinary(t *testing.T) {
 	cases := []struct {
+		id       int
 		version  string
+		os       string
+		arch     string
 		binary   []byte
 		expError bool
 	}{
-		{version: "0.0.1", binary: []byte{1}},
-		{version: "0.1.0", binary: []byte{2}},
-		{version: "0.1.1", binary: []byte{3}},
+		{id: 1, version: "0.0.1", os: "windows", arch: "amd64", binary: []byte{1}},
+		{id: 2, version: "0.1.0", os: "linux", arch: "i386", binary: []byte{2}},
+		{id: 3, version: "0.1.1", os: "linux", arch: "amd64", binary: []byte{3}},
 	}
 
 	// after removing one binary we need to check that all other still present in storage
-	checkOtherExists := func(st storage.BoltStorage, versions map[string]bool) {
+	checkOtherExists := func(st storage.BoltStorage, versions map[int]bool) {
 		for v, e := range versions {
 			if e {
-				b, err := st.GetBinary(v)
-				require.NoError(t, err)
-
+				var f bool
 				for _, c := range cases {
-					if c.version == v {
-						assert.Equal(t, c.binary, b)
+					if c.id == v {
+						cv := model.Build{Version: c.version, Arch: c.arch, OS: c.os}
+						b, err := st.Get(cv)
+						require.NoError(t, err)
+						assert.Equal(t, c.binary, b.Body)
+						f = true
 					}
 				}
+				assert.True(t, f)
 			}
 		}
 	}
 
 	bs, spath := newTempBoltStorage(t)
-	wr := make(map[string]bool) // status of added versions
+	wr := make(map[int]bool) // status of added versions
 	for _, c := range cases {
-		require.NoError(t, bs.AddBinary(c.binary, c.version))
-		wr[c.version] = true
+		bu := model.Build{Version: c.version, OS: c.os, Arch: c.arch, Body: c.binary}
+		require.NoError(t, bs.Add(bu))
+		wr[c.id] = true
 	}
 
 	for _, c := range cases {
-		require.NoError(t, bs.DeleteBinary(c.version))
-		wr[c.version] = false
+		cb := model.Build{Version: c.version, OS: c.os, Arch: c.arch}
+		require.NoError(t, bs.Delete(cb))
+		wr[c.id] = false
 		checkOtherExists(bs, wr)
 	}
 

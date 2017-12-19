@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/tools/update_server/crypto"
+	"github.com/AplaProject/go-apla/tools/update_server/model"
 )
 
 func TestBinarySign(t *testing.T) {
-	b := &crypto.Binary{Version: "1.1", Body: []byte("test"), Date: time.Now()}
-	priv, err := os.Open("../update.priv")
+	b := model.Build{Version: "1.1", Body: []byte("test"), Date: time.Now()}
+	priv, err := os.Open("../testdata/key")
 	if err != nil {
 		t.Error("private key not found")
 	}
@@ -20,7 +21,7 @@ func TestBinarySign(t *testing.T) {
 		t.Error("erro reading private key")
 	}
 
-	pub, err := os.Open("../update.pub")
+	pub, err := os.Open("../testdata/key.pub")
 	if err != nil {
 		t.Error("public key not found")
 	}
@@ -29,12 +30,14 @@ func TestBinarySign(t *testing.T) {
 		t.Error("error reading public key")
 	}
 
-	err = b.MakeSign(privData)
+	bs := crypto.NewBuildSigner(privData)
+	sign, err := bs.MakeSign(b)
 	if err != nil {
 		t.Error("can't sign")
 	}
+	b.Sign = sign
 
-	verify, err := b.CheckSign(pubData)
+	verify, err := bs.CheckSign(b, pubData)
 	if err != nil {
 		t.Error("can't verify")
 	}

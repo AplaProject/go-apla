@@ -1,27 +1,26 @@
 package web
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
-	"sort"
 
 	"github.com/go-chi/chi"
-	"github.com/gorilla/mux"
-	version "github.com/hashicorp/go-version"
 
-	"github.com/AplaProject/go-apla/tools/update_client/structs"
+	"fmt"
+
 	"github.com/AplaProject/go-apla/tools/update_server/config"
+	"github.com/AplaProject/go-apla/tools/update_server/crypto"
+	"github.com/AplaProject/go-apla/tools/update_server/model"
 	"github.com/AplaProject/go-apla/tools/update_server/storage"
 	"github.com/AplaProject/go-apla/tools/update_server/web/middleware"
+	"github.com/go-chi/render"
 )
 
 // Server is storing web dependencies
 type Server struct {
-	Db   storage.Engine
-	Conf *config.Config
+	Db        storage.Engine
+	Conf      *config.Config
+	Signer    crypto.BuildSigner
+	PublicKey []byte
 }
 
 // Run is running web server
@@ -34,35 +33,23 @@ func (s *Server) GetRoutes() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/last", s.getLastVersion)
-		r.Get("/version", s.getVersions)
-
-		r.Route("/binary", func(r chi.Router) {
+		r.Route("/private", func(r chi.Router) {
 			r.Use(middleware.Auth(s.Conf.Login, s.Conf.Pass))
 
-			r.Post("/", s.addBinary)
-
-			r.Route("/{version}", func(r chi.Router) {
-				r.Delete("/", s.removeBinary)
-				r.Get("/{GOOS}/{GOARCH}", s.getBinary)
+			r.Route("/binary", func(r chi.Router) {
+				r.Post("/", s.addBinary)
+				r.Delete("/{os}/{arch}/{version}", s.removeBinary)
 			})
+		})
+
+		r.Route("/{os}/{arch}", func(r chi.Router) {
+			r.Get("/last", s.getLastVersion)
+			r.Get("/versions", s.getVersions)
+			r.Get("/{version}", s.getBinary)
 		})
 	})
 
 	return r
-}
-
-func getLast(versions []string) (string, error) {
-	var vers []*version.Version
-	for _, v := range versions {
-		t, err := version.NewVersion(v)
-		if err != nil {
-			return "", err
-		}
-		vers = append(vers, t)
-	}
-	sort.Sort(version.Collection(vers))
-	return vers[len(vers)-1].String(), nil
 }
 
 func (s *Server) getLastVersion(w http.ResponseWriter, r *http.Request) {
@@ -72,17 +59,18 @@ func (s *Server) getLastVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	version, err := getLast(versions)
+	lastBuild := model.GetLastVersion(versions)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	binary, err := s.Db.GetBinary(version)
+
+	binary, err := s.Db.Get(lastBuild)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
 		return
 	}
-	w.Write(binary)
+	w.Write(binary.Body)
 }
 
 func (s *Server) getVersions(w http.ResponseWriter, r *http.Request) {
@@ -91,77 +79,69 @@ func (s *Server) getVersions(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	for _, version := range versions {
-		w.Write([]byte(version + "|"))
-	}
+
+	render.JSON(w, r, versions)
 }
 
 func (s *Server) getBinary(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	version := vars["version"] + "_" + vars["GOOS"] + "_" + vars["GOARCH"]
-	binary, err := s.Db.GetBinary(version)
+	v := chi.URLParam(r, "version")
+	os := chi.URLParam(r, "os")
+	a := chi.URLParam(r, "arch")
+	rb := model.Build{Version: v, OS: os, Arch: a}
+
+	binary, err := s.Db.Get(rb)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
 		return
 	}
-	w.Write(binary)
+
+	w.Write(binary.Body)
 }
 
 func (s *Server) addBinary(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+	var b model.Build
+	err := render.DecodeJSON(r.Body, &b)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		s.HTTPError(w, r, http.StatusBadRequest, "Problem with decoding json")
 		return
 	}
 
-	var request structs.Request
-	err = json.Unmarshal(body, &request)
-	if request.CheckLogin(s.Conf.Login, s.Conf.Pass) != true {
-		w.WriteHeader(http.StatusUnauthorized)
+	verified, err := s.Signer.CheckSign(b, s.PublicKey)
+	if err != nil || !verified {
+		s.HTTPError(w, r, http.StatusBadRequest, "Wrong binary sign")
 		return
 	}
 
-	public, err := os.Open(s.Conf.PubkeyPath)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	pubData, err := ioutil.ReadAll(public)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	verified, err := request.B.CheckSign(pubData)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	if !b.ValidateSystem() {
+		s.HTTPError(w, r, http.StatusBadRequest, fmt.Sprintf("Wrong os+arch, available systems list: %s", b.GetAvailableSystems()))
 		return
 	}
 
-	if verified != true {
-		w.WriteHeader(http.StatusBadRequest)
+	err = s.Db.Add(b)
+	if err != nil {
+		s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
 		return
 	}
 
-	data, err := json.Marshal(request.B)
-	fmt.Println(len(data))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	err = s.Db.AddBinary(data, request.B.Version)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	render.JSON(w, r, struct{}{})
 }
 
 func (s *Server) removeBinary(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	version := vars["version"]
+	v := chi.URLParam(r, "version")
+	os := chi.URLParam(r, "os")
+	a := chi.URLParam(r, "arch")
+	rb := model.Build{Version: v, OS: os, Arch: a}
 
-	err := s.Db.DeleteBinary(version)
+	err := s.Db.Delete(rb)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	render.JSON(w, r, struct{}{})
+}
+
+func (s *Server) HTTPError(w http.ResponseWriter, r *http.Request, status int, error string) {
+	render.Status(r, status)
+	render.JSON(w, r, error)
 }
