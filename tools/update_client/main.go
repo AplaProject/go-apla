@@ -9,13 +9,13 @@ import (
 )
 
 func main() {
-	command := flag.String("command", "", "")
+	command := flag.String("command", "", "Run command")
 	binaryPath := flag.String("binary", "", "")
 	updateAddr := flag.String("updateAddr", "", "")
 	login := flag.String("login", "", "")
 	pass := flag.String("pass", "", "")
-	privKey := flag.String("priv", "update.priv", "")
-	pubKey := flag.String("pub", "update.pub", "")
+	privKey := flag.String("priv", "update.priv", "Path to private key")
+	pubKey := flag.String("pub", "update.pub", "Path to public key")
 	version := flag.String("version", "", "")
 	startBlock := flag.Int64("startBlock", -1231, "")
 	remove := flag.String("remove", "", "")

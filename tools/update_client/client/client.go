@@ -2,9 +2,6 @@ package client
 
 import (
 	"bytes"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/tools/update_client/structs"
 	version "github.com/hashicorp/go-version"
@@ -25,33 +23,26 @@ import (
 type UpdateClient struct {
 }
 
+// GenerateKeys creates public/private key pair
 func (uc *UpdateClient) GenerateKeys(privatePath string, publicPath string) error {
-	curve := elliptic.P256()
-	priv, err := ecdsa.GenerateKey(curve, rand.Reader)
+	fmt.Println("Generating public/private key pair")
+	priv, pub, err := crypto.GenBytesKeys()
 	if err != nil {
-		return errors.New("can't generate private key")
+		return errors.New("can't generate keys")
 	}
-	pub := priv.PublicKey
-	privKey, err := os.OpenFile(privatePath, os.O_CREATE, 0600)
-	if err != nil {
-		return errors.New("can't open private key file")
-	}
-	_, err = privKey.Write(priv.D.Bytes())
+
+	err = ioutil.WriteFile(privatePath, priv, 0600)
 	if err != nil {
 		return errors.New("can't write private key")
 	}
+	fmt.Printf("Private key has been saved in %s\n", privatePath)
 
-	pubKey, err := os.OpenFile(publicPath, os.O_CREATE, 0600)
-	if err != nil {
-		return errors.New("can't open public key file")
-	}
-	var key []byte
-	key = append(key, pub.X.Bytes()...)
-	key = append(key, pub.Y.Bytes()...)
-	_, err = pubKey.Write(key)
+	err = ioutil.WriteFile(publicPath, pub, 0600)
 	if err != nil {
 		return errors.New("can't write public key")
 	}
+	fmt.Printf("Public key has been saved in %s\n", publicPath)
+
 	return nil
 }
 
