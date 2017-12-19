@@ -72,8 +72,8 @@ var forTest = tplList{
 	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))
 		SetVar(Name: vCmpStartDate, Value: CmpTime(#vStartDate#,#vDateNow#))
-		Span(#vCmpStartDate# = #vStartDate# = #vDateNow#)`,
-		``},
+		Span(#vCmpStartDate#)`,
+		`[{"tag":"span","children":[{"tag":"text","text":"0"}]}]`},
 	{`Input(Type: text, Value: OK Now(YY)+Strong(Ooops))`,
 		`[{"tag":"input","attr":{"type":"text","value":"OK 17+"}}]`},
 	{`Button(Body: LangRes(save), Class: btn btn-primary, Contract: EditProfile, 
@@ -87,7 +87,7 @@ var forTest = tplList{
 	{`EcosysParam(new_table)`,
 		`[{"tag":"text","text":"ContractConditions(\u0026#34;MainCondition\u0026#34;)"}]`},
 	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
-		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","government"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"government"}]}]`},
+		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","default_menu"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"default_menu"}]}]`},
 }
 
 func TestImage(t *testing.T) {
