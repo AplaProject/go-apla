@@ -798,8 +798,8 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 
 // RowConditions checks conditions for table row by id
 func RowConditions(sc *SmartContract, tblname string, id int64) error {
-	esсapedTable := converter.EscapeName(getDefTableName(sc, tblname))
-	condition, err := model.GetRowConditionsByTableNameAndID(esсapedTable, id)
+	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
+	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing row condition query")
 		return err
