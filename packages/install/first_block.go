@@ -108,6 +108,7 @@ func generateFirstBlock(publicKey, nodePublicKey []byte) error {
 
 	block, err := parser.MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("first block marshalling")
 		return err
 	}
 
