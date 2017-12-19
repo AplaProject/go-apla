@@ -47,7 +47,7 @@ func (u *Updater) TryUpdate(currentBlockNumber int64) {
 			if err != nil {
 				//TODO add log
 			}
-			exec.Command(*utils.Dir+"/"+clientName[0],
+			exec.Command(utils.GetCurrentDir()+"/"+clientName[0],
 				fmt.Sprintf(`-command="u" -version="%s" -remove="%s -public="%s"`, update.version, selfName, u.pubkeyPath))
 			os.Exit(0)
 		}
@@ -166,7 +166,7 @@ func (u *Updater) checkUpdateFile(version *version.Version, publicKey string) er
 
 func getLocalVersion() (*version.Version, error) {
 	migration := &model.MigrationHistory{}
-	err := migration.Get()
+	_, err := migration.Get()
 	if err != nil {
 		return nil, err
 	}

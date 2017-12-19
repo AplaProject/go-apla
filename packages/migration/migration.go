@@ -1,9 +1,6 @@
 package migration
 
 import (
-	"time"
-
-	"github.com/AplaProject/go-apla/packages/model"
 	version "github.com/hashicorp/go-version"
 )
 
@@ -1552,18 +1549,18 @@ func init() {
 }
 
 func Migrate(vers *version.Version) error {
-	for _, migrate := range VersionedMigrations {
-		if migrate.vers.LessThan(vers) {
-			err := model.Exec(migrate.migration)
-			if err != nil {
-				return err
-			}
-			dbMigration := &model.MigrationHistory{Version: migrate.vers.String(), DateApplied: time.Now().Unix()}
-			err = dbMigration.Save()
-			if err != nil {
-				return err
-			}
-		}
-	}
+	// for _, migrate := range VersionedMigrations {
+	// 	if migrate.vers.LessThan(vers) {
+	// 		err := model.Exec(migrate.migration)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		dbMigration := &model.MigrationHistory{Version: migrate.vers.String(), DateApplied: time.Now().Unix()}
+	// 		err = dbMigration.Save()
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// }
 	return nil
 }

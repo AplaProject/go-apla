@@ -333,7 +333,7 @@ func TestVDEParams(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if retContent.Tree != `[{"tag":"span","children":[{"tag":"text","text":"My VDE test"}]},{"tag":"text","text":"+French VDE test"}]` {
+	if string(retContent.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"My VDE test"}]},{"tag":"text","text":"+French VDE test"}]` {
 		t.Error(fmt.Errorf(`wrong tree %s`, retContent.Tree))
 		return
 	}

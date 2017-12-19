@@ -218,6 +218,6 @@ func (uc *UpdateClient) UpdateFile(newVersion string, oldFilePath string, public
 	if err != nil {
 		return err
 	}
-	exec.Command(*utils.Dir+"/"+binary.Name, "")
+	exec.Command(utils.GetCurrentDir()+"/"+binary.Name, "")
 	return nil
 }

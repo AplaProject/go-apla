@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 // StopDaemon is model
