@@ -57,19 +57,6 @@ func lenArray(par []interface{}) int64 {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
-		{`func one(row array) int {
-					return 9
-				}
-				func evalfunc string {
-					var myarr array
-					myarr[0] = 0
-					myarr[1] = 1
-					var i, k int
-					k = one(myarr) - 2
-					i = lenArray(myarr) - 1
-					return Sprintf("Out %d %d", i, k) //Sprintf("OOPS %d %d", lenArray(myarr)-1, i)
-				}`, `evalfunc`, ``,
-		},
 		{`contract sets {
 			settings {
 				val = 1.56
@@ -305,6 +292,19 @@ func TestVMCompile(t *testing.T) {
 					return "OK"
 				}
 			}`, `seterr.getset`, `unknown identifier MyFunc`},
+		{`func one() int {
+				return 9
+			}
+			func signfunc string {
+				var myarr array
+				myarr[0] = 0
+				myarr[1] = 1
+				var i, k, j int
+				k = one()-2
+				j = /*comment*/-3
+				i = lenArray(myarr) - 1
+				return Sprintf("%s %d %d %d %d %d", "ok", lenArray(myarr)-1, i, k, j, -4)
+			}`, `signfunc`, `ok 1 1 7 -3 -4`},
 	}
 	vm := NewVM()
 	vm.Extern = true

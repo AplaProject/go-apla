@@ -192,8 +192,7 @@ var (
 			lexNewLine:                      {stateRoot, 0},
 			lexKeyword | (keyContract << 8): {stateContract | statePush, 0},
 			lexKeyword | (keyFunc << 8):     {stateFunc | statePush, 0},
-			lexComment:                      {stateRoot, 0},
-			0:                               {errUnknownCmd, cfError},
+			0: {errUnknownCmd, cfError},
 		},
 		{ // stateBody
 			lexNewLine:                      {stateBody, 0},
@@ -210,7 +209,6 @@ var (
 			lexKeyword | (keyError << 8):    {stateEval, cfCmdError},
 			lexKeyword | (keyWarning << 8):  {stateEval, cfCmdError},
 			lexKeyword | (keyInfo << 8):     {stateEval, cfCmdError},
-			lexComment:                      {stateBody, 0},
 			lexIdent:                        {stateAssignEval | stateFork, 0},
 			lexExtend:                       {stateAssignEval | stateFork, 0},
 			isRCurly:                        {statePop, 0},
@@ -233,13 +231,11 @@ var (
 		},
 		{ // stateFParams
 			lexNewLine: {stateFParams, 0},
-			lexComment: {stateFParams, 0},
 			isLPar:     {stateFParam, 0},
 			0:          {stateFResult | stateStay, 0},
 		},
 		{ // stateFParam
 			lexNewLine: {stateFParam, 0},
-			lexComment: {stateFParam, 0},
 			lexIdent:   {stateFParamTYPE, cfFParam},
 			// lexType:    {stateFParam, cfFType},
 			isComma: {stateFParam, 0},
@@ -247,7 +243,6 @@ var (
 			0:       {errParams, cfError},
 		},
 		{ // stateFParamTYPE
-			lexComment:                  {stateFParamTYPE, 0},
 			lexIdent:                    {stateFParamTYPE, cfFParam},
 			lexType:                     {stateFParam, cfFType},
 			lexKeyword | (keyTail << 8): {stateFTail, cfFTail},
@@ -309,7 +304,6 @@ var (
 		},
 		{ // stateConsts
 			lexNewLine: {stateConsts, 0},
-			lexComment: {stateConsts, 0},
 			isComma:    {stateConsts, 0},
 			lexIdent:   {stateConstsAssign, cfConstName},
 			isRCurly:   {stateToBody, 0},
@@ -326,7 +320,6 @@ var (
 		},
 		{ // stateFields
 			lexNewLine: {stateFields, 0},
-			lexComment: {stateFields, 0},
 			isComma:    {stateFields, 0},
 			lexIdent:   {stateFields, cfField},
 			lexType:    {stateFields, cfFieldType},
@@ -974,9 +967,13 @@ main:
 			}
 		case lexOper:
 			if oper, ok := opers[lexem.Value.(uint32)]; ok {
-				if oper.Cmd == cmdSub && (i == 0 || ((*lexems)[i-1].Type != lexNumber && (*lexems)[i-1].Type != lexIdent &&
-					(*lexems)[i-1].Type != lexExtend &&
-					(*lexems)[i-1].Type != lexString && (*lexems)[i-1].Type != isRCurly && (*lexems)[i-1].Type != isRBrack)) {
+				var prevType uint32
+				if i > 0 {
+					prevType = (*lexems)[i-1].Type
+				}
+				if oper.Cmd == cmdSub && (i == 0 || (prevType != lexNumber && prevType != lexIdent &&
+					prevType != lexExtend && prevType != lexString && prevType != isRCurly &&
+					prevType != isRBrack && prevType != isRPar)) {
 					oper.Cmd = cmdSign
 					oper.Priority = cmdUnary
 				}
