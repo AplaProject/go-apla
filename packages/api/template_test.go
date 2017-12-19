@@ -70,10 +70,11 @@ func TestAPI(t *testing.T) {
 
 var forTest = tplList{
 	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
+		SetVar(Name: simple, Value: TestFunc(my value)) 
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))
 		SetVar(Name: vCmpStartDate, Value: CmpTime(#vStartDate#,#vDateNow#))
-		Span(#vCmpStartDate#)`,
-		`[{"tag":"span","children":[{"tag":"text","text":"0"}]}]`},
+		Span(#vCmpStartDate# #simple#)`,
+		`[{"tag":"span","children":[{"tag":"text","text":"0 TestFunc(my value)"}]}]`},
 	{`Input(Type: text, Value: OK Now(YY)+Strong(Ooops))`,
 		`[{"tag":"input","attr":{"type":"text","value":"OK 17+"}}]`},
 	{`Button(Body: LangRes(save), Class: btn btn-primary, Contract: EditProfile, 
