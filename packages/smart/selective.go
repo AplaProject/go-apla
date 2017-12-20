@@ -34,6 +34,15 @@ var (
 	errUpdNotExistRecord = errors.New(`Update for not existing record`)
 )
 
+var byteaFields map[string]bool = map[string]bool{
+	"hash":       true,
+	"data":       true,
+	"tx_hash":    true,
+	"public_key": true,
+	"pub":        true,
+	"txhash":     true,
+}
+
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
 	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
 	var (
@@ -48,7 +57,14 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
-	isBytea := GetBytea(table)
+	isBytea := map[string]bool{}
+	for _, v := range fields {
+		if _, ok := byteaFields[v]; ok {
+			isBytea[v] = true
+		} else {
+			isBytea[v] = false
+		}
+	}
 	for i, v := range ivalues {
 		if len(fields) > i && isBytea[fields[i]] {
 			switch v.(type) {
@@ -96,7 +112,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	} else {
 		addSQLFields += `rb_id`
 	}
-	selectQuery := `SELECT ` + addSQLFields + ` FROM "` + table + `" ` + addSQLWhere
+	selectQuery := `SELECT ` + addSQLFields + ` FROM "` + table + `" ` + addSQLWhere + " LIMIT 1"
 	selectCost, err := model.GetQueryTotalCost(sc.DbTransaction, selectQuery)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting query total cost")
