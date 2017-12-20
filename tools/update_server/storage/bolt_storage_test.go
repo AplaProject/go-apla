@@ -2,15 +2,15 @@ package storage_test
 
 import (
 	ioutil "io/ioutil"
+	"math/rand"
 	"os"
 	"testing"
 
-	"math/rand"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/AplaProject/go-apla/tools/update_server/model"
 	"github.com/AplaProject/go-apla/tools/update_server/storage"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func newTempBoltStorage(t *testing.T) (storage.BoltStorage, string) {
@@ -44,15 +44,15 @@ func TestBoltStorage_AddBinary(t *testing.T) {
 	}
 
 	bs, spath := newTempBoltStorage(t)
-	var wr []string // added versions
+	var wr []model.Version // added versions
 	for _, c := range cases {
-		bu := model.Build{Version: c.version, OS: c.os, Arch: c.arch, Body: c.binary}
+		bu := model.Build{Version: model.Version{Number: c.version, OS: c.os, Arch: c.arch}, Body: c.binary}
 		err := bs.Add(bu)
 		if c.expError {
 			assert.Error(t, err)
 		} else {
 			assert.NoError(t, err)
-			wr = append(wr, bu.GetSystem())
+			wr = append(wr, bu.Version)
 		}
 	}
 
@@ -113,12 +113,12 @@ func TestBoltStorage_GetBinary(t *testing.T) {
 
 	bs, spath := newTempBoltStorage(t)
 	for _, c := range cases {
-		bu := model.Build{Version: c.version, OS: "linux", Arch: "amd64", Body: c.binary}
+		bu := model.Build{Version: model.Version{Number: c.version, OS: "linux", Arch: "amd64"}, Body: c.binary}
 		require.NoError(t, bs.Add(bu))
 	}
 
 	for _, c := range cases {
-		cb := model.Build{Version: c.version, OS: "linux", Arch: "amd64"}
+		cb := model.Build{Version: model.Version{Number: c.version, OS: "linux", Arch: "amd64"}}
 		b, err := bs.Get(cb)
 		if c.expError {
 			require.Error(t, err)
@@ -152,7 +152,7 @@ func TestBoltStorage_DeleteBinary(t *testing.T) {
 				var f bool
 				for _, c := range cases {
 					if c.id == v {
-						cv := model.Build{Version: c.version, Arch: c.arch, OS: c.os}
+						cv := model.Build{Version: model.Version{Number: c.version, Arch: c.arch, OS: c.os}}
 						b, err := st.Get(cv)
 						require.NoError(t, err)
 						assert.Equal(t, c.binary, b.Body)
@@ -167,13 +167,13 @@ func TestBoltStorage_DeleteBinary(t *testing.T) {
 	bs, spath := newTempBoltStorage(t)
 	wr := make(map[int]bool) // status of added versions
 	for _, c := range cases {
-		bu := model.Build{Version: c.version, OS: c.os, Arch: c.arch, Body: c.binary}
+		bu := model.Build{Version: model.Version{Number: c.version, OS: c.os, Arch: c.arch}, Body: c.binary}
 		require.NoError(t, bs.Add(bu))
 		wr[c.id] = true
 	}
 
 	for _, c := range cases {
-		cb := model.Build{Version: c.version, OS: c.os, Arch: c.arch}
+		cb := model.Build{Version: model.Version{Number: c.version, OS: c.os, Arch: c.arch}}
 		require.NoError(t, bs.Delete(cb))
 		wr[c.id] = false
 		checkOtherExists(bs, wr)

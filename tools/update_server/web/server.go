@@ -7,6 +7,8 @@ import (
 
 	"fmt"
 
+	"encoding/json"
+
 	"github.com/AplaProject/go-apla/tools/update_server/config"
 	"github.com/AplaProject/go-apla/tools/update_server/crypto"
 	"github.com/AplaProject/go-apla/tools/update_server/model"
@@ -59,35 +61,42 @@ func (s *Server) getLastVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lastBuild := model.GetLastVersion(versions)
+	os := chi.URLParam(r, "os")
+	a := chi.URLParam(r, "arch")
+
+	lv, err := model.GetLastVersion(versions, os, a)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		s.HTTPError(w, r, http.StatusBadRequest, "Wrong os/arch params")
 		return
 	}
 
-	binary, err := s.Db.Get(lastBuild)
+	binary, err := s.Db.Get(model.Build{Version: lv})
 	if err != nil {
 		s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
 		return
 	}
+
 	w.Write(binary.Body)
 }
 
 func (s *Server) getVersions(w http.ResponseWriter, r *http.Request) {
+	os := chi.URLParam(r, "os")
+	a := chi.URLParam(r, "arch")
+
 	versions, err := s.Db.GetVersionsList()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
 		return
 	}
 
-	render.JSON(w, r, versions)
+	s.JSON(w, r, model.VersionFilter(versions, os, a))
 }
 
 func (s *Server) getBinary(w http.ResponseWriter, r *http.Request) {
 	v := chi.URLParam(r, "version")
 	os := chi.URLParam(r, "os")
 	a := chi.URLParam(r, "arch")
-	rb := model.Build{Version: v, OS: os, Arch: a}
+	rb := model.Build{Version: model.Version{Number: v, OS: os, Arch: a}}
 
 	binary, err := s.Db.Get(rb)
 	if err != nil {
@@ -113,7 +122,7 @@ func (s *Server) addBinary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !b.ValidateSystem() {
-		s.HTTPError(w, r, http.StatusBadRequest, fmt.Sprintf("Wrong os+arch, available systems list: %s", b.GetAvailableSystems()))
+		s.HTTPError(w, r, http.StatusBadRequest, fmt.Sprintf("Wrong os+arch, available systems list: %s", model.GetAvailableVersions()))
 		return
 	}
 
@@ -123,14 +132,14 @@ func (s *Server) addBinary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.JSON(w, r, struct{}{})
+	s.JSON(w, r, struct{}{})
 }
 
 func (s *Server) removeBinary(w http.ResponseWriter, r *http.Request) {
 	v := chi.URLParam(r, "version")
 	os := chi.URLParam(r, "os")
 	a := chi.URLParam(r, "arch")
-	rb := model.Build{Version: v, OS: os, Arch: a}
+	rb := model.Build{Version: model.Version{Number: v, OS: os, Arch: a}}
 
 	err := s.Db.Delete(rb)
 	if err != nil {
@@ -138,10 +147,20 @@ func (s *Server) removeBinary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.JSON(w, r, struct{}{})
+	s.JSON(w, r, struct{}{})
 }
 
 func (s *Server) HTTPError(w http.ResponseWriter, r *http.Request, status int, error string) {
 	render.Status(r, status)
-	render.JSON(w, r, error)
+	s.JSON(w, r, error)
+}
+
+func (s *Server) JSON(w http.ResponseWriter, r *http.Request, data interface{}) {
+	b, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(b)
 }

@@ -41,12 +41,17 @@ func NewBoltStorage(filename string) (BoltStorage, error) {
 	return db, nil
 }
 
-func (db *BoltStorage) GetVersionsList() ([]string, error) {
-	var result []string
+func (db *BoltStorage) GetVersionsList() ([]model.Version, error) {
+	var result []model.Version
 	err := db.bolt.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket(bucketName).Cursor()
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
-			result = append(result, string(k))
+			kv, err := model.NewVersion(string(k))
+			if err != nil {
+				return err
+			}
+
+			result = append(result, kv)
 		}
 		return nil
 	})
@@ -58,13 +63,13 @@ func (db *BoltStorage) GetVersionsList() ([]string, error) {
 
 func (db *BoltStorage) Get(binary model.Build) (model.Build, error) {
 	var fb model.Build
-	if binary.GetSystem() == "" {
+	if binary.String() == "" {
 		return fb, errors.Errorf("wrong system")
 	}
 
 	err := db.bolt.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucketName)
-		ub := b.Get([]byte(binary.GetSystem()))
+		ub := b.Get([]byte(binary.String()))
 
 		if ub != nil {
 			err := json.Unmarshal(ub, &fb)
@@ -86,11 +91,11 @@ func (db *BoltStorage) Add(binary model.Build) error {
 		return err
 	}
 
-	if aeb.GetSystem() != "" {
-		return errors.Errorf("version %s already exists in storage", binary.GetSystem())
+	if aeb.String() != "" {
+		return errors.Errorf("version %s already exists in storage", binary.String())
 	}
 
-	if binary.GetSystem() == "" {
+	if binary.String() == "" {
 		return errors.Errorf("wrong system")
 	}
 
@@ -102,7 +107,7 @@ func (db *BoltStorage) Add(binary model.Build) error {
 			return err
 		}
 
-		err = b.Put([]byte(binary.GetSystem()), jb)
+		err = b.Put([]byte(binary.String()), jb)
 		if err != nil {
 			return err
 		}
@@ -111,12 +116,12 @@ func (db *BoltStorage) Add(binary model.Build) error {
 }
 
 func (db *BoltStorage) Delete(binary model.Build) error {
-	if binary.GetSystem() == "" {
+	if binary.String() == "" {
 		return errors.Errorf("wrong system")
 	}
 
 	return db.bolt.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucketName)
-		return b.Delete([]byte(binary.GetSystem()))
+		return b.Delete([]byte(binary.String()))
 	})
 }

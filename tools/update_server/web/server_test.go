@@ -12,10 +12,14 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"io/ioutil"
+
+	"github.com/AplaProject/go-apla/tools/update_server/config"
+	"github.com/AplaProject/go-apla/tools/update_server/model"
 	"github.com/AplaProject/go-apla/tools/update_server/storage"
 	"github.com/AplaProject/go-apla/tools/update_server/web"
 	"github.com/parnurzeal/gorequest"
-	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,40 +30,96 @@ var (
 )
 
 func init() {
-	sm := storage.MockEngine{}
+	sm = storage.MockEngine{}
 
 	s := web.Server{
-		Db: &sm,
+		Db:   &sm,
+		Conf: &config.Config{Login: "test", Pass: "test"},
 	}
 
 	server = httptest.NewServer(s.GetRoutes())
-	server.Start()
-
 	v1ApiRoute = fmt.Sprintf("%s/api/v1", server.URL)
 }
 
 func TestGetLastVersion(t *testing.T) {
 	cases := []struct {
-		getVersionsList []string
+		getVersionsList []model.Version
+		getVersionsErr  error
+		lastVersion     model.Build
+
+		get    model.Build
+		getErr error
+
+		respBody []byte
+		expCode  int
+	}{
+		{
+			getVersionsList: []model.Version{
+				{Number: "0.1", OS: "windows", Arch: "amd64"},
+				{Number: "0.1.1", OS: "windows", Arch: "amd64"},
+			},
+			lastVersion: model.Build{Version: model.Version{Number: "0.1.1", OS: "windows", Arch: "amd64"}},
+			get:         model.Build{Body: []byte{1, 2, 3, 4, 5}},
+			respBody:    []byte{1, 2, 3, 4, 5},
+			expCode:     http.StatusOK,
+		},
+	}
+
+	for _, c := range cases {
+		reloadMocks(t)
+		sm.On("GetVersionsList").Return(c.getVersionsList, c.getVersionsErr)
+		sm.On("Get", c.lastVersion).Return(c.get, c.getErr)
+
+		r, b, errs := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/last", v1ApiRoute, c.lastVersion.OS, c.lastVersion.Arch)).End()
+		dumpErrors(t, errs)
+
+		assert.Equal(t, c.expCode, r.StatusCode)
+		assert.Equal(t, c.respBody, []byte(b))
+	}
+}
+
+func TestGetVersion(t *testing.T) {
+	cases := []struct {
+		getVersionsList []model.Version
 		getVersionsErr  error
 
-		getBinary    []byte
-		getBinaryErr error
+		os   string
+		arch string
 
 		respBody string
 		expCode  int
 	}{
-		{respBody: "", expCode: http.StatusOK},
-		{getVersionsErr: errors.New("blah"), expCode: http.StatusInternalServerError},
-		{getVersionsList: []string{"0.1", "0.1.1"}, respBody: toJson(t, "0.1.1"), expCode: http.StatusOK},
-		{getVersionsList: []string{"1.1", "2.0", "3.0"}, respBody: toJson(t, "3.0"), expCode: http.StatusOK},
-		{getVersionsList: []string{"1.9", "2.0"}, respBody: toJson(t, "2.0"), expCode: http.StatusOK},
+		{
+			getVersionsList: []model.Version{
+				{Number: "0.1", OS: "windows", Arch: "amd64"},
+				{Number: "0.1.1", OS: "windows", Arch: "amd64"},
+				{Number: "2.0.1", OS: "linux", Arch: "amd64"},
+			},
+			os:   "windows",
+			arch: "amd64",
+			respBody: toJson(t, []model.Version{
+				{Number: "0.1", OS: "windows", Arch: "amd64"},
+				{Number: "0.1.1", OS: "windows", Arch: "amd64"},
+			}),
+			expCode: http.StatusOK,
+		},
 	}
-	sm.On("GetVersionsList").Return([]string{"1.0.0", "0.1", "0.1.1", "2.0", "2.1"}, nil)
 
-	r, b, errs := gorequest.New().Get(fmt.Sprintf("%s/last", v1ApiRoute)).End()
-	dumpErrors(t, errs)
+	for _, c := range cases {
+		reloadMocks(t)
+		sm.On("GetVersionsList").Return(c.getVersionsList, c.getVersionsErr)
 
+		r, _, errs := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/versions", v1ApiRoute, c.os, c.arch)).End()
+		dumpErrors(t, errs)
+
+		rb, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, c.expCode, r.StatusCode)
+		assert.Equal(t, c.respBody, string(rb))
+	}
 }
 
 func reloadMocks(t *testing.T) {
@@ -69,7 +129,6 @@ func reloadMocks(t *testing.T) {
 func toJson(t *testing.T, d interface{}) string {
 	jsonString, err := json.Marshal(d)
 	require.NoError(t, err)
-
 	return string(jsonString)
 }
 

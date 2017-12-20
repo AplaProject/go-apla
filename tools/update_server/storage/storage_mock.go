@@ -59,15 +59,15 @@ func (_m *MockEngine) Get(binary model.Build) (model.Build, error) {
 }
 
 // GetVersionsList provides a mock function with given fields:
-func (_m *MockEngine) GetVersionsList() ([]string, error) {
+func (_m *MockEngine) GetVersionsList() ([]model.Version, error) {
 	ret := _m.Called()
 
-	var r0 []string
-	if rf, ok := ret.Get(0).(func() []string); ok {
+	var r0 []model.Version
+	if rf, ok := ret.Get(0).(func() []model.Version); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
+			r0 = ret.Get(0).([]model.Version)
 		}
 	}
 
