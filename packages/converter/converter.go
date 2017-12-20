@@ -789,6 +789,21 @@ func ValidateEmail(email string) bool {
 	return Re.MatchString(email)
 }
 
+// ValidateIPv4 validates IPv4 address and port
+func ValidateIPv4(ip string) bool {
+	addr := strings.Split(ip, `.`)
+	if len(addr) != 4 {
+		return false
+	}
+	for _, val := range addr {
+		i, err := strconv.Atoi(val)
+		if err != nil || i < 0 || i > 255 {
+			return false
+		}
+	}
+	return false
+}
+
 // SliceReverse reverses the slice of int64
 func SliceReverse(s []int64) []int64 {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {

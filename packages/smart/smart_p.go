@@ -215,6 +215,62 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		}
 	}
 	if len(value) > 0 {
+		var (
+			ok, checked bool
+			list        [][]string
+		)
+		ival := converter.StrToInt64(value)
+	check:
+		switch name {
+		case `gap_between_blocks`:
+			ok = ival > 0 && ival < 86400
+		case `rb_blocks_1`, `number_of_nodes`:
+			ok = ival > 0 && ival < 1000
+		case `rb_blocks_2`:
+			ok = ival > 0 && ival < 10000
+		case `ecosystem_price`, `contract_price`, `column_price`, `table_price`, `menu_price`,
+			`page_price`, `commission_size`:
+			ok = ival >= 0
+		case `max_block_size`, `max_tx_size`, `max_tx_count`, `max_columns`, `max_indexes`,
+			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`:
+			ok = ival > 0
+		case `fuel_rate`, `full_nodes`, `commission_wallet`:
+			err := json.Unmarshal([]byte(value), &list)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling system param")
+				return 0, err
+			}
+			for _, item := range list {
+				switch name {
+				case `fuel_rate`, `commission_wallet`:
+					if len(item) != 2 || converter.StrToInt64(item[0]) <= 0 ||
+						(name == `fuel_rate` && converter.StrToInt64(item[1]) <= 0) ||
+						(name == `commission_wallet` && converter.StrToInt64(item[1]) == 0) {
+						break check
+					}
+				case `full_nodes`:
+					if len(item) != 3 {
+						break check
+					}
+					key := converter.StrToInt64(item[1])
+					if key == 0 || len(item[2]) != 128 || PubToID(item[2]) != key ||
+						!converter.ValidateIPv4(item[0]) {
+						break check
+					}
+				}
+			}
+			checked = true
+		default:
+			if strings.HasPrefix(name, `extend_cost_`) {
+				ok = ival >= 0
+				break
+			}
+			checked = true
+		}
+		if !checked && (!ok || converter.Int64ToStr(ival) != value) {
+			log.WithFields(log.Fields{"type": consts.InvalidObject, "value": value, "name": name}).Error(ErrInvalidValue.Error())
+			return 0, ErrInvalidValue
+		}
 		fields = append(fields, "value")
 		values = append(values, value)
 	}
