@@ -17,13 +17,13 @@
 package parser
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
-
-	"bytes"
+	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -31,6 +31,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/statsd"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 
@@ -469,6 +470,12 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 
 // CallContract calls the contract functions according to the specified flags
 func (p *Parser) CallContract(flags int) (resultContract string, err error) {
+	counterName := "transaction." + p.TxContract.Name
+	startTime := time.Now()
+	defer func() {
+		endTime := time.Now()
+		statsd.Client.TimingDuration(counterName+statsd.Time, endTime.Sub(startTime), 1.0)
+	}()
 	sc := smart.SmartContract{
 		VDE:           false,
 		Rollback:      true,
