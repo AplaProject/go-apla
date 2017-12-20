@@ -243,6 +243,21 @@ func postTx(txname string, form *url.Values) error {
 	return err
 }
 
+func postTxNowait(txname string, form *url.Values) error {
+	ret := make(map[string]interface{})
+	if err := sendPost(`prepare/`+txname, form, &ret); err != nil {
+		return err
+	}
+	if err := appendSign(ret, form); err != nil {
+		return err
+	}
+	ret = map[string]interface{}{}
+	if err := sendPost(`contract/`+txname, form, &ret); err != nil {
+		return err
+	}
+	return nil
+}
+
 func cutErr(err error) string {
 	out := err.Error()
 	if off := strings.IndexByte(out, '('); off != -1 {

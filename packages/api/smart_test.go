@@ -19,6 +19,7 @@ package api
 import (
 	"fmt"
 	"net/url"
+	"sync"
 	"testing"
 )
 
@@ -79,6 +80,27 @@ func TestMoneyTransfer(t *testing.T) {
 	if err := postTx(`MoneyTransfer`, &form); cutErr(err) != `{"type":"error","error":"Recipient 0005207000 is invalid"}` {
 		t.Error(err)
 		return
+	}
+}
+
+func TestMoneyTransfer1000(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 200; i++ {
+		for j := 0; j < 5; j++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				form := url.Values{`Amount`: {`1`}, `Recipient`: {`0005-2070-2000-0006-0200`}}
+				postTxNowait(`MoneyTransfer`, &form)
+			}()
+			wg.Wait()
+		}
 	}
 }
 
