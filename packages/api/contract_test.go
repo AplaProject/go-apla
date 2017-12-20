@@ -734,7 +734,7 @@ func TestContractChain(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if msg != `X=my param` {
+	if msg != rnd+`=`+rnd {
 		t.Error(fmt.Errorf(`wrong result %s`, msg))
 	}
 }
