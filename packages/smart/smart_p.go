@@ -253,8 +253,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 						break check
 					}
 					key := converter.StrToInt64(item[1])
-					if key == 0 || len(item[2]) != 128 || PubToID(item[2]) != key ||
-						!converter.ValidateIPv4(item[0]) {
+					if key == 0 || len(item[2]) != 128 || !converter.ValidateIPv4(item[0]) {
 						break check
 					}
 				}

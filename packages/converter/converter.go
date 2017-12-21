@@ -801,7 +801,7 @@ func ValidateIPv4(ip string) bool {
 			return false
 		}
 	}
-	return false
+	return true
 }
 
 // SliceReverse reverses the slice of int64
