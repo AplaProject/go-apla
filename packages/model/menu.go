@@ -7,7 +7,6 @@ type Menu struct {
 	Title      string `gorm:"not null"`
 	Value      string `gorm:"not null"`
 	Conditions string `gorm:"not null"`
-	RbID       int64  `gorm:"not null"`
 }
 
 // SetTablePrefix is setting table prefix

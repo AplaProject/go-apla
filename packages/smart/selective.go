@@ -40,6 +40,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		tableID string
 		err     error
 		cost    int64
+		data    string
 	)
 	logger := sc.GetLogger()
 
@@ -91,11 +92,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	if len(addSQLWhere) > 0 {
 		addSQLWhere = " WHERE " + addSQLWhere[0:len(addSQLWhere)-5]
 	}
-	if sc.VDE {
-		addSQLFields = strings.TrimRight(addSQLFields, ",")
-	} else {
-		addSQLFields += `rb_id`
-	}
+	addSQLFields = strings.TrimRight(addSQLFields, ",")
 	selectQuery := `SELECT ` + addSQLFields + ` FROM "` + table + `" ` + addSQLWhere
 	selectCost, err := model.GetQueryTotalCost(sc.DbTransaction, selectQuery)
 	if err != nil {
@@ -123,9 +120,6 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			} else {
 				jsonMap[k] = v
 			}
-			if k == "rb_id" {
-				k = "prev_rb_id"
-			}
 			if k[:1] == "+" || k[:1] == "-" {
 				addSQLFields += k[1:] + ","
 			} else if strings.HasPrefix(k, `timestamp `) {
@@ -134,20 +128,13 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 				addSQLFields += k + ","
 			}
 		}
-		jsonData, _ := json.Marshal(jsonMap)
+		jsonData, err := json.Marshal(jsonMap)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback info to json")
 			return 0, tableID, err
 		}
-		var rollback *model.Rollback
-		if !sc.VDE {
-			rollback = &model.Rollback{Data: string(jsonData), BlockID: sc.BlockData.BlockID}
-			err = rollback.Create(sc.DbTransaction)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating rollback")
-				return 0, tableID, err
-			}
-		}
+		data = string(jsonData)
+
 		addSQLUpdate := ""
 		for i := 0; i < len(fields); i++ {
 			if isBytea[fields[i]] && len(values[i]) != 0 {
@@ -166,17 +153,15 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 				addSQLUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
+		addSQLUpdate = strings.TrimRight(addSQLUpdate, `,`)
 		if !sc.VDE {
-			updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + fmt.Sprintf(` rb_id = '%d'`, rollback.RbID) + addSQLWhere
+			updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + addSQLWhere
 			updateCost, err := model.GetQueryTotalCost(sc.DbTransaction, updateQuery)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
 				return 0, tableID, err
 			}
 			cost += updateCost
-			addSQLUpdate += fmt.Sprintf("rb_id = %d", rollback.RbID)
-		} else {
-			addSQLUpdate = strings.TrimRight(addSQLUpdate, `,`)
 		}
 		err = model.Update(sc.DbTransaction, table, addSQLUpdate, addSQLWhere)
 		if err != nil {
@@ -255,6 +240,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			TxHash:    sc.TxHash,
 			NameTable: table,
 			TableID:   tableID,
+			Data:      data,
 		}
 
 		err = rollbackTx.Create(sc.DbTransaction)

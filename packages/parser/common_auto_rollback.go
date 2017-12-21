@@ -17,7 +17,11 @@
 package parser
 
 import (
+	"encoding/json"
+	"strings"
+
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 
@@ -33,9 +37,34 @@ func (p *Parser) autoRollback() error {
 		return utils.ErrInfo(err)
 	}
 	for _, tx := range txs {
-		err := p.selectiveRollback(tx["table_name"], "id='"+tx["table_id"]+`'`)
-		if err != nil {
-			return p.ErrInfo(err)
+		where := " WHERE id='" + tx["table_id"] + `'`
+		if len(tx["data"]) > 0 {
+			var jsonMap map[string]string
+			err = json.Unmarshal([]byte(tx["data"]), &jsonMap)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollback.Data from json")
+				return p.ErrInfo(err)
+			}
+			addSQLUpdate := ""
+			for k, v := range jsonMap {
+				if converter.InSliceString(k, []string{"hash", "pub", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
+					addSQLUpdate += k + `=decode('` + string(converter.BinToHex([]byte(v))) + `','HEX'),`
+				} else {
+					addSQLUpdate += k + `='` + strings.Replace(v, `'`, `''`, -1) + `',`
+				}
+			}
+			addSQLUpdate = addSQLUpdate[0 : len(addSQLUpdate)-1]
+			err = model.Update(p.DbTransaction, tx["table_name"], addSQLUpdate, where)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "query": addSQLUpdate}).Error("updating table")
+				return p.ErrInfo(err)
+			}
+		} else {
+			err = model.Delete(tx["table_name"], where)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting from table")
+				return p.ErrInfo(err)
+			}
 		}
 	}
 	txForDelete := &model.RollbackTx{TxHash: p.TxHash}
