@@ -141,7 +141,7 @@ func ExecSchemaLocalData(id int, wallet int64) error {
 
 // ExecSchema is executing schema
 func ExecSchema() error {
-	return DBConn.Exec(migration.Schema).Error
+	return migration.Migrate(&MigrationHistory{})
 }
 
 // Update is updating table rows

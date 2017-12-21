@@ -12,12 +12,13 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/migration"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/tools/update_client/client"
 	"github.com/AplaProject/go-apla/tools/update_client/structs"
+
 	version "github.com/hashicorp/go-version"
+	log "github.com/sirupsen/logrus"
 )
 
 type UpdateTime struct {
@@ -33,6 +34,12 @@ type Updater struct {
 
 func NewUpdater(updateAddr string, pubkeyPath string) *Updater {
 	return &Updater{updateAddr: updateAddr, pubkeyPath: pubkeyPath, UpdateTimes: make([]UpdateTime, 0)}
+}
+
+func (u *Updater) Run() error {
+	// TODO: update binary
+
+	return u.Migrate()
 }
 
 func (u *Updater) TryUpdate(currentBlockNumber int64) {
@@ -77,8 +84,15 @@ func (u *Updater) CheckUpdates(pubKeyPath string) error {
 	return nil
 }
 
-func (u *Updater) Migrate(vers *version.Version) error {
-	return migration.Migrate(vers)
+// Migrate executes all migrations
+func (u *Updater) Migrate() error {
+	err := model.ExecSchema()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.MigrationError, "err": err}).Errorf("apply migrations")
+		return err
+	}
+
+	return nil
 }
 
 func (u *Updater) getNeededVersionsUpdates(updateAddr string) ([]*version.Version, error) {
@@ -87,18 +101,8 @@ func (u *Updater) getNeededVersionsUpdates(updateAddr string) ([]*version.Versio
 	if err != nil {
 		return nil, err
 	}
-	dbVersion, err := getLocalVersion()
-	if err != nil {
-		return nil, err
-	}
 
 	softwareVersion, _ := version.NewVersion(consts.VERSION)
-	if dbVersion.LessThan(softwareVersion) {
-		err = migration.Migrate(softwareVersion)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	var neededVersions []*version.Version
 	for _, ver := range vers {
@@ -162,14 +166,4 @@ func (u *Updater) checkUpdateFile(version *version.Version, publicKey string) er
 	}
 
 	return nil
-}
-
-func getLocalVersion() (*version.Version, error) {
-	migration := &model.MigrationHistory{}
-	_, err := migration.Get()
-	if err != nil {
-		return nil, err
-	}
-	result, _ := version.NewVersion(migration.Version)
-	return result, nil
 }
