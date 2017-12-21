@@ -202,9 +202,12 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (string,
 	var isSignature bool
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
-			if !parnames[tx.Name] && !strings.Contains(tx.Tags, `optional`) {
-				logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
-				return ``, fmt.Errorf(eUndefinedParam, tx.Name)
+			if !parnames[tx.Name] {
+				if !strings.Contains(tx.Tags, `optional`) {
+					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
+					return ``, fmt.Errorf(eUndefinedParam, tx.Name)
+				}
+				(*rt.extend)[tx.Name] = reflect.New(tx.Type).Elem().Interface()
 			}
 			if tx.Name == `Signature` {
 				isSignature = true

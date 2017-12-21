@@ -51,18 +51,7 @@ var (
 		"from_gate" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
-		
-		DROP TABLE IF EXISTS "config"; CREATE TABLE "config" (
-		"my_block_id" int NOT NULL DEFAULT '0',
-		"ecosystem_id" int NOT NULL DEFAULT '0',
-		"key_id" bigint NOT NULL DEFAULT '0',
-		"bad_blocks" text NOT NULL DEFAULT '',
-		"auto_reload" int NOT NULL DEFAULT '0',
-		"first_load_blockchain_url" varchar(255)  NOT NULL DEFAULT '',
-		"first_load_blockchain"  varchar(255)  NOT NULL DEFAULT '',
-		"current_load_blockchain"  varchar(255)  NOT NULL DEFAULT ''
-		);
-		
+
 		DROP SEQUENCE IF EXISTS rollback_rb_id_seq CASCADE;
 		CREATE SEQUENCE rollback_rb_id_seq START WITH 1;
 		DROP TABLE IF EXISTS "rollback"; CREATE TABLE "rollback" (
@@ -75,11 +64,9 @@ var (
 		
 		DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
 		"id" bigint NOT NULL DEFAULT '0',
-		"name" varchar(255) NOT NULL DEFAULT '',
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
-		CREATE INDEX "system_states_index_name" ON "system_states" (name);
 		
 		DROP TABLE IF EXISTS "system_parameters";
 		CREATE TABLE "system_parameters" (
@@ -178,9 +165,7 @@ var (
 		
 		INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES  ('system_states',
 				'{"insert": "false", "update": "ContractAccess(\"@1EditParameter\")",
-				  "new_column": "false"}',
-				'{"name": "ContractAccess(\"@1EditParameter\")"}',
-				'ContractAccess(\"@0UpdSysContract\")');
+				  "new_column": "false"}','{}', 'ContractAccess(\"@0UpdSysContract\")');
 		
 		
 		DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
@@ -1173,11 +1158,6 @@ var (
 		data {
 			Name  string "optional"
 		}
-		conditions {
-			if $Name && FindEcosystem($Name) {
-				error Sprintf("Ecosystem %%s is already existed", $Name)
-			}
-		}
 		action {
 			$result = CreateEcosystem($key_id, $Name)
 		}
@@ -1217,23 +1197,9 @@ var (
 		conditions {
 			ConditionById("parameters", true)
 			ValidateCondition($Conditions, $ecosystem_id)
-			var exist int
-			var row map
-			row = DBRow("parameters").Columns("name").WhereId($Id)
-			if row["name"] == "ecosystem_name" {
-				exist = FindEcosystem($Value)
-				if exist > 0 && exist != $ecosystem_id {
-					warning Sprintf("Ecosystem %%s already exists", $Value)
-				}
-			}
 		}
 		action {
 			DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
-			var row map
-			row = DBRow("parameters").Columns("name").WhereId($Id)
-			if row["name"] == "ecosystem_name" {
-				DBUpdate("system_states", $ecosystem_id, "name", $Value)
-			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('10', 'contract NewMenu {

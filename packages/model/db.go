@@ -8,12 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/migration"
-	"github.com/AplaProject/go-apla/packages/utils"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -26,6 +25,9 @@ var (
 
 	// ErrRecordNotFound is Not Found Record wrapper
 	ErrRecordNotFound = gorm.ErrRecordNotFound
+
+	// ErrDBConn database connection error
+	ErrDBConn = errors.New("Database connection error")
 )
 
 func isFound(db *gorm.DB) (bool, error) {
@@ -36,16 +38,16 @@ func isFound(db *gorm.DB) (bool, error) {
 }
 
 // GormInit is initializes Gorm connection
-func GormInit(host string, port string, user string, pass string, dbName string) error {
+func GormInit(host string, port int, user string, pass string, dbName string) error {
 	var err error
 	DBConn, err = gorm.Open("postgres",
-		fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", host, port, user, dbName, pass))
+		fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable password=%s", host, port, user, dbName, pass))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("cant open connection to DB")
 		DBConn = nil
 		return err
 	}
-	if *utils.LogSQL == 1 {
+	if *conf.LogSQL {
 		DBConn.LogMode(true)
 		DBConn.SetLogger(log.New())
 	}
@@ -305,14 +307,13 @@ func IsNodeState(state int64, host string) bool {
 	if strings.HasPrefix(host, `localhost`) {
 		return true
 	}
-	if val, ok := config.ConfigIni[`node_state_id`]; ok {
-		if val == `*` {
+	val := conf.Config.NodeStateID
+	if val == `*` {
+		return true
+	}
+	for _, id := range strings.Split(val, `,`) {
+		if converter.StrToInt64(id) == state {
 			return true
-		}
-		for _, id := range strings.Split(val, `,`) {
-			if converter.StrToInt64(id) == state {
-				return true
-			}
 		}
 	}
 	return false
@@ -398,10 +399,37 @@ func IsTable(tblname string) bool {
 // GetRollbackID returns rollback id
 func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) (int64, error) {
 	var result int64
-	err := GetDB(transaction).Raw(`SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering).Row().Scan(&result)
+	q := `SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering
+	err := GetDB(transaction).Raw(q).Row().Scan(&result)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(fmt.Errorf("GetRollbackID from table %s where %s order by rb_id %s", tblname, where, ordering))
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(q)
 		return 0, err
 	}
 	return result, nil
+}
+
+// InitDB drop all tables and exec db schema
+func InitDB(cfg conf.DBConfig) error {
+
+	err := GormInit(cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name)
+	if err != nil || DBConn == nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("initializing DB")
+		return ErrDBConn
+	}
+	if err = DropTables(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping all tables")
+		return err
+	}
+	if err = ExecSchema(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing db schema")
+		return err
+	}
+
+	install := &Install{Progress: ProgressComplete}
+	if err = install.Create(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating install")
+		return err
+	}
+
+	return nil
 }

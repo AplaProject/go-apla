@@ -19,15 +19,15 @@ package daemons
 import (
 	"context"
 	"net"
+	"strconv"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/config"
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/tcpserver"
-	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -98,7 +98,7 @@ func Confirmations(ctx context.Context, d *daemon) error {
 		}
 
 		var hosts []string
-		if config.ConfigIni["test_mode"] == "1" {
+		if conf.Config.TestMode {
 			hosts = []string{"localhost"}
 		} else {
 			hosts = syspar.GetRemoteHosts()
@@ -106,8 +106,8 @@ func Confirmations(ctx context.Context, d *daemon) error {
 
 		ch := make(chan string)
 		for i := 0; i < len(hosts); i++ {
-			// TODO: ports should be in the table hosts
-			host := hosts[i] + ":" + utils.GetTcpPort(config.ConfigIni)
+			// NOTE: host should not use default port number
+			host := hosts[i] + ":" + strconv.Itoa(consts.DEFAULT_TCP_PORT)
 			d.logger.WithFields(log.Fields{"host": host, "block_id": blockID}).Debug("checking block id confirmed at node")
 			go func() {
 				IsReachable(host, blockID, ch, d.logger)

@@ -49,6 +49,7 @@ import (
 type SmartContract struct {
 	VDE           bool
 	Rollback      bool
+	SysUpdate     bool
 	VM            *script.VM
 	TxSmart       tx.SmartContract
 	TxData        map[string]interface{}

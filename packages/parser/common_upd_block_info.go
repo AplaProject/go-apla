@@ -19,11 +19,11 @@ package parser
 import (
 	"fmt"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -33,8 +33,8 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 	blockID := block.Header.BlockID
 	// for the local tests
 	if block.Header.BlockID == 1 {
-		if *utils.StartBlockID != 0 {
-			blockID = *utils.StartBlockID
+		if *conf.StartBlockID != 0 {
+			blockID = *conf.StartBlockID
 		}
 	}
 	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
@@ -74,13 +74,6 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 		if err := ibUpdate.Update(dbTransaction); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating info block")
 			return fmt.Errorf("error while updating info_block: %s", err)
-		}
-
-		config := &model.Config{}
-		err = config.ChangeBlockIDBatch(dbTransaction, blockID, blockID)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("changing block id batch in config")
-			return err
 		}
 	}
 
