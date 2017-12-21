@@ -11,7 +11,7 @@ import (
 )
 
 func TestBinarySign(t *testing.T) {
-	b := model.Build{Version: model.Version{Number: "1.1"}, Body: []byte("test"), Date: time.Now()}
+	b := model.Build{Version: model.Version{Number: "1.1"}, Body: []byte("test"), Time: time.Now()}
 	priv, err := os.Open("../testdata/key")
 	if err != nil {
 		t.Error("private key not found")

@@ -34,7 +34,7 @@ func main() {
 		Db:        &db,
 		Conf:      &c,
 		PublicKey: pk,
-		Signer:    crypto.BuildSigner{},
+		Signer:    &crypto.BuildSigner{},
 	}
 
 	log.Fatalf("Server running error: %s", s.Run().Error())

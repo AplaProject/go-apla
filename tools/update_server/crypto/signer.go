@@ -1,3 +1,4 @@
+//go:generate sh -c "mockery -inpkg -name Signer -print > file.tmp && mv file.tmp signer_mock.go"
 package crypto
 
 import (
@@ -10,6 +11,11 @@ import (
 
 	"github.com/AplaProject/go-apla/tools/update_server/model"
 )
+
+type Signer interface {
+	MakeSign(build model.Build) ([]byte, error)
+	CheckSign(build model.Build, public []byte) (bool, error)
+}
 
 type BuildSigner struct {
 	privateKey []byte
@@ -32,7 +38,7 @@ func (bs *BuildSigner) MakeSign(build model.Build) ([]byte, error) {
 	priv.D = bi
 
 	data := build.Body
-	data = append(data, []byte(build.Date.String())...)
+	data = append(data, []byte(build.Time.String())...)
 	data = append(data, []byte(build.Number)...)
 
 	signhash := sha256.Sum256(data)
@@ -52,7 +58,7 @@ func (bs *BuildSigner) CheckSign(build model.Build, public []byte) (bool, error)
 	pubkeyCurve := elliptic.P256()
 
 	data := build.Body
-	data = append(data, []byte(build.Date.String())...)
+	data = append(data, []byte(build.Time.String())...)
 	data = append(data, []byte(build.Number)...)
 	hash := sha256.Sum256(data)
 	pubkey := new(ecdsa.PublicKey)

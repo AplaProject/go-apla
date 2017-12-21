@@ -9,6 +9,8 @@ import (
 
 	"encoding/json"
 
+	"bytes"
+
 	"github.com/AplaProject/go-apla/tools/update_server/config"
 	"github.com/AplaProject/go-apla/tools/update_server/crypto"
 	"github.com/AplaProject/go-apla/tools/update_server/model"
@@ -21,7 +23,7 @@ import (
 type Server struct {
 	Db        storage.Engine
 	Conf      *config.Config
-	Signer    crypto.BuildSigner
+	Signer    crypto.Signer
 	PublicKey []byte
 }
 
@@ -70,6 +72,12 @@ func (s *Server) getLastVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var ev model.Version
+	if lv == ev {
+		s.HTTPError(w, r, http.StatusNotFound, "Nothing here yet")
+		return
+	}
+
 	binary, err := s.Db.Get(model.Build{Version: lv})
 	if err != nil {
 		s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
@@ -104,12 +112,18 @@ func (s *Server) getBinary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if bytes.Equal(binary.Body, []byte{}) {
+		s.HTTPError(w, r, http.StatusNotFound, "No such version")
+		return
+	}
+
 	w.Write(binary.Body)
 }
 
 func (s *Server) addBinary(w http.ResponseWriter, r *http.Request) {
 	var b model.Build
 	err := render.DecodeJSON(r.Body, &b)
+
 	if err != nil {
 		s.HTTPError(w, r, http.StatusBadRequest, "Problem with decoding json")
 		return
@@ -121,13 +135,14 @@ func (s *Server) addBinary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !b.ValidateSystem() {
+	if !b.Validate() {
 		s.HTTPError(w, r, http.StatusBadRequest, fmt.Sprintf("Wrong os+arch, available systems list: %s", model.GetAvailableVersions()))
 		return
 	}
 
 	err = s.Db.Add(b)
 	if err != nil {
+		fmt.Println(err)
 		s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
 		return
 	}
@@ -151,7 +166,7 @@ func (s *Server) removeBinary(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) HTTPError(w http.ResponseWriter, r *http.Request, status int, error string) {
-	render.Status(r, status)
+	w.WriteHeader(status)
 	s.JSON(w, r, error)
 }
 
