@@ -51,8 +51,8 @@ func TestAPI(t *testing.T) {
 			t.Error(err)
 			return
 		}
-		if string(ret.Tree) != item.want {
-			t.Error(fmt.Errorf(`wrong tree %s != %s`, ret.Tree, item.want))
+		if RawToString(ret.Tree) != item.want {
+			t.Error(fmt.Errorf(`wrong tree %s != %s`, RawToString(ret.Tree), item.want))
 			return
 		}
 	}
@@ -69,6 +69,12 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
+		SetVar(Name: simple, Value: TestFunc(my value)) 
+		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))
+		SetVar(Name: vCmpStartDate, Value: CmpTime(#vStartDate#,#vDateNow#))
+		Span(#vCmpStartDate# #simple#)`,
+		`[{"tag":"span","children":[{"tag":"text","text":"0 TestFunc(my value)"}]}]`},
 	{`Input(Type: text, Value: OK Now(YY)+Strong(Ooops))`,
 		`[{"tag":"input","attr":{"type":"text","value":"OK 17+"}}]`},
 	{`Button(Body: LangRes(save), Class: btn btn-primary, Contract: EditProfile, 
@@ -82,7 +88,7 @@ var forTest = tplList{
 	{`EcosysParam(new_table)`,
 		`[{"tag":"text","text":"ContractConditions(\u0026#34;MainCondition\u0026#34;)"}]`},
 	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
-		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","government"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"government"}]}]`},
+		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","default_menu"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"default_menu"}]}]`},
 }
 
 func TestImage(t *testing.T) {

@@ -509,6 +509,9 @@ func includeTag(par parFunc) string {
 
 func setvarTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) > 0 {
+		if strings.ContainsAny((*par.Pars)[`Value`], `({`) {
+			(*par.Pars)[`Value`] = processToText(par, (*par.Pars)[`Value`])
+		}
 		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
 	}
 	return ``
@@ -643,10 +646,15 @@ func elseFull(par parFunc) string {
 
 func dateTimeTag(par parFunc) string {
 	datetime := (*par.Pars)[`DateTime`]
-	if len(datetime) == 0 || len(datetime) < 19 {
+	if len(datetime) == 0 {
 		return ``
 	}
-	itime, err := time.Parse(`2006-01-02T15:04:05`, datetime[:19])
+	defTime := `1970-01-01T00:00:00`
+	lenTime := len(datetime)
+	if lenTime < len(defTime) {
+		datetime += defTime[lenTime:]
+	}
+	itime, err := time.Parse(`2006-01-02T15:04:05`, strings.Replace(datetime[:19], ` `, `T`, -1))
 	if err != nil {
 		return err.Error()
 	}
