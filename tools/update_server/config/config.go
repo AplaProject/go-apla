@@ -23,6 +23,7 @@ func NewParser(filepath string) Parser {
 	return Parser{filepath: filepath}
 }
 
+// Do parsing config from filepath to struct
 func (p *Parser) Do() (Config, error) {
 	var c Config
 	cc, err := config.NewConfig("ini", p.filepath)

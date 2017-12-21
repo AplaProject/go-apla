@@ -1,6 +1,9 @@
 package storage
 
 import (
+	"encoding/json"
+
+	"github.com/AplaProject/go-apla/tools/update_server/model"
 	"github.com/boltdb/bolt"
 	"github.com/pkg/errors"
 )
@@ -10,8 +13,9 @@ type BoltStorage struct {
 	open bool
 }
 
-var bucketName = []byte("updateDB")
+var bucketName = []byte("builds")
 
+// NewBoltStorage is creating bolt storage
 func NewBoltStorage(filename string) (BoltStorage, error) {
 	var err error
 	var db BoltStorage
@@ -37,12 +41,17 @@ func NewBoltStorage(filename string) (BoltStorage, error) {
 	return db, nil
 }
 
-func (db *BoltStorage) GetVersionsList() ([]string, error) {
-	var result []string
+func (db *BoltStorage) GetVersionsList() ([]model.Version, error) {
+	var result []model.Version
 	err := db.bolt.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket(bucketName).Cursor()
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
-			result = append(result, string(k))
+			kv, err := model.NewVersion(string(k))
+			if err != nil {
+				return err
+			}
+
+			result = append(result, kv)
 		}
 		return nil
 	})
@@ -52,31 +61,53 @@ func (db *BoltStorage) GetVersionsList() ([]string, error) {
 	return result, nil
 }
 
-func (db *BoltStorage) GetBinary(version string) ([]byte, error) {
-	var binary []byte
+func (db *BoltStorage) Get(binary model.Build) (model.Build, error) {
+	var fb model.Build
+	if binary.String() == "" {
+		return fb, errors.Errorf("wrong system")
+	}
+
 	err := db.bolt.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucketName)
-		binary = b.Get([]byte(version))
+		ub := b.Get([]byte(binary.String()))
+
+		if ub != nil {
+			err := json.Unmarshal(ub, &fb)
+			if err != nil {
+				return err
+			}
+		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return fb, err
 	}
-	return binary, nil
+	return fb, nil
 }
 
-func (db *BoltStorage) AddBinary(binary []byte, version string) error {
-	if len(binary) == 0 {
-		return errors.Errorf("empty binary")
+func (db *BoltStorage) Add(binary model.Build) error {
+	aeb, err := db.Get(binary)
+	if err != nil {
+		return err
 	}
-	if len(version) == 0 {
-		return errors.Errorf("empty version")
+
+	if aeb.String() != "" {
+		return errors.Errorf("version %s already exists in storage", binary.String())
+	}
+
+	if binary.String() == "" {
+		return errors.Errorf("wrong system")
 	}
 
 	return db.bolt.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucketName)
 
-		err := b.Put([]byte(version), binary)
+		jb, err := json.Marshal(binary)
+		if err != nil {
+			return err
+		}
+
+		err = b.Put([]byte(binary.String()), jb)
 		if err != nil {
 			return err
 		}
@@ -84,9 +115,13 @@ func (db *BoltStorage) AddBinary(binary []byte, version string) error {
 	})
 }
 
-func (db *BoltStorage) DeleteBinary(version string) error {
+func (db *BoltStorage) Delete(binary model.Build) error {
+	if binary.String() == "" {
+		return errors.Errorf("wrong system")
+	}
+
 	return db.bolt.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucketName)
-		return b.Delete([]byte(version))
+		return b.Delete([]byte(binary.String()))
 	})
 }

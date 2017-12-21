@@ -5,7 +5,10 @@ import (
 
 	"log"
 
+	"io/ioutil"
+
 	"github.com/AplaProject/go-apla/tools/update_server/config"
+	"github.com/AplaProject/go-apla/tools/update_server/crypto"
 	"github.com/AplaProject/go-apla/tools/update_server/storage"
 	"github.com/AplaProject/go-apla/tools/update_server/web"
 )
@@ -22,9 +25,16 @@ func main() {
 		log.Fatalf("Creation database error: %s", err.Error())
 	}
 
+	pk, err := ioutil.ReadFile(c.PubkeyPath)
+	if err != nil {
+		log.Fatalf("Reading pubkey error: %s", err.Error())
+	}
+
 	s := web.Server{
-		Db:   &db,
-		Conf: &c,
+		Db:        &db,
+		Conf:      &c,
+		PublicKey: pk,
+		Signer:    crypto.BuildSigner{},
 	}
 
 	log.Fatalf("Server running error: %s", s.Run().Error())
