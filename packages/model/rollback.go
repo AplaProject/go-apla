@@ -53,7 +53,6 @@ func GetRollbackHistory(id int64, limit int) ([]map[string]string, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		if !ok {
 			break
 		}
