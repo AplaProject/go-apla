@@ -91,7 +91,7 @@ func TestMoneyTransfer1000(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 200; i++ {
+	for i := 0; i < 1000; i++ {
 		for j := 0; j < 5; j++ {
 			wg.Add(1)
 			go func() {
@@ -99,8 +99,8 @@ func TestMoneyTransfer1000(t *testing.T) {
 				form := url.Values{`Amount`: {`1`}, `Recipient`: {`0005-2070-2000-0006-0200`}}
 				postTxNowait(`MoneyTransfer`, &form)
 			}()
-			wg.Wait()
 		}
+		wg.Wait()
 	}
 }
 

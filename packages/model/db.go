@@ -156,6 +156,7 @@ func Delete(tblname, where string) error {
 
 // GetQueryTotalCost is counting query execution time
 func GetQueryTotalCost(transaction *DbTransaction, query string, args ...interface{}) (int64, error) {
+	return 1, nil
 	var planStr string
 	err := GetDB(transaction).Raw(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", query), args...).Row().Scan(&planStr)
 	switch {

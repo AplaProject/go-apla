@@ -483,12 +483,14 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 		return fmt.Errorf(`Access denied`)
 	}
 
-	if isCustom, err := sc.IsCustomTable(table); err != nil {
-		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
-		return err
-	} else if !isCustom {
-		return fmt.Errorf(table + ` is not a custom table`)
-	}
+	/*
+		if isCustom, err := sc.IsCustomTable(table); err != nil {
+			logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
+			return err
+		} else if !isCustom {
+			return fmt.Errorf(table + ` is not a custom table`)
+		}
+	*/
 
 	prefix, name := PrefixName(table)
 	tables := &model.Table{}
@@ -634,11 +636,11 @@ func (sc *SmartContract) GetContractLimit() (ret int64) {
 // CallContract calls the contract functions according to the specified flags
 func (sc *SmartContract) CallContract(flags int) (string, error) {
 	var (
-		result                        string
-		err                           error
-		public                        []byte
-		sizeFuel, toID, fromID, price int64
-		fuelRate                      decimal.Decimal
+		result                            string
+		err                               error
+		public                            []byte
+		sizeFuel /*toID,*/, fromID, price int64
+		fuelRate                          decimal.Decimal
 	)
 	logger := sc.GetLogger()
 	payWallet := &model.Key{}
@@ -658,7 +660,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	sc.VM = GetVM(sc.VDE, sc.TxSmart.EcosystemID)
 	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 {
 		if !sc.VDE {
-			toID = sc.BlockData.KeyID
+			//toID = sc.BlockData.KeyID
 			fromID = sc.TxSmart.KeyID
 		}
 		if len(sc.TxSmart.PublicKey) > 0 && string(sc.TxSmart.PublicKey) != `null` {
@@ -806,25 +808,27 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			apl = wltAmount
 		}
 		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
-		walletTable := fmt.Sprintf(`%d_keys`, sc.TxSmart.TokenEcosystem)
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(toID)}, true, true); ierr != nil {
-			if ierr != errUpdNotExistRecord {
+		//walletTable := fmt.Sprintf(`%d_keys`, sc.TxSmart.TokenEcosystem)
+		/*
+			if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
+				[]string{converter.Int64ToStr(toID)}, true, true); ierr != nil {
+				if ierr != errUpdNotExistRecord {
+					return retError(ierr)
+				}
+				apl = commission
+			}
+			if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
+				[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true, true); ierr != nil {
+				if ierr != errUpdNotExistRecord {
+					return retError(ierr)
+				}
+				apl = apl.Sub(commission)
+			}
+			if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
+				[]string{converter.Int64ToStr(fromID)}, true, true); ierr != nil {
 				return retError(ierr)
 			}
-			apl = commission
-		}
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
-			[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true, true); ierr != nil {
-			if ierr != errUpdNotExistRecord {
-				return retError(ierr)
-			}
-			apl = apl.Sub(commission)
-		}
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(fromID)}, true, true); ierr != nil {
-			return retError(ierr)
-		}
+		*/
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")
 	}
 	if err != nil {

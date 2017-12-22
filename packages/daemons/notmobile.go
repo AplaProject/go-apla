@@ -17,8 +17,10 @@
 package daemons
 
 import (
+	"io"
 	"os"
 	"os/signal"
+	"runtime/pprof"
 	"syscall"
 
 	"github.com/AplaProject/go-apla/packages/conf"
@@ -62,13 +64,15 @@ func waitSig() {
 }
 
 // WaitForSignals waits for Interrupt os.Kill signals
-func WaitForSignals() {
+func WaitForSignals(f io.Closer) {
 	SigChan = make(chan os.Signal, 1)
 	waitSig()
 	var Term os.Signal = syscall.SIGTERM
 	go func() {
 		signal.Notify(SigChan, os.Interrupt, os.Kill, Term)
 		<-SigChan
+		pprof.StopCPUProfile()
+		f.Close()
 
 		if utils.CancelFunc != nil {
 			utils.CancelFunc()

@@ -665,7 +665,7 @@ func (b *Block) CheckBlock() error {
 	}
 
 	// check each transaction
-	txCounter := make(map[int64]int)
+	//	txCounter := make(map[int64]int)
 	txHashes := make(map[string]struct{})
 	for _, p := range b.Parsers {
 		hexHash := string(converter.BinToHex(p.TxHash))
@@ -677,10 +677,12 @@ func (b *Block) CheckBlock() error {
 		txHashes[hexHash] = struct{}{}
 
 		// check for max transaction per user in one block
-		txCounter[p.TxKeyID]++
-		if txCounter[p.TxKeyID] > syspar.GetMaxBlockUserTx() {
-			return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
-		}
+		/*
+			txCounter[p.TxKeyID]++
+			if txCounter[p.TxKeyID] > syspar.GetMaxBlockUserTx() {
+				return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
+			}
+		*/
 
 		if err := checkTransaction(p, b.Header.Time, false); err != nil {
 			return utils.ErrInfo(err)

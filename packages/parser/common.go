@@ -205,6 +205,7 @@ func ClearTmp(blocks map[int64]string) {
 // CheckLogTx checks if this transaction exists
 // And it would have successfully passed a frontal test
 func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
+	return nil
 	searchedHash, err := crypto.Hash(txBinary)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal(err)
@@ -474,6 +475,7 @@ func (p *Parser) CallContract(flags int) (resultContract string, err error) {
 	startTime := time.Now()
 	defer func() {
 		endTime := time.Now()
+		fmt.Println("CALLING CONTRACT "+counterName+" TIME: ", endTime.Sub(startTime))
 		statsd.Client.TimingDuration(counterName+statsd.Time, endTime.Sub(startTime), 1.0)
 	}()
 	sc := smart.SmartContract{
