@@ -903,6 +903,7 @@ var (
 		  /* You can define your custom styles here or create custom CSS rules */
 		}', 'ContractConditions("MainCondition")');
 		
+		DROP TABLE IF EXISTS "%[1]d_tables";
 		CREATE TABLE "%[1]d_tables" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"name" varchar(100) UNIQUE NOT NULL DEFAULT '',
@@ -971,7 +972,65 @@ var (
 			"value": "ContractAccess(\"@1EditSign\")",
 			"conditions": "ContractAccess(\"@1EditSign\")"
 				}', 'ContractAccess("@1EditTable")');
-		
+
+		DROP TABLE IF EXISTS "%[1]d_notifications";
+		CREATE TABLE "%[1]d_notifications" (
+			"started_processing_time" timestamp,
+			"started_time"	timestamp,
+			"body_text"	text,
+			"recipient_id"	bigint NOT NULL DEFAULT '0',
+			"started_processing_id"	bigint NOT NULL DEFAULT '0',
+			"name"	varchar(255),
+			"role_id"	bigint NOT NULL DEFAULT '0',
+			"role_name"	varchar(255),
+			"page_val_int"	bigint NOT NULL DEFAULT '0',
+			"page_val_str"	varchar(255),
+			"recipient_name" varchar(255),
+			"closed" boolean,
+			"header_text"	text,
+			"recipient_avatar"	text,
+			"notification_type"	bigint NOT NULL DEFAULT '0',
+			"finished_processing_id" bigint NOT NULL DEFAULT '0',
+			"finished_processing_time" timestamp,
+			"page_name"	varchar(255)
+		);
+
+		DROP TABLE IF EXISTS "%[1]d_roles_list";
+		CREATE TABLE "%[1]d_roles_list" (
+			"id" 	bigint NOT NULL DEFAULT '0',
+			"default_page"	varchar(255),
+			"role_name"	varchar(255),
+			"delete"    boolean,
+			"role_type" bigint NOT NULL DEFAULT '0',
+			"creator_id" bigint NOT NULL DEFAULT '0',
+			"date_create" date,
+			"date_delete" date,
+			"creator_name"	varchar(255),
+			"creator_avatar" varchar(255)
+		);
+
+		DROP TABLE IF EXISTS "%[1]d_roles_assign";
+		CREATE TABLE "%[1]d_roles_assign" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"role_id" bigint NOT NULL DEFAULT '0',
+			"role_type" bigint NOT NULL DEFAULT '0',
+			"role_name"	varchar(255),
+			"member_id" bigint NOT NULL DEFAULT '0',
+			"member_username"	varchar(255),
+			"member_avatar"	varchar(255),
+			"appointed_by_id" bigint NOT NULL DEFAULT '0',
+			"appointed_by_name"	varchar(255),
+			"date_start" timestamp,
+			"date_end" timestamp,
+			"delete" boolean
+		);
+
+		DROP TABLE IF EXISTS "%[1]d_member";
+		CREATE TABLE "%[1]d_member" (
+			"member_id" bigint NOT NULL DEFAULT '0',
+			"username"	varchar(255),
+			"avatar"	text
+		);
 		`
 
 	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id","rb_id") VALUES ('1','0');
