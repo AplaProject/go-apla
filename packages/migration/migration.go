@@ -398,7 +398,7 @@ var (
 
 		func ConditionById(table string, validate bool) {
 			var row map
-			row = DBFind(table).Columns("conditions").WhereId($Id)
+			row = DBRow(table).Columns("conditions").WhereId($Id)
 			if !row["conditions"] {
 				error Sprintf("Item %%d has not been found", $Id)
 			}
