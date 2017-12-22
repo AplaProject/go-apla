@@ -19,6 +19,7 @@ package api
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -198,8 +199,12 @@ func waitTx(hash string) (int64, error) {
 		if len(ret.BlockID) > 0 {
 			return converter.StrToInt64(ret.BlockID), fmt.Errorf(ret.Result)
 		}
-		if len(ret.Message) > 0 {
-			return 0, fmt.Errorf(ret.Message)
+		if len(ret.Message.Error) > 0 {
+			errtext, err := json.Marshal(ret.Message)
+			if err != nil {
+				return 0, err
+			}
+			return 0, errors.New(string(errtext))
 		}
 		time.Sleep(time.Second)
 	}
