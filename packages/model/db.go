@@ -396,18 +396,6 @@ func IsTable(tblname string) bool {
 	return name == tblname
 }
 
-// GetRollbackID returns rollback id
-func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) (int64, error) {
-	var result int64
-	q := `SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering
-	err := GetDB(transaction).Raw(q).Row().Scan(&result)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(q)
-		return 0, err
-	}
-	return result, nil
-}
-
 // InitDB drop all tables and exec db schema
 func InitDB(cfg conf.DBConfig) error {
 

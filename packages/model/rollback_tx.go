@@ -7,6 +7,7 @@ type RollbackTx struct {
 	TxHash    []byte `gorm:"not null"`
 	NameTable string `gorm:"not null;size:255;column:table_name"`
 	TableID   string `gorm:"not null;size:255"`
+	Data      string `gorm:"not null;type:jsonb(PostgreSQL)"`
 }
 
 // TableName returns name of table

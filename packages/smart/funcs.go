@@ -323,7 +323,7 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	if sc.VDE {
 		err = model.CreateVDETable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
 	} else {
-		err = model.CreateTable(sc.DbTransaction, tableName, colsSQL)
+		err = model.CreateTable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
 	}
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE tables")
