@@ -145,6 +145,8 @@ func TestImage(t *testing.T) {
 		t.Errorf(`Too much time for template parsing`)
 		return
 	}
+	mydata = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
+	err = postTx(name, &url.Values{`Image`: {mydata}})
 
 	template = `Div(Class: list-group-item){
 		Div(panel-body){
@@ -164,7 +166,7 @@ func TestImage(t *testing.T) {
 		return
 	}
 	md := fmt.Sprintf(`%x`, md5.Sum([]byte(mydata)))
-	if ret.Tree != `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","rb_id","leftImg"],"data":[["1","myimage","/data/1_`+name+`/1/image/`+md+`","0","[{\"tag\":\"image\",\"attr\":{\"src\":\"/data/1_`+name+`/1/image/`+md+`\"}}]"]],"name":"`+name+`","source":"mysrc","types":["text","text","text","text","tags"]}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}}]},{"tag":"form","children":[{"tag":"imageinput","attr":{"name":"img","ratio":"2/1","width":"400"}},{"tag":"button","attr":{"contract":"UploadImage"},"children":[{"tag":"text","text":"Upload!"}]}]}]` {
-		t.Errorf(`Wrong image tree`)
+	if RawToString(ret.Tree) != `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","rb_id","leftImg"],"data":[["1","myimage","/data/1_`+name+`/1/image/`+md+`","0","[{\"tag\":\"image\",\"attr\":{\"src\":\"/data/1_`+name+`/1/image/`+md+`\"}}]"]],"name":"`+name+`","source":"mysrc","types":["text","text","text","text","tags"]}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}}]},{"tag":"form","children":[{"tag":"imageinput","attr":{"name":"img","ratio":"2/1","width":"400"}},{"tag":"button","attr":{"contract":"UploadImage"},"children":[{"tag":"text","text":"Upload!"}]}]}]` {
+		t.Errorf(`Wrong image tree %s`, RawToString(ret.Tree))
 	}
 }

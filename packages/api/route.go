@@ -48,6 +48,7 @@ func Route(route *hr.Router) {
 	}
 
 	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
+	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
 
 	get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)
