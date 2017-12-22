@@ -18,10 +18,13 @@ package parser
 
 import (
 	"encoding/hex"
+	"errors"
 	"io/ioutil"
-	"os"
 	"path/filepath"
+	"strconv"
 	"time"
+
+	"github.com/AplaProject/go-apla/packages/conf"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -40,6 +43,9 @@ import (
 type FirstBlockParser struct {
 	*Parser
 }
+
+// ErrFirstBlockHostIsEmpty host for first block is not specified
+var ErrFirstBlockHostIsEmpty = errors.New("FirstBlockHost is empty")
 
 // Init first block
 func (p *FirstBlockParser) Init() error {
@@ -83,18 +89,21 @@ func (p *FirstBlockParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	node := &model.SystemParameterV2{Name: `full_nodes`}
+	node := &model.SystemParameter{Name: `full_nodes`}
 	if err = node.SaveArray([][]string{{data.Host, converter.Int64ToStr(myAddress),
 		hex.EncodeToString(data.NodePublicKey)}}); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving node array")
 		return p.ErrInfo(err)
 	}
-	commission := &model.SystemParameterV2{Name: `commission_wallet`}
+	commission := &model.SystemParameter{Name: `commission_wallet`}
 	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(myAddress)}}); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
 		return p.ErrInfo(err)
 	}
-	syspar.SysUpdate()
+	if err = syspar.SysUpdate(nil); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
+		return p.ErrInfo(err)
+	}
 	return nil
 }
 
@@ -108,50 +117,68 @@ func (p FirstBlockParser) Header() *tx.Header {
 	return nil
 }
 
-// FirstBlock generates the first block
-func FirstBlock() {
-	if len(*utils.FirstBlockPublicKey) == 0 {
+// GenerateFirstBlock generates the first block
+func GenerateFirstBlock() error {
+	if len(*conf.FirstBlockPublicKey) == 0 {
 		priv, pub, _ := crypto.GenHexKeys()
-		err := ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
-		if err != nil {
+
+		privFile := filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename)
+		if err := ioutil.WriteFile(privFile, []byte(priv), 0644); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing private key file")
-			return
+			return err
 		}
-		*utils.FirstBlockPublicKey = pub
-	}
-	if len(*utils.FirstBlockNodePublicKey) == 0 {
-		priv, pub, _ := crypto.GenHexKeys()
-		err := ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node private key file")
-			return
+		pubFile := filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename)
+		if err := ioutil.WriteFile(pubFile, []byte(pub), 0644); err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing public key file")
+			return err
 		}
-		*utils.FirstBlockNodePublicKey = pub
+		*conf.FirstBlockPublicKey = pub
 	}
 
-	PublicKey := *utils.FirstBlockPublicKey
+	if len(*conf.FirstBlockNodePublicKey) == 0 {
+		priv, pub, _ := crypto.GenHexKeys()
+		nodePrivFile := filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename)
+		if err := ioutil.WriteFile(nodePrivFile, []byte(priv), 0644); err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node private key file")
+			return err
+		}
+		nodePubFile := filepath.Join(conf.Config.PrivateDir, consts.NodePublicKeyFilename)
+		if err := ioutil.WriteFile(nodePubFile, []byte(pub), 0644); err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node public key file")
+			return err
+		}
+		*conf.FirstBlockNodePublicKey = pub
+	}
+
+	PublicKey := *conf.FirstBlockPublicKey
 	PublicKeyBytes, err := hex.DecodeString(string(PublicKey))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex to string")
-		return
+		return err
 	}
 
-	NodePublicKey := *utils.FirstBlockNodePublicKey
+	NodePublicKey := *conf.FirstBlockNodePublicKey
 	NodePublicKeyBytes, err := hex.DecodeString(string(NodePublicKey))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding node public key from hex to string")
-		return
+		return err
 	}
 
-	Host := *utils.FirstBlockHost
+	Host := *conf.FirstBlockHost
 	if len(Host) == 0 {
-		log.Info("first block host is empty, using localhost as host")
-		Host = "127.0.0.1"
+		return ErrFirstBlockHostIsEmpty
 	}
 
 	iAddress := int64(crypto.Address(PublicKeyBytes))
-	now := time.Now().Unix()
+	conf.Config.KeyID = iAddress
 
+	keyIDFile := filepath.Join(conf.Config.PrivateDir, consts.KeyIDFilename)
+	if err := ioutil.WriteFile(keyIDFile, []byte(strconv.FormatInt(iAddress, 10)), 0644); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing keyID file")
+		return err
+	}
+
+	now := time.Now().Unix()
 	header := &utils.BlockData{
 		BlockID:      1,
 		Time:         now,
@@ -175,25 +202,40 @@ func FirstBlock() {
 	)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("first block body bin marshalling")
-		return
+		return err
 	}
 
 	block, err := MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
 	if err != nil {
-		return
+		return err
 	}
 
-	var firstBlockDir string
-	if len(*utils.FirstBlockDir) == 0 {
-		firstBlockDir = *utils.Dir
-	} else {
-		firstBlockDir = filepath.Join("", *utils.FirstBlockDir)
-		if _, err := os.Stat(firstBlockDir); os.IsNotExist(err) {
-			if err = os.Mkdir(firstBlockDir, 0755); err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating first block dir directory")
-				return
-			}
-		}
+	if err := ioutil.WriteFile(*conf.FirstBlockPath, block, 0644); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err, "file": *conf.FirstBlockPath}).Error("first block write")
+		return err
 	}
-	ioutil.WriteFile(filepath.Join(firstBlockDir, "1block"), block, 0644)
+
+	return nil
+}
+
+// GetKeyIDFromPrivateKey load KeyID fron PrivateKey file
+func GetKeyIDFromPrivateKey() (int64, error) {
+
+	key, err := ioutil.ReadFile(filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading private key file")
+		return 0, err
+	}
+	key, err = hex.DecodeString(string(key))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		return 0, err
+	}
+	key, err = crypto.PrivateToPublic(key)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
+		return 0, err
+	}
+
+	return crypto.Address(key), nil
 }

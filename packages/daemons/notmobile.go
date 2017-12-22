@@ -21,6 +21,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -86,9 +87,11 @@ func WaitForSignals() {
 			}
 		}
 
-		err := os.Remove(*utils.Dir + "/daylight.pid")
+		err := os.Remove(conf.GetPidFile())
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": *utils.Dir + "/daylight.pid"}).Error("removing file")
+			log.WithFields(log.Fields{
+				"type": consts.IOError, "error": err, "path": conf.GetPidFile(),
+			}).Error("removing file")
 		}
 
 		os.Exit(1)

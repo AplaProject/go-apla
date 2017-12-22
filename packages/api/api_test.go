@@ -239,6 +239,11 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 	return
 }
 
+func RawToString(input json.RawMessage) string {
+	out := strings.Trim(string(input), `"`)
+	return strings.Replace(out, `\"`, `"`, -1)
+}
+
 func postTx(txname string, form *url.Values) error {
 	_, _, err := postTxResult(txname, form)
 	return err
