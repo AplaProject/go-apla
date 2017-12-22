@@ -67,6 +67,7 @@ var (
 	ErrCurrentBalance = errors.New(`current balance is not enough`)
 	ErrDiffKeys       = errors.New(`Contract and user public keys are different`)
 	ErrEmptyPublicKey = errors.New(`empty public key`)
+	ErrFounderAccount = errors.New(`Unknown founder account`)
 	ErrFuelRate       = errors.New(`Fuel rate must be greater than 0`)
 	ErrIncorrectSign  = errors.New(`incorrect sign`)
 	ErrUnknownNodeID  = errors.New(`Unknown node id`)
