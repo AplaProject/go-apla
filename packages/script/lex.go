@@ -284,7 +284,9 @@ func lexParser(input []rune) (Lexems, error) {
 					value = name
 				}
 			}
-			lexems = append(lexems, &Lexem{lexID, value, line, lexOff - offline + 1})
+			if lexID != lexComment {
+				lexems = append(lexems, &Lexem{lexID, value, line, lexOff - offline + 1})
+			}
 		}
 		if (flags & lexfPush) != 0 {
 			start = off
