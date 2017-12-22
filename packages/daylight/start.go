@@ -236,6 +236,9 @@ func Start() {
 	}
 	conf.SetConfigParams()
 
+	// TODO maybe, use parameters from config
+	autoupdate.InitUpdater(consts.UpdateServer, consts.UpdatePublicKeyPath)
+
 	// process directives
 	if *conf.GenerateFirstBlock {
 		if err := parser.GenerateFirstBlock(); err != nil {
@@ -276,8 +279,7 @@ func Start() {
 		initGorm(conf.Config.DB)
 
 		// Autoupdate
-		updater := autoupdate.NewUpdater(consts.UpdateServer, consts.UpdatePublicKeyPath)
-		err = updater.Run()
+		err = autoupdate.Run()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err}).Error("run autoupdate")
 		}

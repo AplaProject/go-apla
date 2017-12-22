@@ -28,13 +28,13 @@ type database interface {
 func migrate(db database, appVer *version.Version, migrations []*migration) error {
 	dbVerString, err := db.CurrentVersion()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "err": err}).Errorf("can't get database version")
+		log.WithFields(log.Fields{"type": consts.DBError, "err": err}).Errorf("parse version")
 		return err
 	}
 
 	dbVer, err := version.NewVersion(dbVerString)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.MigrationError, "err": err, "version": dbVerString}).Errorf("can't parse database version")
+		log.WithFields(log.Fields{"type": consts.MigrationError, "err": err}).Errorf("parse version")
 		return err
 	}
 
@@ -46,7 +46,7 @@ func migrate(db database, appVer *version.Version, migrations []*migration) erro
 	for _, m := range migrations {
 		mgrVer, err := version.NewVersion(m.version)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.MigrationError, "err": err, "version": m.version}).Errorf("can't parse migration version")
+			log.WithFields(log.Fields{"type": consts.MigrationError, "err": err}).Errorf("parse version")
 			return err
 		}
 		if !dbVer.LessThan(mgrVer) {
@@ -69,7 +69,7 @@ func migrate(db database, appVer *version.Version, migrations []*migration) erro
 func Migrate(db database) error {
 	appVer, err := version.NewVersion(consts.VERSION)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.MigrationError, "err": err, "version": consts.VERSION}).Errorf("can't parse application version")
+		log.WithFields(log.Fields{"type": consts.MigrationError, "err": err}).Errorf("parse version")
 		return err
 	}
 

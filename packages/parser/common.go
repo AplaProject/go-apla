@@ -40,10 +40,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	updater = autoupdate.NewUpdater("http://localhost:8090", "update.pub")
-)
-
 // GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
 func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, keyID int64) {
 	tmp := binaryBlock[:]
@@ -289,7 +285,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
 		return err
 	}
-	updater.TryUpdate(blockID)
+	autoupdate.TryUpdate(blockID)
 	return nil
 }
 
