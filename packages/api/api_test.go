@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 )
@@ -61,7 +62,7 @@ func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
 	if form != nil {
 		ioform = strings.NewReader(form.Encode())
 	}
-	req, err := http.NewRequest(rtype, `http://localhost:7079/api/v2/`+url, ioform)
+	req, err := http.NewRequest(rtype, `http://localhost:7079`+consts.ApiPath+url, ioform)
 	if err != nil {
 		return err
 	}
@@ -236,6 +237,11 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 		err = nil
 	}
 	return
+}
+
+func RawToString(input json.RawMessage) string {
+	out := strings.Trim(string(input), `"`)
+	return strings.Replace(out, `\"`, `"`, -1)
 }
 
 func postTx(txname string, form *url.Values) error {

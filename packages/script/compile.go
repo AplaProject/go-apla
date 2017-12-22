@@ -1130,3 +1130,26 @@ main:
 	curBlock.Code = append(curBlock.Code, bytecode...)
 	return nil
 }
+
+func ContractsList(value string) []string {
+	names := make([]string, 0)
+	lexems, err := lexParser([]rune(value))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("getting contract list")
+		return names
+	}
+	var level int
+	for i, lexem := range lexems {
+		switch lexem.Type {
+		case isLCurly:
+			level++
+		case isRCurly:
+			level--
+		case lexKeyword | (keyContract << 8), lexKeyword | (keyFunc << 8):
+			if level == 0 && i+1 < len(lexems) && lexems[i+1].Type == lexIdent {
+				names = append(names, lexems[i+1].Value.(string))
+			}
+		}
+	}
+	return names
+}

@@ -171,6 +171,7 @@ type Parser struct {
 	TxHeader         *tx.Header
 	txParser         ParserInterface
 	DbTransaction    *model.DbTransaction
+	SysUpdate        bool
 
 	SmartContract smart.SmartContract
 }
@@ -467,10 +468,11 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 }
 
 // CallContract calls the contract functions according to the specified flags
-func (p *Parser) CallContract(flags int) (string, error) {
+func (p *Parser) CallContract(flags int) (resultContract string, err error) {
 	sc := smart.SmartContract{
 		VDE:           false,
 		Rollback:      true,
+		SysUpdate:     false,
 		VM:            smart.GetVM(false, 0),
 		TxSmart:       *p.TxSmart,
 		TxData:        p.TxData,
@@ -482,5 +484,7 @@ func (p *Parser) CallContract(flags int) (string, error) {
 		PublicKeys:    p.PublicKeys,
 		DbTransaction: p.DbTransaction,
 	}
-	return sc.CallContract(flags)
+	resultContract, err = sc.CallContract(flags)
+	p.SysUpdate = sc.SysUpdate
+	return
 }
