@@ -255,7 +255,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 }
 
 func contractsList(value string) []interface{} {
-	list := ContractsList(value)
+	list := script.ContractsList(value)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
 		result[i] = reflect.ValueOf(list[i]).Interface()

@@ -933,6 +933,21 @@ main:
 					}
 					count := parcount[len(parcount)-1]
 					parcount = parcount[:len(parcount)-1]
+					if prev.Value.(*ObjInfo).Type == ObjExtFunc {
+						var errtext string
+						extinfo := prev.Value.(*ObjInfo).Value.(ExtFuncInfo)
+						wantlen := len(extinfo.Params)
+						for _, v := range extinfo.Auto {
+							if len(v) > 0 {
+								wantlen--
+							}
+						}
+						if count != wantlen && (!extinfo.Variadic || count < wantlen) {
+							errtext = fmt.Sprintf(eWrongParams, extinfo.Name, wantlen)
+							logger.WithFields(log.Fields{"error": errtext, "type": consts.ParseError}).Error(errtext)
+							return fmt.Errorf(errtext)
+						}
+					}
 					if prev.Cmd == cmdCallVari {
 						bytecode = append(bytecode, &ByteCode{cmdPush, count})
 					}
@@ -1076,6 +1091,7 @@ main:
 						count++
 					}
 					if lexem.Value.(string) == `CallContract` {
+						count++
 						bytecode = append(bytecode, &ByteCode{cmdPush, (*block)[0].Info.(uint32)})
 					}
 					parcount = append(parcount, count)
@@ -1110,4 +1126,27 @@ main:
 	}
 	curBlock.Code = append(curBlock.Code, bytecode...)
 	return nil
+}
+
+func ContractsList(value string) []string {
+	names := make([]string, 0)
+	lexems, err := lexParser([]rune(value))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("getting contract list")
+		return names
+	}
+	var level int
+	for i, lexem := range lexems {
+		switch lexem.Type {
+		case isLCurly:
+			level++
+		case isRCurly:
+			level--
+		case lexKeyword | (keyContract << 8), lexKeyword | (keyFunc << 8):
+			if level == 0 && i+1 < len(lexems) && lexems[i+1].Type == lexIdent {
+				names = append(names, lexems[i+1].Value.(string))
+			}
+		}
+	}
+	return names
 }

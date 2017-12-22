@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
@@ -309,23 +308,6 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 	return nil
 }
 
-func ContractsList(value string) []string {
-	list := make([]string, 0)
-	re := regexp.MustCompile(`contract[\s]*([\d\w_]+)[\s]*{`)
-	for _, item := range re.FindAllStringSubmatch(value, -1) {
-		if len(item) > 1 {
-			list = append(list, item[1])
-		}
-	}
-	re = regexp.MustCompile(`func[\s]*([\d\w_]+)`)
-	for _, item := range re.FindAllStringSubmatch(value, -1) {
-		if len(item) > 1 && item[1] != `settings` && item[1] != `price` && item[1] != `rollback` {
-			list = append(list, item[1])
-		}
-	}
-	return list
-}
-
 // LoadContracts reads and compiles contracts from smart_contracts tables
 func LoadContracts(transaction *model.DbTransaction) (err error) {
 	var states []map[string]string
@@ -358,7 +340,7 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	}
 	state := uint32(converter.StrToInt64(prefix))
 	for _, item := range contracts {
-		names := strings.Join(ContractsList(item[`value`]), `,`)
+		names := strings.Join(script.ContractsList(item[`value`]), `,`)
 		owner := script.OwnerInfo{
 			StateID:  state,
 			Active:   item[`active`] == `1`,
@@ -391,7 +373,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	EmbedFuncs(vm)
 	smartVDE[state] = vm
 	for _, item := range contracts {
-		names := strings.Join(ContractsList(item[`value`]), `,`)
+		names := strings.Join(script.ContractsList(item[`value`]), `,`)
 		owner := script.OwnerInfo{
 			StateID:  uint32(state),
 			Active:   false,

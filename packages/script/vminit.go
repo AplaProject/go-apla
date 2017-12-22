@@ -343,6 +343,17 @@ func (vm *VM) getObjByNameExt(name string, state uint32) (ret *ObjInfo) {
 	return
 }
 
+func getNameByObj(obj *ObjInfo) (name string) {
+	block := obj.Value.(*Block)
+	for key, val := range block.Parent.Objects {
+		if val == obj {
+			name = key
+			break
+		}
+	}
+	return
+}
+
 func (vm *VM) getInParams(ret *ObjInfo) int {
 	if ret.Type == ObjExtFunc {
 		return len(ret.Value.(ExtFuncInfo).Params)
@@ -393,7 +404,7 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 	return ret, err
 }
 
-// ExContract executes the name contract in the state with spoecified parameters
+// ExContract executes the name contract in the state with specified parameters
 func ExContract(rt *RunTime, state uint32, name string, params map[string]interface{}) (string, error) {
 
 	name = StateName(state, name)

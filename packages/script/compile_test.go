@@ -18,6 +18,7 @@ package script
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -305,11 +306,44 @@ func TestVMCompile(t *testing.T) {
 				i = lenArray(myarr) - 1
 				return Sprintf("%s %d %d %d %d %d", "ok", lenArray(myarr)-1, i, k, j, -4)
 			}`, `signfunc`, `ok 1 1 7 -3 -4`},
+		{`func exttest() string {
+				return Replace("text", "t")
+			}
+			`, `exttest`, `function Replace must have 4 parameters`},
+		{`func mytest(first string, second int) string {
+				return Sprintf("%s %d", first, second)
+		}
+		func test() {
+			return mytest("one", "two")
+		}
+		`, `test`, `parameter 2 has wrong type`},
+		{`func mytest(first string, second int) string {
+								return Sprintf("%s %d", first, second)
+						}
+						func test() string {
+							return mytest("one")
+						}
+						`, `test`, `wrong count of parameters`},
+		{
+			`func ifMap string {
+				var m map
+				if m {
+					return "empty"
+				}
+				
+				m["test"]=1
+				if m {
+					return "not empty"
+				}
+
+				return error "error"
+			}`, "ifMap", "not empty",
+		},
 	}
 	vm := NewVM()
 	vm.Extern = true
 	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
-		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray}, nil})
+		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray, "Replace": strings.Replace}, nil})
 
 	for ikey, item := range test {
 		source := []rune(item.Input)
@@ -336,6 +370,46 @@ func TestVMCompile(t *testing.T) {
 				break
 			}
 
+		}
+	}
+}
+
+func TestContractList(t *testing.T) {
+	test := []TestLexem{{`contract NewContract {
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+			while i < Len(list) {
+				if IsObject(list[i], $ecosystem_id) {
+					warning Sprintf("Contract or function %s exists", list[i] )
+				}
+			}
+		}
+		action {
+		}
+		func price() int {
+			return  SysParamInt("contract_price")
+		}
+	}func MyFunc {}`,
+		`NewContract,MyFunc`},
+		{`contract demo_сontract {
+			data {
+				contract_txt str
+			}
+			func test() {
+			}
+			conditions {
+				if $contract_txt="" {
+					warning "Sorry, you do not have contract access to this action."
+				}
+			}
+		} contract another_contract {} func main { func subfunc(){}}`,
+			`demo_сontract,another_contract,main`},
+	}
+	for _, item := range test {
+		list := ContractsList(item.Input)
+		if strings.Join(list, `,`) != item.Output {
+			t.Error(`wrong names`, strings.Join(list, `,`))
+			break
 		}
 	}
 }
