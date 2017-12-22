@@ -14,20 +14,35 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package daylight
+package api
 
 import (
-	"github.com/AplaProject/go-apla/packages/utils"
+	stdErrors "errors"
+	"testing"
 )
 
-// GetHTTPHost returns program's hosts
-func GetHTTPHost() (string, string, string) {
-	BrowserHTTPHost := "http://localhost:" + *utils.ListenHTTPPort
-	HandleHTTPHost := ""
-	ListenHTTPHost := ":" + *utils.ListenHTTPPort
-	if len(*utils.TCPHost) > 0 {
-		ListenHTTPHost = *utils.TCPHost + ":" + *utils.ListenHTTPPort
-		BrowserHTTPHost = "http://" + *utils.TCPHost + ":" + *utils.ListenHTTPPort
+func TestHistory(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
 	}
-	return BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost
+
+	var ret historyResult
+	err := sendGet("history/pages/1", nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret.List) == 0 {
+		t.Error(stdErrors.New("History should not be empty"))
+	}
+
+	err = sendGet("history/pages/1000", nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret.List) != 0 {
+		t.Error(stdErrors.New("History should be empty"))
+	}
 }

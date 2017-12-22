@@ -25,7 +25,7 @@ import (
 )
 
 func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(method, `/api/v2/`+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
+	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
 }
 
 // Route sets routing pathes
@@ -47,8 +47,8 @@ func Route(route *hr.Router) {
 		anyTx(`POST`, url, params, preHandle, handle)
 	}
 
-	route.Handle(`OPTIONS`, `/api/v2/*name`, optionsHandler())
-	route.Handle(`GET`, `/api/v2/data/:table/:id/:column/:hash`, dataHandler())
+	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
+	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
 
 	get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)
@@ -64,6 +64,7 @@ func Route(route *hr.Router) {
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
 	get(`txstatus/:hash`, ``, authWallet, txstatus)
 	get(`test/:name`, ``, getTest)
+	get(`history/:table/:id`, ``, authWallet, getHistory)
 
 	post(`content/page/:name`, ``, authWallet, getPage)
 	post(`content/menu/:name`, ``, authWallet, getMenu)

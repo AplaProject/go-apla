@@ -17,6 +17,7 @@
 package template
 
 import (
+	"crypto/md5"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -51,7 +52,7 @@ func init() {
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`}
-	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon`}
+	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
 	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
@@ -335,9 +336,12 @@ func dataTag(par parFunc) string {
 				}
 				vals[icol] = ival
 			} else {
-				out, err := json.Marshal(par.Node.Attr[`custombody`].([][]*node)[i-defcol])
+				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
+				root := node{}
+				process(body, &root, par.Workspace)
+				out, err := json.Marshal(root.Children)
 				if err == nil {
-					ival = replace(string(out), 0, &vals)
+					ival = string(out)
 				} else {
 					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling custombody to JSON")
 				}
@@ -401,6 +405,9 @@ func dbfindTag(par parFunc) string {
 		state = converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])
 	}
 	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
+	if fields != `*` && !strings.Contains(fields, `id`) {
+		fields += `, id`
+	}
 	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
@@ -436,6 +443,11 @@ func dbfindTag(par parFunc) string {
 				}
 				if ival == `NULL` {
 					ival = ``
+				}
+				if strings.HasPrefix(ival, `data:image/`) {
+					ival = fmt.Sprintf(`/data/%s/%s/%s/%x`, strings.Trim(tblname, `"`),
+						item[`id`], icol, md5.Sum([]byte(ival)))
+					item[icol] = ival
 				}
 			} else {
 				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &item)
@@ -509,6 +521,9 @@ func includeTag(par parFunc) string {
 
 func setvarTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) > 0 {
+		if strings.ContainsAny((*par.Pars)[`Value`], `({`) {
+			(*par.Pars)[`Value`] = processToText(par, (*par.Pars)[`Value`])
+		}
 		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
 	}
 	return ``
@@ -643,10 +658,15 @@ func elseFull(par parFunc) string {
 
 func dateTimeTag(par parFunc) string {
 	datetime := (*par.Pars)[`DateTime`]
-	if len(datetime) == 0 || len(datetime) < 19 {
+	if len(datetime) == 0 {
 		return ``
 	}
-	itime, err := time.Parse(`2006-01-02T15:04:05`, datetime[:19])
+	defTime := `1970-01-01T00:00:00`
+	lenTime := len(datetime)
+	if lenTime < len(defTime) {
+		datetime += defTime[lenTime:]
+	}
+	itime, err := time.Parse(`2006-01-02T15:04:05`, strings.Replace(datetime[:19], ` `, `T`, -1))
 	if err != nil {
 		return err.Error()
 	}

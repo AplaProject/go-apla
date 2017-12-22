@@ -18,6 +18,7 @@ package script
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -292,6 +293,21 @@ func TestVMCompile(t *testing.T) {
 					return "OK"
 				}
 			}`, `seterr.getset`, `unknown identifier MyFunc`},
+		{
+			`func ifMap string {
+				var m map
+				if m {
+					return "empty"
+				}
+				
+				m["test"]=1
+				if m {
+					return "not empty"
+				}
+
+				return error "error"
+			}`, "ifMap", "not empty",
+		},
 	}
 	vm := NewVM()
 	vm.Extern = true
@@ -323,6 +339,46 @@ func TestVMCompile(t *testing.T) {
 				break
 			}
 
+		}
+	}
+}
+
+func TestContractList(t *testing.T) {
+	test := []TestLexem{{`contract NewContract {
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+			while i < Len(list) {
+				if IsObject(list[i], $ecosystem_id) {
+					warning Sprintf("Contract or function %s exists", list[i] )
+				}
+			}
+		}
+		action {
+		}
+		func price() int {
+			return  SysParamInt("contract_price")
+		}
+	}func MyFunc {}`,
+		`NewContract,MyFunc`},
+		{`contract demo_сontract {
+			data {
+				contract_txt str
+			}
+			func test() {
+			}
+			conditions {
+				if $contract_txt="" {
+					warning "Sorry, you do not have contract access to this action."
+				}
+			}
+		} contract another_contract {} func main { func subfunc(){}}`,
+			`demo_сontract,another_contract,main`},
+	}
+	for _, item := range test {
+		list := ContractsList(item.Input)
+		if strings.Join(list, `,`) != item.Output {
+			t.Error(`wrong names`, strings.Join(list, `,`))
+			break
 		}
 	}
 }
