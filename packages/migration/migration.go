@@ -975,38 +975,39 @@ var (
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (
+			"id" 	bigint NOT NULL DEFAULT '0',
 			"started_processing_time" timestamp,
 			"started_time"	timestamp,
-			"body_text"	text,
+			"body_text"	text NOT NULL DEFAULT '',
 			"recipient_id"	bigint NOT NULL DEFAULT '0',
 			"started_processing_id"	bigint NOT NULL DEFAULT '0',
-			"name"	varchar(255),
+			"name"	varchar(255) NOT NULL DEFAULT '',
 			"role_id"	bigint NOT NULL DEFAULT '0',
-			"role_name"	varchar(255),
+			"role_name"	varchar(255) NOT NULL DEFAULT '',
 			"page_val_int"	bigint NOT NULL DEFAULT '0',
-			"page_val_str"	varchar(255),
-			"recipient_name" varchar(255),
+			"page_val_str"	varchar(255) NOT NULL DEFAULT '',
+			"recipient_name" varchar(255) NOT NULL DEFAULT '',
 			"closed" boolean,
-			"header_text"	text,
-			"recipient_avatar"	text,
+			"header_text"	text NOT NULL DEFAULT '',
+			"recipient_avatar"	text NOT NULL DEFAULT '',
 			"notification_type"	bigint NOT NULL DEFAULT '0',
 			"finished_processing_id" bigint NOT NULL DEFAULT '0',
 			"finished_processing_time" timestamp,
-			"page_name"	varchar(255)
+			"page_name"	varchar(255) NOT NULL DEFAULT ''
 		);
 
 		DROP TABLE IF EXISTS "%[1]d_roles_list";
 		CREATE TABLE "%[1]d_roles_list" (
 			"id" 	bigint NOT NULL DEFAULT '0',
-			"default_page"	varchar(255),
-			"role_name"	varchar(255),
+			"default_page"	varchar(255) NOT NULL DEFAULT '',
+			"role_name"	varchar(255) NOT NULL DEFAULT '',
 			"delete"    boolean,
 			"role_type" bigint NOT NULL DEFAULT '0',
 			"creator_id" bigint NOT NULL DEFAULT '0',
-			"date_create" date,
-			"date_delete" date,
-			"creator_name"	varchar(255),
-			"creator_avatar" varchar(255)
+			"date_create" timestamp,
+			"date_delete" timestamp,
+			"creator_name"	varchar(255) NOT NULL DEFAULT '',
+			"creator_avatar" varchar(255) NOT NULL DEFAULT ''
 		);
 
 		DROP TABLE IF EXISTS "%[1]d_roles_assign";
@@ -1014,12 +1015,12 @@ var (
 			"id" bigint NOT NULL DEFAULT '0',
 			"role_id" bigint NOT NULL DEFAULT '0',
 			"role_type" bigint NOT NULL DEFAULT '0',
-			"role_name"	varchar(255),
+			"role_name"	varchar(255) NOT NULL DEFAULT '',
 			"member_id" bigint NOT NULL DEFAULT '0',
-			"member_username"	varchar(255),
-			"member_avatar"	varchar(255),
+			"member_username" varchar(255) NOT NULL DEFAULT '',
+			"member_avatar"	varchar(255) NOT NULL DEFAULT '',
 			"appointed_by_id" bigint NOT NULL DEFAULT '0',
-			"appointed_by_name"	varchar(255),
+			"appointed_by_name"	varchar(255) NOT NULL DEFAULT '',
 			"date_start" timestamp,
 			"date_end" timestamp,
 			"delete" boolean
@@ -1028,8 +1029,8 @@ var (
 		DROP TABLE IF EXISTS "%[1]d_member";
 		CREATE TABLE "%[1]d_member" (
 			"member_id" bigint NOT NULL DEFAULT '0',
-			"username"	varchar(255),
-			"avatar"	text
+			"username"	varchar(255) NOT NULL DEFAULT '',
+			"avatar"	text NOT NULL DEFAULT ''
 		);
 		`
 
