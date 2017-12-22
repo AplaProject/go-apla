@@ -995,6 +995,8 @@ var (
 			"finished_processing_time" timestamp,
 			"page_name"	varchar(255) NOT NULL DEFAULT ''
 		);
+		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
+
 
 		DROP TABLE IF EXISTS "%[1]d_roles_list";
 		CREATE TABLE "%[1]d_roles_list" (
@@ -1009,6 +1011,9 @@ var (
 			"creator_name"	varchar(255) NOT NULL DEFAULT '',
 			"creator_avatar" varchar(255) NOT NULL DEFAULT ''
 		);
+		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
+		CREATE INDEX "%[1]d_roles_list_index_type" ON "%[1]d_roles_list" (role_type);
 
 		DROP TABLE IF EXISTS "%[1]d_roles_assign";
 		CREATE TABLE "%[1]d_roles_assign" (
@@ -1025,13 +1030,18 @@ var (
 			"date_end" timestamp,
 			"delete" boolean
 		);
+		ALTER TABLE ONLY "%[1]d_roles_assign" ADD CONSTRAINT "%[1]d_roles_assign_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "%[1]d_roles_assign_index_role" ON "%[1]d_roles_assign" (role_id);
+		CREATE INDEX "%[1]d_roles_assign_index_type" ON "%[1]d_roles_assign" (role_type);
+		CREATE INDEX "%[1]d_roles_assign_index_member" ON "%[1]d_roles_assign" (member_id);
 
 		DROP TABLE IF EXISTS "%[1]d_member";
 		CREATE TABLE "%[1]d_member" (
-			"member_id" bigint NOT NULL DEFAULT '0',
+			"id" bigint NOT NULL DEFAULT '0',
 			"username"	varchar(255) NOT NULL DEFAULT '',
 			"avatar"	text NOT NULL DEFAULT ''
 		);
+		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
 		`
 
 	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id","rb_id") VALUES ('1','0');
