@@ -87,7 +87,7 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 	switch v := err.(type) {
 	case string:
 		errCode = v
-		if val, ok := errors[v]; ok {
+		if val, ok := apiErrors[v]; ok {
 			if len(params) > 0 {
 				list := make([]string, 0)
 				msg = fmt.Sprintf(val, params...)
