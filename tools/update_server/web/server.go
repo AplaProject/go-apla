@@ -49,7 +49,11 @@ func (s *Server) GetRoutes() *chi.Mux {
 		r.Route("/{os}/{arch}", func(r chi.Router) {
 			r.Get("/last", s.getLastVersion)
 			r.Get("/versions", s.getVersions)
-			r.Get("/{version}", s.getBinary)
+
+			r.Route("/{version}", func(r chi.Router) {
+				r.Get("/", s.getBuildInfo)
+				r.Get("/binary", s.getBuild)
+			})
 		})
 	})
 
@@ -100,24 +104,58 @@ func (s *Server) getVersions(w http.ResponseWriter, r *http.Request) {
 	s.JSON(w, r, model.VersionFilter(versions, os, a))
 }
 
-func (s *Server) getBinary(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getBuild(w http.ResponseWriter, r *http.Request) {
 	v := chi.URLParam(r, "version")
 	os := chi.URLParam(r, "os")
 	a := chi.URLParam(r, "arch")
 	rb := model.Build{Version: model.Version{Number: v, OS: os, Arch: a}}
 
-	binary, err := s.Db.Get(rb)
+	b, err := s.Db.Get(rb)
 	if err != nil {
 		s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
 		return
 	}
 
-	if bytes.Equal(binary.Body, []byte{}) {
+	if bytes.Equal(b.Body, []byte{}) {
 		s.HTTPError(w, r, http.StatusNotFound, "No such version")
 		return
 	}
 
-	w.Write(binary.Body)
+	var ev model.Version
+	if b.Version == ev {
+		s.HTTPError(w, r, http.StatusNotFound, "Nothing here yet")
+		return
+	}
+
+	w.Write(b.Body)
+}
+
+// BuildInfoResponse is same to model.Build but without encoding body to json (for body see getBuild action)
+type BuildInfoResponse struct {
+	model.Build
+	Body []byte `json:"body,omitempty"`
+}
+
+func (s *Server) getBuildInfo(w http.ResponseWriter, r *http.Request) {
+	v := chi.URLParam(r, "version")
+	os := chi.URLParam(r, "os")
+	a := chi.URLParam(r, "arch")
+	rb := model.Build{Version: model.Version{Number: v, OS: os, Arch: a}}
+
+	b, err := s.Db.Get(rb)
+	if err != nil {
+		s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
+		return
+	}
+
+	var ev model.Version
+	if b.Version == ev {
+		s.HTTPError(w, r, http.StatusNotFound, "Nothing here yet")
+		return
+	}
+
+	b.Body = []byte{}
+	s.JSON(w, r, BuildInfoResponse{Build: b})
 }
 
 func (s *Server) addBinary(w http.ResponseWriter, r *http.Request) {
@@ -137,6 +175,17 @@ func (s *Server) addBinary(w http.ResponseWriter, r *http.Request) {
 
 	if !b.Validate() {
 		s.HTTPError(w, r, http.StatusBadRequest, fmt.Sprintf("Wrong os+arch, available systems list: %s", model.GetAvailableVersions()))
+		return
+	}
+
+	aeb, err := s.Db.Get(b)
+	if err != nil {
+		s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
+		return
+	}
+
+	if aeb.Version == b.Version {
+		s.HTTPError(w, r, http.StatusBadRequest, "Version already exists")
 		return
 	}
 

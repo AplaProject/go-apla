@@ -39,7 +39,7 @@ func (bs *BuildSigner) MakeSign(build model.Build) ([]byte, error) {
 
 	data := build.Body
 	data = append(data, []byte(build.Time.String())...)
-	data = append(data, []byte(build.Number)...)
+	data = append(data, []byte(build.Version.String())...)
 
 	signhash := sha256.Sum256(data)
 	r, s, err := ecdsa.Sign(rand.Reader, priv, signhash[:])
@@ -59,7 +59,7 @@ func (bs *BuildSigner) CheckSign(build model.Build, public []byte) (bool, error)
 
 	data := build.Body
 	data = append(data, []byte(build.Time.String())...)
-	data = append(data, []byte(build.Number)...)
+	data = append(data, []byte(build.Version.String())...)
 	hash := sha256.Sum256(data)
 	pubkey := new(ecdsa.PublicKey)
 	pubkey.Curve = pubkeyCurve

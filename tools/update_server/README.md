@@ -30,4 +30,5 @@ Data format:
 
 *GET /{os}/{arch}/last - download last version binary
 *GET /{os}/{arch}/versions - get all versions list
-*GET /{os}/{arch}/{version} - download binary of the specific version
+*GET /{os}/{arch}/{version} - get info about specific version
+*GET /{os}/{arch}/{version}/binary - download binary of the specific version
