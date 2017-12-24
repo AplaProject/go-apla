@@ -5,7 +5,7 @@
 #### /api/v1
 ##### Private
 
-*POST /private/binary - adding binary
+*POST /private/binary - adding build
 Data format:
 ```
 {
@@ -28,7 +28,7 @@ Data format:
 
 ##### Public
 
-*GET /{os}/{arch}/last - download last version binary
+*GET /{os}/{arch}/last - get info about last version
 *GET /{os}/{arch}/versions - get all versions list
 *GET /{os}/{arch}/{version} - get info about specific version
 *GET /{os}/{arch}/{version}/binary - download binary of the specific version

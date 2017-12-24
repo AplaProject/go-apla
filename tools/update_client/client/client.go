@@ -161,6 +161,34 @@ func (uc *UpdateClient) GetBinary(serverParams params.ServerParams, keyParams pa
 	return b, nil
 }
 
+func (uc *UpdateClient) GetLastBinary(serverParams params.ServerParams,
+	keyParams params.KeyParams,
+	binaryParams params.BinaryParams) (model.Build, error) {
+	var b model.Build
+
+	pv, err := parseVersion(binaryParams.Version)
+	if err != nil {
+		return b, errors.Wrapf(err, "version parsing")
+	}
+
+	r, bd, errs := gorequest.
+		New().
+		SetBasicAuth(serverParams.Login, serverParams.Password).
+		Get(fmt.Sprintf("%s/api/v1/%s/%s/last", serverParams.Server, pv.OS, pv.Arch)).
+		EndStruct(&b)
+
+	if errs != nil {
+		return b, errors.Errorf("creating 1 request error: %v", errs)
+	}
+
+	if r.StatusCode != http.StatusOK {
+		return b, errors.Errorf("getting last version response code: %d, body: %s", r.StatusCode, bd)
+	}
+
+	binaryParams.Version = b.Version.String()
+	return uc.GetBinary(serverParams, keyParams, binaryParams)
+}
+
 // RemoveBinary is removing build from update server (require auth credentials)
 func (uc *UpdateClient) RemoveBinary(serverParams params.ServerParams, binaryParams params.BinaryParams) error {
 	pv, err := parseVersion(binaryParams.Version)

@@ -47,7 +47,7 @@ func (s *Server) GetRoutes() *chi.Mux {
 		})
 
 		r.Route("/{os}/{arch}", func(r chi.Router) {
-			r.Get("/last", s.getLastVersion)
+			r.Get("/last", s.getLastBuildInfo)
 			r.Get("/versions", s.getVersions)
 
 			r.Route("/{version}", func(r chi.Router) {
@@ -60,7 +60,7 @@ func (s *Server) GetRoutes() *chi.Mux {
 	return r
 }
 
-func (s *Server) getLastVersion(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getLastBuildInfo(w http.ResponseWriter, r *http.Request) {
 	versions, err := s.Db.GetVersionsList()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -88,7 +88,8 @@ func (s *Server) getLastVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write(binary.Body)
+	binary.Body = []byte{}
+	s.JSON(w, r, BuildInfoResponse{Build: binary})
 }
 
 func (s *Server) getVersions(w http.ResponseWriter, r *http.Request) {
