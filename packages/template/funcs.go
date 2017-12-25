@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -54,6 +55,7 @@ func init() {
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
 	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
+	funcs[`Random`] = tplFunc{randomTag, defaultTag, `random`, `Min,Max`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
 	funcs[`Strong`] = tplFunc{defaultTag, defaultTag, `strong`, `Body,Class`}
@@ -490,6 +492,15 @@ func dbfindTag(par parFunc) string {
 	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
+}
+
+func randomTag(par parFunc) string {
+	min := converter.StrToInt64((*par.Pars)[`Min`])
+	max := converter.StrToInt64((*par.Pars)[`Max`])
+	if min < 0 || max < 0 || min >= max {
+		return `wrong random parameters`
+	}
+	return converter.Int64ToStr(min + rand.New(rand.NewSource(time.Now().Unix())).Int63n(max-min))
 }
 
 func customTag(par parFunc) string {
