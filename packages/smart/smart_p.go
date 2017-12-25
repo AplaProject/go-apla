@@ -53,7 +53,6 @@ var (
 		"DBIntWhere":       {},
 		"DBAmount":         {},
 		"DBInsertReport":   {},
-		"FindEcosystem":    {},
 	}
 
 	extendCostSysParams = map[string]string{
@@ -84,14 +83,11 @@ var (
 		"Activate":          "extend_cost_activate",
 		"Deactivate":        "extend_cost_deactivate",
 		"CreateEcosystem":   "extend_cost_create_ecosystem",
-		"RollbackEcosystem": "extend_cost_rollback_ecosystem",
 		"TableConditions":   "extend_cost_table_conditions",
 		"CreateTable":       "extend_cost_create_table",
-		"RollbackTable":     "extend_cost_rollback_table",
 		"PermTable":         "extend_cost_perm_table",
 		"ColumnCondition":   "extend_cost_column_condition",
 		"CreateColumn":      "extend_cost_create_column",
-		"RollbackColumn":    "extend_cost_rollback_column",
 		"PermColumn":        "extend_cost_perm_column",
 		"JSONToMap":         "extend_cost_json_to_map",
 	}
@@ -128,10 +124,6 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		fields []string
 		values []interface{}
 	)
-	if sc.TxContract.Name != `@1UpdateSysParam` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SysParams can be only changed from @1UpdateSysParam")
-		return 0, fmt.Errorf(`SysParams can be only changed from @1UpdateSysParam`)
-	}
 	par := &model.SystemParameter{}
 	found, err := par.Get(name)
 	if err != nil {
@@ -170,15 +162,16 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE)
+	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
 	if err != nil {
 		return 0, err
 	}
-	err = syspar.SysUpdate()
+	err = syspar.SysUpdate(sc.DbTransaction)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 		return 0, err
 	}
+	sc.SysUpdate = true
 	return 0, nil
 }
 
@@ -197,7 +190,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if err = sc.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && sc.Rollback, false)
 	return
 }
 
@@ -452,7 +445,7 @@ func HexToBytes(hexdata string) ([]byte, error) {
 
 // LangRes returns the language resource
 func LangRes(sc *SmartContract, idRes, lang string) string {
-	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang)
+	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang, sc.VDE)
 	return ret
 }
 
@@ -472,7 +465,7 @@ func DBInsertReport(sc *SmartContract, tblname string, params string, val ...int
 		return
 	}
 	var lastID string
-	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, !sc.VDE)
+	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, !sc.VDE && sc.Rollback, false)
 	if err == nil {
 		ret, _ = strconv.ParseInt(lastID, 10, 64)
 	}
@@ -499,31 +492,13 @@ func Replace(s, old, new string) string {
 	return strings.Replace(s, old, new, -1)
 }
 
-// FindEcosystem checks if there is an ecosystem with the specified name
-func FindEcosystem(sc *SmartContract, country string) (int64, int64, error) {
-	query := `SELECT id FROM system_states where name=?`
-	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, country)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, 0, err
-	}
-	id, err := model.Single(query, country).Int64()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
-		return 0, 0, err
-	}
-	return cost, id, nil
-}
-
 // CreateEcosystem creates a new ecosystem
 func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error) {
 	if sc.TxContract.Name != `@1NewEcosystem` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateEcosystem can be only called from @1NewEcosystem")
 		return 0, fmt.Errorf(`CreateEcosystem can be only called from @1NewEcosystem`)
 	}
-	_, id, err := sc.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
-		name,
-	}, `system_states`, nil, nil, !sc.VDE)
+	_, id, err := sc.selectiveLoggingAndUpd(nil, nil, `system_states`, nil, nil, !sc.VDE && sc.Rollback, false)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError}).Error("CreateEcosystem")
 		return 0, err
@@ -537,6 +512,36 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if err != nil {
 		return 0, err
 	}
+	sc.Rollback = false
+	_, _, err = DBInsert(sc, id+"_pages", "name,value,menu,conditions", "default_page",
+		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return 0, err
+	}
+	_, _, err = DBInsert(sc, id+"_menu", "name,value,title,conditions", "default_menu",
+		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return 0, err
+	}
+	var (
+		ret []interface{}
+		pub string
+	)
+	_, ret, err = DBSelect(sc, "1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting pub key")
+		return 0, err
+	}
+	if Len(ret) > 0 {
+		pub = ret[0].(map[string]string)[`pub`]
+	}
+	_, _, err = DBInsert(sc, id+"_keys", "id,pub", wallet, pub)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return 0, err
+	}
 	return converter.StrToInt64(id), err
 }
 
@@ -547,10 +552,15 @@ func RollbackEcosystem(sc *SmartContract) error {
 		return fmt.Errorf(`RollbackEcosystem can be only called from @1NewEcosystem`)
 	}
 	rollbackTx := &model.RollbackTx{}
-	err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, "system_states")
+	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, "system_states")
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback tx")
 		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("system states in rollback table")
+		// if there is not such hash then NewEcosystem was faulty. Do nothing.
+		return nil
 	}
 	lastID, err := model.GetNextID(sc.DbTransaction, `system_states`)
 	if err != nil {
@@ -562,6 +572,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 		log.WithFields(log.Fields{"table_id": rollbackTx.TableID, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
 		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
 	}
+
 	if model.IsTable(fmt.Sprintf(`%s_vde_tables`, rollbackTx.TableID)) {
 		// Drop all _local_ tables
 		table := &model.Table{}
@@ -609,14 +620,32 @@ func RollbackTable(sc *SmartContract, name string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from @1NewTable")
 		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
 	}
-	err := model.DropTable(sc.DbTransaction, fmt.Sprintf("%d_%s", sc.TxSmart.EcosystemID, name))
+	tableName := getDefTableName(sc, name)
+	rollbackTx := &model.RollbackTx{}
+	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, tableName)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback table")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("table record in rollback table")
+		// if there is not such hash then NewTable was faulty. Do nothing.
+		return nil
+	}
+	err = rollbackTx.DeleteByHashAndTableName(sc.DbTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting record from rollback table")
+		return err
+	}
+
+	err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%d_%s", sc.TxSmart.EcosystemID, name))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
 		return err
 	}
 	t := model.Table{}
 	t.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
-	found, err := t.Get(sc.DbTransaction, name)
+	found, err = t.Get(sc.DbTransaction, name)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
 		return err
@@ -639,12 +668,23 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`RollbackColumn can be only called from @1NewColumn`)
 	}
+	rollbackTx := &model.RollbackTx{}
+	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.EcosystemID))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column from rollback table")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("column record in rollback table")
+		// if there is not such hash then NewColumn was faulty. Do nothing.
+		return nil
+	}
 	return model.AlterTableDropColumn(fmt.Sprintf(`%d_%s`, sc.TxSmart.EcosystemID, tableName), name)
 }
 
 // UpdateLang updates language resource
 func UpdateLang(sc *SmartContract, name, trans string) {
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans)
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans, sc.VDE)
 }
 
 // Size returns the length of the string

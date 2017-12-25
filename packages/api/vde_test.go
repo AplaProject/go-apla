@@ -316,6 +316,112 @@ func TestVDEParams(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
+	name := randName(`lng`)
+	value := `{"en": "My VDE test", "fr": "French VDE test"}`
+
+	form = url.Values{"Name": {name}, "Trans": {value}, "vde": {`true`}}
+	err = postTx(`NewLang`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	input := fmt.Sprintf(`Span($%s$)+LangRes(%[1]s,fr)`, name)
+	var retContent contentResult
+	err = sendPost(`content`, &url.Values{`template`: {input}, `vde`: {`true`}}, &retContent)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if retContent.Tree != `[{"tag":"span","children":[{"tag":"text","text":"My VDE test"}]},{"tag":"text","text":"+French VDE test"}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, retContent.Tree))
+		return
+	}
+
+	name = crypto.RandSeq(4)
+	err = postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {fmt.Sprintf(imp, name)}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+var vdeimp = `{
+    "pages": [
+        {
+            "Name": "imp_page2",
+            "Conditions": "true",
+            "Menu": "imp",
+            "Value": "imp"
+        }
+    ],
+    "blocks": [
+        {
+            "Name": "imp2",
+            "Conditions": "true",
+            "Value": "imp"
+        }
+    ],
+    "menus": [
+        {
+            "Name": "imp2",
+            "Conditions": "true",
+            "Value": "imp"
+        }
+    ],
+    "parameters": [
+        {
+            "Name": "founder_account2",
+            "Value": "-6457397116804798941",
+            "Conditions": "ContractConditions(\"MainCondition\")"
+        },
+        {
+            "Name": "test_pa2",
+            "Value": "1",
+            "Conditions": "true"
+        }
+    ],
+    "languages": [
+        {
+            "Name": "est2",
+            "Trans": "{\"en\":\"yeye\",\"te\":\"knfek\"}"
+        }
+    ],
+    "contracts": [
+        {
+            "Name": "testCont2",
+            "Value": "contract testCont2 {\n    data {\n\n    }\n\n    conditions {\n\n    }\n\n    action {\n        $result=\"privet\"\n    }\n}",
+            "Conditions": "true"
+        }
+    ],
+    "tables": [
+        {
+            "Name": "tests2",
+            "Columns": "[{\"name\":\"name\",\"type\":\"text\",\"conditions\":\"true\"}]",
+            "Permissions": "{\"insert\":\"true\",\"update\":\"true\",\"new_column\":\"true\"}"
+        }
+    ],
+    "data": [
+        {
+            "Table": "tests2",
+            "Columns": [
+                "name"
+            ],
+            "Data": []
+        }
+    ]
+}`
+
+func TestVDEImport(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	err := postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {vdeimp}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }
 
 func TestHTTPRequest(t *testing.T) {

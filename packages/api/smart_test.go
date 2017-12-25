@@ -209,6 +209,11 @@ func TestNewTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	err = postTx(`NewTable`, &form)
+	if err.Error() != fmt.Sprintf(`{"type":"panic","error":"table %s exists"}`, name) {
+		t.Error(err)
+		return
+	}
 	form = url.Values{"Name": {name},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
 			"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
@@ -221,6 +226,11 @@ func TestNewTable(t *testing.T) {
 		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
 	err = postTx(`NewColumn`, &form)
 	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`NewColumn`, &form)
+	if err.Error() != `{"type":"panic","error":"column newcol exists"}` {
 		t.Error(err)
 		return
 	}
@@ -242,6 +252,57 @@ func TestUpdateSysParam(t *testing.T) {
 	err := postTx(`UpdateSysParam`, &form)
 	if err != nil {
 		t.Error(err)
+		return
+	}
+	var sysList ecosystemParamsResult
+	err = sendGet(`systemparams?names=max_columns`, nil, &sysList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(sysList.List) != 1 || sysList.List[0].Value != `49` {
+		t.Error(`Wrong max_column value`)
+		return
+	}
+	name := randName(`test`)
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action { 
+			var costlen int
+			costlen = SysParamInt("extend_cost_len") + 1
+			UpdateSysParam("Name,Value","max_columns","51")
+			DBUpdateSysParam("extend_cost_len", Str(costlen), "true" )
+			if SysParamInt("extend_cost_len") != costlen {
+				error "Incorrect updated value"
+			}
+			DBUpdateSysParam("max_indexes", "4", "false" )
+		}
+		}`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	err = postTx("NewContract", &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(name, &form)
+	if err != nil {
+		if err.Error() != `{"type":"panic","error":"Access denied"}` {
+			t.Error(err)
+			return
+		}
+	}
+	err = sendGet(`systemparams?names=max_columns,max_indexes`, nil, &sysList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(sysList.List) != 2 || !((sysList.List[0].Value == `51` && sysList.List[1].Value == `4`) ||
+		(sysList.List[0].Value == `4` && sysList.List[1].Value == `51`)) {
+		t.Error(`Wrong max_column or max_indexes value`)
+		return
+	}
+	err = postTx(name, &form)
+	if err == nil || err.Error() != `{"type":"panic","error":"Access denied"}` {
+		t.Error(`incorrect access to system parameter`)
 		return
 	}
 }

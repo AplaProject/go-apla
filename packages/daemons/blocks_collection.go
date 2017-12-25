@@ -26,6 +26,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -61,19 +62,10 @@ func initialLoad(ctx context.Context, d *daemon) error {
 
 	if toLoad {
 		d.logger.Debug("start first block loading")
-		if err := model.UpdateConfig("current_load_clockchain", "file"); err != nil {
-			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating current_load_blockchain in config")
-			return err
-		}
 
 		if err := firstLoad(ctx, d); err != nil {
 			return err
 		}
-	}
-
-	if err := model.UpdateConfig("current_load_clockchain", "nodes"); err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating current_load_blockchain in config")
-		return err
 	}
 
 	return nil
@@ -268,18 +260,12 @@ func downloadChain(ctx context.Context, fileName, url string, logger *log.Entry)
 
 // init first block from file or from embedded value
 func loadFirstBlock(logger *log.Entry) error {
-	var newBlock []byte
-	var err error
 
-	if len(*utils.FirstBlockDir) > 0 {
-		fileName := *utils.FirstBlockDir + "/1block"
-		logger.WithFields(log.Fields{"file_name": fileName}).Info("loading first block from file")
-		newBlock, err = ioutil.ReadFile(fileName)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "file_name": fileName}).Error("reading first block from file")
-		}
-	} else {
-		logger.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("FirstBlockDir doesn't set")
+	newBlock, err := ioutil.ReadFile(*conf.FirstBlockPath)
+	if err != nil {
+		logger.WithFields(log.Fields{
+			"type": consts.IOError, "error": err, "path": *conf.FirstBlockPath,
+		}).Error("reading first block from file")
 	}
 
 	if err = parser.InsertBlockWOForks(newBlock); err != nil {
@@ -295,34 +281,7 @@ func firstLoad(ctx context.Context, d *daemon) error {
 	DBLock()
 	defer DBUnlock()
 
-	nodeConfig := &model.Config{}
-	_, err := nodeConfig.Get()
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting config")
-		return err
-	}
-
-	if nodeConfig.FirstLoadBlockchain == "file" {
-		blockchainURL := nodeConfig.FirstLoadBlockchainURL
-		if len(blockchainURL) == 0 {
-			blockchainURL = syspar.GetBlockchainURL()
-		}
-
-		fileName := *utils.Dir + "/public/blockchain"
-		err = downloadChain(ctx, fileName, blockchainURL, d.logger)
-		if err != nil {
-			return err
-		}
-
-		err = loadFromFile(ctx, fileName, d.logger)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = loadFirstBlock(d.logger)
-	}
-
-	return err
+	return loadFirstBlock(d.logger)
 }
 
 func needLoad(logger *log.Entry) (bool, error) {
@@ -333,7 +292,7 @@ func needLoad(logger *log.Entry) (bool, error) {
 		return false, err
 	}
 	// we have empty blockchain, we need to load blockchain from file or other source
-	if infoBlock.BlockID == 0 || *utils.StartBlockID > 0 {
+	if infoBlock.BlockID == 0 || *conf.StartBlockID > 0 {
 		logger.Debug("blockchain should be loaded")
 		return true, nil
 	}
@@ -369,11 +328,11 @@ func loadFromFile(ctx context.Context, fileName string, logger *log.Entry) error
 			return nil
 		}
 
-		if *utils.EndBlockID > 0 && block.ID == *utils.EndBlockID {
+		if *conf.EndBlockID > 0 && block.ID == *conf.EndBlockID {
 			return nil
 		}
 
-		if *utils.StartBlockID == 0 || (*utils.StartBlockID > 0 && block.ID > *utils.StartBlockID) {
+		if *conf.StartBlockID == 0 || (*conf.StartBlockID > 0 && block.ID > *conf.StartBlockID) {
 			if err = parser.InsertBlockWOForks(block.Data); err != nil {
 				return err
 			}

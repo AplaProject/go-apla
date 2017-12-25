@@ -45,10 +45,7 @@ func initGorm(t *testing.T) *gorm.DB {
 				if err := conn.RegisterFunc("encode", encode, true); err != nil {
 					return err
 				}
-				if err := conn.RegisterFunc("decode", decode, true); err != nil {
-					return err
-				}
-				return nil
+				return conn.RegisterFunc("decode", decode, true)
 			},
 		})
 	}
