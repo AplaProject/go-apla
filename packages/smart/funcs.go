@@ -262,7 +262,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 }
 
 func contractsList(value string) []interface{} {
-	list := ContractsList(value)
+	list := script.ContractsList(value)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
 		result[i] = reflect.ValueOf(list[i]).Interface()
@@ -458,7 +458,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		ecosystem = sc.TxSmart.EcosystemID
 	}
 	tblname = getTableName(sc, tblname, ecosystem)
-	rows, err = model.DBConn.Table(tblname).Select(columns).Where(where, params...).Order(order).
+	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting rows from table")

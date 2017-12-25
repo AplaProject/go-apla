@@ -24,7 +24,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/script"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -66,7 +66,7 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 		if val[`active`] == `NULL` {
 			list[ind][`active`] = ``
 		}
-		list[ind][`name`] = strings.Join(smart.ContractsList(val[`value`]), `,`)
+		list[ind][`name`] = strings.Join(script.ContractsList(val[`value`]), `,`)
 	}
 	data.result = &listResult{
 		Count: converter.Int64ToStr(count - 1), List: list,

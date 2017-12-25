@@ -18,6 +18,7 @@ package api
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"net/http"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -27,10 +28,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type txstatusError struct {
+	Type  string `json:"type,omitempty"`
+	Error string `json:"error,omitempty"`
+}
+
 type txstatusResult struct {
-	BlockID string `json:"blockid"`
-	Message string `json:"errmsg"`
-	Result  string `json:"result"`
+	BlockID string         `json:"blockid"`
+	Message *txstatusError `json:"errmsg,omitempty"`
+	Result  string         `json:"result"`
 }
 
 func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
@@ -53,8 +59,12 @@ func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	if ts.BlockID > 0 {
 		status.BlockID = converter.Int64ToStr(ts.BlockID)
 		status.Result = ts.Error
-	} else {
-		status.Message = ts.Error
+	} else if len(ts.Error) > 0 {
+		if err := json.Unmarshal([]byte(ts.Error), &status.Message); err != nil {
+			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": ts.Error,
+				"error": err}).Error("unmarshalling txstatus error")
+			return errorAPI(w, err, http.StatusInternalServerError)
+		}
 	}
 	data.result = &status
 	return nil
