@@ -408,6 +408,15 @@ func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) 
 	return result, nil
 }
 
+// GetColumnByID returns the value of the column from the table by id
+func GetColumnByID(table, column, id string) (result string, err error) {
+	err = DBConn.Table(table).Select(column).Where(`id=?`, id).Row().Scan(&result)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column by id")
+	}
+	return
+}
+
 // InitDB drop all tables and exec db schema
 func InitDB(cfg conf.DBConfig) error {
 

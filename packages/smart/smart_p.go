@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
@@ -44,15 +43,6 @@ var (
 		"DBUpdateSysParam": {},
 		"DBUpdateExt":      {},
 		"DBSelect":         {},
-		"DBInt":            {},
-		"DBRowExt":         {},
-		"DBRow":            {},
-		"DBStringExt":      {},
-		"DBIntExt":         {},
-		"DBStringWhere":    {},
-		"DBIntWhere":       {},
-		"DBAmount":         {},
-		"DBInsertReport":   {},
 	}
 
 	extendCostSysParams = map[string]string{
@@ -114,16 +104,8 @@ func init() {
 		"DBUpdateSysParam":   UpdateSysParam,
 		"DBUpdateExt":        DBUpdateExt,
 		"DBSelect":           DBSelect,
-		"DBInt":              DBInt,
-		"DBRowExt":           DBRowExt,
-		"DBRow":              DBRow,
-		"DBStringExt":        DBStringExt,
-		"DBIntExt":           DBIntExt,
-		"DBStringWhere":      DBStringWhere,
-		"DBIntWhere":         DBIntWhere,
 		"AddressToId":        AddressToID,
 		"IdToAddress":        IDToAddress,
-		"DBAmount":           DBAmount,
 		"ContractAccess":     ContractAccess,
 		"ContractConditions": ContractConditions,
 		"EcosysParam":        EcosysParam,
@@ -140,7 +122,6 @@ func init() {
 		"PubToID":            PubToID,
 		"HexToBytes":         HexToBytes,
 		"LangRes":            LangRes,
-		"DBInsertReport":     DBInsertReport,
 		"ValidateCondition":  ValidateCondition,
 		"EvalCondition":      EvalCondition,
 		"HasPrefix":          strings.HasPrefix,
@@ -234,11 +215,12 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 	if err != nil {
 		return 0, err
 	}
-	err = syspar.SysUpdate()
+	err = syspar.SysUpdate(sc.DbTransaction)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 		return 0, err
 	}
+	sc.SysUpdate = true
 	return 0, nil
 }
 
@@ -259,167 +241,6 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	}
 	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && sc.Rollback, false)
 	return
-}
-
-// DBInt returns the numeric value of the column for the record with the specified id
-func DBInt(sc *SmartContract, tblname string, name string, id int64) (int64, int64, error) {
-	tblname = getDefTableName(sc, tblname)
-
-	cost, err := model.GetQueryTotalCost(sc.DbTransaction, `select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, 0, err
-	}
-	res, err := model.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).Int64()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting db int")
-	}
-	return cost, res, err
-}
-
-// DBRowExt returns one row from the table StringExt
-func DBRowExt(sc *SmartContract, tblname string, columns string, id interface{}, idname string) (int64, map[string]string, error) {
-
-	tblname = getDefTableName(sc, tblname)
-
-	isBytea := GetBytea(tblname)
-	if isBytea[idname] {
-		switch id.(type) {
-		case string:
-			if vbyte, err := hex.DecodeString(id.(string)); err == nil {
-				id = vbyte
-			}
-		}
-	}
-	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where ` + converter.EscapeName(idname) + `=?`
-	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, id)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, nil, err
-	}
-	res, err := model.GetOneRow(query, id).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
-	}
-
-	return cost, res, err
-}
-
-// DBRow returns one row from the table StringExt
-func DBRow(sc *SmartContract, tblname string, columns string, id int64) (int64, map[string]string, error) {
-	tblname = getDefTableName(sc, tblname)
-
-	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where id=?`
-	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, id)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, nil, err
-	}
-	res, err := model.GetOneRow(query, id).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
-	}
-
-	return cost, res, err
-}
-
-// DBStringExt returns the value of 'name' column for the record with the specified value of the 'idname' field
-func DBStringExt(sc *SmartContract, tblname string, name string, id interface{}, idname string) (int64, string, error) {
-	tblname = getDefTableName(sc, tblname)
-
-	isBytea := GetBytea(tblname)
-	if isBytea[idname] {
-		switch id.(type) {
-		case string:
-			if vbyte, err := hex.DecodeString(id.(string)); err == nil {
-				id = vbyte
-			}
-		}
-	}
-
-	cost, err := model.GetQueryTotalCost(sc.DbTransaction, `select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, "", err
-	}
-	res, err := model.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting dbstring ext")
-	}
-	return cost, res, err
-}
-
-// DBIntExt returns the numeric value of the 'name' column for the record with the specified value of the 'idname' field
-func DBIntExt(sc *SmartContract, tblname string, name string, id interface{}, idname string) (cost int64, ret int64, err error) {
-	var val string
-	var qcost int64
-
-	tblname = getDefTableName(sc, tblname)
-	qcost, val, err = DBStringExt(sc, tblname, name, id, idname)
-	if err != nil {
-		return 0, 0, err
-	}
-	if len(val) == 0 {
-		return 0, 0, nil
-	}
-	res, err := strconv.ParseInt(val, 10, 64)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting DBStringExt result from string to int")
-	}
-	return qcost, res, err
-}
-
-// DBStringWhere returns the column value based on the 'where' condition and 'params' values for this condition
-func DBStringWhere(sc *SmartContract, tblname string, name string, where string, params ...interface{}) (int64, string, error) {
-
-	tblname = getDefTableName(sc, tblname)
-
-	selectQuery := `select ` + converter.EscapeName(name) + ` from ` + converter.EscapeName(tblname) + ` where ` + strings.Replace(converter.Escape(where), `$`, `?`, -1)
-	qcost, err := model.GetQueryTotalCost(sc.DbTransaction, selectQuery, params...)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, "", err
-	}
-	res, err := model.Single(selectQuery, params).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
-		return 0, "", err
-	}
-	return qcost, res, err
-}
-
-// DBIntWhere returns the column value based on the 'where' condition and 'params' values for this condition
-func DBIntWhere(sc *SmartContract, tblname string, name string, where string, params ...interface{}) (cost int64, ret int64, err error) {
-	var val string
-	cost, val, err = DBStringWhere(sc, tblname, name, where, params...)
-	if err != nil {
-		return 0, 0, err
-	}
-	if len(val) == 0 {
-		return 0, 0, nil
-	}
-	res, err := strconv.ParseInt(val, 10, 64)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("conversion DBStringWhere result from string to int")
-	}
-	return cost, res, err
-}
-
-// DBAmount returns the value of the 'amount' column for the record with the 'id' value in the 'column' column
-func DBAmount(sc *SmartContract, tblname, column string, id int64) (int64, decimal.Decimal) {
-
-	tblname = getDefTableName(sc, tblname)
-
-	balance, err := model.Single("SELECT amount FROM "+converter.EscapeName(tblname)+" WHERE "+converter.EscapeName(column)+" = ?", id).String()
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("executing single query")
-		return 0, decimal.New(0, 0)
-	}
-	val, err := decimal.NewFromString(balance)
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.ConversionError}).Error("converting balance from string to decimal")
-	}
-	return 0, val
 }
 
 // SysParamString returns the value of the system parameter
@@ -514,29 +335,6 @@ func HexToBytes(hexdata string) ([]byte, error) {
 func LangRes(sc *SmartContract, idRes, lang string) string {
 	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang, sc.VDE)
 	return ret
-}
-
-// DBInsertReport inserts a record into the specified report table
-func DBInsertReport(sc *SmartContract, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
-	names := strings.Split(getDefTableName(sc, tblname), `_`)
-	state := converter.StrToInt64(names[0])
-	if state != int64(sc.TxSmart.EcosystemID) {
-		err = fmt.Errorf(`Wrong state in DBInsertReport`)
-		return
-	}
-	if !model.IsNodeState(state, ``) {
-		return
-	}
-	tblname = names[0] + `_reports_` + strings.Join(names[1:], `_`)
-	if err = sc.AccessTable(tblname, "insert"); err != nil {
-		return
-	}
-	var lastID string
-	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, !sc.VDE && sc.Rollback, false)
-	if err == nil {
-		ret, _ = strconv.ParseInt(lastID, 10, 64)
-	}
-	return
 }
 
 // EvalCondition gets the condition and check it

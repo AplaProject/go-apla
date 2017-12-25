@@ -22,6 +22,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 )
@@ -334,7 +335,7 @@ func TestVDEParams(t *testing.T) {
 		return
 	}
 	if RawToString(retContent.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"My VDE test"}]},{"tag":"text","text":"+French VDE test"}]` {
-		t.Error(fmt.Errorf(`wrong tree %s`, retContent.Tree))
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(retContent.Tree)))
 		return
 	}
 
@@ -447,12 +448,12 @@ func TestHTTPRequest(t *testing.T) {
 				}
 				heads["Authorization"] = "Bearer " + $Auth
 				pars["vde"] = "true"
-				ret = HTTPRequest("http://localhost:7079/api/v2/content/page/` + rnd + `", "POST", heads, pars)
+				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `content/page/` + rnd + `", "POST", heads, pars)
 				json = JSONToMap(ret)
 				if json["menu"] != "myvdemenu" {
 					error "Wrong vde menu"
 				}
-				ret = HTTPRequest("http://localhost:7079/api/v2/contract/VDEFunctions?vde=true", "GET", heads, pars)
+				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `contract/VDEFunctions?vde=true", "GET", heads, pars)
 				json = JSONToMap(ret)
 				if json["name"] != "@1VDEFunctions" {
 					error "Wrong vde contract"
