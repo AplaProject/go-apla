@@ -142,7 +142,7 @@ func main() {
 			break
 		}
 		for _, v := range vrs {
-			fmt.Println(v.String())
+			fmt.Println(v.Version.String())
 		}
 	case "generate-keys":
 		err = c.GenerateKeys(

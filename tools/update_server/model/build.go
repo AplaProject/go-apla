@@ -98,7 +98,7 @@ func GetAvailableVersions() []Version {
 	return availableVersions
 }
 
-// VersionFilter is filtering and leaves only the necessary versions
+// VersionFilter is filtering and leaves only the necessary versions and sorting by asc
 func VersionFilter(versions []Version, os string, arch string) []Version {
 	var fv []Version
 	for _, v := range versions {
@@ -106,6 +106,8 @@ func VersionFilter(versions []Version, os string, arch string) []Version {
 			fv = append(fv, v)
 		}
 	}
+
+	sortVersions(fv)
 	return fv
 }
 
@@ -140,4 +142,22 @@ func GetLastVersion(versions []Version, os string, arch string) (Version, error)
 
 	lv.Number = last.String()
 	return lv, nil
+}
+
+func sortVersions(versions []Version) error {
+	var bv []*version.Version
+	for _, dv := range versions {
+		v, err := version.NewVersion(dv.Number)
+		if err != nil {
+			return errors.Wrapf(err, "creation version")
+		}
+
+		bv = append(bv, v)
+	}
+	if len(bv) == 0 {
+		return nil
+	}
+
+	sort.Sort(version.Collection(bv))
+	return nil
 }
