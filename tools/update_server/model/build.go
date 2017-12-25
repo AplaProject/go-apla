@@ -63,7 +63,7 @@ var availableVersions = []Version{
 
 // Build is storing build data with needed for update params
 type Build struct {
-	Date time.Time `json:"time"`
+	Time time.Time `json:"time"`
 	Name string    `json:"name"`
 	Body []byte    `json:"body"`
 	Sign []byte    `json:"sign"`
@@ -73,12 +73,17 @@ type Build struct {
 	StartBlock uint64 `json:"start_block"`
 	IsCritical bool   `json:"is_critical"`
 
-	Downloaded int  `json:"-"`
-	Deprecated bool `json:"-"`
+	Downloaded int  `json:"-"` // Counter is not used yet
+	Deprecated bool `json:"-"` // Flag is not used yet
 }
 
 // ValidateSystem is checking os+arch correctness
-func (b *Build) ValidateSystem() bool {
+func (b *Version) Validate() bool {
+	_, err := version.NewVersion(b.Number)
+	if err != nil {
+		return false
+	}
+
 	for _, av := range availableVersions {
 		if av.OS == b.OS && av.Arch == b.Arch {
 			return true

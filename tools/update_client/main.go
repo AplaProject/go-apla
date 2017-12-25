@@ -1,100 +1,161 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"strings"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
+	flags "github.com/jessevdk/go-flags"
+	"github.com/pkg/errors"
 
 	"github.com/AplaProject/go-apla/tools/update_client/client"
+	"github.com/AplaProject/go-apla/tools/update_client/params"
+	"github.com/AplaProject/go-apla/tools/update_server/model"
 )
 
+type ServerOpt struct {
+	Server string `long:"server" description:"updater server address" required:"true"`
+}
+
+type ServerCredentialsOpt struct {
+	Login    string `long:"login" description:"login for updater server auth" required:"true"`
+	Password string `long:"password" description:"password for updater server auth" required:"true"`
+}
+
+type VersionOpt struct {
+	Version string `long:"version" description:"binary version" required:"true"`
+}
+
+type PublicKeyOpt struct {
+	PublicKeyPath string `long:"publ-key-path" description:"path to public key" default:"./resources/key.pub" required:"true"`
+}
+
+type PrivateKeyOpt struct {
+	PrivateKeyPath string `long:"key-path" description:"path to private key for binary signing" default:"./resources/key" required:"true"`
+}
+
+var opts struct {
+	AddCommand struct {
+		ServerOpt
+		ServerCredentialsOpt
+
+		Path       string `long:"binary-path" description:"path to binary that will added" required:"true"`
+		StartBlock int64  `long:"start-block" description:"block updating from" required:"true"`
+
+		VersionOpt
+		PrivateKeyOpt
+	} `command:"add-binary"`
+
+	GetCommand struct {
+		ServerOpt
+		VersionOpt
+
+		Path string `long:"binary-path" description:"path binary will saved to" required:"true"`
+
+		PublicKeyOpt
+	} `command:"get-binary"`
+
+	RemoveCommand struct {
+		ServerOpt
+		ServerCredentialsOpt
+		VersionOpt
+	} `command:"remove-binary"`
+
+	VersionsCommand struct {
+		ServerOpt
+		VersionOpt
+	} `command:"versions"`
+
+	GenerateKeysCommand struct {
+		PublicKeyOpt
+		PrivateKeyOpt
+	} `command:"generate-keys"`
+}
+
 func main() {
-	command := flag.String("command", "", "Run command")
-	binaryPath := flag.String("binary", "", "")
-	updateAddr := flag.String("updateAddr", "", "")
-	login := flag.String("login", "", "")
-	pass := flag.String("pass", "", "")
-	privKey := flag.String("priv", "update.priv", "Path to private key")
-	pubKey := flag.String("pub", "update.pub", "Path to public key")
-	version := flag.String("version", "", "")
-	startBlock := flag.Int64("startBlock", -1231, "")
-	remove := flag.String("remove", "", "")
-	flag.Parse()
-
-	client := &client.UpdateClient{}
-
-	var err error
-	switch *command {
-	case "a":
-		if strings.Trim(*pubKey, " ") == "" ||
-			strings.Trim(*privKey, " ") == "" ||
-			strings.Trim(*binaryPath, " ") == "" ||
-			strings.Trim(*version, " ") == "" ||
-			strings.Trim(*login, " ") == "" ||
-			strings.Trim(*pass, " ") == "" ||
-			strings.Trim(*updateAddr, " ") == "" ||
-			*startBlock == -1231 {
-			fmt.Println(`Usage of a command: -command="a" 
--pubKey="file_path" [default:"update.pub"] 
--privKey="file_path" [default:"update.priv"] 
--binary="file_path" 
--version="X.X.X" 
--login="login" 
--pass="pass"
--updateAddr="http://XXX.xx"
--startBlock=0 or block number`)
-			return
-		}
-		err = client.AddBinary(*pubKey, *privKey, *binaryPath, *version, *login, *pass, *updateAddr, *startBlock)
-	case "g":
-		if strings.Trim(*pubKey, " ") == "" ||
-			strings.Trim(*updateAddr, " ") == "" ||
-			strings.Trim(*version, " ") == "" {
-			fmt.Println(`Usage of a command: -command="g" -pubKey="file_path" [default:"update.pub"], -updateAddr="http://XXX.xx", -version="x.x.x"`)
-			return
-		}
-		err = client.GetBinary(*updateAddr, *pubKey, *version)
-	case "r":
-		if strings.Trim(*updateAddr, " ") == "" ||
-			strings.Trim(*login, " ") == "" ||
-			strings.Trim(*pass, " ") == "" ||
-			strings.Trim(*version, " ") == "" {
-			fmt.Println(`Usage of a command: -command="r" -updateAddr="http://XXX.xx" -login="login" -pass="pass" -version="x.x.x"`)
-			return
-		}
-		err = client.RemoveBinary(*version, *login, *pass, *updateAddr)
-	case "gv":
-		if strings.Trim(*updateAddr, " ") == "" {
-			fmt.Println(`Usage of a command: -command="gv" -updateAddr="http://XXX.xx"`)
-			return
-		}
-		var versions []string
-		versions, err = client.GetVersionList(*updateAddr)
-		fmt.Println(versions)
-	case "gen":
-		if strings.Trim(*pubKey, " ") == "" ||
-			strings.Trim(*privKey, " ") == "" {
-			fmt.Println(`Usage of a command: -command="g" -pubKey="file_path" [default:"update.pub"] -privKey="file_path"`)
-			return
-		}
-		err = client.GenerateKeys(*privKey, *pubKey)
-	case "u":
-		if strings.Trim(*version, " ") == "" ||
-			strings.Trim(*remove, " ") == "" {
-			fmt.Println(`Usage of a command: -command="u" -version="x.x.x" -remove="old_binary_path -public="file_path" [default:"update.pub"]`)
-			return
-		}
-		err = client.UpdateFile(*version, *remove, *pubKey)
-	default:
-		fmt.Println(`available commands: "a" for adding binary to update server, 
-"g" for getting binary from server, 
-"r" for removing binary from update server, 
-"gv" for getting available versions list, 
-"gen" for keys generating`)
+	p := flags.NewParser(&opts, flags.Default)
+	if _, err := p.Parse(); err != nil {
+		os.Exit(1)
 	}
+
+	c := &client.UpdateClient{}
+	var err error
+
+	switch p.Active.Name {
+	case "add-binary":
+		err = c.AddBinary(
+			params.KeyParams{PrivateKeyPath: opts.AddCommand.PrivateKeyPath},
+			params.BinaryParams{
+				Path:       opts.AddCommand.Path,
+				StartBlock: opts.AddCommand.StartBlock,
+				Version:    opts.AddCommand.Version,
+			},
+			params.ServerParams{
+				Server:   opts.AddCommand.Server,
+				Login:    opts.AddCommand.Login,
+				Password: opts.AddCommand.Password,
+			})
+	case "get-binary":
+		var b model.Build
+		b, err = c.GetBinary(
+			params.ServerParams{
+				Server: opts.GetCommand.Server,
+			},
+			params.KeyParams{
+				PublicKeyPath: opts.GetCommand.PublicKeyPath,
+			},
+			params.BinaryParams{
+				Version: opts.GetCommand.Version,
+			})
+		if err != nil {
+			err = errors.Wrapf(err, "getting binary from server")
+			break
+		}
+
+		p := filepath.Join(opts.GetCommand.Path, b.Name+"_"+b.Version.String())
+		err = ioutil.WriteFile(p, b.Body, 0600)
+		if err != nil {
+			err = errors.Wrapf(err, "writing binary to file")
+			break
+		}
+	case "remove-binary":
+		err = c.RemoveBinary(
+			params.ServerParams{
+				Server:   opts.RemoveCommand.Server,
+				Login:    opts.RemoveCommand.Login,
+				Password: opts.RemoveCommand.Password,
+			},
+			params.BinaryParams{
+				Version: opts.RemoveCommand.Version,
+			})
+	case "versions":
+		vrs, verr := c.GetVersionList(
+			params.ServerParams{
+				Server: opts.VersionsCommand.Server,
+			},
+			params.BinaryParams{
+				Version: opts.VersionsCommand.Version,
+			})
+		if verr != nil {
+			err = verr
+			break
+		}
+		for _, v := range vrs {
+			fmt.Println(v.String())
+		}
+	case "generate-keys":
+		err = c.GenerateKeys(
+			params.KeyParams{
+				PrivateKeyPath: opts.GenerateKeysCommand.PrivateKeyPath,
+				PublicKeyPath:  opts.GenerateKeysCommand.PublicKeyPath,
+			})
+	}
+
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("Error while %s: %s\n", p.Active.Name, err.Error())
+		os.Exit(1)
 	} else {
-		fmt.Println("ok")
+		fmt.Printf("Command \"%s\" successfully done\n", p.Active.Name)
 	}
 }
