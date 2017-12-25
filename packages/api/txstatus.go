@@ -34,9 +34,9 @@ type txstatusError struct {
 }
 
 type txstatusResult struct {
-	BlockID string        `json:"blockid"`
-	Message txstatusError `json:"errmsg,omitempty"`
-	Result  string        `json:"result"`
+	BlockID string         `json:"blockid"`
+	Message *txstatusError `json:"errmsg,omitempty"`
+	Result  string         `json:"result"`
 }
 
 func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {

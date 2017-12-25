@@ -200,7 +200,7 @@ func waitTx(hash string) (int64, error) {
 		if len(ret.BlockID) > 0 {
 			return converter.StrToInt64(ret.BlockID), fmt.Errorf(ret.Result)
 		}
-		if len(ret.Message.Error) > 0 {
+		if ret.Message != nil {
 			errtext, err := json.Marshal(ret.Message)
 			if err != nil {
 				return 0, err
