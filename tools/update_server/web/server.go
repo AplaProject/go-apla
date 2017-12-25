@@ -102,7 +102,20 @@ func (s *Server) getVersions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.JSON(w, r, model.VersionFilter(versions, os, a))
+	var resp []BuildInfoResponse
+	vrs := model.VersionFilter(versions, os, a)
+	for _, vr := range vrs {
+		cb, err := s.Db.Get(model.Build{Version: vr})
+		if err != nil {
+			s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
+			return
+		}
+
+		cb.Body = []byte{}
+		resp = append(resp, BuildInfoResponse{Build: cb})
+	}
+
+	s.JSON(w, r, resp)
 }
 
 func (s *Server) getBuild(w http.ResponseWriter, r *http.Request) {
@@ -192,7 +205,6 @@ func (s *Server) addBinary(w http.ResponseWriter, r *http.Request) {
 
 	err = s.Db.Add(b)
 	if err != nil {
-		fmt.Println(err)
 		s.HTTPError(w, r, http.StatusInternalServerError, "Database problems")
 		return
 	}

@@ -109,7 +109,6 @@ func (uc *UpdateClient) GetBinary(serverParams params.ServerParams, keyParams pa
 
 	r, bd, errs := gorequest.
 		New().
-		SetBasicAuth(serverParams.Login, serverParams.Password).
 		Get(fmt.Sprintf("%s/api/v1/%s/%s/%s", serverParams.Server, pv.OS, pv.Arch, pv.Number)).
 		EndStruct(&b)
 
@@ -123,7 +122,6 @@ func (uc *UpdateClient) GetBinary(serverParams params.ServerParams, keyParams pa
 
 	r, bdy, errs := gorequest.
 		New().
-		SetBasicAuth(serverParams.Login, serverParams.Password).
 		Get(fmt.Sprintf("%s/api/v1/%s/%s/%s/binary", serverParams.Server, pv.OS, pv.Arch, pv.Number)).
 		End()
 
@@ -173,7 +171,6 @@ func (uc *UpdateClient) GetLastBinary(serverParams params.ServerParams,
 
 	r, bd, errs := gorequest.
 		New().
-		SetBasicAuth(serverParams.Login, serverParams.Password).
 		Get(fmt.Sprintf("%s/api/v1/%s/%s/last", serverParams.Server, pv.OS, pv.Arch)).
 		EndStruct(&b)
 
@@ -214,8 +211,8 @@ func (uc *UpdateClient) RemoveBinary(serverParams params.ServerParams, binaryPar
 }
 
 // GetVersionList is retrieving list of versions by os+arch parameters
-func (uc *UpdateClient) GetVersionList(serverParams params.ServerParams, binaryParams params.BinaryParams) ([]model.Version, error) {
-	var resp []model.Version
+func (uc *UpdateClient) GetVersionList(serverParams params.ServerParams, binaryParams params.BinaryParams) ([]model.Build, error) {
+	var resp []model.Build
 
 	pv, err := parseVersion(binaryParams.Version)
 	if err != nil {
@@ -224,7 +221,6 @@ func (uc *UpdateClient) GetVersionList(serverParams params.ServerParams, binaryP
 
 	r, bd, errs := gorequest.
 		New().
-		SetBasicAuth(serverParams.Login, serverParams.Password).
 		Get(fmt.Sprintf("%s/api/v1/%s/%s/versions", serverParams.Server, pv.OS, pv.Arch)).
 		EndStruct(&resp)
 

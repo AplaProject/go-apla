@@ -49,7 +49,7 @@ func init() {
 	v1ApiRoute = fmt.Sprintf("%s/api/v1", server.URL)
 }
 
-func TestGetLastVersion(t *testing.T) {
+func TestGetLastBuildInfo(t *testing.T) {
 	cases := []struct {
 		getVersionsList []model.Version
 		getVersionsErr  error
@@ -58,8 +58,8 @@ func TestGetLastVersion(t *testing.T) {
 		get    model.Build
 		getErr error
 
-		respBody []byte
-		expCode  int
+		resp    model.Build
+		expCode int
 	}{
 		{
 			getVersionsList: []model.Version{
@@ -67,8 +67,8 @@ func TestGetLastVersion(t *testing.T) {
 				{Number: "0.1.1", OS: "windows", Arch: "amd64"},
 			},
 			lastVersion: model.Build{Version: model.Version{Number: "0.1.1", OS: "windows", Arch: "amd64"}},
-			get:         model.Build{Body: []byte{1, 2, 3, 4, 5}},
-			respBody:    []byte{1, 2, 3, 4, 5},
+			get:         model.Build{Body: []byte{1, 2, 3, 4, 5}, Version: model.Version{Number: "0.1.1", OS: "windows", Arch: "amd64"}},
+			resp:        model.Build{Version: model.Version{Number: "0.1.1", OS: "windows", Arch: "amd64"}},
 			expCode:     http.StatusOK,
 		},
 	}
@@ -78,15 +78,16 @@ func TestGetLastVersion(t *testing.T) {
 		sm.On("GetVersionsList").Return(c.getVersionsList, c.getVersionsErr)
 		sm.On("Get", c.lastVersion).Return(c.get, c.getErr)
 
-		r, b, errs := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/last", v1ApiRoute, c.lastVersion.OS, c.lastVersion.Arch)).End()
+		var b model.Build
+		r, _, errs := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/last", v1ApiRoute, c.lastVersion.OS, c.lastVersion.Arch)).EndStruct(&b)
 		dumpErrors(t, errs)
 
 		assert.Equal(t, c.expCode, r.StatusCode)
-		assert.Equal(t, c.respBody, []byte(b))
+		assert.Equal(t, c.resp, b)
 	}
 }
 
-func TestGetVersion(t *testing.T) {
+func TestGetVersions(t *testing.T) {
 	cases := []struct {
 		getVersionsList []model.Version
 		getVersionsErr  error
@@ -105,9 +106,9 @@ func TestGetVersion(t *testing.T) {
 			},
 			os:   "windows",
 			arch: "amd64",
-			respBody: toJson(t, []model.Version{
-				{Number: "0.1", OS: "windows", Arch: "amd64"},
-				{Number: "0.1.1", OS: "windows", Arch: "amd64"},
+			respBody: toJson(t, []web.BuildInfoResponse{
+				{Build: model.Build{Version: model.Version{Number: "0.1", OS: "windows", Arch: "amd64"}, Body: []byte{}}},
+				{Build: model.Build{Version: model.Version{Number: "0.1.1", OS: "windows", Arch: "amd64"}, Body: []byte{}}},
 			}),
 			expCode: http.StatusOK,
 		},
@@ -117,16 +118,15 @@ func TestGetVersion(t *testing.T) {
 		reloadMocks(t)
 		sm.On("GetVersionsList").Return(c.getVersionsList, c.getVersionsErr)
 
-		r, _, errs := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/versions", v1ApiRoute, c.os, c.arch)).End()
-		dumpErrors(t, errs)
-
-		rb, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			t.Fatal(err)
+		for _, vrs := range c.getVersionsList {
+			sm.On("Get", model.Build{Version: vrs}).Return(model.Build{Version: vrs}, nil)
 		}
 
+		r, rb, errs := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/versions", v1ApiRoute, c.os, c.arch)).End()
+		dumpErrors(t, errs)
+
 		assert.Equal(t, c.expCode, r.StatusCode)
-		assert.Equal(t, c.respBody, string(rb))
+		assert.Equal(t, c.respBody, rb)
 	}
 }
 
@@ -150,7 +150,7 @@ func TestGetBinary(t *testing.T) {
 			expCode: http.StatusInternalServerError,
 		},
 		{
-			get:      model.Build{Body: []byte{9, 5, 2, 7, 8, 0}},
+			get:      model.Build{Body: []byte{9, 5, 2, 7, 8, 0}, Version: model.Version{OS: "windows", Arch: "amd64", Number: "1.0"}},
 			os:       "windows",
 			arch:     "amd64",
 			version:  "1.0",
@@ -163,7 +163,7 @@ func TestGetBinary(t *testing.T) {
 		reloadMocks(t)
 		sm.On("Get", model.Build{Version: model.Version{Number: c.version, OS: c.os, Arch: c.arch}}).Return(c.get, c.getErr)
 
-		r, _, errs := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/%s", v1ApiRoute, c.os, c.arch, c.version)).End()
+		r, _, errs := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/%s/binary", v1ApiRoute, c.os, c.arch, c.version)).End()
 		dumpErrors(t, errs)
 
 		rb, err := ioutil.ReadAll(r.Body)
@@ -210,7 +210,11 @@ func TestAddBinary(t *testing.T) {
 		checkSign    bool
 		checkSignErr error
 
-		add     error
+		add error
+
+		get    model.Build
+		getErr error
+
 		expCode int
 	}{
 		{
@@ -239,6 +243,24 @@ func TestAddBinary(t *testing.T) {
 		{
 			checkSign: true,
 			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "i386"}},
+			getErr:    errors.New("blah"),
+			expCode:   http.StatusInternalServerError,
+		},
+		{
+			checkSign: true,
+			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "i386"}},
+			get:       model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "i386"}},
+			expCode:   http.StatusBadRequest,
+		},
+		{
+			checkSign: true,
+			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "i386"}},
+			get:       model.Build{},
+			expCode:   http.StatusOK,
+		},
+		{
+			checkSign: true,
+			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "i386"}},
 			add:       errors.New("blah"),
 			expCode:   http.StatusInternalServerError,
 		},
@@ -253,6 +275,7 @@ func TestAddBinary(t *testing.T) {
 		reloadMocks(t)
 		cm.On("CheckSign", c.binary, pubkey).Return(c.checkSign, c.checkSignErr)
 		sm.On("Add", c.binary).Return(c.add)
+		sm.On("Get", c.binary).Return(c.get, c.getErr)
 
 		r, _, errs := gorequest.
 			New().
