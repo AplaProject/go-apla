@@ -12,15 +12,24 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// EcosystemID is ecosystem id
-type EcosystemID int64
+// Recipient is recipient struct
+type Recipient struct {
+	ID          int64
+	EcosystemID int64
+	IsVDE       bool
+}
 
-// UserID is user id
-type UserID int64
+func (r *Recipient) ecosystemPrefix() string {
+	id := strconv.Itoa(int(r.EcosystemID))
+	if r.IsVDE {
+		return id + "_vde"
+	}
+	return id
+}
 
 // NotificationStats storing notification stats data
 type NotificationStats struct {
-	userIDs     sync.Map
+	recipients  sync.Map
 	lastNotifID *int64
 }
 
@@ -34,10 +43,10 @@ var notifications Notifications
 // SendNotifications is sending notifications
 func SendNotifications() {
 	notifications.Range(func(key, value interface{}) bool {
-		ecosystemID := key.(EcosystemID)
+		ecosystemPrefix := key.(string)
 		ecosystemStats := value.(NotificationStats)
 
-		notifs := getEcosystemNotifications(ecosystemID, *ecosystemStats.lastNotifID, ecosystemStats)
+		notifs := getEcosystemNotifications(ecosystemPrefix, *ecosystemStats.lastNotifID, ecosystemStats)
 		for _, notif := range notifs {
 			userID, err := strconv.ParseInt(notif["recipient_id"], 10, 64)
 			if err != nil {
@@ -68,11 +77,11 @@ func SendNotifications() {
 				return false
 			}
 
-			lni, ok := notifications.Load(ecosystemID)
+			lni, ok := notifications.Load(ecosystemPrefix)
 			ln := lni.(NotificationStats)
 			if ok && *ln.lastNotifID < id {
 				*ln.lastNotifID = id
-				notifications.Store(ecosystemID, ln)
+				notifications.Store(ecosystemPrefix, ln)
 			}
 		}
 
@@ -88,14 +97,14 @@ func mapToString(value map[string]string) (string, error) {
 	return string(bytes), nil
 }
 
-func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64, userIDs NotificationStats) []map[string]string {
+func getEcosystemNotifications(ecosystemPrefix string, lastNotificationID int64, ns NotificationStats) []map[string]string {
 	users := make([]int64, 0)
-	userIDs.userIDs.Range(func(key, value interface{}) bool {
-		users = append(users, int64(key.(UserID)))
+	ns.recipients.Range(func(key, value interface{}) bool {
+		users = append(users, key.(int64))
 		return true
 	})
 
-	rows, err := model.GetAllNotifications(int64(ecosystemID), lastNotificationID, users)
+	rows, err := model.GetAllNotifocationsForEcosystem(ecosystemPrefix, lastNotificationID, users)
 	if err != nil || len(rows) == 0 {
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all notifications")
@@ -105,19 +114,22 @@ func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64
 	return rows
 }
 
-// AddUser is subscribing user to notifications
-func AddUser(userID int64, ecosystemID int64) {
-	eId := EcosystemID(ecosystemID)
+// AddRecipient is subscribing user to notifications
+func AddRecipient(r *Recipient) {
+	key := r.ecosystemPrefix()
 
 	var ns NotificationStats
-	ins, ok := notifications.Load(eId)
+	ins, ok := notifications.Load(key)
 
 	if !ok {
-		ns = NotificationStats{userIDs: sync.Map{}, lastNotifID: new(int64)}
+		ns = NotificationStats{
+			recipients:  sync.Map{},
+			lastNotifID: new(int64),
+		}
 	} else {
 		ns = ins.(NotificationStats)
 	}
 
-	ns.userIDs.Store(UserID(userID), 0)
-	notifications.Store(eId, ns)
+	ns.recipients.Store(r.ID, 0)
+	notifications.Store(key, ns)
 }

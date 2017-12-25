@@ -30,7 +30,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -145,7 +145,15 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	notificator.AddUser(wallet, state)
+
+	recipient := &notificator.Recipient{ID: wallet, EcosystemID: state}
+	notificator.AddRecipient(recipient)
+
+	// if exists VDE, then add the recipient in VDE
+	if result.IsVDE {
+		recipient.IsVDE = true
+		notificator.AddRecipient(recipient)
+	}
 
 	return nil
 }
