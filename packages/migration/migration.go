@@ -903,6 +903,7 @@ var (
 		  /* You can define your custom styles here or create custom CSS rules */
 		}', 'ContractConditions("MainCondition")');
 		
+		DROP TABLE IF EXISTS "%[1]d_tables";
 		CREATE TABLE "%[1]d_tables" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"name" varchar(100) UNIQUE NOT NULL DEFAULT '',
@@ -970,11 +971,125 @@ var (
 				'{"name": "ContractAccess(\"@1EditSign\")",
 			"value": "ContractAccess(\"@1EditSign\")",
 			"conditions": "ContractAccess(\"@1EditSign\")"
-				}', 'ContractAccess("@1EditTable")');
-		
+				}', 'ContractAccess("@1EditTable")'),
+				('9', 'member', 
+					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+					  "new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"username": "ContractConditions(\"MainCondition\")",
+					  "avatar": "ContractConditions(\"MainCondition\")"}', 'ContractConditions(\"MainCondition\")'),
+				('10', 'roles_list', 
+					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+					 "new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"default_page": "ContractConditions(\"MainCondition\")",
+					  "role_name": "ContractConditions(\"MainCondition\")",
+					  "delete": "ContractConditions(\"MainCondition\")",
+					  "role_type": "ContractConditions(\"MainCondition\")",
+					  "creator_id": "ContractConditions(\"MainCondition\")",
+					  "date_create": "ContractConditions(\"MainCondition\")",
+					  "date_delete": "ContractConditions(\"MainCondition\")",
+					  "creator_name": "ContractConditions(\"MainCondition\")",
+					  "creator_avatar": "ContractConditions(\"MainCondition\")"}',
+					   'ContractConditions(\"MainCondition\")'),
+				('11', 'roles_assign', 
+					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+					"new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"role_id": "ContractConditions(\"MainCondition\")",
+						"role_type": "ContractConditions(\"MainCondition\")",
+						"role_name": "ContractConditions(\"MainCondition\")",
+						"member_id": "ContractConditions(\"MainCondition\")",
+						"member_username": "ContractConditions(\"MainCondition\")",
+						"member_avatar": "ContractConditions(\"MainCondition\")",
+						"appointed_by_id": "ContractConditions(\"MainCondition\")",
+						"appointed_by_name": "ContractConditions(\"MainCondition\")",
+						"date_start": "ContractConditions(\"MainCondition\")",
+						"date_end": "ContractConditions(\"MainCondition\")",
+						"delete": "ContractConditions(\"MainCondition\")"}', 
+						'ContractConditions(\"MainCondition\")');
+
+		DROP TABLE IF EXISTS "%[1]d_notifications";
+		CREATE TABLE "%[1]d_notifications" (
+			"id" 	bigint NOT NULL DEFAULT '0',
+			"started_processing_time" timestamp,
+			"started_time"	timestamp,
+			"body_text"	text NOT NULL DEFAULT '',
+			"recipient_id"	bigint NOT NULL DEFAULT '0',
+			"started_processing_id"	bigint NOT NULL DEFAULT '0',
+			"name"	varchar(255) NOT NULL DEFAULT '',
+			"role_id"	bigint NOT NULL DEFAULT '0',
+			"role_name"	varchar(255) NOT NULL DEFAULT '',
+			"page_val_int"	bigint NOT NULL DEFAULT '0',
+			"page_val_str"	varchar(255) NOT NULL DEFAULT '',
+			"recipient_name" varchar(255) NOT NULL DEFAULT '',
+			"closed" boolean,
+			"header_text"	text NOT NULL DEFAULT '',
+			"recipient_avatar"	text NOT NULL DEFAULT '',
+			"notification_type"	bigint NOT NULL DEFAULT '0',
+			"finished_processing_id" bigint NOT NULL DEFAULT '0',
+			"finished_processing_time" timestamp,
+			"page_name"	varchar(255) NOT NULL DEFAULT ''
+		);
+		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
+
+
+		DROP TABLE IF EXISTS "%[1]d_roles_list";
+		CREATE TABLE "%[1]d_roles_list" (
+			"id" 	bigint NOT NULL DEFAULT '0',
+			"default_page"	varchar(255) NOT NULL DEFAULT '',
+			"role_name"	varchar(255) NOT NULL DEFAULT '',
+			"delete"    boolean,
+			"role_type" bigint NOT NULL DEFAULT '0',
+			"creator_id" bigint NOT NULL DEFAULT '0',
+			"date_create" timestamp,
+			"date_delete" timestamp,
+			"creator_name"	varchar(255) NOT NULL DEFAULT '',
+			"creator_avatar" varchar(255) NOT NULL DEFAULT '',
+			"rb_id" bigint NOT NULL DEFAULT '0'
+		);
+		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
+		CREATE INDEX "%[1]d_roles_list_index_type" ON "%[1]d_roles_list" (role_type);
+
+		DROP TABLE IF EXISTS "%[1]d_roles_assign";
+		CREATE TABLE "%[1]d_roles_assign" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"role_id" bigint NOT NULL DEFAULT '0',
+			"role_type" bigint NOT NULL DEFAULT '0',
+			"role_name"	varchar(255) NOT NULL DEFAULT '',
+			"member_id" bigint NOT NULL DEFAULT '0',
+			"member_username" varchar(255) NOT NULL DEFAULT '',
+			"member_avatar"	varchar(255) NOT NULL DEFAULT '',
+			"appointed_by_id" bigint NOT NULL DEFAULT '0',
+			"appointed_by_name"	varchar(255) NOT NULL DEFAULT '',
+			"date_start" timestamp,
+			"date_end" timestamp,
+			"delete" boolean,
+			"rb_id" bigint NOT NULL DEFAULT '0'
+		);
+		ALTER TABLE ONLY "%[1]d_roles_assign" ADD CONSTRAINT "%[1]d_roles_assign_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "%[1]d_roles_assign_index_role" ON "%[1]d_roles_assign" (role_id);
+		CREATE INDEX "%[1]d_roles_assign_index_type" ON "%[1]d_roles_assign" (role_type);
+		CREATE INDEX "%[1]d_roles_assign_index_member" ON "%[1]d_roles_assign" (member_id);
+
+		DROP TABLE IF EXISTS "%[1]d_member";
+		CREATE TABLE "%[1]d_member" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"username"	varchar(255) NOT NULL DEFAULT '',
+			"avatar"	text NOT NULL DEFAULT '',
+			"rb_id" bigint NOT NULL DEFAULT '0'
+		);
+		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
 		`
 
 	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id","rb_id") VALUES ('1','0');
+
+	INSERT INTO "1_member" ("id", "username") VALUES('%[1]d', 'founder');
+	INSERT INTO "1_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
+		"creator_id","date_create","creator_name") VALUES('1','default_ecosystem_page', 
+			'Admin', 'false', '1', '%[1]d', NOW(), 'founder');
+	INSERT INTO "1_roles_assign" ("id","role_id","role_type","role_name","member_id",
+		"member_username","appointed_by_id","appointed_by_name",
+		"date_start","delete") VALUES('1','1','1','Admin','%[1]d','founder','%[1]d', 'founder',
+			NOW(), 'false');
 	
 	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
 	('2','contract SystemFunctions {
