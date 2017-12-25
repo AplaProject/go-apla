@@ -85,7 +85,11 @@ func GetTestValue(name string) string {
 
 // GetLogger is returning logger
 func (sc SmartContract) GetLogger() *log.Entry {
-	return log.WithFields(log.Fields{"vde": sc.VDE, "name": sc.TxContract.Name})
+	var name string
+	if sc.TxContract != nil {
+		name = sc.TxContract.Name
+	}
+	return log.WithFields(log.Fields{"vde": sc.VDE, "name": name})
 }
 
 func newVM() *script.VM {
@@ -173,6 +177,12 @@ func VMGetContract(vm *script.VM, name string, state uint32) *Contract {
 		return &Contract{Name: name, Block: obj.Value.(*script.Block)}
 	}
 	return nil
+}
+
+func VMObjectExists(vm *script.VM, name string, state uint32) bool {
+	name = script.StateName(state, name)
+	_, ok := vm.Objects[name]
+	return ok
 }
 
 func vmGetUsedContracts(vm *script.VM, name string, state uint32, full bool) []string {
@@ -307,6 +317,12 @@ func ContractsList(value string) []string {
 			list = append(list, item[1])
 		}
 	}
+	re = regexp.MustCompile(`func[\s]*([\d\w_]+)`)
+	for _, item := range re.FindAllStringSubmatch(value, -1) {
+		if len(item) > 1 && item[1] != `settings` && item[1] != `price` && item[1] != `rollback` {
+			list = append(list, item[1])
+		}
+	}
 	return list
 }
 
@@ -386,7 +402,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 		if err = vmCompile(vm, item[`value`], &owner); err != nil {
 			log.WithFields(log.Fields{"names": names, "error": err}).Error("Load VDE Contract")
 		} else {
-			log.WithFields(log.Fields{"names": names, "contract_id": item["id"]}).Info("OK Load VDE Conctract")
+			log.WithFields(log.Fields{"names": names, "contract_id": item["id"]}).Info("OK Load VDE Contract")
 		}
 	}
 
@@ -792,17 +808,22 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
 		walletTable := fmt.Sprintf(`%d_keys`, sc.TxSmart.TokenEcosystem)
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(fromID)}, true); ierr != nil {
-			return retError(ierr)
-		}
-		// TODO: add checking for key_id "toID". If key not exists it led to fork
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(toID)}, true); ierr != nil {
-			return retError(ierr)
+			[]string{converter.Int64ToStr(toID)}, true, true); ierr != nil {
+			if ierr != errUpdNotExistRecord {
+				return retError(ierr)
+			}
+			apl = commission
 		}
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
-			[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true); ierr != nil {
+			[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true, true); ierr != nil {
+			if ierr != errUpdNotExistRecord {
+				return retError(ierr)
+			}
+			apl = apl.Sub(commission)
+		}
+		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
+			[]string{converter.Int64ToStr(fromID)}, true, true); ierr != nil {
 			return retError(ierr)
 		}
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")

@@ -52,17 +52,6 @@ var (
 		);
 		ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
 		
-		DROP TABLE IF EXISTS "config"; CREATE TABLE "config" (
-		"my_block_id" int NOT NULL DEFAULT '0',
-		"ecosystem_id" int NOT NULL DEFAULT '0',
-		"key_id" bigint NOT NULL DEFAULT '0',
-		"bad_blocks" text NOT NULL DEFAULT '',
-		"auto_reload" int NOT NULL DEFAULT '0',
-		"first_load_blockchain_url" varchar(255)  NOT NULL DEFAULT '',
-		"first_load_blockchain"  varchar(255)  NOT NULL DEFAULT '',
-		"current_load_blockchain"  varchar(255)  NOT NULL DEFAULT ''
-		);
-		
 		DROP SEQUENCE IF EXISTS rollback_rb_id_seq CASCADE;
 		CREATE SEQUENCE rollback_rb_id_seq START WITH 1;
 		DROP TABLE IF EXISTS "rollback"; CREATE TABLE "rollback" (
@@ -75,49 +64,83 @@ var (
 		
 		DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
 		"id" bigint NOT NULL DEFAULT '0',
-		"name" varchar(255) NOT NULL DEFAULT '',
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
-		CREATE INDEX "system_states_index_name" ON "system_states" (name);
 		
 		DROP TABLE IF EXISTS "system_parameters";
 		CREATE TABLE "system_parameters" (
+		"id" bigint NOT NULL DEFAULT '0',
 		"name" varchar(255)  NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
 		"conditions" text  NOT NULL DEFAULT '',
 		"rb_id" bigint  NOT NULL DEFAULT '0'
 		);
-		ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
+		ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY (id);
+		CREATE INDEX "system_parameters_index_name" ON "system_parameters" (name);
 		
-		INSERT INTO system_parameters ("name", "value", "conditions") VALUES 
-		('default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'true'),
-		('default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'true'),
-		('default_ecosystem_contract', '', 'true'),
-		('gap_between_blocks', '2', 'true'),
-		('rb_blocks_1', '60', 'true'),
-		('rb_blocks_2', '3600', 'true'),
-		('new_version_url', 'upd.apla.io', 'true'),
-		('full_nodes', '', 'true'),
-		('number_of_nodes', '101', 'true'),
-		('ecosystem_price', '1000', 'true'),
-		('contract_price', '200', 'true'),
-		('column_price', '200', 'true'),
-		('table_price', '200', 'true'),
-		('menu_price', '100', 'true'),
-		('page_price', '100', 'true'),
-		('blockchain_url', '', 'true'),
-		('max_block_size', '67108864', 'true'),
-		('max_tx_size', '33554432', 'true'),
-		('max_tx_count', '1000', 'true'),
-		('max_columns', '50', 'true'),
-		('max_indexes', '5', 'true'),
-		('max_block_user_tx', '100', 'true'),
-		('max_fuel_tx', '1000', 'true'),
-		('max_fuel_block', '100000', 'true'),
-		('commission_size', '3', 'true'),
-		('commission_wallet', '', 'true'),
-		('fuel_rate', '[["1","1000000000000000"]]', 'true');
+		INSERT INTO system_parameters ("id","name", "value", "conditions") VALUES 
+		('1','default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'true'),
+		('2','default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'true'),
+		('3','default_ecosystem_contract', '', 'true'),
+		('4','gap_between_blocks', '2', 'true'),
+		('5','rb_blocks_1', '60', 'true'),
+		('6','rb_blocks_2', '3600', 'true'),
+		('7','new_version_url', 'upd.apla.io', 'true'),
+		('8','full_nodes', '', 'true'),
+		('9','number_of_nodes', '101', 'true'),
+		('10','ecosystem_price', '1000', 'true'),
+		('11','contract_price', '200', 'true'),
+		('12','column_price', '200', 'true'),
+		('13','table_price', '200', 'true'),
+		('14','menu_price', '100', 'true'),
+		('15','page_price', '100', 'true'),
+		('16','blockchain_url', '', 'true'),
+		('17','max_block_size', '67108864', 'true'),
+		('18','max_tx_size', '33554432', 'true'),
+		('19','max_tx_count', '1000', 'true'),
+		('20','max_columns', '50', 'true'),
+		('21','max_indexes', '5', 'true'),
+		('22','max_block_user_tx', '100', 'true'),
+		('23','max_fuel_tx', '1000', 'true'),
+		('24','max_fuel_block', '100000', 'true'),
+		('25','commission_size', '3', 'true'),
+		('26','commission_wallet', '', 'true'),
+		('27','fuel_rate', '[["1","1000000000000000"]]', 'true'),
+		('28','extend_cost_address_to_id', '10', 'true'),
+		('29','extend_cost_id_to_address', '10', 'true'),
+		('30','extend_cost_new_state', '1000', 'true'), -- What cost must be?
+		('31','extend_cost_sha256', '50', 'true'),
+		('32','extend_cost_pub_to_id', '10', 'true'),
+		('33','extend_cost_ecosys_param', '10', 'true'),
+		('34','extend_cost_sys_param_string', '10', 'true'),
+		('35','extend_cost_sys_param_int', '10', 'true'),
+		('36','extend_cost_sys_fuel', '10', 'true'),
+		('37','extend_cost_validate_condition', '30', 'true'),
+		('38','extend_cost_eval_condition', '20', 'true'),
+		('39','extend_cost_has_prefix', '10', 'true'),
+		('40','extend_cost_contains', '10', 'true'),
+		('41','extend_cost_replace', '10', 'true'),
+		('42','extend_cost_join', '10', 'true'),
+		('43','extend_cost_update_lang', '10', 'true'),
+		('44','extend_cost_size', '10', 'true'),
+		('45','extend_cost_substr', '10', 'true'),
+		('46','extend_cost_contracts_list', '10', 'true'),
+		('47','extend_cost_is_object', '10', 'true'),
+		('48','extend_cost_compile_contract', '100', 'true'),
+		('49','extend_cost_flush_contract', '50', 'true'),
+		('50','extend_cost_eval', '10', 'true'),
+		('51','extend_cost_len', '5', 'true'),
+		('52','extend_cost_activate', '10', 'true'),
+		('53','extend_cost_deactivate', '10', 'true'),
+		('54','extend_cost_create_ecosystem', '100', 'true'),
+		('55','extend_cost_table_conditions', '100', 'true'),
+		('56','extend_cost_create_table', '100', 'true'),
+		('57','extend_cost_perm_table', '100', 'true'),
+		('58','extend_cost_column_condition', '50', 'true'),
+		('59','extend_cost_create_column', '50', 'true'),
+		('60','extend_cost_perm_column', '50', 'true'),
+		('61','extend_cost_json_to_map', '50', 'true');
 		
 		CREATE TABLE "system_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
@@ -142,9 +165,7 @@ var (
 		
 		INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES  ('system_states',
 				'{"insert": "false", "update": "ContractAccess(\"@1EditParameter\")",
-				  "new_column": "false"}',
-				'{"name": "ContractAccess(\"@1EditParameter\")"}',
-				'ContractAccess(\"@0UpdSysContract\")');
+				  "new_column": "false"}','{}', 'ContractAccess(\"@0UpdSysContract\")');
 		
 		
 		DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
@@ -397,8 +418,8 @@ var (
 			  list = ContractsList($Value)
 			  var i int
 			  while i < Len(list) {
-				  if IsContract(list[i], $ecosystem_id) {
-					  warning Sprintf("Contract %%s exists", list[i] )
+				  if IsObject(list[i], $ecosystem_id) {
+					  warning Sprintf("Contract or function %%s exists", list[i] )
 				  }
 				  i = i + 1
 			  }
@@ -444,7 +465,7 @@ var (
 					  j = j + 1 
 				  }
 				  if !ok {
-					  error "Contracts names cannot be changed"
+					  error "Contracts or functions names cannot be changed"
 				  }
 				  i = i + 1
 			  }
@@ -660,8 +681,96 @@ var (
 		  action {
 			  PermColumn($TableName, $Name, $Permissions)
 		  }
-	  }', 'ContractConditions("MainCondition")');
-	  
+	  }', 'ContractConditions("MainCondition")'),
+	  ('19','contract NewLang {
+		data {
+			Name  string
+			Trans string
+		}
+		conditions {
+			EvalCondition("parameters", "changing_language", "value")
+			var row array
+			row = DBFind("languages").Columns("name").Where("name=?", $Name).Limit(1)
+			if Len(row) > 0 {
+				error Sprintf("The language resource %%s already exists", $Name)
+			}
+		}
+		action {
+			DBInsert("languages", "name,res", $Name, $Trans )
+			UpdateLang($Name, $Trans)
+		}
+	}', 'ContractConditions("MainCondition")'),
+	('20','contract EditLang {
+		data {
+			Name  string
+			Trans string
+		}
+		conditions {
+			EvalCondition("parameters", "changing_language", "value")
+		}
+		action {
+			DBUpdateExt("languages", "name", $Name, "res", $Trans )
+			UpdateLang($Name, $Trans)
+		}
+	}', 'ContractConditions("MainCondition")'),
+	('21','func ImportList(row array, cnt string) {
+		if !row {
+			return
+		}
+		var i int
+		while i < Len(row) {
+			var idata map
+			idata = row[i]
+			CallContract(cnt, idata)
+			i = i + 1
+		}
+	}
+	
+	func ImportData(row array) {
+		if !row {
+			return
+		}
+		var i int
+		while i < Len(row) {
+			var idata map
+			var list array
+			var tblname, columns string
+			idata = row[i]
+			i = i + 1
+			tblname = idata["Table"]
+			columns = Join(idata["Columns"], ",")
+			list = idata["Data"] 
+			if !list {
+				continue
+			}
+			var j int
+			while j < Len(list) {
+				var ilist array
+				ilist = list[j]
+				DBInsert(tblname, columns, ilist)
+				j=j+1
+			}
+		}
+	}
+	
+	contract Import {
+		data {
+			Data string
+		}
+		conditions {
+			$list = JSONToMap($Data)
+		}
+		action {
+			ImportList($list["pages"], "NewPage")
+			ImportList($list["blocks"], "NewBlock")
+			ImportList($list["menus"], "NewMenu")
+			ImportList($list["parameters"], "NewParameter")
+			ImportList($list["languages"], "NewLang")
+			ImportList($list["contracts"], "NewContract")
+			ImportList($list["tables"], "NewTable")
+			ImportData($list["data"])
+		}
+	}', 'ContractConditions("MainCondition")');
 	  `
 
 	SchemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
@@ -943,8 +1052,8 @@ var (
 			list = ContractsList($Value)
 			var i int
 			while i < Len(list) {
-				if IsContract(list[i], $ecosystem_id) {
-					warning Sprintf("Contract %%s exists", list[i] )
+				if IsObject(list[i], $ecosystem_id) {
+					warning Sprintf("Contract or function %%s exists", list[i] )
 				}
 				i = i + 1
 			}
@@ -999,7 +1108,7 @@ var (
 					j = j + 1 
 				}
 				if !ok {
-					error "Contracts names cannot be changed"
+					error "Contracts or functions names cannot be changed"
 				}
 				i = i + 1
 			}
@@ -1037,20 +1146,8 @@ var (
 		data {
 			Name  string "optional"
 		}
-		conditions {
-			if $Name && FindEcosystem($Name) {
-				error Sprintf("Ecosystem %%s is already existed", $Name)
-			}
-		}
 		action {
-			var id int
-			id = CreateEcosystem($key_id, $Name)
-			DBInsert(Str(id) + "_pages", "name,value,menu,conditions", "default_page", 
-				  SysParamString("default_ecosystem_page"), "default_menu", "ContractConditions(\"MainCondition\")")
-			DBInsert(Str(id) + "_menu", "name,value,title,conditions", "default_menu", 
-				  SysParamString("default_ecosystem_menu"), "default", "ContractConditions(\"MainCondition\")")
-			DBInsert(Str(id) + "_keys", "id,pub", $key_id, DBString("1_keys", "pub", $key_id))
-			$result = id
+			$result = CreateEcosystem($key_id, $Name)
 		}
 		func price() int {
 			return  SysParamInt("ecosystem_price")
@@ -1084,19 +1181,9 @@ var (
 		conditions {
 			ConditionById("parameters", true)
 			ValidateCondition($Conditions, $ecosystem_id)
-			var exist int
-			if DBString("parameters", "name", $Id) == "ecosystem_name" {
-				exist = FindEcosystem($Value)
-				if exist > 0 && exist != $ecosystem_id {
-					warning Sprintf("Ecosystem %%s already exists", $Value)
-				}
-			}
 		}
 		action {
 			DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
-            if DBString("parameters", "name", $Id) == "ecosystem_name" {
-				DBUpdate("system_states", $ecosystem_id, "name", $Value)
-			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('10', 'contract NewMenu {
@@ -1377,6 +1464,7 @@ var (
 			var list array
 			var tblname, columns string
 			idata = row[i]
+			i = i + 1
 			tblname = idata["Table"]
 			columns = Join(idata["Columns"], ",")
 			list = idata["Data"] 
@@ -1390,7 +1478,6 @@ var (
 				DBInsert(tblname, columns, ilist)
 				j=j+1
 			}
-			i = i + 1
 		}
 	}
 	
@@ -1432,6 +1519,16 @@ var (
 		action {
 			DBUpdate("contracts", $Id, "active", 0)
 			Deactivate($Id, $ecosystem_id)
+		}
+	}', '%[1]d','ContractConditions("MainCondition")'),
+	('28','contract UpdateSysParam {
+		data {
+			Name  string
+			Value string
+			Conditions string "optional"
+		}
+		action {
+			DBUpdateSysParam($Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")');`
 )

@@ -45,7 +45,7 @@ func CheckDB() bool {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting install")
 	}
 
-	if install.Progress == "complete" {
+	if install.Progress == model.ProgressComplete {
 		return true
 	}
 

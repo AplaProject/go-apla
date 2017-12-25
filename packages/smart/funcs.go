@@ -17,7 +17,9 @@
 package smart
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,12 +27,15 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -43,6 +48,8 @@ import (
 // SmartContract is storing smart contract data
 type SmartContract struct {
 	VDE           bool
+	Rollback      bool
+	SysUpdate     bool
 	VM            *script.VM
 	TxSmart       tx.SmartContract
 	TxData        map[string]interface{}
@@ -57,9 +64,10 @@ type SmartContract struct {
 
 var (
 	funcCallsDB = map[string]struct{}{
-		"DBInsert": {},
-		"DBSelect": {},
-		"DBUpdate": {},
+		"DBInsert":    {},
+		"DBSelect":    {},
+		"DBUpdate":    {},
+		"DBUpdateExt": {},
 	}
 	extendCost = map[string]int64{
 		"AddressToId":        10,
@@ -73,16 +81,25 @@ var (
 		"CreateTable":        100,
 		"EcosysParam":        10,
 		"Eval":               10,
+		"EvalCondition":      20,
 		"FlushContract":      50,
+		"HMac":               50,
+		"Join":               10,
 		"JSONToMap":          50,
+		"Sha256":             50,
 		"IdToAddress":        10,
-		"IsContract":         10,
+		"IsObject":           10,
 		"Len":                5,
+		"Replace":            10,
 		"PermColumn":         50,
 		"Split":              50,
 		"PermTable":          100,
 		"Substr":             10,
+		"Size":               10,
+		"ToLower":            10,
+		"TrimSpace":          10,
 		"TableConditions":    100,
+		"UpdateLang":         10,
 		"ValidateCondition":  30,
 	}
 )
@@ -109,14 +126,18 @@ func EmbedFuncs(vm *script.VM) {
 		"DBInsert":           DBInsert,
 		"DBSelect":           DBSelect,
 		"DBUpdate":           DBUpdate,
+		"DBUpdateExt":        DBUpdateExt,
 		"EcosysParam":        EcosysParam,
 		"Eval":               Eval,
+		"EvalCondition":      EvalCondition,
 		"Float":              Float,
 		"FlushContract":      FlushContract,
+		"HMac":               HMac,
+		"Join":               Join,
 		"JSONToMap":          JSONToMap,
 		"IdToAddress":        IDToAddress,
 		"Int":                Int,
-		"IsContract":         IsContract,
+		"IsObject":           IsObject,
 		"Len":                Len,
 		"Money":              Money,
 		"PermColumn":         PermColumn,
@@ -124,10 +145,20 @@ func EmbedFuncs(vm *script.VM) {
 		"Split":              Split,
 		"Str":                Str,
 		"Substr":             Substr,
+		"Replace":            Replace,
+		"Size":               Size,
+		"Sha256":             Sha256,
+		"ToLower":            strings.ToLower,
+		"TrimSpace":          strings.TrimSpace,
 		"TableConditions":    TableConditions,
+		"UpdateLang":         UpdateLang,
 		"ValidateCondition":  ValidateCondition,
 		//   VDE functions only
-		"HTTPRequest": HTTPRequest,
+		"HTTPRequest":  HTTPRequest,
+		"GetMapKeys":   GetMapKeys,
+		"SortedKeys":   SortedKeys,
+		"Date":         Date,
+		"HTTPPostJSON": HTTPPostJSON,
 	}, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
 	}})
@@ -345,6 +376,19 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert vde table info")
 		return err
 	}
+	if !sc.VDE {
+		rollbackTx := &model.RollbackTx{
+			BlockID:   sc.BlockData.BlockID,
+			TxHash:    sc.TxHash,
+			NameTable: tableName,
+			TableID:   converter.Int64ToStr(id),
+		}
+		err = rollbackTx.Create(sc.DbTransaction)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating CreateTable rollback")
+			return err
+		}
+	}
 	return nil
 }
 
@@ -367,7 +411,8 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 	if reflect.TypeOf(val[0]) == reflect.TypeOf([]interface{}{}) {
 		val = val[0].([]interface{})
 	}
-	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, !sc.VDE)
+	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil,
+		nil, !sc.VDE && sc.Rollback, false)
 	if ind > 0 {
 		qcost *= int64(ind)
 	}
@@ -458,7 +503,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	if err = sc.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, false)
 	return
 }
 
@@ -503,9 +548,9 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 	return nil
 }
 
-// IsContract returns true if there is the specified contract
-func IsContract(sc *SmartContract, name string, state int64) bool {
-	return VMGetContract(sc.VM, name, uint32(state)) != nil
+// IsObject returns true if there is the specified contract
+func IsObject(sc *SmartContract, name string, state int64) bool {
+	return VMObjectExists(sc.VM, name, uint32(state))
 }
 
 // Len returns the length of the slice
@@ -538,7 +583,7 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
-		getDefTableName(sc, `tables`), []string{`name`}, []string{name}, !sc.VDE)
+		getDefTableName(sc, `tables`), []string{`name`}, []string{name}, !sc.VDE && sc.Rollback, false)
 	return err
 }
 
@@ -686,7 +731,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 	tEx.SetTablePrefix(prefix)
 	name = strings.ToLower(name)
 
-	exists, err := tEx.IsExistsByPermissionsAndTableName(name, tableName)
+	exists, err := tEx.IsExistsByPermissionsAndTableName(sc.DbTransaction, name, tableName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("querying that table is exists by permissions and table name")
 		return err
@@ -805,7 +850,7 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, inde
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
-		tables, []string{`name`}, []string{tableName}, !sc.VDE)
+		tables, []string{`name`}, []string{tableName}, !sc.VDE && sc.Rollback, false)
 	if err != nil {
 		return err
 	}
@@ -843,7 +888,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
-		tables, []string{`name`}, []string{tableName}, !sc.VDE)
+		tables, []string{`name`}, []string{tableName}, !sc.VDE && sc.Rollback, false)
 	return err
 }
 
@@ -876,6 +921,50 @@ func IDToAddress(id int64) (out string) {
 	return
 }
 
+func HMac(key, data string, raw_output bool) (ret string, err error) {
+	hash, err := crypto.GetHMAC(key, data)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting HMAC")
+		return ``, err
+	}
+	if raw_output {
+		return string(hash), nil
+	} else {
+		return hex.EncodeToString(hash), nil
+	}
+}
+
+//Returns the array of keys of the map
+func GetMapKeys(in map[string]interface{}) []interface{} {
+	keys := make([]interface{}, 0, len(in))
+	for k := range in {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+//Returns the sorted array of keys of the map
+func SortedKeys(m map[string]interface{}) []interface{} {
+	i, sorted := 0, make([]string, len(m))
+	for k := range m {
+		sorted[i] = k
+		i++
+	}
+	sort.Strings(sorted)
+
+	ret := make([]interface{}, len(sorted))
+	for k, v := range sorted {
+		ret[k] = v
+	}
+	return ret
+}
+
+//Formats timestamp to specified date format
+func Date(time_format string, timestamp int64) string {
+	t := time.Unix(timestamp, 0)
+	return t.Format(time_format)
+}
+
 // HTTPRequest sends http request
 func HTTPRequest(requrl, method string, headers map[string]interface{},
 	params map[string]interface{}) (string, error) {
@@ -896,6 +985,38 @@ func HTTPRequest(requrl, method string, headers map[string]interface{},
 		return ``, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	for key, v := range headers {
+		req.Header.Set(key, fmt.Sprint(v))
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http request")
+		return ``, err
+	}
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading http answer")
+		return ``, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http status code")
+		return ``, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
+	}
+	return string(data), nil
+}
+
+// HTTPPostJSON sends post http request with json
+func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string) (string, error) {
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest("POST", requrl, bytes.NewBuffer([]byte(json_str)))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("new http request")
+		return ``, err
+	}
+
 	for key, v := range headers {
 		req.Header.Set(key, fmt.Sprint(v))
 	}

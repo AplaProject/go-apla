@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"reflect"
@@ -26,6 +25,7 @@ import (
 
 	"bytes"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -107,10 +107,6 @@ func IsState(transaction *model.DbTransaction, country string) (int64, error) {
 	return 0, nil
 }
 
-func init() {
-	flag.Parse()
-}
-
 // ParserInterface is parsing transactions
 type ParserInterface interface {
 	Init() error
@@ -175,6 +171,7 @@ type Parser struct {
 	TxHeader         *tx.Header
 	txParser         ParserInterface
 	DbTransaction    *model.DbTransaction
+	SysUpdate        bool
 
 	SmartContract smart.SmartContract
 }
@@ -259,8 +256,8 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	// for local tests
 	blockID := block.Header.BlockID
 	if block.Header.BlockID == 1 {
-		if *utils.StartBlockID != 0 {
-			blockID = *utils.StartBlockID
+		if *conf.StartBlockID != 0 {
+			blockID = *conf.StartBlockID
 		}
 	}
 
@@ -471,9 +468,11 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 }
 
 // CallContract calls the contract functions according to the specified flags
-func (p *Parser) CallContract(flags int) (string, error) {
+func (p *Parser) CallContract(flags int) (resultContract string, err error) {
 	sc := smart.SmartContract{
 		VDE:           false,
+		Rollback:      true,
+		SysUpdate:     false,
 		VM:            smart.GetVM(false, 0),
 		TxSmart:       *p.TxSmart,
 		TxData:        p.TxData,
@@ -485,5 +484,7 @@ func (p *Parser) CallContract(flags int) (string, error) {
 		PublicKeys:    p.PublicKeys,
 		DbTransaction: p.DbTransaction,
 	}
-	return sc.CallContract(flags)
+	resultContract, err = sc.CallContract(flags)
+	p.SysUpdate = sc.SysUpdate
+	return
 }
