@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
@@ -57,6 +58,7 @@ func init() {
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
 	funcs[`Strong`] = tplFunc{defaultTag, defaultTag, `strong`, `Body,Class`}
+	funcs[`SysParam`] = tplFunc{sysparTag, defaultTag, `syspar`, `Name`}
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
 	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Body`}
@@ -236,6 +238,13 @@ func langresTag(par parFunc) string {
 	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
 		lang, par.Workspace.SmartContract.VDE)
 	return ret
+}
+
+func sysparTag(par parFunc) (ret string) {
+	if len((*par.Pars)[`Name`]) > 0 {
+		ret = syspar.SysString((*par.Pars)[`Name`])
+	}
+	return
 }
 
 // Now returns the current time of postgresql
