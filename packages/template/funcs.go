@@ -51,7 +51,7 @@ func init() {
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
-	funcs[`MenuGroup`] = tplFunc{defaultTag, defaultTag, `menugroup`, `Title,Body,Icon`}
+	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
 	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
@@ -139,6 +139,19 @@ func init() {
 
 func defaultTag(par parFunc) string {
 	setAllAttr(par)
+	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return ``
+}
+
+func menugroupTag(par parFunc) string {
+	setAllAttr(par)
+	name := (*par.Pars)[`Title`]
+	if par.RawPars != nil {
+		if v, ok := (*par.RawPars)[`Title`]; ok {
+			name = v
+		}
+	}
+	par.Node.Attr[`name`] = name
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
 }
