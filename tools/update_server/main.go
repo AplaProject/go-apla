@@ -1,12 +1,13 @@
 package main
 
 import (
+	"io/ioutil"
+	"os"
 	"path/filepath"
 
-	"log"
+	log "github.com/sirupsen/logrus"
 
-	"io/ioutil"
-
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/tools/update_server/config"
 	"github.com/AplaProject/go-apla/tools/update_server/crypto"
 	"github.com/AplaProject/go-apla/tools/update_server/storage"
@@ -20,14 +21,17 @@ func main() {
 		log.Fatalf("Config parsing error: %s", err.Error())
 	}
 
+	log.SetLevel(log.InfoLevel)
+	log.SetOutput(os.Stdout)
+
 	db, err := storage.NewBoltStorage(c.DBPath)
 	if err != nil {
-		log.Fatalf("Creation database error: %s", err.Error())
+		log.WithFields(log.Fields{"errType": consts.IOError, "err": err}).Fatal("Creation bolt database")
 	}
 
 	pk, err := ioutil.ReadFile(c.PubkeyPath)
 	if err != nil {
-		log.Fatalf("Reading pubkey error: %s", err.Error())
+		log.WithFields(log.Fields{"errType": consts.IOError, "err": err}).Fatal("Reading public key")
 	}
 
 	s := web.Server{
@@ -37,5 +41,5 @@ func main() {
 		Signer:    &crypto.BuildSigner{},
 	}
 
-	log.Fatalf("Server running error: %s", s.Run().Error())
+	log.WithFields(log.Fields{"errType": consts.NetworkError, "err": s.Run()}).Error("Server running")
 }
