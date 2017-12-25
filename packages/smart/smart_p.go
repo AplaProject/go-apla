@@ -415,7 +415,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, err
 	}
 	if !found || len(sp.Value) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": ErrFounderAccount}).Error("getting founder")
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": ErrFounderAccount}).Error("founder not found")
 		return 0, ErrFounderAccount
 	}
 	founder := sp.Value
