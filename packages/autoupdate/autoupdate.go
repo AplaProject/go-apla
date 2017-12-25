@@ -1,14 +1,17 @@
 package autoupdate
 
 import (
+	"io/ioutil"
 	"os"
 	"os/exec"
-	"sort"
+	"runtime"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/tools/update_client/client"
+	"github.com/AplaProject/go-apla/tools/update_client/params"
+	updateModel "github.com/AplaProject/go-apla/tools/update_server/model"
 
 	version "github.com/hashicorp/go-version"
 	log "github.com/sirupsen/logrus"
@@ -22,54 +25,69 @@ const (
 	checkUpdatesInterval = time.Hour
 )
 
-var updaterInstance *updater
+var updater *Updater
 
 type updateVersion struct {
 	version     string
 	blockNumber int64
 }
 
-type updater struct {
-	updateAddr string
+// Updater is updater
+type Updater struct {
+	server     string
 	pubkeyPath string
 
-	client *client.UpdateClient
-
-	updateVersions []updateVersion
+	client   *client.UpdateClient
+	versions []*updateVersion
 }
 
-func (u *updater) tryUpdate(currentBlockNumber int64) error {
-	for _, update := range u.updateVersions {
-		if update.blockNumber == noBlockNumber || currentBlockNumber+1 <= update.blockNumber {
+func (u *Updater) tryUpdate(currentBlockNumber int64) error {
+	for _, v := range u.versions {
+		if v.blockNumber == noBlockNumber || currentBlockNumber+1 <= v.blockNumber {
 			model.StopAll()
 
-			appBinaryPath, err := os.Executable()
+			executablePath, err := os.Executable()
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.AutoupdateError, "err": err}).Error("get application executable path")
 				return err
 			}
 
-			err = u.client.UpdateFile(update.version, appBinaryPath, u.pubkeyPath)
+			build, err := u.client.GetBinary(
+				params.ServerParams{Server: u.server},
+				params.KeyParams{PublicKeyPath: u.pubkeyPath},
+				params.BinaryParams{Version: v.version},
+			)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.AutoupdateError, "err": err}).Error("get binary data")
+				return err
+			}
+
+			err = ioutil.WriteFile(executablePath, build.Body, 0755)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.AutoupdateError, "err": err}).Error("update executable file")
 				return err
 			}
 
-			u.restart(appBinaryPath)
+			err = u.restart(executablePath)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.AutoupdateError, "err": err}).Error("restart")
+				return err
+			}
+
+			return nil
 		}
 	}
 
 	return nil
 }
 
-func (u *updater) restart(appBinaryPath string) error {
-	cmd := exec.Command(appBinaryPath)
+func (u *Updater) restart(executablePath string) error {
+	cmd := exec.Command(executablePath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	err := cmd.Start()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.AutoupdateError, "err": err}).Error("restart")
 		return err
 	}
 
@@ -79,29 +97,18 @@ func (u *updater) restart(appBinaryPath string) error {
 	return nil
 }
 
-func (u *updater) checkUpdates() error {
-	versions, err := u.getVersionsForUpdates()
+func (u *Updater) checkUpdates() error {
+	versions, err := u.versionsForUpdate()
 	if err != nil {
 		return err
 	}
 
-	u.updateVersions = make([]updateVersion, len(versions))
-	for _, v := range versions {
-		// TODO client will change
-		err := u.client.GetBinary(u.updateAddr, u.pubkeyPath, v.String())
-		if err != nil {
-			return err
-		}
-
-		// TODO save block number
-		u.updateVersions = append(u.updateVersions, updateVersion{version: v.String()})
-	}
-
+	u.versions = versions
 	return nil
 }
 
 // migrate executes database migrations
-func (u *updater) migrate() error {
+func (u *Updater) migrate() error {
 	err := model.ExecSchema()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.MigrationError, "err": err}).Errorf("apply migrations")
@@ -111,10 +118,13 @@ func (u *updater) migrate() error {
 	return nil
 }
 
-// getVersionsForUpdates receives a list of versions for the operating system,
+// versionsForUpdate receives a list of versions for the operating system,
 // followed by filtering versions that are greater current version of the application
-func (u *updater) getVersionsForUpdates() ([]*version.Version, error) {
-	verList, err := u.client.GetVersionList(u.updateAddr)
+func (u *Updater) versionsForUpdate() ([]*updateVersion, error) {
+	verList, err := u.client.GetVersionList(
+		params.ServerParams{Server: u.server},
+		params.BinaryParams{Version: currentVersion()},
+	)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.AutoupdateError, "err": err}).Error("get version list")
 		return nil, err
@@ -125,23 +135,27 @@ func (u *updater) getVersionsForUpdates() ([]*version.Version, error) {
 		log.WithFields(log.Fields{"type": consts.AutoupdateError, "err": err}).Error("parse version")
 	}
 
-	var neededVersions []*version.Version
+	var neededVersions []*updateVersion
 	for _, v := range verList {
-		ver, err := version.NewVersion(v)
+		ver, err := version.NewVersion(v.Number)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.AutoupdateError, "err": err}).Error("parse version")
 			return nil, err
 		}
 		if ver.GreaterThan(appVer) {
-			neededVersions = append(neededVersions, ver)
+			// TODO: save block number
+			neededVersions = append(neededVersions, &updateVersion{
+				version:     v.String(),
+				blockNumber: noBlockNumber,
+			})
 		}
 	}
-	sort.Sort(version.Collection(neededVersions))
+
 	return neededVersions, nil
 }
 
 // update startup scheduler every checkUpdatesInterval
-func (u *updater) scheduler() {
+func (u *Updater) scheduler() {
 	ticker := time.NewTicker(checkUpdatesInterval)
 	for {
 		select {
@@ -152,40 +166,50 @@ func (u *updater) scheduler() {
 	}
 }
 
+func currentVersion() string {
+	v := updateModel.Version{
+		Number: consts.VERSION,
+		OS:     runtime.GOOS,
+		Arch:   runtime.GOARCH,
+	}
+
+	return v.String()
+}
+
 // InitUpdater initializes the update
-func InitUpdater(updateAddr string, pubkeyPath string) {
-	updaterInstance = &updater{
-		updateAddr: updateAddr,
+func InitUpdater(server string, pubkeyPath string) {
+	updater = &Updater{
+		server:     server,
 		pubkeyPath: pubkeyPath,
 
-		client:         &client.UpdateClient{},
-		updateVersions: make([]updateVersion, 0),
+		client:   &client.UpdateClient{},
+		versions: make([]*updateVersion, 0),
 	}
 }
 
 // Run starting updater
 func Run() error {
-	err := updaterInstance.checkUpdates()
+	err := updater.checkUpdates()
 	if err != nil {
 		return err
 	}
 
-	err = updaterInstance.tryUpdate(noBlockNumber)
+	err = updater.tryUpdate(noBlockNumber)
 	if err != nil {
 		return err
 	}
 
-	err = updaterInstance.migrate()
+	err = updater.migrate()
 	if err != nil {
 		return err
 	}
 
-	go updaterInstance.scheduler()
+	go updater.scheduler()
 
 	return nil
 }
 
 // TryUpdate tries to update for the current block number
 func TryUpdate(currentBlockNumber int64) error {
-	return updaterInstance.tryUpdate(currentBlockNumber)
+	return updater.tryUpdate(currentBlockNumber)
 }
