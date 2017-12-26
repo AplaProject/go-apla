@@ -294,18 +294,6 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	return nil
 }
 
-// CheckInputData is checking input data
-func (p *Parser) CheckInputData(data map[string][]interface{}) error {
-	for k, list := range data {
-		for _, v := range list {
-			if !utils.CheckInputData(v, k) {
-				return fmt.Errorf("incorrect %s: %s", v, k)
-			}
-		}
-	}
-	return nil
-}
-
 // FormatBlockData returns formated block data
 func (p *Parser) FormatBlockData() string {
 	result := ""

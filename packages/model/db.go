@@ -123,14 +123,14 @@ func GetRecordsCount(tableName string) (int64, error) {
 }
 
 // ExecSchemaEcosystem is executing ecosystem schema
-func ExecSchemaEcosystem(id int, wallet int64, name string) error {
-	err := DBConn.Exec(fmt.Sprintf(migration.SchemaEcosystem, id, wallet, name)).Error
+func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string) error {
+	err := GetDB(db).Exec(fmt.Sprintf(migration.SchemaEcosystem, id, wallet, name)).Error
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err
 	}
 	if id == 1 {
-		err = DBConn.Exec(fmt.Sprintf(migration.SchemaFirstEcosystem, wallet)).Error
+		err = GetDB(db).Exec(fmt.Sprintf(migration.SchemaFirstEcosystem, wallet)).Error
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first ecosystem schema")
 		}
@@ -410,6 +410,15 @@ func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) 
 		return 0, err
 	}
 	return result, nil
+}
+
+// GetColumnByID returns the value of the column from the table by id
+func GetColumnByID(table, column, id string) (result string, err error) {
+	err = DBConn.Table(table).Select(column).Where(`id=?`, id).Row().Scan(&result)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column by id")
+	}
+	return
 }
 
 // InitDB drop all tables and exec db schema

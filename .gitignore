@@ -103,7 +103,11 @@ go-apla
 1block
 NodePrivateKey
 PrivateKey
+NodePublicKey
+PublicKey
+KeyID
 apla.pid
+config.toml
 
 packages/static/
 public/

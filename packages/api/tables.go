@@ -69,7 +69,7 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 		var maxid int64
 		result.List[i].Name = item[`name`]
 		fullname := getPrefix(data) + `_` + item[`name`]
-		if item[`name`] == `keys` {
+		if item[`name`] == `keys` || item[`name`] == `member` {
 			err = model.DBConn.Table(fullname).Count(&maxid).Error
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table")

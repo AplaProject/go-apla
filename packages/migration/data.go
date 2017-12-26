@@ -23,7 +23,7 @@ var (
 		"error" varchar(255) NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "transactions_status" ADD CONSTRAINT transactions_status_pkey PRIMARY KEY (hash);
-
+		
 		DROP TABLE IF EXISTS "confirmations"; CREATE TABLE "confirmations" (
 		"block_id" bigint  NOT NULL DEFAULT '0',
 		"good" int  NOT NULL DEFAULT '0',
@@ -31,7 +31,7 @@ var (
 		"time" int  NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "confirmations" ADD CONSTRAINT confirmations_pkey PRIMARY KEY (block_id);
-
+		
 		DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
 		"id" int NOT NULL DEFAULT '0',
 		"hash" bytea  NOT NULL DEFAULT '',
@@ -43,13 +43,13 @@ var (
 		"tx" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "block_chain" ADD CONSTRAINT block_chain_pkey PRIMARY KEY (id);
-
+		
 		DROP TABLE IF EXISTS "log_transactions"; CREATE TABLE "log_transactions" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"time" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "log_transactions" ADD CONSTRAINT log_transactions_pkey PRIMARY KEY (hash);
-
+		
 		DROP TABLE IF EXISTS "queue_tx"; CREATE TABLE "queue_tx" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"data" bytea NOT NULL DEFAULT '',
@@ -66,13 +66,13 @@ var (
 		);
 		ALTER SEQUENCE rollback_rb_id_seq owned by rollback.rb_id;
 		ALTER TABLE ONLY "rollback" ADD CONSTRAINT rollback_pkey PRIMARY KEY (rb_id);
-
+		
 		DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
 		"id" bigint NOT NULL DEFAULT '0',
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
-
+		
 		DROP TABLE IF EXISTS "system_parameters";
 		CREATE TABLE "system_parameters" (
 		"id" bigint NOT NULL DEFAULT '0',
@@ -83,8 +83,8 @@ var (
 		);
 		ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY (id);
 		CREATE INDEX "system_parameters_index_name" ON "system_parameters" (name);
-
-		INSERT INTO system_parameters ("id","name", "value", "conditions") VALUES
+		
+		INSERT INTO system_parameters ("id","name", "value", "conditions") VALUES 
 		('1','default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'true'),
 		('2','default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'true'),
 		('3','default_ecosystem_contract', '', 'true'),
@@ -146,7 +146,7 @@ var (
 		('59','extend_cost_create_column', '50', 'true'),
 		('60','extend_cost_perm_column', '50', 'true'),
 		('61','extend_cost_json_to_map', '50', 'true');
-
+		
 		CREATE TABLE "system_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"value" text  NOT NULL DEFAULT '',
@@ -157,8 +157,8 @@ var (
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "system_contracts" ADD CONSTRAINT system_contracts_pkey PRIMARY KEY (id);
-
-
+		
+		
 		CREATE TABLE "system_tables" (
 		"name" varchar(100)  NOT NULL DEFAULT '',
 		"permissions" jsonb,
@@ -167,12 +167,12 @@ var (
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "system_tables" ADD CONSTRAINT system_tables_pkey PRIMARY KEY (name);
-
+		
 		INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES  ('system_states',
 				'{"insert": "false", "update": "ContractAccess(\"@1EditParameter\")",
 				  "new_column": "false"}','{}', 'ContractAccess(\"@0UpdSysContract\")');
-
-
+		
+		
 		DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"block_id" int NOT NULL DEFAULT '0',
@@ -183,14 +183,14 @@ var (
 		"current_version" varchar(50) NOT NULL DEFAULT '0.0.1',
 		"sent" smallint NOT NULL DEFAULT '0'
 		);
-
+		
 		DROP TABLE IF EXISTS "queue_blocks"; CREATE TABLE "queue_blocks" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"full_node_id" bigint NOT NULL DEFAULT '0',
 		"block_id" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "queue_blocks" ADD CONSTRAINT queue_blocks_pkey PRIMARY KEY (hash);
-
+		
 		DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"data" bytea NOT NULL DEFAULT '',
@@ -203,7 +203,7 @@ var (
 		"verified" smallint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "transactions" ADD CONSTRAINT transactions_pkey PRIMARY KEY (hash);
-
+		
 		DROP SEQUENCE IF EXISTS rollback_tx_id_seq CASCADE;
 		CREATE SEQUENCE rollback_tx_id_seq START WITH 1;
 		DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (
@@ -215,12 +215,12 @@ var (
 		);
 		ALTER SEQUENCE rollback_tx_id_seq owned by rollback_tx.id;
 		ALTER TABLE ONLY "rollback_tx" ADD CONSTRAINT rollback_tx_pkey PRIMARY KEY (id);
-
+		
 		DROP TABLE IF EXISTS "install"; CREATE TABLE "install" (
 		"progress" varchar(10) NOT NULL DEFAULT ''
 		);
-
-
+		
+		
 		DROP TYPE IF EXISTS "my_node_keys_enum_status" CASCADE;
 		CREATE TYPE "my_node_keys_enum_status" AS ENUM ('my_pending','approved');
 		DROP SEQUENCE IF EXISTS my_node_keys_id_seq CASCADE;
@@ -238,7 +238,7 @@ var (
 		);
 		ALTER SEQUENCE my_node_keys_id_seq owned by my_node_keys.id;
 		ALTER TABLE ONLY "my_node_keys" ADD CONSTRAINT my_node_keys_pkey PRIMARY KEY (id);
-
+		
 		DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 		"stop_time" int NOT NULL DEFAULT '0'
 		);

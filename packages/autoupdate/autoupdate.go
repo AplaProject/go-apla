@@ -65,7 +65,7 @@ func (u *Updater) tryUpdate(currentBlockNumber uint64) error {
 
 			err = ioutil.WriteFile(executablePath, build.Body, 0755)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.AutoupdateError, "err": err}).Error("update executable file")
+				log.WithFields(log.Fields{"type": consts.IOError, "err": err}).Error("update executable file")
 				return err
 			}
 
@@ -112,7 +112,7 @@ func (u *Updater) checkUpdates() error {
 func (u *Updater) migrate() error {
 	err := model.ExecSchema()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.MigrationError, "err": err}).Errorf("apply migrations")
+		log.WithFields(log.Fields{"type": consts.DBError, "err": err}).Errorf("apply migrations")
 		return err
 	}
 
@@ -148,7 +148,7 @@ func (u *Updater) versionsForUpdate() ([]*updateVersion, error) {
 				version:     v.String(),
 				blockNumber: v.StartBlock,
 			})
-			log.Infof("Update to version %s is available", v.Number)
+			log.WithFields(log.Fields{"version": v.Number}).Info("Update available")
 		}
 	}
 
