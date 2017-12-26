@@ -64,28 +64,35 @@ func TestBoltStorage_AddBinary(t *testing.T) {
 
 }
 
-//func TestBoltStorage_GetVersionsList(t *testing.T) {
-//	cases := []struct {
-//		versionsList []string
-//	}{
-//		{versionsList: []string{"0.0.1"}},
-//		{versionsList: []string{"0.9", "0.9.5", "0.9.9", "1", "1.0.5", "2.0"}},
-//	}
-//
-//	for _, c := range cases {
-//		bs, spath := newTempBoltStorage(t)
-//		for _, v := range c.versionsList {
-//			bu := model.Build{Version: v, Body: []byte{1}}
-//			require.NoError(t, bs.Add(bu))
-//		}
-//
-//		rs, err := bs.GetVersionsList()
-//		require.NoError(t, err)
-//		assert.Equal(t, c.versionsList, rs)
-//
-//		cleanUpFile(t, spath)
-//	}
-//}
+func TestBoltStorage_GetVersionsList(t *testing.T) {
+	cases := []struct {
+		versionsList []model.Version
+	}{
+		{},
+		{versionsList: []model.Version{
+			{Number: "1.0", OS: "windows", Arch: "amd64"},
+		}},
+		{versionsList: []model.Version{
+			{Number: "2.3.5", OS: "linux", Arch: "amd64"},
+			{Number: "1.0", OS: "windows", Arch: "amd64"},
+			{Number: "0.2", OS: "windows", Arch: "i386"},
+		}},
+	}
+
+	for _, c := range cases {
+		bs, spath := newTempBoltStorage(t)
+		for _, v := range c.versionsList {
+			bu := model.Build{Version: v, Body: []byte{1}}
+			require.NoError(t, bs.Add(bu))
+		}
+
+		rs, err := bs.GetVersionsList()
+		require.NoError(t, err)
+		assert.Equal(t, c.versionsList, rs)
+
+		cleanUpFile(t, spath)
+	}
+}
 
 func TestBoltStorage_GetBinary(t *testing.T) {
 	// generating 0 - 4 mb byte slice
