@@ -25,7 +25,7 @@ import (
 )
 
 func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(method, `/api/v2/`+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
+	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
 }
 
 // Route sets routing pathes
@@ -47,7 +47,8 @@ func Route(route *hr.Router) {
 		anyTx(`POST`, url, params, preHandle, handle)
 	}
 
-	route.Handle(`OPTIONS`, `/api/v2/*name`, optionsHandler())
+	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
+	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
 
 	get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)

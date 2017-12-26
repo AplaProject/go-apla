@@ -293,6 +293,37 @@ func TestVMCompile(t *testing.T) {
 					return "OK"
 				}
 			}`, `seterr.getset`, `unknown identifier MyFunc`},
+		{`func one() int {
+				return 9
+			}
+			func signfunc string {
+				var myarr array
+				myarr[0] = 0
+				myarr[1] = 1
+				var i, k, j int
+				k = one()-2
+				j = /*comment*/-3
+				i = lenArray(myarr) - 1
+				return Sprintf("%s %d %d %d %d %d", "ok", lenArray(myarr)-1, i, k, j, -4)
+			}`, `signfunc`, `ok 1 1 7 -3 -4`},
+		{`func exttest() string {
+				return Replace("text", "t")
+			}
+			`, `exttest`, `function Replace must have 4 parameters`},
+		{`func mytest(first string, second int) string {
+				return Sprintf("%s %d", first, second)
+		}
+		func test() {
+			return mytest("one", "two")
+		}
+		`, `test`, `parameter 2 has wrong type`},
+		{`func mytest(first string, second int) string {
+								return Sprintf("%s %d", first, second)
+						}
+						func test() string {
+							return mytest("one")
+						}
+						`, `test`, `wrong count of parameters`},
 		{
 			`func ifMap string {
 				var m map
@@ -312,7 +343,7 @@ func TestVMCompile(t *testing.T) {
 	vm := NewVM()
 	vm.Extern = true
 	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
-		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray}, nil})
+		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray, "Replace": strings.Replace}, nil})
 
 	for ikey, item := range test {
 		source := []rune(item.Input)

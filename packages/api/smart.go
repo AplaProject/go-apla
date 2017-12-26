@@ -79,7 +79,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 					}
 					if !found {
 						log.WithFields(log.Fields{"type": consts.NotFound, "signature": ret[1]}).Error("unknown signature")
-						return contract, ret[1], fmt.Errorf(errors["E_UNKNOWNSIGN"])
+						return contract, ret[1], fmt.Errorf(apiErrors["E_UNKNOWNSIGN"])
 					}
 					var sign TxSignJSON
 					err = json.Unmarshal([]byte(signature.Value), &sign)
