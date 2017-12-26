@@ -104,7 +104,7 @@ func getEcosystemNotifications(ecosystemPrefix string, lastNotificationID int64,
 		return true
 	})
 
-	rows, err := model.GetAllNotifocationsForEcosystem(ecosystemPrefix, lastNotificationID, users)
+	rows, err := model.GetAllNotificationsForEcosystem(ecosystemPrefix, lastNotificationID, users)
 	if err != nil || len(rows) == 0 {
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all notifications")
