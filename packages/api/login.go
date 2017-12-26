@@ -146,7 +146,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 
-	recipient := &notificator.Recipient{ID: wallet, EcosystemID: state}
+	recipient := notificator.Recipient{ID: wallet, EcosystemID: state}
 	notificator.AddRecipient(recipient)
 
 	// if exists VDE, then add the recipient in VDE

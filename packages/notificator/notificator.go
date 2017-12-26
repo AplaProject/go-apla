@@ -20,7 +20,7 @@ type Recipient struct {
 }
 
 func (r *Recipient) ecosystemPrefix() string {
-	id := strconv.Itoa(int(r.EcosystemID))
+	id := strconv.FormatInt(r.EcosystemID, 10)
 	if r.IsVDE {
 		return id + "_vde"
 	}
@@ -115,7 +115,7 @@ func getEcosystemNotifications(ecosystemPrefix string, lastNotificationID int64,
 }
 
 // AddRecipient is subscribing user to notifications
-func AddRecipient(r *Recipient) {
+func AddRecipient(r Recipient) {
 	key := r.ecosystemPrefix()
 
 	var ns NotificationStats
