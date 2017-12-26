@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
@@ -68,6 +67,7 @@ var (
 	ErrCurrentBalance = errors.New(`current balance is not enough`)
 	ErrDiffKeys       = errors.New(`Contract and user public keys are different`)
 	ErrEmptyPublicKey = errors.New(`empty public key`)
+	ErrFounderAccount = errors.New(`Unknown founder account`)
 	ErrFuelRate       = errors.New(`Fuel rate must be greater than 0`)
 	ErrIncorrectSign  = errors.New(`incorrect sign`)
 	ErrUnknownNodeID  = errors.New(`Unknown node id`)
@@ -309,23 +309,6 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 	return nil
 }
 
-func ContractsList(value string) []string {
-	list := make([]string, 0)
-	re := regexp.MustCompile(`contract[\s]*([\d\w_]+)[\s]*{`)
-	for _, item := range re.FindAllStringSubmatch(value, -1) {
-		if len(item) > 1 {
-			list = append(list, item[1])
-		}
-	}
-	re = regexp.MustCompile(`func[\s]*([\d\w_]+)`)
-	for _, item := range re.FindAllStringSubmatch(value, -1) {
-		if len(item) > 1 && item[1] != `settings` && item[1] != `price` && item[1] != `rollback` {
-			list = append(list, item[1])
-		}
-	}
-	return list
-}
-
 // LoadContracts reads and compiles contracts from smart_contracts tables
 func LoadContracts(transaction *model.DbTransaction) (err error) {
 	var states []map[string]string
@@ -358,7 +341,7 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	}
 	state := uint32(converter.StrToInt64(prefix))
 	for _, item := range contracts {
-		names := strings.Join(ContractsList(item[`value`]), `,`)
+		names := strings.Join(script.ContractsList(item[`value`]), `,`)
 		owner := script.OwnerInfo{
 			StateID:  state,
 			Active:   item[`active`] == `1`,
@@ -391,7 +374,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	EmbedFuncs(vm)
 	smartVDE[state] = vm
 	for _, item := range contracts {
-		names := strings.Join(ContractsList(item[`value`]), `,`)
+		names := strings.Join(script.ContractsList(item[`value`]), `,`)
 		owner := script.OwnerInfo{
 			StateID:  uint32(state),
 			Active:   false,
@@ -599,9 +582,9 @@ func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
 		`block_time`: blockTime, `time`: time})
 }
 
-func GetBytea(table string) map[string]bool {
+func GetBytea(db *model.DbTransaction, table string) map[string]bool {
 	isBytea := make(map[string]bool)
-	colTypes, err := model.GetAll(`select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
+	colTypes, err := model.GetAllTx(db, `select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
 		return isBytea
