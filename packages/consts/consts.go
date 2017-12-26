@@ -119,9 +119,3 @@ const TLSFullchainPem = "/fullchain.pem"
 
 // TLSPrivkeyPem privkey pem file
 const TLSPrivkeyPem = "/privkey.pem"
-
-// UpdateServer server address for updates
-const UpdateServer = "http://apla.io"
-
-// UpdatePublicKeyPath public key path for updates
-const UpdatePublicKeyPath = "update.pub"

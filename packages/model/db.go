@@ -57,7 +57,11 @@ func GormInit(host string, port int, user string, pass string, dbName string) er
 // GormClose is closing Gorm connection
 func GormClose() error {
 	if DBConn != nil {
-		return DBConn.Close()
+		err := DBConn.Close()
+		DBConn = nil
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

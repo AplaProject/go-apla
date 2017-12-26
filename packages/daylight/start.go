@@ -237,7 +237,7 @@ func Start() {
 	conf.SetConfigParams()
 
 	// TODO maybe, use parameters from config
-	autoupdate.InitUpdater(consts.UpdateServer, consts.UpdatePublicKeyPath)
+	autoupdate.InitUpdater(conf.Config.Autoupdate.ServerAddress, conf.Config.Autoupdate.PublicKeyPath)
 
 	// process directives
 	if *conf.GenerateFirstBlock {

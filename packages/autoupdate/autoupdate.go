@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/tools/update_client/client"
@@ -19,17 +20,14 @@ import (
 
 const (
 	// updates not tied to block number
-	noBlockNumber = -1
-
-	// interval value of checking updates
-	checkUpdatesInterval = time.Hour
+	noBlockNumber = 0
 )
 
 var updater *Updater
 
 type updateVersion struct {
 	version     string
-	blockNumber int64
+	blockNumber uint64
 }
 
 // Updater is updater
@@ -41,10 +39,13 @@ type Updater struct {
 	versions []*updateVersion
 }
 
-func (u *Updater) tryUpdate(currentBlockNumber int64) error {
+func (u *Updater) tryUpdate(currentBlockNumber uint64) error {
 	for _, v := range u.versions {
 		if v.blockNumber == noBlockNumber || currentBlockNumber+1 <= v.blockNumber {
-			model.StopAll()
+			err := model.SetStopNow()
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.DBError, "err": err}).Error("create stop daemon record")
+			}
 
 			executablePath, err := os.Executable()
 			if err != nil {
@@ -91,7 +92,7 @@ func (u *Updater) restart(executablePath string) error {
 		return err
 	}
 
-	log.Info("restart")
+	log.Info("Restart")
 	os.Exit(0)
 
 	return nil
@@ -143,11 +144,11 @@ func (u *Updater) versionsForUpdate() ([]*updateVersion, error) {
 			return nil, err
 		}
 		if ver.GreaterThan(appVer) {
-			// TODO: save block number
 			neededVersions = append(neededVersions, &updateVersion{
 				version:     v.String(),
-				blockNumber: noBlockNumber,
+				blockNumber: v.StartBlock,
 			})
+			log.Infof("Update to version %s is available", v.Number)
 		}
 	}
 
@@ -156,7 +157,7 @@ func (u *Updater) versionsForUpdate() ([]*updateVersion, error) {
 
 // update startup scheduler every checkUpdatesInterval
 func (u *Updater) scheduler() {
-	ticker := time.NewTicker(checkUpdatesInterval)
+	ticker := time.NewTicker(time.Second * time.Duration(*conf.UpdateInterval))
 	for {
 		select {
 		case <-ticker.C:
@@ -210,6 +211,6 @@ func Run() error {
 }
 
 // TryUpdate tries to update for the current block number
-func TryUpdate(currentBlockNumber int64) error {
+func TryUpdate(currentBlockNumber uint64) error {
 	return updater.tryUpdate(currentBlockNumber)
 }

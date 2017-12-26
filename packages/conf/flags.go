@@ -44,6 +44,9 @@ var configFlagMap = map[string]interface{}{
 	"logLevel":   &flagStr{confVar: &Config.LogLevel, defVal: "ERROR", flagBase: flagBase{help: "log level - ERROR,WARN,INFO,DEBUG"}},
 	"logFile":    &flagStr{confVar: &Config.LogFileName, flagBase: flagBase{help: "log file name"}},
 	"privateDir": &flagStr{confVar: &Config.PrivateDir, flagBase: flagBase{help: "directory for public/private keys"}},
+
+	"updateServer":        &flagStr{confVar: &Config.Autoupdate.ServerAddress, defVal: "http://127.0.0.1:12345", flagBase: flagBase{help: "server address for autoupdates"}},
+	"updatePublicKeyPath": &flagStr{confVar: &Config.Autoupdate.PublicKeyPath, defVal: "update.pub", flagBase: flagBase{help: "public key path for autoupdates"}},
 }
 
 var (
@@ -100,6 +103,9 @@ var (
 
 	// TLS is a directory for .well-known and keys. It is required for https
 	TLS = flag.String("tls", "", "Enable https. Ddirectory for .well-known and keys")
+
+	// UpdateInterval is interval in seconds for checking updates
+	UpdateInterval = flag.Int64("updateInterval", 60*60, "Interval in seconds for checking updates")
 )
 
 func envStr(envName string, val *string) bool {
