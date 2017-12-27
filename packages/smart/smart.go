@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
@@ -69,8 +68,10 @@ var (
 	ErrCurrentBalance = errors.New(`current balance is not enough`)
 	ErrDiffKeys       = errors.New(`Contract and user public keys are different`)
 	ErrEmptyPublicKey = errors.New(`empty public key`)
+	ErrFounderAccount = errors.New(`Unknown founder account`)
 	ErrFuelRate       = errors.New(`Fuel rate must be greater than 0`)
 	ErrIncorrectSign  = errors.New(`incorrect sign`)
+	ErrInvalidValue   = errors.New(`Invalid value`)
 	ErrUnknownNodeID  = errors.New(`Unknown node id`)
 	ErrWrongPriceFunc = errors.New(`Wrong type of price function`)
 )
@@ -178,6 +179,12 @@ func VMGetContract(vm *script.VM, name string, state uint32) *Contract {
 		return &Contract{Name: name, Block: obj.Value.(*script.Block)}
 	}
 	return nil
+}
+
+func VMObjectExists(vm *script.VM, name string, state uint32) bool {
+	name = script.StateName(state, name)
+	_, ok := vm.Objects[name]
+	return ok
 }
 
 func vmGetUsedContracts(vm *script.VM, name string, state uint32, full bool) []string {
@@ -304,17 +311,6 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 	return nil
 }
 
-func ContractsList(value string) []string {
-	list := make([]string, 0)
-	re := regexp.MustCompile(`contract[\s]*([\d\w_]+)[\s]*{`)
-	for _, item := range re.FindAllStringSubmatch(value, -1) {
-		if len(item) > 1 {
-			list = append(list, item[1])
-		}
-	}
-	return list
-}
-
 // LoadContracts reads and compiles contracts from smart_contracts tables
 func LoadContracts(transaction *model.DbTransaction) (err error) {
 	var states []map[string]string
@@ -347,7 +343,7 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	}
 	state := uint32(converter.StrToInt64(prefix))
 	for _, item := range contracts {
-		names := strings.Join(ContractsList(item[`value`]), `,`)
+		names := strings.Join(script.ContractsList(item[`value`]), `,`)
 		owner := script.OwnerInfo{
 			StateID:  state,
 			Active:   item[`active`] == `1`,
@@ -380,7 +376,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	EmbedFuncs(vm)
 	smartVDE[state] = vm
 	for _, item := range contracts {
-		names := strings.Join(ContractsList(item[`value`]), `,`)
+		names := strings.Join(script.ContractsList(item[`value`]), `,`)
 		owner := script.OwnerInfo{
 			StateID:  uint32(state),
 			Active:   false,
@@ -391,7 +387,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 		if err = vmCompile(vm, item[`value`], &owner); err != nil {
 			log.WithFields(log.Fields{"names": names, "error": err}).Error("Load VDE Contract")
 		} else {
-			log.WithFields(log.Fields{"names": names, "contract_id": item["id"]}).Info("OK Load VDE Conctract")
+			log.WithFields(log.Fields{"names": names, "contract_id": item["id"]}).Info("OK Load VDE Contract")
 		}
 	}
 
@@ -646,9 +642,9 @@ func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
 		`block_time`: blockTime, `time`: time})
 }
 
-func GetBytea(table string) map[string]bool {
+func GetBytea(db *model.DbTransaction, table string) map[string]bool {
 	isBytea := make(map[string]bool)
-	colTypes, err := model.GetAll(`select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
+	colTypes, err := model.GetAllTx(db, `select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
 		return isBytea
@@ -854,17 +850,22 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
 		walletTable := fmt.Sprintf(`%d_keys`, sc.TxSmart.TokenEcosystem)
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(fromID)}, true); ierr != nil {
-			return retError(ierr)
-		}
-		// TODO: add checking for key_id "toID". If key not exists it led to fork
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(toID)}, true); ierr != nil {
-			return retError(ierr)
+			[]string{converter.Int64ToStr(toID)}, true, true); ierr != nil {
+			if ierr != errUpdNotExistRecord {
+				return retError(ierr)
+			}
+			apl = commission
 		}
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
-			[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true); ierr != nil {
+			[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true, true); ierr != nil {
+			if ierr != errUpdNotExistRecord {
+				return retError(ierr)
+			}
+			apl = apl.Sub(commission)
+		}
+		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
+			[]string{converter.Int64ToStr(fromID)}, true, true); ierr != nil {
 			return retError(ierr)
 		}
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")

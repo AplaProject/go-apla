@@ -7,8 +7,9 @@ import (
 
 // SystemParameter is model
 type SystemParameter struct {
-	Name       string `gorm:"primary_key;not null;size:255"`
-	Value      string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	ID         int64  `gorm:"primary_key;not null;"`
+	Name       string `gorm:"not null;size:255"`
+	Value      string `gorm:"not null"`
 	Conditions string `gorm:"not null"`
 	RbID       int64  `gorm:"not null"`
 }
@@ -41,9 +42,9 @@ func (sp *SystemParameter) GetValueParameterByName(name, value string) (*string,
 }
 
 // GetAllSystemParameters returns all system parameters
-func GetAllSystemParameters() ([]SystemParameter, error) {
+func GetAllSystemParameters(transaction *DbTransaction) ([]SystemParameter, error) {
 	parameters := new([]SystemParameter)
-	if err := DBConn.Find(&parameters).Error; err != nil {
+	if err := GetDB(transaction).Find(&parameters).Error; err != nil {
 		return nil, err
 	}
 	return *parameters, nil
@@ -59,43 +60,16 @@ func (sp *SystemParameter) ToMap() map[string]string {
 	return result
 }
 
-// SystemParameterV2 is second version model
-type SystemParameterV2 struct {
-	Name       string `gorm:"primary_key;not null;size:255"`
-	Value      string `gorm:"not null"`
-	Conditions string `gorm:"not null"`
-	RbID       int64  `gorm:"not null"`
-}
-
-// TableName returns name of table
-func (sp SystemParameterV2) TableName() string {
-	return "system_parameters"
-}
-
 // Update is update model
-func (sp SystemParameterV2) Update(value string) error {
+func (sp SystemParameter) Update(value string) error {
 	return DBConn.Model(sp).Where("name = ?", sp.Name).Update(`value`, value).Error
 }
 
 // SaveArray is saving array
-func (sp *SystemParameterV2) SaveArray(list [][]string) error {
+func (sp *SystemParameter) SaveArray(list [][]string) error {
 	ret, err := json.Marshal(list)
 	if err != nil {
 		return err
 	}
 	return sp.Update(string(ret))
-}
-
-// Get is retrieving model from database
-func (sp *SystemParameterV2) Get(name string) (bool, error) {
-	return isFound(DBConn.Where("name = ?", name).First(sp))
-}
-
-// GetAllSystemParametersV2 is is retrieving all SystemParameterV2 models from database
-func GetAllSystemParametersV2() ([]SystemParameterV2, error) {
-	parameters := new([]SystemParameterV2)
-	if err := DBConn.Find(&parameters).Error; err != nil {
-		return nil, err
-	}
-	return *parameters, nil
 }

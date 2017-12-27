@@ -26,12 +26,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
+
 	"github.com/dgrijalva/jwt-go"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
-	"github.com/tevino/abool"
 
-	"github.com/AplaProject/go-apla/packages/config"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -45,6 +45,8 @@ import (
 const (
 	jwtPrefix = "Bearer "
 	jwtExpire = 36000 // By default, seconds
+
+	apiInstallRoute = `/api/v2/install`
 )
 
 type apiData struct {
@@ -56,6 +58,24 @@ type apiData struct {
 	vde         bool
 	vm          *script.VM
 	token       *jwt.Token
+}
+
+// ParamString reaturs string value of the api params
+func (a *apiData) ParamString(key string) string {
+	v, ok := a.params[key]
+	if !ok {
+		return ""
+	}
+	return v.(string)
+}
+
+// ParamInt64 reaturs int64 value of the api params
+func (a *apiData) ParamInt64(key string) int64 {
+	v, ok := a.params[key]
+	if !ok {
+		return 0
+	}
+	return v.(int64)
 }
 
 type forSign struct {
@@ -77,12 +97,6 @@ const (
 
 type apiHandle func(http.ResponseWriter, *http.Request, *apiData, *log.Entry) error
 
-var installed *abool.AtomicBool
-
-func init() {
-	installed = abool.New()
-}
-
 func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
 	var (
 		msg, errCode, errParams string
@@ -91,7 +105,7 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 	switch v := err.(type) {
 	case string:
 		errCode = v
-		if val, ok := errors[v]; ok {
+		if val, ok := apiErrors[v]; ok {
 			if len(params) > 0 {
 				list := make([]string, 0)
 				msg = fmt.Sprintf(val, params...)
@@ -149,18 +163,9 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
-// IsInstalled returns installed flag
-func IsInstalled() bool {
-	return installed.IsSet()
-}
-
-// Installed is setting turning installed flag on
-func Installed() {
-	installed.Set()
-}
-
 // DefaultHandler is a common handle function for api requests
 func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
+
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 		counterName := statsd.APIRouteCounterName(method, pattern)
 		statsd.Client.Inc(counterName+statsd.Count, 1, 1.0)
@@ -171,6 +176,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		)
 		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
 		requestLogger.Info("received http request")
+
 		defer func() {
 			endTime := time.Now()
 			statsd.Client.TimingDuration(counterName+statsd.Time, endTime.Sub(startTime), 1.0)
@@ -180,15 +186,21 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 				errorAPI(w, `E_RECOVERED`, http.StatusInternalServerError)
 			}
 		}()
+
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if !IsInstalled() && r.URL.Path != `/api/v2/install` {
-			if model.DBConn == nil && !config.IsExist() {
+		if conf.Installed {
+			if r.URL.Path == apiInstallRoute {
+				errorAPI(w, `E_INSTALLED`, http.StatusInternalServerError)
+				return
+			}
+		} else {
+			if r.URL.Path != apiInstallRoute {
 				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
 				return
 			}
-			Installed()
 		}
+
 		token, err := jwtToken(r)
 		if err != nil {
 			requestLogger.WithFields(log.Fields{"type": consts.JWTError, "params": params, "error": err}).Error("starting session")

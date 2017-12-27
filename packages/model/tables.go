@@ -69,8 +69,8 @@ func (t *Table) ExistsByName(transaction *DbTransaction, name string) (bool, err
 }
 
 // IsExistsByPermissionsAndTableName returns columns existence by permission and table name
-func (t *Table) IsExistsByPermissionsAndTableName(columnName, tableName string) (bool, error) {
-	return isFound(DBConn.Where(`(columns-> ? ) is not null AND name = ?`, columnName, tableName).First(t))
+func (t *Table) IsExistsByPermissionsAndTableName(transaction *DbTransaction, columnName, tableName string) (bool, error) {
+	return isFound(GetDB(transaction).Where(`(columns-> ? ) is not null AND name = ?`, columnName, tableName).First(t))
 }
 
 // GetColumns returns columns from database

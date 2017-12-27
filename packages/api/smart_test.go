@@ -209,6 +209,11 @@ func TestNewTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	err = postTx(`NewTable`, &form)
+	if err.Error() != fmt.Sprintf(`{"type":"panic","error":"table %s exists"}`, name) {
+		t.Error(err)
+		return
+	}
 	form = url.Values{"Name": {name},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
 			"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
@@ -224,11 +229,123 @@ func TestNewTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	err = postTx(`NewColumn`, &form)
+	if err.Error() != `{"type":"panic","error":"column newcol exists"}` {
+		t.Error(err)
+		return
+	}
 	form = url.Values{"TableName": {name}, "Name": {`newCol`},
 		"Permissions": {"ContractConditions(\"MainCondition\")"}}
 	err = postTx(`EditColumn`, &form)
 	if err != nil {
 		t.Error(err)
 		return
+	}
+}
+
+type invalidPar struct {
+	Name  string
+	Value string
+}
+
+func TestUpdateSysParam(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	form := url.Values{"Name": {`max_columns`}, "Value": {`49`}}
+	err := postTx(`UpdateSysParam`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var sysList ecosystemParamsResult
+	err = sendGet(`systemparams?names=max_columns`, nil, &sysList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(sysList.List) != 1 || sysList.List[0].Value != `49` {
+		t.Error(`Wrong max_column value`)
+		return
+	}
+	name := randName(`test`)
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action { 
+			var costlen int
+			costlen = SysParamInt("extend_cost_len") + 1
+			UpdateSysParam("Name,Value","max_columns","51")
+			DBUpdateSysParam("extend_cost_len", Str(costlen), "true" )
+			if SysParamInt("extend_cost_len") != costlen {
+				error "Incorrect updated value"
+			}
+			DBUpdateSysParam("max_indexes", "4", "false" )
+		}
+		}`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	err = postTx("NewContract", &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(name, &form)
+	if err != nil {
+		if err.Error() != `{"type":"panic","error":"Access denied"}` {
+			t.Error(err)
+			return
+		}
+	}
+	err = sendGet(`systemparams?names=max_columns,max_indexes`, nil, &sysList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(sysList.List) != 2 || !((sysList.List[0].Value == `51` && sysList.List[1].Value == `4`) ||
+		(sysList.List[0].Value == `4` && sysList.List[1].Value == `51`)) {
+		t.Error(`Wrong max_column or max_indexes value`)
+		return
+	}
+	err = postTx(name, &form)
+	if err == nil || err.Error() != `{"type":"panic","error":"Access denied"}` {
+		t.Error(`incorrect access to system parameter`)
+		return
+	}
+	notvalid := []invalidPar{
+		{`gap_between_blocks`, `100000`},
+		{`rb_blocks_1`, `-1`},
+		{`rb_blocks_2`, `test`},
+		{`page_price`, `-20`},
+		{`max_block_size`, `0`},
+		{`max_fuel_tx`, `20string`},
+		{`fuel_rate`, `string`},
+		{`fuel_rate`, `[test]`},
+		{`fuel_rate`, `[["name", "100"]]`},
+		{`commission_wallet`, `[["1", "0"]]`},
+		{`commission_wallet`, `[{"1", "50"}]`},
+		{`full_nodes`, `[["34.12.25", "10", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
+		{`full_nodes`, `[["1.34.12.25", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7"]]`},
+		{`full_nodes`, `[["34.12.25.100:65d321", "100000000000", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
+	}
+	for _, item := range notvalid {
+		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {item.Value}})
+		if err == nil {
+			t.Error(`must be invalid ` + item.Value)
+			return
+		}
+		err = sendGet(`systemparams?names=`+item.Name, nil, &sysList)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if len(sysList.List) != 1 {
+			t.Error(`have got wrong parameter ` + item.Name)
+			return
+		}
+		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {sysList.List[0].Value}})
+		if err != nil {
+			fmt.Println(item.Name, sysList.List[0].Value, sysList.List[0])
+			t.Error(err)
+			return
+		}
 	}
 }

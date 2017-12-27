@@ -109,6 +109,7 @@ type FuncInfo struct {
 	Results  []reflect.Type
 	Names    *map[string]FuncName
 	Variadic bool
+	ID       uint32
 }
 
 // VarInfo contains the variable information
@@ -201,9 +202,12 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (string,
 	var isSignature bool
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
-			if !parnames[tx.Name] && !strings.Contains(tx.Tags, `optional`) {
-				logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
-				return ``, fmt.Errorf(eUndefinedParam, tx.Name)
+			if !parnames[tx.Name] {
+				if !strings.Contains(tx.Tags, `optional`) {
+					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
+					return ``, fmt.Errorf(eUndefinedParam, tx.Name)
+				}
+				(*rt.extend)[tx.Name] = reflect.New(tx.Type).Elem().Interface()
 			}
 			if tx.Name == `Signature` {
 				isSignature = true
@@ -268,7 +272,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (string,
 	}
 	(*rt.extend)[`parent`] = prevparent
 	if (*rt.extend)[`result`] != nil {
-		result = (*rt.extend)[`result`].(string)
+		result = fmt.Sprint((*rt.extend)[`result`])
 	}
 	return result, nil
 }
@@ -339,6 +343,17 @@ func (vm *VM) getObjByNameExt(name string, state uint32) (ret *ObjInfo) {
 	return
 }
 
+func getNameByObj(obj *ObjInfo) (name string) {
+	block := obj.Value.(*Block)
+	for key, val := range block.Parent.Objects {
+		if val == obj {
+			name = key
+			break
+		}
+	}
+	return
+}
+
 func (vm *VM) getInParams(ret *ObjInfo) int {
 	if ret.Type == ObjExtFunc {
 		return len(ret.Value.(ExtFuncInfo).Params)
@@ -389,7 +404,7 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 	return ret, err
 }
 
-// ExContract executes the name contract in the state with spoecified parameters
+// ExContract executes the name contract in the state with specified parameters
 func ExContract(rt *RunTime, state uint32, name string, params map[string]interface{}) (string, error) {
 
 	name = StateName(state, name)

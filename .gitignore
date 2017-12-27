@@ -98,18 +98,18 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-static/prepros.cfg
-static/sass
 packages/api/key
 go-apla
 1block
 NodePrivateKey
 PrivateKey
-SelectiveLog.txt
-config.ini
-dclog.txt
-exchangeapi.db
-daylight.pid
+NodePublicKey
+PublicKey
+KeyID
+apla.pid
+config.toml
 
 packages/static/
 public/
+
+.vscode/

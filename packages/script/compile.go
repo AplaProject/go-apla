@@ -101,6 +101,8 @@ const (
 	stateToFork   = 0x4000
 	stateLabel    = 0x8000
 	stateMustEval = 0x010000
+
+	flushMark = 0x100000
 )
 
 const (
@@ -190,8 +192,7 @@ var (
 			lexNewLine:                      {stateRoot, 0},
 			lexKeyword | (keyContract << 8): {stateContract | statePush, 0},
 			lexKeyword | (keyFunc << 8):     {stateFunc | statePush, 0},
-			lexComment:                      {stateRoot, 0},
-			0:                               {errUnknownCmd, cfError},
+			0: {errUnknownCmd, cfError},
 		},
 		{ // stateBody
 			lexNewLine:                      {stateBody, 0},
@@ -208,7 +209,6 @@ var (
 			lexKeyword | (keyError << 8):    {stateEval, cfCmdError},
 			lexKeyword | (keyWarning << 8):  {stateEval, cfCmdError},
 			lexKeyword | (keyInfo << 8):     {stateEval, cfCmdError},
-			lexComment:                      {stateBody, 0},
 			lexIdent:                        {stateAssignEval | stateFork, 0},
 			lexExtend:                       {stateAssignEval | stateFork, 0},
 			isRCurly:                        {statePop, 0},
@@ -231,13 +231,11 @@ var (
 		},
 		{ // stateFParams
 			lexNewLine: {stateFParams, 0},
-			lexComment: {stateFParams, 0},
 			isLPar:     {stateFParam, 0},
 			0:          {stateFResult | stateStay, 0},
 		},
 		{ // stateFParam
 			lexNewLine: {stateFParam, 0},
-			lexComment: {stateFParam, 0},
 			lexIdent:   {stateFParamTYPE, cfFParam},
 			// lexType:    {stateFParam, cfFType},
 			isComma: {stateFParam, 0},
@@ -245,7 +243,6 @@ var (
 			0:       {errParams, cfError},
 		},
 		{ // stateFParamTYPE
-			lexComment:                  {stateFParamTYPE, 0},
 			lexIdent:                    {stateFParamTYPE, cfFParam},
 			lexType:                     {stateFParam, cfFType},
 			lexKeyword | (keyTail << 8): {stateFTail, cfFTail},
@@ -307,7 +304,6 @@ var (
 		},
 		{ // stateConsts
 			lexNewLine: {stateConsts, 0},
-			lexComment: {stateConsts, 0},
 			isComma:    {stateConsts, 0},
 			lexIdent:   {stateConstsAssign, cfConstName},
 			isRCurly:   {stateToBody, 0},
@@ -324,7 +320,6 @@ var (
 		},
 		{ // stateFields
 			lexNewLine: {stateFields, 0},
-			lexComment: {stateFields, 0},
 			isComma:    {stateFields, 0},
 			lexIdent:   {stateFields, cfField},
 			lexType:    {stateFields, cfFieldType},
@@ -764,21 +759,37 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 func (vm *VM) FlushBlock(root *Block) {
 	shift := len(vm.Children)
 	for key, item := range root.Objects {
-		if cur, ok := vm.Objects[key]; ok && item.Type == ObjContract {
-			root.Objects[key].Value.(*Block).Info.(*ContractInfo).ID = cur.Value.(*Block).Info.(*ContractInfo).ID + 0xFFFF
+		if cur, ok := vm.Objects[key]; ok {
+			switch item.Type {
+			case ObjContract:
+				root.Objects[key].Value.(*Block).Info.(*ContractInfo).ID = cur.Value.(*Block).Info.(*ContractInfo).ID + flushMark
+			case ObjFunc:
+				root.Objects[key].Value.(*Block).Info.(*FuncInfo).ID = cur.Value.(*Block).Info.(*FuncInfo).ID + flushMark
+				vm.Objects[key].Value = root.Objects[key].Value
+			}
 		}
 		vm.Objects[key] = item
 	}
 	for _, item := range root.Children {
-		if item.Type == ObjContract {
-			if item.Info.(*ContractInfo).ID > 0xFFFF {
-				item.Info.(*ContractInfo).ID -= 0xFFFF
+		switch item.Type {
+		case ObjContract:
+			if item.Info.(*ContractInfo).ID > flushMark {
+				item.Info.(*ContractInfo).ID -= flushMark
 				vm.Children[item.Info.(*ContractInfo).ID] = item
 				shift--
 				continue
 			}
 			item.Parent = &vm.Block
 			item.Info.(*ContractInfo).ID += uint32(shift)
+		case ObjFunc:
+			if item.Info.(*FuncInfo).ID > flushMark {
+				item.Info.(*FuncInfo).ID -= flushMark
+				vm.Children[item.Info.(*FuncInfo).ID] = item
+				shift--
+				continue
+			}
+			item.Parent = &vm.Block
+			item.Info.(*FuncInfo).ID += uint32(shift)
 		}
 		vm.Children = append(vm.Children, item)
 	}
@@ -922,6 +933,21 @@ main:
 					}
 					count := parcount[len(parcount)-1]
 					parcount = parcount[:len(parcount)-1]
+					if prev.Value.(*ObjInfo).Type == ObjExtFunc {
+						var errtext string
+						extinfo := prev.Value.(*ObjInfo).Value.(ExtFuncInfo)
+						wantlen := len(extinfo.Params)
+						for _, v := range extinfo.Auto {
+							if len(v) > 0 {
+								wantlen--
+							}
+						}
+						if count != wantlen && (!extinfo.Variadic || count < wantlen) {
+							errtext = fmt.Sprintf(eWrongParams, extinfo.Name, wantlen)
+							logger.WithFields(log.Fields{"error": errtext, "type": consts.ParseError}).Error(errtext)
+							return fmt.Errorf(errtext)
+						}
+					}
 					if prev.Cmd == cmdCallVari {
 						bytecode = append(bytecode, &ByteCode{cmdPush, count})
 					}
@@ -956,9 +982,13 @@ main:
 			}
 		case lexOper:
 			if oper, ok := opers[lexem.Value.(uint32)]; ok {
-				if oper.Cmd == cmdSub && (i == 0 || ((*lexems)[i-1].Type != lexNumber && (*lexems)[i-1].Type != lexIdent &&
-					(*lexems)[i-1].Type != lexExtend &&
-					(*lexems)[i-1].Type != lexString && (*lexems)[i-1].Type != isRCurly && (*lexems)[i-1].Type != isRBrack)) {
+				var prevType uint32
+				if i > 0 {
+					prevType = (*lexems)[i-1].Type
+				}
+				if oper.Cmd == cmdSub && (i == 0 || (prevType != lexNumber && prevType != lexIdent &&
+					prevType != lexExtend && prevType != lexString && prevType != isRCurly &&
+					prevType != isRBrack && prevType != isRPar)) {
 					oper.Cmd = cmdSign
 					oper.Priority = cmdUnary
 				}
@@ -1061,6 +1091,7 @@ main:
 						count++
 					}
 					if lexem.Value.(string) == `CallContract` {
+						count++
 						bytecode = append(bytecode, &ByteCode{cmdPush, (*block)[0].Info.(uint32)})
 					}
 					parcount = append(parcount, count)
@@ -1095,4 +1126,27 @@ main:
 	}
 	curBlock.Code = append(curBlock.Code, bytecode...)
 	return nil
+}
+
+func ContractsList(value string) []string {
+	names := make([]string, 0)
+	lexems, err := lexParser([]rune(value))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("getting contract list")
+		return names
+	}
+	var level int
+	for i, lexem := range lexems {
+		switch lexem.Type {
+		case isLCurly:
+			level++
+		case isRCurly:
+			level--
+		case lexKeyword | (keyContract << 8), lexKeyword | (keyFunc << 8):
+			if level == 0 && i+1 < len(lexems) && lexems[i+1].Type == lexIdent {
+				names = append(names, lexems[i+1].Value.(string))
+			}
+		}
+	}
+	return names
 }

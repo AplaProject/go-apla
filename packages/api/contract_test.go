@@ -50,7 +50,7 @@ func TestNewContracts(t *testing.T) {
 		var ret getContractResult
 		err := sendGet(`contract/`+item.Name, nil, &ret)
 		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(errors[`E_CONTRACT`], item.Name)) {
+			if strings.Contains(err.Error(), fmt.Sprintf(apiErrors[`E_CONTRACT`], item.Name)) {
 				form := url.Values{"Name": {item.Name}, "Value": {item.Value},
 					"Conditions": {`true`}}
 				if err := postTx(`NewContract`, &form); err != nil {
@@ -587,4 +587,154 @@ func TestImport(t *testing.T) {
 		return
 	}
 
+}
+
+func TestUpdateFunc(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	rnd := `rnd` + crypto.RandSeq(6)
+	form := url.Values{`Value`: {`
+		func MyTest(input string) string {
+			return "X="+input
+		}`}, `Conditions`: {`true`}}
+	_, id, err := postTxResult(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`
+		contract ` + rnd + ` {
+		    data {
+				Par string
+			}
+			action { 
+				$result = MyTest($Par)
+			}}
+		`}, `Conditions`: {`true`}}
+	_, idcnt, err := postTxResult(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err := postTxResult(rnd, &url.Values{`Par`: {`my param`}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `X=my param` {
+		t.Error(fmt.Errorf(`wrong result %s`, msg))
+	}
+	form = url.Values{`Id`: {id}, `Value`: {`
+		func MyTest2(input string) string {
+			return "Y="+input
+		}`}, `Conditions`: {`true`}}
+	err = postTx(`EditContract`, &form)
+	if err.Error() != `{"type":"error","error":"Contracts or functions names cannot be changed"}` {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Id`: {id}, `Value`: {`
+		func MyTest(input string) string {
+			return "Y="+input
+		}`}, `Conditions`: {`true`}}
+	err = postTx(`EditContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`new param`}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `Y=new param` {
+		t.Errorf(`wrong result %s`, msg)
+	}
+	form = url.Values{`Id`: {idcnt}, `Value`: {`
+		contract ` + rnd + ` {
+		    data {
+				Par string
+			}
+			action { 
+				$result = MyTest($Par) + MyTest("OK")
+			}}
+		`}, `Conditions`: {`true`}}
+	_, idcnt, err = postTxResult(`EditContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`finish`}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `Y=finishY=OK` {
+		t.Errorf(`wrong result %s`, msg)
+	}
+}
+
+func TestContractChain(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{"Name": {rnd}, "Columns": {`[{"name":"value","type":"varchar", "index": "0", 
+	  "conditions":"true"},
+	{"name":"amount", "type":"number","index": "0", "conditions":"true"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract sub` + rnd + ` {
+		data {
+			Id int
+		}
+		action {
+			$row = DBFind("` + rnd + `").Columns("value").WhereId($Id)
+			if Len($row) != 1 {
+				error "sub contract getting error"
+			}
+			$record = $row[0]
+			$new = $record["value"]
+			DBUpdate("` + rnd + `", $Id, "value", $new+"="+$new )
+		}
+	}
+
+	contract ` + rnd + ` {
+		data {
+			Initial string
+		}
+		action {
+			$id = DBInsert("` + rnd + `", "value,amount", $Initial, "0")
+			sub` + rnd + `("Id", $id)
+			$row = DBFind("` + rnd + `").Columns("value").WhereId($id)
+			if Len($row) != 1 {
+				error "contract getting error"
+			}
+			$record = $row[0]
+			$result = $record["value"]
+		}
+	}
+		`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err := postTxResult(rnd, &url.Values{`Initial`: {rnd}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != rnd+`=`+rnd {
+		t.Error(fmt.Errorf(`wrong result %s`, msg))
+	}
 }
