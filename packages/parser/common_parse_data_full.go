@@ -589,6 +589,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 	}
 
 	model.KeysCache.Fill(dbTransaction)
+	model.TablesCache.Fill(dbTransaction)
 	for _, p := range b.Parsers {
 		p.DbTransaction = dbTransaction
 

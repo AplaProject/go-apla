@@ -18,6 +18,7 @@ package smart
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -482,19 +483,18 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 		return fmt.Errorf(`Access denied`)
 	}
 
-	if isCustom, err := sc.IsCustomTable(table); err != nil {
-		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
-		return err
-	} else if !isCustom {
+	_, name := PrefixName(table)
+	found, tableM, err := model.TablesCache.Get(sc.DbTransaction, sc.TxSmart.TokenEcosystem, name)
+	if !found {
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
-
-	prefix, name := PrefixName(table)
-	tables := &model.Table{}
-	tables.SetTablePrefix(prefix)
-	tablePermission, err := tables.GetPermissions(sc.DbTransaction, name, "")
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table permissions")
+		return err
+	}
+	tablePermission := map[string]string{}
+	if err := json.Unmarshal([]byte(tableM.Permissions), &tablePermission); err != nil {
+		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling table permissions from JSON")
 		return err
 	}
 	if len(tablePermission[action]) > 0 {
@@ -522,16 +522,20 @@ func (sc *SmartContract) AccessColumns(table string, columns []string) error {
 		return fmt.Errorf(`Access denied`)
 	}
 	// We don't check IsCustomTable because we calls it in AccessTable
-	prefix, name := PrefixName(table)
-
-	tables := &model.Table{}
-	tables.SetTablePrefix(prefix)
-	columnsAndPermissions, err := tables.GetColumns(sc.DbTransaction, name, "")
+	_, name := PrefixName(table)
+	found, tableM, err := model.TablesCache.Get(sc.DbTransaction, sc.TxSmart.TokenEcosystem, name)
+	if !found {
+		return fmt.Errorf(table + ` is not a custom table`)
+	}
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table columns")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table permissions")
 		return err
 	}
-
+	columnsAndPermissions := map[string]string{}
+	if err := json.Unmarshal([]byte(tableM.Columns), &columnsAndPermissions); err != nil {
+		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling table permissions from JSON")
+		return err
+	}
 	for _, col := range columns {
 		var (
 			cond string

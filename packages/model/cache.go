@@ -31,12 +31,20 @@ type KeyCache struct {
 }
 
 var KeysCache *KeyCache = &KeyCache{}
+var TablesCache *TableCache = &TableCache{}
 
 func keysTableName(prefix int64) string {
 	if prefix == 0 {
 		prefix = 1
 	}
 	return fmt.Sprintf("%d_keys", prefix)
+}
+
+func tablesTableName(prefix int64) string {
+	if prefix == 0 {
+		prefix = 1
+	}
+	return fmt.Sprintf("%d_tables", prefix)
 }
 
 func (k *KeyCache) Fill(tr *DbTransaction) error {
@@ -161,4 +169,56 @@ func (k *KeyCache) Flush(tr *DbTransaction) error {
 	k.Keys = map[int64]map[int64]*Key{}
 	k.Rollbacks = []*RollbackTx{}
 	return nil
+}
+
+type TableCache struct {
+	Tables map[int64]map[string]*Table
+	lock   sync.RWMutex
+}
+
+func (t *TableCache) Fill(tr *DbTransaction) error {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	t.Tables = map[int64]map[string]*Table{}
+
+	ids, err := GetAllSystemStatesIDs()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting all system states id")
+		return err
+	}
+	for _, ecosystemID := range ids {
+		t.Tables[ecosystemID] = map[string]*Table{}
+		tables := new([]*Table)
+		if err := GetDB(tr).Table(tablesTableName(ecosystemID)).Find(tables).Error; err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Selecting all keys from keys table")
+			return err
+		}
+		for _, table := range *tables {
+			t.Tables[ecosystemID][table.Name] = table
+		}
+	}
+	return nil
+}
+
+func (t *TableCache) Get(tr *DbTransaction, ecosystemID int64, tableName string) (bool, *Table, error) {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	if _, ok := t.Tables[ecosystemID]; ok {
+		if table, ok2 := t.Tables[ecosystemID][tableName]; ok2 {
+			return true, table, nil
+		}
+	}
+	table := &Table{}
+	table.SetTablePrefix(tablesTableName(ecosystemID))
+	if found, err := table.Get(tr, tableName); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table")
+		return false, nil, err
+	} else if !found {
+		return false, nil, nil
+	}
+	if _, ok := t.Tables[ecosystemID]; !ok {
+		t.Tables[ecosystemID] = map[string]*Table{}
+	}
+	t.Tables[ecosystemID][tableName] = table
+	return true, table, nil
 }

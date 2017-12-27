@@ -1004,8 +1004,6 @@ var (
 		action {
 			DBUpdate("keys", $key_id,"-amount", $amount)
 			DBUpdate("keys", $recipient,"+amount", $amount)
-			DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash", 
-				$key_id, $recipient, $amount, $Comment, $block, $txhash)
 		}
 	}', '%[1]d', 'ContractConditions("MainCondition")'),
 	('4','contract NewContract {
