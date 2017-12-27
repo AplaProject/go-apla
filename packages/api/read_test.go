@@ -118,8 +118,8 @@ func TestRead(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if strings.Contains(retCont.Tree, `active`) {
-		t.Errorf(`wrong tree %s`, retCont.Tree)
+	if strings.Contains(RawToString(retCont.Tree), `active`) {
+		t.Errorf(`wrong tree %s`, RawToString(retCont.Tree))
 		return
 	}
 
@@ -150,8 +150,8 @@ func TestRead(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if !strings.Contains(retCont.Tree, `No name`) {
-		t.Errorf(`wrong tree %s`, retCont.Tree)
+	if !strings.Contains(RawToString(retCont.Tree), `No name`) {
+		t.Errorf(`wrong tree %s`, RawToString(retCont.Tree))
 		return
 	}
 }
