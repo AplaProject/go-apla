@@ -475,3 +475,52 @@ func TestHTTPRequest(t *testing.T) {
 		return
 	}
 }
+
+func TestNodeHTTPRequest(t *testing.T) {
+	var err error
+	if err = keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract for` + rnd + ` {
+		data {
+			Par string
+		}
+		action { $result = "Test NodeContract " + $Par + " ` + rnd + `"}
+    }`}, `Conditions`: {`ContractConditions("MainCondition")`}}
+
+	if err = postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+				Auth string
+				Par string
+			}
+			action {
+				var ret string 
+				var pars, heads, json map
+				heads["Authorization"] = "Bearer " + $Auth
+				pars["vde"] = "false"
+				pars["Par"] = $Par
+				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)
+				json = JSONToMap(ret)
+				$result = json["hash"]
+			}}`}, `Conditions`: {`true`}, `vde`: {`true`}}
+
+	if err = postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	var msg string
+	if _, msg, err = postTxResult(rnd, &url.Values{`vde`: {`true`}, `Par`: {`node`}, `Auth`: {gAuth}}); err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(`MSG`, msg)
+	t.Error(`OK`)
+}

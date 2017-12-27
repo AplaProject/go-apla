@@ -52,9 +52,16 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
 
+	var signedBy int64
+	signID := data.keyId
+	if data.params[`signed_by`] != nil {
+		signedBy = data.params[`signed_by`].(int64)
+		signID = signedBy
+	}
+
 	key := &model.Key{}
 	key.SetTablePrefix(data.ecosystemId)
-	err = key.Get(data.keyId)
+	_, err = key.Get(signID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		return errorAPI(w, err, http.StatusInternalServerError)
@@ -129,6 +136,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 		TokenEcosystem: data.params[`token_ecosystem`].(int64),
 		MaxSum:         data.params[`max_sum`].(string),
 		PayOver:        data.params[`payover`].(string),
+		SignedBy:       signedBy,
 		Data:           idata,
 	}
 	serializedData, err := msgpack.Marshal(toSerialize)

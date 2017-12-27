@@ -47,4 +47,5 @@ const (
 	WritingFile              = "WritingFile"
 	CentrifugoError          = "CentrifugoError"
 	StatsdError              = "StatsdError"
+	APIError                 = "APIError"
 )
