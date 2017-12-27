@@ -236,7 +236,6 @@ func Start() {
 	}
 	conf.SetConfigParams()
 
-	// TODO maybe, use parameters from config
 	autoupdate.InitUpdater(conf.Config.Autoupdate.ServerAddress, conf.Config.Autoupdate.PublicKeyPath)
 
 	// process directives
@@ -278,7 +277,6 @@ func Start() {
 		}
 		initGorm(conf.Config.DB)
 
-		// Autoupdate
 		err = autoupdate.Run()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err}).Error("run autoupdate")

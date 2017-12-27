@@ -106,7 +106,7 @@ var (
 	TLS = flag.String("tls", "", "Enable https. Ddirectory for .well-known and keys")
 
 	// UpdateInterval is interval in seconds for checking updates
-	UpdateInterval = flag.Int64("updateInterval", 60*60, "Interval in seconds for checking updates")
+	UpdateInterval = flag.Int64("updateInterval", 3600, "Interval in seconds for checking updates, default 3600 seconds (1 hour)")
 )
 
 func envStr(envName string, val *string) bool {

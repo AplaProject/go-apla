@@ -1,27 +1,20 @@
 package system
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func CreatePidFile() error {
 	pid := os.Getpid()
-	data, err := json.Marshal(map[string]string{
-		"pid":     converter.IntToStr(pid),
-		"version": consts.VERSION,
-	})
-	if err != nil {
-		log.WithFields(log.Fields{"pid": pid, "error": err, "type": consts.JSONMarshallError}).Error("marshalling pid to json")
-		return err
-	}
+	data := []byte(strconv.Itoa(pid))
 	return ioutil.WriteFile(conf.GetPidFile(), data, 0644)
 }
 
@@ -29,22 +22,21 @@ func RemovePidFile() error {
 	return os.Remove(conf.GetPidFile())
 }
 
-func ReadPidFile() (map[string]string, error) {
+func ReadPidFile() (int, error) {
 	pidPath := conf.GetPidFile()
 	if _, err := os.Stat(pidPath); err != nil {
-		return nil, nil
+		return 0, nil
 	}
 
 	data, err := ioutil.ReadFile(pidPath)
 	if err != nil {
 		log.WithFields(log.Fields{"path": pidPath, "error": err, "type": consts.IOError}).Error("reading pid file")
-		return nil, err
+		return 0, err
 	}
 
-	var pidMap map[string]string
-	err = json.Unmarshal(data, &pidMap)
+	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
 	if err != nil {
-		log.WithFields(log.Fields{"data": data, "error": err, "type": consts.JSONUnmarshallError}).Error("unmarshalling pid map")
+		log.WithFields(log.Fields{"data": data, "error": err, "type": consts.ConversionError}).Error("pid file data to int")
 	}
-	return pidMap, err
+	return pid, err
 }

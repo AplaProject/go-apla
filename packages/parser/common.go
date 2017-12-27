@@ -288,7 +288,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 
 	err = autoupdate.TryUpdate(uint64(blockID))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err}).Error("creating block")
+		log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err, "blockID": blockID}).Fatal("update for blockID")
 		return err
 	}
 	return nil
