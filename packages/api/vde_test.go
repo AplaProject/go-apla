@@ -516,11 +516,20 @@ func TestNodeHTTPRequest(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	var msg string
+	var (
+		msg string
+		id  int64
+	)
 	if _, msg, err = postTxResult(rnd, &url.Values{`vde`: {`true`}, `Par`: {`node`}, `Auth`: {gAuth}}); err != nil {
 		t.Error(err)
 		return
 	}
-	fmt.Println(`MSG`, msg)
-	t.Error(`OK`)
+	id, err = waitTx(msg)
+	if id != 0 && err != nil {
+		msg = err.Error()
+		err = nil
+	}
+	if msg != `Test NodeContract node `+rnd {
+		t.Error(`wrong result: ` + msg)
+	}
 }
