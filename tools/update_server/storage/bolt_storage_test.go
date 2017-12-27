@@ -70,12 +70,12 @@ func TestBoltStorage_GetVersionsList(t *testing.T) {
 	}{
 		{},
 		{versionsList: []model.Version{
-			{Number: "1.0", OS: "windows", Arch: "amd64"},
+			{Number: "1.0", OS: "darwin", Arch: "amd64"},
 		}},
 		{versionsList: []model.Version{
+			{Number: "0.2", OS: "darwin", Arch: "amd64"},
+			{Number: "1.0", OS: "darwin", Arch: "amd64"},
 			{Number: "2.3.5", OS: "linux", Arch: "amd64"},
-			{Number: "1.0", OS: "windows", Arch: "amd64"},
-			{Number: "0.2", OS: "windows", Arch: "i386"},
 		}},
 	}
 
@@ -147,8 +147,8 @@ func TestBoltStorage_DeleteBinary(t *testing.T) {
 		binary   []byte
 		expError bool
 	}{
-		{id: 1, version: "0.0.1", os: "windows", arch: "amd64", binary: []byte{1}},
-		{id: 2, version: "0.1.0", os: "linux", arch: "i386", binary: []byte{2}},
+		{id: 1, version: "0.0.1", os: "darwin", arch: "amd64", binary: []byte{1}},
+		{id: 2, version: "0.1.0", os: "linux", arch: "amd64", binary: []byte{2}},
 		{id: 3, version: "0.1.1", os: "linux", arch: "amd64", binary: []byte{3}},
 	}
 

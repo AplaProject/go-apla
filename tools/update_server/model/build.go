@@ -53,12 +53,11 @@ func (b *Version) String() string {
 	return fmt.Sprintf("%s_%s_%s", b.OS, b.Arch, b.Number)
 }
 
-// TODO this is not completed list yet
 var availableVersions = []Version{
-	{OS: "linux", Arch: "i386"},
 	{OS: "linux", Arch: "amd64"},
-	{OS: "windows", Arch: "i386"},
 	{OS: "windows", Arch: "amd64"},
+	{OS: "freebsd", Arch: "amd64"},
+	{OS: "darwin", Arch: "amd64"},
 }
 
 // Build is storing build data with needed for update params
@@ -72,9 +71,6 @@ type Build struct {
 
 	StartBlock uint64 `json:"start_block"`
 	IsCritical bool   `json:"is_critical"`
-
-	Downloaded int  `json:"-"` // Counter is not used yet
-	Deprecated bool `json:"-"` // Flag is not used yet
 }
 
 // ValidateSystem is checking os+arch correctness

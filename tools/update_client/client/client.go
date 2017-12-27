@@ -22,7 +22,6 @@ type UpdateClient struct {
 
 // GenerateKeys creates public/private key pair
 func (uc *UpdateClient) GenerateKeys(keyParams params.KeyParams) error {
-	fmt.Println("Generating public/private key pair")
 	priv, pub, err := crypto.GenBytesKeys()
 	if err != nil {
 		return errors.Wrapf(err, "can't generate keys")

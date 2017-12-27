@@ -63,12 +63,12 @@ func TestGetLastBuildInfo(t *testing.T) {
 	}{
 		{
 			getVersionsList: []model.Version{
-				{Number: "0.1", OS: "windows", Arch: "amd64"},
-				{Number: "0.1.1", OS: "windows", Arch: "amd64"},
+				{Number: "0.1", OS: "darwin", Arch: "amd64"},
+				{Number: "0.1.1", OS: "darwin", Arch: "amd64"},
 			},
-			lastVersion: model.Build{Version: model.Version{Number: "0.1.1", OS: "windows", Arch: "amd64"}},
-			get:         model.Build{Body: []byte{1, 2, 3, 4, 5}, Version: model.Version{Number: "0.1.1", OS: "windows", Arch: "amd64"}},
-			resp:        model.Build{Version: model.Version{Number: "0.1.1", OS: "windows", Arch: "amd64"}},
+			lastVersion: model.Build{Version: model.Version{Number: "0.1.1", OS: "darwin", Arch: "amd64"}},
+			get:         model.Build{Body: []byte{1, 2, 3, 4, 5}, Version: model.Version{Number: "0.1.1", OS: "darwin", Arch: "amd64"}},
+			resp:        model.Build{Version: model.Version{Number: "0.1.1", OS: "darwin", Arch: "amd64"}},
 			expCode:     http.StatusOK,
 		},
 	}
@@ -100,15 +100,15 @@ func TestGetVersions(t *testing.T) {
 	}{
 		{
 			getVersionsList: []model.Version{
-				{Number: "0.1", OS: "windows", Arch: "amd64"},
-				{Number: "0.1.1", OS: "windows", Arch: "amd64"},
+				{Number: "0.1", OS: "darwin", Arch: "amd64"},
+				{Number: "0.1.1", OS: "darwin", Arch: "amd64"},
 				{Number: "2.0.1", OS: "linux", Arch: "amd64"},
 			},
-			os:   "windows",
+			os:   "darwin",
 			arch: "amd64",
 			respBody: toJson(t, []web.BuildInfoResponse{
-				{Build: model.Build{Version: model.Version{Number: "0.1", OS: "windows", Arch: "amd64"}, Body: []byte{}}},
-				{Build: model.Build{Version: model.Version{Number: "0.1.1", OS: "windows", Arch: "amd64"}, Body: []byte{}}},
+				{Build: model.Build{Version: model.Version{Number: "0.1", OS: "darwin", Arch: "amd64"}, Body: []byte{}}},
+				{Build: model.Build{Version: model.Version{Number: "0.1.1", OS: "darwin", Arch: "amd64"}, Body: []byte{}}},
 			}),
 			expCode: http.StatusOK,
 		},
@@ -144,14 +144,14 @@ func TestGetBinary(t *testing.T) {
 	}{
 		{
 			getErr:  errors.New("blah"),
-			os:      "windows",
+			os:      "darwin",
 			arch:    "amd64",
 			version: "1.0",
 			expCode: http.StatusInternalServerError,
 		},
 		{
-			get:      model.Build{Body: []byte{9, 5, 2, 7, 8, 0}, Version: model.Version{OS: "windows", Arch: "amd64", Number: "1.0"}},
-			os:       "windows",
+			get:      model.Build{Body: []byte{9, 5, 2, 7, 8, 0}, Version: model.Version{OS: "darwin", Arch: "amd64", Number: "1.0"}},
+			os:       "darwin",
 			arch:     "amd64",
 			version:  "1.0",
 			respBody: []byte{9, 5, 2, 7, 8, 0},
@@ -232,7 +232,7 @@ func TestAddBinary(t *testing.T) {
 		},
 		{
 			checkSign: true,
-			binary:    model.Build{Version: model.Version{Number: "blah-error", OS: "windows", Arch: "amd64"}},
+			binary:    model.Build{Version: model.Version{Number: "blah-error", OS: "darwin", Arch: "amd64"}},
 			expCode:   http.StatusBadRequest,
 		},
 		{
@@ -242,31 +242,31 @@ func TestAddBinary(t *testing.T) {
 		},
 		{
 			checkSign: true,
-			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "i386"}},
+			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "amd64"}},
 			getErr:    errors.New("blah"),
 			expCode:   http.StatusInternalServerError,
 		},
 		{
 			checkSign: true,
-			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "i386"}},
-			get:       model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "i386"}},
+			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "amd64"}},
+			get:       model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "amd64"}},
 			expCode:   http.StatusBadRequest,
 		},
 		{
 			checkSign: true,
-			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "i386"}},
+			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "amd64"}},
 			get:       model.Build{},
 			expCode:   http.StatusOK,
 		},
 		{
 			checkSign: true,
-			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "i386"}},
+			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "amd64"}},
 			add:       errors.New("blah"),
 			expCode:   http.StatusInternalServerError,
 		},
 		{
 			checkSign: true,
-			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "i386"}},
+			binary:    model.Build{Version: model.Version{Number: "1.0", OS: "linux", Arch: "amd64"}},
 			expCode:   http.StatusOK,
 		},
 	}
@@ -301,16 +301,16 @@ func TestRemoveBinary(t *testing.T) {
 		expCode int
 	}{
 		{
-			build:     model.Build{Version: model.Version{Number: "1.0", OS: "windows", Arch: "amd64"}},
+			build:     model.Build{Version: model.Version{Number: "1.0", OS: "darwin", Arch: "amd64"}},
 			deleteErr: errors.New("blah"),
-			os:        "windows",
+			os:        "darwin",
 			arch:      "amd64",
 			version:   "1.0",
 			expCode:   http.StatusInternalServerError,
 		},
 		{
-			build:   model.Build{Version: model.Version{Number: "1.0", OS: "windows", Arch: "amd64"}},
-			os:      "windows",
+			build:   model.Build{Version: model.Version{Number: "1.0", OS: "darwin", Arch: "amd64"}},
+			os:      "darwin",
 			arch:    "amd64",
 			version: "1.0",
 			expCode: http.StatusOK,
