@@ -475,7 +475,7 @@ func (p *Parser) CallContract(flags int) (resultContract string, err error) {
 	startTime := time.Now()
 	defer func() {
 		endTime := time.Now()
-		fmt.Println("CALLING CONTRACT "+counterName+" TIME: ", endTime.Sub(startTime))
+		//fmt.Println("CALLING CONTRACT "+counterName+" TIME: ", endTime.Sub(startTime))
 		statsd.Client.TimingDuration(counterName+statsd.Time, endTime.Sub(startTime), 1.0)
 	}()
 	sc := smart.SmartContract{

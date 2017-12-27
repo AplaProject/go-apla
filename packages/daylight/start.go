@@ -286,7 +286,13 @@ func Start() {
 
 		err = model.BufKeys.Initialize()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "can't init tkeys buffer", utils.ErrInfo(err))
+			fmt.Fprintf(os.Stderr, "can't init keys buffer", utils.ErrInfo(err))
+			Exit(1)
+		}
+
+		err = model.BufTables.Initialize()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "can't init tables buffer", utils.ErrInfo(err))
 			Exit(1)
 		}
 	}

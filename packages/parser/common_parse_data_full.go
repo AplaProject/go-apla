@@ -35,7 +35,7 @@ import (
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/vmihailenco/msgpack.v2"
+	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // Block is storing block data
@@ -589,6 +589,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		return err
 	}
 
+	updateLogTx := ""
 	for _, p := range b.Parsers {
 		p.DbTransaction = dbTransaction
 
@@ -621,10 +622,26 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("updating transaction status block id")
 			return err
 		}
-		if err := InsertInLogTx(p.DbTransaction, p.TxFullData, p.TxTime); err != nil {
-			return utils.ErrInfo(err)
+
+		txHash, err := crypto.Hash(p.TxFullData)
+		if err != nil {
+			log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("hashing binary tx")
+			return err
+		}
+
+		updateLogTx += fmt.Sprintf(`INSERT INTO log_transactions (hash, time) VALUES ('%s', %d);`, hex.EncodeToString(txHash), p.TxTime)
+		// if err := InsertInLogTx(p.DbTransaction, p.TxFullData, p.TxTime); err != nil {
+		// 	return utils.ErrInfo(err)
+		// }
+
+	}
+	if updateLogTx != "" {
+		err := model.GetDB(dbTransaction).Raw(updateLogTx).Error
+		if err != nil {
+			return err
 		}
 	}
+
 	return nil
 }
 

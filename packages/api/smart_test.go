@@ -91,7 +91,7 @@ func TestMoneyTransfer1000(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 200; i++ {
 		for j := 0; j < 5; j++ {
 			wg.Add(1)
 			go func() {

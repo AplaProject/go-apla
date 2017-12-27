@@ -18,11 +18,12 @@ package smart
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -458,9 +459,8 @@ func PrefixName(table string) (prefix, name string) {
 func (sc *SmartContract) IsCustomTable(table string) (isCustom bool, err error) {
 	prefix, name := PrefixName(table)
 	if len(prefix) > 0 {
-		tables := &model.Table{}
-		tables.SetTablePrefix(prefix)
-		found, err := tables.Get(sc.DbTransaction, name)
+		prefixID, _ := strconv.ParseInt(prefix, 10, 64)
+		_, found, err := model.BufTables.GetTable(prefixID, name)
 		if err != nil {
 			return false, err
 		}
@@ -483,23 +483,31 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 		return fmt.Errorf(`Access denied`)
 	}
 
-	/*
-		if isCustom, err := sc.IsCustomTable(table); err != nil {
-			logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
-			return err
-		} else if !isCustom {
-			return fmt.Errorf(table + ` is not a custom table`)
-		}
-	*/
+	if isCustom, err := sc.IsCustomTable(table); err != nil {
+		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
+		return err
+	} else if !isCustom {
+		return fmt.Errorf(table + ` is not a custom table`)
+	}
 
 	prefix, name := PrefixName(table)
-	tables := &model.Table{}
-	tables.SetTablePrefix(prefix)
-	tablePermission, err := tables.GetPermissions(sc.DbTransaction, name, "")
+	prefixID, _ := strconv.ParseInt(prefix, 10, 64)
+	t, found, err := model.BufTables.GetTable(prefixID, name)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table permissions")
 		return err
 	}
+	if !found {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("table not found")
+		return err
+	}
+	tablePermission := map[string]string{}
+	err = json.Unmarshal([]byte(t.Permissions), &tablePermission)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("table permission unmarshalling error")
+		return err
+	}
+
 	if len(tablePermission[action]) > 0 {
 		ret, err := sc.EvalIf(tablePermission[action])
 		if err != nil {
@@ -526,12 +534,20 @@ func (sc *SmartContract) AccessColumns(table string, columns []string) error {
 	}
 	// We don't check IsCustomTable because we calls it in AccessTable
 	prefix, name := PrefixName(table)
-
-	tables := &model.Table{}
-	tables.SetTablePrefix(prefix)
-	columnsAndPermissions, err := tables.GetColumns(sc.DbTransaction, name, "")
+	prefixID, _ := strconv.ParseInt(prefix, 10, 64)
+	t, found, err := model.BufTables.GetTable(prefixID, name)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table columns")
+		return err
+	}
+	if !found {
+		logger.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("geting table columns")
+		return err
+	}
+	columnsAndPermissions := map[string]string{}
+	err = json.Unmarshal([]byte(t.Columns), &columnsAndPermissions)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling table columns")
 		return err
 	}
 
@@ -560,6 +576,7 @@ func (sc *SmartContract) AccessColumns(table string, columns []string) error {
 
 // AccessRights checks the access right by executing the condition value
 func (sc *SmartContract) AccessRights(condition string, iscondition bool) error {
+	fmt.Println("Access rights")
 	sp := &model.StateParameter{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	if sc.VDE {
@@ -642,7 +659,6 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		sizeFuel, toID, fromID, price int64
 		fuelRate                      decimal.Decimal
 	)
-	startTime := time.Now()
 	logger := sc.GetLogger()
 	payWallet := model.Key{}
 	sc.TxContract.Extend = sc.getExtend()
@@ -653,16 +669,10 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		return ``, err
 	}
-	endTime := time.Now()
-	fmt.Println("getExtend time: ", endTime.Sub(startTime))
-	startTime = time.Now()
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
 	sc.TxContract.StackCont = []string{sc.TxContract.Name}
 	(*sc.TxContract.Extend)[`stack_cont`] = StackCont
 	sc.VM = GetVM(sc.VDE, sc.TxSmart.EcosystemID)
-	endTime = time.Now()
-	fmt.Println("getVM time: ", endTime.Sub(startTime))
-	startTime = time.Now()
 	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 {
 		if !sc.VDE {
 			toID = sc.BlockData.KeyID
@@ -694,13 +704,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		sc.PublicKeys = append(sc.PublicKeys, public)
 		var CheckSignResult bool
-		endTime = time.Now()
-		fmt.Println("some code: ", endTime.Sub(startTime))
-		startTime = time.Now()
 		CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.BinSignatures, false)
-		endTime = time.Now()
-		fmt.Println("sign time ", endTime.Sub(startTime))
-		startTime = time.Now()
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("checking tx data sign")
 			return retError(err)
@@ -760,9 +764,6 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
 				return retError(err)
 			}
-			endTime = time.Now()
-			fmt.Println("big code: ", endTime.Sub(startTime))
-			startTime = time.Now()
 			if cprice := sc.TxContract.GetFunc(`price`); cprice != nil {
 				var ret []interface{}
 				if ret, err = VMRun(sc.VM, cprice, nil, sc.TxContract.Extend); err != nil {
@@ -777,20 +778,14 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 					logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong type of price function")
 					return retError(ErrWrongPriceFunc)
 				}
-				endTime = time.Now()
-				fmt.Println("VMRun ", endTime.Sub(startTime))
 			}
-			startTime = time.Now()
 			sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024
 			if amount.Cmp(decimal.New(sizeFuel+price, 0).Mul(fuelRate)) <= 0 {
 				logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")
 				return retError(ErrCurrentBalance)
 			}
-			endTime = time.Now()
-			fmt.Println("small code: ", endTime.Sub(startTime))
 		}
 	}
-	startTime = time.Now()
 	before := (*sc.TxContract.Extend)[`txcost`].(int64) + price
 	// Payment for the size
 	(*sc.TxContract.Extend)[`txcost`] = (*sc.TxContract.Extend)[`txcost`].(int64) - sizeFuel
@@ -802,21 +797,13 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				continue
 			}
 			sc.TxContract.Called = 1 << i
-			endTime = time.Now()
-			fmt.Println("last code part1: ", endTime.Sub(startTime))
-			startTime1 := time.Now()
 			_, err = VMRun(sc.VM, cfunc, nil, sc.TxContract.Extend)
-			endTime1 := time.Now()
-			fmt.Println("VM run 2 ", endTime1.Sub(startTime1))
 			if err != nil {
 				before -= price
 				break
 			}
 		}
 	}
-	endTime = time.Now()
-	fmt.Println("last code part 1: ", endTime.Sub(startTime))
-	startTime = time.Now()
 	sc.TxUsedCost = decimal.New(before-(*sc.TxContract.Extend)[`txcost`].(int64), 0)
 	sc.TxContract.TxPrice = price
 	if (*sc.TxContract.Extend)[`result`] != nil {
@@ -833,9 +820,6 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			apl = wltAmount
 		}
 		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
-		endTime = time.Now()
-		fmt.Println("last code: ", endTime.Sub(startTime))
-		startTime = time.Now()
 		//walletTable := fmt.Sprintf(`%d_keys`, sc.TxSmart.TokenEcosystem)
 		//----------------------first key --------------------------
 		key, found, err := model.BufKeys.GetKey(sc.TxSmart.TokenEcosystem, toID)
@@ -892,8 +876,6 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			return retError(errors.New("payWallet not found"))
 		}
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")
-		endTime = time.Now()
-		fmt.Println("key time: ", endTime.Sub(startTime))
 	}
 	if err != nil {
 		return retError(err)

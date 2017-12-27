@@ -1,5 +1,145 @@
 package model
 
+import (
+	"fmt"
+	"strconv"
+	"sync"
+
+	"github.com/jinzhu/gorm"
+)
+
+func NewBufferedTables() *bufferedTables {
+	return &bufferedTables{tables: make(map[int64]map[string]Table)}
+}
+
+type bufferedTables struct {
+	tables      map[int64]map[string]Table
+	rwMutex     sync.RWMutex
+	updateMutex sync.Mutex
+}
+
+func loadEcosystemTables(ecosystemID int64) (*[]Table, error) {
+	var tables []Table
+	err := DBConn.Raw(fmt.Sprintf(`select * from "%d_tables";`, ecosystemID)).Scan(&tables).Error
+	if err != nil {
+		return nil, err
+	}
+	return &tables, nil
+}
+
+func loadTable(ecosystemID int64, tableName string) (Table, error) {
+	table := &Table{}
+	table.SetTablePrefix(strconv.FormatInt(ecosystemID, 10))
+	found, err := table.Get(nil, tableName)
+	if !found {
+		return *table, gorm.ErrRecordNotFound
+	}
+	return *table, err
+}
+
+func (bk *bufferedTables) updateEcosystemCache(tablePrefix int64) error {
+	bk.updateMutex.Lock()
+	defer bk.updateMutex.Unlock()
+	tables, err := loadEcosystemTables(tablePrefix)
+	if err != nil {
+		return err
+	}
+	newEcosystemBuffer := make(map[string]Table, len(*tables))
+	for _, t := range *tables {
+		newEcosystemBuffer[t.Name] = t
+	}
+
+	bk.tables[tablePrefix] = newEcosystemBuffer
+	return nil
+}
+
+func (bk *bufferedTables) updateKeyCache(tablePrefix int64, tableName string) error {
+	bk.updateMutex.Lock()
+	defer bk.updateMutex.Unlock()
+	table, err := loadTable(tablePrefix, tableName)
+	if err != nil {
+		return err
+	}
+	bk.tables[tablePrefix][tableName] = table
+	return nil
+}
+
+func (bk *bufferedTables) Initialize() error {
+	IDs, err := GetAllSystemStatesIDs()
+	if err != nil {
+		return err
+	}
+	for _, ID := range IDs {
+		err := bk.updateEcosystemCache(ID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (bk *bufferedTables) GetTable(tablePrefix int64, tableName string) (table Table, found bool, err error) {
+	result := Table{}
+	bk.rwMutex.RLock()
+	defer bk.rwMutex.RUnlock()
+
+	_, ok := bk.tables[tablePrefix]
+	if !ok {
+		err := bk.updateEcosystemCache(tablePrefix)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return result, false, err
+		}
+		if err == gorm.ErrRecordNotFound {
+			return result, false, nil
+		}
+	}
+
+	_, ok = bk.tables[tablePrefix][tableName]
+	if !ok {
+		err = bk.updateKeyCache(tablePrefix, tableName)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return result, false, err
+		}
+		if err == gorm.ErrRecordNotFound {
+			return result, false, nil
+		}
+	}
+
+	result = bk.tables[tablePrefix][tableName]
+	return result, true, nil
+}
+
+func (bk *bufferedTables) SetTable(tablePrefix int64, tableName string, table Table) (found bool, err error) {
+	bk.rwMutex.RLock()
+	_, ok := bk.tables[tablePrefix]
+	if !ok {
+		err := bk.updateEcosystemCache(tablePrefix)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return false, err
+		}
+		if err == gorm.ErrRecordNotFound {
+			return false, nil
+		}
+	}
+
+	_, ok = bk.tables[tablePrefix]
+	if !ok {
+		err = bk.updateKeyCache(tablePrefix, tableName)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return false, err
+		}
+		if err == gorm.ErrRecordNotFound {
+			return false, nil
+		}
+	}
+	bk.rwMutex.RUnlock()
+
+	bk.rwMutex.Lock()
+	bk.tables[tablePrefix][tableName] = table
+	bk.rwMutex.Unlock()
+	return true, nil
+}
+
 // Table is model
 type Table struct {
 	tableName   string

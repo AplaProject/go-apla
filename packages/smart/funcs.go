@@ -21,6 +21,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -491,7 +492,6 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
-	fmt.Println("DBupdate")
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
@@ -504,8 +504,58 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	if err = sc.AccessColumns(tblname, columns); err != nil {
 		return
 	}
+
+	if tblname == "1_keys" {
+		err = updateCache(tblname, columns, val, id)
+		return 0, err
+	}
+
 	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, false)
 	return
+}
+
+func updateCache(tableName string, columns []string, val []interface{}, id int64) error {
+	values := converter.InterfaceSliceToStr(val)
+	tableID, _ := strconv.ParseInt(tableName[:strings.Index(tableName, "_")], 10, 64)
+	key, found, err := model.BufKeys.GetKey(tableID, id)
+	amount, _ := decimal.NewFromString(key.Amount)
+	if err != nil {
+		return err
+	}
+	if !found {
+		key = model.Key{}
+		key.ID = id
+		key.Amount = "0"
+	}
+
+	for i, col := range columns {
+		if strings.HasSuffix(col, "amount") {
+			difference, _ := decimal.NewFromString(values[i])
+			switch col[0] {
+			case '+':
+				key.Amount = (amount.Add(difference)).String()
+			case '-':
+				key.Amount = (amount.Sub(difference)).String()
+			default:
+				return errors.New("unknow operation")
+			}
+
+		}
+		if strings.HasSuffix(col, "pub") {
+			key.PublicKey = converter.BinToHex((val[i].(byte)))
+			_, err = model.BufKeys.SetKey(tableID, id, key)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	_, err = model.BufKeys.SetKey(tableID, id, key)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // EcosysParam returns the value of the specified parameter for the ecosystem

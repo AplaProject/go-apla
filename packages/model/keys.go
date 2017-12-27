@@ -8,16 +8,16 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type bufferedKeys struct {
-	keys        map[int64]map[int64]Key
-	rwMutex     sync.RWMutex
-	updateMutex sync.Mutex
-}
-
 var ecosystemNotFoundErr = errors.New("ecosystem not found")
 
 func NewBufferedKeys() *bufferedKeys {
 	return &bufferedKeys{keys: make(map[int64]map[int64]Key)}
+}
+
+type bufferedKeys struct {
+	keys        map[int64]map[int64]Key
+	rwMutex     sync.RWMutex
+	updateMutex sync.Mutex
 }
 
 func loadEcosystemKeys(ecosystemID int64) (*[]Key, error) {
@@ -95,7 +95,6 @@ func (bk *bufferedKeys) GetKey(tablePrefix int64, id int64) (key Key, found bool
 
 	_, ok = bk.keys[tablePrefix][id]
 	if !ok {
-		fmt.Println("retrieve key with id", id)
 		err = bk.updateKeyCache(tablePrefix, id)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return result, false, err
