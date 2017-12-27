@@ -27,7 +27,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
-	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -53,8 +54,9 @@ type Source struct {
 }
 
 type Workspace struct {
-	Sources *map[string]Source
-	Vars    *map[string]string
+	Sources       *map[string]Source
+	Vars          *map[string]string
+	SmartContract *smart.SmartContract
 }
 
 type parFunc struct {
@@ -62,6 +64,7 @@ type parFunc struct {
 	Node      *node
 	Workspace *Workspace
 	Pars      *map[string]string
+	RawPars   *map[string]string
 	Tails     *[]*[][]rune
 }
 
@@ -136,21 +139,24 @@ func setAllAttr(par parFunc) {
 	}
 	for key := range *par.Pars {
 		if key[0] == '@' {
-			var out string
 			key = strings.ToLower(key[1:])
-			root := node{}
 			if par.Node.Attr[key] == nil {
 				continue
 			}
-			process(par.Node.Attr[key].(string), &root, par.Workspace)
-			for _, item := range root.Children {
-				if item.Tag == `text` {
-					out += item.Text
-				}
-			}
-			par.Node.Attr[key] = out
+			par.Node.Attr[key] = processToText(par, par.Node.Attr[key].(string))
 		}
 	}
+}
+
+func processToText(par parFunc, input string) (out string) {
+	root := node{}
+	process(input, &root, par.Workspace)
+	for _, item := range root.Children {
+		if item.Tag == `text` {
+			out += item.Text
+		}
+	}
+	return
 }
 
 func ifValue(val string, workspace *Workspace) bool {
@@ -317,8 +323,18 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		}
 	}
 	state := int(converter.StrToInt64((*workspace.Vars)[`ecosystem_id`]))
-	for i, v := range pars {
-		pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`accept_lang`])
+	if (*workspace.Vars)[`_full`] != `1` {
+		for i, v := range pars {
+			pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`accept_lang`],
+				workspace.SmartContract.VDE)
+			if pars[i] != v {
+				if parFunc.RawPars == nil {
+					rawpars := make(map[string]string)
+					parFunc.RawPars = &rawpars
+				}
+				(*parFunc.RawPars)[i] = v
+			}
+		}
 	}
 	if len(curFunc.Tag) > 0 {
 		curNode.Tag = curFunc.Tag
@@ -542,7 +558,16 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 		(*vars)[`_full`] = `0`
 	}
 	root := node{}
-	process(input, &root, &Workspace{Vars: vars})
+	isvde := (*vars)[`vde`] == `true` || (*vars)[`vde`] == `1`
+
+  sc := smart.SmartContract{
+		VDE: isvde,
+		VM:  smart.GetVM(isvde, converter.StrToInt64((*vars)[`ecosystem_id`])),
+		TxSmart: tx.SmartContract{Header: tx.Header{EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
+			KeyID: converter.StrToInt64((*vars)[`key_id`])}},
+
+	}
+	process(input, &root, &Workspace{Vars: vars, SmartContract: &sc})
 	if root.Children == nil {
 		return []byte(`[]`)
 	}
@@ -552,13 +577,4 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 		return []byte(err.Error())
 	}
 	return out
-}
-
-// StateParam returns the value of state parameters
-func StateParam(idstate int64, name string) (string, error) {
-	val, err := model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_parameters" WHERE name = ?`, name).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting state parameter")
-	}
-	return val, err
 }

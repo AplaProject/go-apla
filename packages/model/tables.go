@@ -8,7 +8,7 @@ type Table struct {
 	ID          int64  `gorm:"primary_key;not null"`
 	Name        string `gorm:"not null;size:100"`
 	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
-	Columns     string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	Columns     string `gorm:"not null"`
 	Conditions  string `gorm:"not null"`
 	RbID        int64  `gorm:"not null"`
 }
@@ -19,7 +19,7 @@ type TableVDE struct {
 	ID          int64  `gorm:"primary_key;not null"`
 	Name        string `gorm:"not null;size:100"`
 	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
-	Columns     string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	Columns     string `gorm:"not null"`
 	Conditions  string `gorm:"not null"`
 }
 
@@ -69,8 +69,8 @@ func (t *Table) ExistsByName(transaction *DbTransaction, name string) (bool, err
 }
 
 // IsExistsByPermissionsAndTableName returns columns existence by permission and table name
-func (t *Table) IsExistsByPermissionsAndTableName(columnName, tableName string) (bool, error) {
-	return isFound(DBConn.Where(`(columns-> ? ) is not null AND name = ?`, columnName, tableName).First(t))
+func (t *Table) IsExistsByPermissionsAndTableName(transaction *DbTransaction, columnName, tableName string) (bool, error) {
+	return isFound(GetDB(transaction).Where(`(columns-> ? ) is not null AND name = ?`, columnName, tableName).First(t))
 }
 
 // GetColumns returns columns from database

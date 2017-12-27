@@ -19,6 +19,7 @@ package api
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -27,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 )
@@ -61,7 +63,7 @@ func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
 	if form != nil {
 		ioform = strings.NewReader(form.Encode())
 	}
-	req, err := http.NewRequest(rtype, `http://localhost:7079/api/v2/`+url, ioform)
+	req, err := http.NewRequest(rtype, `http://localhost:7079`+consts.ApiPath+url, ioform)
 	if err != nil {
 		return err
 	}
@@ -198,8 +200,12 @@ func waitTx(hash string) (int64, error) {
 		if len(ret.BlockID) > 0 {
 			return converter.StrToInt64(ret.BlockID), fmt.Errorf(ret.Result)
 		}
-		if len(ret.Message) > 0 {
-			return 0, fmt.Errorf(ret.Message)
+		if ret.Message != nil {
+			errtext, err := json.Marshal(ret.Message)
+			if err != nil {
+				return 0, err
+			}
+			return 0, errors.New(string(errtext))
 		}
 		time.Sleep(time.Second)
 	}
@@ -226,7 +232,7 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 	}
 	if len((*form)[`vde`]) > 0 {
 		if ret[`result`] != nil {
-			id = converter.StrToInt64(ret[`result`].(string))
+			id = converter.StrToInt64(fmt.Sprint(ret[`result`]))
 		}
 		return
 	}
@@ -236,6 +242,11 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 		err = nil
 	}
 	return
+}
+
+func RawToString(input json.RawMessage) string {
+	out := strings.Trim(string(input), `"`)
+	return strings.Replace(out, `\"`, `"`, -1)
 }
 
 func postTx(txname string, form *url.Values) error {

@@ -17,7 +17,6 @@
 package tcpserver
 
 import (
-	"flag"
 	"io"
 	"net"
 	"strings"
@@ -32,10 +31,6 @@ import (
 var (
 	counter int64
 )
-
-func init() {
-	flag.Parse()
-}
 
 // HandleTCPRequest proceed TCP requests
 func HandleTCPRequest(rw io.ReadWriter) {

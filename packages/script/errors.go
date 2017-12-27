@@ -20,10 +20,13 @@ import "errors"
 
 const (
 	eContractLoop    = `there is loop in %s contract`
+	eTypeParam       = `parameter %d has wrong type`
 	eUndefinedParam  = `%s is not defined`
 	eUnknownContract = `unknown contract %s`
+	eWrongParams     = `function %s must have %d parameters`
 )
 
 var (
-	errContractPars = errors.New(`wrong contract parameters`)
+	errContractPars   = errors.New(`wrong contract parameters`)
+	errWrongCountPars = errors.New(`wrong count of parameters`)
 )

@@ -44,8 +44,8 @@ func TestLang(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if ret.Tree != `[{"tag":"span","children":[{"tag":"text","text":"Text My test"},{"tag":"text","text":"+French string"}]}]` {
-		t.Error(fmt.Errorf(`wrong tree %s`, ret.Tree))
+	if RawToString(ret.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"Text My test"},{"tag":"text","text":"+French string"}]}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
 		return
 	}
 
@@ -63,8 +63,18 @@ func TestLang(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if ret.Tree != `[{"tag":"table","attr":{"columns":[{"Name":"name","Title":"My test"}],"source":"mysrc"}},{"tag":"span","children":[{"tag":"text","text":"Text Spanish text"},{"tag":"text","text":" My test"}]},{"tag":"input","attr":{"class":"form-control","name":"Name","placeholder":"My test","type":"text"}}]` {
-		t.Error(fmt.Errorf(`wrong tree %s`, ret.Tree))
+	if RawToString(ret.Tree) != `[{"tag":"table","attr":{"columns":[{"Name":"name","Title":"My test"}],"source":"mysrc"}},{"tag":"span","children":[{"tag":"text","text":"Text Spanish text"},{"tag":"text","text":" My test"}]},{"tag":"input","attr":{"class":"form-control","name":"Name","placeholder":"My test","type":"text"}}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
+		return
+	}
+	input = fmt.Sprintf(`MenuGroup($%s$){MenuItem(Ooops, ooops)}MenuGroup(nolang){MenuItem(no, no)}`, name)
+	err = sendPost(`content`, &url.Values{`template`: {input}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(ret.Tree) != fmt.Sprintf(`[{"tag":"menugroup","attr":{"name":"$%s$","title":"My test"},"children":[{"tag":"menuitem","attr":{"page":"ooops","title":"Ooops"}}]},{"tag":"menugroup","attr":{"name":"nolang","title":"nolang"},"children":[{"tag":"menuitem","attr":{"page":"no","title":"no"}}]}]`, name) {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
 		return
 	}
 

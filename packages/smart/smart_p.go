@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
@@ -44,16 +43,6 @@ var (
 		"DBUpdateSysParam": {},
 		"DBUpdateExt":      {},
 		"DBSelect":         {},
-		"DBInt":            {},
-		"DBRowExt":         {},
-		"DBRow":            {},
-		"DBStringExt":      {},
-		"DBIntExt":         {},
-		"DBStringWhere":    {},
-		"DBIntWhere":       {},
-		"DBAmount":         {},
-		"DBInsertReport":   {},
-		"FindEcosystem":    {},
 	}
 
 	extendCostSysParams = map[string]string{
@@ -84,14 +73,11 @@ var (
 		"Activate":          "extend_cost_activate",
 		"Deactivate":        "extend_cost_deactivate",
 		"CreateEcosystem":   "extend_cost_create_ecosystem",
-		"RollbackEcosystem": "extend_cost_rollback_ecosystem",
 		"TableConditions":   "extend_cost_table_conditions",
 		"CreateTable":       "extend_cost_create_table",
-		"RollbackTable":     "extend_cost_rollback_table",
 		"PermTable":         "extend_cost_perm_table",
 		"ColumnCondition":   "extend_cost_column_condition",
 		"CreateColumn":      "extend_cost_create_column",
-		"RollbackColumn":    "extend_cost_rollback_column",
 		"PermColumn":        "extend_cost_perm_column",
 		"JSONToMap":         "extend_cost_json_to_map",
 	}
@@ -112,73 +98,7 @@ type TxSignJSON struct {
 }
 
 func init() {
-	Extend(&script.ExtendData{Objects: map[string]interface{}{
-		"DBInsert":           DBInsert,
-		"DBUpdate":           DBUpdate,
-		"DBUpdateSysParam":   UpdateSysParam,
-		"DBUpdateExt":        DBUpdateExt,
-		"DBSelect":           DBSelect,
-		"DBInt":              DBInt,
-		"DBRowExt":           DBRowExt,
-		"DBRow":              DBRow,
-		"DBStringExt":        DBStringExt,
-		"DBIntExt":           DBIntExt,
-		"DBStringWhere":      DBStringWhere,
-		"DBIntWhere":         DBIntWhere,
-		"AddressToId":        AddressToID,
-		"IdToAddress":        IDToAddress,
-		"DBAmount":           DBAmount,
-		"ContractAccess":     ContractAccess,
-		"ContractConditions": ContractConditions,
-		"EcosysParam":        EcosysParam,
-		"SysParamString":     SysParamString,
-		"SysParamInt":        SysParamInt,
-		"SysFuel":            SysFuel,
-		"Int":                Int,
-		"Str":                Str,
-		"Money":              Money,
-		"Float":              Float,
-		"Len":                Len,
-		"Join":               Join,
-		"Sha256":             Sha256,
-		"PubToID":            PubToID,
-		"HexToBytes":         HexToBytes,
-		"LangRes":            LangRes,
-		"DBInsertReport":     DBInsertReport,
-		"ValidateCondition":  ValidateCondition,
-		"EvalCondition":      EvalCondition,
-		"HasPrefix":          strings.HasPrefix,
-		"Contains":           strings.Contains,
-		"Replace":            Replace,
-		"FindEcosystem":      FindEcosystem,
-		"CreateEcosystem":    CreateEcosystem,
-		"RollbackEcosystem":  RollbackEcosystem,
-		"CreateTable":        CreateTable,
-		"RollbackTable":      RollbackTable,
-		"PermTable":          PermTable,
-		"TableConditions":    TableConditions,
-		"ColumnCondition":    ColumnCondition,
-		"CreateColumn":       CreateColumn,
-		"RollbackColumn":     RollbackColumn,
-		"PermColumn":         PermColumn,
-		"UpdateLang":         UpdateLang,
-		"Size":               Size,
-		"Split":              Split,
-		"Substr":             Substr,
-		"ContractsList":      contractsList,
-		"IsObject":           IsObject,
-		"CompileContract":    CompileContract,
-		"FlushContract":      FlushContract,
-		"Eval":               Eval,
-		"Activate":           Activate,
-		"Deactivate":         Deactivate,
-		"JSONToMap":          JSONToMap,
-		"check_signature":    CheckSignature, // system function
-	}, AutoPars: map[string]string{
-		`*smart.SmartContract`: `sc`,
-	}})
-	ExtendCost(getCostP)
-	FuncCallsDB(funcCallsDBP)
+	EmbedFuncs(smartVM, script.VMTypeSmart)
 }
 
 func getCostP(name string) int64 {
@@ -194,10 +114,6 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		fields []string
 		values []interface{}
 	)
-	if sc.TxContract.Name != `@1UpdateSysParam` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SysParams can be only changed from @1UpdateSysParam")
-		return 0, fmt.Errorf(`SysParams can be only changed from @1UpdateSysParam`)
-	}
 	par := &model.SystemParameter{}
 	found, err := par.Get(name)
 	if err != nil {
@@ -221,6 +137,61 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		}
 	}
 	if len(value) > 0 {
+		var (
+			ok, checked bool
+			list        [][]string
+		)
+		ival := converter.StrToInt64(value)
+	check:
+		switch name {
+		case `gap_between_blocks`:
+			ok = ival > 0 && ival < 86400
+		case `rb_blocks_1`, `number_of_nodes`:
+			ok = ival > 0 && ival < 1000
+		case `rb_blocks_2`:
+			ok = ival > 0 && ival < 10000
+		case `ecosystem_price`, `contract_price`, `column_price`, `table_price`, `menu_price`,
+			`page_price`, `commission_size`:
+			ok = ival >= 0
+		case `max_block_size`, `max_tx_size`, `max_tx_count`, `max_columns`, `max_indexes`,
+			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`:
+			ok = ival > 0
+		case `fuel_rate`, `full_nodes`, `commission_wallet`:
+			err := json.Unmarshal([]byte(value), &list)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling system param")
+				return 0, err
+			}
+			for _, item := range list {
+				switch name {
+				case `fuel_rate`, `commission_wallet`:
+					if len(item) != 2 || converter.StrToInt64(item[0]) <= 0 ||
+						(name == `fuel_rate` && converter.StrToInt64(item[1]) <= 0) ||
+						(name == `commission_wallet` && converter.StrToInt64(item[1]) == 0) {
+						break check
+					}
+				case `full_nodes`:
+					if len(item) != 3 {
+						break check
+					}
+					key := converter.StrToInt64(item[1])
+					if key == 0 || len(item[2]) != 128 || !converter.ValidateIPv4(item[0]) {
+						break check
+					}
+				}
+			}
+			checked = true
+		default:
+			if strings.HasPrefix(name, `extend_cost_`) {
+				ok = ival >= 0
+				break
+			}
+			checked = true
+		}
+		if !checked && (!ok || converter.Int64ToStr(ival) != value) {
+			log.WithFields(log.Fields{"type": consts.InvalidObject, "value": value, "name": name}).Error(ErrInvalidValue.Error())
+			return 0, ErrInvalidValue
+		}
 		fields = append(fields, "value")
 		values = append(values, value)
 	}
@@ -236,15 +207,16 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE)
+	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
 	if err != nil {
 		return 0, err
 	}
-	err = syspar.SysUpdate()
+	err = syspar.SysUpdate(sc.DbTransaction)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 		return 0, err
 	}
+	sc.SysUpdate = true
 	return 0, nil
 }
 
@@ -260,172 +232,11 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 		return
 	}
 	columns := strings.Split(params, `,`)
-	if err = sc.AccessColumns(tblname, columns); err != nil {
+	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && sc.Rollback, false)
 	return
-}
-
-// DBInt returns the numeric value of the column for the record with the specified id
-func DBInt(sc *SmartContract, tblname string, name string, id int64) (int64, int64, error) {
-	tblname = getDefTableName(sc, tblname)
-
-	cost, err := model.GetQueryTotalCost(sc.DbTransaction, `select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, 0, err
-	}
-	res, err := model.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).Int64()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting db int")
-	}
-	return cost, res, err
-}
-
-// DBRowExt returns one row from the table StringExt
-func DBRowExt(sc *SmartContract, tblname string, columns string, id interface{}, idname string) (int64, map[string]string, error) {
-
-	tblname = getDefTableName(sc, tblname)
-
-	isBytea := GetBytea(tblname)
-	if isBytea[idname] {
-		switch id.(type) {
-		case string:
-			if vbyte, err := hex.DecodeString(id.(string)); err == nil {
-				id = vbyte
-			}
-		}
-	}
-	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where ` + converter.EscapeName(idname) + `=?`
-	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, id)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, nil, err
-	}
-	res, err := model.GetOneRow(query, id).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
-	}
-
-	return cost, res, err
-}
-
-// DBRow returns one row from the table StringExt
-func DBRow(sc *SmartContract, tblname string, columns string, id int64) (int64, map[string]string, error) {
-	tblname = getDefTableName(sc, tblname)
-
-	query := `select ` + converter.Sanitize(columns, ` ,()*`) + ` from ` + converter.EscapeName(tblname) + ` where id=?`
-	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, id)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, nil, err
-	}
-	res, err := model.GetOneRow(query, id).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
-	}
-
-	return cost, res, err
-}
-
-// DBStringExt returns the value of 'name' column for the record with the specified value of the 'idname' field
-func DBStringExt(sc *SmartContract, tblname string, name string, id interface{}, idname string) (int64, string, error) {
-	tblname = getDefTableName(sc, tblname)
-
-	isBytea := GetBytea(tblname)
-	if isBytea[idname] {
-		switch id.(type) {
-		case string:
-			if vbyte, err := hex.DecodeString(id.(string)); err == nil {
-				id = vbyte
-			}
-		}
-	}
-
-	cost, err := model.GetQueryTotalCost(sc.DbTransaction, `select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, "", err
-	}
-	res, err := model.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting dbstring ext")
-	}
-	return cost, res, err
-}
-
-// DBIntExt returns the numeric value of the 'name' column for the record with the specified value of the 'idname' field
-func DBIntExt(sc *SmartContract, tblname string, name string, id interface{}, idname string) (cost int64, ret int64, err error) {
-	var val string
-	var qcost int64
-
-	tblname = getDefTableName(sc, tblname)
-	qcost, val, err = DBStringExt(sc, tblname, name, id, idname)
-	if err != nil {
-		return 0, 0, err
-	}
-	if len(val) == 0 {
-		return 0, 0, nil
-	}
-	res, err := strconv.ParseInt(val, 10, 64)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting DBStringExt result from string to int")
-	}
-	return qcost, res, err
-}
-
-// DBStringWhere returns the column value based on the 'where' condition and 'params' values for this condition
-func DBStringWhere(sc *SmartContract, tblname string, name string, where string, params ...interface{}) (int64, string, error) {
-
-	tblname = getDefTableName(sc, tblname)
-
-	selectQuery := `select ` + converter.EscapeName(name) + ` from ` + converter.EscapeName(tblname) + ` where ` + strings.Replace(converter.Escape(where), `$`, `?`, -1)
-	qcost, err := model.GetQueryTotalCost(sc.DbTransaction, selectQuery, params...)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, "", err
-	}
-	res, err := model.Single(selectQuery, params).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
-		return 0, "", err
-	}
-	return qcost, res, err
-}
-
-// DBIntWhere returns the column value based on the 'where' condition and 'params' values for this condition
-func DBIntWhere(sc *SmartContract, tblname string, name string, where string, params ...interface{}) (cost int64, ret int64, err error) {
-	var val string
-	cost, val, err = DBStringWhere(sc, tblname, name, where, params...)
-	if err != nil {
-		return 0, 0, err
-	}
-	if len(val) == 0 {
-		return 0, 0, nil
-	}
-	res, err := strconv.ParseInt(val, 10, 64)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("conversion DBStringWhere result from string to int")
-	}
-	return cost, res, err
-}
-
-// DBAmount returns the value of the 'amount' column for the record with the 'id' value in the 'column' column
-func DBAmount(sc *SmartContract, tblname, column string, id int64) (int64, decimal.Decimal) {
-
-	tblname = getDefTableName(sc, tblname)
-
-	balance, err := model.Single("SELECT amount FROM "+converter.EscapeName(tblname)+" WHERE "+converter.EscapeName(column)+" = ?", id).String()
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("executing single query")
-		return 0, decimal.New(0, 0)
-	}
-	val, err := decimal.NewFromString(balance)
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.ConversionError}).Error("converting balance from string to decimal")
-	}
-	return 0, val
 }
 
 // SysParamString returns the value of the system parameter
@@ -518,31 +329,8 @@ func HexToBytes(hexdata string) ([]byte, error) {
 
 // LangRes returns the language resource
 func LangRes(sc *SmartContract, idRes, lang string) string {
-	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang)
+	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang, sc.VDE)
 	return ret
-}
-
-// DBInsertReport inserts a record into the specified report table
-func DBInsertReport(sc *SmartContract, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
-	names := strings.Split(getDefTableName(sc, tblname), `_`)
-	state := converter.StrToInt64(names[0])
-	if state != int64(sc.TxSmart.EcosystemID) {
-		err = fmt.Errorf(`Wrong state in DBInsertReport`)
-		return
-	}
-	if !model.IsNodeState(state, ``) {
-		return
-	}
-	tblname = names[0] + `_reports_` + strings.Join(names[1:], `_`)
-	if err = sc.AccessTable(tblname, "insert"); err != nil {
-		return
-	}
-	var lastID string
-	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, !sc.VDE)
-	if err == nil {
-		ret, _ = strconv.ParseInt(lastID, 10, 64)
-	}
-	return
 }
 
 // EvalCondition gets the condition and check it
@@ -565,36 +353,18 @@ func Replace(s, old, new string) string {
 	return strings.Replace(s, old, new, -1)
 }
 
-// FindEcosystem checks if there is an ecosystem with the specified name
-func FindEcosystem(sc *SmartContract, country string) (int64, int64, error) {
-	query := `SELECT id FROM system_states where name=?`
-	cost, err := model.GetQueryTotalCost(sc.DbTransaction, query, country)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting query total cost")
-		return 0, 0, err
-	}
-	id, err := model.Single(query, country).Int64()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
-		return 0, 0, err
-	}
-	return cost, id, nil
-}
-
 // CreateEcosystem creates a new ecosystem
 func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error) {
 	if sc.TxContract.Name != `@1NewEcosystem` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateEcosystem can be only called from @1NewEcosystem")
 		return 0, fmt.Errorf(`CreateEcosystem can be only called from @1NewEcosystem`)
 	}
-	_, id, err := sc.selectiveLoggingAndUpd([]string{`name`}, []interface{}{
-		name,
-	}, `system_states`, nil, nil, !sc.VDE)
+	_, id, err := sc.selectiveLoggingAndUpd(nil, nil, `system_states`, nil, nil, !sc.VDE && sc.Rollback, false)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError}).Error("CreateEcosystem")
 		return 0, err
 	}
-	err = model.ExecSchemaEcosystem(converter.StrToInt(id), wallet, name)
+	err = model.ExecSchemaEcosystem(sc.DbTransaction, converter.StrToInt(id), wallet, name)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return 0, err
@@ -603,6 +373,80 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if err != nil {
 		return 0, err
 	}
+	sc.Rollback = false
+	_, _, err = DBInsert(sc, id+"_pages", "name,value,menu,conditions", "default_page",
+		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return 0, err
+	}
+	_, _, err = DBInsert(sc, id+"_menu", "name,value,title,conditions", "default_menu",
+		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return 0, err
+	}
+	var (
+		ret []interface{}
+		pub string
+	)
+	_, ret, err = DBSelect(sc, "1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting pub key")
+		return 0, err
+	}
+	if Len(ret) > 0 {
+		pub = ret[0].(map[string]string)[`pub`]
+	}
+	_, _, err = DBInsert(sc, id+"_keys", "id,pub", wallet, pub)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return 0, err
+	}
+	var sp model.StateParameter
+	sp.SetTablePrefix(`1`)
+	found, err := sp.Get(sc.DbTransaction, `founder_account`)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder")
+		return 0, err
+	}
+	if !found || len(sp.Value) == 0 {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": ErrFounderAccount}).Error("founder not found")
+		return 0, ErrFounderAccount
+	}
+	founder := sp.Value
+	_, ret, err = DBSelect(sc, "1_member", "id,username,avatar", converter.StrToInt64(founder), `id`,
+		0, 1, 0, ``, []interface{}{})
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder username")
+		return 0, err
+	}
+	if Len(ret) == 0 {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": ErrFounderAccount}).Error("getting founder info")
+		return 0, ErrFounderAccount
+	}
+	founderInfo := ret[0].(map[string]string)
+	_, _, err = DBInsert(sc, id+"_member", "id,username,avatar", founderInfo[`id`],
+		founderInfo[`username`], founderInfo[`avatar`])
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting member info")
+		return 0, err
+	}
+	_, _, err = DBInsert(sc, id+"_roles_list", "default_page,role_name,delete,role_type,creator_id,date_create,creator_name,creator_avatar",
+		`default_ecosystem_page`, `Admin`, `false`, `1`, founder, `NOW()`, founderInfo[`username`],
+		founderInfo[`avatar`])
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting into role list")
+		return 0, err
+	}
+	_, _, err = DBInsert(sc, id+"_roles_assign", "role_id,role_type,role_name,member_id,member_username,member_avatar,appointed_by_id,appointed_by_name,date_start,delete",
+		`1`, `1`, `Admin`, founder, founderInfo[`username`], founderInfo[`avatar`],
+		founder, founderInfo[`username`], `NOW()`, `false`)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting into role assign")
+		return 0, err
+	}
+
 	return converter.StrToInt64(id), err
 }
 
@@ -613,10 +457,15 @@ func RollbackEcosystem(sc *SmartContract) error {
 		return fmt.Errorf(`RollbackEcosystem can be only called from @1NewEcosystem`)
 	}
 	rollbackTx := &model.RollbackTx{}
-	err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, "system_states")
+	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, "system_states")
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback tx")
 		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("system states in rollback table")
+		// if there is not such hash then NewEcosystem was faulty. Do nothing.
+		return nil
 	}
 	lastID, err := model.GetNextID(sc.DbTransaction, `system_states`)
 	if err != nil {
@@ -628,6 +477,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 		log.WithFields(log.Fields{"table_id": rollbackTx.TableID, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
 		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
 	}
+
 	if model.IsTable(fmt.Sprintf(`%s_vde_tables`, rollbackTx.TableID)) {
 		// Drop all _local_ tables
 		table := &model.Table{}
@@ -675,14 +525,32 @@ func RollbackTable(sc *SmartContract, name string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from @1NewTable")
 		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
 	}
-	err := model.DropTable(sc.DbTransaction, fmt.Sprintf("%d_%s", sc.TxSmart.EcosystemID, name))
+	tableName := getDefTableName(sc, name)
+	rollbackTx := &model.RollbackTx{}
+	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, tableName)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback table")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("table record in rollback table")
+		// if there is not such hash then NewTable was faulty. Do nothing.
+		return nil
+	}
+	err = rollbackTx.DeleteByHashAndTableName(sc.DbTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting record from rollback table")
+		return err
+	}
+
+	err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%d_%s", sc.TxSmart.EcosystemID, name))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
 		return err
 	}
 	t := model.Table{}
 	t.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
-	found, err := t.Get(sc.DbTransaction, name)
+	found, err = t.Get(sc.DbTransaction, name)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
 		return err
@@ -705,12 +573,23 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`RollbackColumn can be only called from @1NewColumn`)
 	}
+	rollbackTx := &model.RollbackTx{}
+	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.EcosystemID))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column from rollback table")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("column record in rollback table")
+		// if there is not such hash then NewColumn was faulty. Do nothing.
+		return nil
+	}
 	return model.AlterTableDropColumn(fmt.Sprintf(`%d_%s`, sc.TxSmart.EcosystemID, tableName), name)
 }
 
 // UpdateLang updates language resource
 func UpdateLang(sc *SmartContract, name, trans string) {
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans)
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans, sc.VDE)
 }
 
 // Size returns the length of the string

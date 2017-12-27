@@ -1,10 +1,8 @@
 package daemons
 
 import (
-	"context"
 	"io"
 	"os"
-	"time"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -14,12 +12,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
-
-// CreatingBlockchain is writing block to blockchain
-func CreatingBlockchain(ctx context.Context, d *daemon) error {
-	d.sleepTime = 10 * time.Second
-	return writeNextBlocks(*utils.Dir+"/public/blockchain", syspar.GetRbBlocks2(), d.logger)
-}
 
 func writeNextBlocks(fileName string, minToSave int64, logger *log.Entry) error {
 	lastSavedBlockID, err := getLastBlockID(fileName, logger)

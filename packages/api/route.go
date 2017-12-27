@@ -25,7 +25,7 @@ import (
 )
 
 func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(method, `/api/v2/`+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
+	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
 }
 
 // Route sets routing pathes
@@ -47,7 +47,8 @@ func Route(route *hr.Router) {
 		anyTx(`POST`, url, params, preHandle, handle)
 	}
 
-	route.Handle(`OPTIONS`, `/api/v2/*name`, optionsHandler())
+	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
+	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
 
 	get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)
@@ -63,11 +64,12 @@ func Route(route *hr.Router) {
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
 	get(`txstatus/:hash`, ``, authWallet, txstatus)
 	get(`test/:name`, ``, getTest)
+	get(`history/:table/:id`, ``, authWallet, getHistory)
 
 	post(`content/page/:name`, ``, authWallet, getPage)
 	post(`content/menu/:name`, ``, authWallet, getMenu)
 	post(`install`, `?first_load_blockchain_url ?first_block_dir log_level type db_host db_port 
-	db_name db_pass db_user:string,?generate_first_block:int64`, install)
+	db_name db_pass db_user ?centrifugo_url ?centrifugo_secret:string,?generate_first_block:int64`, install)
 	post(`vde/create`, ``, authWallet, vdeCreate)
 	post(`login`, `?pubkey signature:hex,?key_id:string,?ecosystem ?expire:int64`, login)
 	postTx(`:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, prepareContract, contract)

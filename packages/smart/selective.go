@@ -19,6 +19,7 @@ package smart
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -29,8 +30,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	errUpdNotExistRecord = errors.New(`Update for not existing record`)
+)
+
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
-	table string, whereFields, whereValues []string, generalRollback bool) (int64, string, error) {
+	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
 	var (
 		tableID string
 		err     error
@@ -43,7 +48,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
-	isBytea := GetBytea(table)
+	isBytea := GetBytea(sc.DbTransaction, table)
 	for i, v := range ivalues {
 		if len(fields) > i && isBytea[fields[i]] {
 			switch v.(type) {
@@ -103,7 +108,10 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, tableID, err
 	}
 	cost += selectCost
-
+	if exists && len(logData) == 0 {
+		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "query": selectQuery}).Error("updating for not existing record")
+		return 0, tableID, errUpdNotExistRecord
+	}
 	if whereFields != nil && len(logData) > 0 {
 		jsonMap := make(map[string]string)
 		for k, v := range logData {
@@ -183,6 +191,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		for i := 0; i < len(fields); i++ {
 			if fields[i] == `id` {
 				isID = true
+				tableID = fmt.Sprint(values[i])
 			}
 			if fields[i][:1] == "+" || fields[i][:1] == "-" {
 				addSQLIns0 += fields[i][1:len(fields[i])] + `,`
@@ -207,13 +216,12 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			for i := 0; i < len(whereFields); i++ {
 				if whereFields[i] == `id` {
 					isID = true
+					tableID = fmt.Sprint(whereValues[i])
 				}
 				addSQLIns0 += `` + whereFields[i] + `,`
 				addSQLIns1 += `'` + whereValues[i] + `',`
 			}
 		}
-		addSQLIns0 = addSQLIns0[0 : len(addSQLIns0)-1]
-		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
 		if !isID {
 			id, err := model.GetNextID(sc.DbTransaction, table)
 			if err != nil {
@@ -221,11 +229,11 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 				return 0, ``, err
 			}
 			tableID = converter.Int64ToStr(id)
-			addSQLIns0 += `,id`
-			addSQLIns1 += `,'` + tableID + `'`
+			addSQLIns0 += `id,`
+			addSQLIns1 += `'` + tableID + `',`
 		}
-
-		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0 + `) VALUES (` + addSQLIns1 + `)`
+		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0[:len(addSQLIns0)-1] +
+			`) VALUES (` + addSQLIns1[:len(addSQLIns1)-1] + `)`
 		insertCost, err := model.GetQueryTotalCost(sc.DbTransaction, insertQuery)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")

@@ -1,8 +1,8 @@
 package daemonsctl
 
 import (
+	conf "github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/daemons"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/tcpserver"
@@ -15,9 +15,9 @@ var (
 	format = logging.MustStringFormatter("%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{message}")
 )
 
-// RunAllDaemons is starting all daemons
+// RunAllDaemons start daemons, load contracts and tcpserver
 func RunAllDaemons() error {
-	err := syspar.SysUpdate()
+	err := syspar.SysUpdate(nil)
 	if err != nil {
 		log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
 		return err
@@ -31,7 +31,7 @@ func RunAllDaemons() error {
 		return err
 	}
 
-	err = tcpserver.TcpListener(*utils.TCPHost + ":" + consts.TCP_PORT)
+	err = tcpserver.TcpListener(conf.Config.TCPServer.Str())
 	if err != nil {
 		log.Errorf("can't start tcp servers, stop")
 		return err

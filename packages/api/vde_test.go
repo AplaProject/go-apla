@@ -22,6 +22,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 )
@@ -169,8 +170,23 @@ func TestVDECreate(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	form = url.Values{"TableName": {name}, "Name": {`newColRead`}, `vde`: {`1`},
+		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {`{"update":"true", "read":"false"}`}}
+	err = postTx(`NewColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	form = url.Values{"TableName": {name}, "Name": {`newCol`}, `vde`: {`1`},
 		"Permissions": {"ContractConditions(\"MainCondition\")"}}
+	err = postTx(`EditColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"TableName": {name}, "Name": {`newCol`}, `vde`: {`1`},
+		"Permissions": {`{"update":"true", "read":"false"}`}}
 	err = postTx(`EditColumn`, &form)
 	if err != nil {
 		t.Error(err)
@@ -316,6 +332,112 @@ func TestVDEParams(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
+	name := randName(`lng`)
+	value := `{"en": "My VDE test", "fr": "French VDE test"}`
+
+	form = url.Values{"Name": {name}, "Trans": {value}, "vde": {`true`}}
+	err = postTx(`NewLang`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	input := fmt.Sprintf(`Span($%s$)+LangRes(%[1]s,fr)`, name)
+	var retContent contentResult
+	err = sendPost(`content`, &url.Values{`template`: {input}, `vde`: {`true`}}, &retContent)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(retContent.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"My VDE test"}]},{"tag":"text","text":"+French VDE test"}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(retContent.Tree)))
+		return
+	}
+
+	name = crypto.RandSeq(4)
+	err = postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {fmt.Sprintf(imp, name)}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+var vdeimp = `{
+    "pages": [
+        {
+            "Name": "imp_page2",
+            "Conditions": "true",
+            "Menu": "imp",
+            "Value": "imp"
+        }
+    ],
+    "blocks": [
+        {
+            "Name": "imp2",
+            "Conditions": "true",
+            "Value": "imp"
+        }
+    ],
+    "menus": [
+        {
+            "Name": "imp2",
+            "Conditions": "true",
+            "Value": "imp"
+        }
+    ],
+    "parameters": [
+        {
+            "Name": "founder_account2",
+            "Value": "-6457397116804798941",
+            "Conditions": "ContractConditions(\"MainCondition\")"
+        },
+        {
+            "Name": "test_pa2",
+            "Value": "1",
+            "Conditions": "true"
+        }
+    ],
+    "languages": [
+        {
+            "Name": "est2",
+            "Trans": "{\"en\":\"yeye\",\"te\":\"knfek\"}"
+        }
+    ],
+    "contracts": [
+        {
+            "Name": "testCont2",
+            "Value": "contract testCont2 {\n    data {\n\n    }\n\n    conditions {\n\n    }\n\n    action {\n        $result=\"privet\"\n    }\n}",
+            "Conditions": "true"
+        }
+    ],
+    "tables": [
+        {
+            "Name": "tests2",
+            "Columns": "[{\"name\":\"name\",\"type\":\"text\",\"conditions\":\"true\"}]",
+            "Permissions": "{\"insert\":\"true\",\"update\":\"true\",\"new_column\":\"true\"}"
+        }
+    ],
+    "data": [
+        {
+            "Table": "tests2",
+            "Columns": [
+                "name"
+            ],
+            "Data": []
+        }
+    ]
+}`
+
+func TestVDEImport(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	err := postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {vdeimp}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }
 
 func TestHTTPRequest(t *testing.T) {
@@ -341,12 +463,12 @@ func TestHTTPRequest(t *testing.T) {
 				}
 				heads["Authorization"] = "Bearer " + $Auth
 				pars["vde"] = "true"
-				ret = HTTPRequest("http://localhost:7079/api/v2/content/page/` + rnd + `", "POST", heads, pars)
+				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `content/page/` + rnd + `", "POST", heads, pars)
 				json = JSONToMap(ret)
 				if json["menu"] != "myvdemenu" {
 					error "Wrong vde menu"
 				}
-				ret = HTTPRequest("http://localhost:7079/api/v2/contract/VDEFunctions?vde=true", "GET", heads, pars)
+				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `contract/VDEFunctions?vde=true", "GET", heads, pars)
 				json = JSONToMap(ret)
 				if json["name"] != "@1VDEFunctions" {
 					error "Wrong vde contract"
