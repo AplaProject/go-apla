@@ -170,8 +170,23 @@ func TestVDECreate(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	form = url.Values{"TableName": {name}, "Name": {`newColRead`}, `vde`: {`1`},
+		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {`{"update":"true", "read":"false"}`}}
+	err = postTx(`NewColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	form = url.Values{"TableName": {name}, "Name": {`newCol`}, `vde`: {`1`},
 		"Permissions": {"ContractConditions(\"MainCondition\")"}}
+	err = postTx(`EditColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"TableName": {name}, "Name": {`newCol`}, `vde`: {`1`},
+		"Permissions": {`{"update":"true", "read":"false"}`}}
 	err = postTx(`EditColumn`, &form)
 	if err != nil {
 		t.Error(err)

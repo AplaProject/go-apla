@@ -18,6 +18,7 @@ package smart
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -456,86 +457,144 @@ func (sc *SmartContract) IsCustomTable(table string) (isCustom bool, err error) 
 }
 
 // AccessTable checks the access right to the table
-func (sc *SmartContract) AccessTable(table, action string) error {
+func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]string, error) {
+	var (
+		err             error
+		tablePermission map[string]string
+	)
 	logger := sc.GetLogger()
 
 	if table == getDefTableName(sc, `parameters`) {
 		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
-			return nil
+			return tablePermission, nil
 		}
 		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-		return fmt.Errorf(`Access denied`)
+		return tablePermission, errAccessDenied
 	}
 
 	if isCustom, err := sc.IsCustomTable(table); err != nil {
 		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
-		return err
+		return tablePermission, err
 	} else if !isCustom {
-		return fmt.Errorf(table + ` is not a custom table`)
+		return tablePermission, fmt.Errorf(table + ` is not a custom table`)
 	}
 
 	prefix, name := PrefixName(table)
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	tablePermission, err := tables.GetPermissions(sc.DbTransaction, name, "")
+	tablePermission, err = tables.GetPermissions(sc.DbTransaction, name, "")
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table permissions")
-		return err
+		return tablePermission, err
 	}
 	if len(tablePermission[action]) > 0 {
 		ret, err := sc.EvalIf(tablePermission[action])
 		if err != nil {
 			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "error": err, "type": consts.EvalError}).Error("evaluating table permissions for action")
-			return err
+			return tablePermission, err
 		}
 		if !ret {
 			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "type": consts.EvalError}).Error("access denied")
-			return fmt.Errorf(`Access denied`)
+			return tablePermission, errAccessDenied
 		}
 	}
-	return nil
+	return tablePermission, nil
+}
+
+func (sc *SmartContract) AccessTable(table, action string) error {
+	_, err := sc.AccessTablePerm(table, action)
+	return err
+}
+
+func getPermColumns(input string) (perm permColumn, err error) {
+	if strings.HasPrefix(input, `{`) {
+		err = json.Unmarshal([]byte(input), &perm)
+	} else {
+		perm.Update = input
+	}
+	return
 }
 
 // AccessColumns checks access rights to the columns
-func (sc *SmartContract) AccessColumns(table string, columns []string) error {
+func (sc *SmartContract) AccessColumns(table string, columns *[]string, update bool) error {
 	logger := sc.GetLogger()
-
 	if table == getDefTableName(sc, `parameters`) {
-		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
-			return nil
+		if update {
+			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
+				return nil
+			}
+			return errAccessDenied
 		}
-		return fmt.Errorf(`Access denied`)
+		return nil
 	}
-	// We don't check IsCustomTable because we calls it in AccessTable
 	prefix, name := PrefixName(table)
-
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
-	columnsAndPermissions, err := tables.GetColumns(sc.DbTransaction, name, "")
+	found, err := tables.Get(sc.DbTransaction, name)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table columns")
 		return err
 	}
-
-	for _, col := range columns {
-		var (
-			cond string
-			ok   bool
-		)
-		cond, ok = columnsAndPermissions[converter.Sanitize(col, ``)]
-		if !ok {
-			cond, ok = columnsAndPermissions[`*`]
+	if !found {
+		return fmt.Errorf(eTableNotFound, table)
+	}
+	var cols map[string]string
+	hcolumns := make(map[string]bool)
+	err = json.Unmarshal([]byte(tables.Columns), &cols)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("getting table columns")
+		return err
+	}
+	for _, col := range *columns {
+		colname := converter.Sanitize(col, `*`)
+		if !update && colname == `*` {
+			for column := range cols {
+				hcolumns[column] = true
+			}
+			break
 		}
-		if ok && len(cond) > 0 {
+		hcolumns[colname] = true
+	}
+	for column, cond := range cols {
+		if !hcolumns[column] && !hcolumns[`*`] {
+			continue
+		}
+		perm, err := getPermColumns(cond)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting access columns")
+			return err
+		}
+		if update {
+			cond = perm.Update
+		} else {
+			cond = perm.Read
+		}
+		if len(cond) > 0 {
 			ret, err := sc.EvalIf(cond)
 			if err != nil {
-				logger.WithFields(log.Fields{"condition": cond, "column": col, "type": consts.EvalError}).Error("evaluating condition")
+				logger.WithFields(log.Fields{"condition": cond, "column": column,
+					"type": consts.EvalError}).Error("evaluating condition")
 				return err
 			}
 			if !ret {
-				return fmt.Errorf(`Access denied`)
+				if update {
+					return errAccessDenied
+				}
+				hcolumns[column] = false
 			}
 		}
+	}
+	if !update {
+		retColumn := make([]string, 0)
+		for key, val := range hcolumns {
+			if val && key != `*` {
+				retColumn = append(retColumn, key)
+			}
+		}
+		if len(retColumn) == 0 {
+			return errAccessDenied
+		}
+		*columns = retColumn
 	}
 	return nil
 }
