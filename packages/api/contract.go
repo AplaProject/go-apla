@@ -34,8 +34,8 @@ import (
 type contractResult struct {
 	Hash string `json:"hash"`
 	// These fields are used for VDE
-	Message string `json:"errmsg,omitempty"`
-	Result  string `json:"result,omitempty"`
+	Message *txstatusError `json:"errmsg,omitempty"`
+	Result  string         `json:"result,omitempty"`
 }
 
 func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {

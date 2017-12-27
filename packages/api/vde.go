@@ -18,6 +18,7 @@ package api
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -170,10 +171,15 @@ func VDEContract(data []byte) (result *contractResult, err error) {
 	if err == nil {
 		if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
 			result.Result = ret
+		} else {
+			if errResult := json.Unmarshal([]byte(err.Error()), &result.Message); errResult != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": err.Error(),
+					"error": errResult}).Error("unmarshalling contract error")
+				result.Message = &txstatusError{Type: "panic", Error: errResult.Error()}
+			}
 		}
-	}
-	if err != nil {
-		result.Message = err.Error()
+	} else {
+		result.Message = &txstatusError{Type: "panic", Error: err.Error()}
 	}
 	return
 }
