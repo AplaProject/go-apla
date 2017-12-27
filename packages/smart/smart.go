@@ -70,6 +70,7 @@ var (
 	ErrFounderAccount = errors.New(`Unknown founder account`)
 	ErrFuelRate       = errors.New(`Fuel rate must be greater than 0`)
 	ErrIncorrectSign  = errors.New(`incorrect sign`)
+	ErrInvalidValue   = errors.New(`Invalid value`)
 	ErrUnknownNodeID  = errors.New(`Unknown node id`)
 	ErrWrongPriceFunc = errors.New(`Wrong type of price function`)
 )
