@@ -28,7 +28,13 @@ var (
 
 	// ErrDBConn database connection error
 	ErrDBConn = errors.New("Database connection error")
+
+	BufKeys *bufferedKeys
 )
+
+func init() {
+	BufKeys = &bufferedKeys{keys: make(map[int64]map[int64]Key)}
+}
 
 func isFound(db *gorm.DB) (bool, error) {
 	if db.RecordNotFound() {

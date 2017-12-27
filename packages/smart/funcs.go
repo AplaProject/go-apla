@@ -491,6 +491,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
+	fmt.Println("DBupdate")
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return

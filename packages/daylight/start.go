@@ -283,6 +283,12 @@ func Start() {
 			}
 		}
 		initGorm(conf.Config.DB)
+
+		err = model.BufKeys.Initialize()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "can't init tkeys buffer", utils.ErrInfo(err))
+			Exit(1)
+		}
 	}
 
 	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -30,7 +31,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
 
-	"github.com/jinzhu/gorm"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -636,16 +636,16 @@ func (sc *SmartContract) GetContractLimit() (ret int64) {
 // CallContract calls the contract functions according to the specified flags
 func (sc *SmartContract) CallContract(flags int) (string, error) {
 	var (
-		result                            string
-		err                               error
-		public                            []byte
-		sizeFuel /*toID,*/, fromID, price int64
-		fuelRate                          decimal.Decimal
+		result                        string
+		err                           error
+		public                        []byte
+		sizeFuel, toID, fromID, price int64
+		fuelRate                      decimal.Decimal
 	)
+	startTime := time.Now()
 	logger := sc.GetLogger()
-	payWallet := &model.Key{}
+	payWallet := model.Key{}
 	sc.TxContract.Extend = sc.getExtend()
-
 	retError := func(err error) (string, error) {
 		eText := err.Error()
 		if !strings.HasPrefix(eText, `{`) {
@@ -653,23 +653,27 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		return ``, err
 	}
-
+	endTime := time.Now()
+	fmt.Println("getExtend time: ", endTime.Sub(startTime))
+	startTime = time.Now()
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
 	sc.TxContract.StackCont = []string{sc.TxContract.Name}
 	(*sc.TxContract.Extend)[`stack_cont`] = StackCont
 	sc.VM = GetVM(sc.VDE, sc.TxSmart.EcosystemID)
+	endTime = time.Now()
+	fmt.Println("getVM time: ", endTime.Sub(startTime))
+	startTime = time.Now()
 	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 {
 		if !sc.VDE {
-			//toID = sc.BlockData.KeyID
+			toID = sc.BlockData.KeyID
 			fromID = sc.TxSmart.KeyID
 		}
 		if len(sc.TxSmart.PublicKey) > 0 && string(sc.TxSmart.PublicKey) != `null` {
 			public = sc.TxSmart.PublicKey
 		}
-		wallet := &model.Key{}
-		wallet.SetTablePrefix(sc.TxSmart.EcosystemID)
-		err = wallet.Get(sc.TxSmart.KeyID)
-		if err != nil && err != gorm.ErrRecordNotFound {
+
+		wallet, found, err := model.BufKeys.GetKey(sc.TxSmart.EcosystemID, sc.TxSmart.KeyID)
+		if err != nil && !found {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 			return retError(err)
 		}
@@ -690,7 +694,13 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		sc.PublicKeys = append(sc.PublicKeys, public)
 		var CheckSignResult bool
+		endTime = time.Now()
+		fmt.Println("some code: ", endTime.Sub(startTime))
+		startTime = time.Now()
 		CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.BinSignatures, false)
+		endTime = time.Now()
+		fmt.Println("sign time ", endTime.Sub(startTime))
+		startTime = time.Now()
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("checking tx data sign")
 			return retError(err)
@@ -733,9 +743,9 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				}
 				fuelRate = fuelRate.Add(payOver)
 			}
-			payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
-			if err = payWallet.Get(fromID); err != nil {
-				if err == gorm.ErrRecordNotFound {
+			payWallet, found, err = model.BufKeys.GetKey(sc.TxSmart.TokenEcosystem, fromID)
+			if err != nil {
+				if !found {
 					return retError(ErrCurrentBalance)
 				}
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
@@ -750,6 +760,9 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
 				return retError(err)
 			}
+			endTime = time.Now()
+			fmt.Println("big code: ", endTime.Sub(startTime))
+			startTime = time.Now()
 			if cprice := sc.TxContract.GetFunc(`price`); cprice != nil {
 				var ret []interface{}
 				if ret, err = VMRun(sc.VM, cprice, nil, sc.TxContract.Extend); err != nil {
@@ -764,19 +777,23 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 					logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong type of price function")
 					return retError(ErrWrongPriceFunc)
 				}
+				endTime = time.Now()
+				fmt.Println("VMRun ", endTime.Sub(startTime))
 			}
+			startTime = time.Now()
 			sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024
 			if amount.Cmp(decimal.New(sizeFuel+price, 0).Mul(fuelRate)) <= 0 {
 				logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")
 				return retError(ErrCurrentBalance)
 			}
+			endTime = time.Now()
+			fmt.Println("small code: ", endTime.Sub(startTime))
 		}
 	}
+	startTime = time.Now()
 	before := (*sc.TxContract.Extend)[`txcost`].(int64) + price
-
 	// Payment for the size
 	(*sc.TxContract.Extend)[`txcost`] = (*sc.TxContract.Extend)[`txcost`].(int64) - sizeFuel
-
 	sc.TxContract.FreeRequest = false
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {
@@ -785,13 +802,21 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				continue
 			}
 			sc.TxContract.Called = 1 << i
+			endTime = time.Now()
+			fmt.Println("last code part1: ", endTime.Sub(startTime))
+			startTime1 := time.Now()
 			_, err = VMRun(sc.VM, cfunc, nil, sc.TxContract.Extend)
+			endTime1 := time.Now()
+			fmt.Println("VM run 2 ", endTime1.Sub(startTime1))
 			if err != nil {
 				before -= price
 				break
 			}
 		}
 	}
+	endTime = time.Now()
+	fmt.Println("last code part 1: ", endTime.Sub(startTime))
+	startTime = time.Now()
 	sc.TxUsedCost = decimal.New(before-(*sc.TxContract.Extend)[`txcost`].(int64), 0)
 	sc.TxContract.TxPrice = price
 	if (*sc.TxContract.Extend)[`result`] != nil {
@@ -808,28 +833,67 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			apl = wltAmount
 		}
 		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
+		endTime = time.Now()
+		fmt.Println("last code: ", endTime.Sub(startTime))
+		startTime = time.Now()
 		//walletTable := fmt.Sprintf(`%d_keys`, sc.TxSmart.TokenEcosystem)
-		/*
-			if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
-				[]string{converter.Int64ToStr(toID)}, true, true); ierr != nil {
-				if ierr != errUpdNotExistRecord {
-					return retError(ierr)
-				}
-				apl = commission
+		//----------------------first key --------------------------
+		key, found, err := model.BufKeys.GetKey(sc.TxSmart.TokenEcosystem, toID)
+		if err != nil {
+			return retError(err)
+		}
+		if !found {
+			apl = apl.Sub(commission)
+		} else {
+			newWal, err := decimal.NewFromString(key.Amount)
+			if err != nil {
+				return "", err
 			}
-			if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
-				[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true, true); ierr != nil {
-				if ierr != errUpdNotExistRecord {
-					return retError(ierr)
-				}
-				apl = apl.Sub(commission)
+			newWal = newWal.Add(apl.Sub(commission))
+			key.Amount = newWal.String()
+			_, err = model.BufKeys.SetKey(sc.TxSmart.TokenEcosystem, toID, key)
+			if err != nil {
+				return retError(err)
 			}
-			if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
-				[]string{converter.Int64ToStr(fromID)}, true, true); ierr != nil {
-				return retError(ierr)
-			}
-		*/
+		}
+		//---------------------second key----------------------
+		// walletStr := syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)
+		// walletID, _ := strconv.ParseUint(walletStr, 10, 64)
+		// commissionWallet, found, err := model.BufKeys.GetKey(sc.TxSmart.TokenEcosystem, int64(walletID))
+		// if err != nil {
+		// 	return retError(err)
+		// }
+		// if !found {
+		// 	apl = apl.Sub(commission)
+		// } else {
+		// 	newWal, err := decimal.NewFromString(commissionWallet.Amount)
+		// 	if err != nil {
+		// 		return "", err
+		// 	}
+		// 	newWal = newWal.Add(commission)
+		// 	commissionWallet.Amount = newWal.String()
+		// 	_, err = model.BufKeys.SetKey(sc.TxSmart.TokenEcosystem, commissionWallet.ID, commissionWallet)
+		// 	if err != nil {
+		// 		return retError(err)
+		// 	}
+		// }
+		// -------------------- third key
+		newWal, err := decimal.NewFromString(payWallet.Amount)
+		if err != nil {
+			return "", err
+		}
+		newWal = newWal.Sub(apl)
+		payWallet.Amount = newWal.String()
+		_, err = model.BufKeys.SetKey(sc.TxSmart.TokenEcosystem, payWallet.ID, payWallet)
+		if err != nil {
+			return retError(err)
+		}
+		if !found {
+			return retError(errors.New("payWallet not found"))
+		}
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")
+		endTime = time.Now()
+		fmt.Println("key time: ", endTime.Sub(startTime))
 	}
 	if err != nil {
 		return retError(err)
