@@ -37,6 +37,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/scheduler"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
@@ -159,6 +160,8 @@ func EmbedFuncs(vm *script.VM) {
 		"SortedKeys":   SortedKeys,
 		"Date":         Date,
 		"HTTPPostJSON": HTTPPostJSON,
+		"ValidateCron": ValidateCron,
+		"UpdateCron":   UpdateCron,
 	}, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
 	}})
@@ -1036,4 +1039,40 @@ func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string
 		return ``, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
 	}
 	return string(data), nil
+}
+
+func ValidateCron(cronSpec string) error {
+	err := scheduler.Parse(cronSpec)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("validate cron format")
+		return err
+	}
+	return nil
+}
+
+func UpdateCron(sc *SmartContract, id int64) error {
+	cronTask := &model.Cron{}
+	cronTask.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID) + "_vde")
+
+	ok, err := cronTask.Get(id)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get cron record")
+		return err
+	}
+
+	if !ok {
+		return nil
+	}
+
+	err = scheduler.UpdateTask(&scheduler.ContractTask{
+		ID:       cronTask.ID,
+		CronSpec: cronTask.Cron,
+		Contract: cronTask.Contract,
+	})
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.SchedulerError, "error": err}).Error("update cron task")
+		return err
+	}
+
+	return nil
 }

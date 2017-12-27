@@ -811,10 +811,12 @@ var (
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
+			ValidateCron($Cron)
 		}
 		action {
-			$result = DBInsert("cron", "owner,cron,contract,limit,till,conditions", 
-				 $key_id, $Cron, $Contract, $Limit, $Till, $Conditions )
+			$result = DBInsert("cron", "owner,cron,contract,\"limit\",till,conditions", 
+				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
+			UpdateCron($result)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('23','contract EditCron {
@@ -828,10 +830,12 @@ var (
 		}
 		conditions {
 			ConditionById("cron", true)
+			ValidateCron($Cron)
 		}
 		action {
-			DBUpdate("cron", $Id, "cron,contract,limit,till,conditions", 
-				$Cron, $Contract, $Limit, $Till, $Conditions )
+			DBUpdate("cron", $Id, "cron,contract,\"limit\",till,conditions", 
+				$Cron, $Contract, $Limit, $Till, $Conditions)
+			UpdateCron($Id)
 		}
 	}', 'ContractConditions("MainCondition")');
 	`

@@ -21,6 +21,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -531,5 +532,54 @@ func TestNodeHTTPRequest(t *testing.T) {
 	}
 	if msg != `Test NodeContract node `+rnd {
 		t.Error(`wrong result: ` + msg)
+	}
+}
+
+func TestCronNew(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	err := postTx("NewCron", &url.Values{
+		"Cron":       {"60 * * * *"},
+		"Contract":   {"CronTest"},
+		"Conditions": {`ContractConditions("MainCondition")`},
+		"vde":        {"true"},
+	})
+	if err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"End of range (60) above maximum (59): 60\"}" }` {
+		t.Error(err)
+	}
+
+	till := time.Now().Format(time.RFC3339)
+	err = postTx("NewCron", &url.Values{
+		"Cron":       {"* * * * *"},
+		"Contract":   {"TestCron"},
+		"Conditions": {`ContractConditions("MainCondition")`},
+		"Till":       {till},
+		"vde":        {"true"},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestCronEdit(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	till := time.Now().Format(time.RFC3339)
+	err := postTx("EditCron", &url.Values{
+		"Id":         {"1"},
+		"Cron":       {"*/3 * * * *"},
+		"Contract":   {"TestCron"},
+		"Conditions": {`ContractConditions("MainCondition")`},
+		"Till":       {till},
+		"vde":        {"true"},
+	})
+	if err != nil {
+		t.Error(err)
 	}
 }

@@ -48,4 +48,5 @@ const (
 	CentrifugoError          = "CentrifugoError"
 	StatsdError              = "StatsdError"
 	APIError                 = "APIError"
+	SchedulerError           = "SchedulerError"
 )

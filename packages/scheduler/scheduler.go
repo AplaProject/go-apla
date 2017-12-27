@@ -1,0 +1,82 @@
+package scheduler
+
+import (
+	"github.com/AplaProject/go-apla/packages/consts"
+
+	"github.com/robfig/cron"
+	log "github.com/sirupsen/logrus"
+)
+
+var scheduler *Scheduler
+
+func init() {
+	scheduler = NewScheduler()
+}
+
+type Scheduler struct {
+	cron *cron.Cron
+}
+
+func (s *Scheduler) AddTask(t Task) error {
+	err := t.ParseCron()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("parse cron format")
+		return err
+	}
+
+	s.cron.Schedule(t, t)
+	log.WithFields(log.Fields{"id": t.String()}).Info("task added")
+
+	return nil
+}
+
+func (s *Scheduler) UpdateTask(t Task) error {
+	err := t.ParseCron()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("parse cron format")
+		return err
+	}
+
+	s.cron.Stop()
+	defer s.cron.Start()
+
+	entries := s.cron.Entries()
+	for _, entry := range entries {
+		task := entry.Schedule.(Task)
+		if task.Equal(t) {
+			task.Update(t)
+			log.WithFields(log.Fields{"task": t.String()}).Info("task updated")
+			return nil
+		}
+
+		continue
+	}
+
+	s.cron.Schedule(t, t)
+	log.WithFields(log.Fields{"task": t.String()}).Info("task added")
+
+	return nil
+}
+
+func NewScheduler() *Scheduler {
+	s := &Scheduler{cron: cron.New()}
+	s.cron.Start()
+	return s
+}
+
+func AddTask(t Task) error {
+	return scheduler.AddTask(t)
+}
+
+func UpdateTask(t Task) error {
+	return scheduler.UpdateTask(t)
+}
+
+func Parse(cronSpec string) error {
+	_, err := cron.Parse(cronSpec)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("parse cron format")
+		return err
+	}
+	return nil
+}
