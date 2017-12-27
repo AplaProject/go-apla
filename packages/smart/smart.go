@@ -373,7 +373,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	}
 	state := converter.StrToInt64(prefix)
 	vm := newVM()
-	EmbedFuncs(vm)
+	EmbedFuncs(vm, script.VMTypeVDE)
 	smartVDE[state] = vm
 	for _, item := range contracts {
 		names := strings.Join(script.ContractsList(item[`value`]), `,`)

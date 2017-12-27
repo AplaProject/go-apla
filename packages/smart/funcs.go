@@ -125,8 +125,8 @@ func getCost(name string) int64 {
 }
 
 // EmbedFuncs is extending vm with embedded functions
-func EmbedFuncs(vm *script.VM) {
-	vmExtend(vm, &script.ExtendData{Objects: map[string]interface{}{
+func EmbedFuncs(vm *script.VM, vt script.VMType) {
+	f := map[string]interface{}{
 		"AddressToId":        AddressToID,
 		"ColumnCondition":    ColumnCondition,
 		"CompileContract":    CompileContract,
@@ -139,8 +139,12 @@ func EmbedFuncs(vm *script.VM) {
 		"DBInsert":           DBInsert,
 		"DBSelect":           DBSelect,
 		"DBUpdate":           DBUpdate,
+		"DBUpdateSysParam":   UpdateSysParam,
 		"DBUpdateExt":        DBUpdateExt,
 		"EcosysParam":        EcosysParam,
+		"SysParamString":     SysParamString,
+		"SysParamInt":        SysParamInt,
+		"SysFuel":            SysFuel,
 		"Eval":               Eval,
 		"EvalCondition":      EvalCondition,
 		"Float":              Float,
@@ -161,22 +165,41 @@ func EmbedFuncs(vm *script.VM) {
 		"Replace":            Replace,
 		"Size":               Size,
 		"Sha256":             Sha256,
-		"ToLower":            strings.ToLower,
-		"TrimSpace":          strings.TrimSpace,
-		"TableConditions":    TableConditions,
-		"UpdateLang":         UpdateLang,
+		"PubToID":            PubToID,
+		"HexToBytes":         HexToBytes,
+		"LangRes":            LangRes,
+		"HasPrefix":          strings.HasPrefix,
 		"ValidateCondition":  ValidateCondition,
-		//   VDE functions only
-		"HTTPRequest":  HTTPRequest,
-		"GetMapKeys":   GetMapKeys,
-		"SortedKeys":   SortedKeys,
-		"Date":         Date,
-		"HTTPPostJSON": HTTPPostJSON,
-	}, AutoPars: map[string]string{
+		"TrimSpace":          strings.TrimSpace,
+		"ToLower":            strings.ToLower,
+		"CreateEcosystem":    CreateEcosystem,
+		"RollbackEcosystem":  RollbackEcosystem,
+		"RollbackTable":      RollbackTable,
+		"TableConditions":    TableConditions,
+		"RollbackColumn":     RollbackColumn,
+		"UpdateLang":         UpdateLang,
+		"Activate":           Activate,
+		"Deactivate":         Deactivate,
+		"check_signature":    CheckSignature,
+	}
+
+	switch vt {
+	case script.VMTypeVDE:
+		f["HTTPRequest"] = HTTPRequest
+		f["GetMapKeys"] = GetMapKeys
+		f["SortedKeys"] = SortedKeys
+		f["Date"] = Date
+		f["HTTPPostJSON"] = HTTPPostJSON
+		vmExtendCost(vm, getCost)
+		vmFuncCallsDB(vm, funcCallsDB)
+	case script.VMTypeSmart:
+		ExtendCost(getCostP)
+		FuncCallsDB(funcCallsDBP)
+	}
+
+	vmExtend(vm, &script.ExtendData{Objects: f, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
 	}})
-	vmExtendCost(vm, getCost)
-	vmFuncCallsDB(vm, funcCallsDB)
 }
 
 func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {

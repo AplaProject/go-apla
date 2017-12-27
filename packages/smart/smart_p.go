@@ -98,66 +98,7 @@ type TxSignJSON struct {
 }
 
 func init() {
-	Extend(&script.ExtendData{Objects: map[string]interface{}{
-		"DBInsert":           DBInsert,
-		"DBUpdate":           DBUpdate,
-		"DBUpdateSysParam":   UpdateSysParam,
-		"DBUpdateExt":        DBUpdateExt,
-		"DBSelect":           DBSelect,
-		"AddressToId":        AddressToID,
-		"IdToAddress":        IDToAddress,
-		"ContractAccess":     ContractAccess,
-		"ContractConditions": ContractConditions,
-		"EcosysParam":        EcosysParam,
-		"SysParamString":     SysParamString,
-		"SysParamInt":        SysParamInt,
-		"SysFuel":            SysFuel,
-		"Int":                Int,
-		"Str":                Str,
-		"Money":              Money,
-		"Float":              Float,
-		"Len":                Len,
-		"Join":               Join,
-		"Sha256":             Sha256,
-		"PubToID":            PubToID,
-		"HexToBytes":         HexToBytes,
-		"LangRes":            LangRes,
-		"ValidateCondition":  ValidateCondition,
-		"EvalCondition":      EvalCondition,
-		"HasPrefix":          strings.HasPrefix,
-		"Contains":           strings.Contains,
-		"TrimSpace":          strings.TrimSpace,
-		"Replace":            Replace,
-		"ToLower":            strings.ToLower,
-		"CreateEcosystem":    CreateEcosystem,
-		"RollbackEcosystem":  RollbackEcosystem,
-		"CreateTable":        CreateTable,
-		"RollbackTable":      RollbackTable,
-		"PermTable":          PermTable,
-		"TableConditions":    TableConditions,
-		"ColumnCondition":    ColumnCondition,
-		"CreateColumn":       CreateColumn,
-		"RollbackColumn":     RollbackColumn,
-		"PermColumn":         PermColumn,
-		"UpdateLang":         UpdateLang,
-		"Size":               Size,
-		"Split":              Split,
-		"Substr":             Substr,
-		"ContractsList":      contractsList,
-		"IsObject":           IsObject,
-		"CompileContract":    CompileContract,
-		"FlushContract":      FlushContract,
-		"Eval":               Eval,
-		"Activate":           Activate,
-		"Deactivate":         Deactivate,
-		"JSONToMap":          JSONToMap,
-		"HMac":               HMac,
-		"check_signature":    CheckSignature, // system function
-	}, AutoPars: map[string]string{
-		`*smart.SmartContract`: `sc`,
-	}})
-	ExtendCost(getCostP)
-	FuncCallsDB(funcCallsDBP)
+	EmbedFuncs(smartVM, script.VMTypeSmart)
 }
 
 func getCostP(name string) int64 {
