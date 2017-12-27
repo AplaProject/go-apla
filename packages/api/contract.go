@@ -54,7 +54,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 
 	key := &model.Key{}
 	key.SetTablePrefix(data.ecosystemId)
-	err = key.Get(data.keyId)
+	_, err = key.Get(data.keyId)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		return errorAPI(w, err, http.StatusInternalServerError)

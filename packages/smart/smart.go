@@ -30,7 +30,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
 
-	"github.com/jinzhu/gorm"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -664,10 +663,8 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		if len(sc.TxSmart.PublicKey) > 0 && string(sc.TxSmart.PublicKey) != `null` {
 			public = sc.TxSmart.PublicKey
 		}
-		wallet := &model.Key{}
-		wallet.SetTablePrefix(sc.TxSmart.EcosystemID)
-		err = wallet.Get(sc.TxSmart.KeyID)
-		if err != nil && err != gorm.ErrRecordNotFound {
+		_, wallet, err := model.KeysCache.Get(sc.TxSmart.EcosystemID, sc.TxSmart.KeyID)
+		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 			return retError(err)
 		}
@@ -731,9 +728,10 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				}
 				fuelRate = fuelRate.Add(payOver)
 			}
-			payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
-			if err = payWallet.Get(fromID); err != nil {
-				if err == gorm.ErrRecordNotFound {
+			var found bool
+			var err error
+			if found, payWallet, err = model.KeysCache.Get(sc.TxSmart.TokenEcosystem, fromID); err != nil {
+				if !found {
 					return retError(ErrCurrentBalance)
 				}
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
@@ -806,24 +804,28 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			apl = wltAmount
 		}
 		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
-		walletTable := fmt.Sprintf(`%d_keys`, sc.TxSmart.TokenEcosystem)
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(toID)}, true, true); ierr != nil {
-			if ierr != errUpdNotExistRecord {
+		if found, err := model.KeysCache.OpAmount(sc.TxSmart.TokenEcosystem, toID, model.OpPlus,
+			apl.Sub(commission), sc.BlockData.BlockID, sc.TxHash); err != nil {
+			if err != nil {
 				return retError(ierr)
 			}
-			apl = commission
+			if !found {
+				apl = commission
+			}
 		}
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
-			[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true, true); ierr != nil {
-			if ierr != errUpdNotExistRecord {
+		if found, err := model.KeysCache.OpAmount(sc.TxSmart.TokenEcosystem, converter.StrToInt64(syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)), model.OpPlus, commission, sc.BlockData.BlockID, sc.TxHash); err != nil {
+			if err != nil {
 				return retError(ierr)
 			}
-			apl = apl.Sub(commission)
+			if !found {
+				apl = apl.Sub(commission)
+			}
 		}
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(fromID)}, true, true); ierr != nil {
-			return retError(ierr)
+		if _, err := model.KeysCache.OpAmount(sc.TxSmart.TokenEcosystem, fromID, model.OpMinus,
+			apl, sc.BlockData.BlockID, sc.TxHash); err != nil {
+			if err != nil {
+				return retError(ierr)
+			}
 		}
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")
 	}

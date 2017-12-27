@@ -492,6 +492,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
 	tblname = getDefTableName(sc, tblname)
+	columns := strings.Split(params, `,`)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
 	}
@@ -499,9 +500,20 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 		err = fmt.Errorf(`Access denied to report table`)
 		return
 	}
-	columns := strings.Split(params, `,`)
 	if err = sc.AccessColumns(tblname, columns); err != nil {
 		return
+	}
+	if strings.Contains(tblname, "keys") {
+		if len(columns) == 1 && strings.Contains(columns[0], "amount") {
+			op := columns[0][:1]
+			amount := (val[0]).(decimal.Decimal)
+			if found, err := model.KeysCache.OpAmount(sc.TxSmart.TokenEcosystem, id, op, amount, sc.BlockData.BlockID, sc.TxHash); err != nil {
+				return 0, err
+			} else if found {
+				return 1, nil
+			}
+			return 0, nil
+		}
 	}
 	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, false)
 	return

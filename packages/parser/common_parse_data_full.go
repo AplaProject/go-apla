@@ -82,7 +82,6 @@ func (b *Block) PlayBlockSafe() error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting db transaction")
 		return err
 	}
-
 	err = b.playBlock(dbTransaction)
 	if err != nil {
 		dbTransaction.Rollback()
@@ -589,6 +588,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		return err
 	}
 
+	model.KeysCache.Fill(dbTransaction)
 	for _, p := range b.Parsers {
 		p.DbTransaction = dbTransaction
 
@@ -624,6 +624,9 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		if err := InsertInLogTx(p.DbTransaction, p.TxFullData, p.TxTime); err != nil {
 			return utils.ErrInfo(err)
 		}
+	}
+	if err := model.KeysCache.Flush(dbTransaction); err != nil {
+		return err
 	}
 	return nil
 }
