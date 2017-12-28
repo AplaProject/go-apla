@@ -321,8 +321,8 @@ var (
 		  "owner"	  bigint NOT NULL DEFAULT '0',
 		  "cron"      varchar(255) NOT NULL DEFAULT '',
 		  "contract"  varchar(255) NOT NULL DEFAULT '',
-		  "limit"     bigint NOT NULL DEFAULT '0',
-		  "till"      timestamp,
+		  "counter"   bigint NOT NULL DEFAULT '0',
+		  "till"      timestamp NOT NULL DEFAULT timestamp '1970-01-01 00:00:00',
 		  "conditions" text  NOT NULL DEFAULT ''
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_cron" ADD CONSTRAINT "%[1]d_vde_cron_pkey" PRIMARY KEY ("id");
@@ -384,7 +384,7 @@ var (
 				'{"owner": "ContractConditions(\"MainCondition\")",
 				"cron": "ContractConditions(\"MainCondition\")",
 				"contract": "ContractConditions(\"MainCondition\")",
-				"limit": "ContractConditions(\"MainCondition\")",
+				"counter": "ContractConditions(\"MainCondition\")",
 				"till": "ContractConditions(\"MainCondition\")",
                   "conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractConditions(\"MainCondition\")');
@@ -814,7 +814,10 @@ var (
 			ValidateCron($Cron)
 		}
 		action {
-			$result = DBInsert("cron", "owner,cron,contract,\"limit\",till,conditions", 
+			if !$Till {
+				$Till = "1970-01-01 00:00:00"
+			}
+			$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions", 
 				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
 			UpdateCron($result)
 		}
@@ -833,7 +836,10 @@ var (
 			ValidateCron($Cron)
 		}
 		action {
-			DBUpdate("cron", $Id, "cron,contract,\"limit\",till,conditions", 
+			if !$Till {
+				$Till = "1970-01-01 00:00:00"
+			}
+			DBUpdate("cron", $Id, "cron,contract,counter,till,conditions", 
 				$Cron, $Contract, $Limit, $Till, $Conditions)
 			UpdateCron($Id)
 		}

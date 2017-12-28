@@ -535,7 +535,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 	}
 }
 
-func TestCronNew(t *testing.T) {
+func TestCron(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
@@ -562,21 +562,12 @@ func TestCronNew(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-}
 
-func TestCronEdit(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
-
-	till := time.Now().Format(time.RFC3339)
-	err := postTx("EditCron", &url.Values{
+	err = postTx("EditCron", &url.Values{
 		"Id":         {"1"},
 		"Cron":       {"*/3 * * * *"},
 		"Contract":   {"TestCron"},
 		"Conditions": {`ContractConditions("MainCondition")`},
-		"Till":       {till},
 		"vde":        {"true"},
 	})
 	if err != nil {
