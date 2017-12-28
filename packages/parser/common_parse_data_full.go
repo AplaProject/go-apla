@@ -89,7 +89,7 @@ func (b *Block) PlayBlockSafe() error {
 		return err
 	}
 
-	err = model.BufKeys.Flush(dbTransaction)
+	err = model.BufKeys.Flush(dbTransaction, b.Header.BlockID)
 	if err != nil {
 		dbTransaction.Rollback()
 		return err

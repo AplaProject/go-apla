@@ -72,6 +72,7 @@ func (bk *bufferedKeys) updateKeyCache(tablePrefix int64, id int64) error {
 	bk.updateMutex.Lock()
 	defer bk.updateMutex.Unlock()
 	key, err := loadVal(tablePrefix, id)
+	fmt.Println("fetching key")
 	if err != nil {
 		return err
 	}
@@ -195,14 +196,26 @@ func (k Key) GenerateInsertSQL(ecosystemID int64) string {
 		ecosystemID, k.ID, hex.EncodeToString(k.PublicKey), k.Amount)
 }
 
-func (bk *bufferedKeys) Flush(transaction *DbTransaction) error {
+func (bk *bufferedKeys) Flush(transaction *DbTransaction, blockID int64) error {
 	updateQueries := ""
 	insertQueries := ""
 	for ecosystemID, table := range bk.keys {
 		for _, key := range table {
 			if key.Status == New {
 				updateQueries += key.Key.GenerateInsertSQL(ecosystemID)
+				updateQueries += fmt.Sprintf(`INSERT INTO rollback_tx(block_id, tx_hash, table_name, table_id, data) 
+				VALUES (%d, decode('', 'HEX'), '%d_keys', '%d', '');`, blockID, ecosystemID, key.Key.ID)
 			} else if key.Status == Updated {
+				fields := "{"
+				if key.Key.Amount != key.History.Amount {
+					fields += fmt.Sprintf(`"amount": %s`, key.History.Amount)
+				}
+				if !sliceEqual(key.Key.PublicKey, key.History.PublicKey) {
+					fields += fmt.Sprintf(`, "pub": %s`, hex.EncodeToString(key.History.PublicKey))
+				}
+				fields += "}"
+				updateQueries += fmt.Sprintf(`INSERT INTO rollback_tx(block_id, tx_hash, table_name, table_id, data) 
+					VALUES (%d, decode('', 'HEX'), '%d_keys', '%d', '%s');`, blockID, ecosystemID, key.Key.ID, fields)
 				insertQueries += key.Key.GenerateUpdateSQL(ecosystemID, &key.History)
 			}
 			key.History = key.Key
@@ -218,6 +231,20 @@ func (bk *bufferedKeys) Flush(transaction *DbTransaction) error {
 	}
 
 	return nil
+}
+
+func sliceEqual(a []byte, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, _ := range a {
+		if (a)[i] != (b)[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Key is model

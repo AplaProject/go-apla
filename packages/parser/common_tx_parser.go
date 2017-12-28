@@ -30,6 +30,8 @@ import (
 func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	// get parameters for "struct" transactions
 	logger := p.GetLogger()
+
+	//startTime := time.Now()
 	txType, keyID := GetTxTypeAndUserID(binaryTx)
 
 	header, err := CheckTransaction(binaryTx)
@@ -142,10 +144,12 @@ func (p *Parser) DeleteQueueTx(hash []byte) error {
 func (p *Parser) AllTxParser() error {
 	logger := p.GetLogger()
 	all, err := model.GetAllUnverifiedAndUnusedTransactions()
+
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unverified and unused transactions")
 		return err
 	}
+
 	for _, data := range all {
 		err := p.TxParser(data.Hash, data.Data, false)
 		if err != nil {
