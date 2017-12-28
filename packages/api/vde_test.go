@@ -498,6 +498,17 @@ func TestNodeHTTPRequest(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	var ret getContractResult
+	err = sendGet(`contract/for`+rnd, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
+		t.Error(err)
+		return
+	}
+
 	form = url.Values{`Value`: {`contract ` + rnd + ` {
 		    data {
 				Auth string
@@ -563,8 +574,14 @@ func TestNodeHTTPRequest(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	//	fmt.Println(`NODE`, nodeResult)
-	//	t.Error(`OK`)
+	id, err = waitTx(nodeResult.Result)
+	if id != 0 && err != nil {
+		msg = err.Error()
+		err = nil
+	}
+	if msg != `Test NodeContract NodeContract testing `+rnd {
+		t.Error(`wrong result: ` + msg)
+	}
 }
 
 func TestCron(t *testing.T) {
