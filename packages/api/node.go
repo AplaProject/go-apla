@@ -109,7 +109,7 @@ func NodeContract(Name string) (result contractResult, err error) {
 		return
 	}
 	auth = logret.Token
-	form = url.Values{`vde`: {`true`}, `Auth`: {auth}}
+	form = url.Values{`vde`: {`true`}}
 	err = sendAPIRequest(`POST`, `node/`+Name, &form, &result, auth)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.APIError, "error": err}).Error("node request")

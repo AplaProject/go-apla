@@ -511,13 +511,12 @@ func TestNodeHTTPRequest(t *testing.T) {
 
 	form = url.Values{`Value`: {`contract ` + rnd + ` {
 		    data {
-				Auth string
 				Par string
 			}
 			action {
 				var ret string 
 				var pars, heads, json map
-				heads["Authorization"] = "Bearer " + $Auth
+				heads["Authorization"] = "Bearer " + $auth_token
 				pars["vde"] = "false"
 				pars["Par"] = $Par
 				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)
@@ -533,7 +532,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 		msg string
 		id  int64
 	)
-	if _, msg, err = postTxResult(rnd, &url.Values{`vde`: {`true`}, `Par`: {`node`}, `Auth`: {gAuth}}); err != nil {
+	if _, msg, err = postTxResult(rnd, &url.Values{`vde`: {`true`}, `Par`: {`node`}}); err != nil {
 		t.Error(err)
 		return
 	}
@@ -547,12 +546,11 @@ func TestNodeHTTPRequest(t *testing.T) {
 	}
 	form = url.Values{`Value`: {`contract node` + rnd + ` {
 		data {
-			Auth string
 		}
 		action { 
 			var ret string 
 			var pars, heads, json map
-			heads["Authorization"] = "Bearer " + $Auth
+			heads["Authorization"] = "Bearer " + $auth_token
 			pars["vde"] = "false"
 			pars["Par"] = "NodeContract testing"
 			ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)

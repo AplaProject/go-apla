@@ -145,7 +145,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if data.vde {
-		ret, err := VDEContract(serializedData)
+		ret, err := VDEContract(serializedData, data)
 		if err != nil {
 			return errorAPI(w, err, http.StatusInternalServerError)
 		}

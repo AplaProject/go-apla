@@ -158,17 +158,22 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 }
 
 // VDEContract is init VDE contract
-func VDEContract(data []byte) (result *contractResult, err error) {
+func VDEContract(contractData []byte, data *apiData) (result *contractResult, err error) {
 	var ret string
-	hash, err := crypto.Hash(data)
+	hash, err := crypto.Hash(contractData)
 	if err != nil {
 		return
 	}
 	result = &contractResult{Hash: hex.EncodeToString(hash)}
 
 	sc := smart.SmartContract{VDE: true, TxHash: hash}
-	err = InitSmartContract(&sc, data)
+	err = InitSmartContract(&sc, contractData)
 	if err == nil {
+		if data.token != nil && data.token.Valid {
+			if auth, err := data.token.SignedString([]byte(jwtSecret)); err == nil {
+				sc.TxData[`auth_token`] = auth
+			}
+		}
 		if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
 			result.Result = ret
 		} else {
