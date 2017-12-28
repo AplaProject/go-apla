@@ -817,6 +817,9 @@ var (
 			if !$Till {
 				$Till = "1970-01-01 00:00:00"
 			}
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
+			}
 			$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions", 
 				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
 			UpdateCron($result)
@@ -838,6 +841,9 @@ var (
 		action {
 			if !$Till {
 				$Till = "1970-01-01 00:00:00"
+			}
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
 			DBUpdate("cron", $Id, "cron,contract,counter,till,conditions", 
 				$Cron, $Contract, $Limit, $Till, $Conditions)

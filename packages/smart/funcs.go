@@ -133,6 +133,7 @@ func EmbedFuncs(vm *script.VM) {
 		"EvalCondition":      EvalCondition,
 		"Float":              Float,
 		"FlushContract":      FlushContract,
+		"HasPrefix":          strings.HasPrefix,
 		"HMac":               HMac,
 		"Join":               Join,
 		"JSONToMap":          JSONToMap,
