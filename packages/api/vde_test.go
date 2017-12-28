@@ -564,22 +564,25 @@ func TestNodeHTTPRequest(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	conf.Config.PrivateDir = `/home/ak/apla`
-	conf.Config.HTTP.Host = `localhost`
-	conf.Config.HTTP.Port = 7079
+	// You can specify the directory with NodePrivateKey & NodePublicKey files
+	conf.Config.PrivateDir = ``
+	if len(conf.Config.PrivateDir) > 0 {
+		conf.Config.HTTP.Host = `localhost`
+		conf.Config.HTTP.Port = 7079
 
-	nodeResult, err := taskContract.NodeContract(`@1node` + rnd)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	id, err = waitTx(nodeResult.Result)
-	if id != 0 && err != nil {
-		msg = err.Error()
-		err = nil
-	}
-	if msg != `Test NodeContract NodeContract testing `+rnd {
-		t.Error(`wrong result: ` + msg)
+		nodeResult, err := taskContract.NodeContract(`@1node` + rnd)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		id, err = waitTx(nodeResult.Result)
+		if id != 0 && err != nil {
+			msg = err.Error()
+			err = nil
+		}
+		if msg != `Test NodeContract NodeContract testing `+rnd {
+			t.Error(`wrong result: ` + msg)
+		}
 	}
 }
 
@@ -590,7 +593,7 @@ func TestCron(t *testing.T) {
 	}
 
 	err := postTx("NewCron", &url.Values{
-		"Cron":       {"60 * * * *"},
+		"Cron":       {"60 * * * * *"},
 		"Contract":   {"CronTest"},
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"vde":        {"true"},
@@ -614,7 +617,7 @@ func TestCron(t *testing.T) {
 
 	till := time.Now().Format(time.RFC3339)
 	err = postTx("NewCron", &url.Values{
-		"Cron":       {"* * * * *"},
+		"Cron":       {"* * * * * *"},
 		"Contract":   {"TestCron"},
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"Till":       {till},
@@ -626,7 +629,7 @@ func TestCron(t *testing.T) {
 
 	err = postTx("EditCron", &url.Values{
 		"Id":         {"1"},
-		"Cron":       {"*/15 * * * *"},
+		"Cron":       {"*/3 * * * * *"},
 		"Contract":   {"TestCron"},
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"Till":       {till},
