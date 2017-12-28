@@ -1066,10 +1066,12 @@ func UpdateCron(sc *SmartContract, id int64) error {
 		return nil
 	}
 
-	err = scheduler.UpdateTask(&contract.ContractTask{
+	err = scheduler.UpdateTask(&scheduler.Task{
 		ID:       cronTask.ID,
 		CronSpec: cronTask.Cron,
-		Contract: cronTask.Contract,
+		Handler: &contract.ContractHandler{
+			Contract: cronTask.Contract,
+		},
 	})
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.SchedulerError, "error": err}).Error("update cron task")

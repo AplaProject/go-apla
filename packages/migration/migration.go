@@ -828,8 +828,8 @@ var (
 	('23','contract EditCron {
 		data {
 			Id         int
-			Cron       string
 			Contract   string
+			Cron       string "optional"
 			Limit      int "optional"
 			Till       string "optional date"
 			Conditions string

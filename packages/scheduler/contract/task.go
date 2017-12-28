@@ -1,64 +1,22 @@
 package contract
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/scheduler"
 
-	"github.com/robfig/cron"
 	log "github.com/sirupsen/logrus"
 )
 
-type ContractTask struct {
-	ID       int64
-	CronSpec string
+type ContractHandler struct {
 	Contract string
-
-	schedule cron.Schedule
 }
 
-func (ct *ContractTask) String() string {
-	return fmt.Sprintf("id %d cron %s contract %s", ct.ID, ct.CronSpec, ct.Contract)
-}
-
-func (ct *ContractTask) ParseCron() error {
-	if len(ct.CronSpec) == 0 {
-		return nil
-	}
-
-	var err error
-	ct.schedule, err = cron.Parse(ct.CronSpec)
-	return err
-}
-
-func (ct *ContractTask) Equal(t scheduler.Task) bool {
-	v, ok := t.(*ContractTask)
-	return ok && ct.ID == v.ID
-}
-
-func (ct *ContractTask) Update(t scheduler.Task) {
-	v, ok := t.(*ContractTask)
-	if ok {
-		*ct = *v
-	}
-}
-
-func (ct *ContractTask) Next(tm time.Time) time.Time {
-	if len(ct.CronSpec) == 0 {
-		var zeroTime time.Time
-		return zeroTime
-	}
-	return ct.schedule.Next(tm)
-}
-
-func (ct *ContractTask) Run() {
-	_, err := NodeContract(ct.Contract)
+func (ch *ContractHandler) Run(t *scheduler.Task) {
+	_, err := NodeContract(ch.Contract)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ContractError, "error": err, "task": ct.ID, "cron": ct.CronSpec, "contract": ct.Contract}).Error("run contract task")
+		log.WithFields(log.Fields{"type": consts.ContractError, "error": err, "task": t.String(), "contract": ch.Contract}).Error("run contract task")
 		return
 	}
 
-	log.WithFields(log.Fields{"task": ct.ID, "cron": ct.CronSpec, "contract": ct.Contract}).Info("run contract task")
+	log.WithFields(log.Fields{"task": t.String(), "contract": ch.Contract}).Info("run contract task")
 }

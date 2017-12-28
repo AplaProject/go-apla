@@ -568,7 +568,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 	conf.Config.HTTP.Host = `localhost`
 	conf.Config.HTTP.Port = 7079
 
-	_, err = taskContract.NodeContract(`@1node` + rnd)
+	nodeResult, err := taskContract.NodeContract(`@1node` + rnd)
 	if err != nil {
 		t.Error(err)
 		return
@@ -626,9 +626,10 @@ func TestCron(t *testing.T) {
 
 	err = postTx("EditCron", &url.Values{
 		"Id":         {"1"},
-		"Cron":       {"*/3 * * * *"},
+		"Cron":       {"*/15 * * * *"},
 		"Contract":   {"TestCron"},
 		"Conditions": {`ContractConditions("MainCondition")`},
+		"Till":       {till},
 		"vde":        {"true"},
 	})
 	if err != nil {

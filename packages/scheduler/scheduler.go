@@ -17,7 +17,7 @@ type Scheduler struct {
 	cron *cron.Cron
 }
 
-func (s *Scheduler) AddTask(t Task) error {
+func (s *Scheduler) AddTask(t *Task) error {
 	err := t.ParseCron()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("parse cron format")
@@ -25,12 +25,12 @@ func (s *Scheduler) AddTask(t Task) error {
 	}
 
 	s.cron.Schedule(t, t)
-	log.WithFields(log.Fields{"id": t.String()}).Info("task added")
+	log.WithFields(log.Fields{"task": t.String()}).Info("task added")
 
 	return nil
 }
 
-func (s *Scheduler) UpdateTask(t Task) error {
+func (s *Scheduler) UpdateTask(t *Task) error {
 	err := t.ParseCron()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("parse cron format")
@@ -42,9 +42,9 @@ func (s *Scheduler) UpdateTask(t Task) error {
 
 	entries := s.cron.Entries()
 	for _, entry := range entries {
-		task := entry.Schedule.(Task)
-		if task.Equal(t) {
-			task.Update(t)
+		task := entry.Schedule.(*Task)
+		if task.ID == t.ID {
+			*task = *t
 			log.WithFields(log.Fields{"task": t.String()}).Info("task updated")
 			return nil
 		}
@@ -64,11 +64,11 @@ func NewScheduler() *Scheduler {
 	return s
 }
 
-func AddTask(t Task) error {
+func AddTask(t *Task) error {
 	return scheduler.AddTask(t)
 }
 
-func UpdateTask(t Task) error {
+func UpdateTask(t *Task) error {
 	return scheduler.UpdateTask(t)
 }
 

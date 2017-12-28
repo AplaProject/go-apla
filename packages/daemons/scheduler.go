@@ -25,11 +25,13 @@ func loadContractTasks() error {
 		return err
 	}
 
-	for _, task := range tasks {
-		err = scheduler.UpdateTask(&contract.ContractTask{
-			ID:       task.ID,
-			CronSpec: task.Cron,
-			Contract: task.Contract,
+	for _, cronTask := range tasks {
+		err = scheduler.UpdateTask(&scheduler.Task{
+			ID:       cronTask.ID,
+			CronSpec: cronTask.Cron,
+			Handler: &contract.ContractHandler{
+				Contract: cronTask.Contract,
+			},
 		})
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.SchedulerError, "error": err}).Error("update cron task")
