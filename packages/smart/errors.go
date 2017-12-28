@@ -14,19 +14,15 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package script
+package smart
 
 import "errors"
 
 const (
-	eContractLoop    = `there is loop in %s contract`
-	eTypeParam       = `parameter %d has wrong type`
-	eUndefinedParam  = `%s is not defined`
-	eUnknownContract = `unknown contract %s`
-	eWrongParams     = `function %s must have %d parameters`
+	eTableNotFound = `Table %s has not been found`
 )
 
 var (
-	errContractPars   = errors.New(`wrong contract parameters`)
-	errWrongCountPars = errors.New(`wrong count of parameters`)
+	errAccessDenied   = errors.New(`Access denied`)
+	errConditionEmpty = errors.New(`Conditions is empty`)
 )

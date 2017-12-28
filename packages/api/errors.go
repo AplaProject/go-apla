@@ -17,7 +17,7 @@
 package api
 
 var (
-	errors = map[string]string{
+	apiErrors = map[string]string{
 		`E_CONTRACT`:      `There is not %s contract`,
 		`E_DBNIL`:         `DB is nil`,
 		`E_ECOSYSTEM`:     `Ecosystem %d doesn't exist`,

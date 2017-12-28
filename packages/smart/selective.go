@@ -49,7 +49,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
-	isBytea := GetBytea(table)
+	isBytea := GetBytea(sc.DbTransaction, table)
 	for i, v := range ivalues {
 		if len(fields) > i && isBytea[fields[i]] {
 			switch v.(type) {

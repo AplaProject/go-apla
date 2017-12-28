@@ -20,6 +20,14 @@ func (rt *RollbackTx) GetRollbackTransactions(dbTransaction *DbTransaction, tran
 	return GetAllTx(dbTransaction, "SELECT * from rollback_tx WHERE tx_hash = ?", -1, transactionHash)
 }
 
+func (rt *RollbackTx) GetRollbackTxsByTableIDAndTableName(tableID, tableName string, limit int) (*[]RollbackTx, error) {
+	rollbackTx := new([]RollbackTx)
+	if err := DBConn.Where("table_id = ? AND table_name = ?", tableID, tableName).Limit(limit).Find(rollbackTx).Error; err != nil {
+		return nil, err
+	}
+	return rollbackTx, nil
+}
+
 // DeleteByHash is deleting rollbackTx by hash
 func (rt *RollbackTx) DeleteByHash(dbTransaction *DbTransaction) error {
 	return GetDB(dbTransaction).Exec("DELETE FROM rollback_tx WHERE tx_hash = ?", rt.TxHash).Error
