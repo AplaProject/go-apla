@@ -17,10 +17,9 @@
 package daemons
 
 import (
-	"os"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/daylight/system"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -59,11 +58,11 @@ func WaitStopTime() {
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("gorm close")
 			}
-			err = os.Remove(conf.GetPidFile())
+			err = system.RemovePidFile()
 			if err != nil {
 				log.WithFields(log.Fields{
-					"type": consts.IOError, "error": err, "path": conf.GetPidFile(),
-				}).Error("removing file")
+					"type": consts.IOError, "error": err,
+				}).Error("removing pid file")
 				panic(err)
 			}
 		}

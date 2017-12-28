@@ -23,6 +23,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/autoupdate"
+
 	"bytes"
 
 	"github.com/AplaProject/go-apla/packages/conf"
@@ -281,6 +283,12 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	err = b.Create(transaction)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
+		return err
+	}
+
+	err = autoupdate.TryUpdate(uint64(blockID))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err, "blockID": blockID}).Fatal("update for blockID")
 		return err
 	}
 	return nil
