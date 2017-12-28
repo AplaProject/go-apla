@@ -617,17 +617,11 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			p.SysUpdate = false
 		}
 
-		if _, err := model.MarkTransactionUsed(p.DbTransaction, p.TxHash); err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("marking transaction used")
-			return err
-		}
+		updateLogTx += fmt.Sprintf(`UPDATE transactions SET used = 1 WHERE hash = decode('%s','HEX');`,
+			hex.EncodeToString(p.TxHash))
 
-		// update status
-		ts := &model.TransactionStatus{}
-		if err := ts.UpdateBlockMsg(p.DbTransaction, b.Header.BlockID, msg, p.TxHash); err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("updating transaction status block id")
-			return err
-		}
+		updateLogTx += fmt.Sprintf(`UPDATE transactions_status SET block_id = %d, error = '%s' WHERE hash = decode('%s','HEX');`,
+			b.Header.BlockID, msg, hex.EncodeToString(p.TxHash))
 
 		txHash, err := crypto.Hash(p.TxFullData)
 		if err != nil {
@@ -636,10 +630,6 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		}
 
 		updateLogTx += fmt.Sprintf(`INSERT INTO log_transactions (hash, time) VALUES ('%s', %d);`, hex.EncodeToString(txHash), p.TxTime)
-		// if err := InsertInLogTx(p.DbTransaction, p.TxFullData, p.TxTime); err != nil {
-		// 	return utils.ErrInfo(err)
-		// }
-
 	}
 
 	if updateLogTx != "" {
