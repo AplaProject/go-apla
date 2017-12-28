@@ -243,6 +243,11 @@ func TestNewTable(t *testing.T) {
 	}
 }
 
+type invalidPar struct {
+	Name  string
+	Value string
+}
+
 func TestUpdateSysParam(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
@@ -304,5 +309,43 @@ func TestUpdateSysParam(t *testing.T) {
 	if err == nil || err.Error() != `{"type":"panic","error":"Access denied"}` {
 		t.Error(`incorrect access to system parameter`)
 		return
+	}
+	notvalid := []invalidPar{
+		{`gap_between_blocks`, `100000`},
+		{`rb_blocks_1`, `-1`},
+		{`rb_blocks_2`, `test`},
+		{`page_price`, `-20`},
+		{`max_block_size`, `0`},
+		{`max_fuel_tx`, `20string`},
+		{`fuel_rate`, `string`},
+		{`fuel_rate`, `[test]`},
+		{`fuel_rate`, `[["name", "100"]]`},
+		{`commission_wallet`, `[["1", "0"]]`},
+		{`commission_wallet`, `[{"1", "50"}]`},
+		{`full_nodes`, `[["34.12.25", "10", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
+		{`full_nodes`, `[["1.34.12.25", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7"]]`},
+		{`full_nodes`, `[["34.12.25.100:65d321", "100000000000", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
+	}
+	for _, item := range notvalid {
+		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {item.Value}})
+		if err == nil {
+			t.Error(`must be invalid ` + item.Value)
+			return
+		}
+		err = sendGet(`systemparams?names=`+item.Name, nil, &sysList)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if len(sysList.List) != 1 {
+			t.Error(`have got wrong parameter ` + item.Name)
+			return
+		}
+		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {sysList.List[0].Value}})
+		if err != nil {
+			fmt.Println(item.Name, sysList.List[0].Value, sysList.List[0])
+			t.Error(err)
+			return
+		}
 	}
 }

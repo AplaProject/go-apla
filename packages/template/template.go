@@ -27,8 +27,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
-	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -559,9 +559,13 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 	}
 	root := node{}
 	isvde := (*vars)[`vde`] == `true` || (*vars)[`vde`] == `1`
-	sc := smart.SmartContract{
+
+  sc := smart.SmartContract{
 		VDE: isvde,
 		VM:  smart.GetVM(isvde, converter.StrToInt64((*vars)[`ecosystem_id`])),
+		TxSmart: tx.SmartContract{Header: tx.Header{EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
+			KeyID: converter.StrToInt64((*vars)[`key_id`])}},
+
 	}
 	process(input, &root, &Workspace{Vars: vars, SmartContract: &sc})
 	if root.Children == nil {
@@ -573,13 +577,4 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 		return []byte(err.Error())
 	}
 	return out
-}
-
-// StateParam returns the value of state parameters
-func StateParam(idstate int64, name string) (string, error) {
-	val, err := model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_parameters" WHERE name = ?`, name).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting state parameter")
-	}
-	return val, err
 }
