@@ -38,6 +38,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/scheduler"
+	"github.com/AplaProject/go-apla/packages/scheduler/contract"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
@@ -1065,7 +1066,7 @@ func UpdateCron(sc *SmartContract, id int64) error {
 		return nil
 	}
 
-	err = scheduler.UpdateTask(&scheduler.ContractTask{
+	err = scheduler.UpdateTask(&contract.ContractTask{
 		ID:       cronTask.ID,
 		CronSpec: cronTask.Cron,
 		Contract: cronTask.Contract,

@@ -7,6 +7,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/scheduler"
+	"github.com/AplaProject/go-apla/packages/scheduler/contract"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -25,7 +26,7 @@ func loadContractTasks() error {
 	}
 
 	for _, task := range tasks {
-		err = scheduler.UpdateTask(&scheduler.ContractTask{
+		err = scheduler.UpdateTask(&contract.ContractTask{
 			ID:       task.ID,
 			CronSpec: task.Cron,
 			Contract: task.Contract,

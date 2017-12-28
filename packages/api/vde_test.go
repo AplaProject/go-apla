@@ -27,6 +27,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
+	taskContract "github.com/AplaProject/go-apla/packages/scheduler/contract"
 )
 
 func TestVDECreate(t *testing.T) {
@@ -567,7 +568,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 	conf.Config.HTTP.Host = `localhost`
 	conf.Config.HTTP.Port = 7079
 
-	nodeResult, err := NodeContract(`@1node` + rnd)
+	_, err = taskContract.NodeContract(`@1node` + rnd)
 	if err != nil {
 		t.Error(err)
 		return
@@ -597,6 +598,19 @@ func TestCron(t *testing.T) {
 	if err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"End of range (60) above maximum (59): 60\"}" }` {
 		t.Error(err)
 	}
+
+	postTx("NewContract", &url.Values{
+		"Value": {`
+			contract TestCron {
+				data {}
+				action {
+					return "Success"
+				}
+			}
+		`},
+		"Conditions": {`ContractConditions("MainCondition")`},
+		"vde":        {"true"},
+	})
 
 	till := time.Now().Format(time.RFC3339)
 	err = postTx("NewCron", &url.Values{

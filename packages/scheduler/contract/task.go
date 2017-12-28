@@ -1,8 +1,11 @@
-package scheduler
+package contract
 
 import (
 	"fmt"
 	"time"
+
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/scheduler"
 
 	"github.com/robfig/cron"
 	log "github.com/sirupsen/logrus"
@@ -26,12 +29,12 @@ func (ct *ContractTask) ParseCron() error {
 	return err
 }
 
-func (ct *ContractTask) Equal(t Task) bool {
+func (ct *ContractTask) Equal(t scheduler.Task) bool {
 	v, ok := t.(*ContractTask)
 	return ok && ct.ID == v.ID
 }
 
-func (ct *ContractTask) Update(t Task) {
+func (ct *ContractTask) Update(t scheduler.Task) {
 	v, ok := t.(*ContractTask)
 	if ok {
 		*ct = *v
@@ -43,5 +46,11 @@ func (ct *ContractTask) Next(tm time.Time) time.Time {
 }
 
 func (ct *ContractTask) Run() {
+	_, err := NodeContract(ct.Contract)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ContractError, "error": err, "task": ct.ID, "cron": ct.CronSpec, "contract": ct.Contract}).Error("run contract task")
+		return
+	}
+
 	log.WithFields(log.Fields{"task": ct.ID, "cron": ct.CronSpec, "contract": ct.Contract}).Info("run contract task")
 }
