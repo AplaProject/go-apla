@@ -568,7 +568,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 	conf.Config.HTTP.Host = `localhost`
 	conf.Config.HTTP.Port = 7079
 
-	_, err = taskContract.NodeContract(`@1node` + rnd)
+	nodeResult, err := taskContract.NodeContract(`@1node` + rnd)
 	if err != nil {
 		t.Error(err)
 		return
