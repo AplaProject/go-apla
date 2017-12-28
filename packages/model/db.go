@@ -34,7 +34,7 @@ var (
 )
 
 func init() {
-	BufKeys = &bufferedKeys{keys: make(map[int64]map[int64]Key)}
+	BufKeys = &bufferedKeys{keys: make(map[int64]map[int64]*KeyWithHistory)}
 	BufTables = &bufferedTables{tables: make(map[int64]map[string]Table)}
 }
 

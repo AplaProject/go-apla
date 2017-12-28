@@ -826,20 +826,21 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		if err != nil {
 			return retError(err)
 		}
-		if !found {
-			apl = apl.Sub(commission)
-		} else {
+		if found {
 			newWal, err := decimal.NewFromString(key.Amount)
 			if err != nil {
 				return "", err
 			}
 			newWal = newWal.Add(apl.Sub(commission))
 			key.Amount = newWal.String()
-			_, err = model.BufKeys.SetKey(sc.TxSmart.TokenEcosystem, toID, key)
+			//_, err = model.BufKeys.UpdateKey(sc.TxSmart.TokenEcosystem, toID, key)
 			if err != nil {
 				return retError(err)
 			}
+		} else {
+			apl = commission
 		}
+		apl = apl.Sub(commission)
 		//---------------------second key----------------------
 		// walletStr := syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)
 		// walletID, _ := strconv.ParseUint(walletStr, 10, 64)
@@ -868,7 +869,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		newWal = newWal.Sub(apl)
 		payWallet.Amount = newWal.String()
-		_, err = model.BufKeys.SetKey(sc.TxSmart.TokenEcosystem, payWallet.ID, payWallet)
+		//found, err = model.BufKeys.UpdateKey(sc.TxSmart.TokenEcosystem, payWallet.ID, payWallet)
 		if err != nil {
 			return retError(err)
 		}

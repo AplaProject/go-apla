@@ -89,6 +89,12 @@ func (b *Block) PlayBlockSafe() error {
 		return err
 	}
 
+	err = model.BufKeys.Flush(dbTransaction)
+	if err != nil {
+		dbTransaction.Rollback()
+		return err
+	}
+
 	if err := UpdBlockInfo(dbTransaction, b); err != nil {
 		dbTransaction.Rollback()
 		return err
@@ -589,7 +595,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		return err
 	}
 
-	updateLogTx := ""
+	//updateLogTx := ""
 	for _, p := range b.Parsers {
 		p.DbTransaction = dbTransaction
 
@@ -623,24 +629,25 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			return err
 		}
 
-		txHash, err := crypto.Hash(p.TxFullData)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("hashing binary tx")
-			return err
-		}
-
-		updateLogTx += fmt.Sprintf(`INSERT INTO log_transactions (hash, time) VALUES ('%s', %d);`, hex.EncodeToString(txHash), p.TxTime)
-		// if err := InsertInLogTx(p.DbTransaction, p.TxFullData, p.TxTime); err != nil {
-		// 	return utils.ErrInfo(err)
+		// txHash, err := crypto.Hash(p.TxFullData)
+		// if err != nil {
+		// 	log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("hashing binary tx")
+		// 	return err
 		// }
 
-	}
-	if updateLogTx != "" {
-		err := model.GetDB(dbTransaction).Raw(updateLogTx).Error
-		if err != nil {
-			return err
+		//updateLogTx += fmt.Sprintf(`INSERT INTO log_transactions (hash, time) VALUES ('%s', %d);`, hex.EncodeToString(txHash), p.TxTime)
+		if err := InsertInLogTx(p.DbTransaction, p.TxFullData, p.TxTime); err != nil {
+			return utils.ErrInfo(err)
 		}
+
 	}
+
+	// if updateLogTx != "" {
+	// 	err := model.GetDB(dbTransaction).Raw(updateLogTx).Error
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }

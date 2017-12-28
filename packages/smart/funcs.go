@@ -21,7 +21,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -533,26 +532,28 @@ func updateCache(tableName string, columns []string, val []interface{}, id int64
 			difference, _ := decimal.NewFromString(values[i])
 			switch col[0] {
 			case '+':
-				key.Amount = (amount.Add(difference)).String()
+				key.Amount = amount.Add(difference).String()
 			case '-':
-				key.Amount = (amount.Sub(difference)).String()
+				key.Amount = amount.Sub(difference).String()
 			default:
-				return errors.New("unknow operation")
+				return fmt.Errorf("unknown operation: %v", col[0])
 			}
-
 		}
 		if strings.HasSuffix(col, "pub") {
 			key.PublicKey = converter.BinToHex((val[i].(byte)))
-			_, err = model.BufKeys.SetKey(tableID, id, key)
-			if err != nil {
-				return err
-			}
 		}
 	}
 
-	_, err = model.BufKeys.SetKey(tableID, id, key)
-	if err != nil {
-		return err
+	if !found {
+		_, err = model.BufKeys.PushKey(tableID, id, key)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = model.BufKeys.UpdateKey(tableID, id, key)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
