@@ -24,7 +24,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime/pprof"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/api"
@@ -211,15 +210,6 @@ func Start() {
 		os.Exit(code)
 	}
 
-	profileFile := "apla.prof"
-	f, err := os.Create(profileFile)
-	if err != nil {
-		log.Fatal("could not create CPU profile: ", err)
-	}
-	if err := pprof.StartCPUProfile(f); err != nil {
-		log.Fatal("could not start CPU profile: ", err)
-	}
-
 	initGorm := func(dbCfg conf.DBConfig) {
 		err = model.GormInit(dbCfg.Host, dbCfg.Port, dbCfg.User, dbCfg.Password, dbCfg.Name)
 		if err != nil {
@@ -346,7 +336,7 @@ func Start() {
 		}
 	}
 
-	daemons.WaitForSignals(f)
+	daemons.WaitForSignals()
 
 	initRoutes(conf.Config.HTTP.Str())
 
