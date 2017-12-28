@@ -23,6 +23,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -533,6 +534,37 @@ func TestNodeHTTPRequest(t *testing.T) {
 	if msg != `Test NodeContract node `+rnd {
 		t.Error(`wrong result: ` + msg)
 	}
+	form = url.Values{`Value`: {`contract node` + rnd + ` {
+		data {
+			Auth string
+		}
+		action { 
+			var ret string 
+			var pars, heads, json map
+			heads["Authorization"] = "Bearer " + $Auth
+			pars["vde"] = "false"
+			pars["Par"] = "NodeContract testing"
+			ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)
+			json = JSONToMap(ret)
+			$result = json["hash"]
+		}
+    }`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
+
+	if err = postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	conf.Config.PrivateDir = `/home/ak/apla`
+	conf.Config.HTTP.Host = `localhost`
+	conf.Config.HTTP.Port = 7079
+
+	nodeResult, err := NodeContract(`@1node` + rnd)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	//	fmt.Println(`NODE`, nodeResult)
+	//	t.Error(`OK`)
 }
 
 func TestCron(t *testing.T) {

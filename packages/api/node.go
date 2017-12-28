@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -39,7 +40,6 @@ import (
 func nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var err error
 
-	fmt.Println(`NAME CONTRACT`, data.params[`name`].(string))
 	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
 	if err != nil || len(NodePrivateKey) == 0 {
 		if err == nil {
@@ -50,7 +50,7 @@ func nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 	}
 	pubkey, err := hex.DecodeString(NodePublicKey)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
 		return err
 	}
 	data.params[`signed_by`] = smart.PubToID(NodePublicKey)
@@ -67,10 +67,6 @@ func nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 		logger.WithFields(log.Fields{"type": consts.APIError}).Error("can't call contract")
 		return err
 	}
-	/*	if !strings.HasSuffix(data.params[`name`].(string), `rndkdrhQC`) {
-		ret, err := NodeContract(`@1rndkdrhQC`)
-		fmt.Println(`NODE`, err, ret)
-	}*/
 	return nil
 }
 
@@ -82,11 +78,13 @@ func NodeContract(Name string) (result contractResult, err error) {
 	)
 	err = sendAPIRequest(`GET`, `getuid`, nil, &ret, ``)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.APIError, "error": err}).Error("calling getuid")
 		return
 	}
 	auth := ret.Token
 	if len(ret.UID) == 0 {
 		err = fmt.Errorf(`getuid has returned empty uid`)
+		log.WithFields(log.Fields{"type": consts.APIError, "error": err}).Error("empty uid")
 		return
 	}
 	NodePrivateKey, NodePublicKey, err = utils.GetNodeKeys()
@@ -99,6 +97,7 @@ func NodeContract(Name string) (result contractResult, err error) {
 	}
 	sign, err = crypto.Sign(NodePrivateKey, ret.UID)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing node uid")
 		return
 	}
 	form := url.Values{"pubkey": {NodePublicKey}, "signature": {hex.EncodeToString(sign)},
@@ -106,12 +105,16 @@ func NodeContract(Name string) (result contractResult, err error) {
 	var logret loginResult
 	err = sendAPIRequest(`POST`, `login`, &form, &logret, auth)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.APIError, "error": err}).Error("login node")
 		return
 	}
 	auth = logret.Token
-	form = url.Values{`vde`: {`true`}, `Auth`: {auth}, `Par`: {`qqq`}}
+	form = url.Values{`vde`: {`true`}, `Auth`: {auth}}
 	err = sendAPIRequest(`POST`, `node/`+Name, &form, &result, auth)
-
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.APIError, "error": err}).Error("node request")
+		return
+	}
 	return
 }
 
@@ -121,7 +124,8 @@ func sendAPIRequest(rtype, url string, form *url.Values, v interface{}, auth str
 	if form != nil {
 		ioform = strings.NewReader(form.Encode())
 	}
-	req, err := http.NewRequest(rtype, `http://localhost:7079`+consts.ApiPath+url, ioform)
+	req, err := http.NewRequest(rtype, fmt.Sprintf(`http://%s:%d%s%s`, conf.Config.HTTP.Host,
+		conf.Config.HTTP.Port, consts.ApiPath, url), ioform)
 	if err != nil {
 		return err
 	}
