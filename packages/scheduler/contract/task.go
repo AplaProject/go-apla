@@ -24,6 +24,10 @@ func (ct *ContractTask) String() string {
 }
 
 func (ct *ContractTask) ParseCron() error {
+	if len(ct.CronSpec) == 0 {
+		return nil
+	}
+
 	var err error
 	ct.schedule, err = cron.Parse(ct.CronSpec)
 	return err
@@ -42,6 +46,10 @@ func (ct *ContractTask) Update(t scheduler.Task) {
 }
 
 func (ct *ContractTask) Next(tm time.Time) time.Time {
+	if len(ct.CronSpec) == 0 {
+		var zeroTime time.Time
+		return zeroTime
+	}
 	return ct.schedule.Next(tm)
 }
 
