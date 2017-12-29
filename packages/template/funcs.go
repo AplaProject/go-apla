@@ -43,7 +43,6 @@ var (
 )
 
 func init() {
-	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
 	funcs[`AddToolButton`] = tplFunc{defaultTag, defaultTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
 	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
@@ -144,10 +143,6 @@ func defaultTag(par parFunc) string {
 	setAllAttr(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
-}
-
-func lowerTag(par parFunc) string {
-	return strings.ToLower((*par.Pars)[`Text`])
 }
 
 func menugroupTag(par parFunc) string {
