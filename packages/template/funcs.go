@@ -553,7 +553,6 @@ func customTag(par parFunc) string {
 }
 
 func tailTag(par parFunc) string {
-	fmt.Println(`TAIL 0`)
 	setAllAttr(par)
 	for key, v := range par.Node.Attr {
 		par.Owner.Attr[key] = v
