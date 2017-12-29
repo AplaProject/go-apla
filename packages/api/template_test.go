@@ -70,6 +70,8 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Strong(SysParam(commission_size))`,
+		`[{"tag":"strong","children":[{"tag":"text","text":"3"}]}]`},
 	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
 		SetVar(Name: simple, Value: TestFunc(my value)) 
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))
