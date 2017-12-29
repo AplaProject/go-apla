@@ -66,6 +66,9 @@ func (vm *VM) EvalIf(input string, state uint32, vars *map[string]interface{}) (
 	rt := vm.RunInit(CostDefault)
 	ret, err := rt.Run(evals[crc].Code.Children[0], nil, vars)
 	if err == nil {
+		if len(ret) == 0 {
+			return false, nil
+		}
 		return valueToBool(ret[0]), nil
 	}
 	return false, err

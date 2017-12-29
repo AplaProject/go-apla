@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/api"
+	"github.com/AplaProject/go-apla/packages/autoupdate"
 	conf "github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -146,7 +147,7 @@ func rollbackToBlock(blockID int64) error {
 	}
 
 	// check blocks related tables
-	startData := map[string]int64{"1_menu": 1, "1_pages": 1, "1_contracts": 26, "1_parameters": 11, "1_keys": 1, "1_tables": 8, "stop_daemons": 1, "queue_blocks": 9999999, "system_tables": 1, "system_parameters": 27, "system_states": 1, "install": 1, "config": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1, "confirmations": 9999999, "my_node_keys": 9999999, "transactions": 9999999}
+	startData := map[string]int64{"1_menu": 1, "1_pages": 1, "1_contracts": 26, "1_parameters": 11, "1_keys": 1, "1_tables": 8, "stop_daemons": 1, "queue_blocks": 9999999, "system_tables": 1, "system_parameters": 27, "system_states": 1, "install": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1, "confirmations": 9999999, "transactions": 9999999}
 	warn := 0
 	for table := range startData {
 		count, err := model.GetRecordsCount(table)
@@ -235,6 +236,8 @@ func Start() {
 	}
 	conf.SetConfigParams()
 
+	autoupdate.InitUpdater(conf.Config.Autoupdate.ServerAddress, conf.Config.Autoupdate.PublicKeyPath)
+
 	// process directives
 	if *conf.GenerateFirstBlock {
 		if err := parser.GenerateFirstBlock(); err != nil {
@@ -273,6 +276,11 @@ func Start() {
 			}
 		}
 		initGorm(conf.Config.DB)
+
+		err = autoupdate.Run()
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err}).Error("run autoupdate")
+		}
 	}
 
 	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
@@ -300,7 +308,7 @@ func Start() {
 
 	// database rollback to the specified block
 	if *conf.RollbackToBlockID > 0 {
-		err = syspar.SysUpdate()
+		err = syspar.SysUpdate(nil)
 		if err != nil {
 			log.WithError(err).Error("can't read system parameters")
 		}
@@ -312,6 +320,10 @@ func Start() {
 		} else {
 			log.Info("Rollback is OK")
 		}
+		Exit(0)
+	}
+
+	if *conf.NoStart {
 		Exit(0)
 	}
 

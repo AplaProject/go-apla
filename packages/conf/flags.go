@@ -5,9 +5,28 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	log "github.com/sirupsen/logrus"
+)
+
+// default flag values
+const (
+	defaultTCPHost  = "127.0.0.1"
+	defaultTCPPort  = 7078
+	defaultHTTPHost = "127.0.0.1"
+	defaultHTTPPort = 7079
+
+	defaultDBName = "apla"
+	defaultDBHost = "127.0.0.1"
+	defaultDBPort = 5432
+
+	defaultFirstBlockHost = "127.0.0.1"
+
+	defaultUpdateInterval      = int64(time.Hour / time.Second)
+	defaultUpdateServer        = "http://127.0.0.1:12345"
+	defaultUpdatePublicKeyPath = "update.pub"
 )
 
 type flagBase struct {
@@ -30,25 +49,29 @@ type flagInt struct {
 }
 
 var configFlagMap = map[string]interface{}{
-	"tcpHost":  &flagStr{confVar: &Config.TCPServer.Host, defVal: "127.0.0.1", flagBase: flagBase{help: "tcp server host"}},
-	"tcpPort":  &flagInt{confVar: &Config.TCPServer.Port, defVal: 7078, flagBase: flagBase{help: "tcp server port"}},
-	"httpHost": &flagStr{confVar: &Config.HTTP.Host, defVal: "127.0.0.1", flagBase: flagBase{help: "http server host"}},
-	"httpPort": &flagInt{confVar: &Config.HTTP.Port, defVal: 7079, flagBase: flagBase{help: "http server port"}},
+	"tcpHost":  &flagStr{confVar: &Config.TCPServer.Host, defVal: defaultTCPHost, flagBase: flagBase{help: "tcp server host"}},
+	"tcpPort":  &flagInt{confVar: &Config.TCPServer.Port, defVal: defaultTCPPort, flagBase: flagBase{help: "tcp server port"}},
+	"httpHost": &flagStr{confVar: &Config.HTTP.Host, defVal: defaultHTTPHost, flagBase: flagBase{help: "http server host"}},
+	"httpPort": &flagInt{confVar: &Config.HTTP.Port, defVal: defaultHTTPPort, flagBase: flagBase{help: "http server port"}},
 
-	"dbName":     &flagStr{confVar: &Config.DB.Name, defVal: "apla", flagBase: flagBase{env: "PGDATABASE", help: "database name"}},
-	"dbHost":     &flagStr{confVar: &Config.DB.Host, defVal: "127.0.0.1", flagBase: flagBase{env: "PGHOST", help: "database host"}},
-	"dbPort":     &flagInt{confVar: &Config.DB.Port, defVal: 5432, flagBase: flagBase{env: "PGPORT", help: "database port"}},
+	"dbName":     &flagStr{confVar: &Config.DB.Name, defVal: defaultDBName, flagBase: flagBase{env: "PGDATABASE", help: "database name"}},
+	"dbHost":     &flagStr{confVar: &Config.DB.Host, defVal: defaultDBHost, flagBase: flagBase{env: "PGHOST", help: "database host"}},
+	"dbPort":     &flagInt{confVar: &Config.DB.Port, defVal: defaultDBPort, flagBase: flagBase{env: "PGPORT", help: "database port"}},
 	"dbUser":     &flagStr{confVar: &Config.DB.User, flagBase: flagBase{env: "PGUSER", help: "database user"}},
 	"dbPassword": &flagStr{confVar: &Config.DB.Password, flagBase: flagBase{env: "PGPASSWORD", help: "database password"}},
 
 	"logLevel":   &flagStr{confVar: &Config.LogLevel, defVal: "ERROR", flagBase: flagBase{help: "log level - ERROR,WARN,INFO,DEBUG"}},
 	"logFile":    &flagStr{confVar: &Config.LogFileName, flagBase: flagBase{help: "log file name"}},
 	"privateDir": &flagStr{confVar: &Config.PrivateDir, flagBase: flagBase{help: "directory for public/private keys"}},
+
+	"updateServer":        &flagStr{confVar: &Config.Autoupdate.ServerAddress, defVal: defaultUpdateServer, flagBase: flagBase{help: "server address for autoupdates"}},
+	"updatePublicKeyPath": &flagStr{confVar: &Config.Autoupdate.PublicKeyPath, defVal: defaultUpdatePublicKeyPath, flagBase: flagBase{help: "public key path for autoupdates"}},
 }
 
 var (
 	// ConfigPath path to config file
 	ConfigPath = flag.String("configPath", "", "full path to config file (toml format)")
+	NoStart    = flag.Bool("noStart", false, "do not start daemon, just do all necessary job")
 
 	// WorkDirectory application working directory
 	WorkDirectory = flag.String("workDir", "", "work directory")
@@ -75,7 +98,7 @@ var (
 	FirstBlockNodePublicKey = flag.String("firstBlockNodePublicKey", "", "FirstBlockNodePublicKey")
 
 	// FirstBlockHost is the host of the first block
-	FirstBlockHost = flag.String("firstBlockHost", "127.0.0.1", "FirstBlockHost")
+	FirstBlockHost = flag.String("firstBlockHost", defaultFirstBlockHost, "FirstBlockHost")
 
 	// WalletAddress is a wallet address for forging
 	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
@@ -100,6 +123,9 @@ var (
 
 	// TLS is a directory for .well-known and keys. It is required for https
 	TLS = flag.String("tls", "", "Enable https. Ddirectory for .well-known and keys")
+
+	// UpdateInterval is interval in seconds for checking updates
+	UpdateInterval = flag.Int64("updateInterval", defaultUpdateInterval, "Interval in seconds for checking updates, default 3600 seconds (1 hour)")
 )
 
 func envStr(envName string, val *string) bool {

@@ -81,9 +81,9 @@ var (
 )
 
 // SysUpdate reloads/updates values of system parameters
-func SysUpdate() error {
+func SysUpdate(dbTransaction *model.DbTransaction) error {
 	var err error
-	systemParameters, err := model.GetAllSystemParametersV2()
+	systemParameters, err := model.GetAllSystemParameters(dbTransaction)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all system parameters")
 		return err
