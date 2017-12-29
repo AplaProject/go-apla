@@ -82,6 +82,8 @@ var forTest = tplList{
 		P(Body: #vStartDate# #vEndDate# #vCmpDate#)
 	}`,
 		`[{"tag":"data","attr":{"columns":["startdate","enddate","custom_id","custom_name"],"data":[["2017-12-10 10:11","2017-12-12 12:13","[{"tag":"p","children":[{"tag":"text","text":"2017-12-10 10:11 2017-12-12 12:13 -1"}]}]","[{"tag":"p","children":[{"tag":"text","text":"2017-12-10 10:11 2017-12-12 12:13 -1"}]}]"],["2017-12-17 16:17","2017-12-15 14:15","[{"tag":"p","children":[{"tag":"text","text":"2017-12-17 16:17 2017-12-15 14:15 1"}]}]","[{"tag":"p","children":[{"tag":"text","text":"2017-12-17 16:17 2017-12-15 14:15 1"}]}]"]],"source":"mysrc","types":["text","text","tags","tags"]}}]`},
+	{`Strong(SysParam(commission_size))`,
+		`[{"tag":"strong","children":[{"tag":"text","text":"3"}]}]`},
 	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
 		SetVar(Name: simple, Value: TestFunc(my value)) 
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))
