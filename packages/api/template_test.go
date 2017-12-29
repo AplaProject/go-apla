@@ -72,17 +72,16 @@ func TestAPI(t *testing.T) {
 var forTest = tplList{
 	{`Data(Source: mysrc, Columns: "startdate,enddate", Data:
 		2017-12-10 10:11,2017-12-12 12:13
-		2017-12-15 14:15,2017-12-17 16:17
+		2017-12-17 16:17,2017-12-15 14:15
 	).Custom(custom_id){
-		SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #startdate#, Format: "YYYY-MM-DD HH:MI"))
-		SetVar(Name: vCmpStartDate, Value: CmpTime(#vStartDate#,#vDateNow#)) 
-		P(Body: #vStartDate# #vDateNow#)
-		P(Body: #vCmpStartDate#)
+		SetVar(Name: vEndDate, Value: DateTime(DateTime: #enddate#, Format: "YYYY-MM-DD HH:MI"))
+		SetVar(Name: vCmpDate, Value: CmpTime(#vStartDate#,#vEndDate#)) 
+		P(Body: #vStartDate# #vEndDate# #vCmpDate#)
 	}.Custom(custom_name){
-		P(Body: #vCmpStartDate#)
+		P(Body: #vStartDate# #vEndDate# #vCmpDate#)
 	}`,
-		``},
+		`[{"tag":"data","attr":{"columns":["startdate","enddate","custom_id","custom_name"],"data":[["2017-12-10 10:11","2017-12-12 12:13","[{"tag":"p","children":[{"tag":"text","text":"2017-12-10 10:11 2017-12-12 12:13 -1"}]}]","[{"tag":"p","children":[{"tag":"text","text":"2017-12-10 10:11 2017-12-12 12:13 -1"}]}]"],["2017-12-17 16:17","2017-12-15 14:15","[{"tag":"p","children":[{"tag":"text","text":"2017-12-17 16:17 2017-12-15 14:15 1"}]}]","[{"tag":"p","children":[{"tag":"text","text":"2017-12-17 16:17 2017-12-15 14:15 1"}]}]"]],"source":"mysrc","types":["text","text","tags","tags"]}}]`},
 	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
 		SetVar(Name: simple, Value: TestFunc(my value)) 
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))
@@ -163,7 +162,7 @@ func TestImage(t *testing.T) {
 
 	template = `Div(Class: list-group-item){
 		Div(panel-body){
-		   DBFind("` + name + `", mysrc).Custom(leftImg){
+		   DBFind("` + name + `", mysrc).Columns("id,name,image").WhereId(2).Custom(leftImg){
 			   Image(Src: "#image#")
 		   }
 		   }
@@ -179,7 +178,8 @@ func TestImage(t *testing.T) {
 		return
 	}
 	md := fmt.Sprintf(`%x`, md5.Sum([]byte(mydata)))
-	if RawToString(ret.Tree) != `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","rb_id","leftImg"],"data":[["1","myimage","/data/1_`+name+`/1/image/`+md+`","0","[{"tag":"image","attr":{"src":"/data/1_`+name+`/1/image/`+md+`"}}]"]],"name":"`+name+`","source":"mysrc","types":["text","text","text","text","tags"]}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}}]},{"tag":"form","children":[{"tag":"imageinput","attr":{"name":"img","ratio":"2/1","width":"400"}},{"tag":"button","attr":{"contract":"UploadImage"},"children":[{"tag":"text","text":"Upload!"}]}]}]` {
-		t.Errorf(`Wrong image tree %s`, RawToString(ret.Tree))
+	want := `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","leftImg"],"data":[["2","myimage","/data/1_` + name + `/2/image/` + md + `","[{"tag":"image","attr":{"src":"/data/1_` + name + `/2/image/` + md + `"}}]"]],"name":"` + name + `","source":"mysrc","types":["text","text","text","tags"],"whereid":"2"}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}}]},{"tag":"form","children":[{"tag":"imageinput","attr":{"name":"img","ratio":"2/1","width":"400"}},{"tag":"button","attr":{"contract":"UploadImage"},"children":[{"tag":"text","text":"Upload!"}]}]}]`
+	if RawToString(ret.Tree) != want {
+		t.Errorf("Wrong image tree %s", RawToString(ret.Tree))
 	}
 }
