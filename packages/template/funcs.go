@@ -43,6 +43,7 @@ var (
 )
 
 func init() {
+	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
 	funcs[`AddToolButton`] = tplFunc{defaultTag, defaultTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
 	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
@@ -143,6 +144,10 @@ func defaultTag(par parFunc) string {
 	setAllAttr(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
+}
+
+func lowerTag(par parFunc) string {
+	return strings.ToLower((*par.Pars)[`Text`])
 }
 
 func menugroupTag(par parFunc) string {
@@ -544,7 +549,7 @@ func customTag(par parFunc) string {
 	}
 	par.Owner.Attr[`customs`] = append(par.Owner.Attr[`customs`].([]string), par.Node.Attr[`column`].(string))
 	par.Owner.Attr[`custombody`] = append(par.Owner.Attr[`custombody`].([]string), (*par.Pars)[`Body`])
-
+	fmt.Println(`CUSTOMS`, par.Owner.Attr[`customs`], par.Owner.Attr[`custombody`])
 	return ``
 }
 
@@ -578,10 +583,12 @@ func includeTag(par parFunc) string {
 
 func setvarTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) > 0 {
+		fmt.Println(`SETVAR 0`, *par.Pars)
 		if strings.ContainsAny((*par.Pars)[`Value`], `({`) {
 			(*par.Pars)[`Value`] = processToText(par, (*par.Pars)[`Value`])
 		}
 		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
+		fmt.Println(`SETVAR`, (*par.Pars)[`Name`], (*par.Workspace.Vars)[(*par.Pars)[`Name`]])
 	}
 	return ``
 }

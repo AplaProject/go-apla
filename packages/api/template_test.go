@@ -70,6 +70,19 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Data(Source: mysrc, Columns: "startdate,enddate", Data:
+		2017-12-10 10:11,2017-12-12 12:13
+		2017-12-15 14:15,2017-12-17 16:17
+	).Custom(custom_id){
+		SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
+		SetVar(Name: vStartDate, Value: DateTime(DateTime: #startdate#, Format: "YYYY-MM-DD HH:MI"))
+		SetVar(Name: vCmpStartDate, Value: CmpTime(#vStartDate#,#vDateNow#)) 
+		P(Body: #vStartDate# #vDateNow#)
+		P(Body: #vCmpStartDate#)
+	}.Custom(custom_name){
+		P(Body: #vCmpStartDate#)
+	}`,
+		``},
 	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
 		SetVar(Name: simple, Value: TestFunc(my value)) 
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))

@@ -40,6 +40,18 @@ func TestJSON(t *testing.T) {
 
 var forTest = tplList{
 	{`Data(Source: mysrc, Columns: "id,name", Data:
+		1, First Name
+		2, Second Name
+	).Custom(custom_id){
+		SetVar(Name: v, Value: Lower(#name#))
+		P(Body: #v#)
+	}.Custom(cust){
+		SetVar(Name: v, Value: Lower(#name#))
+		P(Body: #v#)
+	}`,
+		``},
+
+	{`Data(Source: mysrc, Columns: "id,name", Data:
 		1,first
 		2,second
 		3,third
@@ -136,7 +148,7 @@ var forTest = tplList{
 		MenuItem(Menu 2, page2)
 		MenuItem(Page: page3, Title: Menu 3, Icon: person)
 		}`,
-		`[{"tag":"menuitem","attr":{"page":"page1","title":"Menu 1"}},{"tag":"menugroup","attr":{"title":"SubMenu"},"children":[{"tag":"menuitem","attr":{"page":"page2","title":"Menu 2"}},{"tag":"menuitem","attr":{"icon":"person","page":"page3","title":"Menu 3"}}]}]`},
+		`[{"tag":"menuitem","attr":{"page":"page1","title":"Menu 1"}},{"tag":"menugroup","attr":{"name":"SubMenu","title":"SubMenu"},"children":[{"tag":"menuitem","attr":{"page":"page2","title":"Menu 2"}},{"tag":"menuitem","attr":{"icon":"person","page":"page3","title":"Menu 3"}}]}]`},
 	{`SetVar(testvalue, The, #n#, Value).(n, New).(param,"23")Span(Test value equals #testvalue#).(#param#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, New, Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
 	{`SetVar(test, mytest).(empty,0)And(0,test,0)Or(0,#test#)Or(0, And(0,0))And(0,Or(0,my,while))
