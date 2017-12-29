@@ -549,11 +549,11 @@ func customTag(par parFunc) string {
 	}
 	par.Owner.Attr[`customs`] = append(par.Owner.Attr[`customs`].([]string), par.Node.Attr[`column`].(string))
 	par.Owner.Attr[`custombody`] = append(par.Owner.Attr[`custombody`].([]string), (*par.Pars)[`Body`])
-	fmt.Println(`CUSTOMS`, par.Owner.Attr[`customs`], par.Owner.Attr[`custombody`])
 	return ``
 }
 
 func tailTag(par parFunc) string {
+	fmt.Println(`TAIL 0`)
 	setAllAttr(par)
 	for key, v := range par.Node.Attr {
 		par.Owner.Attr[key] = v
@@ -583,12 +583,10 @@ func includeTag(par parFunc) string {
 
 func setvarTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) > 0 {
-		fmt.Println(`SETVAR 0`, *par.Pars)
 		if strings.ContainsAny((*par.Pars)[`Value`], `({`) {
 			(*par.Pars)[`Value`] = processToText(par, (*par.Pars)[`Value`])
 		}
 		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
-		fmt.Println(`SETVAR`, (*par.Pars)[`Name`], (*par.Workspace.Vars)[(*par.Pars)[`Name`]])
 	}
 	return ``
 }
