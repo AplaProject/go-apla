@@ -47,6 +47,8 @@ const (
 	WritingFile              = "WritingFile"
 	CentrifugoError          = "CentrifugoError"
 	StatsdError              = "StatsdError"
+	MigrationError           = "MigrationError"
+	AutoupdateError          = "AutoupdateError"
 	APIError                 = "APIError"
 	SchedulerError           = "SchedulerError"
 )

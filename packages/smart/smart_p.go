@@ -98,66 +98,7 @@ type TxSignJSON struct {
 }
 
 func init() {
-	Extend(&script.ExtendData{Objects: map[string]interface{}{
-		"DBInsert":           DBInsert,
-		"DBUpdate":           DBUpdate,
-		"DBUpdateSysParam":   UpdateSysParam,
-		"DBUpdateExt":        DBUpdateExt,
-		"DBSelect":           DBSelect,
-		"AddressToId":        AddressToID,
-		"IdToAddress":        IDToAddress,
-		"ContractAccess":     ContractAccess,
-		"ContractConditions": ContractConditions,
-		"EcosysParam":        EcosysParam,
-		"SysParamString":     SysParamString,
-		"SysParamInt":        SysParamInt,
-		"SysFuel":            SysFuel,
-		"Int":                Int,
-		"Str":                Str,
-		"Money":              Money,
-		"Float":              Float,
-		"Len":                Len,
-		"Join":               Join,
-		"Sha256":             Sha256,
-		"PubToID":            PubToID,
-		"HexToBytes":         HexToBytes,
-		"LangRes":            LangRes,
-		"ValidateCondition":  ValidateCondition,
-		"EvalCondition":      EvalCondition,
-		"HasPrefix":          strings.HasPrefix,
-		"Contains":           strings.Contains,
-		"TrimSpace":          strings.TrimSpace,
-		"Replace":            Replace,
-		"ToLower":            strings.ToLower,
-		"CreateEcosystem":    CreateEcosystem,
-		"RollbackEcosystem":  RollbackEcosystem,
-		"CreateTable":        CreateTable,
-		"RollbackTable":      RollbackTable,
-		"PermTable":          PermTable,
-		"TableConditions":    TableConditions,
-		"ColumnCondition":    ColumnCondition,
-		"CreateColumn":       CreateColumn,
-		"RollbackColumn":     RollbackColumn,
-		"PermColumn":         PermColumn,
-		"UpdateLang":         UpdateLang,
-		"Size":               Size,
-		"Split":              Split,
-		"Substr":             Substr,
-		"ContractsList":      contractsList,
-		"IsObject":           IsObject,
-		"CompileContract":    CompileContract,
-		"FlushContract":      FlushContract,
-		"Eval":               Eval,
-		"Activate":           Activate,
-		"Deactivate":         Deactivate,
-		"JSONToMap":          JSONToMap,
-		"HMac":               HMac,
-		"check_signature":    CheckSignature, // system function
-	}, AutoPars: map[string]string{
-		`*smart.SmartContract`: `sc`,
-	}})
-	ExtendCost(getCostP)
-	FuncCallsDB(funcCallsDBP)
+	EmbedFuncs(smartVM, script.VMTypeSmart)
 }
 
 func getCostP(name string) int64 {
@@ -196,6 +137,61 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		}
 	}
 	if len(value) > 0 {
+		var (
+			ok, checked bool
+			list        [][]string
+		)
+		ival := converter.StrToInt64(value)
+	check:
+		switch name {
+		case `gap_between_blocks`:
+			ok = ival > 0 && ival < 86400
+		case `rb_blocks_1`, `number_of_nodes`:
+			ok = ival > 0 && ival < 1000
+		case `rb_blocks_2`:
+			ok = ival > 0 && ival < 10000
+		case `ecosystem_price`, `contract_price`, `column_price`, `table_price`, `menu_price`,
+			`page_price`, `commission_size`:
+			ok = ival >= 0
+		case `max_block_size`, `max_tx_size`, `max_tx_count`, `max_columns`, `max_indexes`,
+			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`:
+			ok = ival > 0
+		case `fuel_rate`, `full_nodes`, `commission_wallet`:
+			err := json.Unmarshal([]byte(value), &list)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling system param")
+				return 0, err
+			}
+			for _, item := range list {
+				switch name {
+				case `fuel_rate`, `commission_wallet`:
+					if len(item) != 2 || converter.StrToInt64(item[0]) <= 0 ||
+						(name == `fuel_rate` && converter.StrToInt64(item[1]) <= 0) ||
+						(name == `commission_wallet` && converter.StrToInt64(item[1]) == 0) {
+						break check
+					}
+				case `full_nodes`:
+					if len(item) != 3 {
+						break check
+					}
+					key := converter.StrToInt64(item[1])
+					if key == 0 || len(item[2]) != 128 || !converter.ValidateIPv4(item[0]) {
+						break check
+					}
+				}
+			}
+			checked = true
+		default:
+			if strings.HasPrefix(name, `extend_cost_`) {
+				ok = ival >= 0
+				break
+			}
+			checked = true
+		}
+		if !checked && (!ok || converter.Int64ToStr(ival) != value) {
+			log.WithFields(log.Fields{"type": consts.InvalidObject, "value": value, "name": name}).Error(ErrInvalidValue.Error())
+			return 0, ErrInvalidValue
+		}
 		fields = append(fields, "value")
 		values = append(values, value)
 	}
@@ -236,7 +232,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 		return
 	}
 	columns := strings.Split(params, `,`)
-	if err = sc.AccessColumns(tblname, columns); err != nil {
+	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
 	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && sc.Rollback, false)

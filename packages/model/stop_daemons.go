@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 // StopDaemon is model
 type StopDaemon struct {
