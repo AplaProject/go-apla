@@ -886,7 +886,7 @@ func RowConditions(sc *SmartContract, tblname string, id int64) error {
 	if err != nil {
 		if err == errAccessDenied {
 			if param, ok := tableParamConditions[tblname]; ok {
-				return sc.AccessRights(param, true)
+				return sc.AccessRights(param, false)
 			}
 		}
 
