@@ -26,6 +26,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/model/querycost"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -36,6 +37,7 @@ var (
 
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
 	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
+	queryCoster := querycost.GetQueryCoster(querycost.ExplainQueryCosterType)
 	var (
 		tableID string
 		err     error
@@ -97,7 +99,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		addSQLFields += `rb_id`
 	}
 	selectQuery := `SELECT ` + addSQLFields + ` FROM "` + table + `" ` + addSQLWhere
-	selectCost, err := model.GetQueryTotalCost(sc.DbTransaction, selectQuery)
+	selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting query total cost")
 		return 0, tableID, err
@@ -168,7 +170,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		}
 		if !sc.VDE {
 			updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + fmt.Sprintf(` rb_id = '%d'`, rollback.RbID) + addSQLWhere
-			updateCost, err := model.GetQueryTotalCost(sc.DbTransaction, updateQuery)
+			updateCost, err := queryCoster.QueryCost(sc.DbTransaction, updateQuery)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
 				return 0, tableID, err
@@ -234,7 +236,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		}
 		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0[:len(addSQLIns0)-1] +
 			`) VALUES (` + addSQLIns1[:len(addSQLIns1)-1] + `)`
-		insertCost, err := model.GetQueryTotalCost(sc.DbTransaction, insertQuery)
+		insertCost, err := queryCoster.QueryCost(sc.DbTransaction, insertQuery)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")
 			return 0, tableID, err
