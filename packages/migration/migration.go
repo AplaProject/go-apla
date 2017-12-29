@@ -1008,7 +1008,7 @@ var (
 
 		DROP TABLE IF EXISTS "%[1]d_roles_list";
 		CREATE TABLE "%[1]d_roles_list" (
-			"id" 	bigint NOT NULL DEFAULT '0',
+			"id" bigint NOT NULL DEFAULT '0',
 			"default_page"	varchar(255) NOT NULL DEFAULT '',
 			"role_name"	varchar(255) NOT NULL DEFAULT '',
 			"delete"    boolean,
@@ -1017,8 +1017,7 @@ var (
 			"date_create" timestamp,
 			"date_delete" timestamp,
 			"creator_name"	varchar(255) NOT NULL DEFAULT '',
-			"creator_avatar" varchar(255) NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"creator_avatar" varchar(255) NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
@@ -1037,8 +1036,7 @@ var (
 			"appointed_by_name"	varchar(255) NOT NULL DEFAULT '',
 			"date_start" timestamp,
 			"date_end" timestamp,
-			"delete" boolean,
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"delete" boolean
 		);
 		ALTER TABLE ONLY "%[1]d_roles_assign" ADD CONSTRAINT "%[1]d_roles_assign_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_assign_index_role" ON "%[1]d_roles_assign" (role_id);
@@ -1049,8 +1047,7 @@ var (
 		CREATE TABLE "%[1]d_member" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"username"	varchar(255) NOT NULL DEFAULT '',
-			"avatar"	text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"avatar"	text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
 		`
