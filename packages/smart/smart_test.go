@@ -35,7 +35,7 @@ func TestNewContract(t *testing.T) {
 				MyVal  string
 			}
 			func conditions {
-				Println( "Front")
+				Println( "Front", Random(10, 5000))
 				//$tmp = "Test string"
 //				Println("NewCitizen Front", $tmp, $key_id, $ecosystem_id, $PublicKey )
 			}
