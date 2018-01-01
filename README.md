@@ -1,3 +1,4 @@
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Go Report Card](https://goreportcard.com/badge/github.com/AplaProject/go-apla)](https://goreportcard.com/report/github.com/AplaProject/go-apla) 
 [![Build Status](https://travis-ci.org/AplaProject/go-apla.svg?branch=master)](https://travis-ci.org/AplaProject/go-apla) 
 [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://apla.readthedocs.io/en/latest/)
