@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -159,6 +160,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Money":              Money,
 		"PermColumn":         PermColumn,
 		"PermTable":          PermTable,
+		"Random":             Random,
 		"Split":              Split,
 		"Str":                Str,
 		"Substr":             Substr,
@@ -1107,4 +1109,12 @@ func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string
 		return ``, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
 	}
 	return string(data), nil
+}
+
+func Random(min int64, max int64) (int64, error) {
+	if min < 0 || max < 0 || min >= max {
+		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("getting random")
+		return 0, fmt.Errorf(`wrong random parameters %d %d`, min, max)
+	}
+	return min + rand.New(rand.NewSource(time.Now().Unix())).Int63n(max-min), nil
 }
