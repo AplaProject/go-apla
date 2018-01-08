@@ -70,6 +70,8 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Strong(SysParam(commission_size))`,
+		`[{"tag":"strong","children":[{"tag":"text","text":"3"}]}]`},
 	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
 		SetVar(Name: simple, Value: TestFunc(my value)) 
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))
@@ -166,7 +168,7 @@ func TestImage(t *testing.T) {
 		return
 	}
 	md := fmt.Sprintf(`%x`, md5.Sum([]byte(mydata)))
-	if RawToString(ret.Tree) != `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","rb_id","leftImg"],"data":[["1","myimage","/data/1_`+name+`/1/image/`+md+`","0","[{\"tag\":\"image\",\"attr\":{\"src\":\"/data/1_`+name+`/1/image/`+md+`\"}}]"]],"name":"`+name+`","source":"mysrc","types":["text","text","text","text","tags"]}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}}]},{"tag":"form","children":[{"tag":"imageinput","attr":{"name":"img","ratio":"2/1","width":"400"}},{"tag":"button","attr":{"contract":"UploadImage"},"children":[{"tag":"text","text":"Upload!"}]}]}]` {
+	if RawToString(ret.Tree) != `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","rb_id","leftImg"],"data":[["1","myimage","/data/1_`+name+`/1/image/`+md+`","0","[{"tag":"image","attr":{"src":"/data/1_`+name+`/1/image/`+md+`"}}]"]],"name":"`+name+`","source":"mysrc","types":["text","text","text","text","tags"]}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}}]},{"tag":"form","children":[{"tag":"imageinput","attr":{"name":"img","ratio":"2/1","width":"400"}},{"tag":"button","attr":{"contract":"UploadImage"},"children":[{"tag":"text","text":"Upload!"}]}]}]` {
 		t.Errorf(`Wrong image tree %s`, RawToString(ret.Tree))
 	}
 }
