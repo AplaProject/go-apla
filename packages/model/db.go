@@ -57,7 +57,11 @@ func GormInit(host string, port int, user string, pass string, dbName string) er
 // GormClose is closing Gorm connection
 func GormClose() error {
 	if DBConn != nil {
-		return DBConn.Close()
+		err := DBConn.Close()
+		DBConn = nil
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -119,14 +123,14 @@ func GetRecordsCount(tableName string) (int64, error) {
 }
 
 // ExecSchemaEcosystem is executing ecosystem schema
-func ExecSchemaEcosystem(id int, wallet int64, name string) error {
-	err := DBConn.Exec(fmt.Sprintf(migration.SchemaEcosystem, id, wallet, name)).Error
+func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string) error {
+	err := GetDB(db).Exec(fmt.Sprintf(migration.SchemaEcosystem, id, wallet, name)).Error
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err
 	}
 	if id == 1 {
-		err = DBConn.Exec(fmt.Sprintf(migration.SchemaFirstEcosystem, wallet)).Error
+		err = GetDB(db).Exec(fmt.Sprintf(migration.SchemaFirstEcosystem, wallet)).Error
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first ecosystem schema")
 		}
@@ -141,7 +145,7 @@ func ExecSchemaLocalData(id int, wallet int64) error {
 
 // ExecSchema is executing schema
 func ExecSchema() error {
-	return DBConn.Exec(migration.Schema).Error
+	return migration.Migrate(&MigrationHistory{})
 }
 
 // Update is updating table rows

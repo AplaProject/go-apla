@@ -60,6 +60,24 @@ type apiData struct {
 	token       *jwt.Token
 }
 
+// ParamString reaturs string value of the api params
+func (a *apiData) ParamString(key string) string {
+	v, ok := a.params[key]
+	if !ok {
+		return ""
+	}
+	return v.(string)
+}
+
+// ParamInt64 reaturs int64 value of the api params
+func (a *apiData) ParamInt64(key string) int64 {
+	v, ok := a.params[key]
+	if !ok {
+		return 0
+	}
+	return v.(int64)
+}
+
 type forSign struct {
 	Time    string `json:"time"`
 	ForSign string `json:"forsign"`
@@ -87,7 +105,7 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 	switch v := err.(type) {
 	case string:
 		errCode = v
-		if val, ok := errors[v]; ok {
+		if val, ok := apiErrors[v]; ok {
 			if len(params) > 0 {
 				list := make([]string, 0)
 				msg = fmt.Sprintf(val, params...)

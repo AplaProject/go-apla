@@ -59,7 +59,7 @@ func (p *FirstBlockParser) Action() error {
 	logger := p.GetLogger()
 	data := p.TxPtr.(*consts.FirstBlock)
 	myAddress := crypto.Address(data.PublicKey)
-	err := model.ExecSchemaEcosystem(1, myAddress, ``)
+	err := model.ExecSchemaEcosystem(nil, 1, myAddress, ``)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return p.ErrInfo(err)

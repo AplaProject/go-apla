@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/api"
+	"github.com/AplaProject/go-apla/packages/autoupdate"
 	conf "github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -236,6 +237,8 @@ func Start() {
 	}
 	conf.SetConfigParams()
 
+	autoupdate.InitUpdater(conf.Config.Autoupdate.ServerAddress, conf.Config.Autoupdate.PublicKeyPath)
+
 	// process directives
 	if *conf.GenerateFirstBlock {
 		if err := install.GenerateFirstBlock(); err != nil {
@@ -274,6 +277,11 @@ func Start() {
 			}
 		}
 		initGorm(conf.Config.DB)
+
+		err = autoupdate.Run()
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err}).Error("run autoupdate")
+		}
 	}
 
 	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")

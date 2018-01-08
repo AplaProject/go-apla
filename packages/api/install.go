@@ -44,11 +44,15 @@ type installParams struct {
 	logLevel               string
 	firstLoadBlockchainURL string
 	firstBlockDir          string
-	dbHost                 string
-	dbPort                 string
-	dbName                 string
-	dbPassword             string
-	dbUsername             string
+
+	dbHost     string
+	dbPort     string
+	dbName     string
+	dbPassword string
+	dbUsername string
+
+	centrifugoSecret string
+	centrifugoURL    string
 }
 
 func installCommon(data *installParams, logger *log.Entry) (err error) {
@@ -79,6 +83,11 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return err
 	}
 
+	conf.Config.Centrifugo = conf.CentrifugoConfig{
+		Secret: data.centrifugoSecret,
+		URL:    data.centrifugoURL,
+	}
+
 	if !install.IsExistFirstBlock() {
 		err = install.GenerateFirstBlock()
 		if err != nil {
@@ -101,17 +110,19 @@ func doInstall(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	data.result = &result
 
 	params := installParams{
-		installType:            data.params["type"].(string),
-		logLevel:               data.params["log_level"].(string),
-		firstLoadBlockchainURL: data.params["first_load_blockchain_url"].(string),
-		dbHost:                 data.params["db_host"].(string),
-		dbPort:                 data.params["db_port"].(string),
-		dbName:                 data.params["db_name"].(string),
-		dbUsername:             data.params["db_user"].(string),
-		dbPassword:             data.params["db_pass"].(string),
-		firstBlockDir:          data.params["first_block_dir"].(string),
+		installType:            data.ParamString("type"),
+		logLevel:               data.ParamString("log_level"),
+		firstLoadBlockchainURL: data.ParamString("first_load_blockchain_url"),
+		firstBlockDir:          data.ParamString("first_block_dir"),
+		dbHost:                 data.ParamString("db_host"),
+		dbPort:                 data.ParamString("db_port"),
+		dbName:                 data.ParamString("db_name"),
+		dbUsername:             data.ParamString("db_user"),
+		dbPassword:             data.ParamString("db_pass"),
+		centrifugoSecret:       data.ParamString("centrifugo_secret"),
+		centrifugoURL:          data.ParamString("centrifugo_url"),
 	}
-	if val := data.params["generate_first_block"]; val.(int64) == 1 {
+	if data.ParamInt64("generate_first_block") == 1 {
 		params.generateFirstBlock = true
 	}
 	err := installCommon(&params, logger)

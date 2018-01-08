@@ -50,7 +50,7 @@ func TestNewContracts(t *testing.T) {
 		var ret getContractResult
 		err := sendGet(`contract/`+item.Name, nil, &ret)
 		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(errors[`E_CONTRACT`], item.Name)) {
+			if strings.Contains(err.Error(), fmt.Sprintf(apiErrors[`E_CONTRACT`], item.Name)) {
 				form := url.Values{"Name": {item.Name}, "Value": {item.Value},
 					"Conditions": {`true`}}
 				if err := postTx(`NewContract`, &form); err != nil {
@@ -254,7 +254,7 @@ func TestEditContracts(t *testing.T) {
 	code := row.Value[`value`]
 	off := strings.IndexByte(code, '-')
 	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
-	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}}
+	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"01231234123412341234"}}
 	if err := postTx(`EditContract`, &form); err != nil {
 		t.Error(err)
 		return
@@ -589,6 +589,57 @@ func TestImport(t *testing.T) {
 
 }
 
+func TestEditContracts_ChangeWallet(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	var cntlist contractsResult
+	err := sendGet(`contracts`, nil, &cntlist)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret getContractResult
+	err = sendGet(`contract/testUpd`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	sid := ret.TableID
+	var row rowResult
+	err = sendGet(`row/contracts/`+sid, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err := postTx(`ActivateContract`, &url.Values{`Id`: {sid}}); err != nil {
+		t.Error(err)
+		return
+	}
+
+	code := row.Value[`value`]
+	off := strings.IndexByte(code, '-')
+	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
+	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"1248-5499-7861-4204-5166"}}
+	err = postTx(`EditContract`, &form)
+	if err == nil {
+		t.Error("Expected `Contract activated` error")
+		return
+	}
+
+	if err := postTx(`DeactivateContract`, &url.Values{`Id`: {sid}}); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err := postTx(`EditContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
 func TestUpdateFunc(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
@@ -610,7 +661,7 @@ func TestUpdateFunc(t *testing.T) {
 		    data {
 				Par string
 			}
-			action { 
+			action {
 				$result = MyTest($Par)
 			}}
 		`}, `Conditions`: {`true`}}
@@ -658,7 +709,7 @@ func TestUpdateFunc(t *testing.T) {
 		    data {
 				Par string
 			}
-			action { 
+			action {
 				$result = MyTest($Par) + MyTest("OK")
 			}}
 		`}, `Conditions`: {`true`}}
@@ -674,5 +725,67 @@ func TestUpdateFunc(t *testing.T) {
 	}
 	if msg != `Y=finishY=OK` {
 		t.Errorf(`wrong result %s`, msg)
+	}
+}
+
+func TestContractChain(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{"Name": {rnd}, "Columns": {`[{"name":"value","type":"varchar", "index": "0", 
+	  "conditions":"true"},
+	{"name":"amount", "type":"number","index": "0", "conditions":"true"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract sub` + rnd + ` {
+		data {
+			Id int
+		}
+		action {
+			$row = DBFind("` + rnd + `").Columns("value").WhereId($Id)
+			if Len($row) != 1 {
+				error "sub contract getting error"
+			}
+			$record = $row[0]
+			$new = $record["value"]
+			DBUpdate("` + rnd + `", $Id, "value", $new+"="+$new )
+		}
+	}
+
+	contract ` + rnd + ` {
+		data {
+			Initial string
+		}
+		action {
+			$id = DBInsert("` + rnd + `", "value,amount", $Initial, "0")
+			sub` + rnd + `("Id", $id)
+			$row = DBFind("` + rnd + `").Columns("value").WhereId($id)
+			if Len($row) != 1 {
+				error "contract getting error"
+			}
+			$record = $row[0]
+			$result = $record["value"]
+		}
+	}
+		`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err := postTxResult(rnd, &url.Values{`Initial`: {rnd}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != rnd+`=`+rnd {
+		t.Error(fmt.Errorf(`wrong result %s`, msg))
 	}
 }
