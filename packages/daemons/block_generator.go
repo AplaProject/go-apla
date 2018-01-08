@@ -91,7 +91,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 
 	trs, err := model.GetAllUnusedTransactions()
-	if err != nil || trs == nil {
+	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
 		return err
 	}
