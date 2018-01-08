@@ -202,6 +202,7 @@ var (
 			  Id         int
 			  Value      string
 			  Conditions string
+			  WalletId   string "optional"
 		  }
 		  conditions {
 			  var row array
@@ -234,11 +235,22 @@ var (
 				  }
 				  i = i + 1
 			  }
+			  if $WalletId != "" {
+			  	  $recipient = AddressToId($WalletId)
+				  if $recipient == 0 {
+					  error Sprintf("New contract owner %%s is invalid", $Recipient)
+				  }
+				  if Int($cur["active"]) == 1 {
+					  error "Contract must be deactivated before wallet changing"
+				  }
+			  } else {
+				  $recipient = $WalletId
+			  }
 		  }
 		  action {
 			  var root int
 			  root = CompileContract($Value, $ecosystem_id, 0, 0)
-			  DBUpdate("contracts", $Id, "value,conditions", $Value, $Conditions)
+			  DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
 			  FlushContract(root, $Id, false)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
@@ -970,6 +982,7 @@ var (
 			Id         int
 			Value      string
 			Conditions string
+			WalletId   string "optional"
 		}
 		conditions {
 			$cur = DBRow("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id)
@@ -1000,11 +1013,22 @@ var (
 				}
 				i = i + 1
 			}
+			if $WalletId != "" {
+				$recipient = AddressToId($WalletId)
+				if $recipient == 0 {
+					error Sprintf("New contract owner %%s is invalid", $Recipient)
+				}
+				if Int($cur["active"]) == 1 {
+					error "Contract must be deactivated before wallet changing"
+				}
+			} else {
+				$recipient = $WalletId
+			}
 		}
 		action {
 			var root int
 			root = CompileContract($Value, $ecosystem_id, Int($cur["wallet_id"]), Int($cur["token_id"]))
-			DBUpdate("contracts", $Id, "value,conditions", $Value, $Conditions)
+			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
 			FlushContract(root, $Id, Int($cur["active"]) == 1)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
