@@ -17,7 +17,7 @@
 package consts
 
 // VERSION is current version
-const VERSION = "0.1.6b9"
+const VERSION = "0.1.6b10"
 
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
