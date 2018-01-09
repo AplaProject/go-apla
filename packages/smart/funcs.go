@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -117,6 +118,13 @@ var (
 		"UpdateLang":         10,
 		"ValidateCondition":  30,
 	}
+	// map for table name to parameter with conditions
+	tableParamConditions = map[string]string{
+		"pages":      "changing_page",
+		"menu":       "changing_menu",
+		"signatures": "changing_signature",
+		"contracts":  "changing_contracts",
+	}
 )
 
 func getCost(name string) int64 {
@@ -161,6 +169,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Money":              Money,
 		"PermColumn":         PermColumn,
 		"PermTable":          PermTable,
+		"Random":             Random,
 		"Split":              Split,
 		"Str":                Str,
 		"Substr":             Substr,
@@ -183,6 +192,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Activate":           Activate,
 		"Deactivate":         Deactivate,
 		"check_signature":    CheckSignature,
+		"RowConditions":      RowConditions,
 	}
 
 	switch vt {
@@ -588,7 +598,7 @@ func Eval(sc *SmartContract, condition string) error {
 	}
 	if !ret {
 		log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-		return fmt.Errorf(`Access denied`)
+		return errAccessDenied
 	}
 	return nil
 }
@@ -864,6 +874,34 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 	return sc.AccessTable(tblName, "new_column")
 }
 
+// RowConditions checks conditions for table row by id
+func RowConditions(sc *SmartContract, tblname string, id int64) error {
+	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
+	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing row condition query")
+		return err
+	}
+
+	if len(condition) == 0 {
+		log.WithFields(log.Fields{"type": consts.NotFound, "name": tblname, "id": id}).Error("record not found")
+		return fmt.Errorf("Item %d has not been found", id)
+	}
+
+	err = Eval(sc, condition)
+	if err != nil {
+		if err == errAccessDenied {
+			if param, ok := tableParamConditions[tblname]; ok {
+				return sc.AccessRights(param, false)
+			}
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 // CreateColumn is creating column
 func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, index string) error {
 	if !accessContracts(sc, `NewColumn`) {
@@ -1111,6 +1149,14 @@ func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string
 		return ``, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
 	}
 	return string(data), nil
+}
+
+func Random(min int64, max int64) (int64, error) {
+	if min < 0 || max < 0 || min >= max {
+		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("getting random")
+		return 0, fmt.Errorf(`wrong random parameters %d %d`, min, max)
+	}
+	return min + rand.New(rand.NewSource(time.Now().Unix())).Int63n(max-min), nil
 }
 
 func ValidateCron(cronSpec string) error {

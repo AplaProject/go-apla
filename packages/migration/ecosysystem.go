@@ -225,16 +225,19 @@ var (
 			  Id         int
 			  Value      string
 			  Conditions string
+			  WalletId   string "optional"
 		  }
 		  conditions {
+			  RowConditions("contracts", $Id)
+			  ValidateCondition($Conditions, $ecosystem_id)
+
 			  var row array
 			  row = DBFind("contracts").Columns("id,value,conditions").WhereId($Id)
 			  if !Len(row) {
 				  error Sprintf("Contract %%d does not exist", $Id)
 			  }
 			  $cur = row[0]
-			  Eval($cur["conditions"])
-			  ValidateCondition($Conditions,$ecosystem_id)
+
 			  var list, curlist array
 			  list = ContractsList($Value)
 			  curlist = ContractsList($cur["value"])
@@ -257,11 +260,22 @@ var (
 				  }
 				  i = i + 1
 			  }
+			  if $WalletId != "" {
+			  	  $recipient = AddressToId($WalletId)
+				  if $recipient == 0 {
+					  error Sprintf("New contract owner %%s is invalid", $Recipient)
+				  }
+				  if Int($cur["active"]) == 1 {
+					  error "Contract must be deactivated before wallet changing"
+				  }
+			  } else {
+				  $recipient = $WalletId
+			  }
 		  }
 		  action {
 			  var root int
 			  root = CompileContract($Value, $ecosystem_id, 0, 0)
-			  DBUpdate("contracts", $Id, "value,conditions", $Value, $Conditions)
+			  DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
 			  FlushContract(root, $Id, false)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
@@ -290,7 +304,8 @@ var (
 			  Conditions string
 		  }
 		  conditions {
-			  ConditionById("parameters", true)
+			  RowConditions("parameters", $Id)
+			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
 			  DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
@@ -323,7 +338,8 @@ var (
 			  Conditions string
 		  }
 		  conditions {
-			  ConditionById("menu", true)
+			  RowConditions("menu", $Id)
+			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
 			  DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
@@ -335,7 +351,7 @@ var (
 			Value  string
 		}
 		conditions {
-			ConditionById("menu", false)
+			RowConditions("menu", $Id)
 		}
 		action {
 			var row map
@@ -370,7 +386,8 @@ var (
 			  Conditions string
 		  }
 		  conditions {
-			  ConditionById("pages", true)
+			  RowConditions("pages", $Id)
+			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
 			  DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
@@ -382,7 +399,7 @@ var (
 			  Value      string
 		  }
 		  conditions {
-			  ConditionById("pages", false)
+			  RowConditions("pages", $Id)
 		  }
 		  action {
 			  var row map
@@ -415,7 +432,8 @@ var (
 			  Conditions string
 		  }
 		  conditions {
-			  ConditionById("blocks", true)
+			  RowConditions("blocks", $Id)
+			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
 			  DBUpdate("blocks", $Id, "value,conditions", $Value, $Conditions)
@@ -1042,14 +1060,17 @@ var (
 			Id         int
 			Value      string
 			Conditions string
+			WalletId   string "optional"
 		}
 		conditions {
+			RowConditions("contracts", $Id)
+			ValidateCondition($Conditions, $ecosystem_id)
+
 			$cur = DBRow("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id)
 			if !$cur {
 				error Sprintf("Contract %%d does not exist", $Id)
 			}
-			Eval($cur["conditions"])
-			ValidateCondition($Conditions,$ecosystem_id)
+
 			var list, curlist array
 			list = ContractsList($Value)
 			curlist = ContractsList($cur["value"])
@@ -1072,11 +1093,22 @@ var (
 				}
 				i = i + 1
 			}
+			if $WalletId != "" {
+				$recipient = AddressToId($WalletId)
+				if $recipient == 0 {
+					error Sprintf("New contract owner %%s is invalid", $Recipient)
+				}
+				if Int($cur["active"]) == 1 {
+					error "Contract must be deactivated before wallet changing"
+				}
+			} else {
+				$recipient = $WalletId
+			}
 		}
 		action {
 			var root int
 			root = CompileContract($Value, $ecosystem_id, Int($cur["wallet_id"]), Int($cur["token_id"]))
-			DBUpdate("contracts", $Id, "value,conditions", $Value, $Conditions)
+			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
 			FlushContract(root, $Id, Int($cur["active"]) == 1)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
@@ -1143,7 +1175,7 @@ var (
 			Conditions string
 		}
 		conditions {
-			ConditionById("parameters", true)
+			RowConditions("parameters", $Id)
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
@@ -1182,7 +1214,8 @@ var (
 			Conditions string
 		}
 		conditions {
-			ConditionById("menu", true)
+			RowConditions("menu", $Id)
+			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
 			DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
@@ -1234,7 +1267,8 @@ var (
 			Conditions string
 		}
 		conditions {
-			ConditionById("pages", true)
+			RowConditions("pages", $Id)
+			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
 			DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
@@ -1246,7 +1280,7 @@ var (
 			Value      string
 		}
 		conditions {
-			ConditionById("pages", false)
+			RowConditions("pages", $Id)
 		}
 		action {
 			var value string
@@ -1322,7 +1356,8 @@ var (
 			Conditions string
 		}
 		conditions {
-			ConditionById("signatures", true)
+			RowConditions("signatures", $Id)
+			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
 			DBUpdate("signatures", $Id, "value,conditions", $Value, $Conditions)
@@ -1355,7 +1390,8 @@ var (
 			Conditions string
 		}
 		conditions {
-			ConditionById("blocks", true)
+			RowConditions("blocks", $Id)
+			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
 			DBUpdate("blocks", $Id, "value,conditions", $Value, $Conditions)

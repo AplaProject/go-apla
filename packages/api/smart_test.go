@@ -124,7 +124,7 @@ func TestPage(t *testing.T) {
 	form = url.Values{"Id": {`7123`}, "Value": {`New Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx(`EditParameter`, &form)
-	if cutErr(err) != `{"type":"error","error":"Item 7123 has not been found"}` {
+	if cutErr(err) != `{"type":"panic","error":"Item 7123 has not been found"}` {
 		t.Error(err)
 		return
 	}
@@ -180,7 +180,7 @@ func TestPage(t *testing.T) {
 	form = url.Values{"Id": {`1112`}, "Value": {value + `Span(Test)`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	err = postTx(`EditPage`, &form)
-	if cutErr(err) != `{"type":"error","error":"Item 1112 has not been found"}` {
+	if cutErr(err) != `{"type":"panic","error":"Item 1112 has not been found"}` {
 		t.Error(err)
 		return
 	}
@@ -345,6 +345,30 @@ func TestUpdateSysParam(t *testing.T) {
 		if err != nil {
 			fmt.Println(item.Name, sysList.List[0].Value, sysList.List[0])
 			t.Error(err)
+			return
+		}
+	}
+}
+
+func TestValidateConditions(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	baseForm := url.Values{"Id": {"1"}, "Value": {"Test"}, "Conditions": {"incorrectConditions"}}
+	contracts := map[string]url.Values{
+		"EditContract":  baseForm,
+		"EditParameter": baseForm,
+		"EditMenu":      baseForm,
+		"EditPage":      url.Values{"Id": {"1"}, "Value": {"Test"}, "Conditions": {"incorrectConditions"}, "Menu": {"1"}},
+	}
+	expectedErr := `{"type":"panic","error":"unknown identifier incorrectConditions"}`
+
+	for contract, form := range contracts {
+		err := postTx(contract, &form)
+		if err.Error() != expectedErr {
+			t.Errorf("contract %s expected '%s' got '%s'", contract, expectedErr, err)
 			return
 		}
 	}

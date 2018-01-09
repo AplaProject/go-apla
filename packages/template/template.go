@@ -339,7 +339,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 	if len(curFunc.Tag) > 0 {
 		curNode.Tag = curFunc.Tag
 		curNode.Attr = make(map[string]interface{})
-		if len(pars[`Body`]) > 0 {
+		if len(pars[`Body`]) > 0 && curFunc.Tag != `custom` {
 			process(pars[`Body`], &curNode, workspace)
 		}
 		parFunc.Owner = owner
@@ -560,12 +560,11 @@ func Template2JSON(input string, full bool, vars *map[string]string) []byte {
 	root := node{}
 	isvde := (*vars)[`vde`] == `true` || (*vars)[`vde`] == `1`
 
-  sc := smart.SmartContract{
+	sc := smart.SmartContract{
 		VDE: isvde,
 		VM:  smart.GetVM(isvde, converter.StrToInt64((*vars)[`ecosystem_id`])),
 		TxSmart: tx.SmartContract{Header: tx.Header{EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
 			KeyID: converter.StrToInt64((*vars)[`key_id`])}},
-
 	}
 	process(input, &root, &Workspace{Vars: vars, SmartContract: &sc})
 	if root.Children == nil {
