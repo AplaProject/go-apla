@@ -45,6 +45,17 @@ var forTest = tplList{
  })`,
 		`[{"tag":"code","attr":{"text":"P(Some text)\n Div(myclass){\n\t Span(Strong(\"Bold text\"))\n }"}}]`},
 	{`Data(Source: mysrc, Columns: "id,name", Data:
+		1, First Name
+		2, Second Name
+	).Custom(custom_id){
+		SetVar(Name: v, Value: Lower(#name#))
+		P(Body: #v#)
+	}.Custom(cust){
+		P(Body: #v#)
+	}`,
+		`[{"tag":"data","attr":{"columns":["id","name","custom_id","cust"],"data":[["1","First Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]"],["2","Second Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]"]],"source":"mysrc","types":["text","text","tags","tags"]}}]`},
+
+	{`Data(Source: mysrc, Columns: "id,name", Data:
 		1,first
 		2,second
 		3,third
