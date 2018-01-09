@@ -162,6 +162,7 @@ func VDEContract(contractData []byte, data *apiData) (result *contractResult, er
 	var ret string
 	hash, err := crypto.Hash(contractData)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of contract data")
 		return
 	}
 	result = &contractResult{Hash: hex.EncodeToString(hash)}

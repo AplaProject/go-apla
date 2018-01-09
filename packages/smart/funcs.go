@@ -1116,7 +1116,6 @@ func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string
 func ValidateCron(cronSpec string) error {
 	err := scheduler.Parse(cronSpec)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("validate cron format")
 		return err
 	}
 	return nil
@@ -1144,7 +1143,6 @@ func UpdateCron(sc *SmartContract, id int64) error {
 		},
 	})
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.SchedulerError, "error": err}).Error("update cron task")
 		return err
 	}
 

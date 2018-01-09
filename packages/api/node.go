@@ -48,15 +48,17 @@ func nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 	data.params[`signed_by`] = smart.PubToID(NodePublicKey)
 	prepareData := *data
 	if err = prepareContract(w, r, &prepareData, logger); err != nil {
-		logger.WithFields(log.Fields{"type": consts.APIError}).Error("can't prepare contract")
 		return err
 	}
 	signed, err := crypto.Sign(NodePrivateKey, prepareData.result.(prepareResult).ForSign)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
+		return err
+	}
 	data.params[`signature`] = signed
 	data.params[`pubkey`] = pubkey
 	data.params[`time`] = prepareData.result.(prepareResult).Time
 	if err = contract(w, r, data, logger); err != nil {
-		logger.WithFields(log.Fields{"type": consts.APIError}).Error("can't call contract")
 		return err
 	}
 	return nil
