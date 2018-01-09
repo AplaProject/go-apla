@@ -30,13 +30,13 @@ import (
 
 func (p *Parser) restoreUpdatedDBRowToPreviousData(tx map[string]string, where string) error {
 	logger := p.GetLogger()
-	var jsonMap map[string]string
-	if err := json.Unmarshal([]byte(tx["data"]), &jsonMap); err != nil {
+	var rollbackInfo map[string]string
+	if err := json.Unmarshal([]byte(tx["data"]), &rollbackInfo); err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollback.Data from json")
 		return p.ErrInfo(err)
 	}
 	addSQLUpdate := ""
-	for k, v := range jsonMap {
+	for k, v := range rollbackInfo {
 		if converter.InSliceString(k, []string{"hash", "pub", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
 			addSQLUpdate += k + `=decode('` + string(converter.BinToHex([]byte(v))) + `','HEX'),`
 		} else {

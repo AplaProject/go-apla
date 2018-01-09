@@ -37,10 +37,10 @@ var (
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
 	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
 	var (
-		tableID string
-		err     error
-		cost    int64
-		data    string
+		tableID         string
+		err             error
+		cost            int64
+		rollbackInfoStr string
 	)
 	logger := sc.GetLogger()
 
@@ -110,15 +110,15 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, tableID, errUpdNotExistRecord
 	}
 	if whereFields != nil && len(logData) > 0 {
-		jsonMap := make(map[string]string)
+		rollbackInfo := make(map[string]string)
 		for k, v := range logData {
 			if k == `id` {
 				continue
 			}
 			if (isBytea[k] || converter.InSliceString(k, []string{"hash", "tx_hash", "pub", "tx_hash", "public_key_0", "node_public_key"})) && v != "" {
-				jsonMap[k] = string(converter.BinToHex([]byte(v)))
+				rollbackInfo[k] = string(converter.BinToHex([]byte(v)))
 			} else {
-				jsonMap[k] = v
+				rollbackInfo[k] = v
 			}
 			if k[:1] == "+" || k[:1] == "-" {
 				addSQLFields += k[1:] + ","
@@ -128,12 +128,12 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 				addSQLFields += k + ","
 			}
 		}
-		jsonData, err := json.Marshal(jsonMap)
+		jsonRollbackInfo, err := json.Marshal(rollbackInfo)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback info to json")
 			return 0, tableID, err
 		}
-		data = string(jsonData)
+		rollbackInfoStr = string(jsonRollbackInfo)
 
 		addSQLUpdate := ""
 		for i := 0; i < len(fields); i++ {
@@ -240,7 +240,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			TxHash:    sc.TxHash,
 			NameTable: table,
 			TableID:   tableID,
-			Data:      data,
+			Data:      rollbackInfoStr,
 		}
 
 		err = rollbackTx.Create(sc.DbTransaction)
