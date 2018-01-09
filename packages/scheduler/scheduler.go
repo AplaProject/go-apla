@@ -20,7 +20,6 @@ type Scheduler struct {
 func (s *Scheduler) AddTask(t *Task) error {
 	err := t.ParseCron()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("parse cron format")
 		return err
 	}
 
@@ -72,11 +71,11 @@ func UpdateTask(t *Task) error {
 	return scheduler.UpdateTask(t)
 }
 
-func Parse(cronSpec string) error {
-	_, err := cron.Parse(cronSpec)
+func Parse(cronSpec string) (cron.Schedule, error) {
+	sch, err := cron.ParseStandard(cronSpec)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("parse cron format")
-		return err
+		return nil, err
 	}
-	return nil
+	return sch, nil
 }

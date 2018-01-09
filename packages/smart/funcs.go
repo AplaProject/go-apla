@@ -1114,7 +1114,7 @@ func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string
 }
 
 func ValidateCron(cronSpec string) error {
-	err := scheduler.Parse(cronSpec)
+	_, err := scheduler.Parse(cronSpec)
 	if err != nil {
 		return err
 	}

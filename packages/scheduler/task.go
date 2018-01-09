@@ -32,7 +32,7 @@ func (t *Task) ParseCron() error {
 	}
 
 	var err error
-	t.schedule, err = cron.Parse(t.CronSpec)
+	t.schedule, err = Parse(t.CronSpec)
 	return err
 }
 

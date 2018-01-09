@@ -34,7 +34,6 @@ func loadContractTasks() error {
 			},
 		})
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.SchedulerError, "error": err}).Error("update cron task")
 			return err
 		}
 	}
