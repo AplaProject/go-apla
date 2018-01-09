@@ -17,11 +17,13 @@
 package api
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/template"
 
@@ -33,6 +35,10 @@ type contentResult struct {
 	MenuTree json.RawMessage `json:"menutree,omitempty"`
 	Title    string          `json:"title,omitempty"`
 	Tree     json.RawMessage `json:"tree"`
+}
+
+type hashResult struct {
+	Hash string `json:"hash"`
 }
 
 func initVars(r *http.Request, data *apiData) *map[string]string {
@@ -72,6 +78,25 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	retmenu := template.Template2JSON(menu, false, initVars(r, data))
 	data.result = &contentResult{Tree: ret, Menu: page.Menu, MenuTree: retmenu}
 	return nil
+}
+
+func getPageHash(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	err = getPage(w, r, data, logger)
+	if err == nil {
+		var out, ret []byte
+		out, err = json.Marshal(data.result.(*contentResult))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("getting string for hash")
+			return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
+		}
+		ret, err = crypto.Hash(out)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating hash of the page")
+			return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
+		}
+		data.result = &hashResult{Hash: hex.EncodeToString(ret)}
+	}
+	return
 }
 
 func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {

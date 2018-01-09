@@ -46,6 +46,17 @@ func TestAPI(t *testing.T) {
 		return
 	}
 
+	var retHash hashResult
+	err = sendPost(`content/hash/default_page`, &url.Values{}, &retHash)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(retHash.Hash) != 64 {
+		t.Error(`wrong hash ` + retHash.Hash)
+		return
+	}
+
 	for _, item := range forTest {
 		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
 		if err != nil {
@@ -79,7 +90,7 @@ var forTest = tplList{
 		Span(#vCmpStartDate# #simple#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"0 TestFunc(my value)"}]}]`},
 	{`Input(Type: text, Value: OK Now(YY)+Strong(Ooops))`,
-		`[{"tag":"input","attr":{"type":"text","value":"OK 17+"}}]`},
+		`[{"tag":"input","attr":{"type":"text","value":"OK 18+"}}]`},
 	{`Button(Body: LangRes(save), Class: btn btn-primary, Contract: EditProfile, 
 		Page:members_list,).Alert(Text: $want_save_changes$, 
 		ConfirmButton: $yes$, CancelButton: $no$, Icon: question)`,
