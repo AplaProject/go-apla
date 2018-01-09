@@ -116,6 +116,13 @@ var (
 		"UpdateLang":         10,
 		"ValidateCondition":  30,
 	}
+	// map for table name to parameter with conditions
+	tableParamConditions = map[string]string{
+		"pages":      "changing_page",
+		"menu":       "changing_menu",
+		"signatures": "changing_signature",
+		"contracts":  "changing_contracts",
+	}
 )
 
 func getCost(name string) int64 {
@@ -183,6 +190,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Activate":           Activate,
 		"Deactivate":         Deactivate,
 		"check_signature":    CheckSignature,
+		"RowConditions":      RowConditions,
 	}
 
 	switch vt {
@@ -586,7 +594,7 @@ func Eval(sc *SmartContract, condition string) error {
 	}
 	if !ret {
 		log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-		return fmt.Errorf(`Access denied`)
+		return errAccessDenied
 	}
 	return nil
 }
@@ -860,6 +868,34 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 	}
 
 	return sc.AccessTable(tblName, "new_column")
+}
+
+// RowConditions checks conditions for table row by id
+func RowConditions(sc *SmartContract, tblname string, id int64) error {
+	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
+	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing row condition query")
+		return err
+	}
+
+	if len(condition) == 0 {
+		log.WithFields(log.Fields{"type": consts.NotFound, "name": tblname, "id": id}).Error("record not found")
+		return fmt.Errorf("Item %d has not been found", id)
+	}
+
+	err = Eval(sc, condition)
+	if err != nil {
+		if err == errAccessDenied {
+			if param, ok := tableParamConditions[tblname]; ok {
+				return sc.AccessRights(param, false)
+			}
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 // CreateColumn is creating column

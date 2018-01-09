@@ -622,7 +622,7 @@ func (sc *SmartContract) AccessRights(condition string, iscondition bool) error 
 			return err
 		}
 		if !ret {
-			return fmt.Errorf(`Access denied`)
+			return errAccessDenied
 		}
 	} else {
 		return fmt.Errorf(`There is not %s in parameters`, condition)

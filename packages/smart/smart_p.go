@@ -133,7 +133,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		}
 		if !ret {
 			log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-			return 0, fmt.Errorf(`Access denied`)
+			return 0, errAccessDenied
 		}
 	}
 	if len(value) > 0 {
