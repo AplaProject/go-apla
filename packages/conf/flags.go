@@ -127,8 +127,8 @@ var (
 	// UpdateInterval is interval in seconds for checking updates
 	UpdateInterval = flag.Int64("updateInterval", defaultUpdateInterval, "Interval in seconds for checking updates, default 3600 seconds (1 hour)")
 
-	// NoCheckReadAccess disables the access check for reading, is used only for VDE
-	NoCheckReadAccess = flag.Bool("noCheckReadAccess", false, "Do not check access for reading, only used for VDE")
+	// CheckReadAccess access check for reading, is used only for VDE
+	CheckReadAccess = flag.Bool("checkReadAccess", true, "Check access for reading, only used for VDE")
 )
 
 func envStr(envName string, val *string) bool {

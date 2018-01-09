@@ -441,7 +441,7 @@ func dbfindTag(par parFunc) string {
 	}
 	sc := par.Workspace.SmartContract
 	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
-	if sc.VDE && !*conf.NoCheckReadAccess {
+	if sc.VDE && *conf.CheckReadAccess {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
 		cols := strings.Split(fields, `,`)
 		if err != nil || sc.AccessColumns(tblname, &cols, false) != nil {
