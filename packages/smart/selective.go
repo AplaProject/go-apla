@@ -37,7 +37,7 @@ var (
 
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
 	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
-	queryCoster := querycost.GetQueryCoster(querycost.ExplainQueryCosterType)
+	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
 	var (
 		tableID string
 		err     error
