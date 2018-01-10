@@ -64,11 +64,20 @@ func lenArray(par []interface{}) int64 {
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
 		{`
-			func One(name string) string {
-
+			func One(list array, name string) string {
+				if list {
+					var row map 
+					row = list[0]
+					return row[name]
+				}
+				return nil
 			}
 			func Row(list array) map {
-				Println("Row")
+				var ret map
+				if list {
+					ret = list[0]
+				}
+				return ret
 			}
 			func GetData().WhereId(id int) array {
 				var par array
@@ -78,11 +87,17 @@ func TestVMCompile(t *testing.T) {
 				par[0] = item
 				return par
 			}
+			func GetEmpty().WhereId(id int) array {
+				var par array
+				return par
+			}
 			func result() string {
 				var m map
 				m = GetData().WhereId(123).Row()
-				Println(m)
-				return "OK"//m["id"] + "=" + GetData().WhereId(100).One("name")
+				if GetEmpty().WhereId(1).One("name") != nil {
+					return "problem"
+				}
+				return m["id"] + "=" + GetData().WhereId(100).One("name")
 			}`, `result`, `Name parameter=Name parameter`},
 		{`contract sets {
 			settings {
