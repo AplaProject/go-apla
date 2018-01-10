@@ -61,6 +61,16 @@ type FormulaQueryCoster struct {
 	rowCounter TableRowCounter
 }
 
+func strSliceIndex(fields []string, fieldToFind string) (index int) {
+	for i, field := range fields {
+		if field == fieldToFind {
+			index = i
+			break
+		}
+	}
+	return
+}
+
 func calcSelectCost(rowCount int64) int64 {
 	return SelectCost + int64(SelectRowCoeff*float64(rowCount))
 }
@@ -147,13 +157,7 @@ func deleteQueryCost(query string, tableRowCounter TableRowCounter) (int64, erro
 
 func getTableNameFromSelectQuery(query string) (string, error) {
 	queryFields := strings.Fields(query)
-	fromFieldIndex := 0
-	for i, field := range queryFields {
-		if field == From {
-			fromFieldIndex = i
-			break
-		}
-	}
+	fromFieldIndex := strSliceIndex(queryFields, From)
 	if fromFieldIndex == 0 {
 		return "", nil
 	}
@@ -162,13 +166,7 @@ func getTableNameFromSelectQuery(query string) (string, error) {
 
 func getTableNameFromInsertQuery(query string) (string, error) {
 	queryFields := strings.Fields(query)
-	intoFieldIndex := 0
-	for i, field := range queryFields {
-		if field == Into {
-			intoFieldIndex = i
-			break
-		}
-	}
+	intoFieldIndex := strSliceIndex(queryFields, Into)
 	if intoFieldIndex == 0 {
 		return "", IntoStatementMissingError
 	}
@@ -185,13 +183,7 @@ func getTableNameFromInsertQuery(query string) (string, error) {
 
 func getTableNameFromUpdateQuery(query string) (string, error) {
 	queryFields := strings.Fields(query)
-	setFieldIndex := 0
-	for i, field := range queryFields {
-		if field == Set {
-			setFieldIndex = i
-			break
-		}
-	}
+	setFieldIndex := strSliceIndex(queryFields, Set)
 	if setFieldIndex == 0 {
 		return "", SetStatementMissingError
 	}
@@ -200,13 +192,7 @@ func getTableNameFromUpdateQuery(query string) (string, error) {
 
 func getTableNameFromDeleteQuery(query string) (string, error) {
 	queryFields := strings.Fields(query)
-	fromFieldIndex := 0
-	for i, field := range queryFields {
-		if field == From {
-			fromFieldIndex = i
-			break
-		}
-	}
+	fromFieldIndex := strSliceIndex(queryFields, From)
 	if fromFieldIndex == 0 {
 		return "", FromStatementMissingError
 	}
