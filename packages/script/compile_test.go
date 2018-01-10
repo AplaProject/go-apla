@@ -64,33 +64,26 @@ func lenArray(par []interface{}) int64 {
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
 		{`
-/*					func GetData().WhereId(id int) array {
-						var par array
-						var item map
-						item["id"] = str(id)
-						item["name"] = "Test value " + str(id)
-						par[0] = item
-						Println("Par", par)
-						var myarr array
-						myarr[0] = 0
-						Println("My arr start", myarr)
-						myarr[1] = 1
-						Println("My arr", myarr)
-						return par
-					}*/
-				func result() string {
-					var qwerty array
-					var myarr array
-						myarr[0] = 7
-						var m array
-						Println("My arr start", myarr, m, qwerty)
-						myarr[1] = 8
-						Println("My arr", myarr, m)
-//					m = GetData().WhereId(123)
-//					Println(m)
-					return "OK"//m["id"] + "=" + GetData().WhereId(100).One("name")
-				}
-				`, `result`, `Name parameter=Name parameter`},
+			func One(name string) string {
+
+			}
+			func Row(list array) map {
+				Println("Row")
+			}
+			func GetData().WhereId(id int) array {
+				var par array
+				var item map
+				item["id"] = str(id)
+				item["name"] = "Test value " + str(id)
+				par[0] = item
+				return par
+			}
+			func result() string {
+				var m map
+				m = GetData().WhereId(123).Row()
+				Println(m)
+				return "OK"//m["id"] + "=" + GetData().WhereId(100).One("name")
+			}`, `result`, `Name parameter=Name parameter`},
 		{`contract sets {
 			settings {
 				val = 1.56

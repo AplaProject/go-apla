@@ -840,6 +840,8 @@ func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block)
 
 // This function is responsible for the compilation of expressions
 func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
+	var indexInfo *IndexInfo
+
 	i := *ind
 	curBlock := (*block)[len(*block)-1]
 
@@ -975,6 +977,7 @@ main:
 					if i < len(*lexems)-1 && (*lexems)[i+1].Type == isEq {
 						i++
 						setIndex = true
+						indexInfo = prev.Value.(*IndexInfo)
 						continue
 					}
 					bytecode = append(bytecode, prev)
@@ -1102,7 +1105,7 @@ main:
 						logger.WithFields(log.Fields{"lex_value": lexem.Value.(string), "type": consts.ParseError}).Error("unknown variable")
 						return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 					}
-					buffer = append(buffer, &ByteCode{cmdIndex, 0})
+					buffer = append(buffer, &ByteCode{cmdIndex, &IndexInfo{objInfo.Value.(int), tobj}})
 				}
 			}
 			if !call {
@@ -1122,7 +1125,7 @@ main:
 		bytecode = append(bytecode, buffer[i])
 	}
 	if setIndex {
-		bytecode = append(bytecode, &ByteCode{cmdSetIndex, 0})
+		bytecode = append(bytecode, &ByteCode{cmdSetIndex, indexInfo})
 	}
 	curBlock.Code = append(curBlock.Code, bytecode...)
 	return nil

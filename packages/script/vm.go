@@ -79,7 +79,6 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 	}
 	if obj.Type == ObjFunc {
 		var imap map[string][]interface{}
-		fmt.Println("Stack", size, in, rt.stack, obj.Value.(*Block).Info.(*FuncInfo).Names)
 		if obj.Value.(*Block).Info.(*FuncInfo).Names != nil {
 			if rt.stack[size-1] != nil {
 				imap = rt.stack[size-1].(map[string][]interface{})
@@ -532,7 +531,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 		case cmdIndex:
 			itype := reflect.TypeOf(rt.stack[size-2]).String()
-			fmt.Println("Index", itype, rt.stack)
 			switch {
 			case itype[:3] == `map`:
 				if strings.Contains(itype, Interface) {
@@ -564,20 +562,15 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				rt.stack = rt.stack[:size-2]
 			case itype[:2] == brackets:
 				ind := rt.stack[size-2].(int64)
-				fmt.Println("SetIndex", ind, itype, rt.stack)
 				if strings.Contains(itype, Interface) {
 					slice := rt.stack[size-3].([]interface{})
 					if int(ind) >= len(slice) {
 						slice = append(slice, make([]interface{}, int(ind)-len(slice)+1)...)
-						for i := 0; i < len(rt.vars); i++ {
-							if reflect.TypeOf(rt.vars[i]).String()[:2] == brackets {
-								if len(rt.stack[size-3].([]interface{})) == len(rt.vars[i].([]interface{})) &&
-									((len(rt.vars[i].([]interface{})) > 0 &&
-										&rt.stack[size-3].([]interface{})[0] == &rt.vars[i].([]interface{})[0]) ||
-										len(rt.vars[i].([]interface{})) == 0 && cap(rt.vars[i].([]interface{})) == i+1) {
-									rt.vars[i] = slice
-									break
-								}
+						indexInfo := cmd.Value.(*IndexInfo)
+						for i := len(rt.blocks) - 1; i >= 0; i-- {
+							if indexInfo.Owner == rt.blocks[i].Block {
+								rt.vars[rt.blocks[i].Offset+indexInfo.VarOffset] = slice
+								break
 							}
 						}
 						rt.stack[size-3] = slice
@@ -588,7 +581,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					slice[ind] = rt.stack[size-1].(map[string]string)
 				}
 				rt.stack = rt.stack[:size-2]
-				fmt.Println("SetIndex After", rt.stack)
 			default:
 				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_type": itype}).Error("type does not support indexing")
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
