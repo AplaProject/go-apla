@@ -729,7 +729,7 @@ func elseFull(par parFunc) string {
 
 func dateTimeTag(par parFunc) string {
 	datetime := (*par.Pars)[`DateTime`]
-	if len(datetime) == 0 {
+	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
 	defTime := `1970-01-01T00:00:00`
