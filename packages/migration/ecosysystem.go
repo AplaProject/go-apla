@@ -447,13 +447,12 @@ var (
 			  Name        string
 			  Type        string
 			  Permissions string
-			  Index       string "optional"
 		  }
 		  conditions {
-			  ColumnCondition($TableName, $Name, $Type, $Permissions, $Index)
+			  ColumnCondition($TableName, $Name, $Type, $Permissions)
 		  }
 		  action {
-			  CreateColumn($TableName, $Name, $Type, $Permissions, $Index)
+			  CreateColumn($TableName, $Name, $Type, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('18','contract EditColumn {
@@ -463,7 +462,7 @@ var (
 			  Permissions string
 		  }
 		  conditions {
-			  ColumnCondition($TableName, $Name, "", $Permissions, "")
+			  ColumnCondition($TableName, $Name, "", $Permissions)
 		  }
 		  action {
 			  PermColumn($TableName, $Name, $Permissions)
@@ -1362,13 +1361,12 @@ var (
 			Name        string
 			Type        string
 			Permissions string
-			Index       string "optional"
 		}
 		conditions {
-			ColumnCondition($TableName, $Name, $Type, $Permissions, $Index)
+			ColumnCondition($TableName, $Name, $Type, $Permissions)
 		}
 		action {
-			CreateColumn($TableName, $Name, $Type, $Permissions, $Index)
+			CreateColumn($TableName, $Name, $Type, $Permissions)
 		}
 		func rollback() {
 			RollbackColumn($TableName, $Name)
@@ -1384,7 +1382,7 @@ var (
 			Permissions string
 		}
 		conditions {
-			ColumnCondition($TableName, $Name, "", $Permissions, "")
+			ColumnCondition($TableName, $Name, "", $Permissions)
 		}
 		action {
 			PermColumn($TableName, $Name, $Permissions)
