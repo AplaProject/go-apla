@@ -908,7 +908,7 @@ main:
 				}
 				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdCall || prev.Cmd == cmdCallVari {
 					if prev.Value.(*ObjInfo).Type == ObjFunc && prev.Value.(*ObjInfo).Value.(*Block).Info.(*FuncInfo).Names != nil {
-						if bytecode[len(bytecode)-1].Cmd != cmdFuncName {
+						if len(bytecode) == 0 || bytecode[len(bytecode)-1].Cmd != cmdFuncName {
 							bytecode = append(bytecode, &ByteCode{cmdPush, nil})
 						}
 						if i < len(*lexems)-4 && (*lexems)[i+1].Type == isDot {
