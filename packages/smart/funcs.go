@@ -1182,7 +1182,7 @@ func UpdateCron(sc *SmartContract, id int64) error {
 	}
 
 	err = scheduler.UpdateTask(&scheduler.Task{
-		ID:       cronTask.ID,
+		ID:       cronTask.UID(),
 		CronSpec: cronTask.Cron,
 		Handler: &contract.ContractHandler{
 			Contract: cronTask.Contract,

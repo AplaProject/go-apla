@@ -1,5 +1,9 @@
 package model
 
+import (
+	"fmt"
+)
+
 type Cron struct {
 	tableName string
 	ID        int64
@@ -27,4 +31,9 @@ func (c *Cron) GetAllCronTasks() ([]*Cron, error) {
 	var crons []*Cron
 	err := DBConn.Table(c.TableName()).Find(&crons).Error
 	return crons, err
+}
+
+// UID returns unique identifier for cron task
+func (c *Cron) UID() string {
+	return fmt.Sprintf("%s_%d", c.tableName, c.ID)
 }

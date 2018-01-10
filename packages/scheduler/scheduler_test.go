@@ -40,7 +40,7 @@ func (mh *mockHandler) Run(t *Task) {
 // This test required timeout 60s
 // go test -timeout 60s
 func TestTask(t *testing.T) {
-	var taskID int64 = 1
+	var taskID = "task1"
 	sch := NewScheduler()
 
 	task := &Task{ID: taskID}
@@ -60,7 +60,7 @@ func TestTask(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = sch.UpdateTask(&Task{ID: 2})
+	err = sch.UpdateTask(&Task{ID: "task2"})
 	if err != nil {
 		t.Error(err)
 	}

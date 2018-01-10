@@ -14,7 +14,7 @@ type Handler interface {
 }
 
 type Task struct {
-	ID       int64
+	ID       string
 	CronSpec string
 
 	Handler Handler
@@ -23,7 +23,7 @@ type Task struct {
 }
 
 func (t *Task) String() string {
-	return fmt.Sprintf("id %d cron %s", t.ID, t.CronSpec)
+	return fmt.Sprintf("id %s cron %s", t.ID, t.CronSpec)
 }
 
 func (t *Task) ParseCron() error {

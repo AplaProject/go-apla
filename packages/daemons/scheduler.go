@@ -2,6 +2,7 @@ package daemons
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -13,28 +14,36 @@ import (
 )
 
 func loadContractTasks() error {
-	if !model.IsTable("1_vde_tables") {
-		return nil
-	}
-
-	c := model.Cron{}
-	c.SetTablePrefix("1_vde")
-	tasks, err := c.GetAllCronTasks()
+	stateIDs, err := model.GetAllSystemStatesIDs()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get all cron tasks")
+		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("get all system states ids")
 		return err
 	}
 
-	for _, cronTask := range tasks {
-		err = scheduler.UpdateTask(&scheduler.Task{
-			ID:       cronTask.ID,
-			CronSpec: cronTask.Cron,
-			Handler: &contract.ContractHandler{
-				Contract: cronTask.Contract,
-			},
-		})
+	for _, stateID := range stateIDs {
+		if !model.IsTable(fmt.Sprintf("%d_vde_cron", stateID)) {
+			return nil
+		}
+
+		c := model.Cron{}
+		c.SetTablePrefix(fmt.Sprintf("%d_vde", stateID))
+		tasks, err := c.GetAllCronTasks()
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get all cron tasks")
 			return err
+		}
+
+		for _, cronTask := range tasks {
+			err = scheduler.UpdateTask(&scheduler.Task{
+				ID:       cronTask.UID(),
+				CronSpec: cronTask.Cron,
+				Handler: &contract.ContractHandler{
+					Contract: cronTask.Contract,
+				},
+			})
+			if err != nil {
+				return err
+			}
 		}
 	}
 
