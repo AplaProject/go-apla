@@ -34,22 +34,26 @@ var (
 	clientsChannels   = ClientsChannels{storage: make(map[int64]string)}
 	centrifugoTimeout = time.Second * 5
 	publisher         *gocent.Client
+	config            conf.CentrifugoConfig
 )
 
 // InitCentrifugo client
 func InitCentrifugo(cfg conf.CentrifugoConfig) {
+	config = cfg
 	publisher = gocent.NewClient(cfg.URL, cfg.Secret, centrifugoTimeout)
 }
 
 func GetHMACSign(userID int64) (string, string, error) {
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	secret, err := crypto.GetHMAC(centrifugoSecret, strconv.FormatInt(userID, 10), timestamp)
+	secret, err := crypto.GetHMAC(config.Secret, strconv.FormatInt(userID, 10), timestamp)
+
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("HMAC getting error")
 		return "", "", err
 	}
+
 	result := hex.EncodeToString(secret)
-	clientsChannels[userID] = result
+	clientsChannels.Set(userID, result)
 	return result, timestamp, nil
 }
 

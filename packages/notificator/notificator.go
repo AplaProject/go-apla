@@ -5,141 +5,128 @@ import (
 	"fmt"
 	"strconv"
 
-	"sync"
-
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/publisher"
 	log "github.com/sirupsen/logrus"
 )
 
-// EcosystemID is ecosystem id
-type EcosystemID int64
-
-// UserID is user id
-type UserID int64
-type NotificationID int64
-
-// NotificationStats storing notification stats data
-type NotificationStats struct {
-	UserIDs     map[UserID]NotificationID
-	lastNotifID *NotificationID
-}
-
 type notificationRecord struct {
-	RecipientID  UserID
-	MaxNotifID   NotificationID
-	RecordsCount int64
+	RoleID       int64 `json:"role_id"`
+	RecordsCount int64 `json:"count"`
 }
 
-type Notifications struct {
-	sync.Map
+func (nr notificationRecord) String() string {
+	return fmt.Sprintf(`{"role_id": %d, "count": %d}`, nr.RoleID, nr.RecordsCount)
 }
 
-func AddUser(userID int64, ecosystemID int64) {
-	if _, ok := notifications[EcosystemID(ecosystemID)]; !ok {
-		notifications[EcosystemID(ecosystemID)] = NotificationStats{UserIDs: make(map[UserID]NotificationID), lastNotifID: new(NotificationID)}
-	}
-	notifications[EcosystemID(ecosystemID)].UserIDs[UserID(userID)] = 0
-}
-
+// SendNotifications send stats about unreaded messages to centrifugo
 func SendNotifications() {
-	for ecosystemID, ecosystemStats := range notifications {
-		notifs := mapToStruct(getEcosystemNotifications(ecosystemID, ecosystemStats))
-		for _, notif := range notifs {
-			if notifications[ecosystemID].UserIDs[notif.RecipientID] >= notif.MaxNotifID {
+	ecosystems, err := getEcosystemIDList()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting id list of ecosystems")
+		return
+	}
+
+	for _, systemId := range ecosystems {
+		result, err := model.GetNotificationsCount(systemId, nil)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notification count")
+			continue
+		}
+
+		notificationsStats, err := parseRecipientNotification(result)
+		if err != nil {
+			// error logged in parseRecipientNotification()
+			continue
+		}
+
+		for recipient, stats := range notificationsStats {
+			rawStats, err := json.Marshal(*stats)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("notification statistic")
 				continue
 			}
-			ok, err := publisher.Write(int64(notif.RecipientID), notif.String())
 
+			ok, err := publisher.Write(recipient, string(rawStats))
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
-				return false
+				continue
 			}
 
 			if !ok {
 				log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
-				return false
+				continue
 			}
-
-			id, err := strconv.ParseInt(notif["id"], 10, 64)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("conversion string to int64")
-				return false
-			}
-			notifications[ecosystemID].UserIDs[notif.RecipientID] = notif.MaxNotifID
 		}
-
-		return true
-	})
+	}
 }
 
-func mapToString(value map[string]string) (string, error) {
-	bytes, err := json.Marshal(value)
+func getEcosystemIDList() ([]int64, error) {
+	var idlist []int64
+
+	db := model.GetDB(nil)
+	rows, err := db.Raw("SELECT id FROM system_states").Rows()
+	defer rows.Close()
+
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(bytes), nil
+
+	for rows.Next() {
+		var id int64
+		rows.Scan(&id)
+		idlist = append(idlist, id)
+	}
+
+	return idlist, err
 }
 
-func getEcosystemNotifications(ecosystemID EcosystemID, userIDs NotificationStats) []map[string]string {
-	users := make([]int64, 0)
-	for userID := range userIDs.UserIDs {
-		users = append(users, int64(userID))
-	}
-	rows, err := model.GetNotificationsCount(int64(ecosystemID), users)
-	if err != nil || len(rows) == 0 {
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notifications count")
-		}
-		return nil
-	}
-	return rows
-}
+func parseRecipientNotification(rows []map[string]string) (map[int64]*[]notificationRecord, error) {
+	recipientNotifications := make(map[int64]*[]notificationRecord)
 
-func mapToStruct(dbData []map[string]string) []notificationRecord {
-	var result []notificationRecord
-	for _, record := range dbData {
-		nf := &notificationRecord{}
-		err := nf.ParseMap(record)
-		if err != nil {
-			continue
-		}
-		result = append(result, *nf)
-	}
-	return result
-}
-
-func (nr *notificationRecord) ParseMap(data map[string]string) error {
-	convert := func(value string, errMessage string) (int64, error) {
+	convert := func(dataRow map[string]string, value string, errMessage string) (int64, error) {
 		var result int64
-		result, err := strconv.ParseInt(data[value], 10, 64)
+		result, err := strconv.ParseInt(dataRow[value], 10, 64)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConvertionError, "error": err}).Error(errMessage)
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error(errMessage)
 		}
 		return result, err
 	}
 
-	maxID, err := convert("max", "error converting max id")
-	if err != nil {
-		return err
+	for _, r := range rows {
+		recipientId, err := convert(r, "recipient_id", "error converting records count")
+		if err != nil {
+			return recipientNotifications, err
+		}
+
+		roleId, err := convert(r, "role_id", "error converting records count")
+		if err != nil {
+			return recipientNotifications, err
+		}
+
+		count, err := convert(r, "cnt", "error converting records count")
+		if err != nil {
+			return recipientNotifications, err
+		}
+
+		roleNotifications := notificationRecord{
+			RoleID:       roleId,
+			RecordsCount: count,
+		}
+
+		nr, ok := recipientNotifications[recipientId]
+		if ok {
+			*nr = append(*nr, roleNotifications)
+			continue
+		}
+
+		records := []notificationRecord{
+			roleNotifications,
+		}
+
+		recipientNotifications[recipientId] = &records
 	}
 
-	count, err := convert("count", "error converting records count")
-	if err != nil {
-		return err
-	}
-
-	userID, err := convert("recipient_id", "error converting records count")
-	if err != nil {
-		return err
-	}
-	nr.MaxNotifID = NotificationID(maxID)
-	nr.RecordsCount = count
-	nr.RecipientID = UserID(userID)
-	return nil
-}
-
-func (nr *notificationRecord) String() string {
-	return fmt.Sprintf(`{"count": %d}`, nr.RecordsCount)
+	return recipientNotifications, nil
 }
