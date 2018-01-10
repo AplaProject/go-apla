@@ -33,12 +33,12 @@ func nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 	var err error
 
 	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
-	if err != nil || len(NodePrivateKey) == 0 {
-		if err == nil {
-			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
-			err = errors.New(`empty node private key`)
-		}
+	if err != nil {
 		return err
+	}
+	if len(NodePrivateKey) == 0 {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+		return errors.New(`empty node private key`)
 	}
 	pubkey, err := hex.DecodeString(NodePublicKey)
 	if err != nil {
@@ -50,12 +50,12 @@ func nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 	if err = prepareContract(w, r, &prepareData, logger); err != nil {
 		return err
 	}
-	signed, err := crypto.Sign(NodePrivateKey, prepareData.result.(prepareResult).ForSign)
+	signature, err := crypto.Sign(NodePrivateKey, prepareData.result.(prepareResult).ForSign)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
 		return err
 	}
-	data.params[`signature`] = signed
+	data.params[`signature`] = signature
 	data.params[`pubkey`] = pubkey
 	data.params[`time`] = prepareData.result.(prepareResult).Time
 	if err = contract(w, r, data, logger); err != nil {

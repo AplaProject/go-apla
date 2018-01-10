@@ -169,23 +169,23 @@ func VDEContract(contractData []byte, data *apiData) (result *contractResult, er
 
 	sc := smart.SmartContract{VDE: true, TxHash: hash}
 	err = InitSmartContract(&sc, contractData)
-	if err == nil {
-		if data.token != nil && data.token.Valid {
-			if auth, err := data.token.SignedString([]byte(jwtSecret)); err == nil {
-				sc.TxData[`auth_token`] = auth
-			}
-		}
-		if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
-			result.Result = ret
-		} else {
-			if errResult := json.Unmarshal([]byte(err.Error()), &result.Message); errResult != nil {
-				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": err.Error(),
-					"error": errResult}).Error("unmarshalling contract error")
-				result.Message = &txstatusError{Type: "panic", Error: errResult.Error()}
-			}
-		}
-	} else {
+	if err != nil {
 		result.Message = &txstatusError{Type: "panic", Error: err.Error()}
+		return
+	}
+	if data.token != nil && data.token.Valid {
+		if auth, err := data.token.SignedString([]byte(jwtSecret)); err == nil {
+			sc.TxData[`auth_token`] = auth
+		}
+	}
+	if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
+		result.Result = ret
+	} else {
+		if errResult := json.Unmarshal([]byte(err.Error()), &result.Message); errResult != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": err.Error(),
+				"error": errResult}).Error("unmarshalling contract error")
+			result.Message = &txstatusError{Type: "panic", Error: errResult.Error()}
+		}
 	}
 	return
 }
