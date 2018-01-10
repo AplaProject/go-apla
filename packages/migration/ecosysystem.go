@@ -202,7 +202,6 @@ var (
 			  Id         int
 			  Value      string
 			  Conditions string
-			  WalletId   string "optional"
 		  }
 		  conditions {
 			  RowConditions("contracts", $Id)
@@ -237,22 +236,11 @@ var (
 				  }
 				  i = i + 1
 			  }
-			  if $WalletId != "" {
-			  	  $recipient = AddressToId($WalletId)
-				  if $recipient == 0 {
-					  error Sprintf("New contract owner %%s is invalid", $Recipient)
-				  }
-				  if Int($cur["active"]) == 1 {
-					  error "Contract must be deactivated before wallet changing"
-				  }
-			  } else {
-				  $recipient = $WalletId
-			  }
 		  }
 		  action {
 			  var root int
 			  root = CompileContract($Value, $ecosystem_id, 0, 0)
-			  DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
+			  DBUpdate("contracts", $Id, "value,conditions", $Value, $Conditions)
 			  FlushContract(root, $Id, false)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
