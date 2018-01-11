@@ -42,6 +42,16 @@ var SetStatementMissingError = errors.New("SET statement missing")
 var IntoStatementMissingError = errors.New("INTO statement missing")
 var UnknownQueryTypeError = errors.New("Unknown query type")
 
+func strSliceIndex(fields []string, fieldToFind string) (index int) {
+	for i, field := range fields {
+		if field == fieldToFind {
+			index = i
+			break
+		}
+	}
+	return
+}
+
 type TableRowCounter interface {
 	RowCount(string) (int64, error)
 }
@@ -61,102 +71,15 @@ type FormulaQueryCoster struct {
 	rowCounter TableRowCounter
 }
 
-func strSliceIndex(fields []string, fieldToFind string) (index int) {
-	for i, field := range fields {
-		if field == fieldToFind {
-			index = i
-			break
-		}
-	}
-	return
+type QueryType interface {
+	GetTableName() (string, error)
+	CalculateCost(int64) int64
 }
 
-func calcSelectCost(rowCount int64) int64 {
-	return SelectCost + int64(SelectRowCoeff*float64(rowCount))
-}
+type SelectQueryType string
 
-func calcUpdateCost(rowCount int64) int64 {
-	return UpdateCost + int64(UpdateRowCoeff*float64(rowCount))
-}
-
-func calcDeleteCost(rowCount int64) int64 {
-	return DeleteCost + int64(DeleteRowCoeff*float64(rowCount))
-}
-
-func calcInsertCost(rowCount int64) int64 {
-	return InsertCost
-}
-
-func (f *FormulaQueryCoster) QueryCost(transaction *model.DbTransaction, query string, args ...interface{}) (int64, error) {
-	cleanedQuery := strings.TrimSpace(strings.ToLower(query))
-	switch {
-	case strings.HasPrefix(cleanedQuery, Select):
-		return selectQueryCost(cleanedQuery, f.rowCounter)
-	case strings.HasPrefix(cleanedQuery, Insert):
-		return insertQueryCost(cleanedQuery, f.rowCounter)
-	case strings.HasPrefix(cleanedQuery, Update):
-		return updateQueryCost(cleanedQuery, f.rowCounter)
-	case strings.HasPrefix(cleanedQuery, Delete):
-		return deleteQueryCost(cleanedQuery, f.rowCounter)
-	}
-	log.WithFields(log.Fields{"type": consts.ParseError, "query": query}).Error("parsing sql query")
-	return 0, UnknownQueryTypeError
-}
-
-func selectQueryCost(query string, tableRowCounter TableRowCounter) (int64, error) {
-	tableName, err := getTableNameFromSelectQuery(query)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParseError, "query": query, "error": err}).Error("getting table name from sql query")
-		return 0, err
-	}
-	rowCount, err := tableRowCounter.RowCount(tableName)
-	if err != nil {
-		return 0, err
-	}
-	return calcSelectCost(rowCount), nil
-}
-
-func insertQueryCost(query string, tableRowCounter TableRowCounter) (int64, error) {
-	tableName, err := getTableNameFromInsertQuery(query)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParseError, "query": query, "error": err}).Error("getting table name from sql query")
-		return 0, err
-	}
-	rowCount, err := tableRowCounter.RowCount(tableName)
-	if err != nil {
-		return 0, err
-	}
-	return calcInsertCost(rowCount), nil
-}
-
-func updateQueryCost(query string, tableRowCounter TableRowCounter) (int64, error) {
-	tableName, err := getTableNameFromUpdateQuery(query)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParseError, "query": query, "error": err}).Error("getting table name from sql query")
-		return 0, err
-	}
-	rowCount, err := tableRowCounter.RowCount(tableName)
-	if err != nil {
-		return 0, err
-	}
-	return calcUpdateCost(rowCount), nil
-}
-
-func deleteQueryCost(query string, tableRowCounter TableRowCounter) (int64, error) {
-	tableName, err := getTableNameFromDeleteQuery(query)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParseError, "query": query, "error": err}).Error("getting table name from sql query")
-		return 0, err
-	}
-	rowCount, err := tableRowCounter.RowCount(tableName)
-	if err != nil {
-		return 0, err
-	}
-	return calcDeleteCost(rowCount), nil
-}
-
-func getTableNameFromSelectQuery(query string) (string, error) {
-	queryFields := strings.Fields(query)
+func (s SelectQueryType) GetTableName() (string, error) {
+	queryFields := strings.Fields(string(s))
 	fromFieldIndex := strSliceIndex(queryFields, From)
 	if fromFieldIndex == 0 {
 		return "", nil
@@ -164,8 +87,29 @@ func getTableNameFromSelectQuery(query string) (string, error) {
 	return strings.Trim(queryFields[fromFieldIndex+1], Quote), nil
 }
 
-func getTableNameFromInsertQuery(query string) (string, error) {
-	queryFields := strings.Fields(query)
+func (s SelectQueryType) CalculateCost(rowCount int64) int64 {
+	return SelectCost + int64(SelectRowCoeff*float64(rowCount))
+}
+
+type UpdateQueryType string
+
+func (s UpdateQueryType) GetTableName() (string, error) {
+	queryFields := strings.Fields(string(s))
+	setFieldIndex := strSliceIndex(queryFields, Set)
+	if setFieldIndex == 0 {
+		return "", SetStatementMissingError
+	}
+	return strings.Trim(queryFields[setFieldIndex-1], Quote), nil
+}
+
+func (s UpdateQueryType) CalculateCost(rowCount int64) int64 {
+	return UpdateCost + int64(UpdateRowCoeff*float64(rowCount))
+}
+
+type InsertQueryType string
+
+func (s InsertQueryType) GetTableName() (string, error) {
+	queryFields := strings.Fields(string(s))
 	intoFieldIndex := strSliceIndex(queryFields, Into)
 	if intoFieldIndex == 0 {
 		return "", IntoStatementMissingError
@@ -181,17 +125,14 @@ func getTableNameFromInsertQuery(query string) (string, error) {
 	return strings.Trim(tableName, Quote), nil
 }
 
-func getTableNameFromUpdateQuery(query string) (string, error) {
-	queryFields := strings.Fields(query)
-	setFieldIndex := strSliceIndex(queryFields, Set)
-	if setFieldIndex == 0 {
-		return "", SetStatementMissingError
-	}
-	return strings.Trim(queryFields[setFieldIndex-1], Quote), nil
+func (s InsertQueryType) CalculateCost(rowCount int64) int64 {
+	return InsertCost
 }
 
-func getTableNameFromDeleteQuery(query string) (string, error) {
-	queryFields := strings.Fields(query)
+type DeleteQueryType string
+
+func (s DeleteQueryType) GetTableName() (string, error) {
+	queryFields := strings.Fields(string(s))
 	fromFieldIndex := strSliceIndex(queryFields, From)
 	if fromFieldIndex == 0 {
 		return "", FromStatementMissingError
@@ -201,4 +142,36 @@ func getTableNameFromDeleteQuery(query string) (string, error) {
 		return "", DeleteMinimumThreeFieldsError
 	}
 	return strings.Trim(queryFields[fromFieldIndex+1], Quote), nil
+}
+
+func (s DeleteQueryType) CalculateCost(rowCount int64) int64 {
+	return DeleteCost + int64(DeleteRowCoeff*float64(rowCount))
+}
+
+func (f *FormulaQueryCoster) QueryCost(transaction *model.DbTransaction, query string, args ...interface{}) (int64, error) {
+	cleanedQuery := strings.TrimSpace(strings.ToLower(query))
+	var queryType QueryType
+	switch {
+	case strings.HasPrefix(cleanedQuery, Select):
+		queryType = SelectQueryType(cleanedQuery)
+	case strings.HasPrefix(cleanedQuery, Insert):
+		queryType = InsertQueryType(cleanedQuery)
+	case strings.HasPrefix(cleanedQuery, Update):
+		queryType = UpdateQueryType(cleanedQuery)
+	case strings.HasPrefix(cleanedQuery, Delete):
+		queryType = DeleteQueryType(cleanedQuery)
+	default:
+		log.WithFields(log.Fields{"type": consts.ParseError, "query": query}).Error("parsing sql query")
+		return 0, UnknownQueryTypeError
+	}
+	tableName, err := queryType.GetTableName()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ParseError, "query": query, "error": err}).Error("getting table name from sql query")
+		return 0, err
+	}
+	rowCount, err := f.rowCounter.RowCount(tableName)
+	if err != nil {
+		return 0, err
+	}
+	return queryType.CalculateCost(rowCount), nil
 }

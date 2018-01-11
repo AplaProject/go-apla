@@ -35,67 +35,67 @@ func (s *QueryCostByFormulaTestSuite) TestQueryCostUnknownQueryType() {
 }
 
 func (s *QueryCostByFormulaTestSuite) TestGetTableNameFromSelectNoTable() {
-	tableName, err := getTableNameFromSelectQuery("select 3")
+	tableName, err := SelectQueryType("select 3").GetTableName()
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), tableName, "")
 }
 
 func (s *QueryCostByFormulaTestSuite) TestGetTableNameFromSelect() {
-	tableName, err := getTableNameFromSelectQuery("select a from keys where 3=1")
+	tableName, err := SelectQueryType("select a from keys where 3=1").GetTableName()
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), tableName, "keys")
-	tableName, err = getTableNameFromSelectQuery(`select a,  b,  c from "1_keys" where 3=1`)
+	tableName, err = SelectQueryType(`select a,  b,  c from "1_keys" where 3=1`).GetTableName()
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), tableName, "1_keys")
 }
 
 func (s *QueryCostByFormulaTestSuite) TestGetTableNameFromInsertNoInto() {
-	_, err := getTableNameFromInsertQuery(`insert "1_keys"(id) values (1)`)
+	_, err := InsertQueryType(`insert "1_keys"(id) values (1)`).GetTableName()
 	assert.Error(s.T(), err)
 	assert.Equal(s.T(), err, IntoStatementMissingError)
 }
 
 func (s *QueryCostByFormulaTestSuite) TestGetTableNameFromInsert() {
-	tableName, err := getTableNameFromInsertQuery("insert into keys(a,b,c) values (1,2,3)")
+	tableName, err := InsertQueryType("insert into keys(a,b,c) values (1,2,3)").GetTableName()
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), tableName, "keys")
-	tableName, err = getTableNameFromInsertQuery(`insert into "1_keys" (a,b,c) values (1,2,3)`)
+	tableName, err = InsertQueryType(`insert into "1_keys" (a,b,c) values (1,2,3)`).GetTableName()
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), tableName, "1_keys")
 }
 
 func (s *QueryCostByFormulaTestSuite) TestGetTableNameFromUpdateNoSet() {
-	_, err := getTableNameFromUpdateQuery(`update keys a = b where id = 1`)
+	_, err := UpdateQueryType(`update keys a = b where id = 1`).GetTableName()
 	assert.Error(s.T(), err)
 	assert.Equal(s.T(), err, SetStatementMissingError)
 }
 
 func (s *QueryCostByFormulaTestSuite) TestGetTableNameFromUpdate() {
-	tableName, err := getTableNameFromUpdateQuery("update keys set a = 1 where id = 2")
+	tableName, err := UpdateQueryType("update keys set a = 1 where id = 2").GetTableName()
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), tableName, "keys")
-	tableName, err = getTableNameFromUpdateQuery(`update "1_keys" set a = 1`)
+	tableName, err = UpdateQueryType(`update "1_keys" set a = 1`).GetTableName()
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), tableName, "1_keys")
 }
 
 func (s *QueryCostByFormulaTestSuite) TestGetTableNameFromDeleteNoFrom() {
-	_, err := getTableNameFromDeleteQuery(`delete table where id = 1`)
+	_, err := DeleteQueryType(`delete table where id = 1`).GetTableName()
 	assert.Error(s.T(), err)
 	assert.Equal(s.T(), err, FromStatementMissingError)
 }
 
 func (s *QueryCostByFormulaTestSuite) TestGetTableNameFromDeleteNoTable() {
-	_, err := getTableNameFromDeleteQuery(`delete from`)
+	_, err := DeleteQueryType(`delete from`).GetTableName()
 	assert.Error(s.T(), err)
 	assert.Equal(s.T(), err, DeleteMinimumThreeFieldsError)
 }
 
 func (s *QueryCostByFormulaTestSuite) TestGetTableNameFromDelete() {
-	tableName, err := getTableNameFromDeleteQuery("delete from keys")
+	tableName, err := DeleteQueryType("delete from keys").GetTableName()
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), tableName, "keys")
-	tableName, err = getTableNameFromDeleteQuery(`delete from "1_keys" where a = 1`)
+	tableName, err = DeleteQueryType(`delete from "1_keys" where a = 1`).GetTableName()
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), tableName, "1_keys")
 }
@@ -103,25 +103,25 @@ func (s *QueryCostByFormulaTestSuite) TestGetTableNameFromDelete() {
 func (s *QueryCostByFormulaTestSuite) TestQueryCostSelect() {
 	cost, err := s.queryCoster.QueryCost(nil, "SELECT * FROM small WHERE id = ?", 3)
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), cost, calcSelectCost(tableRowCount))
+	assert.Equal(s.T(), cost, SelectQueryType("").CalculateCost(tableRowCount))
 }
 
 func (s *QueryCostByFormulaTestSuite) TestQueryCostUpdate() {
 	cost, err := s.queryCoster.QueryCost(nil, "UPDATE small SET a = ?", 3)
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), cost, calcUpdateCost(tableRowCount))
+	assert.Equal(s.T(), cost, UpdateQueryType("").CalculateCost(tableRowCount))
 }
 
 func (s *QueryCostByFormulaTestSuite) TestQueryCostDelete() {
 	cost, err := s.queryCoster.QueryCost(nil, "DELETE FROM small")
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), cost, calcDeleteCost(tableRowCount))
+	assert.Equal(s.T(), cost, DeleteQueryType("").CalculateCost(tableRowCount))
 }
 
 func (s *QueryCostByFormulaTestSuite) TestQueryCostInsert() {
 	cost, err := s.queryCoster.QueryCost(nil, "INSERT INTO small(a,b) VALUES (1,2)")
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), cost, calcInsertCost(tableRowCount))
+	assert.Equal(s.T(), cost, InsertQueryType("").CalculateCost(tableRowCount))
 }
 
 func (s *QueryCostByFormulaTestSuite) TestQueryCostInsertWrongTable() {
