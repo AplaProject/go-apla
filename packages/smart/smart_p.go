@@ -148,8 +148,6 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			ok = ival > 0 && ival < 86400
 		case `rb_blocks_1`, `number_of_nodes`:
 			ok = ival > 0 && ival < 1000
-		case `rb_blocks_2`:
-			ok = ival > 0 && ival < 10000
 		case `ecosystem_price`, `contract_price`, `column_price`, `table_price`, `menu_price`,
 			`page_price`, `commission_size`:
 			ok = ival >= 0
