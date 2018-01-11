@@ -19,6 +19,8 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -40,6 +42,7 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 	for name := range r.Form {
 		vars[name] = r.FormValue(name)
 	}
+	vars[`_full`] = `0`
 	vars[`ecosystem_id`] = converter.Int64ToStr(data.ecosystemId)
 	vars[`key_id`] = converter.Int64ToStr(data.keyId)
 	vars[`accept_lang`] = r.Header.Get(`Accept-Language`)
@@ -59,18 +62,44 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("page not found")
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
-
-	ret := template.Template2JSON(page.Value, false, initVars(r, data))
-
-	menu, err := model.Single(`SELECT value FROM "`+getPrefix(data)+
-		`_menu" WHERE name = ?`, page.Menu).String()
+	menu, err := model.Single(`SELECT value FROM "`+getPrefix(data)+`_menu" WHERE name = ?`,
+		page.Menu).String()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting single from DB")
 		return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
 	}
+	var wg sync.WaitGroup
+	var timeout bool
+	wg.Add(2)
+	success := make(chan bool)
+	go func() {
+		defer wg.Done()
 
-	retmenu := template.Template2JSON(menu, false, initVars(r, data))
-	data.result = &contentResult{Tree: ret, Menu: page.Menu, MenuTree: retmenu}
+		ret := template.Template2JSON(page.Value, &timeout, initVars(r, data))
+		if timeout {
+			return
+		}
+		retmenu := template.Template2JSON(menu, &timeout, initVars(r, data))
+		if timeout {
+			return
+		}
+		data.result = &contentResult{Tree: ret, Menu: page.Menu, MenuTree: retmenu}
+		success <- true
+	}()
+	go func() {
+		select {
+		case <-time.After(5 * time.Millisecond):
+			timeout = true
+		case <-success:
+		}
+		wg.Done()
+	}()
+	wg.Wait()
+	close(success)
+	if timeout {
+		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error(page.Name + " is a heavy page")
+		return errorAPI(w, `E_HEAVYPAGE`, http.StatusInternalServerError)
+	}
 	return nil
 }
 
@@ -87,14 +116,15 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("menu not found")
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
-
-	ret := template.Template2JSON(menu.Value, false, initVars(r, data))
+	var timeout bool
+	ret := template.Template2JSON(menu.Value, &timeout, initVars(r, data))
 	data.result = &contentResult{Tree: ret, Title: menu.Title}
 	return nil
 }
 
 func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	ret := template.Template2JSON(data.params[`template`].(string), false, initVars(r, data))
+	var timeout bool
+	ret := template.Template2JSON(data.params[`template`].(string), &timeout, initVars(r, data))
 	data.result = &contentResult{Tree: ret}
 	return nil
 }

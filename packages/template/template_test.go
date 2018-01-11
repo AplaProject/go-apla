@@ -28,9 +28,11 @@ type tplItem struct {
 type tplList []tplItem
 
 func TestJSON(t *testing.T) {
+	var timeout bool
 	vars := make(map[string]string)
+	vars[`_full`] = `0`
 	for _, item := range forTest {
-		templ := Template2JSON(item.input, false, &vars)
+		templ := Template2JSON(item.input, &timeout, &vars)
 		if string(templ) != item.want {
 			t.Errorf("wrong json \r\n%s != \r\n%s", templ, item.want)
 			return
@@ -165,9 +167,11 @@ var forTest = tplList{
 }
 
 func TestFullJSON(t *testing.T) {
+	var timeout bool
 	vars := make(map[string]string)
+	vars[`_full`] = `1`
 	for _, item := range forFullTest {
-		templ := Template2JSON(item.input, true, &vars)
+		templ := Template2JSON(item.input, &timeout, &vars)
 		if string(templ) != item.want {
 			t.Errorf(`wrong json %s != %s`, templ, item.want)
 			return

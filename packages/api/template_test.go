@@ -91,7 +91,7 @@ var forTest = tplList{
 		Span(#vCmpStartDate# #simple#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"0 TestFunc(my value)"}]}]`},
 	{`Input(Type: text, Value: OK Now(YY)+Strong(Ooops))`,
-		`[{"tag":"input","attr":{"type":"text","value":"OK 17+"}}]`},
+		`[{"tag":"input","attr":{"type":"text","value":"OK 18+"}}]`},
 	{`Button(Body: LangRes(save), Class: btn btn-primary, Contract: EditProfile, 
 		Page:members_list,).Alert(Text: $want_save_changes$, 
 		ConfirmButton: $yes$, CancelButton: $no$, Icon: question)`,
