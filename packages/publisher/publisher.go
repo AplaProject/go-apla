@@ -45,7 +45,7 @@ func InitCentrifugo(cfg conf.CentrifugoConfig) {
 
 func GetHMACSign(userID int64) (string, string, error) {
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	secret, err := crypto.GetHMAC(config.Secret, strconv.FormatInt(userID, 10), timestamp)
+	secret, err := crypto.GetHMACWithTimestamp(config.Secret, strconv.FormatInt(userID, 10), timestamp)
 
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("HMAC getting error")
