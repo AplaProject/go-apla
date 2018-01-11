@@ -63,42 +63,6 @@ func lenArray(par []interface{}) int64 {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
-		{`
-			func One(list array, name string) string {
-				if list {
-					var row map 
-					row = list[0]
-					return row[name]
-				}
-				return nil
-			}
-			func Row(list array) map {
-				var ret map
-				if list {
-					ret = list[0]
-				}
-				return ret
-			}
-			func GetData().WhereId(id int) array {
-				var par array
-				var item map
-				item["id"] = str(id)
-				item["name"] = "Test value " + str(id)
-				par[0] = item
-				return par
-			}
-			func GetEmpty().WhereId(id int) array {
-				var par array
-				return par
-			}
-			func result() string {
-				var m map
-				m = GetData().WhereId(123).Row()
-				if GetEmpty().WhereId(1).One("name") != nil {
-					return "problem"
-				}
-				return m["id"] + "=" + GetData().WhereId(100).One("name")
-			}`, `result`, `Name parameter=Name parameter`},
 		{`contract sets {
 			settings {
 				val = 1.56
@@ -380,6 +344,43 @@ func TestVMCompile(t *testing.T) {
 				return error "error"
 			}`, "ifMap", "not empty",
 		},
+		{`func One(list array, name string) string {
+			if list {
+				var row map 
+				row = list[0]
+				return row[name]
+			}
+			return nil
+		}
+		func Row(list array) map {
+			var ret map
+			if list {
+				ret = list[0]
+			}
+			return ret
+		}
+		func GetData().WhereId(id int) array {
+			var par array
+			var item map
+			item["id"] = str(id)
+			item["name"] = "Test value " + str(id)
+			par[0] = item
+			return par
+		}
+		func GetEmpty().WhereId(id int) array {
+			var par array
+			return par
+		}
+		func result() string {
+			var m map
+			var s string
+			m = GetData().WhereId(123).Row()
+			s = GetEmpty().WhereId(1).One("name") 
+			if s != nil {
+				return "problem"
+			}
+			return m["id"] + "=" + GetData().WhereId(100).One("name")
+		}`, `result`, `123=Test value 100`},
 	}
 	vm := NewVM()
 	vm.Extern = true

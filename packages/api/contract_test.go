@@ -172,13 +172,18 @@ var contracts = []smartContract{
 				vals = ret[0]
 				Test("6", vals["id"])	
 			}
+			var one string
+			one = DBFind("contracts").WhereId(5).One("id")
+			Test("7",  one)	
+			var row map
+			row = DBFind("contracts").WhereId(3).Row()
+			Test("8",  row["id"])	
 			Test("255",  "255")	
 		}
 	}`,
 		[]smartParams{
 			{nil, map[string]string{`0`: `1`, `1`: `1`, `2`: `2`, `3`: `2`, `4`: `1`, `5`: `4`,
-				`6`:   `7`,
-				`255`: `255`}},
+				`6`: `7`, `7`: `5`, `8`: `3`, `255`: `255`}},
 		}},
 	{`testEmpty`, `contract testEmpty {
 				action { Test("empty",  "empty value")}}`,
