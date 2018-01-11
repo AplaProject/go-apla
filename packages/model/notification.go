@@ -1,7 +1,6 @@
 package model
 
 import (
-	"bytes"
 	"strconv"
 )
 
@@ -10,22 +9,22 @@ const notificationTableSuffix = "_notifications"
 // Notification structure
 type Notification struct {
 	tableName              string
-	ID                     uint64 `gorm:"primary_key;not null;size:255"`
+	ID                     int64 `gorm:"primary_key;not null"`
 	StartedProcessingTime  int64
 	StartedTime            int64
 	BodyText               string
-	RecipientID            uint64
+	RecipientID            int64
 	RecipientName          string `gorm:"size:255"`
-	StartedProcessingID    uint64
+	StartedProcessingID    int64
 	Name                   string `gorm:"size:255"`
-	RoleID                 uint64
+	RoleID                 int64
 	RoleName               string `gorm:"size:255"`
-	PageValInt             uint64
+	PageValInt             int64
 	PageValStr             string `gorm:"size:255"`
 	Closed                 bool
 	RecipientAvatar        string
-	NotificationType       uint64
-	FinishedProcessingID   uint64
+	NotificationType       int64
+	FinishedProcessingID   int64
 	FinishedProcessingTime int64
 	PageName               string `gorm:"size:255"`
 }
@@ -43,37 +42,25 @@ func (n *Notification) TableName() string {
 // GetNotificationsCount returns all unclosed notifications by users and ecosystem through role_id
 // if userIDs is nil or empty then filter will be skipped
 func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
+	filter, paramsNeeded := getNotificationCountFilter(userIDs)
 	query := `SELECT recipient_id, role_id, count(*) cnt 
-	 FROM "` + strconv.FormatInt(ecosystemID, 10) + `_notifications" 
-	 WHERE closed = false ` + getNotificationCountFilter(userIDs) + ` 
-	 GROUP BY "recipient_id", "role_id";`
+	FROM "` + strconv.FormatInt(ecosystemID, 10) + `_notifications" 
+	` + filter + ` 
+	GROUP BY "recipient_id", "role_id";`
 
+	if paramsNeeded {
+		return GetAll(query, -1, userIDs)
+	}
 	return GetAll(query, -1)
 }
 
-func getNotificationCountFilter(users []int64) string {
-	if users == nil || len(users) == 0 {
-		return ""
+func getNotificationCountFilter(users []int64) (filter string, paramsNeeded bool) {
+	filter = ` WHERE closed = false `
+	if len(users) == 0 {
+		return filter, paramsNeeded
 	}
 
-	return ` AND recipient_id IN (` + IDList(users).SQLString() + `) `
-}
-
-// IDList represent extended []int64
-type IDList []int64
-
-// SQLString returns list of items separated by "," as string
-func (l IDList) SQLString() string {
-	var bts []byte
-	buf := bytes.NewBuffer(bts)
-
-	for i, item := range l {
-		if i > 0 {
-			buf.WriteString(",")
-		}
-
-		buf.WriteString(strconv.FormatInt(item, 10))
-	}
-
-	return buf.String()
+	filter += ` AND recipient_id IN (?) `
+	paramsNeeded = true
+	return
 }

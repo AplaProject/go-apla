@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type ParseRecipientNotificationsItem struct {
@@ -23,7 +25,7 @@ func TestParseRecipientNotifications(t *testing.T) {
 				map[string]string{
 					"recipient_id": "1",
 					"role_id":      "2",
-					"cnt":          "1", //1
+					"cnt":          "1",
 				},
 				map[string]string{
 					"recipient_id": "2",
@@ -63,10 +65,7 @@ func TestParseRecipientNotifications(t *testing.T) {
 	}
 
 	for i, item := range table {
-		result, err := parseRecipientNotification(item.Input)
-		if err != nil {
-			t.Error(err, "on ", i, " item")
-		}
+		result := parseRecipientNotification(item.Input)
 
 		if err := compareNotificationRecordResult(result, item.Want); err != nil {
 			t.Errorf("on item %d err: %v\n", i, err)
@@ -115,12 +114,7 @@ func TestOutputFormat(t *testing.T) {
 
 	want := `[{"role_id":1,"count":2},{"role_id":2,"count":1}]`
 	bts, err := json.Marshal(records)
-	if err != nil {
-		t.Error("error on marshal records")
-		return
-	}
-
-	if string(bts) != want {
-		t.Errorf(`marshaled result "%s" not equal to "%s"`, string(bts), want)
+	if assert.NoError(t, err) {
+		assert.Equal(t, string(bts), want, "marshaled not equal")
 	}
 }
