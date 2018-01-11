@@ -42,25 +42,22 @@ func (n *Notification) TableName() string {
 // GetNotificationsCount returns all unclosed notifications by users and ecosystem through role_id
 // if userIDs is nil or empty then filter will be skipped
 func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
-	filter, paramsNeeded := getNotificationCountFilter(userIDs)
+	filter, params := getNotificationCountFilter(userIDs)
 	query := `SELECT recipient_id, role_id, count(*) cnt 
 	FROM "` + strconv.FormatInt(ecosystemID, 10) + `_notifications" 
 	` + filter + ` 
 	GROUP BY "recipient_id", "role_id";`
 
-	if paramsNeeded {
-		return GetAll(query, -1, userIDs)
-	}
-	return GetAll(query, -1)
+	return GetAll(query, -1, params)
 }
 
-func getNotificationCountFilter(users []int64) (filter string, paramsNeeded bool) {
+func getNotificationCountFilter(users []int64) (filter string, params []interface{}) {
 	filter = ` WHERE closed = false `
-	if len(users) == 0 {
-		return filter, paramsNeeded
+
+	if len(users) > 0 {
+		filter += `AND recipient_id IN (?) `
+		params = append(params, users)
 	}
 
-	filter += ` AND recipient_id IN (?) `
-	paramsNeeded = true
 	return
 }
