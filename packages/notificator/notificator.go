@@ -2,6 +2,7 @@ package notificator
 
 import (
 	"encoding/json"
+	"sync"
 
 	"github.com/AplaProject/go-apla/packages/converter"
 
@@ -16,16 +17,35 @@ type notificationRecord struct {
 	RecordsCount int64 `json:"count"`
 }
 
-// SendNotifications send stats about unreaded messages to centrifugo
-func SendNotifications() {
-	ecosystems, err := model.GetAllSystemStatesIDs()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting id list of ecosystems")
+var (
+	systemUsers map[int64]*[]int64
+	mu          sync.Mutex
+)
+
+func init() {
+	systemUsers = make(map[int64]*[]int64)
+}
+
+// AddUser add user to send notifications
+func AddUser(userID, systemID int64) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	val, ok := systemUsers[systemID]
+	if ok {
+		*val = append(*val, userID)
 		return
 	}
 
-	for _, systemID := range ecosystems {
-		result, err := model.GetNotificationsCount(systemID, nil)
+	val = &[]int64{userID}
+	systemUsers[systemID] = val
+}
+
+// SendNotifications send stats about unreaded messages to centrifugo
+func SendNotifications() {
+
+	for systemID, users := range systemUsers {
+		result, err := model.GetNotificationsCount(systemID, *users)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notification count")
 			continue
