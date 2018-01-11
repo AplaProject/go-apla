@@ -35,6 +35,7 @@ var (
 		DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
 		"id" int NOT NULL DEFAULT '0',
 		"hash" bytea  NOT NULL DEFAULT '',
+		"rollbacks_hash" bytea NOT NULL DEFAULT '',
 		"data" bytea NOT NULL DEFAULT '',
 		"ecosystem_id" int  NOT NULL DEFAULT '0',
 		"key_id" bigint  NOT NULL DEFAULT '0',

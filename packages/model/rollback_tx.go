@@ -1,12 +1,19 @@
 package model
 
+import "github.com/AplaProject/go-apla/packages/converter"
+
 // RollbackTx is model
 type RollbackTx struct {
-	ID        int64  `gorm:"primary_key;not null"`
-	BlockID   int64  `gorm:"not null"`
-	TxHash    []byte `gorm:"not null"`
-	NameTable string `gorm:"not null;size:255;column:table_name"`
-	TableID   string `gorm:"not null;size:255"`
+	ID        int64  `gorm:"primary_key;not null" json:"-"`
+	BlockID   int64  `gorm:"not null" json:"block_id"`
+	TxHash    []byte `gorm:"not null" json:"tx_hash"`
+	NameTable string `gorm:"not null;size:255;column:table_name" json:"table_name"`
+	TableID   string `gorm:"not null;size:255" json:"table_id"`
+}
+
+type RollbackTxWithData struct {
+	RollbackTx
+	Data string `json:"data"`
 }
 
 // TableName returns name of table
@@ -17,6 +24,30 @@ func (RollbackTx) TableName() string {
 // GetRollbackTransactions is returns rollback transactions
 func (rt *RollbackTx) GetRollbackTransactions(dbTransaction *DbTransaction, transactionHash []byte) ([]map[string]string, error) {
 	return GetAllTx(dbTransaction, "SELECT * from rollback_tx WHERE tx_hash = ?", -1, transactionHash)
+}
+
+func (rt *RollbackTx) GetBlockRollbackTransactions(dbTransaction *DbTransaction, blockID int64) ([]RollbackTxWithData, error) {
+	rollbackTxsWithData := []RollbackTxWithData{}
+	var rollbackTransactions []RollbackTx
+	err := GetDB(dbTransaction).Where("block_id = ?", blockID).Order("tx_hash asc").Find(&rollbackTransactions).Error
+	if err != nil {
+		return rollbackTxsWithData, err
+	}
+	for _, rollbackTx := range rollbackTransactions {
+		rollbackTxWithData := RollbackTxWithData{rollbackTx, ""}
+		rbID, err := GetRollbackIDForTableRow(rollbackTx.NameTable, converter.StrToInt64(rollbackTx.TableID))
+		if err != nil {
+			return nil, err
+		}
+		rollback := &Rollback{}
+		if found, err := rollback.Get(rbID); err != nil {
+			return nil, err
+		} else if found {
+			rollbackTxWithData.Data = rollback.Data
+		}
+		rollbackTxsWithData = append(rollbackTxsWithData, rollbackTxWithData)
+	}
+	return rollbackTxsWithData, nil
 }
 
 // DeleteByHash is deleting rollbackTx by hash
