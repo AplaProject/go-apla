@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -71,7 +72,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	var wg sync.WaitGroup
 	var timeout bool
 	wg.Add(2)
-	success := make(chan bool)
+	success := make(chan bool, 1)
 	go func() {
 		defer wg.Done()
 
@@ -87,12 +88,15 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		success <- true
 	}()
 	go func() {
+		defer wg.Done()
+		if conf.Config.MaxPageGenerationTime == 0 {
+			return
+		}
 		select {
-		case <-time.After(5 * time.Millisecond):
+		case <-time.After(time.Duration(conf.Config.MaxPageGenerationTime) * time.Millisecond):
 			timeout = true
 		case <-success:
 		}
-		wg.Done()
 	}()
 	wg.Wait()
 	close(success)
