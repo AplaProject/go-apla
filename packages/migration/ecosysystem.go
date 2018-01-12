@@ -1052,7 +1052,7 @@ var (
 					error "Contract must be deactivated before wallet changing"
 				}
 			} else {
-				$recipient = $WalletId
+				$recipient = $cur["wallet_id"]
 			}
 		}
 		action {
