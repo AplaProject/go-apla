@@ -661,6 +661,46 @@ func TestUpdateFunc(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
+	form = url.Values{`Value`: {`
+		contract one` + rnd + ` {
+			action {
+				var ret map
+				ret = DBFind("contracts").Columns("id,value").WhereId(10).Row()
+				$result = ret["id"]
+		}}
+		contract row` + rnd + ` {
+				action {
+					var ret string
+					ret = DBFind("contracts").Columns("id,value").WhereId(11).One("id")
+					$result = ret
+				}}
+		
+			`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err := postTxResult(`one`+rnd, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `10` {
+		t.Error(`wrong one`)
+		return
+	}
+	_, msg, err = postTxResult(`row`+rnd, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `11` {
+		t.Error(`wrong row`)
+		return
+	}
+
 	form = url.Values{`Value`: {`
 		contract ` + rnd + ` {
 		    data {
@@ -675,7 +715,7 @@ func TestUpdateFunc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, msg, err := postTxResult(rnd, &url.Values{`Par`: {`my param`}})
+	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`my param`}})
 	if err != nil {
 		t.Error(err)
 		return
