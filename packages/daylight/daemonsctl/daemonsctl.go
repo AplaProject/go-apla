@@ -23,13 +23,14 @@ func RunAllDaemons() error {
 		return err
 	}
 
-	log.Info("start daemons")
-	daemons.StartDaemons()
-
+	log.Info("load contracts")
 	if err := smart.LoadContracts(nil); err != nil {
 		log.Errorf("Load Contracts error: %s", err)
 		return err
 	}
+
+	log.Info("start daemons")
+	daemons.StartDaemons()
 
 	err = tcpserver.TcpListener(conf.Config.TCPServer.Str())
 	if err != nil {
