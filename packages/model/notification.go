@@ -46,9 +46,9 @@ func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]str
 	query := `SELECT recipient_id, role_id, count(*) cnt 
 	FROM "` + strconv.FormatInt(ecosystemID, 10) + `_notifications" 
 	` + filter + ` 
-	GROUP BY "recipient_id", "role_id";`
+	GROUP BY "recipient_id", "role_id"`
 
-	return GetAll(query, -1, params)
+	return GetAllTransaction(nil, query, -1, params...)
 }
 
 func getNotificationCountFilter(users []int64) (filter string, params []interface{}) {
