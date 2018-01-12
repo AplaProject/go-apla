@@ -13,6 +13,7 @@ import (
 )
 
 type notificationRecord struct {
+	EcosystemID  int64 `json:"ecosystem"`
 	RoleID       int64 `json:"role_id"`
 	RecordsCount int64 `json:"count"`
 }
@@ -51,7 +52,7 @@ func SendNotifications() {
 			continue
 		}
 
-		notificationsStats := parseRecipientNotification(result)
+		notificationsStats := parseRecipientNotification(result, systemID)
 
 		for recipient, stats := range notificationsStats {
 			rawStats, err := json.Marshal(*stats)
@@ -74,7 +75,7 @@ func SendNotifications() {
 	}
 }
 
-func parseRecipientNotification(rows []map[string]string) map[int64]*[]notificationRecord {
+func parseRecipientNotification(rows []map[string]string, systemID int64) map[int64]*[]notificationRecord {
 	recipientNotifications := make(map[int64]*[]notificationRecord)
 
 	for _, r := range rows {
@@ -83,6 +84,7 @@ func parseRecipientNotification(rows []map[string]string) map[int64]*[]notificat
 		count := converter.StrToInt64(r["cnt"])
 
 		roleNotifications := notificationRecord{
+			EcosystemID:  systemID,
 			RoleID:       roleID,
 			RecordsCount: count,
 		}
