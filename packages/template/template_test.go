@@ -28,9 +28,11 @@ type tplItem struct {
 type tplList []tplItem
 
 func TestJSON(t *testing.T) {
+	var timeout bool
 	vars := make(map[string]string)
+	vars[`_full`] = `0`
 	for _, item := range forTest {
-		templ := Template2JSON(item.input, false, &vars)
+		templ := Template2JSON(item.input, &timeout, &vars)
 		if string(templ) != item.want {
 			t.Errorf("wrong json \r\n%s != \r\n%s", templ, item.want)
 			return
@@ -74,8 +76,8 @@ var forTest = tplList{
 	{`SetTitle(My pageР)AddToolButton(Title: Open, Page: default)`,
 		`[{"tag":"settitle","attr":{"title":"My pageР"}},{"tag":"addtoolbutton","attr":{"page":"default","title":"Open"}}]`},
 	{`DateTime(2017-11-07T17:51:08)+DateTime(2015-08-27T09:01:00,HH:MI DD.MM.YYYY)
-	+CmpTime(2017-11-07T17:51:08,2017-11-07)CmpTime(2017-11-07T17:51:08,2017-11-07T20:22:01)CmpTime(2015-10-01T17:51:08,2015-10-01T17:51:08)`,
-		`[{"tag":"text","text":"2017-11-07 17:51:08"},{"tag":"text","text":"+09:01 27.08.2015"},{"tag":"text","text":"\n\t+1-10"}]`},
+	+CmpTime(2017-11-07T17:51:08,2017-11-07)CmpTime(2017-11-07T17:51:08,2017-11-07T20:22:01)CmpTime(2015-10-01T17:51:08,2015-10-01T17:51:08)=DateTime(NULL)`,
+		`[{"tag":"text","text":"2017-11-07 17:51:08"},{"tag":"text","text":"+09:01 27.08.2015"},{"tag":"text","text":"\n\t+1-10"},{"tag":"text","text":"="}]`},
 	{`SetVar(pref,unicode Р)Input(Name: myid, Value: #pref#)Strong(qqq)`,
 		`[{"tag":"input","attr":{"name":"myid","value":"unicode Р"}},{"tag":"strong","children":[{"tag":"text","text":"qqq"}]}]`},
 	{`ImageInput(myimg,100,40)`,
@@ -165,9 +167,11 @@ var forTest = tplList{
 }
 
 func TestFullJSON(t *testing.T) {
+	var timeout bool
 	vars := make(map[string]string)
+	vars[`_full`] = `1`
 	for _, item := range forFullTest {
-		templ := Template2JSON(item.input, true, &vars)
+		templ := Template2JSON(item.input, &timeout, &vars)
 		if string(templ) != item.want {
 			t.Errorf(`wrong json %s != %s`, templ, item.want)
 			return

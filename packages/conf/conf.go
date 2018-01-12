@@ -64,6 +64,8 @@ type SavedConfig struct {
 	FirstLoadBlockchainURL string
 	FirstLoadBlockchain    string
 
+	MaxPageGenerationTime int64 // in milliseconds
+
 	TCPServer HostPort
 	HTTP      HostPort
 	DB        DBConfig

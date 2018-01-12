@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -478,7 +479,7 @@ func dbfindTag(par parFunc) string {
 		}
 	}
 
-	if sc.VDE {
+	if sc.VDE && *conf.CheckReadAccess {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
 		if err != nil || sc.AccessColumns(tblname, &queryColumns, false) != nil {
 			return `Access denied`
@@ -798,7 +799,7 @@ func elseFull(par parFunc) string {
 
 func dateTimeTag(par parFunc) string {
 	datetime := (*par.Pars)[`DateTime`]
-	if len(datetime) == 0 {
+	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
 	defTime := `1970-01-01T00:00:00`

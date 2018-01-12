@@ -90,7 +90,6 @@ var (
 		('3','default_ecosystem_contract', '', 'true'),
 		('4','gap_between_blocks', '2', 'true'),
 		('5','rb_blocks_1', '60', 'true'),
-		('6','rb_blocks_2', '3600', 'true'),
 		('7','new_version_url', 'upd.apla.io', 'true'),
 		('8','full_nodes', '', 'true'),
 		('9','number_of_nodes', '101', 'true'),

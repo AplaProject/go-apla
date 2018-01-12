@@ -34,6 +34,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/daemons"
 	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
+	"github.com/AplaProject/go-apla/packages/install"
 	logtools "github.com/AplaProject/go-apla/packages/log"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
@@ -240,7 +241,7 @@ func Start() {
 
 	// process directives
 	if *conf.GenerateFirstBlock {
-		if err := parser.GenerateFirstBlock(); err != nil {
+		if err := install.GenerateFirstBlock(); err != nil {
 			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("GenerateFirstBlock")
 			Exit(1)
 		}

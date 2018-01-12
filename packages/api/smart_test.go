@@ -313,7 +313,6 @@ func TestUpdateSysParam(t *testing.T) {
 	notvalid := []invalidPar{
 		{`gap_between_blocks`, `100000`},
 		{`rb_blocks_1`, `-1`},
-		{`rb_blocks_2`, `test`},
 		{`page_price`, `-20`},
 		{`max_block_size`, `0`},
 		{`max_fuel_tx`, `20string`},
