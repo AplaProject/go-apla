@@ -197,11 +197,21 @@ func TestLinkData(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	hashImage := fmt.Sprintf(`%x`, md5.Sum([]byte(mydata)))
-	hashLongText := fmt.Sprintf(`%x`, md5.Sum([]byte(longText)))
 
-	want := `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","short_text","long_text","leftImg"],"cutoff":"short_text,long_text","data":[["2","myimage","{"link":"/data/1_` + name + `/2/image/` + hashImage + `","title":""}","{"link":"","title":"` + shortText + `"}","{"link":"/data/1_` + name + `/2/long_text/` + hashLongText + `","title":"` + longText[0:31] + `"}","[{"tag":"image","attr":{"src":"/data/1_` + name + `/2/image/` + hashImage + `"}}]"]],"name":"` + name + `","source":"mysrc","types":["text","text","blob","long_text","long_text","tags"],"whereid":"2"}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}}]},{"tag":"form","children":[{"tag":"imageinput","attr":{"name":"img","ratio":"2/1","width":"400"}},{"tag":"button","attr":{"contract":"UploadImage"},"children":[{"tag":"text","text":"Upload!"}]}]}]`
+	linkImage := fmt.Sprintf("/data/1_%s/2/image/%x", name, md5.Sum([]byte(mydata)))
+	linkLongText := fmt.Sprintf("/data/1_%s/2/long_text/%x", name, md5.Sum([]byte(longText)))
+
+	want := `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","short_text","long_text","leftImg"],"cutoff":"short_text,long_text","data":[["2","myimage","{"link":"` + linkImage + `","title":""}","{"link":"","title":"` + shortText + `"}","{"link":"` + linkLongText + `","title":"` + longText[0:31] + `"}","[{"tag":"image","attr":{"src":"` + linkImage + `"}}]"]],"name":"` + name + `","source":"mysrc","types":["text","text","blob","long_text","long_text","tags"],"whereid":"2"}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}}]},{"tag":"form","children":[{"tag":"imageinput","attr":{"name":"img","ratio":"2/1","width":"400"}},{"tag":"button","attr":{"contract":"UploadImage"},"children":[{"tag":"text","text":"Upload!"}]}]}]`
 	if RawToString(ret.Tree) != want {
 		t.Errorf("Wrong image tree %s != %s", RawToString(ret.Tree), want)
+	}
+
+	data, err := sendRawRequest("GET", linkLongText, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if string(data) != longText {
+		t.Errorf("Wrong text %s", data)
 	}
 }
