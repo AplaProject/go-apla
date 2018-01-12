@@ -144,6 +144,23 @@ var (
 			return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
 		}
 
+		func One(list array, name string) string {
+			if list {
+				var row map 
+				row = list[0]
+				return row[name]
+			}
+			return nil
+		}
+
+		func Row(list array) map {
+			var ret map
+			if list {
+				ret = list[0]
+			}
+			return ret
+		}
+
 		func DBRow(table string).Columns(columns string).Where(where string, params ...)
 			.WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
 
@@ -865,6 +882,23 @@ var (
 	func DBFind(table string).Columns(columns string).Where(where string, params ...)
 		 .WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
 		return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
+	}
+
+	func One(list array, name string) string {
+		if list {
+			var row map 
+			row = list[0]
+			return row[name]
+		}
+		return nil
+	}
+	
+	func Row(list array) map {
+		var ret map
+		if list {
+			ret = list[0]
+		}
+		return ret
 	}
 
 	func DBRow(table string).Columns(columns string).Where(where string, params ...)
