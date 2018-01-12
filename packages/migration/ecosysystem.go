@@ -1018,13 +1018,13 @@ var (
 					error "Contract must be deactivated before wallet changing"
 				}
 			} else {
-				$recipient = $WalletId
+				$recipient = $cur["wallet_id"]
 			}
 		}
 		action {
 			var root int
 			root = CompileContract($Value, $ecosystem_id, Int($cur["wallet_id"]), Int($cur["token_id"]))
-			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $cur["wallet_id"])
+			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
 			FlushContract(root, $Id, Int($cur["active"]) == 1)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
