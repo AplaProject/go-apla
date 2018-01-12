@@ -1024,7 +1024,7 @@ var (
 		action {
 			var root int
 			root = CompileContract($Value, $ecosystem_id, Int($cur["wallet_id"]), Int($cur["token_id"]))
-			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
+			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $cur["wallet_id"])
 			FlushContract(root, $Id, Int($cur["active"]) == 1)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
