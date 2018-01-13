@@ -39,6 +39,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/scheduler"
+	"github.com/AplaProject/go-apla/packages/scheduler/contract"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
@@ -201,6 +203,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["SortedKeys"] = SortedKeys
 		f["Date"] = Date
 		f["HTTPPostJSON"] = HTTPPostJSON
+		f["ValidateCron"] = ValidateCron
+		f["UpdateCron"] = UpdateCron
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
@@ -1154,4 +1158,40 @@ func Random(min int64, max int64) (int64, error) {
 		return 0, fmt.Errorf(`wrong random parameters %d %d`, min, max)
 	}
 	return min + rand.New(rand.NewSource(time.Now().Unix())).Int63n(max-min), nil
+}
+
+func ValidateCron(cronSpec string) error {
+	_, err := scheduler.Parse(cronSpec)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateCron(sc *SmartContract, id int64) error {
+	cronTask := &model.Cron{}
+	cronTask.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID) + "_vde")
+
+	ok, err := cronTask.Get(id)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get cron record")
+		return err
+	}
+
+	if !ok {
+		return nil
+	}
+
+	err = scheduler.UpdateTask(&scheduler.Task{
+		ID:       cronTask.UID(),
+		CronSpec: cronTask.Cron,
+		Handler: &contract.ContractHandler{
+			Contract: cronTask.Contract,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

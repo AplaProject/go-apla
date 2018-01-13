@@ -79,6 +79,7 @@ func Route(route *hr.Router) {
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template:string`, jsonContent)
 
+	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
 }
 
 func processParams(input string) (params map[string]int) {

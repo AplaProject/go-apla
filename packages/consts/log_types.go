@@ -49,4 +49,5 @@ const (
 	StatsdError              = "StatsdError"
 	MigrationError           = "MigrationError"
 	AutoupdateError          = "AutoupdateError"
+	SchedulerError           = "SchedulerError"
 )

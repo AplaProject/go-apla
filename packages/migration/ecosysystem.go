@@ -76,7 +76,20 @@ var (
 	  ('10','stylesheet', 'body { 
 		/* You can define your custom styles here or create custom CSS rules */
 	  }', 'ContractConditions("MainCondition")');
-	  
+
+	  DROP TABLE IF EXISTS "%[1]d_vde_cron";
+	  CREATE TABLE "%[1]d_vde_cron" (
+		  "id"        bigint NOT NULL DEFAULT '0',
+		  "owner"	  bigint NOT NULL DEFAULT '0',
+		  "cron"      varchar(255) NOT NULL DEFAULT '',
+		  "contract"  varchar(255) NOT NULL DEFAULT '',
+		  "counter"   bigint NOT NULL DEFAULT '0',
+		  "till"      timestamp NOT NULL DEFAULT timestamp '1970-01-01 00:00:00',
+		  "conditions" text  NOT NULL DEFAULT ''
+	  );
+	  ALTER TABLE ONLY "%[1]d_vde_cron" ADD CONSTRAINT "%[1]d_vde_cron_pkey" PRIMARY KEY ("id");
+
+
 	  CREATE TABLE "%[1]d_vde_tables" (
 	  "id" bigint NOT NULL  DEFAULT '0',
 	  "name" varchar(100) UNIQUE NOT NULL DEFAULT '',
@@ -126,7 +139,17 @@ var (
 			  '{"name": "ContractConditions(\"MainCondition\")",
 		  "value": "ContractConditions(\"MainCondition\")",
 		  "conditions": "ContractConditions(\"MainCondition\")"
-			  }', 'ContractAccess("EditTable")');
+			  }', 'ContractAccess("EditTable")'),
+			  ('7', 'cron',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
+				  "new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"owner": "ContractConditions(\"MainCondition\")",
+				"cron": "ContractConditions(\"MainCondition\")",
+				"contract": "ContractConditions(\"MainCondition\")",
+				"counter": "ContractConditions(\"MainCondition\")",
+				"till": "ContractConditions(\"MainCondition\")",
+                  "conditions": "ContractConditions(\"MainCondition\")"
+				}', 'ContractConditions(\"MainCondition\")');
 	  
 	  INSERT INTO "%[1]d_vde_contracts" ("id", "value", "conditions") VALUES 
 	  ('1','contract MainCondition {
@@ -562,8 +585,57 @@ var (
 			ImportList($list["tables"], "NewTable")
 			ImportData($list["data"])
 		}
+	}', 'ContractConditions("MainCondition")'),
+	('22', 'contract NewCron {
+		data {
+			Cron       string
+			Contract   string
+			Limit      int "optional"
+			Till       string "optional date"
+			Conditions string
+		}
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+			ValidateCron($Cron)
+		}
+		action {
+			if !$Till {
+				$Till = "1970-01-01 00:00:00"
+			}
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
+			}
+			$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions",
+				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
+			UpdateCron($result)
+		}
+	}', 'ContractConditions("MainCondition")'),
+	('23','contract EditCron {
+		data {
+			Id         int
+			Contract   string
+			Cron       string "optional"
+			Limit      int "optional"
+			Till       string "optional date"
+			Conditions string
+		}
+		conditions {
+			ConditionById("cron", true)
+			ValidateCron($Cron)
+		}
+		action {
+			if !$Till {
+				$Till = "1970-01-01 00:00:00"
+			}
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
+			}
+			DBUpdate("cron", $Id, "cron,contract,counter,till,conditions",
+				$Cron, $Contract, $Limit, $Till, $Conditions)
+			UpdateCron($Id)
+		}
 	}', 'ContractConditions("MainCondition")');
-	  `
+	`
 
 	SchemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"id" bigint  NOT NULL DEFAULT '0',
