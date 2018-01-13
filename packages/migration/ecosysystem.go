@@ -1012,7 +1012,7 @@ var (
 			if $WalletId != "" {
 				$recipient = AddressToId($WalletId)
 				if $recipient == 0 {
-					error Sprintf("New contract owner %%s is invalid", $Recipient)
+					error Sprintf("New contract owner %%s is invalid", $WalletId)
 				}
 				if Int($cur["active"]) == 1 {
 					error "Contract must be deactivated before wallet changing"
