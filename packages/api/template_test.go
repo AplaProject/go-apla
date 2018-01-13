@@ -46,6 +46,17 @@ func TestAPI(t *testing.T) {
 		return
 	}
 
+	var retHash hashResult
+	err = sendPost(`content/hash/default_page`, &url.Values{}, &retHash)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(retHash.Hash) != 64 {
+		t.Error(`wrong hash ` + retHash.Hash)
+		return
+	}
+
 	for _, item := range forTest {
 		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
 		if err != nil {
