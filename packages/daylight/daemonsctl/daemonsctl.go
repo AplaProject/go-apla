@@ -7,12 +7,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/tcpserver"
 	"github.com/AplaProject/go-apla/packages/utils"
-	logging "github.com/op/go-logging"
-)
 
-var (
-	log    = logging.MustGetLogger("daylight")
-	format = logging.MustStringFormatter("%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{message}")
+	log "github.com/sirupsen/logrus"
 )
 
 // RunAllDaemons start daemons, load contracts and tcpserver
