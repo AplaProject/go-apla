@@ -21,14 +21,15 @@ import (
 	"net/http"
 
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/notificator"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type idItem struct {
-	ID          int64 `json:"id"`
-	EcosystemID int64 `json:"ecosystem"`
+	ID          string `json:"id"`
+	EcosystemID string `json:"ecosystem"`
 }
 
 type updateNotificatorResult struct {
@@ -45,10 +46,11 @@ func updateNotificator(w http.ResponseWriter, r *http.Request, data *apiData, lo
 	}
 	stateList := make(map[int64][]int64)
 	for _, item := range list {
-		if _, ok := stateList[item.EcosystemID]; !ok {
-			stateList[item.EcosystemID] = make([]int64, 0)
+		ecosystem := converter.StrToInt64(item.EcosystemID)
+		if _, ok := stateList[ecosystem]; !ok {
+			stateList[ecosystem] = make([]int64, 0)
 		}
-		stateList[item.EcosystemID] = append(stateList[item.EcosystemID], item.ID)
+		stateList[ecosystem] = append(stateList[ecosystem], converter.StrToInt64(item.ID))
 	}
 
 	for ecosystemID, users := range stateList {
