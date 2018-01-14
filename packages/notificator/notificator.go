@@ -42,36 +42,40 @@ func AddUser(userID, systemID int64) {
 	systemUsers[systemID] = val
 }
 
-// SendNotifications send stats about unreaded messages to centrifugo
-func SendNotifications() {
+// EcosystemNotifications send stats about unreaded messages to centrifugo for ecosystem
+func UpdateNotifications(ecosystemID int64, users []int64) {
 
-	for systemID, users := range systemUsers {
-		result, err := model.GetNotificationsCount(systemID, *users)
+	result, err := model.GetNotificationsCount(ecosystemID, users)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notification count")
+		return
+	}
+
+	notificationsStats := parseRecipientNotification(result, ecosystemID)
+
+	for recipient, stats := range notificationsStats {
+		rawStats, err := json.Marshal(*stats)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notification count")
+			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("notification statistic")
 			continue
 		}
 
-		notificationsStats := parseRecipientNotification(result, systemID)
-
-		for recipient, stats := range notificationsStats {
-			rawStats, err := json.Marshal(*stats)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("notification statistic")
-				continue
-			}
-
-			ok, err := publisher.Write(recipient, string(rawStats))
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
-				continue
-			}
-
-			if !ok {
-				log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
-				continue
-			}
+		ok, err := publisher.Write(recipient, string(rawStats))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
+			continue
 		}
+
+		if !ok {
+			log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
+		}
+	}
+}
+
+// SendNotifications send stats about unreaded messages to centrifugo
+func SendNotifications() {
+	for ecosystemID, users := range systemUsers {
+		UpdateNotifications(ecosystemID, *users)
 	}
 }
 
