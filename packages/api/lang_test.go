@@ -48,6 +48,15 @@ func TestLang(t *testing.T) {
 		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
 		return
 	}
+	err = sendPost(`content`, &url.Values{`template`: {input}, `lang`: {`fr`}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(ret.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"Text French string"},{"tag":"text","text":"+French string"}]}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
+		return
+	}
 
 	value = `{"en": "My test", "fr": "French string", "es": "Spanish text"}`
 

@@ -332,7 +332,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 	state := int(converter.StrToInt64((*workspace.Vars)[`ecosystem_id`]))
 	if (*workspace.Vars)[`_full`] != `1` {
 		for i, v := range pars {
-			pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`accept_lang`],
+			pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`lang`],
 				workspace.SmartContract.VDE)
 			if pars[i] != v {
 				if parFunc.RawPars == nil {
