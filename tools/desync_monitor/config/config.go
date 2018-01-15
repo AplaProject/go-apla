@@ -9,15 +9,24 @@ type Daemon struct {
 	QueryingPeriod int  `toml:"querying_period"`
 }
 
-type Alert struct {
-	Email   string `toml:"email"`
-	Message string `toml:"message"`
+type AlertMessage struct {
+	To      string `toml:"to"`
+	From    string `toml:"from"`
+	Subject string `toml:"subject"`
+}
+
+type Smtp struct {
+	Host     string `toml:"host"`
+	Port     int    `toml:"port"`
+	Username string `toml:"username"`
+	Password string `toml:"password"`
 }
 
 type Config struct {
-	Daemon    Daemon   `toml:"daemon"`
-	Alert     Alert    `toml:"alert"`
-	NodesList []string `toml:"nodes_list"`
+	Daemon       Daemon       `toml:"daemon"`
+	AlertMessage AlertMessage `toml:"alert_message"`
+	Smtp         Smtp         `toml:"smtp"`
+	NodesList    []string     `toml:"nodes_list"`
 }
 
 func (c *Config) Read(fileName string) error {
