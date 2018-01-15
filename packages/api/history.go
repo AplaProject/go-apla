@@ -42,6 +42,9 @@ func getHistory(w http.ResponseWriter, r *http.Request, data *apiData, logger *l
 	}
 	rollbackList := []map[string]string{}
 	for _, tx := range *txs {
+		if tx.Data == "" {
+			continue
+		}
 		rollback := map[string]string{}
 		if err := json.Unmarshal([]byte(tx.Data), &rollback); err != nil {
 			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollbackTx.Data from JSON")
