@@ -49,7 +49,7 @@ func AddUser(userID, systemID int64) {
 	systemUsers[systemID] = val
 }
 
-// EcosystemNotifications send stats about unreaded messages to centrifugo for ecosystem
+// UpdateNotifications send stats about unreaded messages to centrifugo for ecosystem
 func UpdateNotifications(ecosystemID int64, users []int64) {
 
 	result, err := model.GetNotificationsCount(ecosystemID, users)
@@ -131,17 +131,19 @@ func statsChanged(source []notificationRecord, new *[]notificationRecord) bool {
 	var newRole bool
 
 	for _, nRec := range *new {
-		newRole = false
+		newRole = true
+
 		for _, sRec := range source {
 			if sRec.RoleID == nRec.RoleID {
-				newRole = true
+				newRole = false
+
 				if sRec.RecordsCount != nRec.RecordsCount {
 					return true
 				}
 			}
 		}
 
-		if !newRole {
+		if newRole {
 			return true
 		}
 	}
