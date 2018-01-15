@@ -18,13 +18,20 @@ type notificationRecord struct {
 	RecordsCount int64 `json:"count"`
 }
 
+type lastMessagesKey struct {
+	system int64
+	user   int64
+}
+
 var (
-	systemUsers map[int64]*[]int64
-	mu          sync.Mutex
+	systemUsers  map[int64]*[]int64
+	mu           sync.Mutex
+	lastMessages map[lastMessagesKey][]notificationRecord
 )
 
 func init() {
 	systemUsers = make(map[int64]*[]int64)
+	lastMessages = make(map[lastMessagesKey][]notificationRecord)
 }
 
 // AddUser add user to send notifications
@@ -54,6 +61,16 @@ func UpdateNotifications(ecosystemID int64, users []int64) {
 	notificationsStats := parseRecipientNotification(result, ecosystemID)
 
 	for recipient, stats := range notificationsStats {
+
+		lmk := lastMessagesKey{system: ecosystemID, user: recipient}
+		if oldStats, ok := lastMessages[lmk]; ok {
+			if !statsChanged(oldStats, stats) {
+				continue
+			}
+		}
+
+		lastMessages[lmk] = *stats
+
 		rawStats, err := json.Marshal(*stats)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("notification statistic")
@@ -107,4 +124,26 @@ func parseRecipientNotification(rows []map[string]string, systemID int64) map[in
 	}
 
 	return recipientNotifications
+}
+
+func statsChanged(source []notificationRecord, new *[]notificationRecord) bool {
+
+	var newRole bool
+
+	for _, nRec := range *new {
+		newRole = false
+		for _, sRec := range source {
+			if sRec.RoleID == nRec.RoleID {
+				newRole = true
+				if sRec.RecordsCount != nRec.RecordsCount {
+					return true
+				}
+			}
+		}
+
+		if !newRole {
+			return true
+		}
+	}
+	return false
 }
