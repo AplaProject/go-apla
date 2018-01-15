@@ -23,15 +23,41 @@ type lastMessagesKey struct {
 	user   int64
 }
 
+type lastMessages struct {
+	mu    sync.RWMutex
+	stats map[lastMessagesKey][]notificationRecord
+}
+
+func newLastMessages() *lastMessages {
+	return &lastMessages{
+		stats: map[lastMessagesKey][]notificationRecord{},
+	}
+}
+
+func (lm *lastMessages) get(system, user int64) ([]notificationRecord, bool) {
+	lm.mu.RLock()
+	defer lm.mu.RUnlock()
+
+	res, ok := lm.stats[lastMessagesKey{system: system, user: user}]
+	return res, ok
+}
+
+func (lm *lastMessages) set(system, user int64, newStats []notificationRecord) {
+	lm.mu.Lock()
+	defer lm.mu.Unlock()
+
+	lm.stats[lastMessagesKey{system: system, user: user}] = newStats
+}
+
 var (
-	systemUsers  map[int64]*[]int64
-	mu           sync.Mutex
-	lastMessages map[lastMessagesKey][]notificationRecord
+	systemUsers       map[int64]*[]int64
+	mu                sync.Mutex
+	lastMessagesStats *lastMessages
 )
 
 func init() {
 	systemUsers = make(map[int64]*[]int64)
-	lastMessages = make(map[lastMessagesKey][]notificationRecord)
+	lastMessagesStats = newLastMessages()
 }
 
 // AddUser add user to send notifications
@@ -62,14 +88,13 @@ func UpdateNotifications(ecosystemID int64, users []int64) {
 
 	for recipient, stats := range notificationsStats {
 
-		lmk := lastMessagesKey{system: ecosystemID, user: recipient}
-		if oldStats, ok := lastMessages[lmk]; ok {
+		if oldStats, ok := lastMessagesStats.get(ecosystemID, recipient); ok {
 			if !statsChanged(oldStats, stats) {
 				continue
 			}
 		}
 
-		lastMessages[lmk] = *stats
+		lastMessagesStats.set(ecosystemID, recipient, *stats)
 
 		rawStats, err := json.Marshal(*stats)
 		if err != nil {
