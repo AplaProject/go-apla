@@ -88,6 +88,9 @@ type forTails struct {
 }
 
 func newSource(par parFunc) {
+	if par.Node.Attr[`source`] == nil {
+		return
+	}
 	if par.Workspace.Sources == nil {
 		sources := make(map[string]Source)
 		par.Workspace.Sources = &sources
