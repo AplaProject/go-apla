@@ -588,7 +588,7 @@ var (
 		"urlname" varchar(255) NOT NULL DEFAULT '',
 		"page" varchar(255) NOT NULL DEFAULT '',
 		"roles_access" text NOT NULL DEFAULT '',
-		"delete" smallint NOT NULL DEFAULT '0',
+		"delete" bigint NOT NULL DEFAULT '0',
 		"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 	  ALTER TABLE ONLY "%[1]d_sections" ADD CONSTRAINT "%[1]d_sections_pkey" PRIMARY KEY (id);
