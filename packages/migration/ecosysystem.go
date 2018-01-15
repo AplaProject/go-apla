@@ -9,17 +9,6 @@ var (
 	  ALTER TABLE ONLY "%[1]d_vde_languages" ADD CONSTRAINT "%[1]d_vde_languages_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_languages_index_name" ON "%[1]d_vde_languages" (name);
 	  
-	  DROP TABLE IF EXISTS "%[1]d_vde_sections"; CREATE TABLE "%[1]d_vde_sections" (
-		"id" bigint  NOT NULL DEFAULT '0',
-		"title" varchar(32)  NOT NULL DEFAULT 'Home',
-		"urlname" varchar(32) NOT NULL DEFAULT 'home',
-		"page" varchar(32) NOT NULL DEFAULT 'default_page',
-		"roles_access" text NOT NULL DEFAULT '',
-		"delete" bytea NOT NULL DEFAULT '0',
-	  );
-	  ALTER TABLE ONLY "%[1]d_vde_sections" ADD CONSTRAINT "%[1]d_vde_sections_pkey" PRIMARY KEY (id);
-	  CREATE INDEX "%[1]d_vde_sections_index_title" ON "%[1]d_vde_sections" (title);
-
 	  DROP TABLE IF EXISTS "%[1]d_vde_menu"; CREATE TABLE "%[1]d_vde_menu" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -595,14 +584,17 @@ var (
 		
 		DROP TABLE IF EXISTS "%[1]d_sections"; CREATE TABLE "%[1]d_sections" (
 		"id" bigint  NOT NULL DEFAULT '0',
-		"title" varchar(32)  NOT NULL DEFAULT 'Home',
-		"urlname" varchar(32) NOT NULL DEFAULT 'home',
-		"page" varchar(32) NOT NULL DEFAULT 'default_page',
+		"title" varchar(255)  NOT NULL DEFAULT '',
+		"urlname" varchar(255) NOT NULL DEFAULT '',
+		"page" varchar(255) NOT NULL DEFAULT '',
 		"roles_access" text NOT NULL DEFAULT '',
-		"delete" bytea NOT NULL DEFAULT '0',
-	  );
+		"delete" smallint NOT NULL DEFAULT '0',
+		"rb_id" bigint NOT NULL DEFAULT '0'
+		);
 	  ALTER TABLE ONLY "%[1]d_sections" ADD CONSTRAINT "%[1]d_sections_pkey" PRIMARY KEY (id);
-	  CREATE INDEX "%[1]d_sections_index_title" ON "%[1]d_sections" (title);
+
+        INSERT INTO "%[1]d_sections" ("id","title","urlname","page","roles_access", "delete") 
+	            VALUES('1', 'Home', 'home', 'default_page', '', 0);
 
 		DROP TABLE IF EXISTS "%[1]d_menu"; CREATE TABLE "%[1]d_menu" (
 			"id" bigint  NOT NULL DEFAULT '0',
@@ -792,6 +784,15 @@ var (
 						"appointed_by_name": "ContractConditions(\"MainCondition\")",
 						"date_start": "ContractConditions(\"MainCondition\")",
 						"date_end": "ContractConditions(\"MainCondition\")",
+						"delete": "ContractConditions(\"MainCondition\")"}', 
+						'ContractConditions(\"MainCondition\")'),
+				('12', 'sections', 
+					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+					"new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"title": "ContractConditions(\"MainCondition\")",
+						"urlname": "ContractConditions(\"MainCondition\")",
+						"page": "ContractConditions(\"MainCondition\")",
+						"roles_access": "ContractConditions(\"MainCondition\")",
 						"delete": "ContractConditions(\"MainCondition\")"}', 
 						'ContractConditions(\"MainCondition\")');
 
