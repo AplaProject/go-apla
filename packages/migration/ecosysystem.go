@@ -853,7 +853,7 @@ var (
 						"role_type": "ContractConditions(\"MainCondition\")",
 						"role_name": "ContractConditions(\"MainCondition\")",
 						"member_id": "ContractConditions(\"MainCondition\")",
-						"member_username": "ContractConditions(\"MainCondition\")",
+						"member_name": "ContractConditions(\"MainCondition\")",
 						"member_avatar": "ContractConditions(\"MainCondition\")",
 						"appointed_by_id": "ContractConditions(\"MainCondition\")",
 						"appointed_by_name": "ContractConditions(\"MainCondition\")",
@@ -892,18 +892,23 @@ var (
 			"id" 	bigint NOT NULL DEFAULT '0',
 			"default_page"	varchar(255) NOT NULL DEFAULT '',
 			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"delete"    boolean,
+			"delete"    bigint NOT NULL DEFAULT '0',
 			"role_type" bigint NOT NULL DEFAULT '0',
 			"creator_id" bigint NOT NULL DEFAULT '0',
 			"date_create" timestamp,
 			"date_delete" timestamp,
 			"creator_name"	varchar(255) NOT NULL DEFAULT '',
-			"creator_avatar" varchar(255) NOT NULL DEFAULT '',
+			"creator_avatar" bytea NOT NULL DEFAULT '',
 			"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
 		CREATE INDEX "%[1]d_roles_list_index_type" ON "%[1]d_roles_list" (role_type);
+
+		INSERT INTO "%[1]d_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
+			"date_create","creator_name") VALUES('1','default_ecosystem_page', 
+				'Admin', '0', '3', NOW(), '');
+
 
 		DROP TABLE IF EXISTS "%[1]d_roles_assign";
 		CREATE TABLE "%[1]d_roles_assign" (
@@ -912,13 +917,13 @@ var (
 			"role_type" bigint NOT NULL DEFAULT '0',
 			"role_name"	varchar(255) NOT NULL DEFAULT '',
 			"member_id" bigint NOT NULL DEFAULT '0',
-			"member_username" varchar(255) NOT NULL DEFAULT '',
-			"member_avatar"	varchar(255) NOT NULL DEFAULT '',
+			"member_name" varchar(255) NOT NULL DEFAULT '',
+			"member_avatar"	bytea NOT NULL DEFAULT '',
 			"appointed_by_id" bigint NOT NULL DEFAULT '0',
 			"appointed_by_name"	varchar(255) NOT NULL DEFAULT '',
 			"date_start" timestamp,
 			"date_end" timestamp,
-			"delete" boolean,
+			"delete" bigint NOT NULL DEFAULT '0',
 			"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles_assign" ADD CONSTRAINT "%[1]d_roles_assign_pkey" PRIMARY KEY ("id");
@@ -926,27 +931,25 @@ var (
 		CREATE INDEX "%[1]d_roles_assign_index_type" ON "%[1]d_roles_assign" (role_type);
 		CREATE INDEX "%[1]d_roles_assign_index_member" ON "%[1]d_roles_assign" (member_id);
 
+		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id",
+			"member_name","date_start") VALUES('1','1','3','Admin','%[4]d','founder', NOW());
+	
+
 		DROP TABLE IF EXISTS "%[1]d_member";
 		CREATE TABLE "%[1]d_member" (
 			"id" bigint NOT NULL DEFAULT '0',
-			"username"	varchar(255) NOT NULL DEFAULT '',
-			"avatar"	text NOT NULL DEFAULT '',
+			"member_name"	varchar(255) NOT NULL DEFAULT '',
+			"avatar"	bytea NOT NULL DEFAULT '',
 			"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
+
+		INSERT INTO "%[1]d_member" ("id", "member_name") VALUES('%[4]d', 'admin');
+
 		`
 
 	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id","rb_id") VALUES ('1','0');
 
-	INSERT INTO "1_member" ("id", "username") VALUES('%[1]d', 'founder');
-	INSERT INTO "1_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
-		"creator_id","date_create","creator_name") VALUES('1','default_ecosystem_page', 
-			'Admin', 'false', '1', '%[1]d', NOW(), 'founder');
-	INSERT INTO "1_roles_assign" ("id","role_id","role_type","role_name","member_id",
-		"member_username","appointed_by_id","appointed_by_name",
-		"date_start","delete") VALUES('1','1','1','Admin','%[1]d','founder','%[1]d', 'founder',
-			NOW(), 'false');
-	
 	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
 	('2','contract SystemFunctions {
 	}
