@@ -589,7 +589,13 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		return err
 	}
 
+	bgt := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
+
+	// starting sequential(!) execution of transactions
+	var blockExecTime time.Duration
+	var lastSuccessTx int
 	for _, p := range b.Parsers {
+		txStart := time.Now()
 		p.DbTransaction = dbTransaction
 
 		msg, err := playTransaction(p)
@@ -623,6 +629,53 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		}
 		if err := InsertInLogTx(p.DbTransaction, p.TxFullData, p.TxTime); err != nil {
 			return utils.ErrInfo(err)
+		}
+
+		txDone := time.Since(txStart)
+		blockExecTime += txDone
+		if blockExecTime > bgt {
+			err := dbTransaction.Connection().Exec(fmt.Sprintf("ROLLBACK TO SAVEPOINT \"tx-%d\";", lastSuccessTx)).Error
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("rolling back to previous savepoint")
+				return err
+			}
+
+			doneTx := b.Parsers[:lastSuccessTx]
+			trData := make([][]byte, 0, len(doneTx))
+			for _, tr := range doneTx {
+				trData = append(trData, tr.TxFullData)
+			}
+
+			NodePrivateKey, _, err := utils.GetNodeKeys()
+			if err != nil || len(NodePrivateKey) < 1 {
+				logger.WithFields(log.Fields{"type": consts.NodePrivateKeyFilename, "error": err, "tx_hash": p.TxHash}).Error("reading node private key")
+				return err
+			}
+
+			nbb, err := MarshallBlock(&b.Header, trData, b.PrevHeader.Hash, NodePrivateKey)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("marshalling new block")
+				return err
+			}
+
+			nb, err := parseBlock(bytes.NewBuffer(nbb))
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("parsing new block")
+				return err
+			}
+
+			b.Parsers = nb.Parsers
+			b.MrklRoot = nb.MrklRoot
+			b.SysUpdate = nb.SysUpdate
+
+			return nil
+		} else {
+			lastSuccessTx++
+			err := dbTransaction.Connection().Exec(fmt.Sprintf("SAVEPOINT \"tx-%d\";", lastSuccessTx)).Error
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("using savepoint")
+				return err
+			}
 		}
 	}
 	return nil

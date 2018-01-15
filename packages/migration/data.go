@@ -144,8 +144,9 @@ var (
 		('58','extend_cost_column_condition', '50', 'true'),
 		('59','extend_cost_create_column', '50', 'true'),
 		('60','extend_cost_perm_column', '50', 'true'),
-		('61','extend_cost_json_to_map', '50', 'true');
-		
+		('61','extend_cost_json_to_map', '50', 'true'),
+		('62','max_block_generation_time', '1000', 'true');
+
 		CREATE TABLE "system_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"value" text  NOT NULL DEFAULT '',

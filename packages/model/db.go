@@ -94,6 +94,10 @@ func (tr *DbTransaction) Commit() error {
 	return tr.conn.Commit().Error
 }
 
+func (tr *DbTransaction) Connection() *gorm.DB {
+	return tr.conn
+}
+
 // GetDB is returning gorm.DB
 func GetDB(tr *DbTransaction) *gorm.DB {
 	if tr != nil && tr.conn != nil {
