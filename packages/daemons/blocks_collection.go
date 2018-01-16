@@ -101,7 +101,7 @@ func blocksCollection(ctx context.Context, d *daemon) error {
 	DBLock()
 	defer DBUnlock()
 	// update our chain till maxBlockID from the host
-	return UpdateChain(ctx, d, host, maxBlockID, "rollback_blocks_2")
+	return UpdateChain(ctx, d, host, maxBlockID)
 }
 
 // best host is a host with the biggest last block ID
@@ -175,7 +175,7 @@ func getHostBlockID(host string, logger *log.Entry) (int64, error) {
 }
 
 // UpdateChain load from host all blocks from our last block to maxBlockID
-func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64, rollbackBlocks string) error {
+func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
 
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
@@ -212,7 +212,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64, 
 
 		if !hashMatched {
 			// it should be fork, replace our previous blocks to ones from the host
-			err := parser.GetBlocks(blockID-1, host, rollbackBlocks)
+			err := parser.GetBlocks(blockID-1, host)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 				banNode(host, err)

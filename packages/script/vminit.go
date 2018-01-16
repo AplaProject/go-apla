@@ -37,6 +37,9 @@ type ByteCode struct {
 // ByteCodes is the slice of ByteCode items
 type ByteCodes []*ByteCode
 
+// VMType is virtual machine type
+type VMType int
+
 const (
 	// Types of the compiled objects
 
@@ -61,6 +64,11 @@ const (
 	CostExtend = 10
 	// CostDefault is the default maximum cost of F
 	CostDefault = int64(10000000)
+
+	// VMTypeSmart is smart vm type
+	VMTypeSmart VMType = 1
+	// VMTypeVDE is vde vm type
+	VMTypeVDE VMType = 2
 )
 
 // ExtFuncInfo is the structure for the extrended function
@@ -116,6 +124,12 @@ type FuncInfo struct {
 type VarInfo struct {
 	Obj   *ObjInfo
 	Owner *Block
+}
+
+// IndexInfo contains the information for SetIndex
+type IndexInfo struct {
+	VarOffset int
+	Owner     *Block
 }
 
 // ObjInfo is the common object type

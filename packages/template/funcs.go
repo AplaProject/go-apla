@@ -22,14 +22,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -41,9 +45,11 @@ var (
 )
 
 func init() {
+	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
 	funcs[`AddToolButton`] = tplFunc{defaultTag, defaultTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
 	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
+	funcs[`Code`] = tplFunc{defaultTag, defaultTag, `code`, `Text`}
 	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format`}
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
@@ -57,6 +63,7 @@ func init() {
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
 	funcs[`Strong`] = tplFunc{defaultTag, defaultTag, `strong`, `Body,Class`}
+	funcs[`SysParam`] = tplFunc{sysparTag, defaultTag, `syspar`, `Name`}
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
 	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Body`}
@@ -76,6 +83,7 @@ func init() {
 	funcs[`Span`] = tplFunc{defaultTailTag, defaultTailTag, `span`, `Body,Class`}
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
 	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
+	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 
 	tails[`button`] = forTails{map[string]tailInfo{
 		`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
@@ -143,6 +151,10 @@ func defaultTag(par parFunc) string {
 	return ``
 }
 
+func lowerTag(par parFunc) string {
+	return strings.ToLower((*par.Pars)[`Text`])
+}
+
 func menugroupTag(par parFunc) string {
 	setAllAttr(par)
 	name := (*par.Pars)[`Title`]
@@ -196,12 +208,19 @@ func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
 	}
-	state := converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`])
-	val, err := StateParam(int64(state), (*par.Pars)[`Name`])
+	prefix := (*par.Workspace.Vars)[`ecosystem_id`]
+	state := converter.StrToInt(prefix)
+	if par.Workspace.SmartContract.VDE {
+		prefix += `_vde`
+	}
+	sp := &model.StateParameter{}
+	sp.SetTablePrefix(prefix)
+	_, err := sp.Get(nil, (*par.Pars)[`Name`])
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
 		return err.Error()
 	}
+	val := sp.Value
 	if len((*par.Pars)[`Source`]) > 0 {
 		data := make([][]string, 0)
 		cols := []string{`id`, `name`}
@@ -236,6 +255,13 @@ func langresTag(par parFunc) string {
 	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
 		lang, par.Workspace.SmartContract.VDE)
 	return ret
+}
+
+func sysparTag(par parFunc) (ret string) {
+	if len((*par.Pars)[`Name`]) > 0 {
+		ret = syspar.SysString((*par.Pars)[`Name`])
+	}
+	return
 }
 
 // Now returns the current time of postgresql
@@ -378,6 +404,8 @@ func dbfindTag(par parFunc) string {
 	var (
 		fields string
 		state  int64
+		err    error
+		perm   map[string]string
 	)
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
@@ -417,11 +445,20 @@ func dbfindTag(par parFunc) string {
 	} else {
 		state = converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])
 	}
-	tblname := fmt.Sprintf(`"%d_%s"`, state, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`))
+	sc := par.Workspace.SmartContract
+	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
+	if sc.VDE && *conf.CheckReadAccess {
+		perm, err = sc.AccessTablePerm(tblname, `read`)
+		cols := strings.Split(fields, `,`)
+		if err != nil || sc.AccessColumns(tblname, &cols, false) != nil {
+			return `Access denied`
+		}
+		fields = strings.Join(cols, `,`)
+	}
 	if fields != `*` && !strings.Contains(fields, `id`) {
 		fields += `, id`
 	}
-	list, err := model.GetAll(`select `+fields+` from `+tblname+where+order, limit)
+	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
@@ -480,6 +517,30 @@ func dbfindTag(par parFunc) string {
 		}
 		data = append(data, row)
 	}
+	if sc.VDE && perm != nil && len(perm[`filter`]) > 0 {
+		result := make([]interface{}, len(data))
+		for i, item := range data {
+			row := make(map[string]string)
+			for j, col := range cols {
+				row[col] = item[j]
+			}
+			result[i] = reflect.ValueOf(row).Interface()
+		}
+		fltResult, err := smart.VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
+			&map[string]interface{}{
+				`data`:         result,
+				`ecosystem_id`: sc.TxSmart.EcosystemID,
+				`key_id`:       sc.TxSmart.KeyID, `sc`: sc,
+				`block_time`: 0, `time`: sc.TxSmart.Time})
+		if err != nil || !fltResult {
+			return `Access denied`
+		}
+		for i := range data {
+			for j, col := range cols {
+				data[i][j] = result[i].(map[string]string)[col]
+			}
+		}
+	}
 	setAllAttr(par)
 	delete(par.Node.Attr, `customs`)
 	delete(par.Node.Attr, `custombody`)
@@ -500,7 +561,6 @@ func customTag(par parFunc) string {
 	}
 	par.Owner.Attr[`customs`] = append(par.Owner.Attr[`customs`].([]string), par.Node.Attr[`column`].(string))
 	par.Owner.Attr[`custombody`] = append(par.Owner.Attr[`custombody`].([]string), (*par.Pars)[`Body`])
-
 	return ``
 }
 
@@ -671,7 +731,7 @@ func elseFull(par parFunc) string {
 
 func dateTimeTag(par parFunc) string {
 	datetime := (*par.Pars)[`DateTime`]
-	if len(datetime) == 0 {
+	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
 	defTime := `1970-01-01T00:00:00`
@@ -719,4 +779,19 @@ func cmpTimeTag(par parFunc) string {
 		return `-1`
 	}
 	return `1`
+}
+
+func chartTag(par parFunc) string {
+	defaultTag(par)
+	defaultTail(par, "chart")
+
+	if len((*par.Pars)["Colors"]) > 0 {
+		colors := strings.Split((*par.Pars)["Colors"], ",")
+		for i, v := range colors {
+			colors[i] = strings.TrimSpace(v)
+		}
+		par.Node.Attr["colors"] = colors
+	}
+
+	return ""
 }

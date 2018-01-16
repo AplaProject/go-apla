@@ -18,7 +18,9 @@ package utils
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -56,7 +58,8 @@ var (
 	// CancelFunc is represents cancel func
 	CancelFunc context.CancelFunc
 	// DaemonsCount is number of daemons
-	DaemonsCount int
+	DaemonsCount      int
+	PrivateBlockchain = flag.Bool("privateBlockchain", false, "Is blockchain private")
 )
 
 // GetHTTPTextAnswer returns HTTP answer as a string
@@ -386,10 +389,15 @@ func GetNodeKeys() (string, string, error) {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
 		return "", "", err
 	}
-	npubkey, err := crypto.PrivateToPublic(nprivkey)
+	key, err := hex.DecodeString(string(nprivkey))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		return "", "", err
+	}
+	npubkey, err := crypto.PrivateToPublic(key)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting node private key to public")
 		return "", "", err
 	}
-	return string(nprivkey), string(npubkey), nil
+	return string(nprivkey), hex.EncodeToString(npubkey), nil
 }

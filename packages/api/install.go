@@ -18,10 +18,7 @@ package api
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -30,10 +27,9 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
+	"github.com/AplaProject/go-apla/packages/install"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/parser"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -48,11 +44,15 @@ type installParams struct {
 	logLevel               string
 	firstLoadBlockchainURL string
 	firstBlockDir          string
-	dbHost                 string
-	dbPort                 string
-	dbName                 string
-	dbPassword             string
-	dbUsername             string
+
+	dbHost     string
+	dbPort     string
+	dbName     string
+	dbPassword string
+	dbUsername string
+
+	centrifugoSecret string
+	centrifugoURL    string
 }
 
 func installCommon(data *installParams, logger *log.Entry) (err error) {
@@ -83,70 +83,17 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return err
 	}
 
-	firstBlockFileName := *conf.FirstBlockPath
-	if data.firstBlockDir != "" {
-		firstBlockFileName = filepath.Join(data.firstBlockDir, consts.FirstBlockFilename)
-	}
-	if _, err = os.Stat(firstBlockFileName); len(firstBlockFileName) > 0 && os.IsNotExist(err) {
-		logger.WithFields(log.Fields{"path": firstBlockFileName}).Info("First block does not exists, generating new keys")
-		// If there is no key, this is the first run and the need to create them in the working directory.
-		privateKeyPath := filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename)
-		if _, err = os.Stat(privateKeyPath); os.IsNotExist(err) {
-			log.WithFields(log.Fields{"path": privateKeyPath}).Info("private key is not exists, generating new one")
-
-			if len(*conf.FirstBlockPublicKey) == 0 {
-				log.WithFields(log.Fields{"type": consts.EmptyObject}).Info("first block public key is empty")
-				priv, pub, err := crypto.GenHexKeys()
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("generating hex keys")
-				}
-
-				err = ioutil.WriteFile(privateKeyPath, []byte(priv), 0644)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating private key file")
-					return err
-				}
-
-				err = ioutil.WriteFile(filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename), []byte(pub), 0644)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating public key file")
-					return err
-				}
-				*conf.FirstBlockPublicKey = pub
-			}
-		}
-		nodePrivateKeyPath := filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename)
-		if _, err = os.Stat(nodePrivateKeyPath); os.IsNotExist(err) {
-			logger.WithFields(log.Fields{"path": nodePrivateKeyPath}).Info("NodePrivateKey does not exists, generating new keys")
-			if len(*conf.FirstBlockNodePublicKey) == 0 {
-				priv, pub, err := crypto.GenHexKeys()
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("generating hex keys")
-				}
-
-				err = ioutil.WriteFile(nodePrivateKeyPath, []byte(priv), 0644)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("creating NodePrivateKey")
-					return err
-				}
-
-				err = ioutil.WriteFile(filepath.Join(conf.Config.PrivateDir, consts.NodePublicKeyFilename), []byte(pub), 0644)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("creating NodePublicKey")
-					return err
-				}
-				*conf.FirstBlockNodePublicKey = pub
-			}
-		}
-		parser.GenerateFirstBlock()
+	conf.Config.Centrifugo = conf.CentrifugoConfig{
+		Secret: data.centrifugoSecret,
+		URL:    data.centrifugoURL,
 	}
 
-	if conf.Config.KeyID == 0 {
-		key, err := parser.GetKeyIDFromPrivateKey()
+	if !install.IsExistFirstBlock() {
+		err = install.GenerateFirstBlock()
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("GenerateFirstBlock")
 			return err
 		}
-		conf.Config.KeyID = key
 	}
 
 	if err := conf.SaveConfig(); err != nil {
@@ -157,23 +104,25 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 	return daemonsctl.RunAllDaemons()
 }
 
-func install(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func doInstall(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var result installResult
 
 	data.result = &result
 
 	params := installParams{
-		installType:            data.params["type"].(string),
-		logLevel:               data.params["log_level"].(string),
-		firstLoadBlockchainURL: data.params["first_load_blockchain_url"].(string),
-		dbHost:                 data.params["db_host"].(string),
-		dbPort:                 data.params["db_port"].(string),
-		dbName:                 data.params["db_name"].(string),
-		dbUsername:             data.params["db_user"].(string),
-		dbPassword:             data.params["db_pass"].(string),
-		firstBlockDir:          data.params["first_block_dir"].(string),
+		installType:            data.ParamString("type"),
+		logLevel:               data.ParamString("log_level"),
+		firstLoadBlockchainURL: data.ParamString("first_load_blockchain_url"),
+		firstBlockDir:          data.ParamString("first_block_dir"),
+		dbHost:                 data.ParamString("db_host"),
+		dbPort:                 data.ParamString("db_port"),
+		dbName:                 data.ParamString("db_name"),
+		dbUsername:             data.ParamString("db_user"),
+		dbPassword:             data.ParamString("db_pass"),
+		centrifugoSecret:       data.ParamString("centrifugo_secret"),
+		centrifugoURL:          data.ParamString("centrifugo_url"),
 	}
-	if val := data.params["generate_first_block"]; val.(int64) == 1 {
+	if data.ParamInt64("generate_first_block") == 1 {
 		params.generateFirstBlock = true
 	}
 	err := installCommon(&params, logger)

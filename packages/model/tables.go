@@ -8,7 +8,7 @@ type Table struct {
 	ID          int64  `gorm:"primary_key;not null"`
 	Name        string `gorm:"not null;size:100"`
 	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
-	Columns     string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	Columns     string `gorm:"not null"`
 	Conditions  string `gorm:"not null"`
 	RbID        int64  `gorm:"not null"`
 }
@@ -19,7 +19,7 @@ type TableVDE struct {
 	ID          int64  `gorm:"primary_key;not null"`
 	Name        string `gorm:"not null;size:100"`
 	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
-	Columns     string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	Columns     string `gorm:"not null"`
 	Conditions  string `gorm:"not null"`
 }
 
@@ -179,4 +179,10 @@ func (t *Table) GetAll(prefix string) ([]Table, error) {
 	result := make([]Table, 0)
 	err := DBConn.Table(prefix + "_tables").Find(&result).Error
 	return result, err
+}
+
+// GetRowConditionsByTableNameAndID returns value of `conditions` field for table row by id
+func GetRowConditionsByTableNameAndID(tblname string, id int64) (string, error) {
+	sql := "SELECT conditions FROM " + tblname + " WHERE id = ? LIMIT 1"
+	return Single(sql, id).String()
 }

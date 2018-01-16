@@ -41,6 +41,12 @@ type CentrifugoConfig struct {
 	URL    string
 }
 
+// AutoupdateConfig is autoupdate params
+type AutoupdateConfig struct {
+	ServerAddress string
+	PublicKeyPath string
+}
+
 // SavedConfig parameters saved in "config.toml"
 type SavedConfig struct {
 	LogLevel    string
@@ -58,6 +64,8 @@ type SavedConfig struct {
 	FirstLoadBlockchainURL string
 	FirstLoadBlockchain    string
 
+	MaxPageGenerationTime int64 // in milliseconds
+
 	TCPServer HostPort
 	HTTP      HostPort
 	DB        DBConfig
@@ -67,6 +75,8 @@ type SavedConfig struct {
 	PrivateDir string // place for private keys files: NodePrivateKey, PrivateKey
 
 	Centrifugo CentrifugoConfig
+
+	Autoupdate AutoupdateConfig
 }
 
 // Installed web UI installation mode

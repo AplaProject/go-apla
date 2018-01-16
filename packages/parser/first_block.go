@@ -21,8 +21,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"path/filepath"
-	"strconv"
-	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 
@@ -32,7 +30,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
@@ -114,107 +111,6 @@ func (p *FirstBlockParser) Rollback() error {
 
 // Header is returns first block header
 func (p FirstBlockParser) Header() *tx.Header {
-	return nil
-}
-
-// GenerateFirstBlock generates the first block
-func GenerateFirstBlock() error {
-	if len(*conf.FirstBlockPublicKey) == 0 {
-		priv, pub, _ := crypto.GenHexKeys()
-
-		privFile := filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename)
-		if err := ioutil.WriteFile(privFile, []byte(priv), 0644); err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing private key file")
-			return err
-		}
-		pubFile := filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename)
-		if err := ioutil.WriteFile(pubFile, []byte(pub), 0644); err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing public key file")
-			return err
-		}
-		*conf.FirstBlockPublicKey = pub
-	}
-
-	if len(*conf.FirstBlockNodePublicKey) == 0 {
-		priv, pub, _ := crypto.GenHexKeys()
-		nodePrivFile := filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename)
-		if err := ioutil.WriteFile(nodePrivFile, []byte(priv), 0644); err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node private key file")
-			return err
-		}
-		nodePubFile := filepath.Join(conf.Config.PrivateDir, consts.NodePublicKeyFilename)
-		if err := ioutil.WriteFile(nodePubFile, []byte(pub), 0644); err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing node public key file")
-			return err
-		}
-		*conf.FirstBlockNodePublicKey = pub
-	}
-
-	PublicKey := *conf.FirstBlockPublicKey
-	PublicKeyBytes, err := hex.DecodeString(string(PublicKey))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex to string")
-		return err
-	}
-
-	NodePublicKey := *conf.FirstBlockNodePublicKey
-	NodePublicKeyBytes, err := hex.DecodeString(string(NodePublicKey))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding node public key from hex to string")
-		return err
-	}
-
-	Host := *conf.FirstBlockHost
-	if len(Host) == 0 {
-		return ErrFirstBlockHostIsEmpty
-	}
-
-	iAddress := int64(crypto.Address(PublicKeyBytes))
-	conf.Config.KeyID = iAddress
-
-	keyIDFile := filepath.Join(conf.Config.PrivateDir, consts.KeyIDFilename)
-	if err := ioutil.WriteFile(keyIDFile, []byte(strconv.FormatInt(iAddress, 10)), 0644); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing keyID file")
-		return err
-	}
-
-	now := time.Now().Unix()
-	header := &utils.BlockData{
-		BlockID:      1,
-		Time:         now,
-		EcosystemID:  0,
-		KeyID:        iAddress,
-		NodePosition: 0,
-		Version:      consts.BLOCK_VERSION,
-	}
-	var tx []byte
-	_, err = converter.BinMarshal(&tx,
-		&consts.FirstBlock{
-			TxHeader: consts.TxHeader{
-				Type:  1, // FirstBlock
-				Time:  uint32(now),
-				KeyID: iAddress,
-			},
-			PublicKey:     PublicKeyBytes,
-			NodePublicKey: NodePublicKeyBytes,
-			Host:          string(Host),
-		},
-	)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("first block body bin marshalling")
-		return err
-	}
-
-	block, err := MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
-	if err != nil {
-		return err
-	}
-
-	if err := ioutil.WriteFile(*conf.FirstBlockPath, block, 0644); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err, "file": *conf.FirstBlockPath}).Error("first block write")
-		return err
-	}
-
 	return nil
 }
 
