@@ -1,6 +1,8 @@
 package querycost
 
 import (
+	"github.com/AplaProject/go-apla/packages/model"
+
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -12,7 +14,7 @@ type TestTableRowCounter struct {
 
 const tableRowCount = 10000
 
-func (t *TestTableRowCounter) RowCount(tableName string) (int64, error) {
+func (t *TestTableRowCounter) RowCount(tx *model.DbTransaction, tableName string) (int64, error) {
 	if tableName == "small" {
 		return tableRowCount, nil
 	}

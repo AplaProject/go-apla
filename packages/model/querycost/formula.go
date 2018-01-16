@@ -53,14 +53,14 @@ func strSliceIndex(fields []string, fieldToFind string) (index int) {
 }
 
 type TableRowCounter interface {
-	RowCount(string) (int64, error)
+	RowCount(*model.DbTransaction, string) (int64, error)
 }
 
 type DBCountQueryRowCounter struct {
 }
 
-func (d *DBCountQueryRowCounter) RowCount(tableName string) (int64, error) {
-	count, err := model.GetRecordsCount(tableName)
+func (d *DBCountQueryRowCounter) RowCount(transaction *model.DbTransaction, tableName string) (int64, error) {
+	count, err := model.GetRecordsCountTx(transaction, tableName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": tableName}).Error("Getting record count from table")
 	}
@@ -169,7 +169,7 @@ func (f *FormulaQueryCoster) QueryCost(transaction *model.DbTransaction, query s
 		log.WithFields(log.Fields{"type": consts.ParseError, "query": query, "error": err}).Error("getting table name from sql query")
 		return 0, err
 	}
-	rowCount, err := f.rowCounter.RowCount(tableName)
+	rowCount, err := f.rowCounter.RowCount(transaction, tableName)
 	if err != nil {
 		return 0, err
 	}
