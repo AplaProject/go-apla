@@ -494,7 +494,11 @@ main:
 							}
 							if isTail {
 								parTail, shift, _ := getFunc(input[next:], tailFunc.tplFunc)
-								off = shift + next
+								off = next
+								for ; shift > 0; shift-- {
+									_, size := utf8.DecodeRuneInString(input[off:])
+									off += size
+								}
 								if tailpar == nil {
 									fortail := make([]*[][]rune, 0)
 									tailpar = &fortail
