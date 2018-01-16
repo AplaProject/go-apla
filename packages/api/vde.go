@@ -18,6 +18,7 @@ package api
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -157,23 +158,34 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 }
 
 // VDEContract is init VDE contract
-func VDEContract(data []byte) (result *contractResult, err error) {
+func VDEContract(contractData []byte, data *apiData) (result *contractResult, err error) {
 	var ret string
-	hash, err := crypto.Hash(data)
+	hash, err := crypto.Hash(contractData)
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of contract data")
 		return
 	}
 	result = &contractResult{Hash: hex.EncodeToString(hash)}
 
 	sc := smart.SmartContract{VDE: true, TxHash: hash}
-	err = InitSmartContract(&sc, data)
-	if err == nil {
-		if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
-			result.Result = ret
+	err = InitSmartContract(&sc, contractData)
+	if err != nil {
+		result.Message = &txstatusError{Type: "panic", Error: err.Error()}
+		return
+	}
+	if data.token != nil && data.token.Valid {
+		if auth, err := data.token.SignedString([]byte(jwtSecret)); err == nil {
+			sc.TxData[`auth_token`] = auth
 		}
 	}
-	if err != nil {
-		result.Message = err.Error()
+	if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
+		result.Result = ret
+	} else {
+		if errResult := json.Unmarshal([]byte(err.Error()), &result.Message); errResult != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": err.Error(),
+				"error": errResult}).Error("unmarshalling contract error")
+			result.Message = &txstatusError{Type: "panic", Error: errResult.Error()}
+		}
 	}
 	return
 }

@@ -1,14 +1,11 @@
 package model
 
-import "strconv"
-
 // Language is model
 type Language struct {
 	tableName  string
 	Name       string `gorm:"primary_key;not null;size:100"`
 	Res        string `gorm:"type:jsonb(PostgreSQL)"`
 	Conditions string `gorm:"not null"`
-	RbID       int64  `gotm:"not null"`
 }
 
 // SetTablePrefix is setting table prefix
@@ -34,6 +31,5 @@ func (l *Language) ToMap() map[string]string {
 	result["name"] = l.Name
 	result["res"] = l.Res
 	result["conditions"] = l.Conditions
-	result["rb_id"] = strconv.FormatInt(l.RbID, 10)
 	return result
 }

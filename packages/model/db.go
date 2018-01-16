@@ -342,18 +342,6 @@ func IsTable(tblname string) bool {
 	return name == tblname
 }
 
-// GetRollbackID returns rollback id
-func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) (int64, error) {
-	var result int64
-	q := `SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering
-	err := GetDB(transaction).Raw(q).Row().Scan(&result)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(q)
-		return 0, err
-	}
-	return result, nil
-}
-
 // GetColumnByID returns the value of the column from the table by id
 func GetColumnByID(table, column, id string) (result string, err error) {
 	err = DBConn.Table(table).Select(column).Where(`id=?`, id).Row().Scan(&result)

@@ -31,11 +31,8 @@ import (
 )
 
 // GetBlocks is returning blocks
-func GetBlocks(blockID int64, host string, rollbackBlocks string) error {
+func GetBlocks(blockID int64, host string) error {
 	rollback := syspar.GetRbBlocks1()
-	if rollbackBlocks == "rollback_blocks_2" {
-		rollback = syspar.GetRbBlocks2()
-	}
 
 	badBlocks := make(map[int64]string)
 

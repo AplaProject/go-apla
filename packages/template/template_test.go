@@ -28,17 +28,38 @@ type tplItem struct {
 type tplList []tplItem
 
 func TestJSON(t *testing.T) {
+	var timeout bool
 	vars := make(map[string]string)
+	vars[`_full`] = `0`
 	for _, item := range forTest {
-		templ := Template2JSON(item.input, false, &vars)
+		templ := Template2JSON(item.input, &timeout, &vars)
 		if string(templ) != item.want {
-			t.Errorf(`wrong json %s != %s`, templ, item.want)
+			t.Errorf("wrong json \r\n%s != \r\n%s", templ, item.want)
 			return
 		}
 	}
 }
 
 var forTest = tplList{
+	{`Code(P(Some text)
+ Div(myclass){
+	 Span(Strong("Bold text"))
+ })`,
+		`[{"tag":"code","attr":{"text":"P(Some text)\n Div(myclass){\n\t Span(Strong(\"Bold text\"))\n }"}}]`},
+	{`Data(Source: mysrc, Columns: "id,name", Data:
+		1, First Name
+		2, Second Name
+	).Custom(custom_id){
+		SetVar(Name: v, Value: Lower(#name#))
+		P(Body: #v#)
+	}.Custom(cust){
+		P(Body: #v#)
+	}Data(Columns: "name", Data:
+		First Name
+		Second Name
+	)`,
+		`[{"tag":"data","attr":{"columns":["id","name","custom_id","cust"],"data":[["1","First Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]"],["2","Second Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]"]],"source":"mysrc","types":["text","text","tags","tags"]}},{"tag":"data","attr":{"columns":["name"],"data":[["First Name"],["Second Name"]],"types":["text"]}}]`},
+
 	{`Data(Source: mysrc, Columns: "id,name", Data:
 		1,first
 		2,second
@@ -58,8 +79,8 @@ var forTest = tplList{
 	{`SetTitle(My pageР)AddToolButton(Title: Open, Page: default)`,
 		`[{"tag":"settitle","attr":{"title":"My pageР"}},{"tag":"addtoolbutton","attr":{"page":"default","title":"Open"}}]`},
 	{`DateTime(2017-11-07T17:51:08)+DateTime(2015-08-27T09:01:00,HH:MI DD.MM.YYYY)
-	+CmpTime(2017-11-07T17:51:08,2017-11-07)CmpTime(2017-11-07T17:51:08,2017-11-07T20:22:01)CmpTime(2015-10-01T17:51:08,2015-10-01T17:51:08)`,
-		`[{"tag":"text","text":"2017-11-07 17:51:08"},{"tag":"text","text":"+09:01 27.08.2015"},{"tag":"text","text":"\n\t+1-10"}]`},
+	+CmpTime(2017-11-07T17:51:08,2017-11-07)CmpTime(2017-11-07T17:51:08,2017-11-07T20:22:01)CmpTime(2015-10-01T17:51:08,2015-10-01T17:51:08)=DateTime(NULL)`,
+		`[{"tag":"text","text":"2017-11-07 17:51:08"},{"tag":"text","text":"+09:01 27.08.2015"},{"tag":"text","text":"\n\t+1-10"},{"tag":"text","text":"="}]`},
 	{`SetVar(pref,unicode Р)Input(Name: myid, Value: #pref#)Strong(qqq)`,
 		`[{"tag":"input","attr":{"name":"myid","value":"unicode Р"}},{"tag":"strong","children":[{"tag":"text","text":"qqq"}]}]`},
 	{`ImageInput(myimg,100,40)`,
@@ -136,7 +157,7 @@ var forTest = tplList{
 		MenuItem(Menu 2, page2)
 		MenuItem(Page: page3, Title: Menu 3, Icon: person)
 		}`,
-		`[{"tag":"menuitem","attr":{"page":"page1","title":"Menu 1"}},{"tag":"menugroup","attr":{"title":"SubMenu"},"children":[{"tag":"menuitem","attr":{"page":"page2","title":"Menu 2"}},{"tag":"menuitem","attr":{"icon":"person","page":"page3","title":"Menu 3"}}]}]`},
+		`[{"tag":"menuitem","attr":{"page":"page1","title":"Menu 1"}},{"tag":"menugroup","attr":{"name":"SubMenu","title":"SubMenu"},"children":[{"tag":"menuitem","attr":{"page":"page2","title":"Menu 2"}},{"tag":"menuitem","attr":{"icon":"person","page":"page3","title":"Menu 3"}}]}]`},
 	{`SetVar(testvalue, The, #n#, Value).(n, New).(param,"23")Span(Test value equals #testvalue#).(#param#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, New, Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
 	{`SetVar(test, mytest).(empty,0)And(0,test,0)Or(0,#test#)Or(0, And(0,0))And(0,Or(0,my,while))
@@ -146,12 +167,16 @@ var forTest = tplList{
 		`[{"tag":"text","text":"unknown address"},{"tag":"span","children":[{"tag":"text","text":"1844-6738-3454-7065-1595"}]},{"tag":"text","text":"0000-0003-4673-4764-38731218-8352-5257-3021-1925"}]`},
 	{`Table(src, "ID=id,name,Wallet=wallet")`,
 		`[{"tag":"table","attr":{"columns":[{"Name":"id","Title":"ID"},{"Name":"name","Title":"name"},{"Name":"wallet","Title":"Wallet"}],"source":"src"}}]`},
+	{`Chart(Type: "bar", Source: src, FieldLabel: "name", FieldValue: "count", Colors: "red, green")`,
+		`[{"tag":"chart","attr":{"colors":["red","green"],"fieldlabel":"name","fieldvalue":"count","source":"src","type":"bar"}}]`},
 }
 
 func TestFullJSON(t *testing.T) {
+	var timeout bool
 	vars := make(map[string]string)
+	vars[`_full`] = `1`
 	for _, item := range forFullTest {
-		templ := Template2JSON(item.input, true, &vars)
+		templ := Template2JSON(item.input, &timeout, &vars)
 		if string(templ) != item.want {
 			t.Errorf(`wrong json %s != %s`, templ, item.want)
 			return

@@ -137,21 +137,21 @@ var contracts = []smartContract{
 				vals = ret[0]
 				Test("2",  vals["id"])	
 			}
-			ret = DBFind("contracts").Columns("id,rb_id").Order("id").Offset(1).Limit(1)
+			ret = DBFind("contracts").Columns("id").Order("id").Offset(1).Limit(1)
 			if Len(ret) != 1 {
 				Test("3",  "0")	
 			} else {
 				vals = ret[0]
 				Test("3", vals["value"] + vals["id"])	
 			}
-			ret = DBFind("contracts").Columns("id,rb_id").Where("id='1'")
+			ret = DBFind("contracts").Columns("id").Where("id='1'")
 			if Len(ret) != 1 {
 				Test("4",  "0")	
 			} else {
 				vals = ret[0]
 				Test("4", vals["id"])	
 			}
-			ret = DBFind("contracts").Columns("id,rb_id").Where("id='1'")
+			ret = DBFind("contracts").Columns("id").Where("id='1'")
 			if Len(ret) != 1 {
 				Test("4",  "0")	
 			} else {
@@ -172,13 +172,18 @@ var contracts = []smartContract{
 				vals = ret[0]
 				Test("6", vals["id"])	
 			}
+			var one string
+			one = DBFind("contracts").WhereId(5).One("id")
+			Test("7",  one)	
+			var row map
+			row = DBFind("contracts").WhereId(3).Row()
+			Test("8",  row["id"])	
 			Test("255",  "255")	
 		}
 	}`,
 		[]smartParams{
 			{nil, map[string]string{`0`: `1`, `1`: `1`, `2`: `2`, `3`: `2`, `4`: `1`, `5`: `4`,
-				`6`:   `7`,
-				`255`: `255`}},
+				`6`: `7`, `7`: `5`, `8`: `3`, `255`: `255`}},
 		}},
 	{`testEmpty`, `contract testEmpty {
 				action { Test("empty",  "empty value")}}`,
@@ -254,7 +259,7 @@ func TestEditContracts(t *testing.T) {
 	code := row.Value[`value`]
 	off := strings.IndexByte(code, '-')
 	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
-	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}}
+	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"01231234123412341234"}}
 	if err := postTx(`EditContract`, &form); err != nil {
 		t.Error(err)
 		return
@@ -589,6 +594,57 @@ func TestImport(t *testing.T) {
 
 }
 
+func TestEditContracts_ChangeWallet(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	var cntlist contractsResult
+	err := sendGet(`contracts`, nil, &cntlist)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret getContractResult
+	err = sendGet(`contract/testUpd`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	sid := ret.TableID
+	var row rowResult
+	err = sendGet(`row/contracts/`+sid, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err := postTx(`ActivateContract`, &url.Values{`Id`: {sid}}); err != nil {
+		t.Error(err)
+		return
+	}
+
+	code := row.Value[`value`]
+	off := strings.IndexByte(code, '-')
+	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
+	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"1248-5499-7861-4204-5166"}}
+	err = postTx(`EditContract`, &form)
+	if err == nil {
+		t.Error("Expected `Contract activated` error")
+		return
+	}
+
+	if err := postTx(`DeactivateContract`, &url.Values{`Id`: {sid}}); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err := postTx(`EditContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
 func TestUpdateFunc(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
@@ -605,12 +661,52 @@ func TestUpdateFunc(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
+	form = url.Values{`Value`: {`
+		contract one` + rnd + ` {
+			action {
+				var ret map
+				ret = DBFind("contracts").Columns("id,value").WhereId(10).Row()
+				$result = ret["id"]
+		}}
+		contract row` + rnd + ` {
+				action {
+					var ret string
+					ret = DBFind("contracts").Columns("id,value").WhereId(11).One("id")
+					$result = ret
+				}}
+		
+			`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err := postTxResult(`one`+rnd, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `10` {
+		t.Error(`wrong one`)
+		return
+	}
+	_, msg, err = postTxResult(`row`+rnd, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `11` {
+		t.Error(`wrong row`)
+		return
+	}
+
 	form = url.Values{`Value`: {`
 		contract ` + rnd + ` {
 		    data {
 				Par string
 			}
-			action { 
+			action {
 				$result = MyTest($Par)
 			}}
 		`}, `Conditions`: {`true`}}
@@ -619,7 +715,7 @@ func TestUpdateFunc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, msg, err := postTxResult(rnd, &url.Values{`Par`: {`my param`}})
+	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`my param`}})
 	if err != nil {
 		t.Error(err)
 		return
@@ -658,7 +754,7 @@ func TestUpdateFunc(t *testing.T) {
 		    data {
 				Par string
 			}
-			action { 
+			action {
 				$result = MyTest($Par) + MyTest("OK")
 			}}
 		`}, `Conditions`: {`true`}}
