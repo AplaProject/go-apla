@@ -2,12 +2,12 @@ package model
 
 // RollbackTx is model
 type RollbackTx struct {
-	ID        int64  `gorm:"primary_key;not null"`
-	BlockID   int64  `gorm:"not null"`
-	TxHash    []byte `gorm:"not null"`
-	NameTable string `gorm:"not null;size:255;column:table_name"`
-	TableID   string `gorm:"not null;size:255"`
-	Data      string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	ID        int64  `gorm:"primary_key;not null" json:"-"`
+	BlockID   int64  `gorm:"not null" json:"block_id"`
+	TxHash    []byte `gorm:"not null" json:"tx_hash"`
+	NameTable string `gorm:"not null;size:255;column:table_name" json:"table_name"`
+	TableID   string `gorm:"not null;size:255" json:"table_id"`
+	Data      string `gorm:"not null;type:jsonb(PostgreSQL)" json:"data"`
 }
 
 // TableName returns name of table
@@ -18,6 +18,12 @@ func (RollbackTx) TableName() string {
 // GetRollbackTransactions is returns rollback transactions
 func (rt *RollbackTx) GetRollbackTransactions(dbTransaction *DbTransaction, transactionHash []byte) ([]map[string]string, error) {
 	return GetAllTx(dbTransaction, "SELECT * from rollback_tx WHERE tx_hash = ?", -1, transactionHash)
+}
+
+func (rt *RollbackTx) GetBlockRollbackTransactions(dbTransaction *DbTransaction, blockID int64) ([]RollbackTx, error) {
+	var rollbackTransactions []RollbackTx
+	err := GetDB(dbTransaction).Where("block_id = ?", blockID).Order("tx_hash asc").Find(&rollbackTransactions).Error
+	return rollbackTransactions, err
 }
 
 func (rt *RollbackTx) GetRollbackTxsByTableIDAndTableName(tableID, tableName string, limit int) (*[]RollbackTx, error) {

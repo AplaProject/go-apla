@@ -17,6 +17,8 @@
 package parser
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
@@ -24,9 +26,6 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/autoupdate"
-
-	"bytes"
-
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -270,15 +269,36 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
 		return err
 	}
+	rollbackTx := &model.RollbackTx{}
+	blockRollbackTxs, err := rollbackTx.GetBlockRollbackTransactions(transaction, blockID)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block rollback txs")
+		return err
+	}
+	buffer := bytes.Buffer{}
+	for _, rollbackTx := range blockRollbackTxs {
+		if rollbackTxBytes, err := json.Marshal(rollbackTx); err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback_tx to json")
+			return err
+		} else {
+			buffer.Write(rollbackTxBytes)
+		}
+	}
+	rollbackTxsHash, err := crypto.Hash(buffer.Bytes())
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing block rollback_txs")
+		return err
+	}
 	b := &model.Block{
-		ID:           blockID,
-		Hash:         block.Header.Hash,
-		Data:         block.BinData,
-		EcosystemID:  block.Header.EcosystemID,
-		KeyID:        block.Header.KeyID,
-		NodePosition: block.Header.NodePosition,
-		Time:         block.Header.Time,
-		Tx:           int32(len(block.Parsers)),
+		ID:            blockID,
+		Hash:          block.Header.Hash,
+		Data:          block.BinData,
+		EcosystemID:   block.Header.EcosystemID,
+		KeyID:         block.Header.KeyID,
+		NodePosition:  block.Header.NodePosition,
+		Time:          block.Header.Time,
+		RollbacksHash: rollbackTxsHash,
+		Tx:            int32(len(block.Parsers)),
 	}
 	err = b.Create(transaction)
 	if err != nil {
