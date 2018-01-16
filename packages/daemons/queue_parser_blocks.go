@@ -90,5 +90,5 @@ func QueueParserBlocks(ctx context.Context, d *daemon) error {
 
 	host := getHostPort(nodeHost)
 	// update our chain till maxBlockID from the host
-	return UpdateChain(ctx, d, host, blockID, "rollback_blocks_1")
+	return UpdateChain(ctx, d, host, blockID)
 }

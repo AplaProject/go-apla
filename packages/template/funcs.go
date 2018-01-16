@@ -27,6 +27,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
@@ -43,9 +45,11 @@ var (
 )
 
 func init() {
+	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
 	funcs[`AddToolButton`] = tplFunc{defaultTag, defaultTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
 	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
+	funcs[`Code`] = tplFunc{defaultTag, defaultTag, `code`, `Text`}
 	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format`}
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
@@ -59,6 +63,7 @@ func init() {
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
 	funcs[`Strong`] = tplFunc{defaultTag, defaultTag, `strong`, `Body,Class`}
+	funcs[`SysParam`] = tplFunc{sysparTag, defaultTag, `syspar`, `Name`}
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
 	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Body`}
@@ -78,6 +83,7 @@ func init() {
 	funcs[`Span`] = tplFunc{defaultTailTag, defaultTailTag, `span`, `Body,Class`}
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
 	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
+	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 
 	tails[`button`] = forTails{map[string]tailInfo{
 		`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
@@ -143,6 +149,10 @@ func defaultTag(par parFunc) string {
 	setAllAttr(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
+}
+
+func lowerTag(par parFunc) string {
+	return strings.ToLower((*par.Pars)[`Text`])
 }
 
 func menugroupTag(par parFunc) string {
@@ -245,6 +255,13 @@ func langresTag(par parFunc) string {
 	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
 		lang, par.Workspace.SmartContract.VDE)
 	return ret
+}
+
+func sysparTag(par parFunc) (ret string) {
+	if len((*par.Pars)[`Name`]) > 0 {
+		ret = syspar.SysString((*par.Pars)[`Name`])
+	}
+	return
 }
 
 // Now returns the current time of postgresql
@@ -430,7 +447,7 @@ func dbfindTag(par parFunc) string {
 	}
 	sc := par.Workspace.SmartContract
 	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
-	if sc.VDE {
+	if sc.VDE && *conf.CheckReadAccess {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
 		cols := strings.Split(fields, `,`)
 		if err != nil || sc.AccessColumns(tblname, &cols, false) != nil {
@@ -544,7 +561,6 @@ func customTag(par parFunc) string {
 	}
 	par.Owner.Attr[`customs`] = append(par.Owner.Attr[`customs`].([]string), par.Node.Attr[`column`].(string))
 	par.Owner.Attr[`custombody`] = append(par.Owner.Attr[`custombody`].([]string), (*par.Pars)[`Body`])
-
 	return ``
 }
 
@@ -715,7 +731,7 @@ func elseFull(par parFunc) string {
 
 func dateTimeTag(par parFunc) string {
 	datetime := (*par.Pars)[`DateTime`]
-	if len(datetime) == 0 {
+	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
 	defTime := `1970-01-01T00:00:00`
@@ -763,4 +779,19 @@ func cmpTimeTag(par parFunc) string {
 		return `-1`
 	}
 	return `1`
+}
+
+func chartTag(par parFunc) string {
+	defaultTag(par)
+	defaultTail(par, "chart")
+
+	if len((*par.Pars)["Colors"]) > 0 {
+		colors := strings.Split((*par.Pars)["Colors"], ",")
+		for i, v := range colors {
+			colors[i] = strings.TrimSpace(v)
+		}
+		par.Node.Attr["colors"] = colors
+	}
+
+	return ""
 }

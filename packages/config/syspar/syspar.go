@@ -59,8 +59,6 @@ const (
 	CommissionWallet = `commission_wallet`
 	// RbBlocks1 rollback from queue_bocks
 	RbBlocks1 = `rb_blocks_1`
-	// RbBlocks2 rollback from blocks_collection
-	RbBlocks2 = `rb_blocks_2`
 )
 
 // FullNode is storing full node data
@@ -349,11 +347,6 @@ func SysString(name string) string {
 // GetRbBlocks1 is returns RbBlocks1
 func GetRbBlocks1() int64 {
 	return SysInt64(RbBlocks1)
-}
-
-// GetRbBlocks2 is returns RbBlocks2
-func GetRbBlocks2() int64 {
-	return SysInt64(RbBlocks2)
 }
 
 // HasSys returns boolean whether this system parameter exists

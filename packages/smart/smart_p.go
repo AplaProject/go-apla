@@ -133,7 +133,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		}
 		if !ret {
 			log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-			return 0, fmt.Errorf(`Access denied`)
+			return 0, errAccessDenied
 		}
 	}
 	if len(value) > 0 {
@@ -148,8 +148,6 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			ok = ival > 0 && ival < 86400
 		case `rb_blocks_1`, `number_of_nodes`:
 			ok = ival > 0 && ival < 1000
-		case `rb_blocks_2`:
-			ok = ival > 0 && ival < 10000
 		case `ecosystem_price`, `contract_price`, `column_price`, `table_price`, `menu_price`,
 			`page_price`, `commission_size`:
 			ok = ival >= 0
@@ -502,7 +500,8 @@ func RollbackEcosystem(sc *SmartContract) error {
 	}
 
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
-		`contracts`, `parameters`, `blocks`, `history`, `keys`} {
+		`contracts`, `parameters`, `blocks`, `history`, `keys`, `member`, `roles_list`,
+		`roles_assign`, `notifications`} {
 		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")

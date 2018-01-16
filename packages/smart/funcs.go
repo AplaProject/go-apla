@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -32,11 +33,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/scheduler"
+	"github.com/AplaProject/go-apla/packages/scheduler/contract"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
@@ -115,6 +119,13 @@ var (
 		"UpdateLang":         10,
 		"ValidateCondition":  30,
 	}
+	// map for table name to parameter with conditions
+	tableParamConditions = map[string]string{
+		"pages":      "changing_page",
+		"menu":       "changing_menu",
+		"signatures": "changing_signature",
+		"contracts":  "changing_contracts",
+	}
 )
 
 func getCost(name string) int64 {
@@ -159,6 +170,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Money":              Money,
 		"PermColumn":         PermColumn,
 		"PermTable":          PermTable,
+		"Random":             Random,
 		"Split":              Split,
 		"Str":                Str,
 		"Substr":             Substr,
@@ -181,6 +193,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Activate":           Activate,
 		"Deactivate":         Deactivate,
 		"check_signature":    CheckSignature,
+		"RowConditions":      RowConditions,
 	}
 
 	switch vt {
@@ -190,6 +203,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["SortedKeys"] = SortedKeys
 		f["Date"] = Date
 		f["HTTPPostJSON"] = HTTPPostJSON
+		f["ValidateCron"] = ValidateCron
+		f["UpdateCron"] = UpdateCron
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
@@ -313,7 +328,6 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns to JSON")
 		return err
 	}
-	indexes := make([]string, 0)
 
 	colsSQL := ""
 	colperm := make(map[string]string)
@@ -347,9 +361,6 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		}
 		colsSQL += `"` + colname + `" ` + colType + " " + colDef + " ,\n"
 		colperm[colname] = data[`conditions`]
-		if data[`index`] == "1" {
-			indexes = append(indexes, colname)
-		}
 	}
 	colout, err := json.Marshal(colperm)
 	if err != nil {
@@ -366,13 +377,6 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		return err
 	}
 
-	for _, index := range indexes {
-		err := model.CreateIndex(sc.DbTransaction, tableName+"_"+index, tableName, index)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE indexes")
-			return err
-		}
-	}
 	var perm permTable
 	err = json.Unmarshal([]byte(permissions), &perm)
 	if err != nil {
@@ -484,7 +488,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		ecosystem = sc.TxSmart.EcosystemID
 	}
 	tblname = GetTableName(sc, tblname, ecosystem)
-	if sc.VDE {
+	if sc.VDE && *conf.CheckReadAccess {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
 		if err != nil {
 			return 0, nil, err
@@ -584,7 +588,7 @@ func Eval(sc *SmartContract, condition string) error {
 	}
 	if !ret {
 		log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-		return fmt.Errorf(`Access denied`)
+		return errAccessDenied
 	}
 	return nil
 }
@@ -720,7 +724,6 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		log.WithFields(log.Fields{"size": len(cols), "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
-	var indexes int
 	for _, data := range cols {
 		if len(data[`name`]) == 0 || len(data[`type`]) == 0 {
 			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("wrong column")
@@ -751,20 +754,8 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 				return err
 			}
 		}
-		if data[`index`] == `1` {
-			if itype != `varchar` && itype != `number` && itype != `datetime` {
-				log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect index type")
-				return fmt.Errorf(`incorrect index type`)
-			}
-			indexes++
-		}
 
 	}
-	if indexes > syspar.GetMaxIndexes() {
-		log.WithFields(log.Fields{"size": indexes, "max_size": syspar.GetMaxIndexes, "type": consts.ParameterExceeded}).Error("Too many indexes")
-		return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
-	}
-
 	if err := sc.AccessRights("new_table", false); err != nil {
 		return err
 	}
@@ -782,7 +773,7 @@ func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 }
 
 // ColumnCondition is contract func
-func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, index string) error {
+func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions string) error {
 	if !accessContracts(sc, `NewColumn`, `EditColumn`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ColumnConditions can be only called from @1NewColumn")
 		return fmt.Errorf(`ColumnCondition can be only called from NewColumn or EditColumn`)
@@ -841,27 +832,40 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 		log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("Unknown column type")
 		return fmt.Errorf(`incorrect type`)
 	}
-	if index == `1` {
-		count, err := model.NumIndexes(tblName)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("num indexes")
-			return err
-		}
-		if count >= syspar.GetMaxIndexes() {
-			log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxIndexes(), "type": consts.ParameterExceeded}).Error("Too many indexes")
-			return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
-		}
-		if coltype != `varchar` && coltype != `number` && coltype != `datetime` {
-			log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("incorrect index type")
-			return fmt.Errorf(`incorrect index type`)
-		}
-	}
 
 	return sc.AccessTable(tblName, "new_column")
 }
 
+// RowConditions checks conditions for table row by id
+func RowConditions(sc *SmartContract, tblname string, id int64) error {
+	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
+	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing row condition query")
+		return err
+	}
+
+	if len(condition) == 0 {
+		log.WithFields(log.Fields{"type": consts.NotFound, "name": tblname, "id": id}).Error("record not found")
+		return fmt.Errorf("Item %d has not been found", id)
+	}
+
+	err = Eval(sc, condition)
+	if err != nil {
+		if err == errAccessDenied {
+			if param, ok := tableParamConditions[tblname]; ok {
+				return sc.AccessRights(param, false)
+			}
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 // CreateColumn is creating column
-func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, index string) error {
+func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions string) error {
 	if !accessContracts(sc, `NewColumn`) {
 		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("CreateColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
@@ -892,13 +896,6 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, inde
 		return err
 	}
 
-	if index == "1" {
-		err = model.CreateIndex(sc.DbTransaction, tblname+"_"+name+"_index", tblname, name)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating index for table")
-			return err
-		}
-	}
 	tables := getDefTableName(sc, `tables`)
 	type cols struct {
 		Columns string
@@ -1107,4 +1104,48 @@ func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string
 		return ``, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
 	}
 	return string(data), nil
+}
+
+func Random(min int64, max int64) (int64, error) {
+	if min < 0 || max < 0 || min >= max {
+		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("getting random")
+		return 0, fmt.Errorf(`wrong random parameters %d %d`, min, max)
+	}
+	return min + rand.New(rand.NewSource(time.Now().Unix())).Int63n(max-min), nil
+}
+
+func ValidateCron(cronSpec string) error {
+	_, err := scheduler.Parse(cronSpec)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateCron(sc *SmartContract, id int64) error {
+	cronTask := &model.Cron{}
+	cronTask.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID) + "_vde")
+
+	ok, err := cronTask.Get(id)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get cron record")
+		return err
+	}
+
+	if !ok {
+		return nil
+	}
+
+	err = scheduler.UpdateTask(&scheduler.Task{
+		ID:       cronTask.UID(),
+		CronSpec: cronTask.Cron,
+		Handler: &contract.ContractHandler{
+			Contract: cronTask.Contract,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
