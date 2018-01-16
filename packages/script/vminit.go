@@ -126,6 +126,12 @@ type VarInfo struct {
 	Owner *Block
 }
 
+// IndexInfo contains the information for SetIndex
+type IndexInfo struct {
+	VarOffset int
+	Owner     *Block
+}
+
 // ObjInfo is the common object type
 type ObjInfo struct {
 	Type  int

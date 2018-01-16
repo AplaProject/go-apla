@@ -21,10 +21,13 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
+	taskContract "github.com/AplaProject/go-apla/packages/scheduler/contract"
 )
 
 func TestVDECreate(t *testing.T) {
@@ -488,5 +491,166 @@ func TestHTTPRequest(t *testing.T) {
 	if err := postTx(rnd, &url.Values{`vde`: {`true`}, `Auth`: {gAuth}}); err != nil {
 		t.Error(err)
 		return
+	}
+}
+
+func TestNodeHTTPRequest(t *testing.T) {
+	var err error
+	if err = keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract for` + rnd + ` {
+		data {
+			Par string
+		}
+		action { $result = "Test NodeContract " + $Par + " ` + rnd + `"}
+    }`}, `Conditions`: {`ContractConditions("MainCondition")`}}
+
+	if err = postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	var ret getContractResult
+	err = sendGet(`contract/for`+rnd, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
+		t.Error(err)
+		return
+	}
+
+	form = url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+				Par string
+			}
+			action {
+				var ret string 
+				var pars, heads, json map
+				heads["Authorization"] = "Bearer " + $auth_token
+				pars["vde"] = "false"
+				pars["Par"] = $Par
+				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)
+				json = JSONToMap(ret)
+				$result = json["hash"]
+			}}`}, `Conditions`: {`true`}, `vde`: {`true`}}
+
+	if err = postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	var (
+		msg string
+		id  int64
+	)
+	if _, msg, err = postTxResult(rnd, &url.Values{`vde`: {`true`}, `Par`: {`node`}}); err != nil {
+		t.Error(err)
+		return
+	}
+	id, err = waitTx(msg)
+	if id != 0 && err != nil {
+		msg = err.Error()
+		err = nil
+	}
+	if msg != `Test NodeContract node `+rnd {
+		t.Error(`wrong result: ` + msg)
+	}
+	form = url.Values{`Value`: {`contract node` + rnd + ` {
+		data {
+		}
+		action { 
+			var ret string 
+			var pars, heads, json map
+			heads["Authorization"] = "Bearer " + $auth_token
+			pars["vde"] = "false"
+			pars["Par"] = "NodeContract testing"
+			ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)
+			json = JSONToMap(ret)
+			$result = json["hash"]
+		}
+    }`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
+
+	if err = postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	// You can specify the directory with NodePrivateKey & NodePublicKey files
+	conf.Config.PrivateDir = ``
+	if len(conf.Config.PrivateDir) > 0 {
+		conf.Config.HTTP.Host = `localhost`
+		conf.Config.HTTP.Port = 7079
+
+		nodeResult, err := taskContract.NodeContract(`@1node` + rnd)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		id, err = waitTx(nodeResult.Result)
+		if id != 0 && err != nil {
+			msg = err.Error()
+			err = nil
+		}
+		if msg != `Test NodeContract NodeContract testing `+rnd {
+			t.Error(`wrong result: ` + msg)
+		}
+	}
+}
+
+func TestCron(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	err := postTx("NewCron", &url.Values{
+		"Cron":       {"60 * * * * *"},
+		"Contract":   {"TestCron"},
+		"Conditions": {`ContractConditions("MainCondition")`},
+		"vde":        {"true"},
+	})
+	if err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"End of range (60) above maximum (59): 60\"}" }` {
+		t.Error(err)
+	}
+
+	postTx("NewContract", &url.Values{
+		"Value": {`
+			contract TestCron {
+				data {}
+				action {
+					return "Success"
+				}
+			}
+		`},
+		"Conditions": {`ContractConditions("MainCondition")`},
+		"vde":        {"true"},
+	})
+
+	till := time.Now().Format(time.RFC3339)
+	err = postTx("NewCron", &url.Values{
+		"Cron":       {"* * * * * *"},
+		"Contract":   {"TestCron"},
+		"Conditions": {`ContractConditions("MainCondition")`},
+		"Till":       {till},
+		"vde":        {"true"},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = postTx("EditCron", &url.Values{
+		"Id":         {"1"},
+		"Cron":       {"*/3 * * * * *"},
+		"Contract":   {"TestCron"},
+		"Conditions": {`ContractConditions("MainCondition")`},
+		"Till":       {till},
+		"vde":        {"true"},
+	})
+	if err != nil {
+		t.Error(err)
 	}
 }

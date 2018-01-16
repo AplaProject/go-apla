@@ -70,6 +70,7 @@ func Route(route *hr.Router) {
 
 	post(`content/page/:name`, ``, authWallet, getPage)
 	post(`content/menu/:name`, ``, authWallet, getMenu)
+	post(`content/hash/:name`, ``, authWallet, getPageHash)
 	post(`install`, `?first_load_blockchain_url ?first_block_dir log_level type db_host db_port 
 	db_name db_pass db_user ?centrifugo_url ?centrifugo_secret:string,?generate_first_block:int64`, doInstall)
 	post(`vde/create`, ``, authWallet, vdeCreate)
@@ -80,6 +81,7 @@ func Route(route *hr.Router) {
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template:string`, jsonContent)
 
+	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
 }
 
 func processParams(input string) (params map[string]int) {

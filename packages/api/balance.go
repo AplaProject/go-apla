@@ -23,7 +23,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
-	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -45,8 +44,8 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 
 	key := &model.Key{}
 	key.SetTablePrefix(ecosystemId)
-	err = key.Get(keyID)
-	if err != nil && err != gorm.ErrRecordNotFound {
+	_, err = key.Get(keyID)
+	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting Key for wallet")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}

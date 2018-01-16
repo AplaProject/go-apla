@@ -10,7 +10,6 @@ type Key struct {
 	ID        int64  `gorm:"primary_key;not null"`
 	PublicKey []byte `gorm:"column:pub;not null"`
 	Amount    string `gorm:"not null"`
-	RbID      int64  `gorm:"not null"`
 }
 
 // SetTablePrefix is setting table prefix
@@ -28,6 +27,6 @@ func (m Key) TableName() string {
 }
 
 // Get is retrieving model from database
-func (m *Key) Get(wallet int64) error {
-	return DBConn.Where("id = ?", wallet).First(m).Error
+func (m *Key) Get(wallet int64) (bool, error) {
+	return isFound(DBConn.Where("id = ?", wallet).First(m))
 }
