@@ -1,3 +1,5 @@
+[![Throughput Graph](https://graphs.waffle.io/AplaProject/go-apla/throughput.svg)](https://waffle.io/AplaProject/go-apla/metrics/throughput)
+
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Go Report Card](https://goreportcard.com/badge/github.com/AplaProject/go-apla)](https://goreportcard.com/report/github.com/AplaProject/go-apla) 
 [![Build Status](https://travis-ci.org/AplaProject/go-apla.svg?branch=master)](https://travis-ci.org/AplaProject/go-apla) 
