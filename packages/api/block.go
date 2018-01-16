@@ -50,6 +50,6 @@ func getBlockInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 		log.WithFields(log.Fields{"type": consts.NotFound, "id": blockID}).Error("block with id not found")
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
-	data.result = &GetBlockInfoResult{Hash: block.Hash, EcosystemID: block.EcosystemID, KeyID: block.KeyID, Time: block.Time, Tx: block.Tx, RollbacksHash: []byte("")}
+	data.result = &GetBlockInfoResult{Hash: block.Hash, EcosystemID: block.EcosystemID, KeyID: block.KeyID, Time: block.Time, Tx: block.Tx, RollbacksHash: block.RollbacksHash}
 	return nil
 }
