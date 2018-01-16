@@ -1,7 +1,5 @@
 package model
 
-import "github.com/AplaProject/go-apla/packages/converter"
-
 // RollbackTx is model
 type RollbackTx struct {
 	ID        int64  `gorm:"primary_key;not null" json:"-"`
@@ -9,11 +7,7 @@ type RollbackTx struct {
 	TxHash    []byte `gorm:"not null" json:"tx_hash"`
 	NameTable string `gorm:"not null;size:255;column:table_name" json:"table_name"`
 	TableID   string `gorm:"not null;size:255" json:"table_id"`
-}
-
-type RollbackTxWithData struct {
-	RollbackTx
-	Data string `json:"data"`
+	Data      string `gorm:"not null;type:jsonb(PostgreSQL)" json:"data"`
 }
 
 // TableName returns name of table
@@ -26,28 +20,18 @@ func (rt *RollbackTx) GetRollbackTransactions(dbTransaction *DbTransaction, tran
 	return GetAllTx(dbTransaction, "SELECT * from rollback_tx WHERE tx_hash = ?", -1, transactionHash)
 }
 
-func (rt *RollbackTx) GetBlockRollbackTransactions(dbTransaction *DbTransaction, blockID int64) ([]RollbackTxWithData, error) {
-	rollbackTxsWithData := []RollbackTxWithData{}
+func (rt *RollbackTx) GetBlockRollbackTransactions(dbTransaction *DbTransaction, blockID int64) ([]RollbackTx, error) {
 	var rollbackTransactions []RollbackTx
 	err := GetDB(dbTransaction).Where("block_id = ?", blockID).Order("tx_hash asc").Find(&rollbackTransactions).Error
-	if err != nil {
-		return rollbackTxsWithData, err
+	return rollbackTransactions, err
+}
+
+func (rt *RollbackTx) GetRollbackTxsByTableIDAndTableName(tableID, tableName string, limit int) (*[]RollbackTx, error) {
+	rollbackTx := new([]RollbackTx)
+	if err := DBConn.Where("table_id = ? AND table_name = ?", tableID, tableName).Limit(limit).Find(rollbackTx).Error; err != nil {
+		return nil, err
 	}
-	for _, rollbackTx := range rollbackTransactions {
-		rollbackTxWithData := RollbackTxWithData{rollbackTx, ""}
-		rbID, err := GetRollbackIDForTableRow(rollbackTx.NameTable, converter.StrToInt64(rollbackTx.TableID))
-		if err != nil {
-			return nil, err
-		}
-		rollback := &Rollback{}
-		if found, err := rollback.Get(rbID); err != nil {
-			return nil, err
-		} else if found {
-			rollbackTxWithData.Data = rollback.Data
-		}
-		rollbackTxsWithData = append(rollbackTxsWithData, rollbackTxWithData)
-	}
-	return rollbackTxsWithData, nil
+	return rollbackTx, nil
 }
 
 // DeleteByHash is deleting rollbackTx by hash

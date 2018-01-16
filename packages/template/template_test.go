@@ -28,9 +28,11 @@ type tplItem struct {
 type tplList []tplItem
 
 func TestJSON(t *testing.T) {
+	var timeout bool
 	vars := make(map[string]string)
+	vars[`_full`] = `0`
 	for _, item := range forTest {
-		templ := Template2JSON(item.input, false, &vars)
+		templ := Template2JSON(item.input, &timeout, &vars)
 		if string(templ) != item.want {
 			t.Errorf("wrong json \r\n%s != \r\n%s", templ, item.want)
 			return
@@ -52,8 +54,11 @@ var forTest = tplList{
 		P(Body: #v#)
 	}.Custom(cust){
 		P(Body: #v#)
-	}`,
-		`[{"tag":"data","attr":{"columns":["id","name","custom_id","cust"],"data":[["1","First Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]"],["2","Second Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]"]],"source":"mysrc","types":["text","text","tags","tags"]}}]`},
+	}Data(Columns: "name", Data:
+		First Name
+		Second Name
+	)`,
+		`[{"tag":"data","attr":{"columns":["id","name","custom_id","cust"],"data":[["1","First Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]"],["2","Second Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]"]],"source":"mysrc","types":["text","text","tags","tags"]}},{"tag":"data","attr":{"columns":["name"],"data":[["First Name"],["Second Name"]],"types":["text"]}}]`},
 
 	{`Data(Source: mysrc, Columns: "id,name", Data:
 		1,first
@@ -162,12 +167,16 @@ var forTest = tplList{
 		`[{"tag":"text","text":"unknown address"},{"tag":"span","children":[{"tag":"text","text":"1844-6738-3454-7065-1595"}]},{"tag":"text","text":"0000-0003-4673-4764-38731218-8352-5257-3021-1925"}]`},
 	{`Table(src, "ID=id,name,Wallet=wallet")`,
 		`[{"tag":"table","attr":{"columns":[{"Name":"id","Title":"ID"},{"Name":"name","Title":"name"},{"Name":"wallet","Title":"Wallet"}],"source":"src"}}]`},
+	{`Chart(Type: "bar", Source: src, FieldLabel: "name", FieldValue: "count", Colors: "red, green")`,
+		`[{"tag":"chart","attr":{"colors":["red","green"],"fieldlabel":"name","fieldvalue":"count","source":"src","type":"bar"}}]`},
 }
 
 func TestFullJSON(t *testing.T) {
+	var timeout bool
 	vars := make(map[string]string)
+	vars[`_full`] = `1`
 	for _, item := range forFullTest {
-		templ := Template2JSON(item.input, true, &vars)
+		templ := Template2JSON(item.input, &timeout, &vars)
 		if string(templ) != item.want {
 			t.Errorf(`wrong json %s != %s`, templ, item.want)
 			return

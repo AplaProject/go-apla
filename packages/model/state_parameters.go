@@ -7,7 +7,6 @@ type StateParameter struct {
 	Name       string `gorm:"not null;size:100"`
 	Value      string `gorm:"not null"`
 	Conditions string `gorm:"not null"`
-	RbID       int64  `gorm:"not null"`
 }
 
 // TableName returns name of table

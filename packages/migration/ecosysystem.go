@@ -76,7 +76,20 @@ var (
 	  ('10','stylesheet', 'body { 
 		/* You can define your custom styles here or create custom CSS rules */
 	  }', 'ContractConditions("MainCondition")');
-	  
+
+	  DROP TABLE IF EXISTS "%[1]d_vde_cron";
+	  CREATE TABLE "%[1]d_vde_cron" (
+		  "id"        bigint NOT NULL DEFAULT '0',
+		  "owner"	  bigint NOT NULL DEFAULT '0',
+		  "cron"      varchar(255) NOT NULL DEFAULT '',
+		  "contract"  varchar(255) NOT NULL DEFAULT '',
+		  "counter"   bigint NOT NULL DEFAULT '0',
+		  "till"      timestamp NOT NULL DEFAULT timestamp '1970-01-01 00:00:00',
+		  "conditions" text  NOT NULL DEFAULT ''
+	  );
+	  ALTER TABLE ONLY "%[1]d_vde_cron" ADD CONSTRAINT "%[1]d_vde_cron_pkey" PRIMARY KEY ("id");
+
+
 	  CREATE TABLE "%[1]d_vde_tables" (
 	  "id" bigint NOT NULL  DEFAULT '0',
 	  "name" varchar(100) UNIQUE NOT NULL DEFAULT '',
@@ -126,7 +139,17 @@ var (
 			  '{"name": "ContractConditions(\"MainCondition\")",
 		  "value": "ContractConditions(\"MainCondition\")",
 		  "conditions": "ContractConditions(\"MainCondition\")"
-			  }', 'ContractAccess("EditTable")');
+			  }', 'ContractAccess("EditTable")'),
+			  ('7', 'cron',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
+				  "new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"owner": "ContractConditions(\"MainCondition\")",
+				"cron": "ContractConditions(\"MainCondition\")",
+				"contract": "ContractConditions(\"MainCondition\")",
+				"counter": "ContractConditions(\"MainCondition\")",
+				"till": "ContractConditions(\"MainCondition\")",
+                  "conditions": "ContractConditions(\"MainCondition\")"
+				}', 'ContractConditions(\"MainCondition\")');
 	  
 	  INSERT INTO "%[1]d_vde_contracts" ("id", "value", "conditions") VALUES 
 	  ('1','contract MainCondition {
@@ -142,6 +165,23 @@ var (
 		func DBFind(table string).Columns(columns string).Where(where string, params ...)
 			.WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
 			return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
+		}
+
+		func One(list array, name string) string {
+			if list {
+				var row map 
+				row = list[0]
+				return row[name]
+			}
+			return nil
+		}
+
+		func Row(list array) map {
+			var ret map
+			if list {
+				ret = list[0]
+			}
+			return ret
 		}
 
 		func DBRow(table string).Columns(columns string).Where(where string, params ...)
@@ -435,13 +475,12 @@ var (
 			  Name        string
 			  Type        string
 			  Permissions string
-			  Index       string "optional"
 		  }
 		  conditions {
-			  ColumnCondition($TableName, $Name, $Type, $Permissions, $Index)
+			  ColumnCondition($TableName, $Name, $Type, $Permissions)
 		  }
 		  action {
-			  CreateColumn($TableName, $Name, $Type, $Permissions, $Index)
+			  CreateColumn($TableName, $Name, $Type, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('18','contract EditColumn {
@@ -451,7 +490,7 @@ var (
 			  Permissions string
 		  }
 		  conditions {
-			  ColumnCondition($TableName, $Name, "", $Permissions, "")
+			  ColumnCondition($TableName, $Name, "", $Permissions)
 		  }
 		  action {
 			  PermColumn($TableName, $Name, $Permissions)
@@ -545,14 +584,62 @@ var (
 			ImportList($list["tables"], "NewTable")
 			ImportData($list["data"])
 		}
+	}', 'ContractConditions("MainCondition")'),
+	('22', 'contract NewCron {
+		data {
+			Cron       string
+			Contract   string
+			Limit      int "optional"
+			Till       string "optional date"
+			Conditions string
+		}
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+			ValidateCron($Cron)
+		}
+		action {
+			if !$Till {
+				$Till = "1970-01-01 00:00:00"
+			}
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
+			}
+			$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions",
+				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
+			UpdateCron($result)
+		}
+	}', 'ContractConditions("MainCondition")'),
+	('23','contract EditCron {
+		data {
+			Id         int
+			Contract   string
+			Cron       string "optional"
+			Limit      int "optional"
+			Till       string "optional date"
+			Conditions string
+		}
+		conditions {
+			ConditionById("cron", true)
+			ValidateCron($Cron)
+		}
+		action {
+			if !$Till {
+				$Till = "1970-01-01 00:00:00"
+			}
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
+			}
+			DBUpdate("cron", $Id, "cron,contract,counter,till,conditions",
+				$Cron, $Contract, $Limit, $Till, $Conditions)
+			UpdateCron($Id)
+		}
 	}', 'ContractConditions("MainCondition")');
-	  `
+	`
 
 	SchemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"pub" bytea  NOT NULL DEFAULT '',
-		"amount" decimal(30) NOT NULL DEFAULT '0',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"amount" decimal(30) NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
 		
@@ -563,8 +650,7 @@ var (
 		"amount" decimal(30) NOT NULL DEFAULT '0',
 		"comment" text NOT NULL DEFAULT '',
 		"block_id" int  NOT NULL DEFAULT '0',
-		"txhash" bytea  NOT NULL DEFAULT '',
-		"rb_id" int  NOT NULL DEFAULT '0'
+		"txhash" bytea  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_history" ADD CONSTRAINT "%[1]d_history_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_history_index_sender" ON "%[1]d_history" (sender_id);
@@ -576,8 +662,7 @@ var (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(100) NOT NULL DEFAULT '',
 		  "res" text NOT NULL DEFAULT '',
-		  "conditions" text NOT NULL DEFAULT '',
-		  "rb_id" bigint NOT NULL DEFAULT '0'
+		  "conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_languages" ADD CONSTRAINT "%[1]d_languages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
@@ -587,8 +672,7 @@ var (
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"title" character varying(255) NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
@@ -598,8 +682,7 @@ var (
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
 			"menu" character varying(255) NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
@@ -608,8 +691,7 @@ var (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
@@ -618,8 +700,7 @@ var (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(100) NOT NULL DEFAULT '',
 			"value" jsonb,
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
 		
@@ -629,8 +710,7 @@ var (
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',
 		"active" character(1) NOT NULL DEFAULT '0',
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 		
@@ -649,8 +729,7 @@ var (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint  NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_parameters" ADD CONSTRAINT "%[1]d_parameters_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_parameters_index_name" ON "%[1]d_parameters" (name);
@@ -677,8 +756,7 @@ var (
 		"name" varchar(100) UNIQUE NOT NULL DEFAULT '',
 		"permissions" jsonb,
 		"columns" jsonb,
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
@@ -809,8 +887,7 @@ var (
 			"date_create" timestamp,
 			"date_delete" timestamp,
 			"creator_name"	varchar(255) NOT NULL DEFAULT '',
-			"creator_avatar" varchar(255) NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"creator_avatar" varchar(255) NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
@@ -829,8 +906,7 @@ var (
 			"appointed_by_name"	varchar(255) NOT NULL DEFAULT '',
 			"date_start" timestamp,
 			"date_end" timestamp,
-			"delete" boolean,
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"delete" boolean
 		);
 		ALTER TABLE ONLY "%[1]d_roles_assign" ADD CONSTRAINT "%[1]d_roles_assign_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_assign_index_role" ON "%[1]d_roles_assign" (role_id);
@@ -841,13 +917,12 @@ var (
 		CREATE TABLE "%[1]d_member" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"username"	varchar(255) NOT NULL DEFAULT '',
-			"avatar"	text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"avatar"	text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
 		`
 
-	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id","rb_id") VALUES ('1','0');
+	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id") VALUES ('1');
 
 	INSERT INTO "1_member" ("id", "username") VALUES('%[1]d', 'founder');
 	INSERT INTO "1_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
@@ -865,6 +940,23 @@ var (
 	func DBFind(table string).Columns(columns string).Where(where string, params ...)
 		 .WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
 		return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
+	}
+
+	func One(list array, name string) string {
+		if list {
+			var row map 
+			row = list[0]
+			return row[name]
+		}
+		return nil
+	}
+	
+	func Row(list array) map {
+		var ret map
+		if list {
+			ret = list[0]
+		}
+		return ret
 	}
 
 	func DBRow(table string).Columns(columns string).Where(where string, params ...)
@@ -1018,7 +1110,7 @@ var (
 					error "Contract must be deactivated before wallet changing"
 				}
 			} else {
-				$recipient = $WalletId
+				$recipient = $cur["wallet_id"]
 			}
 		}
 		action {
@@ -1350,13 +1442,12 @@ var (
 			Name        string
 			Type        string
 			Permissions string
-			Index       string "optional"
 		}
 		conditions {
-			ColumnCondition($TableName, $Name, $Type, $Permissions, $Index)
+			ColumnCondition($TableName, $Name, $Type, $Permissions)
 		}
 		action {
-			CreateColumn($TableName, $Name, $Type, $Permissions, $Index)
+			CreateColumn($TableName, $Name, $Type, $Permissions)
 		}
 		func rollback() {
 			RollbackColumn($TableName, $Name)
@@ -1372,7 +1463,7 @@ var (
 			Permissions string
 		}
 		conditions {
-			ColumnCondition($TableName, $Name, "", $Permissions, "")
+			ColumnCondition($TableName, $Name, "", $Permissions)
 		}
 		action {
 			PermColumn($TableName, $Name, $Permissions)
