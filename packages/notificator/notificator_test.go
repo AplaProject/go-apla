@@ -194,7 +194,7 @@ func TestStatsChanged(t *testing.T) {
 
 	for i, record := range table {
 		if assert.Equal(t, record.result, statsChanged(record.old, record.new)) != true {
-			t.Errorf("на шаге %d результат не равен ожидаемому", i)
+			t.Errorf("step %d the result is not the expected", i)
 		}
 	}
 }
