@@ -831,7 +831,7 @@ var (
 				('9', 'member', 
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 					  "new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"username": "ContractConditions(\"MainCondition\")",
+					'{"member_name": "ContractConditions(\"MainCondition\")",
 					  "avatar": "ContractConditions(\"MainCondition\")"}', 'ContractConditions(\"MainCondition\")'),
 				('10', 'roles_list', 
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
