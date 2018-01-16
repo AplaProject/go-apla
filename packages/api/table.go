@@ -37,6 +37,8 @@ type tableResult struct {
 	Insert     string       `json:"insert"`
 	NewColumn  string       `json:"new_column"`
 	Update     string       `json:"update"`
+	Read       string       `json:"read,omitempty"`
+	Filter     string       `json:"filter,omitempty"`
 	Conditions string       `json:"conditions"`
 	Columns    []columnInfo `json:"columns"`
 }
@@ -81,6 +83,8 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			Insert:     perm[`insert`],
 			NewColumn:  perm[`new_column`],
 			Update:     perm[`update`],
+			Read:       perm[`read`],
+			Filter:     perm[`filter`],
 			Conditions: table.Conditions,
 			Columns:    columns,
 		}
