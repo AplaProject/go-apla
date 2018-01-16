@@ -7,6 +7,7 @@ type RollbackTx struct {
 	TxHash    []byte `gorm:"not null"`
 	NameTable string `gorm:"not null;size:255;column:table_name"`
 	TableID   string `gorm:"not null;size:255"`
+	Data      string `gorm:"not null;type:jsonb(PostgreSQL)"`
 }
 
 // TableName returns name of table
@@ -17,6 +18,14 @@ func (RollbackTx) TableName() string {
 // GetRollbackTransactions is returns rollback transactions
 func (rt *RollbackTx) GetRollbackTransactions(dbTransaction *DbTransaction, transactionHash []byte) ([]map[string]string, error) {
 	return GetAllTx(dbTransaction, "SELECT * from rollback_tx WHERE tx_hash = ?", -1, transactionHash)
+}
+
+func (rt *RollbackTx) GetRollbackTxsByTableIDAndTableName(tableID, tableName string, limit int) (*[]RollbackTx, error) {
+	rollbackTx := new([]RollbackTx)
+	if err := DBConn.Where("table_id = ? AND table_name = ?", tableID, tableName).Limit(limit).Find(rollbackTx).Error; err != nil {
+		return nil, err
+	}
+	return rollbackTx, nil
 }
 
 // DeleteByHash is deleting rollbackTx by hash
