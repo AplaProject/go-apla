@@ -2,6 +2,7 @@ package notificator
 
 import (
 	"encoding/json"
+	"strconv"
 	"sync"
 
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -12,14 +13,28 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Ecosystem struct {
+	EcosystemID int64
+	IsVDE       bool
+}
+
+func (e *Ecosystem) prefix() string {
+	prefix := strconv.FormatInt(e.EcosystemID, 10)
+	if e.IsVDE {
+		return prefix + "_vde"
+	}
+	return prefix
+}
+
 type notificationRecord struct {
 	EcosystemID  int64 `json:"ecosystem"`
+	IsVDE        bool  `json:"is_vde"`
 	RoleID       int64 `json:"role_id"`
 	RecordsCount int64 `json:"count"`
 }
 
 type lastMessagesKey struct {
-	system int64
+	system Ecosystem
 	user   int64
 }
 
@@ -34,7 +49,7 @@ func newLastMessages() *lastMessages {
 	}
 }
 
-func (lm *lastMessages) get(system, user int64) ([]notificationRecord, bool) {
+func (lm *lastMessages) get(system Ecosystem, user int64) ([]notificationRecord, bool) {
 	lm.mu.RLock()
 	defer lm.mu.RUnlock()
 
@@ -42,7 +57,7 @@ func (lm *lastMessages) get(system, user int64) ([]notificationRecord, bool) {
 	return res, ok
 }
 
-func (lm *lastMessages) set(system, user int64, newStats []notificationRecord) {
+func (lm *lastMessages) set(system Ecosystem, user int64, newStats []notificationRecord) {
 	lm.mu.Lock()
 	defer lm.mu.Unlock()
 
@@ -50,51 +65,56 @@ func (lm *lastMessages) set(system, user int64, newStats []notificationRecord) {
 }
 
 var (
-	systemUsers       map[int64]*[]int64
+	systemUsers       map[Ecosystem]*[]int64
 	mu                sync.Mutex
 	lastMessagesStats *lastMessages
 )
 
 func init() {
-	systemUsers = make(map[int64]*[]int64)
+	systemUsers = make(map[Ecosystem]*[]int64)
 	lastMessagesStats = newLastMessages()
 }
 
-// AddUser add user to send notifications
-func AddUser(userID, systemID int64) {
+func addUser(userID int64, ecosystem Ecosystem) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	val, ok := systemUsers[systemID]
+	val, ok := systemUsers[ecosystem]
 	if ok {
 		*val = append(*val, userID)
 		return
 	}
 
 	val = &[]int64{userID}
-	systemUsers[systemID] = val
+	systemUsers[ecosystem] = val
+}
+
+// AddUser add user to send notifications
+func AddUser(userID, systemID int64, isVDE bool) {
+	ecosystem := Ecosystem{EcosystemID: systemID, IsVDE: isVDE}
+	addUser(userID, ecosystem)
+	UpdateNotifications(ecosystem, []int64{userID})
 }
 
 // UpdateNotifications send stats about unreaded messages to centrifugo for ecosystem
-func UpdateNotifications(ecosystemID int64, users []int64) {
-
-	result, err := model.GetNotificationsCount(ecosystemID, users)
+func UpdateNotifications(ecosystem Ecosystem, users []int64) {
+	result, err := model.GetNotificationsCount(ecosystem.prefix(), users)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notification count")
 		return
 	}
 
-	notificationsStats := parseRecipientNotification(result, ecosystemID)
+	notificationsStats := parseRecipientNotification(result, ecosystem)
 
 	for recipient, stats := range notificationsStats {
 
-		if oldStats, ok := lastMessagesStats.get(ecosystemID, recipient); ok {
+		if oldStats, ok := lastMessagesStats.get(ecosystem, recipient); ok {
 			if !statsChanged(oldStats, stats) {
 				continue
 			}
 		}
 
-		lastMessagesStats.set(ecosystemID, recipient, *stats)
+		lastMessagesStats.set(ecosystem, recipient, *stats)
 
 		rawStats, err := json.Marshal(*stats)
 		if err != nil {
@@ -116,12 +136,12 @@ func UpdateNotifications(ecosystemID int64, users []int64) {
 
 // SendNotifications send stats about unreaded messages to centrifugo
 func SendNotifications() {
-	for ecosystemID, users := range systemUsers {
-		UpdateNotifications(ecosystemID, *users)
+	for ecosystem, users := range systemUsers {
+		UpdateNotifications(ecosystem, *users)
 	}
 }
 
-func parseRecipientNotification(rows []map[string]string, systemID int64) map[int64]*[]notificationRecord {
+func parseRecipientNotification(rows []map[string]string, ecosystem Ecosystem) map[int64]*[]notificationRecord {
 	recipientNotifications := make(map[int64]*[]notificationRecord)
 
 	for _, r := range rows {
@@ -130,7 +150,8 @@ func parseRecipientNotification(rows []map[string]string, systemID int64) map[in
 		count := converter.StrToInt64(r["cnt"])
 
 		roleNotifications := notificationRecord{
-			EcosystemID:  systemID,
+			EcosystemID:  ecosystem.EcosystemID,
+			IsVDE:        ecosystem.IsVDE,
 			RoleID:       roleID,
 			RecordsCount: count,
 		}

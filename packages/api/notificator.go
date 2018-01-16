@@ -19,6 +19,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -37,7 +38,10 @@ type updateNotificatorResult struct {
 }
 
 func updateNotificator(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var list []idItem
+	var (
+		list  []idItem
+		isVde bool
+	)
 
 	err := json.Unmarshal([]byte(data.params["ids"].(string)), &list)
 	if err != nil {
@@ -53,8 +57,17 @@ func updateNotificator(w http.ResponseWriter, r *http.Request, data *apiData, lo
 		stateList[ecosystem] = append(stateList[ecosystem], converter.StrToInt64(item.ID))
 	}
 
+	if _, ok := data.params["is_vde"]; ok {
+		isVde, err = strconv.ParseBool(data.params["is_vde"].(string))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("parse param is_vde")
+			return errorAPI(w, err, http.StatusInternalServerError)
+		}
+	}
+
 	for ecosystemID, users := range stateList {
-		notificator.UpdateNotifications(ecosystemID, users)
+		ecosystem := notificator.Ecosystem{EcosystemID: ecosystemID, IsVDE: isVde}
+		notificator.UpdateNotifications(ecosystem, users)
 	}
 	data.result = &updateNotificatorResult{Result: true}
 	return nil

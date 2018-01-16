@@ -89,6 +89,29 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_cron" ADD CONSTRAINT "%[1]d_vde_cron_pkey" PRIMARY KEY ("id");
 
+	  DROP TABLE IF EXISTS "%[1]d_vde_notifications";
+	  CREATE TABLE "%[1]d_vde_notifications" (
+		"id" 	bigint NOT NULL DEFAULT '0',
+		"started_processing_time" timestamp,
+		"started_time"	timestamp,
+		"body_text"	text NOT NULL DEFAULT '',
+		"recipient_id"	bigint NOT NULL DEFAULT '0',
+		"started_processing_id"	bigint NOT NULL DEFAULT '0',
+		"name"	varchar(255) NOT NULL DEFAULT '',
+		"role_id"	bigint NOT NULL DEFAULT '0',
+		"role_name"	varchar(255) NOT NULL DEFAULT '',
+		"page_val_int"	bigint NOT NULL DEFAULT '0',
+		"page_val_str"	varchar(255) NOT NULL DEFAULT '',
+		"recipient_name" varchar(255) NOT NULL DEFAULT '',
+		"closed" boolean,
+		"header_text"	text NOT NULL DEFAULT '',
+		"recipient_avatar"	text NOT NULL DEFAULT '',
+		"notification_type"	bigint NOT NULL DEFAULT '0',
+		"finished_processing_id" bigint NOT NULL DEFAULT '0',
+		"finished_processing_time" timestamp,
+		"page_name"	varchar(255) NOT NULL DEFAULT ''
+	  );
+	  ALTER TABLE ONLY "%[1]d_vde_notifications" ADD CONSTRAINT "%[1]d_vde_notifications_pkey" PRIMARY KEY ("id");
 
 	  CREATE TABLE "%[1]d_vde_tables" (
 	  "id" bigint NOT NULL  DEFAULT '0',

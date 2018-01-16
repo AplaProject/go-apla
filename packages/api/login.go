@@ -146,8 +146,13 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	notificator.AddUser(wallet, state)
-	notificator.UpdateNotifications(state, []int64{wallet})
+
+	notificator.AddUser(wallet, state, false)
+
+	// if exists VDE, then add the recipient in VDE
+	if result.IsVDE {
+		notificator.AddUser(wallet, state, true)
+	}
 
 	return nil
 }

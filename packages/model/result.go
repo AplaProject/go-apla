@@ -189,7 +189,7 @@ func GetAllTransaction(transaction *DbTransaction, query string, countRows int, 
 
 // GetAll returns all transaction
 func GetAll(query string, countRows int, args ...interface{}) ([]map[string]string, error) {
-	return GetAllTransaction(nil, query, countRows, args)
+	return GetAllTransaction(nil, query, countRows, args...)
 }
 
 // GetAllTx returns all tx's

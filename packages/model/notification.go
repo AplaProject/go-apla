@@ -1,7 +1,7 @@
 package model
 
 import (
-	"strconv"
+	"github.com/AplaProject/go-apla/packages/converter"
 )
 
 const notificationTableSuffix = "_notifications"
@@ -41,11 +41,12 @@ func (n *Notification) TableName() string {
 
 // GetNotificationsCount returns all unclosed notifications by users and ecosystem through role_id
 // if userIDs is nil or empty then filter will be skipped
-func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
+func GetNotificationsCount(ecosystemPrefix string, userIDs []int64) ([]map[string]string, error) {
+	tableName := converter.EscapeName(ecosystemPrefix + notificationTableSuffix)
 	filter, params := getNotificationCountFilter(userIDs)
-	query := `SELECT recipient_id, role_id, count(*) cnt 
-	FROM "` + strconv.FormatInt(ecosystemID, 10) + `_notifications" 
-	` + filter + ` 
+	query := `SELECT recipient_id, role_id, count(*) cnt
+	FROM ` + tableName + `
+	` + filter + `
 	GROUP BY "recipient_id", "role_id"`
 
 	return GetAllTransaction(nil, query, -1, params...)

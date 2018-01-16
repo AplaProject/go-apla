@@ -69,7 +69,7 @@ func TestParseRecipientNotifications(t *testing.T) {
 	}
 
 	for i, item := range table {
-		result := parseRecipientNotification(item.Input, 1)
+		result := parseRecipientNotification(item.Input, Ecosystem{EcosystemID: 1})
 
 		if err := compareNotificationRecordResult(result, item.Want); err != nil {
 			t.Errorf("on item %d err: %v\n", i, err)
@@ -108,17 +108,19 @@ func TestOutputFormat(t *testing.T) {
 	records := []notificationRecord{
 		notificationRecord{
 			EcosystemID:  1,
+			IsVDE:        false,
 			RoleID:       1,
 			RecordsCount: 2,
 		},
 		notificationRecord{
 			EcosystemID:  2,
+			IsVDE:        true,
 			RoleID:       2,
 			RecordsCount: 1,
 		},
 	}
 
-	want := `[{"ecosystem":1,"role_id":1,"count":2},{"ecosystem":2,"role_id":2,"count":1}]`
+	want := `[{"ecosystem":1,"is_vde":false,"role_id":1,"count":2},{"ecosystem":2,"is_vde":true,"role_id":2,"count":1}]`
 	bts, err := json.Marshal(records)
 	if assert.NoError(t, err) {
 		assert.Equal(t, string(bts), want, "marshaled not equal")
