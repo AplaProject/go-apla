@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -82,6 +83,7 @@ func init() {
 	funcs[`Span`] = tplFunc{defaultTailTag, defaultTailTag, `span`, `Body,Class`}
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
 	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
+	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 
 	tails[`button`] = forTails{map[string]tailInfo{
 		`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
@@ -445,7 +447,7 @@ func dbfindTag(par parFunc) string {
 	}
 	sc := par.Workspace.SmartContract
 	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
-	if sc.VDE {
+	if sc.VDE && *conf.CheckReadAccess {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
 		cols := strings.Split(fields, `,`)
 		if err != nil || sc.AccessColumns(tblname, &cols, false) != nil {
@@ -777,4 +779,19 @@ func cmpTimeTag(par parFunc) string {
 		return `-1`
 	}
 	return `1`
+}
+
+func chartTag(par parFunc) string {
+	defaultTag(par)
+	defaultTail(par, "chart")
+
+	if len((*par.Pars)["Colors"]) > 0 {
+		colors := strings.Split((*par.Pars)["Colors"], ",")
+		for i, v := range colors {
+			colors[i] = strings.TrimSpace(v)
+		}
+		par.Node.Attr["colors"] = colors
+	}
+
+	return ""
 }

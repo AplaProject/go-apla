@@ -30,7 +30,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/utils"
 
-	"github.com/jinzhu/gorm"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -709,8 +708,12 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		wallet := &model.Key{}
 		wallet.SetTablePrefix(sc.TxSmart.EcosystemID)
-		err = wallet.Get(sc.TxSmart.KeyID)
-		if err != nil && err != gorm.ErrRecordNotFound {
+		signedBy := sc.TxSmart.KeyID
+		if sc.TxSmart.SignedBy != 0 {
+			signedBy = sc.TxSmart.SignedBy
+		}
+		_, err = wallet.Get(signedBy)
+		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 			return retError(err)
 		}
@@ -775,14 +778,14 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				fuelRate = fuelRate.Add(payOver)
 			}
 			payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
-			if err = payWallet.Get(fromID); err != nil {
-				if err == gorm.ErrRecordNotFound {
+			if found, err := payWallet.Get(fromID); err != nil || !found {
+				if !found {
 					return retError(ErrCurrentBalance)
 				}
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 				return retError(err)
 			}
-			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) {
+			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
 				return retError(ErrDiffKeys)
 			}
 			var amount decimal.Decimal

@@ -17,10 +17,10 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -33,21 +33,25 @@ type historyResult struct {
 
 func getHistory(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	table := getPrefix(data) + "_" + data.params["table"].(string)
-	id := converter.StrToInt64(data.params["id"].(string))
-
-	rbID, err := model.GetRollbackIDForTableRow(table, id)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("rollback id for table row")
-		return errorAPI(w, err, http.StatusInternalServerError)
-	}
-
-	result := historyResult{}
-	result.List, err = model.GetRollbackHistory(rbID, rollbackHistoryLimit)
+	id := data.params["id"].(string)
+	rollbackTx := &model.RollbackTx{}
+	txs, err := rollbackTx.GetRollbackTxsByTableIDAndTableName(id, table, rollbackHistoryLimit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("rollback history")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-
-	data.result = &result
+	rollbackList := []map[string]string{}
+	for _, tx := range *txs {
+		if tx.Data == "" {
+			continue
+		}
+		rollback := map[string]string{}
+		if err := json.Unmarshal([]byte(tx.Data), &rollback); err != nil {
+			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollbackTx.Data from JSON")
+			return errorAPI(w, err, http.StatusInternalServerError)
+		}
+		rollbackList = append(rollbackList, rollback)
+	}
+	data.result = &historyResult{rollbackList}
 	return nil
 }

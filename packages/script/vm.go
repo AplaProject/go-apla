@@ -566,15 +566,11 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					slice := rt.stack[size-3].([]interface{})
 					if int(ind) >= len(slice) {
 						slice = append(slice, make([]interface{}, int(ind)-len(slice)+1)...)
-						for i := 0; i < len(rt.vars); i++ {
-							if reflect.TypeOf(rt.vars[i]).String()[:2] == brackets {
-								if len(rt.stack[size-3].([]interface{})) == len(rt.vars[i].([]interface{})) &&
-									((len(rt.vars[i].([]interface{})) > 0 &&
-										&rt.stack[size-3].([]interface{})[0] == &rt.vars[i].([]interface{})[0]) ||
-										len(rt.vars[i].([]interface{})) == 0 && cap(rt.vars[i].([]interface{})) == i+1) {
-									rt.vars[i] = slice
-									break
-								}
+						indexInfo := cmd.Value.(*IndexInfo)
+						for i := len(rt.blocks) - 1; i >= 0; i-- {
+							if indexInfo.Owner == rt.blocks[i].Block {
+								rt.vars[rt.blocks[i].Offset+indexInfo.VarOffset] = slice
+								break
 							}
 						}
 						rt.stack[size-3] = slice
@@ -710,26 +706,30 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		case cmdOr:
 			bin = valueToBool(top[1]) || valueToBool(top[0])
 		case cmdEqual, cmdNotEq:
-			switch top[1].(type) {
-			case string:
-				switch top[0].(type) {
-				case int64:
-					bin = ValueToInt(top[1]) == top[0].(int64)
-				case float64:
-					bin = ValueToFloat(top[1]) == top[0].(float64)
-				default:
-					if reflect.TypeOf(top[0]).String() == Decimal {
-						bin = ValueToDecimal(top[1]).Cmp(top[0].(decimal.Decimal)) == 0
-					} else {
-						bin = top[1].(string) == top[0].(string)
+			if top[1] == nil || top[0] == nil {
+				bin = top[0] == top[1]
+			} else {
+				switch top[1].(type) {
+				case string:
+					switch top[0].(type) {
+					case int64:
+						bin = ValueToInt(top[1]) == top[0].(int64)
+					case float64:
+						bin = ValueToFloat(top[1]) == top[0].(float64)
+					default:
+						if reflect.TypeOf(top[0]).String() == Decimal {
+							bin = ValueToDecimal(top[1]).Cmp(top[0].(decimal.Decimal)) == 0
+						} else {
+							bin = top[1].(string) == top[0].(string)
+						}
 					}
+				case float64:
+					bin = top[1].(float64) == ValueToFloat(top[0])
+				case int64:
+					bin = top[1].(int64) == top[0].(int64)
+				default:
+					bin = top[1].(decimal.Decimal).Cmp(ValueToDecimal(top[0])) == 0
 				}
-			case float64:
-				bin = top[1].(float64) == ValueToFloat(top[0])
-			case int64:
-				bin = top[1].(int64) == top[0].(int64)
-			default:
-				bin = top[1].(decimal.Decimal).Cmp(ValueToDecimal(top[0])) == 0
 			}
 			if cmd.Cmd == cmdNotEq {
 				bin = !bin.(bool)

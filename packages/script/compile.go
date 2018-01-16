@@ -840,6 +840,8 @@ func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block)
 
 // This function is responsible for the compilation of expressions
 func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
+	var indexInfo *IndexInfo
+
 	i := *ind
 	curBlock := (*block)[len(*block)-1]
 
@@ -906,9 +908,10 @@ main:
 					parcount = parcount[:len(parcount)-1]
 					bytecode = append(bytecode, prev)
 				}
+				var tail *ByteCode
 				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdCall || prev.Cmd == cmdCallVari {
 					if prev.Value.(*ObjInfo).Type == ObjFunc && prev.Value.(*ObjInfo).Value.(*Block).Info.(*FuncInfo).Names != nil {
-						if bytecode[len(bytecode)-1].Cmd != cmdFuncName {
+						if len(bytecode) == 0 || bytecode[len(bytecode)-1].Cmd != cmdFuncName {
 							bytecode = append(bytecode, &ByteCode{cmdPush, nil})
 						}
 						if i < len(*lexems)-4 && (*lexems)[i+1].Type == isDot {
@@ -918,17 +921,28 @@ main:
 							}
 							names := prev.Value.(*ObjInfo).Value.(*Block).Info.(*FuncInfo).Names
 							if _, ok := (*names)[(*lexems)[i+2].Value.(string)]; !ok {
-								log.WithFields(log.Fields{"type": consts.ParseError, "tail": (*lexems)[i+2].Value.(string)}).Error("unknown function tail")
-								return fmt.Errorf(`unknown function tail %s`, (*lexems)[i+2].Value.(string))
+
+								if i < len(*lexems)-5 && (*lexems)[i+3].Type == isLPar {
+									objInfo, _ := vm.findObj((*lexems)[i+2].Value.(string), block)
+									if objInfo != nil && objInfo.Type == ObjFunc || objInfo.Type == ObjExtFunc {
+										tail = &ByteCode{uint16(cmdCall), objInfo}
+									}
+								}
+								if tail == nil {
+									log.WithFields(log.Fields{"type": consts.ParseError, "tail": (*lexems)[i+2].Value.(string)}).Error("unknown function tail")
+									return fmt.Errorf(`unknown function tail %s`, (*lexems)[i+2].Value.(string))
+								}
 							}
-							buffer = append(buffer, &ByteCode{cmdFuncName, FuncNameCmd{Name: (*lexems)[i+2].Value.(string)}})
-							count := 0
-							if (*lexems)[i+3].Type != isRPar {
-								count++
+							if tail == nil {
+								buffer = append(buffer, &ByteCode{cmdFuncName, FuncNameCmd{Name: (*lexems)[i+2].Value.(string)}})
+								count := 0
+								if (*lexems)[i+3].Type != isRPar {
+									count++
+								}
+								parcount = append(parcount, count)
+								i += 2
+								break
 							}
-							parcount = append(parcount, count)
-							i += 2
-							break
 						}
 					}
 					count := parcount[len(parcount)-1]
@@ -953,6 +967,11 @@ main:
 					}
 					buffer = buffer[:len(buffer)-1]
 					bytecode = append(bytecode, prev)
+					if tail != nil {
+						buffer = append(buffer, tail)
+						parcount = append(parcount, 1)
+						i += 2
+					}
 				}
 			}
 		case isRBrack:
@@ -975,6 +994,7 @@ main:
 					if i < len(*lexems)-1 && (*lexems)[i+1].Type == isEq {
 						i++
 						setIndex = true
+						indexInfo = prev.Value.(*IndexInfo)
 						continue
 					}
 					bytecode = append(bytecode, prev)
@@ -1102,7 +1122,7 @@ main:
 						logger.WithFields(log.Fields{"lex_value": lexem.Value.(string), "type": consts.ParseError}).Error("unknown variable")
 						return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 					}
-					buffer = append(buffer, &ByteCode{cmdIndex, 0})
+					buffer = append(buffer, &ByteCode{cmdIndex, &IndexInfo{objInfo.Value.(int), tobj}})
 				}
 			}
 			if !call {
@@ -1122,7 +1142,7 @@ main:
 		bytecode = append(bytecode, buffer[i])
 	}
 	if setIndex {
-		bytecode = append(bytecode, &ByteCode{cmdSetIndex, 0})
+		bytecode = append(bytecode, &ByteCode{cmdSetIndex, indexInfo})
 	}
 	curBlock.Code = append(curBlock.Code, bytecode...)
 	return nil

@@ -2,8 +2,7 @@ package model
 
 // SystemState is model
 type SystemState struct {
-	ID   int64 `gorm:"primary_key;not null"`
-	RbID int64 `gorm:"not null"`
+	ID int64 `gorm:"primary_key;not null"`
 }
 
 // TableName returns name of table

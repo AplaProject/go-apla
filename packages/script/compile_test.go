@@ -52,6 +52,11 @@ func getArray() []interface{} {
 		"The second string", int64(2000)}
 }
 
+// Str converts the value to a string
+func str(v interface{}) (ret string) {
+	return fmt.Sprint(v)
+}
+
 func lenArray(par []interface{}) int64 {
 	return int64(len(par))
 }
@@ -339,11 +344,49 @@ func TestVMCompile(t *testing.T) {
 				return error "error"
 			}`, "ifMap", "not empty",
 		},
+		{`func One(list array, name string) string {
+			if list {
+				var row map 
+				row = list[0]
+				return row[name]
+			}
+			return nil
+		}
+		func Row(list array) map {
+			var ret map
+			if list {
+				ret = list[0]
+			}
+			return ret
+		}
+		func GetData().WhereId(id int) array {
+			var par array
+			var item map
+			item["id"] = str(id)
+			item["name"] = "Test value " + str(id)
+			par[0] = item
+			return par
+		}
+		func GetEmpty().WhereId(id int) array {
+			var par array
+			return par
+		}
+		func result() string {
+			var m map
+			var s string
+			m = GetData().WhereId(123).Row()
+			s = GetEmpty().WhereId(1).One("name") 
+			if s != nil {
+				return "problem"
+			}
+			return m["id"] + "=" + GetData().WhereId(100).One("name")
+		}`, `result`, `123=Test value 100`},
 	}
 	vm := NewVM()
 	vm.Extern = true
 	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
-		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray, "Replace": strings.Replace}, nil})
+		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray,
+		"str": str, "Replace": strings.Replace}, nil})
 
 	for ikey, item := range test {
 		source := []rune(item.Input)
