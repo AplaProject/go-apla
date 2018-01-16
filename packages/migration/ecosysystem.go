@@ -860,7 +860,29 @@ var (
 						"date_start": "ContractConditions(\"MainCondition\")",
 						"date_end": "ContractConditions(\"MainCondition\")",
 						"delete": "ContractConditions(\"MainCondition\")"}', 
-						'ContractConditions(\"MainCondition\")');
+						'ContractConditions(\"MainCondition\")'),
+				('12', 'notifications', 
+						'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+						"new_column": "ContractConditions(\"MainCondition\")"}',
+						'{"started_processing_time": "ContractConditions(\"MainCondition\")",
+							"started_time": "ContractConditions(\"MainCondition\")",
+							"body_text": "ContractConditions(\"MainCondition\")",
+							"recipient_id": "ContractConditions(\"MainCondition\")",
+							"started_processing_id": "ContractConditions(\"MainCondition\")",
+							"name": "ContractConditions(\"MainCondition\")",
+							"role_id": "ContractConditions(\"MainCondition\")",
+							"role_name": "ContractConditions(\"MainCondition\")",
+							"page_val_int": "ContractConditions(\"MainCondition\")",
+							"page_val_str": "ContractConditions(\"MainCondition\")",
+							"recipient_name": "ContractConditions(\"MainCondition\")",
+							"closed": "ContractConditions(\"MainCondition\")", 
+							"header_text": "ContractConditions(\"MainCondition\")", 
+							"recipient_avatar": "ContractConditions(\"MainCondition\")", 
+							"notification_type": "ContractConditions(\"MainCondition\")", 
+							"finished_processing_id": "ContractConditions(\"MainCondition\")", 
+							"finished_processing_time": "ContractConditions(\"MainCondition\")", 
+							"page_name": "ContractConditions(\"MainCondition\")"}', 
+							'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (
@@ -882,7 +904,8 @@ var (
 			"notification_type"	bigint NOT NULL DEFAULT '0',
 			"finished_processing_id" bigint NOT NULL DEFAULT '0',
 			"finished_processing_time" timestamp,
-			"page_name"	varchar(255) NOT NULL DEFAULT ''
+			"page_name"	varchar(255) NOT NULL DEFAULT '',
+			"rb_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
 
