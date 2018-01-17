@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -41,6 +43,8 @@ type token struct {
 	Type  int
 	Value interface{}
 }
+
+type opFunc func()
 
 var (
 	errExp = errors.New(`wrong expression`)
@@ -85,6 +89,8 @@ func parsing(input string, itype int) (*[]token, error) {
 				val, err = strconv.ParseInt(input[off-numlen:off], 10, 64)
 			case expFloat:
 				val, err = strconv.ParseFloat(input[off-numlen:off], 64)
+			case expMoney:
+				val, err = decimal.NewFromString(input[off-numlen : off])
 			}
 			if err != nil {
 				return nil, err
@@ -121,23 +127,86 @@ func parsing(input string, itype int) (*[]token, error) {
 	return &tokens, nil
 }
 
-func calcExp(tokens []token, eType int) string {
-	stack := make([]interface{}, 0, 16)
-	for _, item := range tokens {
-		switch item.Type {
-		case tkNumber:
-			stack = append(stack, item.Value)
-		case tkAdd:
+func calcExp(tokens []token, resType, prec int) string {
+	var top int
 
+	stack := make([]interface{}, 0, 16)
+
+	addInt := func() {
+		stack[top-1] = stack[top-1].(int64) + stack[top].(int64)
+	}
+	addFloat := func() {
+		stack[top-1] = stack[top-1].(float64) + stack[top].(float64)
+	}
+	addMoney := func() {
+		stack[top-1] = stack[top-1].(decimal.Decimal).Add(stack[top].(decimal.Decimal))
+	}
+	subInt := func() {
+		stack[top-1] = stack[top-1].(int64) - stack[top].(int64)
+	}
+	subFloat := func() {
+		stack[top-1] = stack[top-1].(float64) - stack[top].(float64)
+	}
+	subMoney := func() {
+		stack[top-1] = stack[top-1].(decimal.Decimal).Sub(stack[top].(decimal.Decimal))
+	}
+	mulInt := func() {
+		stack[top-1] = stack[top-1].(int64) * stack[top].(int64)
+	}
+	mulFloat := func() {
+		stack[top-1] = stack[top-1].(float64) * stack[top].(float64)
+	}
+	mulMoney := func() {
+		stack[top-1] = stack[top-1].(decimal.Decimal).Mul(stack[top].(decimal.Decimal))
+	}
+	divInt := func() {
+		stack[top-1] = stack[top-1].(int64) / stack[top].(int64)
+	}
+	divFloat := func() {
+		stack[top-1] = stack[top-1].(float64) / stack[top].(float64)
+	}
+	divMoney := func() {
+		stack[top-1] = stack[top-1].(decimal.Decimal).Div(stack[top].(decimal.Decimal))
+	}
+
+	funcs := map[int][]opFunc{
+		tkAdd: {addInt, addFloat, addMoney},
+		tkSub: {subInt, subFloat, subMoney},
+		tkMul: {mulInt, mulFloat, mulMoney},
+		tkDiv: {divInt, divFloat, divMoney},
+	}
+	for _, item := range tokens {
+		if item.Type == tkNumber {
+			stack = append(stack, item.Value)
+		} else {
+			if len(stack) < 2 {
+				return errExp.Error()
+			}
+			top = len(stack) - 1
+			funcs[item.Type][resType]()
+			stack = stack[:top]
 		}
 	}
 	if len(stack) != 1 {
 		return errExp.Error()
 	}
+	if prec > 0 {
+		if resType == expFloat {
+			return strconv.FormatFloat(stack[0].(float64), 'f', prec, 64)
+		}
+		if resType == expMoney {
+			money := fmt.Sprint(stack[0])
+			if len(money) < prec+1 {
+				money = strings.Repeat(`0`, prec+1-len(money)) + money
+			}
+			money = money[:len(money)-prec] + `.` + money[len(money)-prec:]
+			return strings.TrimRight(strings.TrimRight(money, `0`), `.`)
+		}
+	}
 	return fmt.Sprint(stack[0])
 }
 
-func calculate(exp, etype string) string {
+func calculate(exp, etype string, prec int) string {
 	var resType int
 	if len(etype) == 0 && strings.Contains(exp, `.`) {
 		etype = `float`
@@ -149,7 +218,6 @@ func calculate(exp, etype string) string {
 		resType = expMoney
 	}
 	tk, err := parsing(exp+` `, resType)
-	fmt.Println(`Parse`, err, tk)
 	if err != nil {
 		return err.Error()
 	}
@@ -172,7 +240,7 @@ func calculate(exp, etype string) string {
 			}
 			buf = buf[:i]
 		default:
-			if len(buf) > 1 {
+			if len(buf) > 0 {
 				last := buf[len(buf)-1]
 				if last.Type != tkLPar && last.Value.(int) >= item.Value.(int) {
 					stack = append(stack, last)
@@ -191,6 +259,5 @@ func calculate(exp, etype string) string {
 			return errExp.Error()
 		}
 	}
-	fmt.Println(resType, `Exp`, stack, exp)
-	return calcExp(stack, resType)
+	return calcExp(stack, resType, prec)
 }
