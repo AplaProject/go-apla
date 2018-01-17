@@ -546,7 +546,7 @@ func dbfindTag(par parFunc) string {
 
 				switch extendedColumns[icol] {
 				case columnTypeBlob:
-					link := &valueLink{id: item["id"], column: icol, table: tblname, hash: ival}
+					link := &valueLink{id: item["id"], column: icol, table: tblname, hash: ival, title: ival}
 					ival, err = link.marshal()
 					if err != nil {
 						return err.Error()
