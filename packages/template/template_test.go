@@ -41,6 +41,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(val, 100)Calculate(10000-(34+5)*#val#)=Calculate("((10+#val#-45)*3.0-10)/4.5 + #val#")`,
+		``},
 	{`Code(P(Some text)
  Div(myclass){
 	 Span(Strong("Bold text"))
