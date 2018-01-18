@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/shopspring/decimal"
 )
@@ -78,7 +79,7 @@ func parsing(input string, itype int) (*[]token, error) {
 		'/': {tkDiv, 2},
 	}
 	for off, ch := range input {
-		if (ch >= '0' && ch <= '9') || ch == '.' {
+		if unicode.IsDigit(ch) || ch == '.' {
 			numlen++
 			continue
 		}
