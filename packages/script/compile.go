@@ -1057,7 +1057,7 @@ main:
 			if !call {
 				cmd = &ByteCode{cmdExtend, lexem.Value.(string)}
 				if i < len(*lexems)-1 && (*lexems)[i+1].Type == isLBrack {
-					buffer = append(buffer, &ByteCode{cmdIndex, 0})
+					buffer = append(buffer, &ByteCode{cmdIndex, &IndexInfo{Extend: lexem.Value.(string)}})
 				}
 			}
 		case lexIdent:
@@ -1122,7 +1122,7 @@ main:
 						logger.WithFields(log.Fields{"lex_value": lexem.Value.(string), "type": consts.ParseError}).Error("unknown variable")
 						return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 					}
-					buffer = append(buffer, &ByteCode{cmdIndex, &IndexInfo{objInfo.Value.(int), tobj}})
+					buffer = append(buffer, &ByteCode{cmdIndex, &IndexInfo{objInfo.Value.(int), tobj, ``}})
 				}
 			}
 			if !call {

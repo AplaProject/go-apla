@@ -567,10 +567,14 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					if int(ind) >= len(slice) {
 						slice = append(slice, make([]interface{}, int(ind)-len(slice)+1)...)
 						indexInfo := cmd.Value.(*IndexInfo)
-						for i := len(rt.blocks) - 1; i >= 0; i-- {
-							if indexInfo.Owner == rt.blocks[i].Block {
-								rt.vars[rt.blocks[i].Offset+indexInfo.VarOffset] = slice
-								break
+						if indexInfo.Owner == nil { // Extend variable $varname
+							(*rt.extend)[indexInfo.Extend] = slice
+						} else {
+							for i := len(rt.blocks) - 1; i >= 0; i-- {
+								if indexInfo.Owner == rt.blocks[i].Block {
+									rt.vars[rt.blocks[i].Offset+indexInfo.VarOffset] = slice
+									break
+								}
 							}
 						}
 						rt.stack[size-3] = slice
