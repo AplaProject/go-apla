@@ -112,7 +112,7 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 	log.WithFields(log.Fields{"new_block_id": newBlockID}).Debug("Generated new block id")
 
 	// get block hash
-	blockHash := buf.Next(32)
+	blockHash := buf.Next(consts.HashSize)
 	log.Debug("blockHash %x", blockHash)
 
 	qb := &model.QueueBlock{}
@@ -138,7 +138,7 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 
 	var needTx []byte
 	for buf.Len() > 0 {
-		newDataTxHash := buf.Next(32)
+		newDataTxHash := buf.Next(consts.HashSize)
 		if len(newDataTxHash) == 0 {
 			log.WithFields(log.Fields{"len": len(newDataTxHash), "type": consts.ProtocolError}).Error("wrong transactions hash size")
 			return nil, errors.New("wrong transactions hash size")

@@ -155,10 +155,10 @@ func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
 	case lr == 0:
 		return nil
 	// We got response that mean that node doesn't know about some transactions. We need to send them
-	case lr > 32:
-		for len(resp) > 32 {
+	case lr > consts.HashSize:
+		for len(resp) > consts.HashSize {
 			// Parse the list of requested transactions
-			txHash := converter.BytesShift(&resp, 32)
+			txHash := converter.BytesShift(&resp, consts.HashSize)
 			tr := &model.Transaction{}
 			_, err := tr.Read(txHash)
 			if err != nil {
@@ -285,6 +285,7 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 	// if response handler exist, read the answer and call handler
 	if respHandler != nil {
 		buf := make([]byte, 4)
+
 		// read data size
 		_, err = io.ReadFull(conn, buf)
 		if err != nil {
