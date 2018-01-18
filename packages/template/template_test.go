@@ -41,6 +41,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Span((span text), ok )Span(((span text), ok) )Div(){{My body}}`,
+		`[{"tag":"span","attr":{"class":"ok"},"children":[{"tag":"text","text":"(span text)"}]},{"tag":"span","children":[{"tag":"text","text":"((span text), ok)"}]},{"tag":"div","children":[{"tag":"text","text":"{My body}"}]}]`},
 	{`Code(P(Some text)
  Div(myclass){
 	 Span(Strong("Bold text"))
