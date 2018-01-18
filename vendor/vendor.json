@@ -33,12 +33,6 @@
 			"revisionTime": "2017-04-19T07:17:51Z"
 		},
 		{
-			"checksumSHA1": "gk79AfKA6lVJ/wJf2dhq7kQdaaI=",
-			"path": "github.com/cheggaaa/pb",
-			"revision": "657164d0228d6bebe316fdf725c69f131a50fb10",
-			"revisionTime": "2017-08-24T10:41:20Z"
-		},
-		{
 			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
 			"origin": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
 			"path": "github.com/davecgh/go-spew/spew",
@@ -131,76 +125,10 @@
 			"revisionTime": "2017-11-13T04:44:40Z"
 		},
 		{
-			"checksumSHA1": "cJE7dphDlam/i7PhnsyosNWtbd4=",
-			"path": "github.com/mattn/go-runewidth",
-			"revision": "97311d9f7767e3d6f422ea06661bc2c7a19e8a5d",
-			"revisionTime": "2017-05-10T07:48:58Z"
-		},
-		{
 			"checksumSHA1": "8i1QHcK+4UqLlIWy3a/XWgOL4hE=",
 			"path": "github.com/mattn/go-sqlite3",
 			"revision": "47157b55f33fde3bf09c73d8bd2e60da14fd6e3b",
 			"revisionTime": "2017-11-17T15:06:37Z"
-		},
-		{
-			"checksumSHA1": "FPdzETtRSJG5oEKuJocstxRNLBg=",
-			"path": "github.com/miketheprogrammer/go-thrust/lib/bindings/menu",
-			"revision": "6aa55589fcc4ec586d442e4f7ed315afe3dfcda9",
-			"revisionTime": "2016-10-07T11:16:27Z"
-		},
-		{
-			"checksumSHA1": "KeFxSyjjbOMezHh1nLzM6XmyHhM=",
-			"path": "github.com/miketheprogrammer/go-thrust/lib/bindings/session",
-			"revision": "6aa55589fcc4ec586d442e4f7ed315afe3dfcda9",
-			"revisionTime": "2016-10-07T11:16:27Z"
-		},
-		{
-			"checksumSHA1": "v8cFbXkZGLObNT4uL91NdC3JcGw=",
-			"path": "github.com/miketheprogrammer/go-thrust/lib/bindings/window",
-			"revision": "6aa55589fcc4ec586d442e4f7ed315afe3dfcda9",
-			"revisionTime": "2016-10-07T11:16:27Z"
-		},
-		{
-			"checksumSHA1": "C4nD0UjVAkHl2PnI42oYyR1YxAw=",
-			"path": "github.com/miketheprogrammer/go-thrust/lib/commands",
-			"revision": "6aa55589fcc4ec586d442e4f7ed315afe3dfcda9",
-			"revisionTime": "2016-10-07T11:16:27Z"
-		},
-		{
-			"checksumSHA1": "Y6SVL+I299NJsKcX/ZKruqkQvgI=",
-			"path": "github.com/miketheprogrammer/go-thrust/lib/common",
-			"revision": "6aa55589fcc4ec586d442e4f7ed315afe3dfcda9",
-			"revisionTime": "2016-10-07T11:16:27Z"
-		},
-		{
-			"checksumSHA1": "Bp80WpjomwGk9MZfWGHD39y7twg=",
-			"path": "github.com/miketheprogrammer/go-thrust/lib/connection",
-			"revision": "6aa55589fcc4ec586d442e4f7ed315afe3dfcda9",
-			"revisionTime": "2016-10-07T11:16:27Z"
-		},
-		{
-			"checksumSHA1": "fAWOJtxZTd82Ye652DtWcSaxgjY=",
-			"path": "github.com/miketheprogrammer/go-thrust/lib/dispatcher",
-			"revision": "6aa55589fcc4ec586d442e4f7ed315afe3dfcda9",
-			"revisionTime": "2016-10-07T11:16:27Z"
-		},
-		{
-			"checksumSHA1": "PMXTeWjopClvQiO7RWcsHXrswSQ=",
-			"path": "github.com/miketheprogrammer/go-thrust/lib/events",
-			"revision": "6aa55589fcc4ec586d442e4f7ed315afe3dfcda9",
-			"revisionTime": "2016-10-07T11:16:27Z"
-		},
-		{
-			"checksumSHA1": "7EoXmmr05akx4NfeEivgPqCPGeU=",
-			"path": "github.com/miketheprogrammer/go-thrust/lib/spawn",
-			"revision": "6aa55589fcc4ec586d442e4f7ed315afe3dfcda9",
-			"revisionTime": "2016-10-07T11:16:27Z"
-		},
-		{
-			"checksumSHA1": "E5ERrGgssqPk64+urIfTNRIKhAw=",
-			"path": "github.com/miketheprogrammer/go-thrust/thrust",
-			"revision": "6aa55589fcc4ec586d442e4f7ed315afe3dfcda9",
-			"revisionTime": "2016-10-07T11:16:27Z"
 		},
 		{
 			"checksumSHA1": "CxNwJP++vjUAyy3bbJnNss1Il9Q=",
@@ -281,12 +209,6 @@
 			"path": "github.com/stretchr/testify/require",
 			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
 			"revisionTime": "2017-08-14T20:04:35Z"
-		},
-		{
-			"checksumSHA1": "G1tnrjQ9YZH7qfHAQI9vZmpNuYg=",
-			"path": "github.com/tevino/abool",
-			"revision": "9b9efcf221b50905aab9bbabd3daed56dc10f339",
-			"revisionTime": "2017-09-17T06:19:28Z"
 		},
 		{
 			"checksumSHA1": "iNE2KX9BQzCptlQC2DdQEVmn4R4=",

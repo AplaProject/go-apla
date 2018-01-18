@@ -137,21 +137,21 @@ var contracts = []smartContract{
 				vals = ret[0]
 				Test("2",  vals["id"])	
 			}
-			ret = DBFind("contracts").Columns("id,rb_id").Order("id").Offset(1).Limit(1)
+			ret = DBFind("contracts").Columns("id").Order("id").Offset(1).Limit(1)
 			if Len(ret) != 1 {
 				Test("3",  "0")	
 			} else {
 				vals = ret[0]
 				Test("3", vals["value"] + vals["id"])	
 			}
-			ret = DBFind("contracts").Columns("id,rb_id").Where("id='1'")
+			ret = DBFind("contracts").Columns("id").Where("id='1'")
 			if Len(ret) != 1 {
 				Test("4",  "0")	
 			} else {
 				vals = ret[0]
 				Test("4", vals["id"])	
 			}
-			ret = DBFind("contracts").Columns("id,rb_id").Where("id='1'")
+			ret = DBFind("contracts").Columns("id").Where("id='1'")
 			if Len(ret) != 1 {
 				Test("4",  "0")	
 			} else {

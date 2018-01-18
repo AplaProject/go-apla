@@ -475,13 +475,12 @@ var (
 			  Name        string
 			  Type        string
 			  Permissions string
-			  Index       string "optional"
 		  }
 		  conditions {
-			  ColumnCondition($TableName, $Name, $Type, $Permissions, $Index)
+			  ColumnCondition($TableName, $Name, $Type, $Permissions)
 		  }
 		  action {
-			  CreateColumn($TableName, $Name, $Type, $Permissions, $Index)
+			  CreateColumn($TableName, $Name, $Type, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('18','contract EditColumn {
@@ -491,7 +490,7 @@ var (
 			  Permissions string
 		  }
 		  conditions {
-			  ColumnCondition($TableName, $Name, "", $Permissions, "")
+			  ColumnCondition($TableName, $Name, "", $Permissions)
 		  }
 		  action {
 			  PermColumn($TableName, $Name, $Permissions)
@@ -640,8 +639,7 @@ var (
 	SchemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"pub" bytea  NOT NULL DEFAULT '',
-		"amount" decimal(30) NOT NULL DEFAULT '0',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"amount" decimal(30) NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
 		
@@ -652,8 +650,7 @@ var (
 		"amount" decimal(30) NOT NULL DEFAULT '0',
 		"comment" text NOT NULL DEFAULT '',
 		"block_id" int  NOT NULL DEFAULT '0',
-		"txhash" bytea  NOT NULL DEFAULT '',
-		"rb_id" int  NOT NULL DEFAULT '0'
+		"txhash" bytea  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_history" ADD CONSTRAINT "%[1]d_history_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_history_index_sender" ON "%[1]d_history" (sender_id);
@@ -665,19 +662,31 @@ var (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(100) NOT NULL DEFAULT '',
 		  "res" text NOT NULL DEFAULT '',
-		  "conditions" text NOT NULL DEFAULT '',
-		  "rb_id" bigint NOT NULL DEFAULT '0'
+		  "conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_languages" ADD CONSTRAINT "%[1]d_languages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
 		
+		DROP TABLE IF EXISTS "%[1]d_sections"; CREATE TABLE "%[1]d_sections" (
+		"id" bigint  NOT NULL DEFAULT '0',
+		"title" varchar(255)  NOT NULL DEFAULT '',
+		"urlname" varchar(255) NOT NULL DEFAULT '',
+		"page" varchar(255) NOT NULL DEFAULT '',
+		"roles_access" text NOT NULL DEFAULT '',
+		"delete" bigint NOT NULL DEFAULT '0',
+		"rb_id" bigint NOT NULL DEFAULT '0'
+		);
+	  ALTER TABLE ONLY "%[1]d_sections" ADD CONSTRAINT "%[1]d_sections_pkey" PRIMARY KEY (id);
+
+        INSERT INTO "%[1]d_sections" ("id","title","urlname","page","roles_access", "delete") 
+	            VALUES('1', 'Home', 'home', 'default_page', '', 0);
+
 		DROP TABLE IF EXISTS "%[1]d_menu"; CREATE TABLE "%[1]d_menu" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"title" character varying(255) NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
@@ -687,8 +696,7 @@ var (
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
 			"menu" character varying(255) NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
@@ -697,8 +705,7 @@ var (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
@@ -707,8 +714,7 @@ var (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(100) NOT NULL DEFAULT '',
 			"value" jsonb,
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
 		
@@ -718,8 +724,7 @@ var (
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',
 		"active" character(1) NOT NULL DEFAULT '0',
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 		
@@ -738,8 +743,7 @@ var (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint  NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_parameters" ADD CONSTRAINT "%[1]d_parameters_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_parameters_index_name" ON "%[1]d_parameters" (name);
@@ -766,8 +770,7 @@ var (
 		"name" varchar(100) UNIQUE NOT NULL DEFAULT '',
 		"permissions" jsonb,
 		"columns" jsonb,
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
@@ -881,7 +884,16 @@ var (
 							"finished_processing_id": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")", 
 							"finished_processing_time": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")", 
 							"page_name": "false"}', 
-							'ContractAccess(\"@1EditTable\")');
+							'ContractAccess(\"@1EditTable\")'),
+				('13', 'sections', 
+					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+					"new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"title": "ContractConditions(\"MainCondition\")",
+						"urlname": "ContractConditions(\"MainCondition\")",
+						"page": "ContractConditions(\"MainCondition\")",
+						"roles_access": "ContractConditions(\"MainCondition\")",
+						"delete": "ContractConditions(\"MainCondition\")"}', 
+						'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (
@@ -969,7 +981,7 @@ var (
 
 		`
 
-	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id","rb_id") VALUES ('1','0');
+	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id") VALUES ('1');
 
 	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
 	('2','contract SystemFunctions {
@@ -1480,13 +1492,12 @@ var (
 			Name        string
 			Type        string
 			Permissions string
-			Index       string "optional"
 		}
 		conditions {
-			ColumnCondition($TableName, $Name, $Type, $Permissions, $Index)
+			ColumnCondition($TableName, $Name, $Type, $Permissions)
 		}
 		action {
-			CreateColumn($TableName, $Name, $Type, $Permissions, $Index)
+			CreateColumn($TableName, $Name, $Type, $Permissions)
 		}
 		func rollback() {
 			RollbackColumn($TableName, $Name)
@@ -1502,7 +1513,7 @@ var (
 			Permissions string
 		}
 		conditions {
-			ColumnCondition($TableName, $Name, "", $Permissions, "")
+			ColumnCondition($TableName, $Name, "", $Permissions)
 		}
 		action {
 			PermColumn($TableName, $Name, $Permissions)

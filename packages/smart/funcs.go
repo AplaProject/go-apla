@@ -328,7 +328,6 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns to JSON")
 		return err
 	}
-	indexes := make([]string, 0)
 
 	colsSQL := ""
 	colperm := make(map[string]string)
@@ -362,9 +361,6 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		}
 		colsSQL += `"` + colname + `" ` + colType + " " + colDef + " ,\n"
 		colperm[colname] = data[`conditions`]
-		if data[`index`] == "1" {
-			indexes = append(indexes, colname)
-		}
 	}
 	colout, err := json.Marshal(colperm)
 	if err != nil {
@@ -374,20 +370,13 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	if sc.VDE {
 		err = model.CreateVDETable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
 	} else {
-		err = model.CreateTable(sc.DbTransaction, tableName, colsSQL)
+		err = model.CreateTable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
 	}
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE tables")
 		return err
 	}
 
-	for _, index := range indexes {
-		err := model.CreateIndex(sc.DbTransaction, tableName+"_"+index, tableName, index)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE indexes")
-			return err
-		}
-	}
 	var perm permTable
 	err = json.Unmarshal([]byte(permissions), &perm)
 	if err != nil {
@@ -735,7 +724,6 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		log.WithFields(log.Fields{"size": len(cols), "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
-	var indexes int
 	for _, data := range cols {
 		if len(data[`name`]) == 0 || len(data[`type`]) == 0 {
 			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("wrong column")
@@ -766,20 +754,8 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 				return err
 			}
 		}
-		if data[`index`] == `1` {
-			if itype != `varchar` && itype != `number` && itype != `datetime` {
-				log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect index type")
-				return fmt.Errorf(`incorrect index type`)
-			}
-			indexes++
-		}
 
 	}
-	if indexes > syspar.GetMaxIndexes() {
-		log.WithFields(log.Fields{"size": indexes, "max_size": syspar.GetMaxIndexes, "type": consts.ParameterExceeded}).Error("Too many indexes")
-		return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
-	}
-
 	if err := sc.AccessRights("new_table", false); err != nil {
 		return err
 	}
@@ -797,7 +773,7 @@ func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 }
 
 // ColumnCondition is contract func
-func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, index string) error {
+func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions string) error {
 	if !accessContracts(sc, `NewColumn`, `EditColumn`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ColumnConditions can be only called from @1NewColumn")
 		return fmt.Errorf(`ColumnCondition can be only called from NewColumn or EditColumn`)
@@ -856,21 +832,6 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions, i
 		log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("Unknown column type")
 		return fmt.Errorf(`incorrect type`)
 	}
-	if index == `1` {
-		count, err := model.NumIndexes(tblName)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("num indexes")
-			return err
-		}
-		if count >= syspar.GetMaxIndexes() {
-			log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxIndexes(), "type": consts.ParameterExceeded}).Error("Too many indexes")
-			return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
-		}
-		if coltype != `varchar` && coltype != `number` && coltype != `datetime` {
-			log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("incorrect index type")
-			return fmt.Errorf(`incorrect index type`)
-		}
-	}
 
 	return sc.AccessTable(tblName, "new_column")
 }
@@ -904,7 +865,7 @@ func RowConditions(sc *SmartContract, tblname string, id int64) error {
 }
 
 // CreateColumn is creating column
-func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, index string) error {
+func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions string) error {
 	if !accessContracts(sc, `NewColumn`) {
 		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("CreateColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
@@ -935,13 +896,6 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions, inde
 		return err
 	}
 
-	if index == "1" {
-		err = model.CreateIndex(sc.DbTransaction, tblname+"_"+name+"_index", tblname, name)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating index for table")
-			return err
-		}
-	}
 	tables := getDefTableName(sc, `tables`)
 	type cols struct {
 		Columns string
