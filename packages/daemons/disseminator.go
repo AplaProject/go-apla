@@ -289,7 +289,11 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 		// read data size
 		_, err = io.ReadFull(conn, buf)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data size")
+			if err == io.EOF {
+				logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Warn("connection closed unexpectedly")
+			} else {
+				logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data size")
+			}
 		}
 
 		respSize := converter.BinToDec(buf)
