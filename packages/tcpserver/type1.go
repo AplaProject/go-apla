@@ -139,7 +139,7 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 	var needTx []byte
 	for buf.Len() > 0 {
 		newDataTxHash := buf.Next(consts.HashSize)
-		if len(newDataTxHash) == 0 {
+		if len(newDataTxHash) != consts.HashSize {
 			log.WithFields(log.Fields{"len": len(newDataTxHash), "type": consts.ProtocolError}).Error("wrong transactions hash size")
 			return nil, errors.New("wrong transactions hash size")
 		}

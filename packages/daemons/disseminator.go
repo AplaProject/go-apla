@@ -155,8 +155,8 @@ func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
 	case lr == 0:
 		return nil
 	// We got response that mean that node doesn't know about some transactions. We need to send them
-	case lr > consts.HashSize:
-		for len(resp) > consts.HashSize {
+	case lr >= consts.HashSize:
+		for len(resp) >= consts.HashSize {
 			// Parse the list of requested transactions
 			txHash := converter.BytesShift(&resp, consts.HashSize)
 			tr := &model.Transaction{}
