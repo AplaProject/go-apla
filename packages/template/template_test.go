@@ -41,6 +41,9 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Calculate( Exp: 342278783438/0, Type: money )Calculate( Exp: 5.2/0, Type: float )
+		Calculate( Exp: 7/0)`,
+		`[{"tag":"text","text":"dividing by zerodividing by zerodividing by zero"}]`},
 	{`SetVar(val, 2200000034343443343430000)SetVar(zero, 0)Calculate( Exp: (342278783438+5000)*(#val#-932780000), Type: money, Prec:18 )Calculate( Exp: (2+50)*(#zero#-9), Type: money )`,
 		`[{"tag":"text","text":"753013346318631859.1075080680647-468"}]`},
 	{`SetVar(val, 100)Calculate(10000-(34+5)*#val#)=Calculate("((10+#val#-45)*3.0-10)/4.5 + #val#", Prec: 4)`,

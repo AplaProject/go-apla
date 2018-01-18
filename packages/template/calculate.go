@@ -48,6 +48,7 @@ type opFunc func()
 
 var (
 	errExp = errors.New(`wrong expression`)
+	errDiv = errors.New(`dividing by zero`)
 )
 
 func parsing(input string, itype int) (*[]token, error) {
@@ -183,6 +184,22 @@ func calcExp(tokens []token, resType, prec int) string {
 				return errExp.Error()
 			}
 			top = len(stack) - 1
+			if item.Type == tkDiv {
+				switch resType {
+				case expInt:
+					if stack[top].(int64) == 0 {
+						return errDiv.Error()
+					}
+				case expFloat:
+					if stack[top].(float64) == 0 {
+						return errDiv.Error()
+					}
+				case expMoney:
+					if stack[top].(decimal.Decimal).Cmp(decimal.New(0, 0)) == 0 {
+						return errDiv.Error()
+					}
+				}
+			}
 			funcs[item.Type][resType]()
 			stack = stack[:top]
 		}
