@@ -149,30 +149,43 @@ func sendHashes(fullNodeID int64, logger *log.Entry) error {
 
 func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
 	var buf bytes.Buffer
-	for len(resp) > 16 {
-		// Parse the list of requested transactions
-		txHash := converter.BytesShift(&resp, 16)
-		tr := &model.Transaction{}
-		_, err := tr.Read(txHash)
+	lr := len(resp)
+	switch true {
+	// We got response that mean other full node have all of transactions and we don't need to do anything
+	case lr == 0:
+		return nil
+	// We got response that mean that node doesn't know about some transactions. We need to send them
+	case lr > 32:
+		for len(resp) > 32 {
+			// Parse the list of requested transactions
+			txHash := converter.BytesShift(&resp, 32)
+			tr := &model.Transaction{}
+			_, err := tr.Read(txHash)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("reading transaction by hash")
+				return err
+			}
+
+			if len(tr.Data) > 0 {
+				buf.Write(converter.EncodeLengthPlusData(tr.Data))
+			}
+		}
+
+		// write out the requested transactions
+		_, err := w.Write(converter.DecToBin(buf.Len(), 4))
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("reading transaction by hash")
+			logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing tx size")
 			return err
 		}
-		if len(tr.Data) > 0 {
-			buf.Write(converter.EncodeLengthPlusData(tr.Data))
+		_, err = w.Write(buf.Bytes())
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing tx data")
+			return err
 		}
+		return nil
 	}
-	// write out the requested transactions
-	_, err := w.Write(converter.DecToBin(buf.Len(), 4))
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing tx size")
-		return err
-	}
-	_, err = w.Write(buf.Bytes())
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing tx data")
-	}
-	return err
+
+	return nil
 }
 
 func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int64) []byte {

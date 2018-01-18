@@ -43,13 +43,13 @@ func Type1(r *DisRequest, rw io.ReadWriter) error {
 	 *  type - 1 byte. 0 - block, 1 - list of transactions
 	 *  {if type==1}:
 	 *  <any number of the next sets>
-	 *   tx_hash - 16 bytes
+	 *   tx_hash - 32 bytes
 	 * </>
 	 * {if type==0}:
 	 *  block_id - 3 bytes
 	 *  hash - 32 bytes
 	 * <any number of the next sets>
-	 *   tx_hash - 16 bytes
+	 *   tx_hash - 32 bytes
 	 * </>
 	 * */
 
@@ -138,7 +138,7 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 
 	var needTx []byte
 	for buf.Len() > 0 {
-		newDataTxHash := buf.Next(16)
+		newDataTxHash := buf.Next(32)
 		if len(newDataTxHash) == 0 {
 			log.WithFields(log.Fields{"len": len(newDataTxHash), "type": consts.ProtocolError}).Error("wrong transactions hash size")
 			return nil, errors.New("wrong transactions hash size")
@@ -183,10 +183,8 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 }
 
 func saveNewTransactions(r *DisRequest) error {
-
 	binaryTxs := r.Data
 	log.WithFields(log.Fields{"binaryTxs": binaryTxs}).Debug("trying to save binary txs")
-
 	for len(binaryTxs) > 0 {
 		txSize, err := converter.DecodeLength(&binaryTxs)
 		if err != nil {
