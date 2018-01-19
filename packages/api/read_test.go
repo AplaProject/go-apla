@@ -91,7 +91,7 @@ func TestRead(t *testing.T) {
 			row = $data[i]
 			if i == 1 || i == 3 {
 				row["my"] = "No name"
-				//$data[i] = row
+				$data[i] = row
 			}
 			i = i+ 1
 		}

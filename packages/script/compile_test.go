@@ -381,6 +381,10 @@ func TestVMCompile(t *testing.T) {
 			}
 			return m["id"] + "=" + GetData().WhereId(100).One("name")
 		}`, `result`, `123=Test value 100`},
+		{`func mapbug() string {
+			$data[10] = "extend ok"
+			return $data[10]
+			}`, `mapbug`, `extend ok`},
 	}
 	vm := NewVM()
 	vm.Extern = true
@@ -397,8 +401,8 @@ func TestVMCompile(t *testing.T) {
 			}
 		} else {
 			if out, err := vm.Call(item.Func, nil, &map[string]interface{}{
-				`rt_state`: uint32(ikey) + 22,
-				`test1`:    101, `test2`: `test 2`,
+				`rt_state`: uint32(ikey) + 22, `data`: make([]interface{}, 0),
+				`test1`: 101, `test2`: `test 2`,
 				"glob": map[string]interface{}{`test`: `String value`, `number`: 1001},
 				`test3`: func(param int64) string {
 					return fmt.Sprintf("test=%d=test", param)
