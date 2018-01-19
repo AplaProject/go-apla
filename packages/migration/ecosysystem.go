@@ -977,7 +977,7 @@ var (
 		);
 		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
 
-		INSERT INTO "%[1]d_member" ("id", "member_name") VALUES('%[4]d', 'admin');
+		INSERT INTO "%[1]d_member" ("id", "member_name") VALUES('%[4]d', 'founder');
 
 		`
 
