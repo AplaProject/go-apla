@@ -840,6 +840,9 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	sc.TxContract.TxPrice = price
 	if (*sc.TxContract.Extend)[`result`] != nil {
 		result = fmt.Sprint((*sc.TxContract.Extend)[`result`])
+		if len(result) > 255 {
+			result = result[:255]
+		}
 	}
 
 	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !*utils.PrivateBlockchain {
