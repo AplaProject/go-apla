@@ -673,8 +673,7 @@ var (
 		"urlname" varchar(255) NOT NULL DEFAULT '',
 		"page" varchar(255) NOT NULL DEFAULT '',
 		"roles_access" text NOT NULL DEFAULT '',
-		"delete" bigint NOT NULL DEFAULT '0',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"delete" bigint NOT NULL DEFAULT '0'
 		);
 	  ALTER TABLE ONLY "%[1]d_sections" ADD CONSTRAINT "%[1]d_sections_pkey" PRIMARY KEY (id);
 
@@ -914,8 +913,7 @@ var (
 			"recipient_id"	bigint NOT NULL DEFAULT '0',
 			"started_processing_id"	bigint NOT NULL DEFAULT '0',
 			"body_text"	text NOT NULL DEFAULT '',
-			"header_text"	text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"header_text"	text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
 
@@ -931,8 +929,7 @@ var (
 			"date_create" timestamp,
 			"date_delete" timestamp,
 			"creator_name"	varchar(255) NOT NULL DEFAULT '',
-			"creator_avatar" bytea NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"creator_avatar" bytea NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
@@ -956,8 +953,7 @@ var (
 			"appointed_by_name"	varchar(255) NOT NULL DEFAULT '',
 			"date_start" timestamp,
 			"date_end" timestamp,
-			"delete" bigint NOT NULL DEFAULT '0',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"delete" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles_assign" ADD CONSTRAINT "%[1]d_roles_assign_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_assign_index_role" ON "%[1]d_roles_assign" (role_id);
@@ -972,8 +968,7 @@ var (
 		CREATE TABLE "%[1]d_member" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
-			"avatar"	bytea NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"avatar"	bytea NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
 
