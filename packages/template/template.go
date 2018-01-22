@@ -419,6 +419,9 @@ main:
 				if ch == '"' || ch == '`' {
 					pair = ch
 				} else {
+					if ch == modes[mode][0] {
+						level++
+					}
 					params[curp] = append(params[curp], ch)
 				}
 			}

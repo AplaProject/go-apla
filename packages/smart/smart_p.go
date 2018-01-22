@@ -362,7 +362,19 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		log.WithFields(log.Fields{"type": consts.DBError}).Error("CreateEcosystem")
 		return 0, err
 	}
-	err = model.ExecSchemaEcosystem(sc.DbTransaction, converter.StrToInt(id), wallet, name)
+	var sp model.StateParameter
+	sp.SetTablePrefix(`1`)
+	found, err := sp.Get(sc.DbTransaction, `founder_account`)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder")
+		return 0, err
+	}
+	if !found || len(sp.Value) == 0 {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": ErrFounderAccount}).Error("founder not found")
+		return 0, ErrFounderAccount
+	}
+	err = model.ExecSchemaEcosystem(sc.DbTransaction, converter.StrToInt(id), wallet, name,
+		converter.StrToInt64(sp.Value))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return 0, err
@@ -401,50 +413,6 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
-	var sp model.StateParameter
-	sp.SetTablePrefix(`1`)
-	found, err := sp.Get(sc.DbTransaction, `founder_account`)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder")
-		return 0, err
-	}
-	if !found || len(sp.Value) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": ErrFounderAccount}).Error("founder not found")
-		return 0, ErrFounderAccount
-	}
-	founder := sp.Value
-	_, ret, err = DBSelect(sc, "1_member", "id,username,avatar", converter.StrToInt64(founder), `id`,
-		0, 1, 0, ``, []interface{}{})
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder username")
-		return 0, err
-	}
-	if Len(ret) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": ErrFounderAccount}).Error("getting founder info")
-		return 0, ErrFounderAccount
-	}
-	founderInfo := ret[0].(map[string]string)
-	_, _, err = DBInsert(sc, id+"_member", "id,username,avatar", founderInfo[`id`],
-		founderInfo[`username`], founderInfo[`avatar`])
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting member info")
-		return 0, err
-	}
-	_, _, err = DBInsert(sc, id+"_roles_list", "default_page,role_name,delete,role_type,creator_id,date_create,creator_name,creator_avatar",
-		`default_ecosystem_page`, `Admin`, `false`, `1`, founder, `NOW()`, founderInfo[`username`],
-		founderInfo[`avatar`])
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting into role list")
-		return 0, err
-	}
-	_, _, err = DBInsert(sc, id+"_roles_assign", "role_id,role_type,role_name,member_id,member_username,member_avatar,appointed_by_id,appointed_by_name,date_start,delete",
-		`1`, `1`, `Admin`, founder, founderInfo[`username`], founderInfo[`avatar`],
-		founder, founderInfo[`username`], `NOW()`, `false`)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting into role assign")
-		return 0, err
-	}
-
 	return converter.StrToInt64(id), err
 }
 
