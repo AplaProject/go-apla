@@ -195,6 +195,15 @@ var contracts = []smartContract{
 		[]smartParams{
 			{nil, map[string]string{`date`: `-` + time.Now().Format(`2006.01.02`) + `-`}},
 		}},
+	{`testLong`, `contract testLong {
+		action { Test("long",  "long result")
+			$result = DBFind("contracts").WhereId(2).One("value") + DBFind("contracts").WhereId(4).One("value")
+			Println("Result", $result)
+			Test("long",  "long result")
+		}}`,
+		[]smartParams{
+			{nil, map[string]string{`long`: `long result`}},
+		}},
 	{`testSimple`, `contract testSimple {
 				data {
 					amount int
@@ -259,7 +268,7 @@ func TestEditContracts(t *testing.T) {
 	code := row.Value[`value`]
 	off := strings.IndexByte(code, '-')
 	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
-	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"01231234123412341234"}}
+	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"01231234123412341230"}}
 	if err := postTx(`EditContract`, &form); err != nil {
 		t.Error(err)
 		return

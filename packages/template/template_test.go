@@ -48,6 +48,8 @@ var forTest = tplList{
 		`[{"tag":"text","text":"753013346318631859.1075080680647-468"}]`},
 	{`SetVar(val, 100)Calculate(10000-(34+5)*#val#)=Calculate("((10+#val#-45)*3.0-10)/4.5 + #val#", Prec: 4)`,
 		`[{"tag":"text","text":"6100"},{"tag":"text","text":"=141.1111"}]`},
+	{`Span((span text), ok )Span(((span text), ok) )Div(){{My body}}`,
+		`[{"tag":"span","attr":{"class":"ok"},"children":[{"tag":"text","text":"(span text)"}]},{"tag":"span","children":[{"tag":"text","text":"((span text), ok)"}]},{"tag":"div","children":[{"tag":"text","text":"{My body}"}]}]`},
 	{`Code(P(Some text)
  Div(myclass){
 	 Span(Strong("Bold text"))
