@@ -79,6 +79,8 @@ const PrivkeyLength = 32
 // BlockSize is size of block
 const BlockSize = 16
 
+const HashSize = 32
+
 // TxTypes is the list of the embedded transactions
 var TxTypes = map[int]string{
 	1: "FirstBlock",

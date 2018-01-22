@@ -7,12 +7,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/tcpserver"
 	"github.com/AplaProject/go-apla/packages/utils"
-	logging "github.com/op/go-logging"
-)
 
-var (
-	log    = logging.MustGetLogger("daylight")
-	format = logging.MustStringFormatter("%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{message}")
+	log "github.com/sirupsen/logrus"
 )
 
 // RunAllDaemons start daemons, load contracts and tcpserver
@@ -23,13 +19,14 @@ func RunAllDaemons() error {
 		return err
 	}
 
-	log.Info("start daemons")
-	daemons.StartDaemons()
-
+	log.Info("load contracts")
 	if err := smart.LoadContracts(nil); err != nil {
 		log.Errorf("Load Contracts error: %s", err)
 		return err
 	}
+
+	log.Info("start daemons")
+	daemons.StartDaemons()
 
 	err = tcpserver.TcpListener(conf.Config.TCPServer.Str())
 	if err != nil {

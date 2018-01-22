@@ -23,8 +23,8 @@ func GetAllTransactions(limit int) (*[]Transaction, error) {
 }
 
 // GetAllUnusedTransactions is retrieving all unused transactions
-func GetAllUnusedTransactions() (*[]Transaction, error) {
-	transactions := new([]Transaction)
+func GetAllUnusedTransactions() ([]Transaction, error) {
+	var transactions []Transaction
 	if err := DBConn.Where("used = ?", "0").Find(&transactions).Error; err != nil {
 		return nil, err
 	}

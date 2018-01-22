@@ -223,7 +223,7 @@ func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
 		if sc.VDE {
 			prefix += `_vde`
 		}
-		tblname = fmt.Sprintf(`%s_%s`, prefix, tblname)
+		tblname = fmt.Sprintf(`%s_%s`, prefix, strings.ToLower(tblname))
 	}
 	return tblname
 }

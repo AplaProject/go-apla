@@ -151,7 +151,7 @@ func rollbackToBlock(blockID int64) error {
 	startData := map[string]int64{"1_menu": 1, "1_pages": 1, "1_contracts": 26, "1_parameters": 11, "1_keys": 1, "1_tables": 8, "stop_daemons": 1, "queue_blocks": 9999999, "system_tables": 1, "system_parameters": 27, "system_states": 1, "install": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1, "confirmations": 9999999, "transactions": 9999999}
 	warn := 0
 	for table := range startData {
-		count, err := model.GetRecordsCount(table)
+		count, err := model.GetRecordsCountTx(nil, table)
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting record count")
 			return err
