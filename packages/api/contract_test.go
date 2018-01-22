@@ -195,6 +195,15 @@ var contracts = []smartContract{
 		[]smartParams{
 			{nil, map[string]string{`date`: `-` + time.Now().Format(`2006.01.02`) + `-`}},
 		}},
+	{`testLong`, `contract testLong {
+		action { Test("long",  "long result")
+			$result = DBFind("contracts").WhereId(2).One("value") + DBFind("contracts").WhereId(4).One("value")
+			Println("Result", $result)
+			Test("long",  "long result")
+		}}`,
+		[]smartParams{
+			{nil, map[string]string{`long`: `long result`}},
+		}},
 	{`testSimple`, `contract testSimple {
 				data {
 					amount int
