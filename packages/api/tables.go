@@ -45,7 +45,7 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 
 	table := getPrefix(data) + `_tables`
 
-	count, err := model.GetRecordsCount(table)
+	count, err := model.GetRecordsCountTx(nil, table)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting records count from tables")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
