@@ -113,7 +113,11 @@ func monitor(conf *config.Config) {
 		hash2Node[rollbacksHash] = append(hash2Node[rollbacksHash], node)
 	}
 	if len(hash2Node) > 1 {
-		sendEmail(&conf.Smtp, &conf.AlertMessage, fmt.Sprintf("nodes unsynced. Rollback hashes are: %s", hash2Node))
+		hash2NodeStrResults := []string{}
+		for k, v := range hash2Node {
+			hash2NodeStrResults = append(hash2NodeStrResults, fmt.Sprintf("%x: %s", k, v))
+		}
+		sendEmail(&conf.Smtp, &conf.AlertMessage, fmt.Sprintf("nodes unsynced. Rollback hashes are: %s", strings.Join(hash2NodeStrResults, ",")))
 	}
 }
 
