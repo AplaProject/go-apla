@@ -22,7 +22,7 @@ func dbfindExpressionBlob(column string) string {
 
 func dbfindExpressionLongText(column string) string {
 	return fmt.Sprintf(`json_build_array(
-		substr(%s, 0, %d),
+		substr(%s, 1, %d),
 		CASE WHEN length(%[1]s)>%[2]d THEN md5(%[1]s) END) "%[1]s"`, column, substringLength)
 }
 
