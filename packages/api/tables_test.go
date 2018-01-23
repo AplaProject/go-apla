@@ -18,6 +18,7 @@ package api
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 )
 
@@ -55,6 +56,24 @@ func TestTable(t *testing.T) {
 		return
 	}
 	err = sendGet(`table/contracts`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestJSONTable(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	name := randName(`json`)
+	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
+	  "conditions":"true"},
+	 {"name":"Doc", "type":"json","index": "0", "conditions":"true"}
+	]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	err := postTx(`NewTable`, &form)
 	if err != nil {
 		t.Error(err)
 		return
