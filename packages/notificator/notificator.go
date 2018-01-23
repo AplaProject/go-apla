@@ -49,6 +49,13 @@ func (lm *lastMessages) set(system, user int64, newStats []notificationRecord) {
 	lm.stats[lastMessagesKey{system: system, user: user}] = newStats
 }
 
+func (lm *lastMessages) delete(system, user int64) {
+	lm.mu.Lock()
+	defer lm.mu.Unlock()
+
+	delete(lm.stats, lastMessagesKey{system: system, user: user})
+}
+
 var (
 	systemUsers       map[int64]*[]int64
 	mu                sync.Mutex
@@ -86,31 +93,32 @@ func UpdateNotifications(ecosystemID int64, users []int64) {
 
 	notificationsStats := parseRecipientNotification(result, ecosystemID)
 
-	for recipient, stats := range notificationsStats {
+	for _, user := range users {
+		oldStats, _ := lastMessagesStats.get(ecosystemID, user)
+		var newStats []notificationRecord
 
-		if oldStats, ok := lastMessagesStats.get(ecosystemID, recipient); ok {
-			if !statsChanged(oldStats, stats) {
-				continue
+		if ns, _ := notificationsStats[user]; ns != nil {
+			newStats = *ns
+		} else {
+			newStats = nil
+		}
+
+		if !statsChanged(oldStats, newStats) {
+			continue
+		}
+
+		if len(newStats) == 0 {
+			for i := range oldStats {
+				oldStats[i].RecordsCount = 0
 			}
-		}
 
-		lastMessagesStats.set(ecosystemID, recipient, *stats)
-
-		rawStats, err := json.Marshal(*stats)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("notification statistic")
+			lastMessagesStats.delete(ecosystemID, user)
+			sendUserStats(user, oldStats)
 			continue
 		}
 
-		ok, err := publisher.Write(recipient, string(rawStats))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
-			continue
-		}
-
-		if !ok {
-			log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
-		}
+		lastMessagesStats.set(ecosystemID, user, newStats)
+		sendUserStats(user, newStats)
 	}
 }
 
@@ -118,6 +126,22 @@ func UpdateNotifications(ecosystemID int64, users []int64) {
 func SendNotifications() {
 	for ecosystemID, users := range systemUsers {
 		UpdateNotifications(ecosystemID, *users)
+	}
+}
+
+func sendUserStats(user int64, stats []notificationRecord) {
+	rawStats, err := json.Marshal(stats)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("notification statistic")
+	}
+
+	ok, err := publisher.Write(user, string(rawStats))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
+	}
+
+	if !ok {
+		log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
 	}
 }
 
@@ -151,11 +175,19 @@ func parseRecipientNotification(rows []map[string]string, systemID int64) map[in
 	return recipientNotifications
 }
 
-func statsChanged(source []notificationRecord, new *[]notificationRecord) bool {
+func statsChanged(source, new []notificationRecord) bool {
+
+	if len(source) != len(new) {
+		return true
+	}
+
+	if len(new) == 0 {
+		return false
+	}
 
 	var newRole bool
 
-	for _, nRec := range *new {
+	for _, nRec := range new {
 		newRole = true
 
 		for _, sRec := range source {

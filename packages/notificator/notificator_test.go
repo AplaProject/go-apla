@@ -128,7 +128,7 @@ func TestOutputFormat(t *testing.T) {
 func TestStatsChanged(t *testing.T) {
 	type tsc struct {
 		old    []notificationRecord
-		new    *[]notificationRecord
+		new    []notificationRecord
 		result bool
 	}
 
@@ -141,7 +141,7 @@ func TestStatsChanged(t *testing.T) {
 				notificationRecord{EcosystemID: 1, RoleID: 3, RecordsCount: 1},
 			},
 
-			new: &[]notificationRecord{
+			new: []notificationRecord{
 				notificationRecord{EcosystemID: 1, RoleID: 1, RecordsCount: 1},
 				notificationRecord{EcosystemID: 1, RoleID: 2, RecordsCount: 1},
 				notificationRecord{EcosystemID: 1, RoleID: 4, RecordsCount: 1}, //new role added
@@ -156,7 +156,7 @@ func TestStatsChanged(t *testing.T) {
 				notificationRecord{EcosystemID: 1, RoleID: 3, RecordsCount: 1},
 			},
 
-			new: &[]notificationRecord{
+			new: []notificationRecord{
 				notificationRecord{EcosystemID: 1, RoleID: 1, RecordsCount: 1},
 				notificationRecord{EcosystemID: 1, RoleID: 2, RecordsCount: 2}, //records count changed
 				notificationRecord{EcosystemID: 1, RoleID: 3, RecordsCount: 1},
@@ -171,7 +171,7 @@ func TestStatsChanged(t *testing.T) {
 				notificationRecord{EcosystemID: 1, RoleID: 3, RecordsCount: 1},
 			},
 
-			new: &[]notificationRecord{
+			new: []notificationRecord{
 				notificationRecord{EcosystemID: 1, RoleID: 1, RecordsCount: 1},
 				notificationRecord{EcosystemID: 1, RoleID: 2, RecordsCount: 1},
 				notificationRecord{EcosystemID: 1, RoleID: 3, RecordsCount: 1},
@@ -181,11 +181,32 @@ func TestStatsChanged(t *testing.T) {
 		// no old records add new record
 		tsc{
 			old: []notificationRecord{},
-			new: &[]notificationRecord{
+			new: []notificationRecord{
 				notificationRecord{EcosystemID: 1, RoleID: 1, RecordsCount: 1},
 				notificationRecord{EcosystemID: 1, RoleID: 2, RecordsCount: 1},
 				notificationRecord{EcosystemID: 1, RoleID: 3, RecordsCount: 1},
 			},
+			result: true,
+		},
+		// old is nil add new record
+		tsc{
+			old: nil,
+			new: []notificationRecord{
+				notificationRecord{EcosystemID: 1, RoleID: 1, RecordsCount: 1},
+				notificationRecord{EcosystemID: 1, RoleID: 2, RecordsCount: 1},
+				notificationRecord{EcosystemID: 1, RoleID: 3, RecordsCount: 1},
+			},
+			result: true,
+		},
+		// old has value - now nil
+		tsc{
+			old: []notificationRecord{
+				notificationRecord{EcosystemID: 1, RoleID: 1, RecordsCount: 1},
+				notificationRecord{EcosystemID: 1, RoleID: 2, RecordsCount: 1},
+				notificationRecord{EcosystemID: 1, RoleID: 3, RecordsCount: 1},
+			},
+
+			new:    nil,
 			result: true,
 		},
 	}
