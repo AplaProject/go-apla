@@ -341,6 +341,8 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		var colType string
 		colDef := ``
 		switch data[`type`] {
+		case "json":
+			colType = `jsonb`
 		case "varchar":
 			colType = `varchar(102400)`
 		case "character":
@@ -731,7 +733,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		}
 		itype := data[`type`]
 		if itype != `varchar` && itype != `number` && itype != `datetime` && itype != `text` &&
-			itype != `bytea` && itype != `double` && itype != `money` && itype != `character` {
+			itype != `bytea` && itype != `json` && itype != `double` && itype != `money` && itype != `character` {
 			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect type")
 			return fmt.Errorf(`incorrect type`)
 		}
@@ -827,8 +829,9 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
-	if coltype != `varchar` && coltype != `number` && coltype != `datetime` && coltype != `character` &&
-		coltype != `text` && coltype != `bytea` && coltype != `double` && coltype != `money` {
+	if coltype != `varchar` && coltype != `number` && coltype != `datetime` &&
+		coltype != `character` && coltype != `text` && coltype != `bytea` && coltype != `double` &&
+		coltype != `money` && coltype != `json` {
 		log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("Unknown column type")
 		return fmt.Errorf(`incorrect type`)
 	}
@@ -875,6 +878,8 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions strin
 
 	var colType string
 	switch coltype {
+	case "json":
+		colType = `jsonb`
 	case "varchar":
 		colType = `varchar(102400)`
 	case "number":
