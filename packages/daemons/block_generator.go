@@ -101,44 +101,34 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return nil
 	}
 
-	blockBin, err := generateNextBlock(
-		prevBlock,
-		trs,
-		NodePrivateKey,
-		time.Now().Unix(),
-		myNodePosition,
-		conf.Config.EcosystemID,
-		conf.Config.KeyID,
-	)
-	if err != nil {
-		return err
-	}
-	return parser.InsertBlockWOForks(blockBin)
-}
-
-func generateNextBlock(
-	prevBlock *model.InfoBlock,
-	trs []model.Transaction,
-	key string,
-	blockTime int64,
-	myNodePosition int64,
-	ecosystemID int64,
-	keyID int64,
-) ([]byte, error) {
-
 	header := &utils.BlockData{
 		BlockID:      prevBlock.BlockID + 1,
 		Time:         time.Now().Unix(),
-		EcosystemID:  ecosystemID,
-		KeyID:        keyID,
+		EcosystemID:  conf.Config.EcosystemID,
+		KeyID:        conf.Config.KeyID,
 		NodePosition: myNodePosition,
 		Version:      consts.BLOCK_VERSION,
 	}
+
+	blockBin, err := generateNextBlock(header, trs, NodePrivateKey, prevBlock.Hash)
+	if err != nil {
+		return err
+	}
+
+	err := parser.InsertBlockWOForks(blockBin)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func generateNextBlock(blockHeader *utils.BlockData, trs []model.Transaction, key string, prevBlockHash []byte) ([]byte, error) {
 
 	trData := make([][]byte, 0, len(trs))
 	for _, tr := range trs {
 		trData = append(trData, tr.Data)
 	}
 
-	return parser.MarshallBlock(header, trData, prevBlock.Hash, key)
+	return parser.MarshallBlock(header, trData, prevBlockHash, key)
 }
