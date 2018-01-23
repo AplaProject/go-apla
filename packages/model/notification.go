@@ -44,7 +44,7 @@ func (n *Notification) TableName() string {
 func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
 	filter, params := getNotificationCountFilter(userIDs)
 	query := `SELECT recipient_id, role_id, count(*) cnt 
-	FROM "` + strconv.FormatInt(ecosystemID, 10) + `_notifications" 
+	FROM "` + strconv.FormatInt(ecosystemID, 10) + notificationTableSuffix + `" 
 	` + filter + ` 
 	GROUP BY "recipient_id", "role_id"`
 
