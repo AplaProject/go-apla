@@ -63,7 +63,10 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		}
 	}
 
-	values := converter.InterfaceSliceToStr(ivalues)
+	values, err := converter.InterfaceSliceToStr(ivalues)
+	if err != nil {
+		return 0, ``, err
+	}
 
 	addSQLFields := `id,`
 	for i, field := range fields {

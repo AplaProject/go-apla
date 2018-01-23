@@ -3,6 +3,7 @@ package converter
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math"
 	"reflect"
@@ -552,10 +553,10 @@ func BytesShift(str *[]byte, index int64) (ret []byte) {
 }
 
 // InterfaceToStr converts the interfaces to the string
-func InterfaceToStr(v interface{}) string {
+func InterfaceToStr(v interface{}) (string, error) {
 	var str string
 	if v == nil {
-		return ``
+		return ``, nil
 	}
 	switch v.(type) {
 	case int:
@@ -569,20 +570,31 @@ func InterfaceToStr(v interface{}) string {
 	case []byte:
 		str = string(v.([]byte))
 	default:
-		if reflect.TypeOf(v).String() == `decimal.Decimal` {
+		if reflect.TypeOf(v).String() == `map[string]interface {}` {
+			if out, err := json.Marshal(v); err != nil {
+				log.WithFields(log.Fields{"error": err, "type": consts.JSONMarshallError}).Error("marshalling map for jsonb")
+				return ``, err
+			} else {
+				str = string(out)
+			}
+		} else if reflect.TypeOf(v).String() == `decimal.Decimal` {
 			str = v.(decimal.Decimal).String()
 		}
 	}
-	return str
+	return str, nil
 }
 
 // InterfaceSliceToStr converts the slice of interfaces to the slice of strings
-func InterfaceSliceToStr(i []interface{}) []string {
-	var str []string
+func InterfaceSliceToStr(i []interface{}) (str []string, err error) {
+	var val string
 	for _, v := range i {
-		str = append(str, InterfaceToStr(v))
+		val, err = InterfaceToStr(v)
+		if err != nil {
+			return
+		}
+		str = append(str, val)
 	}
-	return str
+	return
 }
 
 // InterfaceToFloat64 converts the interfaces to the float64

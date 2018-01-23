@@ -69,11 +69,45 @@ func TestJSONTable(t *testing.T) {
 	}
 	name := randName(`json`)
 	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
-	  "conditions":"true"},
-	 {"name":"Doc", "type":"json","index": "0", "conditions":"true"}
-	]`},
+	  "conditions":"true"}, {"name":"Doc", "type":"json","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action { 
+			var ret1, ret2 int
+			ret1 = DBInsert("` + name + `", "MyName,Doc", "test", "{\"type\": \"0\"}")
+			var mydoc map
+			mydoc["type"] = "document"
+			mydoc["ind"] = 2
+			mydoc["doc"] = "Some text."
+			ret2 = DBInsert("` + name + `", "MyName,Doc", "test2", mydoc)
+		}}
+		contract ` + name + `Upd {
+		action {
+			DBUpdate("` + name + `", 1, "Doc", "{\"type\": \"doc\", \"ind\": \"3\"}")
+			var mydoc map
+			mydoc["type"] = "doc"
+			mydoc["doc"] = "Some test text."
+			DBUpdate("` + name + `", 2, "myname,Doc", "test3", mydoc)
+		}}
+		`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	err = postTx("NewContract", &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(name, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(name+`Upd`, &url.Values{})
 	if err != nil {
 		t.Error(err)
 		return
