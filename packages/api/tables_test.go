@@ -84,17 +84,26 @@ func TestJSONTable(t *testing.T) {
 			var mydoc map
 			mydoc["type"] = "document"
 			mydoc["ind"] = 2
+			mydoc["check"] = 99
 			mydoc["doc"] = "Some text."
 			ret2 = DBInsert("` + name + `", "MyName,Doc", "test2", mydoc)
 		}}
 		contract ` + name + `Upd {
 		action {
-			DBUpdate("` + name + `", 1, "Doc", "{\"type\": \"doc\", \"ind\": \"3\"}")
+			DBUpdate("` + name + `", 1, "Doc", "{\"type\": \"doc\", \"ind\": \"3\", \"check\": \"33\"}")
 			var mydoc map
 			mydoc["type"] = "doc"
 			mydoc["doc"] = "Some test text."
 			DBUpdate("` + name + `", 2, "myname,Doc", "test3", mydoc)
 		}}
+		contract ` + name + `UpdOne {
+			data {
+				Type int
+			}
+			action {
+				DBUpdate("` + name + `", 1, "myname,Doc->Ind,Doc->type", "New name", 
+					      $Type, "new\"doc\" val")
+			}}
 		`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx("NewContract", &form)
@@ -108,6 +117,11 @@ func TestJSONTable(t *testing.T) {
 		return
 	}
 	err = postTx(name+`Upd`, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(name+`UpdOne`, &url.Values{"Type": {"101"}})
 	if err != nil {
 		t.Error(err)
 		return

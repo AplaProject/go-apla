@@ -70,12 +70,14 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 	addSQLFields := `id,`
 	for i, field := range fields {
-		field = strings.TrimSpace(field)
+		field = strings.TrimSpace(strings.ToLower(field))
 		fields[i] = field
 		if field[:1] == "+" || field[:1] == "-" {
 			addSQLFields += field[1:] + ","
 		} else if strings.HasPrefix(field, `timestamp `) {
 			addSQLFields += field[len(`timestamp `):] + `,`
+		} else if strings.Contains(field, `->`) {
+			addSQLFields += field[:strings.Index(field, `->`)] + `,`
 		} else {
 			addSQLFields += field + ","
 		}
@@ -136,7 +138,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			return 0, tableID, err
 		}
 		rollbackInfoStr = string(jsonRollbackInfo)
-
+		updJson := make(map[string]map[string]string)
 		addSQLUpdate := ""
 		for i := 0; i < len(fields); i++ {
 			if isBytea[fields[i]] && len(values[i]) != 0 {
@@ -151,11 +153,28 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 				addSQLUpdate += fields[i][len(`timestamp `):] + `= to_timestamp('` + values[i] + `'),`
 			} else if strings.HasPrefix(values[i], `timestamp `) {
 				addSQLUpdate += fields[i] + `= timestamp '` + values[i][len(`timestamp `):] + `',`
+			} else if strings.Contains(fields[i], `->`) {
+				colfield := strings.Split(fields[i], `->`)
+				if len(colfield) == 2 {
+					if updJson[colfield[0]] == nil {
+						updJson[colfield[0]] = make(map[string]string)
+					}
+					updJson[colfield[0]][colfield[1]] = values[i]
+				}
 			} else {
 				addSQLUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
+		for colname, colvals := range updJson {
+			out, err := json.Marshal(colvals)
+			if err != nil {
+				log.WithFields(log.Fields{"error": err, "type": consts.JSONMarshallError}).Error("marshalling update columns for jsonb")
+				return 0, ``, err
+			}
+			addSQLUpdate += fmt.Sprintf(`%s=%[1]s || '%s',`, colname, string(out))
+		}
 		addSQLUpdate = strings.TrimRight(addSQLUpdate, `,`)
+		fmt.Println(`UPDATE`, addSQLUpdate)
 		if !sc.VDE {
 			updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + addSQLWhere
 			updateCost, err := queryCoster.QueryCost(sc.DbTransaction, updateQuery)
