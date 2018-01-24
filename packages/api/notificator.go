@@ -44,7 +44,9 @@ func updateNotificator(w http.ResponseWriter, r *http.Request, data *apiData, lo
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling ids")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
+
 	stateList := make(map[int64][]int64)
+
 	for _, item := range list {
 		ecosystem := converter.StrToInt64(item.EcosystemID)
 		if _, ok := stateList[ecosystem]; !ok {
@@ -53,9 +55,7 @@ func updateNotificator(w http.ResponseWriter, r *http.Request, data *apiData, lo
 		stateList[ecosystem] = append(stateList[ecosystem], converter.StrToInt64(item.ID))
 	}
 
-	for ecosystemID, users := range stateList {
-		notificator.UpdateNotifications(ecosystemID, users)
-	}
+	go notificator.SendNotificationsByRequest(stateList)
 	data.result = &updateNotificatorResult{Result: true}
 	return nil
 }

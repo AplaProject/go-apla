@@ -85,13 +85,10 @@ func AddUser(userID, systemID int64) {
 // UpdateNotifications send stats about unreaded messages to centrifugo for ecosystem
 func UpdateNotifications(ecosystemID int64, users []int64) {
 
-	result, err := model.GetNotificationsCount(ecosystemID, users)
+	notificationsStats, err := getEcosystemNotificationStats(ecosystemID, users)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notification count")
 		return
 	}
-
-	notificationsStats := parseRecipientNotification(result, ecosystemID)
 
 	for _, user := range users {
 		oldStats, _ := lastMessagesStats.get(ecosystemID, user)
@@ -122,26 +119,20 @@ func UpdateNotifications(ecosystemID int64, users []int64) {
 	}
 }
 
+func getEcosystemNotificationStats(ecosystemID int64, users []int64) (map[int64]*[]notificationRecord, error) {
+	result, err := model.GetNotificationsCount(ecosystemID, users)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notification count")
+		return nil, err
+	}
+
+	return parseRecipientNotification(result, ecosystemID), nil
+}
+
 // SendNotifications send stats about unreaded messages to centrifugo
 func SendNotifications() {
 	for ecosystemID, users := range systemUsers {
 		UpdateNotifications(ecosystemID, *users)
-	}
-}
-
-func sendUserStats(user int64, stats []notificationRecord) {
-	rawStats, err := json.Marshal(stats)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("notification statistic")
-	}
-
-	ok, err := publisher.Write(user, string(rawStats))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
-	}
-
-	if !ok {
-		log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
 	}
 }
 
@@ -205,4 +196,38 @@ func statsChanged(source, new []notificationRecord) bool {
 		}
 	}
 	return false
+}
+
+func sendUserStats(user int64, stats []notificationRecord) {
+	rawStats, err := json.Marshal(stats)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("notification statistic")
+	}
+
+	ok, err := publisher.Write(user, string(rawStats))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
+	}
+
+	if !ok {
+		log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
+	}
+}
+
+// SendNotificationsByRequest send stats by systemUsers one time
+func SendNotificationsByRequest(systemUsers map[int64][]int64) {
+	for ecosystemID, users := range systemUsers {
+		stats, err := getEcosystemNotificationStats(ecosystemID, users)
+		if err != nil {
+			continue
+		}
+
+		for user, notifications := range stats {
+			if notifications == nil {
+				continue
+			}
+
+			sendUserStats(user, *notifications)
+		}
+	}
 }
