@@ -107,7 +107,7 @@ func TcpListener(laddr string) error {
 		log.Warn("Listening at local address: ", laddr)
 	}
 
-	l, err := net.Listen("tcp4", laddr)
+	l, err := net.Listen("tcp", laddr)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": laddr}).Error("Error listening")
 		return err

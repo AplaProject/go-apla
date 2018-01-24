@@ -21,17 +21,14 @@ package daylight
 import (
 	"net"
 	"net/http"
-	"strconv"
 
-	conf "github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func httpListener(ListenHTTPHost string, route http.Handler) {
-	l, err := net.Listen("tcp4", ListenHTTPHost)
+	l, err := net.Listen("tcp", ListenHTTPHost)
 	log.WithFields(log.Fields{"host": ListenHTTPHost, "type": consts.NetworkError}).Debug("trying to listen at")
 	if err == nil {
 		log.WithFields(log.Fields{"host": ListenHTTPHost}).Info("listening at")
@@ -44,40 +41,6 @@ func httpListener(ListenHTTPHost string, route http.Handler) {
 		err = srv.Serve(l)
 		if err != nil {
 			log.WithFields(log.Fields{"host": ListenHTTPHost, "error": err, "type": consts.NetworkError}).Fatal("serving http at host")
-			panic(err)
-		}
-	}()
-}
-
-// For ipv6 on the server
-func httpListenerV6(route http.Handler) {
-	i := 0
-	port := strconv.Itoa(conf.Config.HTTP.Port)
-	var l net.Listener
-	var err error
-	for {
-		if i > 7 {
-			log.WithFields(log.Fields{"type": consts.NetworkError}).Error("tried all ports")
-			panic("Error listening ")
-		}
-		if i > 0 {
-			port = "7" + converter.IntToStr(i) + "79"
-		}
-		i++
-		l, err = net.Listen("tcp6", ":"+port)
-		if err == nil {
-			log.WithFields(log.Fields{"host": ":" + port}).Info("listening ipv6 at")
-			break
-		} else {
-			log.WithFields(log.Fields{"error": err, "host": ":" + port, "type": consts.NetworkError}).Error("cannot listenin at host")
-		}
-	}
-
-	go func() {
-		srv := &http.Server{Handler: route}
-		err = srv.Serve(l)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err, "host": ":" + port}).Error("serving http at host")
 			panic(err)
 		}
 	}()
