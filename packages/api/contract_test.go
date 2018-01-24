@@ -137,21 +137,21 @@ var contracts = []smartContract{
 				vals = ret[0]
 				Test("2",  vals["id"])	
 			}
-			ret = DBFind("contracts").Columns("id,rb_id").Order("id").Offset(1).Limit(1)
+			ret = DBFind("contracts").Columns("id").Order("id").Offset(1).Limit(1)
 			if Len(ret) != 1 {
 				Test("3",  "0")	
 			} else {
 				vals = ret[0]
 				Test("3", vals["value"] + vals["id"])	
 			}
-			ret = DBFind("contracts").Columns("id,rb_id").Where("id='1'")
+			ret = DBFind("contracts").Columns("id").Where("id='1'")
 			if Len(ret) != 1 {
 				Test("4",  "0")	
 			} else {
 				vals = ret[0]
 				Test("4", vals["id"])	
 			}
-			ret = DBFind("contracts").Columns("id,rb_id").Where("id='1'")
+			ret = DBFind("contracts").Columns("id").Where("id='1'")
 			if Len(ret) != 1 {
 				Test("4",  "0")	
 			} else {
@@ -194,6 +194,15 @@ var contracts = []smartContract{
 					action { Test("date",  "-2006.01.02-")}}`,
 		[]smartParams{
 			{nil, map[string]string{`date`: `-` + time.Now().Format(`2006.01.02`) + `-`}},
+		}},
+	{`testLong`, `contract testLong {
+		action { Test("long",  "long result")
+			$result = DBFind("contracts").WhereId(2).One("value") + DBFind("contracts").WhereId(4).One("value")
+			Println("Result", $result)
+			Test("long",  "long result")
+		}}`,
+		[]smartParams{
+			{nil, map[string]string{`long`: `long result`}},
 		}},
 	{`testSimple`, `contract testSimple {
 				data {
@@ -259,7 +268,7 @@ func TestEditContracts(t *testing.T) {
 	code := row.Value[`value`]
 	off := strings.IndexByte(code, '-')
 	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
-	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"01231234123412341234"}}
+	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"01231234123412341230"}}
 	if err := postTx(`EditContract`, &form); err != nil {
 		t.Error(err)
 		return

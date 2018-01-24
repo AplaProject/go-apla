@@ -130,6 +130,7 @@ type VarInfo struct {
 type IndexInfo struct {
 	VarOffset int
 	Owner     *Block
+	Extend    string
 }
 
 // ObjInfo is the common object type

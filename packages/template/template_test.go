@@ -41,6 +41,15 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Calculate( Exp: 342278783438/0, Type: money )Calculate( Exp: 5.2/0, Type: float )
+		Calculate( Exp: 7/0)`,
+		`[{"tag":"text","text":"dividing by zerodividing by zerodividing by zero"}]`},
+	{`SetVar(val, 2200000034343443343430000)SetVar(zero, 0)Calculate( Exp: (342278783438+5000)*(#val#-932780000), Type: money, Prec:18 )Calculate( Exp: (2+50)*(#zero#-9), Type: money )`,
+		`[{"tag":"text","text":"753013346318631859.1075080680647-468"}]`},
+	{`SetVar(val, 100)Calculate(10000-(34+5)*#val#)=Calculate("((10+#val#-45)*3.0-10)/4.5 + #val#", Prec: 4)`,
+		`[{"tag":"text","text":"6100"},{"tag":"text","text":"=141.1111"}]`},
+	{`Span((span text), ok )Span(((span text), ok) )Div(){{My body}}`,
+		`[{"tag":"span","attr":{"class":"ok"},"children":[{"tag":"text","text":"(span text)"}]},{"tag":"span","children":[{"tag":"text","text":"((span text), ok)"}]},{"tag":"div","children":[{"tag":"text","text":"{My body}"}]}]`},
 	{`Code(P(Some text)
  Div(myclass){
 	 Span(Strong("Bold text"))
@@ -54,8 +63,11 @@ var forTest = tplList{
 		P(Body: #v#)
 	}.Custom(cust){
 		P(Body: #v#)
-	}`,
-		`[{"tag":"data","attr":{"columns":["id","name","custom_id","cust"],"data":[["1","First Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]"],["2","Second Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]"]],"source":"mysrc","types":["text","text","tags","tags"]}}]`},
+	}Data(Columns: "name", Data:
+		First Name
+		Second Name
+	)`,
+		`[{"tag":"data","attr":{"columns":["id","name","custom_id","cust"],"data":[["1","First Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"first name\"}]}]"],["2","Second Name","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]","[{\"tag\":\"p\",\"children\":[{\"tag\":\"text\",\"text\":\"second name\"}]}]"]],"source":"mysrc","types":["text","text","tags","tags"]}},{"tag":"data","attr":{"columns":["name"],"data":[["First Name"],["Second Name"]],"types":["text"]}}]`},
 
 	{`Data(Source: mysrc, Columns: "id,name", Data:
 		1,first

@@ -88,6 +88,9 @@ type forTails struct {
 }
 
 func newSource(par parFunc) {
+	if par.Node.Attr[`source`] == nil {
+		return
+	}
 	if par.Workspace.Sources == nil {
 		sources := make(map[string]Source)
 		par.Workspace.Sources = &sources
@@ -329,7 +332,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 	state := int(converter.StrToInt64((*workspace.Vars)[`ecosystem_id`]))
 	if (*workspace.Vars)[`_full`] != `1` {
 		for i, v := range pars {
-			pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`accept_lang`],
+			pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`lang`],
 				workspace.SmartContract.VDE)
 			if pars[i] != v {
 				if parFunc.RawPars == nil {
@@ -416,6 +419,9 @@ main:
 				if ch == '"' || ch == '`' {
 					pair = ch
 				} else {
+					if ch == modes[mode][0] {
+						level++
+					}
 					params[curp] = append(params[curp], ch)
 				}
 			}
@@ -491,7 +497,11 @@ main:
 							}
 							if isTail {
 								parTail, shift, _ := getFunc(input[next:], tailFunc.tplFunc)
-								off = shift + next
+								off = next
+								for ; shift > 0; shift-- {
+									_, size := utf8.DecodeRuneInString(input[off:])
+									off += size
+								}
 								if tailpar == nil {
 									fortail := make([]*[][]rune, 0)
 									tailpar = &fortail

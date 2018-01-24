@@ -29,7 +29,7 @@ func TestLang(t *testing.T) {
 		return
 	}
 	name := randName(`lng`)
-	value := `{"en": "My test", "fr": "French string"}`
+	value := `{"en": "My test", "fr": "French string" }`
 
 	form := url.Values{"Name": {name}, "Trans": {value}}
 	err := postTx(`NewLang`, &form)
@@ -37,14 +37,44 @@ func TestLang(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	input := fmt.Sprintf(`Span(Text LangRes(%s)+LangRes(%[1]s,fr))`, name)
+	forutf := randName(`lng`)
+	err = postTx(`NewLang`, &url.Values{"Name": {forutf}, "Trans": {`{"en": "тест" }`}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	input := fmt.Sprintf(`
+		Div(){
+			Button(Body: $%[1]s$ $,  Page:test).Alert(Text: $%[1]s$, ConfirmButton: $confirm$, CancelButton: $cancel$)
+			Button(Body: LangRes(%[1]s) LangRes, PageParams: "test", ).Alert(Text: $%[1]s$, CancelButton: $cancel$)
+	}`, forutf)
 	var ret contentResult
 	err = sendPost(`content`, &url.Values{`template`: {input}}, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	if RawToString(ret.Tree) != `[{"tag":"div","children":[{"tag":"button","attr":{"alert":{"cancelbutton":"$cancel$","confirmbutton":"$confirm$","text":"тест"},"page":"test"},"children":[{"tag":"text","text":"тест $"}]},{"tag":"button","attr":{"alert":{"cancelbutton":"$cancel$","text":"тест"},"pageparams":{"test":{"text":"test","type":"text"}}},"children":[{"tag":"text","text":"тест"},{"tag":"text","text":" LangRes"}]}]}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
+		return
+	}
+	input = fmt.Sprintf(`Span(Text LangRes(%s)+LangRes(%[1]s,fr))`, name)
+	err = sendPost(`content`, &url.Values{`template`: {input}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	if RawToString(ret.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"Text My test"},{"tag":"text","text":"+French string"}]}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
+		return
+	}
+	err = sendPost(`content`, &url.Values{`template`: {input}, `lang`: {`fr`}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(ret.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"Text French string"},{"tag":"text","text":"+French string"}]}]` {
 		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
 		return
 	}

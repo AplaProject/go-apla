@@ -2,7 +2,6 @@ package model
 
 import (
 	"encoding/json"
-	"strconv"
 )
 
 // SystemParameter is model
@@ -11,7 +10,6 @@ type SystemParameter struct {
 	Name       string `gorm:"not null;size:255"`
 	Value      string `gorm:"not null"`
 	Conditions string `gorm:"not null"`
-	RbID       int64  `gorm:"not null"`
 }
 
 // TableName returns name of table
@@ -56,7 +54,6 @@ func (sp *SystemParameter) ToMap() map[string]string {
 	result["name"] = sp.Name
 	result["value"] = sp.Value
 	result["conditions"] = sp.Conditions
-	result["rb_id"] = strconv.FormatInt(sp.RbID, 10)
 	return result
 }
 

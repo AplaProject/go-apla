@@ -91,14 +91,19 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 
 	trs, err := model.GetAllUnusedTransactions()
-	if err != nil || trs == nil {
+	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
 		return err
 	}
 
+	// Block generation will be started only if we have transactions
+	if len(trs) == 0 {
+		return nil
+	}
+
 	blockBin, err := generateNextBlock(
 		prevBlock,
-		*trs,
+		trs,
 		NodePrivateKey,
 		time.Now().Unix(),
 		myNodePosition,

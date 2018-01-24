@@ -39,7 +39,7 @@ func (ib *InfoBlock) Create(transaction *DbTransaction) error {
 
 // MarkSent update model sent field
 func (ib *InfoBlock) MarkSent() error {
-	return DBConn.Model(ib).Update("sent", "1").Error
+	return DBConn.Model(ib).Update("sent", 1).Error
 }
 
 // BlockGetUnsent returns InfoBlock

@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"net/url"
 	"testing"
+
+	"github.com/AplaProject/go-apla/packages/crypto"
 )
 
 type smartParams struct {
@@ -31,6 +33,39 @@ type smartContract struct {
 	Name   string
 	Value  string
 	Params []smartParams
+}
+
+func TestUpperName(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := crypto.RandSeq(4)
+	form := url.Values{"Name": {"testTable" + rnd}, "Columns": {`[{"name":"num","type":"text",   "conditions":"true"},
+	{"name":"text", "type":"text","conditions":"true"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract AddRow` + rnd + ` {
+		data {
+		}
+		conditions {
+		}
+		action {
+		   DBInsert("testTable` + rnd + `", "num, text", "fgdgf", "124234") 
+		}
+	}`}, `Conditions`: {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(`AddRow`+rnd, &url.Values{}); err != nil {
+		t.Error(err)
+		return
+	}
 }
 
 func TestSmartFields(t *testing.T) {
@@ -321,9 +356,8 @@ func TestUpdateSysParam(t *testing.T) {
 		{`fuel_rate`, `[["name", "100"]]`},
 		{`commission_wallet`, `[["1", "0"]]`},
 		{`commission_wallet`, `[{"1", "50"}]`},
-		{`full_nodes`, `[["34.12.25", "10", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
-		{`full_nodes`, `[["1.34.12.25", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7"]]`},
-		{`full_nodes`, `[["34.12.25.100:65d321", "100000000000", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
+		{`full_nodes`, `[["", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7"]]`},
+		{`full_nodes`, `[["127.0.0.1", "0", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
 	}
 	for _, item := range notvalid {
 		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {item.Value}})

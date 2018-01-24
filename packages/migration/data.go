@@ -35,6 +35,7 @@ var (
 		DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
 		"id" int NOT NULL DEFAULT '0',
 		"hash" bytea  NOT NULL DEFAULT '',
+		"rollbacks_hash" bytea NOT NULL DEFAULT '',
 		"data" bytea NOT NULL DEFAULT '',
 		"ecosystem_id" int  NOT NULL DEFAULT '0',
 		"key_id" bigint  NOT NULL DEFAULT '0',
@@ -56,20 +57,9 @@ var (
 		"from_gate" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
-
-		DROP SEQUENCE IF EXISTS rollback_rb_id_seq CASCADE;
-		CREATE SEQUENCE rollback_rb_id_seq START WITH 1;
-		DROP TABLE IF EXISTS "rollback"; CREATE TABLE "rollback" (
-		"rb_id" bigint NOT NULL  default nextval('rollback_rb_id_seq'),
-		"block_id" bigint NOT NULL DEFAULT '0',
-		"data" text NOT NULL DEFAULT ''
-		);
-		ALTER SEQUENCE rollback_rb_id_seq owned by rollback.rb_id;
-		ALTER TABLE ONLY "rollback" ADD CONSTRAINT rollback_pkey PRIMARY KEY (rb_id);
 		
 		DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
-		"id" bigint NOT NULL DEFAULT '0',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
 		
@@ -78,8 +68,7 @@ var (
 		"id" bigint NOT NULL DEFAULT '0',
 		"name" varchar(255)  NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint  NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY (id);
 		CREATE INDEX "system_parameters_index_name" ON "system_parameters" (name);
@@ -153,8 +142,7 @@ var (
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '0',
 		"active" character(1) NOT NULL DEFAULT '0',
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "system_contracts" ADD CONSTRAINT system_contracts_pkey PRIMARY KEY (id);
 		
@@ -163,8 +151,7 @@ var (
 		"name" varchar(100)  NOT NULL DEFAULT '',
 		"permissions" jsonb,
 		"columns" jsonb,
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "system_tables" ADD CONSTRAINT system_tables_pkey PRIMARY KEY (name);
 		
@@ -211,7 +198,8 @@ var (
 		"block_id" bigint NOT NULL DEFAULT '0',
 		"tx_hash" bytea  NOT NULL DEFAULT '',
 		"table_name" varchar(255) NOT NULL DEFAULT '',
-		"table_id" varchar(255) NOT NULL DEFAULT ''
+		"table_id" varchar(255) NOT NULL DEFAULT '',
+		"data" TEXT NOT NULL DEFAULT ''
 		);
 		ALTER SEQUENCE rollback_tx_id_seq owned by rollback_tx.id;
 		ALTER TABLE ONLY "rollback_tx" ADD CONSTRAINT rollback_tx_pkey PRIMARY KEY (id);
@@ -233,8 +221,7 @@ var (
 		"status" my_node_keys_enum_status  NOT NULL DEFAULT 'my_pending',
 		"my_time" int NOT NULL DEFAULT '0',
 		"time" bigint NOT NULL DEFAULT '0',
-		"block_id" int NOT NULL DEFAULT '0',
-		"rb_id" int NOT NULL DEFAULT '0'
+		"block_id" int NOT NULL DEFAULT '0'
 		);
 		ALTER SEQUENCE my_node_keys_id_seq owned by my_node_keys.id;
 		ALTER TABLE ONLY "my_node_keys" ADD CONSTRAINT my_node_keys_pkey PRIMARY KEY (id);

@@ -144,6 +144,17 @@ func TestRead(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	var tableInfo tableResult
+	err = sendGet(`table/`+name+`?vde=true`, nil, &tableInfo)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if tableInfo.Filter != `ReadFilter`+name+`()` {
+		t.Errorf(`wrong filter ` + tableInfo.Filter)
+		return
+	}
+
 	err = sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
 		`DBFind(` + name + `, src).Limit(2)`}}, &retCont)
 	if err != nil {

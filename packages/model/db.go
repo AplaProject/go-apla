@@ -1,8 +1,6 @@
 package model
 
 import (
-	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -119,16 +117,16 @@ func DropTables() error {
 	`).Error
 }
 
-// GetRecordsCount is counting all records of table
-func GetRecordsCount(tableName string) (int64, error) {
+// GetRecordsCount is counting all records of table in transaction
+func GetRecordsCountTx(db *DbTransaction, tableName string) (int64, error) {
 	var count int64
-	err := DBConn.Table(tableName).Count(&count).Error
+	err := GetDB(db).Table(tableName).Count(&count).Error
 	return count, err
 }
 
 // ExecSchemaEcosystem is executing ecosystem schema
-func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string) error {
-	err := GetDB(db).Exec(fmt.Sprintf(migration.SchemaEcosystem, id, wallet, name)).Error
+func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder int64) error {
+	err := GetDB(db).Exec(fmt.Sprintf(migration.SchemaEcosystem, id, wallet, name, founder)).Error
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err
@@ -160,62 +158,6 @@ func Update(transaction *DbTransaction, tblname, set, where string) error {
 // Delete is deleting table rows
 func Delete(tblname, where string) error {
 	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
-}
-
-// GetQueryTotalCost is counting query execution time
-func GetQueryTotalCost(transaction *DbTransaction, query string, args ...interface{}) (int64, error) {
-	var planStr string
-	err := GetDB(transaction).Raw(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", query), args...).Row().Scan(&planStr)
-	switch {
-	case err == sql.ErrNoRows:
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": query}).Error("no rows while explaining query")
-		return 0, errors.New("No rows")
-	case err != nil:
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": query}).Error("error explaining query")
-		return 0, err
-	}
-	var queryPlan []map[string]interface{}
-	dec := json.NewDecoder(strings.NewReader(planStr))
-	dec.UseNumber()
-	if err := dec.Decode(&queryPlan); err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("decoding query plan from JSON")
-		return 0, err
-	}
-	if len(queryPlan) == 0 {
-		log.Error("Query plan is empty")
-		return 0, errors.New("Query plan is empty")
-	}
-	firstNode := queryPlan[0]
-	var plan interface{}
-	var ok bool
-	if plan, ok = firstNode["Plan"]; !ok {
-		log.Error("No Plan key in result")
-		return 0, errors.New("No Plan key in result")
-	}
-
-	planMap, ok := plan.(map[string]interface{})
-	if !ok {
-		log.Error("Plan is not map[string]interface{}")
-		return 0, errors.New("Plan is not map[string]interface{}")
-	}
-
-	totalCost, ok := planMap["Total Cost"]
-	if !ok {
-		return 0, errors.New("PlanMap has no TotalCost")
-	}
-
-	totalCostNum, ok := totalCost.(json.Number)
-	if !ok {
-		log.Error("PlanMap has no TotalCost")
-		return 0, errors.New("Total cost is not a number")
-	}
-
-	totalCostF64, err := totalCostNum.Float64()
-	if err != nil {
-		log.Error("Total cost is not a number")
-		return 0, err
-	}
-	return int64(totalCostF64), nil
 }
 
 // GetColumnCount is counting rows in table
@@ -402,18 +344,6 @@ func IsTable(tblname string) bool {
 		Select("table_name").Row().Scan(&name)
 
 	return name == tblname
-}
-
-// GetRollbackID returns rollback id
-func GetRollbackID(transaction *DbTransaction, tblname, where, ordering string) (int64, error) {
-	var result int64
-	q := `SELECT rb_id FROM "` + tblname + `" ` + where + " order by rb_id " + ordering
-	err := GetDB(transaction).Raw(q).Row().Scan(&result)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error(q)
-		return 0, err
-	}
-	return result, nil
 }
 
 // GetColumnByID returns the value of the column from the table by id

@@ -475,13 +475,12 @@ var (
 			  Name        string
 			  Type        string
 			  Permissions string
-			  Index       string "optional"
 		  }
 		  conditions {
-			  ColumnCondition($TableName, $Name, $Type, $Permissions, $Index)
+			  ColumnCondition($TableName, $Name, $Type, $Permissions)
 		  }
 		  action {
-			  CreateColumn($TableName, $Name, $Type, $Permissions, $Index)
+			  CreateColumn($TableName, $Name, $Type, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('18','contract EditColumn {
@@ -491,7 +490,7 @@ var (
 			  Permissions string
 		  }
 		  conditions {
-			  ColumnCondition($TableName, $Name, "", $Permissions, "")
+			  ColumnCondition($TableName, $Name, "", $Permissions)
 		  }
 		  action {
 			  PermColumn($TableName, $Name, $Permissions)
@@ -640,8 +639,7 @@ var (
 	SchemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"pub" bytea  NOT NULL DEFAULT '',
-		"amount" decimal(30) NOT NULL DEFAULT '0',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"amount" decimal(30) NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
 		
@@ -652,8 +650,7 @@ var (
 		"amount" decimal(30) NOT NULL DEFAULT '0',
 		"comment" text NOT NULL DEFAULT '',
 		"block_id" int  NOT NULL DEFAULT '0',
-		"txhash" bytea  NOT NULL DEFAULT '',
-		"rb_id" int  NOT NULL DEFAULT '0'
+		"txhash" bytea  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_history" ADD CONSTRAINT "%[1]d_history_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_history_index_sender" ON "%[1]d_history" (sender_id);
@@ -665,19 +662,30 @@ var (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(100) NOT NULL DEFAULT '',
 		  "res" text NOT NULL DEFAULT '',
-		  "conditions" text NOT NULL DEFAULT '',
-		  "rb_id" bigint NOT NULL DEFAULT '0'
+		  "conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_languages" ADD CONSTRAINT "%[1]d_languages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
 		
+		DROP TABLE IF EXISTS "%[1]d_sections"; CREATE TABLE "%[1]d_sections" (
+		"id" bigint  NOT NULL DEFAULT '0',
+		"title" varchar(255)  NOT NULL DEFAULT '',
+		"urlname" varchar(255) NOT NULL DEFAULT '',
+		"page" varchar(255) NOT NULL DEFAULT '',
+		"roles_access" text NOT NULL DEFAULT '',
+		"delete" bigint NOT NULL DEFAULT '0'
+		);
+	  ALTER TABLE ONLY "%[1]d_sections" ADD CONSTRAINT "%[1]d_sections_pkey" PRIMARY KEY (id);
+
+        INSERT INTO "%[1]d_sections" ("id","title","urlname","page","roles_access", "delete") 
+	            VALUES('1', 'Home', 'home', 'default_page', '', 0);
+
 		DROP TABLE IF EXISTS "%[1]d_menu"; CREATE TABLE "%[1]d_menu" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"title" character varying(255) NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
@@ -687,8 +695,7 @@ var (
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
 			"menu" character varying(255) NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
@@ -697,8 +704,7 @@ var (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
@@ -707,8 +713,7 @@ var (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(100) NOT NULL DEFAULT '',
 			"value" jsonb,
-			"conditions" text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
 		
@@ -718,8 +723,7 @@ var (
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',
 		"active" character(1) NOT NULL DEFAULT '0',
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 		
@@ -738,8 +742,7 @@ var (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint  NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_parameters" ADD CONSTRAINT "%[1]d_parameters_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_parameters_index_name" ON "%[1]d_parameters" (name);
@@ -766,8 +769,7 @@ var (
 		"name" varchar(100) UNIQUE NOT NULL DEFAULT '',
 		"permissions" jsonb,
 		"columns" jsonb,
-		"conditions" text  NOT NULL DEFAULT '',
-		"rb_id" bigint NOT NULL DEFAULT '0'
+		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
@@ -829,60 +831,89 @@ var (
 			"conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractAccess("@1EditTable")'),
 				('9', 'member', 
-					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+					'{"insert": "ContractAccess(\"Profile_Edit\")", "update": "ContractAccess(\"Profile_Edit\")", 
 					  "new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"username": "ContractConditions(\"MainCondition\")",
-					  "avatar": "ContractConditions(\"MainCondition\")"}', 'ContractConditions(\"MainCondition\")'),
+					'{"member_name": "ContractAccess(\"Profile_Edit\")",
+					  "avatar": "ContractAccess(\"Profile_Edit\")"}', 'ContractConditions(\"MainCondition\")'),
 				('10', 'roles_list', 
-					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+					'{"insert": "ContractAccess(\"Roles_Create\")", "update": "ContractAccess(\"Roles_Del\")", 
 					 "new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"default_page": "ContractConditions(\"MainCondition\")",
-					  "role_name": "ContractConditions(\"MainCondition\")",
-					  "delete": "ContractConditions(\"MainCondition\")",
-					  "role_type": "ContractConditions(\"MainCondition\")",
-					  "creator_id": "ContractConditions(\"MainCondition\")",
-					  "date_create": "ContractConditions(\"MainCondition\")",
-					  "date_delete": "ContractConditions(\"MainCondition\")",
-					  "creator_name": "ContractConditions(\"MainCondition\")",
-					  "creator_avatar": "ContractConditions(\"MainCondition\")"}',
+					'{"default_page": "false",
+					  "role_name": "false",
+					  "delete": "ContractAccess(\"Roles_Del\")",
+					  "role_type": "false",
+					  "creator_id": "false",
+					  "date_create": "false",
+					  "date_delete": "ContractAccess(\"Roles_Del\")",
+					  "creator_name": "false",
+					  "creator_avatar": "false"}',
 					   'ContractConditions(\"MainCondition\")'),
 				('11', 'roles_assign', 
+					'{"insert": "ContractAccess(\"Roles_Assign\", \"voting_CheckDecision\")", "update": "ContractAccess(\"Roles_Unassign\")", 
+					"new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"role_id": "false",
+						"role_type": "false",
+						"role_name": "false",
+						"member_id": "false",
+						"member_name": "false",
+						"member_avatar": "false",
+						"appointed_by_id": "false",
+						"appointed_by_name": "false",
+						"date_start": "false",
+						"date_end": "ContractAccess(\"Roles_Unassign\")",
+						"delete": "ContractAccess(\"Roles_Unassign\")"}', 
+						'ContractConditions(\"MainCondition\")'),
+				('12', 'notifications', 
+						'{"insert": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")", "update": "true", 
+						"new_column": "ContractConditions(\"MainCondition\")"}',
+						'{"icon": "false",
+							"started_processing_time": "ContractAccess(\"Notifications_Roles_Processing\")",
+							"date_create": "false",
+							"page_params": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")",
+							"body_text": "false",
+							"recipient_id": "false",
+							"started_processing_id": "ContractAccess(\"Notifications_Roles_Processing\")",
+							"role_id": "false",
+							"role_name": "false",
+							"recipient_name": "false",
+							"closed": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")", 
+							"header_text": "false", 
+							"recipient_avatar": "false", 
+							"notification_type": "false", 
+							"finished_processing_id": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")", 
+							"finished_processing_time": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")", 
+							"page_name": "false"}', 
+							'ContractAccess(\"@1EditTable\")'),
+				('13', 'sections', 
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 					"new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"role_id": "ContractConditions(\"MainCondition\")",
-						"role_type": "ContractConditions(\"MainCondition\")",
-						"role_name": "ContractConditions(\"MainCondition\")",
-						"member_id": "ContractConditions(\"MainCondition\")",
-						"member_username": "ContractConditions(\"MainCondition\")",
-						"member_avatar": "ContractConditions(\"MainCondition\")",
-						"appointed_by_id": "ContractConditions(\"MainCondition\")",
-						"appointed_by_name": "ContractConditions(\"MainCondition\")",
-						"date_start": "ContractConditions(\"MainCondition\")",
-						"date_end": "ContractConditions(\"MainCondition\")",
+					'{"title": "ContractConditions(\"MainCondition\")",
+						"urlname": "ContractConditions(\"MainCondition\")",
+						"page": "ContractConditions(\"MainCondition\")",
+						"roles_access": "ContractConditions(\"MainCondition\")",
 						"delete": "ContractConditions(\"MainCondition\")"}', 
 						'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (
 			"id" 	bigint NOT NULL DEFAULT '0',
-			"started_processing_time" timestamp,
-			"started_time"	timestamp,
-			"body_text"	text NOT NULL DEFAULT '',
-			"recipient_id"	bigint NOT NULL DEFAULT '0',
-			"started_processing_id"	bigint NOT NULL DEFAULT '0',
-			"name"	varchar(255) NOT NULL DEFAULT '',
-			"role_id"	bigint NOT NULL DEFAULT '0',
-			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"page_val_int"	bigint NOT NULL DEFAULT '0',
-			"page_val_str"	varchar(255) NOT NULL DEFAULT '',
-			"recipient_name" varchar(255) NOT NULL DEFAULT '',
-			"closed" boolean,
-			"header_text"	text NOT NULL DEFAULT '',
-			"recipient_avatar"	text NOT NULL DEFAULT '',
+			"icon"	varchar(255) NOT NULL DEFAULT '',
+			"closed" bigint NOT NULL DEFAULT '0',
 			"notification_type"	bigint NOT NULL DEFAULT '0',
+			"started_processing_time" timestamp,
+			"page_name"	varchar(255) NOT NULL DEFAULT '',
+			"recipient_avatar"	bytea NOT NULL DEFAULT '',
+			"date_create"	timestamp,
+			"page_params"	text NOT NULL DEFAULT '',
+			"recipient_name" varchar(255) NOT NULL DEFAULT '',
 			"finished_processing_id" bigint NOT NULL DEFAULT '0',
 			"finished_processing_time" timestamp,
-			"page_name"	varchar(255) NOT NULL DEFAULT ''
+			"role_id"	bigint NOT NULL DEFAULT '0',
+			"role_name"	varchar(255) NOT NULL DEFAULT '',
+			"recipient_id"	bigint NOT NULL DEFAULT '0',
+			"started_processing_id"	bigint NOT NULL DEFAULT '0',
+			"body_text"	text NOT NULL DEFAULT '',
+			"header_text"	text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
 
@@ -892,18 +923,22 @@ var (
 			"id" 	bigint NOT NULL DEFAULT '0',
 			"default_page"	varchar(255) NOT NULL DEFAULT '',
 			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"delete"    boolean,
+			"delete"    bigint NOT NULL DEFAULT '0',
 			"role_type" bigint NOT NULL DEFAULT '0',
 			"creator_id" bigint NOT NULL DEFAULT '0',
 			"date_create" timestamp,
 			"date_delete" timestamp,
 			"creator_name"	varchar(255) NOT NULL DEFAULT '',
-			"creator_avatar" varchar(255) NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"creator_avatar" bytea NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
 		CREATE INDEX "%[1]d_roles_list_index_type" ON "%[1]d_roles_list" (role_type);
+
+		INSERT INTO "%[1]d_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
+			"date_create","creator_name") VALUES('1','default_ecosystem_page', 
+				'Admin', '0', '3', NOW(), '');
+
 
 		DROP TABLE IF EXISTS "%[1]d_roles_assign";
 		CREATE TABLE "%[1]d_roles_assign" (
@@ -912,41 +947,37 @@ var (
 			"role_type" bigint NOT NULL DEFAULT '0',
 			"role_name"	varchar(255) NOT NULL DEFAULT '',
 			"member_id" bigint NOT NULL DEFAULT '0',
-			"member_username" varchar(255) NOT NULL DEFAULT '',
-			"member_avatar"	varchar(255) NOT NULL DEFAULT '',
+			"member_name" varchar(255) NOT NULL DEFAULT '',
+			"member_avatar"	bytea NOT NULL DEFAULT '',
 			"appointed_by_id" bigint NOT NULL DEFAULT '0',
 			"appointed_by_name"	varchar(255) NOT NULL DEFAULT '',
 			"date_start" timestamp,
 			"date_end" timestamp,
-			"delete" boolean,
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"delete" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles_assign" ADD CONSTRAINT "%[1]d_roles_assign_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_assign_index_role" ON "%[1]d_roles_assign" (role_id);
 		CREATE INDEX "%[1]d_roles_assign_index_type" ON "%[1]d_roles_assign" (role_type);
 		CREATE INDEX "%[1]d_roles_assign_index_member" ON "%[1]d_roles_assign" (member_id);
 
+		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id",
+			"member_name","date_start") VALUES('1','1','3','Admin','%[4]d','founder', NOW());
+	
+
 		DROP TABLE IF EXISTS "%[1]d_member";
 		CREATE TABLE "%[1]d_member" (
 			"id" bigint NOT NULL DEFAULT '0',
-			"username"	varchar(255) NOT NULL DEFAULT '',
-			"avatar"	text NOT NULL DEFAULT '',
-			"rb_id" bigint NOT NULL DEFAULT '0'
+			"member_name"	varchar(255) NOT NULL DEFAULT '',
+			"avatar"	bytea NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
+
+		INSERT INTO "%[1]d_member" ("id", "member_name") VALUES('%[4]d', 'founder');
+
 		`
 
-	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id","rb_id") VALUES ('1','0');
+	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id") VALUES ('1');
 
-	INSERT INTO "1_member" ("id", "username") VALUES('%[1]d', 'founder');
-	INSERT INTO "1_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
-		"creator_id","date_create","creator_name") VALUES('1','default_ecosystem_page', 
-			'Admin', 'false', '1', '%[1]d', NOW(), 'founder');
-	INSERT INTO "1_roles_assign" ("id","role_id","role_type","role_name","member_id",
-		"member_username","appointed_by_id","appointed_by_name",
-		"date_start","delete") VALUES('1','1','1','Admin','%[1]d','founder','%[1]d', 'founder',
-			NOW(), 'false');
-	
 	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
 	('2','contract SystemFunctions {
 	}
@@ -1118,13 +1149,13 @@ var (
 			if $WalletId != "" {
 				$recipient = AddressToId($WalletId)
 				if $recipient == 0 {
-					error Sprintf("New contract owner %%s is invalid", $Recipient)
+					error Sprintf("New contract owner %%s is invalid", $WalletId)
 				}
 				if Int($cur["active"]) == 1 {
 					error "Contract must be deactivated before wallet changing"
 				}
 			} else {
-				$recipient = $cur["wallet_id"]
+				$recipient = Int($cur["wallet_id"])
 			}
 		}
 		action {
@@ -1456,13 +1487,12 @@ var (
 			Name        string
 			Type        string
 			Permissions string
-			Index       string "optional"
 		}
 		conditions {
-			ColumnCondition($TableName, $Name, $Type, $Permissions, $Index)
+			ColumnCondition($TableName, $Name, $Type, $Permissions)
 		}
 		action {
-			CreateColumn($TableName, $Name, $Type, $Permissions, $Index)
+			CreateColumn($TableName, $Name, $Type, $Permissions)
 		}
 		func rollback() {
 			RollbackColumn($TableName, $Name)
@@ -1478,7 +1508,7 @@ var (
 			Permissions string
 		}
 		conditions {
-			ColumnCondition($TableName, $Name, "", $Permissions, "")
+			ColumnCondition($TableName, $Name, "", $Permissions)
 		}
 		action {
 			PermColumn($TableName, $Name, $Permissions)
