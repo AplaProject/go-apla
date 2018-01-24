@@ -132,7 +132,7 @@ func SendNotifications() {
 func sendUserStats(user int64, stats []notificationRecord) {
 	rawStats, err := json.Marshal(stats)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("notification statistic")
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("notification statistic")
 	}
 
 	ok, err := publisher.Write(user, string(rawStats))
