@@ -174,7 +174,6 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			addSQLUpdate += fmt.Sprintf(`%s=%[1]s || '%s',`, colname, string(out))
 		}
 		addSQLUpdate = strings.TrimRight(addSQLUpdate, `,`)
-		fmt.Println(`UPDATE`, addSQLUpdate)
 		if !sc.VDE {
 			updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + addSQLWhere
 			updateCost, err := queryCoster.QueryCost(sc.DbTransaction, updateQuery)

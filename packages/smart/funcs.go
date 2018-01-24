@@ -475,6 +475,15 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	if len(order) == 0 {
 		order = `id`
 	}
+	colList := make([]string, 0)
+	for _, icol := range strings.Split(strings.ToLower(columns), `,`) {
+		if strings.Contains(icol, `->`) {
+			colfield := strings.Split(icol, `->`)
+			icol = fmt.Sprintf(`%s::jsonb->>'%s' as "%[1]s.%[2]s"`, colfield[0], colfield[1])
+		}
+		colList = append(colList, icol)
+	}
+	columns = strings.Join(colList, `,`)
 	where = strings.Replace(converter.Escape(where), `$`, `?`, -1)
 	if id != 0 {
 		where = fmt.Sprintf(`id='%d'`, id)

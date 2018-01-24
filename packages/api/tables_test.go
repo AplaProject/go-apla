@@ -76,6 +76,16 @@ func TestJSONTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	checkGet := func(want string) {
+		_, msg, err := postTxResult(name+`Get`, &url.Values{"Id": {`2`}})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if msg != want {
+			t.Error(`wrong answer`, msg)
+		}
+	}
 
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
@@ -84,10 +94,23 @@ func TestJSONTable(t *testing.T) {
 			var mydoc map
 			mydoc["type"] = "document"
 			mydoc["ind"] = 2
-			mydoc["check"] = 99
+			mydoc["check"] = "99"
 			mydoc["doc"] = "Some text."
 			ret2 = DBInsert("` + name + `", "MyName,Doc", "test2", mydoc)
 		}}
+		contract ` + name + `Get {
+			data {
+				Id int
+			}
+			action {
+				var ret map
+				var out string
+				ret = DBFind("` + name + `").Columns("Myname,doc,Doc->Ind").WhereId($Id).Row()
+				out = ret["doc.ind"]
+				out = out + DBFind("` + name + `").Columns("myname,doc->Type").WhereId($Id).One("Doc->type")
+				 $result = out + Str(DBFind("` + name + `").WhereId($Id).One("doc->check"))
+			}
+		}
 		contract ` + name + `Upd {
 		action {
 			DBUpdate("` + name + `", 1, "Doc", "{\"type\": \"doc\", \"ind\": \"3\", \"check\": \"33\"}")
@@ -103,7 +126,9 @@ func TestJSONTable(t *testing.T) {
 			action {
 				DBUpdate("` + name + `", 1, "myname,Doc->Ind,Doc->type", "New name", 
 					      $Type, "new\"doc\" val")
-			}}
+				DBUpdate("` + name + `", 2, "myname,Doc->Ind,Doc->type", "New name", 
+						$Type, "new\"doc\"")
+			  }}
 		`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx("NewContract", &form)
@@ -116,14 +141,19 @@ func TestJSONTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	checkGet(`2document99`)
+
 	err = postTx(name+`Upd`, &url.Values{})
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	checkGet(`doc`)
+
 	err = postTx(name+`UpdOne`, &url.Values{"Type": {"101"}})
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	checkGet(`101new"doc"`)
 }
