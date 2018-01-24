@@ -634,6 +634,12 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		txDone := time.Since(txStart)
 		blockExecTime += txDone
 		if blockExecTime > bgt {
+
+			// Nothing to rollback yet
+			if lastSuccessTx == 0 {
+				return err
+			}
+
 			err := dbTransaction.Connection().Exec(fmt.Sprintf("ROLLBACK TO SAVEPOINT \"tx-%d\";", lastSuccessTx)).Error
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("rolling back to previous savepoint")
