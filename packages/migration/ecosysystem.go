@@ -908,7 +908,7 @@ var (
 			"page_val_int"	bigint NOT NULL DEFAULT '0',
 			"page_val_str"	varchar(255) NOT NULL DEFAULT '',
 			"recipient_name" varchar(255) NOT NULL DEFAULT '',
-			"closed" boolean,
+			"closed" bigint NOT NULL DEFAULT '0',
 			"header_text"	text NOT NULL DEFAULT '',
 			"recipient_avatar"	text NOT NULL DEFAULT '',
 			"notification_type"	bigint NOT NULL DEFAULT '0',
