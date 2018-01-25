@@ -156,4 +156,24 @@ func TestJSONTable(t *testing.T) {
 		return
 	}
 	checkGet(`101new"doc"`)
+
+	forTest := tplList{{`DBFind(` + name + `,my).Columns("id,doc->type").WhereId(2)`,
+		`[{"tag":"dbfind","attr":{"columns":["id","doc.type"],"data":[["2","new"doc""]],"name":"` +
+			name + `","source":"my","types":["text","text"],"whereid":"2"}}]`},
+		{`DBFind(` + name + `,my).Columns("doc->type").Custom(mytype, OK:#doc.type#)`,
+			`[{"tag":"dbfind","attr":{"columns":["doc.type","id","mytype"],"data":[["new"doc" val","1","[{"tag":"text","text":"OK:new\\u0026#34;doc\\u0026#34; val"}]"],["new"doc"","2","[{"tag":"text","text":"OK:new\\u0026#34;doc\\u0026#34;"}]"]],"name":"` +
+				name + `","source":"my","types":["text","text","tags"]}}]`},
+	}
+	var ret contentResult
+	for _, item := range forTest {
+		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if RawToString(ret.Tree) != item.want {
+			t.Error(fmt.Errorf(`wrong tree %s != %s`, RawToString(ret.Tree), item.want))
+			return
+		}
+	}
 }
