@@ -2,9 +2,9 @@ package notificator
 
 import (
 	"encoding/json"
-	"strconv"
-
 	"sync"
+
+	"github.com/AplaProject/go-apla/packages/converter"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -12,112 +12,222 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// EcosystemID is ecosystem id
-type EcosystemID int64
-
-// UserID is user id
-type UserID int64
-
-// NotificationStats storing notification stats data
-type NotificationStats struct {
-	userIDs     sync.Map
-	lastNotifID *int64
+type notificationRecord struct {
+	EcosystemID  int64 `json:"ecosystem"`
+	RoleID       int64 `json:"role_id"`
+	RecordsCount int64 `json:"count"`
 }
 
-type Notifications struct {
-	sync.Map
+type lastMessagesKey struct {
+	system int64
+	user   int64
 }
 
-//var notifications Notifications
-var notifications Notifications
-
-// SendNotifications is sending notifications
-func SendNotifications() {
-	notifications.Range(func(key, value interface{}) bool {
-		ecosystemID := key.(EcosystemID)
-		ecosystemStats := value.(NotificationStats)
-
-		notifs := getEcosystemNotifications(ecosystemID, *ecosystemStats.lastNotifID, ecosystemStats)
-		for _, notif := range notifs {
-			userID, err := strconv.ParseInt(notif["recipient_id"], 10, 64)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConversionError, "value": notif["recipient_id"], "error": err}).Error("getting recipient_id")
-				return false
-			}
-
-			data, err := mapToString(notif)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling notification")
-				return false
-			}
-
-			ok, err := publisher.Write(userID, data)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
-				return false
-			}
-
-			if !ok {
-				log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
-				return false
-			}
-
-			id, err := strconv.ParseInt(notif["id"], 10, 64)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("conversion string to int64")
-				return false
-			}
-
-			lni, ok := notifications.Load(ecosystemID)
-			ln := lni.(NotificationStats)
-			if ok && *ln.lastNotifID < id {
-				*ln.lastNotifID = id
-				notifications.Store(ecosystemID, ln)
-			}
-		}
-
-		return true
-	})
+type lastMessages struct {
+	mu    sync.RWMutex
+	stats map[lastMessagesKey][]notificationRecord
 }
 
-func mapToString(value map[string]string) (string, error) {
-	bytes, err := json.Marshal(value)
+func newLastMessages() *lastMessages {
+	return &lastMessages{
+		stats: map[lastMessagesKey][]notificationRecord{},
+	}
+}
+
+func (lm *lastMessages) get(system, user int64) ([]notificationRecord, bool) {
+	lm.mu.RLock()
+	defer lm.mu.RUnlock()
+
+	res, ok := lm.stats[lastMessagesKey{system: system, user: user}]
+	return res, ok
+}
+
+func (lm *lastMessages) set(system, user int64, newStats []notificationRecord) {
+	lm.mu.Lock()
+	defer lm.mu.Unlock()
+
+	lm.stats[lastMessagesKey{system: system, user: user}] = newStats
+}
+
+func (lm *lastMessages) delete(system, user int64) {
+	lm.mu.Lock()
+	defer lm.mu.Unlock()
+
+	delete(lm.stats, lastMessagesKey{system: system, user: user})
+}
+
+var (
+	systemUsers       map[int64]*[]int64
+	mu                sync.Mutex
+	lastMessagesStats *lastMessages
+)
+
+func init() {
+	systemUsers = make(map[int64]*[]int64)
+	lastMessagesStats = newLastMessages()
+}
+
+// AddUser add user to send notifications
+func AddUser(userID, systemID int64) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	val, ok := systemUsers[systemID]
+	if ok {
+		*val = append(*val, userID)
+		return
+	}
+
+	val = &[]int64{userID}
+	systemUsers[systemID] = val
+}
+
+// UpdateNotifications send stats about unreaded messages to centrifugo for ecosystem
+func UpdateNotifications(ecosystemID int64, users []int64) {
+
+	notificationsStats, err := getEcosystemNotificationStats(ecosystemID, users)
 	if err != nil {
-		return "", err
+		return
 	}
-	return string(bytes), nil
-}
 
-func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64, userIDs NotificationStats) []map[string]string {
-	users := make([]int64, 0)
-	userIDs.userIDs.Range(func(key, value interface{}) bool {
-		users = append(users, int64(key.(UserID)))
-		return true
-	})
+	for _, user := range users {
+		oldStats, _ := lastMessagesStats.get(ecosystemID, user)
+		var newStats []notificationRecord
 
-	rows, err := model.GetAllNotifications(int64(ecosystemID), lastNotificationID, users)
-	if err != nil || len(rows) == 0 {
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all notifications")
+		if ns, _ := notificationsStats[user]; ns != nil {
+			newStats = *ns
+		} else {
+			newStats = nil
 		}
-		return nil
+
+		if !statsChanged(oldStats, newStats) {
+			continue
+		}
+
+		if len(newStats) == 0 {
+			for i := range oldStats {
+				oldStats[i].RecordsCount = 0
+			}
+
+			lastMessagesStats.delete(ecosystemID, user)
+			sendUserStats(user, oldStats)
+			continue
+		}
+
+		lastMessagesStats.set(ecosystemID, user, newStats)
+		sendUserStats(user, newStats)
 	}
-	return rows
 }
 
-// AddUser is subscribing user to notifications
-func AddUser(userID int64, ecosystemID int64) {
-	eId := EcosystemID(ecosystemID)
+func getEcosystemNotificationStats(ecosystemID int64, users []int64) (map[int64]*[]notificationRecord, error) {
+	result, err := model.GetNotificationsCount(ecosystemID, users)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notification count")
+		return nil, err
+	}
 
-	var ns NotificationStats
-	ins, ok := notifications.Load(eId)
+	return parseRecipientNotification(result, ecosystemID), nil
+}
+
+// SendNotifications send stats about unreaded messages to centrifugo
+func SendNotifications() {
+	for ecosystemID, users := range systemUsers {
+		UpdateNotifications(ecosystemID, *users)
+	}
+}
+
+func parseRecipientNotification(rows []map[string]string, systemID int64) map[int64]*[]notificationRecord {
+	recipientNotifications := make(map[int64]*[]notificationRecord)
+
+	for _, r := range rows {
+		recipientID := converter.StrToInt64(r["recipient_id"])
+		roleID := converter.StrToInt64(r["role_id"])
+		count := converter.StrToInt64(r["cnt"])
+
+		roleNotifications := notificationRecord{
+			EcosystemID:  systemID,
+			RoleID:       roleID,
+			RecordsCount: count,
+		}
+
+		nr, ok := recipientNotifications[recipientID]
+		if ok {
+			*nr = append(*nr, roleNotifications)
+			continue
+		}
+
+		records := []notificationRecord{
+			roleNotifications,
+		}
+
+		recipientNotifications[recipientID] = &records
+	}
+
+	return recipientNotifications
+}
+
+func statsChanged(source, new []notificationRecord) bool {
+
+	if len(source) != len(new) {
+		return true
+	}
+
+	if len(new) == 0 {
+		return false
+	}
+
+	var newRole bool
+
+	for _, nRec := range new {
+		newRole = true
+
+		for _, sRec := range source {
+			if sRec.RoleID == nRec.RoleID {
+				newRole = false
+
+				if sRec.RecordsCount != nRec.RecordsCount {
+					return true
+				}
+			}
+		}
+
+		if newRole {
+			return true
+		}
+	}
+	return false
+}
+
+func sendUserStats(user int64, stats []notificationRecord) {
+	rawStats, err := json.Marshal(stats)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("notification statistic")
+	}
+
+	ok, err := publisher.Write(user, string(rawStats))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
+	}
 
 	if !ok {
-		ns = NotificationStats{userIDs: sync.Map{}, lastNotifID: new(int64)}
-	} else {
-		ns = ins.(NotificationStats)
+		log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
 	}
+}
 
-	ns.userIDs.Store(UserID(userID), 0)
-	notifications.Store(eId, ns)
+// SendNotificationsByRequest send stats by systemUsers one time
+func SendNotificationsByRequest(systemUsers map[int64][]int64) {
+	for ecosystemID, users := range systemUsers {
+		stats, err := getEcosystemNotificationStats(ecosystemID, users)
+		if err != nil {
+			continue
+		}
+
+		for user, notifications := range stats {
+			if notifications == nil {
+				continue
+			}
+
+			sendUserStats(user, *notifications)
+		}
+	}
 }
