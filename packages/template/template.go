@@ -118,7 +118,7 @@ func setAllAttr(par parFunc) {
 			for _, ch := range v {
 				switch ch {
 				case '"':
-					if stack[len(stack)-1] == '"' {
+					if len(stack) > 0 && stack[len(stack)-1] == '"' {
 						stack = stack[:len(stack)-1]
 					} else {
 						stack = append(stack, '"')
@@ -130,7 +130,7 @@ func setAllAttr(par parFunc) {
 				case '[':
 					stack = append(stack, ']')
 				case ')', '}', ']':
-					if stack[len(stack)-1] == ch {
+					if len(stack) > 0 && stack[len(stack)-1] == ch {
 						stack = stack[:len(stack)-1]
 					}
 				case ',':
