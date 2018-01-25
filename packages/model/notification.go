@@ -52,7 +52,7 @@ func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]str
 }
 
 func getNotificationCountFilter(users []int64) (filter string, params []interface{}) {
-	filter = ` WHERE closed = false `
+	filter = ` WHERE closed = 0 `
 
 	if len(users) > 0 {
 		filter += `AND recipient_id IN (?) `

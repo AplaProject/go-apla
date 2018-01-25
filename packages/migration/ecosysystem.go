@@ -897,24 +897,23 @@ var (
 		DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (
 			"id" 	bigint NOT NULL DEFAULT '0',
-			"started_processing_time" timestamp,
-			"started_time"	timestamp,
-			"body_text"	text NOT NULL DEFAULT '',
-			"recipient_id"	bigint NOT NULL DEFAULT '0',
-			"started_processing_id"	bigint NOT NULL DEFAULT '0',
-			"name"	varchar(255) NOT NULL DEFAULT '',
-			"role_id"	bigint NOT NULL DEFAULT '0',
-			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"page_val_int"	bigint NOT NULL DEFAULT '0',
-			"page_val_str"	varchar(255) NOT NULL DEFAULT '',
-			"recipient_name" varchar(255) NOT NULL DEFAULT '',
+			"icon"	varchar(255) NOT NULL DEFAULT '',
 			"closed" bigint NOT NULL DEFAULT '0',
-			"header_text"	text NOT NULL DEFAULT '',
-			"recipient_avatar"	text NOT NULL DEFAULT '',
 			"notification_type"	bigint NOT NULL DEFAULT '0',
+			"started_processing_time" timestamp,
+			"page_name"	varchar(255) NOT NULL DEFAULT '',
+			"recipient_avatar"	bytea NOT NULL DEFAULT '',
+			"date_create"	timestamp,
+			"page_params"	text NOT NULL DEFAULT '',
+			"recipient_name" varchar(255) NOT NULL DEFAULT '',
 			"finished_processing_id" bigint NOT NULL DEFAULT '0',
 			"finished_processing_time" timestamp,
-			"page_name"	varchar(255) NOT NULL DEFAULT ''
+			"role_id"	bigint NOT NULL DEFAULT '0',
+			"role_name"	varchar(255) NOT NULL DEFAULT '',
+			"recipient_id"	bigint NOT NULL DEFAULT '0',
+			"started_processing_id"	bigint NOT NULL DEFAULT '0',
+			"body_text"	text NOT NULL DEFAULT '',
+			"header_text"	text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
 
