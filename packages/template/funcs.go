@@ -427,6 +427,7 @@ func dbfindTag(par parFunc) string {
 	if len(fields) == 0 {
 		fields = `*`
 	}
+	fields = strings.ToLower(fields)
 	if par.Node.Attr[`where`] != nil {
 		where = ` where ` + converter.Escape(par.Node.Attr[`where`].(string))
 	}

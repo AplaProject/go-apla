@@ -1016,9 +1016,9 @@ var (
 					fields = JSONToMap(row[colfield[0]])
 					val = fields[colfield[1]]
 				}
-                if !val {
-                    return ""
-                }
+				if !val {
+					return ""
+				}
 				return val
 			}
 			return row[name]
