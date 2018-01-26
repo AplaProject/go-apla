@@ -59,5 +59,5 @@ func GetHMACSign(userID int64) (string, string, error) {
 
 // Write is publishing data to server
 func Write(userID int64, data string) (bool, error) {
-	return publisher.Publish("client#"+strconv.FormatInt(userID, 10), []byte(data))
+	return publisher.Publish("client"+strconv.FormatInt(userID, 10), []byte(data))
 }
