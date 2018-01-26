@@ -460,6 +460,8 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 	return
 }
 
+// PrepareColumns replaces jsonb fields -> in the list of columns for db selecting
+// For example, name,doc->title => name,doc::jsonb->>'title' as "doc.title"
 func PrepareColumns(columns string) string {
 	colList := make([]string, 0)
 	for _, icol := range strings.Split(columns, `,`) {

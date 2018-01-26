@@ -585,14 +585,14 @@ func InterfaceToStr(v interface{}) (string, error) {
 }
 
 // InterfaceSliceToStr converts the slice of interfaces to the slice of strings
-func InterfaceSliceToStr(i []interface{}) (str []string, err error) {
+func InterfaceSliceToStr(i []interface{}) (strs []string, err error) {
 	var val string
 	for _, v := range i {
 		val, err = InterfaceToStr(v)
 		if err != nil {
 			return
 		}
-		str = append(str, val)
+		strs = append(strs, val)
 	}
 	return
 }

@@ -543,7 +543,9 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 		return fmt.Errorf(eTableNotFound, table)
 	}
 	var cols map[string]string
-	hcolumns := make(map[string]colAccess)
+	// Every item of checkColumns has 'ok' boolean value. If it equals false then the key-column
+	// doesn't have read/update access rights.
+	checkColumns := make(map[string]colAccess)
 	err = json.Unmarshal([]byte(tables.Columns), &cols)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("getting table columns")
@@ -556,15 +558,15 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 		}
 		if !update && colname == `*` {
 			for column := range cols {
-				hcolumns[column] = colAccess{true, column}
+				checkColumns[column] = colAccess{true, column}
 			}
 			break
 		}
-		hcolumns[colname] = colAccess{true, colname}
+		checkColumns[colname] = colAccess{true, colname}
 	}
-	_, isall := hcolumns[`*`]
+	_, isall := checkColumns[`*`]
 	for column, cond := range cols {
-		if ca, ok := hcolumns[column]; (!ok || !ca.ok) && !isall {
+		if ca, ok := checkColumns[column]; (!ok || !ca.ok) && !isall {
 			continue
 		}
 		perm, err := getPermColumns(cond)
@@ -588,13 +590,13 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 				if update {
 					return errAccessDenied
 				}
-				hcolumns[column] = colAccess{false, ``}
+				checkColumns[column] = colAccess{false, ``}
 			}
 		}
 	}
 	if !update {
 		retColumn := make([]string, 0)
-		for key, val := range hcolumns {
+		for key, val := range checkColumns {
 			if val.ok && key != `*` {
 				retColumn = append(retColumn, val.original)
 			}
