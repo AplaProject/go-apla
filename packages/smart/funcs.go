@@ -648,7 +648,7 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 // TableConditions is contract func
 func TableConditions(sc *SmartContract, name, columns, permissions string) (err error) {
 	isEdit := len(columns) == 0
-
+	name = strings.ToLower(name)
 	if isEdit {
 		if !accessContracts(sc, `EditTable`) {
 			log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1EditTable")
@@ -774,6 +774,8 @@ func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 
 // ColumnCondition is contract func
 func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions string) error {
+	name = strings.ToLower(name)
+	tableName = strings.ToLower(tableName)
 	if !accessContracts(sc, `NewColumn`, `EditColumn`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ColumnConditions can be only called from @1NewColumn")
 		return fmt.Errorf(`ColumnCondition can be only called from NewColumn or EditColumn`)
@@ -785,7 +787,6 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		prefix += `_vde`
 	}
 	tEx.SetTablePrefix(prefix)
-	name = strings.ToLower(name)
 
 	exists, err := tEx.IsExistsByPermissionsAndTableName(sc.DbTransaction, name, tableName)
 	if err != nil {
@@ -832,7 +833,6 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("Unknown column type")
 		return fmt.Errorf(`incorrect type`)
 	}
-
 	return sc.AccessTable(tblName, "new_column")
 }
 
@@ -871,6 +871,7 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions strin
 		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
 	}
 	name = strings.ToLower(name)
+	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
 
 	var colType string
@@ -933,6 +934,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		return fmt.Errorf(`EditColumn can be only called from EditColumn`)
 	}
 	name = strings.ToLower(name)
+	tableName = strings.ToLower(tableName)
 	tables := getDefTableName(sc, `tables`)
 	type cols struct {
 		Columns string
