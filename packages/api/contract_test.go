@@ -87,6 +87,17 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`TestMultiForm`, `contract TestMultiForm {
+		data {
+			list array
+		}
+		action { 
+			Test("multiform",  $list[0]+$list[1])
+		}
+	}`,
+		[]smartParams{
+			{map[string]string{`list[]`: `2`, `list[0]`: `start`, `list[1]`: `finish`}, map[string]string{`multiform`: `startfinish`}},
+		}},
 	{`errTestMessage`, `contract errTestMessage {
 		conditions {
 		}
