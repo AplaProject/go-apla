@@ -535,7 +535,73 @@ var (
 		while i < Len(row) {
 			var idata map
 			idata = row[i]
-			CallContract(cnt, idata)
+
+			if(cnt == "pages"){
+				$ret_page = DBFind("pages").Columns("id").Where("name=$", idata["Name"])
+				$page_id = One($ret_page, "id") 
+				if ($page_id != nil){
+					idata["Id"] = Int($page_id) 
+					CallContract("EditPage", idata)
+				} else {
+					CallContract("NewPage", idata)
+				}
+			}
+			if(cnt == "blocks"){
+				$ret_block = DBFind("blocks").Columns("id").Where("name=$", idata["Name"])
+				$block_id = One($ret_block, "id") 
+				if ($block_id != nil){
+					idata["Id"] = Int($block_id)
+					CallContract("EditBlock", idata)
+				} else {
+					CallContract("NewBlock", idata)
+				}
+			}
+			if(cnt == "menus"){
+				$ret_menu = DBFind("menu").Columns("id,value").Where("name=$", idata["Name"])
+				$menu_id = One($ret_menu, "id") 
+				$menu_value = One($ret_menu, "value") 
+				if ($menu_id != nil){
+					idata["Id"] = Int($menu_id)
+					idata["Value"] = Str($menu_value) + "\n" + Str(idata["Value"])
+					CallContract("EditMenu", idata)
+				} else {
+					CallContract("NewMenu", idata)
+				}
+			}
+			if(cnt == "parameters"){
+				$ret_param = DBFind("parameters").Columns("id").Where("name=$", idata["Name"])
+				$param_id = One($ret_param, "id")
+				if ($param_id != nil){ 
+					idata["Id"] = Int($param_id) 
+					CallContract("EditParameter", idata)
+				} else {
+					CallContract("NewParameter", idata)
+				}
+			}
+			if(cnt == "languages"){
+				$ret_lang = DBFind("languages").Columns("id").Where("name=$", idata["Name"])
+				$lang_id = One($ret_lang, "id")
+				if ($lang_id != nil){
+					CallContract("EditLang", idata)
+				} else {
+					CallContract("NewLang", idata)
+				}
+			}
+			if(cnt == "contracts"){
+				if IsObject(idata["Name"], $ecosystem_id){
+				} else {
+					CallContract("NewContract", idata)
+				} 
+			}
+			if(cnt == "tables"){
+				$ret_table = DBFind("tables").Columns("id").Where("name=$", idata["Name"])
+				$table_id = One($ret_table, "id")
+				if ($table_id != nil){	
+				} else {
+					CallContract("NewTable", idata)
+				}
+			}
+
 			i = i + 1
 		}
 	}
@@ -575,13 +641,13 @@ var (
 			$list = JSONToMap($Data)
 		}
 		action {
-			ImportList($list["pages"], "NewPage")
-			ImportList($list["blocks"], "NewBlock")
-			ImportList($list["menus"], "NewMenu")
-			ImportList($list["parameters"], "NewParameter")
-			ImportList($list["languages"], "NewLang")
-			ImportList($list["contracts"], "NewContract")
-			ImportList($list["tables"], "NewTable")
+			ImportList($list["pages"], "pages")
+			ImportList($list["blocks"], "blocks")
+			ImportList($list["menus"], "menus")
+			ImportList($list["parameters"], "parameters")
+			ImportList($list["languages"], "languages")
+			ImportList($list["contracts"], "contracts")
+			ImportList($list["tables"], "tables")
 			ImportData($list["data"])
 		}
 	}', 'ContractConditions("MainCondition")'),
@@ -1522,7 +1588,73 @@ var (
 		while i < Len(row) {
 			var idata map
 			idata = row[i]
-			CallContract(cnt, idata)
+
+			if(cnt == "pages"){
+				$ret_page = DBFind("pages").Columns("id").Where("name=$", idata["Name"])
+				$page_id = One($ret_page, "id") 
+				if ($page_id != nil){
+					idata["Id"] = Int($page_id) 
+					CallContract("EditPage", idata)
+				} else {
+					CallContract("NewPage", idata)
+				}
+			}
+			if(cnt == "blocks"){
+				$ret_block = DBFind("blocks").Columns("id").Where("name=$", idata["Name"])
+				$block_id = One($ret_block, "id") 
+				if ($block_id != nil){
+					idata["Id"] = Int($block_id)
+					CallContract("EditBlock", idata)
+				} else {
+					CallContract("NewBlock", idata)
+				}
+			}
+			if(cnt == "menus"){
+				$ret_menu = DBFind("menu").Columns("id,value").Where("name=$", idata["Name"])
+				$menu_id = One($ret_menu, "id") 
+				$menu_value = One($ret_menu, "value") 
+				if ($menu_id != nil){
+					idata["Id"] = Int($menu_id)
+					idata["Value"] = Str($menu_value) + "\n" + Str(idata["Value"])
+					CallContract("EditMenu", idata)
+				} else {
+					CallContract("NewMenu", idata)
+				}
+			}
+			if(cnt == "parameters"){
+				$ret_param = DBFind("parameters").Columns("id").Where("name=$", idata["Name"])
+				$param_id = One($ret_param, "id")
+				if ($param_id != nil){ 
+					idata["Id"] = Int($param_id) 
+					CallContract("EditParameter", idata)
+				} else {
+					CallContract("NewParameter", idata)
+				}
+			}
+			if(cnt == "languages"){
+				$ret_lang = DBFind("languages").Columns("id").Where("name=$", idata["Name"])
+				$lang_id = One($ret_lang, "id")
+				if ($lang_id != nil){
+					CallContract("EditLang", idata)
+				} else {
+					CallContract("NewLang", idata)
+				}
+			}
+			if(cnt == "contracts"){
+				if IsObject(idata["Name"], $ecosystem_id){
+				} else {
+					CallContract("NewContract", idata)
+				} 
+			}
+			if(cnt == "tables"){
+				$ret_table = DBFind("tables").Columns("id").Where("name=$", idata["Name"])
+				$table_id = One($ret_table, "id")
+				if ($table_id != nil){	
+				} else {
+					CallContract("NewTable", idata)
+				}
+			}
+
 			i = i + 1
 		}
 	}
@@ -1562,13 +1694,13 @@ var (
 			$list = JSONToMap($Data)
 		}
 		action {
-			ImportList($list["pages"], "NewPage")
-			ImportList($list["blocks"], "NewBlock")
-			ImportList($list["menus"], "NewMenu")
-			ImportList($list["parameters"], "NewParameter")
-			ImportList($list["languages"], "NewLang")
-			ImportList($list["contracts"], "NewContract")
-			ImportList($list["tables"], "NewTable")
+			ImportList($list["pages"], "pages")
+			ImportList($list["blocks"], "blocks")
+			ImportList($list["menus"], "menus")
+			ImportList($list["parameters"], "parameters")
+			ImportList($list["languages"], "languages")
+			ImportList($list["contracts"], "contracts")
+			ImportList($list["tables"], "tables")
 			ImportData($list["data"])
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
