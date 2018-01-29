@@ -113,7 +113,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	if err != nil {
 		return err
 	}
-	return parser.InsertBlockWOForks(blockBin)
+	return parser.InsertBlockWOForks(blockBin, true)
 }
 
 func generateNextBlock(

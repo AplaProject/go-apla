@@ -46,6 +46,7 @@ type Block struct {
 	BinData    []byte
 	Parsers    []*Parser
 	SysUpdate  bool
+	GenBlock   bool // it equals true when we are generating a new block
 }
 
 // GetLogger is returns logger
@@ -55,12 +56,12 @@ func (b Block) GetLogger() *log.Entry {
 }
 
 // InsertBlockWOForks is inserting blocks
-func InsertBlockWOForks(data []byte) error {
+func InsertBlockWOForks(data []byte, genBlock bool) error {
 	block, err := ProcessBlockWherePrevFromBlockchainTable(data)
 	if err != nil {
 		return err
 	}
-
+	block.GenBlock = genBlock
 	if err := block.CheckBlock(); err != nil {
 		return err
 	}
@@ -588,11 +589,21 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
 		return err
 	}
-
+	limits := b.newLimits()
 	for _, p := range b.Parsers {
+		var (
+			msg string
+			err error
+		)
 		p.DbTransaction = dbTransaction
 
-		msg, err := playTransaction(p)
+		err = limits.preProcess(p)
+		if err == nil {
+			msg, err = playTransaction(p)
+		}
+		if err == nil {
+			err = limits.postProcess(p)
+		}
 		if err != nil {
 			// skip this transaction
 			model.MarkTransactionUsed(nil, p.TxHash)
