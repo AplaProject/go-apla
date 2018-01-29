@@ -641,7 +641,7 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
-		getDefTableName(sc, `tables`), []string{`name`}, []string{name}, !sc.VDE && sc.Rollback, false)
+		getDefTableName(sc, `tables`), []string{`name`}, []string{strings.ToLower(name)}, !sc.VDE && sc.Rollback, false)
 	return err
 }
 
