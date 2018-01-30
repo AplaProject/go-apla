@@ -3,11 +3,12 @@ package model
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 const keysUpdatePattern = `UPDATE "1_keys" SET amount = amount + ? WHERE id = ?`
 
-var errLowBalance = errors.New("not enough funds on the balance")
+var errLowBalance = errors.New("not enough APL on the balance")
 
 // History represent record of history table
 type History struct {
@@ -18,6 +19,7 @@ type History struct {
 	Comment     string
 	BlockID     int64
 	TxHash      []byte
+	CreatedAt   time.Time
 }
 
 // TokenTransferWithHistory add one history record and update wallet balance

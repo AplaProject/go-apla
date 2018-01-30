@@ -657,7 +657,7 @@ var (
 		CREATE INDEX "%[1]d_history_index_sender" ON "%[1]d_history" (sender_id);
 		CREATE INDEX "%[1]d_history_index_recipient" ON "%[1]d_history" (recipient_id);
 		CREATE INDEX "%[1]d_history_index_block" ON "%[1]d_history" (block_id, txhash);
-		
+		CREATE INDEX "%[1]d_history_index_created" ON "%[1]d_history" (created_at);
 		
 		DROP TABLE IF EXISTS "%[1]d_languages"; CREATE TABLE "%[1]d_languages" (
 		  "id" bigint  NOT NULL DEFAULT '0',

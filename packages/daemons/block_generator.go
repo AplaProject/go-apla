@@ -27,8 +27,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/parser"
+	"github.com/AplaProject/go-apla/packages/tokenMovementMonitor"
 	"github.com/AplaProject/go-apla/packages/utils"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -115,11 +115,12 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	err := parser.InsertBlockWOForks(blockBin)
+	err = parser.InsertBlockWOForks(blockBin)
 	if err != nil {
 		return err
 	}
 
+	go tokenMovementMonitor.CheckTokenMovementLimits(conf.Config.TokenMovement, header.BlockID)
 	return nil
 }
 
@@ -130,5 +131,5 @@ func generateNextBlock(blockHeader *utils.BlockData, trs []model.Transaction, ke
 		trData = append(trData, tr.Data)
 	}
 
-	return parser.MarshallBlock(header, trData, prevBlockHash, key)
+	return parser.MarshallBlock(blockHeader, trData, prevBlockHash, key)
 }
