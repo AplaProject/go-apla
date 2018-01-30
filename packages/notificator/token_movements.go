@@ -1,4 +1,4 @@
-package tokenMovementMonitor
+package notificator
 
 import (
 	"fmt"

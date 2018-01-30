@@ -26,8 +26,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/notificator"
 	"github.com/AplaProject/go-apla/packages/parser"
-	"github.com/AplaProject/go-apla/packages/tokenMovementMonitor"
 	"github.com/AplaProject/go-apla/packages/utils"
 	log "github.com/sirupsen/logrus"
 )
@@ -120,7 +120,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	go tokenMovementMonitor.CheckTokenMovementLimits(conf.Config.TokenMovement, header.BlockID)
+	go notificator.CheckTokenMovementLimits(conf.Config.TokenMovement, header.BlockID)
 	return nil
 }
 
