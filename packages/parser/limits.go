@@ -28,26 +28,56 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	letPreprocess = 0x0001 // checking before generating block
+	letGenBlock   = 0x0002 // checking during generating block
+	letParsing    = 0x0004 // common checking during parsing block
+)
+
 // Limits is used for saving current limit information
 type Limits struct {
-	GenMode  bool      // equals true when the node is generating a block
+	Block    *Block    // it equals nil if checking before generatin block
 	Limiters []Limiter // the list of limiters
 }
 
 // Limiter describes interface functions for limits
 type Limiter interface {
-	initLimit() error
+	initLimit(*Block) error
 	preLimit(*Parser) error
 	postLimit(*Parser) error
 }
 
+type initLimiter struct {
+	limiter Limiter
+	modes   int // combination of letPreprocess letGenBlock letParsing
+}
+
+var (
+	allLimiters = []initLimiter{
+		{&txUserLimit{}, letPreprocess | letParsing},
+		{&txMaxLimit{}, letPreprocess | letParsing},
+		{&txUserEcosysLimit{}, letPreprocess | letParsing},
+		{&timeBlockLimit{}, letGenBlock},
+	}
+)
+
 // newLimits initializes Limits structure.
-func (b *Block) newLimits() (limits *Limits, err error) {
-	limits = &Limits{GenMode: b.GenBlock, Limiters: []Limiter{
-		&timeBlockLimit{}, &txUserLimit{}, &txMaxLimit{}, &txUserEcosysLimit{},
-	}}
-	for _, limiter := range limits.Limiters {
-		if err = limiter.initLimit(); err != nil {
+func newLimits(b *Block) (limits *Limits, err error) {
+	var mode int
+	limits = &Limits{Block: b, Limiters: make([]Limiter, 0, 8)}
+	if b == nil {
+		mode = letPreprocess
+	} else if b.GenBlock {
+		mode = letGenBlock
+	} else {
+		mode = letParsing
+	}
+	for _, limiter := range allLimiters {
+		if limiter.modes&mode == 0 {
+			continue
+		}
+		limits.Limiters = append(limits.Limiters, limiter.limiter)
+		if err = limiter.initLimit(b); err != nil {
 			return nil, err
 		}
 	}
@@ -80,13 +110,15 @@ func limitError(msg, limitName string, args ...interface{}) error {
 
 // Checking the time of the start of generating block
 type timeBlockLimit struct {
+	Block *Block
 	Start int64 // the time of the start of generating block
 	Limit int64 // the maximum time
 }
 
-func (bl *timeBlockLimit) initLimit() error {
+func (bl *timeBlockLimit) initLimit(b *Block) error {
+	bl.Block = b
 	bl.Start = time.Now().Unix()
-	bl.Limit = 1000
+	bl.Limit = 1000 // It should be taken from time limit system parameter
 	return nil
 }
 
@@ -96,6 +128,7 @@ func (bl *timeBlockLimit) preLimit(p *Parser) error {
 
 func (bl *timeBlockLimit) postLimit(p *Parser) error {
 	if time.Now().Unix() > bl.Start+bl.Limit {
+		bl.Block.StopBlock = true
 		return limitError(`timeBlockLimit`, `Time limitation of generating block`)
 	}
 	return nil
@@ -107,7 +140,7 @@ type txUserLimit struct {
 	Limit   int           // the value of max tx from one user
 }
 
-func (bl *txUserLimit) initLimit() error {
+func (bl *txUserLimit) initLimit(b *Block) error {
 	bl.TxUsers = make(map[int64]int)
 	bl.Limit = converter.StrToInt(syspar.SysString(syspar.MaxBlockUserTx))
 	return nil
@@ -138,7 +171,7 @@ type txMaxLimit struct {
 	Limit int // max count of tx in the block
 }
 
-func (bl *txMaxLimit) initLimit() error {
+func (bl *txMaxLimit) initLimit(b *Block) error {
 	bl.Limit = syspar.GetMaxTxCount()
 	return nil
 }
@@ -165,7 +198,7 @@ type txUserEcosysLimit struct {
 	TxEcosys map[int64]ecosysLimit // the counter of tx from one user in ecosystems
 }
 
-func (bl *txUserEcosysLimit) initLimit() error {
+func (bl *txUserEcosysLimit) initLimit(b *Block) error {
 	bl.TxEcosys = make(map[int64]ecosysLimit)
 	return nil
 }

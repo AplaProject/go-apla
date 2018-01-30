@@ -47,6 +47,8 @@ type Block struct {
 	Parsers    []*Parser
 	SysUpdate  bool
 	GenBlock   bool // it equals true when we are generating a new block
+	StopBlock  bool
+	StopCount  int // The count of good tx in the block
 }
 
 // GetLogger is returns logger
@@ -593,7 +595,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 	if err != nil {
 		return err
 	}
-	for _, p := range b.Parsers {
+	for curTx, p := range b.Parsers {
 		var (
 			msg string
 			err error
@@ -608,6 +610,10 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			err = limits.postProcess(p)
 		}
 		if err != nil {
+			if b.StopBlock {
+				b.StopCount = curTx
+				return nil
+			}
 			// skip this transaction
 			model.MarkTransactionUsed(nil, p.TxHash)
 			p.processBadTransaction(p.TxHash, err.Error())

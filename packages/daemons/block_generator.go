@@ -95,9 +95,21 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
 		return err
 	}
+	// Checks preprocessing count limits
+	txList := make([]*model.Transaction, len(trs))
+	for _, txItem := range trs {
+		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
+		p, err := ParseTransaction(bufTransaction)
+		if err != nil {
+			if p.TxHash != nil {
+				p.processBadTransaction(p.TxHash, err.Error())
+			}
+			return nil, fmt.Errorf("parse transaction error(%s)", err)
+		}
+	}
 
 	// Block generation will be started only if we have transactions
-	if len(trs) == 0 {
+	if len(txList) == 0 {
 		return nil
 	}
 
