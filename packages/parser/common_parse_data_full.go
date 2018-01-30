@@ -589,7 +589,10 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
 		return err
 	}
-	limits := b.newLimits()
+	limits, err := b.newLimits()
+	if err != nil {
+		return err
+	}
 	for _, p := range b.Parsers {
 		var (
 			msg string
