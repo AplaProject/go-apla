@@ -460,6 +460,20 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 	return
 }
 
+// PrepareColumns replaces jsonb fields -> in the list of columns for db selecting
+// For example, name,doc->title => name,doc::jsonb->>'title' as "doc.title"
+func PrepareColumns(columns string) string {
+	colList := make([]string, 0)
+	for _, icol := range strings.Split(columns, `,`) {
+		if strings.Contains(icol, `->`) {
+			colfield := strings.Split(icol, `->`)
+			icol = fmt.Sprintf(`%s::jsonb->>'%s' as "%[1]s.%[2]s"`, colfield[0], colfield[1])
+		}
+		colList = append(colList, icol)
+	}
+	return strings.Join(colList, `,`)
+}
+
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
 	where string, params []interface{}) (int64, []interface{}, error) {
@@ -472,6 +486,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	if len(columns) == 0 {
 		columns = `*`
 	}
+	columns = strings.ToLower(columns)
 	if len(order) == 0 {
 		order = `id`
 	}
@@ -501,6 +516,8 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		}
 		columns = strings.Join(cols, `,`)
 	}
+	columns = PrepareColumns(columns)
+
 	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {

@@ -645,6 +645,9 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 // JSONToMap is converting json to map
 func JSONToMap(input string) (map[string]interface{}, error) {
 	var ret map[string]interface{}
+	if len(input) == 0 {
+		return make(map[string]interface{}), nil
+	}
 	err := json.Unmarshal([]byte(input), &ret)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling json to map")

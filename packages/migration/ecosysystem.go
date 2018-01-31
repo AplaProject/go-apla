@@ -171,6 +171,21 @@ var (
 			if list {
 				var row map 
 				row = list[0]
+				if Contains(name, "->") {
+					var colfield array
+					var val string
+					colfield = Split(ToLower(name), "->")
+					val = row[colfield[0]+"."+ colfield[1]]
+					if !val {
+						var fields map
+						fields = JSONToMap(row[colfield[0]])
+						val = fields[colfield[1]]
+					}
+					if !val {
+						return ""
+					}
+					return val
+				}
 				return row[name]
 			}
 			return nil
@@ -991,6 +1006,21 @@ var (
 		if list {
 			var row map 
 			row = list[0]
+			if Contains(name, "->") {
+				var colfield array
+				var val string
+				colfield = Split(ToLower(name), "->")
+				val = row[colfield[0]+"."+ colfield[1]]
+				if !val {
+					var fields map
+					fields = JSONToMap(row[colfield[0]])
+					val = fields[colfield[1]]
+				}
+				if !val {
+					return ""
+				}
+				return val
+			}
 			return row[name]
 		}
 		return nil
