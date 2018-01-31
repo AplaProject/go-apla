@@ -47,8 +47,7 @@ type Block struct {
 	Parsers    []*Parser
 	SysUpdate  bool
 	GenBlock   bool // it equals true when we are generating a new block
-	StopBlock  bool
-	StopCount  int // The count of good tx in the block
+	StopCount  int  // The count of good tx in the block
 }
 
 // GetLogger is returns logger
@@ -87,7 +86,34 @@ func (b *Block) PlayBlockSafe() error {
 	}
 
 	err = b.playBlock(dbTransaction)
-	if err != nil {
+	if b.GenBlock && b.StopCount > 0 {
+		doneTx := b.Parsers[:b.StopCount]
+		trData := make([][]byte, 0, b.StopCount)
+		for _, tr := range doneTx {
+			trData = append(trData, tr.TxFullData)
+		}
+		NodePrivateKey, _, err := utils.GetNodeKeys()
+		if err != nil || len(NodePrivateKey) < 1 {
+			log.WithFields(log.Fields{"type": consts.NodePrivateKeyFilename, "error": err}).Error("reading node private key")
+			return err
+		}
+
+		nbb, err := MarshallBlock(&b.Header, trData, b.PrevHeader.Hash, NodePrivateKey)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marshalling new block")
+			return err
+		}
+		nb, err := parseBlock(bytes.NewBuffer(nbb))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
+			return err
+		}
+
+		b.Parsers = nb.Parsers
+		b.MrklRoot = nb.MrklRoot
+		b.SysUpdate = nb.SysUpdate
+		err = nil
+	} else if err != nil {
 		dbTransaction.Rollback()
 		return err
 	}
@@ -591,10 +617,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
 		return err
 	}
-	limits, err := b.newLimits()
-	if err != nil {
-		return err
-	}
+	limits := NewLimits(b)
 	for curTx, p := range b.Parsers {
 		var (
 			msg string
@@ -602,17 +625,26 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		)
 		p.DbTransaction = dbTransaction
 
-		err = limits.preProcess(p)
-		if err == nil {
-			msg, err = playTransaction(p)
+		if b.GenBlock {
+			err = dbTransaction.Connection().Exec(fmt.Sprintf("SAVEPOINT \"tx-%d\";", curTx)).Error
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("using savepoint")
+				return err
+			}
 		}
-		if err == nil {
-			err = limits.postProcess(p)
+		msg, err = playTransaction(p)
+		if err == nil && p.TxSmart != nil {
+			err = limits.CheckLimit(p)
 		}
 		if err != nil {
-			if b.StopBlock {
+			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
-				return nil
+				model.IncrementAttempt(p.TxHash)
+				err = dbTransaction.Connection().Exec(fmt.Sprintf("ROLLBACK TO SAVEPOINT \"tx-%d\";", curTx)).Error
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("rolling back to previous savepoint")
+				}
+				return err
 			}
 			// skip this transaction
 			model.MarkTransactionUsed(nil, p.TxHash)

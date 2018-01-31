@@ -164,7 +164,7 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Id": {`13`}, "Value": {`Changed Param Value`},
+	form = url.Values{"Id": {`14`}, "Value": {`Changed Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx(`EditParameter`, &form)
 	if err != nil {

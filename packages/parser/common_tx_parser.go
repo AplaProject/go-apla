@@ -120,6 +120,13 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 	return nil
 }
 
+func (p *Parser) ProcessBadTransaction(err error) {
+	if p.TxHash != nil {
+		model.MarkTransactionUsed(nil, p.TxHash)
+		p.processBadTransaction(p.TxHash, err.Error())
+	}
+}
+
 // DeleteQueueTx deletes a transaction from the queue
 func (p *Parser) DeleteQueueTx(hash []byte) error {
 	logger := p.GetLogger()

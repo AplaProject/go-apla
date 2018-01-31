@@ -17,12 +17,14 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/config/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 
 	log "github.com/sirupsen/logrus"
@@ -36,15 +38,15 @@ const (
 
 // Limits is used for saving current limit information
 type Limits struct {
+	Mode     int
 	Block    *Block    // it equals nil if checking before generatin block
 	Limiters []Limiter // the list of limiters
 }
 
 // Limiter describes interface functions for limits
 type Limiter interface {
-	initLimit(*Block) error
-	preLimit(*Parser) error
-	postLimit(*Parser) error
+	initLimit(*Block)
+	checkLimit(*Parser, int) error
 }
 
 type initLimiter struct {
@@ -53,49 +55,43 @@ type initLimiter struct {
 }
 
 var (
-	allLimiters = []initLimiter{
+	// ErrLimitSkip returns when tx should be skipped during generating block
+	ErrLimitSkip = errors.New(`skip tx`)
+	// ErrLimitStop returns when the generation of the block should be stopped
+	ErrLimitStop = errors.New(`stop generating block`)
+)
+
+// NewLimits initializes Limits structure.
+func NewLimits(b *Block) (limits *Limits) {
+	limits = &Limits{Block: b, Limiters: make([]Limiter, 0, 8)}
+	if b == nil {
+		limits.Mode = letPreprocess
+	} else if b.GenBlock {
+		limits.Mode = letGenBlock
+	} else {
+		limits.Mode = letParsing
+	}
+	allLimiters := []initLimiter{
+		{&txMaxSize{}, letPreprocess | letParsing},
 		{&txUserLimit{}, letPreprocess | letParsing},
 		{&txMaxLimit{}, letPreprocess | letParsing},
 		{&txUserEcosysLimit{}, letPreprocess | letParsing},
 		{&timeBlockLimit{}, letGenBlock},
 	}
-)
-
-// newLimits initializes Limits structure.
-func newLimits(b *Block) (limits *Limits, err error) {
-	var mode int
-	limits = &Limits{Block: b, Limiters: make([]Limiter, 0, 8)}
-	if b == nil {
-		mode = letPreprocess
-	} else if b.GenBlock {
-		mode = letGenBlock
-	} else {
-		mode = letParsing
-	}
 	for _, limiter := range allLimiters {
-		if limiter.modes&mode == 0 {
+		if limiter.modes&limits.Mode == 0 {
 			continue
 		}
+		limiter.limiter.initLimit(b)
 		limits.Limiters = append(limits.Limiters, limiter.limiter)
-		if err = limiter.initLimit(b); err != nil {
-			return nil, err
-		}
 	}
 	return
 }
 
-func (limits *Limits) preProcess(p *Parser) error {
+// CheckLimits calls each limiter
+func (limits *Limits) CheckLimit(p *Parser) error {
 	for _, limiter := range limits.Limiters {
-		if err := limiter.preLimit(p); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (limits *Limits) postProcess(p *Parser) error {
-	for _, limiter := range limits.Limiters {
-		if err := limiter.postLimit(p); err != nil {
+		if err := limiter.checkLimit(p, limits.Mode); err != nil {
 			return err
 		}
 	}
@@ -108,28 +104,41 @@ func limitError(msg, limitName string, args ...interface{}) error {
 	return script.SetVMError(`panic`, err)
 }
 
+// Checking the max tx in the block
+type txMaxLimit struct {
+	Count int // the current count
+	Limit int // max count of tx in the block
+}
+
+func (bl *txMaxLimit) initLimit(b *Block) {
+	bl.Limit = syspar.GetMaxTxCount()
+}
+
+func (bl *txMaxLimit) checkLimit(p *Parser, mode int) error {
+	bl.Count++
+	if bl.Count > bl.Limit {
+		if mode == letPreprocess {
+			return ErrLimitStop
+		}
+		return limitError(`txMaxLimit`, `Max tx in the block`)
+	}
+	return nil
+}
+
 // Checking the time of the start of generating block
 type timeBlockLimit struct {
-	Block *Block
 	Start int64 // the time of the start of generating block
 	Limit int64 // the maximum time
 }
 
-func (bl *timeBlockLimit) initLimit(b *Block) error {
-	bl.Block = b
+func (bl *timeBlockLimit) initLimit(b *Block) {
 	bl.Start = time.Now().Unix()
-	bl.Limit = 1000 // It should be taken from time limit system parameter
-	return nil
+	bl.Limit = syspar.GetMaxBlockGenerationTime()
 }
 
-func (bl *timeBlockLimit) preLimit(p *Parser) error {
-	return nil
-}
-
-func (bl *timeBlockLimit) postLimit(p *Parser) error {
+func (bl *timeBlockLimit) checkLimit(p *Parser, mode int) error {
 	if time.Now().Unix() > bl.Start+bl.Limit {
-		bl.Block.StopBlock = true
-		return limitError(`timeBlockLimit`, `Time limitation of generating block`)
+		return ErrLimitStop
 	}
 	return nil
 }
@@ -140,13 +149,12 @@ type txUserLimit struct {
 	Limit   int           // the value of max tx from one user
 }
 
-func (bl *txUserLimit) initLimit(b *Block) error {
+func (bl *txUserLimit) initLimit(b *Block) {
 	bl.TxUsers = make(map[int64]int)
-	bl.Limit = converter.StrToInt(syspar.SysString(syspar.MaxBlockUserTx))
-	return nil
+	bl.Limit = syspar.GetMaxBlockUserTx()
 }
 
-func (bl *txUserLimit) preLimit(p *Parser) error {
+func (bl *txUserLimit) checkLimit(p *Parser, mode int) error {
 	var (
 		count int
 		ok    bool
@@ -154,37 +162,13 @@ func (bl *txUserLimit) preLimit(p *Parser) error {
 	keyID := p.TxSmart.KeyID
 	if count, ok = bl.TxUsers[keyID]; ok {
 		if count+1 > bl.Limit {
+			if mode == letPreprocess {
+				return ErrLimitSkip
+			}
 			return limitError(`txUserLimit`, `Max tx from one user %d`, keyID)
 		}
 	}
 	bl.TxUsers[keyID] = count + 1
-	return nil
-}
-
-func (bl *txUserLimit) postLimit(p *Parser) error {
-	return nil
-}
-
-// Checking the max tx in the block
-type txMaxLimit struct {
-	Count int // the current count
-	Limit int // max count of tx in the block
-}
-
-func (bl *txMaxLimit) initLimit(b *Block) error {
-	bl.Limit = syspar.GetMaxTxCount()
-	return nil
-}
-
-func (bl *txMaxLimit) preLimit(p *Parser) error {
-	bl.Count++
-	if bl.Count > bl.Limit {
-		return limitError(`txMaxLimit`, `Max tx in the block`)
-	}
-	return nil
-}
-
-func (bl *txMaxLimit) postLimit(p *Parser) error {
 	return nil
 }
 
@@ -198,17 +182,19 @@ type txUserEcosysLimit struct {
 	TxEcosys map[int64]ecosysLimit // the counter of tx from one user in ecosystems
 }
 
-func (bl *txUserEcosysLimit) initLimit(b *Block) error {
+func (bl *txUserEcosysLimit) initLimit(b *Block) {
 	bl.TxEcosys = make(map[int64]ecosysLimit)
-	return nil
 }
 
-func (bl *txUserEcosysLimit) preLimit(p *Parser) error {
+func (bl *txUserEcosysLimit) checkLimit(p *Parser, mode int) error {
 	keyID := p.TxSmart.KeyID
 	ecosystemID := p.TxSmart.EcosystemID
 	if val, ok := bl.TxEcosys[ecosystemID]; ok {
 		if user, ok := val.TxUsers[keyID]; ok {
 			if user+1 > val.Limit {
+				if mode == letPreprocess {
+					return ErrLimitSkip
+				}
 				return limitError(`txUserEcosysLimit`, `Max tx from one user %d in ecosystem %d`,
 					keyID, ecosystemID)
 			}
@@ -217,13 +203,45 @@ func (bl *txUserEcosysLimit) preLimit(p *Parser) error {
 			val.TxUsers[keyID] = 1
 		}
 	} else {
-		limit := 20 // This limit should be taken from ecosys params table of ecosystemID
+		limit := syspar.GetMaxBlockUserTx()
+		sp := &model.StateParameter{}
+		sp.SetTablePrefix(converter.Int64ToStr(ecosystemID))
+		found, err := sp.Get(nil, `max_block_user_tx`)
+		if err != nil {
+			return limitError(`txUserEcosysLimit`, err.Error())
+		}
+		if found {
+			limit = converter.StrToInt(sp.Value)
+		}
 		bl.TxEcosys[ecosystemID] = ecosysLimit{TxUsers: make(map[int64]int), Limit: limit}
 		bl.TxEcosys[ecosystemID].TxUsers[keyID] = 1
 	}
 	return nil
 }
 
-func (bl *txUserEcosysLimit) postLimit(p *Parser) error {
+// Checking the max tx & block size
+type txMaxSize struct {
+	Size       int64 // the current size of the block
+	LimitBlock int64 // max size of the block
+	LimitTx    int64 // max size of tx
+}
+
+func (bl *txMaxSize) initLimit(b *Block) {
+	bl.LimitBlock = syspar.GetMaxBlockSize()
+	bl.LimitTx = syspar.GetMaxTxSize()
+}
+
+func (bl *txMaxSize) checkLimit(p *Parser, mode int) error {
+	size := int64(len(p.TxFullData))
+	if size > bl.LimitTx {
+		return limitError(`txMaxSize`, `Max size of tx`)
+	}
+	bl.Size += size
+	if bl.Size > bl.LimitBlock {
+		if mode == letPreprocess {
+			return ErrLimitStop
+		}
+		return limitError(`txMaxSize`, `Max size of the block`)
+	}
 	return nil
 }

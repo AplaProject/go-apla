@@ -761,7 +761,8 @@ var (
 		('11','money_digit', '2', 'ContractConditions("MainCondition")'),
 		('12','stylesheet', 'body {
 		  /* You can define your custom styles here or create custom CSS rules */
-		}', 'ContractConditions("MainCondition")');
+		}', 'ContractConditions("MainCondition")'),
+		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")');
 		
 		DROP TABLE IF EXISTS "%[1]d_tables";
 		CREATE TABLE "%[1]d_tables" (
