@@ -308,6 +308,12 @@ func TestNewTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	var ret tablesResult
+	err = sendGet(`tables`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }
 
 type invalidPar struct {
