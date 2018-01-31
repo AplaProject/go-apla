@@ -704,7 +704,50 @@ var (
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
-		
+
+		INSERT INTO "%[1]d_menu" ("id","name","title","value","conditions") VALUES('2','admin_menu','Admin menu','MenuItem(
+    Icon: "icon-screen-desktop",
+    Page: "interface",
+    Title: "Interface"
+)
+MenuItem(
+    Icon: "icon-docs",
+    Page: "tables",
+    Title: "Tables"
+)
+MenuItem(
+    Icon: "icon-briefcase",
+    Page: "contracts",
+    Title: "Smart Contracts"
+)
+MenuItem(
+    Icon: "icon-settings",
+    Page: "parameters",
+    Title: "Ecosystem parameters"
+)
+MenuItem(
+    Icon: "icon-globe",
+    Page: "languages",
+    Title: "Language resources"
+)
+MenuItem(
+    Icon: "icon-cloud-upload",
+    Page: "import",
+    Title: "Import"
+)
+MenuItem(
+    Icon: "icon-cloud-download",
+    Page: "export",
+    Title: "Export"
+)
+If("#key_id#" == EcosysParam("founder_account")){
+    MenuItem(
+        Icon: "icon-lock",
+        Page: "vde",
+        Title: "Dedicated Ecosystem"
+    )
+}','true');
+
 		DROP TABLE IF EXISTS "%[1]d_pages"; CREATE TABLE "%[1]d_pages" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -714,7 +757,12 @@ var (
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
-		
+
+
+		INSERT INTO "%[1]d_pages" ("id","name","value","menu","conditions") VALUES('2','admin_index','','admin_menu','true');
+
+
+
 		DROP TABLE IF EXISTS "%[1]d_blocks"; CREATE TABLE "%[1]d_blocks" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -977,7 +1025,7 @@ var (
 
 		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id",
 			"member_name","date_start") VALUES('1','1','3','Admin','%[4]d','founder', NOW());
-	
+
 
 		DROP TABLE IF EXISTS "%[1]d_member";
 		CREATE TABLE "%[1]d_member" (
