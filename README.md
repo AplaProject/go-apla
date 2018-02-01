@@ -104,13 +104,6 @@ The web version of the Blockexplorer will be available soon.<br>
 ## Plans
 We believe that our code can be improved, that is why we are committed to further enhancing its quality and performance.
 
-#### testnet
-Around Mar 1, 2018 the third version of testnet will be launched<br>
-You can check the operation of the system by logging into the testnet using your private key.<br>
-
-#### mainnet
-Is scheduled to launch on May 1, 2018<br>
-
 ## Participation in Development
 Please, read the [CONTRIBUTING.md](https://github.com/GenesisKernel/go-genesis/blob/master/CONTRIBUTING.md) to get all the detailed information about sending Pull Requests.
 
