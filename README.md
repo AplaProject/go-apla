@@ -54,7 +54,7 @@ Create interfaces using [Protypo](http://apla.readthedocs.io/ru/latest/introduct
 </p>
 <br>
 
-Establish [rights](http://egaas-en.readthedocs.io/ru/latest/introduction/what-is-Apla.html#id18) for changing the code of contracts/interfaces and data in registers
+Establish [rights](https://genesiskernel.readthedocs.io/en/latest/introduction/what-is-Apla.html#id18) for changing the code of contracts/interfaces and data in registers
 
 <p align="center">
     <img src="https://i.imgur.com/DkvR7MZ.jpg">
