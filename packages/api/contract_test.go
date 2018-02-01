@@ -626,18 +626,25 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	var cntlist contractsResult
-	err := sendGet(`contracts`, nil, &cntlist)
-	if err != nil {
+	rnd := `rnd` + crypto.RandSeq(6)
+	code := `contract ` + rnd + ` {
+		data {
+			Par string "optional"
+		}
+		action { $result = $par}}`
+	form := url.Values{`Value`: {code}, `Conditions`: {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
+
 	var ret getContractResult
-	err = sendGet(`contract/testUpd`, nil, &ret)
+	err := sendGet(`contract/`+rnd, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	keyID := ret.WalletID
 	sid := ret.TableID
 	var row rowResult
 	err = sendGet(`row/contracts/`+sid, nil, &row)
@@ -651,16 +658,22 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 		return
 	}
 
-	code := row.Value[`value`]
-	off := strings.IndexByte(code, '-')
-	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
-	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"1248-5499-7861-4204-5166"}}
+	code = row.Value[`value`]
+	form = url.Values{`Id`: {sid}, `Value`: {code}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"1248-5499-7861-4204-5166"}}
 	err = postTx(`EditContract`, &form)
 	if err == nil {
 		t.Error("Expected `Contract activated` error")
 		return
 	}
-
+	err = sendGet(`contract/`+rnd, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.WalletID != keyID {
+		t.Error(`wrong walletID`, ret.WalletID, keyID)
+		return
+	}
 	if err := postTx(`DeactivateContract`, &url.Values{`Id`: {sid}}); err != nil {
 		t.Error(err)
 		return
@@ -668,6 +681,15 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 
 	if err := postTx(`EditContract`, &form); err != nil {
 		t.Error(err)
+		return
+	}
+	err = sendGet(`contract/`+rnd, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Address != "1248-5499-7861-4204-5166" {
+		t.Error(`wrong address`, ret.Address, "!= 1248-5499-7861-4204-5166")
 		return
 	}
 }
