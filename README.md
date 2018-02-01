@@ -112,7 +112,7 @@ You can check the operation of the system by logging into the testnet using your
 Is scheduled to launch on May 1, 2018<br>
 
 ## Participation in Development
-Please, read the [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) to get all the detailed information about sending Pull Requests.
+Please, read the [CONTRIBUTING.md](https://github.com/GenesisKernel/go-genesis/blob/master/CONTRIBUTING.md) to get all the detailed information about sending Pull Requests.
 
 ## Documentation
 Please, study and expand our [documentation](https://genesiskernel.readthedocs.io)
