@@ -3,17 +3,17 @@
 </p>
 <br>
 
-[![Throughput Graph](https://graphs.waffle.io/AplaProject/go-apla/throughput.svg)](https://waffle.io/AplaProject/go-apla/metrics/throughput)
+[![Throughput Graph](https://graphs.waffle.io/GenesisKernel/go-genesis/throughput.svg)](https://waffle.io/GenesisKernel/go-genesis/metrics/throughput)
 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![Go Report Card](https://goreportcard.com/badge/github.com/AplaProject/go-apla)](https://goreportcard.com/report/github.com/AplaProject/go-apla)
-[![Build Status](https://travis-ci.org/AplaProject/go-apla.svg?branch=master)](https://travis-ci.org/AplaProject/go-apla)
-[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://apla.readthedocs.io/en/latest/)
-[![](https://tokei.rs/b1/github/AplaProject/go-apla)](https://github.com/AplaProject/go-apla)
-![](https://reposs.herokuapp.com/?path=AplaProject/go-apla&style=flat)
+[![Go Report Card](https://goreportcard.com/badge/github.com/GenesisKernel/go-genesis)](https://goreportcard.com/report/github.com/GenesisKernel/go-genesis)
+[![Build Status](https://travis-ci.org/GenesisKernel/go-genesis.svg?branch=master)](https://travis-ci.org/GenesisKernel/go-genesis)
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://genesiskernel.readthedocs.io/en/latest/)
+[![](https://tokei.rs/b1/github/GenesisKernel/go-genesis)](https://github.com/GenesisKernel/go-genesis)
+![](https://reposs.herokuapp.com/?path=GenesisKernel/go-genesis&style=flat)
 [![API Reference](
 https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667
-)](https://godoc.org/github.com/AplaProject/go-apla)
+)](https://godoc.org/github.com/GenesisKernel/go-genesis)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/GenesisCommunity?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 <p align="center">
@@ -42,12 +42,12 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 
 
 ## How Genesis Works
-Develop your applications using [Simvolio](http://apla.readthedocs.io/ru/latest/introduction/script.html#simvolio). Simvolio is a С-like programming language used for creating contracts and which is compiled to byte code. It has a minimum required number of program control commands and predefined functions.
+Develop your applications using [Simvolio](http://genesiskernel.readthedocs.io/ru/latest/introduction/script.html#simvolio). Simvolio is a С-like programming language used for creating contracts and which is compiled to byte code. It has a minimum required number of program control commands and predefined functions.
 <p align="center">
     <img src="https://i.imgur.com/qHosOsw.jpg">
 </p><br>
 
-Create interfaces using [Protypo](http://apla.readthedocs.io/ru/latest/introduction/templates2.html#protypo). Protypo is a language for creating frontend pages. It is in essence a template engine which transforms a sequence of functions with parameters into a tree structure with elements, which can be then used for the front-end.
+Create interfaces using [Protypo](http://genesiskernel.readthedocs.io/ru/latest/introduction/templates2.html#protypo). Protypo is a language for creating frontend pages. It is in essence a template engine which transforms a sequence of functions with parameters into a tree structure with elements, which can be then used for the front-end.
 
 <p align="center">
     <img src="https://i.imgur.com/CYL1b95.jpg">
