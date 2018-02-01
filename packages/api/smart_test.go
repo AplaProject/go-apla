@@ -19,6 +19,7 @@ package api
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -250,8 +251,8 @@ func TestNewTable(t *testing.T) {
 		return
 	}
 	form = url.Values{"Name": {name},
-		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
-			"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
+		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")",
+				"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
 	err = postTx(`EditTable`, &form)
 	if err != nil {
 		t.Error(err)
@@ -272,6 +273,35 @@ func TestNewTable(t *testing.T) {
 	form = url.Values{"TableName": {name}, "Name": {`newCol`},
 		"Permissions": {"ContractConditions(\"MainCondition\")"}}
 	err = postTx(`EditColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	upname := strings.ToUpper(name)
+	form = url.Values{"TableName": {upname}, "Name": {`UPCol`},
+		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
+	err = postTx(`NewColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"TableName": {upname}, "Name": {`upCOL`},
+		"Permissions": {"ContractConditions(\"MainCondition\")"}}
+	err = postTx(`EditColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {upname},
+		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
+			"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
+	err = postTx(`EditTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret tablesResult
+	err = sendGet(`tables`, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return
