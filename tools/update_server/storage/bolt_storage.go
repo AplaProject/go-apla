@@ -3,7 +3,7 @@ package storage
 import (
 	"encoding/json"
 
-	"github.com/AplaProject/go-apla/tools/update_server/model"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/model"
 	"github.com/boltdb/bolt"
 	"github.com/pkg/errors"
 )

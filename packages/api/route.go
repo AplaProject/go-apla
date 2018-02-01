@@ -19,7 +19,7 @@ package api
 import (
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )

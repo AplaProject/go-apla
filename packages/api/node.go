@@ -21,10 +21,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )

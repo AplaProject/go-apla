@@ -21,7 +21,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
 type smartParams struct {

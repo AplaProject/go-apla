@@ -26,20 +26,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 
 	"github.com/dgrijalva/jwt-go"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/script"
-	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/statsd"
-	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/AplaProject/go-apla/packages/utils/tx"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/statsd"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 )
 
 const (
