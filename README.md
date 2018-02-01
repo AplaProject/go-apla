@@ -42,19 +42,19 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 
 
 ## How Genesis Works
-Develop your applications using [Simvolio](http://genesiskernel.readthedocs.io/en/latest/introduction/script.html#simvolio). Simvolio is a С-like programming language used for creating contracts and which is compiled to byte code. It has a minimum required number of program control commands and predefined functions.
+Develop your applications using [Simvolio](http://genesiskernel.readthedocs.io/en/latest/introduction/script.html#simvolio-contracts-language). Simvolio is a С-like programming language used for creating contracts and which is compiled to byte code. It has a minimum required number of program control commands and predefined functions.
 <p align="center">
     <img src="https://i.imgur.com/qHosOsw.jpg">
 </p><br>
 
-Create interfaces using [Protypo](http://genesiskernel.readthedocs.io/en/latest/introduction/templates2.html#protypo). Protypo is a language for creating frontend pages. It is in essence a template engine which transforms a sequence of functions with parameters into a tree structure with elements, which can be then used for the front-end.
+Create interfaces using [Protypo](http://genesiskernel.readthedocs.io/en/latest/introduction/templates2.html#protypo-template-language). Protypo is a language for creating frontend pages. It is in essence a template engine which transforms a sequence of functions with parameters into a tree structure with elements, which can be then used for the front-end.
 
 <p align="center">
     <img src="https://i.imgur.com/CYL1b95.jpg">
 </p>
 <br>
 
-Establish [rights](https://genesiskernel.readthedocs.io/en/latest/introduction/what-is-Apla.html#id18) for changing the code of contracts/interfaces and data in registers
+Establish [rights](https://genesiskernel.readthedocs.io/en/latest/introduction/what-is-Apla.html#access-rights-control-mechanism) for changing the code of contracts/interfaces and data in registers
 
 <p align="center">
     <img src="https://i.imgur.com/DkvR7MZ.jpg">
