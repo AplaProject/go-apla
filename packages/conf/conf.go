@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	toml "github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
 )

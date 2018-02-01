@@ -19,8 +19,8 @@ package script
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
 type evalCode struct {

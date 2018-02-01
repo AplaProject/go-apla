@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/AplaProject/go-apla/tools/update_server/config"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

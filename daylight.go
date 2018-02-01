@@ -19,7 +19,7 @@ package main
 import (
 	"runtime"
 
-	"github.com/AplaProject/go-apla/packages/daylight"
+	"github.com/GenesisKernel/go-genesis/packages/daylight"
 )
 
 func main() {
