@@ -22,15 +22,15 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 
-	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/utils/tx"
+	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"

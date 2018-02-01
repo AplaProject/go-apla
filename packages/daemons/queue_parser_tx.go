@@ -19,9 +19,9 @@ package daemons
 import (
 	"context"
 
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/parser"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/parser"
 
 	log "github.com/sirupsen/logrus"
 )
