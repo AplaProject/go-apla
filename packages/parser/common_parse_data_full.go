@@ -639,7 +639,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		if err != nil {
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
-				model.IncrementAttempt(p.TxHash)
+				model.IncrementTxAttemptCount(p.TxHash)
 				err = dbTransaction.Connection().Exec(fmt.Sprintf("ROLLBACK TO SAVEPOINT \"tx-%d\";", curTx)).Error
 				if err != nil {
 					logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("rolling back to previous savepoint")

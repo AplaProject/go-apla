@@ -127,9 +127,9 @@ func (t *Transaction) Create() error {
 	return DBConn.Create(t).Error
 }
 
-// IncrementAttempt increases attempt column
-func IncrementAttempt(transactionHash []byte) (int64, error) {
-	query := DBConn.Exec("update transactions set counter=counter+1, used = case when counter>5 then 1 else 0 end where hash = ?",
+// IncrementTxAttemptCount increases attempt column
+func IncrementTxAttemptCount(transactionHash []byte) (int64, error) {
+	query := DBConn.Exec("update transactions set attempt=attempt+1, used = case when attempt>5 then 1 else 0 end where hash = ?",
 		transactionHash)
 	return query.RowsAffected, query.Error
 }

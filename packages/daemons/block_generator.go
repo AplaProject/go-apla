@@ -113,11 +113,11 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		if p.TxSmart != nil {
 			err = limits.CheckLimit(p)
 			if err == parser.ErrLimitStop && i > 0 {
-				model.IncrementAttempt(p.TxHash)
+				model.IncrementTxAttemptCount(p.TxHash)
 				break
 			} else if err != nil {
 				if err == parser.ErrLimitSkip {
-					model.IncrementAttempt(p.TxHash)
+					model.IncrementTxAttemptCount(p.TxHash)
 				} else {
 					p.ProcessBadTransaction(err)
 				}
@@ -127,10 +127,6 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		txList = append(txList, &trs[i])
 	}
 
-	// Block generation will be started only if we have transactions
-	if len(txList) == 0 {
-		return nil
-	}
 	blockBin, err := generateNextBlock(
 		prevBlock,
 		txList,
