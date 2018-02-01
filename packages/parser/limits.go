@@ -127,17 +127,17 @@ func (bl *txMaxLimit) check(p *Parser, mode int) error {
 
 // Checking the time of the start of generating block
 type timeBlockLimit struct {
-	Start int64 // the time of the start of generating block
-	Limit int64 // the maximum time
+	Start time.Time     // the time of the start of generating block
+	Limit time.Duration // the maximum time
 }
 
 func (bl *timeBlockLimit) init(b *Block) {
-	bl.Start = time.Now().Unix()
-	bl.Limit = syspar.GetMaxBlockGenerationTime()
+	bl.Start = time.Now()
+	bl.Limit = time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
 }
 
 func (bl *timeBlockLimit) check(p *Parser, mode int) error {
-	if time.Now().Unix() > bl.Start+bl.Limit {
+	if time.Since(bl.Start) > bl.Limit {
 		return ErrLimitStop
 	}
 	return nil

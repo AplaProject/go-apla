@@ -73,7 +73,7 @@ func TestLimit(t *testing.T) {
 				return
 			}
 		}
-		time.Sleep(8 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
 	checkList := func(count, wantBlocks int) (err error) {
 		var list listResult
@@ -82,7 +82,7 @@ func TestLimit(t *testing.T) {
 			return
 		}
 		if converter.StrToInt(list.Count) != count {
-			return fmt.Errorf(`wrong list items %d != %d`, list.Count, count)
+			return fmt.Errorf(`wrong list items %s != %d`, list.Count, count)
 		}
 		blocks := make(map[string]int)
 		for _, item := range list.List {
@@ -92,7 +92,7 @@ func TestLimit(t *testing.T) {
 				blocks[item["block"]] = 1
 			}
 		}
-		if len(blocks) != wantBlocks {
+		if wantBlocks > 0 && len(blocks) != wantBlocks {
 			return fmt.Errorf(`wrong number of blocks %d != %d`, len(blocks), wantBlocks)
 		}
 		return nil
@@ -117,7 +117,7 @@ func TestLimit(t *testing.T) {
 		maxusers = syspar.List[0].Value
 		maxtx = syspar.List[1].Value
 	}
-	defer func() {
+	restoreMax := func() {
 		if err := postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_count`}, `Value`: {maxtx}}); err != nil {
 			t.Error(err)
 			return
@@ -126,7 +126,8 @@ func TestLimit(t *testing.T) {
 			t.Error(err)
 			return
 		}
-	}()
+	}
+	defer restoreMax()
 	if err := postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_count`}, `Value`: {`7`}}); err != nil {
 		t.Error(err)
 		return
@@ -145,4 +146,29 @@ func TestLimit(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	restoreMax()
+	err = sendGet(`systemparams?names=max_block_generation_time`, nil, &syspar)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var maxtime string
+	maxtime = syspar.List[0].Value
+	defer func() {
+		if err := postTx(`Upd`+rnd, &url.Values{`Name`: {`max_block_generation_time`},
+			`Value`: {maxtime}}); err != nil {
+			t.Error(err)
+			return
+		}
+	}()
+	if err := postTx(`Upd`+rnd, &url.Values{`Name`: {`max_block_generation_time`}, `Value`: {`100`}}); err != nil {
+		t.Error(err)
+		return
+	}
+	sendList()
+	if err = checkList(40, 0); err != nil {
+		t.Error(err)
+		return
+	}
+
 }
