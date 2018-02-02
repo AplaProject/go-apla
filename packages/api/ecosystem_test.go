@@ -21,8 +21,8 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
 func TestNewEcosystem(t *testing.T) {

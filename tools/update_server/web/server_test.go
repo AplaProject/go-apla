@@ -14,11 +14,11 @@ import (
 
 	"io/ioutil"
 
-	"github.com/AplaProject/go-apla/tools/update_server/config"
-	"github.com/AplaProject/go-apla/tools/update_server/crypto"
-	"github.com/AplaProject/go-apla/tools/update_server/model"
-	"github.com/AplaProject/go-apla/tools/update_server/storage"
-	"github.com/AplaProject/go-apla/tools/update_server/web"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/config"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/crypto"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/model"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/storage"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/web"
 	"github.com/parnurzeal/gorequest"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
