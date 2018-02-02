@@ -19,7 +19,7 @@ package api
 import (
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -65,6 +65,8 @@ func Route(route *hr.Router) {
 	get(`txstatus/:hash`, ``, authWallet, txstatus)
 	get(`test/:name`, ``, getTest)
 	get(`history/:table/:id`, ``, authWallet, getHistory)
+	get(`block/:id`, ``, getBlockInfo)
+	get(`maxblockid`, ``, getMaxBlockID)
 
 	post(`content/page/:name`, ``, authWallet, getPage)
 	post(`content/menu/:name`, ``, authWallet, getMenu)

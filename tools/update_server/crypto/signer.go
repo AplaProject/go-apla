@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/AplaProject/go-apla/tools/update_server/model"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/model"
 )
 
 type Signer interface {

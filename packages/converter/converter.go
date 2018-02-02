@@ -13,7 +13,7 @@ import (
 
 	"bytes"
 
-	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -787,28 +787,6 @@ func EscapeForJSON(data string) string {
 func ValidateEmail(email string) bool {
 	Re := regexp.MustCompile(`^(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 	return Re.MatchString(email)
-}
-
-// ValidateIPv4 validates IPv4 address and port
-func ValidateIPv4(ip string) bool {
-	ipport := strings.Split(ip, `:`)
-	addr := strings.Split(ipport[0], `.`)
-	if len(addr) != 4 || len(ipport) > 2 {
-		return false
-	}
-	for _, val := range addr {
-		i, err := strconv.Atoi(val)
-		if err != nil || i < 0 || i > 255 {
-			return false
-		}
-	}
-	if len(ipport) == 2 {
-		i, err := strconv.Atoi(ipport[1])
-		if err != nil || i < 0 || i > 0xffff {
-			return false
-		}
-	}
-	return true
 }
 
 // SliceReverse reverses the slice of int64

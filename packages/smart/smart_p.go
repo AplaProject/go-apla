@@ -23,14 +23,14 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/language"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/script"
-	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/language"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -173,7 +173,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 						break check
 					}
 					key := converter.StrToInt64(item[1])
-					if key == 0 || len(item[2]) != 128 || !converter.ValidateIPv4(item[0]) {
+					if key == 0 || len(item[2]) != 128 || len(item[0]) == 0 {
 						break check
 					}
 				}

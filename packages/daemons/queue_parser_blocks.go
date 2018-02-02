@@ -20,13 +20,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 
-	"github.com/AplaProject/go-apla/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
