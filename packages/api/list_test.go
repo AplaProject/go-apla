@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
 
 func TestList(t *testing.T) {

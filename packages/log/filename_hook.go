@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 
 	"github.com/sirupsen/logrus"
 )
