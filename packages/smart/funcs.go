@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -491,6 +492,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		order = `id`
 	}
 	where = strings.Replace(converter.Escape(where), `$`, `?`, -1)
+	where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
 	if id != 0 {
 		where = fmt.Sprintf(`id='%d'`, id)
 		limit = 1
