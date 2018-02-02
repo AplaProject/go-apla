@@ -10,7 +10,7 @@ Data format:
 ```
 {
 	"time": "0001-01-01T00:00:00Z",
-	"name": "go-apla",
+	"name": "go-genesis",
 	"body": "AQID",
 	"sign": "blah",
 
