@@ -520,7 +520,7 @@ func dbfindTag(par parFunc) string {
 				}
 			}
 			if par.Node.Attr[`prefix`] != nil {
-				(*par.Workspace.Vars)[prefix+`_`+icol] = ival
+				(*par.Workspace.Vars)[prefix+`_`+strings.Replace(icol, `.`, `_`, 1)] = ival
 			}
 			row[i] = ival
 		}

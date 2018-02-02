@@ -156,9 +156,12 @@ func TestJSONTable(t *testing.T) {
 	}
 	checkGet(`101new"doc"`)
 
-	forTest := tplList{{`DBFind(` + name + `,my).Columns("id,doc->type").WhereId(2)`,
-		`[{"tag":"dbfind","attr":{"columns":["id","doc.type"],"data":[["2","new"doc""]],"name":"` +
-			name + `","source":"my","types":["text","text"],"whereid":"2"}}]`},
+	forTest := tplList{{`DBFind(` + name + `,my).Columns("id,doc,doc->type").WhereId(2).Vars(my)
+		Span(#my_id##my_doc_type#)`,
+		`[{"tag":"dbfind","attr":{"columns":["id","doc","doc.type"],"data":[["2","{"doc": "Some test text.", "ind": "101", "type": "new\\"doc\\""}","new"doc""]],"name":"` + name + `","source":"my","types":["text","text","text"],"whereid":"2"}},{"tag":"span","children":[{"tag":"text","text":"2new\u0026#34;doc\u0026#34;"}]}]`},
+		{`DBFind(` + name + `,my).Columns("id,doc->type").WhereId(2)`,
+			`[{"tag":"dbfind","attr":{"columns":["id","doc.type"],"data":[["2","new"doc""]],"name":"` +
+				name + `","source":"my","types":["text","text"],"whereid":"2"}}]`},
 		{`DBFind(` + name + `,my).Columns("doc->type").Custom(mytype, OK:#doc.type#)`,
 			`[{"tag":"dbfind","attr":{"columns":["doc.type","id","mytype"],"data":[["new"doc" val","1","[{"tag":"text","text":"OK:new\\u0026#34;doc\\u0026#34; val"}]"],["new"doc"","2","[{"tag":"text","text":"OK:new\\u0026#34;doc\\u0026#34;"}]"]],"name":"` +
 				name + `","source":"my","types":["text","text","tags"]}}]`},
