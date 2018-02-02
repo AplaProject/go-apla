@@ -19,6 +19,7 @@ package api
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -237,6 +238,7 @@ func TestNewTable(t *testing.T) {
 	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
 	  "conditions":"true"},
 	{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
+	{"name":"Doc", "type":"json","index": "0", "conditions":"true"},	
 	{"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
@@ -250,9 +252,16 @@ func TestNewTable(t *testing.T) {
 		return
 	}
 	form = url.Values{"Name": {name},
-		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
-			"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
+		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")",
+				"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
 	err = postTx(`EditTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"TableName": {name}, "Name": {`newDoc`},
+		"Type": {"json"}, "Index": {"0"}, "Permissions": {"true"}}
+	err = postTx(`NewColumn`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -272,6 +281,35 @@ func TestNewTable(t *testing.T) {
 	form = url.Values{"TableName": {name}, "Name": {`newCol`},
 		"Permissions": {"ContractConditions(\"MainCondition\")"}}
 	err = postTx(`EditColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	upname := strings.ToUpper(name)
+	form = url.Values{"TableName": {upname}, "Name": {`UPCol`},
+		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
+	err = postTx(`NewColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"TableName": {upname}, "Name": {`upCOL`},
+		"Permissions": {"ContractConditions(\"MainCondition\")"}}
+	err = postTx(`EditColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {upname},
+		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
+			"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
+	err = postTx(`EditTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret tablesResult
+	err = sendGet(`tables`, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return

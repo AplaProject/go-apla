@@ -18,6 +18,7 @@ package api
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 )
 
@@ -32,7 +33,6 @@ func TestTables(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	fmt.Println(`RET`, ret)
 	if int64(ret.Count) < 7 {
 		t.Error(fmt.Errorf(`The number of tables %d < 7`, ret.Count))
 		return
@@ -58,5 +58,121 @@ func TestTable(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 		return
+	}
+}
+
+func TestJSONTable(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	name := randName(`json`)
+	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
+	  "conditions":"true"}, {"name":"Doc", "type":"json","index": "0", "conditions":"true"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	checkGet := func(want string) {
+		_, msg, err := postTxResult(name+`Get`, &url.Values{"Id": {`2`}})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if msg != want {
+			t.Error(`wrong answer`, msg)
+		}
+	}
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action { 
+			var ret1, ret2 int
+			ret1 = DBInsert("` + name + `", "MyName,Doc", "test", "{\"type\": \"0\"}")
+			var mydoc map
+			mydoc["type"] = "document"
+			mydoc["ind"] = 2
+			mydoc["check"] = "99"
+			mydoc["doc"] = "Some text."
+			ret2 = DBInsert("` + name + `", "MyName,Doc", "test2", mydoc)
+		}}
+		contract ` + name + `Get {
+			data {
+				Id int
+			}
+			action {
+				var ret map
+				var out string
+				ret = DBFind("` + name + `").Columns("Myname,doc,Doc->Ind").WhereId($Id).Row()
+				out = ret["doc.ind"]
+				out = out + DBFind("` + name + `").Columns("myname,doc->Type").WhereId($Id).One("Doc->type")
+				 $result = out + Str(DBFind("` + name + `").WhereId($Id).One("doc->check"))
+			}
+		}
+		contract ` + name + `Upd {
+		action {
+			DBUpdate("` + name + `", 1, "Doc", "{\"type\": \"doc\", \"ind\": \"3\", \"check\": \"33\"}")
+			var mydoc map
+			mydoc["type"] = "doc"
+			mydoc["doc"] = "Some test text."
+			DBUpdate("` + name + `", 2, "myname,Doc", "test3", mydoc)
+		}}
+		contract ` + name + `UpdOne {
+			data {
+				Type int
+			}
+			action {
+				DBUpdate("` + name + `", 1, "myname,Doc->Ind,Doc->type", "New name", 
+					      $Type, "new\"doc\" val")
+				DBUpdate("` + name + `", 2, "myname,Doc->Ind,Doc->type", "New name", 
+						$Type, "new\"doc\"")
+			  }}
+		`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	err = postTx("NewContract", &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(name, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	checkGet(`2document99`)
+
+	err = postTx(name+`Upd`, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	checkGet(`doc`)
+
+	err = postTx(name+`UpdOne`, &url.Values{"Type": {"101"}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	checkGet(`101new"doc"`)
+
+	forTest := tplList{{`DBFind(` + name + `,my).Columns("id,doc->type").WhereId(2)`,
+		`[{"tag":"dbfind","attr":{"columns":["id","doc.type"],"data":[["2","new"doc""]],"name":"` +
+			name + `","source":"my","types":["text","text"],"whereid":"2"}}]`},
+		{`DBFind(` + name + `,my).Columns("doc->type").Custom(mytype, OK:#doc.type#)`,
+			`[{"tag":"dbfind","attr":{"columns":["doc.type","id","mytype"],"data":[["new"doc" val","1","[{"tag":"text","text":"OK:new\\u0026#34;doc\\u0026#34; val"}]"],["new"doc"","2","[{"tag":"text","text":"OK:new\\u0026#34;doc\\u0026#34;"}]"]],"name":"` +
+				name + `","source":"my","types":["text","text","tags"]}}]`},
+	}
+	var ret contentResult
+	for _, item := range forTest {
+		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if RawToString(ret.Tree) != item.want {
+			t.Error(fmt.Errorf(`wrong tree %s != %s`, RawToString(ret.Tree), item.want))
+			return
+		}
 	}
 }

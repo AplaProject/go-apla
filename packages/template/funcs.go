@@ -427,6 +427,7 @@ func dbfindTag(par parFunc) string {
 	if len(fields) == 0 {
 		fields = `*`
 	}
+	fields = strings.ToLower(fields)
 	if par.Node.Attr[`where`] != nil {
 		where = ` where ` + converter.Escape(par.Node.Attr[`where`].(string))
 	}
@@ -464,6 +465,8 @@ func dbfindTag(par parFunc) string {
 	if fields != `*` && !strings.Contains(fields, `id`) {
 		fields += `, id`
 	}
+	fields = smart.PrepareColumns(fields)
+
 	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")

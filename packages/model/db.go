@@ -230,6 +230,8 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 			itype = `varchar`
 		case dataType == `bigint`:
 			itype = "number"
+		case dataType == `jsonb`:
+			itype = "json"
 		case strings.HasPrefix(dataType, `timestamp`):
 			itype = "datetime"
 		case strings.HasPrefix(dataType, `numeric`):
