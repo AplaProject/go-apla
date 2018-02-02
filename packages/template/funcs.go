@@ -64,7 +64,8 @@ func init() {
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
 	funcs[`Strong`] = tplFunc{defaultTag, defaultTag, `strong`, `Body,Class`}
 	funcs[`SysParam`] = tplFunc{sysparTag, defaultTag, `syspar`, `Name`}
-	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
+	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`,
+		`Body,Page,Class,Contract,Params,PageParams,URL`}
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
 	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Body`}
 	funcs[`Form`] = tplFunc{defaultTailTag, defaultTailTag, `form`, `Class,Body`}
@@ -73,7 +74,8 @@ func init() {
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
 	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,@Value,Disabled`}
 	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
-	funcs[`LinkPage`] = tplFunc{defaultTailTag, defaultTailTag, `linkpage`, `Body,Page,Class,PageParams`}
+	funcs[`LinkPage`] = tplFunc{defaultTailTag, defaultTailTag, `linkpage`,
+		`Body,Page,Class,PageParams,URL`}
 	funcs[`Data`] = tplFunc{dataTag, defaultTailTag, `data`, `Source,Columns,Data`}
 	funcs[`DBFind`] = tplFunc{dbfindTag, defaultTailTag, `dbfind`, `Name,Source`}
 	funcs[`And`] = tplFunc{andTag, defaultTag, `and`, `*`}

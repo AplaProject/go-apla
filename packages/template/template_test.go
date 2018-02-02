@@ -41,6 +41,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar( idu, 234 )Button(URL: "/admin/contracts/#idu#-MyContract")LinkPage(URL: "/test/#idu#")`,
+		`[{"tag":"button","attr":{"url":"/admin/contracts/234-MyContract"}},{"tag":"linkpage","attr":{"url":"/test/234"}}]`},
 	{`Calculate( Exp: 342278783438/0, Type: money )Calculate( Exp: 5.2/0, Type: float )
 		Calculate( Exp: 7/0)`,
 		`[{"tag":"text","text":"dividing by zerodividing by zerodividing by zero"}]`},
