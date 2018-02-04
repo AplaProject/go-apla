@@ -104,7 +104,10 @@ Create interfaces using [Protypo](http://genesiskernel.readthedocs.io/en/latest/
 
 ## Requirements
 
-* Go >=1.9
+## Quick Start
+<p align="center">
+    <img src="https://i.imgur.com/6oYykyk.jpg">
+</p>
 
 ## Build
 
