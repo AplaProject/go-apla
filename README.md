@@ -110,7 +110,7 @@ Establish [rights](https://genesiskernel.readthedocs.io/en/latest/introduction/w
 <p align="center">
     <img src="https://i.imgur.com/DkvR7MZ.jpg">
 </p>
-Post your blockchain application on Playmarket or Appstore. <br>
+Post your blockchain application on Google Play or Appstore. <br>
 https://github.com/GenesisKernel/genesis-reactnative<br><br><br>
 <p align="center">
     <img src="https://i.imgur.com/m46Kxwc.png" alt="" width=250>
@@ -133,8 +133,9 @@ Deploy an instance on linux:<br>
 bash manage.sh install 3 (creates and launches 3 local nodes)
 ```
 Deploy an instance on windows:<br>
+https://github.com/GenesisKernel/quick-start-win/releases<br>
 ```bash
-manage.exe
+win_install.exe
 ```
 
 
@@ -192,3 +193,8 @@ See also the list of [contributors](https://github.com/GenesisKernel/go-genesis/
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/GenesisKernel/go-genesis/blob/master/LICENSE) file for details
+
+<p align="center">
+<a href="#"><img src="http://www.kgsbo.com/wp-content/themes/kgsbo/images/top.png" width=100 align="center"></a><br>
+  <a href="#">Back to top</a>
+</p>
