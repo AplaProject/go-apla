@@ -100,7 +100,16 @@ Create interfaces using [Protypo](http://genesiskernel.readthedocs.io/en/latest/
 </p>
 <br>
 
-# Installation
+Establish [rights](https://genesiskernel.readthedocs.io/en/latest/introduction/what-is-Apla.html#access-rights-control-mechanism) for changing the code of contracts/interfaces and data in registers
+
+<p align="center">
+    <img src="https://i.imgur.com/DkvR7MZ.jpg">
+</p>
+Post your blockchain application on Google Play or Appstore. <br>
+https://github.com/GenesisKernel/genesis-reactnative<br><br><br>
+<p align="center">
+    <img src="https://i.imgur.com/m46Kxwc.png" alt="" width=250>
+</p>
 
 ## Requirements
 
@@ -113,7 +122,10 @@ Create interfaces using [Protypo](http://genesiskernel.readthedocs.io/en/latest/
 
 Build Apla:
 ```
-go get github.com/GenesisKernel/go-genesis
+Deploy an instance on windows:<br>
+https://github.com/GenesisKernel/quick-start-win/releases<br>
+```bash
+win_install.exe
 ```
 
 # Running
@@ -134,5 +146,9 @@ To work through GUI you need to install https://github.com/AplaProject/apla-fron
 ----------
 
 
-### Questions?
-email: hello@apla.io
+This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/GenesisKernel/go-genesis/blob/master/LICENSE) file for details
+
+<p align="center">
+<a href="#"><img src="http://www.kgsbo.com/wp-content/themes/kgsbo/images/top.png" width=100 align="center"></a><br>
+  <a href="#">Back to top</a>
+</p>
