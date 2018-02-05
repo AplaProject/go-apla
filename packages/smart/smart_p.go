@@ -379,18 +379,19 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return 0, err
 	}
+
 	err = LoadContract(sc.DbTransaction, id)
 	if err != nil {
 		return 0, err
 	}
 	sc.Rollback = false
-	_, _, err = DBInsert(sc, id+"_pages", "name,value,menu,conditions", "default_page",
+	_, _, err = DBInsert(sc, id+"_pages", "id,name,value,menu,conditions", "1", "default_page",
 		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
-	_, _, err = DBInsert(sc, id+"_menu", "name,value,title,conditions", "default_menu",
+	_, _, err = DBInsert(sc, id+"_menu", "id,name,value,title,conditions", "1", "default_menu",
 		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")

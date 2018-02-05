@@ -28,7 +28,6 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -492,7 +491,6 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		order = `id`
 	}
 	where = strings.Replace(converter.Escape(where), `$`, `?`, -1)
-	where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
 	if id != 0 {
 		where = fmt.Sprintf(`id='%d'`, id)
 		limit = 1
@@ -621,6 +619,11 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 		return fmt.Errorf(`FlushContract can be only called from NewContract or EditContract`)
 	}
 	root := iroot.(*script.Block)
+	if id != 0 {
+		if len(root.Children) != 1 || root.Children[0].Type != script.ObjContract {
+			return fmt.Errorf(`Оnly one contract must be in the record`)
+		}
+	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
 			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = id
