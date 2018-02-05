@@ -192,7 +192,7 @@ See also the list of [contributors](https://github.com/GenesisKernel/go-genesis/
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/GenesisKernel/go-genesis/blob/master/LICENSE) file for details
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/GenesisKernel/go-genesis/blob/master/LICENSE) file for details
 
 <p align="center">
 <a href="#"><img src="http://www.kgsbo.com/wp-content/themes/kgsbo/images/top.png" width=100 align="center"></a><br>

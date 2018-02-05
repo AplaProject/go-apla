@@ -77,14 +77,14 @@ unirse:
 <br><p align="center"><b>Basta con poner un asterisco a este repositorio, y obtendrá sus tokens durante el lanzamiento de la
 plataforma</b></p><br>
 
-[date to be announced]  culminará la colección de asteriscos. Antes de esa fecha, usted debe alojar en su bio [la clave pública ECDSA](http://GenesisProject.github.io), que analizaremos y escribiremos en el bolckchain de Genesis, el acceso al token GEN
+[date to be announced]  culminará la colección de asteriscos. Antes de esa fecha, usted debe alojar en su bio [la clave pública ECDSA](http://GenesisCommunity.github.io/newkey), que analizaremos y escribiremos en el bolckchain de Genesis, el acceso al token GEN
 será posible a través de una clave privada. Si después de la distribución de los tokens queda un remanente, el
 fondo Genesis lo administrará según su criterio.
 <br> <br>
 
 Usted podría obtener +10 GEN adicionales, si en el bio especifica el lógin del usuario de github (a través de un
 espacio después de la clave), que le recomendó la plataforma Génesis. Él también recibirá +10 GEN adicionales (si
-coloca en su perfil la [ la clave pública ECDSA](http://GenesisProject.github.io)).<br> <br>
+coloca en su perfil la [ la clave pública ECDSA](http://GenesisCommunity.github.io/newkey)).<br> <br>
 
 <p align="center"><a href="https://www.facebook.com/sharer/sharer.php?u=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/facebook.png" width=40></a> <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fgithub.com%2FGenesisCommunity%2Fgo-genesis&text=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository&hashtags=genesisblockchain" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/twitter.png" width=40></a> <a href="http://reddit.com/submit?url=https://github.com/GenesisCommunity/go-genesis/&amp;title=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/reddit.png" width=40></a> <a href="https://plus.google.com/share?url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/google.png" width=40></a> <a href="mailto:?subject=I wanted you to see this site&amp;body=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository -  https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/email.png" width=40></a> <a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/linkedin.png" width=40></a><br>Tell your friends!</p><br>
 
@@ -234,7 +234,7 @@ este proyecto.<br>
 
 ## Licencia
 
-Este proyecto se encuentra bajo la licencia de GPLv3- ver el archivo de [LICENCIA.md](https://github.com/GenesisKernel/go-genesis/blob/master/LICENSE) para más detalles
+Este proyecto se encuentra bajo la licencia de GPLv3- ver el archivo de [LICENCIA ](https://github.com/GenesisKernel/go-genesis/blob/master/LICENSE) para más detalles
 
 <p align="center">
 <a href="#"><img src="http://www.kgsbo.com/wp-content/themes/kgsbo/images/top.png" width=100 align="center"></a><br>
