@@ -219,7 +219,7 @@ select value from system_parameters where name='full_nodes';
 
 ## 许可证
 
-该项目获得GPLv3许可-详情请查看文件 [LICENSE.md](https://github.com/GenesisKernel/go-genesis/blob/master/LICENSE)
+该项目获得GPLv3许可-详情请查看文件 [LICENSE](https://github.com/GenesisKernel/go-genesis/blob/master/LICENSE)
 
 <p align="center">
 <a href="#"><img src="http://www.kgsbo.com/wp-content/themes/kgsbo/images/top.png" width=100 align="center"></a><br>
