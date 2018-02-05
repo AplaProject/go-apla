@@ -34,7 +34,7 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 ## Why is Genesis Unique?
  - In Genesis you can create your own blockchain ecosystem with customized rules. In essence, you can create your own "Ethereum", which can easily interact and communicate with your neighbor's "Ethereum" (another ecosystem on Genesis).
  - Developing applications on the Genesis platform is easy and fun. Mastering the platform's programming languages – Simvolio and Protypo - will take you around just four hours.
- - You'll be able to immediately upload your newly developed applications on Simvolio and Protypo directly to your mobile device running IOS or Android. You can do this using our application, which is soon to be available from Appstore and Google Play. Or you can upload your version after making some changes to our source codes.
+ - You'll be able to immediately upload your newly developed applications on Simvolio and Protypo directly to your mobile device running IOS or Android. You can do this using our application, which is soon to be available from App Store and Google Play. Or you can upload your version after making some changes to our source codes.
  - All of the platform's parameters (even the consensus algorithm!) are fully customizable, and can be changed by community voting or by any other algorithms.
 
 
@@ -56,7 +56,7 @@ Establish [rights](https://genesiskernel.readthedocs.io/en/latest/introduction/w
 <p align="center">
     <img src="https://i.imgur.com/DkvR7MZ.jpg">
 </p>
-Post your blockchain application on Playmarket or Appstore. <br>
+Post your blockchain application on Google play or App Store. <br>
 https://github.com/GenesisKernel/genesis-reactnative<br><br><br>
 <p align="center">
     <img src="https://i.imgur.com/m46Kxwc.png" alt="" width=250>
@@ -79,8 +79,9 @@ Deploy an instance on linux:<br>
 bash manage.sh install 3 (creates and launches 3 local nodes)
 ```
 Deploy an instance on windows:<br>
+https://github.com/GenesisKernel/quick-start-win/releases<br>
 ```bash
-manage.exe
+win_install.exe
 ```
 
 
@@ -105,7 +106,7 @@ We believe that our code can be improved, that is why we are committed to furthe
 Please, read the [CONTRIBUTING.md](https://github.com/GenesisKernel/go-genesis/blob/master/CONTRIBUTING.md) to get all the detailed information about sending Pull Requests.
 
 ## Documentation
-Please, study and expand our [documentation](https://genesiskernel.readthedocs.io)
+Please, study and expand our [documentation](https://genesiskernel.readthedocs.io/en/latest/#contents)
 
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/GenesisKernel/go-genesis/tags).
