@@ -60,7 +60,7 @@ In order to further promote the process of engaging 850 thousand GitHub users, w
 <br><p align="center"><b>Just give a star to this repository, and receive your tokens when the platform launches.
 </b></p><br>
 
-The star count will end on [date to be announced]. Before this date, post an ECDSA public key in your bio, which we will parse and write into the Genesis blockchain. Access to GEN tokens will be possible using private keys. If there are some tokens left after the giveaway, the Genesis foundation will distribute the rest at their own discretion.<br> <br>
+The star count will end on [date to be announced]. Before this date, post an [ECDSA public key](http://GenesisCommunity.github.io/newkey) in your bio, which we will parse and write into the Genesis blockchain. Access to GEN tokens will be possible using private keys. If there are some tokens left after the giveaway, the Genesis foundation will distribute the rest at their own discretion.<br> <br>
 
 You can receive an extra +10 GEN if you write the login of a GitHub user who told you about Genesis (put it right after your public key in your BIO on GitHub). This user will also receive an additional +10 GEN (if they place a [public ECDSA key](http://GenesisCommunity.github.io/newkey) in their profile).<br><br>
 
@@ -71,11 +71,11 @@ As a result, around 850 thousand programmers will take full control over the blo
 After starting the mainnet, GEN will be added to exchanges without any problems. By the way, currently there are no public blockchain platforms on the exchanges that allow for development of custom smart contracts, and that have the total cost of its coins amounting to less than $1 billion.
 
 Platform | Smart-contracts | Market Cap | Token price | Total Supply| Github | Source code
---- | --- | --- | --- | ---| --- | --- 
-Ethereum | [Documentation](http://solidity.readthedocs.io/en/develop/introduction-to-smart-contracts.html) | $90B | [$900](https://coinmarketcap.com/currencies/ethereum/)  | 100M | [ethereum](https://github.com/ethereum/go-ethereum) | original
-NEO | [Documentation](http://docs.neo.org/en-us/sc/introduction.html) | $8B | [$120](https://coinmarketcap.com/currencies/neo/) | 100M| [neo-project](https://github.com/neo-project/neo) | original
-EOS | [Documentation](https://github.com/EOSIO/eos/wiki/Smart-Contract) | $6B | [$9](https://coinmarketcap.com/currencies/eos/) | 900M | [EOSIO](https://github.com/EOSIO/eos) | original
-Qtum | [Documentation](https://github.com/qtumproject/qtum/blob/master/doc/sparknet-guide.md) | $2B | [$29](https://coinmarketcap.com/currencies/qtum/) | 100M |  [qtumproject](https://github.com/qtumproject/qtum) | bitcoin fork
+--- | --- | --- | --- | ---| --- | ---
+Ethereum | [Documentation](http://solidity.readthedocs.io/en/develop/introduction-to-smart-contracts.html) | $80B | [$800](https://coinmarketcap.com/currencies/ethereum/)  | 100M | [ethereum](https://github.com/ethereum/go-ethereum) | original
+NEO | [Documentation](http://docs.neo.org/en-us/sc/introduction.html) | $6B | [$100](https://coinmarketcap.com/currencies/neo/) | 100M| [neo-project](https://github.com/neo-project/neo) | original
+EOS | [Documentation](https://github.com/EOSIO/eos/wiki/Smart-Contract) | $5 | [$8](https://coinmarketcap.com/currencies/eos/) | 900M | [EOSIO](https://github.com/EOSIO/eos) | original
+Qtum | [Documentation](https://github.com/qtumproject/qtum/blob/master/doc/sparknet-guide.md) | $1B | [$20](https://coinmarketcap.com/currencies/qtum/) | 100M |  [qtumproject](https://github.com/qtumproject/qtum) | bitcoin fork
 
 Based on information available at https://coinmarketcap.com/tokens/
 
@@ -110,7 +110,7 @@ Establish [rights](https://genesiskernel.readthedocs.io/en/latest/introduction/w
 <p align="center">
     <img src="https://i.imgur.com/DkvR7MZ.jpg">
 </p>
-Post your blockchain application on Playmarket or Appstore. <br>
+Post your blockchain application on Google Play or Appstore. <br>
 https://github.com/GenesisKernel/genesis-reactnative<br><br><br>
 <p align="center">
     <img src="https://i.imgur.com/m46Kxwc.png" alt="" width=250>
@@ -119,7 +119,7 @@ https://github.com/GenesisKernel/genesis-reactnative<br><br><br>
 
 ## Quick Start
 <p align="center">
-    <img src="https://i.imgur.com/xa0Av40.jpg">
+    <img src="https://i.imgur.com/6oYykyk.jpg">
 </p>
 
 https://github.com/GenesisKernel/quick-start<Br>
@@ -133,8 +133,9 @@ Deploy an instance on linux:<br>
 bash manage.sh install 3 (creates and launches 3 local nodes)
 ```
 Deploy an instance on windows:<br>
+https://github.com/GenesisKernel/quick-start-win/releases<br>
 ```bash
-manage.exe
+win_install.exe
 ```
 
 
@@ -191,4 +192,9 @@ See also the list of [contributors](https://github.com/GenesisKernel/go-genesis/
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/GenesisKernel/go-genesis/blob/master/LICENSE) file for details
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/GenesisKernel/go-genesis/blob/master/LICENSE) file for details
+
+<p align="center">
+<a href="#"><img src="http://www.kgsbo.com/wp-content/themes/kgsbo/images/top.png" width=100 align="center"></a><br>
+  <a href="#">Back to top</a>
+</p>
