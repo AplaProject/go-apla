@@ -60,9 +60,9 @@ In order to further promote the process of engaging 850 thousand GitHub users, w
 <br><p align="center"><b>Just give a star to this repository, and receive your tokens when the platform launches.
 </b></p><br>
 
-The star count will end on [date to be announced]. Before this date, post an [ECDSA public key](http://GenesisCommunity.github.io/newkey) in your bio, which we will parse and write into the Genesis blockchain. Access to GEN tokens will be possible using private keys. If there are some tokens left after the giveaway, the Genesis foundation will distribute the rest at their own discretion.<br> <br>
+The star count will end on [date to be announced]. Before this date, post an [ECDSA public key](http://GenesisCommunity.github.io/newKeys.html) in your bio, which we will parse and write into the Genesis blockchain. Access to GEN tokens will be possible using private keys. If there are some tokens left after the giveaway, the Genesis foundation will distribute the rest at their own discretion.<br> <br>
 
-You can receive an extra +10 GEN if you write the login of a GitHub user who told you about Genesis (put it right after your public key in your BIO on GitHub). This user will also receive an additional +10 GEN (if they place a [public ECDSA key](http://GenesisCommunity.github.io/newkey) in their profile).<br><br>
+You can receive an extra +10 GEN if you write the login of a GitHub user who told you about Genesis (put it right after your public key in your BIO on GitHub). This user will also receive an additional +10 GEN (if they place a [public ECDSA key](http://GenesisCommunity.github.io/newKeys.html) in their profile).<br><br>
 
 <p align="center"><a href="https://www.facebook.com/sharer/sharer.php?u=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/facebook.png" width=40></a> <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fgithub.com%2FGenesisCommunity%2Fgo-genesis&text=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository&hashtags=genesisblockchain" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/twitter.png" width=40></a> <a href="http://reddit.com/submit?url=https://github.com/GenesisCommunity/go-genesis/&amp;title=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/reddit.png" width=40></a> <a href="https://plus.google.com/share?url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/google.png" width=40></a> <a href="mailto:?subject=I wanted you to see this site&amp;body=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository -  https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/email.png" width=40></a> <a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/linkedin.png" width=40></a><br>Tell your friends!</p><br>
 
@@ -160,7 +160,7 @@ We believe that our code can be improved, that is why we are committed to furthe
 Please, read the [CONTRIBUTING.md](https://github.com/GenesisKernel/go-genesis/blob/master/CONTRIBUTING.md) to get all the detailed information about sending Pull Requests.
 
 ## Documentation
-Please, study and expand our [documentation](https://genesiskernel.readthedocs.io)
+Please, study and expand our [documentation](https://genesiskernel.readthedocs.io/en/latest/#contents)
 
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/GenesisKernel/go-genesis/tags).
