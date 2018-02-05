@@ -43,13 +43,28 @@ func TestLang(t *testing.T) {
 		t.Error(err)
 		return
 	}
-
+	form = url.Values{"Name": {name}, "Value": {fmt.Sprintf(`Span($%s$)`, name)},
+		"Menu": {`default_menu`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret contentResult
+	err = sendPost(`content/page/`+name, &url.Values{`lang`: {`fr`}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(ret.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"French string"}]}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
+		return
+	}
 	input := fmt.Sprintf(`
 		Div(){
 			Button(Body: $%[1]s$ $,  Page:test).Alert(Text: $%[1]s$, ConfirmButton: $confirm$, CancelButton: $cancel$)
 			Button(Body: LangRes(%[1]s) LangRes, PageParams: "test", ).Alert(Text: $%[1]s$, CancelButton: $cancel$)
 	}`, forutf)
-	var ret contentResult
 	err = sendPost(`content`, &url.Values{`template`: {input}}, &ret)
 	if err != nil {
 		t.Error(err)
