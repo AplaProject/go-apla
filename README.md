@@ -60,7 +60,7 @@ In order to further promote the process of engaging 850 thousand GitHub users, w
 <br><p align="center"><b>Just give a star to this repository, and receive your tokens when the platform launches.
 </b></p><br>
 
-The star count will end on [date to be announced]. Before this date, post an ECDSA public key in your bio, which we will parse and write into the Genesis blockchain. Access to GEN tokens will be possible using private keys. If there are some tokens left after the giveaway, the Genesis foundation will distribute the rest at their own discretion.<br> <br>
+The star count will end on [date to be announced]. Before this date, post an [ECDSA public key](http://GenesisCommunity.github.io/newkey) in your bio, which we will parse and write into the Genesis blockchain. Access to GEN tokens will be possible using private keys. If there are some tokens left after the giveaway, the Genesis foundation will distribute the rest at their own discretion.<br> <br>
 
 You can receive an extra +10 GEN if you write the login of a GitHub user who told you about Genesis (put it right after your public key in your BIO on GitHub). This user will also receive an additional +10 GEN (if they place a [public ECDSA key](http://GenesisCommunity.github.io/newkey) in their profile).<br><br>
 
