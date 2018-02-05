@@ -66,13 +66,13 @@ Genesis - opensource 区块链平台，其基础工作由程序员奥列格•�
 <br><p align="center"><b>只需在该软件储藏仓上打星号，在平台启动时即可获得自己的代币</b>
 </p><br>
 
-[date to be announced] 征集星号活动将结束。在次日起千您需要将 [公共密钥ECDSA](http://GenesisCommunity.github.io/newkey), 上传至个人bio中
+[date to be announced] 征集星号活动将结束。在次日起千您需要将 [公共密钥ECDSA](http://GenesisCommunity.github.io/newKeys.html), 上传至个人bio中
 ，我们将该密钥进行配对并写入Genesis-区块链中，通过密钥可访问GEN代币。如果在代币分配后还有剩余，则Genesis
 储备将自行决定剩余代币的分配。
 <br> <br>
 
 如果在bio中指出Github-user用户名（在密钥空格后），您可额外获得超过10个GEN代币，向您介绍
-Genesis的人同样可额外获得超过10个GEN代币（如果他在自己的设定档中上传 [ECDSA公共密钥](http://GenesisCommunity.github.io/newkey)).<br> <br>
+Genesis的人同样可额外获得超过10个GEN代币（如果他在自己的设定档中上传 [ECDSA公共密钥](http://GenesisCommunity.github.io/newKeys.html)).<br> <br>
 
 <p align="center"><a href="https://www.facebook.com/sharer/sharer.php?u=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/facebook.png" width=40></a> <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fgithub.com%2FGenesisCommunity%2Fgo-genesis&text=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository&hashtags=genesisblockchain" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/twitter.png" width=40></a> <a href="http://reddit.com/submit?url=https://github.com/GenesisCommunity/go-genesis/&amp;title=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/reddit.png" width=40></a> <a href="https://plus.google.com/share?url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/google.png" width=40></a> <a href="mailto:?subject=I wanted you to see this site&amp;body=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository -  https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/email.png" width=40></a> <a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/linkedin.png" width=40></a><br>Tell your friends!</p><br>
 
@@ -185,7 +185,7 @@ select value from system_parameters where name='full_nodes';
 请阅读 [CONTRIBUTING.md](https://github.com/GenesisKernel/go-genesis/blob/master/CONTRIBUTING.md) 以获取有关Pull Requests发送过程详细信息。
 
 ## 文件
-请了解并补充我们的 [文件](https://genesiskernel.readthedocs.io/)
+请了解并补充我们的 [文件](https://genesiskernel.readthedocs.io/en/latest/#contents)
 
 
 ## 版本管理
