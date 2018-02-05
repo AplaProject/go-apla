@@ -149,7 +149,7 @@ https://github.com/GenesisKernel/genesis-reactnative<br><br><br>
 
 ## Inicio rápido
 <p align="center">
-    <img src="https://i.imgur.com/xa0Av40.jpg">
+    <img src="https://i.imgur.com/6oYykyk.jpg">
 </p>
 
 https://github.com/GenesisKernel/quick-start<Br>
