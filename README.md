@@ -156,6 +156,14 @@ The web version of the Blockexplorer will be available soon.<br>
 ## Plans
 We believe that our code can be improved, that is why we are committed to further enhancing its quality and performance.
 
+#### Testnet
+
+[date to be announced]<br>
+
+#### Mainnet
+
+[date to be announced]<br>
+
 ## Participation in Development
 Please, read the [CONTRIBUTING.md](https://github.com/GenesisKernel/go-genesis/blob/master/CONTRIBUTING.md) to get all the detailed information about sending Pull Requests.
 

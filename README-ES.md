@@ -187,6 +187,14 @@ La versión web de Blockexplorer pronto estará disponible.<br>
 
 Consideramos que nuestro código se puede perfeccionar, por lo que trabajaremos en su calidad y rendimiento.
 
+#### Testnet
+
+[date to be announced]
+En la red de prueba, se puede comprobar el funcionamiento del sistema con su clave privada.<br>
+
+#### Mainnet
+
+[date to be announced]<br>
 ## Participación en el desarrollo
 Por favor, lea el [CONTRIBUTING.md](https://github.com/GenesisKernel/go-genesis/blob/master/CONTRIBUTING.md)  para obtener más información sobre el proceso de envío de Pull Requests.
 
