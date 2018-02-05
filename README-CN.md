@@ -172,6 +172,14 @@ select value from system_parameters where name='full_nodes';
 
 我们认为，可以将源代码做的更好，因此将不断提高它的质量和产量。
 
+#### Testnet
+
+[date to be announced]
+使用个人密钥，在测试网站中对系统的工作性能进行检测。<br>
+
+#### Mainnet
+
+[date to be announced]<br>
 
 ## 参与设计
 请阅读 [CONTRIBUTING.md](https://github.com/GenesisKernel/go-genesis/blob/master/CONTRIBUTING.md) 以获取有关Pull Requests发送过程详细信息。
