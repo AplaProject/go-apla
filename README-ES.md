@@ -187,14 +187,6 @@ La versión web de Blockexplorer pronto estará disponible.<br>
 
 Consideramos que nuestro código se puede perfeccionar, por lo que trabajaremos en su calidad y rendimiento.
 
-#### testnet
-
-La fecha aproximada del lanzamiento de la tercera versión de testnet es el 1 de marzo del 2018
-En la red de prueba, se puede comprobar el funcionamiento del sistema con su clave privada.<br>
-
-#### mainnet
-
-Será lanzado aproximadamente el 15 de abril del 2018<br>
 ## Participación en el desarrollo
 Por favor, lea el [CONTRIBUTING.md](https://github.com/GenesisKernel/go-genesis/blob/master/CONTRIBUTING.md)  para obtener más información sobre el proceso de envío de Pull Requests.
 
