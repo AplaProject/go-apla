@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
 	toml "github.com/BurntSushi/toml"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -47,6 +47,17 @@ type AutoupdateConfig struct {
 	PublicKeyPath string
 }
 
+// TokenMovementConfig smtp config for token movement
+type TokenMovementConfig struct {
+	Host     string `toml:"host"`
+	Port     int    `toml:"port"`
+	Username string `toml:"username"`
+	Password string `toml:"password"`
+	To       string `toml:"to"`
+	From     string `toml:"from"`
+	Subject  string `toml:"subject"`
+}
+
 // SavedConfig parameters saved in "config.toml"
 type SavedConfig struct {
 	LogLevel    string
@@ -77,6 +88,8 @@ type SavedConfig struct {
 	Centrifugo CentrifugoConfig
 
 	Autoupdate AutoupdateConfig
+
+	TokenMovement TokenMovementConfig
 }
 
 // Installed web UI installation mode

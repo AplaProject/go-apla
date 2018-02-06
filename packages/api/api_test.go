@@ -25,7 +25,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -261,4 +263,18 @@ func cutErr(err error) string {
 		out = out[:off]
 	}
 	return strings.TrimSpace(out)
+}
+
+func TestMoneyTransfer10(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	for i := 0; i < 10; i++ {
+		form := url.Values{`Amount`: {strconv.FormatInt(int64(i+1), 10)}, `Recipient`: {`0005-2070-2000-0006-0200`}}
+		if err := postTx(`MoneyTransfer`, &form); err != nil {
+			fmt.Println(err)
+		}
+	}
 }

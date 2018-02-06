@@ -1,12 +1,10 @@
 package model
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // Key is model
 type Key struct {
-	tableName string
+	prefix    int64
 	ID        int64  `gorm:"primary_key;not null"`
 	PublicKey []byte `gorm:"column:pub;not null"`
 	Amount    string `gorm:"not null"`
@@ -17,13 +15,16 @@ func (m *Key) SetTablePrefix(prefix int64) *Key {
 	if prefix == 0 {
 		prefix = 1
 	}
-	m.tableName = fmt.Sprintf("%d_keys", prefix)
+	m.prefix = prefix
 	return m
 }
 
 // TableName returns name of table
 func (m Key) TableName() string {
-	return m.tableName
+	if m.prefix == 0 {
+		m.prefix = 1
+	}
+	return fmt.Sprintf("%d_keys", m.prefix)
 }
 
 // Get is retrieving model from database
