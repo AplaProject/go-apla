@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
 	toml "github.com/BurntSushi/toml"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -73,6 +73,8 @@ type SavedConfig struct {
 
 	WorkDir    string // application work dir (cwd by default)
 	PrivateDir string // place for private keys files: NodePrivateKey, PrivateKey
+
+	MapAPIKey string
 
 	Centrifugo CentrifugoConfig
 
