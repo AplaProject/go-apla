@@ -224,6 +224,13 @@ var contracts = []smartContract{
 			action { var ivar int}
 		}`,
 		nil},
+	{`testGetContract`, `contract testGetContract {
+			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
+				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
+		[]smartParams{
+			{nil, map[string]string{`ByName`: `0 6`,
+				`ById`: `NewLang`}},
+		}},
 }
 
 func TestEditContracts(t *testing.T) {

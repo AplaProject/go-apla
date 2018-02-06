@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
@@ -80,6 +81,8 @@ var (
 		"CreateColumn":      "extend_cost_create_column",
 		"PermColumn":        "extend_cost_perm_column",
 		"JSONToMap":         "extend_cost_json_to_map",
+		"GetContractByName": "extend_cost_contract_by_name",
+		"GetContractById":   "extend_cost_contract_by_id",
 	}
 )
 
@@ -329,6 +332,36 @@ func HexToBytes(hexdata string) ([]byte, error) {
 func LangRes(sc *SmartContract, idRes, lang string) string {
 	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang, sc.VDE)
 	return ret
+}
+
+// GetContractByName returns id of the contract with this name
+func GetContractByName(sc *SmartContract, name string) int64 {
+	contract := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID))
+	if contract == nil {
+		return 0
+	}
+	info := (*contract).Block.Info.(*script.ContractInfo)
+	if info == nil {
+		return 0
+	}
+	return info.Owner.TableID
+}
+
+// GetContractById returns the name of the contract with this id
+func GetContractById(sc *SmartContract, id int64) string {
+	_, ret, err := DBSelect(sc, getDefTableName(sc, "contracts"), "value", id, `id`, 0, 1,
+		0, ``, []interface{}{})
+	if err != nil || len(ret) != 1 {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract name")
+		return ``
+	}
+
+	re := regexp.MustCompile(`(?is)^\s*contract\s+([\d\w_]+)\s*{`)
+	names := re.FindStringSubmatch(ret[0].(map[string]string)["value"])
+	if len(names) != 2 {
+		return ``
+	}
+	return names[1]
 }
 
 // EvalCondition gets the condition and check it
