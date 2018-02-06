@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"html"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -430,6 +431,7 @@ func dbfindTag(par parFunc) string {
 	fields = strings.ToLower(fields)
 	if par.Node.Attr[`where`] != nil {
 		where = ` where ` + converter.Escape(par.Node.Attr[`where`].(string))
+		where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
 	}
 	if par.Node.Attr[`whereid`] != nil {
 		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(par.Node.Attr[`whereid`].(string)))
@@ -520,7 +522,7 @@ func dbfindTag(par parFunc) string {
 				}
 			}
 			if par.Node.Attr[`prefix`] != nil {
-				(*par.Workspace.Vars)[prefix+`_`+icol] = ival
+				(*par.Workspace.Vars)[prefix+`_`+strings.Replace(icol, `.`, `_`, 1)] = ival
 			}
 			row[i] = ival
 		}

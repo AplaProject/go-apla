@@ -9,7 +9,7 @@
 [![API Reference](
 https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667
 )](https://godoc.org/github.com/GenesisKernel/go-genesis)
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-apla?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-genesis?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Slack Status](https://slack.apla.io/badge.svg)](https://slack.apla.io)
 
 # Installation
@@ -30,12 +30,12 @@ go get github.com/GenesisKernel/go-genesis
 Create Apla directory and copy binary:
 ```
 mkdir ~/apla
-cp $GOPATH/bin/go-apla ~/apla
+cp $GOPATH/bin/go-genesis ~/apla
 ```
 
 Run Apla:
 ```
-~/apla/go-apla
+~/apla/go-genesis
 ```
 
 To work through GUI you need to install https://github.com/AplaProject/apla-front
