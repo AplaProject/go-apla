@@ -73,6 +73,9 @@ func UpdateLang(state int, name, value string, vde bool) {
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "value": value, "error": err}).Error("Unmarshalling json")
 	}
+	for key, val := range ires {
+		ires[strings.ToLower(key)] = val
+	}
 	if len(ires) > 0 {
 		(*lang[state]).res[name] = &ires
 	}
@@ -101,6 +104,9 @@ func loadLang(state int, vde bool) error {
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "value": ilist["res"], "error": err}).Error("Unmarshalling json")
 		}
+		for key, val := range ires {
+			ires[strings.ToLower(key)] = val
+		}
 		(*res).res[ilist[`name`]] = &ires
 	}
 	if vde {
@@ -125,15 +131,22 @@ func LangText(in string, state int, accept string, vde bool) (string, bool) {
 			return err.Error(), false
 		}
 	}
+	langs := strings.Split(accept, `,`)
 	if lres, ok := (*lang[istate]).res[in]; ok {
-		langs := strings.Split(accept, `,`)
 		lng := DefLang()
 		for _, val := range langs {
+			val = strings.ToLower(val)
 			if len(val) < 2 {
 				break
 			}
 			if !IsLang(val[:2]) {
 				continue
+			}
+			if len(val) >= 5 && val[2] == '-' {
+				if _, ok := (*lres)[val[:5]]; ok {
+					lng = val[:5]
+					break
+				}
 			}
 			if _, ok := (*lres)[val[:2]]; ok {
 				lng = val[:2]

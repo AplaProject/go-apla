@@ -29,7 +29,7 @@ func TestLang(t *testing.T) {
 		return
 	}
 	name := randName(`lng`)
-	value := `{"en": "My test", "fr": "French string" }`
+	value := `{"en": "My test", "fr": "French string", "en-US": "US locale" }`
 
 	form := url.Values{"Name": {name}, "Trans": {value}}
 	err := postTx(`NewLang`, &form)
@@ -57,6 +57,24 @@ func TestLang(t *testing.T) {
 		return
 	}
 	if RawToString(ret.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"French string"}]}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
+		return
+	}
+	err = sendPost(`content/page/`+name, &url.Values{`lang`: {`en-GB`}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(ret.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"My test"}]}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
+		return
+	}
+	err = sendPost(`content/page/`+name, &url.Values{`lang`: {`en-US`}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(ret.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"US locale"}]}]` {
 		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
 		return
 	}
