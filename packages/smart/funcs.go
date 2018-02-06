@@ -142,64 +142,63 @@ func getCost(name string) int64 {
 // EmbedFuncs is extending vm with embedded functions
 func EmbedFuncs(vm *script.VM, vt script.VMType) {
 	f := map[string]interface{}{
-		"AddressToId":        AddressToID,
-		"ColumnCondition":    ColumnCondition,
-		"CompileContract":    CompileContract,
-		"Contains":           strings.Contains,
-		"ContractAccess":     ContractAccess,
-		"ContractConditions": ContractConditions,
-		"ContractsList":      contractsList,
-		"CreateColumn":       CreateColumn,
-		"CreateTable":        CreateTable,
-		"DBInsert":           DBInsert,
-		"DBSelect":           DBSelect,
-		"DBUpdate":           DBUpdate,
-		"DBUpdateSysParam":   UpdateSysParam,
-		"DBUpdateExt":        DBUpdateExt,
-		"EcosysParam":        EcosysParam,
-		"SysParamString":     SysParamString,
-		"SysParamInt":        SysParamInt,
-		"SysFuel":            SysFuel,
-		"Eval":               Eval,
-		"EvalCondition":      EvalCondition,
-		"Float":              Float,
-		"FlushContract":      FlushContract,
-		"GetContractByName":  GetContractByName,
-		"GetContractById":    GetContractById,
-		"HMac":               HMac,
-		"Join":               Join,
-		"JSONToMap":          JSONToMap,
-		"IdToAddress":        IDToAddress,
-		"Int":                Int,
-		"IsObject":           IsObject,
-		"Len":                Len,
-		"Money":              Money,
-		"PermColumn":         PermColumn,
-		"PermTable":          PermTable,
-		"Random":             Random,
-		"Split":              Split,
-		"Str":                Str,
-		"Substr":             Substr,
-		"Replace":            Replace,
-		"Size":               Size,
-		"Sha256":             Sha256,
-		"PubToID":            PubToID,
-		"HexToBytes":         HexToBytes,
-		"LangRes":            LangRes,
-		"HasPrefix":          strings.HasPrefix,
-		"ValidateCondition":  ValidateCondition,
-		"TrimSpace":          strings.TrimSpace,
-		"ToLower":            strings.ToLower,
-		"CreateEcosystem":    CreateEcosystem,
-		"RollbackEcosystem":  RollbackEcosystem,
-		"RollbackTable":      RollbackTable,
-		"TableConditions":    TableConditions,
-		"RollbackColumn":     RollbackColumn,
-		"UpdateLang":         UpdateLang,
-		"Activate":           Activate,
-		"Deactivate":         Deactivate,
-		"check_signature":    CheckSignature,
-		"RowConditions":      RowConditions,
+		"AddressToId":              AddressToID,
+		"ColumnCondition":          ColumnCondition,
+		"CompileContract":          CompileContract,
+		"Contains":                 strings.Contains,
+		"ContractAccess":           ContractAccess,
+		"ContractConditions":       ContractConditions,
+		"ContractsList":            contractsList,
+		"CreateColumn":             CreateColumn,
+		"CreateTable":              CreateTable,
+		"DBInsert":                 DBInsert,
+		"DBSelect":                 DBSelect,
+		"DBUpdate":                 DBUpdate,
+		"DBUpdateSysParam":         UpdateSysParam,
+		"DBUpdateExt":              DBUpdateExt,
+		"EcosysParam":              EcosysParam,
+		"SysParamString":           SysParamString,
+		"SysParamInt":              SysParamInt,
+		"SysFuel":                  SysFuel,
+		"Eval":                     Eval,
+		"EvalCondition":            EvalCondition,
+		"Float":                    Float,
+		"FlushContract":            FlushContract,
+		"HMac":                     HMac,
+		"Join":                     Join,
+		"JSONToMap":                JSONToMap,
+		"IdToAddress":              IDToAddress,
+		"Int":                      Int,
+		"IsObject":                 IsObject,
+		"Len":                      Len,
+		"Money":                    Money,
+		"PermColumn":               PermColumn,
+		"PermTable":                PermTable,
+		"Random":                   Random,
+		"Split":                    Split,
+		"Str":                      Str,
+		"Substr":                   Substr,
+		"Replace":                  Replace,
+		"Size":                     Size,
+		"Sha256":                   Sha256,
+		"PubToID":                  PubToID,
+		"HexToBytes":               HexToBytes,
+		"LangRes":                  LangRes,
+		"HasPrefix":                strings.HasPrefix,
+		"ValidateCondition":        ValidateCondition,
+		"TrimSpace":                strings.TrimSpace,
+		"ToLower":                  strings.ToLower,
+		"CreateEcosystem":          CreateEcosystem,
+		"RollbackEcosystem":        RollbackEcosystem,
+		"RollbackTable":            RollbackTable,
+		"TableConditions":          TableConditions,
+		"RollbackColumn":           RollbackColumn,
+		"UpdateLang":               UpdateLang,
+		"Activate":                 Activate,
+		"Deactivate":               Deactivate,
+		"check_signature":          CheckSignature,
+		"RowConditions":            RowConditions,
+		"TokenTransferWithHistory": TokenTransferWithHistory,
 	}
 
 	switch vt {
@@ -1181,6 +1180,25 @@ func UpdateCron(sc *SmartContract, id int64) error {
 		},
 	})
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// TokenTransferWithHistory change keys for sender and recipient and make history record
+func TokenTransferWithHistory(sc *SmartContract, sender, recipient int64, amount decimal.Decimal, comment string) error {
+
+	if _, err := DBUpdate(sc, "keys", sender, "-amount", amount); err != nil {
+		return err
+	}
+
+	if _, err := DBUpdate(sc, "keys", recipient, "+amount", amount); err != nil {
+		return err
+	}
+
+	if _, _, err := DBInsert(sc, "history", "sender_id,recipient_id,amount,comment,block_id,txhash",
+		sender, recipient, amount, comment, sc.BlockData.BlockID, sc.TxHash); err != nil {
 		return err
 	}
 
