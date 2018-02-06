@@ -665,7 +665,8 @@ var (
 		"amount" decimal(30) NOT NULL DEFAULT '0',
 		"comment" text NOT NULL DEFAULT '',
 		"block_id" int  NOT NULL DEFAULT '0',
-		"txhash" bytea  NOT NULL DEFAULT ''
+		"txhash" bytea  NOT NULL DEFAULT '',
+		"created_at" timestamp DEFAULT NOW()
 		);
 		ALTER TABLE ONLY "%[1]d_history" ADD CONSTRAINT "%[1]d_history_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_history_index_sender" ON "%[1]d_history" (sender_id);
@@ -1135,10 +1136,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 		action {
-			DBUpdate("keys", $key_id,"-amount", $amount)
-			DBUpdate("keys", $recipient,"+amount", $amount)
-			DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash", 
-				$key_id, $recipient, $amount, $Comment, $block, $txhash)
+			TokenTransferWithHistory($key_id, $recipient, $amount, $Comment)
 		}
 	}', '%[1]d', 'ContractConditions("MainCondition")'),
 	('4','contract NewContract {
