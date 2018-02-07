@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/conf"
 
 	"github.com/sirupsen/logrus"
 )

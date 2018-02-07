@@ -22,9 +22,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/script"
+	"github.com/GenesisCommunity/go-genesis/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
 )

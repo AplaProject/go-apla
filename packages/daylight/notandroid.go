@@ -23,9 +23,9 @@ import (
 	"net/http"
 	"strconv"
 
-	conf "github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	conf "github.com/GenesisCommunity/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
 
 	log "github.com/sirupsen/logrus"
 )

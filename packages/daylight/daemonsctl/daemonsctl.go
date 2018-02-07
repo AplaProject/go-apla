@@ -1,12 +1,12 @@
 package daemonsctl
 
 import (
-	conf "github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/daemons"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	conf "github.com/GenesisCommunity/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/config/syspar"
+	"github.com/GenesisCommunity/go-genesis/packages/daemons"
+	"github.com/GenesisCommunity/go-genesis/packages/smart"
+	"github.com/GenesisCommunity/go-genesis/packages/tcpserver"
+	"github.com/GenesisCommunity/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )

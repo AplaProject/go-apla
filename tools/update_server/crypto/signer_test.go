@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/tools/update_server/crypto"
-	"github.com/GenesisKernel/go-genesis/tools/update_server/model"
+	"github.com/GenesisCommunity/go-genesis/tools/update_server/crypto"
+	"github.com/GenesisCommunity/go-genesis/tools/update_server/model"
 )
 
 func TestBinarySign(t *testing.T) {

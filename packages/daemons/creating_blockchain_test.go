@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/GenesisKernel/go-genesis/packages/static"
+	"github.com/GenesisCommunity/go-genesis/packages/static"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 

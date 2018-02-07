@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/GenesisKernel/go-genesis/tools/update_server/model"
-	"github.com/GenesisKernel/go-genesis/tools/update_server/storage"
+	"github.com/GenesisCommunity/go-genesis/tools/update_server/model"
+	"github.com/GenesisCommunity/go-genesis/tools/update_server/storage"
 )
 
 func newTempBoltStorage(t *testing.T) (storage.BoltStorage, string) {
