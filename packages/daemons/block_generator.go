@@ -121,7 +121,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	go notificator.CheckTokenMovementLimits(conf.Config.TokenMovement, header.BlockID)
+	go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockID)
 	return nil
 }
 
