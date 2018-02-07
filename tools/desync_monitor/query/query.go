@@ -3,6 +3,8 @@ package query
 import (
 	"fmt"
 	"sync"
+
+	"github.com/GenesisCommunity/go-genesis/packages/api"
 )
 
 const maxBlockIDEndpoint = "/api/v2/maxblockid"

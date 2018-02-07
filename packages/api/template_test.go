@@ -28,9 +28,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/stretchr/testify/assert"
+	"github.com/GenesisCommunity/go-genesis/packages/crypto"
 )
 
 type tplItem struct {

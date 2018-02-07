@@ -23,9 +23,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/model"
 
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"

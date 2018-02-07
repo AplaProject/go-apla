@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisCommunity/go-genesis/packages/model"
 
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisCommunity/go-genesis/packages/crypto"
+	"github.com/GenesisCommunity/go-genesis/packages/utils"
 )
 
 func TestBlockMarshall(t *testing.T) {

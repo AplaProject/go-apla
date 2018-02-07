@@ -19,10 +19,7 @@ package api
 import (
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
-
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )

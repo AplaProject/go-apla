@@ -9,7 +9,8 @@ import (
 
 	"context"
 
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisCommunity/go-genesis/packages/model"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 func createTables(t *testing.T, db *sql.DB) {

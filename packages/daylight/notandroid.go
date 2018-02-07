@@ -22,7 +22,9 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	conf "github.com/GenesisCommunity/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
 
 	log "github.com/sirupsen/logrus"
 )

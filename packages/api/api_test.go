@@ -31,11 +31,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/crypto"
 )
 
 const apiAddress = "http://localhost:7079"

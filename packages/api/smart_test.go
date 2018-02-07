@@ -24,12 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/shopspring/decimal"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/GenesisCommunity/go-genesis/packages/crypto"
 )
 
 type smartParams struct {

@@ -14,7 +14,7 @@ import (
 
 	"bytes"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )

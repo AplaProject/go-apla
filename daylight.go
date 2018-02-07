@@ -19,7 +19,7 @@ package main
 import (
 	"runtime"
 
-	"github.com/GenesisKernel/go-genesis/cmd"
+	"github.com/GenesisCommunity/go-genesis/packages/daylight"
 )
 
 func main() {

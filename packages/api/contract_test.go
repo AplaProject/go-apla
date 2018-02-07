@@ -23,11 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisCommunity/go-genesis/packages/crypto"
 )
 
 func TestHardContract(t *testing.T) {

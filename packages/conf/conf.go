@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/BurntSushi/toml"
-	"github.com/pkg/errors"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	toml "github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 

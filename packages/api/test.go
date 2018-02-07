@@ -19,7 +19,9 @@ package api
 import (
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/crypto"
+	"github.com/GenesisCommunity/go-genesis/packages/smart"
 
 	log "github.com/sirupsen/logrus"
 )

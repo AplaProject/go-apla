@@ -21,8 +21,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/crypto"
 
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"

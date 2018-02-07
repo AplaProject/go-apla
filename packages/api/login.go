@@ -21,15 +21,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/notificator"
-	"github.com/GenesisKernel/go-genesis/packages/publisher"
-	msgpack "gopkg.in/vmihailenco/msgpack.v2"
+	"github.com/GenesisCommunity/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/notificator"
+	"github.com/GenesisCommunity/go-genesis/packages/publisher"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/crypto"
+	"github.com/GenesisCommunity/go-genesis/packages/model"
 
 	"encoding/hex"
 	"encoding/json"

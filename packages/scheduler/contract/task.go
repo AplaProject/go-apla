@@ -1,8 +1,8 @@
 package contract
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/scheduler"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/scheduler"
 
 	log "github.com/sirupsen/logrus"
 )
