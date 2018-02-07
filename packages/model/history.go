@@ -54,8 +54,8 @@ type APLTransfer struct {
 }
 
 // GetExcessCommonTokenMovementPerDay returns sum of amounts 24 hours
-func GetExcessCommonTokenMovementPerDay() (amount float64, err error) {
-	db := GetDB(nil)
+func GetExcessCommonTokenMovementPerDay(tx *DbTransaction) (amount float64, err error) {
+	db := GetDB(tx)
 	type result struct {
 		Amount float64
 	}
@@ -68,8 +68,8 @@ func GetExcessCommonTokenMovementPerDay() (amount float64, err error) {
 }
 
 // GetExcessFromToTokenMovementPerDay returns from to pairs where sum of amount greather than fromToPerDayLimit per 24 hours
-func GetExcessFromToTokenMovementPerDay() (excess []APLTransfer, err error) {
-	db := GetDB(nil)
+func GetExcessFromToTokenMovementPerDay(tx *DbTransaction) (excess []APLTransfer, err error) {
+	db := GetDB(tx)
 	err = db.Table("1_history").
 		Select("sender_id, recipient_id, SUM(amount) sum_amount").
 		Where("created_at > NOW() - interval '24 hours' AND amount > 0").
@@ -81,8 +81,8 @@ func GetExcessFromToTokenMovementPerDay() (excess []APLTransfer, err error) {
 }
 
 // GetExcessTokenMovementQtyPerBlock returns from to pairs where APL transactions count greather than tokenMovementQtyPerBlockLimit per 24 hours
-func GetExcessTokenMovementQtyPerBlock(blockID int64) (excess []APLTransfer, err error) {
-	db := GetDB(nil)
+func GetExcessTokenMovementQtyPerBlock(tx *DbTransaction, blockID int64) (excess []APLTransfer, err error) {
+	db := GetDB(tx)
 	err = db.Table("1_history").
 		Select("sender_id, count(*)").
 		Where("block_id = ? AND amount > ?", blockID, 0).
