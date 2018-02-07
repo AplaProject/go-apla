@@ -544,11 +544,10 @@ func dbfindTag(par parFunc) string {
 			var ival string
 			if i < defcol {
 				ival = item[icol]
-				if strings.IndexByte(ival, '<') >= 0 {
-					ival = html.EscapeString(ival)
-				}
 				if ival == `NULL` {
 					ival = ``
+				} else if strings.IndexByte(ival, '<') >= 0 {
+					ival = html.EscapeString(ival)
 				}
 
 				switch extendedColumns[icol] {
@@ -586,7 +585,7 @@ func dbfindTag(par parFunc) string {
 				}
 			}
 			if par.Node.Attr[`prefix`] != nil {
-				(*par.Workspace.Vars)[prefix+`_`+icol] = ival
+				(*par.Workspace.Vars)[prefix+`_`+icol] = item[icol]
 			}
 			row[i] = ival
 		}
