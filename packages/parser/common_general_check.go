@@ -19,47 +19,4 @@
 //LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
-package daemons
-
-import (
-	"context"
-
-	"github.com/GenesisCommunity/go-genesis/packages/consts"
-	"github.com/GenesisCommunity/go-genesis/packages/model"
-	"github.com/GenesisCommunity/go-genesis/packages/parser"
-
-	log "github.com/sirupsen/logrus"
-)
-
-// QueueParserTx parses transaction from the queue
-func QueueParserTx(ctx context.Context, d *daemon) error {
-	DBLock()
-	defer DBUnlock()
-
-	infoBlock := &model.InfoBlock{}
-	_, err := infoBlock.Get()
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
-		return err
-	}
-	if infoBlock.BlockID == 0 {
-		d.logger.Debug("no blocks for parsing")
-		return nil
-	}
-
-	// delete looped transactions
-	_, err = model.DeleteLoopedTransactions()
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting looped transactions")
-		return err
-	}
-
-	p := new(transaction.Transaction)
-	err = transaction.ProcessTransactionsQueue(p.DbTransaction)
-	if err != nil {
-		d.logger.WithFields(log.Fields{"error": err}).Error("parsing transactions")
-		return err
-	}
-
-	return nil
-}
+package parser
