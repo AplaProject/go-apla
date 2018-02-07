@@ -74,8 +74,6 @@ type SavedConfig struct {
 	WorkDir    string // application work dir (cwd by default)
 	PrivateDir string // place for private keys files: NodePrivateKey, PrivateKey
 
-	MapAPIKey string
-
 	Centrifugo CentrifugoConfig
 
 	Autoupdate AutoupdateConfig
