@@ -303,13 +303,12 @@ func GetCurrentDir() string {
 	return dir
 }
 
-// GetBlockBody gets the block data
-func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, error) {
+// GetBlocksBody is retrieving `blocksCount` blocks bodies starting with blockID and puts them in the channel
+func GetBlocksBody(host string, blockID int64, blocksCount int32, dataTypeBlockBody int64) (chan []byte, error) {
 	conn, err := TCPConn(host)
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
-	defer conn.Close()
 
 	// send the type of data
 	_, err = conn.Write(converter.DecToBin(dataTypeBlockBody, 2))
@@ -325,29 +324,44 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 		return nil, ErrInfo(err)
 	}
 
-	// receive the data size as a response that server wants to transfer
-	buf := make([]byte, 4)
-	_, err = conn.Read(buf)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data size from connection")
-		return nil, ErrInfo(err)
-	}
-	// if the data size is less than 10mb, we will receive them
-	dataSize := converter.BinToDec(buf)
-	var binaryBlock []byte
-	if dataSize < 10485760 && dataSize > 0 {
-		binaryBlock = make([]byte, dataSize)
+	rawBlocksCh := make(chan []byte, blocksCount)
+	go func() {
+		defer func() {
+			close(rawBlocksCh)
+			conn.Close()
+		}()
 
-		_, err = io.ReadFull(conn, binaryBlock)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data from connection")
-			return nil, ErrInfo(err)
+		for {
+			// receive the data size as a response that server wants to transfer
+			buf := make([]byte, 4)
+			_, err = conn.Read(buf)
+			if err != nil {
+				if err != io.EOF {
+					log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data size from connection")
+				}
+				return
+			}
+			dataSize := converter.BinToDec(buf)
+			var binaryBlock []byte
+
+			// data size must be less than 10mb
+			if dataSize >= 10485760 && dataSize == 0 {
+				log.Error("null block")
+				return
+			}
+
+			binaryBlock = make([]byte, dataSize)
+
+			_, err = io.ReadFull(conn, binaryBlock)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data from connection")
+				return
+			}
+
+			rawBlocksCh <- binaryBlock
 		}
-	} else {
-		log.Error("null block")
-		return nil, ErrInfo("null block")
-	}
-	return binaryBlock, nil
+	}()
+	return rawBlocksCh, nil
 
 }
 

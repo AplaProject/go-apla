@@ -14,8 +14,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// TransactionType is type of transaction
-type TransactionType struct {
+// RequestType is type of request
+type RequestType struct {
 	Type uint16
 }
 

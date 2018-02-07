@@ -61,10 +61,14 @@ func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {
 }
 
 // GetBlocksFrom is retrieving ordered chain of blocks from database
-func (b *Block) GetBlocksFrom(startFromID int64, ordering string) ([]Block, error) {
+func (b *Block) GetBlocksFrom(startFromID int64, ordering string, limit int32) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
-	err = DBConn.Order("id "+ordering).Where("id > ?", startFromID).Find(&blockchain).Error
+	if limit == 0 {
+		err = DBConn.Order("id "+ordering).Where("id > ?", startFromID).Find(&blockchain).Error
+	} else {
+		err = DBConn.Order("id "+ordering).Where("id > ?", startFromID).Limit(limit).Find(&blockchain).Error
+	}
 	return *blockchain, err
 }
 

@@ -36,6 +36,7 @@ import (
 
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context/ctxhttp"
 )
@@ -191,70 +192,14 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		return ctx.Err()
 	}
 
-	type rbr struct {
-		blockID  int64
-		rawBlock []byte
-	}
-
-	// getRawBlock is 1st conveyor stage. It extracts the block body through a semaphore and sending raw body to 2st stage
-	getRawBlock := func(rawBlocksCh chan rbr, semaphore chan bool, errCh chan error, host string, blockID int64) {
-		<-semaphore
-		blockBin, err := utils.GetBlockBody(host, blockID, consts.DATA_TYPE_BLOCK_BODY)
-		if err != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
-			errCh <- err
-			return
-		}
-
-		rawBlocksCh <- rbr{blockID: blockID, rawBlock: blockBin}
-		semaphore <- true
-	}
-
-	// rawBlocksQueue is 2nd conveyor stage. It storing blocks and send them in a sequential order to 2nd stage
-	rawBlocksQueue := func(rawBlocksCh chan rbr, rawBlocksQueueCh chan []byte, fbID int64) {
-		type rbb struct {
-			rbrs []rbr
-			*sync.RWMutex
-		}
-
-		nextBlockID := fbID
-		buffer := rbb{RWMutex: &sync.RWMutex{}}
-
-		go func() {
-			for rb := range rawBlocksCh {
-				buffer.Lock()
-				buffer.rbrs = append(buffer.rbrs, rb)
-				buffer.Unlock()
-			}
-		}()
-
-		go func() {
-			for {
-				buffer.RLock()
-				for _, orb := range buffer.rbrs {
-					if nextBlockID == orb.blockID {
-						rawBlocksQueueCh <- orb.rawBlock
-						nextBlockID = orb.blockID + 1
-					}
-				}
-				buffer.RUnlock()
-			}
-		}()
-	}
-
-	// playRawBlock is 3nd conveyor stage. It parses blocks and writing them into blockchain
-	playRawBlock := func(rawBlocksQueueCh chan []byte, errCh chan error, s *sync.WaitGroup) {
+	playRawBlock := func(rawBlocksQueueCh chan []byte) error {
 		for rb := range rawBlocksQueueCh {
-			nb := make([]byte, len(rb))
-			copy(nb, rb)
-
-			block, err := parser.ProcessBlockWherePrevFromBlockchainTable(nb)
+			block, err := parser.ProcessBlockWherePrevFromBlockchainTable(rb)
 			if err != nil {
 				// we got bad block and should ban this host
 				banNode(host, err)
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
-				errCh <- err
-				return
+				return err
 			}
 
 			// hash compare could be failed in the case of fork
@@ -263,84 +208,69 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
 			}
 
-			if !hashMatched {
-				// it should be fork, replace our previous blocks to ones from the host
-				err := parser.GetBlocks(block.Header.BlockID-1, host)
-				if err != nil {
-					d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
-					banNode(host, err)
-					errCh <- err
-					return
-				}
-			} else {
-				/* TODO should we uncomment this ?????????????
-				_, err := model.MarkTransactionsUnverified()
-				if err != nil {
-					return err
-				}
-				*/
-			}
+			//if !hashMatched {
+			// it should be fork, replace our previous blocks to ones from the host
+			//err := parser.GetBlocks(block.Header.BlockID-1, host)
+			//if err != nil {
+			//	d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
+			//	banNode(host, err)
+			//	errCh <- err
+			//	return
+			//}
+			//}
+			//} else {
+			//	/* TODO should we uncomment this ?????????????
+			//	_, err := model.MarkTransactionsUnverified()
+			//	if err != nil {
+			//		return err
+			//	}
+			//	*/
+			//}
 
 			block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
 			if err != nil {
 				banNode(host, err)
-				errCh <- utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
-				return
+				return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
 			}
 			if err = block.CheckBlock(); err != nil {
 				banNode(host, err)
-				errCh <- err
-				return
+				return err
 			}
 			if err = block.PlayBlockSafe(); err != nil {
 				banNode(host, err)
-				errCh <- err
-				return
+				return err
 			}
-			s.Done()
 		}
+		return nil
 	}
 
 	st := time.Now()
 	d.logger.Infof("starting downloading blocks from %d to %d (%d) \n", curBlock.BlockID, maxBlockID, maxBlockID-curBlock.BlockID)
 
-	rawBlocksCh := make(chan rbr, 200)
-	rawBlocksQueueCh := make(chan []byte)
-	errCh := make(chan error)
-	doneCh := make(chan bool)
-
-	// This semaphore is controlling amount of concurrent requests at the same time.
-	// Current TCP server can handle only 20 connections from all(!) daemons
-	concurrentBlockRequests := 5
-	blockRequestsSemaphore := make(chan bool, concurrentBlockRequests)
-	for i := 0; i < concurrentBlockRequests; i++ {
-		blockRequestsSemaphore <- true
-	}
-
-	go func() {
-		sc := &sync.WaitGroup{}
-		go rawBlocksQueue(rawBlocksCh, rawBlocksQueueCh, curBlock.BlockID+1)
-		go playRawBlock(rawBlocksQueueCh, errCh, sc)
-		for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID++ {
-			go getRawBlock(rawBlocksCh, blockRequestsSemaphore, errCh, host, blockID)
-			sc.Add(1)
+	count := 0
+	var err error
+	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(tcpserver.BlocksPerRequest) {
+		var rawBlocksChan chan []byte
+		rawBlocksChan, err = utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY)
+		if err != nil {
+			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
+			break
 		}
 
-		sc.Wait()
-		doneCh <- true
-	}()
-
-	select {
-	case <-doneCh:
-		d.logger.Infof("%d blocks was collected (%s) \n", maxBlockID-curBlock.BlockID, time.Since(st).String())
-		return nil
-	case err := <-errCh:
-		d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
-		return err
-	case <-time.After(time.Minute * 10):
-		d.logger.Info("block collector 10m timeout")
-		return nil
+		err = playRawBlock(rawBlocksChan)
+		if err != nil {
+			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
+			break
+		}
+		count++
 	}
+
+	if err != nil {
+		d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("retrieving blockchain from node")
+	} else {
+		d.logger.Infof("%d blocks was collected (%s) \n", count, time.Since(st).String())
+	}
+	return err
 }
 
 func downloadChain(ctx context.Context, fileName, url string, logger *log.Entry) error {

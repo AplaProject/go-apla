@@ -17,7 +17,6 @@
 package tcpserver
 
 import (
-	"io"
 	"net"
 	"strings"
 	"sync/atomic"
@@ -33,7 +32,7 @@ var (
 )
 
 // HandleTCPRequest proceed TCP requests
-func HandleTCPRequest(rw io.ReadWriter) {
+func HandleTCPRequest(rw net.Conn) {
 	defer func() {
 		atomic.AddInt64(&counter, -1)
 	}()
@@ -43,7 +42,7 @@ func HandleTCPRequest(rw io.ReadWriter) {
 		return
 	}
 
-	dType := &TransactionType{}
+	dType := &RequestType{}
 	err := ReadRequest(dType, rw)
 	if err != nil {
 		log.Errorf("read request type failed: %s", err)
@@ -79,7 +78,7 @@ func HandleTCPRequest(rw io.ReadWriter) {
 		req := &GetBodyRequest{}
 		err = ReadRequest(req, rw)
 		if err == nil {
-			response, err = Type7(req)
+			err = Type7(req, rw)
 		}
 
 	case 10:
