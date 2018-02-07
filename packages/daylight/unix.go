@@ -22,7 +22,7 @@ package daylight
 import (
 	"syscall"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
 
 	log "github.com/sirupsen/logrus"
 )

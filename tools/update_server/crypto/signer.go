@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/GenesisKernel/go-genesis/tools/update_server/model"
+	"github.com/GenesisCommunity/go-genesis/tools/update_server/model"
 )
 
 type Signer interface {

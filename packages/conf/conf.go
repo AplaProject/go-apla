@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
 	toml "github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
 )

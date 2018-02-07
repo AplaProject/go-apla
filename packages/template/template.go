@@ -24,11 +24,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/language"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/language"
+	"github.com/GenesisCommunity/go-genesis/packages/smart"
+	"github.com/GenesisCommunity/go-genesis/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"

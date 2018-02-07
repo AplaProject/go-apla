@@ -11,10 +11,10 @@ import (
 	"github.com/parnurzeal/gorequest"
 	"github.com/pkg/errors"
 
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/tools/update_client/params"
-	upd_crypto "github.com/GenesisKernel/go-genesis/tools/update_server/crypto"
-	"github.com/GenesisKernel/go-genesis/tools/update_server/model"
+	"github.com/GenesisCommunity/go-genesis/packages/crypto"
+	"github.com/GenesisCommunity/go-genesis/tools/update_client/params"
+	upd_crypto "github.com/GenesisCommunity/go-genesis/tools/update_server/crypto"
+	"github.com/GenesisCommunity/go-genesis/tools/update_server/model"
 )
 
 type UpdateClient struct {

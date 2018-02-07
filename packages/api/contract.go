@@ -21,11 +21,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/model"
+	"github.com/GenesisCommunity/go-genesis/packages/script"
+	"github.com/GenesisCommunity/go-genesis/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"

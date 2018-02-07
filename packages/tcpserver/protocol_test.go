@@ -7,7 +7,7 @@ import (
 
 	"reflect"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
 )
 
 func TestReadRequest(t *testing.T) {

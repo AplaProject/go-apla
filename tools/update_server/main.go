@@ -7,11 +7,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/tools/update_server/config"
-	"github.com/GenesisKernel/go-genesis/tools/update_server/crypto"
-	"github.com/GenesisKernel/go-genesis/tools/update_server/storage"
-	"github.com/GenesisKernel/go-genesis/tools/update_server/web"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/tools/update_server/config"
+	"github.com/GenesisCommunity/go-genesis/tools/update_server/crypto"
+	"github.com/GenesisCommunity/go-genesis/tools/update_server/storage"
+	"github.com/GenesisCommunity/go-genesis/tools/update_server/web"
 )
 
 func main() {

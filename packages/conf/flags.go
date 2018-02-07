@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
 	log "github.com/sirupsen/logrus"
 )
 

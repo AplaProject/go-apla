@@ -22,15 +22,15 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/conf"
 
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/GenesisCommunity/go-genesis/packages/config/syspar"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/crypto"
+	"github.com/GenesisCommunity/go-genesis/packages/model"
+	"github.com/GenesisCommunity/go-genesis/packages/smart"
+	"github.com/GenesisCommunity/go-genesis/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"

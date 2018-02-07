@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisCommunity/go-genesis/packages/crypto"
 )
 
 func TestNewContracts(t *testing.T) {

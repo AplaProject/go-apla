@@ -22,12 +22,12 @@ import (
 	"io"
 	"sync"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisCommunity/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/config/syspar"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/model"
+	"github.com/GenesisCommunity/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
