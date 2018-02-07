@@ -38,7 +38,7 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 - [Licencia](#licencia)
 
 ## Introducción
-Genesis es una plataforma opensource de tecnología bolckchain, cuya base fue establecida en el año 2011 por
+Genesis es una plataforma opensource de tecnología blockchain, cuya base fue establecida en el año 2011 por
 el programador Oleg Strelenko. El código de la plataforma fue escrito completamente desde cero. En la
 actualidad un equipo con más de 15 desarrolladores altamente calificados trabaja en el proyecto. No sería justo
 crear ICO para una sociedad de Genesis que nos parece buena, por lo que decidimos repartir el 85% de los
