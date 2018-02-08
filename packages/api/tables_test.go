@@ -177,6 +177,39 @@ func TestJSONTable(t *testing.T) {
 	}
 	checkGet(`101new"doc"2`)
 
+	form = url.Values{"Name": {`res` + name}, "Value": {`contract res` + name + ` {
+		data {
+			Id int
+		}
+		action { 
+			$result = DBFind("contracts").WhereId($Id).Row()
+		}}`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	err = postTx("NewContract", &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {`run` + name}, "Value": {`contract run` + name + ` {
+		action { 
+			$temp = res` + name + `("Id",10)
+			$result = $temp["id"]
+		}}`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	err = postTx("NewContract", &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err := postTxResult(`run`+name, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `10` {
+		t.Error(`wrong answer`, msg)
+	}
+
 	forTest := tplList{{`DBFind(` + name + `,my).Columns("id,doc,doc->type").Where(doc->ind='101' and doc->check='33')`,
 		`[{"tag":"dbfind","attr":{"columns":["id","doc","doc.type"],"data":[["1","{"ind": "101", "type": "new\\"doc\\" val", "check": "33"}","new"doc" val"]],"name":"` + name + `","source":"my","types":["text","text","text"],"where":"doc-\u003eind='101' and doc-\u003echeck='33'"}}]`},
 		{`DBFind(` + name + `,my).Columns("id,doc,doc->type").WhereId(2).Vars(my)
