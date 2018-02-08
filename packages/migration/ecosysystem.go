@@ -1062,7 +1062,11 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 		action {
 			DBUpdate("keys", $key_id,"-amount", $amount)
-			DBUpdate("keys", $recipient,"+amount", $amount)
+			if DBFind("keys").Columns("id").WhereId($recipient).One("id") == nil {
+				DBInsert("keys", "id,amount",  $recipient, $amount)
+			} else {
+			   DBUpdate("keys", $recipient,"+amount", $amount)
+			}
 			DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash", 
 				$key_id, $recipient, $amount, $Comment, $block, $txhash)
 		}
