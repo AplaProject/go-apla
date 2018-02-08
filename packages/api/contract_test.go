@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
 func TestNewContracts(t *testing.T) {
@@ -224,6 +224,13 @@ var contracts = []smartContract{
 			action { var ivar int}
 		}`,
 		nil},
+	{`testGetContract`, `contract testGetContract {
+			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
+				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
+		[]smartParams{
+			{nil, map[string]string{`ByName`: `0 6`,
+				`ById`: `NewLang`}},
+		}},
 }
 
 func TestEditContracts(t *testing.T) {
@@ -481,24 +488,28 @@ func TestSignature(t *testing.T) {
 			}
 			action { 
 				$result = "OK " + Str($Amount)
-			}}
-			
-			contract ` + rnd + `Test {
-				data {
-					Recipient int "hidden"
-					Amount  money
-					Signature string "signature:` + rnd + `Transfer"
-				}
-				func action {
-					` + rnd + `Transfer("Recipient,Amount,Signature",$Recipient,$Amount,$Signature )
-					$result = "OOOPS " + Str($Amount)
-				}
-			  }
-			`}, `Conditions`: {`true`}}
+			}}`}, `Conditions`: {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
+	form = url.Values{`Value`: {`contract ` + rnd + `Test {
+			data {
+				Recipient int "hidden"
+				Amount  money
+				Signature string "signature:` + rnd + `Transfer"
+			}
+			func action {
+				` + rnd + `Transfer("Recipient,Amount,Signature",$Recipient,$Amount,$Signature )
+				$result = "OOOPS " + Str($Amount)
+			}
+		  }
+		`}, `Conditions`: {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+
 	form = url.Values{`Name`: {rnd + `Transfer`}, `Value`: {`{"title": "Would you like to sign",
 		"params":[
 			{"name": "Receipient", "text": "Wallet"},
@@ -608,18 +619,25 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	var cntlist contractsResult
-	err := sendGet(`contracts`, nil, &cntlist)
-	if err != nil {
+	rnd := `rnd` + crypto.RandSeq(6)
+	code := `contract ` + rnd + ` {
+		data {
+			Par string "optional"
+		}
+		action { $result = $par}}`
+	form := url.Values{`Value`: {code}, `Conditions`: {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
+
 	var ret getContractResult
-	err = sendGet(`contract/testUpd`, nil, &ret)
+	err := sendGet(`contract/`+rnd, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	keyID := ret.WalletID
 	sid := ret.TableID
 	var row rowResult
 	err = sendGet(`row/contracts/`+sid, nil, &row)
@@ -633,16 +651,22 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 		return
 	}
 
-	code := row.Value[`value`]
-	off := strings.IndexByte(code, '-')
-	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
-	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"1248-5499-7861-4204-5166"}}
+	code = row.Value[`value`]
+	form = url.Values{`Id`: {sid}, `Value`: {code}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"1248-5499-7861-4204-5166"}}
 	err = postTx(`EditContract`, &form)
 	if err == nil {
 		t.Error("Expected `Contract activated` error")
 		return
 	}
-
+	err = sendGet(`contract/`+rnd, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.WalletID != keyID {
+		t.Error(`wrong walletID`, ret.WalletID, keyID)
+		return
+	}
 	if err := postTx(`DeactivateContract`, &url.Values{`Id`: {sid}}); err != nil {
 		t.Error(err)
 		return
@@ -650,6 +674,15 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 
 	if err := postTx(`EditContract`, &form); err != nil {
 		t.Error(err)
+		return
+	}
+	err = sendGet(`contract/`+rnd, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Address != "1248-5499-7861-4204-5166" {
+		t.Error(`wrong address`, ret.Address, "!= 1248-5499-7861-4204-5166")
 		return
 	}
 }
@@ -661,10 +694,13 @@ func TestUpdateFunc(t *testing.T) {
 	}
 
 	rnd := `rnd` + crypto.RandSeq(6)
-	form := url.Values{`Value`: {`
-		func MyTest(input string) string {
-			return "X="+input
-		}`}, `Conditions`: {`true`}}
+	form := url.Values{`Value`: {`contract f` + rnd + ` {
+		data {
+			par string
+		}
+		func action {
+			$result = "X="+$par
+		}}`}, `Conditions`: {`true`}}
 	_, id, err := postTxResult(`NewContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -677,8 +713,14 @@ func TestUpdateFunc(t *testing.T) {
 				var ret map
 				ret = DBFind("contracts").Columns("id,value").WhereId(10).Row()
 				$result = ret["id"]
-		}}
-		contract row` + rnd + ` {
+		}}`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	form = url.Values{`Value`: {`contract row` + rnd + ` {
 				action {
 					var ret string
 					ret = DBFind("contracts").Columns("id,value").WhereId(11).One("id")
@@ -716,7 +758,7 @@ func TestUpdateFunc(t *testing.T) {
 				Par string
 			}
 			action {
-				$result = MyTest($Par)
+				$result = f` + rnd + `("par",$Par)
 			}}
 		`}, `Conditions`: {`true`}}
 	_, idcnt, err := postTxResult(`NewContract`, &form)
@@ -741,10 +783,13 @@ func TestUpdateFunc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form = url.Values{`Id`: {id}, `Value`: {`
-		func MyTest(input string) string {
-			return "Y="+input
-		}`}, `Conditions`: {`true`}}
+	form = url.Values{`Id`: {id}, `Value`: {`contract f` + rnd + `{
+		data {
+			par string
+		}
+		action {
+			$result = "Y="+$par
+		}}`}, `Conditions`: {`true`}}
 	err = postTx(`EditContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -764,7 +809,7 @@ func TestUpdateFunc(t *testing.T) {
 				Par string
 			}
 			action {
-				$result = MyTest($Par) + MyTest("OK")
+				$result = f` + rnd + `("par",$Par) + f` + rnd + `("par","OK")
 			}}
 		`}, `Conditions`: {`true`}}
 	_, idcnt, err = postTxResult(`EditContract`, &form)
@@ -811,9 +856,14 @@ func TestContractChain(t *testing.T) {
 			$new = $record["value"]
 			DBUpdate("` + rnd + `", $Id, "value", $new+"="+$new )
 		}
+	}`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
 	}
 
-	contract ` + rnd + ` {
+	form = url.Values{`Value`: {`contract ` + rnd + ` {
 		data {
 			Initial string
 		}

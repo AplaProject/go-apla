@@ -7,11 +7,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/tools/update_server/config"
-	"github.com/AplaProject/go-apla/tools/update_server/crypto"
-	"github.com/AplaProject/go-apla/tools/update_server/storage"
-	"github.com/AplaProject/go-apla/tools/update_server/web"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/config"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/crypto"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/storage"
+	"github.com/GenesisKernel/go-genesis/tools/update_server/web"
 )
 
 func main() {

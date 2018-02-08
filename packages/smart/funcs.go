@@ -28,22 +28,23 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/scheduler"
-	"github.com/AplaProject/go-apla/packages/scheduler/contract"
-	"github.com/AplaProject/go-apla/packages/script"
-	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/AplaProject/go-apla/packages/utils/tx"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/scheduler"
+	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
+	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -100,6 +101,8 @@ var (
 		"Eval":               10,
 		"EvalCondition":      20,
 		"FlushContract":      50,
+		"GetContractByName":  20,
+		"GetContractById":    20,
 		"HMac":               50,
 		"Join":               10,
 		"JSONToMap":          50,
@@ -160,6 +163,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"EvalCondition":      EvalCondition,
 		"Float":              Float,
 		"FlushContract":      FlushContract,
+		"GetContractByName":  GetContractByName,
+		"GetContractById":    GetContractById,
 		"HMac":               HMac,
 		"Join":               Join,
 		"JSONToMap":          JSONToMap,
@@ -460,6 +465,20 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 	return
 }
 
+// PrepareColumns replaces jsonb fields -> in the list of columns for db selecting
+// For example, name,doc->title => name,doc::jsonb->>'title' as "doc.title"
+func PrepareColumns(columns string) string {
+	colList := make([]string, 0)
+	for _, icol := range strings.Split(columns, `,`) {
+		if strings.Contains(icol, `->`) {
+			colfield := strings.Split(icol, `->`)
+			icol = fmt.Sprintf(`%s::jsonb->>'%s' as "%[1]s.%[2]s"`, colfield[0], colfield[1])
+		}
+		colList = append(colList, icol)
+	}
+	return strings.Join(colList, `,`)
+}
+
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
 	where string, params []interface{}) (int64, []interface{}, error) {
@@ -472,10 +491,12 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	if len(columns) == 0 {
 		columns = `*`
 	}
+	columns = strings.ToLower(columns)
 	if len(order) == 0 {
 		order = `id`
 	}
 	where = strings.Replace(converter.Escape(where), `$`, `?`, -1)
+	where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
 	if id != 0 {
 		where = fmt.Sprintf(`id='%d'`, id)
 		limit = 1
@@ -501,6 +522,8 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		}
 		columns = strings.Join(cols, `,`)
 	}
+	columns = PrepareColumns(columns)
+
 	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {
@@ -567,7 +590,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, false)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, true)
 	return
 }
 
@@ -602,6 +625,11 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 		return fmt.Errorf(`FlushContract can be only called from NewContract or EditContract`)
 	}
 	root := iroot.(*script.Block)
+	if id != 0 {
+		if len(root.Children) != 1 || root.Children[0].Type != script.ObjContract {
+			return fmt.Errorf(`Оnly one contract must be in the record`)
+		}
+	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
 			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = id
@@ -643,7 +671,7 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
-		getDefTableName(sc, `tables`), []string{`name`}, []string{name}, !sc.VDE && sc.Rollback, false)
+		getDefTableName(sc, `tables`), []string{`name`}, []string{strings.ToLower(name)}, !sc.VDE && sc.Rollback, false)
 	return err
 }
 

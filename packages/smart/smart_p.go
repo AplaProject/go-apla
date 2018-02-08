@@ -21,16 +21,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/language"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/script"
-	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/language"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -80,6 +81,8 @@ var (
 		"CreateColumn":      "extend_cost_create_column",
 		"PermColumn":        "extend_cost_perm_column",
 		"JSONToMap":         "extend_cost_json_to_map",
+		"GetContractByName": "extend_cost_contract_by_name",
+		"GetContractById":   "extend_cost_contract_by_id",
 	}
 )
 
@@ -233,7 +236,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && sc.Rollback, false)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && sc.Rollback, true)
 	return
 }
 
@@ -331,6 +334,36 @@ func LangRes(sc *SmartContract, idRes, lang string) string {
 	return ret
 }
 
+// GetContractByName returns id of the contract with this name
+func GetContractByName(sc *SmartContract, name string) int64 {
+	contract := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID))
+	if contract == nil {
+		return 0
+	}
+	info := (*contract).Block.Info.(*script.ContractInfo)
+	if info == nil {
+		return 0
+	}
+	return info.Owner.TableID
+}
+
+// GetContractById returns the name of the contract with this id
+func GetContractById(sc *SmartContract, id int64) string {
+	_, ret, err := DBSelect(sc, getDefTableName(sc, "contracts"), "value", id, `id`, 0, 1,
+		0, ``, []interface{}{})
+	if err != nil || len(ret) != 1 {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract name")
+		return ``
+	}
+
+	re := regexp.MustCompile(`(?is)^\s*contract\s+([\d\w_]+)\s*{`)
+	names := re.FindStringSubmatch(ret[0].(map[string]string)["value"])
+	if len(names) != 2 {
+		return ``
+	}
+	return names[1]
+}
+
 // EvalCondition gets the condition and check it
 func EvalCondition(sc *SmartContract, table, name, condfield string) error {
 	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM "`+getDefTableName(sc, table)+
@@ -379,18 +412,19 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return 0, err
 	}
+
 	err = LoadContract(sc.DbTransaction, id)
 	if err != nil {
 		return 0, err
 	}
 	sc.Rollback = false
-	_, _, err = DBInsert(sc, id+"_pages", "name,value,menu,conditions", "default_page",
+	_, _, err = DBInsert(sc, id+"_pages", "id,name,value,menu,conditions", "1", "default_page",
 		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
-	_, _, err = DBInsert(sc, id+"_menu", "name,value,title,conditions", "default_menu",
+	_, _, err = DBInsert(sc, id+"_menu", "id,name,value,title,conditions", "1", "default_menu",
 		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
@@ -645,6 +679,9 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 // JSONToMap is converting json to map
 func JSONToMap(input string) (map[string]interface{}, error) {
 	var ret map[string]interface{}
+	if len(input) == 0 {
+		return make(map[string]interface{}), nil
+	}
 	err := json.Unmarshal([]byte(input), &ret)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling json to map")

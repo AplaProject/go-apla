@@ -23,17 +23,18 @@ import (
 	"fmt"
 	"html"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/language"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/language"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -427,8 +428,10 @@ func dbfindTag(par parFunc) string {
 	if len(fields) == 0 {
 		fields = `*`
 	}
+	fields = strings.ToLower(fields)
 	if par.Node.Attr[`where`] != nil {
 		where = ` where ` + converter.Escape(par.Node.Attr[`where`].(string))
+		where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
 	}
 	if par.Node.Attr[`whereid`] != nil {
 		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(par.Node.Attr[`whereid`].(string)))
@@ -464,6 +467,8 @@ func dbfindTag(par parFunc) string {
 	if fields != `*` && !strings.Contains(fields, `id`) {
 		fields += `, id`
 	}
+	fields = smart.PrepareColumns(fields)
+
 	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
@@ -517,7 +522,7 @@ func dbfindTag(par parFunc) string {
 				}
 			}
 			if par.Node.Attr[`prefix`] != nil {
-				(*par.Workspace.Vars)[prefix+`_`+icol] = ival
+				(*par.Workspace.Vars)[prefix+`_`+strings.Replace(icol, `.`, `_`, 1)] = ival
 			}
 			row[i] = ival
 		}

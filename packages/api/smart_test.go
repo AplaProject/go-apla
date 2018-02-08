@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
 type smartParams struct {
@@ -304,6 +304,12 @@ func TestNewTable(t *testing.T) {
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
 			"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
 	err = postTx(`EditTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret tablesResult
+	err = sendGet(`tables`, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return

@@ -23,9 +23,9 @@ import (
 	"net/http"
 	"strconv"
 
-	conf "github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
+	conf "github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 
 	log "github.com/sirupsen/logrus"
 )
