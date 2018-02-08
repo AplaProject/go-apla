@@ -27,9 +27,10 @@ type MaxBlockResponse struct {
 	BlockID uint32
 }
 
-// GetBodyRequest contains BlockID
-type GetBodyRequest struct {
-	BlockID uint32
+// GetBodiesRequest contains BlockID
+type GetBodiesRequest struct {
+	BlockID      uint32
+	ReverseOrder bool
 }
 
 // GetBodyResponse is Data []bytes
@@ -105,6 +106,17 @@ func ReadRequest(request interface{}, r io.Reader) error {
 			}
 			t.SetInt(int64(val))
 
+		case reflect.Bool:
+			val, err := readBytes(r, 1)
+			if err != nil {
+				return err
+			}
+
+			if val[0] == 0 {
+				t.SetBool(false)
+			} else {
+				t.SetBool(true)
+			}
 		default:
 			log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("unsupported field")
 			panic("unsupported field")

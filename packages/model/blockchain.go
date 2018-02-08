@@ -72,6 +72,13 @@ func (b *Block) GetBlocksFrom(startFromID int64, ordering string, limit int32) (
 	return *blockchain, err
 }
 
+func (b *Block) GetReverseBlockchain(endBlockID int64, limit int32) ([]Block, error) {
+	var err error
+	blockchain := new([]Block)
+	err = DBConn.Model(&Block{}).Order("id DESC").Where("id <= ?", endBlockID).Limit(limit).Find(&blockchain).Error
+	return *blockchain, err
+}
+
 // DeleteById is deleting block by ID
 func (b *Block) DeleteById(transaction *DbTransaction, id int64) error {
 	return GetDB(transaction).Where("id = ?", id).Delete(Block{}).Error

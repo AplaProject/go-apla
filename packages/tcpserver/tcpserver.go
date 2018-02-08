@@ -75,7 +75,7 @@ func HandleTCPRequest(rw net.Conn) {
 		}
 
 	case 7:
-		req := &GetBodyRequest{}
+		req := &GetBodiesRequest{}
 		err = ReadRequest(req, rw)
 		if err == nil {
 			err = Type7(req, rw)

@@ -208,24 +208,15 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
 			}
 
-			//if !hashMatched {
-			// it should be fork, replace our previous blocks to ones from the host
-			//err := parser.GetBlocks(block.Header.BlockID-1, host)
-			//if err != nil {
-			//	d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
-			//	banNode(host, err)
-			//	errCh <- err
-			//	return
-			//}
-			//}
-			//} else {
-			//	/* TODO should we uncomment this ?????????????
-			//	_, err := model.MarkTransactionsUnverified()
-			//	if err != nil {
-			//		return err
-			//	}
-			//	*/
-			//}
+			if !hashMatched {
+				//it should be fork, replace our previous blocks to ones from the host
+				err := parser.GetBlocks(block.Header.BlockID-1, host)
+				if err != nil {
+					d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
+					banNode(host, err)
+					return err
+				}
+			}
 
 			block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
 			if err != nil {
@@ -251,7 +242,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	var err error
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(tcpserver.BlocksPerRequest) {
 		var rawBlocksChan chan []byte
-		rawBlocksChan, err = utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY)
+		rawBlocksChan, err = utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, false)
 		if err != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
 			break

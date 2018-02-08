@@ -29,9 +29,16 @@ const BlocksPerRequest int32 = 1000
 
 // Type7 writes the body of the specified block
 // blocksCollection and queue_parser_blocks daemons send the request through p.GetBlocks()
-func Type7(request *GetBodyRequest, w net.Conn) error {
+func Type7(request *GetBodiesRequest, w net.Conn) error {
 	block := &model.Block{}
-	blocks, err := block.GetBlocksFrom(int64(request.BlockID-1), "ASC", BlocksPerRequest)
+
+	var blocks []model.Block
+	var err error
+	if request.ReverseOrder {
+		blocks, err = block.GetReverseBlockchain(int64(request.BlockID), BlocksPerRequest)
+	} else {
+		blocks, err = block.GetBlocksFrom(int64(request.BlockID-1), "ASC", BlocksPerRequest)
+	}
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_id": request.BlockID}).Error("Error getting 1000 blocks from block_id")
 		return err
