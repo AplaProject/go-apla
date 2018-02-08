@@ -5,12 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/shopspring/decimal"
-)
-
-const (
-	fromToPerDayLimit             = 10000
-	tokenMovementQtyPerBlockLimit = 100
 )
 
 var errLowBalance = errors.New("not enough APL on the balance")
@@ -74,7 +70,7 @@ func GetExcessFromToTokenMovementPerDay(tx *DbTransaction) (excess []APLTransfer
 		Select("sender_id, recipient_id, SUM(amount) sum_amount").
 		Where("created_at > NOW() - interval '24 hours' AND amount > 0").
 		Group("sender_id, recipient_id").
-		Having("SUM(amount) > ?", fromToPerDayLimit).
+		Having("SUM(amount) > ?", consts.FromToPerDayLimit).
 		Scan(&excess).Error
 
 	return excess, err
@@ -87,7 +83,7 @@ func GetExcessTokenMovementQtyPerBlock(tx *DbTransaction, blockID int64) (excess
 		Select("sender_id, count(*)").
 		Where("block_id = ? AND amount > ?", blockID, 0).
 		Group("sender_id").
-		Having("count(*) > ?", tokenMovementQtyPerBlockLimit).
+		Having("count(*) > ?", consts.TokenMovementQtyPerBlockLimit).
 		Scan(&excess).Error
 
 	return excess, err
