@@ -120,6 +120,7 @@ Qtum | [Documentation](https://github.com/qtumproject/qtum/blob/master/doc/spark
 </p>
 
 也可以把你自己开发的区块链应用上传至 Google Play 或 Appstore 应用商店。
+
 [https://github.com/GenesisKernel/genesis-reactnative](https://github.com/GenesisKernel/genesis-reactnative)
 
 <p align="center">
