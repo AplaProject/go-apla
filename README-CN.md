@@ -73,16 +73,6 @@ Star计数将在 \[时间待定\] 结束。在此之前您需要将生成的 [�
 
 最后，约85万程序员可获得对区块链平台的全面掌控，使用新规则建立新世界。
 
-主网络上线之后、GEN 毫无疑问将能够上市交易所。需要指出的是，目前没有任何一家公共区块链平台提供开发自定义智能合约的功能，现有公共区块链平台中的代币的总价值低于10亿美元。
-
-平台 | 智能合约 | 市场份额 | Token 价格 | 总供应量 | Github | 源码
---- | --- | --- | --- | ---| --- | ---
-Ethereum | [Documentation](http://solidity.readthedocs.io/en/develop/introduction-to-smart-contracts.html) | $80B | [$800](https://coinmarketcap.com/currencies/ethereum/)  | 100M | [ethereum](https://github.com/ethereum/go-ethereum) | original
-NEO | [Documentation](http://docs.neo.org/en-us/sc/introduction.html) | $6B | [$100](https://coinmarketcap.com/currencies/neo/) | 100M| [neo-project](https://github.com/neo-project/neo) | original
-EOS | [Documentation](https://github.com/EOSIO/eos/wiki/Smart-Contract) | $5 | [$8](https://coinmarketcap.com/currencies/eos/) | 900M | [EOSIO](https://github.com/EOSIO/eos) | original
-Qtum | [Documentation](https://github.com/qtumproject/qtum/blob/master/doc/sparknet-guide.md) | $1B | [$20](https://coinmarketcap.com/currencies/qtum/) | 100M |  [qtumproject](https://github.com/qtumproject/qtum) | bitcoin fork
-
-根据 [https://coinmarketcap.com/tokens/](https://coinmarketcap.com/tokens/) 统计
 
 
 ## 接入 Github
