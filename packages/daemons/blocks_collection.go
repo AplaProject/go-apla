@@ -25,6 +25,10 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
+
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
@@ -32,13 +36,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
-
-	"time"
-
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context/ctxhttp"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
 
 // BlocksCollection collects and parses blocks

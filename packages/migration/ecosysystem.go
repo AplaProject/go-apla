@@ -160,59 +160,7 @@ var (
 		  }
 		}
 	  }', 'ContractConditions("MainCondition")'),
-	  ('2','contract VDEFunctions {}
-	  
-		func DBFind(table string).Columns(columns string).Where(where string, params ...)
-			.WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
-			return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
-		}
-
-		func One(list array, name string) string {
-			if list {
-				var row map 
-				row = list[0]
-				return row[name]
-			}
-			return nil
-		}
-
-		func Row(list array) map {
-			var ret map
-			if list {
-				ret = list[0]
-			}
-			return ret
-		}
-
-		func DBRow(table string).Columns(columns string).Where(where string, params ...)
-			.WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
-
-			var result array
-			result = DBFind(table).Columns(columns).Where(where, params ...).WhereId(id).Order(order).Ecosystem(ecosystem)
-
-			var row map
-			if Len(result) > 0 {
-				row = result[0]
-			}
-
-			return row
-		}
-
-		func ConditionById(table string, validate bool) {
-			var row map
-			row = DBRow(table).Columns("conditions").WhereId($Id)
-			if !row["conditions"] {
-				error Sprintf("Item %%d has not been found", $Id)
-			}
-
-			Eval(row["conditions"])
-
-			if validate {
-				ValidateCondition($Conditions,$ecosystem_id)
-			}
-		}
-	  ', 'ContractConditions("MainCondition")'),
-	  ('3','contract NewContract {
+	  ('2','contract NewContract {
 		  data {
 			  Value      string
 			  Conditions string
@@ -237,7 +185,7 @@ var (
 			  $result = id
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('4','contract EditContract {
+	  ('3','contract EditContract {
 		  data {
 			  Id         int
 			  Value      string
@@ -284,7 +232,7 @@ var (
 			  FlushContract(root, $Id, false)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('5','contract NewParameter {
+	  ('4','contract NewParameter {
 		  data {
 			  Name string
 			  Value string
@@ -302,7 +250,7 @@ var (
 			  $result = DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('6','contract EditParameter {
+	  ('5','contract EditParameter {
 		  data {
 			  Id int
 			  Value string
@@ -316,7 +264,7 @@ var (
 			  DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('7', 'contract NewMenu {
+	  ('6', 'contract NewMenu {
 		  data {
 			  Name       string
 			  Value      string
@@ -335,7 +283,7 @@ var (
 			  $result = DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('8','contract EditMenu {
+	  ('7','contract EditMenu {
 		  data {
 			  Id         int
 			  Value      string
@@ -350,7 +298,7 @@ var (
 			  DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('9','contract AppendMenu {
+	  ('8','contract AppendMenu {
 		data {
 			Id     int
 			Value  string
@@ -364,7 +312,7 @@ var (
 			DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
 		}
 	  }', 'ContractConditions("MainCondition")'),
-	  ('10','contract NewPage {
+	  ('9','contract NewPage {
 		  data {
 			  Name       string
 			  Value      string
@@ -383,7 +331,7 @@ var (
 			  $result = DBInsert("pages", "name,value,menu,conditions", $Name, $Value, $Menu, $Conditions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('11','contract EditPage {
+	  ('10','contract EditPage {
 		  data {
 			  Id         int
 			  Value      string
@@ -398,7 +346,7 @@ var (
 			  DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('12','contract AppendPage {
+	  ('11','contract AppendPage {
 		  data {
 			  Id         int
 			  Value      string
@@ -412,7 +360,7 @@ var (
 			  DBUpdate("pages", $Id, "value", row["value"] + "\r\n" + $Value)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('13','contract NewBlock {
+	  ('12','contract NewBlock {
 		  data {
 			  Name       string
 			  Value      string
@@ -430,7 +378,7 @@ var (
 			  $result = DBInsert("blocks", "name,value,conditions", $Name, $Value, $Conditions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('14','contract EditBlock {
+	  ('13','contract EditBlock {
 		  data {
 			  Id         int
 			  Value      string
@@ -444,7 +392,7 @@ var (
 			  DBUpdate("blocks", $Id, "value,conditions", $Value, $Conditions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('15','contract NewTable {
+	  ('14','contract NewTable {
 		  data {
 			  Name       string
 			  Columns      string
@@ -457,7 +405,7 @@ var (
 			  CreateTable($Name, $Columns, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('16','contract EditTable {
+	  ('15','contract EditTable {
 		  data {
 			  Name       string
 			  Permissions string
@@ -469,7 +417,7 @@ var (
 			  PermTable($Name, $Permissions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('17','contract NewColumn {
+	  ('16','contract NewColumn {
 		  data {
 			  TableName   string
 			  Name        string
@@ -483,7 +431,7 @@ var (
 			  CreateColumn($TableName, $Name, $Type, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('18','contract EditColumn {
+	  ('17','contract EditColumn {
 		  data {
 			  TableName   string
 			  Name        string
@@ -496,7 +444,7 @@ var (
 			  PermColumn($TableName, $Name, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('19','contract NewLang {
+	  ('18','contract NewLang {
 		data {
 			Name  string
 			Trans string
@@ -514,7 +462,7 @@ var (
 			UpdateLang($Name, $Trans)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('20','contract EditLang {
+	('19','contract EditLang {
 		data {
 			Name  string
 			Trans string
@@ -527,65 +475,127 @@ var (
 			UpdateLang($Name, $Trans)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('21','func ImportList(row array, cnt string) {
-		if !row {
-			return
-		}
-		var i int
-		while i < Len(row) {
-			var idata map
-			idata = row[i]
-			CallContract(cnt, idata)
-			i = i + 1
-		}
-	}
-	
-	func ImportData(row array) {
-		if !row {
-			return
-		}
-		var i int
-		while i < Len(row) {
-			var idata map
-			var list array
-			var tblname, columns string
-			idata = row[i]
-			i = i + 1
-			tblname = idata["Table"]
-			columns = Join(idata["Columns"], ",")
-			list = idata["Data"] 
-			if !list {
-				continue
-			}
-			var j int
-			while j < Len(list) {
-				var ilist array
-				ilist = list[j]
-				DBInsert(tblname, columns, ilist)
-				j=j+1
-			}
-		}
-	}
-	
-	contract Import {
+	('20','contract Import {
 		data {
 			Data string
 		}
 		conditions {
 			$list = JSONToMap($Data)
 		}
+		func ImportList(row array, cnt string) {
+			if !row {
+				return
+			}
+			var i int
+			while i < Len(row) {
+				var idata map
+				idata = row[i]
+				if(cnt == "pages"){
+					$ret_page = DBFind("pages").Columns("id").Where("name=$", idata["Name"])
+					$page_id = One($ret_page, "id") 
+					if ($page_id != nil){
+						idata["Id"] = Int($page_id) 
+						CallContract("EditPage", idata)
+					} else {
+						CallContract("NewPage", idata)
+					}
+				}
+				if(cnt == "blocks"){
+					$ret_block = DBFind("blocks").Columns("id").Where("name=$", idata["Name"])
+					$block_id = One($ret_block, "id") 
+					if ($block_id != nil){
+						idata["Id"] = Int($block_id)
+						CallContract("EditBlock", idata)
+					} else {
+						CallContract("NewBlock", idata)
+					}
+				}
+				if(cnt == "menus"){
+					$ret_menu = DBFind("menu").Columns("id,value").Where("name=$", idata["Name"])
+					$menu_id = One($ret_menu, "id") 
+					$menu_value = One($ret_menu, "value") 
+					if ($menu_id != nil){
+						idata["Id"] = Int($menu_id)
+						idata["Value"] = Str($menu_value) + "\n" + Str(idata["Value"])
+						CallContract("EditMenu", idata)
+					} else {
+						CallContract("NewMenu", idata)
+					}
+				}
+				if(cnt == "parameters"){
+					$ret_param = DBFind("parameters").Columns("id").Where("name=$", idata["Name"])
+					$param_id = One($ret_param, "id")
+					if ($param_id != nil){ 
+						idata["Id"] = Int($param_id) 
+						CallContract("EditParameter", idata)
+					} else {
+						CallContract("NewParameter", idata)
+					}
+				}
+				if(cnt == "languages"){
+					$ret_lang = DBFind("languages").Columns("id").Where("name=$", idata["Name"])
+					$lang_id = One($ret_lang, "id")
+					if ($lang_id != nil){
+						CallContract("EditLang", idata)
+					} else {
+						CallContract("NewLang", idata)
+					}
+				}
+				if(cnt == "contracts"){
+					if IsObject(idata["Name"], $ecosystem_id){
+					} else {
+						CallContract("NewContract", idata)
+					} 
+				}
+				if(cnt == "tables"){
+					$ret_table = DBFind("tables").Columns("id").Where("name=$", idata["Name"])
+					$table_id = One($ret_table, "id")
+					if ($table_id != nil){	
+					} else {
+						CallContract("NewTable", idata)
+					}
+				}
+				i = i + 1
+			}
+		}
+		func ImportData(row array) {
+			if !row {
+				return
+			}
+			var i int
+			while i < Len(row) {
+				var idata map
+				var list array
+				var tblname, columns string
+				idata = row[i]
+				i = i + 1
+				tblname = idata["Table"]
+				columns = Join(idata["Columns"], ",")
+				list = idata["Data"] 
+				if !list {
+					continue
+				}
+				var j int
+				while j < Len(list) {
+					var ilist array
+					ilist = list[j]
+					DBInsert(tblname, columns, ilist)
+					j=j+1
+				}
+			}
+		}
 		action {
-			ImportList($list["pages"], "NewPage")
-			ImportList($list["blocks"], "NewBlock")
-			ImportList($list["menus"], "NewMenu")
-			ImportList($list["parameters"], "NewParameter")
-			ImportList($list["languages"], "NewLang")
-			ImportList($list["contracts"], "NewContract")
-			ImportList($list["tables"], "NewTable")
+			ImportList($list["pages"], "pages")
+			ImportList($list["blocks"], "blocks")
+			ImportList($list["menus"], "menus")
+			ImportList($list["parameters"], "parameters")
+			ImportList($list["languages"], "languages")
+			ImportList($list["contracts"], "contracts")
+			ImportList($list["tables"], "tables")
 			ImportData($list["data"])
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('22', 'contract NewCron {
+	('21', 'contract NewCron {
 		data {
 			Cron       string
 			Contract   string
@@ -609,7 +619,7 @@ var (
 			UpdateCron($result)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('23','contract EditCron {
+	('22','contract EditCron {
 		data {
 			Id         int
 			Contract   string
@@ -689,7 +699,50 @@ var (
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
-		
+
+		INSERT INTO "%[1]d_menu" ("id","name","title","value","conditions") VALUES('2','admin_menu','Admin menu','MenuItem(
+    Icon: "icon-screen-desktop",
+    Page: "interface",
+    Title: "Interface"
+)
+MenuItem(
+    Icon: "icon-docs",
+    Page: "tables",
+    Title: "Tables"
+)
+MenuItem(
+    Icon: "icon-briefcase",
+    Page: "contracts",
+    Title: "Smart Contracts"
+)
+MenuItem(
+    Icon: "icon-settings",
+    Page: "parameters",
+    Title: "Ecosystem parameters"
+)
+MenuItem(
+    Icon: "icon-globe",
+    Page: "languages",
+    Title: "Language resources"
+)
+MenuItem(
+    Icon: "icon-cloud-upload",
+    Page: "import",
+    Title: "Import"
+)
+MenuItem(
+    Icon: "icon-cloud-download",
+    Page: "export",
+    Title: "Export"
+)
+If("#key_id#" == EcosysParam("founder_account")){
+    MenuItem(
+        Icon: "icon-lock",
+        Page: "vde",
+        Title: "Dedicated Ecosystem"
+    )
+}','true');
+
 		DROP TABLE IF EXISTS "%[1]d_pages"; CREATE TABLE "%[1]d_pages" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -699,7 +752,12 @@ var (
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
-		
+
+
+		INSERT INTO "%[1]d_pages" ("id","name","value","menu","conditions") VALUES('2','admin_index','','admin_menu','true');
+
+
+
 		DROP TABLE IF EXISTS "%[1]d_blocks"; CREATE TABLE "%[1]d_blocks" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -962,7 +1020,7 @@ var (
 
 		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id",
 			"member_name","date_start") VALUES('1','1','3','Admin','%[4]d','founder', NOW());
-	
+
 
 		DROP TABLE IF EXISTS "%[1]d_member";
 		CREATE TABLE "%[1]d_member" (
@@ -979,61 +1037,7 @@ var (
 	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id") VALUES ('1');
 
 	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
-	('2','contract SystemFunctions {
-	}
-	
-	func DBFind(table string).Columns(columns string).Where(where string, params ...)
-		 .WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
-		return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
-	}
-
-	func One(list array, name string) string {
-		if list {
-			var row map 
-			row = list[0]
-			return row[name]
-		}
-		return nil
-	}
-	
-	func Row(list array) map {
-		var ret map
-		if list {
-			ret = list[0]
-		}
-		return ret
-	}
-
-	func DBRow(table string).Columns(columns string).Where(where string, params ...)
-		.WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
-		
-		var result array
-		result = DBFind(table).Columns(columns).Where(where, params ...).WhereId(id).Order(order).Ecosystem(ecosystem)
-
-		var row map
-		if Len(result) > 0 {
-			row = result[0]
-		}
-
-		return row
-	}
-	
-	func ConditionById(table string, validate bool) {
-		var row map
-		row = DBRow(table).Columns("conditions").WhereId($Id)
-		if !row["conditions"] {
-			error Sprintf("Item %%d has not been found", $Id)
-		}
-
-		Eval(row["conditions"])
-
-		if validate {
-			ValidateCondition($Conditions,$ecosystem_id)
-		}
-	}
-	
-	', '%[1]d','ContractConditions("MainCondition")'),
-	('3','contract MoneyTransfer {
+	('2','contract MoneyTransfer {
 		data {
 			Recipient string
 			Amount    string
@@ -1058,12 +1062,16 @@ var (
 		}
 		action {
 			DBUpdate("keys", $key_id,"-amount", $amount)
-			DBUpdate("keys", $recipient,"+amount", $amount)
+			if DBFind("keys").Columns("id").WhereId($recipient).One("id") == nil {
+				DBInsert("keys", "id,amount",  $recipient, $amount)
+			} else {
+			   DBUpdate("keys", $recipient,"+amount", $amount)
+			}
 			DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash", 
 				$key_id, $recipient, $amount, $Comment, $block, $txhash)
 		}
 	}', '%[1]d', 'ContractConditions("MainCondition")'),
-	('4','contract NewContract {
+	('3','contract NewContract {
 		data {
 			Value      string
 			Conditions string
@@ -1108,7 +1116,7 @@ var (
 			return  SysParamInt("contract_price")
 		}
 	}', '%[1]d', 'ContractConditions("MainCondition")'),
-	('5','contract EditContract {
+	('4','contract EditContract {
 		data {
 			Id         int
 			Value      string
@@ -1160,12 +1168,12 @@ var (
 		}
 		action {
 			var root int
-			root = CompileContract($Value, $ecosystem_id, Int($cur["wallet_id"]), Int($cur["token_id"]))
+			root = CompileContract($Value, $ecosystem_id, $recipient, Int($cur["token_id"]))
 			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
 			FlushContract(root, $Id, Int($cur["active"]) == 1)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('6','contract ActivateContract {
+	('5','contract ActivateContract {
 		data {
 			Id  int
 		}
@@ -1187,7 +1195,7 @@ var (
 			Activate($Id, $ecosystem_id)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('7','contract NewEcosystem {
+	('6','contract NewEcosystem {
 		data {
 			Name  string "optional"
 		}
@@ -1201,7 +1209,7 @@ var (
 			RollbackEcosystem()
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('8','contract NewParameter {
+	('7','contract NewParameter {
 		data {
 			Name string
 			Value string
@@ -1221,7 +1229,7 @@ var (
 			DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('9','contract EditParameter {
+	('8','contract EditParameter {
 		data {
 			Id int
 			Value string
@@ -1235,7 +1243,7 @@ var (
 			DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('10', 'contract NewMenu {
+	('9', 'contract NewMenu {
 		data {
 			Name       string
 			Value      string
@@ -1259,7 +1267,7 @@ var (
 			return  SysParamInt("menu_price")
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('11','contract EditMenu {
+	('10','contract EditMenu {
 		data {
 			Id         int
 			Value      string
@@ -1274,7 +1282,7 @@ var (
 			DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('12','contract AppendMenu {
+	('11','contract AppendMenu {
 		data {
 			Id     int
 			Value      string
@@ -1288,7 +1296,7 @@ var (
 			DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('13','contract NewPage {
+	('12','contract NewPage {
 		data {
 			Name       string
 			Value      string
@@ -1312,7 +1320,7 @@ var (
 			return  SysParamInt("page_price")
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('14','contract EditPage {
+	('13','contract EditPage {
 		data {
 			Id         int
 			Value      string
@@ -1327,7 +1335,7 @@ var (
 			DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('15','contract AppendPage {
+	('14','contract AppendPage {
 		data {
 			Id         int
 			Value      string
@@ -1348,7 +1356,7 @@ var (
 			DBUpdate("pages", $Id, "value",  value )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('16','contract NewLang {
+	('15','contract NewLang {
 		data {
 			Name  string
 			Trans string
@@ -1368,7 +1376,7 @@ var (
 			UpdateLang($Name, $Trans)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('17','contract EditLang {
+	('16','contract EditLang {
 		data {
 			Name  string
 			Trans string
@@ -1381,7 +1389,7 @@ var (
 			UpdateLang($Name, $Trans)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('18','contract NewSign {
+	('17','contract NewSign {
 		data {
 			Name       string
 			Value      string
@@ -1402,7 +1410,7 @@ var (
 			DBInsert("signatures", "name,value,conditions", $Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('19','contract EditSign {
+	('18','contract EditSign {
 		data {
 			Id         int
 			Value      string
@@ -1416,7 +1424,7 @@ var (
 			DBUpdate("signatures", $Id, "value,conditions", $Value, $Conditions)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('20','contract NewBlock {
+	('19','contract NewBlock {
 		data {
 			Name       string
 			Value      string
@@ -1436,7 +1444,7 @@ var (
 			DBInsert("blocks", "name,value,conditions", $Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('21','contract EditBlock {
+	('20','contract EditBlock {
 		data {
 			Id         int
 			Value      string
@@ -1450,7 +1458,7 @@ var (
 			DBUpdate("blocks", $Id, "value,conditions", $Value, $Conditions)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('22','contract NewTable {
+	('21','contract NewTable {
 		data {
 			Name       string
 			Columns      string
@@ -1469,7 +1477,7 @@ var (
 			return  SysParamInt("table_price")
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('23','contract EditTable {
+	('22','contract EditTable {
 		data {
 			Name       string
 			Permissions string
@@ -1481,7 +1489,7 @@ var (
 			PermTable($Name, $Permissions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('24','contract NewColumn {
+	('23','contract NewColumn {
 		data {
 			TableName   string
 			Name        string
@@ -1501,7 +1509,7 @@ var (
 			return  SysParamInt("column_price")
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('25','contract EditColumn {
+	('24','contract EditColumn {
 		data {
 			TableName   string
 			Name        string
@@ -1514,65 +1522,127 @@ var (
 			PermColumn($TableName, $Name, $Permissions)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('26','func ImportList(row array, cnt string) {
-		if !row {
-			return
-		}
-		var i int
-		while i < Len(row) {
-			var idata map
-			idata = row[i]
-			CallContract(cnt, idata)
-			i = i + 1
-		}
-	}
-	
-	func ImportData(row array) {
-		if !row {
-			return
-		}
-		var i int
-		while i < Len(row) {
-			var idata map
-			var list array
-			var tblname, columns string
-			idata = row[i]
-			i = i + 1
-			tblname = idata["Table"]
-			columns = Join(idata["Columns"], ",")
-			list = idata["Data"] 
-			if !list {
-				continue
-			}
-			var j int
-			while j < Len(list) {
-				var ilist array
-				ilist = list[j]
-				DBInsert(tblname, columns, ilist)
-				j=j+1
-			}
-		}
-	}
-	
-	contract Import {
+	('25','contract Import {
 		data {
 			Data string
 		}
 		conditions {
 			$list = JSONToMap($Data)
 		}
+		func ImportList(row array, cnt string) {
+			if !row {
+				return
+			}
+			var i int
+			while i < Len(row) {
+				var idata map
+				idata = row[i]
+				if(cnt == "pages"){
+					$ret_page = DBFind("pages").Columns("id").Where("name=$", idata["Name"])
+					$page_id = One($ret_page, "id") 
+					if ($page_id != nil){
+						idata["Id"] = Int($page_id) 
+						CallContract("EditPage", idata)
+					} else {
+						CallContract("NewPage", idata)
+					}
+				}
+				if(cnt == "blocks"){
+					$ret_block = DBFind("blocks").Columns("id").Where("name=$", idata["Name"])
+					$block_id = One($ret_block, "id") 
+					if ($block_id != nil){
+						idata["Id"] = Int($block_id)
+						CallContract("EditBlock", idata)
+					} else {
+						CallContract("NewBlock", idata)
+					}
+				}
+				if(cnt == "menus"){
+					$ret_menu = DBFind("menu").Columns("id,value").Where("name=$", idata["Name"])
+					$menu_id = One($ret_menu, "id") 
+					$menu_value = One($ret_menu, "value") 
+					if ($menu_id != nil){
+						idata["Id"] = Int($menu_id)
+						idata["Value"] = Str($menu_value) + "\n" + Str(idata["Value"])
+						CallContract("EditMenu", idata)
+					} else {
+						CallContract("NewMenu", idata)
+					}
+				}
+				if(cnt == "parameters"){
+					$ret_param = DBFind("parameters").Columns("id").Where("name=$", idata["Name"])
+					$param_id = One($ret_param, "id")
+					if ($param_id != nil){ 
+						idata["Id"] = Int($param_id) 
+						CallContract("EditParameter", idata)
+					} else {
+						CallContract("NewParameter", idata)
+					}
+				}
+				if(cnt == "languages"){
+					$ret_lang = DBFind("languages").Columns("id").Where("name=$", idata["Name"])
+					$lang_id = One($ret_lang, "id")
+					if ($lang_id != nil){
+						CallContract("EditLang", idata)
+					} else {
+						CallContract("NewLang", idata)
+					}
+				}
+				if(cnt == "contracts"){
+					if IsObject(idata["Name"], $ecosystem_id){
+					} else {
+						CallContract("NewContract", idata)
+					} 
+				}
+				if(cnt == "tables"){
+					$ret_table = DBFind("tables").Columns("id").Where("name=$", idata["Name"])
+					$table_id = One($ret_table, "id")
+					if ($table_id != nil){	
+					} else {
+						CallContract("NewTable", idata)
+					}
+				}
+				i = i + 1
+			}
+		}
+		func ImportData(row array) {
+			if !row {
+				return
+			}
+			var i int
+			while i < Len(row) {
+				var idata map
+				var list array
+				var tblname, columns string
+				idata = row[i]
+				i = i + 1
+				tblname = idata["Table"]
+				columns = Join(idata["Columns"], ",")
+				list = idata["Data"] 
+				if !list {
+					continue
+				}
+				var j int
+				while j < Len(list) {
+					var ilist array
+					ilist = list[j]
+					DBInsert(tblname, columns, ilist)
+					j=j+1
+				}
+			}
+		}
 		action {
-			ImportList($list["pages"], "NewPage")
-			ImportList($list["blocks"], "NewBlock")
-			ImportList($list["menus"], "NewMenu")
-			ImportList($list["parameters"], "NewParameter")
-			ImportList($list["languages"], "NewLang")
-			ImportList($list["contracts"], "NewContract")
-			ImportList($list["tables"], "NewTable")
+			ImportList($list["pages"], "pages")
+			ImportList($list["blocks"], "blocks")
+			ImportList($list["menus"], "menus")
+			ImportList($list["parameters"], "parameters")
+			ImportList($list["languages"], "languages")
+			ImportList($list["contracts"], "contracts")
+			ImportList($list["tables"], "tables")
 			ImportData($list["data"])
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('27','contract DeactivateContract {
+	('26','contract DeactivateContract {
 		data {
 			Id         int
 		}
@@ -1594,7 +1664,7 @@ var (
 			Deactivate($Id, $ecosystem_id)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('28','contract UpdateSysParam {
+	('27','contract UpdateSysParam {
 		data {
 			Name  string
 			Value string

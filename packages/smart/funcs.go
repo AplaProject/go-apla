@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -100,6 +101,8 @@ var (
 		"Eval":               10,
 		"EvalCondition":      20,
 		"FlushContract":      50,
+		"GetContractByName":  20,
+		"GetContractById":    20,
 		"HMac":               50,
 		"Join":               10,
 		"JSONToMap":          50,
@@ -160,6 +163,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"EvalCondition":      EvalCondition,
 		"Float":              Float,
 		"FlushContract":      FlushContract,
+		"GetContractByName":  GetContractByName,
+		"GetContractById":    GetContractById,
 		"HMac":               HMac,
 		"Join":               Join,
 		"JSONToMap":          JSONToMap,
@@ -341,6 +346,8 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		var colType string
 		colDef := ``
 		switch data[`type`] {
+		case "json":
+			colType = `jsonb`
 		case "varchar":
 			colType = `varchar(102400)`
 		case "character":
@@ -458,6 +465,20 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 	return
 }
 
+// PrepareColumns replaces jsonb fields -> in the list of columns for db selecting
+// For example, name,doc->title => name,doc::jsonb->>'title' as "doc.title"
+func PrepareColumns(columns string) string {
+	colList := make([]string, 0)
+	for _, icol := range strings.Split(columns, `,`) {
+		if strings.Contains(icol, `->`) {
+			colfield := strings.Split(icol, `->`)
+			icol = fmt.Sprintf(`%s::jsonb->>'%s' as "%[1]s.%[2]s"`, colfield[0], colfield[1])
+		}
+		colList = append(colList, icol)
+	}
+	return strings.Join(colList, `,`)
+}
+
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
 	where string, params []interface{}) (int64, []interface{}, error) {
@@ -470,10 +491,12 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	if len(columns) == 0 {
 		columns = `*`
 	}
+	columns = strings.ToLower(columns)
 	if len(order) == 0 {
 		order = `id`
 	}
 	where = strings.Replace(converter.Escape(where), `$`, `?`, -1)
+	where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
 	if id != 0 {
 		where = fmt.Sprintf(`id='%d'`, id)
 		limit = 1
@@ -499,6 +522,8 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		}
 		columns = strings.Join(cols, `,`)
 	}
+	columns = PrepareColumns(columns)
+
 	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {
@@ -565,7 +590,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, false)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, true)
 	return
 }
 
@@ -600,6 +625,11 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 		return fmt.Errorf(`FlushContract can be only called from NewContract or EditContract`)
 	}
 	root := iroot.(*script.Block)
+	if id != 0 {
+		if len(root.Children) != 1 || root.Children[0].Type != script.ObjContract {
+			return fmt.Errorf(`Оnly one contract must be in the record`)
+		}
+	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
 			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = id
@@ -641,14 +671,14 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
-		getDefTableName(sc, `tables`), []string{`name`}, []string{name}, !sc.VDE && sc.Rollback, false)
+		getDefTableName(sc, `tables`), []string{`name`}, []string{strings.ToLower(name)}, !sc.VDE && sc.Rollback, false)
 	return err
 }
 
 // TableConditions is contract func
 func TableConditions(sc *SmartContract, name, columns, permissions string) (err error) {
 	isEdit := len(columns) == 0
-
+	name = strings.ToLower(name)
 	if isEdit {
 		if !accessContracts(sc, `EditTable`) {
 			log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1EditTable")
@@ -731,7 +761,8 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		}
 		itype := data[`type`]
 		if itype != `varchar` && itype != `number` && itype != `datetime` && itype != `text` &&
-			itype != `bytea` && itype != `double` && itype != `money` && itype != `character` {
+			itype != `bytea` && itype != `double` && itype != `json` && itype != `money` &&
+			itype != `character` {
 			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect type")
 			return fmt.Errorf(`incorrect type`)
 		}
@@ -774,6 +805,8 @@ func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 
 // ColumnCondition is contract func
 func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions string) error {
+	name = strings.ToLower(name)
+	tableName = strings.ToLower(tableName)
 	if !accessContracts(sc, `NewColumn`, `EditColumn`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ColumnConditions can be only called from @1NewColumn")
 		return fmt.Errorf(`ColumnCondition can be only called from NewColumn or EditColumn`)
@@ -785,7 +818,6 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		prefix += `_vde`
 	}
 	tEx.SetTablePrefix(prefix)
-	name = strings.ToLower(name)
 
 	exists, err := tEx.IsExistsByPermissionsAndTableName(sc.DbTransaction, name, tableName)
 	if err != nil {
@@ -827,12 +859,12 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
-	if coltype != `varchar` && coltype != `number` && coltype != `datetime` && coltype != `character` &&
+	if coltype != `varchar` && coltype != `number` && coltype != `datetime` &&
+		coltype != `character` && coltype != `json` &&
 		coltype != `text` && coltype != `bytea` && coltype != `double` && coltype != `money` {
 		log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("Unknown column type")
 		return fmt.Errorf(`incorrect type`)
 	}
-
 	return sc.AccessTable(tblName, "new_column")
 }
 
@@ -871,10 +903,13 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions strin
 		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
 	}
 	name = strings.ToLower(name)
+	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
 
 	var colType string
 	switch coltype {
+	case "json":
+		colType = `jsonb`
 	case "varchar":
 		colType = `varchar(102400)`
 	case "number":
@@ -933,6 +968,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		return fmt.Errorf(`EditColumn can be only called from EditColumn`)
 	}
 	name = strings.ToLower(name)
+	tableName = strings.ToLower(tableName)
 	tables := getDefTableName(sc, `tables`)
 	type cols struct {
 		Columns string

@@ -7,11 +7,11 @@ import (
 	"reflect"
 	"strconv"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // RequestType is type of request
