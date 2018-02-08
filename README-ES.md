@@ -92,20 +92,6 @@ Como resultado, cerca de 850 mil programadores recibirán el control total de la
 comenzar a construir un mundo nuevo con nuevas reglas.
 <br> <br>
 
-Después de iniciar el mainnet, los GEN pueden agregarse a las bolsas de valores sin problemas. Por cierto, en la
-actualidad no existe ninguna plataforma pública de bolckchain con valor total de todos los tokens menor de $1 mil
-millones de dolares, que tenga capacidad para desarrollar sus contratos inteligentes y cotizar en bolsa.
-
-
-Platform | Smart-contracts | Market Cap | Token price | Total Supply| Github | Source code
---- | --- | --- | --- | ---| --- | ---
-Ethereum | [Documentation](http://solidity.readthedocs.io/en/develop/introduction-to-smart-contracts.html) | $80B | [$800](https://coinmarketcap.com/currencies/ethereum/)  | 100M | [ethereum](https://github.com/ethereum/go-ethereum) | original
-NEO | [Documentation](http://docs.neo.org/en-us/sc/introduction.html) | $6B | [$100](https://coinmarketcap.com/currencies/neo/) | 100M| [neo-project](https://github.com/neo-project/neo) | original
-EOS | [Documentation](https://github.com/EOSIO/eos/wiki/Smart-Contract) | $5 | [$8](https://coinmarketcap.com/currencies/eos/) | 900M | [EOSIO](https://github.com/EOSIO/eos) | original
-Qtum | [Documentation](https://github.com/qtumproject/qtum/blob/master/doc/sparknet-guide.md) | $1B | [$20](https://coinmarketcap.com/currencies/qtum/) | 100M |  [qtumproject](https://github.com/qtumproject/qtum) | bitcoin fork
-
-En base a https://coinmarketcap.com/tokens/
-
 
 ## Integración con github
 Planificamos la posibilidad de pagar las confirmaciones aprobadas y cierres issue en GEN. Es decir, usted puede

@@ -67,17 +67,6 @@ Genesis - opensource блокчейн платформа, основа кото�
 
 В итоге около 850 тыс программистов получат полный контроль над блокчейн платформой и смогут начать строить новый мир с новыми правилами.<br> <br>
 
-После запуска mainnet, GEN смогут быть без проблем добавлены на биржи. Кстати, сейчас нет ни одной публичной блокчейн платформы, обладающей возможностью разрабатывать свои смарт-контракты и вышедшей на биржи у которой суммарная стоимость всех токенов меньше $1 млрд.
-
-Platform | Smart-contracts | Market Cap | Token price | Total Supply| Github | Source code
---- | --- | --- | --- | ---| --- | ---
-Ethereum | [Documentation](http://solidity.readthedocs.io/en/develop/introduction-to-smart-contracts.html) | $80B | [$800](https://coinmarketcap.com/currencies/ethereum/)  | 100M | [ethereum](https://github.com/ethereum/go-ethereum) | original
-NEO | [Documentation](http://docs.neo.org/en-us/sc/introduction.html) | $6B | [$100](https://coinmarketcap.com/currencies/neo/) | 100M| [neo-project](https://github.com/neo-project/neo) | original
-EOS | [Documentation](https://github.com/EOSIO/eos/wiki/Smart-Contract) | $5 | [$8](https://coinmarketcap.com/currencies/eos/) | 900M | [EOSIO](https://github.com/EOSIO/eos) | original
-Qtum | [Documentation](https://github.com/qtumproject/qtum/blob/master/doc/sparknet-guide.md) | $1B | [$20](https://coinmarketcap.com/currencies/qtum/) | 100M |  [qtumproject](https://github.com/qtumproject/qtum) | bitcoin fork
-
-Но основе https://coinmarketcap.com/tokens/
-
 
 ## Интеграция с github
 Мы планируем сделать возможность оплачивать одобренные коммиты и закрытие issue в GEN. Т.е. вы сможете интегрировать Genesis в свой репозиторий и автоматически платить пользователям, которые будут улучшать Ваш продукт.<br>
