@@ -332,6 +332,74 @@ func LoadContracts(transaction *model.DbTransaction) (err error) {
 	return
 }
 
+func LoadSysFuncs(vm *script.VM, state int) error {
+	code := `func DBFind(table string).Columns(columns string).Where(where string, params ...)
+	.WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
+   return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
+}
+
+func One(list array, name string) string {
+   if list {
+	   var row map 
+	   row = list[0]
+	   if Contains(name, "->") {
+		   var colfield array
+		   var val string
+		   colfield = Split(ToLower(name), "->")
+		   val = row[colfield[0]+"."+ colfield[1]]
+		   if !val {
+			   var fields map
+			   fields = JSONToMap(row[colfield[0]])
+			   val = fields[colfield[1]]
+		   }
+		   if !val {
+			   return ""
+		   }
+		   return val
+	   }
+	   return row[name]
+   }
+   return nil
+}
+
+func Row(list array) map {
+   var ret map
+   if list {
+	   ret = list[0]
+   }
+   return ret
+}
+
+func DBRow(table string).Columns(columns string).Where(where string, params ...)
+   .WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
+   
+   var result array
+   result = DBFind(table).Columns(columns).Where(where, params ...).WhereId(id).Order(order).Ecosystem(ecosystem)
+
+   var row map
+   if Len(result) > 0 {
+	   row = result[0]
+   }
+
+   return row
+}
+
+func ConditionById(table string, validate bool) {
+   var row map
+   row = DBRow(table).Columns("conditions").WhereId($Id)
+   if !row["conditions"] {
+	   error Sprintf("Item %%d has not been found", $Id)
+   }
+
+   Eval(row["conditions"])
+
+   if validate {
+	   ValidateCondition($Conditions,$ecosystem_id)
+   }
+}`
+	return vmCompile(vm, code, &script.OwnerInfo{StateID: uint32(state)})
+}
+
 // LoadContract reads and compiles contract of new state
 func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
@@ -341,6 +409,7 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 		return err
 	}
 	state := uint32(converter.StrToInt64(prefix))
+	LoadSysFuncs(smartVM, int(state))
 	for _, item := range contracts {
 		names := strings.Join(script.ContractsList(item[`value`]), `,`)
 		owner := script.OwnerInfo{
@@ -374,6 +443,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	vm := newVM()
 	EmbedFuncs(vm, script.VMTypeVDE)
 	smartVDE[state] = vm
+	LoadSysFuncs(vm, int(state))
 	for _, item := range contracts {
 		names := strings.Join(script.ContractsList(item[`value`]), `,`)
 		owner := script.OwnerInfo{
