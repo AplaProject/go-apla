@@ -231,5 +231,5 @@ Web 版本的 Blockexplorer 马上就会放出。
 
 <p align="center">
 <a href="#"><img src="http://www.kgsbo.com/wp-content/themes/kgsbo/images/top.png" width=100 align="center"></a><br>
-  <a href="#">向上</a>
+  <a href="#">返回顶部</a>
 </p>
