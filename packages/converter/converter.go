@@ -963,3 +963,18 @@ func RoundWithoutPrecision(num float64) int64 {
 	//log.Debug("num", num)
 	return int64(num + math.Copysign(0.5, num))
 }
+
+// ValueToInt converts interface (string or int64) to int64
+func ValueToInt(v interface{}) (ret int64) {
+	var err error
+	switch val := v.(type) {
+	case int64:
+		ret = val
+	case string:
+		ret, err = strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting value from string to int")
+		}
+	}
+	return
+}

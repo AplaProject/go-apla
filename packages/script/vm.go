@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -250,21 +251,6 @@ func valueToBool(v interface{}) bool {
 		return dec.Cmp(decimal.New(0, 0)) != 0
 	}
 	return false
-}
-
-// ValueToInt converts interface (string or int64) to int64
-func ValueToInt(v interface{}) (ret int64) {
-	var err error
-	switch val := v.(type) {
-	case int64:
-		ret = val
-	case string:
-		ret, err = strconv.ParseInt(val, 10, 64)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting value from string to int")
-		}
-	}
-	return
 }
 
 // ValueToFloat converts interface (string, float64 or int64) to float64
@@ -604,7 +590,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = ValueToInt(top[1]) + top[0].(int64)
+					bin = converter.ValueToInt(top[1]) + top[0].(int64)
 				case float64:
 					bin = ValueToFloat(top[1]) + top[0].(float64)
 				default:
@@ -629,7 +615,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = ValueToInt(top[1]) - top[0].(int64)
+					bin = converter.ValueToInt(top[1]) - top[0].(int64)
 				case float64:
 					bin = ValueToFloat(top[1]) - top[0].(float64)
 				default:
@@ -652,7 +638,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = ValueToInt(top[1]) * top[0].(int64)
+					bin = converter.ValueToInt(top[1]) * top[0].(int64)
 				case float64:
 					bin = ValueToFloat(top[1]) * top[0].(float64)
 				default:
@@ -683,7 +669,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = ValueToInt(top[1]) / top[0].(int64)
+					bin = converter.ValueToInt(top[1]) / top[0].(int64)
 				case float64:
 					bin = ValueToFloat(top[1]) / top[0].(float64)
 				default:
@@ -717,7 +703,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case string:
 					switch top[0].(type) {
 					case int64:
-						bin = ValueToInt(top[1]) == top[0].(int64)
+						bin = converter.ValueToInt(top[1]) == top[0].(int64)
 					case float64:
 						bin = ValueToFloat(top[1]) == top[0].(float64)
 					default:
@@ -743,7 +729,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = ValueToInt(top[1]) < top[0].(int64)
+					bin = converter.ValueToInt(top[1]) < top[0].(int64)
 				case float64:
 					bin = ValueToFloat(top[1]) < top[0].(float64)
 				default:
@@ -768,7 +754,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = ValueToInt(top[1]) > top[0].(int64)
+					bin = converter.ValueToInt(top[1]) > top[0].(int64)
 				case float64:
 					bin = ValueToFloat(top[1]) > top[0].(float64)
 				default:

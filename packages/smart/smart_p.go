@@ -257,7 +257,7 @@ func SysFuel(state int64) string {
 
 // Int converts the value to a number
 func Int(v interface{}) int64 {
-	return script.ValueToInt(v)
+	return converter.ValueToInt(v)
 }
 
 // Str converts the value to a string
