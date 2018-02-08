@@ -222,7 +222,7 @@ Web 版本的 Blockexplorer 马上就会放出。
 
 请查看该项目的 [参与者](https://github.com/GenesisKernel/go-genesis/graphs/contributors) 名单。
 
-[Join](mailto:hello@apla.io) Genesis 团队！
+[加入](mailto:hello@apla.io) Genesis 团队！
 
 
 ## 许可证
