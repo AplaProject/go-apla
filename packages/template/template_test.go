@@ -31,6 +31,7 @@ func TestJSON(t *testing.T) {
 	var timeout bool
 	vars := make(map[string]string)
 	vars[`_full`] = `0`
+	vars[`my`] = `Span(test)`
 	for _, item := range forTest {
 		templ := Template2JSON(item.input, &timeout, &vars)
 		if string(templ) != item.want {
@@ -41,6 +42,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(q, q#my#q)Div(Class: #my#){#my# Strong(#my#) Div(#q#){P(Span(#my#))}}`,
+		`[{"tag":"div","attr":{"class":"Span(test)"},"children":[{"tag":"text","text":"Span(test) "},{"tag":"strong","children":[{"tag":"text","text":"Span(test)"}]},{"tag":"div","attr":{"class":"qSpan(test)q"},"children":[{"tag":"p","children":[{"tag":"span","children":[{"tag":"text","text":"Span(test)"}]}]}]}]}]`},
 	{`Button(Body: addpage, 
 		Contract: NewPage, 
 		Params: "Name=hello_page2, Value=Div(fefe, dbbt), Menu=default_menu, Conditions=true")`,
@@ -53,8 +56,8 @@ var forTest = tplList{
 		`[{"tag":"text","text":"753013346318631859.1075080680647-468"}]`},
 	{`SetVar(val, 100)Calculate(10000-(34+5)*#val#)=Calculate("((10+#val#-45)*3.0-10)/4.5 + #val#", Prec: 4)`,
 		`[{"tag":"text","text":"6100"},{"tag":"text","text":"=141.1111"}]`},
-	{`Span((span text), ok )Span(((span text), ok) )Div(){{My body}}`,
-		`[{"tag":"span","attr":{"class":"ok"},"children":[{"tag":"text","text":"(span text)"}]},{"tag":"span","children":[{"tag":"text","text":"((span text), ok)"}]},{"tag":"div","children":[{"tag":"text","text":"{My body}"}]}]`},
+	{`Span((span text), ok )Span(((span text), ok) )Div(){{My #my# body}}`,
+		`[{"tag":"span","attr":{"class":"ok"},"children":[{"tag":"text","text":"(span text)"}]},{"tag":"span","children":[{"tag":"text","text":"((span text), ok)"}]},{"tag":"div","children":[{"tag":"text","text":"{My Span(test) body}"}]}]`},
 	{`Code(P(Some text)
  Div(myclass){
 	 Span(Strong("Bold text"))
@@ -175,8 +178,8 @@ var forTest = tplList{
 	{`SetVar(testvalue, The, #n#, Value).(n, New).(param,"23")Span(Test value equals #testvalue#).(#param#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, New, Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
 	{`SetVar(test, mytest).(empty,0)And(0,test,0)Or(0,#test#)Or(0, And(0,0))And(0,Or(0,my,while))
-		And(1,#mytest#)Or(#empty#, And(#empty#, line))`,
-		`[{"tag":"text","text":"010010"}]`},
+		And(1,#mytest#)Or(#empty#, And(#empty#, line))Or(#test#==mytest)If(#empty#).Else{Div(){#my#}}`,
+		`[{"tag":"text","text":"0100101"},{"tag":"div","children":[{"tag":"text","text":"Span(test)"}]}]`},
 	{`Address()Span(Address(-5728238900021))Address(3467347643873).(-6258391547979339691)`,
 		`[{"tag":"text","text":"unknown address"},{"tag":"span","children":[{"tag":"text","text":"1844-6738-3454-7065-1595"}]},{"tag":"text","text":"0000-0003-4673-4764-38731218-8352-5257-3021-1925"}]`},
 	{`Table(src, "ID=id,name,Wallet=wallet")`,

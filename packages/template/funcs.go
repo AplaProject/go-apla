@@ -207,7 +207,7 @@ func addressTag(par parFunc) string {
 }
 
 func calculateTag(par parFunc) string {
-	return calculate((*par.Pars)[`Exp`], (*par.Pars)[`Type`],
+	return calculate(macro((*par.Pars)[`Exp`], par.Workspace.Vars), (*par.Pars)[`Type`],
 		converter.StrToInt((*par.Pars)[`Prec`]))
 }
 
@@ -741,7 +741,7 @@ func elseFull(par parFunc) string {
 }
 
 func dateTimeTag(par parFunc) string {
-	datetime := (*par.Pars)[`DateTime`]
+	datetime := macro((*par.Pars)[`DateTime`], par.Workspace.Vars)
 	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
@@ -761,6 +761,8 @@ func dateTimeTag(par parFunc) string {
 		if format == `timeformat` {
 			format = `2006-01-02 15:04:05`
 		}
+	} else {
+		format = macro(format, par.Workspace.Vars)
 	}
 	format = strings.Replace(format, `YYYY`, `2006`, -1)
 	format = strings.Replace(format, `YY`, `06`, -1)
@@ -775,7 +777,7 @@ func dateTimeTag(par parFunc) string {
 
 func cmpTimeTag(par parFunc) string {
 	prepare := func(val string) string {
-		val = strings.Replace(val, `T`, ` `, -1)
+		val = strings.Replace(macro(val, par.Workspace.Vars), `T`, ` `, -1)
 		if len(val) > 19 {
 			val = val[:19]
 		}
