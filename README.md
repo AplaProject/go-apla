@@ -52,7 +52,7 @@ In order to further promote the process of engaging 850 thousand GitHub users, w
 <br>
 
 - first 1,000 will receive 150 GEN each
-- fist 10,000 - 140 GEN
+- first 10,000 - 140 GEN
 - first 100,000 - 120 GEN
 - first 500,000 - 80 GEN
 - all the rest - 70 GEN each
