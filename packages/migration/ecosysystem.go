@@ -990,7 +990,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"value": "ContractConditions(\"MainCondition\")",
 			"conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractAccess("@1EditTable")'),
-				('9', 'member', 
+				('9', 'members', 
 					'{"insert": "ContractAccess(\"Profile_Edit\")", "update": "ContractAccess(\"Profile_Edit\")", 
 					  "new_column": "ContractConditions(\"MainCondition\")"}',
 					'{"member_name": "ContractAccess(\"Profile_Edit\")",
@@ -1006,7 +1006,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 					  "date_create": "false",
 					  "date_delete": "ContractAccess(\"Roles_Del\")",
 					  "creator_name": "false",
-					  "creator_avatar": "false"}',
+					  "creator_avatar": "false",
+					  "company_id": "false"}',
 					   'ContractConditions(\"MainCondition\")'),
 				('11', 'roles_assign', 
 					'{"insert": "ContractAccess(\"Roles_Assign\", \"voting_CheckDecision\")", "update": "ContractAccess(\"Roles_Unassign\")", 
@@ -1089,15 +1090,20 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"date_create" timestamp,
 			"date_delete" timestamp,
 			"creator_name"	varchar(255) NOT NULL DEFAULT '',
-			"creator_avatar" bytea NOT NULL DEFAULT ''
+			"creator_avatar" bytea NOT NULL DEFAULT '',
+			"company_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
 		CREATE INDEX "%[1]d_roles_list_index_type" ON "%[1]d_roles_list" (role_type);
 
 		INSERT INTO "%[1]d_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
-			"date_create","creator_name") VALUES('1','default_ecosystem_page', 
-				'Admin', '0', '3', NOW(), '');
+			"date_create","creator_name") VALUES
+			('1','default_ecosystem_page', 'Admin', '0', '3', NOW(), ''),
+			('2','', 'Candidate for validators', '0', '3', NOW(), ''),
+			('3','', 'Validator', '0', '3', NOW(), ''),
+			('4','', 'Investor with voting rights', '0', '3', NOW(), ''),
+			('5','', 'Delegate', '0', '3', NOW(), '');
 
 
 		DROP TABLE IF EXISTS "%[1]d_roles_assign";
@@ -1124,15 +1130,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"member_name","date_start") VALUES('1','1','3','Admin','%[4]d','founder', NOW());
 
 
-		DROP TABLE IF EXISTS "%[1]d_member";
-		CREATE TABLE "%[1]d_member" (
+		DROP TABLE IF EXISTS "%[1]d_members";
+		CREATE TABLE "%[1]d_members" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
 			"avatar"	bytea NOT NULL DEFAULT ''
 		);
-		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
+		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
-		INSERT INTO "%[1]d_member" ("id", "member_name") VALUES('%[4]d', 'founder');
+		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
 
 		`
 
