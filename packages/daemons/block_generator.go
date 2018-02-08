@@ -17,6 +17,7 @@
 package daemons
 
 import (
+	"bytes"
 	"context"
 	"time"
 
@@ -95,15 +96,40 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
 		return err
 	}
-
-	// Block generation will be started only if we have transactions
 	if len(trs) == 0 {
 		return nil
 	}
 
+	limits := parser.NewLimits(nil)
+	// Checks preprocessing count limits
+	txList := make([]*model.Transaction, 0, len(trs))
+	for i, txItem := range trs {
+		bufTransaction := bytes.NewBuffer(txItem.Data)
+		p, err := parser.ParseTransaction(bufTransaction)
+		if err != nil {
+			p.ProcessBadTransaction(err)
+			continue
+		}
+		if p.TxSmart != nil {
+			err = limits.CheckLimit(p)
+			if err == parser.ErrLimitStop && i > 0 {
+				model.IncrementTxAttemptCount(p.TxHash)
+				break
+			} else if err != nil {
+				if err == parser.ErrLimitSkip {
+					model.IncrementTxAttemptCount(p.TxHash)
+				} else {
+					p.ProcessBadTransaction(err)
+				}
+				continue
+			}
+		}
+		txList = append(txList, &trs[i])
+	}
+
 	blockBin, err := generateNextBlock(
 		prevBlock,
-		trs,
+		txList,
 		NodePrivateKey,
 		time.Now().Unix(),
 		myNodePosition,
@@ -113,12 +139,12 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	if err != nil {
 		return err
 	}
-	return parser.InsertBlockWOForks(blockBin)
+	return parser.InsertBlockWOForks(blockBin, true)
 }
 
 func generateNextBlock(
 	prevBlock *model.InfoBlock,
-	trs []model.Transaction,
+	trs []*model.Transaction,
 	key string,
 	blockTime int64,
 	myNodePosition int64,

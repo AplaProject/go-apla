@@ -133,7 +133,8 @@ var (
 		('58','extend_cost_column_condition', '50', 'true'),
 		('59','extend_cost_create_column', '50', 'true'),
 		('60','extend_cost_perm_column', '50', 'true'),
-		('61','extend_cost_json_to_map', '50', 'true');
+		('61','extend_cost_json_to_map', '50', 'true'),
+		('62','max_block_generation_time', '2000', 'true');
 		
 		CREATE TABLE "system_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
@@ -186,6 +187,7 @@ var (
 		"key_id" bigint NOT NULL DEFAULT '0',
 		"counter" smallint NOT NULL DEFAULT '0',
 		"sent" smallint NOT NULL DEFAULT '0',
+		"attempt" smallint NOT NULL DEFAULT '0',
 		"verified" smallint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "transactions" ADD CONSTRAINT transactions_pkey PRIMARY KEY (hash);
