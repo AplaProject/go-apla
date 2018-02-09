@@ -93,16 +93,6 @@ comenzar a construir un mundo nuevo con nuevas reglas.
 <br> <br>
 
 
-## Integración con github
-Planificamos la posibilidad de pagar las confirmaciones aprobadas y cierres issue en GEN. Es decir, usted puede
-integrar a Genesis en su repositorio y pagar automáticamente a los usuarios que mejorarán su producto.
-<br>
-Coloque nuestra insignia para apoyar a Génesis.<br>
-<p align="center">
-
-[![We accept GEN](https://img.shields.io/badge/We_accept-GEN-brightgreen.svg)](https://github.com/GenesisCommunity/go-genesis/)
-
-</p>
 
 ```
 [![We accept GEN](https://img.shields.io/badge/We_accept-GEN-brightgreen.svg)](https://github.com/GenesisCommunity/go-genesis/)
