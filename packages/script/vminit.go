@@ -237,6 +237,10 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 	for i, ipar := range pars {
 		(*rt.extend)[ipar] = params[i]
 	}
+	prevthis := (*rt.extend)[`this_contract`]
+	_, nameContract := ParseContract(name)
+	(*rt.extend)[`this_contract`] = nameContract
+
 	prevparent := (*rt.extend)[`parent`]
 	parent := ``
 	for i := len(rt.blocks) - 1; i >= 0; i-- {
@@ -285,6 +289,8 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		stackCont((*rt.extend)[`sc`], ``)
 	}
 	(*rt.extend)[`parent`] = prevparent
+	(*rt.extend)[`this_contract`] = prevthis
+
 	return (*rt.extend)[`result`], nil
 }
 

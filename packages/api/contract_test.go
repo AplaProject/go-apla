@@ -699,7 +699,7 @@ func TestUpdateFunc(t *testing.T) {
 			par string
 		}
 		func action {
-			$result = "X="+$par
+			$result = Sprintf("X=%s %s %s", $par, $original_contract, $this_contract)
 		}}`}, `Conditions`: {`true`}}
 	_, id, err := postTxResult(`NewContract`, &form)
 	if err != nil {
@@ -758,7 +758,7 @@ func TestUpdateFunc(t *testing.T) {
 				Par string
 			}
 			action {
-				$result = f` + rnd + `("par",$Par)
+				$result = f` + rnd + `("par",$Par) + " " + $this_contract
 			}}
 		`}, `Conditions`: {`true`}}
 	_, idcnt, err := postTxResult(`NewContract`, &form)
@@ -771,7 +771,7 @@ func TestUpdateFunc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if msg != `X=my param` {
+	if msg != fmt.Sprintf(`X=my param %s f%[1]s %[1]s`, rnd) {
 		t.Error(fmt.Errorf(`wrong result %s`, msg))
 	}
 	form = url.Values{`Id`: {id}, `Value`: {`
@@ -800,7 +800,7 @@ func TestUpdateFunc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if msg != `Y=new param` {
+	if msg != `Y=new param `+rnd {
 		t.Errorf(`wrong result %s`, msg)
 	}
 	form = url.Values{`Id`: {idcnt}, `Value`: {`
