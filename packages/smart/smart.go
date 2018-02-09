@@ -512,7 +512,6 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`contract`:     sc.TxContract,
 		`block_time`:   blockTime,
 	}
-
 	for key, val := range sc.TxData {
 		extend[key] = val
 	}
