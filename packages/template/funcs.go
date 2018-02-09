@@ -678,6 +678,7 @@ func buttonTag(par parFunc) string {
 func ifTag(par parFunc) string {
 	cond := ifValue((*par.Pars)[`Condition`], par.Workspace)
 	if cond {
+		process((*par.Pars)[`Body`], par.Node, par.Workspace)
 		for _, item := range par.Node.Children {
 			par.Owner.Children = append(par.Owner.Children, item)
 		}

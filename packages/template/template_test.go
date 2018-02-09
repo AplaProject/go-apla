@@ -41,6 +41,12 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`If(){SetVar(false_condition, 1)Span(False)}.Else{SetVar(true_condition, 1)Span(True)} 
+	  If(true){SetVar(ok, 1)}.Else{SetVar(problem, 1)}
+	  If(false){SetVar(if, 1)}.ElseIf(true){SetVar(elseif, 1)}.Else{SetVar(else, 1)}
+	  Div(){
+		#false_condition# #true_condition# #ok# #problem# #if# #elseif# #else#
+	  }`, `[{"tag":"span","children":[{"tag":"text","text":"True"}]},{"tag":"div","children":[{"tag":"text","text":"#false_condition# 1 1 #problem# #if# 1 #else#"}]}]`},
 	{`Button(Body: addpage, 
 		Contract: NewPage, 
 		Params: "Name=hello_page2, Value=Div(fefe, dbbt), Menu=default_menu, Conditions=true")`,
