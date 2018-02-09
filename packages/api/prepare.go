@@ -60,7 +60,7 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 	if data.params[`signed_by`] != nil {
 		smartTx.SignedBy = data.params[`signed_by`].(int64)
 	}
-	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, EcosystemID: data.ecosystemId, KeyID: data.keyId}
+	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, EcosystemID: data.ecosystemId, KeyID: data.keyId, RoleID: data.roleId}
 	forsign := smartTx.ForSign()
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
