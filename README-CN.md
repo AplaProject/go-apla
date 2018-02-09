@@ -75,15 +75,6 @@ Star计数将在 \[时间待定\] 结束。在此之前您需要将生成的 [�
 
 
 
-## 接入 Github
-
-我们计划实现通过支付 GEN 来关闭 issue 或者接受 pull requests 的功能。也就是说，你可以通过支付 GEN 来奖励为你的项目做出贡献的用户。
-
-<p align="center">
-
-[![We accept GEN](https://img.shields.io/badge/We_accept-GEN-brightgreen.svg)](https://github.com/GenesisCommunity/go-genesis/)
-
-</p>
 
 ```
 [[![We accept GEN](https://img.shields.io/badge/We_accept-GEN-brightgreen.svg)](https://github.com/GenesisCommunity/go-genesis/)

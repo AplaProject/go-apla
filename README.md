@@ -70,14 +70,6 @@ You can receive an extra +10 GEN if you write the login of a GitHub user who tol
 
 As a result, around 850 thousand programmers will take full control over the blockchain platform and will be able to start building a new world with new rules.<br> <br>
 
-## Integration with GitHub
-We plan on providing the option to pay for the approved pull requests and closed issues with GEN. In other words, you can integrate Genesis in your repository and automatically pay users, who help improve your product.<br>
-Add our badge to your repository to support Genesis.<br>
-<p align="center">
-
-[![We accept GEN](https://img.shields.io/badge/We_accept-GEN-brightgreen.svg)](https://github.com/GenesisCommunity/go-genesis/)
-
-</p>
 
 ```
 [![We accept GEN](https://img.shields.io/badge/We_accept-GEN-brightgreen.svg)](https://github.com/GenesisCommunity/go-genesis/)
