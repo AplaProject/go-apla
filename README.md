@@ -71,9 +71,6 @@ You can receive an extra +10 GEN if you write the login of a GitHub user who tol
 As a result, around 850 thousand programmers will take full control over the blockchain platform and will be able to start building a new world with new rules.<br> <br>
 
 
-```
-[![We accept GEN](https://img.shields.io/badge/We_accept-GEN-brightgreen.svg)](https://github.com/GenesisCommunity/go-genesis/)
-```
 
 ## How Genesis Works
 Develop your applications using [Simvolio](http://genesiskernel.readthedocs.io/en/latest/introduction/script.html#simvolio-contracts-language). Simvolio is a С-like programming language used for creating contracts and which is compiled to byte code. It has a minimum required number of program control commands and predefined functions.

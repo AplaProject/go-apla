@@ -69,10 +69,6 @@ Genesis - opensource блокчейн платформа, основа кото�
 
 
 
-```
-[![We accept GEN](https://img.shields.io/badge/We_accept-GEN-brightgreen.svg)](https://github.com/GenesisCommunity/go-genesis/)
-```
-
 ## Как Genesis работает
 Разрабатывайте приложения на  [Simvolio](http://genesiskernel.readthedocs.io/en/latest/introduction/script.html#simvolio-contracts-language). Simvolio - это С-подобный язык программирования на котором пишутся контракты и который компилируется в байт-код. Имеет минимально необходимое количество управляющих конструкций и встроенных функций.
 <p align="center">

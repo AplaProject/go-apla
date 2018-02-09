@@ -94,10 +94,6 @@ comenzar a construir un mundo nuevo con nuevas reglas.
 
 
 
-```
-[![We accept GEN](https://img.shields.io/badge/We_accept-GEN-brightgreen.svg)](https://github.com/GenesisCommunity/go-genesis/)
-```
-
 ## Cómo funciona Genesis
 Desarrolle aplicaciones en [Simvolio](http://genesiskernel.readthedocs.io/en/latest/introduction/script.html#simvolio-contracts-language). Simvolio es un lenguaje de programación similar a C- lenguaje, en el que se escriben contratos y el cual se transforma en código de bytes. Tiene una cantidad mínima requerida de estructuras de control y funciones incorporadas.
 <p align="center">
