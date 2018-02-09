@@ -502,7 +502,6 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`original_contract`: ``, `this_contract`: ``,
 		`role_id`: head.RoleID,
 	}
-
 	for key, val := range sc.TxData {
 		extend[key] = val
 	}
