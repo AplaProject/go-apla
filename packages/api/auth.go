@@ -37,6 +37,7 @@ type JWTClaims struct {
 	UID         string `json:"uid,omitempty"`
 	EcosystemID string `json:"ecosystem_id,omitempty"`
 	KeyID       string `json:"key_id,omitempty"`
+	RoleID      string `json:"role_id,omitempty"`
 	jwt.StandardClaims
 }
 
