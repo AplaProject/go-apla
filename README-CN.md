@@ -76,10 +76,6 @@ Star计数将在 \[时间待定\] 结束。在此之前您需要将生成的 [�
 
 
 
-```
-[[![We accept GEN](https://img.shields.io/badge/We_accept-GEN-brightgreen.svg)](https://github.com/GenesisCommunity/go-genesis/)
-```
-
 ## Genesis是如何运行的
 
 你可以使用一种名为 [Simvolio](http://genesiskernel.readthedocs.io/en/latest/introduction/script.html#simvolio-contracts-language) 类似C语言的智能合约编程语言来进行开发，之后被编译成字节码，它只包含非常少的变成指令和预置方法。
