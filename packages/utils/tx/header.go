@@ -6,6 +6,7 @@ type Header struct {
 	Time          int64
 	EcosystemID   int64
 	KeyID         int64
+	RoleID        int64
 	NodePosition  int64
 	PublicKey     []byte
 	BinSignatures []byte

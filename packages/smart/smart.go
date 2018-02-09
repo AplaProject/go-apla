@@ -491,12 +491,17 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		blockKeyID = sc.BlockData.KeyID
 		blockTime = sc.BlockData.Time
 	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `ecosystem_id`: head.EcosystemID,
+	extend := map[string]interface{}{
+		`type`:          head.Type,
+		`time`:          head.Time,
+		`ecosystem_id`:  head.EcosystemID,
 		`node_position`: head.NodePosition,
 		`block`:         block, `key_id`: keyID, `block_key_id`: blockKeyID,
 		`parent`: ``, `txcost`: sc.GetContractLimit(), `txhash`: sc.TxHash, `result`: ``,
 		`sc`: sc, `contract`: sc.TxContract, `block_time`: blockTime,
-		`original_contract`: ``, `this_contract`: ``}
+		`original_contract`: ``, `this_contract`: ``,
+		`role_id`: head.RoleID,
+	}
 	for key, val := range sc.TxData {
 		extend[key] = val
 	}
