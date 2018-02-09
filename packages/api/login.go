@@ -188,6 +188,35 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 
+	if len(data.params["role_id"].(string)) == 0 {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("role is empty")
+		return errorAPI(w, "E_EMPTYROLE", http.StatusBadRequest)
+	}
+
+	role := data.params["role_id"].(int64)
+	ok, err := model.MemberHasRole(nil, state, wallet, role)
+	if err != nil {
+		logger.WithFields(log.Fields{
+			"type":      consts.DBError,
+			"member":    wallet,
+			"role":      role,
+			"ecosystem": state}).Error("check role")
+
+		return errorAPI(w, "E_CHECKROLE", http.StatusBadRequest)
+	}
+
+	if !ok {
+		logger.WithFields(log.Fields{
+			"type":      consts.NotFound,
+			"member":    wallet,
+			"role":      role,
+			"ecosystem": state}).Error("member hasn't role")
+
+		return errorAPI(w, "E_CHECKROLE", http.StatusBadRequest)
+	}
+
+	data.roleId = role
+
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("checking signature")
