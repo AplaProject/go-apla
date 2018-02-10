@@ -24,10 +24,9 @@ package language
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 	"unicode/utf8"
-
-	"strconv"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"

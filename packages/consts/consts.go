@@ -85,6 +85,7 @@ const PrivkeyLength = 32
 // BlockSize is size of block
 const BlockSize = 16
 
+// HashSize is size of hash
 const HashSize = 32
 
 // TxTypes is the list of the embedded transactions
@@ -92,8 +93,8 @@ var TxTypes = map[int]string{
 	1: "FirstBlock",
 }
 
-// ApiPath is the beginning of the api url
-var ApiPath = `/api/v2/`
+// APIPath is the beginning of the api url
+var APIPath = `/api/v2/`
 
 // DefaultConfigFile name of config file (toml format)
 const DefaultConfigFile = "config.toml"

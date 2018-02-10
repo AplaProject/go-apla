@@ -477,9 +477,9 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 		return tablePermission, errAccessDenied
 	}
 
-	if isCustom, err := sc.IsCustomTable(table); err != nil {
-		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
-		return tablePermission, err
+	if isCustom, errCustom := sc.IsCustomTable(table); errCustom != nil {
+		logger.WithFields(log.Fields{"table": table, "error": errCustom, "type": consts.DBError}).Error("checking custom table")
+		return tablePermission, errCustom
 	} else if !isCustom {
 		return tablePermission, fmt.Errorf(table + ` is not a custom table`)
 	}
@@ -784,12 +784,12 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				fuelRate = fuelRate.Add(payOver)
 			}
 			payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
-			if found, err := payWallet.Get(fromID); err != nil || !found {
+			if found, errFound := payWallet.Get(fromID); errFound != nil || !found {
 				if !found {
 					return retError(ErrCurrentBalance)
 				}
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
-				return retError(err)
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": errFound}).Error("getting wallet")
+				return retError(errFound)
 			}
 			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
 				return retError(ErrDiffKeys)

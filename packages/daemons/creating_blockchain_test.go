@@ -45,6 +45,7 @@ func getTmpFile(t *testing.T) string {
 	return fileName
 }
 
+// TODO: This test out of date
 func TestEmptyFile(t *testing.T) {
 	fileName := getTmpFile(t)
 	defer os.Remove(fileName)
@@ -58,6 +59,8 @@ func TestEmptyFile(t *testing.T) {
 		t.Errorf("bad error %s", err)
 	}
 }
+
+// TODO: This test out of date
 func getFirstBlock(t *testing.T) blockData {
 	newBlock, err := static.Asset("static/1block")
 	if err != nil {
@@ -72,6 +75,7 @@ func getFirstBlock(t *testing.T) blockData {
 	return block
 }
 
+// TODO: This test out of date
 func TestBlockUnmarshal(t *testing.T) {
 	block := getFirstBlock(t)
 
@@ -80,6 +84,7 @@ func TestBlockUnmarshal(t *testing.T) {
 	}
 }
 
+// TODO: This test out of date
 func TestLastBlock(t *testing.T) {
 	block := getFirstBlock(t)
 
@@ -125,6 +130,7 @@ func addBlock(t *testing.T, blockID int64, data []byte, db *sql.DB) {
 
 }
 
+// TODO: This test out of date
 func TestWriteNext(t *testing.T) {
 	block := getFirstBlock(t)
 

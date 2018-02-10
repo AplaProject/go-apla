@@ -35,8 +35,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/tools/update_client/client"
 	"github.com/GenesisKernel/go-genesis/tools/update_client/params"
 	updateModel "github.com/GenesisKernel/go-genesis/tools/update_server/model"
-
-	version "github.com/hashicorp/go-version"
+	"github.com/hashicorp/go-version"
 	log "github.com/sirupsen/logrus"
 )
 

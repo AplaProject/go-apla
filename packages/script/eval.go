@@ -43,7 +43,8 @@ func (vm *VM) CompileEval(input string, state uint32) error {
 	source := `func eval bool { return ` + input + `}`
 	block, err := vm.CompileBlock([]rune(source), &OwnerInfo{StateID: state})
 	if err == nil {
-		crc, err := crypto.CalcChecksum([]byte(input))
+		var crc uint64
+		crc, err = crypto.CalcChecksum([]byte(input))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("calculating compile eval input checksum")
 		}
@@ -64,7 +65,7 @@ func (vm *VM) EvalIf(input string, state uint32, vars *map[string]interface{}) (
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("calculating compile eval checksum")
 	}
 	if eval, ok := evals[crc]; !ok || eval.Source != input {
-		if err := vm.CompileEval(input, state); err != nil {
+		if err = vm.CompileEval(input, state); err != nil {
 			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("compiling eval")
 			return false, err
 		}

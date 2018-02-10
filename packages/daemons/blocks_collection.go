@@ -218,7 +218,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 		if !hashMatched {
 			// it should be fork, replace our previous blocks to ones from the host
-			err := parser.GetBlocks(blockID-1, host)
+			err = parser.GetBlocks(blockID-1, host)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 				banNode(host, err)

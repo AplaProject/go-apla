@@ -56,9 +56,9 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	}
 	token, err := jwt.ParseWithClaims(data.params[`token`].(string), &JWTClaims{},
 		func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			if _, ok = token.Method.(*jwt.SigningMethodHMAC); !ok {
 				logger.WithFields(log.Fields{"type": consts.JWTError, "signing_method": token.Header["alg"]}).Error("unexpected signing method")
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return []byte(jwtSecret), nil
 		})

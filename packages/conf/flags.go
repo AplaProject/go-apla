@@ -93,7 +93,8 @@ var configFlagMap = map[string]interface{}{
 var (
 	// ConfigPath path to config file
 	ConfigPath = flag.String("configPath", "", "full path to config file (toml format)")
-	NoStart    = flag.Bool("noStart", false, "do not start daemon, just do all necessary job")
+	// NoStart daemon, just do all necessary job
+	NoStart = flag.Bool("noStart", false, "do not start daemon, just do all necessary job")
 
 	// WorkDirectory application working directory
 	WorkDirectory = flag.String("workDir", "", "work directory")

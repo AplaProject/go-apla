@@ -260,15 +260,15 @@ func getSharedKey(private, public []byte) (shared []byte, err error) {
 
 		if priv.Curve.IsOnCurve(pub.X, pub.Y) {
 			x, y := pub.Curve.ScalarMult(pub.X, pub.Y, priv.D.Bytes())
-			bytes := x.Bytes()
-			bytes = append(bytes, y.Bytes()...)
-			key, err := Hash(bytes)
-			if err != nil {
+			data := x.Bytes()
+			data = append(data, y.Bytes()...)
+			var key []byte
+			if key, err = Hash(data); err != nil {
 				return nil, ErrUnknownProvider
 			}
 			shared = key
 		} else {
-			err = fmt.Errorf("Not IsOnCurve")
+			err = fmt.Errorf("not IsOnCurve")
 		}
 	default:
 		return nil, ErrUnknownProvider

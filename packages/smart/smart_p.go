@@ -128,14 +128,14 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 	}
 	if !found {
 		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("system parameter get")
-		return 0, fmt.Errorf(`Parameter %s has not been found`, name)
+		return 0, fmt.Errorf(`parameter %s has not been found`, name)
 	}
 	cond := par.Conditions
 	if len(cond) > 0 {
-		ret, err := sc.EvalIf(cond)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("evaluating conditions")
-			return 0, err
+		ret, errRet := sc.EvalIf(cond)
+		if errRet != nil {
+			log.WithFields(log.Fields{"type": consts.EvalError, "error": errRet}).Error("evaluating conditions")
+			return 0, errRet
 		}
 		if !ret {
 			log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
@@ -161,7 +161,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`:
 			ok = ival > 0
 		case `fuel_rate`, `full_nodes`, `commission_wallet`:
-			err := json.Unmarshal([]byte(value), &list)
+			err = json.Unmarshal([]byte(value), &list)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling system param")
 				return 0, err
@@ -200,7 +200,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		values = append(values, value)
 	}
 	if len(conditions) > 0 {
-		if err := CompileEval(conditions, 0); err != nil {
+		if err = CompileEval(conditions, 0); err != nil {
 			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": 0, "type": consts.EvalError}).Error("compiling eval")
 			return 0, err
 		}
@@ -232,7 +232,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 		return
 	}
 	if strings.Contains(tblname, `_reports_`) {
-		err = fmt.Errorf(`Access denied to report table`)
+		err = fmt.Errorf(`access denied to report table`)
 		return
 	}
 	columns := strings.Split(params, `,`)
@@ -347,7 +347,7 @@ func EvalCondition(sc *SmartContract, table, name, condfield string) error {
 	}
 	if len(conditions) == 0 {
 		log.WithFields(log.Fields{"type": consts.NotFound, "name": name}).Error("Record not found")
-		return fmt.Errorf(`Record %s has not been found`, name)
+		return fmt.Errorf(`record %s has not been found`, name)
 	}
 	return Eval(sc, conditions)
 }
@@ -447,7 +447,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 	lastID--
 	if converter.StrToInt64(rollbackTx.TableID) != lastID {
 		log.WithFields(log.Fields{"table_id": rollbackTx.TableID, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
-		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
+		return fmt.Errorf(`incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
 	}
 
 	if model.IsTable(fmt.Sprintf(`%s_vde_tables`, rollbackTx.TableID)) {
@@ -455,7 +455,8 @@ func RollbackEcosystem(sc *SmartContract) error {
 		table := &model.Table{}
 		prefix := fmt.Sprintf(`%s_vde`, rollbackTx.TableID)
 		table.SetTablePrefix(prefix)
-		list, err := table.GetAll(prefix)
+		var list []model.Table
+		list, err = table.GetAll(prefix)
 		if err != nil {
 			return err
 		}

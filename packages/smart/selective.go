@@ -38,7 +38,7 @@ import (
 )
 
 var (
-	errUpdNotExistRecord = errors.New(`Update for not existing record`)
+	errUpdNotExistRecord = errors.New(`update for not existing record`)
 )
 
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
@@ -54,7 +54,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 	if generalRollback && sc.BlockData == nil {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Block is undefined")
-		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
+		return 0, ``, fmt.Errorf(`it is impossible to write to DB when Block is undefined`)
 	}
 
 	isBytea := GetBytea(sc.DbTransaction, table)
@@ -62,8 +62,9 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		if len(fields) > i && isBytea[fields[i]] {
 			switch v.(type) {
 			case string:
-				if vbyte, err := hex.DecodeString(v.(string)); err == nil {
-					ivalues[i] = vbyte
+				var vByte []byte
+				if vByte, err = hex.DecodeString(v.(string)); err == nil {
+					ivalues[i] = vByte
 				}
 			}
 		}
@@ -133,7 +134,8 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 				addSQLFields += k + ","
 			}
 		}
-		jsonRollbackInfo, err := json.Marshal(rollbackInfo)
+		var jsonRollbackInfo []byte
+		jsonRollbackInfo, err = json.Marshal(rollbackInfo)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback info to json")
 			return 0, tableID, err
@@ -161,7 +163,8 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		addSQLUpdate = strings.TrimRight(addSQLUpdate, `,`)
 		if !sc.VDE {
 			updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + addSQLWhere
-			updateCost, err := queryCoster.QueryCost(sc.DbTransaction, updateQuery)
+			var updateCost int64
+			updateCost, err = queryCoster.QueryCost(sc.DbTransaction, updateQuery)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
 				return 0, tableID, err
@@ -213,7 +216,8 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			}
 		}
 		if !isID {
-			id, err := model.GetNextID(sc.DbTransaction, table)
+			var id int64
+			id, err = model.GetNextID(sc.DbTransaction, table)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id for table")
 				return 0, ``, err
@@ -224,7 +228,8 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		}
 		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0[:len(addSQLIns0)-1] +
 			`) VALUES (` + addSQLIns1[:len(addSQLIns1)-1] + `)`
-		insertCost, err := queryCoster.QueryCost(sc.DbTransaction, insertQuery)
+		var insertCost int64
+		insertCost, err = queryCoster.QueryCost(sc.DbTransaction, insertQuery)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")
 			return 0, tableID, err

@@ -106,16 +106,16 @@ func HandleTCPRequest(rw io.ReadWriter) {
 	}
 }
 
-// TcpListener is listening tcp address
-func TcpListener(laddr string) error {
+// TCPListener is listening tcp address
+func TCPListener(addr string) error {
 
-	if strings.HasPrefix(laddr, "127.") {
-		log.Warn("Listening at local address: ", laddr)
+	if strings.HasPrefix(addr, "127.") {
+		log.Warn("Listening at local address: ", addr)
 	}
 
-	l, err := net.Listen("tcp4", laddr)
+	l, err := net.Listen("tcp4", addr)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": laddr}).Error("Error listening")
+		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": addr}).Error("Error listening")
 		return err
 	}
 
@@ -124,7 +124,7 @@ func TcpListener(laddr string) error {
 		for {
 			conn, err := l.Accept()
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": laddr}).Error("Error accepting")
+				log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": addr}).Error("Error accepting")
 				time.Sleep(time.Second)
 			} else {
 				go func(conn net.Conn) {

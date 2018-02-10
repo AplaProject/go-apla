@@ -86,7 +86,7 @@ func GetAllUnverifiedAndUnusedTransactions() ([]*QueueTx, error) {
 	}
 	defer rows.Close()
 	var data, hash []byte
-	result := []*QueueTx{}
+	var result []*QueueTx
 	for rows.Next() {
 		if err := rows.Scan(&data, &hash); err != nil {
 			return nil, err

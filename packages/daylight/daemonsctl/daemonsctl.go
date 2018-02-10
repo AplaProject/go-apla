@@ -23,7 +23,7 @@
 package daemonsctl
 
 import (
-	conf "github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
@@ -42,7 +42,7 @@ func RunAllDaemons() error {
 	}
 
 	log.Info("load contracts")
-	if err := smart.LoadContracts(nil); err != nil {
+	if err = smart.LoadContracts(nil); err != nil {
 		log.Errorf("Load Contracts error: %s", err)
 		return err
 	}
@@ -50,7 +50,7 @@ func RunAllDaemons() error {
 	log.Info("start daemons")
 	daemons.StartDaemons()
 
-	err = tcpserver.TcpListener(conf.Config.TCPServer.Str())
+	err = tcpserver.TCPListener(conf.Config.TCPServer.Str())
 	if err != nil {
 		log.Errorf("can't start tcp servers, stop")
 		return err

@@ -59,8 +59,8 @@ type apiData struct {
 	status      int
 	result      interface{}
 	params      map[string]interface{}
-	ecosystemId int64
-	keyId       int64
+	ecosystemID int64
+	keyID       int64
 	vde         bool
 	vm          *script.VM
 	token       *jwt.Token
@@ -138,7 +138,7 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 }
 
 func getPrefix(data *apiData) (prefix string) {
-	prefix = converter.Int64ToStr(data.ecosystemId)
+	prefix = converter.Int64ToStr(data.ecosystemID)
 	if data.vde {
 		prefix += `_vde`
 	}
@@ -147,7 +147,7 @@ func getPrefix(data *apiData) (prefix string) {
 
 func getSignHeader(txName string, data *apiData) tx.Header {
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
-		EcosystemID: data.ecosystemId, KeyID: data.keyId}
+		EcosystemID: data.ecosystemID, KeyID: data.keyID}
 }
 
 func getHeader(txName string, data *apiData) (tx.Header, error) {
@@ -165,7 +165,7 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		return tx.Header{}, fmt.Errorf("signature is empty")
 	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
-		EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
+		EcosystemID: data.ecosystemID, KeyID: data.keyID, PublicKey: publicKey,
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
@@ -222,8 +222,8 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		data.token = token
 		if token != nil && token.Valid {
 			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
-				data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
-				data.keyId = converter.StrToInt64(claims.KeyID)
+				data.ecosystemID = converter.StrToInt64(claims.EcosystemID)
+				data.keyID = converter.StrToInt64(claims.KeyID)
 			}
 		}
 		// Getting and validating request parameters
@@ -234,9 +234,9 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		}
 		vde := r.FormValue(`vde`)
 		if vde == `1` || vde == `true` {
-			data.vm = smart.GetVM(true, data.ecosystemId)
+			data.vm = smart.GetVM(true, data.ecosystemID)
 			if data.vm == nil {
-				errorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemId)
+				errorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemID)
 				return
 			}
 			data.vde = true
@@ -254,8 +254,8 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 			case pInt64:
 				data.params[key] = converter.StrToInt64(val)
 			case pHex:
-				bin, err := hex.DecodeString(val)
-				if err != nil {
+				var bin []byte
+				if bin, err = hex.DecodeString(val); err != nil {
 					requestLogger.WithFields(log.Fields{"type": consts.ConversionError, "value": val, "error": err}).Error("decoding http parameter from hex")
 					errorAPI(w, err, http.StatusBadRequest)
 					return
@@ -281,7 +281,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 }
 
 func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (int64, string, error) {
-	ecosystemID := data.ecosystemId
+	ecosystemID := data.ecosystemID
 	if data.params[`ecosystem`].(int64) > 0 {
 		ecosystemID = data.params[`ecosystem`].(int64)
 		count, err := model.GetNextID(nil, `system_states`)

@@ -34,7 +34,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/api"
 	"github.com/GenesisKernel/go-genesis/packages/autoupdate"
-	conf "github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -157,7 +157,8 @@ func rollbackToBlock(blockID int64) error {
 	startData := map[string]int64{"1_menu": 1, "1_pages": 1, "1_contracts": 26, "1_parameters": 11, "1_keys": 1, "1_tables": 8, "stop_daemons": 1, "queue_blocks": 9999999, "system_tables": 1, "system_parameters": 27, "system_states": 1, "install": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1, "confirmations": 9999999, "transactions": 9999999}
 	warn := 0
 	for table := range startData {
-		count, err := model.GetRecordsCountTx(nil, table)
+		var count int64
+		count, err = model.GetRecordsCountTx(nil, table)
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting record count")
 			return err
@@ -234,7 +235,7 @@ func Start() {
 		log.Info("Config file missing.")
 	} else {
 		if !*conf.InitConfig {
-			if err := conf.LoadConfig(); err != nil {
+			if err = conf.LoadConfig(); err != nil {
 				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
 				return
 			}
@@ -247,21 +248,21 @@ func Start() {
 
 	// process directives
 	if *conf.GenerateFirstBlock {
-		if err := install.GenerateFirstBlock(); err != nil {
+		if err = install.GenerateFirstBlock(); err != nil {
 			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("GenerateFirstBlock")
 			Exit(1)
 		}
 	}
 
 	if *conf.InitDatabase {
-		if err := model.InitDB(conf.Config.DB); err != nil {
+		if err = model.InitDB(conf.Config.DB); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("InitDB")
 			Exit(1)
 		}
 	}
 
 	if *conf.InitConfig {
-		if err := conf.SaveConfig(); err != nil {
+		if err = conf.SaveConfig(); err != nil {
 			log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
 			Exit(1)
 		}
@@ -271,13 +272,14 @@ func Start() {
 
 	if conf.Installed {
 		if conf.Config.KeyID == 0 {
-			key, err := parser.GetKeyIDFromPrivateKey()
+			var key int64
+			key, err = parser.GetKeyIDFromPrivateKey()
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Unable to get KeyID")
 				Exit(1)
 			}
 			conf.Config.KeyID = key
-			if err := conf.SaveConfig(); err != nil {
+			if err = conf.SaveConfig(); err != nil {
 				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
 				Exit(1)
 			}
@@ -307,7 +309,7 @@ func Start() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	// save the current pid and version
-	if err := savePid(); err != nil {
+	if err = savePid(); err != nil {
 		log.Errorf("can't create pid: %s", err)
 		Exit(1)
 	}

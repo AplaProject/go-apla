@@ -59,7 +59,7 @@ func TestNewContracts(t *testing.T) {
 			if strings.Contains(err.Error(), fmt.Sprintf(apiErrors[`E_CONTRACT`], item.Name)) {
 				form := url.Values{"Name": {item.Name}, "Value": {item.Value},
 					"Conditions": {`true`}}
-				if err := postTx(`NewContract`, &form); err != nil {
+				if err = postTx(`NewContract`, &form); err != nil {
 					if item.Params[0].Results[`error`] != err.Error() {
 						t.Error(err)
 						return
@@ -338,7 +338,7 @@ func TestActivateContracts(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
+	if err = postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
 		t.Error(err)
 		return
 	}
@@ -405,7 +405,7 @@ func TestDeactivateContracts(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
+	if err = postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
 		t.Error(err)
 		return
 	}
@@ -427,7 +427,7 @@ func TestDeactivateContracts(t *testing.T) {
 		t.Error(fmt.Errorf(`row not activate ` + rnd))
 	}
 
-	if err := postTx(rnd, &url.Values{`Par`: {rnd}}); err != nil {
+	if err = postTx(rnd, &url.Values{`Par`: {rnd}}); err != nil {
 		t.Error(err)
 		return
 	}
@@ -435,7 +435,7 @@ func TestDeactivateContracts(t *testing.T) {
 		return
 	}
 
-	if err := postTx(`DeactivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
+	if err = postTx(`DeactivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
 		t.Error(err)
 		return
 	}
@@ -634,7 +634,7 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 		return
 	}
 
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {sid}}); err != nil {
+	if err = postTx(`ActivateContract`, &url.Values{`Id`: {sid}}); err != nil {
 		t.Error(err)
 		return
 	}
@@ -773,7 +773,7 @@ func TestUpdateFunc(t *testing.T) {
 				$result = MyTest($Par) + MyTest("OK")
 			}}
 		`}, `Conditions`: {`true`}}
-	_, idcnt, err = postTxResult(`EditContract`, &form)
+	_, _, err = postTxResult(`EditContract`, &form)
 	if err != nil {
 		t.Error(err)
 		return

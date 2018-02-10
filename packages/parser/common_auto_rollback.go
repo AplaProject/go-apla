@@ -77,11 +77,11 @@ func (p *Parser) autoRollback() error {
 	for _, tx := range txs {
 		where := " WHERE id='" + tx["table_id"] + `'`
 		if len(tx["data"]) > 0 {
-			if err := p.restoreUpdatedDBRowToPreviousData(tx, where); err != nil {
+			if err = p.restoreUpdatedDBRowToPreviousData(tx, where); err != nil {
 				return err
 			}
 		} else {
-			if err := p.deleteInsertedDBRow(tx, where); err != nil {
+			if err = p.deleteInsertedDBRow(tx, where); err != nil {
 				return err
 			}
 		}

@@ -62,7 +62,7 @@ var FromStatementMissingError = errors.New("FROM statement missing")
 var DeleteMinimumThreeFieldsError = errors.New("DELETE query must consist minimum of 3 fields")
 var SetStatementMissingError = errors.New("SET statement missing")
 var IntoStatementMissingError = errors.New("INTO statement missing")
-var UnknownQueryTypeError = errors.New("Unknown query type")
+var UnknownQueryTypeError = errors.New("unknown query type")
 
 func strSliceIndex(fields []string, fieldToFind string) (index int) {
 	for i, field := range fields {
@@ -137,7 +137,7 @@ func (s InsertQueryType) GetTableName() (string, error) {
 		return "", IntoStatementMissingError
 	}
 	tableNameValuesField := queryFields[intoFieldIndex+1]
-	tableName := ""
+	var tableName string
 	lparenIndex := strings.Index(tableNameValuesField, Lparen)
 	if lparenIndex > 0 {
 		tableName = tableNameValuesField[:lparenIndex]

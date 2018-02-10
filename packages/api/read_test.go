@@ -106,15 +106,15 @@ func TestRead(t *testing.T) {
 	`, name)
 	form = url.Values{"Value": {contFill},
 		"Conditions": {`true`}, "vde": {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
+	if err = postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := postTx(name, &url.Values{"vde": {`true`}}); err != nil {
+	if err = postTx(name, &url.Values{"vde": {`true`}}); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`GetData`+name, &url.Values{"vde": {`true`}}); err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"Access denied\"}" }` {
+	if err = postTx(`GetData`+name, &url.Values{"vde": {`true`}}); err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"Access denied\"}" }` {
 		t.Errorf(`access problem`)
 		return
 	}
@@ -129,16 +129,16 @@ func TestRead(t *testing.T) {
 		return
 	}
 
-	if err := postTx(`GetOK`+name, &url.Values{"vde": {`true`}}); err != nil {
+	if err = postTx(`GetOK`+name, &url.Values{"vde": {`true`}}); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`EditColumn`, &url.Values{"vde": {`true`}, `TableName`: {name}, `Name`: {`active`},
+	if err = postTx(`EditColumn`, &url.Values{"vde": {`true`}, `TableName`: {name}, `Name`: {`active`},
 		`Permissions`: {`{"update":"true", "read":"ContractConditions(\"MainCondition\")"}`}}); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`Get`+name, &url.Values{"vde": {`true`}}); err != nil {
+	if err = postTx(`Get`+name, &url.Values{"vde": {`true`}}); err != nil {
 		t.Error(err)
 		return
 	}

@@ -59,14 +59,14 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	info := (*contract).Block.Info.(*script.ContractInfo)
 
 	var signedBy int64
-	signID := data.keyId
+	signID := data.keyID
 	if data.params[`signed_by`] != nil {
 		signedBy = data.params[`signed_by`].(int64)
 		signID = signedBy
 	}
 
 	key := &model.Key{}
-	key.SetTablePrefix(data.ecosystemId)
+	key.SetTablePrefix(data.ecosystemID)
 	_, err = key.Get(signID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
@@ -137,7 +137,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	}
 	toSerialize = tx.SmartContract{
 		Header: tx.Header{Type: int(info.ID), Time: converter.StrToInt64(data.params[`time`].(string)),
-			EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
+			EcosystemID: data.ecosystemID, KeyID: data.keyID, PublicKey: publicKey,
 			BinSignatures: converter.EncodeLengthPlusData(signature)},
 		TokenEcosystem: data.params[`token_ecosystem`].(int64),
 		MaxSum:         data.params[`max_sum`].(string),
@@ -151,14 +151,12 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if data.vde {
-		ret, err := VDEContract(serializedData, data)
-		if err != nil {
+		if data.result, err = VDEContract(serializedData, data); err != nil {
 			return errorAPI(w, err, http.StatusInternalServerError)
 		}
-		data.result = ret
 		return nil
 	}
-	if hash, err = model.SendTx(int64(info.ID), data.keyId,
+	if hash, err = model.SendTx(int64(info.ID), data.keyID,
 		append([]byte{128}, serializedData...)); err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}

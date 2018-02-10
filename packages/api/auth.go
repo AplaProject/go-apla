@@ -70,7 +70,7 @@ func jwtGenerateToken(w http.ResponseWriter, claims JWTClaims) (string, error) {
 }
 
 func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if data.keyId == 0 {
+	if data.keyID == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
 		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}
@@ -78,7 +78,7 @@ func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *l
 }
 
 func authState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if data.keyId == 0 || data.ecosystemId <= 1 {
+	if data.keyID == 0 || data.ecosystemID <= 1 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("state is empty")
 		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}

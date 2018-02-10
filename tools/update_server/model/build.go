@@ -1,14 +1,12 @@
 package model
 
 import (
+	"fmt"
 	"sort"
+	"strings"
 	"time"
 
-	"fmt"
-
-	"strings"
-
-	version "github.com/hashicorp/go-version"
+	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 )
 

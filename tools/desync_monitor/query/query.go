@@ -30,7 +30,7 @@ func MaxBlockIDs(nodesList []string) ([]int64, error) {
 		}(nodeUrl)
 	}
 	wg.Wait()
-	maxBlockIds := []int64{}
+	var maxBlockIds []int64
 	for _, result := range workResults.m {
 		switch res := result.(type) {
 		case int64:

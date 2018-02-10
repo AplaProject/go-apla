@@ -90,7 +90,7 @@ func (b *Block) GetBlocksFrom(startFromID int64, ordering string) ([]Block, erro
 	return *blockchain, err
 }
 
-// DeleteById is deleting block by ID
-func (b *Block) DeleteById(transaction *DbTransaction, id int64) error {
+// DeleteByID is deleting block by ID
+func (b *Block) DeleteByID(transaction *DbTransaction, id int64) error {
 	return GetDB(transaction).Where("id = ?", id).Delete(Block{}).Error
 }

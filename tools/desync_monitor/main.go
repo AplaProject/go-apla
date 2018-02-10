@@ -26,19 +26,19 @@ const smtpPortFlagName = "smtpPort"
 const smtpUsernameFlagName = "smtpUsername"
 const smtpPasswordFlagName = "smtpPassword"
 
-var configPath *string = flag.String(confPathFlagName, "config.toml", "path to desync monitor config")
-var nodesList *string = flag.String(nodesListFlagName, "127.0.0.1:7079", "which nodes to query, in format url1,url2,url3")
-var daemonMode *bool = flag.Bool(daemonModeFlagName, false, "start as daemon")
-var queryingPeriod *int = flag.Int(queryingPeriodFlagName, 1, "period of querying nodes in seconds, if started as daemon")
+var configPath = flag.String(confPathFlagName, "config.toml", "path to desync monitor config")
+var nodesList = flag.String(nodesListFlagName, "127.0.0.1:7079", "which nodes to query, in format url1,url2,url3")
+var daemonMode = flag.Bool(daemonModeFlagName, false, "start as daemon")
+var queryingPeriod = flag.Int(queryingPeriodFlagName, 1, "period of querying nodes in seconds, if started as daemon")
 
-var alertMessageTo *string = flag.String(alertMessageToFlagName, "alert@apla.io", "email adress to send alert")
-var alertMessageSubj *string = flag.String(alertMessageSubjFlagName, "problem with nodes synchronization", "alert message subject")
-var alertMessageFrom *string = flag.String(alertMessageFromFlagName, "monitor@apla.io", "email adress from witch to send alert")
+var alertMessageTo = flag.String(alertMessageToFlagName, "alert@apla.io", "email adress to send alert")
+var alertMessageSubj = flag.String(alertMessageSubjFlagName, "problem with nodes synchronization", "alert message subject")
+var alertMessageFrom = flag.String(alertMessageFromFlagName, "monitor@apla.io", "email adress from witch to send alert")
 
-var smtpHost *string = flag.String(smtpHostFlagName, "", "host of smtp server, to send alert email")
-var smtpPort *int = flag.Int(smtpPortFlagName, 25, "port of smtp server")
-var smtpUsername *string = flag.String(smtpUsernameFlagName, "", "login to smtp server")
-var smtpPassword *string = flag.String(smtpPasswordFlagName, "", "password to smtp server")
+var smtpHost = flag.String(smtpHostFlagName, "", "host of smtp server, to send alert email")
+var smtpPort = flag.Int(smtpPortFlagName, 25, "port of smtp server")
+var smtpUsername = flag.String(smtpUsernameFlagName, "", "login to smtp server")
+var smtpPassword = flag.String(smtpPasswordFlagName, "", "password to smtp server")
 
 func minElement(slice []int64) int64 {
 	var min int64 = math.MaxInt64
@@ -113,7 +113,7 @@ func monitor(conf *config.Config) {
 		hash2Node[rollbacksHash] = append(hash2Node[rollbacksHash], node)
 	}
 	if len(hash2Node) > 1 {
-		hash2NodeStrResults := []string{}
+		var hash2NodeStrResults []string
 		for k, v := range hash2Node {
 			hash2NodeStrResults = append(hash2NodeStrResults, fmt.Sprintf("%x: %s", k, v))
 		}
@@ -130,7 +130,7 @@ func main() {
 	flagsOverrideConfig(conf)
 	if conf.Daemon.DaemonMode {
 		ticker := time.NewTicker(time.Second * time.Duration(conf.Daemon.QueryingPeriod))
-		for _ = range ticker.C {
+		for range ticker.C {
 			monitor(conf)
 		}
 	} else {

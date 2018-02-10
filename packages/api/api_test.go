@@ -69,7 +69,7 @@ func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
 	if form != nil {
 		ioform = strings.NewReader(form.Encode())
 	}
-	req, err := http.NewRequest(rtype, `http://localhost:7079`+consts.ApiPath+url, ioform)
+	req, err := http.NewRequest(rtype, `http://localhost:7079`+consts.APIPath+url, ioform)
 	if err != nil {
 		return err
 	}
@@ -93,10 +93,7 @@ func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
 		return fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
 	}
 
-	if err = json.Unmarshal(data, v); err != nil {
-		return err
-	}
-	return nil
+	return json.Unmarshal(data, v)
 }
 
 func sendGet(url string, form *url.Values, v interface{}) error {

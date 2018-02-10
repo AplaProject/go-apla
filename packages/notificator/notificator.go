@@ -25,7 +25,6 @@ package notificator
 import (
 	"encoding/json"
 	"strconv"
-
 	"sync"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -59,15 +58,15 @@ func SendNotifications() {
 		ecosystemID := key.(EcosystemID)
 		ecosystemStats := value.(NotificationStats)
 
-		notifs := getEcosystemNotifications(ecosystemID, *ecosystemStats.lastNotifID, ecosystemStats)
-		for _, notif := range notifs {
-			userID, err := strconv.ParseInt(notif["recipient_id"], 10, 64)
+		notifies := getEcosystemNotifications(ecosystemID, *ecosystemStats.lastNotifID, ecosystemStats)
+		for _, notify := range notifies {
+			userID, err := strconv.ParseInt(notify["recipient_id"], 10, 64)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConversionError, "value": notif["recipient_id"], "error": err}).Error("getting recipient_id")
+				log.WithFields(log.Fields{"type": consts.ConversionError, "value": notify["recipient_id"], "error": err}).Error("getting recipient_id")
 				return false
 			}
 
-			data, err := mapToString(notif)
+			data, err := mapToString(notify)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling notification")
 				return false
@@ -84,7 +83,7 @@ func SendNotifications() {
 				return false
 			}
 
-			id, err := strconv.ParseInt(notif["id"], 10, 64)
+			id, err := strconv.ParseInt(notify["id"], 10, 64)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("conversion string to int64")
 				return false
@@ -129,10 +128,10 @@ func getEcosystemNotifications(ecosystemID EcosystemID, lastNotificationID int64
 
 // AddUser is subscribing user to notifications
 func AddUser(userID int64, ecosystemID int64) {
-	eId := EcosystemID(ecosystemID)
+	eID := EcosystemID(ecosystemID)
 
 	var ns NotificationStats
-	ins, ok := notifications.Load(eId)
+	ins, ok := notifications.Load(eID)
 
 	if !ok {
 		ns = NotificationStats{userIDs: sync.Map{}, lastNotifID: new(int64)}
@@ -141,5 +140,5 @@ func AddUser(userID int64, ecosystemID int64) {
 	}
 
 	ns.userIDs.Store(UserID(userID), 0)
-	notifications.Store(eId, ns)
+	notifications.Store(eID, ns)
 }

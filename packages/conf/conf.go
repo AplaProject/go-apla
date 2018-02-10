@@ -27,8 +27,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/BurntSushi/toml"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	toml "github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -1,7 +1,7 @@
 package storage_test
 
 import (
-	ioutil "io/ioutil"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"testing"

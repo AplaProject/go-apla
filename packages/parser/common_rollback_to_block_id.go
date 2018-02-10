@@ -44,8 +44,11 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 	limit := 1000
 	// roll back our blocks
 	for {
-		block := &model.Block{}
-		blocks, err := block.GetBlocks(blockID, int32(limit))
+		var (
+			block  = &model.Block{}
+			blocks []model.Block
+		)
+		blocks, err = block.GetBlocks(blockID, int32(limit))
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting blocks")
 			return p.ErrInfo(err)

@@ -6,12 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	flags "github.com/jessevdk/go-flags"
-	"github.com/pkg/errors"
-
 	"github.com/GenesisKernel/go-genesis/tools/update_client/client"
 	"github.com/GenesisKernel/go-genesis/tools/update_client/params"
 	"github.com/GenesisKernel/go-genesis/tools/update_server/model"
+	"github.com/jessevdk/go-flags"
+	"github.com/pkg/errors"
 )
 
 type ServerOpt struct {
