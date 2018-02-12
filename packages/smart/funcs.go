@@ -101,6 +101,8 @@ var (
 		"Eval":               10,
 		"EvalCondition":      20,
 		"FlushContract":      50,
+		"GetContractByName":  20,
+		"GetContractById":    20,
 		"HMac":               50,
 		"Join":               10,
 		"JSONToMap":          50,
@@ -161,6 +163,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"EvalCondition":      EvalCondition,
 		"Float":              Float,
 		"FlushContract":      FlushContract,
+		"GetContractByName":  GetContractByName,
+		"GetContractById":    GetContractById,
 		"HMac":               HMac,
 		"Join":               Join,
 		"JSONToMap":          JSONToMap,
@@ -586,7 +590,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, false)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, true)
 	return
 }
 
@@ -621,6 +625,11 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 		return fmt.Errorf(`FlushContract can be only called from NewContract or EditContract`)
 	}
 	root := iroot.(*script.Block)
+	if id != 0 {
+		if len(root.Children) != 1 || root.Children[0].Type != script.ObjContract {
+			return fmt.Errorf(`Оnly one contract must be in the record`)
+		}
+	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
 			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = id

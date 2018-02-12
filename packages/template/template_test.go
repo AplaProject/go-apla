@@ -44,6 +44,12 @@ func TestJSON(t *testing.T) {
 var forTest = tplList{
 	{`SetVar(q, q#my#q)Div(Class: #my#){#my# Strong(#my#) Div(#q#){P(Span(#my#))}}`,
 		`[{"tag":"div","attr":{"class":"Span(test)"},"children":[{"tag":"text","text":"Span(test) "},{"tag":"strong","children":[{"tag":"text","text":"Span(test)"}]},{"tag":"div","attr":{"class":"qSpan(test)q"},"children":[{"tag":"p","children":[{"tag":"span","children":[{"tag":"text","text":"Span(test)"}]}]}]}]}]`},
+	{`If(){SetVar(false_condition, 1)Span(False)}.Else{SetVar(true_condition, 1)Span(True)} 
+	  If(true){SetVar(ok, 1)}.Else{SetVar(problem, 1)}
+	  If(false){SetVar(if, 1)}.ElseIf(true){SetVar(elseif, 1)}.Else{SetVar(else, 1)}
+	  Div(){
+		#false_condition# #true_condition# #ok# #problem# #if# #elseif# #else#
+	  }`, `[{"tag":"span","children":[{"tag":"text","text":"True"}]},{"tag":"div","children":[{"tag":"text","text":"#false_condition# 1 1 #problem# #if# 1 #else#"}]}]`},
 	{`Button(Body: addpage, 
 		Contract: NewPage, 
 		Params: "Name=hello_page2, Value=Div(fefe, dbbt), Menu=default_menu, Conditions=true")`,
@@ -186,6 +192,12 @@ var forTest = tplList{
 		`[{"tag":"table","attr":{"columns":[{"Name":"id","Title":"ID"},{"Name":"name","Title":"name"},{"Name":"wallet","Title":"Wallet"}],"source":"src"}}]`},
 	{`Chart(Type: "bar", Source: src, FieldLabel: "name", FieldValue: "count", Colors: "red, green")`,
 		`[{"tag":"chart","attr":{"colors":["red","green"],"fieldlabel":"name","fieldvalue":"count","source":"src","type":"bar"}}]`},
+	{"InputMap(mapName, `{\"zoom\":\"12\", \"address\": \"some address\", \"area\":\"some area\", \"coords\": \"some cords\"}`, PolyType, satelite)",
+		`[{"tag":"inputMap","attr":{"@value":"{\"zoom\":\"12\", \"address\": \"some address\", \"area\":\"some area\", \"coords\": \"some cords\"}","maptype":"satelite","name":"mapName","type":"PolyType"}}]`},
+	{"InputMap(mapName, `{\"zoom\":\"12\", \"address\": \"some address\", \"area\":\"some area\", \"coords\": \"some cords\"}`, PolyType, satelite).Validate(ping: pong)",
+		`[{"tag":"inputMap","attr":{"@value":"{\"zoom\":\"12\", \"address\": \"some address\", \"area\":\"some area\", \"coords\": \"some cords\"}","maptype":"satelite","name":"mapName","type":"PolyType","validate":{"ping":"pong"}}}]`},
+	{`Map(Input data, satelite, 300)`,
+		`[{"tag":"map","attr":{"@value":"Input data","hmap":"300","maptype":"satelite"}}]`},
 }
 
 func TestFullJSON(t *testing.T) {
