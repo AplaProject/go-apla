@@ -142,23 +142,6 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
 	}
 
-	if len(data.params["role_id"].(string)) == 0 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("role is empty")
-		return errorAPI(w, "E_EMPTYROLE", http.StatusBadRequest)
-	}
-
-	role := data.params["role_id"].(int64)
-	ok, err := model.MemberHasRole(nil, state, wallet, role)
-	if err != nil {
-		logger.WithFields(log.Fields{
-			"type":      consts.DBError,
-			"member":    wallet,
-			"role":      role,
-			"ecosystem": state}).Error("check role")
-
-		return errorAPI(w, "E_CHECKROLE", http.StatusBadRequest)
-	}
-
 	if r, ok := data.params["role_id"]; ok {
 		role := r.(int64)
 		if role > 0 {
@@ -170,37 +153,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 					"role":      role,
 					"ecosystem": state}).Error("check role")
 
-				return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
-			}
-
-			if !ok {
-				logger.WithFields(log.Fields{
-					"type":      consts.NotFound,
-					"member":    wallet,
-					"role":      role,
-					"ecosystem": state,
-				}).Error("member hasn't role")
-
-				return errorAPI(w, "E_CHECKROLE", http.StatusNotFound)
-			}
-
-			data.roleId = role
-		}
-	}
-
-	if r, ok := data.params["role_id"]; ok {
-		var role int64
-		role = r.(int64)
-		if role > 0 {
-			ok, err := model.MemberHasRole(nil, state, wallet, role)
-			if err != nil {
-				logger.WithFields(log.Fields{
-					"type":      consts.DBError,
-					"member":    wallet,
-					"role":      role,
-					"ecosystem": state}).Error("check role")
-
-				return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
+				return errorAPI(w, "E_CHECKROLE", http.StatusBadRequest)
 			}
 
 			if !ok {
