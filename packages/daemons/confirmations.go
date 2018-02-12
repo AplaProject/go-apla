@@ -18,6 +18,7 @@ package daemons
 
 import (
 	"context"
+	"errors"
 	"net"
 	"strconv"
 	"time"
@@ -107,12 +108,12 @@ func Confirmations(ctx context.Context, d *daemon) error {
 		ch := make(chan string)
 		for i := 0; i < len(hosts); i++ {
 			// NOTE: host should not use default port number
-			tcpPort := conf.Config.TCPServer.Port
-			if tcpPort == 0 {
-				tcpPort = consts.DEFAULT_TCP_PORT
+			host, err := NormalizeHostAddress(hosts[i], consts.DEFAULT_TCP_PORT)
+			if err != nil {
+				d.logger.WithFields(log.Fields{"host": host[i], "error": err}).Error("wrong host address")
+				continue
 			}
 
-			host := hosts[i] + ":" + strconv.Itoa(tcpPort)
 			d.logger.WithFields(log.Fields{"host": host, "block_id": blockID}).Debug("checking block id confirmed at node")
 			go func() {
 				IsReachable(host, blockID, ch, d.logger)
@@ -202,4 +203,19 @@ func IsReachable(host string, blockID int64, ch0 chan string, logger *log.Entry)
 	case <-time.After(consts.WAIT_CONFIRMED_NODES * time.Second):
 		ch0 <- "0"
 	}
+}
+
+// NormalizeHostAddress get address. if port not defined returns combined string with ip and defaultPort
+func NormalizeHostAddress(address string, defaultPort int) (result string, err error) {
+	_, _, err = net.SplitHostPort(address)
+	if err == nil {
+		return address, nil
+	}
+
+	ip := net.ParseIP(address)
+	if ip == nil {
+		return "", errors.New("wrong IP")
+	}
+
+	return net.JoinHostPort(ip.String(), strconv.FormatInt(int64(defaultPort), 10)), nil
 }
