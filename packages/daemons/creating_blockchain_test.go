@@ -4,13 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"regexp"
 	"testing"
 
-	"github.com/GenesisKernel/go-genesis/packages/static"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	log "github.com/sirupsen/logrus"
 )
 
 func getTmpFile(t *testing.T) string {
@@ -34,49 +33,6 @@ func TestEmptyFile(t *testing.T) {
 	matched, regErr := regexp.Match("empty blockchain file", []byte(err.Error()))
 	if regErr != nil || !matched {
 		t.Errorf("bad error %s", err)
-	}
-}
-func getFirstBlock(t *testing.T) blockData {
-	newBlock, err := static.Asset("static/1block")
-	if err != nil {
-		t.Fatalf("Can't get first block")
-	}
-
-	block, err := unmarshalBlockData(newBlock)
-	if err != nil {
-		t.Fatalf("readBlock error: %s", err)
-	}
-
-	return block
-}
-
-func TestBlockUnmarshal(t *testing.T) {
-	block := getFirstBlock(t)
-
-	if block.ID != 1 {
-		t.Errorf("bad blockID, want 1, got %d", block.ID)
-	}
-}
-
-func TestLastBlock(t *testing.T) {
-	block := getFirstBlock(t)
-
-	fileName := getTmpFile(t)
-	defer os.Remove(fileName)
-
-	fileBlockBin := marshallFileBlock(block)
-	err := ioutil.WriteFile(fileName, fileBlockBin, os.ModeAppend)
-	if err != nil {
-		t.Fatalf("can't write to file: %s", err)
-	}
-
-	blockID, err := getLastBlockID(fileName)
-	if err != nil {
-		t.Fatalf("can't get last id: %s", err)
-	}
-
-	if blockID != 1 {
-		t.Errorf("bad id, want 1, got %d", blockID)
 	}
 }
 
