@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
 
 func TestLimit(t *testing.T) {
