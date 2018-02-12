@@ -97,11 +97,6 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	// Block generation will be started only if we have transactions
-	if len(trs) == 0 {
-		return nil
-	}
-
 	limits := parser.NewLimits(nil)
 	// Checks preprocessing count limits
 	txList := make([]*model.Transaction, 0, len(trs))
