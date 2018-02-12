@@ -48,8 +48,13 @@ func TestLimit(t *testing.T) {
 		action {
 		   DBInsert("tbl` + rnd + `", "name, block", $Num, $block) 
 		}
+	}`}, `Conditions`: {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
 	}
-	contract Upd` + rnd + ` {
+
+	form = url.Values{`Value`: {`contract Upd` + rnd + ` {
 		data {
 			Name string
 			Value string

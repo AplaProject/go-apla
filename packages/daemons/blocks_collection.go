@@ -268,7 +268,7 @@ func loadFirstBlock(logger *log.Entry) error {
 		}).Error("reading first block from file")
 	}
 
-	if err = parser.InsertBlockWOForks(newBlock); err != nil {
+	if err = parser.InsertBlockWOForks(newBlock, false); err != nil {
 		logger.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("inserting new block")
 		return err
 	}
@@ -333,7 +333,7 @@ func loadFromFile(ctx context.Context, fileName string, logger *log.Entry) error
 		}
 
 		if *conf.StartBlockID == 0 || (*conf.StartBlockID > 0 && block.ID > *conf.StartBlockID) {
-			if err = parser.InsertBlockWOForks(block.Data); err != nil {
+			if err = parser.InsertBlockWOForks(block.Data, false); err != nil {
 				return err
 			}
 		}
