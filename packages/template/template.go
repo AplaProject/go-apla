@@ -380,7 +380,9 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		curNode.Tag = curFunc.Tag
 		curNode.Attr = make(map[string]interface{})
 		if len(pars[`Body`]) > 0 && curFunc.Tag != `custom` {
-			process(pars[`Body`], &curNode, workspace)
+			if curFunc.Tag != `if` {
+				process(pars[`Body`], &curNode, workspace)
+			}
 		}
 		parFunc.Owner = owner
 		parFunc.Node = &curNode
