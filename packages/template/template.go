@@ -672,8 +672,13 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 	sc := smart.SmartContract{
 		VDE: isvde,
 		VM:  smart.GetVM(isvde, converter.StrToInt64((*vars)[`ecosystem_id`])),
-		TxSmart: tx.SmartContract{Header: tx.Header{EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
-			KeyID: converter.StrToInt64((*vars)[`key_id`])}},
+		TxSmart: tx.SmartContract{
+			Header: tx.Header{
+				EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
+				KeyID:       converter.StrToInt64((*vars)[`key_id`]),
+				RoleID:      converter.StrToInt64((*vars)[`role_id`]),
+			},
+		},
 	}
 	process(input, &root, &Workspace{Vars: vars, Timeout: timeout, SmartContract: &sc})
 	if root.Children == nil || *timeout {
