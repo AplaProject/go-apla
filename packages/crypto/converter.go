@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
 
 // Address gets int64 EGGAS address from the public key

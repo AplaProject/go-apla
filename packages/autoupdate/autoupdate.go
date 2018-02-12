@@ -7,12 +7,12 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/tools/update_client/client"
-	"github.com/AplaProject/go-apla/tools/update_client/params"
-	updateModel "github.com/AplaProject/go-apla/tools/update_server/model"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/tools/update_client/client"
+	"github.com/GenesisKernel/go-genesis/tools/update_client/params"
+	updateModel "github.com/GenesisKernel/go-genesis/tools/update_server/model"
 
 	version "github.com/hashicorp/go-version"
 	log "github.com/sirupsen/logrus"
