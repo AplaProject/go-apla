@@ -107,7 +107,12 @@ func Confirmations(ctx context.Context, d *daemon) error {
 		ch := make(chan string)
 		for i := 0; i < len(hosts); i++ {
 			// NOTE: host should not use default port number
-			host := hosts[i] + ":" + strconv.Itoa(consts.DEFAULT_TCP_PORT)
+			tcpPort := conf.Config.TCPServer.Port
+			if tcpPort == 0 {
+				tcpPort = consts.DEFAULT_TCP_PORT
+			}
+
+			host := hosts[i] + ":" + strconv.Itoa(tcpPort)
 			d.logger.WithFields(log.Fields{"host": host, "block_id": blockID}).Debug("checking block id confirmed at node")
 			go func() {
 				IsReachable(host, blockID, ch, d.logger)
