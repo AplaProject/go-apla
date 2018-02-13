@@ -83,6 +83,13 @@ func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("insert logged transaction")
 		return utils.ErrInfo(err)
 	}
+	if _, err := model.MarkTransactionUsed(transaction, txHash); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": txHash}).Error("marking transaction used")
+		return err
+	}
+	if _, err := model.DeleteQueueTxByHash(transaction, txHash); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": txHash}).Error("DeleteQueueTxByHash")
+	}
 	return nil
 }
 

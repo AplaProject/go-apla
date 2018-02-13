@@ -207,7 +207,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		// hash compare could be failed in the case of fork
 		hashMatched, thisErrIsOk := block.CheckHash()
 		if thisErrIsOk != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
+			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Info("start the fork creation process")
 		}
 
 		if !hashMatched {
@@ -218,13 +218,6 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				banNode(host, err)
 				return err
 			}
-		} else {
-			/* TODO should we uncomment this ?????????????
-			_, err := model.MarkTransactionsUnverified()
-			if err != nil {
-				return err
-			}
-			*/
 		}
 
 		block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
