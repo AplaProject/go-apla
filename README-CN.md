@@ -53,24 +53,6 @@ Genesis 是一个开源的区块链平台，最早的开发由程序员奥列格
 
 为了防止 Genesis 的公共区块链平台中受到攻击，你需要使用 GEN 代币支付网络资源使用费用（类似其他平台那样）。我们将在平台的创世块中发行1亿枚代币，其中85%（8500万GEN）将发放给注册时间1年以上（防止机器人）的85万Github 用户。我们之所以选择这种方式分配代币，是因为 Github 用户超过2400万人，大家几乎都是程序员。
 
-为了使征集85万 Github 用户的过程更为有效，我们采取如下奖励机制：
-
-- 前 1,000 名奖励150GEN
-- 前 10,000名 - 140GEN
-- 前 100,000名 -120GEN
-- 前 500,000名 - 80GEN
-- 其余奖励 70GEN
-
-<br><p align="center"><b>只需为这个项目点亮 star，即可在平台启动时获得自己的代币</b>
-</p><br>
-
-Star计数将在 \[时间待定\] 结束。在此之前您需要将生成的 [公共密钥ECDSA](http://GenesisCommunity.github.io/newKeys.html), 上传至个人简介或者在[https://gist.github.com/]( https://gist.github.com/)中发布一个名为 `genesis_public_key` 的文件将密钥写入，我们将该密钥进行配对并写入 Genesis 区块链中，通过密钥你就可以访问GEN代币。如果在代币分配后还有剩余，则 Genesis 将自行决定剩余代币的分配。
-
-如果在简介中附加推荐你的 Gihub 用户名（填写在密钥+空格后），您可额外获得的10个GEN代币，邀请您加入
- Genesis 的人同样可额外获得超过10个GEN代币（只要他也设定好了自己的 [ECDSA公共密钥](http://GenesisCommunity.github.io/newKeys.html))。
-
-<p align="center"><a href="https://www.facebook.com/sharer/sharer.php?u=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/facebook.png" width=40></a> <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fgithub.com%2FGenesisCommunity%2Fgo-genesis&text=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository&hashtags=genesisblockchain" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/twitter.png" width=40></a> <a href="http://reddit.com/submit?url=https://github.com/GenesisCommunity/go-genesis/&amp;title=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/reddit.png" width=40></a> <a href="https://plus.google.com/share?url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/google.png" width=40></a> <a href="mailto:?subject=I wanted you to see this site&amp;body=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository -  https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/email.png" width=40></a> <a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/linkedin.png" width=40></a><br>Tell your friends!</p><br>
-
 最后，约85万程序员可获得对区块链平台的全面掌控，使用新规则建立新世界。
 
 
