@@ -129,6 +129,9 @@ var (
 
 	// CheckReadAccess access check for reading, is used only for VDE
 	CheckReadAccess = flag.Bool("checkReadAccess", true, "Check access for reading, only used for VDE")
+
+	// IsVDEMode enable VDE mode
+	IsVDEMode = flag.Bool("vdeMode", false, "Enable VDE mode")
 )
 
 func envStr(envName string, val *string) bool {
