@@ -200,7 +200,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 					"role":      role,
 					"ecosystem": state}).Error("check role")
 
-				return errorAPI(w, "E_CHECKROLE", http.StatusBadRequest)
+				return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
 			}
 
 			if !ok {
@@ -211,7 +211,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 					"ecosystem": state,
 				}).Error("member hasn't role")
 
-				return errorAPI(w, "E_CHECKROLE", http.StatusBadRequest)
+				return errorAPI(w, "E_CHECKROLE", http.StatusNotFound)
 			}
 
 			data.roleId = role
