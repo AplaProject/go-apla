@@ -153,7 +153,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 					"role":      role,
 					"ecosystem": state}).Error("check role")
 
-				return errorAPI(w, "E_CHECKROLE", http.StatusBadRequest)
+				return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
 			}
 
 			if !ok {
