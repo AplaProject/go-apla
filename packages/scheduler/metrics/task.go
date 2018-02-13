@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	taskCronSpec = "*/1 * * * *" // every 30 minutes
+	taskCronSpec = "*/30 * * * *" // every 30 minutes
 )
 
 var tasks = []*scheduler.Task{
