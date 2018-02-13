@@ -801,28 +801,6 @@ func ValidateEmail(email string) bool {
 	return Re.MatchString(email)
 }
 
-// ValidateIPv4 validates IPv4 address and port
-func ValidateIPv4(ip string) bool {
-	ipport := strings.Split(ip, `:`)
-	addr := strings.Split(ipport[0], `.`)
-	if len(addr) != 4 || len(ipport) > 2 {
-		return false
-	}
-	for _, val := range addr {
-		i, err := strconv.Atoi(val)
-		if err != nil || i < 0 || i > 255 {
-			return false
-		}
-	}
-	if len(ipport) == 2 {
-		i, err := strconv.Atoi(ipport[1])
-		if err != nil || i < 0 || i > 0xffff {
-			return false
-		}
-	}
-	return true
-}
-
 // SliceReverse reverses the slice of int64
 func SliceReverse(s []int64) []int64 {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
