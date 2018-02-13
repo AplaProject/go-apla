@@ -19,6 +19,7 @@ package api
 import (
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
@@ -62,11 +63,8 @@ func Route(route *hr.Router) {
 	get(`systemparams`, `?names:string`, authWallet, systemParams)
 	get(`table/:name`, ``, authWallet, table)
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
-	get(`txstatus/:hash`, ``, authWallet, txstatus)
+
 	get(`test/:name`, ``, getTest)
-	get(`history/:table/:id`, ``, authWallet, getHistory)
-	get(`block/:id`, ``, getBlockInfo)
-	get(`maxblockid`, ``, getMaxBlockID)
 
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
 	post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
@@ -81,6 +79,11 @@ func Route(route *hr.Router) {
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template:string`, jsonContent)
 
+	if !*conf.IsVDEMode {
+		get(`txstatus/:hash`, ``, authWallet, txstatus)
+		get(`history/:table/:id`, ``, authWallet, getHistory)
+
+	}
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
 }
 
