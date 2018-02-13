@@ -164,6 +164,7 @@ type Parser struct {
 	TxTime           int64
 	TxType           int64
 	TxCost           int64           // Maximum cost of executing contract
+	TxFuel           int64           // The fuel cost of executed contract
 	TxUsedCost       decimal.Decimal // Used cost of CPU resources
 	TxPtr            interface{}     // Pointer to the corresponding struct in consts/struct.go
 	TxData           map[string]interface{}
@@ -501,6 +502,7 @@ func (p *Parser) CallContract(flags int) (resultContract string, err error) {
 		DbTransaction: p.DbTransaction,
 	}
 	resultContract, err = sc.CallContract(flags)
+	p.TxFuel = sc.TxFuel
 	p.SysUpdate = sc.SysUpdate
 	return
 }

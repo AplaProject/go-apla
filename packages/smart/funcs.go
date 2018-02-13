@@ -72,6 +72,7 @@ type SmartContract struct {
 	TxSmart       tx.SmartContract
 	TxData        map[string]interface{}
 	TxContract    *Contract
+	TxFuel        int64           // The fuel of executing contract
 	TxCost        int64           // Maximum cost of executing contract
 	TxUsedCost    decimal.Decimal // Used cost of CPU resources
 	BlockData     *utils.BlockData

@@ -45,6 +45,10 @@ const (
 	MaxBlockSize = `max_block_size`
 	// MaxTxSize is the maximum size of the transaction
 	MaxTxSize = `max_tx_size`
+	// MaxBlockFuel is the maximum fuel of the block
+	MaxBlockFuel = `max_fuel_block`
+	// MaxTxFuel is the maximum fuel of the transaction
+	MaxTxFuel = `max_fuel_tx`
 	// MaxTxCount is the maximum count of the transactions
 	MaxTxCount = `max_tx_count`
 	// MaxBlockGenerationTime is the time limit for block generation (in ms)
@@ -290,6 +294,16 @@ func GetCommissionWallet(ecosystem int64) string {
 // GetMaxBlockSize is returns max block size
 func GetMaxBlockSize() int64 {
 	return converter.StrToInt64(SysString(MaxBlockSize))
+}
+
+// GetMaxBlockFuel is returns max block fuel
+func GetMaxBlockFuel() int64 {
+	return converter.StrToInt64(SysString(MaxBlockFuel))
+}
+
+// GetMaxTxFuel is returns max tx fuel
+func GetMaxTxFuel() int64 {
+	return converter.StrToInt64(SysString(MaxTxFuel))
 }
 
 // GetMaxBlockGenerationTime is returns max block generation time (in ms)

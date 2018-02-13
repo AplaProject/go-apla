@@ -77,6 +77,7 @@ func NewLimits(b *Block) (limits *Limits) {
 		{&txMaxLimit{}, letPreprocess | letParsing},
 		{&txUserEcosysLimit{}, letPreprocess | letParsing},
 		{&timeBlockLimit{}, letGenBlock},
+		{&txMaxFuel{}, letGenBlock | letParsing},
 	}
 	for _, limiter := range allLimiters {
 		if limiter.modes&limits.Mode == 0 {
@@ -99,7 +100,7 @@ func (limits *Limits) CheckLimit(p *Parser) error {
 }
 
 func limitError(limitName, msg string, args ...interface{}) error {
-	err := fmt.Errorf(msg, args)
+	err := fmt.Errorf(msg, args...)
 	log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error(limitName)
 	return script.SetVMError(`panic`, err)
 }
@@ -242,6 +243,33 @@ func (bl *txMaxSize) check(p *Parser, mode int) error {
 			return ErrLimitStop
 		}
 		return limitError(`txMaxSize`, `Max size of the block`)
+	}
+	return nil
+}
+
+// Checking the max tx & block size
+type txMaxFuel struct {
+	Fuel       int64 // the current fuel of the block
+	LimitBlock int64 // max fuel of the block
+	LimitTx    int64 // max fuel of tx
+}
+
+func (bl *txMaxFuel) init(b *Block) {
+	bl.LimitBlock = syspar.GetMaxBlockFuel()
+	bl.LimitTx = syspar.GetMaxTxFuel()
+}
+
+func (bl *txMaxFuel) check(p *Parser, mode int) error {
+	fuel := p.TxFuel
+	if fuel > bl.LimitTx {
+		return limitError(`txMaxFuel`, `Max fuel of tx`)
+	}
+	bl.Fuel += fuel
+	if bl.Fuel > bl.LimitBlock {
+		if mode == letGenBlock {
+			return ErrLimitStop
+		}
+		return limitError(`txMaxFuel`, `Max fuel of the block`)
 	}
 	return nil
 }
