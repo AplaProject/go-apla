@@ -110,7 +110,7 @@ func Confirmations(ctx context.Context, d *daemon) error {
 			// NOTE: host should not use default port number
 			host, err := NormalizeHostAddress(hosts[i], consts.DEFAULT_TCP_PORT)
 			if err != nil {
-				d.logger.WithFields(log.Fields{"host": host[i], "error": err}).Error("wrong host address")
+				d.logger.WithFields(log.Fields{"host": host[i], "type": consts.ParseError, "error": err}).Error("wrong host address")
 				continue
 			}
 
