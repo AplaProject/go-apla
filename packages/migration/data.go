@@ -95,7 +95,7 @@ var (
 		('20','max_columns', '50', 'true'),
 		('21','max_indexes', '5', 'true'),
 		('22','max_block_user_tx', '100', 'true'),
-		('23','max_fuel_tx', '1000', 'true'),
+		('23','max_fuel_tx', '3000', 'true'),
 		('24','max_fuel_block', '100000', 'true'),
 		('25','commission_size', '3', 'true'),
 		('26','commission_wallet', '', 'true'),

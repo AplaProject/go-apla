@@ -262,7 +262,7 @@ func (bl *txMaxFuel) init(b *Block) {
 func (bl *txMaxFuel) check(p *Parser, mode int) error {
 	fuel := p.TxFuel
 	if fuel > bl.LimitTx {
-		return limitError(`txMaxFuel`, `Max fuel of tx`)
+		return limitError(`txMaxFuel`, `Max fuel of tx %d > %d`, fuel, bl.LimitTx)
 	}
 	bl.Fuel += fuel
 	if bl.Fuel > bl.LimitBlock {
