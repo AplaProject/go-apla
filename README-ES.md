@@ -64,29 +64,6 @@ aproximadamente 850 mil usuarios de github, cuyas cuentas han existido durante a
 protección contra bots). Determinamos usar este método de distribución de tokens, porque más de 24
 millones de personas son usuarios de github y casi todos son programadores.
 <br>
-Para que el proceso de afiliación de 850,000 usuarios de github sea más activo, estimularemos a los primeros en
-unirse:
-<br>
-
-- los primeros 1,000 recibirán 150 GEN
-- los siguientes 10,000 - 140 GEN
-- los subsiguientes 100.000 - 120 GEN
-- los próximos 500,000 - 80 GEN
-- el resto recibirá 70 GEN
-
-<br><p align="center"><b>Basta con poner un asterisco a este repositorio, y obtendrá sus tokens durante el lanzamiento de la
-plataforma</b></p><br>
-
-[date to be announced]  culminará la colección de asteriscos. Antes de esa fecha, usted debe alojar en su bio [la clave pública ECDSA](http://GenesisCommunity.github.io/newKeys.html), que analizaremos y escribiremos en el bolckchain de Genesis, el acceso al token GEN
-será posible a través de una clave privada. Si después de la distribución de los tokens queda un remanente, el
-fondo Genesis lo administrará según su criterio.
-<br> <br>
-
-Usted podría obtener +10 GEN adicionales, si en el bio especifica el lógin del usuario de github (a través de un
-espacio después de la clave), que le recomendó la plataforma Génesis. Él también recibirá +10 GEN adicionales (si
-coloca en su perfil la [ la clave pública ECDSA](http://GenesisCommunity.github.io/newKeys.html)).<br> <br>
-
-<p align="center"><a href="https://www.facebook.com/sharer/sharer.php?u=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/facebook.png" width=40></a> <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fgithub.com%2FGenesisCommunity%2Fgo-genesis&text=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository&hashtags=genesisblockchain" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/twitter.png" width=40></a> <a href="http://reddit.com/submit?url=https://github.com/GenesisCommunity/go-genesis/&amp;title=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/reddit.png" width=40></a> <a href="https://plus.google.com/share?url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/google.png" width=40></a> <a href="mailto:?subject=I wanted you to see this site&amp;body=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository -  https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/email.png" width=40></a> <a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/linkedin.png" width=40></a><br>Tell your friends!</p><br>
 
 Como resultado, cerca de 850 mil programadores recibirán el control total de la plataforma blockchain y podrán
 comenzar a construir un mundo nuevo con nuevas reglas.

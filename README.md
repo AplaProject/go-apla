@@ -48,28 +48,8 @@ Genesis is an open-source blockchain platform, the basis of which was laid in 20
 ## Get Your Tokens, GitHub User!
 To protect the platform from attacks, Genesis (just as other public blockchain platforms) charges payments in GEN tokens for use of the network resources. The platform's genesis block will emit 100 million tokens and 85% (85m GEN) will be distributed among 850 thousand GitHub users, whose accounts were created more than a year ago (to protect from bots). We choose this way of token distribution, because there are over 24 million GitHub users, and virtually all of them are software developers.
 <br>
-In order to further promote the process of engaging 850 thousand GitHub users, we have special bonuses for the early adopters:
-<br>
-
-- first 1,000 will receive 150 GEN each
-- first 10,000 - 140 GEN
-- first 100,000 - 120 GEN
-- first 500,000 - 80 GEN
-- all the rest - 70 GEN each
-
-<br><p align="center"><b>Just give a star to this repository, and receive your tokens when the platform launches.
-</b></p><br>
-
-The star count will end on [date to be announced]. Before this date, post an [ECDSA public key](http://GenesisCommunity.github.io/newKeys.html) in your bio or post it as a pubic gist at https://gist.github.com/. If you use gist, please use genesis_public_key as the file name. We will parse your key and write it into the Genesis blockchain. Access to GEN tokens will be possible using private keys. In case there are some tokens left after the giveaway, the Genesis foundation will distribute the rest at their own discretion.<br> <br>
-
-
-You can receive an extra +10 GEN if you write the login of a GitHub user who told you about Genesis (put it right after your public key in your GitHub BIO or in your public gist). Examples: ([GitHub BIO](https://github.com/c-darwin));  ([Gist](https://gist.github.com/c-darwin/c9daed5fcc589932c9be92e9c78dbd38)). This user will also receive an additional +10 GEN (if they place a [public ECDSA key](http://GenesisCommunity.github.io/newKeys.html) in their profile or post it on gist).<br> <br>
-
-
-<p align="center"><a href="https://www.facebook.com/sharer/sharer.php?u=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/facebook.png" width=40></a> <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fgithub.com%2FGenesisCommunity%2Fgo-genesis&text=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository&hashtags=genesisblockchain" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/twitter.png" width=40></a> <a href="http://reddit.com/submit?url=https://github.com/GenesisCommunity/go-genesis/&amp;title=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/reddit.png" width=40></a> <a href="https://plus.google.com/share?url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/google.png" width=40></a> <a href="mailto:?subject=I wanted you to see this site&amp;body=85%25%20of%20all%20tokens%20will%20be%20distributed%20for%20free%20among%20850,000%20GitHub%20users,%20who%20put%20a%20star%20in%20this%20repository -  https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/email.png" width=40></a> <a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=https://github.com/GenesisCommunity/go-genesis/" target="_blank"><img src="https://simplesharebuttons.com/images/somacro/linkedin.png" width=40></a><br>Tell your friends!</p><br>
 
 As a result, around 850 thousand programmers will take full control over the blockchain platform and will be able to start building a new world with new rules.<br> <br>
-
 
 
 ## How Genesis Works
