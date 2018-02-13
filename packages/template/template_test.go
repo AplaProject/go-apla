@@ -178,6 +178,12 @@ var forTest = tplList{
 		`[{"tag":"table","attr":{"columns":[{"Name":"id","Title":"ID"},{"Name":"name","Title":"name"},{"Name":"wallet","Title":"Wallet"}],"source":"src"}}]`},
 	{`Chart(Type: "bar", Source: src, FieldLabel: "name", FieldValue: "count", Colors: "red, green")`,
 		`[{"tag":"chart","attr":{"colors":["red","green"],"fieldlabel":"name","fieldvalue":"count","source":"src","type":"bar"}}]`},
+	{"InputMap(mapName, `{\"zoom\":\"12\", \"address\": \"some address\", \"area\":\"some area\", \"coords\": \"some cords\"}`, PolyType, satelite)",
+		`[{"tag":"inputMap","attr":{"@value":"{\"zoom\":\"12\", \"address\": \"some address\", \"area\":\"some area\", \"coords\": \"some cords\"}","maptype":"satelite","name":"mapName","type":"PolyType"}}]`},
+	{"InputMap(mapName, `{\"zoom\":\"12\", \"address\": \"some address\", \"area\":\"some area\", \"coords\": \"some cords\"}`, PolyType, satelite).Validate(ping: pong)",
+		`[{"tag":"inputMap","attr":{"@value":"{\"zoom\":\"12\", \"address\": \"some address\", \"area\":\"some area\", \"coords\": \"some cords\"}","maptype":"satelite","name":"mapName","type":"PolyType","validate":{"ping":"pong"}}}]`},
+	{`Map(Input data, satelite, 300)`,
+		`[{"tag":"map","attr":{"@value":"Input data","hmap":"300","maptype":"satelite"}}]`},
 }
 
 func TestFullJSON(t *testing.T) {
