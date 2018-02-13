@@ -155,6 +155,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"DBUpdate":           DBUpdate,
 		"DBUpdateSysParam":   UpdateSysParam,
 		"DBUpdateExt":        DBUpdateExt,
+		"DBSelectMetrics":    DBSelectMetrics,
 		"EcosysParam":        EcosysParam,
 		"SysParamString":     SysParamString,
 		"SysParamInt":        SysParamInt,
