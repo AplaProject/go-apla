@@ -25,15 +25,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/autoupdate"
-	"github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/AplaProject/go-apla/packages/utils/tx"
+	"github.com/GenesisKernel/go-genesis/packages/autoupdate"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -237,7 +237,7 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	if txQueue {
 		// check for duplicate transaction from queue
 		qtx := &model.QueueTx{}
-		found, err := qtx.GetByHash(searchedHash)
+		found, err := qtx.GetByHash(nil, searchedHash)
 		if found {
 			log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in queue")
 			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %x", searchedHash))
@@ -375,7 +375,7 @@ func (p *Parser) BlockError(err error) {
 	}
 	p.DeleteQueueTx(p.TxHash)
 	ts := &model.TransactionStatus{}
-	ts.SetError(errText, p.TxHash)
+	ts.SetError(nil, errText, p.TxHash)
 }
 
 // AccessRights checks the access right by executing the condition value

@@ -19,7 +19,7 @@ package smart
 import (
 	"testing"
 
-	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/script"
 )
 
 type TestSmart struct {

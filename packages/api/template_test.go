@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
 type tplItem struct {
@@ -197,16 +197,13 @@ func TestLinkData(t *testing.T) {
 
 	template = `Div(Class: list-group-item){
 		Div(panel-body){
-		   DBFind("` + name + `", mysrc).Columns("id,name,image,short_text,long_text").Cutoff("short_text,long_text").WhereId(2).Custom(leftImg){
+		   DBFind("` + name + `", mysrc).Columns("id,name,image,short_text,long_text").Cutoff("short_text,long_text").WhereId(2).Vars(prefix).Custom(leftImg){
 			   Image(Src: "#image#")
 		   }
 		   }
 		   Table(mysrc,"Image=leftImg")
-		}
-	 Form(){
-	   ImageInput(Name: img, Width: 400, Ratio: 2/1)
-				Button(Body: Add, Contract: UploadImage){ Upload! }
-	  }`
+		   Image(Src: "#prefix_image#")
+		}`
 	err = sendPost(`content`, &url.Values{`template`: {template}}, &ret)
 	if err != nil {
 		t.Error(err)
@@ -217,7 +214,7 @@ func TestLinkData(t *testing.T) {
 	linkImage := fmt.Sprintf("/data/1_%s/2/image/%s", name, hashImage)
 	linkLongText := fmt.Sprintf("/data/1_%s/2/long_text/%x", name, md5.Sum([]byte(longText)))
 
-	want := `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","short_text","long_text","leftImg"],"cutoff":"short_text,long_text","data":[["2","myimage","{"link":"` + linkImage + `","title":"` + hashImage + `"}","{"link":"","title":"` + shortText + `"}","{"link":"` + linkLongText + `","title":"` + longText[0:32] + `"}","[{"tag":"image","attr":{"src":"` + linkImage + `"}}]"]],"name":"` + name + `","source":"mysrc","types":["text","text","blob","long_text","long_text","tags"],"whereid":"2"}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}}]},{"tag":"form","children":[{"tag":"imageinput","attr":{"name":"img","ratio":"2/1","width":"400"}},{"tag":"button","attr":{"contract":"UploadImage"},"children":[{"tag":"text","text":"Upload!"}]}]}]`
+	want := `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","short_text","long_text","leftImg"],"cutoff":"short_text,long_text","data":[["2","myimage","{"link":"` + linkImage + `","title":"` + hashImage + `"}","{"link":"","title":"` + shortText + `"}","{"link":"` + linkLongText + `","title":"` + longText[0:32] + `"}","[{"tag":"image","attr":{"src":"` + linkImage + `"}}]"]],"name":"` + name + `","source":"mysrc","types":["text","text","blob","long_text","long_text","tags"],"whereid":"2"}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}},{"tag":"image","attr":{"src":"` + linkImage + `"}}]}]`
 	if RawToString(ret.Tree) != want {
 		t.Errorf("Wrong image tree %s != %s", RawToString(ret.Tree), want)
 	}

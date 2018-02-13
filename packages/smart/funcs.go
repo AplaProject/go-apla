@@ -33,17 +33,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/scheduler"
-	"github.com/AplaProject/go-apla/packages/scheduler/contract"
-	"github.com/AplaProject/go-apla/packages/script"
-	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/AplaProject/go-apla/packages/utils/tx"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/scheduler"
+	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
+	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -641,14 +641,14 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
-		getDefTableName(sc, `tables`), []string{`name`}, []string{name}, !sc.VDE && sc.Rollback, false)
+		getDefTableName(sc, `tables`), []string{`name`}, []string{strings.ToLower(name)}, !sc.VDE && sc.Rollback, false)
 	return err
 }
 
 // TableConditions is contract func
 func TableConditions(sc *SmartContract, name, columns, permissions string) (err error) {
 	isEdit := len(columns) == 0
-
+	name = strings.ToLower(name)
 	if isEdit {
 		if !accessContracts(sc, `EditTable`) {
 			log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1EditTable")
@@ -774,6 +774,8 @@ func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 
 // ColumnCondition is contract func
 func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions string) error {
+	name = strings.ToLower(name)
+	tableName = strings.ToLower(tableName)
 	if !accessContracts(sc, `NewColumn`, `EditColumn`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ColumnConditions can be only called from @1NewColumn")
 		return fmt.Errorf(`ColumnCondition can be only called from NewColumn or EditColumn`)
@@ -785,7 +787,6 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		prefix += `_vde`
 	}
 	tEx.SetTablePrefix(prefix)
-	name = strings.ToLower(name)
 
 	exists, err := tEx.IsExistsByPermissionsAndTableName(sc.DbTransaction, name, tableName)
 	if err != nil {
@@ -832,7 +833,6 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("Unknown column type")
 		return fmt.Errorf(`incorrect type`)
 	}
-
 	return sc.AccessTable(tblName, "new_column")
 }
 
@@ -871,6 +871,7 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions strin
 		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
 	}
 	name = strings.ToLower(name)
+	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
 
 	var colType string
@@ -933,6 +934,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		return fmt.Errorf(`EditColumn can be only called from EditColumn`)
 	}
 	name = strings.ToLower(name)
+	tableName = strings.ToLower(tableName)
 	tables := getDefTableName(sc, `tables`)
 	type cols struct {
 		Columns string

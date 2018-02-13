@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/AplaProject/go-apla/packages/static"
+	"github.com/GenesisKernel/go-genesis/packages/static"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 

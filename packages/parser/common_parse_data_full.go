@@ -23,15 +23,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/config/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/script"
-	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/AplaProject/go-apla/packages/utils/tx"
+	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -595,7 +595,11 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		msg, err := playTransaction(p)
 		if err != nil {
 			// skip this transaction
-			model.MarkTransactionUsed(nil, p.TxHash)
+			_, err2 := model.MarkTransactionUsed(p.DbTransaction, p.TxHash)
+			if err2 != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err2}).Error("marking used transactions")
+				return err2
+			}
 			p.processBadTransaction(p.TxHash, err.Error())
 			if p.SysUpdate {
 				if err = syspar.SysUpdate(p.DbTransaction); err != nil {
