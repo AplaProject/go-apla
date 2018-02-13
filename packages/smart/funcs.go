@@ -488,7 +488,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		ecosystem = sc.TxSmart.EcosystemID
 	}
 	tblname = GetTableName(sc, tblname, ecosystem)
-	if sc.VDE && *conf.CheckReadAccess {
+	if sc.VDE && *conf.CheckReadAccess && tblname != GetTableName(sc, "tables", ecosystem) {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
 		if err != nil {
 			return 0, nil, err
