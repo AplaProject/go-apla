@@ -255,9 +255,9 @@ func SysFuel(state int64) string {
 	return syspar.GetFuelRate(state)
 }
 
-// Int converts a string to a number
-func Int(val string) int64 {
-	return converter.StrToInt64(val)
+// Int converts the value to a number
+func Int(v interface{}) int64 {
+	return converter.ValueToInt(v)
 }
 
 // Str converts the value to a string
