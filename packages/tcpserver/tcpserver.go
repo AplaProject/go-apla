@@ -22,9 +22,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -101,6 +101,10 @@ func HandleTCPRequest(rw net.Conn) {
 
 // TcpListener is listening tcp address
 func TcpListener(laddr string) error {
+
+	if *conf.IsVDEMode {
+		return nil
+	}
 
 	if strings.HasPrefix(laddr, "127.") {
 		log.Warn("Listening at local address: ", laddr)
