@@ -51,7 +51,6 @@ func Route(route *hr.Router) {
 	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
 	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
 
-	get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)
 	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
 	get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
@@ -82,8 +81,9 @@ func Route(route *hr.Router) {
 	if !*conf.IsVDEMode {
 		get(`txstatus/:hash`, ``, authWallet, txstatus)
 		get(`history/:table/:id`, ``, authWallet, getHistory)
-
+		get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 	}
+
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
 }
 
