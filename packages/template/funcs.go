@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"html"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -85,6 +86,8 @@ func init() {
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
 	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
+	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
+	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
 
 	tails[`button`] = forTails{map[string]tailInfo{
 		`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
@@ -143,6 +146,9 @@ func init() {
 	tails[`select`] = forTails{map[string]tailInfo{
 		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
 		`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`inputMap`] = forTails{map[string]tailInfo{
+		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
 	}}
 }
 
@@ -206,7 +212,7 @@ func addressTag(par parFunc) string {
 }
 
 func calculateTag(par parFunc) string {
-	return calculate((*par.Pars)[`Exp`], (*par.Pars)[`Type`],
+	return calculate(macro((*par.Pars)[`Exp`], par.Workspace.Vars), (*par.Pars)[`Type`],
 		converter.StrToInt((*par.Pars)[`Prec`]))
 }
 
@@ -430,6 +436,7 @@ func dbfindTag(par parFunc) string {
 	fields = strings.ToLower(fields)
 	if par.Node.Attr[`where`] != nil {
 		where = ` where ` + converter.Escape(par.Node.Attr[`where`].(string))
+		where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
 	}
 	if par.Node.Attr[`whereid`] != nil {
 		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(par.Node.Attr[`whereid`].(string)))
@@ -520,7 +527,7 @@ func dbfindTag(par parFunc) string {
 				}
 			}
 			if par.Node.Attr[`prefix`] != nil {
-				(*par.Workspace.Vars)[prefix+`_`+icol] = ival
+				(*par.Workspace.Vars)[prefix+`_`+strings.Replace(icol, `.`, `_`, 1)] = ival
 			}
 			row[i] = ival
 		}
@@ -676,6 +683,7 @@ func buttonTag(par parFunc) string {
 func ifTag(par parFunc) string {
 	cond := ifValue((*par.Pars)[`Condition`], par.Workspace)
 	if cond {
+		process((*par.Pars)[`Body`], par.Node, par.Workspace)
 		for _, item := range par.Node.Children {
 			par.Owner.Children = append(par.Owner.Children, item)
 		}
@@ -739,7 +747,7 @@ func elseFull(par parFunc) string {
 }
 
 func dateTimeTag(par parFunc) string {
-	datetime := (*par.Pars)[`DateTime`]
+	datetime := macro((*par.Pars)[`DateTime`], par.Workspace.Vars)
 	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
@@ -759,6 +767,8 @@ func dateTimeTag(par parFunc) string {
 		if format == `timeformat` {
 			format = `2006-01-02 15:04:05`
 		}
+	} else {
+		format = macro(format, par.Workspace.Vars)
 	}
 	format = strings.Replace(format, `YYYY`, `2006`, -1)
 	format = strings.Replace(format, `YY`, `06`, -1)
@@ -773,7 +783,7 @@ func dateTimeTag(par parFunc) string {
 
 func cmpTimeTag(par parFunc) string {
 	prepare := func(val string) string {
-		val = strings.Replace(val, `T`, ` `, -1)
+		val = strings.Replace(macro(val, par.Workspace.Vars), `T`, ` `, -1)
 		if len(val) > 19 {
 			val = val[:19]
 		}

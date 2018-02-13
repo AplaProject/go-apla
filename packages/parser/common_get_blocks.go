@@ -20,14 +20,15 @@ import (
 	"errors"
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // GetBlocks is returning blocks
@@ -39,21 +40,22 @@ func GetBlocks(blockID int64, host string) error {
 	blocks := make([]*Block, 0)
 	var count int64
 
-	for {
+	// load the block bodies from the host
+	blocksCh, err := utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, true)
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+
+	for binaryBlock := range blocksCh {
 		if blockID < 2 {
 			log.WithFields(log.Fields{"type": consts.BlockIsFirst}).Error("block id is smaller than 2")
 			return utils.ErrInfo(errors.New("block_id < 2"))
 		}
+
 		// if the limit of blocks received from the node was exaggerated
 		if count > int64(rollback) {
 			log.WithFields(log.Fields{"count": count, "max_count": int64(rollback)}).Error("limit of received from the node was exaggerated")
 			return utils.ErrInfo(errors.New("count > variables[rollback_blocks]"))
-		}
-
-		// load the block body from the host
-		binaryBlock, err := utils.GetBlockBody(host, blockID, consts.DATA_TYPE_BLOCK_BODY)
-		if err != nil {
-			return utils.ErrInfo(err)
 		}
 
 		block, err := ProcessBlockWherePrevFromBlockchainTable(binaryBlock)
@@ -99,7 +101,7 @@ func GetBlocks(blockID int64, host string) error {
 	}
 
 	// mark all transaction as unverified
-	_, err := model.MarkVerifiedAndNotUsedTransactionsUnverified()
+	_, err = model.MarkVerifiedAndNotUsedTransactionsUnverified()
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
@@ -111,7 +113,7 @@ func GetBlocks(blockID int64, host string) error {
 	// we have the slice of blocks for applying
 	// first of all we should rollback old blocks
 	block := &model.Block{}
-	myRollbackBlocks, err := block.GetBlocksFrom(blockID, "desc")
+	myRollbackBlocks, err := block.GetBlocksFrom(blockID, "desc", 0)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting rollback blocks from blockID")
 		return utils.ErrInfo(err)

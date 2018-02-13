@@ -17,15 +17,14 @@
 package tcpserver
 
 import (
-	"io"
 	"net"
 	"strings"
 	"sync/atomic"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-
 	log "github.com/sirupsen/logrus"
+
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 )
 
 var (
@@ -33,7 +32,7 @@ var (
 )
 
 // HandleTCPRequest proceed TCP requests
-func HandleTCPRequest(rw io.ReadWriter) {
+func HandleTCPRequest(rw net.Conn) {
 	defer func() {
 		atomic.AddInt64(&counter, -1)
 	}()
@@ -43,7 +42,7 @@ func HandleTCPRequest(rw io.ReadWriter) {
 		return
 	}
 
-	dType := &TransactionType{}
+	dType := &RequestType{}
 	err := ReadRequest(dType, rw)
 	if err != nil {
 		log.Errorf("read request type failed: %s", err)
@@ -76,10 +75,10 @@ func HandleTCPRequest(rw io.ReadWriter) {
 		}
 
 	case 7:
-		req := &GetBodyRequest{}
+		req := &GetBodiesRequest{}
 		err = ReadRequest(req, rw)
 		if err == nil {
-			response, err = Type7(req)
+			err = Type7(req, rw)
 		}
 
 	case 10:

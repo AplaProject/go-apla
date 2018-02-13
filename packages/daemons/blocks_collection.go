@@ -25,6 +25,10 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
+
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
@@ -32,10 +36,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
+	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 // BlocksCollection collects and parses blocks
@@ -184,64 +186,81 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		return err
 	}
 
-	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID++ {
-		if ctx.Err() != nil {
-			d.logger.WithFields(log.Fields{"type": consts.ContextError, "error": ctx.Err()}).Error("context error")
-			return ctx.Err()
-		}
+	if ctx.Err() != nil {
+		d.logger.WithFields(log.Fields{"type": consts.ContextError, "error": ctx.Err()}).Error("context error")
+		return ctx.Err()
+	}
 
-		blockBin, err := utils.GetBlockBody(host, blockID, consts.DATA_TYPE_BLOCK_BODY)
-		if err != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
-			return err
-		}
-
-		block, err := parser.ProcessBlockWherePrevFromBlockchainTable(blockBin)
-		if err != nil {
-			// we got bad block and should ban this host
-			banNode(host, err)
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
-			return err
-		}
-
-		// hash compare could be failed in the case of fork
-		hashMatched, thisErrIsOk := block.CheckHash()
-		if thisErrIsOk != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
-		}
-
-		if !hashMatched {
-			// it should be fork, replace our previous blocks to ones from the host
-			err := parser.GetBlocks(blockID-1, host)
+	playRawBlock := func(rawBlocksQueueCh chan []byte) error {
+		for rb := range rawBlocksQueueCh {
+			block, err := parser.ProcessBlockWherePrevFromBlockchainTable(rb)
 			if err != nil {
-				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
+				// we got bad block and should ban this host
+				banNode(host, err)
+				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
+				return err
+			}
+
+			// hash compare could be failed in the case of fork
+			hashMatched, thisErrIsOk := block.CheckHash()
+			if thisErrIsOk != nil {
+				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
+			}
+
+			if !hashMatched {
+				//it should be fork, replace our previous blocks to ones from the host
+				err := parser.GetBlocks(block.Header.BlockID-1, host)
+				if err != nil {
+					d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
+					banNode(host, err)
+					return err
+				}
+			}
+
+			block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
+			if err != nil {
+				banNode(host, err)
+				return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
+			}
+			if err = block.CheckBlock(); err != nil {
 				banNode(host, err)
 				return err
 			}
-		} else {
-			/* TODO should we uncomment this ?????????????
-			_, err := model.MarkTransactionsUnverified()
-			if err != nil {
+			if err = block.PlayBlockSafe(); err != nil {
+				banNode(host, err)
 				return err
 			}
-			*/
+		}
+		return nil
+	}
+
+	st := time.Now()
+	d.logger.Infof("starting downloading blocks from %d to %d (%d) \n", curBlock.BlockID, maxBlockID, maxBlockID-curBlock.BlockID)
+
+	count := 0
+	var err error
+	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(tcpserver.BlocksPerRequest) {
+		var rawBlocksChan chan []byte
+		rawBlocksChan, err = utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, false)
+		if err != nil {
+			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
+			break
 		}
 
-		block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
+		err = playRawBlock(rawBlocksChan)
 		if err != nil {
-			banNode(host, err)
-			return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
+			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
+			break
 		}
-		if err = block.CheckBlock(); err != nil {
-			banNode(host, err)
-			return err
-		}
-		if err = block.PlayBlockSafe(); err != nil {
-			banNode(host, err)
-			return err
-		}
+		count++
 	}
-	return nil
+
+	if err != nil {
+		d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("retrieving blockchain from node")
+	} else {
+		d.logger.Infof("%d blocks was collected (%s) \n", count, time.Since(st).String())
+	}
+	return err
 }
 
 func downloadChain(ctx context.Context, fileName, url string, logger *log.Entry) error {
