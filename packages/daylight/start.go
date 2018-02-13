@@ -277,11 +277,6 @@ func Start() {
 			}
 		}
 		initGorm(conf.Config.DB)
-
-		// err = autoupdate.Run()
-		// if err != nil {
-		// 	log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err}).Error("run autoupdate")
-		// }
 	}
 
 	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
