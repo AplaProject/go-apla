@@ -18,9 +18,9 @@ package daemons
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"net"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
@@ -206,16 +206,16 @@ func IsReachable(host string, blockID int64, ch0 chan string, logger *log.Entry)
 }
 
 // NormalizeHostAddress get address. if port not defined returns combined string with ip and defaultPort
-func NormalizeHostAddress(address string, defaultPort int) (result string, err error) {
-	_, _, err = net.SplitHostPort(address)
-	if err == nil {
-		return address, nil
+func NormalizeHostAddress(address string, defaultPort int) (string, error) {
+
+	_, _, err := net.SplitHostPort(address)
+	if err != nil {
+		if strings.HasSuffix(err.Error(), "missing port in address") {
+			return fmt.Sprintf("%s:%d", address, defaultPort), nil
+		}
+
+		return "", err
 	}
 
-	ip := net.ParseIP(address)
-	if ip == nil {
-		return "", errors.New("wrong IP")
-	}
-
-	return net.JoinHostPort(ip.String(), strconv.FormatInt(int64(defaultPort), 10)), nil
+	return address, nil
 }
