@@ -176,7 +176,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 						break check
 					}
 					key := converter.StrToInt64(item[1])
-					if key == 0 || len(item[2]) != 128 || !converter.ValidateIPv4(item[0]) {
+					if key == 0 || len(item[2]) != 128 || len(item[0]) == 0 {
 						break check
 					}
 				}
@@ -255,9 +255,9 @@ func SysFuel(state int64) string {
 	return syspar.GetFuelRate(state)
 }
 
-// Int converts a string to a number
-func Int(val string) int64 {
-	return converter.StrToInt64(val)
+// Int converts the value to a number
+func Int(v interface{}) int64 {
+	return converter.ValueToInt(v)
 }
 
 // Str converts the value to a string
