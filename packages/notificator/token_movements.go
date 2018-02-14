@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/shopspring/decimal"
+
 	"net/smtp"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
@@ -15,9 +17,9 @@ import (
 
 const (
 	networkPerDayLimit            = 100000000
-	networkPerDayMsgTemplate      = "day APL movement volume =  %f"
-	fromToDayLimitMsgTemplate     = "from %d to %d sended volume = %f"
-	perBlockTokenMovementTemplate = "from wallet %d token movement count = %f in block: %d"
+	networkPerDayMsgTemplate      = "day APL movement volume =  %s"
+	fromToDayLimitMsgTemplate     = "from %d to %d sended volume = %s"
+	perBlockTokenMovementTemplate = "from wallet %d token movement count = %d in block: %d"
 
 	networkPerDayEvent         = 1
 	fromToDayLimitEvent        = 2
@@ -52,9 +54,11 @@ func CheckTokenMovementLimits(tx *model.DbTransaction, conf conf.TokenMovementCo
 		amount, err := model.GetExcessCommonTokenMovementPerDay(tx)
 
 		if err != nil {
+
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("check common token movement")
-		} else if amount > networkPerDayLimit {
-			messages = append(messages, fmt.Sprintf(networkPerDayMsgTemplate, amount))
+		} else if amount.GreaterThanOrEqual(decimal.NewFromFloat(networkPerDayLimit)) {
+
+			messages = append(messages, fmt.Sprintf(networkPerDayMsgTemplate, amount.String()))
 			lastLimitEvents[networkPerDayEvent] = time.Now()
 		}
 	}
@@ -74,12 +78,12 @@ func CheckTokenMovementLimits(tx *model.DbTransaction, conf conf.TokenMovementCo
 		}
 	}
 
-	transfers, err := model.GetExcessTokenMovementQtyPerBlock(tx, blockID)
+	excesses, err := model.GetExcessTokenMovementQtyPerBlock(tx, blockID)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("check token movement per block")
 	} else {
-		for _, transfer := range transfers {
-			messages = append(messages, fmt.Sprintf(perBlockTokenMovementTemplate, transfer.SenderID, transfer.Amount, blockID))
+		for _, excess := range excesses {
+			messages = append(messages, fmt.Sprintf(perBlockTokenMovementTemplate, excess.SenderID, excess.TxCount, blockID))
 		}
 	}
 
