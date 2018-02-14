@@ -23,13 +23,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -825,7 +825,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 			return retError(ErrIncorrectSign)
 		}
-		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !*utils.PrivateBlockchain {
+		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !*utils.PrivateBlockchain && !*conf.IsVDEMode {
 			if sc.TxSmart.TokenEcosystem == 0 {
 				sc.TxSmart.TokenEcosystem = 1
 			}
@@ -932,7 +932,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 	}
 
-	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !*utils.PrivateBlockchain {
+	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !*utils.PrivateBlockchain && !*conf.IsVDEMode {
 		apl := sc.TxUsedCost.Mul(fuelRate)
 		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
 		if ierr != nil {
