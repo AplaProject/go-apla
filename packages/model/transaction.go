@@ -10,6 +10,7 @@ type Transaction struct {
 	KeyID    int64  `gorm:"not null"`
 	Counter  int8   `gorm:"not null"`
 	Sent     int8   `gorm:"not null"`
+	Attempt  int8   `gorm:"not null"`
 	Verified int8   `gorm:"not null;default:1"`
 }
 
@@ -124,4 +125,11 @@ func (t *Transaction) GetVerified(transactionHash []byte) (bool, error) {
 // Create is creating record of model
 func (t *Transaction) Create() error {
 	return DBConn.Create(t).Error
+}
+
+// IncrementTxAttemptCount increases attempt column
+func IncrementTxAttemptCount(transactionHash []byte) (int64, error) {
+	query := DBConn.Exec("update transactions set attempt=attempt+1, used = case when attempt>5 then 1 else 0 end where hash = ?",
+		transactionHash)
+	return query.RowsAffected, query.Error
 }

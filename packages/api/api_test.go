@@ -239,6 +239,9 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 		}
 		return
 	}
+	if len((*form)[`nowait`]) > 0 {
+		return
+	}
 	id, err = waitTx(ret[`hash`].(string))
 	if id != 0 && err != nil {
 		msg = err.Error()

@@ -8,9 +8,6 @@ import (
 	"os"
 	"regexp"
 	"testing"
-
-	"github.com/GenesisKernel/go-genesis/packages/static"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 func getTmpFile(t *testing.T) string {

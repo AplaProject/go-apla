@@ -72,6 +72,7 @@ type SmartContract struct {
 	TxSmart       tx.SmartContract
 	TxData        map[string]interface{}
 	TxContract    *Contract
+	TxFuel        int64           // The fuel of executing contract
 	TxCost        int64           // Maximum cost of executing contract
 	TxUsedCost    decimal.Decimal // Used cost of CPU resources
 	BlockData     *utils.BlockData
@@ -101,6 +102,8 @@ var (
 		"Eval":               10,
 		"EvalCondition":      20,
 		"FlushContract":      50,
+		"GetContractByName":  20,
+		"GetContractById":    20,
 		"HMac":               50,
 		"Join":               10,
 		"JSONToMap":          50,
@@ -295,7 +298,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
 			}
 			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
-				`key_id`: sc.TxSmart.KeyID, `sc`: sc})
+				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``})
 			if err != nil {
 				return false, err
 			}
@@ -559,7 +562,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	if sc.VDE && perm != nil && len(perm[`filter`]) > 0 {
 		fltResult, err := VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
 			&map[string]interface{}{
-				`data`:         result,
+				`data`: result, `original_contract`: ``, `this_contract`: ``,
 				`ecosystem_id`: sc.TxSmart.EcosystemID,
 				`key_id`:       sc.TxSmart.KeyID, `sc`: sc,
 				`block_time`: 0, `time`: sc.TxSmart.Time})
@@ -587,7 +590,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, false)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, true)
 	return
 }
 
@@ -622,6 +625,11 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 		return fmt.Errorf(`FlushContract can be only called from NewContract or EditContract`)
 	}
 	root := iroot.(*script.Block)
+	if id != 0 {
+		if len(root.Children) != 1 || root.Children[0].Type != script.ObjContract {
+			return fmt.Errorf(`Оnly one contract must be in the record`)
+		}
+	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
 			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = id

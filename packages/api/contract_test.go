@@ -87,6 +87,17 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`TestMultiForm`, `contract TestMultiForm {
+			data {
+				list array
+			}
+			action { 
+				Test("multiform",  $list[0]+$list[1])
+			}
+		}`,
+		[]smartParams{
+			{map[string]string{`list[]`: `2`, `list[0]`: `start`, `list[1]`: `finish`}, map[string]string{`multiform`: `startfinish`}},
+		}},
 	{`errTestMessage`, `contract errTestMessage {
 		conditions {
 		}
@@ -224,6 +235,13 @@ var contracts = []smartContract{
 			action { var ivar int}
 		}`,
 		nil},
+	{`testGetContract`, `contract testGetContract {
+			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
+				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
+		[]smartParams{
+			{nil, map[string]string{`ByName`: `0 5`,
+				`ById`: `EditLang`}},
+		}},
 }
 
 func TestEditContracts(t *testing.T) {
@@ -481,24 +499,28 @@ func TestSignature(t *testing.T) {
 			}
 			action { 
 				$result = "OK " + Str($Amount)
-			}}
-			
-			contract ` + rnd + `Test {
-				data {
-					Recipient int "hidden"
-					Amount  money
-					Signature string "signature:` + rnd + `Transfer"
-				}
-				func action {
-					` + rnd + `Transfer("Recipient,Amount,Signature",$Recipient,$Amount,$Signature )
-					$result = "OOOPS " + Str($Amount)
-				}
-			  }
-			`}, `Conditions`: {`true`}}
+			}}`}, `Conditions`: {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
+	form = url.Values{`Value`: {`contract ` + rnd + `Test {
+			data {
+				Recipient int "hidden"
+				Amount  money
+				Signature string "signature:` + rnd + `Transfer"
+			}
+			func action {
+				` + rnd + `Transfer("Recipient,Amount,Signature",$Recipient,$Amount,$Signature )
+				$result = "OOOPS " + Str($Amount)
+			}
+		  }
+		`}, `Conditions`: {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+
 	form = url.Values{`Name`: {rnd + `Transfer`}, `Value`: {`{"title": "Would you like to sign",
 		"params":[
 			{"name": "Receipient", "text": "Wallet"},
@@ -683,10 +705,13 @@ func TestUpdateFunc(t *testing.T) {
 	}
 
 	rnd := `rnd` + crypto.RandSeq(6)
-	form := url.Values{`Value`: {`
-		func MyTest(input string) string {
-			return "X="+input
-		}`}, `Conditions`: {`true`}}
+	form := url.Values{`Value`: {`contract f` + rnd + ` {
+		data {
+			par string
+		}
+		func action {
+			$result = Sprintf("X=%s %s %s", $par, $original_contract, $this_contract)
+		}}`}, `Conditions`: {`true`}}
 	_, id, err := postTxResult(`NewContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -699,8 +724,14 @@ func TestUpdateFunc(t *testing.T) {
 				var ret map
 				ret = DBFind("contracts").Columns("id,value").WhereId(10).Row()
 				$result = ret["id"]
-		}}
-		contract row` + rnd + ` {
+		}}`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	form = url.Values{`Value`: {`contract row` + rnd + ` {
 				action {
 					var ret string
 					ret = DBFind("contracts").Columns("id,value").WhereId(11).One("id")
@@ -738,7 +769,7 @@ func TestUpdateFunc(t *testing.T) {
 				Par string
 			}
 			action {
-				$result = MyTest($Par)
+				$result = f` + rnd + `("par",$Par) + " " + $this_contract
 			}}
 		`}, `Conditions`: {`true`}}
 	_, idcnt, err := postTxResult(`NewContract`, &form)
@@ -751,7 +782,7 @@ func TestUpdateFunc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if msg != `X=my param` {
+	if msg != fmt.Sprintf(`X=my param %s f%[1]s %[1]s`, rnd) {
 		t.Error(fmt.Errorf(`wrong result %s`, msg))
 	}
 	form = url.Values{`Id`: {id}, `Value`: {`
@@ -763,10 +794,13 @@ func TestUpdateFunc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form = url.Values{`Id`: {id}, `Value`: {`
-		func MyTest(input string) string {
-			return "Y="+input
-		}`}, `Conditions`: {`true`}}
+	form = url.Values{`Id`: {id}, `Value`: {`contract f` + rnd + `{
+		data {
+			par string
+		}
+		action {
+			$result = "Y="+$par
+		}}`}, `Conditions`: {`true`}}
 	err = postTx(`EditContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -777,7 +811,7 @@ func TestUpdateFunc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if msg != `Y=new param` {
+	if msg != `Y=new param `+rnd {
 		t.Errorf(`wrong result %s`, msg)
 	}
 	form = url.Values{`Id`: {idcnt}, `Value`: {`
@@ -786,7 +820,7 @@ func TestUpdateFunc(t *testing.T) {
 				Par string
 			}
 			action {
-				$result = MyTest($Par) + MyTest("OK")
+				$result = f` + rnd + `("par",$Par) + f` + rnd + `("par","OK")
 			}}
 		`}, `Conditions`: {`true`}}
 	_, idcnt, err = postTxResult(`EditContract`, &form)
@@ -833,9 +867,14 @@ func TestContractChain(t *testing.T) {
 			$new = $record["value"]
 			DBUpdate("` + rnd + `", $Id, "value", $new+"="+$new )
 		}
+	}`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
 	}
 
-	contract ` + rnd + ` {
+	form = url.Values{`Value`: {`contract ` + rnd + ` {
 		data {
 			Initial string
 		}
