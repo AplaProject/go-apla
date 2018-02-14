@@ -98,6 +98,12 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 				var val string
 
 				val = strings.TrimSpace(r.FormValue(fitem.Name))
+				if fitem.Type.String() == `[]interface {}` {
+					val = r.FormValue(fitem.Name + `[]`)
+					if val == `0` {
+						val = ``
+					}
+				}
 				if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) &&
 					!strings.Contains(fitem.Tags, `signature`) {
 					log.WithFields(log.Fields{"type": consts.EmptyObject, "item_name": fitem.Name}).Error("route item is empty")
