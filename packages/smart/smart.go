@@ -922,6 +922,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			}
 		}
 	}
+	sc.TxFuel = before - (*sc.TxContract.Extend)[`txcost`].(int64) - price
 	sc.TxUsedCost = decimal.New(before-(*sc.TxContract.Extend)[`txcost`].(int64), 0)
 	sc.TxContract.TxPrice = price
 	if (*sc.TxContract.Extend)[`result`] != nil {
