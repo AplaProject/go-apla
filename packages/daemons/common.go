@@ -155,7 +155,6 @@ func getHostPort(h string) string {
 func getActiveDaemons() []string {
 	if *conf.IsVDEMode {
 		return []string{
-			"Confirmations",
 			"Notificator",
 			"VDEScheduler",
 		}
