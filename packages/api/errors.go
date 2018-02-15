@@ -20,6 +20,7 @@ var (
 	apiErrors = map[string]string{
 		`E_CONTRACT`:      `There is not %s contract`,
 		`E_DBNIL`:         `DB is nil`,
+		`E_DELETEDKEY`:    `The key is deleted`,
 		`E_ECOSYSTEM`:     `Ecosystem %d doesn't exist`,
 		`E_EMPTYPUBLIC`:   `Public key is undefined`,
 		`E_EMPTYSIGN`:     `Signature is undefined`,
