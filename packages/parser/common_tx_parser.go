@@ -103,20 +103,20 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting tx by hash from queue")
 	}
 
+	if qtx.FromGate == 0 {
+		m := &model.TransactionStatus{}
+		err = m.SetError(nil, errText, hash)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("setting transaction status error")
+			return utils.ErrInfo(err)
+		}
+	}
 	p.DeleteQueueTx(hash)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")
 		return utils.ErrInfo(err)
 	}
 
-	if qtx.FromGate == 0 {
-		m := &model.TransactionStatus{}
-		err = m.SetError(p.DbTransaction, errText, hash)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("setting transaction status error")
-			return utils.ErrInfo(err)
-		}
-	}
 	return nil
 }
 
