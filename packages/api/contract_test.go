@@ -87,6 +87,15 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`DBProblem`, `contract DBProblem {
+		action{
+			DBFind("members").Where("name=?", "name")
+		}
+	}`,
+		[]smartParams{
+			{nil, map[string]string{`error`: `startfinish`}},
+		}},
+
 	{`TestMultiForm`, `contract TestMultiForm {
 					data {
 						list array
