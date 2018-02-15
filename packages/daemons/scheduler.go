@@ -50,8 +50,8 @@ func loadContractTasks() error {
 	return nil
 }
 
-// Scheduler starts contracts on schedule
-func Scheduler(ctx context.Context, d *daemon) error {
+// VDEScheduler starts contracts on schedule
+func VDEScheduler(ctx context.Context, d *daemon) error {
 	d.sleepTime = time.Hour
 	return loadContractTasks()
 }

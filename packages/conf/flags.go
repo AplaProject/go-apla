@@ -128,7 +128,7 @@ var (
 	UpdateInterval = flag.Int64("updateInterval", defaultUpdateInterval, "Interval in seconds for checking updates, default 3600 seconds (1 hour)")
 
 	// CheckReadAccess access check for reading, is used only for VDE
-	// CheckReadAccess = flag.Bool("checkReadAccess", true, "Check access for reading, only used for VDE")
+	CheckReadAccess = flag.Bool("checkReadAccess", true, "Check access for reading, only used for VDE")
 
 	// IsVDEMode enable VDE mode
 	IsVDEMode = flag.Bool("vdeMode", false, "Enable VDE mode")
