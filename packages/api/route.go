@@ -82,6 +82,8 @@ func Route(route *hr.Router) {
 		get(`txstatus/:hash`, ``, authWallet, txstatus)
 		get(`history/:table/:id`, ``, authWallet, getHistory)
 		get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
+		get(`block/:id`, ``, getBlockInfo)
+		get(`maxblockid`, ``, getMaxBlockID)
 	}
 
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
