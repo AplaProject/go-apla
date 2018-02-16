@@ -1,4 +1,4 @@
-package autoupdate
+package service
 
 import (
 	"io/ioutil"

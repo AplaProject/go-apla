@@ -18,11 +18,8 @@ package daemons
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
@@ -51,22 +48,6 @@ var daemonsList = map[string]func(context.Context, *daemon) error{
 	"Confirmations":     Confirmations,
 	"Notificator":       Notificate,
 	"Scheduler":         Scheduler,
-}
-
-var serverList = []string{
-	"BlocksCollection",
-	"BlockGenerator",
-	"QueueParserTx",
-	"QueueParserBlocks",
-	"Disseminator",
-	"Confirmations",
-	"Notificator",
-	"Scheduler",
-}
-
-var rollbackList = []string{
-	"BlocksCollection",
-	"Confirmations",
 }
 
 func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.Context, *daemon) error, retCh chan string) {
@@ -112,11 +93,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.
 }
 
 // StartDaemons starts daemons
-func StartDaemons() {
-	if conf.Config.StartDaemons == "null" {
-		return
-	}
-
+func StartDaemons(daemonsToStart []string) {
 	go WaitStopTime()
 
 	daemonsTable := make(map[string]string)
@@ -134,13 +111,6 @@ func StartDaemons() {
 	utils.CancelFunc = cancel
 	utils.ReturnCh = make(chan string)
 
-	daemonsToStart := serverList
-	if len(conf.Config.StartDaemons) > 0 {
-		daemonsToStart = strings.Split(conf.Config.StartDaemons, ",")
-	} else if *conf.TestRollBack {
-		daemonsToStart = rollbackList
-	}
-
 	log.WithFields(log.Fields{"daemons_to_start": daemonsToStart}).Info("starting daemons")
 
 	for _, name := range daemonsToStart {
@@ -154,11 +124,4 @@ func StartDaemons() {
 
 		log.WithFields(log.Fields{"daemon_name": name}).Warning("unknown daemon name")
 	}
-}
-
-func getHostPort(h string) string {
-	if strings.Contains(h, ":") {
-		return h
-	}
-	return fmt.Sprintf("%s:%d", h, consts.DEFAULT_TCP_PORT)
 }

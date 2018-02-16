@@ -41,7 +41,7 @@ func Route(route *hr.Router) {
 		if len(pars) > 0 {
 			pars = `,` + pars
 		}
-		methodRoute(route, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, authWallet, handle)
+		methodRoute(route, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, authWallet, blockchainUpdatingState, handle)
 	}
 	postTx := func(url string, params string, preHandle, handle apiHandle) {
 		anyTx(`POST`, url, params, preHandle, handle)

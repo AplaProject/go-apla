@@ -238,7 +238,7 @@ func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Wr
 		go func(h string) {
 			sendDRequest(h, reqType, buf, respHand, logger)
 			wg.Done()
-		}(getHostPort(host))
+		}(utils.GetHostPort(host))
 	}
 	wg.Wait()
 

@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/api"
-	"github.com/GenesisKernel/go-genesis/packages/autoupdate"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -39,6 +38,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -237,7 +237,7 @@ func Start() {
 	}
 	conf.SetConfigParams()
 
-	autoupdate.InitUpdater(conf.Config.Autoupdate.ServerAddress, conf.Config.Autoupdate.PublicKeyPath)
+	service.InitUpdater(conf.Config.Autoupdate.ServerAddress, conf.Config.Autoupdate.PublicKeyPath)
 
 	// process directives
 	if *conf.GenerateFirstBlock {
@@ -278,7 +278,7 @@ func Start() {
 		}
 		initGorm(conf.Config.DB)
 
-		err = autoupdate.Run()
+		err = service.Run()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err}).Error("run autoupdate")
 		}
@@ -335,6 +335,14 @@ func Start() {
 		if err != nil {
 			os.Exit(1)
 		}
+		go func() {
+			na := service.NodeActualizer{AvailableBlockchainGap: 5}
+			startCh := na.Run()
+
+			for s := range startCh {
+				daemonsctl.RunSpecificDaemons(s)
+			}
+		}()
 	}
 
 	daemons.WaitForSignals()

@@ -8,8 +8,26 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
+	"strings"
+
 	log "github.com/sirupsen/logrus"
 )
+
+var serverList = []string{
+	"BlocksCollection",
+	"BlockGenerator",
+	"QueueParserTx",
+	"QueueParserBlocks",
+	"Disseminator",
+	"Confirmations",
+	"Notificator",
+	"Scheduler",
+}
+
+var rollbackList = []string{
+	"BlocksCollection",
+	"Confirmations",
+}
 
 // RunAllDaemons start daemons, load contracts and tcpserver
 func RunAllDaemons() error {
@@ -26,7 +44,18 @@ func RunAllDaemons() error {
 	}
 
 	log.Info("start daemons")
-	daemons.StartDaemons()
+
+	if conf.Config.StartDaemons != "null" {
+		daemonsToStart := serverList
+		if len(conf.Config.StartDaemons) > 0 {
+			daemonsToStartParam := strings.Split(conf.Config.StartDaemons, ",")
+			daemonsToStart = daemonsToStartParam
+		} else if *conf.TestRollBack {
+			daemonsToStart = rollbackList
+		}
+
+		daemons.StartDaemons(daemonsToStart)
+	}
 
 	err = tcpserver.TcpListener(conf.Config.TCPServer.Str())
 	if err != nil {
@@ -35,4 +64,8 @@ func RunAllDaemons() error {
 	}
 
 	return nil
+}
+
+func RunSpecificDaemons(daemonsToStart []string) {
+	daemons.StartDaemons(daemonsToStart)
 }
