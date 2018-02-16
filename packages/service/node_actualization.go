@@ -57,7 +57,7 @@ func (n *NodeActualizer) Run() <-chan []string {
 				}
 			}
 
-			time.Sleep(time.Second * 10)
+			time.Sleep(time.Minute * 5)
 		}
 	}()
 
@@ -91,7 +91,7 @@ func (n *NodeActualizer) checkBlockchainActuality() (bool, error) {
 
 	// Node did not accept any blocks for an hour
 	t := time.Unix(foreignBlock.Time, 0)
-	if time.Since(t).Hours() >= 1 && len(remoteHosts) > 1 {
+	if time.Since(t).Minutes() > 30 && len(remoteHosts) > 1 {
 		return false, nil
 	}
 
