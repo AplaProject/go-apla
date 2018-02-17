@@ -21,6 +21,7 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 ## Contents
 
 - [Why is Genesis Unique?](#why-is-genesis-unique)
+- [Tokens](#tokens)
 - [How Genesis Works](#how-genesis-works)
 - [Quick Start](#quick-start)
 - [Plans](#plans)
@@ -30,13 +31,14 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 - [Developers](#developers)
 - [License](#license)
 
-
 ## Why is Genesis Unique?
  - In Genesis you can create your own blockchain ecosystem with customized rules. In essence, you can create your own "Ethereum", which can easily interact and communicate with your neighbor's "Ethereum" (another ecosystem on Genesis).
  - Developing applications on the Genesis platform is easy and fun. Mastering the platform's programming languages – Simvolio and Protypo - will take you around just four hours.
  - You'll be able to immediately upload your newly developed applications on Simvolio and Protypo directly to your mobile device running IOS or Android. You can do this using our application, which is soon to be available from App Store and Google Play. Or you can upload your version after making some changes to our source codes.
  - All of the platform's parameters (even the consensus algorithm!) are fully customizable, and can be changed by community voting or by any other algorithms.
 
+## Tokens
+https://gist.github.com/c-darwin/a9a96a4eaae16c0d410f34e434594132
 
 ## How Genesis Works
 Develop your applications using [Simvolio](http://genesiskernel.readthedocs.io/en/latest/introduction/script.html#simvolio-contracts-language). Simvolio is a С-like programming language used for creating contracts and which is compiled to byte code. It has a minimum required number of program control commands and predefined functions.
