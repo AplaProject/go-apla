@@ -23,6 +23,7 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 
 ## Contents
 
+- [Tokens](#tokens)
 - [Introduction](#introduction)
 - [Why is Genesis Unique?](#why-is-genesis-unique)
 - [Get Your Tokens, GitHub User!](#get-your-tokens-github-user)
@@ -35,6 +36,9 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 - [Versioning](#versioning)
 - [Developers](#developers)
 - [License](#license)
+
+## Tokens
+https://gist.github.com/c-darwin/a9a96a4eaae16c0d410f34e434594132
 
 ## Introduction
 Genesis is an open-source blockchain platform, the basis of which was laid in 2011 by programmer Oleg Strelenko. The platform's code was written completely from the ground up. Currently, there is a team of over 15 top-tier software developers working on the project. We can't run an ICO for the concept of Genesis the way that we like, that's why we decided to give away 85% of all tokens to a maximum number of programmers, so that with the help of the community Genesis becomes the best blockchain platform in the world.
