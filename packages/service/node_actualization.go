@@ -15,24 +15,35 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
 
+// DefaultBlockchainGap is default value for the number of lagging blocks
+const DefaultBlockchainGap int64 = 10
+
 // NodePaused is global flag represents that node is not generate blocks, only collect it
 var NodePaused = abool.New()
 
 type NodeActualizer struct {
-	AvailableBlockchainGap int64
+	availableBlockchainGap int64
 
-	// is local state of node
+	serverDaemonsList  []string
+	notAffectedDaemons []string
+
 	activityPaused bool
-
 	startDaemonsCh chan []string
+}
+
+func NewNodeActualizer(availableBlockchainGap int64, allDaemons, notAffectedDaemons []string) NodeActualizer {
+	return NodeActualizer{
+		availableBlockchainGap: availableBlockchainGap,
+		serverDaemonsList:      allDaemons,
+		notAffectedDaemons:     notAffectedDaemons,
+	}
 }
 
 // Run is starting node monitoring
 func (n *NodeActualizer) Run() <-chan []string {
-	// Waiting until daemons started
-	time.Sleep(time.Second * 5)
 	n.startDaemonsCh = make(chan []string)
 	go func() {
+		log.Info("Node Actualizer monitoring starting")
 		defer close(n.startDaemonsCh)
 		for {
 			actual, err := n.checkBlockchainActuality()
@@ -42,6 +53,8 @@ func (n *NodeActualizer) Run() <-chan []string {
 			}
 
 			if !actual && !n.activityPaused {
+				log.Info("Node Actualizer is pausing node activity")
+
 				err := n.pauseNodeActivity()
 				if err != nil {
 					log.WithFields(log.Fields{"type": consts.BCActualizationError, "err": err}).Error("pausing blockchain activity")
@@ -50,6 +63,8 @@ func (n *NodeActualizer) Run() <-chan []string {
 			}
 
 			if actual && n.activityPaused {
+				log.Info("Node Actualizer is resuming node activity")
+
 				err := n.resumeNodeActivity()
 				if err != nil {
 					log.WithFields(log.Fields{"type": consts.BCActualizationError, "err": err}).Error("resuming blockchain activity")
@@ -57,7 +72,7 @@ func (n *NodeActualizer) Run() <-chan []string {
 				}
 			}
 
-			time.Sleep(time.Minute * 5)
+			time.Sleep(time.Second * 5)
 		}
 	}()
 
@@ -79,7 +94,7 @@ func (n *NodeActualizer) checkBlockchainActuality() (bool, error) {
 	}
 
 	// Currently this node is downloading blockchain
-	if curBlock.BlockID == 0 || curBlock.BlockID+n.AvailableBlockchainGap < maxBlockID {
+	if curBlock.BlockID == 0 || curBlock.BlockID+n.availableBlockchainGap < maxBlockID {
 		return false, nil
 	}
 
@@ -105,14 +120,16 @@ func (n *NodeActualizer) pauseNodeActivity() error {
 	}
 	utils.DaemonsCount = 0
 
+	n.startDaemonsCh <- n.notAffectedDaemons
 	n.activityPaused = true
 	NodePaused.Set()
+
 	return nil
 }
 
 func (n *NodeActualizer) resumeNodeActivity() error {
+	n.startDaemonsCh <- n.serverDaemonsList
 	n.activityPaused = false
 	NodePaused.UnSet()
-	n.startDaemonsCh <- []string{"BlocksCollection", "Confirmations", "Notificator", "Scheduler"}
 	return nil
 }

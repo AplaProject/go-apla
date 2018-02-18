@@ -69,3 +69,7 @@ func RunAllDaemons() error {
 func RunSpecificDaemons(daemonsToStart []string) {
 	daemons.StartDaemons(daemonsToStart)
 }
+
+func GetServerDaemonsList() []string {
+	return serverList
+}

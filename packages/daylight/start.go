@@ -336,7 +336,12 @@ func Start() {
 			os.Exit(1)
 		}
 		go func() {
-			na := service.NodeActualizer{AvailableBlockchainGap: 5}
+			// Waiting until daemons started
+			time.Sleep(time.Second * 20)
+			na := service.NewNodeActualizer(service.DefaultBlockchainGap,
+				daemonsctl.GetServerDaemonsList(),
+				[]string{"BlocksCollection", "Confirmations", "Notificator", "Scheduler"},
+			)
 			startCh := na.Run()
 
 			for s := range startCh {
