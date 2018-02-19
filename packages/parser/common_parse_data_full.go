@@ -108,7 +108,7 @@ func (b *Block) PlayBlockSafe() error {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
 			return err
 		}
-
+		b.BinData = nbb
 		b.Parsers = nb.Parsers
 		b.MrklRoot = nb.MrklRoot
 		b.SysUpdate = nb.SysUpdate
