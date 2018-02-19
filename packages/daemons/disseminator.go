@@ -29,6 +29,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -43,7 +44,9 @@ const (
 // if we are full node(miner): sends blocks and transactions hashes
 // else send the full transactions
 func Disseminator(ctx context.Context, d *daemon) error {
-
+	if service.NodePaused.IsSet() {
+		return nil
+	}
 	isFullNode := true
 	myNodePosition, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
 	if err != nil {
@@ -238,7 +241,7 @@ func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Wr
 		go func(h string) {
 			sendDRequest(h, reqType, buf, respHand, logger)
 			wg.Done()
-		}(getHostPort(host))
+		}(utils.GetHostPort(host))
 	}
 	wg.Wait()
 

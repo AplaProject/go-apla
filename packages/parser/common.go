@@ -25,7 +25,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/autoupdate"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -35,6 +34,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -307,7 +307,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		return err
 	}
 
-	err = autoupdate.TryUpdate(uint64(blockID))
+	err = service.TryUpdate(uint64(blockID))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err, "blockID": blockID}).Fatal("update for blockID")
 		return err
@@ -502,7 +502,6 @@ func (p *Parser) CallContract(flags int) (resultContract string, err error) {
 		DbTransaction: p.DbTransaction,
 	}
 	resultContract, err = sc.CallContract(flags)
-	p.TxFuel = sc.TxFuel
 	p.SysUpdate = sc.SysUpdate
 	return
 }

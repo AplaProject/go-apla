@@ -22,14 +22,16 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/vmihailenco/msgpack.v2"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
-
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type contractResult struct {
@@ -159,5 +161,12 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	data.result = &contractResult{Hash: hex.EncodeToString(hash)}
+	return nil
+}
+
+func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	if service.NodePaused.IsSet() {
+		return errorAPI(w, errors.New("Node is updating blockchain"), http.StatusServiceUnavailable)
+	}
 	return nil
 }

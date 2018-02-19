@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -36,6 +37,9 @@ import (
 // BlockGenerator is daemon that generates blocks
 func BlockGenerator(ctx context.Context, d *daemon) error {
 	d.sleepTime = time.Second
+	if service.NodePaused.IsSet() {
+		return nil
+	}
 
 	_, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
 	if err != nil {
