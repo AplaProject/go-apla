@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -274,10 +275,20 @@ func TestMoneyTransfer10(t *testing.T) {
 		return
 	}
 
-	for i := 0; i < 10; i++ {
-		form := url.Values{`Amount`: {strconv.FormatInt(int64(i+1), 10)}, `Recipient`: {`0005-2070-2000-0006-0200`}}
-		if err := postTx(`MoneyTransfer`, &form); err != nil {
-			fmt.Println(err)
+	var wg sync.WaitGroup
+	for i := 0; i < 30; i++ {
+		wg.Add(4)
+		for j := 0; j < 4; j++ {
+			go func(counter int) {
+				defer wg.Done()
+
+				form := url.Values{`Amount`: {strconv.FormatInt(int64(i+1), 10)}, `Recipient`: {`1028-0432-0934-8475-1098`}} //-8166311980224800518
+				if err := postTx(`MoneyTransfer`, &form); err != nil {
+					fmt.Println(err)
+				}
+			}(j)
 		}
+
+		wg.Wait()
 	}
 }
