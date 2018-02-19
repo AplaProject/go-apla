@@ -690,7 +690,7 @@ func JSONToMap(input string) (map[string]interface{}, error) {
 	return ret, nil
 }
 
-func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) (map[string]interface{}, error) {
+func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
 	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get values of metric")

@@ -54,7 +54,7 @@ func GetEcosystemTxPerDay() ([]*EcosystemTx, error) {
 }
 
 // GetMetricValues returns aggregated metric values in the time interval
-func GetMetricValues(metric, timeInterval, aggregateFunc string) (map[string]interface{}, error) {
+func GetMetricValues(metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
 	rows, err := DBConn.Table(tableNameMetrics).Select("key,"+aggregateFunc+"(value)").
 		Where("metric = ? AND time >= EXTRACT(EPOCH FROM NOW() - CAST(? AS INTERVAL))", metric, timeInterval).
 		Group("key").Rows()
@@ -63,16 +63,19 @@ func GetMetricValues(metric, timeInterval, aggregateFunc string) (map[string]int
 	}
 
 	var (
-		result = make(map[string]interface{})
+		result = []interface{}{}
 		key    string
-		value  interface{}
+		value  string
 	)
 	for rows.Next() {
 		if err := rows.Scan(&key, &value); err != nil {
 			return nil, err
 		}
 
-		result[key] = value
+		result = append(result, map[string]string{
+			"key":   key,
+			"value": value,
+		})
 	}
 
 	return result, nil
