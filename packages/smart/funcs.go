@@ -100,6 +100,8 @@ var (
 		"Eval":               10,
 		"EvalCondition":      20,
 		"FlushContract":      50,
+		"GetContractByName":  20,
+		"GetContractById":    20,
 		"HMac":               50,
 		"Join":               10,
 		"JSONToMap":          50,
@@ -160,6 +162,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"EvalCondition":      EvalCondition,
 		"Float":              Float,
 		"FlushContract":      FlushContract,
+		"GetContractByName":  GetContractByName,
+		"GetContractById":    GetContractById,
 		"HMac":               HMac,
 		"Join":               Join,
 		"JSONToMap":          JSONToMap,
@@ -223,9 +227,9 @@ func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
 		if sc.VDE {
 			prefix += `_vde`
 		}
-		tblname = fmt.Sprintf(`%s_%s`, prefix, strings.ToLower(tblname))
+		tblname = fmt.Sprintf(`%s_%s`, prefix, tblname)
 	}
-	return tblname
+	return strings.ToLower(tblname)
 }
 
 func getDefTableName(sc *SmartContract, tblname string) string {

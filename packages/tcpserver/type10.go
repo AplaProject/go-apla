@@ -17,8 +17,6 @@
 package tcpserver
 
 import (
-	"errors"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -36,8 +34,7 @@ func Type10() (*MaxBlockResponse, error) {
 		return nil, utils.ErrInfo(err)
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("cant found info block")
-		return nil, errors.New("can't found info block")
+		log.WithFields(log.Fields{"type": consts.NotFound}).Debug("Can't found info block")
 	}
 
 	return &MaxBlockResponse{
