@@ -649,7 +649,10 @@ var (
 	SchemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"pub" bytea  NOT NULL DEFAULT '',
-		"amount" decimal(30) NOT NULL DEFAULT '0'
+		"amount" decimal(30) NOT NULL DEFAULT '0',
+		"multi" int NOT NULL DEFAULT '0',
+		"delete" int NOT NULL DEFAULT '0',
+		"block" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
 		
@@ -819,7 +822,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		('11','money_digit', '2', 'ContractConditions("MainCondition")'),
 		('12','stylesheet', 'body {
 		  /* You can define your custom styles here or create custom CSS rules */
-		}', 'ContractConditions("MainCondition")');
+		}', 'ContractConditions("MainCondition")'),
+		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")');
 		
 		DROP TABLE IF EXISTS "%[1]d_tables";
 		CREATE TABLE "%[1]d_tables" (

@@ -388,7 +388,7 @@ func ConditionById(table string, validate bool) {
    var row map
    row = DBRow(table).Columns("conditions").WhereId($Id)
    if !row["conditions"] {
-	   error Sprintf("Item %%d has not been found", $Id)
+	   error Sprintf("Item %d has not been found", $Id)
    }
 
    Eval(row["conditions"])
@@ -477,7 +477,8 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`node_position`: head.NodePosition,
 		`block`:         block, `key_id`: keyID, `block_key_id`: blockKeyID,
 		`parent`: ``, `txcost`: sc.GetContractLimit(), `txhash`: sc.TxHash, `result`: ``,
-		`sc`: sc, `contract`: sc.TxContract, `block_time`: blockTime}
+		`sc`: sc, `contract`: sc.TxContract, `block_time`: blockTime,
+		`original_contract`: ``, `this_contract`: ``}
 	for key, val := range sc.TxData {
 		extend[key] = val
 	}
@@ -718,7 +719,7 @@ func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
 		blockTime = sc.BlockData.Time
 	}
 	return VMEvalIf(sc.VM, conditions, uint32(sc.TxSmart.EcosystemID), &map[string]interface{}{`ecosystem_id`: sc.TxSmart.EcosystemID,
-		`key_id`: sc.TxSmart.KeyID, `sc`: sc,
+		`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``,
 		`block_time`: blockTime, `time`: time})
 }
 
@@ -902,6 +903,10 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	// Payment for the size
 	(*sc.TxContract.Extend)[`txcost`] = (*sc.TxContract.Extend)[`txcost`].(int64) - sizeFuel
 
+	_, nameContract := script.ParseContract(sc.TxContract.Name)
+	(*sc.TxContract.Extend)[`original_contract`] = nameContract
+	(*sc.TxContract.Extend)[`this_contract`] = nameContract
+
 	sc.TxContract.FreeRequest = false
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {
@@ -917,6 +922,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			}
 		}
 	}
+	sc.TxFuel = before - (*sc.TxContract.Extend)[`txcost`].(int64) - price
 	sc.TxUsedCost = decimal.New(before-(*sc.TxContract.Extend)[`txcost`].(int64), 0)
 	sc.TxContract.TxPrice = price
 	if (*sc.TxContract.Extend)[`result`] != nil {

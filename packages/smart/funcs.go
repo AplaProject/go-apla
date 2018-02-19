@@ -72,6 +72,7 @@ type SmartContract struct {
 	TxSmart       tx.SmartContract
 	TxData        map[string]interface{}
 	TxContract    *Contract
+	TxFuel        int64           // The fuel of executing contract
 	TxCost        int64           // Maximum cost of executing contract
 	TxUsedCost    decimal.Decimal // Used cost of CPU resources
 	BlockData     *utils.BlockData
@@ -229,9 +230,9 @@ func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
 		if sc.VDE {
 			prefix += `_vde`
 		}
-		tblname = fmt.Sprintf(`%s_%s`, prefix, strings.ToLower(tblname))
+		tblname = fmt.Sprintf(`%s_%s`, prefix, tblname)
 	}
-	return tblname
+	return strings.ToLower(tblname)
 }
 
 func getDefTableName(sc *SmartContract, tblname string) string {
@@ -299,7 +300,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
 			}
 			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
-				`key_id`: sc.TxSmart.KeyID, `sc`: sc})
+				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``})
 			if err != nil {
 				return false, err
 			}
@@ -563,7 +564,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	if sc.VDE && perm != nil && len(perm[`filter`]) > 0 {
 		fltResult, err := VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
 			&map[string]interface{}{
-				`data`:         result,
+				`data`: result, `original_contract`: ``, `this_contract`: ``,
 				`ecosystem_id`: sc.TxSmart.EcosystemID,
 				`key_id`:       sc.TxSmart.KeyID, `sc`: sc,
 				`block_time`: 0, `time`: sc.TxSmart.Time})

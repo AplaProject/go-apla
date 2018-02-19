@@ -176,7 +176,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 						break check
 					}
 					key := converter.StrToInt64(item[1])
-					if key == 0 || len(item[2]) != 128 || !converter.ValidateIPv4(item[0]) {
+					if key == 0 || len(item[2]) != 128 || len(item[0]) == 0 {
 						break check
 					}
 				}
@@ -255,9 +255,9 @@ func SysFuel(state int64) string {
 	return syspar.GetFuelRate(state)
 }
 
-// Int converts a string to a number
-func Int(val string) int64 {
-	return converter.StrToInt64(val)
+// Int converts the value to a number
+func Int(v interface{}) int64 {
+	return converter.ValueToInt(v)
 }
 
 // Str converts the value to a string
@@ -526,6 +526,7 @@ func RollbackTable(sc *SmartContract, name string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from @1NewTable")
 		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
 	}
+	name = strings.ToLower(name)
 	tableName := getDefTableName(sc, name)
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, tableName)
@@ -544,7 +545,7 @@ func RollbackTable(sc *SmartContract, name string) error {
 		return err
 	}
 
-	err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%d_%s", sc.TxSmart.EcosystemID, name))
+	err = model.DropTable(sc.DbTransaction, tableName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
 		return err
@@ -574,6 +575,7 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`RollbackColumn can be only called from @1NewColumn`)
 	}
+	name = strings.ToLower(name)
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.EcosystemID))
 	if err != nil {
@@ -585,7 +587,7 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 		// if there is not such hash then NewColumn was faulty. Do nothing.
 		return nil
 	}
-	return model.AlterTableDropColumn(fmt.Sprintf(`%d_%s`, sc.TxSmart.EcosystemID, tableName), name)
+	return model.AlterTableDropColumn(getDefTableName(sc, tableName), name)
 }
 
 // UpdateLang updates language resource

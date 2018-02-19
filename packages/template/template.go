@@ -225,7 +225,10 @@ func ifValue(val string, workspace *Workspace) bool {
 	cond := []string{val}
 	if len(sep) > 0 {
 		cond = strings.SplitN(val, sep, 2)
-		cond[0], cond[1] = strings.Trim(cond[0], `"`), strings.Trim(cond[1], `"`)
+		cond[0], cond[1] = macro(strings.Trim(cond[0], `"`), workspace.Vars),
+			macro(strings.Trim(cond[1], `"`), workspace.Vars)
+	} else {
+		val = macro(val, workspace.Vars)
 	}
 	switch sep {
 	case ``:
@@ -338,15 +341,15 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 			val := strings.TrimSpace(string(v))
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
-				pars[val[:off]] = macro(strings.Trim(val[off+1:], "\t\r\n \"`"), workspace.Vars)
+				pars[val[:off]] = strings.Trim(val[off+1:], "\t\r\n \"`")
 			} else {
-				pars[strconv.Itoa(i)] = macro(val, workspace.Vars)
+				pars[strconv.Itoa(i)] = val
 			}
 		}
 	} else {
 		for i, v := range strings.Split(curFunc.Params, `,`) {
 			if i < len(*params) {
-				val := macro(strings.TrimSpace(string((*params)[i])), workspace.Vars)
+				val := strings.TrimSpace(string((*params)[i]))
 				off := strings.IndexByte(val, ':')
 				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
 					cut := "\t\r\n \"`"
@@ -380,7 +383,9 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		curNode.Tag = curFunc.Tag
 		curNode.Attr = make(map[string]interface{})
 		if len(pars[`Body`]) > 0 && curFunc.Tag != `custom` {
-			process(pars[`Body`], &curNode, workspace)
+			if curFunc.Tag != `if` {
+				process(pars[`Body`], &curNode, workspace)
+			}
 		}
 		parFunc.Owner = owner
 		parFunc.Node = &curNode
@@ -394,6 +399,16 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		out = curFunc.Full(parFunc)
 	} else {
 		out = curFunc.Func(parFunc)
+	}
+	for key, v := range parFunc.Node.Attr {
+		switch v.(type) {
+		case string:
+			parFunc.Node.Attr[key] = macro(v.(string), workspace.Vars)
+		}
+	}
+	parFunc.Node.Text = macro(parFunc.Node.Text, workspace.Vars)
+	for inode, node := range parFunc.Node.Children {
+		parFunc.Node.Children[inode].Text = macro(node.Text, workspace.Vars)
 	}
 	if len(out) > 0 {
 		if len(owner.Children) > 0 && owner.Children[len(owner.Children)-1].Tag == tagText {
@@ -607,7 +622,6 @@ func process(input string, owner *node, workspace *Workspace) {
 func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte {
 	root := node{}
 	isvde := (*vars)[`vde`] == `true` || (*vars)[`vde`] == `1`
-
 	sc := smart.SmartContract{
 		VDE: isvde,
 		VM:  smart.GetVM(isvde, converter.StrToInt64((*vars)[`ecosystem_id`])),

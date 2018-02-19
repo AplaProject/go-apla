@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	sqlite "github.com/mattn/go-sqlite3"
 
 	"io/ioutil"
 
