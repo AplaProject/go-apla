@@ -28,7 +28,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -461,7 +460,7 @@ func dbfindTag(par parFunc) string {
 	}
 	sc := par.Workspace.SmartContract
 	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
-	if sc.VDE && *conf.IsVDEMode {
+	if sc.VDE {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
 		cols := strings.Split(fields, `,`)
 		if err != nil || sc.AccessColumns(tblname, &cols, false) != nil {
