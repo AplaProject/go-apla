@@ -164,6 +164,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"EvalCondition":      EvalCondition,
 		"Float":              Float,
 		"FlushContract":      FlushContract,
+		"GetContractByName":  GetContractByName,
+		"GetContractById":    GetContractById,
 		"HMac":               HMac,
 		"Join":               Join,
 		"JSONToMap":          JSONToMap,
