@@ -595,7 +595,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		msg, err := playTransaction(p)
 		if err != nil {
 			// skip this transaction
-			_, err2 := model.MarkTransactionUsed(p.DbTransaction, p.TxHash)
+			_, err2 := model.MarkTransactionUsed(nil, p.TxHash)
 			if err2 != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err2}).Error("marking used transactions")
 				return err2
