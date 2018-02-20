@@ -388,7 +388,7 @@ func ConditionById(table string, validate bool) {
    var row map
    row = DBRow(table).Columns("conditions").WhereId($Id)
    if !row["conditions"] {
-	   error Sprintf("Item %%d has not been found", $Id)
+	   error Sprintf("Item %d has not been found", $Id)
    }
 
    Eval(row["conditions"])
