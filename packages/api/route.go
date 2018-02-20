@@ -53,7 +53,6 @@ func Route(route *hr.Router) {
 
 	get(`contract/:name`, ``, authWallet, getContract)
 	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
-	get(`ecosystems`, ``, authWallet, ecosystems)
 	get(`getuid`, ``, getUID)
 	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
 	get(`row/:name/:id`, `?columns:string`, authWallet, row)
@@ -83,6 +82,7 @@ func Route(route *hr.Router) {
 		get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
 		get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
 		get(`systemparams`, `?names:string`, authWallet, systemParams)
+		get(`ecosystems`, ``, authWallet, ecosystems)
 	}
 
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
