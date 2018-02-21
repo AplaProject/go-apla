@@ -98,17 +98,17 @@ func (b *Block) PlayBlockSafe() error {
 			return err
 		}
 
-		nbb, err := MarshallBlock(&b.Header, trData, b.PrevHeader.Hash, NodePrivateKey)
+		newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader.Hash, NodePrivateKey)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marshalling new block")
 			return err
 		}
-		nb, err := parseBlock(bytes.NewBuffer(nbb))
+		nb, err := parseBlock(bytes.NewBuffer(newBlockData))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
 			return err
 		}
-		b.BinData = nbb
+		b.BinData = newBlockData
 		b.Parsers = nb.Parsers
 		b.MrklRoot = nb.MrklRoot
 		b.SysUpdate = nb.SysUpdate
