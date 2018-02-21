@@ -18,7 +18,6 @@ package template
 
 import (
 	"encoding/json"
-	"html"
 	"regexp"
 	"strconv"
 	"strings"
@@ -278,7 +277,7 @@ func appendText(owner *node, text string) {
 		return
 	}
 	if len(text) > 0 {
-		owner.Children = append(owner.Children, &node{Tag: tagText, Text: html.EscapeString(text)})
+		owner.Children = append(owner.Children, &node{Tag: tagText, Text: text})
 	}
 }
 
