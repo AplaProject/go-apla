@@ -856,9 +856,45 @@ If("#key_id#" == EcosysParam("founder_account")){
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
 
 
-		INSERT INTO "%[1]d_pages" ("id","name","value","menu","conditions") VALUES('2','admin_index','','admin_menu','true');
-
-
+		INSERT INTO "%[1]d_pages" ("id","name","value","menu","conditions") VALUES
+			('2','admin_index','','admin_menu','true'),
+			('3','notifications','DBFind(Name: notifications, Source: noti_s).Where("closed=0 and notification_type=1 and recipient_id=#key_id#")
+				DBFind(Name: notifications, Source: noti_r).Where("closed=0 and notification_type=2 and (started_processing_id=0 or started_processing_id=#key_id#)")
+				
+				ForList(noti_s){
+						Div(Class: list-group-item){
+							LinkPage(Page: #page_name#, PageParams: "notific_id=#id#,notific_type=#notification_type#,notific_header=#header_text#,#page_params#"){        
+								Div(media-box){
+									Div(Class: pull-left){
+										Em(Class: fa #icon# fa-1x text-info)
+									} 
+									Div(media-box-body clearfix){ 
+										Div(Class: m0 text-normal, Body: #header_text#) 
+										Div(Class: m0 text-muted h6, Body: #body_text#)
+									}
+								}
+							}
+						}
+				}
+				
+				ForList(noti_r){
+					DBFind(Name: roles_assign, Source: src_roles).Where("member_id=#key_id# and role_id=#role_id# and delete=0").Vars(prefix)
+					If(#prefix_id# > 0){
+						Div(Class: list-group-item){
+							LinkPage(Page: #page_name#, PageParams: "notific_id=#id#,notific_type=#notification_type#,notific_header=#header_text#,#page_params#"){        
+								Div(media-box){
+									Div(Class: pull-left){
+										Em(Class: fa #icon# fa-1x text-primary)
+									} 
+									Div(media-box-body clearfix){ 
+										Div(Class: m0 text-normal, Body: #header_text#) 
+										Div(Class: m0 text-muted h6, Body: #body_text#)
+									}
+								}
+							}
+						}
+					}
+				}','default_menu','ContractAccess("@1EditPage")');
 
 		DROP TABLE IF EXISTS "%[1]d_blocks"; CREATE TABLE "%[1]d_blocks" (
 			"id" bigint  NOT NULL DEFAULT '0',
