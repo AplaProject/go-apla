@@ -124,3 +124,9 @@ const TLSFullchainPem = "/fullchain.pem"
 
 // TLSPrivkeyPem privkey pem file
 const TLSPrivkeyPem = "/privkey.pem"
+
+// FromToPerDayLimit day limit token transfer between accounts
+const FromToPerDayLimit = 10000
+
+// TokenMovementQtyPerBlockLimit block limit token transfer
+const TokenMovementQtyPerBlockLimit = 100
