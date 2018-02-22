@@ -700,19 +700,38 @@ func (b *Block) CheckBlock() error {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("block id is larger then previous more than on 1")
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", b.Header.BlockID, b.PrevHeader.BlockID))
 		}
-		// check time interval between blocks
-		sleepTime, err := syspar.GetSleepTimeByPosition(b.Header.NodePosition, b.PrevHeader.NodePosition)
+
+		firstBlock := model.Block{}
+		found, err := firstBlock.Get(1)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting sleep time")
-			return utils.ErrInfo(err)
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
+			return err
 		}
 
-		errTime := syspar.GetGapsBetweenBlocks() - 1
-		if errTime < 0 {
-			errTime = 0
+		if !found {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
+			return err
 		}
-		if b.PrevHeader.Time+sleepTime-b.Header.Time > errTime {
-			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", b.PrevHeader.Time, sleepTime, b.Header.Time, errTime))
+
+		blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
+		blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
+
+		blockTimeCalculator := utils.NewBlockTimeCalculator(&utils.ClockWrapper{},
+			time.Unix(firstBlock.Time, 0),
+			blockGenerationDuration,
+			blocksGapDuration,
+			syspar.GetNumberOfNodes(),
+		)
+
+		validBlock, err := blockTimeCalculator.ValidateBlock(b.Header.NodePosition, time.Unix(b.Header.Time, 0))
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
+			return err
+		}
+
+		if !validBlock {
+			logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("incorrect block time")
+			return utils.ErrInfo(fmt.Errorf("incorrect block time %d", b.PrevHeader.Time))
 		}
 	}
 

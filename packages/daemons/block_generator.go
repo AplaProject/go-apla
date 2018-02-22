@@ -25,7 +25,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -37,7 +36,7 @@ import (
 func BlockGenerator(ctx context.Context, d *daemon) error {
 	d.sleepTime = time.Second
 
-	_, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
+	nodePosition, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
 	if err != nil {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
@@ -49,10 +48,43 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	defer DBUnlock()
 
 	// wee need fresh myNodePosition after locking
-	myNodePosition, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
+	nodePosition, err = syspar.GetNodePositionByKeyID(conf.Config.KeyID)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node position by key id")
 		return err
+	}
+
+	firstBlock := model.Block{}
+	found, err := firstBlock.Get(1)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
+		return err
+	}
+
+	if !found {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
+		return err
+	}
+
+	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
+	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
+
+	blockTimeCalculator := utils.NewBlockTimeCalculator(&utils.ClockWrapper{},
+		time.Unix(firstBlock.Time, 0),
+		blockGenerationDuration,
+		blocksGapDuration,
+		syspar.GetNumberOfNodes(),
+	)
+
+	timeToGenerate, err := blockTimeCalculator.TimeToGenerate(nodePosition)
+	if err != nil {
+		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
+		return err
+	}
+
+	if !timeToGenerate {
+		d.logger.WithFields(log.Fields{"type": consts.JustWaiting}).Debug("not my generation time")
+		return nil
 	}
 
 	prevBlock := &model.InfoBlock{}
@@ -60,19 +92,6 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting previous block")
 		return err
-	}
-
-	// calculate the next block generation time
-	sleepTime, err := syspar.GetSleepTimeByKey(conf.Config.KeyID, converter.StrToInt64(prevBlock.NodePosition))
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting sleep time")
-		return err
-	}
-	toSleep := int64(sleepTime) - (time.Now().Unix() - int64(prevBlock.Time))
-	if toSleep > 0 {
-		d.logger.WithFields(log.Fields{"type": consts.JustWaiting, "seconds": toSleep}).Debug("sleeping n seconds")
-		d.sleepTime = time.Duration(toSleep) * time.Second
-		return nil
 	}
 
 	NodePrivateKey, _, err := utils.GetNodeKeys()
@@ -133,7 +152,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		txList,
 		NodePrivateKey,
 		time.Now().Unix(),
-		myNodePosition,
+		nodePosition,
 		conf.Config.EcosystemID,
 		conf.Config.KeyID,
 	)
