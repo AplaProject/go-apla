@@ -99,10 +99,11 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 
 				val = strings.TrimSpace(r.FormValue(fitem.Name))
 				if fitem.Type.String() == `[]interface {}` {
-					val = r.FormValue(fitem.Name + `[]`)
-					if val == `0` {
-						val = ``
+					count := r.FormValue(fitem.Name + `[]`)
+					if converter.StrToInt(count) > 0 || len(val) > 0 {
+						continue
 					}
+					val = ``
 				}
 				if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) &&
 					!strings.Contains(fitem.Tags, `signature`) {
