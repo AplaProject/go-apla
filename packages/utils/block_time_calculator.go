@@ -8,10 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Clock interface {
-	Now() time.Time
-}
-
+// BlockTimeCalculator calculating block generation time
 type BlockTimeCalculator struct {
 	clock Clock
 
@@ -31,13 +28,11 @@ type blockGenerationState struct {
 
 var TimeError = errors.New("current time before first block")
 
-func NewBlockTimeCalculator(clock Clock,
-	firstBlockTime time.Time,
+func NewBlockTimeCalculator(firstBlockTime time.Time,
 	blockGenerationTime, blocksGap time.Duration,
 	nodesCount int64,
 ) BlockTimeCalculator {
 	return BlockTimeCalculator{
-		clock:               clock,
 		firstBlockTime:      firstBlockTime,
 		blockGenerationTime: blockGenerationTime,
 		blocksGap:           blocksGap,
@@ -46,7 +41,7 @@ func NewBlockTimeCalculator(clock Clock,
 }
 
 func (btc *BlockTimeCalculator) TimeToGenerate(nodePosition int64) (bool, error) {
-	bgs, err := btc.countBlockTime(false, time.Time{})
+	bgs, err := btc.countBlockTime(btc.clock.Now())
 	if err != nil {
 		return false, err
 	}
@@ -55,7 +50,7 @@ func (btc *BlockTimeCalculator) TimeToGenerate(nodePosition int64) (bool, error)
 }
 
 func (btc *BlockTimeCalculator) ValidateBlock(nodePosition int64, at time.Time) (bool, error) {
-	bgs, err := btc.countBlockTime(true, at)
+	bgs, err := btc.countBlockTime(at)
 	if err != nil {
 		return false, err
 	}
@@ -63,17 +58,17 @@ func (btc *BlockTimeCalculator) ValidateBlock(nodePosition int64, at time.Time) 
 	return int64(bgs.nodePosition) == nodePosition, nil
 }
 
-func (btc *BlockTimeCalculator) countBlockTime(past bool, pastTime time.Time) (blockGenerationState, error) {
-	curTime := btc.clock.Now()
-	if past {
-		curTime = pastTime
-	}
+func (btc *BlockTimeCalculator) SetClock(clock Clock) *BlockTimeCalculator {
+	btc.clock = clock
+	return btc
+}
 
+func (btc *BlockTimeCalculator) countBlockTime(blockTime time.Time) (blockGenerationState, error) {
 	bgs := blockGenerationState{}
 	nextBlockStart := btc.firstBlockTime
 	curNodeIndex := 0
 
-	if curTime.Before(nextBlockStart) {
+	if blockTime.Before(nextBlockStart) {
 		return blockGenerationState{}, TimeError
 	}
 
@@ -82,7 +77,7 @@ func (btc *BlockTimeCalculator) countBlockTime(past bool, pastTime time.Time) (b
 		curBlockEnd := curBlockStart.Add(btc.blocksGap + btc.blockGenerationTime)
 		nextBlockStart = curBlockEnd.Add(time.Second)
 
-		if curTime.Equal(curBlockStart) || curTime.After(curBlockStart) && curTime.Before(nextBlockStart) {
+		if blockTime.Equal(curBlockStart) || blockTime.After(curBlockStart) && blockTime.Before(nextBlockStart) {
 			bgs.start = curBlockStart
 			bgs.duration = btc.blocksGap + btc.blockGenerationTime
 			bgs.nodePosition = curNodeIndex

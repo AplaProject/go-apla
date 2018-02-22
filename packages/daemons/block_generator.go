@@ -69,14 +69,13 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
 	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
 
-	blockTimeCalculator := utils.NewBlockTimeCalculator(&utils.ClockWrapper{},
-		time.Unix(firstBlock.Time, 0),
+	blockTimeCalculator := utils.NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
 		blockGenerationDuration,
 		blocksGapDuration,
 		syspar.GetNumberOfNodes(),
 	)
 
-	timeToGenerate, err := blockTimeCalculator.TimeToGenerate(nodePosition)
+	timeToGenerate, err := blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
 		return err
@@ -143,9 +142,9 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		txList = append(txList, &trs[i])
 	}
 	// Block generation will be started only if we have transactions
-	//if len(trs) == 0 {
-	//	return nil
-	//}
+	if len(trs) == 0 {
+		return nil
+	}
 
 	blockBin, err := generateNextBlock(
 		prevBlock,

@@ -716,8 +716,7 @@ func (b *Block) CheckBlock() error {
 		blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
 		blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
 
-		blockTimeCalculator := utils.NewBlockTimeCalculator(&utils.ClockWrapper{},
-			time.Unix(firstBlock.Time, 0),
+		blockTimeCalculator := utils.NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
 			blockGenerationDuration,
 			blocksGapDuration,
 			syspar.GetNumberOfNodes(),

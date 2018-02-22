@@ -64,14 +64,13 @@ func TestTimeToGenerate(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		btc := NewBlockTimeCalculator(c.clock,
-			c.firstBlockTime,
+		btc := NewBlockTimeCalculator(c.firstBlockTime,
 			c.blockGenTime,
 			c.blocksGap,
 			c.nodesCount,
 		)
 
-		execResult, execErr := btc.TimeToGenerate(c.nodePosition)
+		execResult, execErr := btc.SetClock(c.clock).TimeToGenerate(c.nodePosition)
 		require.Equal(t, c.err, execErr)
 		assert.Equal(t, c.result, execResult)
 	}
@@ -83,7 +82,7 @@ func TestCountBlockTime(t *testing.T) {
 		blockGenTime   time.Duration
 		blocksGap      time.Duration
 		nodesCount     int64
-		clock          Clock
+		clock          time.Time
 
 		result blockGenerationState
 		err    error
@@ -91,12 +90,7 @@ func TestCountBlockTime(t *testing.T) {
 		// Current time before first block case
 		{
 			firstBlockTime: time.Unix(1, 0),
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(0, 0))
-				return mc
-			}(),
+			clock:          time.Unix(0, 0),
 
 			err: TimeError,
 		},
@@ -107,12 +101,7 @@ func TestCountBlockTime(t *testing.T) {
 			blockGenTime:   time.Second * 0,
 			blocksGap:      time.Second * 0,
 			nodesCount:     5,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(0, 0))
-				return mc
-			}(),
+			clock:          time.Unix(0, 0),
 
 			result: blockGenerationState{
 				start:    time.Unix(0, 0),
@@ -128,12 +117,7 @@ func TestCountBlockTime(t *testing.T) {
 			blockGenTime:   time.Second * 1,
 			blocksGap:      time.Second * 0,
 			nodesCount:     5,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(0, 0))
-				return mc
-			}(),
+			clock:          time.Unix(0, 0),
 
 			result: blockGenerationState{
 				start:    time.Unix(0, 0),
@@ -149,12 +133,7 @@ func TestCountBlockTime(t *testing.T) {
 			blockGenTime:   time.Second * 0,
 			blocksGap:      time.Second * 1,
 			nodesCount:     5,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(0, 0))
-				return mc
-			}(),
+			clock:          time.Unix(0, 0),
 
 			result: blockGenerationState{
 				start:    time.Unix(0, 0),
@@ -170,12 +149,7 @@ func TestCountBlockTime(t *testing.T) {
 			blockGenTime:   time.Second * 4,
 			blocksGap:      time.Second * 6,
 			nodesCount:     5,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(0, 0))
-				return mc
-			}(),
+			clock:          time.Unix(0, 0),
 
 			result: blockGenerationState{
 				start:    time.Unix(0, 0),
@@ -191,12 +165,7 @@ func TestCountBlockTime(t *testing.T) {
 			blockGenTime:   time.Second * 1,
 			blocksGap:      time.Second * 1,
 			nodesCount:     10,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(0, 0))
-				return mc
-			}(),
+			clock:          time.Unix(0, 0),
 
 			result: blockGenerationState{
 				start:    time.Unix(0, 0),
@@ -212,12 +181,7 @@ func TestCountBlockTime(t *testing.T) {
 			blockGenTime:   time.Second * 2,
 			blocksGap:      time.Second * 3,
 			nodesCount:     10,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(5, 999999999))
-				return mc
-			}(),
+			clock:          time.Unix(5, 999999999),
 
 			result: blockGenerationState{
 				start:    time.Unix(0, 0),
@@ -233,12 +197,7 @@ func TestCountBlockTime(t *testing.T) {
 			blockGenTime:   time.Second * 0,
 			blocksGap:      time.Second * 1,
 			nodesCount:     3,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(6, 0))
-				return mc
-			}(),
+			clock:          time.Unix(6, 0),
 
 			result: blockGenerationState{
 				start:    time.Unix(6, 0),
@@ -254,12 +213,7 @@ func TestCountBlockTime(t *testing.T) {
 			blockGenTime:   time.Second * 2,
 			blocksGap:      time.Second * 2,
 			nodesCount:     1,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(6, 0))
-				return mc
-			}(),
+			clock:          time.Unix(6, 0),
 
 			result: blockGenerationState{
 				start:    time.Unix(5, 0),
@@ -275,12 +229,7 @@ func TestCountBlockTime(t *testing.T) {
 			blockGenTime:   time.Second * 2,
 			blocksGap:      time.Second * 3,
 			nodesCount:     3,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(13, 0))
-				return mc
-			}(),
+			clock:          time.Unix(13, 0),
 
 			result: blockGenerationState{
 				start:    time.Unix(13, 0),
@@ -296,12 +245,7 @@ func TestCountBlockTime(t *testing.T) {
 			blockGenTime:   time.Second * 2,
 			blocksGap:      time.Second * 3,
 			nodesCount:     3,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(16, 0))
-				return mc
-			}(),
+			clock:          time.Unix(16, 0),
 
 			result: blockGenerationState{
 				start:    time.Unix(13, 0),
@@ -317,12 +261,7 @@ func TestCountBlockTime(t *testing.T) {
 			blockGenTime:   time.Second * 4,
 			blocksGap:      time.Second * 5,
 			nodesCount:     101,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(1519241010, 1234))
-				return mc
-			}(),
+			clock:          time.Unix(1519241010, 1234),
 
 			result: blockGenerationState{
 				start:    time.Unix(1519241010, 0),
@@ -334,14 +273,13 @@ func TestCountBlockTime(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		btc := NewBlockTimeCalculator(c.clock,
-			c.firstBlockTime,
+		btc := NewBlockTimeCalculator(c.firstBlockTime,
 			c.blockGenTime,
 			c.blocksGap,
 			c.nodesCount,
 		)
 
-		execResult, execErr := btc.countBlockTime(false, time.Time{})
+		execResult, execErr := btc.countBlockTime(c.clock)
 		require.Equal(t, c.err, execErr)
 		assert.Equal(t, c.result, execResult)
 	}
