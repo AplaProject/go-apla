@@ -41,6 +41,7 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`QRcode(Some text)`, `[{"tag":"qrcode","attr":{"text":"Some text"}}]`},
 	{`Calculate( Exp: 342278783438/0, Type: money )Calculate( Exp: 5.2/0, Type: float )
 		Calculate( Exp: 7/0)`,
 		`[{"tag":"text","text":"dividing by zerodividing by zerodividing by zero"}]`},
