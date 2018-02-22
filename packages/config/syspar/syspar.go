@@ -49,6 +49,8 @@ const (
 	BlockchainURL = `blockchain_url`
 	// MaxBlockSize is the maximum size of the block
 	MaxBlockSize = `max_block_size`
+	// MaxBlockGenerationTime is the time limit for block generation (in ms)
+	MaxBlockGenerationTime = `max_block_generation_time`
 	// MaxTxSize is the maximum size of the transaction
 	MaxTxSize = `max_tx_size`
 	// MaxTxCount is the maximum count of the transactions
@@ -294,6 +296,11 @@ func GetCommissionWallet(ecosystem int64) string {
 // GetMaxBlockSize is returns max block size
 func GetMaxBlockSize() int64 {
 	return converter.StrToInt64(SysString(MaxBlockSize))
+}
+
+// GetMaxBlockGenerationTime is returns max block generation time (in ms)
+func GetMaxBlockGenerationTime() int64 {
+	return converter.StrToInt64(SysString(MaxBlockGenerationTime))
 }
 
 // GetMaxTxSize is returns max tx size
