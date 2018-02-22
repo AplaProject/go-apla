@@ -214,6 +214,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
+		f["GetBlock"] = GetBlock
 		ExtendCost(getCostP)
 		FuncCallsDB(funcCallsDBP)
 	}
@@ -1185,4 +1186,22 @@ func UpdateCron(sc *SmartContract, id int64) error {
 	}
 
 	return nil
+}
+
+func GetBlock(blockID int64) (map[string]int64, error) {
+	block := model.Block{}
+	ok, err := block.Get(blockID)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
+		return nil, err
+	}
+	if !ok {
+		return nil, nil
+	}
+
+	return map[string]int64{
+		"id":     block.ID,
+		"time":   block.Time,
+		"key_id": block.KeyID,
+	}, nil
 }

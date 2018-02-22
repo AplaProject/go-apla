@@ -444,3 +444,21 @@ func TestValidateConditions(t *testing.T) {
 		}
 	}
 }
+
+func TestDelayedContracts(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	form := url.Values{
+		"Contract":   {"MainCondition"},
+		"EveryBlock": {"5"},
+		"Conditions": {"true"},
+	}
+
+	if err := postTx("NewDelayedContract", &form); err != nil {
+		t.Error(err)
+		return
+	}
+}

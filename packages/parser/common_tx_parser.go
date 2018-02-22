@@ -74,6 +74,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		KeyID:    keyID,
 		Counter:  counter,
 		Verified: 1,
+		HighRate: tx.HighRate,
 	}
 	err = newTx.Create()
 	if err != nil {
