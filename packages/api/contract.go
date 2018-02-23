@@ -165,7 +165,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 }
 
 func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if service.NodePaused.IsSet() {
+	if service.IsNodePaused() {
 		return errorAPI(w, errors.New("Node is updating blockchain"), http.StatusServiceUnavailable)
 	}
 	return nil

@@ -37,7 +37,7 @@ import (
 // BlockGenerator is daemon that generates blocks
 func BlockGenerator(ctx context.Context, d *daemon) error {
 	d.sleepTime = time.Second
-	if service.NodePaused.IsSet() {
+	if service.IsNodePaused() {
 		return nil
 	}
 

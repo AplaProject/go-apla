@@ -18,13 +18,11 @@ import (
 // DefaultBlockchainGap is default value for the number of lagging blocks
 const DefaultBlockchainGap int64 = 10
 
-// NodePaused is global flag represents that node is not generate blocks, only collect it
-var NodePaused = abool.New()
+// nodePaused is global flag represents that node is not generate blocks, only collect it
+var nodePaused = abool.New()
 
 type NodeActualizer struct {
 	availableBlockchainGap int64
-
-	activityPaused bool
 }
 
 func NewNodeActualizer(availableBlockchainGap int64) NodeActualizer {
@@ -44,29 +42,23 @@ func (n *NodeActualizer) Run() {
 				return
 			}
 
-			if !actual && !n.activityPaused {
+			if !actual && !IsNodePaused() {
 				log.Info("Node Actualizer is pausing node activity")
-
-				err := n.pauseNodeActivity()
-				if err != nil {
-					log.WithFields(log.Fields{"type": consts.BCActualizationError, "err": err}).Error("pausing blockchain activity")
-					return
-				}
+				n.pauseNodeActivity()
 			}
 
-			if actual && n.activityPaused {
+			if actual && IsNodePaused() {
 				log.Info("Node Actualizer is resuming node activity")
-
-				err := n.resumeNodeActivity()
-				if err != nil {
-					log.WithFields(log.Fields{"type": consts.BCActualizationError, "err": err}).Error("resuming blockchain activity")
-					return
-				}
+				n.resumeNodeActivity()
 			}
 
 			time.Sleep(time.Minute * 5)
 		}
 	}()
+}
+
+func IsNodePaused() bool {
+	return nodePaused.IsSet()
 }
 
 func (n *NodeActualizer) checkBlockchainActuality() (bool, error) {
@@ -103,15 +95,10 @@ func (n *NodeActualizer) checkBlockchainActuality() (bool, error) {
 	return true, nil
 }
 
-func (n *NodeActualizer) pauseNodeActivity() error {
-	n.activityPaused = true
-	NodePaused.Set()
-
-	return nil
+func (n *NodeActualizer) pauseNodeActivity() {
+	nodePaused.Set()
 }
 
-func (n *NodeActualizer) resumeNodeActivity() error {
-	n.activityPaused = false
-	NodePaused.UnSet()
-	return nil
+func (n *NodeActualizer) resumeNodeActivity() {
+	nodePaused.UnSet()
 }

@@ -44,7 +44,7 @@ const (
 // if we are full node(miner): sends blocks and transactions hashes
 // else send the full transactions
 func Disseminator(ctx context.Context, d *daemon) error {
-	if service.NodePaused.IsSet() {
+	if service.IsNodePaused() {
 		return nil
 	}
 	isFullNode := true

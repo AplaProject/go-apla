@@ -55,7 +55,7 @@ func HandleTCPRequest(rw net.Conn) {
 
 	switch dType.Type {
 	case 1:
-		if service.NodePaused.IsSet() {
+		if service.IsNodePaused() {
 			return
 		}
 		req := &DisRequest{}
@@ -65,7 +65,7 @@ func HandleTCPRequest(rw net.Conn) {
 		}
 
 	case 2:
-		if service.NodePaused.IsSet() {
+		if service.IsNodePaused() {
 			return
 		}
 		req := &DisRequest{}
