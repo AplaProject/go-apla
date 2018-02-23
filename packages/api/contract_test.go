@@ -74,8 +74,11 @@ func TestNewContracts(t *testing.T) {
 				form[key] = []string{value}
 			}
 			if err := postTx(item.Name, &form); err != nil {
-				t.Error(err)
-				return
+				if err.Error() != par.Results[`error`] {
+					t.Error(err)
+					return
+				}
+				continue
 			}
 			for key, value := range par.Results {
 				if !wanted(key, value) {
@@ -83,6 +86,16 @@ func TestNewContracts(t *testing.T) {
 				}
 			}
 		}
+	}
+	var row rowResult
+	err := sendGet(`row/menu/1`, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value[`value`] == `update` {
+		t.Errorf(`menu == update`)
+		return
 	}
 }
 
@@ -92,16 +105,15 @@ var contracts = []smartContract{
 		{ $result=DBUpdate("menu", 1, "value", "updated") }
 		}`,
 		[]smartParams{
-			{nil, map[string]string{`error`: `startfinish`}},
+			{nil, map[string]string{`error`: `{"type":"panic","error":"runtime panic error"}`}},
 		}},
-
 	{`DBProblem`, `contract DBProblem {
 		action{
 			DBFind("members").Where("name=?", "name")
 		}
 	}`,
 		[]smartParams{
-			{nil, map[string]string{`error`: `startfinish`}},
+			{nil, map[string]string{`error`: `{"type":"panic","error":"pq: current transaction is aborted, commands ignored until end of transaction block"}`}},
 		}},
 
 	{`TestMultiForm`, `contract TestMultiForm {
