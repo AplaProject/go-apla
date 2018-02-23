@@ -87,6 +87,14 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`Crash`, `contract Crash { data {} conditions {} action
+
+		{ $result=DBUpdate("menu", 1, "value", "updated") }
+		}`,
+		[]smartParams{
+			{nil, map[string]string{`error`: `startfinish`}},
+		}},
+
 	{`DBProblem`, `contract DBProblem {
 		action{
 			DBFind("members").Where("name=?", "name")
