@@ -111,7 +111,40 @@ func setAllAttr(par parFunc) {
 		if key == `Params` || key == `PageParams` {
 			imap := make(map[string]interface{})
 			re := regexp.MustCompile(`(?is)(.*)\((.*)\)`)
-			for _, parval := range strings.Split(v, `,`) {
+			parList := make([]string, 0, 10)
+			curPar := make([]rune, 0, 256)
+			stack := make([]rune, 0, 256)
+			for _, ch := range v {
+				switch ch {
+				case '"':
+					if len(stack) > 0 && stack[len(stack)-1] == '"' {
+						stack = stack[:len(stack)-1]
+					} else {
+						stack = append(stack, '"')
+					}
+				case '(':
+					stack = append(stack, ')')
+				case '{':
+					stack = append(stack, '}')
+				case '[':
+					stack = append(stack, ']')
+				case ')', '}', ']':
+					if len(stack) > 0 && stack[len(stack)-1] == ch {
+						stack = stack[:len(stack)-1]
+					}
+				case ',':
+					if len(stack) == 0 {
+						parList = append(parList, string(curPar))
+						curPar = curPar[:0]
+						continue
+					}
+				}
+				curPar = append(curPar, ch)
+			}
+			if len(curPar) > 0 {
+				parList = append(parList, string(curPar))
+			}
+			for _, parval := range parList {
 				parval = strings.TrimSpace(parval)
 				if len(parval) > 0 {
 					if off := strings.IndexByte(parval, '='); off == -1 {

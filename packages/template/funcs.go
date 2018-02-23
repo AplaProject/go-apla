@@ -65,7 +65,7 @@ func init() {
 	funcs[`SysParam`] = tplFunc{sysparTag, defaultTag, `syspar`, `Name`}
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
-	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Body`}
+	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Data,Index`}
 	funcs[`Form`] = tplFunc{defaultTailTag, defaultTailTag, `form`, `Class,Body`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Image`] = tplFunc{defaultTailTag, defaultTailTag, `image`, `Src,Alt,Class`}
@@ -80,6 +80,7 @@ func init() {
 	funcs[`P`] = tplFunc{defaultTailTag, defaultTailTag, `p`, `Body,Class`}
 	funcs[`RadioGroup`] = tplFunc{defaultTailTag, defaultTailTag, `radiogroup`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
 	funcs[`Span`] = tplFunc{defaultTailTag, defaultTailTag, `span`, `Body,Class`}
+	funcs[`QRcode`] = tplFunc{defaultTag, defaultTag, `qrcode`, `Text`}
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
 	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
@@ -174,8 +175,18 @@ func menugroupTag(par parFunc) string {
 }
 
 func forlistTag(par parFunc) (ret string) {
+	var (
+		name, indexName string
+	)
 	setAllAttr(par)
-	name := par.Node.Attr[`source`].(string)
+	if len((*par.Pars)[`Source`]) > 0 {
+		name = par.Node.Attr[`source`].(string)
+	}
+	if len((*par.Pars)[`Index`]) > 0 {
+		indexName = par.Node.Attr[`index`].(string)
+	} else {
+		indexName = name + `_index`
+	}
 	if len(name) == 0 || par.Workspace.Sources == nil {
 		return
 	}
@@ -184,12 +195,23 @@ func forlistTag(par parFunc) (ret string) {
 		return
 	}
 	root := node{}
-	for _, item := range *source.Data {
-		vals := make(map[string]string)
+	keys := make(map[string]bool)
+	for key := range *par.Workspace.Vars {
+		keys[key] = true
+	}
+	for index, item := range *source.Data {
+		vals := map[string]string{indexName: converter.IntToStr(index + 1)}
 		for i, icol := range *source.Columns {
 			vals[icol] = item[i]
 		}
-		body := replace((*par.Pars)[`Body`], 0, &vals)
+		if index > 0 {
+			for key := range *par.Workspace.Vars {
+				if !keys[key] {
+					delete(*par.Workspace.Vars, key)
+				}
+			}
+		}
+		body := replace((*par.Pars)[`Data`], 0, &vals)
 		process(body, &root, par.Workspace)
 	}
 	par.Node.Children = root.Children
