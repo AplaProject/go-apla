@@ -54,26 +54,11 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	firstBlock := model.Block{}
-	found, err := firstBlock.Get(1)
+	blockTimeCalculator, err := utils.BuildBlockTimeCalculator()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
+		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
 		return err
 	}
-
-	if !found {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
-		return err
-	}
-
-	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
-	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
-
-	blockTimeCalculator := utils.NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
-		blockGenerationDuration,
-		blocksGapDuration,
-		syspar.GetNumberOfNodes(),
-	)
 
 	timeToGenerate, err := blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition)
 	if err != nil {

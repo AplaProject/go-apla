@@ -34,9 +34,11 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/model"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -428,4 +430,29 @@ func GetNodeKeys() (string, string, error) {
 		return "", "", err
 	}
 	return string(nprivkey), hex.EncodeToString(npubkey), nil
+}
+
+func BuildBlockTimeCalculator() (BlockTimeCalculator, error) {
+	var btc BlockTimeCalculator
+	firstBlock := model.Block{}
+	found, err := firstBlock.Get(1)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
+		return btc, err
+	}
+
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("first block not found")
+		return btc, err
+	}
+
+	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
+	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
+
+	btc = NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
+		blockGenerationDuration,
+		blocksGapDuration,
+		syspar.GetNumberOfNodes(),
+	)
+	return btc, nil
 }

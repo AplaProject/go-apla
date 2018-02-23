@@ -701,26 +701,11 @@ func (b *Block) CheckBlock() error {
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", b.Header.BlockID, b.PrevHeader.BlockID))
 		}
 
-		firstBlock := model.Block{}
-		found, err := firstBlock.Get(1)
+		blockTimeCalculator, err := utils.BuildBlockTimeCalculator()
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
+			logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
 			return err
 		}
-
-		if !found {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
-			return err
-		}
-
-		blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
-		blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
-
-		blockTimeCalculator := utils.NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
-			blockGenerationDuration,
-			blocksGapDuration,
-			syspar.GetNumberOfNodes(),
-		)
 
 		validBlock, err := blockTimeCalculator.ValidateBlock(b.Header.NodePosition, time.Unix(b.Header.Time, 0))
 		if err != nil {

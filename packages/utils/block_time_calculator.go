@@ -23,7 +23,7 @@ type blockGenerationState struct {
 	start    time.Time
 	duration time.Duration
 
-	nodePosition int
+	nodePosition int64
 }
 
 var TimeError = errors.New("current time before first block")
@@ -46,7 +46,7 @@ func (btc *BlockTimeCalculator) TimeToGenerate(nodePosition int64) (bool, error)
 		return false, err
 	}
 
-	return int64(bgs.nodePosition) == nodePosition, nil
+	return bgs.nodePosition == nodePosition, nil
 }
 
 func (btc *BlockTimeCalculator) ValidateBlock(nodePosition int64, at time.Time) (bool, error) {
@@ -55,7 +55,7 @@ func (btc *BlockTimeCalculator) ValidateBlock(nodePosition int64, at time.Time) 
 		return false, err
 	}
 
-	return int64(bgs.nodePosition) == nodePosition, nil
+	return bgs.nodePosition == nodePosition, nil
 }
 
 func (btc *BlockTimeCalculator) SetClock(clock Clock) *BlockTimeCalculator {
@@ -66,7 +66,7 @@ func (btc *BlockTimeCalculator) SetClock(clock Clock) *BlockTimeCalculator {
 func (btc *BlockTimeCalculator) countBlockTime(blockTime time.Time) (blockGenerationState, error) {
 	bgs := blockGenerationState{}
 	nextBlockStart := btc.firstBlockTime
-	curNodeIndex := 0
+	var curNodeIndex int64
 
 	if blockTime.Before(nextBlockStart) {
 		return blockGenerationState{}, TimeError
@@ -84,10 +84,6 @@ func (btc *BlockTimeCalculator) countBlockTime(blockTime time.Time) (blockGenera
 			return bgs, nil
 		}
 
-		if curNodeIndex == int(btc.nodesCount-1) {
-			curNodeIndex = 0
-		} else {
-			curNodeIndex++
-		}
+		curNodeIndex = (curNodeIndex + 1) % btc.nodesCount
 	}
 }
