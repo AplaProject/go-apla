@@ -13,3 +13,7 @@ func InitVDEMode(config *conf.VDEConfig) *VDE {
 type VDE struct {
 	*conf.VDEConfig
 }
+
+func (mode *VDE) Start(exitFunc func(int), gormInit func(conf.DBConfig)) {
+	gormInit(mode.DB)
+}
