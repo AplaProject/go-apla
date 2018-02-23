@@ -107,6 +107,9 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 						}
 					}
 				}
+				if len(list) == 0 && len(val) > 0 {
+					list = append(list, val)
+				}
 				idata = append(idata, converter.EncodeLength(int64(len(list)))...)
 				for _, ilist := range list {
 					blist := []byte(ilist)
