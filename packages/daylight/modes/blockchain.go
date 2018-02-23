@@ -14,8 +14,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// InitBlockchainMode creates exemplar of Blochain mode
-func InitBlockchainMode(config *conf.SavedConfig) *Blockchain {
+// InitBlockchain creates exemplar of Blochain mode
+func InitBlockchain(config *conf.SavedConfig) *Blockchain {
 	mode := &Blockchain{
 		SavedConfig: config,
 	}

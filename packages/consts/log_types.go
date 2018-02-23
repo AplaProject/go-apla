@@ -50,4 +50,5 @@ const (
 	MigrationError           = "MigrationError"
 	AutoupdateError          = "AutoupdateError"
 	SchedulerError           = "SchedulerError"
+	VDEMasterError           = "VDEMasterError"
 )

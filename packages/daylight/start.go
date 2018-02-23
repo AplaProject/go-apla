@@ -52,7 +52,7 @@ func initStatsd() {
 
 // NodeMode allows implement different startup modes
 type NodeMode interface {
-	Start(exitFunc func(int)) error
+	Start(exitFunc func(int), gormInit func(conf.DBConfig))
 }
 
 func killOld() {
@@ -243,7 +243,20 @@ func Start() {
 		Exit(0)
 	}
 
-	modes.InitBlockchainMode(&conf.Config)
+	var mode NodeMode
+	if *conf.IsVDEMaster {
+		var c conf.VDEMasterConfig
+		if err := conf.LoadVDEConfig(&c); err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
+			Exit(1)
+		}
+
+		mode = modes.InitVDEMaster(&c)
+	} else {
+		mode = modes.InitBlockchain(&conf.Config)
+	}
+
+	mode.Start(Exit, initGorm)
 
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
