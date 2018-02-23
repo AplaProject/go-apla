@@ -23,6 +23,8 @@ import (
 	"testing"
 
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type smartParams struct {
@@ -452,13 +454,29 @@ func TestDelayedContracts(t *testing.T) {
 	}
 
 	form := url.Values{
-		"Contract":   {"MainCondition"},
-		"EveryBlock": {"5"},
+		"Contract":   {"UnknownContract"},
+		"EveryBlock": {"10"},
+		"Limit":      {"2"},
 		"Conditions": {"true"},
 	}
+	err := postTx("NewDelayedContract", &form)
+	assert.EqualError(t, err, `{"type":"error","error":"Unknown contract @1UnknownContract"}`)
 
-	if err := postTx("NewDelayedContract", &form); err != nil {
-		t.Error(err)
-		return
+	form.Set("Contract", "MainCondition")
+	err = postTx("NewDelayedContract", &form)
+	assert.NoError(t, err)
+
+	form.Set("BlockID", "1")
+	err = postTx("NewDelayedContract", &form)
+	assert.EqualError(t, err, `{"type":"error","error":"The blockID must be greater than the current blockID"}`)
+
+	form = url.Values{
+		"Id":         {"1"},
+		"Contract":   {"MainCondition"},
+		"EveryBlock": {"10"},
+		"Conditions": {"true"},
+		"Deleted":    {"1"},
 	}
+	err = postTx("EditDelayedContract", &form)
+	assert.NoError(t, err)
 }

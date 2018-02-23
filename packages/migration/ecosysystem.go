@@ -1748,7 +1748,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Conditions string
 			BlockID int "optional"
 			Limit int "optional"
-			Deleted bool "optional"
+			Deleted int "optional"
 		}
 		conditions {
 			ConditionById("delayed_contracts", true)
@@ -1770,7 +1770,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 		action {
-			DBUpdate("delayed_contracts", "contract,key_id,block_id,every_block,\"limit\",deleted,conditions", $Id, $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Deleted, $Conditions)
+			DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,\"limit\",deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Deleted, $Conditions)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
 	('30', 'contract CallDelayedContract {
