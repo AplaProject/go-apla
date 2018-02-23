@@ -76,10 +76,18 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	} else if len(data.params[`pubkey`].([]byte)) > 0 {
 		wallet = crypto.Address(data.params[`pubkey`].([]byte))
 	}
-	pubkey, err = model.Single(`select pub from "`+converter.Int64ToStr(state)+`_keys" where id=?`, wallet).Bytes()
+	account := &model.Key{}
+	account.SetTablePrefix(state)
+	isAccount, err := account.Get(wallet)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		return errorAPI(w, err, http.StatusBadRequest)
+	}
+	if isAccount {
+		pubkey = account.PublicKey
+		if account.Delete == 1 {
+			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
+		}
 	}
 	if state > 1 && len(pubkey) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty, and state is not default")

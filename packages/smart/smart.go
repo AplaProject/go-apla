@@ -65,6 +65,7 @@ var (
 	smartTest = make(map[string]string)
 
 	ErrCurrentBalance = errors.New(`current balance is not enough`)
+	ErrDeletedKey     = errors.New(`The key is deleted`)
 	ErrDiffKeys       = errors.New(`Contract and user public keys are different`)
 	ErrEmptyPublicKey = errors.New(`empty public key`)
 	ErrFounderAccount = errors.New(`Unknown founder account`)
@@ -388,7 +389,7 @@ func ConditionById(table string, validate bool) {
    var row map
    row = DBRow(table).Columns("conditions").WhereId($Id)
    if !row["conditions"] {
-	   error Sprintf("Item %%d has not been found", $Id)
+	   error Sprintf("Item %d has not been found", $Id)
    }
 
    Eval(row["conditions"])
@@ -798,6 +799,9 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 			return retError(err)
+		}
+		if wallet.Delete == 1 {
+			return retError(ErrDeletedKey)
 		}
 		if len(wallet.PublicKey) > 0 {
 			public = wallet.PublicKey

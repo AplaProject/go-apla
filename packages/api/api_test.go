@@ -25,7 +25,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"sync"
+	"testing"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -264,4 +267,28 @@ func cutErr(err error) string {
 		out = out[:off]
 	}
 	return strings.TrimSpace(out)
+}
+
+func TestMoneyTransfer10(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 30; i++ {
+		wg.Add(4)
+		for j := 0; j < 4; j++ {
+			go func(counter int) {
+				defer wg.Done()
+
+				form := url.Values{`Amount`: {strconv.FormatInt(int64(i+1), 10)}, `Recipient`: {`1028-0432-0934-8475-1098`}} //-8166311980224800518
+				if err := postTx(`MoneyTransfer`, &form); err != nil {
+					fmt.Println(err)
+				}
+			}(j)
+		}
+
+		wg.Wait()
+	}
 }
