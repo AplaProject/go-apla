@@ -41,6 +41,11 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Button(Body: addpage, 
+		Contract: NewPage, 
+		Params: "Name=hello_page2, Value=Div(fefe, dbbt), Menu=default_menu, Conditions=true")`,
+		`[{"tag":"button","attr":{"contract":"NewPage","params":{"Conditions":{"text":"true","type":"text"},"Menu":{"text":"default_menu","type":"text"},"Name":{"text":"hello_page2","type":"text"},"Value":{"params":["fefe","dbbt"],"type":"Div"}}},"children":[{"tag":"text","text":"addpage"}]}]`},
+	{"Button(Body: add table1, Contract: NewTable, Params: `Name=name,Columns=[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"1\",  \"conditions\":\"true\"}, {\"name\":\"Amount\", \"type\":\"number\",\"index\": \"0\", \"conditions\":\"true\"}],Permissions={\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}`)", `[{"tag":"button","attr":{"contract":"NewTable","params":{"Columns":{"text":"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"1\",  \"conditions\":\"true\"}, {\"name\":\"Amount\", \"type\":\"number\",\"index\": \"0\", \"conditions\":\"true\"}]","type":"text"},"Name":{"text":"name","type":"text"},"Permissions":{"text":"{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}","type":"text"}}},"children":[{"tag":"text","text":"add table1"}]}]`},
 	{`Calculate( Exp: 342278783438/0, Type: money )Calculate( Exp: 5.2/0, Type: float )
 		Calculate( Exp: 7/0)`,
 		`[{"tag":"text","text":"dividing by zerodividing by zerodividing by zero"}]`},
