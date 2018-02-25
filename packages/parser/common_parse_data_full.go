@@ -701,21 +701,24 @@ func (b *Block) CheckBlock() error {
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", b.Header.BlockID, b.PrevHeader.BlockID))
 		}
 
-		blockTimeCalculator, err := utils.BuildBlockTimeCalculator()
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
-			return err
-		}
+		// skip time validation for first block
+		if b.Header.BlockID > 1 {
+			blockTimeCalculator, err := utils.BuildBlockTimeCalculator()
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
+				return err
+			}
 
-		validBlock, err := blockTimeCalculator.ValidateBlock(b.Header.NodePosition, time.Unix(b.Header.Time, 0))
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
-			return err
-		}
+			validBlockTime, err := blockTimeCalculator.ValidateBlock(b.Header.NodePosition, time.Unix(b.Header.Time, 0))
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
+				return err
+			}
 
-		if !validBlock {
-			logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("incorrect block time")
-			return utils.ErrInfo(fmt.Errorf("incorrect block time %d", b.PrevHeader.Time))
+			if !validBlockTime {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("incorrect block time")
+				return utils.ErrInfo(fmt.Errorf("incorrect block time %d", b.PrevHeader.Time))
+			}
 		}
 	}
 

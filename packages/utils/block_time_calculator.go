@@ -10,7 +10,8 @@ import (
 
 // BlockTimeCalculator calculating block generation time
 type BlockTimeCalculator struct {
-	clock Clock
+	clock         Clock
+	blocksCounter intervalBlocksCounter
 
 	firstBlockTime      time.Time
 	blockGenerationTime time.Duration
@@ -33,6 +34,9 @@ func NewBlockTimeCalculator(firstBlockTime time.Time,
 	nodesCount int64,
 ) BlockTimeCalculator {
 	return BlockTimeCalculator{
+		clock:         &ClockWrapper{},
+		blocksCounter: &blocksCounter{},
+
 		firstBlockTime:      firstBlockTime,
 		blockGenerationTime: blockGenerationTime,
 		blocksGap:           blocksGap,
@@ -46,7 +50,12 @@ func (btc *BlockTimeCalculator) TimeToGenerate(nodePosition int64) (bool, error)
 		return false, err
 	}
 
-	return bgs.nodePosition == nodePosition, nil
+	blocks, err := btc.blocksCounter.count(bgs)
+	if err != nil {
+		return false, err
+	}
+
+	return bgs.nodePosition == nodePosition && blocks == 0, nil
 }
 
 func (btc *BlockTimeCalculator) ValidateBlock(nodePosition int64, at time.Time) (bool, error) {
@@ -55,11 +64,21 @@ func (btc *BlockTimeCalculator) ValidateBlock(nodePosition int64, at time.Time) 
 		return false, err
 	}
 
-	return bgs.nodePosition == nodePosition, nil
+	blocks, err := btc.blocksCounter.count(bgs)
+	if err != nil {
+		return false, err
+	}
+
+	return bgs.nodePosition == nodePosition && blocks == 0, nil
 }
 
 func (btc *BlockTimeCalculator) SetClock(clock Clock) *BlockTimeCalculator {
 	btc.clock = clock
+	return btc
+}
+
+func (btc *BlockTimeCalculator) setBlockCounter(counter intervalBlocksCounter) *BlockTimeCalculator {
+	btc.blocksCounter = counter
 	return btc
 }
 

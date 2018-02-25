@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 // Block is model
 type Block struct {
 	ID            int64  `gorm:"primary_key;not_null"`
@@ -76,6 +78,13 @@ func (b *Block) GetReverseBlockchain(endBlockID int64, limit int32) ([]Block, er
 	var err error
 	blockchain := new([]Block)
 	err = DBConn.Model(&Block{}).Order("id DESC").Where("id <= ?", endBlockID).Limit(limit).Find(&blockchain).Error
+	return *blockchain, err
+}
+
+func (b *Block) GetNodeBlocksAtTime(from, to time.Time, node int64) ([]Block, error) {
+	var err error
+	blockchain := new([]Block)
+	err = DBConn.Model(&Block{}).Where("node_position = ? AND time BETWEEN ? AND ?", node, from.Unix(), to.Unix()).Find(&blockchain).Error
 	return *blockchain, err
 }
 
