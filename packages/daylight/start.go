@@ -65,7 +65,7 @@ func killOld() {
 		if err != nil {
 			log.WithFields(log.Fields{"data": dat, "error": err, "type": consts.JSONUnmarshallError}).Error("unmarshalling pid map")
 		}
-		log.WithFields(log.Fields{"path": conf.Config.WorkDir + pidMap["pid"]}).Debug("old pid path")
+		log.WithFields(log.Fields{"path": conf.Config.Dir + pidMap["pid"]}).Debug("old pid path")
 
 		KillPid(pidMap["pid"])
 		if fmt.Sprintf("%s", err) != "null" {
@@ -86,7 +86,7 @@ func initLogs() error {
 	if len(conf.Config.LogFileName) == 0 {
 		log.SetOutput(os.Stdout)
 	} else {
-		fileName := filepath.Join(conf.Config.WorkDir, conf.Config.LogFileName)
+		fileName := filepath.Join(conf.Config.Dir, conf.Config.LogFileName)
 		openMode := os.O_APPEND
 		if _, err := os.Stat(fileName); os.IsNotExist(err) {
 			openMode = os.O_CREATE
@@ -165,7 +165,7 @@ func rollbackToBlock(blockID int64) error {
 	}
 
 	if warn == 0 {
-		rbFile := filepath.Join(conf.Config.WorkDir, consts.RollbackResultFilename)
+		rbFile := filepath.Join(conf.Config.Dir, consts.RollbackResultFilename)
 		ioutil.WriteFile(rbFile, []byte("1"), 0644)
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile, "path": rbFile}).Error("rollback result flag")
@@ -279,7 +279,7 @@ func Start() {
 		initGorm(conf.Config.DB)
 	}
 
-	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
+	log.WithFields(log.Fields{"work_dir": conf.Config.Dir, "version": consts.VERSION}).Info("started with")
 
 	killOld()
 

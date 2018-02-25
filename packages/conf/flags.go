@@ -62,7 +62,7 @@ var configFlagMap = map[string]interface{}{
 
 	"logLevel":   &flagStr{confVar: &Config.LogLevel, defVal: "ERROR", flagBase: flagBase{help: "log level - ERROR,WARN,INFO,DEBUG"}},
 	"logFile":    &flagStr{confVar: &Config.LogFileName, flagBase: flagBase{help: "log file name"}},
-	"privateDir": &flagStr{confVar: &Config.PrivateDir, flagBase: flagBase{help: "directory for public/private keys"}},
+	"privateDir": &flagStr{confVar: &Config.KeysDir, flagBase: flagBase{help: "directory for public/private keys"}},
 
 	"updateServer":        &flagStr{confVar: &Config.Autoupdate.ServerAddress, defVal: defaultUpdateServer, flagBase: flagBase{help: "server address for autoupdates"}},
 	"updatePublicKeyPath": &flagStr{confVar: &Config.Autoupdate.PublicKeyPath, defVal: defaultUpdatePublicKeyPath, flagBase: flagBase{help: "public key path for autoupdates"}},
@@ -194,21 +194,21 @@ func SetConfigParams() {
 	})
 
 	if *WorkDirectory != "" {
-		Config.WorkDir = *WorkDirectory
+		Config.Dir = *WorkDirectory
 	} else {
 		cwd, err := os.Getwd()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("Getcwd failed")
 		}
-		Config.WorkDir = cwd
+		Config.Dir = cwd
 	}
 
-	if Config.PrivateDir == "" {
-		Config.PrivateDir = Config.WorkDir
+	if Config.KeysDir == "" {
+		Config.KeysDir = Config.Dir
 	}
 
 	if *FirstBlockPath == "" {
-		*FirstBlockPath = filepath.Join(Config.PrivateDir, consts.FirstBlockFilename)
+		*FirstBlockPath = filepath.Join(Config.KeysDir, consts.FirstBlockFilename)
 	}
 
 	if *keyID != 0 {

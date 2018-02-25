@@ -129,8 +129,8 @@ func GenerateFirstBlock() error {
 		}
 	} else {
 		_, publicKey, err = createKeyPair(
-			filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename),
-			filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename),
+			filepath.Join(conf.Config.KeysDir, consts.PrivateKeyFilename),
+			filepath.Join(conf.Config.KeysDir, consts.PublicKeyFilename),
 		)
 		if err != nil {
 			return err
@@ -146,8 +146,8 @@ func GenerateFirstBlock() error {
 		}
 	} else {
 		_, nodePublicKey, err = createKeyPair(
-			filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename),
-			filepath.Join(conf.Config.PrivateDir, consts.NodePublicKeyFilename),
+			filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename),
+			filepath.Join(conf.Config.KeysDir, consts.NodePublicKeyFilename),
 		)
 		if err != nil {
 			return err
@@ -158,7 +158,7 @@ func GenerateFirstBlock() error {
 	conf.Config.KeyID = address
 
 	err = createFile(
-		filepath.Join(conf.Config.PrivateDir, consts.KeyIDFilename),
+		filepath.Join(conf.Config.KeysDir, consts.KeyIDFilename),
 		[]byte(strconv.FormatInt(address, 10)),
 	)
 	if err != nil {

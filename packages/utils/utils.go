@@ -412,7 +412,7 @@ func GetParent() string {
 
 // GetNodeKeys returns node private key and public key
 func GetNodeKeys() (string, string, error) {
-	nprivkey, err := ioutil.ReadFile(filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename))
+	nprivkey, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
 		return "", "", err

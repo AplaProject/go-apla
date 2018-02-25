@@ -117,7 +117,7 @@ func (p FirstBlockParser) Header() *tx.Header {
 // GetKeyIDFromPrivateKey load KeyID fron PrivateKey file
 func GetKeyIDFromPrivateKey() (int64, error) {
 
-	key, err := ioutil.ReadFile(filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename))
+	key, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.PrivateKeyFilename))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading private key file")
 		return 0, err

@@ -62,18 +62,9 @@ type TokenMovementConfig struct {
 type SavedConfig struct {
 	LogLevel    string
 	LogFileName string
-	InstallType string
-	NodeStateID string
-	TestMode    bool
-
-	StartDaemons string // comma separated list of daemons to start or empty for all or 'null'
 
 	KeyID       int64
 	EcosystemID int64
-
-	BadBlocks              string
-	FirstLoadBlockchainURL string
-	FirstLoadBlockchain    string
 
 	MaxPageGenerationTime int64 // in milliseconds
 
@@ -82,8 +73,8 @@ type SavedConfig struct {
 	DB        DBConfig
 	StatsD    StatsDConfig
 
-	WorkDir    string // application work dir (cwd by default)
-	PrivateDir string // place for private keys files: NodePrivateKey, PrivateKey
+	Dir     string // application work dir (cwd by default)
+	KeysDir string // place for private keys files: NodePrivateKey, PrivateKey
 
 	Centrifugo CentrifugoConfig
 
@@ -97,10 +88,7 @@ var Installed bool
 
 // Config global parameters
 var Config = SavedConfig{
-	InstallType:  "PRIVATE_NET",
-	NodeStateID:  "*",
-	StartDaemons: "",
-	StatsD:       StatsDConfig{Name: "apla", HostPort: HostPort{Host: "127.0.0.1", Port: 8125}},
+	StatsD: StatsDConfig{Name: "apla", HostPort: HostPort{Host: "127.0.0.1", Port: 8125}},
 }
 
 // GetConfigPath returns path from command line arg or default
@@ -113,7 +101,7 @@ func GetConfigPath() string {
 
 // GetPidFile returns path to pid file
 func GetPidFile() string {
-	return filepath.Join(Config.WorkDir, consts.PidFilename)
+	return filepath.Join(Config.Dir, consts.PidFilename)
 }
 
 // LoadConfig from configFile

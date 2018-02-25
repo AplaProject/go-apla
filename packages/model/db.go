@@ -8,7 +8,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration"
 
@@ -252,23 +251,6 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 // DropTable is dropping table
 func DropTable(transaction *DbTransaction, tableName string) error {
 	return GetDB(transaction).DropTable(tableName).Error
-}
-
-// IsNodeState :Because of import cycle utils and config
-func IsNodeState(state int64, host string) bool {
-	if strings.HasPrefix(host, `localhost`) {
-		return true
-	}
-	val := conf.Config.NodeStateID
-	if val == `*` {
-		return true
-	}
-	for _, id := range strings.Split(val, `,`) {
-		if converter.StrToInt64(id) == state {
-			return true
-		}
-	}
-	return false
 }
 
 // NumIndexes is counting table indexes
