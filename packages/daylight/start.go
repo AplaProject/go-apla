@@ -26,20 +26,20 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/api"
+	"github.com/julienschmidt/httprouter"
+
 	"github.com/GenesisKernel/go-genesis/packages/autoupdate"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
 	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
-	"github.com/GenesisKernel/go-genesis/packages/daylight/modes"
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/modes"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -52,7 +52,8 @@ func initStatsd() {
 
 // NodeMode allows implement different startup modes
 type NodeMode interface {
-	Start(exitFunc func(int), gormInit func(conf.DBConfig))
+	Start(exitFunc func(int), gormInit func(conf.DBConfig), listenerFunc func(string, *httprouter.Router))
+	DaemonList() []string
 }
 
 func killOld() {
@@ -134,22 +135,11 @@ func delPidFile() {
 	os.Remove(conf.GetPidFile())
 }
 
-func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
-	for _, method := range methods {
-		route.HandlerFunc(method, path, handle)
-	}
-}
-
-func initRoutes(listenHost string) {
-	route := httprouter.New()
-	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
-	api.Route(route)
-	route.Handler(`GET`, consts.WellKnownRoute, http.FileServer(http.Dir(*conf.TLS)))
+func runHTTPListener(host string, router *httprouter.Router) {
 	if len(*conf.TLS) > 0 {
-		go http.ListenAndServeTLS(":443", *conf.TLS+consts.TLSFullchainPem, *conf.TLS+consts.TLSPrivkeyPem, route)
+		go http.ListenAndServeTLS(":443", *conf.TLS+consts.TLSFullchainPem, *conf.TLS+consts.TLSPrivkeyPem, router)
 	}
-
-	httpListener(listenHost, route)
+	httpListener(host, router)
 }
 
 // Start starts the main code of the program
@@ -256,11 +246,11 @@ func Start() {
 		mode = modes.InitBlockchain(&conf.Config)
 	}
 
-	mode.Start(Exit, initGorm)
+	mode.Start(Exit, initGorm, runHTTPListener)
 
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err := daemonsctl.RunAllDaemons()
+		err := daemonsctl.RunAllDaemons(mode.DaemonList())
 		log.Info("Daemons started")
 		if err != nil {
 			os.Exit(1)
@@ -268,8 +258,6 @@ func Start() {
 	}
 
 	daemons.WaitForSignals()
-
-	initRoutes(conf.Config.HTTP.Str())
 
 	select {}
 }

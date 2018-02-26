@@ -27,7 +27,6 @@ type VDEMasterConfig struct {
 }
 
 // LoadVDEConfig from configFile
-// the function has side effect updating global var Config
 func LoadVDEConfig(config interface{}) error {
 	log.WithFields(log.Fields{"path": GetConfigPath()}).Info("Loading config")
 	_, err := toml.DecodeFile(GetConfigPath(), config)
