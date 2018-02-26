@@ -326,12 +326,24 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 	if *workspace.Timeout {
 		return
 	}
+	trim := func(input string, quotes bool) string {
+		result := strings.Trim(input, "\t\r\n ")
+		if quotes {
+			for _, ch := range "\"`" {
+				if rune(result[0]) == ch {
+					result = strings.Trim(result, string([]rune{ch}))
+					break
+				}
+			}
+		}
+		return result
+	}
 	if curFunc.Params == `*` {
 		for i, v := range *params {
 			val := strings.TrimSpace(string(v))
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
-				pars[val[:off]] = macro(strings.Trim(val[off+1:], "\t\r\n \"`"), workspace.Vars)
+				pars[val[:off]] = macro(trim(val[off+1:], true), workspace.Vars)
 			} else {
 				pars[strconv.Itoa(i)] = macro(val, workspace.Vars)
 			}
@@ -342,11 +354,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 				val := macro(strings.TrimSpace(string((*params)[i])), workspace.Vars)
 				off := strings.IndexByte(val, ':')
 				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
-					cut := "\t\r\n \"`"
-					if val[:off] == `Data` {
-						cut = "\t\r\n "
-					}
-					pars[val[:off]] = strings.Trim(val[off+1:], cut)
+					pars[val[:off]] = trim(val[off+1:], val[:off] != `Data`)
 				} else {
 					pars[v] = val
 				}
