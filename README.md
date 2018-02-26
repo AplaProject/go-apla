@@ -21,7 +21,7 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 ## Contents
 
 - [Why is Genesis Unique?](#why-is-genesis-unique)
-- [Tokens](#tokens)
+- [Get Your Free Tokens, GitHub User!](#get-your-free-tokens-github-user)
 - [How Genesis Works](#how-genesis-works)
 - [Quick Start](#quick-start)
 - [Plans](#plans)
@@ -37,7 +37,7 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
  - You'll be able to immediately upload your newly developed applications on Simvolio and Protypo directly to your mobile device running IOS or Android. You can do this using our application, which is soon to be available from App Store and Google Play. Or you can upload your version after making some changes to our source codes.
  - All of the platform's parameters (even the consensus algorithm!) are fully customizable, and can be changed by community voting or by any other algorithms.
 
-## Tokens
+## Get Your Free Tokens, GitHub User!
 https://gist.github.com/c-darwin/a9a96a4eaae16c0d410f34e434594132
 
 ## How Genesis Works
