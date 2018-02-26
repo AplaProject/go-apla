@@ -8,13 +8,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTimeToGenerate(t *testing.T) {
+func TestBlockTimeCalculator_TimeToGenerate(t *testing.T) {
 	cases := []struct {
 		firstBlockTime time.Time
 		blockGenTime   time.Duration
 		blocksGap      time.Duration
 		nodesCount     int64
 		clock          Clock
+		blocksCounter  intervalBlocksCounter
 		nodePosition   int64
 
 		result bool
@@ -31,6 +32,7 @@ func TestTimeToGenerate(t *testing.T) {
 
 			err: TimeError,
 		},
+
 		{
 			firstBlockTime: time.Unix(1, 0),
 			blockGenTime:   time.Second * 2,
@@ -43,23 +45,42 @@ func TestTimeToGenerate(t *testing.T) {
 				mc.On("Now").Return(time.Unix(16, 0))
 				return mc
 			}(),
-
-			result: true,
-		},
-		{
-			firstBlockTime: time.Unix(0, 0),
-			blockGenTime:   time.Second * 2,
-			blocksGap:      time.Second * 3,
-			nodesCount:     3,
-			nodePosition:   3,
-
-			clock: func() Clock {
-				mc := &MockClock{}
-				mc.On("Now").Return(time.Unix(0, 0))
-				return mc
+			blocksCounter: func() intervalBlocksCounter {
+				ibc := &mockIntervalBlocksCounter{}
+				ibc.On("count", blockGenerationState{
+					start:        time.Unix(13, 0),
+					duration:     time.Second * 5,
+					nodePosition: 2,
+				}).Return(1, nil)
+				return ibc
 			}(),
 
 			result: false,
+		},
+
+		{
+			firstBlockTime: time.Unix(1, 0),
+			blockGenTime:   time.Second * 2,
+			blocksGap:      time.Second * 3,
+			nodesCount:     3,
+			nodePosition:   2,
+
+			clock: func() Clock {
+				mc := &MockClock{}
+				mc.On("Now").Return(time.Unix(16, 0))
+				return mc
+			}(),
+			blocksCounter: func() intervalBlocksCounter {
+				ibc := &mockIntervalBlocksCounter{}
+				ibc.On("count", blockGenerationState{
+					start:        time.Unix(13, 0),
+					duration:     time.Second * 5,
+					nodePosition: 2,
+				}).Return(0, nil)
+				return ibc
+			}(),
+
+			result: true,
 		},
 	}
 
@@ -70,13 +91,96 @@ func TestTimeToGenerate(t *testing.T) {
 			c.nodesCount,
 		)
 
-		execResult, execErr := btc.SetClock(c.clock).TimeToGenerate(c.nodePosition)
+		execResult, execErr := btc.
+			SetClock(c.clock).
+			setBlockCounter(c.blocksCounter).
+			TimeToGenerate(c.nodePosition)
+
 		require.Equal(t, c.err, execErr)
 		assert.Equal(t, c.result, execResult)
 	}
 }
 
-func TestCountBlockTime(t *testing.T) {
+func TestBlockTimeCalculator_ValidateBlock(t *testing.T) {
+	cases := []struct {
+		firstBlockTime time.Time
+		blockGenTime   time.Duration
+		blocksGap      time.Duration
+		nodesCount     int64
+		time           time.Time
+		blocksCounter  intervalBlocksCounter
+		nodePosition   int64
+
+		result bool
+		err    error
+	}{
+		{
+			firstBlockTime: time.Unix(1, 0),
+			time:           time.Unix(0, 0),
+
+			err: TimeError,
+		},
+
+		{
+			firstBlockTime: time.Unix(1, 0),
+			blockGenTime:   time.Second * 2,
+			blocksGap:      time.Second * 3,
+			nodesCount:     3,
+			nodePosition:   2,
+
+			time: time.Unix(16, 0),
+			blocksCounter: func() intervalBlocksCounter {
+				ibc := &mockIntervalBlocksCounter{}
+				ibc.On("count", blockGenerationState{
+					start:        time.Unix(13, 0),
+					duration:     time.Second * 5,
+					nodePosition: 2,
+				}).Return(1, nil)
+				return ibc
+			}(),
+
+			result: false,
+		},
+
+		{
+			firstBlockTime: time.Unix(1, 0),
+			blockGenTime:   time.Second * 2,
+			blocksGap:      time.Second * 3,
+			nodesCount:     3,
+			nodePosition:   2,
+
+			time: time.Unix(16, 0),
+			blocksCounter: func() intervalBlocksCounter {
+				ibc := &mockIntervalBlocksCounter{}
+				ibc.On("count", blockGenerationState{
+					start:        time.Unix(13, 0),
+					duration:     time.Second * 5,
+					nodePosition: 2,
+				}).Return(0, nil)
+				return ibc
+			}(),
+
+			result: true,
+		},
+	}
+
+	for _, c := range cases {
+		btc := NewBlockTimeCalculator(c.firstBlockTime,
+			c.blockGenTime,
+			c.blocksGap,
+			c.nodesCount,
+		)
+
+		execResult, execErr := btc.
+			setBlockCounter(c.blocksCounter).
+			ValidateBlock(c.nodePosition, c.time)
+
+		require.Equal(t, c.err, execErr)
+		assert.Equal(t, c.result, execResult)
+	}
+}
+
+func TestBlockTImeCalculator_countBlockTime(t *testing.T) {
 	cases := []struct {
 		firstBlockTime time.Time
 		blockGenTime   time.Duration
