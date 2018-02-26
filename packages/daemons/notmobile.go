@@ -62,11 +62,17 @@ func waitSig() {
 }
 
 // WaitForSignals waits for Interrupt os.Kill signals
-func WaitForSignals() {
+func WaitForSignals() chan struct{} {
 	SigChan = make(chan os.Signal, 1)
 	waitSig()
 	var Term os.Signal = syscall.SIGTERM
+
+	doneChan := make(chan struct{})
 	go func() {
+		defer func() {
+			doneChan <- struct{}{}
+		}()
+
 		signal.Notify(SigChan, os.Interrupt, os.Kill, Term)
 		<-SigChan
 
@@ -94,7 +100,7 @@ func WaitForSignals() {
 			}).Error("removing file")
 		}
 
-		os.Exit(1)
-
 	}()
+
+	return doneChan
 }

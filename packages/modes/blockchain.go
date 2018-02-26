@@ -10,10 +10,13 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/daemons"
 	"github.com/GenesisKernel/go-genesis/packages/install"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,6 +25,16 @@ func InitBlockchain(config *conf.SavedConfig) *Blockchain {
 	mode := &Blockchain{
 		SavedConfig: config,
 		api:         api.CreateDefaultRouter(),
+		daemonList: []string{
+			"BlocksCollection",
+			"BlockGenerator",
+			"QueueParserTx",
+			"QueueParserBlocks",
+			"Disseminator",
+			"Confirmations",
+			"Notificator",
+			// "Scheduler",
+		},
 	}
 
 	api.AddBlockChainRoutes(mode.api)
@@ -31,20 +44,12 @@ func InitBlockchain(config *conf.SavedConfig) *Blockchain {
 // Blockchain represent implementation to run node as blockchain
 type Blockchain struct {
 	*conf.SavedConfig
-	api *httprouter.Router
+	api        *httprouter.Router
+	daemonList []string
 }
 
 func (mode *Blockchain) DaemonList() []string {
-	return []string{
-		"BlocksCollection",
-		"BlockGenerator",
-		"QueueParserTx",
-		"QueueParserBlocks",
-		"Disseminator",
-		"Confirmations",
-		"Notificator",
-		// "Scheduler",
-	}
+	return mode.daemonList
 }
 
 // Start Implement NodeMode interface
@@ -93,6 +98,36 @@ func (mode *Blockchain) Start(exitFunc func(int), gormFunc func(conf.DBConfig), 
 	}
 
 	listenerFunc(mode.SavedConfig.HTTP.Str(), mode.api)
+
+	if model.DBConn != nil {
+		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
+		err := syspar.SysUpdate(nil)
+		if err != nil {
+			log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
+			exitFunc(1)
+		}
+
+		log.Info("load contracts")
+		if err := smart.LoadContracts(nil); err != nil {
+			log.Errorf("Load Contracts error: %s", err)
+			exitFunc(1)
+		}
+
+		log.Info("start daemons")
+		daemons.StartDaemons(mode.daemonList)
+
+		err = tcpserver.TcpListener(conf.Config.TCPServer.Str())
+		if err != nil {
+			log.Errorf("can't start tcp servers, stop")
+			exitFunc(1)
+		}
+
+		log.Info("Daemons started")
+	}
+}
+
+func (mode *Blockchain) Stop() {
+	log.Infoln("Blockchain mode stopped")
 }
 
 func rollbackToBlock(blockID int64) error {

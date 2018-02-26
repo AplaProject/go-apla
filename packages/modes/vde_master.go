@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	createRoleTemplate = `CREATE ROLE %s PASSWORD '%s' NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN`
+	createRoleTemplate = `CREATE ROLE %s WITH ENCRYPTED PASSWORD '%s' NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN`
 	createDBTemplate   = `CREATE DATABASE %s OWNER %s`
+	commandTemplate    = `./go-genesis -VDEMode=true -configPath=%s -workDir=%s`
 )
 
 // InitVDEMaster returns new master of VDE
@@ -65,6 +66,11 @@ func (mode *VDEMaster) DaemonList() []string {
 	return mode.VDE.DaemonList()
 }
 
+func (mode *VDEMaster) Stop() {
+	mode.processes.StopAllProcesses()
+	log.Infoln("VDEMaster mode stopped")
+}
+
 func (mode *VDEMaster) prepareWorkDir() error {
 	if _, err := os.Stat(mode.configsPath); os.IsNotExist(err) {
 		if err := os.Mkdir(mode.configsPath, 0700); err != nil {
@@ -77,41 +83,51 @@ func (mode *VDEMaster) prepareWorkDir() error {
 }
 
 // CreateVDE creates one instance of VDE
-func (mode *VDEMaster) CreateVDE(name string, config *conf.VDEConfig) error {
+func (mode *VDEMaster) CreateVDE(name, dbUser, dbPassword string) error {
 
-	if err := mode.createVDEDB(name, config.DB.User, config.DB.Password); err != nil {
+	if err := mode.createVDEDB(name, dbUser, dbPassword); err != nil {
 		return err
 	}
 
-	if err := mode.initVDEDir(name, config); err != nil {
-
+	if err := mode.initVDEDir(name, mode.VDE.VDEConfig); err != nil {
 		return err
 	}
 
-	privFile := filepath.Join(mode.configsPath, consts.PrivateKeyFilename)
-	pubFile := filepath.Join(mode.configsPath, consts.PublicKeyFilename)
+	vdeDir := path.Join(mode.configsPath, name)
+	privFile := filepath.Join(vdeDir, consts.PrivateKeyFilename)
+	pubFile := filepath.Join(vdeDir, consts.PublicKeyFilename)
 	_, _, err := install.CreateKeyPair(privFile, pubFile)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("error on creating keys")
 		return err
 	}
 
-	procDir := path.Join(mode.configsPath, name)
-	confEntry := pConf.NewConfigEntry(procDir)
+	vdeConfigPath := filepath.Join(vdeDir, "config.toml")
+	vdeConfig := *mode.VDE.VDEConfig
+	vdeConfig.WorkDir = vdeDir
+	vdeConfig.DB.User = dbUser
+	vdeConfig.DB.Password = dbPassword
+	vdeConfig.DB.Name = name
+	vdeConfig.HTTP.Port = 7081
+
+	conf.SaveVDEConfig(vdeConfigPath, &vdeConfig)
+
+	confEntry := pConf.NewConfigEntry(vdeDir)
 	confEntry.Name = "program:" + name
-	confEntry.AddKeyValue("command", fmt.Sprintf("./go-genesis -VDEmode=true -configPath=%s -workDir=%s", filepath.Join(procDir, "config.toml"), procDir))
+	command := fmt.Sprintf("./go-genesis -VDEMode=true -initDatabase=true -configPath=%s -workDir=%s", vdeConfigPath, vdeDir)
+	confEntry.AddKeyValue("command", command)
 	proc := process.NewProcess("vdeMaster", confEntry)
 
 	mode.processes.Add(name, proc)
 	mode.processes.Find(name).Start(true)
-	log.Info("VDE loaded")
+	log.Infoln(command)
 	return nil
 }
 
 func (mode *VDEMaster) createVDEDB(vdeName, login, pass string) error {
 
-	md5pas := getMD5Pass(pass)
-	if err := model.DBConn.Exec(fmt.Sprintf(createRoleTemplate, login, md5pas)).Error; err != nil {
+	// md5pas := getMD5Pass(login, pass)
+	if err := model.DBConn.Exec(fmt.Sprintf(createRoleTemplate, login, pass)).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE DB User")
 		return err
 	}
@@ -138,9 +154,9 @@ func (mode *VDEMaster) initVDEDir(vdeName string, config *conf.VDEConfig) error 
 	return saveConfigFile(configPath, config)
 }
 
-func getMD5Pass(text string) string {
+func getMD5Pass(login, pass string) string {
 	hasher := md5.New()
-	hasher.Write([]byte(text))
+	hasher.Write([]byte(login + pass))
 	return "md5" + hex.EncodeToString(hasher.Sum(nil))
 }
 
@@ -181,9 +197,12 @@ func (mode *VDEMaster) initProcessManager() error {
 	for _, item := range list {
 		if item.IsDir() {
 			procDir := path.Join(mode.configsPath, item.Name())
+			commandStr := fmt.Sprintf(commandTemplate, filepath.Join(procDir, "config.toml"), procDir)
+
 			confEntry := pConf.NewConfigEntry(procDir)
 			confEntry.Name = "program:" + item.Name()
-			confEntry.AddKeyValue("command", fmt.Sprintf("./go-genesis -VDEmode=true -configPath=%s -workDir=%s", filepath.Join(procDir, "config.toml"), procDir))
+			confEntry.AddKeyValue("command", commandStr)
+			confEntry.AddKeyValue("redirect_stderr", "true")
 			proc := process.NewProcess("vdeMaster", confEntry)
 
 			mode.processes.Add(item.Name(), proc)

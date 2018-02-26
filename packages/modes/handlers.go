@@ -26,7 +26,10 @@ func (mode *VDEMaster) createVDEHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	if err := mode.CreateVDE(name, mode.VDE.VDEConfig); err != nil {
+	user := r.FormValue("dbUser")
+	password := r.FormValue("dbPassword")
+
+	if err := mode.CreateVDE(name, user, password); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

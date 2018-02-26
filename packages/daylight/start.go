@@ -33,7 +33,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
-	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/modes"
@@ -53,6 +52,7 @@ func initStatsd() {
 // NodeMode allows implement different startup modes
 type NodeMode interface {
 	Start(exitFunc func(int), gormInit func(conf.DBConfig), listenerFunc func(string, *httprouter.Router))
+	Stop()
 	DaemonList() []string
 }
 
@@ -242,22 +242,21 @@ func Start() {
 		}
 
 		mode = modes.InitVDEMaster(&c)
+	} else if *conf.IsVDE {
+		var c conf.VDEConfig
+		if err := conf.LoadVDEConfig(&c); err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
+			Exit(1)
+		}
+
+		mode = modes.InitVDEMode(&c)
 	} else {
 		mode = modes.InitBlockchain(&conf.Config)
 	}
 
 	mode.Start(Exit, initGorm, runHTTPListener)
 
-	if model.DBConn != nil {
-		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err := daemonsctl.RunAllDaemons(mode.DaemonList())
-		log.Info("Daemons started")
-		if err != nil {
-			os.Exit(1)
-		}
-	}
-
-	daemons.WaitForSignals()
-
-	select {}
+	<-daemons.WaitForSignals()
+	mode.Stop()
+	// select {}
 }
