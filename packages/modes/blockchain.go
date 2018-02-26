@@ -4,6 +4,9 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/julienschmidt/httprouter"
+
+	"github.com/GenesisKernel/go-genesis/packages/api"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -18,18 +21,34 @@ import (
 func InitBlockchain(config *conf.SavedConfig) *Blockchain {
 	mode := &Blockchain{
 		SavedConfig: config,
+		api:         api.CreateDefaultRouter(),
 	}
 
+	api.AddBlockChainRoutes(mode.api)
 	return mode
 }
 
 // Blockchain represent implementation to run node as blockchain
 type Blockchain struct {
 	*conf.SavedConfig
+	api *httprouter.Router
+}
+
+func (mode *Blockchain) DaemonList() []string {
+	return []string{
+		"BlocksCollection",
+		"BlockGenerator",
+		"QueueParserTx",
+		"QueueParserBlocks",
+		"Disseminator",
+		"Confirmations",
+		"Notificator",
+		// "Scheduler",
+	}
 }
 
 // Start Implement NodeMode interface
-func (mode *Blockchain) Start(exitFunc func(int), gormFunc func(conf.DBConfig)) {
+func (mode *Blockchain) Start(exitFunc func(int), gormFunc func(conf.DBConfig), listenerFunc func(string, *httprouter.Router)) {
 
 	if *conf.GenerateFirstBlock {
 		if err := install.GenerateFirstBlock(); err != nil {
@@ -72,6 +91,8 @@ func (mode *Blockchain) Start(exitFunc func(int), gormFunc func(conf.DBConfig)) 
 
 		exitFunc(0)
 	}
+
+	listenerFunc(mode.SavedConfig.HTTP.Str(), mode.api)
 }
 
 func rollbackToBlock(blockID int64) error {

@@ -12,7 +12,7 @@ import (
 )
 
 // RunAllDaemons start daemons, load contracts and tcpserver
-func RunAllDaemons() error {
+func RunAllDaemons(daemonList []string) error {
 	err := syspar.SysUpdate(nil)
 	if err != nil {
 		log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
@@ -26,7 +26,7 @@ func RunAllDaemons() error {
 	}
 
 	log.Info("start daemons")
-	daemons.StartDaemons()
+	daemons.StartDaemons(daemonList)
 
 	err = tcpserver.TcpListener(conf.Config.TCPServer.Str())
 	if err != nil {

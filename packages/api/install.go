@@ -34,6 +34,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var allDaemons = []string{
+	"BlocksCollection",
+	"BlockGenerator",
+	"QueueParserTx",
+	"QueueParserBlocks",
+	"Disseminator",
+	"Confirmations",
+	"Notificator",
+	"Scheduler",
+}
+
 type installResult struct {
 	Success bool `json:"success"`
 }
@@ -101,7 +112,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return err
 	}
 
-	return daemonsctl.RunAllDaemons()
+	return daemonsctl.RunAllDaemons(allDaemons)
 }
 
 func doInstall(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {

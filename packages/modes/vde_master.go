@@ -7,13 +7,16 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/install"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	pConf "github.com/ochinchina/supervisord/config"
-	"github.com/ochinchina/supervisord/process"
+	"github.com/julienschmidt/httprouter"
+	pConf "github.com/rpoletaev/supervisord/config"
+	"github.com/rpoletaev/supervisord/process"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -31,6 +34,7 @@ func InitVDEMaster(config *conf.VDEMasterConfig) *VDEMaster {
 		processes:       process.NewProcessManager(),
 	}
 
+	mode.registerHandlers(mode.VDE.api)
 	return mode
 }
 
@@ -43,17 +47,22 @@ type VDEMaster struct {
 }
 
 // Start implements NodeMode interface
-func (mode *VDEMaster) Start(exitFunc func(int), gormInit func(conf.DBConfig)) {
-	mode.VDE.Start(exitFunc, gormInit)
+func (mode *VDEMaster) Start(exitFunc func(int), gormInit func(conf.DBConfig), listenerFunc func(string, *httprouter.Router)) {
+
+	mode.VDE.Start(exitFunc, gormInit, listenerFunc)
 
 	//TODO: load master implementations
 	if err := mode.prepareWorkDir(); err != nil {
 		exitFunc(1)
 	}
 
-	if err := mode.runProcesses(); err != nil {
+	if err := mode.initProcessManager(); err != nil {
 		exitFunc(1)
 	}
+}
+
+func (mode *VDEMaster) DaemonList() []string {
+	return mode.VDE.DaemonList()
 }
 
 func (mode *VDEMaster) prepareWorkDir() error {
@@ -74,14 +83,28 @@ func (mode *VDEMaster) CreateVDE(name string, config *conf.VDEConfig) error {
 		return err
 	}
 
-	if err := mode.loadProcess(); err != nil {
-		return err
-	}
-
 	if err := mode.initVDEDir(name, config); err != nil {
 
 		return err
 	}
+
+	privFile := filepath.Join(mode.configsPath, consts.PrivateKeyFilename)
+	pubFile := filepath.Join(mode.configsPath, consts.PublicKeyFilename)
+	_, _, err := install.CreateKeyPair(privFile, pubFile)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("error on creating keys")
+		return err
+	}
+
+	procDir := path.Join(mode.configsPath, name)
+	confEntry := pConf.NewConfigEntry(procDir)
+	confEntry.Name = "program:" + name
+	confEntry.AddKeyValue("command", fmt.Sprintf("./go-genesis -VDEmode=true -configPath=%s -workDir=%s", filepath.Join(procDir, "config.toml"), procDir))
+	proc := process.NewProcess("vdeMaster", confEntry)
+
+	mode.processes.Add(name, proc)
+	mode.processes.Find(name).Start(true)
+	log.Info("VDE loaded")
 	return nil
 }
 
@@ -147,7 +170,7 @@ func saveConfigFile(path string, config interface{}) error {
 	return nil
 }
 
-func (mode *VDEMaster) loadProcess() error {
+func (mode *VDEMaster) initProcessManager() error {
 
 	list, err := ioutil.ReadDir(mode.configsPath)
 	if err != nil {
@@ -160,11 +183,34 @@ func (mode *VDEMaster) loadProcess() error {
 			procDir := path.Join(mode.configsPath, item.Name())
 			confEntry := pConf.NewConfigEntry(procDir)
 			confEntry.Name = "program:" + item.Name()
-			confEntry.
+			confEntry.AddKeyValue("command", fmt.Sprintf("./go-genesis -VDEmode=true -configPath=%s -workDir=%s", filepath.Join(procDir, "config.toml"), procDir))
 			proc := process.NewProcess("vdeMaster", confEntry)
+
 			mode.processes.Add(item.Name(), proc)
 		}
 	}
 
 	return nil
+}
+
+// ListProcess returns list of process names with state of process
+func (mode *VDEMaster) ListProcess() map[string]string {
+	list := make(map[string]string)
+
+	mode.processes.ForEachProcess(func(p *process.Process) {
+		list[p.GetName()] = p.GetState().String()
+	})
+
+	return list
+}
+
+// DeleteVDE stop VDE process and remove VDE folder
+func (mode *VDEMaster) DeleteVDE(name string) error {
+	p := mode.processes.Find(name)
+	if p != nil {
+		p.Stop(true)
+	}
+
+	vdeDir := path.Join(mode.configsPath, name)
+	return os.RemoveAll(vdeDir)
 }

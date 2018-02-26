@@ -112,7 +112,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.
 }
 
 // StartDaemons starts daemons
-func StartDaemons() {
+func StartDaemons(dList []string) {
 	if conf.Config.StartDaemons == "null" {
 		return
 	}
@@ -134,7 +134,7 @@ func StartDaemons() {
 	utils.CancelFunc = cancel
 	utils.ReturnCh = make(chan string)
 
-	daemonsToStart := serverList
+	daemonsToStart := dList
 	if len(conf.Config.StartDaemons) > 0 {
 		daemonsToStart = strings.Split(conf.Config.StartDaemons, ",")
 	} else if *conf.TestRollBack {
