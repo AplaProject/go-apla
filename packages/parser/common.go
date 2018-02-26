@@ -26,7 +26,6 @@ import (
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/autoupdate"
-	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -257,11 +256,6 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 
 	// for local tests
 	blockID := block.Header.BlockID
-	if block.Header.BlockID == 1 {
-		if *conf.StartBlockID != 0 {
-			blockID = *conf.StartBlockID
-		}
-	}
 
 	// record into the block chain
 	bl := &model.Block{}

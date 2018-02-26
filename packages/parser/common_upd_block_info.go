@@ -19,7 +19,6 @@ package parser
 import (
 	"fmt"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -32,11 +31,6 @@ import (
 func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 	blockID := block.Header.BlockID
 	// for the local tests
-	if block.Header.BlockID == 1 {
-		if *conf.StartBlockID != 0 {
-			blockID = *conf.StartBlockID
-		}
-	}
 	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
 		block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition)
 

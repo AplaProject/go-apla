@@ -227,7 +227,7 @@ func Start() {
 		conf.Installed = false
 		log.Info("Config file missing.")
 	} else {
-		if !*conf.InitConfig {
+		if !*conf.CreateConfig {
 			if err := conf.LoadConfig(); err != nil {
 				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
 				return
@@ -254,7 +254,7 @@ func Start() {
 		}
 	}
 
-	if *conf.InitConfig {
+	if *conf.CreateConfig {
 		if err := conf.SaveConfig(); err != nil {
 			log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
 			Exit(1)
@@ -316,10 +316,6 @@ func Start() {
 		} else {
 			log.Info("Rollback is OK")
 		}
-		Exit(0)
-	}
-
-	if *conf.NoStart {
 		Exit(0)
 	}
 

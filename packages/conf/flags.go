@@ -60,9 +60,9 @@ var configFlagMap = map[string]interface{}{
 	"dbUser":     &flagStr{confVar: &Config.DB.User, flagBase: flagBase{env: "PGUSER", help: "database user"}},
 	"dbPassword": &flagStr{confVar: &Config.DB.Password, flagBase: flagBase{env: "PGPASSWORD", help: "database password"}},
 
-	"logLevel":   &flagStr{confVar: &Config.LogLevel, defVal: "ERROR", flagBase: flagBase{help: "log level - ERROR,WARN,INFO,DEBUG"}},
-	"logFile":    &flagStr{confVar: &Config.LogFileName, flagBase: flagBase{help: "log file name"}},
-	"privateDir": &flagStr{confVar: &Config.KeysDir, flagBase: flagBase{help: "directory for public/private keys"}},
+	"logLevel": &flagStr{confVar: &Config.LogLevel, defVal: "ERROR", flagBase: flagBase{help: "log level - ERROR,WARN,INFO,DEBUG"}},
+	"logFile":  &flagStr{confVar: &Config.LogFileName, flagBase: flagBase{help: "log file name"}},
+	"keysDir":  &flagStr{confVar: &Config.KeysDir, flagBase: flagBase{help: "directory for public/private keys"}},
 
 	"updateServer":        &flagStr{confVar: &Config.Autoupdate.ServerAddress, defVal: defaultUpdateServer, flagBase: flagBase{help: "server address for autoupdates"}},
 	"updatePublicKeyPath": &flagStr{confVar: &Config.Autoupdate.PublicKeyPath, defVal: defaultUpdatePublicKeyPath, flagBase: flagBase{help: "public key path for autoupdates"}},
@@ -71,16 +71,15 @@ var configFlagMap = map[string]interface{}{
 var (
 	// ConfigPath path to config file
 	ConfigPath = flag.String("configPath", "", "full path to config file (toml format)")
-	NoStart    = flag.Bool("noStart", false, "do not start daemon, just do all necessary job")
 
 	// WorkDirectory application working directory
-	WorkDirectory = flag.String("workDir", "", "work directory")
+	WorkDirectory = flag.String("dir", "", "work directory")
 
 	// FirstBlockPath is a file (1block) where first block file will be stored
 	FirstBlockPath = flag.String("firstBlockPath", "", "pathname of '1block' file")
 
 	// InitConfig initialize config
-	InitConfig = flag.Bool("initConfig", false, "write config parameters to file")
+	CreateConfig = flag.Bool("createConfig", false, "write config parameters to file")
 
 	// InitDatabase initialize database
 	InitDatabase = flag.Bool("initDatabase", false, "initialize database")
@@ -100,23 +99,8 @@ var (
 	// FirstBlockHost is the host of the first block
 	FirstBlockHost = flag.String("firstBlockHost", defaultFirstBlockHost, "FirstBlockHost")
 
-	// WalletAddress is a wallet address for forging
-	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
-
-	// LogSQL show if we should display sql queries in logs
-	LogSQL = flag.Bool("logSQL", false, "set DBConn.LogMode")
-
-	// LogStackTrace show if we should display stack trace in logs
-	LogStackTrace = flag.Bool("logStackTrace", false, "log stack trace")
-
 	// TestRollBack starts special set of daemons
 	TestRollBack = flag.Bool("testRollBack", false, "starts special set of daemons")
-
-	// StartBlockID is the start block
-	StartBlockID = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
-
-	// EndBlockID is the end block
-	EndBlockID = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
 
 	// RollbackToBlockID is the target block for rollback
 	RollbackToBlockID = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
@@ -126,9 +110,6 @@ var (
 
 	// UpdateInterval is interval in seconds for checking updates
 	UpdateInterval = flag.Int64("updateInterval", defaultUpdateInterval, "Interval in seconds for checking updates, default 3600 seconds (1 hour)")
-
-	// CheckReadAccess access check for reading, is used only for VDE
-	CheckReadAccess = flag.Bool("checkReadAccess", true, "Check access for reading, only used for VDE")
 )
 
 func envStr(envName string, val *string) bool {
