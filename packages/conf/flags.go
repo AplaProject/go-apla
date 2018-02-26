@@ -22,8 +22,6 @@ const (
 	defaultDBHost = "127.0.0.1"
 	defaultDBPort = 5432
 
-	defaultFirstBlockHost = "127.0.0.1"
-
 	defaultUpdateInterval      = int64(time.Hour / time.Second)
 	defaultUpdateServer        = "http://127.0.0.1:12345"
 	defaultUpdatePublicKeyPath = "update.pub"
@@ -75,29 +73,17 @@ var (
 	// WorkDirectory application working directory
 	WorkDirectory = flag.String("dir", "", "work directory")
 
-	// FirstBlockPath is a file (1block) where first block file will be stored
-	FirstBlockPath = flag.String("firstBlockPath", "", "pathname of '1block' file")
-
 	// InitConfig initialize config
 	CreateConfig = flag.Bool("createConfig", false, "write config parameters to file")
 
-	// InitDatabase initialize database
+	// InstDatabase initialize database
 	InitDatabase = flag.Bool("initDatabase", false, "initialize database")
 
-	// GenerateFirstBlock force regeneration of first block
-	GenerateFirstBlock = flag.Bool("generateFirstBlock", false, "generate firstblock and keys")
+	// FirstBlockPath is a file (1block) where first block file will be stored
+	FirstBlockPath = flag.String("firstBlockPath", "", "pathname of '1block' file")
 
 	// keyID wallet id
 	keyID = flag.Int64("keyID", 0, "wallet id")
-
-	// FirstBlockPublicKey is the private key
-	FirstBlockPublicKey = flag.String("firstBlockPublicKey", "", "FirstBlockPublicKey")
-
-	// FirstBlockNodePublicKey is the node private key
-	FirstBlockNodePublicKey = flag.String("firstBlockNodePublicKey", "", "FirstBlockNodePublicKey")
-
-	// FirstBlockHost is the host of the first block
-	FirstBlockHost = flag.String("firstBlockHost", defaultFirstBlockHost, "FirstBlockHost")
 
 	// TestRollBack starts special set of daemons
 	TestRollBack = flag.Bool("testRollBack", false, "starts special set of daemons")

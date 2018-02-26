@@ -21,9 +21,7 @@ import (
 	"fmt"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
-
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
-
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/utils"

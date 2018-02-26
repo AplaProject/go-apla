@@ -29,12 +29,11 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/api"
 	"github.com/GenesisKernel/go-genesis/packages/autoupdate"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
 	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
-	"github.com/GenesisKernel/go-genesis/packages/install"
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
@@ -238,14 +237,6 @@ func Start() {
 	conf.SetConfigParams()
 
 	autoupdate.InitUpdater(conf.Config.Autoupdate.ServerAddress, conf.Config.Autoupdate.PublicKeyPath)
-
-	// process directives
-	if *conf.GenerateFirstBlock {
-		if err := install.GenerateFirstBlock(); err != nil {
-			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("GenerateFirstBlock")
-			Exit(1)
-		}
-	}
 
 	if *conf.InitDatabase {
 		if err := model.InitDB(conf.Config.DB); err != nil {

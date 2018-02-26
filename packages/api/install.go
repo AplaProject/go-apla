@@ -21,14 +21,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-
 	"github.com/GenesisKernel/go-genesis/packages/conf"
-
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
-	"github.com/GenesisKernel/go-genesis/packages/install"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	log "github.com/sirupsen/logrus"
@@ -39,11 +35,9 @@ type installResult struct {
 }
 
 type installParams struct {
-	generateFirstBlock     bool
-	installType            string
-	logLevel               string
-	firstLoadBlockchainURL string
-	firstBlockDir          string
+	installType   string
+	logLevel      string
+	firstBlockDir string
 
 	dbHost     string
 	dbPort     string
@@ -63,13 +57,6 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 
 	conf.Config.LogLevel = data.logLevel
 
-	if len(data.firstLoadBlockchainURL) == 0 {
-		log.WithFields(log.Fields{
-			"url": syspar.GetBlockchainURL(),
-		}).Info("firstLoadBlockchainURL is not set through POST data, setting it to first load blockchain url from syspar")
-		data.firstLoadBlockchainURL = syspar.GetBlockchainURL()
-	}
-
 	conf.Config.DB.Host = data.dbHost
 	conf.Config.DB.Port = converter.StrToInt(data.dbPort)
 	conf.Config.DB.Name = data.dbName
@@ -88,14 +75,6 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		URL:    data.centrifugoURL,
 	}
 
-	if !install.IsExistFirstBlock() {
-		err = install.GenerateFirstBlock()
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("GenerateFirstBlock")
-			return err
-		}
-	}
-
 	if err := conf.SaveConfig(); err != nil {
 		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("saving config")
 		return err
@@ -110,20 +89,15 @@ func doInstall(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	data.result = &result
 
 	params := installParams{
-		installType:            data.ParamString("type"),
-		logLevel:               data.ParamString("log_level"),
-		firstLoadBlockchainURL: data.ParamString("first_load_blockchain_url"),
-		firstBlockDir:          data.ParamString("first_block_dir"),
-		dbHost:                 data.ParamString("db_host"),
-		dbPort:                 data.ParamString("db_port"),
-		dbName:                 data.ParamString("db_name"),
-		dbUsername:             data.ParamString("db_user"),
-		dbPassword:             data.ParamString("db_pass"),
-		centrifugoSecret:       data.ParamString("centrifugo_secret"),
-		centrifugoURL:          data.ParamString("centrifugo_url"),
-	}
-	if data.ParamInt64("generate_first_block") == 1 {
-		params.generateFirstBlock = true
+		installType:      data.ParamString("type"),
+		logLevel:         data.ParamString("log_level"),
+		dbHost:           data.ParamString("db_host"),
+		dbPort:           data.ParamString("db_port"),
+		dbName:           data.ParamString("db_name"),
+		dbUsername:       data.ParamString("db_user"),
+		dbPassword:       data.ParamString("db_pass"),
+		centrifugoSecret: data.ParamString("centrifugo_secret"),
+		centrifugoURL:    data.ParamString("centrifugo_url"),
 	}
 	err := installCommon(&params, logger)
 	if err != nil {
