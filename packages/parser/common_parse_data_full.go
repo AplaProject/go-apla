@@ -67,7 +67,7 @@ func InsertBlockWOForks(data []byte) error {
 		return err
 	}
 
-	if err := block.CheckBlock(); err != nil {
+	if err = block.CheckBlock(); err != nil {
 		return err
 	}
 
@@ -95,12 +95,12 @@ func (b *Block) PlayBlockSafe() error {
 		return err
 	}
 
-	if err := UpdBlockInfo(dbTransaction, b); err != nil {
+	if err = UpdBlockInfo(dbTransaction, b); err != nil {
 		dbTransaction.Rollback()
 		return err
 	}
 
-	if err := InsertIntoBlockchain(dbTransaction, b); err != nil {
+	if err = InsertIntoBlockchain(dbTransaction, b); err != nil {
 		dbTransaction.Rollback()
 		return err
 	}
@@ -350,7 +350,7 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 	p.TxPtr = nil
 	p.TxSmart = &smartTx
 	p.TxTime = smartTx.Time
-	p.TxEcosystemID = (smartTx.EcosystemID)
+	p.TxEcosystemID = smartTx.EcosystemID
 	p.TxKeyID = smartTx.KeyID
 
 	contract := smart.GetContractByID(int32(smartTx.Type))
@@ -385,27 +385,28 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 				v, err = converter.DecodeLenInt64(&input)
 			case script.Decimal:
 				var s string
-				if err := converter.BinUnmarshal(&input, &s); err != nil {
+				if err = converter.BinUnmarshal(&input, &s); err != nil {
 					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling script.Decimal")
 					return err
 				}
 				v, err = decimal.NewFromString(s)
 			case `string`:
 				var s string
-				if err := converter.BinUnmarshal(&input, &s); err != nil {
+				if err = converter.BinUnmarshal(&input, &s); err != nil {
 					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
 					return err
 				}
 				v = s
 			case `[]uint8`:
 				var b []byte
-				if err := converter.BinUnmarshal(&input, &b); err != nil {
+				if err = converter.BinUnmarshal(&input, &b); err != nil {
 					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
 					return err
 				}
 				v = hex.EncodeToString(b)
 			case `[]interface {}`:
-				count, err := converter.DecodeLength(&input)
+				var count int64
+				count, err = converter.DecodeLength(&input)
 				if err != nil {
 					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling []interface{}")
 					return err
@@ -413,8 +414,8 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 				isforv = true
 				list := make([]interface{}, 0)
 				for count > 0 {
-					length, err := converter.DecodeLength(&input)
-					if err != nil {
+					var length int64
+					if length, err = converter.DecodeLength(&input); err != nil {
 						log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling tx length")
 						return err
 					}
@@ -495,7 +496,7 @@ func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	p.TxHeader = header
 	p.TxTime = header.Time
 	p.TxType = txType
-	p.TxEcosystemID = (header.EcosystemID)
+	p.TxEcosystemID = header.EcosystemID
 	p.TxKeyID = header.KeyID
 
 	err = trParser.Validate()
@@ -575,15 +576,13 @@ func playTransaction(p *Parser) (string, error) {
 	if p.TxContract != nil {
 		// check that there are enough money in CallContract
 		return p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
-	} else {
-		if p.txParser == nil {
-			return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
-		}
-
-		err := p.txParser.Action()
-		if _, ok := err.(error); ok {
-			return "", utils.ErrInfo(err.(error))
-		}
+	}
+	if p.txParser == nil {
+		return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
+	}
+	err := p.txParser.Action()
+	if _, ok := err.(error); ok {
+		return "", utils.ErrInfo(err.(error))
 	}
 	return "", nil
 }

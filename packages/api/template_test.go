@@ -64,7 +64,7 @@ func TestAPI(t *testing.T) {
 	}
 
 	for _, item := range forTest {
-		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
+		err = sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
 		if err != nil {
 			t.Error(err)
 			return
@@ -147,7 +147,7 @@ func TestImage(t *testing.T) {
 		 }
 		}`},
 		"Conditions": {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
+	if err = postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
@@ -178,7 +178,10 @@ func TestImage(t *testing.T) {
 	}
 	mydata = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
 	err = postTx(name, &url.Values{`Image`: {mydata}})
-
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	template = `Div(Class: list-group-item){
 		Div(panel-body){
 		   DBFind("` + name + `", mysrc).Columns("id,name,image").WhereId(2).Custom(leftImg){

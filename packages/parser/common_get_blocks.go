@@ -123,8 +123,7 @@ func GetBlocks(blockID int64, host string) error {
 		return utils.ErrInfo(err)
 	}
 	for _, block := range myRollbackBlocks {
-		err := RollbackTxFromBlock(block.Data)
-		if err != nil {
+		if err = RollbackTxFromBlock(block.Data); err != nil {
 			return utils.ErrInfo(err)
 		}
 	}
@@ -151,18 +150,18 @@ func GetBlocks(blockID int64, host string) error {
 		}
 
 		forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", block.Header.BlockID, block.PrevHeader.Hash, block.MrklRoot, block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition)
-		hash, err := crypto.DoubleHash([]byte(forSha))
-		if err != nil {
+		var hash []byte
+		if hash, err = crypto.DoubleHash([]byte(forSha)); err != nil {
 			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("double hashing block")
 		}
 		block.Header.Hash = hash
 
-		if err := block.CheckBlock(); err != nil {
+		if err = block.CheckBlock(); err != nil {
 			dbTransaction.Rollback()
 			return utils.ErrInfo(err)
 		}
 
-		if err := block.playBlock(dbTransaction); err != nil {
+		if err = block.playBlock(dbTransaction); err != nil {
 			dbTransaction.Rollback()
 			return utils.ErrInfo(err)
 		}
@@ -170,14 +169,14 @@ func GetBlocks(blockID int64, host string) error {
 
 		// for last block we should update block info
 		if i == 0 {
-			err := UpdBlockInfo(dbTransaction, block)
+			err = UpdBlockInfo(dbTransaction, block)
 			if err != nil {
 				dbTransaction.Rollback()
 				return utils.ErrInfo(err)
 			}
 		}
 		if block.SysUpdate {
-			if err := syspar.SysUpdate(dbTransaction); err != nil {
+			if err = syspar.SysUpdate(dbTransaction); err != nil {
 				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 				return utils.ErrInfo(err)
 			}
@@ -189,18 +188,17 @@ func GetBlocks(blockID int64, host string) error {
 		block := blocks[i]
 		// Delete old blocks from blockchain
 		b := &model.Block{}
-		err = b.DeleteById(dbTransaction, block.Header.BlockID)
+		err = b.DeleteByID(dbTransaction, block.Header.BlockID)
 		if err != nil {
 			dbTransaction.Rollback()
 			return err
 		}
 		// insert new blocks into blockchain
-		if err := InsertIntoBlockchain(dbTransaction, block); err != nil {
+		if err = InsertIntoBlockchain(dbTransaction, block); err != nil {
 			dbTransaction.Rollback()
 			return err
 		}
 	}
 
-	err = dbTransaction.Commit()
-	return err
+	return dbTransaction.Commit()
 }

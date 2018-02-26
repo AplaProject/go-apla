@@ -63,7 +63,7 @@ type EncryptKey struct {
 
 func validateSmartContract(r *http.Request, data *apiData, result *prepareResult) (contract *smart.Contract, parerr interface{}, err error) {
 	cntname := data.params[`name`].(string)
-	contract = smart.VMGetContract(data.vm, cntname, uint32(data.ecosystemId))
+	contract = smart.VMGetContract(data.vm, cntname, uint32(data.ecosystemID))
 	if contract == nil {
 		return nil, cntname, fmt.Errorf(`E_CONTRACT`)
 	}
@@ -78,8 +78,8 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 					pref := getPrefix(data)
 					signature := &model.Signature{}
 					signature.SetTablePrefix(pref)
-					found, err := signature.Get(ret[1])
-					if err != nil {
+					var found bool
+					if found, err = signature.Get(ret[1]); err != nil {
 						log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting signature by name")
 						break
 					}
@@ -93,7 +93,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 						log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling sign from json")
 						break
 					}
-					sign.ForSign = fmt.Sprintf(`%s,%d`, (*result).Time, uint64(data.keyId))
+					sign.ForSign = fmt.Sprintf(`%s,%d`, (*result).Time, uint64(data.keyID))
 					for _, isign := range sign.Params {
 						sign.ForSign += fmt.Sprintf(`,%v`, strings.TrimSpace(r.FormValue(isign.Param)))
 					}

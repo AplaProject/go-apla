@@ -25,10 +25,10 @@ package smart
 import "errors"
 
 const (
-	eTableNotFound = `Table %s has not been found`
+	eTableNotFound = `table %s has not been found`
 )
 
 var (
-	errAccessDenied   = errors.New(`Access denied`)
-	errConditionEmpty = errors.New(`Conditions is empty`)
+	errAccessDenied   = errors.New(`access denied`)
+	errConditionEmpty = errors.New(`conditions is empty`)
 )

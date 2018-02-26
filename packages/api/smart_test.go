@@ -400,7 +400,7 @@ func TestValidateConditions(t *testing.T) {
 		"EditContract":  baseForm,
 		"EditParameter": baseForm,
 		"EditMenu":      baseForm,
-		"EditPage":      url.Values{"Id": {"1"}, "Value": {"Test"}, "Conditions": {"incorrectConditions"}, "Menu": {"1"}},
+		"EditPage":      {"Id": {"1"}, "Value": {"Test"}, "Conditions": {"incorrectConditions"}, "Menu": {"1"}},
 	}
 	expectedErr := `{"type":"panic","error":"unknown identifier incorrectConditions"}`
 

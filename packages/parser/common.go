@@ -124,17 +124,17 @@ type ParserInterface interface {
 }
 
 // GetTablePrefix returns table prefix
-func GetTablePrefix(global string, stateId int64) (string, error) {
+func GetTablePrefix(global string, stateID int64) (string, error) {
 	globalInt, err := strconv.Atoi(global)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.ConversionError}).Error("converting global to int")
 		return "", err
 	}
-	stateIdStr := converter.Int64ToStr(stateId)
+	stateIDStr := converter.Int64ToStr(stateID)
 	if globalInt == 1 {
 		return "global", nil
 	}
-	return stateIdStr, nil
+	return stateIDStr, nil
 }
 
 // GetParser returns ParserInterface
@@ -144,7 +144,7 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 		return &FirstBlockParser{p}, nil
 	}
 	log.WithFields(log.Fields{"tx_type": txType, "type": consts.UnknownObject}).Error("unknown txType")
-	return nil, fmt.Errorf("Unknown txType: %s", txType)
+	return nil, fmt.Errorf("unknown txType: %s", txType)
 }
 
 // Parser is a structure for parsing transactions
@@ -270,7 +270,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 
 	// record into the block chain
 	bl := &model.Block{}
-	err := bl.DeleteById(transaction, blockID)
+	err := bl.DeleteByID(transaction, blockID)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
 		return err
@@ -281,13 +281,11 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block rollback txs")
 		return err
 	}
-	buffer := bytes.Buffer{}
+	buffer := bytes.NewBuffer(nil)
 	for _, rollbackTx := range blockRollbackTxs {
-		if rollbackTxBytes, err := json.Marshal(rollbackTx); err != nil {
+		if err = json.NewEncoder(buffer).Encode(rollbackTx); err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback_tx to json")
 			return err
-		} else {
-			buffer.Write(rollbackTxBytes)
 		}
 	}
 	rollbackTxsHash, err := crypto.Hash(buffer.Bytes())
@@ -416,9 +414,9 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 }
 
 // AccessChange is changing access
-func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
+func (p *Parser) AccessChange(table, name, global string, stateID int64) error {
 	logger := p.GetLogger()
-	prefix, err := GetTablePrefix(global, stateId)
+	prefix, err := GetTablePrefix(global, stateID)
 	if err != nil {
 		return err
 	}

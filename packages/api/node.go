@@ -64,8 +64,6 @@ func nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 	data.params[`signature`] = signature
 	data.params[`pubkey`] = pubkey
 	data.params[`time`] = prepareData.result.(prepareResult).Time
-	if err = contract(w, r, data, logger); err != nil {
-		return err
-	}
-	return nil
+
+	return contract(w, r, data, logger)
 }

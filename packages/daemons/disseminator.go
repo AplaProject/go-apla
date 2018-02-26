@@ -126,7 +126,7 @@ func sendHashes(fullNodeID int64, logger *log.Entry) error {
 
 	buf := prepareHashReq(block, trs, fullNodeID)
 	if buf != nil || len(buf) > 0 {
-		err := sendPacketToAll(I_AM_FULL_NODE, buf, sendHashesResp, logger)
+		err = sendPacketToAll(I_AM_FULL_NODE, buf, sendHashesResp, logger)
 		if err != nil {
 			return err
 		}

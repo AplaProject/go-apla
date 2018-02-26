@@ -38,7 +38,7 @@ type balanceResult struct {
 }
 
 func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	ecosystemId, _, err := checkEcosystem(w, data, logger)
+	ecosystemID, _, err := checkEcosystem(w, data, logger)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	}
 
 	key := &model.Key{}
-	key.SetTablePrefix(ecosystemId)
+	key.SetTablePrefix(ecosystemID)
 	_, err = key.Get(keyID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting Key for wallet")

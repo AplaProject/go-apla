@@ -61,7 +61,7 @@ func BlockRollback(data []byte) error {
 	}
 
 	b := &model.Block{}
-	err = b.DeleteById(dbTransaction, block.Header.BlockID)
+	err = b.DeleteByID(dbTransaction, block.Header.BlockID)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
 		dbTransaction.Rollback()
@@ -140,7 +140,7 @@ func doBlockRollback(transaction *model.DbTransaction, block *Block) error {
 		}
 
 		if p.TxContract != nil {
-			if _, err := p.CallContract(smart.CallInit | smart.CallRollback); err != nil {
+			if _, err = p.CallContract(smart.CallInit | smart.CallRollback); err != nil {
 				return err
 			}
 			if err = p.autoRollback(); err != nil {

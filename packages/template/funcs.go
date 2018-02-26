@@ -242,9 +242,9 @@ func ecosysparTag(par parFunc) string {
 				par.Workspace.SmartContract.VDE)
 			data = append(data, []string{converter.IntToStr(key + 1), item})
 		}
-		node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
+		nodeItem := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
 			`data`: &data, `source`: (*par.Pars)[`Source`]}}
-		par.Owner.Children = append(par.Owner.Children, &node)
+		par.Owner.Children = append(par.Owner.Children, &nodeItem)
 		return ``
 	}
 	if len((*par.Pars)[`Index`]) > 0 {

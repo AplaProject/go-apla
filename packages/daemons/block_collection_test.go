@@ -25,20 +25,18 @@ package daemons
 import (
 	"context"
 	"database/sql"
+	"io/ioutil"
 	"net"
 	"os"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/jinzhu/gorm"
-	sqlite "github.com/mattn/go-sqlite3"
-
-	"io/ioutil"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/jinzhu/gorm"
+	sqlite "github.com/mattn/go-sqlite3"
 )
 
 func encode(x, y []byte) string {

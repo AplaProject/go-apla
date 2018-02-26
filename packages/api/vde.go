@@ -46,24 +46,24 @@ type vdeCreateResult struct {
 }
 
 func vdeCreate(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, data.ecosystemId)) {
+	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, data.ecosystemID)) {
 		return errorAPI(w, `E_VDECREATED`, http.StatusBadRequest)
 	}
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
+	sp.SetTablePrefix(converter.Int64ToStr(data.ecosystemID))
 	if _, err := sp.Get(nil, `founder_account`); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
-	if converter.StrToInt64(sp.Value) != data.keyId {
+	if converter.StrToInt64(sp.Value) != data.keyID {
 		logger.WithFields(log.Fields{"type": consts.AccessDenied, "error": fmt.Errorf(`Access denied`)}).Error("creating vde")
 		return errorAPI(w, `E_PERMISSION`, http.StatusUnauthorized)
 	}
-	if err := model.ExecSchemaLocalData(int(data.ecosystemId), data.keyId); err != nil {
+	if err := model.ExecSchemaLocalData(int(data.ecosystemID), data.keyID); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	smart.LoadVDEContracts(nil, converter.Int64ToStr(data.ecosystemId))
+	smart.LoadVDEContracts(nil, converter.Int64ToStr(data.ecosystemID))
 	data.result = vdeCreateResult{Result: true}
 	return nil
 }
@@ -102,32 +102,32 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 				v, err = converter.DecodeLenInt64(&input)
 			case script.Decimal:
 				var s string
-				if err := converter.BinUnmarshal(&input, &s); err != nil {
+				if err = converter.BinUnmarshal(&input, &s); err != nil {
 					return err
 				}
 				v, err = decimal.NewFromString(s)
 			case `string`:
 				var s string
-				if err := converter.BinUnmarshal(&input, &s); err != nil {
+				if err = converter.BinUnmarshal(&input, &s); err != nil {
 					return err
 				}
 				v = s
 			case `[]uint8`:
 				var b []byte
-				if err := converter.BinUnmarshal(&input, &b); err != nil {
+				if err = converter.BinUnmarshal(&input, &b); err != nil {
 					return err
 				}
 				v = hex.EncodeToString(b)
 			case `[]interface {}`:
-				count, err := converter.DecodeLength(&input)
-				if err != nil {
+				var count int64
+				if count, err = converter.DecodeLength(&input); err != nil {
 					return err
 				}
 				isforv = true
 				list := make([]interface{}, 0)
 				for count > 0 {
-					length, err := converter.DecodeLength(&input)
-					if err != nil {
+					var length int64
+					if length, err = converter.DecodeLength(&input); err != nil {
 						return err
 					}
 					if len(input) < int(length) {
@@ -180,7 +180,8 @@ func VDEContract(contractData []byte, data *apiData) (result *contractResult, er
 		return
 	}
 	if data.token != nil && data.token.Valid {
-		if auth, err := data.token.SignedString([]byte(jwtSecret)); err == nil {
+		var auth string
+		if auth, err = data.token.SignedString([]byte(jwtSecret)); err == nil {
 			sc.TxData[`auth_token`] = auth
 		}
 	}

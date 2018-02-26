@@ -23,13 +23,10 @@
 package daemons
 
 import (
-	"testing"
-
-	"database/sql"
-
-	"time"
-
 	"context"
+	"database/sql"
+	"testing"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"

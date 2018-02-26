@@ -25,16 +25,16 @@ package migration
 import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 
-	version "github.com/hashicorp/go-version"
+	"github.com/hashicorp/go-version"
 	log "github.com/sirupsen/logrus"
 )
 
 var migrations = []*migration{
 	// Inital migration
-	&migration{"0.0.1", migrationInitial},
+	{"0.0.1", migrationInitial},
 
 	// Initial schema
-	&migration{"0.1.6b9", migrationInitialSchema},
+	{"0.1.6b9", migrationInitialSchema},
 }
 
 type migration struct {

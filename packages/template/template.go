@@ -300,7 +300,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		curNode node
 	)
 	pars := make(map[string]string)
-	parFunc := parFunc{
+	parFuncItem := parFunc{
 		Workspace: workspace,
 	}
 	if *workspace.Timeout {
@@ -341,11 +341,11 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 			pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`lang`],
 				workspace.SmartContract.VDE)
 			if pars[i] != v {
-				if parFunc.RawPars == nil {
+				if parFuncItem.RawPars == nil {
 					rawpars := make(map[string]string)
-					parFunc.RawPars = &rawpars
+					parFuncItem.RawPars = &rawpars
 				}
-				(*parFunc.RawPars)[i] = v
+				(*parFuncItem.RawPars)[i] = v
 			}
 		}
 	}
@@ -355,18 +355,18 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		if len(pars[`Body`]) > 0 && curFunc.Tag != `custom` {
 			process(pars[`Body`], &curNode, workspace)
 		}
-		parFunc.Owner = owner
-		parFunc.Node = &curNode
-		parFunc.Tails = tailpars
+		parFuncItem.Owner = owner
+		parFuncItem.Node = &curNode
+		parFuncItem.Tails = tailpars
 	}
 	if *workspace.Timeout {
 		return
 	}
-	parFunc.Pars = &pars
+	parFuncItem.Pars = &pars
 	if (*workspace.Vars)[`_full`] == `1` {
-		out = curFunc.Full(parFunc)
+		out = curFunc.Full(parFuncItem)
 	} else {
-		out = curFunc.Func(parFunc)
+		out = curFunc.Func(parFuncItem)
 	}
 	if len(out) > 0 {
 		if len(owner.Children) > 0 && owner.Children[len(owner.Children)-1].Tag == tagText {

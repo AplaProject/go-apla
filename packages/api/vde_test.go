@@ -70,7 +70,7 @@ func TestVDECreate(t *testing.T) {
 		}
 		action { Test("active 5",  $Par)}}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
 
-	if err := postTx(`EditContract`, &form); err != nil {
+	if err = postTx(`EditContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
@@ -472,12 +472,12 @@ func TestHTTPRequest(t *testing.T) {
 				}
 				heads["Authorization"] = "Bearer " + $Auth
 				pars["vde"] = "true"
-				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `content/page/` + rnd + `", "POST", heads, pars)
+				ret = HTTPRequest("http://localhost:7079` + consts.APIPath + `content/page/` + rnd + `", "POST", heads, pars)
 				json = JSONToMap(ret)
 				if json["menu"] != "myvdemenu" {
 					error "Wrong vde menu"
 				}
-				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `contract/VDEFunctions?vde=true", "GET", heads, pars)
+				ret = HTTPRequest("http://localhost:7079` + consts.APIPath + `contract/VDEFunctions?vde=true", "GET", heads, pars)
 				json = JSONToMap(ret)
 				if json["name"] != "@1VDEFunctions" {
 					error "Wrong vde contract"
@@ -526,7 +526,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
+	if err = postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
 		t.Error(err)
 		return
 	}
@@ -541,7 +541,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 				heads["Authorization"] = "Bearer " + $auth_token
 				pars["vde"] = "false"
 				pars["Par"] = $Par
-				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)
+				ret = HTTPRequest("http://localhost:7079` + consts.APIPath + `node/for` + rnd + `", "POST", heads, pars)
 				json = JSONToMap(ret)
 				$result = json["hash"]
 			}}`}, `Conditions`: {`true`}, `vde`: {`true`}}
@@ -575,7 +575,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 			heads["Authorization"] = "Bearer " + $auth_token
 			pars["vde"] = "false"
 			pars["Par"] = "NodeContract testing"
-			ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)
+			ret = HTTPRequest("http://localhost:7079` + consts.APIPath + `node/for` + rnd + `", "POST", heads, pars)
 			json = JSONToMap(ret)
 			$result = json["hash"]
 		}

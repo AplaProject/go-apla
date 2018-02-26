@@ -112,7 +112,7 @@ func sendAPIRequest(rtype, url string, form *url.Values, v interface{}, auth str
 		ioform = strings.NewReader(form.Encode())
 	}
 	req, err := http.NewRequest(rtype, fmt.Sprintf(`http://%s:%d%s%s`, conf.Config.HTTP.Host,
-		conf.Config.HTTP.Port, consts.ApiPath, url), ioform)
+		conf.Config.HTTP.Port, consts.APIPath, url), ioform)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("new api request")
 		return err

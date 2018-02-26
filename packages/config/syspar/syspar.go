@@ -112,8 +112,8 @@ func SysUpdate(dbTransaction *model.DbTransaction) error {
 			if len(item) < 3 {
 				continue
 			}
-			pub, err := hex.DecodeString(item[2])
-			if err != nil {
+			var pub []byte
+			if pub, err = hex.DecodeString(item[2]); err != nil {
 				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": item[2]}).Error("decoding inode from string")
 				return err
 			}

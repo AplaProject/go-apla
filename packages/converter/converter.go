@@ -23,6 +23,7 @@
 package converter
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -32,8 +33,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"bytes"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/shopspring/decimal"

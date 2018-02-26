@@ -25,7 +25,7 @@ package migration
 import (
 	"testing"
 
-	version "github.com/hashicorp/go-version"
+	"github.com/hashicorp/go-version"
 )
 
 type dbMock struct {
@@ -53,7 +53,7 @@ func TestMockMigration(t *testing.T) {
 
 	appVer := version.Must(version.NewVersion("0.0.2"))
 
-	err = migrate(createDBMock("0"), appVer, []*migration{&migration{"error version", ""}})
+	err = migrate(createDBMock("0"), appVer, []*migration{{"error version", ""}})
 	if err.Error() != "Malformed version: error version" {
 		t.Error(err)
 	}
@@ -62,8 +62,8 @@ func TestMockMigration(t *testing.T) {
 	err = migrate(
 		db, appVer,
 		[]*migration{
-			&migration{"0.0.1", ""},
-			&migration{"0.0.2", ""},
+			{"0.0.1", ""},
+			{"0.0.2", ""},
 		},
 	)
 	if err != nil {
@@ -75,7 +75,7 @@ func TestMockMigration(t *testing.T) {
 
 	db = createDBMock("0.0.2")
 	err = migrate(db, appVer, []*migration{
-		&migration{"0.0.3", ""},
+		{"0.0.3", ""},
 	})
 	if err != nil {
 		t.Error(err)

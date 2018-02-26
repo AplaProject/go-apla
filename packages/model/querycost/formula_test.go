@@ -23,12 +23,12 @@
 package querycost
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/model"
-
 	"errors"
+	"testing"
+
+	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 type TestTableRowCounter struct {

@@ -3,10 +3,9 @@ package query
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"sync"
-
-	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
 )

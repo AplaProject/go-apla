@@ -32,7 +32,7 @@ func TestBuild_GetSystem(t *testing.T) {
 }
 
 func TestGetLastVersion(t *testing.T) {
-	sv := []Version{}
+	var sv []Version
 	for _, c := range versionCases {
 		sv = append(sv, Version{Number: c.version, OS: c.os, Arch: c.arch})
 	}

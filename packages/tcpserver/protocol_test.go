@@ -24,17 +24,15 @@ package tcpserver
 
 import (
 	"bytes"
-
-	"testing"
-
 	"reflect"
+	"testing"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
 
 func TestReadRequest(t *testing.T) {
 	type testStruct struct {
-		Id   uint32
+		ID   uint32
 		Data []byte
 	}
 
@@ -48,7 +46,7 @@ func TestReadRequest(t *testing.T) {
 	if err != nil {
 		t.Errorf("read request return err: %s", err)
 	}
-	if test.Id != 10 {
+	if test.ID != 10 {
 		t.Errorf("bad id value")
 	}
 	if string(test.Data) != "test" {
@@ -58,7 +56,7 @@ func TestReadRequest(t *testing.T) {
 
 func TestReadRequestTag(t *testing.T) {
 	type testStruct2 struct {
-		Id   uint32
+		ID   uint32
 		Data []byte `size:"4"`
 	}
 
@@ -71,7 +69,7 @@ func TestReadRequestTag(t *testing.T) {
 	if err != nil {
 		t.Errorf("read request return err: %s", err)
 	}
-	if test.Id != 10 {
+	if test.ID != 10 {
 		t.Errorf("bad id value")
 	}
 	if string(test.Data) != "test" {
@@ -81,15 +79,15 @@ func TestReadRequestTag(t *testing.T) {
 
 func TestSendRequest(t *testing.T) {
 	type testStruct2 struct {
-		Id   uint32
-		Id2  int64
+		ID   uint32
+		ID2  int64
 		Test []byte
 		Text []byte `size:"4"`
 	}
 
 	test := testStruct2{
-		Id:   15,
-		Id2:  0x1BCDEF0010203040,
+		ID:   15,
+		ID2:  0x1BCDEF0010203040,
 		Test: []byte("test"),
 		Text: []byte("text"),
 	}

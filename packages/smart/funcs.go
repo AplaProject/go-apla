@@ -50,7 +50,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
-
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -290,13 +289,13 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 				contract = VMGetContract(sc.VM, name, 0)
 				if contract == nil {
 					log.WithFields(log.Fields{"contract_name": name, "type": consts.NotFound}).Error("Unknown contract")
-					return false, fmt.Errorf(`Unknown contract %s`, name)
+					return false, fmt.Errorf(`unknown contract %s`, name)
 				}
 			}
 			block := contract.GetFunc(`conditions`)
 			if block == nil {
 				log.WithFields(log.Fields{"contract_name": name, "type": consts.EmptyObject}).Error("There is not conditions in contract")
-				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
+				return false, fmt.Errorf(`there is not conditions in contract %s`, name)
 			}
 			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
 				`key_id`: sc.TxSmart.KeyID, `sc`: sc})
@@ -341,7 +340,7 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	for _, data := range cols {
 		colname := strings.ToLower(data[`name`])
 		if colList[colname] {
-			return fmt.Errorf(`There are the same columns`)
+			return fmt.Errorf(`there are the same columns`)
 		}
 		colList[colname] = true
 		var colType string
@@ -564,7 +563,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 		return
 	}
 	if strings.Contains(tblname, `_reports_`) {
-		err = fmt.Errorf(`Access denied to report table`)
+		err = fmt.Errorf(`access denied to report table`)
 		return
 	}
 	columns := strings.Split(params, `,`)
@@ -585,7 +584,7 @@ func EcosysParam(sc *SmartContract, name string) string {
 func Eval(sc *SmartContract, condition string) error {
 	if len(condition) == 0 {
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("The condition is empty")
-		return fmt.Errorf(`The condition is empty`)
+		return fmt.Errorf(`the condition is empty`)
 	}
 	ret, err := sc.EvalIf(condition)
 	if err != nil {
@@ -696,7 +695,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	v := reflect.ValueOf(perm)
 	for i := 0; i < v.NumField(); i++ {
 		cond := v.Field(i).Interface().(string)
-		name := v.Type().Field(i).Name
+		name = v.Type().Field(i).Name
 		if len(cond) == 0 && name != `Read` && name != `Filter` {
 			log.WithFields(log.Fields{"condition_type": name, "type": consts.EmptyObject}).Error("condition is empty")
 			return fmt.Errorf(`%v condition is empty`, name)
@@ -728,7 +727,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	}
 	if len(cols) > syspar.GetMaxColumns() {
 		log.WithFields(log.Fields{"size": len(cols), "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
-		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
+		return fmt.Errorf(`too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
 	for _, data := range cols {
 		if len(data[`name`]) == 0 || len(data[`type`]) == 0 {
@@ -762,18 +761,14 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		}
 
 	}
-	if err := sc.AccessRights("new_table", false); err != nil {
-		return err
-	}
-
-	return nil
+	return sc.AccessRights("new_table", false)
 }
 
 // ValidateCondition checks if the condition can be compiled
 func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 	if len(condition) == 0 {
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("conditions cannot be empty")
-		return fmt.Errorf("Conditions cannot be empty")
+		return fmt.Errorf("conditions cannot be empty")
 	}
 	return VMCompileEval(sc.VM, condition, uint32(state))
 }
@@ -809,9 +804,12 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 	}
 	if len(permissions) == 0 {
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Permissions are empty")
-		return fmt.Errorf(`Permissions is empty`)
+		return fmt.Errorf(`permissions is empty`)
 	}
-	perm, err := getPermColumns(permissions)
+	var perm permColumn
+	if perm, err = getPermColumns(permissions); err != nil {
+		return err
+	}
 	if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
 		return err
 	}
@@ -831,7 +829,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 	}
 	if count >= int64(syspar.GetMaxColumns()) {
 		log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
-		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
+		return fmt.Errorf(`too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
 	if coltype != `varchar` && coltype != `number` && coltype != `datetime` && coltype != `character` &&
 		coltype != `text` && coltype != `bytea` && coltype != `double` && coltype != `money` {
@@ -843,8 +841,8 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 }
 
 // RowConditions checks conditions for table row by id
-func RowConditions(sc *SmartContract, tblname string, id int64) error {
-	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
+func RowConditions(sc *SmartContract, tblName string, id int64) error {
+	escapedTableName := converter.EscapeName(getDefTableName(sc, tblName))
 	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing row condition query")
@@ -852,14 +850,14 @@ func RowConditions(sc *SmartContract, tblname string, id int64) error {
 	}
 
 	if len(condition) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound, "name": tblname, "id": id}).Error("record not found")
-		return fmt.Errorf("Item %d has not been found", id)
+		log.WithFields(log.Fields{"type": consts.NotFound, "name": tblName, "id": id}).Error("record not found")
+		return fmt.Errorf("item %d has not been found", id)
 	}
 
 	err = Eval(sc, condition)
 	if err != nil {
 		if err == errAccessDenied {
-			if param, ok := tableParamConditions[tblname]; ok {
+			if param, ok := tableParamConditions[tblName]; ok {
 				return sc.AccessRights(param, false)
 			}
 		}
@@ -995,17 +993,16 @@ func IDToAddress(id int64) (out string) {
 	return
 }
 
-func HMac(key, data string, raw_output bool) (ret string, err error) {
+func HMac(key, data string, rawOutput bool) (ret string, err error) {
 	hash, err := crypto.GetHMAC(key, data)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting HMAC")
 		return ``, err
 	}
-	if raw_output {
+	if rawOutput {
 		return string(hash), nil
-	} else {
-		return hex.EncodeToString(hash), nil
 	}
+	return hex.EncodeToString(hash), nil
 }
 
 //Returns the array of keys of the map
@@ -1034,13 +1031,13 @@ func SortedKeys(m map[string]interface{}) []interface{} {
 }
 
 //Formats timestamp to specified date format
-func Date(time_format string, timestamp int64) string {
+func Date(timeFormat string, timestamp int64) string {
 	t := time.Unix(timestamp, 0)
-	return t.Format(time_format)
+	return t.Format(timeFormat)
 }
 
 // HTTPRequest sends http request
-func HTTPRequest(requrl, method string, headers map[string]interface{},
+func HTTPRequest(reqURL, method string, headers map[string]interface{},
 	params map[string]interface{}) (string, error) {
 
 	var ioform io.Reader
@@ -1053,7 +1050,7 @@ func HTTPRequest(requrl, method string, headers map[string]interface{},
 	if len(*form) > 0 {
 		ioform = strings.NewReader(form.Encode())
 	}
-	req, err := http.NewRequest(method, requrl, ioform)
+	req, err := http.NewRequest(method, reqURL, ioform)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("new http request")
 		return ``, err
@@ -1081,11 +1078,11 @@ func HTTPRequest(requrl, method string, headers map[string]interface{},
 }
 
 // HTTPPostJSON sends post http request with json
-func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string) (string, error) {
+func HTTPPostJSON(requrl string, headers map[string]interface{}, jsonStr string) (string, error) {
 
 	client := &http.Client{}
 
-	req, err := http.NewRequest("POST", requrl, bytes.NewBuffer([]byte(json_str)))
+	req, err := http.NewRequest("POST", requrl, bytes.NewBuffer([]byte(jsonStr)))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("new http request")
 		return ``, err

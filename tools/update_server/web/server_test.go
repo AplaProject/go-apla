@@ -1,18 +1,13 @@
 package web_test
 
 import (
-	"net/http/httptest"
-
-	"testing"
-
-	"fmt"
-
-	"os"
-
 	"encoding/json"
-	"net/http"
-
+	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
 
 	"github.com/GenesisKernel/go-genesis/tools/update_server/config"
 	"github.com/GenesisKernel/go-genesis/tools/update_server/crypto"

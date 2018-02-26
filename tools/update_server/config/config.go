@@ -1,7 +1,7 @@
 package config
 
 import (
-	config "github.com/astaxie/beego/config"
+	"github.com/astaxie/beego/config"
 	"github.com/pkg/errors"
 )
 

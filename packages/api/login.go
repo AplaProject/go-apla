@@ -69,7 +69,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("UID is empty")
 		return errorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
 	}
-	state := data.ecosystemId
+	state := data.ecosystemID
 	if data.params[`ecosystem`].(int64) > 0 {
 		state = data.params[`ecosystem`].(int64)
 	}
@@ -111,9 +111,10 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	var (
 		sp      model.StateParameter
 		founder int64
+		ok      bool
 	)
 	sp.SetTablePrefix(converter.Int64ToStr(state))
-	if ok, err := sp.Get(nil, "founder_account"); err != nil {
+	if ok, err = sp.Get(nil, "founder_account"); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder_account parameter")
 		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
 	} else if ok {

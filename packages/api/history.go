@@ -46,7 +46,7 @@ func getHistory(w http.ResponseWriter, r *http.Request, data *apiData, logger *l
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("rollback history")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	rollbackList := []map[string]string{}
+	var rollbackList []map[string]string
 	for _, tx := range *txs {
 		if tx.Data == "" {
 			continue

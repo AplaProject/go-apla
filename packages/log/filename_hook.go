@@ -72,7 +72,7 @@ func (hook ContextHook) Fire(entry *logrus.Entry) error {
 				}
 				entry.Data["from"] = append(entry.Data["from"].([]string), path.Base(name))
 			}
-			count += 1
+			count++
 		}
 	}
 	return nil
