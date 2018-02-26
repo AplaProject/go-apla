@@ -29,7 +29,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/api"
 	"github.com/GenesisKernel/go-genesis/packages/autoupdate"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
@@ -38,7 +37,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/julienschmidt/httprouter"
@@ -129,49 +127,6 @@ func savePid() error {
 
 func delPidFile() {
 	os.Remove(conf.GetPidFile())
-}
-
-func rollbackToBlock(blockID int64) error {
-	if err := smart.LoadContracts(nil); err != nil {
-		return err
-	}
-	parser := new(parser.Parser)
-	err := parser.RollbackToBlockID(*conf.RollbackToBlockID)
-	if err != nil {
-		return err
-	}
-
-	// block id = 1, is a special case for full rollback
-	if blockID != 1 {
-		return nil
-	}
-
-	// check blocks related tables
-	startData := map[string]int64{"1_menu": 1, "1_pages": 1, "1_contracts": 26, "1_parameters": 11, "1_keys": 1, "1_tables": 8, "stop_daemons": 1, "queue_blocks": 9999999, "system_tables": 1, "system_parameters": 27, "system_states": 1, "install": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1, "confirmations": 9999999, "transactions": 9999999}
-	warn := 0
-	for table := range startData {
-		count, err := model.GetRecordsCountTx(nil, table)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting record count")
-			return err
-		}
-		if count > 0 && count > startData[table] {
-			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Warn("record count in table is larger then start")
-			warn++
-		} else {
-			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Info("record count in table is ok")
-		}
-	}
-
-	if warn == 0 {
-		rbFile := filepath.Join(conf.Config.Dir, consts.RollbackResultFilename)
-		ioutil.WriteFile(rbFile, []byte("1"), 0644)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile, "path": rbFile}).Error("rollback result flag")
-			return err
-		}
-	}
-	return nil
 }
 
 func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
@@ -292,23 +247,6 @@ func Start() {
 		Exit(1)
 	}
 	defer delPidFile()
-
-	// database rollback to the specified block
-	if *conf.RollbackToBlockID > 0 {
-		err = syspar.SysUpdate(nil)
-		if err != nil {
-			log.WithError(err).Error("can't read system parameters")
-		}
-		log.WithFields(log.Fields{"block_id": *conf.RollbackToBlockID}).Info("Rollbacking to block ID")
-		err := rollbackToBlock(*conf.RollbackToBlockID)
-		log.WithFields(log.Fields{"block_id": *conf.RollbackToBlockID}).Info("Rollback is ok")
-		if err != nil {
-			log.WithError(err).Error("Rollback error")
-		} else {
-			log.Info("Rollback is OK")
-		}
-		Exit(0)
-	}
 
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)

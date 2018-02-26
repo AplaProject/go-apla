@@ -88,9 +88,6 @@ var (
 	// TestRollBack starts special set of daemons
 	TestRollBack = flag.Bool("testRollBack", false, "starts special set of daemons")
 
-	// RollbackToBlockID is the target block for rollback
-	RollbackToBlockID = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
-
 	// TLS is a directory for .well-known and keys. It is required for https
 	TLS = flag.String("tls", "", "Enable https. Ddirectory for .well-known and keys")
 
