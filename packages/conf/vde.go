@@ -34,8 +34,8 @@ func LoadVDEConfig(config interface{}) error {
 }
 
 // SaveVDEConfig save global parameters to configFile
-func SaveVDEConfig(config interface{}) error {
-	cf, err := os.Create(GetConfigPath())
+func SaveVDEConfig(path string, config interface{}) error {
+	cf, err := os.Create(path)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("Create config file failed")
 		return err
