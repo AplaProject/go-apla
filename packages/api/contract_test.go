@@ -90,6 +90,18 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`TestOneInput`, `contract TestOneInput {
+				data {
+					list array
+				}
+				action { 
+					Test("oneinput",  $list[0])
+				}
+			}`,
+		[]smartParams{
+			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input value`}},
+		}},
+
 	{`DBProblem`, `contract DBProblem {
 		action{
 			DBFind("members").Where("name=?", "name")
