@@ -64,7 +64,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 
 	if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-			if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `crypt`) {
+			if strings.Contains(fitem.Tags, `crypt`) {
 				continue
 			}
 			if strings.Contains(fitem.Tags, `signature`) && result != nil {
@@ -104,6 +104,11 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 						continue
 					}
 					val = ``
+				}
+				if strings.Contains(fitem.Tags, `file`) && len(val) == 0 && data.multipart {
+					if _, fhead, _ := r.FormFile(fitem.Name); fhead != nil {
+						val = fhead.Filename
+					}
 				}
 				if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) &&
 					!strings.Contains(fitem.Tags, `signature`) {

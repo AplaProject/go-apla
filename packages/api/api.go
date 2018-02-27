@@ -55,6 +55,7 @@ type apiData struct {
 	params      map[string]interface{}
 	ecosystemId int64
 	keyId       int64
+	multipart   bool
 	vde         bool
 	vm          *script.VM
 	token       *jwt.Token
@@ -221,7 +222,12 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 			}
 		}
 		// Getting and validating request parameters
-		r.ParseForm()
+		data.multipart = strings.HasPrefix(r.Header.Get(`Content-Type`), `multipart`)
+		if data.multipart {
+			r.ParseMultipartForm(15 * 1024 * 1024)
+		} else {
+			r.ParseForm()
+		}
 		data.params = make(map[string]interface{})
 		for _, par := range ps {
 			data.params[par.Key] = par.Value

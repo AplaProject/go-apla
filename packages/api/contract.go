@@ -19,6 +19,7 @@ package api
 import (
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
@@ -92,6 +94,35 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	if info.Tx != nil {
 	fields:
 		for _, fitem := range *info.Tx {
+			if strings.Contains(fitem.Tags, `file`) {
+				var fileInfo smart.FileInfo
+				if data.multipart {
+					if _, fileHeader, _ := r.FormFile(fitem.Name); fileHeader != nil {
+						file, err := fileHeader.Open()
+						if err != nil {
+							log.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting multipart file")
+							return errorAPI(w, err.Error(), http.StatusBadRequest)
+						}
+						buf, err := ioutil.ReadAll(file)
+						file.Close()
+						if err != nil {
+							log.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("reading multipart file")
+							return errorAPI(w, err.Error(), http.StatusBadRequest)
+						}
+						fileInfo = smart.FileInfo{Filename: fileHeader.Filename,
+							Mime: fileHeader.Header.Get(`Content-Type`),
+							Data: buf,
+						}
+					}
+				}
+				serialFile, err := msgpack.Marshal(fileInfo)
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling file to msgpack")
+					return errorAPI(w, err, http.StatusInternalServerError)
+				}
+				idata = append(append(idata, converter.EncodeLength(int64(len(serialFile)))...), serialFile...)
+				continue
+			}
 			val := strings.TrimSpace(r.FormValue(fitem.Name))
 			if strings.Contains(fitem.Tags, `address`) {
 				val = converter.Int64ToStr(converter.StringToAddress(val))

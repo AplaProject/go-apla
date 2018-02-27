@@ -48,6 +48,12 @@ type Contract struct {
 	Block         *script.Block
 }
 
+type FileInfo struct {
+	Filename string
+	Mime     string
+	Data     []byte
+}
+
 const (
 	// CallInit is a flag for calling init function of the contract
 	CallInit = 0x01

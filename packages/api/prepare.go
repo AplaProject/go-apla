@@ -17,12 +17,16 @@
 package api
 
 import (
+	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
@@ -62,13 +66,39 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 	}
 	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, EcosystemID: data.ecosystemId, KeyID: data.keyId}
 	forsign := smartTx.ForSign()
+	getHash := func(input []byte) (string, error) {
+		hash, err := crypto.Hash(input)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of file")
+			return ``, err
+		}
+		return hex.EncodeToString(hash), nil
+	}
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
-			if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `signature`) {
+			if strings.Contains(fitem.Tags, `signature`) {
 				continue
 			}
 			var val string
-			if fitem.Type.String() == `[]interface {}` {
+			if strings.Contains(fitem.Tags, `file`) && data.multipart {
+				if _, fileHeader, _ := r.FormFile(fitem.Name); fileHeader != nil {
+					file, err := fileHeader.Open()
+					if err != nil {
+						log.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting multipart file")
+						return errorAPI(w, err.Error(), http.StatusBadRequest)
+					}
+					buf, err := ioutil.ReadAll(file)
+					file.Close()
+					if err != nil {
+						log.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("reading multipart file")
+						return errorAPI(w, err.Error(), http.StatusBadRequest)
+					}
+					val, err = getHash(buf)
+					if err != nil {
+						return errorAPI(w, err.Error(), http.StatusBadRequest)
+					}
+				}
+			} else if fitem.Type.String() == `[]interface {}` {
 				for key, values := range r.Form {
 					if key == fitem.Name+`[]` && len(values) > 0 {
 						count := converter.StrToInt(values[0])
@@ -84,6 +114,12 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 				}
 			} else {
 				val = strings.TrimSpace(r.FormValue(fitem.Name))
+				if strings.Contains(fitem.Tags, `image`) && len(val) > 0 {
+					val, err = getHash([]byte(val))
+					if err != nil {
+						return errorAPI(w, err.Error(), http.StatusBadRequest)
+					}
+				}
 				if strings.Contains(fitem.Tags, `address`) {
 					val = converter.Int64ToStr(converter.StringToAddress(val))
 				} else if fitem.Type.String() == script.Decimal {

@@ -17,12 +17,21 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
@@ -903,5 +912,140 @@ func TestContractChain(t *testing.T) {
 	}
 	if msg != rnd+`=`+rnd {
 		t.Error(fmt.Errorf(`wrong result %s`, msg))
+	}
+}
+
+func postMultiPart(uri string, params map[string]string, paramName, path string) (*map[string]interface{}, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile(paramName, filepath.Base(path))
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(part, file)
+
+	for key, val := range params {
+		_ = writer.WriteField(key, val)
+	}
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", `http://localhost:7079`+consts.ApiPath+uri, body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if len(gAuth) > 0 {
+		req.Header.Set("Authorization", jwtPrefix+gAuth)
+	}
+	if err != nil {
+		return nil, err
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
+	}
+	var v map[string]interface{}
+	err = json.Unmarshal(data, &v)
+	if err != nil {
+		return nil, err
+	}
+	return &v, nil
+}
+
+func TestMultipart(t *testing.T) {
+
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(6)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+				Par string
+				Num int
+				Image string "image"
+				Data  bytes "file"
+			}
+			action { 
+				$result = $Par + $Data_Filename + Str($Data_Size) + $Data_Mime
+			}}`}, `Conditions`: {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract ` + rnd + `Opt {
+		data {
+			Par string
+			Image string "image optional"
+			Data  bytes "file optional"
+		}
+		action { 
+			$result = $Par + $Data_Filename + Str($Data_Size) + $Data_Mime
+		}}`}, `Conditions`: {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	params := map[string]string{
+		"Par":   "String parameter",
+		"Num":   "7",
+		"Image": `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`,
+	}
+	v, err := postMultiPart("prepare/"+rnd, params, "Data", "api_test.go")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if err = appendSign(*v, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	params[`signature`] = form[`signature`][0]
+	params[`time`] = form[`time`][0]
+	v, err = postMultiPart(`contract/`+rnd, params, "Data", "api_test.go")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var (
+		id  int64
+		msg string
+	)
+	id, err = waitTx((*v)[`hash`].(string))
+	if id != 0 && err != nil {
+		msg = err.Error()
+		err = nil
+	}
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `String parameterapi_test.go6306application/octet-stream` {
+		t.Errorf(`Wrong result %s`, msg)
+		return
+	}
+	_, msg, err = postTxResult(rnd+`Opt`, &url.Values{`Par`: {rnd}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != rnd+`0` {
+		t.Error(fmt.Errorf(`wrong result %s`, msg))
+		return
 	}
 }

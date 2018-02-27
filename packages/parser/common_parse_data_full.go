@@ -359,13 +359,47 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 
 	input := smartTx.Data
 	p.TxData = make(map[string]interface{})
-
+	getHash := func(input []byte) (string, error) {
+		hash, err := crypto.Hash(input)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of file")
+			return ``, err
+		}
+		return hex.EncodeToString(hash), nil
+	}
 	if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 		for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
 			var err error
 			var v interface{}
 			var forv string
 			var isforv bool
+			if strings.Contains(fitem.Tags, `file`) {
+				var (
+					hash     string
+					buf      []byte
+					fileInfo smart.FileInfo
+				)
+				if err := converter.BinUnmarshal(&input, &buf); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling file")
+					return err
+				}
+				if err := msgpack.Unmarshal(buf, &fileInfo); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("unmarshalling file msgpack")
+					return err
+				}
+				if len(fileInfo.Filename) > 0 {
+					hash, err = getHash(fileInfo.Data)
+					if err != nil {
+						return err
+					}
+				}
+				p.TxData[fitem.Name] = fileInfo.Data
+				p.TxData[fitem.Name+`_Filename`] = fileInfo.Filename
+				p.TxData[fitem.Name+`_Mime`] = fileInfo.Mime
+				p.TxData[fitem.Name+`_Size`] = len(fileInfo.Data)
+				forsign += fmt.Sprintf(",%v", hash)
+				continue
+			}
 			switch fitem.Type.String() {
 			case `uint64`:
 				var val uint64
@@ -433,8 +467,11 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 			if err != nil {
 				return err
 			}
-			if strings.Index(fitem.Tags, `image`) >= 0 {
-				continue
+			if strings.Contains(fitem.Tags, `image`) && len(v.(string)) > 0 {
+				v, err = getHash([]byte(v.(string)))
+				if err != nil {
+					return err
+				}
 			}
 			if isforv {
 				v = forv
