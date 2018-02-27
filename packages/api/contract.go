@@ -39,7 +39,7 @@ type contractResult struct {
 	Result  string         `json:"result,omitempty"`
 }
 
-func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func contract(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) error {
 	var (
 		hash, publicKey []byte
 		toSerialize     interface{}
@@ -47,9 +47,9 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	contract, parerr, err := validateSmartContract(r, data, nil)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), `E_`) {
-			return errorAPI(w, err.Error(), http.StatusBadRequest, parerr)
+			return ErrorAPI(w, err.Error(), http.StatusBadRequest, parerr)
 		}
-		return errorAPI(w, err, http.StatusBadRequest)
+		return ErrorAPI(w, err, http.StatusBadRequest)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
 
@@ -65,10 +65,10 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	_, err = key.Get(signID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 	if key.Delete == 1 {
-		return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
+		return ErrorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 	}
 	if len(key.PublicKey) == 0 {
 		if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
@@ -80,7 +80,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 		}
 		if len(publicKey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
-			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
+			return ErrorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 		}
 	} else {
 		logger.Warning("public key for wallet not found")
@@ -89,7 +89,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	signature := data.params[`signature`].([]byte)
 	if len(signature) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signature is empty")
-		return errorAPI(w, `E_EMPTYSIGN`, http.StatusBadRequest)
+		return ErrorAPI(w, `E_EMPTYSIGN`, http.StatusBadRequest)
 	}
 	idata := make([]byte, 0)
 	if info.Tx != nil {
@@ -150,19 +150,19 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 	if data.vde {
 		ret, err := VDEContract(serializedData, data)
 		if err != nil {
-			return errorAPI(w, err, http.StatusInternalServerError)
+			return ErrorAPI(w, err, http.StatusInternalServerError)
 		}
 		data.result = ret
 		return nil
 	}
 	if hash, err = model.SendTx(int64(info.ID), data.keyId,
 		append([]byte{128}, serializedData...)); err != nil {
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 	data.result = &contractResult{Hash: hex.EncodeToString(hash)}
 	return nil

@@ -39,23 +39,23 @@ type vdeCreateResult struct {
 	Result bool `json:"result"`
 }
 
-func vdeCreate(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func vdeCreate(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) error {
 	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, data.ecosystemId)) {
-		return errorAPI(w, `E_VDECREATED`, http.StatusBadRequest)
+		return ErrorAPI(w, `E_VDECREATED`, http.StatusBadRequest)
 	}
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
 	if _, err := sp.Get(nil, `founder_account`); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
-		return errorAPI(w, err, http.StatusBadRequest)
+		return ErrorAPI(w, err, http.StatusBadRequest)
 	}
 	if converter.StrToInt64(sp.Value) != data.keyId {
 		logger.WithFields(log.Fields{"type": consts.AccessDenied, "error": fmt.Errorf(`Access denied`)}).Error("creating vde")
-		return errorAPI(w, `E_PERMISSION`, http.StatusUnauthorized)
+		return ErrorAPI(w, `E_PERMISSION`, http.StatusUnauthorized)
 	}
 	if err := model.ExecSchemaLocalData(int(data.ecosystemId), data.keyId); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 	smart.LoadVDEContracts(nil, converter.Int64ToStr(data.ecosystemId))
 	data.result = vdeCreateResult{Result: true}
@@ -158,7 +158,7 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 }
 
 // VDEContract is init VDE contract
-func VDEContract(contractData []byte, data *apiData) (result *contractResult, err error) {
+func VDEContract(contractData []byte, data *ApiData) (result *contractResult, err error) {
 	var ret string
 	hash, err := crypto.Hash(contractData)
 	if err != nil {

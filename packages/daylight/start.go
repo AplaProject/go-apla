@@ -258,5 +258,4 @@ func Start() {
 
 	<-daemons.WaitForSignals()
 	mode.Stop()
-	// select {}
 }

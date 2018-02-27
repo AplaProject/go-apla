@@ -37,7 +37,7 @@ type tablesResult struct {
 	List  []tableInfo `json:"list"`
 }
 
-func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+func tables(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) (err error) {
 	var (
 		result tablesResult
 		limit  int
@@ -48,7 +48,7 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 	count, err := model.GetRecordsCountTx(nil, table)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting records count from tables")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return ErrorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	if data.params[`limit`].(int64) > 0 {
 		limit = int(data.params[`limit`].(int64))
@@ -59,7 +59,7 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting names from tables")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return ErrorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	result = tablesResult{
@@ -82,7 +82,7 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 			maxid--
 		}
 		if err != nil {
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+			return ErrorAPI(w, err.Error(), http.StatusInternalServerError)
 		}
 		result.List[i].Count = converter.Int64ToStr(maxid)
 	}

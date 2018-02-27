@@ -27,8 +27,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func MethodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
+func MethodRoute(route *hr.Router, method, pattern, pars string, isVDEMode bool, handler ...ApiHandle) {
+	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, isVDEMode, processParams(pars), handler...))
 }
 
 func setRoute(route *hr.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
@@ -37,31 +37,31 @@ func setRoute(route *hr.Router, path string, handle func(http.ResponseWriter, *h
 	}
 }
 
-func CreateDefaultRouter() *hr.Router {
+func CreateDefaultRouter(isVDEMode bool) *hr.Router {
 	router := hr.New()
 	setRoute(router, `/monitoring`, daemons.Monitoring, `GET`)
-	AddCommonRoutes(router)
+	AddCommonRoutes(router, isVDEMode)
 
 	router.Handler(`GET`, consts.WellKnownRoute, http.FileServer(http.Dir(*conf.TLS)))
 	return router
 }
 
-func AddCommonRoutes(router *hr.Router) {
+func AddCommonRoutes(router *hr.Router, isVDEMode bool) {
 
-	get := func(pattern, params string, handler ...apiHandle) {
-		MethodRoute(router, `GET`, pattern, params, handler...)
+	get := func(pattern, params string, handler ...ApiHandle) {
+		MethodRoute(router, `GET`, pattern, params, isVDEMode, handler...)
 	}
-	post := func(pattern, params string, handler ...apiHandle) {
-		MethodRoute(router, `POST`, pattern, params, handler...)
+	post := func(pattern, params string, handler ...ApiHandle) {
+		MethodRoute(router, `POST`, pattern, params, isVDEMode, handler...)
 	}
-	anyTx := func(method, pattern, pars string, preHandle, handle apiHandle) {
-		MethodRoute(router, method, `prepare/`+pattern, pars, authWallet, preHandle)
+	anyTx := func(method, pattern, pars string, preHandle, handle ApiHandle) {
+		MethodRoute(router, method, `prepare/`+pattern, pars, isVDEMode, authWallet, preHandle)
 		if len(pars) > 0 {
 			pars = `,` + pars
 		}
-		MethodRoute(router, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, authWallet, handle)
+		MethodRoute(router, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, isVDEMode, authWallet, handle)
 	}
-	postTx := func(url string, params string, preHandle, handle apiHandle) {
+	postTx := func(url string, params string, preHandle, handle ApiHandle) {
 		anyTx(`POST`, url, params, preHandle, handle)
 	}
 
@@ -96,14 +96,15 @@ func AddCommonRoutes(router *hr.Router) {
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template:string`, jsonContent)
 
-	MethodRoute(router, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
+	MethodRoute(router, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, isVDEMode, nodeContract)
 
 }
 
 // AddBlockChainRoutes add specific routes to router
 func AddBlockChainRoutes(router *hr.Router) {
-	get := func(pattern, params string, handler ...apiHandle) {
-		MethodRoute(router, `GET`, pattern, params, handler...)
+
+	get := func(pattern, params string, handler ...ApiHandle) {
+		MethodRoute(router, `GET`, pattern, params, false, handler...)
 	}
 
 	get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)

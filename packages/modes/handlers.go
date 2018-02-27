@@ -6,48 +6,47 @@ import (
 
 	"encoding/json"
 
+	"github.com/GenesisKernel/go-genesis/packages/api"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rpoletaev/supervisord/process"
+	log "github.com/sirupsen/logrus"
 )
 
 // AddVDEMasterHandlers add specific handlers to router
 func (mode *VDEMaster) registerHandlers(router *httprouter.Router) {
-	router.Handle(http.MethodPost, "/vde/create", mode.createVDEHandler)
-	router.Handle(http.MethodPost, "/vde/start", mode.startVDEHandler)
-	router.Handle(http.MethodPost, "/vde/stop", mode.stopVDEHandler)
-	router.Handle(http.MethodPost, "/vde/delete", mode.deleteVDEHandler)
-	router.Handle(http.MethodGet, "/vde", mode.listVDEHandler)
+	api.MethodRoute(router, http.MethodPost, "/vde/create", "", true, mode.createVDEHandler)
+	api.MethodRoute(router, http.MethodPost, "/vde/start", "", true, mode.startVDEHandler)
+	api.MethodRoute(router, http.MethodPost, "/vde/stop", "", true, mode.stopVDEHandler)
+	api.MethodRoute(router, http.MethodPost, "/vde/delete", "", true, mode.deleteVDEHandler)
+	api.MethodRoute(router, http.MethodGet, "/vde", "", true, mode.listVDEHandler)
 }
 
-func (mode *VDEMaster) createVDEHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (mode *VDEMaster) createVDEHandler(w http.ResponseWriter, r *http.Request, data *api.ApiData, logger *log.Entry) error {
 	name := r.FormValue("name")
 	if len(name) == 0 {
-		http.Error(w, "name is empty", http.StatusBadRequest)
-		return
+		return api.ErrorAPI(w, fmt.Errorf("name is empty"), http.StatusBadRequest)
 	}
 
 	user := r.FormValue("dbUser")
 	password := r.FormValue("dbPassword")
 
 	if err := mode.CreateVDE(name, user, password); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return api.ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 
 	fmt.Fprintf(w, "VDE '%s' created", name)
+	return nil
 }
 
-func (mode *VDEMaster) startVDEHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (mode *VDEMaster) startVDEHandler(w http.ResponseWriter, r *http.Request, data *api.ApiData, logger *log.Entry) error {
 	name := r.FormValue("name")
 	if len(name) == 0 {
-		http.Error(w, "name is empty", http.StatusBadRequest)
-		return
+		return api.ErrorAPI(w, fmt.Errorf("name is empty"), http.StatusBadRequest)
 	}
 
 	proc := mode.processes.Find(name)
 	if proc == nil {
-		http.Error(w, fmt.Sprintf("process '%s' not found", name), http.StatusNotFound)
-		return
+		return api.ErrorAPI(w, fmt.Sprintf("process '%s' not found", name), http.StatusNotFound)
 	}
 
 	state := proc.GetState()
@@ -56,23 +55,21 @@ func (mode *VDEMaster) startVDEHandler(w http.ResponseWriter, r *http.Request, p
 		state == process.FATAL {
 		proc.Start(true)
 		fmt.Fprintf(w, "VDE '%s' is started", name)
-		return
+		return nil
 	}
 
-	http.Error(w, fmt.Sprintf("VDE '%s' is %s", name, state), http.StatusBadRequest)
+	return api.ErrorAPI(w, fmt.Errorf("VDE '%s' is %s", name, state), http.StatusBadRequest)
 }
 
-func (mode *VDEMaster) stopVDEHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (mode *VDEMaster) stopVDEHandler(w http.ResponseWriter, r *http.Request, data *api.ApiData, logger *log.Entry) error {
 	name := r.FormValue("name")
 	if len(name) == 0 {
-		http.Error(w, "name is empty", http.StatusBadRequest)
-		return
+		return api.ErrorAPI(w, fmt.Errorf("name is empty"), http.StatusBadRequest)
 	}
 
 	proc := mode.processes.Find(name)
 	if proc == nil {
-		http.Error(w, fmt.Sprintf("process '%s' not found", name), http.StatusNotFound)
-		return
+		return api.ErrorAPI(w, fmt.Errorf("process '%s' not found", name), http.StatusNotFound)
 	}
 
 	state := proc.GetState()
@@ -80,30 +77,32 @@ func (mode *VDEMaster) stopVDEHandler(w http.ResponseWriter, r *http.Request, pa
 		state == process.STARTING {
 		proc.Stop(true)
 		fmt.Fprintf(w, "VDE '%s' is stoped", name)
-		return
+		return nil
 	}
 
-	http.Error(w, fmt.Sprintf("VDE '%s' is %s", name, state), http.StatusBadRequest)
+	return api.ErrorAPI(w, fmt.Errorf("VDE '%s' is %s", name, state), http.StatusBadRequest)
 }
 
-func (mode *VDEMaster) deleteVDEHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (mode *VDEMaster) deleteVDEHandler(w http.ResponseWriter, r *http.Request, data *api.ApiData, logger *log.Entry) error {
 	name := r.FormValue("name")
 	if len(name) == 0 {
-		http.Error(w, "name is empty", http.StatusBadRequest)
-		return
+		return api.ErrorAPI(w, fmt.Errorf("name is empty"), http.StatusBadRequest)
 	}
 
 	proc := mode.processes.Find(name)
 	if proc == nil {
-		http.Error(w, fmt.Sprintf("process '%s' not found", name), http.StatusNotFound)
-		return
+		return api.ErrorAPI(w, fmt.Errorf("process '%s' not found", name), http.StatusNotFound)
 	}
 
 	proc.Stop(true)
-
+	return nil
 }
 
-func (mode *VDEMaster) listVDEHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (mode *VDEMaster) listVDEHandler(w http.ResponseWriter, r *http.Request, data *api.ApiData, logger *log.Entry) error {
 	enc := json.NewEncoder(w)
-	enc.Encode(mode.ListProcess())
+	if err := enc.Encode(mode.ListProcess()); err != nil {
+		return api.ErrorAPI(w, err, http.StatusInternalServerError)
+	}
+
+	return nil
 }

@@ -29,7 +29,7 @@ type ecosystemsResult struct {
 	Number uint32 `json:"number"`
 }
 
-func ecosystems(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+func ecosystems(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) (err error) {
 
 	number, err := model.GetNextID(nil, `system_states`)
 	if err != nil {

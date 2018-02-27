@@ -36,28 +36,28 @@ func dataHandler() hr.Handle {
 		data, err := model.GetColumnByID(ps.ByName(`table`), ps.ByName(`column`), ps.ByName(`id`))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting data from table")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+			ErrorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 			return
 		}
 		mark := `base64,`
 		offset := strings.Index(data, mark)
 		if offset == -1 || fmt.Sprintf(`%x`, md5.Sum([]byte(data))) != strings.ToLower(ps.ByName(`hash`)) {
 			log.WithFields(log.Fields{"type": consts.InvalidObject, "error": fmt.Errorf("wrong hash or data")}).Error("wrong hash or data")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+			ErrorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 			return
 		}
 		re := regexp.MustCompile(`(?is)^data:([a-z0-9-]+\/[a-z0-9-]+);base64,$`)
 		ret := re.FindStringSubmatch(data[:offset+len(mark)])
 		if len(ret) != 2 {
 			log.WithFields(log.Fields{"type": consts.InvalidObject, "error": fmt.Errorf("wrong image data")}).Error("wrong image data")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+			ErrorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 			return
 		}
 		datatype := ret[1]
 		bin, err := base64.StdEncoding.DecodeString(data[offset+len(mark):])
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("encoding base64")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+			ErrorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 		}
 		w.Header().Set("Content-Type", datatype)
 		w.Header().Set("Cache-Control", "public,max-age=604800,immutable")

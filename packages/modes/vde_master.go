@@ -62,10 +62,12 @@ func (mode *VDEMaster) Start(exitFunc func(int), gormInit func(conf.DBConfig), l
 	}
 }
 
+// DaemonList implement func of NodeMode interface
 func (mode *VDEMaster) DaemonList() []string {
 	return mode.VDE.DaemonList()
 }
 
+// Stop implement func of NodeMode interface
 func (mode *VDEMaster) Stop() {
 	mode.processes.StopAllProcesses()
 	log.Infoln("VDEMaster mode stopped")

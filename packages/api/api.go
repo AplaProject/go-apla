@@ -49,7 +49,7 @@ const (
 	apiInstallRoute = `/api/v2/install`
 )
 
-type apiData struct {
+type ApiData struct {
 	status      int
 	result      interface{}
 	params      map[string]interface{}
@@ -61,7 +61,7 @@ type apiData struct {
 }
 
 // ParamString reaturs string value of the api params
-func (a *apiData) ParamString(key string) string {
+func (a *ApiData) ParamString(key string) string {
 	v, ok := a.params[key]
 	if !ok {
 		return ""
@@ -70,7 +70,7 @@ func (a *apiData) ParamString(key string) string {
 }
 
 // ParamInt64 reaturs int64 value of the api params
-func (a *apiData) ParamInt64(key string) int64 {
+func (a *ApiData) ParamInt64(key string) int64 {
 	v, ok := a.params[key]
 	if !ok {
 		return 0
@@ -95,9 +95,9 @@ const (
 	pOptional = 0x100
 )
 
-type apiHandle func(http.ResponseWriter, *http.Request, *apiData, *log.Entry) error
+type ApiHandle func(http.ResponseWriter, *http.Request, *ApiData, *log.Entry) error
 
-func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
+func ErrorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
 	var (
 		msg, errCode, errParams string
 	)
@@ -131,7 +131,7 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 	return fmt.Errorf(msg)
 }
 
-func getPrefix(data *apiData) (prefix string) {
+func getPrefix(data *ApiData) (prefix string) {
 	prefix = converter.Int64ToStr(data.ecosystemId)
 	if data.vde {
 		prefix += `_vde`
@@ -139,12 +139,12 @@ func getPrefix(data *apiData) (prefix string) {
 	return
 }
 
-func getSignHeader(txName string, data *apiData) tx.Header {
+func getSignHeader(txName string, data *ApiData) tx.Header {
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
 		EcosystemID: data.ecosystemId, KeyID: data.keyId}
 }
 
-func getHeader(txName string, data *apiData) (tx.Header, error) {
+func getHeader(txName string, data *ApiData) (tx.Header, error) {
 	publicKey := []byte("null")
 	if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
 		publicKey = data.params[`pubkey`].([]byte)
@@ -164,7 +164,7 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 }
 
 // DefaultHandler is a common handle function for api requests
-func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
+func DefaultHandler(method, pattern string, isVDEMode bool, params map[string]int, handlers ...ApiHandle) hr.Handle {
 
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 		counterName := statsd.APIRouteCounterName(method, pattern)
@@ -172,7 +172,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		startTime := time.Now()
 		var (
 			err  error
-			data apiData
+			data ApiData
 		)
 		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
 		requestLogger.Info("received http request")
@@ -183,7 +183,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 			if r := recover(); r != nil {
 				requestLogger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r, "stack": string(debug.Stack())}).Error("panic recovered error")
 				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
-				errorAPI(w, `E_RECOVERED`, http.StatusInternalServerError)
+				ErrorAPI(w, `E_RECOVERED`, http.StatusInternalServerError)
 			}
 		}()
 
@@ -191,12 +191,12 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if conf.Installed {
 			if r.URL.Path == apiInstallRoute {
-				errorAPI(w, `E_INSTALLED`, http.StatusInternalServerError)
+				ErrorAPI(w, `E_INSTALLED`, http.StatusInternalServerError)
 				return
 			}
 		} else {
 			if r.URL.Path != apiInstallRoute {
-				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
+				ErrorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
 				return
 			}
 		}
@@ -207,10 +207,10 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 			errmsg := err.Error()
 			expired := `token is expired by`
 			if strings.HasPrefix(errmsg, expired) {
-				errorAPI(w, `E_TOKENEXPIRED`, http.StatusUnauthorized, errmsg[len(expired):])
+				ErrorAPI(w, `E_TOKENEXPIRED`, http.StatusUnauthorized, errmsg[len(expired):])
 				return
 			}
-			errorAPI(w, err, http.StatusBadRequest)
+			ErrorAPI(w, err, http.StatusBadRequest)
 			return
 		}
 		data.token = token
@@ -226,22 +226,23 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		for _, par := range ps {
 			data.params[par.Key] = par.Value
 		}
-		vde := r.FormValue(`vde`)
-		if vde == `1` || vde == `true` {
+
+		if isVDEMode {
 			data.vm = smart.GetVM(true, data.ecosystemId)
 			if data.vm == nil {
-				errorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemId)
+				ErrorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemId)
 				return
 			}
 			data.vde = true
 		} else {
 			data.vm = smart.GetVM(false, 0)
 		}
+
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {
 				requestLogger.WithFields(log.Fields{"type": consts.RouteError, "error": fmt.Sprintf("undefined val %s", key)}).Error("undefined val")
-				errorAPI(w, `E_UNDEFINEVAL`, http.StatusBadRequest, key)
+				ErrorAPI(w, `E_UNDEFINEVAL`, http.StatusBadRequest, key)
 				return
 			}
 			switch par & 0xff {
@@ -251,7 +252,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 				bin, err := hex.DecodeString(val)
 				if err != nil {
 					requestLogger.WithFields(log.Fields{"type": consts.ConversionError, "value": val, "error": err}).Error("decoding http parameter from hex")
-					errorAPI(w, err, http.StatusBadRequest)
+					ErrorAPI(w, err, http.StatusBadRequest)
 					return
 				}
 				data.params[key] = bin
@@ -267,25 +268,25 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		jsonResult, err := json.Marshal(data.result)
 		if err != nil {
 			requestLogger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marhsalling http response to json")
-			errorAPI(w, err, http.StatusInternalServerError)
+			ErrorAPI(w, err, http.StatusInternalServerError)
 			return
 		}
 		w.Write(jsonResult)
 	})
 }
 
-func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (int64, string, error) {
+func checkEcosystem(w http.ResponseWriter, data *ApiData, logger *log.Entry) (int64, string, error) {
 	ecosystemID := data.ecosystemId
 	if data.params[`ecosystem`].(int64) > 0 {
 		ecosystemID = data.params[`ecosystem`].(int64)
 		count, err := model.GetNextID(nil, `system_states`)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id system states")
-			return 0, ``, errorAPI(w, err, http.StatusBadRequest)
+			return 0, ``, ErrorAPI(w, err, http.StatusBadRequest)
 		}
 		if ecosystemID >= count {
 			logger.WithFields(log.Fields{"state_id": ecosystemID, "count": count, "type": consts.ParameterExceeded}).Error("state_id is larger then max count")
-			return 0, ``, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, ecosystemID)
+			return 0, ``, ErrorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, ecosystemID)
 		}
 	}
 	prefix := converter.Int64ToStr(ecosystemID)

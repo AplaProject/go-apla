@@ -24,7 +24,7 @@ import (
 func InitBlockchain(config *conf.SavedConfig) *Blockchain {
 	mode := &Blockchain{
 		SavedConfig: config,
-		api:         api.CreateDefaultRouter(),
+		api:         api.CreateDefaultRouter(false),
 		daemonList: []string{
 			"BlocksCollection",
 			"BlockGenerator",
@@ -48,6 +48,7 @@ type Blockchain struct {
 	daemonList []string
 }
 
+// DaemonList implement func of NodeMode interface
 func (mode *Blockchain) DaemonList() []string {
 	return mode.daemonList
 }
@@ -126,6 +127,7 @@ func (mode *Blockchain) Start(exitFunc func(int), gormFunc func(conf.DBConfig), 
 	}
 }
 
+// Stop implement func of NodeMode interface
 func (mode *Blockchain) Stop() {
 	log.Infoln("Blockchain mode stopped")
 }

@@ -30,7 +30,7 @@ type rowResult struct {
 	Value map[string]string `json:"value"`
 }
 
-func row(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+func row(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) (err error) {
 	cols := `*`
 	if len(data.params[`columns`].(string)) > 0 {
 		cols = converter.EscapeName(data.params[`columns`].(string))
@@ -39,7 +39,7 @@ func row(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entr
 	row, err := model.GetOneRow(`SELECT `+cols+` FROM `+table+` WHERE id = ?`, data.params[`id`].(string)).String()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": data.params["name"].(string), "id": data.params["id"].(string)}).Error("getting one row")
-		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)
+		return ErrorAPI(w, `E_QUERY`, http.StatusInternalServerError)
 	}
 
 	data.result = &rowResult{Value: row}

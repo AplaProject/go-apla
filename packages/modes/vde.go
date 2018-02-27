@@ -12,10 +12,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// InitVDEMode init VDE Mode
 func InitVDEMode(config *conf.VDEConfig) *VDE {
 	mode := &VDE{
 		VDEConfig: config,
-		api:       api.CreateDefaultRouter(),
+		api:       api.CreateDefaultRouter(true),
 		daemonList: []string{
 			"Notificator",
 			"Scheduler",
@@ -25,12 +26,14 @@ func InitVDEMode(config *conf.VDEConfig) *VDE {
 	return mode
 }
 
+// VDE represent VDE mode implement NodeMode interface
 type VDE struct {
 	*conf.VDEConfig
 	api        *httprouter.Router
 	daemonList []string
 }
 
+// Start implement Start func of NodeMode interface
 func (mode *VDE) Start(exitFunc func(int), gormInit func(conf.DBConfig), listenerFunc func(string, *httprouter.Router)) {
 	gormInit(mode.DB)
 
@@ -57,10 +60,12 @@ func (mode *VDE) Start(exitFunc func(int), gormInit func(conf.DBConfig), listene
 	}
 }
 
+// DaemonList implement func of NodeMode interface
 func (mode *VDE) DaemonList() []string {
 	return mode.daemonList
 }
 
+// Stop implement func of NodeMode interface
 func (mode *VDE) Stop() {
 	log.Infoln("VDE mode stopped")
 }

@@ -55,7 +55,7 @@ type EncryptKey struct {
 	Error     string `json:"error"`
 }
 
-func validateSmartContract(r *http.Request, data *apiData, result *prepareResult) (contract *smart.Contract, parerr interface{}, err error) {
+func validateSmartContract(r *http.Request, data *ApiData, result *prepareResult) (contract *smart.Contract, parerr interface{}, err error) {
 	cntname := data.params[`name`].(string)
 	contract = smart.VMGetContract(data.vm, cntname, uint32(data.ecosystemId))
 	if contract == nil {

@@ -36,7 +36,7 @@ type prepareResult struct {
 	Time    string            `json:"time"`
 }
 
-func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func prepareContract(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) error {
 	var (
 		result  prepareResult
 		timeNow int64
@@ -49,9 +49,9 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 	contract, parerr, err := validateSmartContract(r, data, &result)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), `E_`) {
-			return errorAPI(w, err.Error(), http.StatusBadRequest, parerr)
+			return ErrorAPI(w, err.Error(), http.StatusBadRequest, parerr)
 		}
-		return errorAPI(w, err, http.StatusBadRequest)
+		return ErrorAPI(w, err, http.StatusBadRequest)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
 	smartTx.TokenEcosystem = data.params[`token_ecosystem`].(int64)
