@@ -7,8 +7,6 @@ import (
 
 	"path/filepath"
 
-	"fmt"
-
 	"github.com/GenesisKernel/go-genesis/tools/update_server/model"
 	"github.com/pkg/errors"
 )
@@ -40,7 +38,6 @@ func (bs *BinaryStorage) SaveBuild(build model.Build) error {
 		return errors.Wrapf(err, "saving binary to file")
 	}
 
-	fmt.Println("file saved?")
 	return nil
 }
 
