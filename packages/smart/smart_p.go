@@ -595,8 +595,14 @@ func UpdateLang(sc *SmartContract, name, trans string) {
 }
 
 // Size returns the length of the string
-func Size(s string) int64 {
-	return int64(len(s))
+func Size(s interface{}) int64 {
+	switch v := s.(type) {
+	case string:
+		return int64(len(v))
+	case []uint8:
+		return int64(len(v))
+	}
+	return 0
 }
 
 // Substr returns the substring of the string

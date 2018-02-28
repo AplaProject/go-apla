@@ -55,6 +55,7 @@ type FileInfo struct {
 }
 
 const (
+	MimePrefix = `mime:`
 	// CallInit is a flag for calling init function of the contract
 	CallInit = 0x01
 	// CallCondition is a flag for calling condition function of the contract

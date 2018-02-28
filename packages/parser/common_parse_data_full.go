@@ -393,7 +393,12 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 						return err
 					}
 				}
-				p.TxData[fitem.Name] = fileInfo.Data
+				if len(fileInfo.Data) > 0 {
+					mime := []byte(smart.MimePrefix + fileInfo.Mime)
+					p.TxData[fitem.Name] = append(fileInfo.Data, append(mime, byte(len(mime)))...)
+				} else {
+					p.TxData[fitem.Name] = fileInfo.Data
+				}
 				p.TxData[fitem.Name+`_Filename`] = fileInfo.Filename
 				p.TxData[fitem.Name+`_Mime`] = fileInfo.Mime
 				p.TxData[fitem.Name+`_Size`] = len(fileInfo.Data)

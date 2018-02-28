@@ -982,7 +982,7 @@ func TestMultipart(t *testing.T) {
 				Data  bytes "file"
 			}
 			action { 
-				$result = $Par + $Data_Filename + Str($Data_Size) + $Data_Mime
+				$result = $Par + $Data_Filename + Str($Data_Size) + FileMime($Data) + Str(FileSize($Data)) + $Data_Mime
 			}}`}, `Conditions`: {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
@@ -995,8 +995,8 @@ func TestMultipart(t *testing.T) {
 			Data  bytes "file optional"
 		}
 		action { 
-			$result = $Par + $Data_Filename + Str($Data_Size) + $Data_Mime
-		}}`}, `Conditions`: {`true`}}
+			$result = $Par + $Data_Filename + Str($Data_Size) + FileMime($Data) + Str(FileSize($Data)) + $Data_Mime
+			}}`}, `Conditions`: {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
@@ -1035,7 +1035,7 @@ func TestMultipart(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if msg != `String parameterapi_test.go6306application/octet-stream` {
+	if msg != `String parameterapi_test.go6306application/octet-stream6306application/octet-stream` {
 		t.Errorf(`Wrong result %s`, msg)
 		return
 	}
@@ -1044,7 +1044,7 @@ func TestMultipart(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if msg != rnd+`0` {
+	if msg != rnd+`00` {
 		t.Error(fmt.Errorf(`wrong result %s`, msg))
 		return
 	}

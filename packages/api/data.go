@@ -26,14 +26,15 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
 
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	base64columnType = "bytea"
-	base64header     = "base64,"
+	bytesColumnType = "bytea"
+	base64header    = "base64,"
 )
 
 var base64regexp = regexp.MustCompile(`(?is)^data:([a-z0-9-]+\/[a-z0-9-]+);base64,$`)
@@ -62,8 +63,14 @@ func dataHandler() hr.Handle {
 			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 			return
 		}
+		if mime := smart.FileMime([]byte(data)); len(mime) > 0 {
+			w.Header().Set("Content-Type", mime)
+			w.Header().Set("Cache-Control", "public,max-age=604800,immutable")
+			w.Write(smart.FileData([]byte(data)))
+			return
+		}
 
-		if columnType != base64columnType {
+		if columnType != bytesColumnType {
 			w.Header().Set("Content-Type", "text/plain")
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Write([]byte(data))

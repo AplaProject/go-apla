@@ -198,6 +198,9 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Deactivate":         Deactivate,
 		"check_signature":    CheckSignature,
 		"RowConditions":      RowConditions,
+		"FileData":           FileData,
+		"FileMime":           FileMime,
+		"FileSize":           FileSize,
 	}
 
 	switch vt {
@@ -1160,4 +1163,34 @@ func UpdateCron(sc *SmartContract, id int64) error {
 	}
 
 	return nil
+}
+
+func FileMime(input []byte) (mime string) {
+	size := len(input)
+	if size > 0 {
+		lenMime := int(input[len(input)-1])
+		if lenMime < size {
+			suffix := string(input[size-lenMime-1 : size-1])
+			if strings.HasPrefix(suffix, MimePrefix) && strings.Contains(suffix, `/`) {
+				mime = suffix[len(MimePrefix):]
+			}
+		}
+	}
+	return
+}
+
+func FileData(input []byte) []byte {
+	mime := FileMime(input)
+	if len(mime) == 0 {
+		return input
+	}
+	return input[:len(input)-len(mime)-len(MimePrefix)-1]
+}
+
+func FileSize(input []byte) int64 {
+	mime := FileMime(input)
+	if len(mime) == 0 {
+		return int64(len(input))
+	}
+	return int64(len(input) - len(mime) - len(MimePrefix) - 1)
 }
