@@ -328,7 +328,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 	}
 	trim := func(input string, quotes bool) string {
 		result := strings.Trim(input, "\t\r\n ")
-		if quotes {
+		if quotes && len(result) > 0 {
 			for _, ch := range "\"`" {
 				if rune(result[0]) == ch {
 					result = strings.Trim(result, string([]rune{ch}))
