@@ -106,6 +106,7 @@ var contracts = []smartContract{
 		}`,
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"runtime panic error"}`}},
+		}},
 	{`TestOneInput`, `contract TestOneInput {
 		data {
 			list array
