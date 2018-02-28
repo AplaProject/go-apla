@@ -521,27 +521,25 @@ func RollbackEcosystem(sc *SmartContract) error {
 
 // RollbackTable is rolling back table
 func RollbackTable(sc *SmartContract, name string) error {
-	if sc.TxContract.Name != `@1NewTable` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from @1NewTable")
-		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
+	if !accessContracts(sc, "NewTable", "Import") {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from NewTable or Import")
+		return fmt.Errorf(`RollbackTable can be only called from NewTable or Import`)
 	}
 	name = strings.ToLower(name)
 	tableName := getDefTableName(sc, name)
 	rollbackTx := &model.RollbackTx{}
+
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, tableName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback table")
 		return err
 	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("table record in rollback table")
-		// if there is not such hash then NewTable was faulty. Do nothing.
-		return nil
-	}
-	err = rollbackTx.DeleteByHashAndTableName(sc.DbTransaction)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting record from rollback table")
-		return err
+	if found {
+		err = rollbackTx.DeleteByHashAndTableName(sc.DbTransaction)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting records from rollback table")
+			return err
+		}
 	}
 
 	err = model.DropTable(sc.DbTransaction, tableName)
@@ -686,4 +684,17 @@ func JSONToMap(input string) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return ret, nil
+}
+
+func RollbackContract(sc *SmartContract, name string) error {
+	if !accessContracts(sc, "Import") {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract, "error": errAccessRollbackContract}).Error("Check contract access")
+		return errAccessRollbackContract
+	}
+
+	if c := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID)); c != nil {
+		delete(sc.VM.Objects, c.Name)
+	}
+
+	return nil
 }

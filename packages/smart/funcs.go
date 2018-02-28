@@ -198,6 +198,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Deactivate":         Deactivate,
 		"check_signature":    CheckSignature,
 		"RowConditions":      RowConditions,
+		"RollbackContract":   RollbackContract,
 	}
 
 	switch vt {
