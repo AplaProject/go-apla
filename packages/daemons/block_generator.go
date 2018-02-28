@@ -132,7 +132,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	header := &utils.BlockData{
 		BlockID:      prevBlock.BlockID + 1,
 		Time:         time.Now().Unix(),
-		EcosystemID:  conf.Config.EcosystemID,
+		EcosystemID:  0,
 		KeyID:        conf.Config.KeyID,
 		NodePosition: myNodePosition,
 		Version:      consts.BLOCK_VERSION,

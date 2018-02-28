@@ -2,6 +2,7 @@ package conf
 
 import (
 	"flag"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -169,6 +170,19 @@ func SetConfigParams() {
 
 	if Config.KeysDir == "" {
 		Config.KeysDir = Config.Dir
+	}
+
+	if Config.KeyID == 0 {
+		keyIDFileName := filepath.Join(Config.KeysDir, consts.KeyIDFilename)
+		if keyIDBytes, err := ioutil.ReadFile(keyIDFileName); err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": keyIDFileName}).Fatal("reading KeyID file")
+		} else {
+			if keyID, err := strconv.ParseInt(string(keyIDBytes), 10, 64); err != nil {
+				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": string(keyIDBytes)}).Fatal("converting keyID to int")
+			} else {
+				Config.KeyID = keyID
+			}
+		}
 	}
 
 	if *FirstBlockPath == "" {

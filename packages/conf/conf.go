@@ -63,8 +63,7 @@ type SavedConfig struct {
 	LogLevel    string
 	LogFileName string
 
-	KeyID       int64
-	EcosystemID int64
+	KeyID int64 `toml:"-"`
 
 	MaxPageGenerationTime int64 // in milliseconds
 
@@ -73,8 +72,8 @@ type SavedConfig struct {
 	DB        DBConfig
 	StatsD    StatsDConfig
 
-	Dir     string // application work dir (cwd by default)
-	KeysDir string // place for private keys files: NodePrivateKey, PrivateKey
+	Dir     string `toml:"-"` // application work dir (cwd by default)
+	KeysDir string `toml:"-"` // place for private keys files: NodePrivateKey, PrivateKey
 
 	Centrifugo CentrifugoConfig
 

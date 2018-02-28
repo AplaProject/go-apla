@@ -35,7 +35,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -210,18 +209,6 @@ func Start() {
 	}
 
 	if conf.Installed {
-		if conf.Config.KeyID == 0 {
-			key, err := parser.GetKeyIDFromPrivateKey()
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Unable to get KeyID")
-				Exit(1)
-			}
-			conf.Config.KeyID = key
-			if err := conf.SaveConfig(); err != nil {
-				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
-				Exit(1)
-			}
-		}
 		initGorm(conf.Config.DB)
 	}
 
