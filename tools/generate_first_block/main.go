@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"flag"
 	"io/ioutil"
 	"time"
@@ -33,7 +34,15 @@ func main() {
 	}
 
 	var tx []byte
-	_, err := converter.BinMarshal(&tx,
+	bPublicKey, err := hex.DecodeString(*publicKey)
+	if err != nil {
+		log.WithFields(log.Fields{"value": *publicKey, "error": err}).Fatal("converting public key from hex")
+	}
+	bNodePublicKey, err := hex.DecodeString(*nodePublicKey)
+	if err != nil {
+		log.WithFields(log.Fields{"value": *nodePublicKey, "error": err}).Fatal("converting node public key from hex")
+	}
+	_, err = converter.BinMarshal(&tx,
 		&consts.FirstBlock{
 			TxHeader: consts.TxHeader{
 				// TODO: move types to enum
@@ -42,8 +51,8 @@ func main() {
 				Time:  uint32(now),
 				KeyID: *keyID,
 			},
-			PublicKey:     []byte(*publicKey),
-			NodePublicKey: []byte(*nodePublicKey),
+			PublicKey:     []byte(bPublicKey),
+			NodePublicKey: []byte(bNodePublicKey),
 			Host:          *host,
 		},
 	)
