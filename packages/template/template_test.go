@@ -41,6 +41,7 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`QRcode(Some text)`, `[{"tag":"qrcode","attr":{"text":"Some text"}}]`},
 	{`Button(Body: addpage, 
 		Contract: NewPage, 
 		Params: "Name=hello_page2, Value=Div(fefe, dbbt), Menu=default_menu, Conditions=true")`,

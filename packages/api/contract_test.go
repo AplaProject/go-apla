@@ -74,7 +74,7 @@ func TestNewContracts(t *testing.T) {
 				form[key] = []string{value}
 			}
 			if err := postTx(item.Name, &form); err != nil {
-				if err.Error() != par.Results[`error`] {
+				if par.Results[`error`] != err.Error() {
 					t.Error(err)
 					return
 				}
@@ -106,6 +106,16 @@ var contracts = []smartContract{
 		}`,
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"runtime panic error"}`}},
+	{`TestOneInput`, `contract TestOneInput {
+		data {
+			list array
+		}
+		action { 
+			Test("oneinput",  $list[0])
+		}
+	}`,
+		[]smartParams{
+			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input value`}},
 		}},
 	{`DBProblem`, `contract DBProblem {
 		action{
@@ -115,7 +125,6 @@ var contracts = []smartContract{
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"pq: current transaction is aborted, commands ignored until end of transaction block"}`}},
 		}},
-
 	{`TestMultiForm`, `contract TestMultiForm {
 					data {
 						list array
