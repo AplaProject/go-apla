@@ -28,11 +28,11 @@ type VersionOpt struct {
 }
 
 type PublicKeyOpt struct {
-	PublicKeyPath string `long:"publ-key-path" description:"path to public key" default:"./resources/key.pub" required:"true"`
+	PublicKeyPath string `long:"publ-key-path" description:"path to public key" required:"true"`
 }
 
 type PrivateKeyOpt struct {
-	PrivateKeyPath string `long:"key-path" description:"path to private key for binary signing" default:"./resources/key" required:"true"`
+	PrivateKeyPath string `long:"key-path" description:"path to private key for binary signing" required:"true"`
 }
 
 var opts struct {
@@ -114,7 +114,7 @@ func main() {
 		}
 
 		p := filepath.Join(opts.GetCommand.Path, b.Name+"_"+b.Version.String())
-		err = ioutil.WriteFile(p, b.Body, 0600)
+		err = ioutil.WriteFile(p, b.Body, os.FileMode(0770))
 		if err != nil {
 			err = errors.Wrapf(err, "writing binary to file")
 			break

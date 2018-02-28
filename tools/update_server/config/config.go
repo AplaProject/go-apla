@@ -7,12 +7,13 @@ import (
 
 // Config is storing web & database credentials, public key for checking sign on apla's binary
 type Config struct {
-	Login      string
-	Pass       string
-	Host       string
-	Port       string
-	DBPath     string
-	PubkeyPath string
+	Login       string
+	Pass        string
+	Host        string
+	Port        string
+	StorageDir  string
+	DatabaseDir string
+	PubkeyPath  string
 }
 
 type Parser struct {
@@ -40,7 +41,8 @@ func (p *Parser) Do() (Config, error) {
 	c.Pass = configIni["pass"]
 	c.Host = configIni["host"]
 	c.Port = configIni["port"]
-	c.DBPath = configIni["dbpath"]
+	c.StorageDir = configIni["storage"]
+	c.DatabaseDir = configIni["dbpath"]
 	c.PubkeyPath = configIni["pubkeypath"]
 	return c, nil
 }

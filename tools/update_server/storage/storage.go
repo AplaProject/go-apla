@@ -6,6 +6,6 @@ import "github.com/GenesisKernel/go-genesis/tools/update_server/model"
 type Engine interface {
 	GetVersionsList() ([]model.Version, error)
 	Get(binary model.Build) (model.Build, error)
-	Add(binary model.Build) error
+	Add(build model.Build) error
 	Delete(binary model.Build) error
 }

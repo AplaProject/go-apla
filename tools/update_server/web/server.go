@@ -195,6 +195,7 @@ func (s *Server) addBinary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !b.Validate() {
+		log.Warn("Wrong binary sign")
 		s.HTTPError(w, r, http.StatusBadRequest, fmt.Sprintf("Wrong os+arch, available systems list: %s", model.GetAvailableVersions()))
 		return
 	}
@@ -218,6 +219,7 @@ func (s *Server) addBinary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Infof("Added binary %s", b.Version.String())
 	s.JSON(w, r, struct{}{})
 }
 

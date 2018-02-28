@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -27,12 +28,12 @@ func (uc *UpdateClient) GenerateKeys(keyParams params.KeyParams) error {
 		return errors.Wrapf(err, "can't generate keys")
 	}
 
-	err = ioutil.WriteFile(keyParams.PrivateKeyPath, priv, 0600)
+	err = ioutil.WriteFile(keyParams.PrivateKeyPath, []byte(hex.EncodeToString(priv)), 0600)
 	if err != nil {
 		return errors.Wrapf(err, "can't write private key")
 	}
 
-	err = ioutil.WriteFile(keyParams.PublicKeyPath, pub, 0600)
+	err = ioutil.WriteFile(keyParams.PublicKeyPath, []byte(hex.EncodeToString(pub)), 0600)
 	if err != nil {
 		return errors.Wrapf(err, "can't write public key")
 	}
@@ -48,6 +49,11 @@ func (uc *UpdateClient) AddBinary(keyParams params.KeyParams, binaryParams param
 	data, err := ioutil.ReadAll(priv)
 	if err != nil {
 		return errors.Wrapf(err, "can't read private key path %s ", keyParams.PrivateKeyPath)
+	}
+
+	privKey, err := hex.DecodeString(string(data))
+	if err != nil {
+		return errors.Wrapf(err, "can't decode private key")
 	}
 
 	file, err := os.Open(binaryParams.Path)
@@ -72,7 +78,7 @@ func (uc *UpdateClient) AddBinary(keyParams params.KeyParams, binaryParams param
 		Name:       path.Base(binaryParams.Path),
 		StartBlock: uint64(binaryParams.StartBlock),
 	}
-	s := upd_crypto.NewBuildSigner(data)
+	s := upd_crypto.NewBuildSigner(privKey)
 	sign, err := s.MakeSign(b)
 	if err != nil {
 		return errors.Wrapf(err, "can't create sign")
@@ -145,8 +151,13 @@ func (uc *UpdateClient) GetBinary(serverParams params.ServerParams, keyParams pa
 		return b, err
 	}
 
+	pubKey, err := hex.DecodeString(string(keyData))
+	if err != nil {
+		return b, errors.Wrapf(err, "can't decode public key")
+	}
+
 	sn := upd_crypto.BuildSigner{}
-	verified, err := sn.CheckSign(b, keyData)
+	verified, err := sn.CheckSign(b, pubKey)
 	if err != nil {
 		return b, errors.Wrapf(err, "verifying binary")
 	}

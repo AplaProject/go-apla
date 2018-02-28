@@ -27,8 +27,8 @@ func TestDo(t *testing.T) {
 		},
 		{
 			filename:      "config.ini",
-			configContent: "[default]\nlogin=admin\npass=admin\nhost=localhost\nport=12345\ndbpath=db.db\npubkeypath=pubkey",
-			expectConfig:  config.Config{Login: "admin", Pass: "admin", Host: "localhost", Port: "12345", DBPath: "db.db", PubkeyPath: "pubkey"},
+			configContent: "[default]\nlogin=admin\npass=admin\nhost=localhost\nport=12345\nstorage=./resources/storage\npubkeypath=pubkey",
+			expectConfig:  config.Config{Login: "admin", Pass: "admin", Host: "localhost", Port: "12345", StorageDir: "./resources/storage", PubkeyPath: "pubkey"},
 		},
 	}
 	var rfs []string
