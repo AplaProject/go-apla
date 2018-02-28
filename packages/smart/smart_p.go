@@ -528,18 +528,20 @@ func RollbackTable(sc *SmartContract, name string) error {
 	name = strings.ToLower(name)
 	tableName := getDefTableName(sc, name)
 	rollbackTx := &model.RollbackTx{}
-
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, tableName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback table")
 		return err
 	}
-	if found {
-		err = rollbackTx.DeleteByHashAndTableName(sc.DbTransaction)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting records from rollback table")
-			return err
-		}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("table record in rollback table")
+		// if there is not such hash then NewTable was faulty. Do nothing.
+		return nil
+	}
+	err = rollbackTx.DeleteByHashAndTableName(sc.DbTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting records from rollback table")
+		return err
 	}
 
 	err = model.DropTable(sc.DbTransaction, tableName)
