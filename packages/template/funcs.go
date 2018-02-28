@@ -21,7 +21,6 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"html"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -404,9 +403,6 @@ func dataTag(par parFunc) string {
 			var ival string
 			if i < defcol {
 				ival = strings.TrimSpace(item[i])
-				if strings.IndexByte(ival, '<') >= 0 {
-					ival = html.EscapeString(ival)
-				}
 				vals[icol] = ival
 			} else {
 				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
@@ -526,9 +522,6 @@ func dbfindTag(par parFunc) string {
 			var ival string
 			if i < defcol {
 				ival = item[icol]
-				if strings.IndexByte(ival, '<') >= 0 {
-					ival = html.EscapeString(ival)
-				}
 				if ival == `NULL` {
 					ival = ``
 				}
