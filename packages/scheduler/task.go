@@ -23,7 +23,7 @@ type Task struct {
 }
 
 func (t *Task) String() string {
-	return fmt.Sprintf("id %s cron %s", t.ID, t.CronSpec)
+	return fmt.Sprintf("%s %s", t.ID, t.CronSpec)
 }
 
 func (t *Task) ParseCron() error {
