@@ -54,13 +54,21 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *ApiData, logg
 		return ErrorAPI(w, err, http.StatusBadRequest)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
+
 	smartTx.TokenEcosystem = data.params[`token_ecosystem`].(int64)
 	smartTx.MaxSum = data.params[`max_sum`].(string)
 	smartTx.PayOver = data.params[`payover`].(string)
 	if data.params[`signed_by`] != nil {
 		smartTx.SignedBy = data.params[`signed_by`].(int64)
 	}
-	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, EcosystemID: data.ecosystemId, KeyID: data.keyId}
+	smartTx.Header = tx.Header{
+		NodeMode:    data.mode,
+		Type:        int(info.ID),
+		Time:        timeNow,
+		EcosystemID: data.ecosystemId,
+		KeyID:       data.keyId,
+	}
+
 	forsign := smartTx.ForSign()
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {

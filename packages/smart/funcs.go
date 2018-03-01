@@ -34,6 +34,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/modes/mastervde"
+
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -1184,5 +1186,19 @@ func UpdateCron(sc *SmartContract, id int64) error {
 		return err
 	}
 
+	return nil
+}
+
+// CreateVDE contract func
+func CreateVDE(sc *SmartContract, name, dbUser, dbPass string) error {
+
+	master, ok := sc.Header.NodeMode.(*mastervde.VDEMaster)
+	if !ok {
+		err := fmt.Errorf("func permited only for VDEMaster mode")
+		log.WithFields(log.Fields{"type": consts.VDEMasterError, "error": err}).Error("call VDE creation")
+		return err
+	}
+
+	master.CreateVDE(name, dbUser, dbPass)
 	return nil
 }

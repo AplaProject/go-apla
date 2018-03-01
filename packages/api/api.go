@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/modes"
+
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 
 	"github.com/dgrijalva/jwt-go"
@@ -58,6 +60,7 @@ type ApiData struct {
 	vde         bool
 	vm          *script.VM
 	token       *jwt.Token
+	mode        modes.NodeMode
 }
 
 // ParamString reaturs string value of the api params
@@ -164,7 +167,7 @@ func getHeader(txName string, data *ApiData) (tx.Header, error) {
 }
 
 // DefaultHandler is a common handle function for api requests
-func DefaultHandler(method, pattern string, isVDEMode bool, params map[string]int, handlers ...ApiHandle) hr.Handle {
+func DefaultHandler(method, pattern string, mode modes.NodeMode, params map[string]int, handlers ...ApiHandle) hr.Handle {
 
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 		counterName := statsd.APIRouteCounterName(method, pattern)
@@ -227,15 +230,15 @@ func DefaultHandler(method, pattern string, isVDEMode bool, params map[string]in
 			data.params[par.Key] = par.Value
 		}
 
-		if isVDEMode {
+		if mode.Type() == modes.TypeBlockchain {
+			data.vm = smart.GetVM(false, 0)
+		} else {
 			data.vm = smart.GetVM(true, data.ecosystemId)
 			if data.vm == nil {
 				ErrorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemId)
 				return
 			}
 			data.vde = true
-		} else {
-			data.vm = smart.GetVM(false, 0)
 		}
 
 		for key, par := range params {

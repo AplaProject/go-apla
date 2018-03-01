@@ -1,4 +1,4 @@
-package modes
+package blockchain
 
 import (
 	"io/ioutil"
@@ -13,6 +13,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
 	"github.com/GenesisKernel/go-genesis/packages/install"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/modes"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
@@ -20,8 +21,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// InitBlockchain creates exemplar of Blochain mode
-func InitBlockchain(config *conf.SavedConfig) *Blockchain {
+// Init creates exemplar of Blochain mode
+func Init(config *conf.SavedConfig) *Blockchain {
 	mode := &Blockchain{
 		SavedConfig: config,
 		api:         api.CreateDefaultRouter(false),
@@ -33,7 +34,6 @@ func InitBlockchain(config *conf.SavedConfig) *Blockchain {
 			"Disseminator",
 			"Confirmations",
 			"Notificator",
-			// "Scheduler",
 		},
 	}
 
@@ -54,7 +54,7 @@ func (mode *Blockchain) DaemonList() []string {
 }
 
 // Start Implement NodeMode interface
-func (mode *Blockchain) Start(exitFunc func(int), gormFunc func(conf.DBConfig), listenerFunc func(string, *httprouter.Router)) {
+func (mode *Blockchain) Start(exitFunc func(int), gormFunc func(conf.DBConfig)) {
 
 	if *conf.GenerateFirstBlock {
 		if err := install.GenerateFirstBlock(); err != nil {
@@ -98,8 +98,6 @@ func (mode *Blockchain) Start(exitFunc func(int), gormFunc func(conf.DBConfig), 
 		exitFunc(0)
 	}
 
-	listenerFunc(mode.SavedConfig.HTTP.Str(), mode.api)
-
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err := syspar.SysUpdate(nil)
@@ -130,6 +128,16 @@ func (mode *Blockchain) Start(exitFunc func(int), gormFunc func(conf.DBConfig), 
 // Stop implement func of NodeMode interface
 func (mode *Blockchain) Stop() {
 	log.Infoln("Blockchain mode stopped")
+}
+
+// API returns mode API
+func (mode *Blockchain) API() *httprouter.Router {
+	return mode.api
+}
+
+// Mode returns node type
+func (mode *Blockchain) Mode() modes.ModeType {
+	return modes.TypeBlockchain
 }
 
 func rollbackToBlock(blockID int64) error {

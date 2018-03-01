@@ -1,4 +1,4 @@
-package modes
+package mastervde
 
 import (
 	"crypto/md5"
@@ -9,12 +9,16 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/GenesisKernel/go-genesis/packages/modes"
+
+	"github.com/julienschmidt/httprouter"
+
 	"github.com/BurntSushi/toml"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/install"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/julienschmidt/httprouter"
+	"github.com/GenesisKernel/go-genesis/packages/modes/vde"
 	pConf "github.com/rpoletaev/supervisord/config"
 	"github.com/rpoletaev/supervisord/process"
 	log "github.com/sirupsen/logrus"
@@ -26,31 +30,38 @@ const (
 	commandTemplate    = `./go-genesis -VDEMode=true -configPath=%s -workDir=%s`
 )
 
-// InitVDEMaster returns new master of VDE
-func InitVDEMaster(config *conf.VDEMasterConfig) *VDEMaster {
-	mode := &VDEMaster{
-		VDEMasterConfig: config,
-		VDE:             InitVDEMode(config.VDEConfig),
-		configsPath:     path.Join(config.WorkDir, "configs"),
-		processes:       process.NewProcessManager(),
-	}
-
-	mode.registerHandlers(mode.VDE.api)
-	return mode
+// Config config for VDE master mode
+type Config struct {
+	VDEConfig *vde.Config
+	Login     string
+	Password  string
 }
 
 // VDEMaster represents master of VDE mode
 type VDEMaster struct {
-	*conf.VDEMasterConfig
-	*VDE
+	*Config
+	*vde.VDE
 	configsPath string
 	processes   *process.ProcessManager
 }
 
-// Start implements NodeMode interface
-func (mode *VDEMaster) Start(exitFunc func(int), gormInit func(conf.DBConfig), listenerFunc func(string, *httprouter.Router)) {
+// Init returns new master of VDE
+func Init(config *Config) *VDEMaster {
+	mode := &VDEMaster{
+		Config:      config,
+		VDE:         vde.Init(config.VDEConfig),
+		configsPath: path.Join(config.VDEConfig.WorkDir, "configs"),
+		processes:   process.NewProcessManager(),
+	}
 
-	mode.VDE.Start(exitFunc, gormInit, listenerFunc)
+	// mode.registerHandlers(mode.VDE.API())
+	return mode
+}
+
+// Start implements NodeMode interface
+func (mode *VDEMaster) Start(exitFunc func(int), gormInit func(conf.DBConfig)) {
+
+	mode.VDE.Start(exitFunc, gormInit)
 
 	//TODO: load master implementations
 	if err := mode.prepareWorkDir(); err != nil {
@@ -73,6 +84,16 @@ func (mode *VDEMaster) Stop() {
 	log.Infoln("VDEMaster mode stopped")
 }
 
+// API returns httprouter
+func (mode *VDEMaster) API() *httprouter.Router {
+	return mode.VDE.API()
+}
+
+// Mode returns node type
+func (mode *VDEMaster) Mode() modes.ModeType {
+	return modes.TypeVDEMaster
+}
+
 func (mode *VDEMaster) prepareWorkDir() error {
 	if _, err := os.Stat(mode.configsPath); os.IsNotExist(err) {
 		if err := os.Mkdir(mode.configsPath, 0700); err != nil {
@@ -91,7 +112,7 @@ func (mode *VDEMaster) CreateVDE(name, dbUser, dbPassword string) error {
 		return err
 	}
 
-	if err := mode.initVDEDir(name, mode.VDE.VDEConfig); err != nil {
+	if err := mode.initVDEDir(name, mode.VDE.Config); err != nil {
 		return err
 	}
 
@@ -105,7 +126,7 @@ func (mode *VDEMaster) CreateVDE(name, dbUser, dbPassword string) error {
 	}
 
 	vdeConfigPath := filepath.Join(vdeDir, "config.toml")
-	vdeConfig := *mode.VDE.VDEConfig
+	vdeConfig := *mode.VDE.Config
 	vdeConfig.WorkDir = vdeDir
 	vdeConfig.DB.User = dbUser
 	vdeConfig.DB.Password = dbPassword
@@ -142,7 +163,7 @@ func (mode *VDEMaster) createVDEDB(vdeName, login, pass string) error {
 	return nil
 }
 
-func (mode *VDEMaster) initVDEDir(vdeName string, config *conf.VDEConfig) error {
+func (mode *VDEMaster) initVDEDir(vdeName string, config *vde.Config) error {
 
 	vdeDirName := path.Join(mode.configsPath, vdeName)
 	if _, err := os.Stat(vdeDirName); os.IsNotExist(err) {

@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -36,6 +37,9 @@ import (
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/modes"
+	"github.com/GenesisKernel/go-genesis/packages/modes/blockchain"
+	"github.com/GenesisKernel/go-genesis/packages/modes/mastervde"
+	"github.com/GenesisKernel/go-genesis/packages/modes/vde"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -47,13 +51,6 @@ func initStatsd() {
 	if err := statsd.Init(cfg.Host, cfg.Port, cfg.Name); err != nil {
 		log.WithFields(log.Fields{"type": consts.StatsdError, "error": err}).Fatal("cannot initialize statsd")
 	}
-}
-
-// NodeMode allows implement different startup modes
-type NodeMode interface {
-	Start(exitFunc func(int), gormInit func(conf.DBConfig), listenerFunc func(string, *httprouter.Router))
-	Stop()
-	DaemonList() []string
 }
 
 func killOld() {
@@ -233,28 +230,32 @@ func Start() {
 		Exit(0)
 	}
 
-	var mode NodeMode
+	var mode modes.NodeMode
+	var port string
 	if *conf.IsVDEMaster {
-		var c conf.VDEMasterConfig
+
+		var c mastervde.Config
 		if err := conf.LoadVDEConfig(&c); err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
 			Exit(1)
 		}
 
-		mode = modes.InitVDEMaster(&c)
+		port = strconv.Itoa(c.VDEConfig.HTTP.Port)
+		mode = mastervde.Init(&c)
 	} else if *conf.IsVDE {
-		var c conf.VDEConfig
+
+		var c vde.Config
 		if err := conf.LoadVDEConfig(&c); err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
 			Exit(1)
 		}
 
-		mode = modes.InitVDEMode(&c)
+		port = strconv.Itoa(c.HTTP.Port)
+		mode = vde.Init(&c)
 	} else {
-		mode = modes.InitBlockchain(&conf.Config)
+		mode = blockchain.Init(&conf.Config)
 	}
 
-	mode.Start(Exit, initGorm, runHTTPListener)
+	mode.Start(Exit, initGorm)
+	runHTTPListener(port, mode.API())
 
 	<-daemons.WaitForSignals()
 	mode.Stop()

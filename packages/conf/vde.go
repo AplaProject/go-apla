@@ -8,29 +8,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// VDEConfig config for VDE mode
-type VDEConfig struct {
-	DB          DBConfig
-	HTTP        HostPort
-	Centrifugo  CentrifugoConfig
-	Autoupdate  AutoupdateConfig
-	WorkDir     string
-	LogLevel    string
-	LogFileName string
-}
-
-// VDEMasterConfig config for VDE master mode
-type VDEMasterConfig struct {
-	*VDEConfig
-	Login    string
-	Password string
-}
-
 // LoadVDEConfig from configFile
 func LoadVDEConfig(config interface{}) error {
 	log.WithFields(log.Fields{"path": GetConfigPath()}).Info("Loading config")
-	_, err := toml.DecodeFile(GetConfigPath(), config)
-	return err
+	if _, err := toml.DecodeFile(GetConfigPath(), config); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
+		return err
+	}
+	return nil
 }
 
 // SaveVDEConfig save global parameters to configFile
