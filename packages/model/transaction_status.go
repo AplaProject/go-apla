@@ -59,6 +59,6 @@ func (ts *TransactionStatus) UpdateBlockMsg(transaction *DbTransaction, newBlock
 }
 
 // SetError is updating transaction status error
-func (ts *TransactionStatus) SetError(errorText string, transactionHash []byte) error {
-	return DBConn.Model(&TransactionStatus{}).Where("hash = ?", transactionHash).Update("error", errorText).Error
+func (ts *TransactionStatus) SetError(transaction *DbTransaction, errorText string, transactionHash []byte) error {
+	return GetDB(transaction).Model(&TransactionStatus{}).Where("hash = ?", transactionHash).Update("error", errorText).Error
 }

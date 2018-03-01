@@ -88,6 +88,9 @@ var configFlagMap = map[string]interface{}{
 
 	"updateServer":        &flagStr{confVar: &Config.Autoupdate.ServerAddress, defVal: defaultUpdateServer, flagBase: flagBase{help: "server address for autoupdates"}},
 	"updatePublicKeyPath": &flagStr{confVar: &Config.Autoupdate.PublicKeyPath, defVal: defaultUpdatePublicKeyPath, flagBase: flagBase{help: "public key path for autoupdates"}},
+
+	"centrifugoSecret": &flagStr{confVar: &Config.Centrifugo.Secret, flagBase: flagBase{help: "centrifugo secret key for centrifugo"}},
+	"centrifugoUrl":    &flagStr{confVar: &Config.Centrifugo.URL, flagBase: flagBase{help: "host:port for centrifugo"}},
 }
 
 var (

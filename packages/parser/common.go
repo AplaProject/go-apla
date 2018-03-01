@@ -243,7 +243,7 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	if txQueue {
 		// check for duplicate transaction from queue
 		qtx := &model.QueueTx{}
-		found, err := qtx.GetByHash(searchedHash)
+		found, err := qtx.GetByHash(nil, searchedHash)
 		if found {
 			log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in queue")
 			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %x", searchedHash))
@@ -381,7 +381,7 @@ func (p *Parser) BlockError(err error) {
 	}
 	p.DeleteQueueTx(p.TxHash)
 	ts := &model.TransactionStatus{}
-	ts.SetError(errText, p.TxHash)
+	ts.SetError(nil, errText, p.TxHash)
 }
 
 // AccessRights checks the access right by executing the condition value

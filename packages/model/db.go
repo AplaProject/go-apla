@@ -114,6 +114,10 @@ func (tr *DbTransaction) Commit() error {
 	return tr.conn.Commit().Error
 }
 
+func (tr *DbTransaction) Connection() *gorm.DB {
+	return tr.conn
+}
+
 // GetDB is returning gorm.DB
 func GetDB(tr *DbTransaction) *gorm.DB {
 	if tr != nil && tr.conn != nil {
@@ -240,6 +244,14 @@ func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]st
 		tableName, columnName).String()
 }
 
+// GetAllColumnTypes returns column types for table
+func GetAllColumnTypes(tblname string) ([]map[string]string, error) {
+	return GetAll(`SELECT column_name, data_type
+		FROM information_schema.columns
+		WHERE table_name = ?
+		ORDER BY ordinal_position ASC`, -1, tblname)
+}
+
 // GetColumnType is returns type of column
 func GetColumnType(tblname, column string) (itype string, err error) {
 	coltype, err := GetColumnDataTypeCharMaxLength(tblname, column)
@@ -252,6 +264,8 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 			itype = `varchar`
 		case dataType == `bigint`:
 			itype = "number"
+		case dataType == `jsonb`:
+			itype = "json"
 		case strings.HasPrefix(dataType, `timestamp`):
 			itype = "datetime"
 		case strings.HasPrefix(dataType, `numeric`):

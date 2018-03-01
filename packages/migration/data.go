@@ -96,8 +96,8 @@ var (
 		CREATE INDEX "system_parameters_index_name" ON "system_parameters" (name);
 		
 		INSERT INTO system_parameters ("id","name", "value", "conditions") VALUES 
-		('1','default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'true'),
-		('2','default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'true'),
+		('1','default_ecosystem_page', '', 'true'),
+		('2','default_ecosystem_menu', '', 'true'),
 		('3','default_ecosystem_contract', '', 'true'),
 		('4','gap_between_blocks', '2', 'true'),
 		('5','rb_blocks_1', '60', 'true'),

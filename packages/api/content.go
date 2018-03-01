@@ -66,18 +66,26 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 	return &vars
 }
 
-func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-
+func pageValue(w http.ResponseWriter, data *apiData, logger *log.Entry) (*model.Page, error) {
 	page := &model.Page{}
 	page.SetTablePrefix(getPrefix(data))
 	found, err := page.Get(data.params[`name`].(string))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
-		return err
+		return nil, errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("page not found")
-		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		return nil, errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+	}
+	return page, nil
+}
+
+func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+
+	page, err := pageValue(w, data, logger)
+	if err != nil {
+		return err
 	}
 	menu, err := model.Single(`SELECT value FROM "`+getPrefix(data)+`_menu" WHERE name = ?`,
 		page.Menu).String()
@@ -164,6 +172,19 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var timeout bool
 	ret := template.Template2JSON(data.params[`template`].(string), &timeout, initVars(r, data))
+	data.result = &contentResult{Tree: ret}
+	return nil
+}
+
+func getSource(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	page, err := pageValue(w, data, logger)
+	if err != nil {
+		return err
+	}
+	var timeout bool
+	vars := initVars(r, data)
+	(*vars)["_full"] = "1"
+	ret := template.Template2JSON(page.Value, &timeout, vars)
 	data.result = &contentResult{Tree: ret}
 	return nil
 }

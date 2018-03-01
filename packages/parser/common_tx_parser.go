@@ -104,25 +104,25 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 	}
 	// looks like there is not hash in queue_tx in this moment
 	qtx := &model.QueueTx{}
-	/*found*/ _, err := qtx.GetByHash(hash)
+	_, err := qtx.GetByHash(p.DbTransaction, hash)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting tx by hash from queue")
 	}
 
-	p.DeleteQueueTx(hash)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")
-		return utils.ErrInfo(err)
-	}
-	// -----
 	if qtx.FromGate == 0 {
 		m := &model.TransactionStatus{}
-		err = m.SetError(errText, hash)
+		err = m.SetError(nil, errText, hash)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("setting transaction status error")
 			return utils.ErrInfo(err)
 		}
 	}
+	p.DeleteQueueTx(hash)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")
+		return utils.ErrInfo(err)
+	}
+
 	return nil
 }
 
@@ -130,13 +130,13 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 func (p *Parser) DeleteQueueTx(hash []byte) error {
 	logger := p.GetLogger()
 	delQueueTx := &model.QueueTx{Hash: hash}
-	err := delQueueTx.DeleteTx()
+	err := delQueueTx.DeleteTx(p.DbTransaction)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")
 		return utils.ErrInfo(err)
 	}
 	// Because we process transactions with verified=0 in queue_parser_tx, after processing we need to delete them
-	_, err = model.DeleteTransactionIfUnused(hash)
+	_, err = model.DeleteTransactionIfUnused(p.DbTransaction, hash)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction if unused")
 		return utils.ErrInfo(err)

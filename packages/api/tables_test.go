@@ -38,7 +38,6 @@ func TestTables(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	fmt.Println(`RET`, ret)
 	if int64(ret.Count) < 7 {
 		t.Error(fmt.Errorf(`The number of tables %d < 7`, ret.Count))
 		return

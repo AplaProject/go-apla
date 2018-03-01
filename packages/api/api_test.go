@@ -63,7 +63,7 @@ func PrivateToPublicHex(hexkey string) (string, error) {
 	return hex.EncodeToString(pubKey), nil
 }
 
-func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
+func sendRawRequest(rtype, url string, form *url.Values) ([]byte, error) {
 	client := &http.Client{}
 	var ioform io.Reader
 	if form != nil {
@@ -71,7 +71,7 @@ func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
 	}
 	req, err := http.NewRequest(rtype, `http://localhost:7079`+consts.ApiPath+url, ioform)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
@@ -80,23 +80,29 @@ func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
+		return nil, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
 	}
 
-	if err = json.Unmarshal(data, v); err != nil {
+	return data, nil
+}
+
+func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
+	data, err := sendRawRequest(rtype, url, form)
+	if err != nil {
 		return err
 	}
-	return nil
+
+	return json.Unmarshal(data, v)
 }
 
 func sendGet(url string, form *url.Values, v interface{}) error {

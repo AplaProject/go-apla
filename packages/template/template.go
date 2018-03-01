@@ -24,7 +24,6 @@ package template
 
 import (
 	"encoding/json"
-	"html"
 	"regexp"
 	"strconv"
 	"strings"
@@ -118,7 +117,40 @@ func setAllAttr(par parFunc) {
 		if key == `Params` || key == `PageParams` {
 			imap := make(map[string]interface{})
 			re := regexp.MustCompile(`(?is)(.*)\((.*)\)`)
-			for _, parval := range strings.Split(v, `,`) {
+			parList := make([]string, 0, 10)
+			curPar := make([]rune, 0, 256)
+			stack := make([]rune, 0, 256)
+			for _, ch := range v {
+				switch ch {
+				case '"':
+					if len(stack) > 0 && stack[len(stack)-1] == '"' {
+						stack = stack[:len(stack)-1]
+					} else {
+						stack = append(stack, '"')
+					}
+				case '(':
+					stack = append(stack, ')')
+				case '{':
+					stack = append(stack, '}')
+				case '[':
+					stack = append(stack, ']')
+				case ')', '}', ']':
+					if len(stack) > 0 && stack[len(stack)-1] == ch {
+						stack = stack[:len(stack)-1]
+					}
+				case ',':
+					if len(stack) == 0 {
+						parList = append(parList, string(curPar))
+						curPar = curPar[:0]
+						continue
+					}
+				}
+				curPar = append(curPar, ch)
+			}
+			if len(curPar) > 0 {
+				parList = append(parList, string(curPar))
+			}
+			for _, parval := range parList {
 				parval = strings.TrimSpace(parval)
 				if len(parval) > 0 {
 					if off := strings.IndexByte(parval, '='); off == -1 {
@@ -208,14 +240,8 @@ func ifValue(val string, workspace *Workspace) bool {
 	case `!=`:
 		return len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1])
 	case `>`, `<`, `<=`, `>=`:
-		ret0, err := decimal.NewFromString(strings.TrimSpace(cond[0]))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": strings.TrimSpace(cond[0])}).Error("converting left condition from string to decimal")
-		}
-		ret1, err := decimal.NewFromString(strings.TrimSpace(cond[1]))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": strings.TrimSpace(cond[1])}).Error("converting right condition from string to decimal")
-		}
+		ret0, _ := decimal.NewFromString(strings.TrimSpace(cond[0]))
+		ret1, _ := decimal.NewFromString(strings.TrimSpace(cond[1]))
 		if len(cond) == 2 {
 			var bin bool
 			if sep == `>` || sep == `<=` {
@@ -290,7 +316,7 @@ func appendText(owner *node, text string) {
 		return
 	}
 	if len(text) > 0 {
-		owner.Children = append(owner.Children, &node{Tag: tagText, Text: html.EscapeString(text)})
+		owner.Children = append(owner.Children, &node{Tag: tagText, Text: text})
 	}
 }
 
@@ -306,12 +332,24 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 	if *workspace.Timeout {
 		return
 	}
+	trim := func(input string, quotes bool) string {
+		result := strings.Trim(input, "\t\r\n ")
+		if quotes && len(result) > 0 {
+			for _, ch := range "\"`" {
+				if rune(result[0]) == ch {
+					result = strings.Trim(result, string([]rune{ch}))
+					break
+				}
+			}
+		}
+		return result
+	}
 	if curFunc.Params == `*` {
 		for i, v := range *params {
 			val := strings.TrimSpace(string(v))
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
-				pars[val[:off]] = macro(strings.Trim(val[off+1:], "\t\r\n \"`"), workspace.Vars)
+				pars[val[:off]] = macro(trim(val[off+1:], true), workspace.Vars)
 			} else {
 				pars[strconv.Itoa(i)] = macro(val, workspace.Vars)
 			}
@@ -322,11 +360,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 				val := macro(strings.TrimSpace(string((*params)[i])), workspace.Vars)
 				off := strings.IndexByte(val, ':')
 				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
-					cut := "\t\r\n \"`"
-					if val[:off] == `Data` {
-						cut = "\t\r\n "
-					}
-					pars[val[:off]] = strings.Trim(val[off+1:], cut)
+					pars[val[:off]] = trim(val[off+1:], val[:off] != `Data`)
 				} else {
 					pars[v] = val
 				}

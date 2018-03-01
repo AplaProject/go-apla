@@ -35,8 +35,8 @@ func (qt *QueueTx) TableName() string {
 }
 
 // DeleteTx is deleting tx
-func (qt *QueueTx) DeleteTx() error {
-	return DBConn.Delete(qt).Error
+func (qt *QueueTx) DeleteTx(transaction *DbTransaction) error {
+	return GetDB(transaction).Delete(qt).Error
 }
 
 // Save is saving model
@@ -50,8 +50,8 @@ func (qt *QueueTx) Create() error {
 }
 
 // GetByHash is retrieving model from database by hash
-func (qt *QueueTx) GetByHash(hash []byte) (bool, error) {
-	return isFound(DBConn.Where("hash = ?", hash).First(qt))
+func (qt *QueueTx) GetByHash(transaction *DbTransaction, hash []byte) (bool, error) {
+	return isFound(GetDB(transaction).Where("hash = ?", hash).First(qt))
 }
 
 // DeleteQueueTxByHash is deleting queue tx by hash

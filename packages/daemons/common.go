@@ -91,7 +91,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.
 
 	d := &daemon{
 		goRoutineName: goRoutineName,
-		sleepTime:     1 * time.Second,
+		sleepTime:     100 * time.Millisecond,
 		logger:        logger,
 	}
 

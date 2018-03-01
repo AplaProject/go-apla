@@ -23,7 +23,9 @@
 package parser
 
 import (
+	"bytes"
 	"database/sql"
+	"strconv"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -68,20 +70,21 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
 		return p.ErrInfo(err)
 	}
-	data := block.Data
-	converter.BytesShift(&data, 1)
-	iblock := converter.BinToDecBytesShift(&data, 4)
-	time := converter.BinToDecBytesShift(&data, 4)
-	ecosystemID := converter.BinToDecBytesShift(&data, 4)
-	keyID := converter.BinToDecBytesShift(&data, 8)
-	nodePosition := converter.BinToDecBytesShift(&data, 1)
+
+	header, err := ParseBlockHeader(bytes.NewBuffer(block.Data))
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
 	ib := &model.InfoBlock{
-		Hash:         block.Hash,
-		BlockID:      iblock,
-		Time:         time,
-		EcosystemID:  ecosystemID,
-		KeyID:        keyID,
-		NodePosition: converter.Int64ToStr(nodePosition)}
+		Hash:           block.Hash,
+		BlockID:        header.BlockID,
+		Time:           header.Time,
+		EcosystemID:    header.EcosystemID,
+		KeyID:          header.KeyID,
+		NodePosition:   converter.Int64ToStr(header.NodePosition),
+		CurrentVersion: strconv.Itoa(header.Version),
+	}
 
 	err = ib.Update(p.DbTransaction)
 	if err != nil {

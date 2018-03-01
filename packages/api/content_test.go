@@ -44,4 +44,28 @@ func TestContent(t *testing.T) {
 		t.Error(fmt.Errorf(`wrong tree %s`, "ret.Tree"))
 		return
 	}
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	name := randName(`page`)
+	form := url.Values{"Name": {name}, "Value": {`If(true){Div(){Span(My text)Address()}}.Else{Div(Body: Hidden text)}`},
+		"Menu": {`default_menu`}, "Conditions": {"true"}}
+	err = postTx(`NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = sendPost("content/source/"+name, &url.Values{}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if RawToString(ret.Tree) != `[{"tag":"if","attr":{"condition":"true"},"children":[{"tag":"div","children":[{"tag":"span","children":[{"tag":"text","text":"My text"}]},{"tag":"address"}]}],"tail":[{"tag":"else","children":[{"tag":"div","children":[{"tag":"text","text":"Hidden text"}]}]}]}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
+		return
+	}
+
 }

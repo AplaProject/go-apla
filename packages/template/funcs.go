@@ -23,11 +23,9 @@
 package template
 
 import (
-	"crypto/md5"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"html"
 	"reflect"
 	"strconv"
 	"strings"
@@ -73,7 +71,7 @@ func init() {
 	funcs[`SysParam`] = tplFunc{sysparTag, defaultTag, `syspar`, `Name`}
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
-	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Body`}
+	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Data,Index`}
 	funcs[`Form`] = tplFunc{defaultTailTag, defaultTailTag, `form`, `Class,Body`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Image`] = tplFunc{defaultTailTag, defaultTailTag, `image`, `Src,Alt,Class`}
@@ -88,9 +86,12 @@ func init() {
 	funcs[`P`] = tplFunc{defaultTailTag, defaultTailTag, `p`, `Body,Class`}
 	funcs[`RadioGroup`] = tplFunc{defaultTailTag, defaultTailTag, `radiogroup`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
 	funcs[`Span`] = tplFunc{defaultTailTag, defaultTailTag, `span`, `Body,Class`}
+	funcs[`QRcode`] = tplFunc{defaultTag, defaultTag, `qrcode`, `Text`}
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
 	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
+	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
+	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
 
 	tails[`button`] = forTails{map[string]tailInfo{
 		`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
@@ -132,6 +133,7 @@ func init() {
 		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
 		`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
 		`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
+		`Cutoff`:    {tplFunc{tailTag, defaultTailFull, `cutoff`, `Cutoff`}, false},
 	}}
 	tails[`p`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -149,6 +151,9 @@ func init() {
 	tails[`select`] = forTails{map[string]tailInfo{
 		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
 		`Style`:    {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+	}}
+	tails[`inputMap`] = forTails{map[string]tailInfo{
+		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
 	}}
 }
 
@@ -176,8 +181,18 @@ func menugroupTag(par parFunc) string {
 }
 
 func forlistTag(par parFunc) (ret string) {
+	var (
+		name, indexName string
+	)
 	setAllAttr(par)
-	name := par.Node.Attr[`source`].(string)
+	if len((*par.Pars)[`Source`]) > 0 {
+		name = par.Node.Attr[`source`].(string)
+	}
+	if len((*par.Pars)[`Index`]) > 0 {
+		indexName = par.Node.Attr[`index`].(string)
+	} else {
+		indexName = name + `_index`
+	}
 	if len(name) == 0 || par.Workspace.Sources == nil {
 		return
 	}
@@ -186,12 +201,23 @@ func forlistTag(par parFunc) (ret string) {
 		return
 	}
 	root := node{}
-	for _, item := range *source.Data {
-		vals := make(map[string]string)
+	keys := make(map[string]bool)
+	for key := range *par.Workspace.Vars {
+		keys[key] = true
+	}
+	for index, item := range *source.Data {
+		vals := map[string]string{indexName: converter.IntToStr(index + 1)}
 		for i, icol := range *source.Columns {
 			vals[icol] = item[i]
 		}
-		body := replace((*par.Pars)[`Body`], 0, &vals)
+		if index > 0 {
+			for key := range *par.Workspace.Vars {
+				if !keys[key] {
+					delete(*par.Workspace.Vars, key)
+				}
+			}
+		}
+		body := replace((*par.Pars)[`Data`], 0, &vals)
 		process(body, &root, par.Workspace)
 	}
 	par.Node.Children = root.Children
@@ -382,9 +408,6 @@ func dataTag(par parFunc) string {
 			var ival string
 			if i < defcol {
 				ival = strings.TrimSpace(item[i])
-				if strings.IndexByte(ival, '<') >= 0 {
-					ival = html.EscapeString(ival)
-				}
 				vals[icol] = ival
 			} else {
 				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
@@ -418,15 +441,20 @@ func dbfindTag(par parFunc) string {
 		state  int64
 		err    error
 		perm   map[string]string
+		prefix string
+		where  string
+		order  string
+		limit  = 25
+
+		cutoffColumns   = make(map[string]bool)
+		extendedColumns = make(map[string]string)
+		queryColumns    = make([]string, 0)
 	)
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
 	}
 	defaultTail(par, `dbfind`)
-	prefix := ``
-	where := ``
-	order := ``
-	limit := 25
+
 	if par.Node.Attr[`columns`] != nil {
 		fields = converter.Escape(par.Node.Attr[`columns`].(string))
 	}
@@ -457,59 +485,120 @@ func dbfindTag(par parFunc) string {
 	} else {
 		state = converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])
 	}
+	if par.Node.Attr["cutoff"] != nil {
+		for _, v := range strings.Split(par.Node.Attr["cutoff"].(string), ",") {
+			cutoffColumns[v] = true
+		}
+	}
+
 	sc := par.Workspace.SmartContract
 	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
+
+	rows, err := model.GetAllColumnTypes(tblname)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column types from db")
+		return err.Error()
+	}
+	columnTypes := make(map[string]string, len(rows))
+	for _, row := range rows {
+		columnTypes[row["column_name"]] = row["data_type"]
+	}
+
+	if fields != "*" {
+		if !strings.Contains(fields, "id") {
+			fields += ", id"
+		}
+		queryColumns = strings.Split(fields, ",")
+	} else {
+		for _, col := range rows {
+			queryColumns = append(queryColumns, col["column_name"])
+		}
+	}
+
 	if sc.VDE && *conf.CheckReadAccess {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
-		cols := strings.Split(fields, `,`)
-		if err != nil || sc.AccessColumns(tblname, &cols, false) != nil {
+		if err != nil || sc.AccessColumns(tblname, &queryColumns, false) != nil {
 			return `Access denied`
 		}
-		fields = strings.Join(cols, `,`)
 	}
-	if fields != `*` && !strings.Contains(fields, `id`) {
-		fields += `, id`
+
+	columnNames := make([]string, len(queryColumns))
+	copy(columnNames, queryColumns)
+	for i, col := range queryColumns {
+		switch columnTypes[col] {
+		case "bytea":
+			extendedColumns[col] = columnTypeBlob
+			queryColumns[i] = dbfindExpressionBlob(col)
+			break
+		case "text", "varchar", "character varying":
+			if cutoffColumns[col] {
+				extendedColumns[col] = columnTypeLongText
+				queryColumns[i] = dbfindExpressionLongText(col)
+			}
+			break
+		}
 	}
+
+	fields = strings.Join(queryColumns, ",")
+
 	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
 	}
 	data := make([][]string, 0)
-	cols := make([]string, 0)
 	types := make([]string, 0)
 	lencol := 0
 	defcol := 0
 	for _, item := range list {
 		if lencol == 0 {
-			for key := range item {
-				cols = append(cols, key)
-				types = append(types, `text`)
+			for _, key := range columnNames {
+				if v, ok := extendedColumns[key]; ok {
+					types = append(types, v)
+				} else {
+					types = append(types, columnTypeText)
+				}
 			}
-			defcol = len(cols)
+			defcol = len(columnNames)
 			if par.Node.Attr[`customs`] != nil {
 				for _, v := range par.Node.Attr[`customs`].([]string) {
-					cols = append(cols, v)
+					columnNames = append(columnNames, v)
 					types = append(types, `tags`)
 				}
 			}
-			lencol = len(cols)
+			lencol = len(columnNames)
 		}
 		row := make([]string, lencol)
-		for i, icol := range cols {
+		for i, icol := range columnNames {
 			var ival string
 			if i < defcol {
 				ival = item[icol]
-				if strings.IndexByte(ival, '<') >= 0 {
-					ival = html.EscapeString(ival)
-				}
 				if ival == `NULL` {
 					ival = ``
 				}
-				if strings.HasPrefix(ival, `data:image/`) {
-					ival = fmt.Sprintf(`/data/%s/%s/%s/%x`, strings.Trim(tblname, `"`),
-						item[`id`], icol, md5.Sum([]byte(ival)))
-					item[icol] = ival
+
+				switch extendedColumns[icol] {
+				case columnTypeBlob:
+					link := &valueLink{id: item["id"], column: icol, table: tblname, hash: ival, title: ival}
+					ival, err = link.marshal()
+					if err != nil {
+						return err.Error()
+					}
+					item[icol] = link.link()
+					break
+				case columnTypeLongText:
+					var res []string
+					err = json.Unmarshal([]byte(ival), &res)
+					if err != nil {
+						log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling long text params from JSON")
+						return err.Error()
+					}
+					link := &valueLink{id: item["id"], column: icol, table: tblname, hash: res[1], title: res[0]}
+					ival, err = link.marshal()
+					if err != nil {
+						return err.Error()
+					}
+					break
 				}
 			} else {
 				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &item)
@@ -523,7 +612,7 @@ func dbfindTag(par parFunc) string {
 				}
 			}
 			if par.Node.Attr[`prefix`] != nil {
-				(*par.Workspace.Vars)[prefix+`_`+icol] = ival
+				(*par.Workspace.Vars)[prefix+`_`+icol] = item[icol]
 			}
 			row[i] = ival
 		}
@@ -533,7 +622,7 @@ func dbfindTag(par parFunc) string {
 		result := make([]interface{}, len(data))
 		for i, item := range data {
 			row := make(map[string]string)
-			for j, col := range cols {
+			for j, col := range columnNames {
 				row[col] = item[j]
 			}
 			result[i] = reflect.ValueOf(row).Interface()
@@ -548,7 +637,7 @@ func dbfindTag(par parFunc) string {
 			return `Access denied`
 		}
 		for i := range data {
-			for j, col := range cols {
+			for j, col := range columnNames {
 				data[i][j] = result[i].(map[string]string)[col]
 			}
 		}
@@ -557,7 +646,7 @@ func dbfindTag(par parFunc) string {
 	delete(par.Node.Attr, `customs`)
 	delete(par.Node.Attr, `custombody`)
 	delete(par.Node.Attr, `prefix`)
-	par.Node.Attr[`columns`] = &cols
+	par.Node.Attr[`columns`] = &columnNames
 	par.Node.Attr[`types`] = &types
 	par.Node.Attr[`data`] = &data
 	newSource(par)

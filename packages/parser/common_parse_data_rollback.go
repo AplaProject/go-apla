@@ -132,12 +132,6 @@ func doBlockRollback(transaction *model.DbTransaction, block *Block) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transacion from queue by hash")
 			return utils.ErrInfo(err)
 		}
-		queueTx := &model.QueueTx{Hash: p.TxHash, Data: p.TxFullData}
-		err = queueTx.Save(transaction)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving transaction to the queue")
-			return p.ErrInfo(err)
-		}
 
 		if p.TxContract != nil {
 			if _, err := p.CallContract(smart.CallInit | smart.CallRollback); err != nil {

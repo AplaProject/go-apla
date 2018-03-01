@@ -102,10 +102,10 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	// Block generation will be started only if we have transactions
-	if len(trs) == 0 {
-		return nil
-	}
+	//Block generation will be started only if we have transactions
+	//if len(trs) == 0 {
+	//	return nil
+	//}
 
 	blockBin, err := generateNextBlock(
 		prevBlock,

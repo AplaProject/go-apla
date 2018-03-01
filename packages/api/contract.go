@@ -24,6 +24,7 @@ package api
 
 import (
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -105,11 +106,15 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 			case `[]interface {}`:
 				var list []string
 				for key, values := range r.Form {
-					if key == fitem.Name+`[]` {
-						for _, value := range values {
-							list = append(list, value)
+					if key == fitem.Name+`[]` && len(values) > 0 {
+						count := converter.StrToInt(values[0])
+						for i := 0; i < count; i++ {
+							list = append(list, r.FormValue(fmt.Sprintf(`%s[%d]`, fitem.Name, i)))
 						}
 					}
+				}
+				if len(list) == 0 && len(val) > 0 {
+					list = append(list, val)
 				}
 				idata = append(idata, converter.EncodeLength(int64(len(list)))...)
 				for _, ilist := range list {

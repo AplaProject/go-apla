@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
@@ -86,6 +87,8 @@ var (
 		"CreateColumn":      "extend_cost_create_column",
 		"PermColumn":        "extend_cost_perm_column",
 		"JSONToMap":         "extend_cost_json_to_map",
+		"GetContractByName": "extend_cost_contract_by_name",
+		"GetContractById":   "extend_cost_contract_by_id",
 	}
 )
 
@@ -337,6 +340,36 @@ func LangRes(sc *SmartContract, idRes, lang string) string {
 	return ret
 }
 
+// GetContractByName returns id of the contract with this name
+func GetContractByName(sc *SmartContract, name string) int64 {
+	contract := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID))
+	if contract == nil {
+		return 0
+	}
+	info := (*contract).Block.Info.(*script.ContractInfo)
+	if info == nil {
+		return 0
+	}
+	return info.Owner.TableID
+}
+
+// GetContractById returns the name of the contract with this id
+func GetContractById(sc *SmartContract, id int64) string {
+	_, ret, err := DBSelect(sc, getDefTableName(sc, "contracts"), "value", id, `id`, 0, 1,
+		0, ``, []interface{}{})
+	if err != nil || len(ret) != 1 {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract name")
+		return ``
+	}
+
+	re := regexp.MustCompile(`(?is)^\s*contract\s+([\d\w_]+)\s*{`)
+	names := re.FindStringSubmatch(ret[0].(map[string]string)["value"])
+	if len(names) != 2 {
+		return ``
+	}
+	return names[1]
+}
+
 // EvalCondition gets the condition and check it
 func EvalCondition(sc *SmartContract, table, name, condfield string) error {
 	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM "`+getDefTableName(sc, table)+
@@ -474,7 +507,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 	}
 
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
-		`contracts`, `parameters`, `blocks`, `history`, `keys`, `sections`, `member`, `roles_list`,
+		`contracts`, `parameters`, `blocks`, `history`, `keys`, `sections`, `members`, `roles_list`,
 		`roles_assign`, `notifications`} {
 		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
@@ -498,6 +531,7 @@ func RollbackTable(sc *SmartContract, name string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from @1NewTable")
 		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
 	}
+	name = strings.ToLower(name)
 	tableName := getDefTableName(sc, name)
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, tableName)
@@ -516,7 +550,7 @@ func RollbackTable(sc *SmartContract, name string) error {
 		return err
 	}
 
-	err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%d_%s", sc.TxSmart.EcosystemID, name))
+	err = model.DropTable(sc.DbTransaction, tableName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
 		return err
@@ -546,6 +580,7 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`RollbackColumn can be only called from @1NewColumn`)
 	}
+	name = strings.ToLower(name)
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.EcosystemID))
 	if err != nil {
@@ -557,7 +592,7 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 		// if there is not such hash then NewColumn was faulty. Do nothing.
 		return nil
 	}
-	return model.AlterTableDropColumn(fmt.Sprintf(`%d_%s`, sc.TxSmart.EcosystemID, tableName), name)
+	return model.AlterTableDropColumn(getDefTableName(sc, tableName), name)
 }
 
 // UpdateLang updates language resource

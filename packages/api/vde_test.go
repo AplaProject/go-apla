@@ -462,6 +462,7 @@ func TestHTTPRequest(t *testing.T) {
 			action {
 				var ret string 
 				var pars, heads, json map
+				$ret_table = DBFind("tables").Columns("id").Where("name=$", "notable")
 				ret = HTTPRequest("http://www.instagram.com/", "GET", heads, pars)
 				if !Contains(ret, "react-root") {
 					error "instagram error"

@@ -80,8 +80,11 @@ func TestNewContracts(t *testing.T) {
 				form[key] = []string{value}
 			}
 			if err := postTx(item.Name, &form); err != nil {
-				t.Error(err)
-				return
+				if par.Results[`error`] != err.Error() {
+					t.Error(err)
+					return
+				}
+				continue
 			}
 			for key, value := range par.Results {
 				if !wanted(key, value) {
@@ -90,9 +93,56 @@ func TestNewContracts(t *testing.T) {
 			}
 		}
 	}
+	var row rowResult
+	err := sendGet(`row/menu/1`, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value[`value`] == `update` {
+		t.Errorf(`menu == update`)
+		return
+	}
 }
 
 var contracts = []smartContract{
+	{`Crash`, `contract Crash { data {} conditions {} action
+
+		{ $result=DBUpdate("menu", 1, "value", "updated") }
+		}`,
+		[]smartParams{
+			{nil, map[string]string{`error`: `{"type":"panic","error":"runtime panic error"}`}},
+		}},
+	{`TestOneInput`, `contract TestOneInput {
+		data {
+			list array
+		}
+		action { 
+			Test("oneinput",  $list[0])
+		}
+	}`,
+		[]smartParams{
+			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input value`}},
+		}},
+	{`DBProblem`, `contract DBProblem {
+		action{
+			DBFind("members").Where("name=?", "name")
+		}
+	}`,
+		[]smartParams{
+			{nil, map[string]string{`error`: `{"type":"panic","error":"pq: current transaction is aborted, commands ignored until end of transaction block"}`}},
+		}},
+	{`TestMultiForm`, `contract TestMultiForm {
+					data {
+						list array
+					}
+					action { 
+						Test("multiform",  $list[0]+$list[1])
+					}
+				}`,
+		[]smartParams{
+			{map[string]string{`list[]`: `2`, `list[0]`: `start`, `list[1]`: `finish`}, map[string]string{`multiform`: `startfinish`}},
+		}},
 	{`errTestMessage`, `contract errTestMessage {
 		conditions {
 		}
@@ -230,6 +280,13 @@ var contracts = []smartContract{
 			action { var ivar int}
 		}`,
 		nil},
+	{`testGetContract`, `contract testGetContract {
+			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
+				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
+		[]smartParams{
+			{nil, map[string]string{`ByName`: `0 6`,
+				`ById`: `NewLang`}},
+		}},
 }
 
 func TestEditContracts(t *testing.T) {
@@ -614,18 +671,25 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	var cntlist contractsResult
-	err := sendGet(`contracts`, nil, &cntlist)
-	if err != nil {
+	rnd := `rnd` + crypto.RandSeq(6)
+	code := `contract ` + rnd + ` {
+		data {
+			Par string "optional"
+		}
+		action { $result = $par}}`
+	form := url.Values{`Value`: {code}, `Conditions`: {`true`}}
+	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
+
 	var ret getContractResult
-	err = sendGet(`contract/testUpd`, nil, &ret)
+	err := sendGet(`contract/`+rnd, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	keyID := ret.WalletID
 	sid := ret.TableID
 	var row rowResult
 	err = sendGet(`row/contracts/`+sid, nil, &row)
@@ -639,16 +703,22 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 		return
 	}
 
-	code := row.Value[`value`]
-	off := strings.IndexByte(code, '-')
-	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
-	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"1248-5499-7861-4204-5166"}}
+	code = row.Value[`value`]
+	form = url.Values{`Id`: {sid}, `Value`: {code}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"1248-5499-7861-4204-5166"}}
 	err = postTx(`EditContract`, &form)
 	if err == nil {
 		t.Error("Expected `Contract activated` error")
 		return
 	}
-
+	err = sendGet(`contract/`+rnd, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.WalletID != keyID {
+		t.Error(`wrong walletID`, ret.WalletID, keyID)
+		return
+	}
 	if err := postTx(`DeactivateContract`, &url.Values{`Id`: {sid}}); err != nil {
 		t.Error(err)
 		return
@@ -656,6 +726,15 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 
 	if err := postTx(`EditContract`, &form); err != nil {
 		t.Error(err)
+		return
+	}
+	err = sendGet(`contract/`+rnd, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Address != "1248-5499-7861-4204-5166" {
+		t.Error(`wrong address`, ret.Address, "!= 1248-5499-7861-4204-5166")
 		return
 	}
 }

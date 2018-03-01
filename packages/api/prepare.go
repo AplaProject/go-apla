@@ -76,13 +76,17 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 			var val string
 			if fitem.Type.String() == `[]interface {}` {
 				for key, values := range r.Form {
-					if key == fitem.Name+`[]` {
+					if key == fitem.Name+`[]` && len(values) > 0 {
+						count := converter.StrToInt(values[0])
 						var list []string
-						for _, value := range values {
-							list = append(list, value)
+						for i := 0; i < count; i++ {
+							list = append(list, r.FormValue(fmt.Sprintf(`%s[%d]`, fitem.Name, i)))
 						}
 						val = strings.Join(list, `,`)
 					}
+				}
+				if len(val) == 0 {
+					val = r.FormValue(fitem.Name)
 				}
 			} else {
 				val = strings.TrimSpace(r.FormValue(fitem.Name))
