@@ -1770,7 +1770,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 		action {
-			DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,\"limit\",deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Deleted, $Conditions)
+			DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,\"limit\",deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
 	('30', 'contract CallDelayedContract {
