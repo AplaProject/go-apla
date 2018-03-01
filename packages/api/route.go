@@ -17,56 +17,74 @@
 package api
 
 import (
+	"net/http"
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/modes"
+
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/daemons"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
 
-func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
+func MethodRoute(route *hr.Router, method, pattern, pars string, mode modes.NodeMode, handler ...ApiHandle) {
+	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, mode, processParams(pars), handler...))
 }
 
-// Route sets routing pathes
-func Route(route *hr.Router) {
-	get := func(pattern, params string, handler ...apiHandle) {
-		methodRoute(route, `GET`, pattern, params, handler...)
+func setRoute(route *hr.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
+	for _, method := range methods {
+		route.HandlerFunc(method, path, handle)
 	}
-	post := func(pattern, params string, handler ...apiHandle) {
-		methodRoute(route, `POST`, pattern, params, handler...)
+}
+
+// CreateDefaultRouter returns common api
+func CreateDefaultRouter(mode modes.NodeMode) *hr.Router {
+	router := hr.New()
+	setRoute(router, `/monitoring`, daemons.Monitoring, `GET`)
+	AddCommonRoutes(router, mode)
+
+	router.Handler(`GET`, consts.WellKnownRoute, http.FileServer(http.Dir(*conf.TLS)))
+	return router
+}
+
+// AddCommonRoutes add common handlers to router
+func AddCommonRoutes(router *hr.Router, mode modes.NodeMode) {
+
+	get := func(pattern, params string, handler ...ApiHandle) {
+		MethodRoute(router, `GET`, pattern, params, mode, handler...)
 	}
-	anyTx := func(method, pattern, pars string, preHandle, handle apiHandle) {
-		methodRoute(route, method, `prepare/`+pattern, pars, authWallet, preHandle)
+	post := func(pattern, params string, handler ...ApiHandle) {
+		MethodRoute(router, `POST`, pattern, params, mode, handler...)
+	}
+	anyTx := func(method, pattern, pars string, preHandle, handle ApiHandle) {
+		MethodRoute(router, method, `prepare/`+pattern, pars, mode, authWallet, preHandle)
 		if len(pars) > 0 {
 			pars = `,` + pars
 		}
-		methodRoute(route, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, authWallet, handle)
+		MethodRoute(router, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, mode, authWallet, handle)
 	}
-	postTx := func(url string, params string, preHandle, handle apiHandle) {
+	postTx := func(url string, params string, preHandle, handle ApiHandle) {
 		anyTx(`POST`, url, params, preHandle, handle)
 	}
 
-	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
-	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
+	router.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
+	router.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
 
 	get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)
 	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
-	get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
-	get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
-	get(`ecosystems`, ``, authWallet, ecosystems)
+
 	get(`getuid`, ``, getUID)
 	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
 	get(`row/:name/:id`, `?columns:string`, authWallet, row)
 	get(`systemparams`, `?names:string`, authWallet, systemParams)
 	get(`table/:name`, ``, authWallet, table)
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
-	get(`txstatus/:hash`, ``, authWallet, txstatus)
+
 	get(`test/:name`, ``, getTest)
 	get(`history/:table/:id`, ``, authWallet, getHistory)
-	get(`block/:id`, ``, getBlockInfo)
-	get(`maxblockid`, ``, getMaxBlockID)
 
 	post(`content/source/:name`, ``, authWallet, getSource)
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
@@ -74,7 +92,7 @@ func Route(route *hr.Router) {
 	post(`content/hash/:name`, ``, authWallet, getPageHash)
 	post(`install`, `?first_load_blockchain_url ?first_block_dir log_level type db_host db_port 
 	db_name db_pass db_user ?centrifugo_url ?centrifugo_secret:string,?generate_first_block:int64`, doInstall)
-	post(`vde/create`, ``, authWallet, vdeCreate)
+	// post(`vde/create`, ``, authWallet, vdeCreate)
 	post(`login`, `?pubkey signature:hex,?key_id:string,?ecosystem ?expire:int64`, login)
 	postTx(`:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, prepareContract, contract)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
@@ -82,7 +100,23 @@ func Route(route *hr.Router) {
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template:string`, jsonContent)
 
-	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
+	MethodRoute(router, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, mode, nodeContract)
+
+}
+
+// AddBlockChainRoutes add specific routes to router
+func AddBlockChainRoutes(router *hr.Router, mode modes.NodeMode) {
+
+	get := func(pattern, params string, handler ...ApiHandle) {
+		MethodRoute(router, `GET`, pattern, params, mode, handler...)
+	}
+
+	get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
+	get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
+	get(`ecosystems`, ``, authWallet, ecosystems)
+	get(`txstatus/:hash`, ``, authWallet, txstatus)
+	get(`block/:id`, ``, getBlockInfo)
+	get(`maxblockid`, ``, getMaxBlockID)
 }
 
 func processParams(input string) (params map[string]int) {

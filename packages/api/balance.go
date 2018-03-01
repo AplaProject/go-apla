@@ -31,7 +31,7 @@ type balanceResult struct {
 	Money  string `json:"money"`
 }
 
-func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func balance(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) error {
 	ecosystemId, _, err := checkEcosystem(w, data, logger)
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	keyID := converter.StringToAddress(data.params[`wallet`].(string))
 	if keyID == 0 {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "value": data.params["wallet"].(string)}).Error("converting wallet to address")
-		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
+		return ErrorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
 
 	key := &model.Key{}
@@ -47,7 +47,7 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	_, err = key.Get(keyID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting Key for wallet")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 	data.result = &balanceResult{Amount: key.Amount, Money: converter.EGSMoney(key.Amount)}
 	return nil

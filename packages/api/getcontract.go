@@ -46,14 +46,14 @@ type getContractResult struct {
 	Name     string          `json:"name"`
 }
 
-func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func getContract(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) error {
 	var result getContractResult
 
 	cntname := data.params[`name`].(string)
 	contract := smart.VMGetContract(data.vm, cntname, uint32(data.ecosystemId))
 	if contract == nil {
 		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": cntname}).Error("contract name")
-		return errorAPI(w, `E_CONTRACT`, http.StatusBadRequest, cntname)
+		return ErrorAPI(w, `E_CONTRACT`, http.StatusBadRequest, cntname)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
 	fields := make([]contractField, 0)

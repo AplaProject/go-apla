@@ -38,7 +38,7 @@ type ecosystemParamsResult struct {
 	List []paramValue `json:"list"`
 }
 
-func ecosystemParams(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+func ecosystemParams(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) (err error) {
 	var (
 		result ecosystemParamsResult
 		names  map[string]bool

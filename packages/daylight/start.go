@@ -24,25 +24,25 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/api"
+	"github.com/julienschmidt/httprouter"
+
 	"github.com/GenesisKernel/go-genesis/packages/autoupdate"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
-	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
-	"github.com/GenesisKernel/go-genesis/packages/install"
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
+	"github.com/GenesisKernel/go-genesis/packages/modes"
+	"github.com/GenesisKernel/go-genesis/packages/modes/blockchain"
+	"github.com/GenesisKernel/go-genesis/packages/modes/mastervde"
+	"github.com/GenesisKernel/go-genesis/packages/modes/vde"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -132,65 +132,11 @@ func delPidFile() {
 	os.Remove(conf.GetPidFile())
 }
 
-func rollbackToBlock(blockID int64) error {
-	if err := smart.LoadContracts(nil); err != nil {
-		return err
-	}
-	parser := new(parser.Parser)
-	err := parser.RollbackToBlockID(*conf.RollbackToBlockID)
-	if err != nil {
-		return err
-	}
-
-	// block id = 1, is a special case for full rollback
-	if blockID != 1 {
-		return nil
-	}
-
-	// check blocks related tables
-	startData := map[string]int64{"1_menu": 1, "1_pages": 1, "1_contracts": 26, "1_parameters": 11, "1_keys": 1, "1_tables": 8, "stop_daemons": 1, "queue_blocks": 9999999, "system_tables": 1, "system_parameters": 27, "system_states": 1, "install": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1, "confirmations": 9999999, "transactions": 9999999}
-	warn := 0
-	for table := range startData {
-		count, err := model.GetRecordsCountTx(nil, table)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting record count")
-			return err
-		}
-		if count > 0 && count > startData[table] {
-			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Warn("record count in table is larger then start")
-			warn++
-		} else {
-			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Info("record count in table is ok")
-		}
-	}
-
-	if warn == 0 {
-		rbFile := filepath.Join(conf.Config.WorkDir, consts.RollbackResultFilename)
-		ioutil.WriteFile(rbFile, []byte("1"), 0644)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile, "path": rbFile}).Error("rollback result flag")
-			return err
-		}
-	}
-	return nil
-}
-
-func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
-	for _, method := range methods {
-		route.HandlerFunc(method, path, handle)
-	}
-}
-
-func initRoutes(listenHost string) {
-	route := httprouter.New()
-	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
-	api.Route(route)
-	route.Handler(`GET`, consts.WellKnownRoute, http.FileServer(http.Dir(*conf.TLS)))
+func runHTTPListener(host string, router *httprouter.Router) {
 	if len(*conf.TLS) > 0 {
-		go http.ListenAndServeTLS(":443", *conf.TLS+consts.TLSFullchainPem, *conf.TLS+consts.TLSPrivkeyPem, route)
+		go http.ListenAndServeTLS(":443", *conf.TLS+consts.TLSFullchainPem, *conf.TLS+consts.TLSPrivkeyPem, router)
 	}
-
-	httpListener(listenHost, route)
+	httpListener(host, router)
 }
 
 // Start starts the main code of the program
@@ -223,6 +169,7 @@ func Start() {
 	}
 
 	conf.InitConfigFlags()
+
 	if conf.NoConfig() {
 		conf.Installed = false
 		log.Info("Config file missing.")
@@ -240,13 +187,6 @@ func Start() {
 	autoupdate.InitUpdater(conf.Config.Autoupdate.ServerAddress, conf.Config.Autoupdate.PublicKeyPath)
 
 	// process directives
-	if *conf.GenerateFirstBlock {
-		if err := install.GenerateFirstBlock(); err != nil {
-			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("GenerateFirstBlock")
-			Exit(1)
-		}
-	}
-
 	if *conf.InitDatabase {
 		if err := model.InitDB(conf.Config.DB); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("InitDB")
@@ -261,22 +201,6 @@ func Start() {
 		}
 		log.Info("Config file created.")
 		conf.Installed = true
-	}
-
-	if conf.Installed {
-		if conf.Config.KeyID == 0 {
-			key, err := parser.GetKeyIDFromPrivateKey()
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Unable to get KeyID")
-				Exit(1)
-			}
-			conf.Config.KeyID = key
-			if err := conf.SaveConfig(); err != nil {
-				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
-				Exit(1)
-			}
-		}
-		initGorm(conf.Config.DB)
 	}
 
 	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
@@ -302,39 +226,37 @@ func Start() {
 	}
 	defer delPidFile()
 
-	// database rollback to the specified block
-	if *conf.RollbackToBlockID > 0 {
-		err = syspar.SysUpdate(nil)
-		if err != nil {
-			log.WithError(err).Error("can't read system parameters")
-		}
-		log.WithFields(log.Fields{"block_id": *conf.RollbackToBlockID}).Info("Rollbacking to block ID")
-		err := rollbackToBlock(*conf.RollbackToBlockID)
-		log.WithFields(log.Fields{"block_id": *conf.RollbackToBlockID}).Info("Rollback is ok")
-		if err != nil {
-			log.WithError(err).Error("Rollback error")
-		} else {
-			log.Info("Rollback is OK")
-		}
-		Exit(0)
-	}
-
 	if *conf.NoStart {
 		Exit(0)
 	}
 
-	if model.DBConn != nil {
-		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err := daemonsctl.RunAllDaemons()
-		log.Info("Daemons started")
-		if err != nil {
-			os.Exit(1)
+	var mode modes.NodeMode
+	var port string
+	if *conf.IsVDEMaster {
+
+		var c mastervde.Config
+		if err := conf.LoadVDEConfig(&c); err != nil {
+			Exit(1)
 		}
+
+		port = strconv.Itoa(c.VDEConfig.HTTP.Port)
+		mode = mastervde.Init(&c)
+	} else if *conf.IsVDE {
+
+		var c vde.Config
+		if err := conf.LoadVDEConfig(&c); err != nil {
+			Exit(1)
+		}
+
+		port = strconv.Itoa(c.HTTP.Port)
+		mode = vde.Init(&c)
+	} else {
+		mode = blockchain.Init(&conf.Config)
 	}
 
-	daemons.WaitForSignals()
+	mode.Start(Exit, initGorm)
+	runHTTPListener(port, mode.API())
 
-	initRoutes(conf.Config.HTTP.Str())
-
-	select {}
+	<-daemons.WaitForSignals()
+	mode.Stop()
 }

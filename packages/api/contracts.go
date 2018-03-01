@@ -34,7 +34,7 @@ type contractsResult struct {
 	List  []map[string]string `json:"list"`
 }
 
-func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+func getContracts(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) (err error) {
 	var limit int
 
 	table := getPrefix(data) + `_contracts`
@@ -42,7 +42,7 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 	count, err := model.GetNextID(nil, table)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return ErrorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	if data.params[`limit`].(int64) > 0 {
@@ -54,7 +54,7 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return ErrorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	for ind, val := range list {
 		if val[`wallet_id`] == `NULL` {

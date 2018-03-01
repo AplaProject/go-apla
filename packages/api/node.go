@@ -29,7 +29,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func nodeContract(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) error {
 	var err error
 
 	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()

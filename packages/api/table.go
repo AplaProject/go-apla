@@ -43,7 +43,7 @@ type tableResult struct {
 	Columns    []columnInfo `json:"columns"`
 }
 
-func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+func table(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) (err error) {
 	var result tableResult
 
 	prefix := getPrefix(data)
@@ -52,7 +52,7 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	_, err = table.Get(nil, data.params[`name`].(string))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return ErrorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	if len(table.Name) > 0 {
@@ -60,20 +60,20 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		err := json.Unmarshal([]byte(table.Permissions), &perm)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table permissions to json")
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+			return ErrorAPI(w, err.Error(), http.StatusInternalServerError)
 		}
 		var cols map[string]string
 		err = json.Unmarshal([]byte(table.Columns), &cols)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table columns to json")
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+			return ErrorAPI(w, err.Error(), http.StatusInternalServerError)
 		}
 		columns := make([]columnInfo, 0)
 		for key, value := range cols {
 			colType, err := model.GetColumnType(prefix+`_`+data.params[`name`].(string), key)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column type from db")
-				return errorAPI(w, err.Error(), http.StatusInternalServerError)
+				return ErrorAPI(w, err.Error(), http.StatusInternalServerError)
 			}
 			columns = append(columns, columnInfo{Name: key, Perm: value,
 				Type: colType})
@@ -89,7 +89,7 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			Columns:    columns,
 		}
 	} else {
-		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
+		return ErrorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
 	}
 	data.result = &result
 	return

@@ -46,7 +46,7 @@ type loginResult struct {
 	IsVDE       bool   `json:"vde,omitempty"`
 }
 
-func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func login(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) error {
 	var (
 		pubkey []byte
 		wallet int64
@@ -61,7 +61,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	}
 	if len(msg) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("UID is empty")
-		return errorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
+		return ErrorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
 	}
 	state := data.ecosystemId
 	if data.params[`ecosystem`].(int64) > 0 {
@@ -81,33 +81,33 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	isAccount, err := account.Get(wallet)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
-		return errorAPI(w, err, http.StatusBadRequest)
+		return ErrorAPI(w, err, http.StatusBadRequest)
 	}
 	if isAccount {
 		pubkey = account.PublicKey
 		if account.Delete == 1 {
-			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
+			return ErrorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 		}
 	}
 	if state > 1 && len(pubkey) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty, and state is not default")
-		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
+		return ErrorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
 	}
 	if len(pubkey) == 0 {
 		pubkey = data.params[`pubkey`].([]byte)
 		if len(pubkey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
-			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
+			return ErrorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 		}
 	}
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("checking signature")
-		return errorAPI(w, err, http.StatusBadRequest)
+		return ErrorAPI(w, err, http.StatusBadRequest)
 	}
 	if !verify {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("incorrect signature")
-		return errorAPI(w, `E_SIGNATURE`, http.StatusBadRequest)
+		return ErrorAPI(w, `E_SIGNATURE`, http.StatusBadRequest)
 	}
 	address := crypto.KeyToAddress(pubkey)
 	var (
@@ -117,7 +117,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	sp.SetTablePrefix(converter.Int64ToStr(state))
 	if ok, err := sp.Get(nil, "founder_account"); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder_account parameter")
-		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
+		return ErrorAPI(w, `E_SERVER`, http.StatusBadRequest)
 	} else if ok {
 		founder = converter.StrToInt64(sp.Value)
 	}
@@ -141,17 +141,17 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	result.Token, err = jwtGenerateToken(w, claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	result.Refresh, err = jwtGenerateToken(w, claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 	result.NotifyKey, err = publisher.GetHMACSign(wallet)
 	if err != nil {
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 	notificator.AddUser(wallet, state)
 

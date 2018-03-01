@@ -14,16 +14,16 @@ type GetMaxBlockIDResult struct {
 	MaxBlockID int64 `json:"max_block_id"`
 }
 
-func getMaxBlockID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+func getMaxBlockID(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) (err error) {
 	block := &model.Block{}
 	found, err := block.GetMaxBlock()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max block")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 	if !found {
 		log.WithFields(log.Fields{"type": consts.NotFound}).Error("last block not found")
-		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		return ErrorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 	data.result = &GetMaxBlockIDResult{block.ID}
 	return nil
@@ -38,17 +38,17 @@ type GetBlockInfoResult struct {
 	RollbacksHash []byte `json:"rollbacks_hash"`
 }
 
-func getBlockInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+func getBlockInfo(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) (err error) {
 	blockID := converter.StrToInt64(data.params["id"].(string))
 	block := model.Block{}
 	found, err := block.Get(blockID)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 	if !found {
 		log.WithFields(log.Fields{"type": consts.NotFound, "id": blockID}).Error("block with id not found")
-		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		return ErrorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 	data.result = &GetBlockInfoResult{Hash: block.Hash, EcosystemID: block.EcosystemID, KeyID: block.KeyID, Time: block.Time, Tx: block.Tx, RollbacksHash: block.RollbacksHash}
 	return nil

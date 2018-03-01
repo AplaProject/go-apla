@@ -177,3 +177,7 @@ func IsExistFirstBlock() bool {
 	}
 	return true
 }
+
+func CreateKeyPair(privFilename, pubFilename string) (priv, pub []byte, err error) {
+	return createKeyPair(privFilename, pubFilename)
+}

@@ -34,6 +34,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var allDaemons = []string{
+	"BlocksCollection",
+	"BlockGenerator",
+	"QueueParserTx",
+	"QueueParserBlocks",
+	"Disseminator",
+	"Confirmations",
+	"Notificator",
+	"Scheduler",
+}
+
 type installResult struct {
 	Success bool `json:"success"`
 }
@@ -101,10 +112,10 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return err
 	}
 
-	return daemonsctl.RunAllDaemons()
+	return daemonsctl.RunAllDaemons(allDaemons)
 }
 
-func doInstall(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func doInstall(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) error {
 	var result installResult
 
 	data.result = &result
@@ -129,9 +140,9 @@ func doInstall(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("installCommon")
 		if strings.HasPrefix(err.Error(), `E_`) {
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+			return ErrorAPI(w, err.Error(), http.StatusInternalServerError)
 		}
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 
 	conf.Installed = true

@@ -26,7 +26,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+func ecosystemParam(w http.ResponseWriter, r *http.Request, data *ApiData, logger *log.Entry) (err error) {
 	_, prefix, err := checkEcosystem(w, data, logger)
 	if err != nil {
 		return err
@@ -36,11 +36,11 @@ func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData, logge
 	found, err := sp.Get(nil, data.params[`name`].(string))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting state parameter by name")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return ErrorAPI(w, err, http.StatusInternalServerError)
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "key": data.params["name"].(string)}).Error("state parameter not found")
-		return errorAPI(w, err, http.StatusBadRequest)
+		return ErrorAPI(w, err, http.StatusBadRequest)
 	}
 
 	data.result = &paramValue{ID: converter.Int64ToStr(sp.ID), Name: sp.Name, Value: sp.Value, Conditions: sp.Conditions}
