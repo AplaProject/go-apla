@@ -87,21 +87,37 @@ func TestNewContracts(t *testing.T) {
 			}
 		}
 	}
+	var row rowResult
+	err := sendGet(`row/menu/1`, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value[`value`] == `update` {
+		t.Errorf(`menu == update`)
+		return
+	}
 }
 
 var contracts = []smartContract{
+	{`Crash`, `contract Crash { data {} conditions {} action
+
+		{ $result=DBUpdate("menu", 1, "value", "updated") }
+		}`,
+		[]smartParams{
+			{nil, map[string]string{`error`: `{"type":"panic","error":"runtime panic error"}`}},
+		}},
 	{`TestOneInput`, `contract TestOneInput {
-				data {
-					list array
-				}
-				action { 
-					Test("oneinput",  $list[0])
-				}
-			}`,
+		data {
+			list array
+		}
+		action { 
+			Test("oneinput",  $list[0])
+		}
+	}`,
 		[]smartParams{
 			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input value`}},
 		}},
-
 	{`DBProblem`, `contract DBProblem {
 		action{
 			DBFind("members").Where("name=?", "name")

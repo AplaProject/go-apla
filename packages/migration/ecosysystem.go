@@ -18,7 +18,51 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_menu" ADD CONSTRAINT "%[1]d_vde_menu_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_menu_index_name" ON "%[1]d_vde_menu" (name);
-	  
+
+
+	  INSERT INTO "%[1]d_vde_menu" ("id","name","title","value","conditions") VALUES('2','admin_menu','Admin menu','MenuItem(
+    Icon: "icon-screen-desktop",
+    Page: "interface",
+    Vde: "true",
+    Title: "Interface"
+)
+MenuItem(
+    Icon: "icon-docs",
+    Page: "tables",
+    Vde: "true",
+    Title: "Tables"
+)
+MenuItem(
+    Icon: "icon-briefcase",
+    Page: "contracts",
+    Vde: "true",
+    Title: "Smart Contracts"
+)
+MenuItem(
+    Icon: "icon-settings",
+    Page: "parameters",
+    Vde: "true",
+    Title: "Ecosystem parameters"
+)
+MenuItem(
+    Icon: "icon-globe",
+    Page: "languages",
+    Vde: "true",
+    Title: "Language resources"
+)
+MenuItem(
+    Icon: "icon-cloud-upload",
+    Page: "import",
+    Vde: "true",
+    Title: "Import"
+)
+MenuItem(
+    Icon: "icon-cloud-download",
+    Page: "export",
+    Vde: "true",
+    Title: "Export"
+)','true');
+
 	  DROP TABLE IF EXISTS "%[1]d_vde_pages"; CREATE TABLE "%[1]d_vde_pages" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -28,7 +72,9 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_pages" ADD CONSTRAINT "%[1]d_vde_pages_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_pages_index_name" ON "%[1]d_vde_pages" (name);
-	  
+
+	  INSERT INTO "%[1]d_vde_pages" ("id","name","value","menu","conditions") VALUES('2','admin_index','','admin_menu','true');
+
 	  DROP TABLE IF EXISTS "%[1]d_vde_blocks"; CREATE TABLE "%[1]d_vde_blocks" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -758,9 +804,45 @@ If("#key_id#" == EcosysParam("founder_account")){
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
 
 
-		INSERT INTO "%[1]d_pages" ("id","name","value","menu","conditions") VALUES('2','admin_index','','admin_menu','true');
-
-
+		INSERT INTO "%[1]d_pages" ("id","name","value","menu","conditions") VALUES
+			('2','admin_index','','admin_menu','true'),
+			('3','notifications','DBFind(Name: notifications, Source: noti_s).Where("closed=0 and notification_type=1 and recipient_id=#key_id#")
+				DBFind(Name: notifications, Source: noti_r).Where("closed=0 and notification_type=2 and (started_processing_id=0 or started_processing_id=#key_id#)")
+				
+				ForList(noti_s){
+						Div(Class: list-group-item){
+							LinkPage(Page: #page_name#, PageParams: "notific_id=#id#,notific_type=#notification_type#,notific_header=#header_text#,#page_params#"){        
+								Div(media-box){
+									Div(Class: pull-left){
+										Em(Class: fa #icon# fa-1x text-info)
+									} 
+									Div(media-box-body clearfix){ 
+										Div(Class: m0 text-normal, Body: #header_text#) 
+										Div(Class: m0 text-muted h6, Body: #body_text#)
+									}
+								}
+							}
+						}
+				}
+				
+				ForList(noti_r){
+					DBFind(Name: roles_assign, Source: src_roles).Where("member_id=#key_id# and role_id=#role_id# and delete=0").Vars(prefix)
+					If(#prefix_id# > 0){
+						Div(Class: list-group-item){
+							LinkPage(Page: #page_name#, PageParams: "notific_id=#id#,notific_type=#notification_type#,notific_header=#header_text#,#page_params#"){        
+								Div(media-box){
+									Div(Class: pull-left){
+										Em(Class: fa #icon# fa-1x text-primary)
+									} 
+									Div(media-box-body clearfix){ 
+										Div(Class: m0 text-normal, Body: #header_text#) 
+										Div(Class: m0 text-muted h6, Body: #body_text#)
+									}
+								}
+							}
+						}
+					}
+				}','default_menu','ContractAccess("@1EditPage")');
 
 		DROP TABLE IF EXISTS "%[1]d_blocks"; CREATE TABLE "%[1]d_blocks" (
 			"id" bigint  NOT NULL DEFAULT '0',
@@ -893,7 +975,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"value": "ContractConditions(\"MainCondition\")",
 			"conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractAccess("@1EditTable")'),
-				('9', 'member', 
+				('9', 'members', 
 					'{"insert": "ContractAccess(\"Profile_Edit\")", "update": "ContractAccess(\"Profile_Edit\")", 
 					  "new_column": "ContractConditions(\"MainCondition\")"}',
 					'{"member_name": "ContractAccess(\"Profile_Edit\")",
@@ -909,7 +991,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 					  "date_create": "false",
 					  "date_delete": "ContractAccess(\"Roles_Del\")",
 					  "creator_name": "false",
-					  "creator_avatar": "false"}',
+					  "creator_avatar": "false",
+					  "company_id": "false"}',
 					   'ContractConditions(\"MainCondition\")'),
 				('11', 'roles_assign', 
 					'{"insert": "ContractAccess(\"Roles_Assign\", \"voting_CheckDecision\")", "update": "ContractAccess(\"Roles_Unassign\")", 
@@ -992,15 +1075,20 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"date_create" timestamp,
 			"date_delete" timestamp,
 			"creator_name"	varchar(255) NOT NULL DEFAULT '',
-			"creator_avatar" bytea NOT NULL DEFAULT ''
+			"creator_avatar" bytea NOT NULL DEFAULT '',
+			"company_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
 		CREATE INDEX "%[1]d_roles_list_index_type" ON "%[1]d_roles_list" (role_type);
 
 		INSERT INTO "%[1]d_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
-			"date_create","creator_name") VALUES('1','default_ecosystem_page', 
-				'Admin', '0', '3', NOW(), '');
+			"date_create","creator_name") VALUES
+			('1','default_ecosystem_page', 'Admin', '0', '3', NOW(), ''),
+			('2','', 'Candidate for validators', '0', '3', NOW(), ''),
+			('3','', 'Validator', '0', '3', NOW(), ''),
+			('4','', 'Investor with voting rights', '0', '3', NOW(), ''),
+			('5','', 'Delegate', '0', '3', NOW(), '');
 
 
 		DROP TABLE IF EXISTS "%[1]d_roles_assign";
@@ -1027,15 +1115,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"member_name","date_start") VALUES('1','1','3','Admin','%[4]d','founder', NOW());
 
 
-		DROP TABLE IF EXISTS "%[1]d_member";
-		CREATE TABLE "%[1]d_member" (
+		DROP TABLE IF EXISTS "%[1]d_members";
+		CREATE TABLE "%[1]d_members" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
 			"avatar"	bytea NOT NULL DEFAULT ''
 		);
-		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
+		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
-		INSERT INTO "%[1]d_member" ("id", "member_name") VALUES('%[4]d', 'founder');
+		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
 
 		`
 

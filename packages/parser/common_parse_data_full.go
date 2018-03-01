@@ -222,7 +222,7 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
 		p, err := ParseTransaction(bufTransaction)
 		if err != nil {
-			if p.TxHash != nil {
+			if p != nil && p.TxHash != nil {
 				p.processBadTransaction(p.TxHash, err.Error())
 			}
 			return nil, fmt.Errorf("parse transaction error(%s)", err)
@@ -647,7 +647,15 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 				return err
 			}
 			// skip this transaction
-			model.MarkTransactionUsed(nil, p.TxHash)
+			errRoll := dbTransaction.Connection().Exec(fmt.Sprintf("ROLLBACK TO SAVEPOINT \"tx-%d\";", curTx)).Error
+			if errRoll != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": errRoll, "tx_hash": p.TxHash}).Error("rolling back to previous savepoint")
+			}
+			_, err2 := model.MarkTransactionUsed(nil, p.TxHash)
+			if err2 != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err2}).Error("marking used transactions")
+				return err2
+			}
 			p.processBadTransaction(p.TxHash, err.Error())
 			if p.SysUpdate {
 				if err = syspar.SysUpdate(p.DbTransaction); err != nil {
@@ -656,6 +664,10 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 				p.SysUpdate = false
 			}
 			continue
+		}
+		err = dbTransaction.Connection().Exec(fmt.Sprintf("RELEASE SAVEPOINT \"tx-%d\";", curTx)).Error
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("releasing savepoint")
 		}
 		if p.SysUpdate {
 			b.SysUpdate = true
