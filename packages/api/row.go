@@ -30,15 +30,25 @@ type rowResult struct {
 	Value map[string]string `json:"value"`
 }
 
-func row(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	cols := `*`
-	if len(data.params[`columns`].(string)) > 0 {
-		cols = converter.EscapeName(data.params[`columns`].(string))
+func getTableRowByID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	data.params["column"] = "id"
+	return getTableRow(w, r, data, logger)
+}
+
+func getTableRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	columns := data.ParamString("columns")
+	if len(columns) > 0 {
+		columns = converter.EscapeName(columns)
+	} else {
+		columns = "*"
 	}
-	table := converter.EscapeName(getPrefix(data) + `_` + data.params[`name`].(string))
-	row, err := model.GetOneRow(`SELECT `+cols+` FROM `+table+` WHERE id = ?`, data.params[`id`].(string)).String()
+	tableSuffix := data.ParamString("name")
+	table := converter.EscapeName(getPrefix(data) + `_` + tableSuffix)
+	column := converter.EscapeName(data.ParamString("column"))
+	value := data.ParamString("value")
+	row, err := model.GetOneRow(`SELECT `+columns+` FROM `+table+` WHERE `+column+` = ?`, value).String()
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": data.params["name"].(string), "id": data.params["id"].(string)}).Error("getting one row")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": tableSuffix, "column": column, "value": value}).Error("getting one row")
 		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)
 	}
 
