@@ -1306,6 +1306,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 			FlushContract(root, id, false)
 			$result = id
 		}
+		func rollback() {
+			var list array
+			list = ContractsList($Value)
+			var i int
+			while i < Len(list) {
+				RollbackContract(list[i])
+				i = i + 1
+			}
+		}
 		func price() int {
 			return  SysParamInt("contract_price")
 		}

@@ -689,12 +689,16 @@ func JSONToMap(input string) (map[string]interface{}, error) {
 }
 
 func RollbackContract(sc *SmartContract, name string) error {
-	if !accessContracts(sc, "Import") {
+	if !accessContracts(sc, "NewContract", "Import") {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract, "error": errAccessRollbackContract}).Error("Check contract access")
 		return errAccessRollbackContract
 	}
 
 	if c := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID)); c != nil {
+		id := c.Block.Info.(*script.ContractInfo).ID
+		if int(id) < len(sc.VM.Children) {
+			sc.VM.Children = sc.VM.Children[:id]
+		}
 		delete(sc.VM.Objects, c.Name)
 	}
 
