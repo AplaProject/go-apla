@@ -359,14 +359,6 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 
 	input := smartTx.Data
 	p.TxData = make(map[string]interface{})
-	getHash := func(input []byte) (string, error) {
-		hash, err := crypto.Hash(input)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of file")
-			return ``, err
-		}
-		return hex.EncodeToString(hash), nil
-	}
 	if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 		for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
 			var err error
@@ -388,8 +380,9 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 					return err
 				}
 				if len(fileInfo.Filename) > 0 {
-					hash, err = getHash(fileInfo.Data)
+					hash, err = crypto.HashHex(fileInfo.Data)
 					if err != nil {
+						log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of file")
 						return err
 					}
 				}
@@ -473,8 +466,9 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 				return err
 			}
 			if strings.Contains(fitem.Tags, `image`) && len(v.(string)) > 0 {
-				v, err = getHash([]byte(v.(string)))
+				v, err = crypto.HashHex([]byte(v.(string)))
 				if err != nil {
+					log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of image file")
 					return err
 				}
 			}

@@ -65,7 +65,7 @@ func dataHandler() hr.Handle {
 		}
 		if mime := smart.FileMime([]byte(data)); len(mime) > 0 {
 			w.Header().Set("Content-Type", mime)
-			w.Header().Set("Cache-Control", "public,max-age=604800,immutable")
+			w.Header().Set("Cache-Control", fmt.Sprintf("public,max-age=%d,immutable", maxAge))
 			w.Write(smart.FileData([]byte(data)))
 			return
 		}

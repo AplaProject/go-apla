@@ -100,13 +100,13 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 					if _, fileHeader, _ := r.FormFile(fitem.Name); fileHeader != nil {
 						file, err := fileHeader.Open()
 						if err != nil {
-							log.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting multipart file")
+							log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting multipart file")
 							return errorAPI(w, err.Error(), http.StatusBadRequest)
 						}
 						buf, err := ioutil.ReadAll(file)
 						file.Close()
 						if err != nil {
-							log.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("reading multipart file")
+							log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading multipart file")
 							return errorAPI(w, err.Error(), http.StatusBadRequest)
 						}
 						fileInfo = smart.FileInfo{Filename: fileHeader.Filename,

@@ -43,8 +43,10 @@ import (
 )
 
 const (
-	jwtPrefix = "Bearer "
-	jwtExpire = 36000 // By default, seconds
+	jwtPrefix     = "Bearer "
+	jwtExpire     = 36000            // By default, seconds
+	multipartSize = 15 * 1024 * 1024 // size for ParseMultipartForm
+	maxAge        = 604800           // max-age for data
 
 	apiInstallRoute = `/api/v2/install`
 )
@@ -224,7 +226,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		// Getting and validating request parameters
 		data.multipart = strings.HasPrefix(r.Header.Get(`Content-Type`), `multipart`)
 		if data.multipart {
-			r.ParseMultipartForm(15 * 1024 * 1024)
+			r.ParseMultipartForm(multipartSize)
 		} else {
 			r.ParseForm()
 		}

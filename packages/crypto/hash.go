@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	log "github.com/sirupsen/logrus"
@@ -49,6 +50,14 @@ func Hash(msg []byte) ([]byte, error) {
 	default:
 		return nil, ErrUnknownProvider
 	}
+}
+
+func HashHex(input []byte) (string, error) {
+	hash, err := Hash(input)
+	if err != nil {
+		return ``, err
+	}
+	return hex.EncodeToString(hash), nil
 }
 
 func DoubleHash(msg []byte) ([]byte, error) {

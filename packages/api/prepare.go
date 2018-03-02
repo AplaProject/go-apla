@@ -17,7 +17,6 @@
 package api
 
 import (
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -66,14 +65,6 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 	}
 	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, EcosystemID: data.ecosystemId, KeyID: data.keyId}
 	forsign := smartTx.ForSign()
-	getHash := func(input []byte) (string, error) {
-		hash, err := crypto.Hash(input)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of file")
-			return ``, err
-		}
-		return hex.EncodeToString(hash), nil
-	}
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
 			if strings.Contains(fitem.Tags, `signature`) {
@@ -84,17 +75,18 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 				if _, fileHeader, _ := r.FormFile(fitem.Name); fileHeader != nil {
 					file, err := fileHeader.Open()
 					if err != nil {
-						log.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting multipart file")
+						log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting multipart file")
 						return errorAPI(w, err.Error(), http.StatusBadRequest)
 					}
 					buf, err := ioutil.ReadAll(file)
 					file.Close()
 					if err != nil {
-						log.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("reading multipart file")
+						log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading multipart file")
 						return errorAPI(w, err.Error(), http.StatusBadRequest)
 					}
-					val, err = getHash(buf)
+					val, err = crypto.HashHex(buf)
 					if err != nil {
+						log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of file")
 						return errorAPI(w, err.Error(), http.StatusBadRequest)
 					}
 				}
@@ -115,8 +107,9 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 			} else {
 				val = strings.TrimSpace(r.FormValue(fitem.Name))
 				if strings.Contains(fitem.Tags, `image`) && len(val) > 0 {
-					val, err = getHash([]byte(val))
+					val, err = crypto.HashHex([]byte(val))
 					if err != nil {
+						log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of image file")
 						return errorAPI(w, err.Error(), http.StatusBadRequest)
 					}
 				}
