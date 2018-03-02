@@ -975,7 +975,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"value": "ContractConditions(\"MainCondition\")",
 			"conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractAccess("@1EditTable")'),
-				('9', 'members', 
+				('9', 'member',
 					'{"insert": "ContractAccess(\"Profile_Edit\")", "update": "ContractAccess(\"Profile_Edit\")", 
 					  "new_column": "ContractConditions(\"MainCondition\")"}',
 					'{"member_name": "ContractAccess(\"Profile_Edit\")",
@@ -1115,15 +1115,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"member_name","date_start") VALUES('1','1','3','Admin','%[4]d','founder', NOW());
 
 
-		DROP TABLE IF EXISTS "%[1]d_members";
-		CREATE TABLE "%[1]d_members" (
+		DROP TABLE IF EXISTS "%[1]d_member";
+		CREATE TABLE "%[1]d_member" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
 			"avatar"	bytea NOT NULL DEFAULT ''
 		);
-		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
+		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
 
-		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
+		INSERT INTO "%[1]d_member" ("id", "member_name") VALUES('%[4]d', 'founder');
 
 		`
 

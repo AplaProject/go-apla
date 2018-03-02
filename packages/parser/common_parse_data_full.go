@@ -665,9 +665,11 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			}
 			continue
 		}
-		err = dbTransaction.Connection().Exec(fmt.Sprintf("RELEASE SAVEPOINT \"tx-%d\";", curTx)).Error
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("releasing savepoint")
+		if b.GenBlock {
+			err = dbTransaction.Connection().Exec(fmt.Sprintf("RELEASE SAVEPOINT \"tx-%d\";", curTx)).Error
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("releasing savepoint")
+			}
 		}
 		if p.SysUpdate {
 			b.SysUpdate = true
