@@ -401,7 +401,9 @@ func dataTag(par parFunc) string {
 		for i, icol := range cols {
 			var ival string
 			if i < defcol {
-				ival = strings.TrimSpace(item[i])
+				if i < len(item) {
+					ival = strings.TrimSpace(item[i])
+				}
 				vals[icol] = ival
 			} else {
 				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
