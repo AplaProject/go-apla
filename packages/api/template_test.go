@@ -81,6 +81,8 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(10)`,
+		`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["11"],["12"]],"limit":"2","name":"contracts","offset":"10","order":"id","source":"src_contracts","types":["text"]}}]`},
 	{`DBFind(contracts, src_pos).Columns(id).Where("id >= 1 and id <= 3")
 		ForList(src_pos, Index: index){
 		Div(list-group-item) {
