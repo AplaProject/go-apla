@@ -407,7 +407,9 @@ func dataTag(par parFunc) string {
 		for i, icol := range cols {
 			var ival string
 			if i < defcol {
-				ival = strings.TrimSpace(item[i])
+				if i < len(item) {
+					ival = strings.TrimSpace(item[i])
+				}
 				vals[icol] = ival
 			} else {
 				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
@@ -444,6 +446,7 @@ func dbfindTag(par parFunc) string {
 		prefix string
 		where  string
 		order  string
+		offset string
 		limit  = 25
 
 		cutoffColumns   = make(map[string]bool)
@@ -475,6 +478,9 @@ func dbfindTag(par parFunc) string {
 	}
 	if limit > 250 {
 		limit = 250
+	}
+	if par.Node.Attr[`offset`] != nil {
+		offset = fmt.Sprintf(` offset %d`, converter.StrToInt(par.Node.Attr[`offset`].(string)))
 	}
 	if par.Node.Attr[`prefix`] != nil {
 		prefix = par.Node.Attr[`prefix`].(string)
@@ -541,7 +547,7 @@ func dbfindTag(par parFunc) string {
 
 	fields = strings.Join(queryColumns, ",")
 
-	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order, limit)
+	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order+offset, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
