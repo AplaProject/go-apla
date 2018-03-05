@@ -58,7 +58,7 @@ func Route(route *hr.Router) {
 	get(`ecosystems`, ``, authWallet, ecosystems)
 	get(`getuid`, ``, getUID)
 	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
-	get(`row/:name/:value`, `?columns:string`, authWallet, row)
+	get(`row/:name/:id`, `?columns:string`, authWallet, row)
 	get(`interface/page/:name`, ``, authWallet, getPageRow)
 	get(`interface/menu/:name`, ``, authWallet, getMenuRow)
 	get(`interface/block/:name`, ``, authWallet, getBlockInterfaceRow)

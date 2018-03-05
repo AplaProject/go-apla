@@ -148,12 +148,3 @@ func GetRowConditionsByTableNameAndID(tblname string, id int64) (string, error) 
 	sql := "SELECT conditions FROM " + tblname + " WHERE id = ? LIMIT 1"
 	return Single(sql, id).String()
 }
-
-func GetRowByTableNameAndColumn(tblname, column, value string) (map[string]string, error) {
-	var data map[string]string
-	err := DBConn.Table(tblname).Where(column+`=?`, value).First(data).Error
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
