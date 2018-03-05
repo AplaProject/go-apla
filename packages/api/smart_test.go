@@ -447,6 +447,34 @@ func TestValidateConditions(t *testing.T) {
 	}
 }
 
+func TestDBMetric(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	name := randName("Metrics")
+	form := url.Values{
+		"Value": {`
+			contract ` + name + ` {
+				data {}
+				conditions {}
+				action {
+					DBSelectMetrics("ecosystem_pages", "1 days", "max")
+				}
+			}`},
+		"Conditions": {"true"},
+	}
+	if err := postTx("NewContract", &form); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(name, &url.Values{}); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
 func TestDelayedContracts(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)

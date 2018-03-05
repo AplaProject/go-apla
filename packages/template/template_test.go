@@ -42,6 +42,7 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`QRcode(Some text)`, `[{"tag":"qrcode","attr":{"text":"Some text"}}]`},
 	{`SetVar(q, q#my#q)Div(Class: #my#){#my# Strong(#my#) Div(#q#){P(Span(#my#))}}`,
 		`[{"tag":"div","attr":{"class":"Span(test)"},"children":[{"tag":"text","text":"Span(test) "},{"tag":"strong","children":[{"tag":"text","text":"Span(test)"}]},{"tag":"div","attr":{"class":"qSpan(test)q"},"children":[{"tag":"p","children":[{"tag":"span","children":[{"tag":"text","text":"Span(test)"}]}]}]}]}]`},
 	{`If(){SetVar(false_condition, 1)Span(False)}.Else{SetVar(true_condition, 1)Span(True)} 
