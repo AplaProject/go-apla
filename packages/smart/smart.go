@@ -29,7 +29,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )

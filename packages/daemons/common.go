@@ -51,18 +51,7 @@ var daemonsList = map[string]func(context.Context, *daemon) error{
 	"QueueParserBlocks": QueueParserBlocks,
 	"Confirmations":     Confirmations,
 	"Notificator":       Notificate,
-	"Scheduler":         Scheduler,
-}
-
-var serverList = []string{
-	"BlocksCollection",
-	"BlockGenerator",
-	"QueueParserTx",
-	"QueueParserBlocks",
-	"Disseminator",
-	"Confirmations",
-	"Notificator",
-	"Scheduler",
+	"VDEScheduler":      VDEScheduler,
 }
 
 var rollbackList = []string{
@@ -135,7 +124,7 @@ func StartDaemons() {
 	utils.CancelFunc = cancel
 	utils.ReturnCh = make(chan string)
 
-	daemonsToStart := serverList
+	daemonsToStart := getActiveDaemons()
 	if len(conf.Config.StartDaemons) > 0 {
 		daemonsToStart = strings.Split(conf.Config.StartDaemons, ",")
 	} else if *conf.TestRollBack {
@@ -164,4 +153,23 @@ func getHostPort(h string) string {
 		return h
 	}
 	return fmt.Sprintf("%s:%d", h, consts.DEFAULT_TCP_PORT)
+}
+
+func getActiveDaemons() []string {
+	if *conf.IsVDEMode {
+		return []string{
+			"Notificator",
+			"VDEScheduler",
+		}
+	}
+
+	return []string{
+		"BlocksCollection",
+		"BlockGenerator",
+		"QueueParserTx",
+		"QueueParserBlocks",
+		"Disseminator",
+		"Confirmations",
+		"Notificator",
+	}
 }
