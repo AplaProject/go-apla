@@ -1328,16 +1328,33 @@ If("#key_id#" == EcosysParam("founder_account")){
 	('13','contract EditPage {
 		data {
 			Id         int
-			Value      string
-			Menu      string
-			Conditions string
+			Value      string "optional"
+			Menu      string "optional"
+			Conditions string "optional"
 		}
 		conditions {
 			RowConditions("pages", $Id)
-			ValidateCondition($Conditions, $ecosystem_id)
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
 		}
 		action {
-			DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
+			var pars, vals array
+			if $Value {
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Menu {
+				pars[Len(pars)] = "menu"
+				vals[Len(vals)] = $Menu
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if Len(vals) > 0 {
+				DBUpdate("pages", $Id, Join(pars, ","), vals...)
+			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('14','contract AppendPage {
