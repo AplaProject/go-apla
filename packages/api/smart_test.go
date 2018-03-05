@@ -472,3 +472,140 @@ func TestDBMetric(t *testing.T) {
 		return
 	}
 }
+
+func TestPartitialEdit(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	name := randName(`part`)
+	form := url.Values{"Name": {name}, "Value": {"Span(Original text)"},
+		"Menu": {"original_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err := postTx(`NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var retList listResult
+	err = sendGet(`list/pages`, nil, &retList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	idItem := retList.Count
+	value := `Span(Temp)`
+	menu := `temp_menu`
+	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Value": {value},
+		"Menu": {menu}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret rowResult
+	err = sendGet(`row/pages/`+idItem, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Value["value"] != value || ret.Value["menu"] != menu {
+		t.Errorf(`wrong value or menu`)
+		return
+	}
+	value = `Span(Updated)`
+	menu = `default_menu`
+	conditions := `true`
+	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Value": {value}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Menu": {menu}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Conditions": {conditions}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`row/pages/`+idItem, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Value["value"] != value || ret.Value["menu"] != menu ||
+		ret.Value["conditions"] != conditions {
+		t.Errorf(`wrong page parameters`)
+		return
+	}
+
+	form = url.Values{"Name": {name}, "Value": {`MenuItem(One)`}, "Title": {`My Menu`},
+		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`NewMenu`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`list/menu`, nil, &retList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	idItem = retList.Count
+	value = `MenuItem(Two)`
+	err = postTx(`EditMenu`, &url.Values{"Id": {idItem}, "Value": {value}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`EditMenu`, &url.Values{"Id": {idItem}, "Conditions": {conditions}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`row/menu/`+idItem, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Value["value"] != value || ret.Value["conditions"] != conditions {
+		t.Errorf(`wrong menu parameters`)
+		return
+	}
+
+	form = url.Values{"Name": {name}, "Value": {`Span(Block)`},
+		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`NewBlock`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`list/blocks`, nil, &retList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	idItem = retList.Count
+	value = `Span(Updated block)`
+	err = postTx(`EditBlock`, &url.Values{"Id": {idItem}, "Value": {value}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`EditBlock`, &url.Values{"Id": {idItem}, "Conditions": {conditions}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`row/blocks/`+idItem, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Value["value"] != value || ret.Value["conditions"] != conditions {
+		t.Errorf(`wrong block parameters`)
+		return
+	}
+
+}

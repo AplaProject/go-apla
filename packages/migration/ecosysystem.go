@@ -1275,16 +1275,33 @@ If("#key_id#" == EcosysParam("founder_account")){
 	('10','contract EditMenu {
 		data {
 			Id         int
-			Value      string
+			Value      string "optional"
 			Title      string "optional"
-			Conditions string
+			Conditions string "optional"
 		}
 		conditions {
 			RowConditions("menu", $Id)
-			ValidateCondition($Conditions, $ecosystem_id)
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
 		}
 		action {
-			DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
+			var pars, vals array
+			if $Value {
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Title {
+				pars[Len(pars)] = "title"
+				vals[Len(vals)] = $Title
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if Len(vals) > 0 {
+				DBUpdate("menu", $Id, Join(pars, ","), vals...)
+			}			
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('11','contract AppendMenu {
@@ -1469,15 +1486,28 @@ If("#key_id#" == EcosysParam("founder_account")){
 	('20','contract EditBlock {
 		data {
 			Id         int
-			Value      string
-			Conditions string
+			Value      string "optional"
+			Conditions string "optional"
 		}
 		conditions {
 			RowConditions("blocks", $Id)
-			ValidateCondition($Conditions, $ecosystem_id)
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
 		}
 		action {
-			DBUpdate("blocks", $Id, "value,conditions", $Value, $Conditions)
+			var pars, vals array
+			if $Value {
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if Len(vals) > 0 {
+				DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('21','contract NewTable {
