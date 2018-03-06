@@ -286,17 +286,34 @@ var (
 	  ('7','contract EditMenu {
 		  data {
 			  Id         int
-			  Value      string
+			  Value      string "optional"
 			  Title      string "optional"
-			  Conditions string
-		  }
-		  conditions {
-			  RowConditions("menu", $Id)
+			  Conditions string "optional"
+	  	}
+	  	conditions {
+		  RowConditions("menu", $Id)
+		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
-		  action {
-			  DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
+	  	}
+	  	action {
+		  var pars, vals array
+		  if $Value {
+			  pars[0] = "value"
+			  vals[0] = $Value
 		  }
+		  if $Title {
+			  pars[Len(pars)] = "title"
+			  vals[Len(vals)] = $Title
+		  }
+		  if $Conditions {
+			  pars[Len(pars)] = "conditions"
+			  vals[Len(vals)] = $Conditions
+		  }
+		  if Len(vals) > 0 {
+			  DBUpdate("menu", $Id, Join(pars, ","), vals...)
+		  }			
+		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('8','contract AppendMenu {
 		data {
@@ -333,18 +350,35 @@ var (
 	  }', 'ContractConditions("MainCondition")'),
 	  ('10','contract EditPage {
 		  data {
-			  Id         int
-			  Value      string
-			  Menu      string
-			  Conditions string
-		  }
-		  conditions {
-			  RowConditions("pages", $Id)
+			Id         int
+			Value      string "optional"
+			Menu      string "optional"
+		  	Conditions string "optional"
+	  	}
+	  	conditions {
+		  RowConditions("pages", $Id)
+		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
-		  action {
-			  DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
+	  	}
+	  	action {
+		  var pars, vals array
+		  if $Value {
+			  pars[0] = "value"
+			  vals[0] = $Value
 		  }
+		  if $Menu {
+			  pars[Len(pars)] = "menu"
+			  vals[Len(vals)] = $Menu
+		  }
+		  if $Conditions {
+			  pars[Len(pars)] = "conditions"
+			  vals[Len(vals)] = $Conditions
+		  }
+		  if Len(vals) > 0 {
+			  DBUpdate("pages", $Id, Join(pars, ","), vals...)
+		  }
+	  	}		  
 	  }', 'ContractConditions("MainCondition")'),
 	  ('11','contract AppendPage {
 		  data {
@@ -380,17 +414,30 @@ var (
 	  }', 'ContractConditions("MainCondition")'),
 	  ('13','contract EditBlock {
 		  data {
-			  Id         int
-			  Value      string
-			  Conditions string
-		  }
-		  conditions {
-			  RowConditions("blocks", $Id)
+			Id         int
+			Value      string "optional"
+		  	Conditions string "optional"
+	  		}
+	  	conditions {
+		  RowConditions("blocks", $Id)
+		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
-		  action {
-			  DBUpdate("blocks", $Id, "value,conditions", $Value, $Conditions)
+	  	}
+	  	action {
+		  var pars, vals array
+		  if $Value {
+			  pars[0] = "value"
+			  vals[0] = $Value
 		  }
+		  if $Conditions {
+			  pars[Len(pars)] = "conditions"
+			  vals[Len(vals)] = $Conditions
+		  }
+		  if Len(vals) > 0 {
+			  DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+		  }
+		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('14','contract NewTable {
 		  data {
