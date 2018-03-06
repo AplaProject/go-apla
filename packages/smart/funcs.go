@@ -199,6 +199,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UpdateLang":         UpdateLang,
 		"Activate":           Activate,
 		"Deactivate":         Deactivate,
+		"SetContractWallet":  SetContractWallet,
 		"check_signature":    CheckSignature,
 		"RowConditions":      RowConditions,
 	}

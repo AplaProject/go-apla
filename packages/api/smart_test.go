@@ -609,3 +609,66 @@ func TestPartitialEdit(t *testing.T) {
 	}
 
 }
+
+func TestContractEdit(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	name := randName(`part`)
+	form := url.Values{"Value": {`contract ` + name + ` {
+		    action {
+				$result = "before"
+			}
+		}`},
+		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	err := postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var retList listResult
+	err = sendGet(`list/contracts`, nil, &retList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	idItem := retList.Count
+	value := `contract ` + name + ` {
+		action {
+			$result = "after"
+		}
+	}`
+	conditions := `true`
+	wallet := "1231234123412341230"
+	err = postTx(`EditContract`, &url.Values{"Id": {idItem}, "Value": {value}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`EditContract`, &url.Values{"Id": {idItem}, "Conditions": {conditions},
+		"WalletId": {wallet}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret rowResult
+	err = sendGet(`row/contracts/`+idItem, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Value["value"] != value || ret.Value["conditions"] != conditions ||
+		ret.Value["wallet_id"] != wallet {
+		t.Errorf(`wrong parameters of contract`)
+		return
+	}
+	_, msg, err := postTxResult(name, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != "after" {
+		t.Errorf(`the wrong result of the contract %s`, msg)
+	}
+}

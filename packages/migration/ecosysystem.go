@@ -188,48 +188,65 @@ var (
 	  ('3','contract EditContract {
 		  data {
 			  Id         int
-			  Value      string
-			  Conditions string
+			  Value      string "optional"
+			  Conditions string "optional"
 		  }
 		  conditions {
-			  RowConditions("contracts", $Id)
-			  ValidateCondition($Conditions, $ecosystem_id)
+			RowConditions("contracts", $Id)
+			if $Conditions {
+	    		ValidateCondition($Conditions, $ecosystem_id)
+			}
 
-			  var row array
-			  row = DBFind("contracts").Columns("id,value,conditions").WhereId($Id)
-			  if !Len(row) {
-				  error Sprintf("Contract %%d does not exist", $Id)
-			  }
-			  $cur = row[0]
-
-			  var list, curlist array
-			  list = ContractsList($Value)
-			  curlist = ContractsList($cur["value"])
-			  if Len(list) != Len(curlist) {
-				  error "Contracts cannot be removed or inserted"
-			  }
-			  var i int
-			  while i < Len(list) {
-				  var j int
-				  var ok bool
-				  while j < Len(curlist) {
-					  if curlist[j] == list[i] {
-						  ok = true
-						  break
-					  }
-					  j = j + 1 
-				  }
-				  if !ok {
-					  error "Contracts or functions names cannot be changed"
-				  }
-				  i = i + 1
-			  }
+			var row array
+			row = DBFind("contracts").Columns("id,value,conditions").WhereId($Id)
+			if !Len(row) {
+				error Sprintf("Contract %%d does not exist", $Id)
+			}
+			$cur = row[0]
+			if $Value {
+				var list, curlist array
+				list = ContractsList($Value)
+				curlist = ContractsList($cur["value"])
+				if Len(list) != Len(curlist) {
+					error "Contracts cannot be removed or inserted"
+				}
+				var i int
+				while i < Len(list) {
+					var j int
+					var ok bool
+					while j < Len(curlist) {
+						if curlist[j] == list[i] {
+							ok = true
+							break
+						}
+						j = j + 1 
+					}
+					if !ok {
+						error "Contracts or functions names cannot be changed"
+					}
+					i = i + 1
+				}
+			}
 		  }
 		  action {
-			  var root int
-			  root = CompileContract($Value, $ecosystem_id, 0, 0)
-			  DBUpdate("contracts", $Id, "value,conditions", $Value, $Conditions)
-			  FlushContract(root, $Id, false)
+			var root int
+			var pars, vals array
+
+			if $Value {
+				root = CompileContract($Value, $ecosystem_id, 0, 0)
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if Len(vals) > 0 {
+				DBUpdate("contracts", $Id, Join(pars, ","), vals...)
+			}
+			if $Value {
+			   FlushContract(root, $Id, false)
+			}
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('4','contract NewParameter {
@@ -1171,40 +1188,42 @@ If("#key_id#" == EcosysParam("founder_account")){
 	('4','contract EditContract {
 		data {
 			Id         int
-			Value      string
-			Conditions string
+			Value      string "optional"
+			Conditions string "optional"
 			WalletId   string "optional"
 		}
 		conditions {
 			RowConditions("contracts", $Id)
-			ValidateCondition($Conditions, $ecosystem_id)
-
+			if $Conditions {
+			    ValidateCondition($Conditions, $ecosystem_id)
+			}
 			$cur = DBRow("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id)
 			if !$cur {
 				error Sprintf("Contract %%d does not exist", $Id)
 			}
-
-			var list, curlist array
-			list = ContractsList($Value)
-			curlist = ContractsList($cur["value"])
-			if Len(list) != Len(curlist) {
-				error "Contracts cannot be removed or inserted"
-			}
-			var i int
-			while i < Len(list) {
-				var j int
-				var ok bool
-				while j < Len(curlist) {
-					if curlist[j] == list[i] {
-						ok = true
-						break
+			if $Value {
+				var list, curlist array
+				list = ContractsList($Value)
+				curlist = ContractsList($cur["value"])
+				if Len(list) != Len(curlist) {
+					error "Contracts cannot be removed or inserted"
+				}
+				var i int
+				while i < Len(list) {
+					var j int
+					var ok bool
+					while j < Len(curlist) {
+						if curlist[j] == list[i] {
+							ok = true
+							break
+						}
+						j = j + 1 
 					}
-					j = j + 1 
+					if !ok {
+						error "Contracts or functions names cannot be changed"
+					}
+					i = i + 1
 				}
-				if !ok {
-					error "Contracts or functions names cannot be changed"
-				}
-				i = i + 1
 			}
 			if $WalletId != "" {
 				$recipient = AddressToId($WalletId)
@@ -1220,9 +1239,30 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 		action {
 			var root int
-			root = CompileContract($Value, $ecosystem_id, $recipient, Int($cur["token_id"]))
-			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
-			FlushContract(root, $Id, Int($cur["active"]) == 1)
+			var pars, vals array
+			if $Value {
+				root = CompileContract($Value, $ecosystem_id, $recipient, Int($cur["token_id"]))
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if $WalletId != "" {
+				pars[Len(pars)] = "wallet_id"
+				vals[Len(vals)] = $recipient
+			}
+			if Len(vals) > 0 {
+				DBUpdate("contracts", $Id, Join(pars, ","), vals...)
+			}		
+			if $Value {
+				FlushContract(root, $Id, Int($cur["active"]) == 1)
+			} else {
+				if $WalletId != "" {
+					SetContractWallet($Id, $ecosystem_id, $recipient)
+				}
+			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('5','contract ActivateContract {
