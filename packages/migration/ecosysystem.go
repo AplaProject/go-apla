@@ -880,6 +880,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 				'{"name": "ContractConditions(\"MainCondition\")",
 			"value": "ContractConditions(\"MainCondition\")",
 			"menu": "ContractConditions(\"MainCondition\")",
+			"validate_count": "ContractConditions(\"MainCondition\")",
 			"conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractAccess("@1EditTable")'),
 				('7', 'blocks', 
