@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"flag"
 	"os"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -24,7 +23,6 @@ var rollbackCmd = &cobra.Command{
 	Short: "Rollbacks blockchain to blockID",
 	Run: func(cmd *cobra.Command, args []string) {
 		dbPassword := os.Getenv("DB_PASSWORD")
-		flag.Parse()
 		if err := model.GormInit(dbHost, dbPort, dbUser, dbPassword, dbName); err != nil {
 			log.WithError(err).Fatal("init db")
 			return

@@ -189,13 +189,6 @@ func Start() {
 	}
 	conf.SetConfigParams()
 
-	if *conf.InitDatabase {
-		if err := model.InitDB(conf.Config.DB); err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("InitDB")
-			Exit(1)
-		}
-	}
-
 	if *conf.CreateConfig {
 		if err := conf.SaveConfig(); err != nil {
 			log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")

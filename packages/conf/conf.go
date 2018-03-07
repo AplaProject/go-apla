@@ -66,7 +66,7 @@ type SavedConfig struct {
 	TCPServer HostPort
 	HTTP      HostPort
 	DB        DBConfig
-	StatsD    StatsDConfig
+	StatsD    StatsDConfig `toml:"-"`
 
 	WorkDir string // application work dir (cwd by default)
 	KeysDir string // place for private keys files: NodePrivateKey, PrivateKey
