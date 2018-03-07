@@ -1181,6 +1181,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 			FlushContract(root, id, false)
 			$result = id
 		}
+		func rollback() {
+			var list array
+    		list = ContractsList($Value)
+			var i int
+			while i < Len(list) {
+				RollbackContract(list[i])
+				i = i + 1
+			}
+		}
 		func price() int {
 			return  SysParamInt("contract_price")
 		}
@@ -1264,6 +1273,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 				}
 			}
 		}
+		func rollback() {
+			RollbackEditContract()
+		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('5','contract ActivateContract {
 		data {
@@ -1286,6 +1298,10 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("contracts", $Id, "active", 1)
 			Activate($Id, $ecosystem_id)
 		}
+		func rollback() {
+			Deactivate($Id, $ecosystem_id)
+		}
+
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('6','contract NewEcosystem {
 		data {
@@ -1801,6 +1817,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 		action {
 			DBUpdate("contracts", $Id, "active", 0)
 			Deactivate($Id, $ecosystem_id)
+		}
+		func rollback() {
+			Activate($Id, $ecosystem_id)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('27','contract UpdateSysParam {
