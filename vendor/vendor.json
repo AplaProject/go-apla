@@ -174,6 +174,18 @@
 			"revisionTime": "2017-11-18T12:42:23Z"
 		},
 		{
+			"checksumSHA1": "VNUkFQcdmHCkMDIcFtqlxsQQlls=",
+			"path": "github.com/spf13/cobra",
+			"revision": "c6c44e6fdcc30161c7f4480754da7230d01c06e3",
+			"revisionTime": "2018-03-01T18:15:57Z"
+		},
+		{
+			"checksumSHA1": "tfKmT8uovT9Ch2YyDJtti3egAB4=",
+			"path": "github.com/spf13/pflag",
+			"revision": "ee5fd03fd6acfd43e44aea0b4135958546ed8e73",
+			"revisionTime": "2018-02-20T14:32:36Z"
+		},
+		{
 			"checksumSHA1": "EO+jcRet/AJ6IY3lBO8l8BLsZWg=",
 			"origin": "github.com/stretchr/testify/vendor/github.com/stretchr/objx",
 			"path": "github.com/stretchr/objx",
@@ -195,6 +207,12 @@
 		{
 			"checksumSHA1": "7vs6dSc1PPGBKyzb/SCIyeMJPLQ=",
 			"path": "github.com/stretchr/testify/require",
+			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
+			"revisionTime": "2017-08-14T20:04:35Z"
+		},
+		{
+			"checksumSHA1": "uefllr2OtKBGo/kQSAPbW3w6p0A=",
+			"path": "github.com/stretchr/testify/suite",
 			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
 			"revisionTime": "2017-08-14T20:04:35Z"
 		},
