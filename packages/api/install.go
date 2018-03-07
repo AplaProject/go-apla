@@ -55,7 +55,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		return fmt.Errorf(`E_INSTALLED`)
 	}
 
-	conf.Config.LogLevel = data.logLevel
+	conf.Config.LogConfig.LogLevel = data.logLevel
 
 	conf.Config.DB.Host = data.dbHost
 	conf.Config.DB.Port = converter.StrToInt(data.dbPort)

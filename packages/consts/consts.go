@@ -93,7 +93,7 @@ var ApiPath = `/api/v2/`
 const DefaultConfigFile = "config.toml"
 
 // PidFilename name of pid file
-const PidFilename = "apla.pid"
+const PidFilename = "go-genesis.pid"
 
 // FirstBlockFilename name of first block binary file
 const FirstBlockFilename = "1block"

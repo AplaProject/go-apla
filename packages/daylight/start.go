@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/api"
-	"github.com/GenesisKernel/go-genesis/packages/autoupdate"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -38,6 +37,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
+
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -61,7 +61,7 @@ func killOld() {
 		if err != nil {
 			log.WithFields(log.Fields{"data": dat, "error": err, "type": consts.JSONUnmarshallError}).Error("unmarshalling pid map")
 		}
-		log.WithFields(log.Fields{"path": conf.Config.Dir + pidMap["pid"]}).Debug("old pid path")
+		log.WithFields(log.Fields{"path": conf.Config.WorkDir + pidMap["pid"]}).Debug("old pid path")
 
 		KillPid(pidMap["pid"])
 		if fmt.Sprintf("%s", err) != "null" {
@@ -79,10 +79,10 @@ func killOld() {
 
 func initLogs() error {
 
-	if len(conf.Config.LogFileName) == 0 {
+	if len(conf.Config.LogConfig.LogTo) == 0 {
 		log.SetOutput(os.Stdout)
 	} else {
-		fileName := filepath.Join(conf.Config.Dir, conf.Config.LogFileName)
+		fileName := filepath.Join(conf.Config.WorkDir, conf.Config.LogConfig.LogTo)
 		openMode := os.O_APPEND
 		if _, err := os.Stat(fileName); os.IsNotExist(err) {
 			openMode = os.O_CREATE
@@ -96,7 +96,7 @@ func initLogs() error {
 		log.SetOutput(f)
 	}
 
-	switch conf.Config.LogLevel {
+	switch conf.Config.LogConfig.LogLevel {
 	case "DEBUG":
 		log.SetLevel(log.DebugLevel)
 	case "INFO":
@@ -148,7 +148,6 @@ func initRoutes(listenHost string) {
 
 // Start starts the main code of the program
 func Start() {
-
 	var err error
 
 	defer func() {
@@ -190,8 +189,6 @@ func Start() {
 	}
 	conf.SetConfigParams()
 
-	autoupdate.InitUpdater(conf.Config.Autoupdate.ServerAddress, conf.Config.Autoupdate.PublicKeyPath)
-
 	if *conf.InitDatabase {
 		if err := model.InitDB(conf.Config.DB); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("InitDB")
@@ -212,7 +209,7 @@ func Start() {
 		initGorm(conf.Config.DB)
 	}
 
-	log.WithFields(log.Fields{"work_dir": conf.Config.Dir, "version": consts.VERSION}).Info("started with")
+	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
 
 	killOld()
 

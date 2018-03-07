@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	log "github.com/sirupsen/logrus"
@@ -19,13 +18,9 @@ const (
 	defaultHTTPHost = "127.0.0.1"
 	defaultHTTPPort = 7079
 
-	defaultDBName = "apla"
+	defaultDBName = "genesis"
 	defaultDBHost = "127.0.0.1"
 	defaultDBPort = 5432
-
-	defaultUpdateInterval      = int64(time.Hour / time.Second)
-	defaultUpdateServer        = "http://127.0.0.1:12345"
-	defaultUpdatePublicKeyPath = "update.pub"
 )
 
 type flagBase struct {
@@ -59,12 +54,9 @@ var configFlagMap = map[string]interface{}{
 	"dbUser":     &flagStr{confVar: &Config.DB.User, flagBase: flagBase{env: "PGUSER", help: "database user"}},
 	"dbPassword": &flagStr{confVar: &Config.DB.Password, flagBase: flagBase{env: "PGPASSWORD", help: "database password"}},
 
-	"logLevel": &flagStr{confVar: &Config.LogLevel, defVal: "ERROR", flagBase: flagBase{help: "log level - ERROR,WARN,INFO,DEBUG"}},
-	"logFile":  &flagStr{confVar: &Config.LogFileName, flagBase: flagBase{help: "log file name"}},
+	"logLevel": &flagStr{confVar: &Config.LogConfig.LogLevel, defVal: "ERROR", flagBase: flagBase{help: "log level - ERROR,WARN,INFO,DEBUG"}},
+	"logTo":    &flagStr{confVar: &Config.LogConfig.LogTo, flagBase: flagBase{help: "log to"}},
 	"keysDir":  &flagStr{confVar: &Config.KeysDir, flagBase: flagBase{help: "directory for public/private keys"}},
-
-	"updateServer":        &flagStr{confVar: &Config.Autoupdate.ServerAddress, defVal: defaultUpdateServer, flagBase: flagBase{help: "server address for autoupdates"}},
-	"updatePublicKeyPath": &flagStr{confVar: &Config.Autoupdate.PublicKeyPath, defVal: defaultUpdatePublicKeyPath, flagBase: flagBase{help: "public key path for autoupdates"}},
 }
 
 var (
@@ -72,7 +64,7 @@ var (
 	ConfigPath = flag.String("configPath", "", "full path to config file (toml format)")
 
 	// WorkDirectory application working directory
-	WorkDirectory = flag.String("dir", "", "work directory")
+	WorkDirectory = flag.String("dataDir", "", "work directory")
 
 	// InitConfig initialize config
 	CreateConfig = flag.Bool("createConfig", false, "write config parameters to file")
@@ -91,9 +83,6 @@ var (
 
 	// TLS is a directory for .well-known and keys. It is required for https
 	TLS = flag.String("tls", "", "Enable https. Ddirectory for .well-known and keys")
-
-	// UpdateInterval is interval in seconds for checking updates
-	UpdateInterval = flag.Int64("updateInterval", defaultUpdateInterval, "Interval in seconds for checking updates, default 3600 seconds (1 hour)")
 )
 
 func envStr(envName string, val *string) bool {
@@ -159,17 +148,17 @@ func SetConfigParams() {
 	})
 
 	if *WorkDirectory != "" {
-		Config.Dir = *WorkDirectory
+		Config.WorkDir = *WorkDirectory
 	} else {
 		cwd, err := os.Getwd()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("Getcwd failed")
 		}
-		Config.Dir = cwd
+		Config.WorkDir = cwd
 	}
 
 	if Config.KeysDir == "" {
-		Config.KeysDir = Config.Dir
+		Config.KeysDir = Config.WorkDir
 	}
 
 	if Config.KeyID == 0 {

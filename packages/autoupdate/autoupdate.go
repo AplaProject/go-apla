@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/tools/update_client/client"
@@ -157,7 +156,7 @@ func (u *Updater) versionsForUpdate() ([]*updateVersion, error) {
 
 // update startup scheduler every checkUpdatesInterval
 func (u *Updater) scheduler() {
-	ticker := time.NewTicker(time.Second * time.Duration(*conf.UpdateInterval))
+	ticker := time.NewTicker(time.Second)
 	for {
 		select {
 		case <-ticker.C:

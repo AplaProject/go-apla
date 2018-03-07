@@ -41,10 +41,9 @@ type CentrifugoConfig struct {
 	URL    string
 }
 
-// AutoupdateConfig is autoupdate params
-type AutoupdateConfig struct {
-	ServerAddress string
-	PublicKeyPath string
+type LogConfig struct {
+	LogTo    string
+	LogLevel string
 }
 
 // TokenMovementConfig smtp config for token movement
@@ -60,9 +59,6 @@ type TokenMovementConfig struct {
 
 // SavedConfig parameters saved in "config.toml"
 type SavedConfig struct {
-	LogLevel    string
-	LogFileName string
-
 	KeyID int64 `toml:"-"`
 
 	MaxPageGenerationTime int64 // in milliseconds
@@ -72,12 +68,12 @@ type SavedConfig struct {
 	DB        DBConfig
 	StatsD    StatsDConfig
 
-	Dir     string `toml:"-"` // application work dir (cwd by default)
-	KeysDir string `toml:"-"` // place for private keys files: NodePrivateKey, PrivateKey
+	WorkDir string // application work dir (cwd by default)
+	KeysDir string // place for private keys files: NodePrivateKey, PrivateKey
 
 	Centrifugo CentrifugoConfig
 
-	Autoupdate AutoupdateConfig
+	LogConfig LogConfig
 
 	TokenMovement TokenMovementConfig
 }
@@ -87,7 +83,7 @@ var Installed bool
 
 // Config global parameters
 var Config = SavedConfig{
-	StatsD: StatsDConfig{Name: "apla", HostPort: HostPort{Host: "127.0.0.1", Port: 8125}},
+	StatsD: StatsDConfig{Name: "genesis", HostPort: HostPort{Host: "127.0.0.1", Port: 8125}},
 }
 
 // GetConfigPath returns path from command line arg or default
@@ -100,7 +96,7 @@ func GetConfigPath() string {
 
 // GetPidFile returns path to pid file
 func GetPidFile() string {
-	return filepath.Join(Config.Dir, consts.PidFilename)
+	return filepath.Join(Config.WorkDir, consts.PidFilename)
 }
 
 // LoadConfig from configFile
