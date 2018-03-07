@@ -609,7 +609,7 @@ func compositeTag(par parFunc) string {
 	par.Owner.Attr[`composites`] = append(par.Owner.Attr[`composites`].([]string),
 		(*par.Pars)[`Name`])
 	par.Owner.Attr[`compositedata`] = append(par.Owner.Attr[`compositedata`].([]string),
-		(*par.Pars)[`Data`])
+		macro((*par.Pars)[`Data`], par.Workspace.Vars))
 	return ``
 }
 
