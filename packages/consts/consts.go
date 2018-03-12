@@ -130,3 +130,6 @@ const FromToPerDayLimit = 10000
 
 // TokenMovementQtyPerBlockLimit block limit token transfer
 const TokenMovementQtyPerBlockLimit = 100
+
+// DefaultVDE default VDE ecosystem
+const DefaultVDE = 1
