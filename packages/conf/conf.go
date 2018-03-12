@@ -116,11 +116,16 @@ func GetPidFile() string {
 	return filepath.Join(Config.WorkDir, consts.PidFilename)
 }
 
-// LoadConfig from configFile
-// the function has side effect updating global var Config
+// LoadConfig load config from default path
 func LoadConfig() error {
-	log.WithFields(log.Fields{"path": GetConfigPath()}).Info("Loading config")
-	_, err := toml.DecodeFile(GetConfigPath(), &Config)
+	return LoadConfigFromPath(GetConfigPath())
+}
+
+// LoadConfigFromPath from configFile
+// the function has side effect updating global var Config
+func LoadConfigFromPath(path string) error {
+	log.WithFields(log.Fields{"path": path}).Info("Loading config")
+	_, err := toml.DecodeFile(path, &Config)
 	return err
 }
 
@@ -133,6 +138,28 @@ func SaveConfig() error {
 	}
 	defer cf.Close()
 	return toml.NewEncoder(cf).Encode(Config)
+}
+
+// SaveConfigByPath save config by path
+func SaveConfigByPath(c SavedConfig, path string) error {
+	var cf *os.File
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		cf, err = os.Create(path)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("Create config file failed")
+			return err
+		}
+	} else {
+		cf, err = os.Open(path)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("Create config file failed")
+			return err
+		}
+	}
+
+	defer cf.Close()
+	return toml.NewEncoder(cf).Encode(c)
 }
 
 // NoConfig config file does not exist
