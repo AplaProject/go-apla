@@ -137,11 +137,6 @@ func LoadConfig(path string) error {
 	return nil
 }
 
-// LoadConfig load config from default path
-func LoadConfig() error {
-	return LoadConfigFromPath(GetConfigPath())
-}
-
 // LoadConfigFromPath from configFile
 // the function has side effect updating global var Config
 func LoadConfigFromPath(path string) error {

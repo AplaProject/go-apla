@@ -839,118 +839,138 @@ MenuItem(
 				i = i + 1
 			}
 		}
-		func ImportData(row array) {
-			if !row {
-				return
-			}
-			var i int
-			while i < Len(row) {
-				var idata map
-				var list array
-				var tblname, columns string
-				idata = row[i]
-				i = i + 1
-				tblname = idata["Table"]
-				columns = Join(idata["Columns"], ",")
-				list = idata["Data"] 
-				if !list {
-					continue
-				}
-				var j int
-				while j < Len(list) {
-					var ilist array
-					ilist = list[j]
-					DBInsert(tblname, columns, ilist)
-					j=j+1
-				}
-			}
-		}
-		action {
-			ImportList($list["pages"], "pages")
-			ImportList($list["blocks"], "blocks")
-			ImportList($list["menus"], "menus")
-			ImportList($list["parameters"], "parameters")
-			ImportList($list["languages"], "languages")
-			ImportList($list["contracts"], "contracts")
-			ImportList($list["tables"], "tables")
-			ImportData($list["data"])
-		}
-	}', 'ContractConditions("MainCondition")'),
-	('21', 'NewCron','contract NewCron {
-		data {
-			Cron       string
-			Contract   string
-			Limit      int "optional"
-			Till       string "optional date"
-			Conditions string
-		}
-		conditions {
-			ValidateCondition($Conditions,$ecosystem_id)
-			ValidateCron($Cron)
-		}
-		action {
-			if !$Till {
-				$Till = "1970-01-01 00:00:00"
-			}
-			if !HasPrefix($Contract, "@") {
-				$Contract = "@" + Str($ecosystem_id) + $Contract
-			}
-			$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions",
-				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
-			UpdateCron($result)
-		}
-	}', 'ContractConditions("MainCondition")'),
-	('22','EditCron','contract EditCron {
-		data {
-			Id         int
-			Contract   string
-			Cron       string "optional"
-			Limit      int "optional"
-			Till       string "optional date"
-			Conditions string
-		}
-		conditions {
-			ConditionById("cron", true)
-			ValidateCron($Cron)
-		}
-		action {
-			if !$Till {
-				$Till = "1970-01-01 00:00:00"
-			}
-			if !HasPrefix($Contract, "@") {
-				$Contract = "@" + Str($ecosystem_id) + $Contract
-			}
-			DBUpdate("cron", $Id, "cron,contract,counter,till,conditions",
-				$Cron, $Contract, $Limit, $Till, $Conditions)
-			UpdateCron($Id)
-		}
-	}', 'ContractConditions("MainCondition")'),
-	('23', 'UploadBinary', contract UploadBinary {
-		data {
-			Name  string
-			Data  bytes "file"
-			AppID int
-			DataMimeType string "optional"
-			MemberID int "optional"
-		}
-		conditions {
-			$Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $AppID, $MemberID, $Name).One("id"))
-		}
-		action {
-			var hash string
-			hash = MD5($Data)
-
-			if $DataMimeType == "" {
-				$DataMimeType = "application/octet-stream"
-			}
-
-			if $Id != 0 {
-				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+		if(cnt == "menus"){
+			$ret_menu = DBFind("menu").Columns("id,value").Where("name=$", idata["Name"])
+			$menu_id = One($ret_menu, "id") 
+			$menu_value = One($ret_menu, "value") 
+			if ($menu_id != nil){
+				idata["Id"] = Int($menu_id)
+				idata["Value"] = Str($menu_value) + "\n" + Str(idata["Value"])
+				CallContract("EditMenu", idata)
 			} else {
-				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, hash, $DataMimeType)
+				CallContract("NewMenu", idata)
 			}
-
-			$result = $Id
 		}
-	}', 'ContractConditions("MainCondition")');
-	`
+		if(cnt == "parameters"){
+			$ret_param = DBFind("parameters").Columns("id").Where("name=$", idata["Name"])
+			$param_id = One($ret_param, "id")
+			if ($param_id != nil){ 
+				idata["Id"] = Int($param_id) 
+				CallContract("EditParameter", idata)
+			} else {
+				CallContract("NewParameter", idata)
+			}
+		}
+		if(cnt == "languages"){
+			$ret_lang = DBFind("languages").Columns("id").Where("name=$", idata["Name"])
+			$lang_id = One($ret_lang, "id")
+			if ($lang_id != nil){
+				CallContract("EditLang", idata)
+			} else {
+				CallContract("NewLang", idata)
+			}
+		}
+		if(cnt == "contracts"){
+			if IsObject(idata["Name"], $ecosystem_id){
+			} else {
+				CallContract("NewContract", idata)
+			} 
+		}
+		if(cnt == "tables"){
+			$ret_table = DBFind("tables").Columns("id").Where("name=$", idata["Name"])
+			$table_id = One($ret_table, "id")
+			if ($table_id != nil){	
+			} else {
+				CallContract("NewTable", idata)
+			}
+		}
+		i = i + 1
+	}
+}
+func ImportData(row array) {
+	if !row {
+		return
+	}
+	var i int
+	while i < Len(row) {
+		var idata map
+		var list array
+		var tblname, columns string
+		idata = row[i]
+		i = i + 1
+		tblname = idata["Table"]
+		columns = Join(idata["Columns"], ",")
+		list = idata["Data"] 
+		if !list {
+			continue
+		}
+		var j int
+		while j < Len(list) {
+			var ilist array
+			ilist = list[j]
+			DBInsert(tblname, columns, ilist)
+			j=j+1
+		}
+	}
+}
+action {
+	ImportList($list["pages"], "pages")
+	ImportList($list["blocks"], "blocks")
+	ImportList($list["menus"], "menus")
+	ImportList($list["parameters"], "parameters")
+	ImportList($list["languages"], "languages")
+	ImportList($list["contracts"], "contracts")
+	ImportList($list["tables"], "tables")
+	ImportData($list["data"])
+}
+}', 'ContractConditions("MainCondition")'),
+('21', 'contract NewCron {
+data {
+	Cron       string
+	Contract   string
+	Limit      int "optional"
+	Till       string "optional date"
+	Conditions string
+}
+conditions {
+	ValidateCondition($Conditions,$ecosystem_id)
+	ValidateCron($Cron)
+}
+action {
+	if !$Till {
+		$Till = "1970-01-01 00:00:00"
+	}
+	if !HasPrefix($Contract, "@") {
+		$Contract = "@" + Str($ecosystem_id) + $Contract
+	}
+	$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions",
+		$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
+	UpdateCron($result)
+}
+}', 'ContractConditions("MainCondition")'),
+('22','contract EditCron {
+data {
+	Id         int
+	Contract   string
+	Cron       string "optional"
+	Limit      int "optional"
+	Till       string "optional date"
+	Conditions string
+}
+conditions {
+	ConditionById("cron", true)
+	ValidateCron($Cron)
+}
+action {
+	if !$Till {
+		$Till = "1970-01-01 00:00:00"
+	}
+	if !HasPrefix($Contract, "@") {
+		$Contract = "@" + Str($ecosystem_id) + $Contract
+	}
+	DBUpdate("cron", $Id, "cron,contract,counter,till,conditions",
+		$Cron, $Contract, $Limit, $Till, $Conditions)
+	UpdateCron($Id)
+}
+}', 'ContractConditions("MainCondition")');
+`
