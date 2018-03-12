@@ -67,6 +67,7 @@ func Route(route *hr.Router) {
 	get(`history/:table/:id`, ``, authWallet, getHistory)
 	get(`block/:id`, ``, getBlockInfo)
 	get(`maxblockid`, ``, getMaxBlockID)
+	get(`version`, ``, getVersion)
 
 	post(`content/source/:name`, ``, authWallet, getSource)
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
