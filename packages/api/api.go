@@ -55,6 +55,7 @@ type apiData struct {
 	params      map[string]interface{}
 	ecosystemId int64
 	keyId       int64
+	isMobile    string
 	vde         bool
 	vm          *script.VM
 	token       *jwt.Token
@@ -218,6 +219,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
 				data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
 				data.keyId = converter.StrToInt64(claims.KeyID)
+				data.isMobile = claims.IsMobile
 			}
 		}
 		// Getting and validating request parameters
