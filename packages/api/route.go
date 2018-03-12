@@ -59,7 +59,7 @@ func Route(route *hr.Router) {
 	get(`interface/page/:name`, ``, authWallet, getPageRow)
 	get(`interface/menu/:name`, ``, authWallet, getMenuRow)
 	get(`interface/block/:name`, ``, authWallet, getBlockInterfaceRow)
-	get(`systemparams`, `?names:string`, authWallet, systemParams)
+
 	get(`table/:name`, ``, authWallet, table)
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
 
