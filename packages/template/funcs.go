@@ -405,9 +405,6 @@ func dataTag(par parFunc) string {
 				if i < len(item) {
 					ival = strings.TrimSpace(item[i])
 				}
-				if strings.IndexByte(ival, '<') >= 0 {
-					ival = html.EscapeString(ival)
-				}
 				vals[icol] = ival
 			} else {
 				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
