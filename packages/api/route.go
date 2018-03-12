@@ -19,6 +19,7 @@ package api
 import (
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
@@ -45,14 +46,8 @@ func Route(route *hr.Router) {
 	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
 	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
 
-	get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
-	get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
-	get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)
 	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
-	get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
-	get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
-	get(`ecosystems`, ``, authWallet, ecosystems)
 	get(`getuid`, ``, getUID)
 	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
 	get(`row/:name/:id`, `?columns:string`, authWallet, row)
@@ -62,13 +57,11 @@ func Route(route *hr.Router) {
 	get(`systemparams`, `?names:string`, authWallet, systemParams)
 	get(`table/:name`, ``, authWallet, table)
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
-	get(`txstatus/:hash`, ``, authWallet, txstatus)
+
 	get(`test/:name`, ``, getTest)
-	get(`history/:table/:id`, ``, authWallet, getHistory)
-	get(`block/:id`, ``, getBlockInfo)
-	get(`maxblockid`, ``, getMaxBlockID)
 	get(`version`, ``, getVersion)
 	get(`avatar/:ecosystem/:member`, ``, getAvatar)
+
 	get(`config/:option`, ``, getConfigOption)
 	post(`content/source/:name`, ``, authWallet, getSource)
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
@@ -85,6 +78,19 @@ func Route(route *hr.Router) {
 	post(`updnotificator`, `ids:string`, updateNotificator)
 
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, contractHandlers.nodeContract)
+	if !*conf.IsVDEMasterMode && !*conf.IsVDEMode {
+		get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
+		get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
+		get(`txstatus/:hash`, ``, authWallet, txstatus)
+		get(`history/:table/:id`, ``, authWallet, getHistory)
+		get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
+		get(`block/:id`, ``, getBlockInfo)
+		get(`maxblockid`, ``, getMaxBlockID)
+		get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
+		get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
+		get(`systemparams`, `?names:string`, authWallet, systemParams)
+		get(`ecosystems`, ``, authWallet, ecosystems)
+	}
 }
 
 func processParams(input string) (params map[string]int) {

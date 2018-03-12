@@ -153,3 +153,6 @@ const TxRequestExpire = 1 * time.Minute
 
 // DefaultTempDirName is default name of temporary directory
 const DefaultTempDirName = "genesis-temp"
+
+// DefaultVDE default VDE ecosystem
+const DefaultVDE = 1

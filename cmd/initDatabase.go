@@ -19,3 +19,9 @@ var initDatabaseCmd = &cobra.Command{
 		}
 	},
 }
+
+func initVDE()
+	if err := model.CreateVDEIfNotExists(consts.DefaultVDE, conf.Config.KeyID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("error on init VDE schema")
+	}
+}

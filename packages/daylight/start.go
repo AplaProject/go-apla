@@ -37,7 +37,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-
+	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -219,6 +219,12 @@ func Start() {
 	initGorm(conf.Config.DB)
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 
+	if *conf.IsVDEMasterMode {
+		if err := vdemanager.InitVDEManager(); err != nil {
+			Exit(1)
+		}
+	}
+
 	killOld()
 
 	publisher.InitCentrifugo(conf.Config.Centrifugo)
@@ -246,10 +252,6 @@ func Start() {
 		if err != nil {
 			os.Exit(1)
 		}
-		//go func() {
-		//	na := service.NewNodeActualizer(service.DefaultBlockchainGap)
-		//	na.Run()
-		//}()
 	}
 
 	daemons.WaitForSignals()

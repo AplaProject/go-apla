@@ -130,7 +130,7 @@ func StartDaemons() {
 	utils.CancelFunc = cancel
 	utils.ReturnCh = make(chan string)
 
-	daemonsToStart := serverList
+	daemonsToStart := getDaemonsToStart()
 	if conf.Config.TestRollBack {
 		daemonsToStart = rollbackList
 	}
@@ -155,4 +155,15 @@ func getHostPort(h string) string {
 		return h
 	}
 	return fmt.Sprintf("%s:%d", h, consts.DEFAULT_TCP_PORT)
+}
+
+func getDaemonsToStart() []string {
+	if *conf.IsVDEMasterMode || *conf.IsVDEMode {
+		return []string{
+			"Notificator",
+			"Scheduler",
+		}
+	}
+
+	return serverList
 }

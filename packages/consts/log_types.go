@@ -52,4 +52,6 @@ const (
 	AutoupdateError          = "AutoupdateError"
 	BCActualizationError     = "BCActualizationError"
 	SchedulerError           = "SchedulerError"
+	WrongModeError           = "WrongModeError"
+	VDEManagerError          = "VDEManagerError"
 )
