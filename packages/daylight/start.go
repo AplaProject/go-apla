@@ -42,6 +42,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -252,6 +253,19 @@ func Start() {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("InitDB")
 			Exit(1)
 		}
+
+		if *conf.IsVDEMasterMode || *conf.IsVDEMode {
+			err := model.ExecSchemaEcosystem(nil, 1, conf.Config.KeyID, ``, conf.Config.KeyID)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
+				Exit(1)
+			}
+
+			if err := model.CreateVDEIfNotExists(consts.DefaultVDE, conf.Config.KeyID); err != nil {
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("")
+				Exit(1)
+			}
+		}
 	}
 
 	if *conf.InitConfig {
@@ -280,6 +294,12 @@ func Start() {
 	}
 
 	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
+
+	if *conf.IsVDEMasterMode {
+		if err := vdemanager.InitVDEManager(); err != nil {
+			Exit(1)
+		}
+	}
 
 	killOld()
 

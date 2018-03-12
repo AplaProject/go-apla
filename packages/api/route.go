@@ -19,6 +19,7 @@ package api
 import (
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
@@ -50,23 +51,15 @@ func Route(route *hr.Router) {
 	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
 	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
 
-	get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)
 	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
-	get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
-	get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
-	get(`ecosystems`, ``, authWallet, ecosystems)
 	get(`getuid`, ``, getUID)
 	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
 	get(`row/:name/:id`, `?columns:string`, authWallet, row)
-	get(`systemparams`, `?names:string`, authWallet, systemParams)
 	get(`table/:name`, ``, authWallet, table)
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
-	get(`txstatus/:hash`, ``, authWallet, txstatus)
+
 	get(`test/:name`, ``, getTest)
-	get(`history/:table/:id`, ``, authWallet, getHistory)
-	get(`block/:id`, ``, getBlockInfo)
-	get(`maxblockid`, ``, getMaxBlockID)
 
 	post(`content/source/:name`, ``, authWallet, getSource)
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
@@ -81,6 +74,18 @@ func Route(route *hr.Router) {
 	post(`signtest/`, `forsign private:string`, signTest)
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template:string`, jsonContent)
+
+	if !*conf.IsVDEMasterMode && !*conf.IsVDEMode {
+		get(`txstatus/:hash`, ``, authWallet, txstatus)
+		get(`history/:table/:id`, ``, authWallet, getHistory)
+		get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
+		get(`block/:id`, ``, getBlockInfo)
+		get(`maxblockid`, ``, getMaxBlockID)
+		get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
+		get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
+		get(`systemparams`, `?names:string`, authWallet, systemParams)
+		get(`ecosystems`, ``, authWallet, ecosystems)
+	}
 
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
 }
