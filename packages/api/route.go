@@ -64,6 +64,7 @@ func Route(route *hr.Router) {
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
 
 	get(`test/:name`, ``, getTest)
+	get(`version`, ``, getVersion)
 
 	post(`content/source/:name`, ``, authWallet, getSource)
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
