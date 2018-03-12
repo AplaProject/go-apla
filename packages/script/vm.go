@@ -1028,6 +1028,7 @@ func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]in
 		}
 	}()
 	info := block.Info.(*FuncInfo)
+	log.Infof("INFOF: %+v", *info)
 	rt.extend = extend
 	if _, err = rt.RunCode(block); err == nil {
 		off := len(rt.stack) - len(info.Results)

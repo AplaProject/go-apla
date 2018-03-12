@@ -37,7 +37,7 @@ type VDEManager struct {
 }
 
 var (
-	Manager          VDEManager
+	Manager          *VDEManager
 	childConfigsPath string
 )
 
@@ -66,11 +66,6 @@ func prepareWorkDir() error {
 // CreateVDE creates one instance of VDE
 func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) error {
 
-	if mgr.processes == nil {
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("creating new VDE")
-		return errWrongMode
-	}
-
 	if err := mgr.createVDEDB(name, dbUser, dbPassword); err != nil {
 		return err
 	}
@@ -80,6 +75,14 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 	}
 
 	vdeDir := path.Join(childConfigsPath, name)
+	privFile := filepath.Join(vdeDir, consts.PrivateKeyFilename)
+	pubFile := filepath.Join(vdeDir, consts.PublicKeyFilename)
+	_, _, err := createKeyPair(privFile, pubFile)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("error on creating keys")
+		return err
+	}
+
 	vdeConfigPath := filepath.Join(vdeDir, consts.DefaultConfigFile)
 	vdeConfig := conf.Config
 	vdeConfig.WorkDir = vdeDir
@@ -87,7 +90,6 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 	vdeConfig.DB.Password = dbPassword
 	vdeConfig.DB.Name = name
 	vdeConfig.HTTP.Port = port
-	vdeConfig.PrivateDir = vdeConfigPath
 
 	if err := conf.SaveConfigByPath(vdeConfig, vdeConfigPath); err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("saving VDE config")
@@ -96,39 +98,29 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 
 	confEntry := pConf.NewConfigEntry(vdeDir)
 	confEntry.Name = "program:" + name
-	command := fmt.Sprintf("%s -VDEMode=true -initDatabase=true -generateKeys=true -configPath=%s -workDir=%s", bin(), vdeConfigPath, vdeDir)
+	command := fmt.Sprintf("%s -VDEMode=true -initDatabase=true -configPath=%s -workDir=%s", bin(), vdeConfigPath, vdeDir)
 	confEntry.AddKeyValue("command", command)
 	proc := process.NewProcess("vdeMaster", confEntry)
 
 	mgr.processes.Add(name, proc)
 	mgr.processes.Find(name).Start(true)
+	log.Infoln(command)
 	return nil
 }
 
 // ListProcess returns list of process names with state of process
-func (mgr *VDEManager) ListProcess() (map[string]string, error) {
-	if mgr.processes == nil {
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("get VDE list")
-		return nil, errWrongMode
-	}
-
+func (mgr *VDEManager) ListProcess() map[string]string {
 	list := make(map[string]string)
 
 	mgr.processes.ForEachProcess(func(p *process.Process) {
 		list[p.GetName()] = p.GetState().String()
 	})
 
-	return list, nil
+	return list
 }
 
 // DeleteVDE stop VDE process and remove VDE folder
 func (mgr *VDEManager) DeleteVDE(name string) error {
-
-	if mgr.processes == nil {
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("deleting VDE")
-		return errWrongMode
-	}
-
 	p := mgr.processes.Find(name)
 	if p != nil {
 		p.Stop(true)
@@ -160,11 +152,6 @@ func (mgr *VDEManager) DeleteVDE(name string) error {
 // StartVDE find process and then start him
 func (mgr *VDEManager) StartVDE(name string) error {
 
-	if mgr.processes == nil {
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("starting VDE")
-		return errWrongMode
-	}
-
 	proc := mgr.processes.Find(name)
 	if proc == nil {
 		err := fmt.Errorf(`VDE '%s' is not exists`, name)
@@ -188,12 +175,6 @@ func (mgr *VDEManager) StartVDE(name string) error {
 
 // StopVDE find process with definded name and then stop him
 func (mgr *VDEManager) StopVDE(name string) error {
-
-	if mgr.processes == nil {
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("on stopping VDE process")
-		return errWrongMode
-	}
-
 	proc := mgr.processes.Find(name)
 	if proc == nil {
 		err := fmt.Errorf(`VDE '%s' is not exists`, name)
@@ -243,7 +224,7 @@ func (mgr *VDEManager) initVDEDir(vdeName string) error {
 }
 
 func initProcessManager() error {
-	Manager = VDEManager{
+	Manager = &VDEManager{
 		processes: process.NewProcessManager(),
 	}
 
@@ -257,6 +238,7 @@ func initProcessManager() error {
 		if item.IsDir() {
 			procDir := path.Join(childConfigsPath, item.Name())
 			commandStr := fmt.Sprintf(commandTemplate, bin(), filepath.Join(procDir, consts.DefaultConfigFile), procDir)
+			log.Errorln("commandStr: ", commandStr)
 			confEntry := pConf.NewConfigEntry(procDir)
 			confEntry.Name = "program:" + item.Name()
 			confEntry.AddKeyValue("command", commandStr)
