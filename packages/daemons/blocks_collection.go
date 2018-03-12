@@ -261,11 +261,10 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 // init first block from file or from embedded value
 func loadFirstBlock(logger *log.Entry) error {
-
-	newBlock, err := ioutil.ReadFile(*conf.FirstBlockPath)
+	newBlock, err := ioutil.ReadFile(conf.Config.FirstBlockPath)
 	if err != nil {
 		logger.WithFields(log.Fields{
-			"type": consts.IOError, "error": err, "path": *conf.FirstBlockPath,
+			"type": consts.IOError, "error": err, "path": conf.Config.FirstBlockPath,
 		}).Error("reading first block from file")
 	}
 

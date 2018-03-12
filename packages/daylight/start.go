@@ -50,7 +50,7 @@ func initStatsd() {
 }
 
 func killOld() {
-	pidPath := conf.GetPidFile()
+	pidPath := conf.Config.GetPidPath()
 	if _, err := os.Stat(pidPath); err == nil {
 		dat, err := ioutil.ReadFile(pidPath)
 		if err != nil {
@@ -61,13 +61,13 @@ func killOld() {
 		if err != nil {
 			log.WithFields(log.Fields{"data": dat, "error": err, "type": consts.JSONUnmarshallError}).Error("unmarshalling pid map")
 		}
-		log.WithFields(log.Fields{"path": conf.Config.WorkDir + pidMap["pid"]}).Debug("old pid path")
+		log.WithFields(log.Fields{"path": conf.Config.DataDir + pidMap["pid"]}).Debug("old pid path")
 
 		KillPid(pidMap["pid"])
 		if fmt.Sprintf("%s", err) != "null" {
 			// give 15 sec to end the previous process
 			for i := 0; i < 15; i++ {
-				if _, err := os.Stat(conf.GetPidFile()); err == nil {
+				if _, err := os.Stat(conf.Config.GetPidPath()); err == nil {
 					time.Sleep(time.Second)
 				} else {
 					break
@@ -78,11 +78,10 @@ func killOld() {
 }
 
 func initLogs() error {
-
 	if len(conf.Config.LogConfig.LogTo) == 0 {
 		log.SetOutput(os.Stdout)
 	} else {
-		fileName := filepath.Join(conf.Config.WorkDir, conf.Config.LogConfig.LogTo)
+		fileName := filepath.Join(conf.Config.DataDir, conf.Config.LogConfig.LogTo)
 		openMode := os.O_APPEND
 		if _, err := os.Stat(fileName); os.IsNotExist(err) {
 			openMode = os.O_CREATE
@@ -121,11 +120,28 @@ func savePid() error {
 		log.WithFields(log.Fields{"pid": pid, "error": err, "type": consts.JSONMarshallError}).Error("marshalling pid to json")
 		return err
 	}
-	return ioutil.WriteFile(conf.GetPidFile(), PidAndVer, 0644)
+
+	return ioutil.WriteFile(conf.Config.GetPidPath(), PidAndVer, 0644)
+}
+
+func CreateLockFile() error {
+	return ioutil.WriteFile(conf.Config.LockFilePath, []byte{}, 0644)
 }
 
 func delPidFile() {
-	os.Remove(conf.GetPidFile())
+	os.Remove(conf.Config.GetPidPath())
+}
+
+func DelLockFile() error {
+	return os.Remove(conf.Config.LockFilePath)
+}
+
+func IsLockFileExists() bool {
+	if _, err := os.Stat(conf.Config.LockFilePath); os.IsNotExist(err) {
+		return false
+	}
+
+	return true
 }
 
 func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
@@ -138,9 +154,9 @@ func initRoutes(listenHost string) {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
-	route.Handler(`GET`, consts.WellKnownRoute, http.FileServer(http.Dir(*conf.TLS)))
-	if len(*conf.TLS) > 0 {
-		go http.ListenAndServeTLS(":443", *conf.TLS+consts.TLSFullchainPem, *conf.TLS+consts.TLSPrivkeyPem, route)
+	route.Handler(`GET`, consts.WellKnownRoute, http.FileServer(http.Dir(conf.Config.TLS)))
+	if len(conf.Config.TLS) > 0 {
+		go http.ListenAndServeTLS(":443", conf.Config.TLS+consts.TLSFullchainPem, conf.Config.TLS+consts.TLSPrivkeyPem, route)
 	}
 
 	httpListener(listenHost, route)
@@ -174,40 +190,18 @@ func Start() {
 		}
 	}
 
-	conf.InitConfigFlags()
-	if conf.NoConfig() {
-		conf.Installed = false
-		log.Info("Config file missing.")
-	} else {
-		if !*conf.CreateConfig {
-			if err := conf.LoadConfig(); err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
-				return
-			}
-			conf.Installed = true
-		}
-	}
-	conf.SetConfigParams()
-
-	if *conf.CreateConfig {
-		if err := conf.SaveConfig(); err != nil {
-			log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
-			Exit(1)
-		}
-		log.Info("Config file created.")
-		conf.Installed = true
+	if IsLockFileExists() {
+		log.Fatal("Lock file is found")
 	}
 
-	if conf.Installed {
-		initGorm(conf.Config.DB)
-	}
+	conf.Config.Installed = true
 
-	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
+	initGorm(conf.Config.DB)
+	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 
 	killOld()
 
 	publisher.InitCentrifugo(conf.Config.Centrifugo)
-
 	initStatsd()
 
 	err = initLogs()
@@ -224,6 +218,13 @@ func Start() {
 		Exit(1)
 	}
 	defer delPidFile()
+
+	// create lock file
+	if err := CreateLockFile(); err != nil {
+		log.Errorf("can't create lock: %s", err)
+		Exit(1)
+	}
+	defer DelLockFile()
 
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)

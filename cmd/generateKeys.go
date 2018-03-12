@@ -6,44 +6,42 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"os"
+
+	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 const fileMode = 0600
 
-const PrivateKeyFilename = "PrivateKey"
-const PublicKeyFilename = "PublicKey"
-const NodePrivateKeyFilename = "NodePrivateKey"
-const NodePublicKeyFilename = "NodePublicKey"
-const KeyIDFilename = "KeyID"
-
-var kPath string
-
 // generateKeysCmd represents the generateKeys command
 var generateKeysCmd = &cobra.Command{
-	Use:   "generateKeys",
-	Short: "Generate keys",
+	Use:    "generateKeys",
+	Short:  "Keys generation",
+	PreRun: loadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
 		_, publicKey, err := createKeyPair(
-			filepath.Join(kPath, PrivateKeyFilename),
-			filepath.Join(kPath, PublicKeyFilename),
+			filepath.Join(conf.Config.KeysDir, consts.PrivateKeyFilename),
+			filepath.Join(conf.Config.KeysDir, consts.PublicKeyFilename),
 		)
 		if err != nil {
 			log.WithFields(log.Fields{"error": err}).Fatal("generating user keys")
 			return
 		}
 		_, _, err = createKeyPair(
-			filepath.Join(kPath, NodePrivateKeyFilename),
-			filepath.Join(kPath, NodePublicKeyFilename),
+			filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename),
+			filepath.Join(conf.Config.KeysDir, consts.NodePublicKeyFilename),
 		)
 		if err != nil {
 			log.WithFields(log.Fields{"error": err}).Fatal("generating node keys")
 			return
 		}
 		address := crypto.Address(publicKey)
-		keyIDPath := filepath.Join(kPath, KeyIDFilename)
+		keyIDPath := filepath.Join(conf.Config.KeysDir, consts.KeyIDFilename)
 		err = createFile(keyIDPath, []byte(strconv.FormatInt(address, 10)))
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "path": keyIDPath}).Fatal("generating node keys")
@@ -53,13 +51,15 @@ var generateKeysCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	rootCmd.AddCommand(generateKeysCmd)
-
-	generateKeysCmd.Flags().StringVarP(&kPath, "path", "p", ".", "path to keys folder")
-}
-
 func createFile(filename string, data []byte) error {
+	dir := filepath.Dir(filename)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err := os.Mkdir(dir, 0775)
+		if err != nil {
+			return errors.Wrapf(err, "creating dir %s", dir)
+		}
+	}
+
 	return ioutil.WriteFile(filename, data, fileMode)
 }
 

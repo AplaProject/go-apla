@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"os"
-
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/daylight"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
@@ -12,18 +12,30 @@ import (
 )
 
 var blockID int64
-var dbHost string
-var dbPort int
-var dbName string
-var dbUser string
 
 // rollbackCmd represents the rollback command
 var rollbackCmd = &cobra.Command{
-	Use:   "rollback",
-	Short: "Rollbacks blockchain to blockID",
+	Use:    "rollback",
+	Short:  "Rollback blockchain to blockID",
+	PreRun: loadConfigWKey,
 	Run: func(cmd *cobra.Command, args []string) {
-		dbPassword := os.Getenv("DB_PASSWORD")
-		if err := model.GormInit(dbHost, dbPort, dbUser, dbPassword, dbName); err != nil {
+		if daylight.IsLockFileExists() {
+			log.Fatal("Lock file is found")
+		}
+
+		// create lock file
+		if err := daylight.CreateLockFile(); err != nil {
+			log.Fatalf("can't create lock: %s", err)
+		}
+		defer daylight.DelLockFile()
+
+		if err := model.GormInit(
+			conf.Config.DB.Host,
+			conf.Config.DB.Port,
+			conf.Config.DB.User,
+			conf.Config.DB.Password,
+			conf.Config.DB.Name,
+		); err != nil {
 			log.WithError(err).Fatal("init db")
 			return
 		}
@@ -50,12 +62,6 @@ var rollbackCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(rollbackCmd)
-
-	rollbackCmd.Flags().Int64Var(&blockID, "blockID", 1, "blockID to rollback")
-	rollbackCmd.Flags().IntVar(&dbPort, "dbPort", 5432, "genesis database port to rollback")
-	rollbackCmd.Flags().StringVar(&dbHost, "dbHost", "localhost", "genesis database host to rollback")
-	rollbackCmd.Flags().StringVar(&dbName, "dbName", "genesis", "genesis database name")
-	rollbackCmd.Flags().StringVar(&dbUser, "dbUser", "genesis", "genesis database username")
-
+	rollbackCmd.Flags().Int64Var(&blockID, "blockId", 1, "blockID to rollback")
+	rollbackCmd.MarkFlagRequired("blockId")
 }

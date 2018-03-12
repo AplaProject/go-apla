@@ -51,7 +51,7 @@ type installParams struct {
 
 func installCommon(data *installParams, logger *log.Entry) (err error) {
 
-	if conf.Installed {
+	if conf.Config.Installed {
 		return fmt.Errorf(`E_INSTALLED`)
 	}
 
@@ -75,7 +75,7 @@ func installCommon(data *installParams, logger *log.Entry) (err error) {
 		URL:    data.centrifugoURL,
 	}
 
-	if err := conf.SaveConfig(); err != nil {
+	if err := conf.SaveConfig(conf.Config.ConfigPath); err != nil {
 		log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("saving config")
 		return err
 	}
@@ -108,7 +108,7 @@ func doInstall(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 
-	conf.Installed = true
+	conf.Config.Installed = true
 	result.Success = true
 	return nil
 }

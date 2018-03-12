@@ -19,7 +19,6 @@ package utils
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -33,11 +32,13 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	log "github.com/sirupsen/logrus"
 )
 
 // BlockData is a structure of the block's header
@@ -428,4 +429,14 @@ func GetNodeKeys() (string, string, error) {
 		return "", "", err
 	}
 	return string(nprivkey), hex.EncodeToString(npubkey), nil
+}
+
+func CreateDirIfNotExists(dir string, mode os.FileMode) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err := os.Mkdir(dir, mode)
+		if err != nil {
+			return errors.Wrapf(err, "creating dir %s", dir)
+		}
+	}
+	return nil
 }

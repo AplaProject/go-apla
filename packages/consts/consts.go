@@ -92,8 +92,11 @@ var ApiPath = `/api/v2/`
 // DefaultConfigFile name of config file (toml format)
 const DefaultConfigFile = "config.toml"
 
-// PidFilename name of pid file
-const PidFilename = "go-genesis.pid"
+// DefaultPidFilename is default filename of pid file
+const DefaultPidFilename = "go-genesis.pid"
+
+// DefaultLockFilename is default filename of lock file
+const DefaultLockFilename = "go-genesis.lock"
 
 // FirstBlockFilename name of first block binary file
 const FirstBlockFilename = "1block"

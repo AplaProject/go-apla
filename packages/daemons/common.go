@@ -131,7 +131,7 @@ func StartDaemons() {
 	utils.ReturnCh = make(chan string)
 
 	daemonsToStart := serverList
-	if *conf.TestRollBack {
+	if conf.Config.TestRollBack {
 		daemonsToStart = rollbackList
 	}
 

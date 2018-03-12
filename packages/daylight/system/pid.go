@@ -15,15 +15,15 @@ import (
 func CreatePidFile() error {
 	pid := os.Getpid()
 	data := []byte(strconv.Itoa(pid))
-	return ioutil.WriteFile(conf.GetPidFile(), data, 0644)
+	return ioutil.WriteFile(conf.Config.GetPidPath(), data, 0644)
 }
 
 func RemovePidFile() error {
-	return os.Remove(conf.GetPidFile())
+	return os.Remove(conf.Config.GetPidPath())
 }
 
 func ReadPidFile() (int, error) {
-	pidPath := conf.GetPidFile()
+	pidPath := conf.Config.GetPidPath()
 	if _, err := os.Stat(pidPath); err != nil {
 		return 0, nil
 	}
