@@ -21,7 +21,6 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"html"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -533,9 +532,6 @@ func dbfindTag(par parFunc) string {
 			var ival string
 			if i < defcol {
 				ival = item[icol]
-				if strings.IndexByte(ival, '<') >= 0 {
-					ival = html.EscapeString(ival)
-				}
 				if ival == `NULL` {
 					ival = ``
 				}
