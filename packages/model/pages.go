@@ -23,3 +23,8 @@ func (p *Page) TableName() string {
 func (p *Page) Get(name string) (bool, error) {
 	return isFound(DBConn.Where("name = ?", name).First(p))
 }
+
+func (p *Page) Count() (count int64, err error) {
+	err = DBConn.Table(p.TableName()).Count(&count).Error
+	return
+}
