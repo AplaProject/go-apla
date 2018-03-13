@@ -408,9 +408,30 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		out = curFunc.Func(parFunc)
 	}
 	for key, v := range parFunc.Node.Attr {
-		switch v.(type) {
+		switch attr := v.(type) {
 		case string:
-			parFunc.Node.Attr[key] = macro(v.(string), workspace.Vars)
+			parFunc.Node.Attr[key] = macro(attr, workspace.Vars)
+		case map[string]interface{}:
+			for parkey, parval := range attr {
+				switch parmap := parval.(type) {
+				case map[string]interface{}:
+					for textkey, textval := range parmap {
+						var result interface{}
+						switch val := textval.(type) {
+						case string:
+							result = macro(val, workspace.Vars)
+						case []string:
+							for i, ival := range val {
+								val[i] = macro(ival, workspace.Vars)
+							}
+							result = val
+						}
+						if result != nil {
+							parFunc.Node.Attr[key].(map[string]interface{})[parkey].(map[string]interface{})[textkey] = result
+						}
+					}
+				}
+			}
 		}
 	}
 	parFunc.Node.Text = macro(parFunc.Node.Text, workspace.Vars)
