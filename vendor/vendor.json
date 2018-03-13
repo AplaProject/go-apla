@@ -64,6 +64,13 @@
 			"revisionTime": "2017-11-13T18:07:20Z"
 		},
 		{
+			"checksumSHA1": "1G0D/+HHC9kUjpzc6nuc8jk1O9g=",
+			"path": "github.com/gorilla/rpc",
+			"revision": "22c016f3df3febe0c1f6727598b6389507e03a18",
+			"revisionTime": "2016-09-23T22:06:01Z",
+			"tree": true
+		},
+		{
 			"checksumSHA1": "SGSXlSU1TFtg5aTlVA9v4Ka86lU=",
 			"origin": "github.com/centrifugal/centrifugo/vendor/github.com/gorilla/securecookie",
 			"path": "github.com/gorilla/securecookie",
@@ -174,6 +181,13 @@
 			"path": "github.com/robfig/cron",
 			"revision": "2315d5715e36303a941d907f038da7f7c44c773b",
 			"revisionTime": "2017-11-01T20:10:47Z"
+		},
+		{
+			"checksumSHA1": "QwOuqLMxiY2V5HvOcoissejEg2M=",
+			"path": "github.com/rogpeppe/go-charset/charset",
+			"revision": "e9ff06f347d3f5d0013d59ed83754f0e88de10d4",
+			"revisionTime": "2015-06-15T17:25:32Z",
+			"tree": true
 		},
 		{
 			"checksumSHA1": "C0uSGH4Anewsb602sQmOVs/uGSQ=",
