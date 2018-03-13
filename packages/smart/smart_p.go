@@ -614,9 +614,9 @@ func Substr(s string, off int64, slen int64) string {
 
 // Activate sets Active status of the contract in smartVM
 func Activate(sc *SmartContract, tblid int64, state int64) error {
-	if sc.TxContract.Name != `@1ActivateContract` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ActivateContract can be only called from @1ActivateContract")
-		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract`)
+	if !accessContracts(sc, "ActivateContract", "DeactivateContract") {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ActivateContract can be only called from @1ActivateContract or @1DeactivateContract")
+		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
 	}
 	ActivateContract(tblid, state, true)
 	return nil
@@ -624,9 +624,9 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 
 // DeactivateContract sets Active status of the contract in smartVM
 func Deactivate(sc *SmartContract, tblid int64, state int64) error {
-	if sc.TxContract.Name != `@1DeactivateContract` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1DeactivateContract")
-		return fmt.Errorf(`DeactivateContract can be only called from @1DeactivateContract`)
+	if !accessContracts(sc, "ActivateContract", "DeactivateContract") {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract")
+		return fmt.Errorf(`DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
 	}
 	ActivateContract(tblid, state, false)
 	return nil
