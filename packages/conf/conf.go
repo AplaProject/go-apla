@@ -129,6 +129,14 @@ func LoadConfigFromPath(path string) error {
 	return err
 }
 
+// GetConfigFromPath returns new config from path
+func GetConfigFromPath(path string) (*SavedConfig, error) {
+	config := &SavedConfig{}
+	log.WithFields(log.Fields{"path": path}).Info("Loading config")
+	_, err := toml.DecodeFile(path, config)
+	return config, err
+}
+
 // SaveConfig save global parameters to configFile
 func SaveConfig() error {
 	cf, err := os.Create(GetConfigPath())
