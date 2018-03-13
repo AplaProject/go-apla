@@ -190,6 +190,13 @@
 			"tree": true
 		},
 		{
+			"checksumSHA1": "MyUzunzysfhOlm/yJfV89oC+mO4=",
+			"path": "github.com/rogpeppe/go-charset/data",
+			"revision": "e9ff06f347d3f5d0013d59ed83754f0e88de10d4",
+			"revisionTime": "2015-06-15T17:25:32Z",
+			"tree": true
+		},
+		{
 			"checksumSHA1": "C0uSGH4Anewsb602sQmOVs/uGSQ=",
 			"path": "github.com/rpoletaev/supervisord",
 			"revision": "4e265b19bfbdc40722a3d33d9e65dc2721f7ff6a",
