@@ -58,6 +58,13 @@ type TokenMovementConfig struct {
 	Subject  string `toml:"subject"`
 }
 
+type FullNodeConfig struct {
+	KeyID      int64
+	PublicKey  string
+	TCPAddress string
+	APIAddress string
+}
+
 // SavedConfig parameters saved in "config.toml"
 type SavedConfig struct {
 	LogLevel    string
@@ -90,6 +97,8 @@ type SavedConfig struct {
 	Autoupdate AutoupdateConfig
 
 	TokenMovement TokenMovementConfig
+
+	FullNodes []FullNodeConfig
 }
 
 // Installed web UI installation mode

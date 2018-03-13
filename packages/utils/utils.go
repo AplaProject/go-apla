@@ -26,6 +26,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -428,4 +429,22 @@ func GetNodeKeys() (string, string, error) {
 		return "", "", err
 	}
 	return string(nprivkey), hex.EncodeToString(npubkey), nil
+}
+
+// ValidateURL returns error if the URL is invalid
+func ValidateURL(rawurl string) error {
+	u, err := url.ParseRequestURI(rawurl)
+	if err != nil {
+		return err
+	}
+
+	if len(u.Scheme) == 0 {
+		return fmt.Errorf("Invalid scheme: %s", rawurl)
+	}
+
+	if len(u.Host) == 0 {
+		return fmt.Errorf("Invalid host: %s", rawurl)
+	}
+
+	return nil
 }

@@ -22,8 +22,6 @@ const (
 	defaultDBHost = "127.0.0.1"
 	defaultDBPort = 5432
 
-	defaultFirstBlockHost = "127.0.0.1"
-
 	defaultUpdateInterval      = int64(time.Hour / time.Second)
 	defaultUpdateServer        = "http://127.0.0.1:12345"
 	defaultUpdatePublicKeyPath = "update.pub"
@@ -96,9 +94,6 @@ var (
 
 	// FirstBlockNodePublicKey is the node private key
 	FirstBlockNodePublicKey = flag.String("firstBlockNodePublicKey", "", "FirstBlockNodePublicKey")
-
-	// FirstBlockHost is the host of the first block
-	FirstBlockHost = flag.String("firstBlockHost", defaultFirstBlockHost, "FirstBlockHost")
 
 	// WalletAddress is a wallet address for forging
 	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")

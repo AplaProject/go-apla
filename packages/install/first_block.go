@@ -18,7 +18,6 @@ package install
 
 import (
 	"encoding/hex"
-	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -36,9 +35,6 @@ import (
 )
 
 const fileMode = 0644
-
-// ErrFirstBlockHostIsEmpty host for first block is not specified
-var ErrFirstBlockHostIsEmpty = errors.New("FirstBlockHost is empty")
 
 func createKeyPair(privFilename, pubFilename string) (priv, pub []byte, err error) {
 	priv, pub, err = crypto.GenBytesKeys()
@@ -70,10 +66,6 @@ func createFile(filename string, data []byte) error {
 }
 
 func generateFirstBlock(publicKey, nodePublicKey []byte) error {
-	if len(*conf.FirstBlockHost) == 0 {
-		return ErrFirstBlockHostIsEmpty
-	}
-
 	now := time.Now().Unix()
 
 	header := &utils.BlockData{
@@ -97,7 +89,6 @@ func generateFirstBlock(publicKey, nodePublicKey []byte) error {
 			},
 			PublicKey:     publicKey,
 			NodePublicKey: nodePublicKey,
-			Host:          *conf.FirstBlockHost,
 		},
 	)
 
