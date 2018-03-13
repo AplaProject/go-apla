@@ -131,6 +131,13 @@
 			"revisionTime": "2013-12-21T20:05:32Z"
 		},
 		{
+			"checksumSHA1": "InaWW+GTrinyO51dFJKqRpaIZ/A=",
+			"path": "github.com/ochinchina/go-ini",
+			"revision": "378031a63e2d8155b39b81b225b7351bc11a6ffc",
+			"revisionTime": "2017-11-08T03:18:33Z",
+			"tree": true
+		},
+		{
 			"checksumSHA1": "BoXdUBWB8UnSlFlbnuTQaPqfCGk=",
 			"path": "github.com/op/go-logging",
 			"revision": "970db520ece77730c7e4724c61121037378659d9",
