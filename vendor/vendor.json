@@ -162,10 +162,11 @@
 			"revisionTime": "2017-11-01T20:10:47Z"
 		},
 		{
-			"checksumSHA1": "dFi6ljPybr1ijVnhDtkYnHg80YM=",
+			"checksumSHA1": "C0uSGH4Anewsb602sQmOVs/uGSQ=",
 			"path": "github.com/rpoletaev/supervisord",
 			"revision": "4e265b19bfbdc40722a3d33d9e65dc2721f7ff6a",
-			"revisionTime": "2018-02-25T19:24:45Z"
+			"revisionTime": "2018-02-25T19:24:45Z",
+			"tree": true
 		},
 		{
 			"checksumSHA1": "4nhXt+svWtwsjFzQMbBywcykuEo=",
