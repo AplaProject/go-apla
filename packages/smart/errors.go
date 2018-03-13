@@ -23,6 +23,8 @@ const (
 )
 
 var (
-	errAccessDenied   = errors.New(`Access denied`)
-	errConditionEmpty = errors.New(`Conditions is empty`)
+	errAccessDenied           = errors.New(`Access denied`)
+	errConditionEmpty         = errors.New(`Conditions is empty`)
+	errContractNotFound       = errors.New(`Contract has not been found`)
+	errAccessRollbackContract = errors.New(`RollbackContract can be only called from Import or NewContract`)
 )
