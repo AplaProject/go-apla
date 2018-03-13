@@ -1425,29 +1425,28 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('12','func preparePageValidateCount(count int) int {
-		var min, max int
-		min = Int(EcosysParam("min_page_validate_count"))
-		max = Int(EcosysParam("max_page_validate_count"))
-
-		if count < min {
-			count = min
-		} else {
-			if count > max {
-				count = max
-			}
-		}
-
-		return count
-	}
-	
-	contract NewPage {
+	('12','contract NewPage {
 		data {
 			Name       string
 			Value      string
 			Menu       string
 			Conditions string
 			ValidateCount int "optional"
+		}
+		func preparePageValidateCount(count int) int {
+			var min, max int
+			min = Int(EcosysParam("min_page_validate_count"))
+			max = Int(EcosysParam("max_page_validate_count"))
+	
+			if count < min {
+				count = min
+			} else {
+				if count > max {
+					count = max
+				}
+			}
+	
+			return count
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1477,6 +1476,21 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Conditions string "optional"
       ValidateCount int "optional"
 		}
+		func preparePageValidateCount(count int) int {
+			var min, max int
+			min = Int(EcosysParam("min_page_validate_count"))
+			max = Int(EcosysParam("max_page_validate_count"))
+	
+			if count < min {
+				count = min
+			} else {
+				if count > max {
+					count = max
+				}
+			}
+	
+			return count
+		}		
 		conditions {
 			RowConditions("pages", $Id)
 			if $Conditions {
