@@ -22,6 +22,9 @@ const (
 	childFolder        = "configs"
 	createRoleTemplate = `CREATE ROLE %s WITH ENCRYPTED PASSWORD '%s' NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN`
 	createDBTemplate   = `CREATE DATABASE %s OWNER %s`
+
+	dropDBTemplate     = `DROP OWNED BY %s CASCADE`
+	dropDBRoleTemplate = `DROP ROLE IF EXISTS %s`
 	commandTemplate    = `%s -VDEMode=true -configPath=%s -workDir=%s`
 )
 
@@ -121,6 +124,25 @@ func (mgr *VDEManager) DeleteVDE(name string) error {
 	}
 
 	vdeDir := path.Join(childConfigsPath, name)
+	vdeConfigPath := filepath.Join(vdeDir, consts.DefaultConfigFile)
+	vdeConfig, err := conf.GetConfigFromPath(vdeConfigPath)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Errorf("Getting config from path %s", vdeConfigPath)
+		return err
+	}
+
+	dropDBquery := fmt.Sprintf(dropDBTemplate, vdeConfig.DB.User)
+	if err := model.DBConn.Exec(dropDBquery).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Deleting vde db")
+		return err
+	}
+
+	dropVDERoleQuery := fmt.Sprintf(dropDBRoleTemplate, vdeConfig.DB.User)
+	if err := model.DBConn.Exec(dropVDERoleQuery).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Deleting vde db user")
+		return err
+	}
+
 	return os.RemoveAll(vdeDir)
 }
 
@@ -195,8 +217,6 @@ func (mgr *VDEManager) initVDEDir(vdeName string) error {
 		}
 	}
 
-	// configPath := path.Join(vdeDirName, consts.DefaultConfigFile)
-	// return saveConfigFile(configPath)
 	return nil
 }
 
