@@ -1040,7 +1040,6 @@ If("#key_id#" == EcosysParam("founder_account")){
 		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
 
 		INSERT INTO "%[1]d_member" ("id", "member_name") VALUES('%[4]d', 'founder');
-		INSERT INTO "%[1]d_member" ("id", "member_name") VALUES('4544233900443112470', 'guest');
 
 		`
 
