@@ -816,6 +816,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
 			"menu" character varying(255) NOT NULL DEFAULT '',
+			"validate_count" bigint NOT NULL DEFAULT '1',
 			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
@@ -888,7 +889,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 		('12','stylesheet', 'body {
 		  /* You can define your custom styles here or create custom CSS rules */
 		}', 'ContractConditions("MainCondition")'),
-		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")');
+		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")'),
+		('14','min_page_validate_count', '1', 'ContractConditions("MainCondition")'),
+		('15','max_page_validate_count', '6', 'ContractConditions("MainCondition")');
 		
 		DROP TABLE IF EXISTS "%[1]d_tables";
 		CREATE TABLE "%[1]d_tables" (
@@ -941,6 +944,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 				'{"name": "ContractConditions(\"MainCondition\")",
 			"value": "ContractConditions(\"MainCondition\")",
 			"menu": "ContractConditions(\"MainCondition\")",
+			"validate_count": "ContractConditions(\"MainCondition\")",
 			"conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractAccess("@1EditTable")'),
 				('7', 'blocks', 
@@ -1421,12 +1425,29 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('12','contract NewPage {
+	('12','func preparePageValidateCount(count int) int {
+		var min, max int
+		min = Int(EcosysParam("min_page_validate_count"))
+		max = Int(EcosysParam("max_page_validate_count"))
+
+		if count < min {
+			count = min
+		} else {
+			if count > max {
+				count = max
+			}
+		}
+
+		return count
+	}
+	
+	contract NewPage {
 		data {
 			Name       string
 			Value      string
 			Menu       string
 			Conditions string
+			ValidateCount int "optional"
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1437,26 +1458,31 @@ If("#key_id#" == EcosysParam("founder_account")){
 			if row {
 				warning Sprintf( "Page %%s already exists", $Name)
 			}
+
+			$ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
-			DBInsert("pages", "name,value,menu,conditions", $Name, $Value, $Menu, $Conditions )
+			DBInsert("pages", "name,value,menu,validate_count,conditions", $Name, $Value, $Menu, $ValidateCount, $Conditions)
 		}
 		func price() int {
 			return  SysParamInt("page_price")
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}
+	', '%[1]d','ContractConditions("MainCondition")'),
 	('13','contract EditPage {
 		data {
 			Id         int
 			Value      string "optional"
 			Menu      string "optional"
 			Conditions string "optional"
+      ValidateCount int "optional"
 		}
 		conditions {
 			RowConditions("pages", $Id)
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
+      $ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
 			var pars, vals array
@@ -1472,6 +1498,10 @@ If("#key_id#" == EcosysParam("founder_account")){
 				pars[Len(pars)] = "conditions"
 				vals[Len(vals)] = $Conditions
 			}
+      if $ValidateCount {
+				pars[Len(pars)] = "validate_count"
+				vals[Len(vals)] = $ValidateCount
+      }
 			if Len(vals) > 0 {
 				DBUpdate("pages", $Id, Join(pars, ","), vals...)
 			}
