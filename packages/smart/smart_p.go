@@ -86,6 +86,14 @@ var (
 	}
 )
 
+const (
+	nActivateContract   = "ActivateContract"
+	nDeactivateContract = "DeactivateContract"
+	nEditContract       = "EditContract"
+	nImport             = "Import"
+	nNewContract        = "NewContract"
+)
+
 //SignRes contains the data of the signature
 type SignRes struct {
 	Param string `json:"name"`
@@ -614,7 +622,7 @@ func Substr(s string, off int64, slen int64) string {
 
 // Activate sets Active status of the contract in smartVM
 func Activate(sc *SmartContract, tblid int64, state int64) error {
-	if !accessContracts(sc, "ActivateContract", "DeactivateContract") {
+	if !accessContracts(sc, nActivateContract, nDeactivateContract) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ActivateContract can be only called from @1ActivateContract or @1DeactivateContract")
 		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
 	}
@@ -624,7 +632,7 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 
 // DeactivateContract sets Active status of the contract in smartVM
 func Deactivate(sc *SmartContract, tblid int64, state int64) error {
-	if !accessContracts(sc, "ActivateContract", "DeactivateContract") {
+	if !accessContracts(sc, nActivateContract, nDeactivateContract) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract")
 		return fmt.Errorf(`DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
 	}
@@ -693,7 +701,7 @@ func JSONToMap(input string) (map[string]interface{}, error) {
 }
 
 func RollbackContract(sc *SmartContract, name string) error {
-	if !accessContracts(sc, "NewContract", "Import") {
+	if !accessContracts(sc, nNewContract, nImport) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract, "error": errAccessRollbackContract}).Error("Check contract access")
 		return errAccessRollbackContract
 	}
@@ -720,7 +728,7 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 
 // RollbackEditContract rollbacks the contract
 func RollbackEditContract(sc *SmartContract) error {
-	if !accessContracts(sc, "EditContract") {
+	if !accessContracts(sc, nEditContract) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackEditContract can be only called from @1EditContract")
 		return fmt.Errorf(`RollbackEditContract can be only called from @1EditContract`)
 	}
