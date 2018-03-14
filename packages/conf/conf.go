@@ -155,13 +155,13 @@ func SaveConfigByPath(c SavedConfig, path string) error {
 	if os.IsNotExist(err) {
 		cf, err = os.Create(path)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("Create config file failed")
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("Creating config file failed")
 			return err
 		}
 	} else {
 		cf, err = os.Open(path)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("Create config file failed")
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("Opening config file failed")
 			return err
 		}
 	}
