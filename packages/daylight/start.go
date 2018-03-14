@@ -78,9 +78,16 @@ func killOld() {
 }
 
 func initLogs() error {
-	if len(conf.Config.LogConfig.LogTo) == 0 {
+	switch conf.Config.LogConfig.LogFormat {
+	case "json":
+		log.SetFormatter(&log.JSONFormatter{})
+	default:
+		log.SetFormatter(&log.TextFormatter{})
+	}
+	switch conf.Config.LogConfig.LogTo {
+	case "stdout":
 		log.SetOutput(os.Stdout)
-	} else {
+	default:
 		fileName := filepath.Join(conf.Config.DataDir, conf.Config.LogConfig.LogTo)
 		openMode := os.O_APPEND
 		if _, err := os.Stat(fileName); os.IsNotExist(err) {

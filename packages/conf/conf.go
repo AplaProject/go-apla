@@ -49,8 +49,9 @@ type CentrifugoConfig struct {
 }
 
 type LogConfig struct {
-	LogTo    string
-	LogLevel string
+	LogTo     string
+	LogLevel  string
+	LogFormat string
 }
 
 // TokenMovementConfig smtp config for token movement

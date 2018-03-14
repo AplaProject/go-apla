@@ -84,8 +84,10 @@ func init() {
 	// Log
 	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogTo, "logTo", "stdout", "Send logs to")
 	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogLevel, "verbosity", "ERROR", "Log verbosity (DEBUG | INFO | WARN | ERROR)")
+	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogFormat, "logFormat", "text", "log format, could be text|json")
 	viper.BindPFlag("Log.LogTo", configCmd.Flags().Lookup("logTo"))
 	viper.BindPFlag("Log.Verbosity", configCmd.Flags().Lookup("verbosity"))
+	viper.BindPFlag("Log.LogFormat", configCmd.Flags().Lookup("logFormat"))
 
 	// TokenMovement
 	configCmd.Flags().StringVar(&conf.Config.TokenMovement.Host, "tmovHost", "", "Token movement host")
