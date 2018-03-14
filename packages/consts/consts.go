@@ -133,3 +133,6 @@ const TokenMovementQtyPerBlockLimit = 100
 
 // DefaultVDE default VDE ecosystem
 const DefaultVDE = 1
+
+// NodeExecutableFileName executable file name
+const NodeExecutableFileName = "go-genesis"
