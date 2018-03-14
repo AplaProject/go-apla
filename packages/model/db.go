@@ -175,7 +175,9 @@ func CreateVDEIfNotExists(id int64, wallet int64) error {
 	}
 
 	if converter.StrToInt64(sp.Value) != wallet {
-		return fmt.Errorf("access denied")
+		err := fmt.Errorf("access denied")
+		log.WithFields(log.Fields{"type": consts.AccessDenied, "error": err}).Error("creating vde")
+		return err
 	}
 
 	if err := ExecSchemaLocalData(int(id), wallet); err != nil {

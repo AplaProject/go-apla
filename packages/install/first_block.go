@@ -19,7 +19,6 @@ package install
 import (
 	"encoding/hex"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -39,35 +38,6 @@ const fileMode = 0644
 
 // ErrFirstBlockHostIsEmpty host for first block is not specified
 var ErrFirstBlockHostIsEmpty = errors.New("FirstBlockHost is empty")
-
-func createKeyPair(privFilename, pubFilename string) (priv, pub []byte, err error) {
-	priv, pub, err = crypto.GenBytesKeys()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("generate keys")
-		return
-	}
-
-	err = createFile(privFilename, []byte(hex.EncodeToString(priv)))
-	if err != nil {
-		return
-	}
-
-	err = createFile(pubFilename, []byte(hex.EncodeToString(pub)))
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func createFile(filename string, data []byte) error {
-	err := ioutil.WriteFile(filename, data, fileMode)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing file")
-		return err
-	}
-	return nil
-}
 
 func generateFirstBlock(publicKey, nodePublicKey []byte) error {
 	if len(*conf.FirstBlockHost) == 0 {
@@ -112,7 +82,7 @@ func generateFirstBlock(publicKey, nodePublicKey []byte) error {
 		return err
 	}
 
-	return createFile(*conf.FirstBlockPath, block)
+	return utils.CreateFile(*conf.FirstBlockPath, block)
 }
 
 // GenerateFirstBlock generates the first block
@@ -128,7 +98,7 @@ func GenerateFirstBlock() error {
 			return err
 		}
 	} else {
-		_, publicKey, err = createKeyPair(
+		_, publicKey, err = utils.CreateKeyPair(
 			filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename),
 			filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename),
 		)
@@ -145,7 +115,7 @@ func GenerateFirstBlock() error {
 			return err
 		}
 	} else {
-		_, nodePublicKey, err = createKeyPair(
+		_, nodePublicKey, err = utils.CreateKeyPair(
 			filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename),
 			filepath.Join(conf.Config.PrivateDir, consts.NodePublicKeyFilename),
 		)
@@ -157,7 +127,7 @@ func GenerateFirstBlock() error {
 	address := crypto.Address(publicKey)
 	conf.Config.KeyID = address
 
-	err = createFile(
+	err = utils.CreateFile(
 		filepath.Join(conf.Config.PrivateDir, consts.KeyIDFilename),
 		[]byte(strconv.FormatInt(address, 10)),
 	)

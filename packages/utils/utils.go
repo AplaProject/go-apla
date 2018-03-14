@@ -429,3 +429,34 @@ func GetNodeKeys() (string, string, error) {
 	}
 	return string(nprivkey), hex.EncodeToString(npubkey), nil
 }
+
+// CreateFile create new file
+func CreateFile(filename string, data []byte) error {
+	err := ioutil.WriteFile(filename, data, 0644)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing file")
+		return err
+	}
+	return nil
+}
+
+// CreateKeyPair creates files with private and pub keys
+func CreateKeyPair(privFilename, pubFilename string) (priv, pub []byte, err error) {
+	priv, pub, err = crypto.GenBytesKeys()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("generate keys")
+		return
+	}
+
+	err = CreateFile(privFilename, []byte(hex.EncodeToString(priv)))
+	if err != nil {
+		return
+	}
+
+	err = CreateFile(pubFilename, []byte(hex.EncodeToString(pub)))
+	if err != nil {
+		return
+	}
+
+	return
+}

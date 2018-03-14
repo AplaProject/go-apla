@@ -1209,53 +1209,25 @@ func UpdateCron(sc *SmartContract, id int64) error {
 
 // CreateVDE allow create new VDE throw vdemanager
 func CreateVDE(sc *SmartContract, name, dbUser, dbPassword string, port int64) error {
-
-	log.Infoln("FROM CREATEVDE FUNC")
 	return vdemanager.Manager.CreateVDE(name, dbUser, dbPassword, int(port))
 }
 
 // DeleteVDE delete vde
 func DeleteVDE(sc *SmartContract, name string) error {
-	if vdemanager.Manager == nil {
-		err := fmt.Errorf("node must be running as VDEMaster")
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": err}).Error("create new VDE")
-		return err
-	}
-
 	return vdemanager.Manager.DeleteVDE(name)
 }
 
 // StartVDE run VDE process
 func StartVDE(sc *SmartContract, name string) error {
-	if vdemanager.Manager == nil {
-		err := fmt.Errorf("node must be running as VDEMaster")
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": err}).Error("create new VDE")
-		return err
-	}
-
 	return vdemanager.Manager.StartVDE(name)
 }
 
 // StopVDE stops VDE process
 func StopVDE(sc *SmartContract, name string) error {
-	if vdemanager.Manager == nil {
-		err := fmt.Errorf("node must be running as VDEMaster")
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": err}).Error("create new VDE")
-		return err
-	}
-
 	return vdemanager.Manager.StopVDE(name)
 }
 
 // GetVDEList returns list VDE process with statuses
 func GetVDEList(sc *SmartContract, name string) (map[string]string, error) {
-	if vdemanager.Manager == nil {
-		err := fmt.Errorf("node must be running as VDEMaster")
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": err}).Error("create new VDE")
-		return nil, err
-	}
-
-	processes := vdemanager.Manager.ListProcess()
-	log.Infof("%+v", processes)
-	return processes, nil
+	return vdemanager.Manager.ListProcess()
 }

@@ -254,7 +254,7 @@ func Start() {
 			Exit(1)
 		}
 
-		if *conf.IsVDEMasterMode || *conf.IsVDEMode {
+		if conf.IsVDE() {
 			err := model.ExecSchemaEcosystem(nil, 1, conf.Config.KeyID, ``, conf.Config.KeyID)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
@@ -262,7 +262,7 @@ func Start() {
 			}
 
 			if err := model.CreateVDEIfNotExists(consts.DefaultVDE, conf.Config.KeyID); err != nil {
-				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("")
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Creating VDE if not exists")
 				Exit(1)
 			}
 		}
