@@ -80,7 +80,7 @@ func Route(route *hr.Router) {
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template:string`, jsonContent)
 
-	if !*conf.IsVDEMasterMode && !*conf.IsVDEMode {
+	if !conf.IsVDE() {
 		get(`txstatus/:hash`, ``, authWallet, txstatus)
 		get(`history/:table/:id`, ``, authWallet, getHistory)
 		get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)

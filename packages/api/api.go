@@ -229,7 +229,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 			data.params[par.Key] = par.Value
 		}
 
-		if *conf.IsVDEMasterMode || *conf.IsVDEMode {
+		if conf.IsVDE() {
 			data.vm = smart.GetVM(true, consts.DefaultVDE)
 			if data.vm == nil {
 				errorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemId)
@@ -239,6 +239,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		} else {
 			data.vm = smart.GetVM(false, 0)
 		}
+
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {

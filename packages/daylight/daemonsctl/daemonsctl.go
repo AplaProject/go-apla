@@ -28,7 +28,7 @@ func RunAllDaemons() error {
 	log.Info("start daemons")
 	daemons.StartDaemons()
 
-	if *conf.IsVDEMasterMode || *conf.IsVDEMode {
+	if conf.IsVDE() {
 		return nil
 	}
 
