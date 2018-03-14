@@ -135,6 +135,11 @@ var (
 	IsVDEMode = flag.Bool("VDEMode", false, "Setup mode as VDE")
 )
 
+// IsVDE returns true if node work as VDE
+func IsVDE() bool {
+	return *IsVDEMasterMode || *IsVDEMode
+}
+
 func envStr(envName string, val *string) bool {
 	if env, ok := os.LookupEnv(envName); ok {
 		*val = env

@@ -78,7 +78,7 @@ func Route(route *hr.Router) {
 	post(`updnotificator`, `ids:string`, updateNotificator)
 
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, contractHandlers.nodeContract)
-	if !*conf.IsVDEMasterMode && !*conf.IsVDEMode {
+	if !conf.IsVDE() {
 		get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
 		get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
 		get(`txstatus/:hash`, ``, authWallet, txstatus)

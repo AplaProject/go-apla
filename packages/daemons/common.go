@@ -158,7 +158,7 @@ func getHostPort(h string) string {
 }
 
 func getDaemonsToStart() []string {
-	if *conf.IsVDEMasterMode || *conf.IsVDEMode {
+	if conf.IsVDE() {
 		return []string{
 			"Notificator",
 			"Scheduler",
