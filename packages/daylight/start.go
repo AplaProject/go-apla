@@ -248,6 +248,12 @@ func Start() {
 		}
 	}
 
+	if conf.IsVDE() && *conf.GenerateKeys {
+		if _, _, err := utils.GenerateKeyFiles(); err != nil {
+			Exit(1)
+		}
+	}
+
 	if *conf.InitDatabase {
 		if err := model.InitDB(conf.Config.DB); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("InitDB")
