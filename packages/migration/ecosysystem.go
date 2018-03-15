@@ -94,7 +94,7 @@ MenuItem(
 	  
 	  CREATE TABLE "%[1]d_vde_contracts" (
 	  "id" bigint NOT NULL  DEFAULT '0',
-	  "name" text NOT NULL DEFAULT '0',
+	  "name" text NOT NULL DEFAULT '',
 	  "value" text  NOT NULL DEFAULT '',
 	  "conditions" text  NOT NULL DEFAULT ''
 	  );
@@ -161,7 +161,8 @@ MenuItem(
 	  INSERT INTO "%[1]d_vde_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts', 
 			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 				"new_column": "ContractConditions(\"MainCondition\")"}',
-			  '{"name": "false","value": "ContractConditions(\"MainCondition\")",
+			  '{"name": "false",
+				"value": "ContractConditions(\"MainCondition\")",
 				"conditions": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("EditTable")'),
 			  ('2', 'languages', 
 			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
@@ -1050,7 +1051,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		
 		INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions") VALUES 
 			('1', 'contracts', '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}', 
-			'{	"name", "false", 
+			'{"name": "false", 
 				"value": "ContractConditions(\"MainCondition\")",
 				  "wallet_id": "ContractConditions(\"MainCondition\")",
 				  "token_id": "ContractConditions(\"MainCondition\")",
