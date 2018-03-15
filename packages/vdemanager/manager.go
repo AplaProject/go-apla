@@ -8,8 +8,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/utils"
-
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -82,14 +80,6 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 	}
 
 	vdeDir := path.Join(childConfigsPath, name)
-	privFile := filepath.Join(vdeDir, consts.PrivateKeyFilename)
-	pubFile := filepath.Join(vdeDir, consts.PublicKeyFilename)
-	_, _, err := utils.CreateKeyPair(privFile, pubFile)
-	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Error("error on creating keys")
-		return err
-	}
-
 	vdeConfigPath := filepath.Join(vdeDir, consts.DefaultConfigFile)
 	vdeConfig := conf.Config
 	vdeConfig.WorkDir = vdeDir
@@ -97,6 +87,7 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 	vdeConfig.DB.Password = dbPassword
 	vdeConfig.DB.Name = name
 	vdeConfig.HTTP.Port = port
+	vdeConfig.PrivateDir = vdeConfigPath
 
 	if err := conf.SaveConfigByPath(vdeConfig, vdeConfigPath); err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("saving VDE config")
@@ -105,7 +96,7 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 
 	confEntry := pConf.NewConfigEntry(vdeDir)
 	confEntry.Name = "program:" + name
-	command := fmt.Sprintf("%s -VDEMode=true -initDatabase=true -configPath=%s -workDir=%s", bin(), vdeConfigPath, vdeDir)
+	command := fmt.Sprintf("%s -VDEMode=true -initDatabase=true -generateKeys=true -configPath=%s -workDir=%s", bin(), vdeConfigPath, vdeDir)
 	confEntry.AddKeyValue("command", command)
 	proc := process.NewProcess("vdeMaster", confEntry)
 

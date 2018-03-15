@@ -133,6 +133,8 @@ var (
 	IsVDEMasterMode = flag.Bool("VDEMaster", false, "Setup mode as VDEMaster, allow manage child VDE systems")
 
 	IsVDEMode = flag.Bool("VDEMode", false, "Setup mode as VDE")
+
+	GenerateKeys = flag.Bool("generateKeys", false, "Generate public and private keys")
 )
 
 // IsVDE returns true if node work as VDE
