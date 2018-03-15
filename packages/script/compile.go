@@ -1173,5 +1173,6 @@ func ContractsList(value string) []string {
 			}
 		}
 	}
+
 	return names
 }
