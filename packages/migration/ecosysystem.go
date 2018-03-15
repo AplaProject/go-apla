@@ -94,6 +94,7 @@ MenuItem(
 	  
 	  CREATE TABLE "%[1]d_vde_contracts" (
 	  "id" bigint NOT NULL  DEFAULT '0',
+	  "name" text NOT NULL DEFAULT '0',
 	  "value" text  NOT NULL DEFAULT '',
 	  "conditions" text  NOT NULL DEFAULT ''
 	  );
@@ -160,7 +161,7 @@ MenuItem(
 	  INSERT INTO "%[1]d_vde_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts', 
 			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 				"new_column": "ContractConditions(\"MainCondition\")"}',
-			  '{"value": "ContractConditions(\"MainCondition\")",
+			  '{"name": "false","value": "ContractConditions(\"MainCondition\")",
 				"conditions": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("EditTable")'),
 			  ('2', 'languages', 
 			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
@@ -242,11 +243,12 @@ MenuItem(
 				  }
 				  i = i + 1
 			  }
+			  $contract_name=list[0]
 		  }
 		  action {
 			  var root, id int
 			  root = CompileContract($Value, $ecosystem_id, 0, 0)
-			  id = DBInsert("contracts", "value,conditions", $Value, $Conditions )
+			  id = DBInsert("contracts", "name,value,conditions", $contract_name, $Value, $Conditions )
 			  FlushContract(root, id, false)
 			  $result = id
 		  }
@@ -973,6 +975,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		
 		CREATE TABLE "%[1]d_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
+		"name" text NOT NULL DEFAULT '',
 		"value" text  NOT NULL DEFAULT '',
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',
@@ -982,8 +985,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		);
 		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 		
-		INSERT INTO "%[1]d_contracts" ("id", "value", "wallet_id","active", "conditions") VALUES 
-		('1','contract MainCondition {
+		INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id","active", "conditions") VALUES 
+		('1','MainCondition','contract MainCondition {
 		  conditions {
 			if EcosysParam("founder_account")!=$key_id
 			{
@@ -1047,7 +1050,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		
 		INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions") VALUES 
 			('1', 'contracts', '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}', 
-			'{"value": "ContractConditions(\"MainCondition\")",
+			'{	"name", "false", 
+				"value": "ContractConditions(\"MainCondition\")",
 				  "wallet_id": "ContractConditions(\"MainCondition\")",
 				  "token_id": "ContractConditions(\"MainCondition\")",
 				  "active": "ContractConditions(\"MainCondition\")",
@@ -1386,6 +1390,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 				}
 				i = i + 1
 			}
+
+			$contract_name = list[0]
 			if !$TokenEcosystem {
 				$TokenEcosystem = 1
 			} else {
@@ -1397,8 +1403,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		action {
 			var root, id int
 			root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
-			id = DBInsert("contracts", "value,conditions, wallet_id, token_id", 
-				   $Value, $Conditions, $walletContract, $TokenEcosystem)
+			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id", 
+				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem)
 			FlushContract(root, id, false)
 			$result = id
 		}
