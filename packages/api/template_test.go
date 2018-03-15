@@ -81,8 +81,9 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
-	{`DBFind(contracts, src).Order(id).Custom(a){SetVar(where, #where# #id#)}
-	Div(){Table(src, "=x")}Div(){Table(src)}Div(){#where#}`, ``},
+	{`SetVar(where)DBFind(contracts, src).Columns(id).Order(id).Limit(3).Custom(a){SetVar(where, #where# #id#)}
+	Div(){Table(src, "=x")}Div(){Table(src)}Div(){#where#}`,
+		`[{"tag":"dbfind","attr":{"columns":["id","a"],"data":[["1","null"],["2","null"],["3","null"]],"limit":"3","name":"contracts","order":"id","source":"src","types":["text","tags"]}},{"tag":"div","children":[{"tag":"table","attr":{"columns":[{"Name":"x","Title":""}],"source":"src"}}]},{"tag":"div","children":[{"tag":"table","attr":{"source":"src"}}]},{"tag":"div","children":[{"tag":"text","text":" 1 2 3"}]}]`},
 	{`DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(10)`,
 		`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["11"],["12"]],"limit":"2","name":"contracts","offset":"10","order":"id","source":"src_contracts","types":["text"]}}]`},
 	{`DBFind(contracts, src_pos).Columns(id).Where("id >= 1 and id <= 3")
