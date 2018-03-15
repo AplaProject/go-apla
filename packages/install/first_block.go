@@ -17,11 +17,8 @@
 package install
 
 import (
-	"encoding/hex"
 	"errors"
 	"os"
-	"path/filepath"
-	"strconv"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -29,7 +26,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
@@ -87,50 +83,7 @@ func generateFirstBlock(publicKey, nodePublicKey []byte) error {
 
 // GenerateFirstBlock generates the first block
 func GenerateFirstBlock() error {
-	var publicKey, nodePublicKey []byte
-	var err error
-
-	// publicKey
-	if len(*conf.FirstBlockPublicKey) > 0 {
-		publicKey, err = hex.DecodeString(*conf.FirstBlockPublicKey)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding key from hex to string")
-			return err
-		}
-	} else {
-		_, publicKey, err = utils.CreateKeyPair(
-			filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename),
-			filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename),
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	// nodePublicKey
-	if len(*conf.FirstBlockNodePublicKey) > 0 {
-		nodePublicKey, err = hex.DecodeString(*conf.FirstBlockNodePublicKey)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding key from hex to string")
-			return err
-		}
-	} else {
-		_, nodePublicKey, err = utils.CreateKeyPair(
-			filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename),
-			filepath.Join(conf.Config.PrivateDir, consts.NodePublicKeyFilename),
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	address := crypto.Address(publicKey)
-	conf.Config.KeyID = address
-
-	err = utils.CreateFile(
-		filepath.Join(conf.Config.PrivateDir, consts.KeyIDFilename),
-		[]byte(strconv.FormatInt(address, 10)),
-	)
+	publicKey, nodePublicKey, err := utils.GenerateKeyFiles()
 	if err != nil {
 		return err
 	}

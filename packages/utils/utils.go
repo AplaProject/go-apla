@@ -31,6 +31,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
@@ -457,6 +458,53 @@ func CreateKeyPair(privFilename, pubFilename string) (priv, pub []byte, err erro
 	if err != nil {
 		return
 	}
+
+	return
+}
+
+// GenerateKeyFiles creates node and owner pub & priv key files
+func GenerateKeyFiles() (publicKey, nodePublicKey []byte, err error) {
+	// publicKey
+	if len(*conf.FirstBlockPublicKey) > 0 {
+		publicKey, err = hex.DecodeString(*conf.FirstBlockPublicKey)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding key from hex to string")
+			return
+		}
+	} else {
+		_, publicKey, err = CreateKeyPair(
+			filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename),
+			filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename),
+		)
+		if err != nil {
+			return
+		}
+	}
+
+	// nodePublicKey
+	if len(*conf.FirstBlockNodePublicKey) > 0 {
+		nodePublicKey, err = hex.DecodeString(*conf.FirstBlockNodePublicKey)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding key from hex to string")
+			return
+		}
+	} else {
+		_, nodePublicKey, err = CreateKeyPair(
+			filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename),
+			filepath.Join(conf.Config.PrivateDir, consts.NodePublicKeyFilename),
+		)
+		if err != nil {
+			return
+		}
+	}
+
+	address := crypto.Address(publicKey)
+	conf.Config.KeyID = address
+
+	err = CreateFile(
+		filepath.Join(conf.Config.PrivateDir, consts.KeyIDFilename),
+		[]byte(strconv.FormatInt(address, 10)),
+	)
 
 	return
 }
