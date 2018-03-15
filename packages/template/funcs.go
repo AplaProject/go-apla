@@ -88,6 +88,7 @@ func init() {
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
+	funcs[`Static`] = tplFunc{staticTag, defaultTag, "static", "Name,Var"}
 
 	tails[`button`] = forTails{map[string]tailInfo{
 		`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
@@ -832,6 +833,34 @@ func chartTag(par parFunc) string {
 			colors[i] = strings.TrimSpace(v)
 		}
 		par.Node.Attr["colors"] = colors
+	}
+
+	return ""
+}
+
+func staticTag(par parFunc) string {
+	var ecosystemID string
+	if par.Node.Attr[`ecosystem`] != nil {
+		ecosystemID = par.Node.Attr[`ecosystem`].(string)
+	} else {
+		ecosystemID = (*par.Workspace.Vars)[`ecosystem_id`]
+	}
+
+	static := &model.Static{}
+	static.SetTablePrefix(ecosystemID)
+	ok, err := static.Get((*par.Pars)["Name"])
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting record from db")
+		return err.Error()
+	}
+
+	if ok {
+		varName := (*par.Pars)["Var"]
+		if len(varName) == 0 {
+			varName = static.Name
+		}
+
+		(*par.Workspace.Vars)[varName] = static.Link()
 	}
 
 	return ""

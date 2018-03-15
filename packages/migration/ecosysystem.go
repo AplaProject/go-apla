@@ -89,6 +89,16 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_cron" ADD CONSTRAINT "%[1]d_vde_cron_pkey" PRIMARY KEY ("id");
 
+		DROP TABLE IF EXISTS "%[1]d_vde_statics";
+		CREATE TABLE "%[1]d_vde_statics" (
+			"id" bigint  NOT NULL DEFAULT '0',
+			"date" timestamp NOT NULL DEFAULT NOW(),
+			"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
+			"data" bytea NOT NULL DEFAULT '',
+			"hash" varchar(32) NOT NULL DEFAULT ''
+		);
+		ALTER TABLE ONLY "%[1]d_vde_statics" ADD CONSTRAINT "%[1]d_vde_statics_pkey" PRIMARY KEY (id);
+		CREATE INDEX "%[1]d_vde_statics_index_name" ON "%[1]d_vde_statics" (name);
 
 	  CREATE TABLE "%[1]d_vde_tables" (
 	  "id" bigint NOT NULL  DEFAULT '0',
@@ -148,8 +158,16 @@ var (
 				"contract": "ContractConditions(\"MainCondition\")",
 				"counter": "ContractConditions(\"MainCondition\")",
 				"till": "ContractConditions(\"MainCondition\")",
-                  "conditions": "ContractConditions(\"MainCondition\")"
-				}', 'ContractConditions(\"MainCondition\")');
+				  "conditions": "ContractConditions(\"MainCondition\")"
+				}', 'ContractConditions(\"MainCondition\")'),
+			  ('8', 'statics', 
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+					"new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"name": "ContractConditions(\"MainCondition\")",
+					"date": "ContractConditions(\"MainCondition\")",
+					"data": "ContractConditions(\"MainCondition\")",
+					"hash": "ContractConditions(\"MainCondition\")"}',
+					'ContractConditions(\"MainCondition\")');
 	  
 	  INSERT INTO "%[1]d_vde_contracts" ("id", "value", "conditions") VALUES 
 	  ('1','contract MainCondition {
@@ -707,6 +725,25 @@ var (
 				$Cron, $Contract, $Limit, $Till, $Conditions)
 			UpdateCron($Id)
 		}
+	}', 'ContractConditions("MainCondition")'),
+	('23','contract UploadStatic {
+		data {
+			Name  string
+			Data  string
+		}
+		conditions {
+			$Id = Int(DBFind("statics").Columns("id").Where("name = ?", $Name).One("id"))
+		}
+		action {
+			var hash string
+			hash = MD5($Data)
+
+			if $Id != 0 {
+				DBUpdate("statics", $Id, "name,data,hash", $Name, $Data, hash)
+			} else {
+				DBInsert("statics", "name,data,hash", $Name, $Data, hash)
+			}
+		}
 	}', 'ContractConditions("MainCondition")');
 	`
 
@@ -1023,6 +1060,14 @@ If("#key_id#" == EcosysParam("founder_account")){
 						"page": "ContractConditions(\"MainCondition\")",
 						"roles_access": "ContractConditions(\"MainCondition\")",
 						"delete": "ContractConditions(\"MainCondition\")"}', 
+						'ContractConditions(\"MainCondition\")'),
+				('14', 'statics', 
+					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+					"new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"name": "ContractConditions(\"MainCondition\")",
+						"date": "ContractConditions(\"MainCondition\")",
+						"data": "ContractConditions(\"MainCondition\")",
+						"hash": "ContractConditions(\"MainCondition\")"}',
 						'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
@@ -1105,6 +1150,17 @@ If("#key_id#" == EcosysParam("founder_account")){
 
 		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
 
+
+		DROP TABLE IF EXISTS "%[1]d_statics";
+		CREATE TABLE "%[1]d_statics" (
+			"id" bigint  NOT NULL DEFAULT '0',
+			"date" timestamp NOT NULL DEFAULT NOW(),
+			"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
+			"data" bytea NOT NULL DEFAULT '',
+			"hash" varchar(32) NOT NULL DEFAULT ''
+		);
+		ALTER TABLE ONLY "%[1]d_statics" ADD CONSTRAINT "%[1]d_statics_pkey" PRIMARY KEY (id);
+		CREATE INDEX "%[1]d_statics_index_name" ON "%[1]d_statics" (name);
 		`
 
 	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id") VALUES ('1');
@@ -1874,6 +1930,25 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 		action {
 			DBUpdateSysParam($Name, $Value, $Conditions )
+		}
+	}', '%[1]d','ContractConditions("MainCondition")'),
+	('28','contract UploadStatic {
+		data {
+			Name  string
+			Data  string
+		}
+		conditions {
+			$Id = Int(DBFind("statics").Columns("id").Where("name = ?", $Name).One("id"))
+		}
+		action {
+			var hash string
+			hash = MD5($Data)
+
+			if $Id != 0 {
+				DBUpdate("statics", $Id, "name,data,hash", $Name, $Data, hash)
+			} else {
+				DBInsert("statics", "name,data,hash", $Name, $Data, hash)
+			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")');`
 )

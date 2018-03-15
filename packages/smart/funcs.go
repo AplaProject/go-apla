@@ -18,6 +18,7 @@ package smart
 
 import (
 	"bytes"
+	"crypto/md5"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
@@ -204,6 +205,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RollbackEditContract": RollbackEditContract,
 		"check_signature":      CheckSignature,
 		"RowConditions":        RowConditions,
+		"MD5":                  MD5,
 	}
 
 	switch vt {
@@ -1189,4 +1191,10 @@ func UpdateCron(sc *SmartContract, id int64) error {
 	}
 
 	return nil
+}
+
+// MD5 returns md5 hash sum of data
+func MD5(data string) string {
+	hash := md5.Sum([]byte(data))
+	return hex.EncodeToString(hash[:])
 }

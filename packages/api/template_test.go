@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/stretchr/testify/assert"
 )
 
 type tplItem struct {
@@ -127,6 +128,8 @@ var forTest = tplList{
 		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","default_menu"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"default_menu"}]}]`},
 }
 
+var imageData = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
+
 func TestImage(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
@@ -180,7 +183,7 @@ func TestImage(t *testing.T) {
 		t.Errorf(`Too much time for template parsing`)
 		return
 	}
-	mydata = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
+	mydata = imageData
 	err = postTx(name, &url.Values{`Image`: {mydata}})
 
 	template = `Div(Class: list-group-item){
@@ -205,4 +208,20 @@ func TestImage(t *testing.T) {
 	if RawToString(ret.Tree) != want {
 		t.Errorf("Wrong image tree %s", RawToString(ret.Tree))
 	}
+}
+
+func TestStatic(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	form := url.Values{
+		"Name": {"file"},
+		"Data": {imageData},
+	}
+	assert.NoError(t, postTx("UploadStatic", &form))
+
+	var ret contentResult
+	template := `Static(Name: file, Var: my_file) Image(Src: #my_file#)`
+	err := sendPost(`content`, &url.Values{`template`: {template}}, &ret)
+	assert.NoError(t, err)
+	assert.Equal(t, `[{"tag":"image","attr":{"src":"/data/1_statics/1/data/6bfc1a86b98b72f9cbdc19be1c36ac55"}}]`, string(ret.Tree))
 }
