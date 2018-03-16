@@ -41,6 +41,7 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/theckman/go-flock"
 )
 
 // BlockData is a structure of the block's header
@@ -443,6 +444,20 @@ func CreateDirIfNotExists(dir string, mode os.FileMode) error {
 	return nil
 }
 
+func LockOrDie(dir string) *flock.Flock {
+	f := flock.NewFlock(dir)
+	success, err := f.TryLock()
+	if err != nil {
+		log.WithError(err).Fatal("Locking go-genesis")
+	}
+
+	if !success {
+		log.Fatal("Go-genesis is locked")
+	}
+
+	return f
+}
+
 // ValidateURL returns error if the URL is invalid
 func ValidateURL(rawurl string) error {
 	u, err := url.ParseRequestURI(rawurl)
@@ -466,11 +481,4 @@ func ShuffleSlice(slice []string) {
 		j := rand.Intn(i + 1)
 		slice[i], slice[j] = slice[j], slice[i]
 	}
-
-	// dest := make([]string, len(src))
-	// perm := rand.Perm(len(src))
-	// for i, v := range perm {
-	// 	dest[v] = src[i]
-	// }
-	// return dest
 }

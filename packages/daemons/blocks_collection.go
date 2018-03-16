@@ -73,8 +73,6 @@ func initialLoad(ctx context.Context, d *daemon) error {
 
 func blocksCollection(ctx context.Context, d *daemon) (err error) {
 	hosts := syspar.GetRemoteHosts()
-	hosts = []string{"127.0.0.1:7000"}
-
 	var (
 		chooseFromConfig bool
 		host             string

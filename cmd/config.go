@@ -23,16 +23,16 @@ var configCmd = &cobra.Command{
 
 		err := conf.FillRuntimePaths()
 		if err != nil {
-			log.Fatalf("Filling config: %s", err.Error())
+			log.WithError(err).Fatal("Filling config")
 		}
 
 		if configPath == "" {
-			configPath = filepath.Join(conf.Config.DataDir, "config.toml")
+			configPath = filepath.Join(conf.Config.DataDir, consts.DefaultConfigFile)
 		}
 
 		err = conf.SaveConfig(configPath)
 		if err != nil {
-			log.Fatalf("Saving config error: %s", err.Error())
+			log.WithError(err).Fatal("Saving config")
 		}
 
 		log.Infof("Config is saved to %s", configPath)

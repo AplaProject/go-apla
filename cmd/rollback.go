@@ -3,10 +3,10 @@ package cmd
 import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/daylight"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -19,15 +19,8 @@ var rollbackCmd = &cobra.Command{
 	Short:  "Rollback blockchain to blockID",
 	PreRun: loadConfigWKey,
 	Run: func(cmd *cobra.Command, args []string) {
-		if daylight.IsLockFileExists() {
-			log.Fatal("Lock file is found")
-		}
-
-		// create lock file
-		if err := daylight.CreateLockFile(); err != nil {
-			log.Fatalf("can't create lock: %s", err)
-		}
-		defer daylight.DelLockFile()
+		f := utils.LockOrDie(conf.Config.LockFilePath)
+		defer f.Unlock()
 
 		if err := model.GormInit(
 			conf.Config.DB.Host,
