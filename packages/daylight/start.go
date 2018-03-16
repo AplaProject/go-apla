@@ -138,9 +138,19 @@ func initRoutes(listenHost string) {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
-	route.Handler(`GET`, consts.WellKnownRoute, http.FileServer(http.Dir(conf.Config.TLS)))
-	if len(conf.Config.TLS) > 0 {
-		go http.ListenAndServeTLS(":443", conf.Config.TLS+consts.TLSFullchainPem, conf.Config.TLS+consts.TLSPrivkeyPem, route)
+	if conf.Config.TLS {
+		if len(conf.Config.TLSCert) == 0 || len(conf.Config.TLSKey) == 0 {
+			log.Fatal("-tls-cert/TLSCert and -tls-key/TLSKey must be specified with -tls/TLS")
+		}
+		if _, err := os.Stat(conf.Config.TLSCert); os.IsNotExist(err) {
+			log.WithError(err).Fatalf(`Filepath -tls-cert/TLSCert = %s is invalid`, conf.Config.TLSCert)
+		}
+		if _, err := os.Stat(conf.Config.TLSKey); os.IsNotExist(err) {
+			log.WithError(err).Fatalf(`Filepath -tls-key/TLSKey = %s is invalid`, conf.Config.TLSKey)
+		}
+		go http.ListenAndServeTLS(":443", conf.Config.TLSCert, conf.Config.TLSKey, route)
+	} else if len(conf.Config.TLSCert) != 0 || len(conf.Config.TLSKey) != 0 {
+		log.Fatal("-tls/TLS must be specified with -tls-cert/TLSCert and -tls-key/TLSKey")
 	}
 
 	httpListener(listenHost, route)

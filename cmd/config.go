@@ -113,7 +113,9 @@ func init() {
 	configCmd.Flags().StringVar(&conf.Config.KeysDir, "keysDir", "", "Keys directory (default dataDir)")
 	configCmd.Flags().StringVar(&conf.Config.DataDir, "dataDir", "", "Data directory (default cwd/genesis-data)")
 	configCmd.Flags().StringVar(&conf.Config.FirstBlockPath, "firstBlock", "", "First block path (default dataDir/1block)")
-	configCmd.Flags().StringVar(&conf.Config.TLS, "tls", "", "Enable https. Ddirectory for .well-known and keys")
+	configCmd.Flags().BoolVar(&conf.Config.TLS, "tls", false, "Enable https")
+	configCmd.Flags().StringVar(&conf.Config.TLSCert, "tls-cert", "", "Filepath to the fullchain of certificates")
+	configCmd.Flags().StringVar(&conf.Config.TLSKey, "tls-key", "", "Filepath to the private key")
 	configCmd.Flags().Int64Var(&conf.Config.MaxPageGenerationTime, "mpgt", 1000, "Max page generation time in ms")
 	viper.BindPFlag("PidFilePath", configCmd.Flags().Lookup("pid"))
 	viper.BindPFlag("LockFilePath", configCmd.Flags().Lookup("lock"))
@@ -121,5 +123,7 @@ func init() {
 	viper.BindPFlag("DataDir", configCmd.Flags().Lookup("dataDir"))
 	viper.BindPFlag("FirstBlockPath", configCmd.Flags().Lookup("firstBlock"))
 	viper.BindPFlag("TLS", configCmd.Flags().Lookup("tls"))
+	viper.BindPFlag("TLSCert", configCmd.Flags().Lookup("tls-cert"))
+	viper.BindPFlag("TLSKey", configCmd.Flags().Lookup("tls-key"))
 	viper.BindPFlag("MaxPageGenerationTime", configCmd.Flags().Lookup("mpgt"))
 }

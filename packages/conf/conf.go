@@ -71,13 +71,16 @@ type GlobalConfig struct {
 	ConfigPath   string `toml:"-"`
 	TestRollBack bool   `toml:"-"`
 
-	PidFilePath           string
-	LockFilePath          string
-	DataDir               string // application work dir (cwd by default)
-	KeysDir               string // place for private keys files: NodePrivateKey, PrivateKey
-	FirstBlockPath        string
-	TLS                   string // TLS is a directory for .well-known and keys. It is required for https
-	MaxPageGenerationTime int64  // in milliseconds
+	PidFilePath    string
+	LockFilePath   string
+	DataDir        string // application work dir (cwd by default)
+	KeysDir        string // place for private keys files: NodePrivateKey, PrivateKey
+	FirstBlockPath string
+	TLS            bool   // TLS is on/off. It is required for https
+	TLSCert        string // TLSCert is a filepath of the fullchain of certificate.
+	TLSKey         string // TLSKey is a filepath of the private key.
+
+	MaxPageGenerationTime int64 // in milliseconds
 
 	TCPServer HostPort
 	HTTP      HostPort
