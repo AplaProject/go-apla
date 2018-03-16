@@ -892,6 +892,18 @@ If("#key_id#" == EcosysParam("founder_account")){
 		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")'),
 		('14','min_page_validate_count', '1', 'ContractConditions("MainCondition")'),
 		('15','max_page_validate_count', '6', 'ContractConditions("MainCondition")');
+
+		DROP TABLE IF EXISTS "%[1]d_app_param";
+		CREATE TABLE "%[1]d_app_param" (
+		"id" bigint NOT NULL  DEFAULT '0',
+		"app_id" bigint NOT NULL  DEFAULT '0',
+		"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
+		"value" text NOT NULL DEFAULT '',
+		"conditions" text  NOT NULL DEFAULT ''
+		);
+		ALTER TABLE ONLY "%[1]d_app_param" ADD CONSTRAINT "%[1]d_app_param_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "%[1]d_app_param_index_name" ON "%[1]d_app_param" (name);
+		CREATE INDEX "%[1]d_app_param_index_app" ON "%[1]d_app_param" (app_id);
 		
 		DROP TABLE IF EXISTS "%[1]d_tables";
 		CREATE TABLE "%[1]d_tables" (
@@ -1874,6 +1886,41 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 		action {
 			DBUpdateSysParam($Name, $Value, $Conditions )
+		}
+	}', '%[1]d','ContractConditions("MainCondition")'),
+	('28','contract NewAppParam {
+		data {
+			App int
+			Name string
+			Value string
+			Conditions string
+		}
+		conditions {
+			ValidateCondition($Conditions, $ecosystem_id)
+
+			var row map
+			row = DBRow("app_param").Columns("id").Where("app_id=? and name = ? ", $App, $Name)
+
+			if row {
+				warning Sprintf( "App parameter %%s already exists", $Name)
+			}
+		}
+		action {
+			DBInsert("app_param", "app_id,name,value,conditions", $App, $Name, $Value, $Conditions )
+		}
+	}', '%[1]d','ContractConditions("MainCondition")'),
+	('29','contract EditAppParam {
+		data {
+			Id int
+			Value string
+			Conditions string
+		}
+		conditions {
+			RowConditions("app_param", $Id)
+			ValidateCondition($Conditions, $ecosystem_id)
+		}
+		action {
+			DBUpdate("app_param", $Id, "value,conditions", $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")');`
 )

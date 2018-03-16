@@ -48,6 +48,7 @@ func init() {
 	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
 	funcs[`AddToolButton`] = tplFunc{defaultTag, defaultTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
 	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
+	funcs[`AppParam`] = tplFunc{appparTag, defaultTag, `apppar`, `Name,App,Index,Source`}
 	funcs[`Calculate`] = tplFunc{calculateTag, defaultTag, `calculate`, `Exp,Type,Prec`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
 	funcs[`Code`] = tplFunc{defaultTag, defaultTag, `code`, `Text`}
@@ -237,12 +238,36 @@ func calculateTag(par parFunc) string {
 		converter.StrToInt((*par.Pars)[`Prec`]))
 }
 
+func paramToSource(par parFunc, val string) string {
+	data := make([][]string, 0)
+	cols := []string{`id`, `name`}
+	types := []string{`text`, `text`}
+	for key, item := range strings.Split(val, `,`) {
+		item, _ = language.LangText(item, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			(*par.Workspace.Vars)[`lang`], par.Workspace.SmartContract.VDE)
+		data = append(data, []string{converter.IntToStr(key + 1), item})
+	}
+	node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
+		`data`: &data, `source`: (*par.Pars)[`Source`]}}
+	par.Owner.Children = append(par.Owner.Children, &node)
+	return ``
+}
+
+func paramToIndex(par parFunc, val string) (ret string) {
+	ind := converter.StrToInt((*par.Pars)[`Index`])
+	if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
+		ret, _ = language.LangText(alist[ind-1],
+			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]), (*par.Workspace.Vars)[`lang`],
+			par.Workspace.SmartContract.VDE)
+	}
+	return
+}
+
 func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
 	}
 	prefix := (*par.Workspace.Vars)[`ecosystem_id`]
-	state := converter.StrToInt(prefix)
 	if par.Workspace.SmartContract.VDE {
 		prefix += `_vde`
 	}
@@ -255,27 +280,31 @@ func ecosysparTag(par parFunc) string {
 	}
 	val := sp.Value
 	if len((*par.Pars)[`Source`]) > 0 {
-		data := make([][]string, 0)
-		cols := []string{`id`, `name`}
-		types := []string{`text`, `text`}
-		for key, item := range strings.Split(val, `,`) {
-			item, _ = language.LangText(item, state, (*par.Workspace.Vars)[`lang`],
-				par.Workspace.SmartContract.VDE)
-			data = append(data, []string{converter.IntToStr(key + 1), item})
-		}
-		node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
-			`data`: &data, `source`: (*par.Pars)[`Source`]}}
-		par.Owner.Children = append(par.Owner.Children, &node)
-		return ``
+		return paramToSource(par, val)
 	}
 	if len((*par.Pars)[`Index`]) > 0 {
-		ind := converter.StrToInt((*par.Pars)[`Index`])
-		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
-			val, _ = language.LangText(alist[ind-1], state, (*par.Workspace.Vars)[`lang`],
-				par.Workspace.SmartContract.VDE)
-		} else {
-			val = ``
-		}
+		val = paramToIndex(par, val)
+	}
+	return val
+}
+
+func appparTag(par parFunc) string {
+	if len((*par.Pars)[`Name`]) == 0 || len((*par.Pars)[`App`]) == 0 {
+		return ``
+	}
+	ap := &model.AppParam{}
+	ap.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
+	_, err := ap.Get(nil, converter.StrToInt64((*par.Pars)[`App`]), (*par.Pars)[`Name`])
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting app param")
+		return err.Error()
+	}
+	val := ap.Value
+	if len((*par.Pars)[`Source`]) > 0 {
+		return paramToSource(par, val)
+	}
+	if len((*par.Pars)[`Index`]) > 0 {
+		val = paramToIndex(par, val)
 	}
 	return val
 }
