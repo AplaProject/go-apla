@@ -18,16 +18,6 @@ var SchemaVDE = `DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d
   ALTER TABLE ONLY "%[1]d_vde_menu" ADD CONSTRAINT "%[1]d_vde_menu_pkey" PRIMARY KEY (id);
   CREATE INDEX "%[1]d_vde_menu_index_name" ON "%[1]d_vde_menu" (name);
   
-  DROP TABLE IF EXISTS "%[1]d_vde_pages"; CREATE TABLE "%[1]d_vde_pages" (
-  "id" bigint  NOT NULL DEFAULT '0',
-  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
-  "value" text NOT NULL DEFAULT '',
-  "menu" character varying(255) NOT NULL DEFAULT '',
-  "conditions" text NOT NULL DEFAULT ''
-  );
-  ALTER TABLE ONLY "%[1]d_vde_pages" ADD CONSTRAINT "%[1]d_vde_pages_pkey" PRIMARY KEY (id);
-  CREATE INDEX "%[1]d_vde_pages_index_name" ON "%[1]d_vde_pages" (name);
-  INSERT INTO "%[1]d_vde_pages" ("id","name","value","menu","conditions") VALUES('1','admin_index','','admin_menu','true');
   INSERT INTO "%[1]d_vde_menu" ("id","name","title","value","conditions") VALUES('1','admin_menu','Admin menu','MenuItem(
     Icon: "icon-screen-desktop",
     Page: "interface",
@@ -71,7 +61,17 @@ If("#key_id#" == EcosysParam("founder_account")){
     )
 }','true');
 
-
+  DROP TABLE IF EXISTS "%[1]d_vde_pages"; CREATE TABLE "%[1]d_vde_pages" (
+  "id" bigint  NOT NULL DEFAULT '0',
+  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
+  "value" text NOT NULL DEFAULT '',
+  "menu" character varying(255) NOT NULL DEFAULT '',
+  "conditions" text NOT NULL DEFAULT ''
+  );
+  ALTER TABLE ONLY "%[1]d_vde_pages" ADD CONSTRAINT "%[1]d_vde_pages_pkey" PRIMARY KEY (id);
+  CREATE INDEX "%[1]d_vde_pages_index_name" ON "%[1]d_vde_pages" (name);
+  INSERT INTO "%[1]d_vde_pages" ("id","name","value","menu","conditions") VALUES('1','admin_index','','admin_menu','true');
+  
   DROP TABLE IF EXISTS "%[1]d_vde_blocks"; CREATE TABLE "%[1]d_vde_blocks" (
   "id" bigint  NOT NULL DEFAULT '0',
   "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
