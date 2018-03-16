@@ -27,7 +27,51 @@ var SchemaVDE = `DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d
   );
   ALTER TABLE ONLY "%[1]d_vde_pages" ADD CONSTRAINT "%[1]d_vde_pages_pkey" PRIMARY KEY (id);
   CREATE INDEX "%[1]d_vde_pages_index_name" ON "%[1]d_vde_pages" (name);
-  
+  INSERT INTO "%[1]d_vde_pages" ("id","name","value","menu","conditions") VALUES('1','admin_index','','admin_menu','true');
+  INSERT INTO "%[1]d_vde_menu" ("id","name","title","value","conditions") VALUES('1','admin_menu','Admin menu','MenuItem(
+    Icon: "icon-screen-desktop",
+    Page: "interface",
+    Title: "Interface"
+)
+MenuItem(
+    Icon: "icon-docs",
+    Page: "tables",
+    Title: "Tables"
+)
+MenuItem(
+    Icon: "icon-briefcase",
+    Page: "contracts",
+    Title: "Smart Contracts"
+)
+MenuItem(
+    Icon: "icon-settings",
+    Page: "parameters",
+    Title: "Ecosystem parameters"
+)
+MenuItem(
+    Icon: "icon-globe",
+    Page: "languages",
+    Title: "Language resources"
+)
+MenuItem(
+    Icon: "icon-cloud-upload",
+    Page: "import",
+    Title: "Import"
+)
+MenuItem(
+    Icon: "icon-cloud-download",
+    Page: "export",
+    Title: "Export"
+)
+If("#key_id#" == EcosysParam("founder_account")){
+    MenuItem(
+        Icon: "icon-lock",
+        Page: "vde",
+        Title: "Dedicated Ecosystem"
+    )
+}','true');
+
+
   DROP TABLE IF EXISTS "%[1]d_vde_blocks"; CREATE TABLE "%[1]d_vde_blocks" (
   "id" bigint  NOT NULL DEFAULT '0',
   "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -150,6 +194,15 @@ var SchemaVDE = `DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d
                   "conditions": "ContractConditions(\"MainCondition\")"
 		}', 'ContractConditions(\"MainCondition\")');
   
+	DROP TABLE IF EXISTS "%[1]d_vde_members";
+	CREATE TABLE "%[1]d_vde_members" (
+		"id" bigint NOT NULL DEFAULT '0',
+		"member_name"	varchar(255) NOT NULL DEFAULT '',
+		"avatar"	bytea NOT NULL DEFAULT ''
+	);
+	ALTER TABLE ONLY "%[1]d_vde_members" ADD CONSTRAINT "%[1]d_vde_member_pkey" PRIMARY KEY ("id");
+	INSERT INTO "%[1]d_vde_members" ("id", "member_name") VALUES('%[2]d', 'founder');
+
   INSERT INTO "%[1]d_vde_contracts" ("id", "value", "conditions") VALUES 
   ('1','contract MainCondition {
 conditions {
