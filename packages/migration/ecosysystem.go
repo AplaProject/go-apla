@@ -1897,16 +1897,22 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 		conditions {
 			ValidateCondition($Conditions, $ecosystem_id)
-
+			if $App == 0 {
+				warning "App id cannot equal 0"
+			}
 			var row map
-			row = DBRow("app_param").Columns("id").Where("app_id=? and name = ? ", $App, $Name)
-
+			Println("OK 0")
+//			row = DBRow("app_param").Columns("id").Where("app_id = ? and name = ?", $App, $Name)
+			row = DBRow("app_param").Columns("id").Where("name = ?", $Name)
+			Println("OK 1")
 			if row {
 				warning Sprintf( "App parameter %%s already exists", $Name)
 			}
 		}
 		action {
+			Println("OK 2")
 			DBInsert("app_param", "app_id,name,value,conditions", $App, $Name, $Value, $Conditions )
+			Println("OK 3")
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('29','contract EditAppParam {
@@ -1916,10 +1922,14 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Conditions string
 		}
 		conditions {
+			Println("START 0")
 			RowConditions("app_param", $Id)
+			Println("START 1")
 			ValidateCondition($Conditions, $ecosystem_id)
+			Println("START 2")
 		}
 		action {
+			Println("START 3")
 			DBUpdate("app_param", $Id, "value,conditions", $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")');`
