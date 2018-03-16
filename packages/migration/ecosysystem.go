@@ -850,7 +850,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',
 		"active" character(1) NOT NULL DEFAULT '0',
-		"conditions" text  NOT NULL DEFAULT ''
+		"conditions" text  NOT NULL DEFAULT '',
+		"app_id" bigint NOT NULL DEFAULT '0',
+		"app_deleted" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 		
@@ -1105,6 +1107,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 
 		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
 
+		DROP TABLE IF EXISTS "%[1]d_applications";
+		CREATE TABLE "%[1]d_applications" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"name" varchar(255) NOT NULL DEFAULT '',
+			"uuid" uuid NOT NULL DEFAULT '',
+			"condition" text NOT NULL DEFAULT '',
+			"deleted" bigint NOT NULL DEFAULT '0'
+		);
+		ALTER TABLE ONLY "%[1]d_applications" ADD CONSTRAINT "%[1]d_application_pkey" PRIMARY KEY ("id");
 		`
 
 	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id") VALUES ('1');
