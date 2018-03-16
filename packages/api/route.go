@@ -79,7 +79,7 @@ func Route(route *hr.Router) {
 	post(`install`, `?first_load_blockchain_url ?first_block_dir log_level type db_host db_port 
 	db_name db_pass db_user ?centrifugo_url ?centrifugo_secret:string,?generate_first_block:int64`, doInstall)
 	post(`vde/create`, ``, authWallet, vdeCreate)
-	post(`login`, `?pubkey signature:hex,?key_id:string,?ecosystem ?expire:int64 ?role_id:int64`, login)
+	post(`login`, `?pubkey signature:hex,?key_id:string,?ecosystem ?expire ?role_id:int64`, login)
 	postTx(`:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, prepareContract, contract)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
 	post(`signtest/`, `forsign private:string`, signTest)
