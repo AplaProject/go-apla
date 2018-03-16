@@ -124,24 +124,8 @@ func savePid() error {
 	return ioutil.WriteFile(conf.Config.GetPidPath(), PidAndVer, 0644)
 }
 
-func CreateLockFile() error {
-	return ioutil.WriteFile(conf.Config.LockFilePath, []byte{}, 0644)
-}
-
 func delPidFile() {
 	os.Remove(conf.Config.GetPidPath())
-}
-
-func DelLockFile() error {
-	return os.Remove(conf.Config.LockFilePath)
-}
-
-func IsLockFileExists() bool {
-	if _, err := os.Stat(conf.Config.LockFilePath); os.IsNotExist(err) {
-		return false
-	}
-
-	return true
 }
 
 func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
@@ -190,9 +174,8 @@ func Start() {
 		}
 	}
 
-	if IsLockFileExists() {
-		log.Fatal("Lock file is found")
-	}
+	f := utils.LockOrDie(conf.Config.LockFilePath)
+	defer f.Unlock()
 
 	conf.Config.Installed = true
 
@@ -218,13 +201,6 @@ func Start() {
 		Exit(1)
 	}
 	defer delPidFile()
-
-	// create lock file
-	if err := CreateLockFile(); err != nil {
-		log.Errorf("can't create lock: %s", err)
-		Exit(1)
-	}
-	defer DelLockFile()
 
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)

@@ -40,7 +40,7 @@ func Execute() {
 func defautConfigPath() string {
 	p, err := os.Getwd()
 	if err != nil {
-		log.Fatal("getting cur wd")
+		log.WithError(err).Fatal("getting cur wd")
 	}
 
 	return filepath.Join(p, "genesis-data", "config.toml")

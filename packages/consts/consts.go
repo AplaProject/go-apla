@@ -92,6 +92,8 @@ var ApiPath = `/api/v2/`
 // DefaultConfigFile name of config file (toml format)
 const DefaultConfigFile = "config.toml"
 
+const DefaultWorkdirName = "genesis-data"
+
 // DefaultPidFilename is default filename of pid file
 const DefaultPidFilename = "go-genesis.pid"
 

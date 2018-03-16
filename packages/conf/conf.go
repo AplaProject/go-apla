@@ -152,7 +152,7 @@ func FillRuntimePaths() error {
 			return errors.Wrapf(err, "getting current wd")
 		}
 
-		Config.DataDir = filepath.Join(cwd, "genesis-data")
+		Config.DataDir = filepath.Join(cwd, consts.DefaultWorkdirName)
 	}
 
 	if Config.KeysDir == "" {

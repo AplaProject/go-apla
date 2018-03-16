@@ -40,7 +40,7 @@ var generateFirstBlockCmd = &cobra.Command{
 			filepath := filepath.Join(conf.Config.KeysDir, kName)
 			data, err := ioutil.ReadFile(filepath)
 			if err != nil {
-				log.WithError(err).Fatalf("Reading %s key data from %s", kName, filepath)
+				log.WithError(err).WithFields(log.Fields{"key": kName, "filepath": filepath}).Fatal("Reading key data")
 			}
 
 			decodedKey, err := hex.DecodeString(string(data))

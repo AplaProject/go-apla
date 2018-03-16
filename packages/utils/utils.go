@@ -39,6 +39,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/theckman/go-flock"
 )
 
 // BlockData is a structure of the block's header
@@ -439,4 +440,18 @@ func CreateDirIfNotExists(dir string, mode os.FileMode) error {
 		}
 	}
 	return nil
+}
+
+func LockOrDie(dir string) *flock.Flock {
+	f := flock.NewFlock(dir)
+	success, err := f.TryLock()
+	if err != nil {
+		log.WithError(err).Fatal("Locking go-genesis")
+	}
+
+	if !success {
+		log.Fatal("Go-genesis is locked")
+	}
+
+	return f
 }
