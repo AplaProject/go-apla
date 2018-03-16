@@ -104,7 +104,6 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 		}
 	}
 
-	// NOTE: should be generalized in separate method
 	infoBlock := &model.InfoBlock{}
 	found, err := infoBlock.Get()
 	if err != nil {
