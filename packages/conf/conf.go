@@ -87,6 +87,8 @@ type GlobalConfig struct {
 	Centrifugo    CentrifugoConfig
 	LogConfig     LogConfig
 	TokenMovement TokenMovementConfig
+
+	NodesAddr []string
 }
 
 // Config global parameters
@@ -189,4 +191,8 @@ func FillRuntimeKey() error {
 	}
 
 	return nil
+}
+
+func GetNodesAddr() []string {
+	return Config.NodesAddr[:]
 }

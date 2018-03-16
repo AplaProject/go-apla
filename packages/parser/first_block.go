@@ -85,12 +85,6 @@ func (p *FirstBlockParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	node := &model.SystemParameter{Name: `full_nodes`}
-	if err = node.SaveArray([][]string{{data.Host, converter.Int64ToStr(myAddress),
-		hex.EncodeToString(data.NodePublicKey)}}); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving node array")
-		return p.ErrInfo(err)
-	}
 	commission := &model.SystemParameter{Name: `commission_wallet`}
 	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(myAddress)}}); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")

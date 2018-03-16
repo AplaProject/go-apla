@@ -17,8 +17,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var host string
-
 // generateFirstBlockCmd represents the generateFirstBlock command
 var generateFirstBlockCmd = &cobra.Command{
 	Use:    "generateFirstBlock",
@@ -45,7 +43,7 @@ var generateFirstBlockCmd = &cobra.Command{
 
 			decodedKey, err := hex.DecodeString(string(data))
 			if err != nil {
-				log.WithError(err).Fatal("converting %s from hex", kName)
+				log.WithError(err).Fatalf("converting %s from hex", kName)
 			}
 
 			return decodedKey
@@ -61,7 +59,6 @@ var generateFirstBlockCmd = &cobra.Command{
 				},
 				PublicKey:     decodeKeyFile(consts.PublicKeyFilename),
 				NodePublicKey: decodeKeyFile(consts.NodePublicKeyFilename),
-				Host:          host,
 			},
 		)
 
@@ -79,9 +76,4 @@ var generateFirstBlockCmd = &cobra.Command{
 		ioutil.WriteFile(conf.Config.FirstBlockPath, block, 0644)
 		log.Info("first block generated")
 	},
-}
-
-func init() {
-	generateFirstBlockCmd.Flags().StringVar(&host, "host", "127.0.0.1", "first block host")
-	generateFirstBlockCmd.MarkFlagRequired("host")
 }

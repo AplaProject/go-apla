@@ -36,6 +36,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
 
+var ErrNodesUnavailable = errors.New("All nodes unvailabale")
+
 // BlocksCollection collects and parses blocks
 func BlocksCollection(ctx context.Context, d *daemon) error {
 	if err := initialLoad(ctx, d); err != nil {
@@ -69,14 +71,37 @@ func initialLoad(ctx context.Context, d *daemon) error {
 	return nil
 }
 
-func blocksCollection(ctx context.Context, d *daemon) error {
-
+func blocksCollection(ctx context.Context, d *daemon) (err error) {
 	hosts := syspar.GetRemoteHosts()
+	var (
+		chooseFromConfig bool
+		host             string
+		maxBlockID       int64
+	)
+	if len(hosts) > 0 {
+		// get a host with the biggest block id from system parameters
+		host, maxBlockID, err = chooseBestHost(ctx, hosts, d.logger)
+		if err != nil {
+			if err == ErrNodesUnavailable {
+				chooseFromConfig = true
+			} else {
+				return err
+			}
+		}
+	} else {
+		chooseFromConfig = true
+	}
 
-	// get a host with the biggest block id
-	host, maxBlockID, err := chooseBestHost(ctx, hosts, d.logger)
-	if err != nil {
-		return err
+	if chooseFromConfig {
+		// get a host with the biggest block id from config
+		log.Debug("Getting a host with biggest block from config")
+		hosts = conf.GetNodesAddr()
+		if len(hosts) > 0 {
+			host, maxBlockID, err = chooseBestHost(ctx, hosts, d.logger)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	// NOTE: should be generalized in separate method
@@ -111,6 +136,8 @@ func chooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 	}
 	c := make(chan blockAndHost, len(hosts))
 
+	utils.ShuffleSlice(hosts)
+
 	var wg sync.WaitGroup
 	for _, h := range hosts {
 		if ctx.Err() != nil {
@@ -134,6 +161,7 @@ func chooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 
 	maxBlockID := int64(-1)
 	var bestHost string
+	var errCount int
 	for i := 0; i < len(hosts); i++ {
 		bl := <-c
 
@@ -141,6 +169,14 @@ func chooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 			maxBlockID = bl.blockID
 			bestHost = bl.host
 		}
+
+		if bl.err != nil {
+			errCount++
+		}
+	}
+
+	if errCount == len(hosts) {
+		return "", 0, ErrNodesUnavailable
 	}
 
 	return bestHost, maxBlockID, nil
