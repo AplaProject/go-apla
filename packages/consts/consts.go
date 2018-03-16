@@ -16,6 +16,10 @@
 
 package consts
 
+import (
+	"time"
+)
+
 // VERSION is current version
 const VERSION = "0.1.6b11"
 
@@ -133,3 +137,5 @@ const FromToPerDayLimit = 10000
 
 // TokenMovementQtyPerBlockLimit block limit token transfer
 const TokenMovementQtyPerBlockLimit = 100
+
+const TCPConnTimeout = 5 * time.Second

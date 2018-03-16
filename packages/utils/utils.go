@@ -23,8 +23,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,13 +34,13 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 // BlockData is a structure of the block's header
@@ -284,7 +286,7 @@ func TypeInt(txType string) int64 {
 
 // TCPConn connects to the address
 func TCPConn(Addr string) (net.Conn, error) {
-	conn, err := net.DialTimeout("tcp", Addr, 10*time.Second)
+	conn, err := net.DialTimeout("tcp", Addr, consts.TCPConnTimeout)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "address": Addr}).Debug("dialing tcp")
 		return nil, ErrInfo(err)
@@ -439,4 +441,36 @@ func CreateDirIfNotExists(dir string, mode os.FileMode) error {
 		}
 	}
 	return nil
+}
+
+// ValidateURL returns error if the URL is invalid
+func ValidateURL(rawurl string) error {
+	u, err := url.ParseRequestURI(rawurl)
+	if err != nil {
+		return err
+	}
+
+	if len(u.Scheme) == 0 {
+		return fmt.Errorf("Invalid scheme: %s", rawurl)
+	}
+
+	if len(u.Host) == 0 {
+		return fmt.Errorf("Invalid host: %s", rawurl)
+	}
+
+	return nil
+}
+
+func ShuffleSlice(slice []string) {
+	for i, _ := range slice {
+		j := rand.Intn(i + 1)
+		slice[i], slice[j] = slice[j], slice[i]
+	}
+
+	// dest := make([]string, len(src))
+	// perm := rand.Perm(len(src))
+	// for i, v := range perm {
+	// 	dest[v] = src[i]
+	// }
+	// return dest
 }
