@@ -45,6 +45,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/satori/go.uuid"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -1189,4 +1190,9 @@ func UpdateCron(sc *SmartContract, id int64) error {
 	}
 
 	return nil
+}
+
+// UUID returns new uuid
+func (sc *SmartContract) UUID() string {
+	return uuid.Must(uuid.NewV4()).String()
 }
