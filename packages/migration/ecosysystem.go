@@ -763,7 +763,9 @@ var (
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"title" character varying(255) NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT ''
+			"conditions" text NOT NULL DEFAULT '',
+			"app_id" bigint NOT NULL DEFAULT '0',
+			"app_deleted" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
@@ -817,7 +819,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"value" text NOT NULL DEFAULT '',
 			"menu" character varying(255) NOT NULL DEFAULT '',
 			"validate_count" bigint NOT NULL DEFAULT '1',
-			"conditions" text NOT NULL DEFAULT ''
+			"conditions" text NOT NULL DEFAULT '',
+			"app_id" bigint NOT NULL DEFAULT '0',
+			"app_deleted" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
@@ -831,7 +835,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT ''
+			"conditions" text NOT NULL DEFAULT '',
+			"app_id" bigint NOT NULL DEFAULT '0',
+			"app_deleted" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
@@ -901,7 +907,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 		"name" varchar(100) UNIQUE NOT NULL DEFAULT '',
 		"permissions" jsonb,
 		"columns" jsonb,
-		"conditions" text  NOT NULL DEFAULT ''
+		"conditions" text  NOT NULL DEFAULT '',
+		"app_id" bigint NOT NULL DEFAULT '0',
+		"app_deleted" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
@@ -1111,7 +1119,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		CREATE TABLE "%[1]d_applications" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
-			"uuid" uuid NOT NULL DEFAULT '',
+			"uuid" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
 			"condition" text NOT NULL DEFAULT '',
 			"deleted" bigint NOT NULL DEFAULT '0'
 		);
