@@ -758,7 +758,8 @@ var (
         INSERT INTO "%[1]d_sections" ("id","title","urlname","page","roles_access", "delete") 
 	            VALUES('1', 'Home', 'home', 'default_page', '', 0);
 
-		DROP TABLE IF EXISTS "%[1]d_menu"; CREATE TABLE "%[1]d_menu" (
+		DROP TABLE IF EXISTS "%[1]d_menu"; 
+		CREATE TABLE "%[1]d_menu" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"title" character varying(255) NOT NULL DEFAULT '',
