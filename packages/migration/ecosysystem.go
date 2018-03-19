@@ -1104,7 +1104,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
 		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
-
+		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
 		`
 
 	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id") VALUES ('1');
