@@ -18,7 +18,6 @@ package template
 
 import (
 	"encoding/json"
-	"html"
 	"regexp"
 	"strconv"
 	"strings"
@@ -37,6 +36,7 @@ import (
 const (
 	tagText = `text`
 	tagData = `data`
+	maxDeep = 16
 )
 
 type node struct {
@@ -262,7 +262,7 @@ func ifValue(val string, workspace *Workspace) bool {
 	return false
 }
 
-func replace(input string, level int, vars *map[string]string) string {
+func replace(input string, level *[]string, vars *map[string]string) string {
 	if len(input) == 0 {
 		return input
 	}
@@ -289,10 +289,25 @@ func replace(input string, level int, vars *map[string]string) string {
 		}
 		if isName {
 			if value, ok := (*vars)[string(name)]; ok {
-				if level < 10 {
-					value = replace(value, level+1, vars)
+				var loop bool
+				if len(*level) < maxDeep {
+					for _, item := range *level {
+						if item == string(name) {
+							loop = true
+							break
+						}
+					}
+				} else {
+					loop = true
 				}
-				result = append(result, []rune(value)...)
+				if !loop {
+					*level = append(*level, string(name))
+					value = replace(value, level, vars)
+					*level = (*level)[:len(*level)-1]
+					result = append(result, []rune(value)...)
+				} else {
+					result = append(append(result, syschar), append(name, syschar)...)
+				}
 				isName = false
 			} else {
 				result = append(append(result, syschar), name...)
@@ -312,7 +327,12 @@ func macro(input string, vars *map[string]string) string {
 	if (*vars)[`_full`] == `1` || strings.IndexByte(input, '#') == -1 {
 		return input
 	}
-	return replace(input, 0, vars)
+	return macroReplace(input, vars)
+}
+
+func macroReplace(input string, vars *map[string]string) string {
+	level := make([]string, 0, maxDeep)
+	return replace(input, &level, vars)
 }
 
 func appendText(owner *node, text string) {
@@ -320,7 +340,7 @@ func appendText(owner *node, text string) {
 		return
 	}
 	if len(text) > 0 {
-		owner.Children = append(owner.Children, &node{Tag: tagText, Text: html.EscapeString(text)})
+		owner.Children = append(owner.Children, &node{Tag: tagText, Text: text})
 	}
 }
 
@@ -336,12 +356,24 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 	if *workspace.Timeout {
 		return
 	}
+	trim := func(input string, quotes bool) string {
+		result := strings.Trim(input, "\t\r\n ")
+		if quotes && len(result) > 0 {
+			for _, ch := range "\"`" {
+				if rune(result[0]) == ch {
+					result = strings.Trim(result, string([]rune{ch}))
+					break
+				}
+			}
+		}
+		return result
+	}
 	if curFunc.Params == `*` {
 		for i, v := range *params {
 			val := strings.TrimSpace(string(v))
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
-				pars[val[:off]] = strings.Trim(val[off+1:], "\t\r\n \"`")
+				pars[val[:off]] = trim(val[off+1:], true)
 			} else {
 				pars[strconv.Itoa(i)] = val
 			}
@@ -352,11 +384,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 				val := strings.TrimSpace(string((*params)[i]))
 				off := strings.IndexByte(val, ':')
 				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
-					cut := "\t\r\n \"`"
-					if val[:off] == `Data` {
-						cut = "\t\r\n "
-					}
-					pars[val[:off]] = strings.Trim(val[off+1:], cut)
+					pars[val[:off]] = trim(val[off+1:], val[:off] != `Data`)
 				} else {
 					pars[v] = val
 				}
@@ -383,7 +411,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		curNode.Tag = curFunc.Tag
 		curNode.Attr = make(map[string]interface{})
 		if len(pars[`Body`]) > 0 && curFunc.Tag != `custom` {
-			if curFunc.Tag != `if` {
+			if curFunc.Tag != `if` || (*workspace.Vars)[`_full`] == `1` {
 				process(pars[`Body`], &curNode, workspace)
 			}
 		}

@@ -79,6 +79,9 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 						val = strings.Join(list, `,`)
 					}
 				}
+				if len(val) == 0 {
+					val = r.FormValue(fitem.Name)
+				}
 			} else {
 				val = strings.TrimSpace(r.FormValue(fitem.Name))
 				if strings.Contains(fitem.Tags, `address`) {

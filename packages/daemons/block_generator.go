@@ -115,11 +115,11 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		if p.TxSmart != nil {
 			err = limits.CheckLimit(p)
 			if err == parser.ErrLimitStop && i > 0 {
-				model.IncrementTxAttemptCount(p.TxHash)
+				model.IncrementTxAttemptCount(nil, p.TxHash)
 				break
 			} else if err != nil {
 				if err == parser.ErrLimitSkip {
-					model.IncrementTxAttemptCount(p.TxHash)
+					model.IncrementTxAttemptCount(nil, p.TxHash)
 				} else {
 					p.ProcessBadTransaction(err)
 				}

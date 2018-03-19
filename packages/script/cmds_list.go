@@ -38,6 +38,7 @@ const (
 	cmdIndex                 // get index []
 	cmdSetIndex              // set index []
 	cmdFuncName              // set func name Func(...).Name(...)
+	cmdUnwrapArr             // unwrap array to stack
 	cmdError                 // error command
 )
 

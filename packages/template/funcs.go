@@ -21,7 +21,6 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"html"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -68,7 +67,7 @@ func init() {
 	funcs[`SysParam`] = tplFunc{sysparTag, defaultTag, `syspar`, `Name`}
 	funcs[`Button`] = tplFunc{buttonTag, buttonTag, `button`, `Body,Page,Class,Contract,Params,PageParams`}
 	funcs[`Div`] = tplFunc{defaultTailTag, defaultTailTag, `div`, `Class,Body`}
-	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Body`}
+	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Data,Index`}
 	funcs[`Form`] = tplFunc{defaultTailTag, defaultTailTag, `form`, `Class,Body`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Image`] = tplFunc{defaultTailTag, defaultTailTag, `image`, `Src,Alt,Class`}
@@ -83,6 +82,7 @@ func init() {
 	funcs[`P`] = tplFunc{defaultTailTag, defaultTailTag, `p`, `Body,Class`}
 	funcs[`RadioGroup`] = tplFunc{defaultTailTag, defaultTailTag, `radiogroup`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
 	funcs[`Span`] = tplFunc{defaultTailTag, defaultTailTag, `span`, `Body,Class`}
+	funcs[`QRcode`] = tplFunc{defaultTag, defaultTag, `qrcode`, `Text`}
 	funcs[`Table`] = tplFunc{tableTag, defaultTailTag, `table`, `Source,Columns`}
 	funcs[`Select`] = tplFunc{defaultTailTag, defaultTailTag, `select`, `Name,Source,NameColumn,ValueColumn,Value,Class`}
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
@@ -176,8 +176,18 @@ func menugroupTag(par parFunc) string {
 }
 
 func forlistTag(par parFunc) (ret string) {
+	var (
+		name, indexName string
+	)
 	setAllAttr(par)
-	name := par.Node.Attr[`source`].(string)
+	if len((*par.Pars)[`Source`]) > 0 {
+		name = par.Node.Attr[`source`].(string)
+	}
+	if len((*par.Pars)[`Index`]) > 0 {
+		indexName = par.Node.Attr[`index`].(string)
+	} else {
+		indexName = name + `_index`
+	}
 	if len(name) == 0 || par.Workspace.Sources == nil {
 		return
 	}
@@ -186,12 +196,23 @@ func forlistTag(par parFunc) (ret string) {
 		return
 	}
 	root := node{}
-	for _, item := range *source.Data {
-		vals := make(map[string]string)
+	keys := make(map[string]bool)
+	for key := range *par.Workspace.Vars {
+		keys[key] = true
+	}
+	for index, item := range *source.Data {
+		vals := map[string]string{indexName: converter.IntToStr(index + 1)}
 		for i, icol := range *source.Columns {
 			vals[icol] = item[i]
 		}
-		body := replace((*par.Pars)[`Body`], 0, &vals)
+		if index > 0 {
+			for key := range *par.Workspace.Vars {
+				if !keys[key] {
+					delete(*par.Workspace.Vars, key)
+				}
+			}
+		}
+		body := macroReplace((*par.Pars)[`Data`], &vals)
 		process(body, &root, par.Workspace)
 	}
 	par.Node.Children = root.Children
@@ -381,13 +402,12 @@ func dataTag(par parFunc) string {
 		for i, icol := range cols {
 			var ival string
 			if i < defcol {
-				ival = strings.TrimSpace(item[i])
-				if strings.IndexByte(ival, '<') >= 0 {
-					ival = html.EscapeString(ival)
+				if i < len(item) {
+					ival = strings.TrimSpace(item[i])
 				}
 				vals[icol] = ival
 			} else {
-				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
+				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &vals)
 				root := node{}
 				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
@@ -418,6 +438,7 @@ func dbfindTag(par parFunc) string {
 		state  int64
 		err    error
 		perm   map[string]string
+		offset string
 	)
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
@@ -450,6 +471,10 @@ func dbfindTag(par parFunc) string {
 	if limit > 250 {
 		limit = 250
 	}
+	if par.Node.Attr[`offset`] != nil {
+		offset = fmt.Sprintf(` offset %d`, converter.StrToInt(par.Node.Attr[`offset`].(string)))
+	}
+
 	if par.Node.Attr[`prefix`] != nil {
 		prefix = par.Node.Attr[`prefix`].(string)
 		limit = 1
@@ -474,7 +499,7 @@ func dbfindTag(par parFunc) string {
 	}
 	fields = smart.PrepareColumns(fields)
 
-	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order, limit)
+	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order+offset, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
@@ -504,9 +529,6 @@ func dbfindTag(par parFunc) string {
 			var ival string
 			if i < defcol {
 				ival = item[icol]
-				if strings.IndexByte(ival, '<') >= 0 {
-					ival = html.EscapeString(ival)
-				}
 				if ival == `NULL` {
 					ival = ``
 				}
@@ -516,7 +538,7 @@ func dbfindTag(par parFunc) string {
 					item[icol] = ival
 				}
 			} else {
-				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &item)
+				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &item)
 				root := node{}
 				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
@@ -613,7 +635,7 @@ func setvarTag(par parFunc) string {
 		if strings.ContainsAny((*par.Pars)[`Value`], `({`) {
 			(*par.Pars)[`Value`] = processToText(par, (*par.Pars)[`Value`])
 		}
-		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
+		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = macroReplace((*par.Pars)[`Value`], par.Workspace.Vars)
 	}
 	return ``
 }
