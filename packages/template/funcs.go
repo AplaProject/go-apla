@@ -212,7 +212,7 @@ func forlistTag(par parFunc) (ret string) {
 				}
 			}
 		}
-		body := replace((*par.Pars)[`Data`], 0, &vals)
+		body := macroReplace((*par.Pars)[`Data`], &vals)
 		process(body, &root, par.Workspace)
 	}
 	par.Node.Children = root.Children
@@ -407,7 +407,7 @@ func dataTag(par parFunc) string {
 				}
 				vals[icol] = ival
 			} else {
-				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
+				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &vals)
 				root := node{}
 				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
@@ -538,7 +538,7 @@ func dbfindTag(par parFunc) string {
 					item[icol] = ival
 				}
 			} else {
-				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &item)
+				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &item)
 				root := node{}
 				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
@@ -635,7 +635,7 @@ func setvarTag(par parFunc) string {
 		if strings.ContainsAny((*par.Pars)[`Value`], `({`) {
 			(*par.Pars)[`Value`] = processToText(par, (*par.Pars)[`Value`])
 		}
-		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
+		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = macroReplace((*par.Pars)[`Value`], par.Workspace.Vars)
 	}
 	return ``
 }
