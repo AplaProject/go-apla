@@ -532,10 +532,20 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			rv := reflect.ValueOf(rt.stack[size-2])
 			switch rv.Kind() {
 			case reflect.Map:
-				rt.stack[size-2] = rv.MapIndex(reflect.ValueOf(rt.stack[size-1])).Interface()
+				v := rv.MapIndex(reflect.ValueOf(rt.stack[size-1]))
+				if v.IsValid() {
+					rt.stack[size-2] = v.Interface()
+				} else {
+					rt.stack[size-2] = nil
+				}
 				rt.stack = rt.stack[:size-1]
 			case reflect.Slice:
-				rt.stack[size-2] = rv.Index(int(rt.stack[size-1].(int64))).Interface()
+				v := rv.Index(int(rt.stack[size-1].(int64)))
+				if v.IsValid() {
+					rt.stack[size-2] = v.Interface()
+				} else {
+					rt.stack[size-2] = nil
+				}
 				rt.stack = rt.stack[:size-1]
 			default:
 				itype := reflect.TypeOf(rt.stack[size-2]).String()
