@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log/syslog"
 	"math/rand"
 	"net/http"
 	"os"
@@ -40,6 +41,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
+	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 )
 
 func initStatsd() {
@@ -77,6 +79,74 @@ func killOld() {
 	}
 }
 
+func syslogFacility(facility string) syslog.Priority {
+	switch facility {
+	case "LOG_KERN":
+		return syslog.LOG_KERN
+	case "LOG_USER":
+		return syslog.LOG_USER
+	case "LOG_MAIL":
+		return syslog.LOG_MAIL
+	case "LOG_DAEMON":
+		return syslog.LOG_DAEMON
+	case "LOG_AUTH":
+		return syslog.LOG_AUTH
+	case "LOG_SYSLOG":
+		return syslog.LOG_SYSLOG
+	case "LOG_LPR":
+		return syslog.LOG_LPR
+	case "LOG_NEWS":
+		return syslog.LOG_NEWS
+	case "LOG_UUCP":
+		return syslog.LOG_UUCP
+	case "LOG_CRON":
+		return syslog.LOG_CRON
+	case "LOG_AUTHPRIV":
+		return syslog.LOG_AUTHPRIV
+	case "LOG_FTP":
+		return syslog.LOG_FTP
+	case "LOG_LOCAL0":
+		return syslog.LOG_LOCAL0
+	case "LOG_LOCAL1":
+		return syslog.LOG_LOCAL1
+	case "LOG_LOCAL2":
+		return syslog.LOG_LOCAL2
+	case "LOG_LOCAL3":
+		return syslog.LOG_LOCAL3
+	case "LOG_LOCAL4":
+		return syslog.LOG_LOCAL4
+	case "LOG_LOCAL5":
+		return syslog.LOG_LOCAL5
+	case "LOG_LOCAL6":
+		return syslog.LOG_LOCAL6
+	case "LOG_LOCAL7":
+		return syslog.LOG_LOCAL7
+	}
+	return 0
+}
+
+func syslogSeverity(severity string) syslog.Priority {
+	switch severity {
+	case "LOG_EMERG":
+		return syslog.LOG_EMERG
+	case "LOG_ALERT":
+		return syslog.LOG_ALERT
+	case "LOG_CRIT":
+		return syslog.LOG_CRIT
+	case "LOG_ERR":
+		return syslog.LOG_ERR
+	case "LOG_WARNING":
+		return syslog.LOG_WARNING
+	case "LOG_NOTICE":
+		return syslog.LOG_NOTICE
+	case "LOG_INFO":
+		return syslog.LOG_INFO
+	case "LOG_DEBUG":
+		return syslog.LOG_DEBUG
+	}
+	return 0
+}
+
 func initLogs() error {
 	switch conf.Config.LogConfig.LogFormat {
 	case "json":
@@ -87,6 +157,16 @@ func initLogs() error {
 	switch conf.Config.LogConfig.LogTo {
 	case "stdout":
 		log.SetOutput(os.Stdout)
+	case "syslog":
+		severity := syslogSeverity(conf.Config.LogConfig.Syslog.Severity)
+		facility := syslogFacility(conf.Config.LogConfig.Syslog.Facility)
+		tag := conf.Config.LogConfig.Syslog.Tag
+		sysLogHook, err := lSyslog.NewSyslogHook("", "", severity|facility, tag)
+		if err != nil {
+			log.WithError(err).Error("initializing syslog hook")
+		} else {
+			log.AddHook(sysLogHook)
+		}
 	default:
 		fileName := filepath.Join(conf.Config.DataDir, conf.Config.LogConfig.LogTo)
 		openMode := os.O_APPEND
