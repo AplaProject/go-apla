@@ -41,7 +41,6 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
-	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 )
 
 func initStatsd() {
@@ -161,7 +160,7 @@ func initLogs() error {
 		severity := syslogSeverity(conf.Config.LogConfig.Syslog.Severity)
 		facility := syslogFacility(conf.Config.LogConfig.Syslog.Facility)
 		tag := conf.Config.LogConfig.Syslog.Tag
-		sysLogHook, err := lSyslog.NewSyslogHook("", "", severity|facility, tag)
+		sysLogHook, err := logtools.NewSyslogHook(tag, severity|facility)
 		if err != nil {
 			log.WithError(err).Error("initializing syslog hook")
 		} else {
