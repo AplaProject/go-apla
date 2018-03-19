@@ -45,6 +45,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -215,6 +216,21 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["HTTPPostJSON"] = HTTPPostJSON
 		f["ValidateCron"] = ValidateCron
 		f["UpdateCron"] = UpdateCron
+		vmExtendCost(vm, getCost)
+		vmFuncCallsDB(vm, funcCallsDB)
+	case script.VMTypeVDEMaster:
+		f["HTTPRequest"] = HTTPRequest
+		f["GetMapKeys"] = GetMapKeys
+		f["SortedKeys"] = SortedKeys
+		f["Date"] = Date
+		f["HTTPPostJSON"] = HTTPPostJSON
+		f["ValidateCron"] = ValidateCron
+		f["UpdateCron"] = UpdateCron
+		f["CreateVDE"] = CreateVDE
+		f["DeleteVDE"] = DeleteVDE
+		f["StartVDE"] = StartVDE
+		f["StopVDE"] = StopVDE
+		f["GetVDEList"] = GetVDEList
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
@@ -1068,7 +1084,7 @@ func SortedKeys(m map[string]interface{}) []interface{} {
 	return ret
 }
 
-//Formats timestamp to specified date format
+// Formats timestamp to specified date format
 func Date(time_format string, timestamp int64) string {
 	t := time.Unix(timestamp, 0)
 	return t.Format(time_format)
@@ -1189,4 +1205,29 @@ func UpdateCron(sc *SmartContract, id int64) error {
 	}
 
 	return nil
+}
+
+// CreateVDE allow create new VDE throw vdemanager
+func CreateVDE(sc *SmartContract, name, dbUser, dbPassword string, port int64) error {
+	return vdemanager.Manager.CreateVDE(name, dbUser, dbPassword, int(port))
+}
+
+// DeleteVDE delete vde
+func DeleteVDE(sc *SmartContract, name string) error {
+	return vdemanager.Manager.DeleteVDE(name)
+}
+
+// StartVDE run VDE process
+func StartVDE(sc *SmartContract, name string) error {
+	return vdemanager.Manager.StartVDE(name)
+}
+
+// StopVDE stops VDE process
+func StopVDE(sc *SmartContract, name string) error {
+	return vdemanager.Manager.StopVDE(name)
+}
+
+// GetVDEList returns list VDE process with statuses
+func GetVDEList(sc *SmartContract, name string) (map[string]string, error) {
+	return vdemanager.Manager.ListProcess()
 }

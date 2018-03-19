@@ -17,12 +17,8 @@
 package install
 
 import (
-	"encoding/hex"
 	"errors"
-	"io/ioutil"
 	"os"
-	"path/filepath"
-	"strconv"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -30,7 +26,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
@@ -39,35 +34,6 @@ const fileMode = 0644
 
 // ErrFirstBlockHostIsEmpty host for first block is not specified
 var ErrFirstBlockHostIsEmpty = errors.New("FirstBlockHost is empty")
-
-func createKeyPair(privFilename, pubFilename string) (priv, pub []byte, err error) {
-	priv, pub, err = crypto.GenBytesKeys()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("generate keys")
-		return
-	}
-
-	err = createFile(privFilename, []byte(hex.EncodeToString(priv)))
-	if err != nil {
-		return
-	}
-
-	err = createFile(pubFilename, []byte(hex.EncodeToString(pub)))
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func createFile(filename string, data []byte) error {
-	err := ioutil.WriteFile(filename, data, fileMode)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing file")
-		return err
-	}
-	return nil
-}
 
 func generateFirstBlock(publicKey, nodePublicKey []byte) error {
 	if len(*conf.FirstBlockHost) == 0 {
@@ -112,55 +78,12 @@ func generateFirstBlock(publicKey, nodePublicKey []byte) error {
 		return err
 	}
 
-	return createFile(*conf.FirstBlockPath, block)
+	return utils.CreateFile(*conf.FirstBlockPath, block)
 }
 
 // GenerateFirstBlock generates the first block
 func GenerateFirstBlock() error {
-	var publicKey, nodePublicKey []byte
-	var err error
-
-	// publicKey
-	if len(*conf.FirstBlockPublicKey) > 0 {
-		publicKey, err = hex.DecodeString(*conf.FirstBlockPublicKey)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding key from hex to string")
-			return err
-		}
-	} else {
-		_, publicKey, err = createKeyPair(
-			filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename),
-			filepath.Join(conf.Config.PrivateDir, consts.PublicKeyFilename),
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	// nodePublicKey
-	if len(*conf.FirstBlockNodePublicKey) > 0 {
-		nodePublicKey, err = hex.DecodeString(*conf.FirstBlockNodePublicKey)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding key from hex to string")
-			return err
-		}
-	} else {
-		_, nodePublicKey, err = createKeyPair(
-			filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename),
-			filepath.Join(conf.Config.PrivateDir, consts.NodePublicKeyFilename),
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	address := crypto.Address(publicKey)
-	conf.Config.KeyID = address
-
-	err = createFile(
-		filepath.Join(conf.Config.PrivateDir, consts.KeyIDFilename),
-		[]byte(strconv.FormatInt(address, 10)),
-	)
+	publicKey, nodePublicKey, err := utils.GenerateKeyFiles()
 	if err != nil {
 		return err
 	}

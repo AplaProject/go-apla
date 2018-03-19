@@ -160,6 +160,34 @@ func ExecSchemaLocalData(id int, wallet int64) error {
 	return DBConn.Exec(fmt.Sprintf(migration.SchemaVDE, id, wallet)).Error
 }
 
+// CreateVDEIfNotExists creates VDE
+func CreateVDEIfNotExists(id int64, wallet int64) error {
+
+	if IsTable(fmt.Sprintf(`%d_vde_tables`, id)) {
+		return nil
+	}
+
+	sp := &StateParameter{}
+	sp.SetTablePrefix(converter.Int64ToStr(id))
+	if _, err := sp.Get(nil, `founder_account`); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
+		return err
+	}
+
+	if converter.StrToInt64(sp.Value) != wallet {
+		err := fmt.Errorf("access denied")
+		log.WithFields(log.Fields{"type": consts.AccessDenied, "error": err}).Error("creating vde")
+		return err
+	}
+
+	if err := ExecSchemaLocalData(int(id), wallet); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
+		return err
+	}
+
+	return nil
+}
+
 // ExecSchema is executing schema
 func ExecSchema() error {
 	return migration.Migrate(&MigrationHistory{})

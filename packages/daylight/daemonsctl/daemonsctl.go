@@ -28,6 +28,10 @@ func RunAllDaemons() error {
 	log.Info("start daemons")
 	daemons.StartDaemons()
 
+	if conf.IsVDE() {
+		return nil
+	}
+
 	err = tcpserver.TcpListener(conf.Config.TCPServer.Str())
 	if err != nil {
 		log.Errorf("can't start tcp servers, stop")

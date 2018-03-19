@@ -129,7 +129,18 @@ var (
 
 	// CheckReadAccess access check for reading, is used only for VDE
 	CheckReadAccess = flag.Bool("checkReadAccess", true, "Check access for reading, only used for VDE")
+
+	IsVDEMasterMode = flag.Bool("VDEMaster", false, "Setup mode as VDEMaster, allow manage child VDE systems")
+
+	IsVDEMode = flag.Bool("VDEMode", false, "Setup mode as VDE")
+
+	GenerateKeys = flag.Bool("generateKeys", false, "Generate public and private keys")
 )
+
+// IsVDE returns true if node work as VDE
+func IsVDE() bool {
+	return *IsVDEMasterMode || *IsVDEMode
+}
 
 func envStr(envName string, val *string) bool {
 	if env, ok := os.LookupEnv(envName); ok {
