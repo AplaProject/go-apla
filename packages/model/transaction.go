@@ -78,8 +78,8 @@ func DeleteUsedTransactions(transaction *DbTransaction) (int64, error) {
 }
 
 // DeleteTransactionIfUnused deleting unused transaction
-func DeleteTransactionIfUnused(transactionHash []byte) (int64, error) {
-	query := DBConn.Exec("DELETE FROM transactions WHERE hash = ? and used = 0 and verified = 0", transactionHash)
+func DeleteTransactionIfUnused(transaction *DbTransaction, transactionHash []byte) (int64, error) {
+	query := GetDB(transaction).Exec("DELETE FROM transactions WHERE hash = ? and used = 0 and verified = 0", transactionHash)
 	return query.RowsAffected, query.Error
 }
 
@@ -128,8 +128,8 @@ func (t *Transaction) Create() error {
 }
 
 // IncrementTxAttemptCount increases attempt column
-func IncrementTxAttemptCount(transactionHash []byte) (int64, error) {
-	query := DBConn.Exec("update transactions set attempt=attempt+1, used = case when attempt>5 then 1 else 0 end where hash = ?",
+func IncrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte) (int64, error) {
+	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt>5 then 1 else 0 end where hash = ?",
 		transactionHash)
 	return query.RowsAffected, query.Error
 }
