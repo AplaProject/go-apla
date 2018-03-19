@@ -64,6 +64,7 @@ type RunTime struct {
 	vm     *VM
 	cost   int64
 	err    error
+	unwrap bool
 }
 
 func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
@@ -72,6 +73,18 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 	)
 	size := len(rt.stack)
 	in = rt.vm.getInParams(obj)
+	if rt.unwrap && cmd == cmdCallVari && size > 1 &&
+		reflect.TypeOf(rt.stack[size-2]).String() == `[]interface {}` {
+		count = rt.stack[size-1].(int)
+		arr := rt.stack[size-2].([]interface{})
+		rt.stack = rt.stack[:size-2]
+		for _, item := range arr {
+			rt.stack = append(rt.stack, item)
+		}
+		rt.stack = append(rt.stack, count-1+len(arr))
+		size = len(rt.stack)
+	}
+	rt.unwrap = false
 	if cmd == cmdCallVari {
 		count = rt.stack[size-1].(int)
 		size--
@@ -563,6 +576,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_type": itype}).Error("type does not support indexing")
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
+			}
+		case cmdUnwrapArr:
+			if reflect.TypeOf(rt.stack[size-1]).String() == `[]interface {}` {
+				rt.unwrap = true
 			}
 		case cmdSign:
 			switch top[0].(type) {

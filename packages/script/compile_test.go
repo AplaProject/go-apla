@@ -385,6 +385,13 @@ func TestVMCompile(t *testing.T) {
 			$data[10] = "extend ok"
 			return $data[10]
 			}`, `mapbug`, `extend ok`},
+		{`func result() string {
+				var myarr array
+				myarr[0] = "string"
+				myarr[1] = 7
+				myarr[2] = "9th item"
+				return Sprintf("RESULT=%s %d %v", myarr...)
+			}`, `result`, `RESULT=string 7 9th item`},
 	}
 	vm := NewVM()
 	vm.Extern = true

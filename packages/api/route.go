@@ -59,6 +59,9 @@ func Route(route *hr.Router) {
 	get(`getuid`, ``, getUID)
 	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
 	get(`row/:name/:id`, `?columns:string`, authWallet, row)
+	get(`interface/page/:name`, ``, authWallet, getPageRow)
+	get(`interface/menu/:name`, ``, authWallet, getMenuRow)
+	get(`interface/block/:name`, ``, authWallet, getBlockInterfaceRow)
 	get(`systemparams`, `?names:string`, authWallet, systemParams)
 	get(`table/:name`, ``, authWallet, table)
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
@@ -67,6 +70,7 @@ func Route(route *hr.Router) {
 	get(`history/:table/:id`, ``, authWallet, getHistory)
 	get(`block/:id`, ``, getBlockInfo)
 	get(`maxblockid`, ``, getMaxBlockID)
+	get(`version`, ``, getVersion)
 
 	post(`content/source/:name`, ``, authWallet, getSource)
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)

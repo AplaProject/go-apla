@@ -21,7 +21,6 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"html"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -403,9 +402,8 @@ func dataTag(par parFunc) string {
 		for i, icol := range cols {
 			var ival string
 			if i < defcol {
-				ival = strings.TrimSpace(item[i])
-				if strings.IndexByte(ival, '<') >= 0 {
-					ival = html.EscapeString(ival)
+				if i < len(item) {
+					ival = strings.TrimSpace(item[i])
 				}
 				vals[icol] = ival
 			} else {
@@ -440,6 +438,7 @@ func dbfindTag(par parFunc) string {
 		state  int64
 		err    error
 		perm   map[string]string
+		offset string
 	)
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
@@ -472,6 +471,10 @@ func dbfindTag(par parFunc) string {
 	if limit > 250 {
 		limit = 250
 	}
+	if par.Node.Attr[`offset`] != nil {
+		offset = fmt.Sprintf(` offset %d`, converter.StrToInt(par.Node.Attr[`offset`].(string)))
+	}
+
 	if par.Node.Attr[`prefix`] != nil {
 		prefix = par.Node.Attr[`prefix`].(string)
 		limit = 1
@@ -496,7 +499,7 @@ func dbfindTag(par parFunc) string {
 	}
 	fields = smart.PrepareColumns(fields)
 
-	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order, limit)
+	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order+offset, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
@@ -526,9 +529,6 @@ func dbfindTag(par parFunc) string {
 			var ival string
 			if i < defcol {
 				ival = item[icol]
-				if strings.IndexByte(ival, '<') >= 0 {
-					ival = html.EscapeString(ival)
-				}
 				if ival == `NULL` {
 					ival = ``
 				}
