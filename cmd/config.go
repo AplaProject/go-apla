@@ -82,10 +82,18 @@ func init() {
 	viper.BindPFlag("Centrifugo.URL", configCmd.Flags().Lookup("centUrl"))
 
 	// Log
-	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogTo, "logTo", "stdout", "Send logs to")
+	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogTo, "logTo", "stdout", "Send logs to stdout|(filename)|syslog")
 	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogLevel, "verbosity", "ERROR", "Log verbosity (DEBUG | INFO | WARN | ERROR)")
+	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogFormat, "logFormat", "text", "log format, could be text|json")
+	configCmd.Flags().StringVar(&conf.Config.LogConfig.Syslog.Severity, "syslogSeverity", "LOG_EMERG", "syslog severity")
+	configCmd.Flags().StringVar(&conf.Config.LogConfig.Syslog.Facility, "syslogFacility", "LOG_KERN", "syslog facility")
+	configCmd.Flags().StringVar(&conf.Config.LogConfig.Syslog.Tag, "syslogTag", "go-genesis", "syslog program tag")
 	viper.BindPFlag("Log.LogTo", configCmd.Flags().Lookup("logTo"))
 	viper.BindPFlag("Log.Verbosity", configCmd.Flags().Lookup("verbosity"))
+	viper.BindPFlag("Log.LogFormat", configCmd.Flags().Lookup("logFormat"))
+	viper.BindPFlag("Log.Syslog.Severity", configCmd.Flags().Lookup("syslogSeverity"))
+	viper.BindPFlag("Log.Syslog.Facility", configCmd.Flags().Lookup("syslogFacility"))
+	viper.BindPFlag("Log.Syslog.Tag", configCmd.Flags().Lookup("syslogTag"))
 
 	// TokenMovement
 	configCmd.Flags().StringVar(&conf.Config.TokenMovement.Host, "tmovHost", "", "Token movement host")

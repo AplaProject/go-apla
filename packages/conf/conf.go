@@ -48,9 +48,17 @@ type CentrifugoConfig struct {
 	URL    string
 }
 
+type Syslog struct {
+	Facility string
+	Severity string
+	Tag      string
+}
+
 type LogConfig struct {
-	LogTo    string
-	LogLevel string
+	LogTo     string
+	LogLevel  string
+	LogFormat string
+	Syslog    Syslog
 }
 
 // TokenMovementConfig smtp config for token movement

@@ -9,6 +9,12 @@
 			"revisionTime": "2017-10-14T08:28:56Z"
 		},
 		{
+			"checksumSHA1": "zDn6rjeNQNGXBdDfMa4pJ1vw8gs=",
+			"path": "github.com/blackjack/syslog",
+			"revision": "4ea3f32c1eb1115ad9e010eeff314fffc5fc8638",
+			"revisionTime": "2013-09-22T06:43:54Z"
+		},
+		{
 			"checksumSHA1": "lbE4q2dpUgue10EEx8eutP36vzo=",
 			"path": "github.com/boltdb/bolt",
 			"revision": "9da31745363232bc1e27dbab3569e77383a51585",
