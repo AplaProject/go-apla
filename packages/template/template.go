@@ -42,6 +42,7 @@ import (
 const (
 	tagText = `text`
 	tagData = `data`
+	maxDeep = 16
 )
 
 type node struct {
@@ -258,7 +259,7 @@ func ifValue(val string, workspace *Workspace) bool {
 	return false
 }
 
-func replace(input string, level int, vars *map[string]string) string {
+func replace(input string, level *[]string, vars *map[string]string) string {
 	if len(input) == 0 {
 		return input
 	}
@@ -285,10 +286,25 @@ func replace(input string, level int, vars *map[string]string) string {
 		}
 		if isName {
 			if value, ok := (*vars)[string(name)]; ok {
-				if level < 10 {
-					value = replace(value, level+1, vars)
+				var loop bool
+				if len(*level) < maxDeep {
+					for _, item := range *level {
+						if item == string(name) {
+							loop = true
+							break
+						}
+					}
+				} else {
+					loop = true
 				}
-				result = append(result, []rune(value)...)
+				if !loop {
+					*level = append(*level, string(name))
+					value = replace(value, level, vars)
+					*level = (*level)[:len(*level)-1]
+					result = append(result, []rune(value)...)
+				} else {
+					result = append(append(result, syschar), append(name, syschar)...)
+				}
 				isName = false
 			} else {
 				result = append(append(result, syschar), name...)
@@ -308,7 +324,12 @@ func macro(input string, vars *map[string]string) string {
 	if (*vars)[`_full`] == `1` || strings.IndexByte(input, '#') == -1 {
 		return input
 	}
-	return replace(input, 0, vars)
+	return macroReplace(input, vars)
+}
+
+func macroReplace(input string, vars *map[string]string) string {
+	level := make([]string, 0, maxDeep)
+	return replace(input, &level, vars)
 }
 
 func appendText(owner *node, text string) {

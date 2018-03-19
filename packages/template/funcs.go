@@ -217,7 +217,7 @@ func forlistTag(par parFunc) (ret string) {
 				}
 			}
 		}
-		body := replace((*par.Pars)[`Data`], 0, &vals)
+		body := macroReplace((*par.Pars)[`Data`], &vals)
 		process(body, &root, par.Workspace)
 	}
 	par.Node.Children = root.Children
@@ -410,7 +410,7 @@ func dataTag(par parFunc) string {
 				ival = strings.TrimSpace(item[i])
 				vals[icol] = ival
 			} else {
-				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
+				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &vals)
 				root := node{}
 				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
@@ -601,7 +601,7 @@ func dbfindTag(par parFunc) string {
 					break
 				}
 			} else {
-				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &item)
+				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &item)
 				root := node{}
 				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
