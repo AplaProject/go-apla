@@ -996,9 +996,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
 		CREATE INDEX "%[1]d_roles_list_index_type" ON "%[1]d_roles_list" (role_type);
 
-		INSERT INTO "%[1]d_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
-			"date_create","creator_name") VALUES('1','default_ecosystem_page', 
-				'Admin', '0', '3', NOW(), '');
+		INSERT INTO "%[1]d_roles_list" ("id", "default_page", "role_name", "delete", "role_type", "date_create","creator_name") 
+		VALUES('1','default_ecosystem_page', 'Admin', '0', '3', NOW(), ''), 
+				('2', 'default_ecosystem_page', 'Delegate', '0', '3', NOW(), '');
 
 
 		DROP TABLE IF EXISTS "%[1]d_roles_assign";
