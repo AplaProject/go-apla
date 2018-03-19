@@ -81,6 +81,8 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`If(#isMobile#){Span(Mobile)}.Else{Span(Desktop)}`,
+		`[{"tag":"span","children":[{"tag":"text","text":"Desktop"}]}]`},
 	{`DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(10)`,
 		`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["11"],["12"]],"limit":"2","name":"contracts","offset":"10","order":"id","source":"src_contracts","types":["text"]}}]`},
 	{`DBFind(contracts, src_pos).Columns(id).Where("id >= 1 and id <= 3")
@@ -127,6 +129,23 @@ var forTest = tplList{
 		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","default_menu"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"default_menu"}]}]`},
 }
 
+func TestMobile(t *testing.T) {
+	var ret contentResult
+	gMobile = true
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	err := sendPost(`content`, &url.Values{`template`: {`If(#isMobile#){Span(Mobile)}.Else{Span(Desktop)}`}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(ret.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"Mobile"}]}]` {
+		t.Error(fmt.Errorf(`wrong mobile tree %s`, RawToString(ret.Tree)))
+		return
+	}
+}
 func TestImage(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
