@@ -89,16 +89,17 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_cron" ADD CONSTRAINT "%[1]d_vde_cron_pkey" PRIMARY KEY ("id");
 
-		DROP TABLE IF EXISTS "%[1]d_vde_statics";
-		CREATE TABLE "%[1]d_vde_statics" (
-			"id" bigint  NOT NULL DEFAULT '0',
-			"date" timestamp NOT NULL DEFAULT NOW(),
-			"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
+		DROP TABLE IF EXISTS "%[1]d_vde_binaries";
+		CREATE TABLE "%[1]d_vde_binaries" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"app_id" bigint NOT NULL DEFAULT '0',
+			"member_id" bigint NOT NULL DEFAULT '0',
+			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
 			"hash" varchar(32) NOT NULL DEFAULT ''
 		);
-		ALTER TABLE ONLY "%[1]d_vde_statics" ADD CONSTRAINT "%[1]d_vde_statics_pkey" PRIMARY KEY (id);
-		CREATE INDEX "%[1]d_vde_statics_index_name" ON "%[1]d_vde_statics" (name);
+		ALTER TABLE ONLY "%[1]d_vde_binaries" ADD CONSTRAINT "%[1]d_vde_binaries_pkey" PRIMARY KEY (id);
+		CREATE UNIQUE INDEX "%[1]d_vde_binaries_index_app_id_member_id_name" ON "%[1]d_vde_binaries" (app_id, member_id, name);
 
 	  CREATE TABLE "%[1]d_vde_tables" (
 	  "id" bigint NOT NULL  DEFAULT '0',
@@ -163,8 +164,9 @@ var (
 			  ('8', 'statics', 
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 					"new_column": "ContractConditions(\"MainCondition\")"}',
-				'{"name": "ContractConditions(\"MainCondition\")",
-					"date": "ContractConditions(\"MainCondition\")",
+				'{"app_id": "ContractConditions(\"MainCondition\")",
+					"member_id": "ContractConditions(\"MainCondition\")",
+					"name": "ContractConditions(\"MainCondition\")",
 					"data": "ContractConditions(\"MainCondition\")",
 					"hash": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")');
@@ -726,22 +728,24 @@ var (
 			UpdateCron($Id)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('23','contract UploadStatic {
+	('23','contract UploadBinary {
 		data {
 			Name  string
 			Data  string
+			AppID int
+			MemberID int "optional"
 		}
 		conditions {
-			$Id = Int(DBFind("statics").Columns("id").Where("name = ?", $Name).One("id"))
+			$Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $AppID, $MemberID, $Name).One("id"))
 		}
 		action {
 			var hash string
 			hash = MD5($Data)
 
 			if $Id != 0 {
-				DBUpdate("statics", $Id, "name,data,hash", $Name, $Data, hash)
+				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
 			} else {
-				DBInsert("statics", "name,data,hash", $Name, $Data, hash)
+				DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
 			}
 		}
 	}', 'ContractConditions("MainCondition")');
@@ -1061,11 +1065,12 @@ If("#key_id#" == EcosysParam("founder_account")){
 						"roles_access": "ContractConditions(\"MainCondition\")",
 						"delete": "ContractConditions(\"MainCondition\")"}', 
 						'ContractConditions(\"MainCondition\")'),
-				('14', 'statics', 
+				('14', 'binaries', 
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 					"new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"name": "ContractConditions(\"MainCondition\")",
-						"date": "ContractConditions(\"MainCondition\")",
+					'{"app_id": "ContractConditions(\"MainCondition\")",
+						"member_id": "ContractConditions(\"MainCondition\")",
+						"name": "ContractConditions(\"MainCondition\")",
 						"data": "ContractConditions(\"MainCondition\")",
 						"hash": "ContractConditions(\"MainCondition\")"}',
 						'ContractConditions(\"MainCondition\")');
@@ -1151,16 +1156,17 @@ If("#key_id#" == EcosysParam("founder_account")){
 		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
 
 
-		DROP TABLE IF EXISTS "%[1]d_statics";
-		CREATE TABLE "%[1]d_statics" (
-			"id" bigint  NOT NULL DEFAULT '0',
-			"date" timestamp NOT NULL DEFAULT NOW(),
-			"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
+		DROP TABLE IF EXISTS "%[1]d_binaries";
+		CREATE TABLE "%[1]d_binaries" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"app_id" bigint NOT NULL DEFAULT '0',
+			"member_id" bigint NOT NULL DEFAULT '0',
+			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
 			"hash" varchar(32) NOT NULL DEFAULT ''
 		);
-		ALTER TABLE ONLY "%[1]d_statics" ADD CONSTRAINT "%[1]d_statics_pkey" PRIMARY KEY (id);
-		CREATE INDEX "%[1]d_statics_index_name" ON "%[1]d_statics" (name);
+		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
+		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (app_id, member_id, name);
 		`
 
 	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id") VALUES ('1');
@@ -1932,22 +1938,24 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdateSysParam($Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('28','contract UploadStatic {
+	('28','contract UploadBinary {
 		data {
 			Name  string
 			Data  string
+			AppID int
+			MemberID int "optional"
 		}
 		conditions {
-			$Id = Int(DBFind("statics").Columns("id").Where("name = ?", $Name).One("id"))
+			$Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $AppID, $MemberID, $Name).One("id"))
 		}
 		action {
 			var hash string
 			hash = MD5($Data)
 
 			if $Id != 0 {
-				DBUpdate("statics", $Id, "name,data,hash", $Name, $Data, hash)
+				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
 			} else {
-				DBInsert("statics", "name,data,hash", $Name, $Data, hash)
+				DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
 			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")');`

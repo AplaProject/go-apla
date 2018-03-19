@@ -196,23 +196,10 @@ func processToText(par parFunc, input string) (out string) {
 }
 
 func ifValue(val string, workspace *Workspace) bool {
-	var (
-		sep   string
-		owner node
-	)
+	var sep string
 
-	if strings.IndexByte(val, '(') != -1 {
-		process(val, &owner, workspace)
-		if len(owner.Children) > 0 {
-			inode := owner.Children[0]
-			if inode.Tag == tagText {
-				val = inode.Text
-			}
-		} else {
-			val = ``
-		}
+	val = parseArg(val, workspace)
 
-	}
 	if strings.Index(val, `;base64`) < 0 {
 		for _, item := range []string{`==`, `!=`, `<=`, `>=`, `<`, `>`} {
 			if strings.Index(val, item) >= 0 {
@@ -623,6 +610,23 @@ func process(input string, owner *node, workspace *Workspace) {
 		name = append(name, ch)
 	}
 	appendText(owner, string(name))
+}
+
+func parseArg(arg string, workspace *Workspace) (val string) {
+	if strings.IndexByte(arg, '(') == -1 {
+		return arg
+	}
+
+	var owner node
+	process(arg, &owner, workspace)
+	if len(owner.Children) > 0 {
+		inode := owner.Children[0]
+		if inode.Tag == tagText {
+			val = inode.Text
+		}
+	}
+
+	return
 }
 
 // Template2JSON converts templates to JSON data

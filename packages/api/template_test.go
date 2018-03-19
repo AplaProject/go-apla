@@ -210,18 +210,20 @@ func TestImage(t *testing.T) {
 	}
 }
 
-func TestStatic(t *testing.T) {
+func TestBinary(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	form := url.Values{
-		"Name": {"file"},
-		"Data": {imageData},
+		"AppID":    {"1"},
+		"MemberID": {"1"},
+		"Name":     {"file"},
+		"Data":     {imageData},
 	}
-	assert.NoError(t, postTx("UploadStatic", &form))
+	assert.NoError(t, postTx("UploadBinary", &form))
 
 	var ret contentResult
-	template := `Static(Name: file, Var: my_file) Image(Src: #my_file#)`
+	template := `Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`
 	err := sendPost(`content`, &url.Values{`template`: {template}}, &ret)
 	assert.NoError(t, err)
-	assert.Equal(t, `[{"tag":"image","attr":{"src":"/data/1_statics/1/data/6bfc1a86b98b72f9cbdc19be1c36ac55"}}]`, string(ret.Tree))
+	assert.Regexp(t, `\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/[a-f0-9]{32}"}}\]`, string(ret.Tree))
 }
