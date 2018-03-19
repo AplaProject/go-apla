@@ -637,7 +637,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		if err != nil {
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
-				model.IncrementTxAttemptCount(p.TxHash)
+				model.IncrementTxAttemptCount(p.DbTransaction, p.TxHash)
 			}
 			errRoll := dbTransaction.RollbackSavepoint(curTx)
 			if errRoll != nil {
@@ -645,7 +645,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 				return errRoll
 			}
 			// skip this transaction
-			model.MarkTransactionUsed(nil, p.TxHash)
+			model.MarkTransactionUsed(p.DbTransaction, p.TxHash)
 			p.processBadTransaction(p.TxHash, err.Error())
 			if p.SysUpdate {
 				if err = syspar.SysUpdate(p.DbTransaction); err != nil {

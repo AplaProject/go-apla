@@ -40,6 +40,7 @@ var (
 	gAuth             string
 	gAddress          string
 	gPrivate, gPublic string
+	gMobile           bool
 )
 
 type global struct {
@@ -138,6 +139,9 @@ func keyLogin(state int64) (err error) {
 	}
 	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
 		`ecosystem`: {converter.Int64ToStr(state)}}
+	if gMobile {
+		form[`mobile`] = []string{`true`}
+	}
 	var logret loginResult
 	err = sendPost(`login`, &form, &logret)
 	if err != nil {
