@@ -1129,6 +1129,11 @@ main:
 				cmd = &ByteCode{cmdVar, &VarInfo{objInfo, tobj}}
 			}
 		}
+		if lexem.Type&0xff == lexKeyword {
+			if lexem.Value.(uint32) == keyTail {
+				cmd = &ByteCode{cmdUnwrapArr, 0}
+			}
+		}
 		if cmd != nil {
 			bytecode = append(bytecode, cmd)
 		}
