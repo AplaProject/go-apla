@@ -21,8 +21,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 
@@ -37,7 +35,6 @@ type getUIDResult struct {
 	EcosystemID string `json:"ecosystem_id,omitempty"`
 	KeyID       string `json:"key_id,omitempty"`
 	Address     string `json:"address,omitempty"`
-	IsVDE       bool   `json:"vde,omitempty"`
 }
 
 func getUID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
@@ -65,7 +62,5 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-
-	result.IsVDE = *conf.IsVDEMode
 	return
 }
