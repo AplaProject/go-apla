@@ -1316,9 +1316,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		);
 		ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
-
-		INSERT INTO "system_states" ("id") VALUES ('1');
-
+		
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
 			('16', 'delayed_contracts',
 			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
