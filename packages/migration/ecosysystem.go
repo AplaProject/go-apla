@@ -1016,10 +1016,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 		('6','changing_page', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
 		('7','changing_menu', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
 		('8','changing_contracts', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
-		('9','ecosystem_name', '%[3]s', 'ContractConditions("MainCondition")'),
-		('10','max_sum', '1000000', 'ContractConditions("MainCondition")'),
-		('11','money_digit', '2', 'ContractConditions("MainCondition")'),
-		('12','stylesheet', 'body {
+		('9','max_sum', '1000000', 'ContractConditions("MainCondition")'),
+		('10','money_digit', '2', 'ContractConditions("MainCondition")'),
+		('11','stylesheet', 'body {
 		  /* You can define your custom styles here or create custom CSS rules */
 		}', 'ContractConditions("MainCondition")'),
 		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")'),
