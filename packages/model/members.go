@@ -9,7 +9,7 @@ type Member struct {
 
 // SetTablePrefix is setting table prefix
 func (m *Member) SetTablePrefix(prefix string) {
-	m.tableName = prefix + "_member"
+	m.tableName = prefix + "_members"
 }
 
 // TableName returns name of table

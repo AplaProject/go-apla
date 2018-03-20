@@ -64,6 +64,7 @@ type RunTime struct {
 	vm     *VM
 	cost   int64
 	err    error
+	unwrap bool
 }
 
 func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
@@ -72,6 +73,18 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 	)
 	size := len(rt.stack)
 	in = rt.vm.getInParams(obj)
+	if rt.unwrap && cmd == cmdCallVari && size > 1 &&
+		reflect.TypeOf(rt.stack[size-2]).String() == `[]interface {}` {
+		count = rt.stack[size-1].(int)
+		arr := rt.stack[size-2].([]interface{})
+		rt.stack = rt.stack[:size-2]
+		for _, item := range arr {
+			rt.stack = append(rt.stack, item)
+		}
+		rt.stack = append(rt.stack, count-1+len(arr))
+		size = len(rt.stack)
+	}
+	rt.unwrap = false
 	if cmd == cmdCallVari {
 		count = rt.stack[size-1].(int)
 		size--
@@ -516,23 +529,26 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				err = fmt.Errorf(`unknown extend identifier %s`, cmd.Value.(string))
 			}
 		case cmdIndex:
-			itype := reflect.TypeOf(rt.stack[size-2]).String()
-			switch {
-			case itype[:3] == `map`:
-				if strings.Contains(itype, Interface) {
-					rt.stack[size-2] = rt.stack[size-2].(map[string]interface{})[rt.stack[size-1].(string)]
+			rv := reflect.ValueOf(rt.stack[size-2])
+			switch rv.Kind() {
+			case reflect.Map:
+				v := rv.MapIndex(reflect.ValueOf(rt.stack[size-1]))
+				if v.IsValid() {
+					rt.stack[size-2] = v.Interface()
 				} else {
-					rt.stack[size-2] = rt.stack[size-2].(map[string]string)[rt.stack[size-1].(string)]
+					rt.stack[size-2] = nil
 				}
 				rt.stack = rt.stack[:size-1]
-			case itype[:2] == brackets:
-				if strings.Contains(itype, Interface) {
-					rt.stack[size-2] = rt.stack[size-2].([]interface{})[rt.stack[size-1].(int64)]
+			case reflect.Slice:
+				v := rv.Index(int(rt.stack[size-1].(int64)))
+				if v.IsValid() {
+					rt.stack[size-2] = v.Interface()
 				} else {
-					rt.stack[size-2] = rt.stack[size-2].([]map[string]string)[rt.stack[size-1].(int64)]
+					rt.stack[size-2] = nil
 				}
 				rt.stack = rt.stack[:size-1]
 			default:
+				itype := reflect.TypeOf(rt.stack[size-2]).String()
 				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_type": itype}).Error("type does not support indexing")
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
 			}
@@ -540,11 +556,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			itype := reflect.TypeOf(rt.stack[size-3]).String()
 			switch {
 			case itype[:3] == `map`:
-				if strings.Contains(itype, Interface) {
-					rt.stack[size-3].(map[string]interface{})[rt.stack[size-2].(string)] = rt.stack[size-1]
-				} else {
-					rt.stack[size-3].(map[string]string)[rt.stack[size-2].(string)] = rt.stack[size-1].(string)
-				}
+				reflect.ValueOf(rt.stack[size-3]).SetMapIndex(reflect.ValueOf(rt.stack[size-2]), reflect.ValueOf(rt.stack[size-1]))
 				rt.stack = rt.stack[:size-2]
 			case itype[:2] == brackets:
 				ind := rt.stack[size-2].(int64)
@@ -574,6 +586,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_type": itype}).Error("type does not support indexing")
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
+			}
+		case cmdUnwrapArr:
+			if reflect.TypeOf(rt.stack[size-1]).String() == `[]interface {}` {
+				rt.unwrap = true
 			}
 		case cmdSign:
 			switch top[0].(type) {

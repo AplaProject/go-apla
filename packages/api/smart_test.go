@@ -23,6 +23,8 @@ import (
 	"testing"
 
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type smartParams struct {
@@ -471,4 +473,238 @@ func TestDBMetric(t *testing.T) {
 		t.Error(err)
 		return
 	}
+}
+
+func TestPartitialEdit(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	name := randName(`part`)
+	form := url.Values{"Name": {name}, "Value": {"Span(Original text)"},
+		"Menu": {"original_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err := postTx(`NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var retList listResult
+	err = sendGet(`list/pages`, nil, &retList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	idItem := retList.Count
+	value := `Span(Temp)`
+	menu := `temp_menu`
+	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Value": {value},
+		"Menu": {menu}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret rowResult
+	err = sendGet(`row/pages/`+idItem, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Value["value"] != value || ret.Value["menu"] != menu {
+		t.Errorf(`wrong value or menu`)
+		return
+	}
+	value = `Span(Updated)`
+	menu = `default_menu`
+	conditions := `true`
+	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Value": {value}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Menu": {menu}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Conditions": {conditions}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`row/pages/`+idItem, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Value["value"] != value || ret.Value["menu"] != menu ||
+		ret.Value["conditions"] != conditions {
+		t.Errorf(`wrong page parameters`)
+		return
+	}
+
+	form = url.Values{"Name": {name}, "Value": {`MenuItem(One)`}, "Title": {`My Menu`},
+		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`NewMenu`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`list/menu`, nil, &retList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	idItem = retList.Count
+	value = `MenuItem(Two)`
+	err = postTx(`EditMenu`, &url.Values{"Id": {idItem}, "Value": {value}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`EditMenu`, &url.Values{"Id": {idItem}, "Conditions": {conditions}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`row/menu/`+idItem, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Value["value"] != value || ret.Value["conditions"] != conditions {
+		t.Errorf(`wrong menu parameters`)
+		return
+	}
+
+	form = url.Values{"Name": {name}, "Value": {`Span(Block)`},
+		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`NewBlock`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`list/blocks`, nil, &retList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	idItem = retList.Count
+	value = `Span(Updated block)`
+	err = postTx(`EditBlock`, &url.Values{"Id": {idItem}, "Value": {value}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`EditBlock`, &url.Values{"Id": {idItem}, "Conditions": {conditions}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`row/blocks/`+idItem, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Value["value"] != value || ret.Value["conditions"] != conditions {
+		t.Errorf(`wrong block parameters`)
+		return
+	}
+
+}
+
+func TestContractEdit(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	name := randName(`part`)
+	form := url.Values{"Value": {`contract ` + name + ` {
+		    action {
+				$result = "before"
+			}
+		}`},
+		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	err := postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var retList listResult
+	err = sendGet(`list/contracts`, nil, &retList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	idItem := retList.Count
+	value := `contract ` + name + ` {
+		action {
+			$result = "after"
+		}
+	}`
+	conditions := `true`
+	wallet := "1231234123412341230"
+	err = postTx(`EditContract`, &url.Values{"Id": {idItem}, "Value": {value}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(`EditContract`, &url.Values{"Id": {idItem}, "Conditions": {conditions},
+		"WalletId": {wallet}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret rowResult
+	err = sendGet(`row/contracts/`+idItem, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret.Value["value"] != value || ret.Value["conditions"] != conditions ||
+		ret.Value["wallet_id"] != wallet {
+		t.Errorf(`wrong parameters of contract`)
+		return
+	}
+	_, msg, err := postTxResult(name, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != "after" {
+		t.Errorf(`the wrong result of the contract %s`, msg)
+	}
+}
+
+func TestDelayedContracts(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	form := url.Values{
+		"Contract":   {"UnknownContract"},
+		"EveryBlock": {"10"},
+		"Limit":      {"2"},
+		"Conditions": {"true"},
+	}
+	err := postTx("NewDelayedContract", &form)
+	assert.EqualError(t, err, `{"type":"error","error":"Unknown contract @1UnknownContract"}`)
+
+	form.Set("Contract", "MainCondition")
+	err = postTx("NewDelayedContract", &form)
+	assert.NoError(t, err)
+
+	form.Set("BlockID", "1")
+	err = postTx("NewDelayedContract", &form)
+	assert.EqualError(t, err, `{"type":"error","error":"The blockID must be greater than the current blockID"}`)
+
+	form = url.Values{
+		"Id":         {"1"},
+		"Contract":   {"MainCondition"},
+		"EveryBlock": {"10"},
+		"Conditions": {"true"},
+		"Deleted":    {"1"},
+	}
+	err = postTx("EditDelayedContract", &form)
+	assert.NoError(t, err)
 }
