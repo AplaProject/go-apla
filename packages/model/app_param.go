@@ -4,7 +4,7 @@ package model
 type AppParam struct {
 	tableName  string
 	ID         int64  `gorm:"primary_key;not null"`
-	App        int64  `gorm:"not null"`
+	AppID      int64  `gorm:"not null"`
 	Name       string `gorm:"not null;size:100"`
 	Value      string `gorm:"not null"`
 	Conditions string `gorm:"not null"`
