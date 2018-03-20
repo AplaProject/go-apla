@@ -41,7 +41,7 @@ func (rt *RollbackTx) DeleteByHash(dbTransaction *DbTransaction) error {
 
 // DeleteByHashAndTableName is deleting tx by hash and table name
 func (rt *RollbackTx) DeleteByHashAndTableName(transaction *DbTransaction) error {
-	return GetDB(transaction).Where("tx_hash = ? and table_name = ?", rt.TxHash, rt.NameTable).Delete(rt).Error
+	return GetDB(transaction).Exec("DELETE FROM rollback_tx WHERE tx_hash = ? and table_name = ?", rt.TxHash, rt.NameTable).Error
 }
 
 // Create is creating record of model

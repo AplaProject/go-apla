@@ -269,10 +269,10 @@ MenuItem(
 			  list = ContractsList($Value)
 			  var i int
 			  while i < Len(list) {
-				  if IsObject(list[i], $ecosystem_id) {
-					  warning Sprintf("Contract or function %%s exists", list[i] )
-				  }
-				  i = i + 1
+				if IsObject(list[i], $ecosystem_id) {
+					warning Sprintf("Contract or function %%s exists", list[i] )
+				}
+				i = i + 1
 			  }
 		  }
 		  action {
@@ -1306,6 +1306,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 			FlushContract(root, id, false)
 			$result = id
 		}
+		func rollback() {
+			var list array
+			list = ContractsList($Value)
+			var i int
+			while i < Len(list) {
+				RollbackContract(list[i])
+				i = i + 1
+			}
+		}
 		func price() int {
 			return  SysParamInt("contract_price")
 		}
@@ -1780,7 +1789,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 				if IsObject(idata["Name"], $ecosystem_id){
 				} else {
 					CallContract("NewContract", idata)
-				} 
+				}
 			}
 			if(cnt == "tables"){
 				$ret_table = DBFind("tables").Columns("id").Where("name=$", idata["Name"])
@@ -1792,6 +1801,32 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 
 			i = i + 1
+		}
+	}
+
+	func RollbackImportList(row array, cnt string) {
+		if !row {
+			return
+		}
+
+		if cnt == "tables" {
+			var i int
+			while i < Len(row) {
+				var idata map
+				idata = row[i]
+				RollbackTable(idata["Name"])
+				i = i + 1
+			}
+		}
+
+		if cnt == "contracts" {
+			var i int
+			while i < Len(row) {
+				var idata map
+				idata = row[i]
+				RollbackContract(idata["Name"])
+				i = i + 1
+			}
 		}
 	}
 	
@@ -1838,6 +1873,11 @@ If("#key_id#" == EcosysParam("founder_account")){
 			ImportList($list["contracts"], "contracts")
 			ImportList($list["tables"], "tables")
 			ImportData($list["data"])
+		}
+		func rollback() {
+			$list = JSONToMap($Data)
+			RollbackImportList($list["contracts"], "contracts")
+			RollbackImportList($list["tables"], "tables")
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('27','contract DeactivateContract {
