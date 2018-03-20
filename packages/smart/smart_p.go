@@ -530,9 +530,9 @@ func RollbackEcosystem(sc *SmartContract) error {
 
 // RollbackTable is rolling back table
 func RollbackTable(sc *SmartContract, name string) error {
-	if sc.TxContract.Name != `@1NewTable` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from @1NewTable")
-		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
+	if !accessContracts(sc, "NewTable", "Import") {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from NewTable or Import")
+		return fmt.Errorf(`RollbackTable can be only called from NewTable or Import`)
 	}
 	name = strings.ToLower(name)
 	tableName := getDefTableName(sc, name)
@@ -549,7 +549,7 @@ func RollbackTable(sc *SmartContract, name string) error {
 	}
 	err = rollbackTx.DeleteByHashAndTableName(sc.DbTransaction)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting record from rollback table")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting records from rollback table")
 		return err
 	}
 

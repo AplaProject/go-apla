@@ -622,6 +622,31 @@ var (
 				i = i + 1
 			}
 		}
+		func RollbackImportList(row array, cnt string) {
+			if !row {
+				return
+			}
+			
+			if cnt == "tables" {
+				var i int
+				while i < Len(row) {
+					var idata map
+					idata = row[i]
+					RollbackTable(idata["Name"])
+					i = i + 1
+				}
+			}
+			
+			if cnt == "contracts" {
+				var i int
+				while i < Len(row) {
+					var idata map
+					idata = row[i]
+					RollbackContract(idata["Name"])
+					i = i + 1
+				}
+			}
+		}
 		func ImportData(row array) {
 			if !row {
 				return
@@ -657,6 +682,11 @@ var (
 			ImportList($list["contracts"], "contracts")
 			ImportList($list["tables"], "tables")
 			ImportData($list["data"])
+		}
+		func rollback() {
+			$list = JSONToMap($Data)
+			RollbackImportList($list["contracts"], "contracts")
+			RollbackImportList($list["tables"], "tables")
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('21', 'contract NewCron {
