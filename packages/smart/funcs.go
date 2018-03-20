@@ -1210,6 +1210,8 @@ func GetBlock(blockID int64) (map[string]int64, error) {
 		"time":   block.Time,
 		"key_id": block.KeyID,
 	}, nil
+}
+
 // UUID returns new uuid
 func UUID(sc *SmartContract) string {
 	return uuid.Must(uuid.NewV4()).String()
