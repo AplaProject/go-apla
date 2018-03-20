@@ -977,7 +977,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 					  "date_create": "false",
 					  "date_delete": "ContractAccess(\"Roles_Del\")",
 					  "creator_name": "false",
-					  "creator_avatar": "false"}',
+					  "creator_avatar": "false",
+					  "company_id": "false"}',
 					   'ContractConditions(\"MainCondition\")'),
 				('11', 'roles_assign', 
 					'{"insert": "ContractAccess(\"Roles_Assign\", \"voting_CheckDecision\")", "update": "ContractAccess(\"Roles_Unassign\")", 
@@ -1060,15 +1061,20 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"date_create" timestamp,
 			"date_delete" timestamp,
 			"creator_name"	varchar(255) NOT NULL DEFAULT '',
-			"creator_avatar" bytea NOT NULL DEFAULT ''
+			"creator_avatar" bytea NOT NULL DEFAULT '',
+			"company_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
 		CREATE INDEX "%[1]d_roles_list_index_type" ON "%[1]d_roles_list" (role_type);
 
 		INSERT INTO "%[1]d_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
-			"date_create","creator_name") VALUES('1','default_ecosystem_page', 
-				'Admin', '0', '3', NOW(), '');
+			"date_create","creator_name") VALUES
+			('1','default_ecosystem_page', 'Admin', '0', '3', NOW(), ''),
+			('2','', 'Candidate for validators', '0', '3', NOW(), ''),
+			('3','', 'Validator', '0', '3', NOW(), ''),
+			('4','', 'Investor with voting rights', '0', '3', NOW(), ''),
+			('5','', 'Delegate', '0', '3', NOW(), '');
 
 
 		DROP TABLE IF EXISTS "%[1]d_roles_assign";
@@ -1107,7 +1113,37 @@ If("#key_id#" == EcosysParam("founder_account")){
 		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
 		`
 
-	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id") VALUES ('1');
+	SchemaFirstEcosystem = `
+		DROP TABLE IF EXISTS "1_delayed_contracts";
+		CREATE TABLE "1_delayed_contracts" (
+			"id" int NOT NULL default 0,
+			"contract" varchar(255) NOT NULL DEFAULT '',
+			"key_id" bigint NOT NULL DEFAULT '0',
+			"block_id" int NOT NULL DEFAULT '0',
+			"every_block" int NOT NULL DEFAULT '0',
+			"counter" int NOT NULL DEFAULT '0',
+			"limit" int NOT NULL DEFAULT '0',
+			"deleted" boolean NOT NULL DEFAULT 'false',
+			"conditions" text NOT NULL DEFAULT ''
+		);
+		ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
+		
+		INSERT INTO "system_states" ("id") VALUES ('1');
+
+		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
+			('14', 'delayed_contracts', 
+			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+			"new_column": "ContractConditions(\"MainCondition\")"}',
+			'{"contract": "ContractConditions(\"MainCondition\")",
+				"key_id": "ContractConditions(\"MainCondition\")",
+				"block_id": "ContractConditions(\"MainCondition\")",
+				"every_block": "ContractConditions(\"MainCondition\")",
+				"counter": "ContractConditions(\"MainCondition\")",
+				"limit": "ContractConditions(\"MainCondition\")",
+				"deleted": "ContractConditions(\"MainCondition\")",
+				"conditions": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")');
 
 	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
 	('2','contract MoneyTransfer {
@@ -1875,5 +1911,104 @@ If("#key_id#" == EcosysParam("founder_account")){
 		action {
 			DBUpdateSysParam($Name, $Value, $Conditions )
 		}
-	}', '%[1]d','ContractConditions("MainCondition")');`
+	}', '%[1]d','ContractConditions("MainCondition")'),
+	('28', 'contract NewDelayedContract {
+		data {
+			Contract string
+			EveryBlock int
+			Conditions string
+			BlockID int "optional"
+			Limit int "optional"
+		}
+		conditions {
+			ValidateCondition($Conditions, $ecosystem_id)
+
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
+			}
+			
+			if GetContractByName($Contract) == 0 {
+				error Sprintf("Unknown contract %%s", $Contract)
+			}
+
+			if $BlockID == 0 {
+				$BlockID = $block + $EveryBlock
+			}
+
+			if $BlockID <= $block {
+				error "The blockID must be greater than the current blockID"
+			}
+		}
+		action {
+			DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,\"limit\",conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('29', 'contract EditDelayedContract {
+		data {
+			Id int
+			Contract string
+			EveryBlock int
+			Conditions string
+			BlockID int "optional"
+			Limit int "optional"
+			Deleted int "optional"
+		}
+		conditions {
+			ConditionById("delayed_contracts", true)
+
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
+			}
+
+			if GetContractByName($Contract) == 0 {
+				error Sprintf("Unknown contract %%s", $Contract)
+			}
+
+			if $BlockID == 0 {
+				$BlockID = $block + $EveryBlock
+			}
+
+			if $BlockID <= $block {
+				error "The blockID must be greater than the current blockID"
+			}
+		}
+		action {
+			DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,\"limit\",deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('30', 'contract CallDelayedContract {
+		data {
+			Id int
+		}
+		conditions {
+			var rows array
+			rows = DBFind("delayed_contracts").Where("id = ? and deleted = false", $Id)
+			if !Len(rows) {
+				error Sprintf("Delayed contract %%d does not exist", $Id)
+			}
+			$cur = rows[0]
+	
+			if $key_id != Int($cur["key_id"]) {
+				error "Access denied"
+			}
+	
+			if $block != Int($cur["block_id"]) {
+				error Sprintf("Delayed contract %%d must run on block %%s, current block %%d", $Id, $cur["block_id"], $block)
+			}
+		}
+		action {
+			var limit, counter, block_id int
+	
+			limit = Int($cur["limit"])
+			counter = Int($cur["counter"])+1
+			block_id = $block
+	
+			if limit == 0 || limit > counter {
+				block_id = block_id + Int($cur["every_block"])
+			}
+	
+			DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
+			CallContract($cur["contract"], nil)
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")');`
 )

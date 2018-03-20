@@ -22,12 +22,11 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/notificator"
-
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -76,13 +75,20 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return nil
 	}
 
-	NodePrivateKey, _, err := utils.GetNodeKeys()
+	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
 	if err != nil || len(NodePrivateKey) < 1 {
 		if err == nil {
 			d.logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
 		}
 		return err
 	}
+
+	dtx := DelayedTx{
+		privateKey: NodePrivateKey,
+		publicKey:  NodePublicKey,
+		logger:     d.logger,
+	}
+	dtx.RunForBlockID(prevBlock.BlockID + 1)
 
 	p := new(parser.Parser)
 
