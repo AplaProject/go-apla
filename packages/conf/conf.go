@@ -50,7 +50,6 @@ type CentrifugoConfig struct {
 
 type Syslog struct {
 	Facility string
-	Severity string
 	Tag      string
 }
 

@@ -80,68 +80,46 @@ func killOld() {
 
 func syslogFacility(facility string) syslog.Priority {
 	switch facility {
-	case "LOG_KERN":
+	case "kern":
 		return syslog.LOG_KERN
-	case "LOG_USER":
+	case "user":
 		return syslog.LOG_USER
-	case "LOG_MAIL":
+	case "mail":
 		return syslog.LOG_MAIL
-	case "LOG_DAEMON":
+	case "daemon":
 		return syslog.LOG_DAEMON
-	case "LOG_AUTH":
+	case "auth":
 		return syslog.LOG_AUTH
-	case "LOG_SYSLOG":
+	case "syslog":
 		return syslog.LOG_SYSLOG
-	case "LOG_LPR":
+	case "lpr":
 		return syslog.LOG_LPR
-	case "LOG_NEWS":
+	case "news":
 		return syslog.LOG_NEWS
-	case "LOG_UUCP":
+	case "uucp":
 		return syslog.LOG_UUCP
-	case "LOG_CRON":
+	case "cron":
 		return syslog.LOG_CRON
-	case "LOG_AUTHPRIV":
+	case "authpriv":
 		return syslog.LOG_AUTHPRIV
-	case "LOG_FTP":
+	case "ftp":
 		return syslog.LOG_FTP
-	case "LOG_LOCAL0":
+	case "local0":
 		return syslog.LOG_LOCAL0
-	case "LOG_LOCAL1":
+	case "local1":
 		return syslog.LOG_LOCAL1
-	case "LOG_LOCAL2":
+	case "local2":
 		return syslog.LOG_LOCAL2
-	case "LOG_LOCAL3":
+	case "local3":
 		return syslog.LOG_LOCAL3
-	case "LOG_LOCAL4":
+	case "local4":
 		return syslog.LOG_LOCAL4
-	case "LOG_LOCAL5":
+	case "local5":
 		return syslog.LOG_LOCAL5
-	case "LOG_LOCAL6":
+	case "local6":
 		return syslog.LOG_LOCAL6
-	case "LOG_LOCAL7":
+	case "local7":
 		return syslog.LOG_LOCAL7
-	}
-	return 0
-}
-
-func syslogSeverity(severity string) syslog.Priority {
-	switch severity {
-	case "LOG_EMERG":
-		return syslog.LOG_EMERG
-	case "LOG_ALERT":
-		return syslog.LOG_ALERT
-	case "LOG_CRIT":
-		return syslog.LOG_CRIT
-	case "LOG_ERR":
-		return syslog.LOG_ERR
-	case "LOG_WARNING":
-		return syslog.LOG_WARNING
-	case "LOG_NOTICE":
-		return syslog.LOG_NOTICE
-	case "LOG_INFO":
-		return syslog.LOG_INFO
-	case "LOG_DEBUG":
-		return syslog.LOG_DEBUG
 	}
 	return 0
 }
@@ -157,10 +135,9 @@ func initLogs() error {
 	case "stdout":
 		log.SetOutput(os.Stdout)
 	case "syslog":
-		severity := syslogSeverity(conf.Config.LogConfig.Syslog.Severity)
 		facility := syslogFacility(conf.Config.LogConfig.Syslog.Facility)
 		tag := conf.Config.LogConfig.Syslog.Tag
-		sysLogHook, err := logtools.NewSyslogHook(tag, severity|facility)
+		sysLogHook, err := logtools.NewSyslogHook(tag, facility)
 		if err != nil {
 			log.WithError(err).Error("initializing syslog hook")
 		} else {
