@@ -205,6 +205,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RollbackEditContract": RollbackEditContract,
 		"check_signature":      CheckSignature,
 		"RowConditions":        RowConditions,
+		"UUID":                 UUID,
 	}
 
 	switch vt {
@@ -1193,6 +1194,6 @@ func UpdateCron(sc *SmartContract, id int64) error {
 }
 
 // UUID returns new uuid
-func (sc *SmartContract) UUID() string {
+func UUID(sc *SmartContract) string {
 	return uuid.Must(uuid.NewV4()).String()
 }
