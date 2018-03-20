@@ -1131,8 +1131,6 @@ If("#key_id#" == EcosysParam("founder_account")){
 		ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
 		
-		INSERT INTO "system_states" ("id") VALUES ('1');
-
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
 			('14', 'delayed_contracts', 
 			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
@@ -2021,5 +2019,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"is_valued" bigint NOT NULL DEFAULT '0'
 	);
 	ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
+
+	INSERT INTO "1_ecosystems" ("id", "name", "is_valued") VALUES ('1', "base ecosystem", 1);
 	`
 )
