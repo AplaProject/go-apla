@@ -1310,7 +1310,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 				"limit": "ContractConditions(\"MainCondition\")",
 				"deleted": "ContractConditions(\"MainCondition\")",
 				"conditions": "ContractConditions(\"MainCondition\")"}',
-				'ContractConditions(\"MainCondition\")');
+				'ContractConditions(\"MainCondition\")'),
+
+			(
+				'17',
+				'1_ecosystems',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"name": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")'
+			);
 
 	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
 	('2','contract MoneyTransfer {
