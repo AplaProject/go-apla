@@ -37,14 +37,15 @@ type getUIDResult struct {
 	EcosystemID string `json:"ecosystem_id,omitempty"`
 	KeyID       string `json:"key_id,omitempty"`
 	Address     string `json:"address,omitempty"`
-	IsVDE       bool   `json:"vde,omitempty"`
+	IsVDE       bool   `json:"vde"`
 }
 
 func getUID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var result getUIDResult
+	result := &getUIDResult{
+		IsVDE: *conf.IsVDEMode,
+	}
 
-	data.result = &result
-
+	data.result = result
 	if data.token != nil && data.token.Valid {
 		if claims, ok := data.token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
 			result.EcosystemID = claims.EcosystemID
@@ -66,6 +67,5 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 
-	result.IsVDE = *conf.IsVDEMode
 	return
 }
