@@ -4,6 +4,7 @@ import (
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
+	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -17,6 +18,13 @@ func RunAllDaemons() error {
 	if err != nil {
 		log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
 		return err
+	}
+
+	// If list of nodes is empty, then used node from the first block
+	if syspar.GetNumberOfNodes() == 0 {
+		if keyID, publicKey, ok := parser.GetKeysFromFirstBlock(); ok {
+			syspar.AddFullNodeKeys(keyID, publicKey)
+		}
 	}
 
 	log.Info("load contracts")
