@@ -1158,7 +1158,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		INSERT INTO "system_states" ("id") VALUES ('1');
 
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
-			('14', 'delayed_contracts', 
+			('15', 'delayed_contracts', 
 			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 			"new_column": "ContractConditions(\"MainCondition\")"}',
 			'{"contract": "ContractConditions(\"MainCondition\")",
