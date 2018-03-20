@@ -2222,5 +2222,14 @@ If("#key_id#" == EcosysParam("founder_account")){
            	DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
                     $key_id, $newId, $amount, "New user deposit", $block, $txhash)
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")');`
+	}','%[1]d', 'ContractConditions("MainCondition")');
+	
+	DROP TABLE IF EXISTS "1_ecosystems";
+	CREATE TABLE "1_ecosystems" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"name"	varchar(255) NOT NULL DEFAULT '',
+			"is_valued" bigint NOT NULL DEFAULT '0'
+	);
+	ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
+	`
 )
