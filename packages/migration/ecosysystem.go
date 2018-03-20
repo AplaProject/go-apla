@@ -1156,18 +1156,27 @@ If("#key_id#" == EcosysParam("founder_account")){
 		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
 		
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
-			('15', 'delayed_contracts', 
-			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
-			"new_column": "ContractConditions(\"MainCondition\")"}',
-			'{"contract": "ContractConditions(\"MainCondition\")",
-				"key_id": "ContractConditions(\"MainCondition\")",
-				"block_id": "ContractConditions(\"MainCondition\")",
-				"every_block": "ContractConditions(\"MainCondition\")",
-				"counter": "ContractConditions(\"MainCondition\")",
-				"limit": "ContractConditions(\"MainCondition\")",
-				"deleted": "ContractConditions(\"MainCondition\")",
-				"conditions": "ContractConditions(\"MainCondition\")"}',
-				'ContractConditions(\"MainCondition\")');
+			(
+				'15', 
+				'delayed_contracts', 
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"contract": "ContractConditions(\"MainCondition\")",
+					"key_id": "ContractConditions(\"MainCondition\")",
+					"block_id": "ContractConditions(\"MainCondition\")",
+					"every_block": "ContractConditions(\"MainCondition\")",
+					"counter": "ContractConditions(\"MainCondition\")",
+					"limit": "ContractConditions(\"MainCondition\")",
+					"deleted": "ContractConditions(\"MainCondition\")",
+					"conditions": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")'
+			),
+			(
+				'16',
+				'1_ecosystems',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"name": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")'
+			);
 
 	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
 	('2','contract MoneyTransfer {
