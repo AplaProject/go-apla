@@ -205,6 +205,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RollbackEditContract": RollbackEditContract,
 		"check_signature":      CheckSignature,
 		"RowConditions":        RowConditions,
+		"UUID":                 UUID,
 	}
 
 	switch vt {
@@ -1210,6 +1211,6 @@ func GetBlock(blockID int64) (map[string]int64, error) {
 		"key_id": block.KeyID,
 	}, nil
 // UUID returns new uuid
-func (sc *SmartContract) UUID() string {
+func UUID(sc *SmartContract) string {
 	return uuid.Must(uuid.NewV4()).String()
 }
