@@ -1074,7 +1074,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 			('2','', 'Candidate for validators', '0', '3', NOW(), ''),
 			('3','', 'Validator', '0', '3', NOW(), ''),
 			('4','', 'Investor with voting rights', '0', '3', NOW(), ''),
-			('5','', 'Delegate', '0', '3', NOW(), '');
+			('5','', 'Delegate', '0', '3', NOW(), ''),
+			('6','', 'Developer', '0', '3', NOW(), '');
 
 
 		DROP TABLE IF EXISTS "%[1]d_roles_assign";
@@ -1097,8 +1098,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 		CREATE INDEX "%[1]d_roles_assign_index_type" ON "%[1]d_roles_assign" (role_type);
 		CREATE INDEX "%[1]d_roles_assign_index_member" ON "%[1]d_roles_assign" (member_id);
 
-		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id",
-			"member_name","date_start") VALUES('1','1','3','Admin','%[4]d','founder', NOW());
+		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id", "member_name","date_start") 
+		VALUES('1','1','3','Admin','%[4]d','founder', NOW()),
+			('2','6','3','Developer','%[4]d','founder', NOW());
 
 
 		DROP TABLE IF EXISTS "%[1]d_members";
