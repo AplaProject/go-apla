@@ -1030,7 +1030,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 						"page": "ContractConditions(\"MainCondition\")",
 						"roles_access": "ContractConditions(\"MainCondition\")",
 						"delete": "ContractConditions(\"MainCondition\")"}', 
-						'ContractConditions(\"MainCondition\")');
+						'ContractConditions(\"MainCondition\")'),
+				('14', 'applications',
+					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"title": "ContractConditions(\"MainCondition\")",
+						"name": "ContractConditions(\"MainCondition\")",
+						"uuid": "false",
+						"condition": "ContractConditions(\"MainCondition\")",
+						"deleted": "ContractConditions(\"MainCondition\")"}', 
+					'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (
