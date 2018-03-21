@@ -440,9 +440,12 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			val, ok := params[tx.Name]
-			if !ok && !strings.Contains(tx.Tags, `optional`) {
-				logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
-				return nil, fmt.Errorf(eUndefinedParam, tx.Name)
+			if !ok {
+				if !strings.Contains(tx.Tags, `optional`) {
+					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
+					return nil, fmt.Errorf(eUndefinedParam, tx.Name)
+				}
+				val = reflect.New(tx.Type).Elem().Interface()
 			}
 			names = append(names, tx.Name)
 			vals = append(vals, val)

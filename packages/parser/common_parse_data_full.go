@@ -625,12 +625,10 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		)
 		p.DbTransaction = dbTransaction
 
-		if b.GenBlock {
-			err = dbTransaction.Connection().Exec(fmt.Sprintf("SAVEPOINT \"tx-%d\";", curTx)).Error
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("using savepoint")
-				return err
-			}
+		err = dbTransaction.Savepoint(curTx)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("using savepoint")
+			return err
 		}
 		msg, err = playTransaction(p)
 		if err == nil && p.TxSmart != nil {
@@ -639,23 +637,15 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		if err != nil {
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
-				model.IncrementTxAttemptCount(p.TxHash)
-				err = dbTransaction.Connection().Exec(fmt.Sprintf("ROLLBACK TO SAVEPOINT \"tx-%d\";", curTx)).Error
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("rolling back to previous savepoint")
-				}
-				return err
+				model.IncrementTxAttemptCount(p.DbTransaction, p.TxHash)
+			}
+			errRoll := dbTransaction.RollbackSavepoint(curTx)
+			if errRoll != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("rolling back to previous savepoint")
+				return errRoll
 			}
 			// skip this transaction
-			errRoll := dbTransaction.Connection().Exec(fmt.Sprintf("ROLLBACK TO SAVEPOINT \"tx-%d\";", curTx)).Error
-			if errRoll != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": errRoll, "tx_hash": p.TxHash}).Error("rolling back to previous savepoint")
-			}
-			_, err2 := model.MarkTransactionUsed(nil, p.TxHash)
-			if err2 != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err2}).Error("marking used transactions")
-				return err2
-			}
+			model.MarkTransactionUsed(p.DbTransaction, p.TxHash)
 			p.processBadTransaction(p.TxHash, err.Error())
 			if p.SysUpdate {
 				if err = syspar.SysUpdate(p.DbTransaction); err != nil {
@@ -665,11 +655,9 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			}
 			continue
 		}
-		if b.GenBlock {
-			err = dbTransaction.Connection().Exec(fmt.Sprintf("RELEASE SAVEPOINT \"tx-%d\";", curTx)).Error
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("releasing savepoint")
-			}
+		err = dbTransaction.ReleaseSavepoint(curTx)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("releasing savepoint")
 		}
 		if p.SysUpdate {
 			b.SysUpdate = true

@@ -376,7 +376,7 @@ func (p *Parser) BlockError(err error) {
 	}
 	p.DeleteQueueTx(p.TxHash)
 	ts := &model.TransactionStatus{}
-	ts.SetError(nil, errText, p.TxHash)
+	ts.SetError(p.DbTransaction, errText, p.TxHash)
 }
 
 // AccessRights checks the access right by executing the condition value

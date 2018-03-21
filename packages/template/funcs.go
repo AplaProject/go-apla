@@ -37,6 +37,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Composite struct {
+	Name string      `json:"name"`
+	Data interface{} `json:"data,omitempty"`
+}
+
 var (
 	funcs = make(map[string]tplFunc)
 	tails = make(map[string]forTails)
@@ -89,8 +94,9 @@ func init() {
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
 
 	tails[`button`] = forTails{map[string]tailInfo{
-		`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
-		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		`Alert`:             {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
+		`Style`:             {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		`CompositeContract`: {tplFunc{compositeTag, defaultTailFull, `composite`, `Name,Data`}, false},
 	}}
 	tails[`div`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -212,7 +218,7 @@ func forlistTag(par parFunc) (ret string) {
 				}
 			}
 		}
-		body := replace((*par.Pars)[`Data`], 0, &vals)
+		body := macroReplace((*par.Pars)[`Data`], &vals)
 		process(body, &root, par.Workspace)
 	}
 	par.Node.Children = root.Children
@@ -402,10 +408,12 @@ func dataTag(par parFunc) string {
 		for i, icol := range cols {
 			var ival string
 			if i < defcol {
-				ival = strings.TrimSpace(item[i])
+				if i < len(item) {
+					ival = strings.TrimSpace(item[i])
+				}
 				vals[icol] = ival
 			} else {
-				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
+				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &vals)
 				root := node{}
 				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
@@ -436,10 +444,7 @@ func dbfindTag(par parFunc) string {
 		state  int64
 		err    error
 		perm   map[string]string
-		prefix string
-		where  string
-		order  string
-		limit  = 25
+		offset string
 
 		cutoffColumns   = make(map[string]bool)
 		extendedColumns = make(map[string]string)
@@ -449,6 +454,10 @@ func dbfindTag(par parFunc) string {
 		return ``
 	}
 	defaultTail(par, `dbfind`)
+	prefix := ``
+	where := ``
+	order := ``
+	limit := 25
 
 	if par.Node.Attr[`columns`] != nil {
 		fields = converter.Escape(par.Node.Attr[`columns`].(string))
@@ -473,6 +482,10 @@ func dbfindTag(par parFunc) string {
 	if limit > 250 {
 		limit = 250
 	}
+	if par.Node.Attr[`offset`] != nil {
+		offset = fmt.Sprintf(` offset %d`, converter.StrToInt(par.Node.Attr[`offset`].(string)))
+	}
+
 	if par.Node.Attr[`prefix`] != nil {
 		prefix = par.Node.Attr[`prefix`].(string)
 		limit = 1
@@ -537,7 +550,7 @@ func dbfindTag(par parFunc) string {
 	}
 	fields = smart.PrepareColumns(fields)
 
-	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order, limit)
+	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order+offset, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
@@ -597,7 +610,7 @@ func dbfindTag(par parFunc) string {
 					break
 				}
 			} else {
-				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &item)
+				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &item)
 				root := node{}
 				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
@@ -650,6 +663,22 @@ func dbfindTag(par parFunc) string {
 	return ``
 }
 
+func compositeTag(par parFunc) string {
+	setAllAttr(par)
+	if len((*par.Pars)[`Name`]) == 0 {
+		return ``
+	}
+	if par.Owner.Attr[`composites`] == nil {
+		par.Owner.Attr[`composites`] = make([]string, 0)
+		par.Owner.Attr[`compositedata`] = make([]string, 0)
+	}
+	par.Owner.Attr[`composites`] = append(par.Owner.Attr[`composites`].([]string),
+		(*par.Pars)[`Name`])
+	par.Owner.Attr[`compositedata`] = append(par.Owner.Attr[`compositedata`].([]string),
+		macro((*par.Pars)[`Data`], par.Workspace.Vars))
+	return ``
+}
+
 func customTag(par parFunc) string {
 	setAllAttr(par)
 	if par.Owner.Attr[`customs`] == nil {
@@ -694,7 +723,7 @@ func setvarTag(par parFunc) string {
 		if strings.ContainsAny((*par.Pars)[`Value`], `({`) {
 			(*par.Pars)[`Value`] = processToText(par, (*par.Pars)[`Value`])
 		}
-		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
+		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = macroReplace((*par.Pars)[`Value`], par.Workspace.Vars)
 	}
 	return ``
 }
@@ -758,6 +787,24 @@ func defaultTailTag(par parFunc) string {
 func buttonTag(par parFunc) string {
 	defaultTag(par)
 	defaultTail(par, `button`)
+	defer func() {
+		delete(par.Node.Attr, `composites`)
+		delete(par.Node.Attr, `compositedata`)
+	}()
+	if par.Node.Attr[`composites`] != nil {
+		composites := make([]Composite, 0)
+		for i, name := range par.Node.Attr[`composites`].([]string) {
+			var data interface{}
+			input := par.Node.Attr[`compositedata`].([]string)[i]
+			if len(input) > 0 {
+				if err := json.Unmarshal([]byte(input), &data); err != nil {
+					return err.Error()
+				}
+			}
+			composites = append(composites, Composite{Name: name, Data: data})
+		}
+		par.Node.Attr[`composite`] = &composites
+	}
 	return ``
 }
 

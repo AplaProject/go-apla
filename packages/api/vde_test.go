@@ -609,7 +609,7 @@ func TestCron(t *testing.T) {
 	}
 
 	err := postTx("NewCron", &url.Values{
-		"Cron":       {"60 * * * * *"},
+		"Cron":       {"60 * * * *"},
 		"Contract":   {"TestCron"},
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"vde":        {"true"},
@@ -633,7 +633,7 @@ func TestCron(t *testing.T) {
 
 	till := time.Now().Format(time.RFC3339)
 	err = postTx("NewCron", &url.Values{
-		"Cron":       {"* * * * * *"},
+		"Cron":       {"* * * * *"},
 		"Contract":   {"TestCron"},
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"Till":       {till},
@@ -645,7 +645,7 @@ func TestCron(t *testing.T) {
 
 	err = postTx("EditCron", &url.Values{
 		"Id":         {"1"},
-		"Cron":       {"*/3 * * * * *"},
+		"Cron":       {"*/3 * * * *"},
 		"Contract":   {"TestCron"},
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"Till":       {till},

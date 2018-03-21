@@ -234,48 +234,65 @@ MenuItem(
 	  ('3','contract EditContract {
 		  data {
 			  Id         int
-			  Value      string
-			  Conditions string
+			  Value      string "optional"
+			  Conditions string "optional"
 		  }
 		  conditions {
-			  RowConditions("contracts", $Id)
-			  ValidateCondition($Conditions, $ecosystem_id)
+			RowConditions("contracts", $Id)
+			if $Conditions {
+	    		ValidateCondition($Conditions, $ecosystem_id)
+			}
 
-			  var row array
-			  row = DBFind("contracts").Columns("id,value,conditions").WhereId($Id)
-			  if !Len(row) {
-				  error Sprintf("Contract %%d does not exist", $Id)
-			  }
-			  $cur = row[0]
-
-			  var list, curlist array
-			  list = ContractsList($Value)
-			  curlist = ContractsList($cur["value"])
-			  if Len(list) != Len(curlist) {
-				  error "Contracts cannot be removed or inserted"
-			  }
-			  var i int
-			  while i < Len(list) {
-				  var j int
-				  var ok bool
-				  while j < Len(curlist) {
-					  if curlist[j] == list[i] {
-						  ok = true
-						  break
-					  }
-					  j = j + 1 
-				  }
-				  if !ok {
-					  error "Contracts or functions names cannot be changed"
-				  }
-				  i = i + 1
-			  }
+			var row array
+			row = DBFind("contracts").Columns("id,value,conditions").WhereId($Id)
+			if !Len(row) {
+				error Sprintf("Contract %%d does not exist", $Id)
+			}
+			$cur = row[0]
+			if $Value {
+				var list, curlist array
+				list = ContractsList($Value)
+				curlist = ContractsList($cur["value"])
+				if Len(list) != Len(curlist) {
+					error "Contracts cannot be removed or inserted"
+				}
+				var i int
+				while i < Len(list) {
+					var j int
+					var ok bool
+					while j < Len(curlist) {
+						if curlist[j] == list[i] {
+							ok = true
+							break
+						}
+						j = j + 1 
+					}
+					if !ok {
+						error "Contracts or functions names cannot be changed"
+					}
+					i = i + 1
+				}
+			}
 		  }
 		  action {
-			  var root int
-			  root = CompileContract($Value, $ecosystem_id, 0, 0)
-			  DBUpdate("contracts", $Id, "value,conditions", $Value, $Conditions)
-			  FlushContract(root, $Id, false)
+			var root int
+			var pars, vals array
+
+			if $Value {
+				root = CompileContract($Value, $ecosystem_id, 0, 0)
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if Len(vals) > 0 {
+				DBUpdate("contracts", $Id, Join(pars, ","), vals...)
+			}
+			if $Value {
+			   FlushContract(root, $Id, false)
+			}
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('4','contract NewParameter {
@@ -332,17 +349,34 @@ MenuItem(
 	  ('7','contract EditMenu {
 		  data {
 			  Id         int
-			  Value      string
+			  Value      string "optional"
 			  Title      string "optional"
-			  Conditions string
-		  }
-		  conditions {
-			  RowConditions("menu", $Id)
+			  Conditions string "optional"
+	  	}
+	  	conditions {
+		  RowConditions("menu", $Id)
+		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
-		  action {
-			  DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
+	  	}
+	  	action {
+		  var pars, vals array
+		  if $Value {
+			  pars[0] = "value"
+			  vals[0] = $Value
 		  }
+		  if $Title {
+			  pars[Len(pars)] = "title"
+			  vals[Len(vals)] = $Title
+		  }
+		  if $Conditions {
+			  pars[Len(pars)] = "conditions"
+			  vals[Len(vals)] = $Conditions
+		  }
+		  if Len(vals) > 0 {
+			  DBUpdate("menu", $Id, Join(pars, ","), vals...)
+		  }			
+		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('8','contract AppendMenu {
 		data {
@@ -379,18 +413,35 @@ MenuItem(
 	  }', 'ContractConditions("MainCondition")'),
 	  ('10','contract EditPage {
 		  data {
-			  Id         int
-			  Value      string
-			  Menu      string
-			  Conditions string
-		  }
-		  conditions {
-			  RowConditions("pages", $Id)
+			Id         int
+			Value      string "optional"
+			Menu      string "optional"
+		  	Conditions string "optional"
+	  	}
+	  	conditions {
+		  RowConditions("pages", $Id)
+		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
-		  action {
-			  DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
+	  	}
+	  	action {
+		  var pars, vals array
+		  if $Value {
+			  pars[0] = "value"
+			  vals[0] = $Value
 		  }
+		  if $Menu {
+			  pars[Len(pars)] = "menu"
+			  vals[Len(vals)] = $Menu
+		  }
+		  if $Conditions {
+			  pars[Len(pars)] = "conditions"
+			  vals[Len(vals)] = $Conditions
+		  }
+		  if Len(vals) > 0 {
+			  DBUpdate("pages", $Id, Join(pars, ","), vals...)
+		  }
+	  	}		  
 	  }', 'ContractConditions("MainCondition")'),
 	  ('11','contract AppendPage {
 		  data {
@@ -426,17 +477,30 @@ MenuItem(
 	  }', 'ContractConditions("MainCondition")'),
 	  ('13','contract EditBlock {
 		  data {
-			  Id         int
-			  Value      string
-			  Conditions string
-		  }
-		  conditions {
-			  RowConditions("blocks", $Id)
+			Id         int
+			Value      string "optional"
+		  	Conditions string "optional"
+	  		}
+	  	conditions {
+		  RowConditions("blocks", $Id)
+		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
-		  action {
-			  DBUpdate("blocks", $Id, "value,conditions", $Value, $Conditions)
+	  	}
+	  	action {
+		  var pars, vals array
+		  if $Value {
+			  pars[0] = "value"
+			  vals[0] = $Value
 		  }
+		  if $Conditions {
+			  pars[Len(pars)] = "conditions"
+			  vals[Len(vals)] = $Conditions
+		  }
+		  if Len(vals) > 0 {
+			  DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+		  }
+		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('14','contract NewTable {
 		  data {
@@ -798,6 +862,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
 			"menu" character varying(255) NOT NULL DEFAULT '',
+			"validate_count" bigint NOT NULL DEFAULT '1',
 			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
@@ -906,7 +971,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 		('12','stylesheet', 'body {
 		  /* You can define your custom styles here or create custom CSS rules */
 		}', 'ContractConditions("MainCondition")'),
-		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")');
+		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")'),
+		('14','min_page_validate_count', '1', 'ContractConditions("MainCondition")'),
+		('15','max_page_validate_count', '6', 'ContractConditions("MainCondition")');
 		
 		DROP TABLE IF EXISTS "%[1]d_tables";
 		CREATE TABLE "%[1]d_tables" (
@@ -959,6 +1026,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 				'{"name": "ContractConditions(\"MainCondition\")",
 			"value": "ContractConditions(\"MainCondition\")",
 			"menu": "ContractConditions(\"MainCondition\")",
+			"validate_count": "ContractConditions(\"MainCondition\")",
 			"conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractAccess("@1EditTable")'),
 				('7', 'blocks', 
@@ -975,7 +1043,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"value": "ContractConditions(\"MainCondition\")",
 			"conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractAccess("@1EditTable")'),
-				('9', 'member',
+				('9', 'members', 
 					'{"insert": "ContractAccess(\"Profile_Edit\")", "update": "ContractAccess(\"Profile_Edit\")", 
 					  "new_column": "ContractConditions(\"MainCondition\")"}',
 					'{"member_name": "ContractAccess(\"Profile_Edit\")",
@@ -1088,7 +1156,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 			('2','', 'Candidate for validators', '0', '3', NOW(), ''),
 			('3','', 'Validator', '0', '3', NOW(), ''),
 			('4','', 'Investor with voting rights', '0', '3', NOW(), ''),
-			('5','', 'Delegate', '0', '3', NOW(), '');
+			('5','', 'Delegate', '0', '3', NOW(), ''),
+			('6','', 'Developer', '0', '3', NOW(), '');
 
 
 		DROP TABLE IF EXISTS "%[1]d_roles_assign";
@@ -1111,23 +1180,54 @@ If("#key_id#" == EcosysParam("founder_account")){
 		CREATE INDEX "%[1]d_roles_assign_index_type" ON "%[1]d_roles_assign" (role_type);
 		CREATE INDEX "%[1]d_roles_assign_index_member" ON "%[1]d_roles_assign" (member_id);
 
-		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id",
-			"member_name","date_start") VALUES('1','1','3','Admin','%[4]d','founder', NOW());
+		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id", "member_name","date_start") 
+		VALUES('1','1','3','Admin','%[4]d','founder', NOW()),
+			('2','6','3','Developer','%[4]d','founder', NOW());
 
 
-		DROP TABLE IF EXISTS "%[1]d_member";
-		CREATE TABLE "%[1]d_member" (
+		DROP TABLE IF EXISTS "%[1]d_members";
+		CREATE TABLE "%[1]d_members" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
 			"avatar"	bytea NOT NULL DEFAULT ''
 		);
-		ALTER TABLE ONLY "%[1]d_member" ADD CONSTRAINT "%[1]d_member_pkey" PRIMARY KEY ("id");
+		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
-		INSERT INTO "%[1]d_member" ("id", "member_name") VALUES('%[4]d', 'founder');
-
+		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
+		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
 		`
 
-	SchemaFirstEcosystem = `INSERT INTO "system_states" ("id") VALUES ('1');
+	SchemaFirstEcosystem = `
+		DROP TABLE IF EXISTS "1_delayed_contracts";
+		CREATE TABLE "1_delayed_contracts" (
+			"id" int NOT NULL default 0,
+			"contract" varchar(255) NOT NULL DEFAULT '',
+			"key_id" bigint NOT NULL DEFAULT '0',
+			"block_id" int NOT NULL DEFAULT '0',
+			"every_block" int NOT NULL DEFAULT '0',
+			"counter" int NOT NULL DEFAULT '0',
+			"limit" int NOT NULL DEFAULT '0',
+			"deleted" boolean NOT NULL DEFAULT 'false',
+			"conditions" text NOT NULL DEFAULT ''
+		);
+		ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
+		
+		INSERT INTO "system_states" ("id") VALUES ('1');
+
+		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
+			('14', 'delayed_contracts', 
+			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+			"new_column": "ContractConditions(\"MainCondition\")"}',
+			'{"contract": "ContractConditions(\"MainCondition\")",
+				"key_id": "ContractConditions(\"MainCondition\")",
+				"block_id": "ContractConditions(\"MainCondition\")",
+				"every_block": "ContractConditions(\"MainCondition\")",
+				"counter": "ContractConditions(\"MainCondition\")",
+				"limit": "ContractConditions(\"MainCondition\")",
+				"deleted": "ContractConditions(\"MainCondition\")",
+				"conditions": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")');
 
 	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
 	('2','contract MoneyTransfer {
@@ -1205,6 +1305,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 			FlushContract(root, id, false)
 			$result = id
 		}
+		func rollback() {
+			var list array
+    		list = ContractsList($Value)
+			var i int
+			while i < Len(list) {
+				RollbackContract(list[i])
+				i = i + 1
+			}
+		}
 		func price() int {
 			return  SysParamInt("contract_price")
 		}
@@ -1212,40 +1321,42 @@ If("#key_id#" == EcosysParam("founder_account")){
 	('4','contract EditContract {
 		data {
 			Id         int
-			Value      string
-			Conditions string
+			Value      string "optional"
+			Conditions string "optional"
 			WalletId   string "optional"
 		}
 		conditions {
 			RowConditions("contracts", $Id)
-			ValidateCondition($Conditions, $ecosystem_id)
-
+			if $Conditions {
+			    ValidateCondition($Conditions, $ecosystem_id)
+			}
 			$cur = DBRow("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id)
 			if !$cur {
 				error Sprintf("Contract %%d does not exist", $Id)
 			}
-
-			var list, curlist array
-			list = ContractsList($Value)
-			curlist = ContractsList($cur["value"])
-			if Len(list) != Len(curlist) {
-				error "Contracts cannot be removed or inserted"
-			}
-			var i int
-			while i < Len(list) {
-				var j int
-				var ok bool
-				while j < Len(curlist) {
-					if curlist[j] == list[i] {
-						ok = true
-						break
+			if $Value {
+				var list, curlist array
+				list = ContractsList($Value)
+				curlist = ContractsList($cur["value"])
+				if Len(list) != Len(curlist) {
+					error "Contracts cannot be removed or inserted"
+				}
+				var i int
+				while i < Len(list) {
+					var j int
+					var ok bool
+					while j < Len(curlist) {
+						if curlist[j] == list[i] {
+							ok = true
+							break
+						}
+						j = j + 1 
 					}
-					j = j + 1 
+					if !ok {
+						error "Contracts or functions names cannot be changed"
+					}
+					i = i + 1
 				}
-				if !ok {
-					error "Contracts or functions names cannot be changed"
-				}
-				i = i + 1
 			}
 			if $WalletId != "" {
 				$recipient = AddressToId($WalletId)
@@ -1261,9 +1372,33 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 		action {
 			var root int
-			root = CompileContract($Value, $ecosystem_id, $recipient, Int($cur["token_id"]))
-			DBUpdate("contracts", $Id, "value,conditions,wallet_id", $Value, $Conditions, $recipient)
-			FlushContract(root, $Id, Int($cur["active"]) == 1)
+			var pars, vals array
+			if $Value {
+				root = CompileContract($Value, $ecosystem_id, $recipient, Int($cur["token_id"]))
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if $WalletId != "" {
+				pars[Len(pars)] = "wallet_id"
+				vals[Len(vals)] = $recipient
+			}
+			if Len(vals) > 0 {
+				DBUpdate("contracts", $Id, Join(pars, ","), vals...)
+			}		
+			if $Value {
+				FlushContract(root, $Id, Int($cur["active"]) == 1)
+			} else {
+				if $WalletId != "" {
+					SetContractWallet($Id, $ecosystem_id, $recipient)
+				}
+			}
+		}
+		func rollback() {
+			RollbackEditContract()
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('5','contract ActivateContract {
@@ -1287,6 +1422,10 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("contracts", $Id, "active", 1)
 			Activate($Id, $ecosystem_id)
 		}
+		func rollback() {
+			Deactivate($Id, $ecosystem_id)
+		}
+
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('6','contract NewEcosystem {
 		data {
@@ -1363,16 +1502,33 @@ If("#key_id#" == EcosysParam("founder_account")){
 	('10','contract EditMenu {
 		data {
 			Id         int
-			Value      string
+			Value      string "optional"
 			Title      string "optional"
-			Conditions string
+			Conditions string "optional"
 		}
 		conditions {
 			RowConditions("menu", $Id)
-			ValidateCondition($Conditions, $ecosystem_id)
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
 		}
 		action {
-			DBUpdate("menu", $Id, "value,title,conditions", $Value, $Title, $Conditions)
+			var pars, vals array
+			if $Value {
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Title {
+				pars[Len(pars)] = "title"
+				vals[Len(vals)] = $Title
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if Len(vals) > 0 {
+				DBUpdate("menu", $Id, Join(pars, ","), vals...)
+			}			
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('11','contract AppendMenu {
@@ -1395,6 +1551,22 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Value      string
 			Menu       string
 			Conditions string
+			ValidateCount int "optional"
+		}
+		func preparePageValidateCount(count int) int {
+			var min, max int
+			min = Int(EcosysParam("min_page_validate_count"))
+			max = Int(EcosysParam("max_page_validate_count"))
+	
+			if count < min {
+				count = min
+			} else {
+				if count > max {
+					count = max
+				}
+			}
+	
+			return count
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1405,27 +1577,68 @@ If("#key_id#" == EcosysParam("founder_account")){
 			if row {
 				warning Sprintf( "Page %%s already exists", $Name)
 			}
+
+			$ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
-			DBInsert("pages", "name,value,menu,conditions", $Name, $Value, $Menu, $Conditions )
+			DBInsert("pages", "name,value,menu,validate_count,conditions", $Name, $Value, $Menu, $ValidateCount, $Conditions)
 		}
 		func price() int {
 			return  SysParamInt("page_price")
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}
+	', '%[1]d','ContractConditions("MainCondition")'),
 	('13','contract EditPage {
 		data {
 			Id         int
-			Value      string
-			Menu      string
-			Conditions string
+			Value      string "optional"
+			Menu      string "optional"
+			Conditions string "optional"
+      ValidateCount int "optional"
 		}
+		func preparePageValidateCount(count int) int {
+			var min, max int
+			min = Int(EcosysParam("min_page_validate_count"))
+			max = Int(EcosysParam("max_page_validate_count"))
+	
+			if count < min {
+				count = min
+			} else {
+				if count > max {
+					count = max
+				}
+			}
+	
+			return count
+		}		
 		conditions {
 			RowConditions("pages", $Id)
-			ValidateCondition($Conditions, $ecosystem_id)
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
+      $ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
-			DBUpdate("pages", $Id, "value,menu,conditions", $Value, $Menu, $Conditions)
+			var pars, vals array
+			if $Value {
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Menu {
+				pars[Len(pars)] = "menu"
+				vals[Len(vals)] = $Menu
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+      if $ValidateCount {
+				pars[Len(pars)] = "validate_count"
+				vals[Len(vals)] = $ValidateCount
+      }
+			if Len(vals) > 0 {
+				DBUpdate("pages", $Id, Join(pars, ","), vals...)
+			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('14','contract AppendPage {
@@ -1540,15 +1753,28 @@ If("#key_id#" == EcosysParam("founder_account")){
 	('20','contract EditBlock {
 		data {
 			Id         int
-			Value      string
-			Conditions string
+			Value      string "optional"
+			Conditions string "optional"
 		}
 		conditions {
 			RowConditions("blocks", $Id)
-			ValidateCondition($Conditions, $ecosystem_id)
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
 		}
 		action {
-			DBUpdate("blocks", $Id, "value,conditions", $Value, $Conditions)
+			var pars, vals array
+			if $Value {
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if Len(vals) > 0 {
+				DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('21','contract NewTable {
@@ -1756,6 +1982,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("contracts", $Id, "active", 0)
 			Deactivate($Id, $ecosystem_id)
 		}
+		func rollback() {
+			Activate($Id, $ecosystem_id)
+		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('27','contract UpdateSysParam {
 		data {
@@ -1766,5 +1995,104 @@ If("#key_id#" == EcosysParam("founder_account")){
 		action {
 			DBUpdateSysParam($Name, $Value, $Conditions )
 		}
-	}', '%[1]d','ContractConditions("MainCondition")');`
+	}', '%[1]d','ContractConditions("MainCondition")'),
+	('28', 'contract NewDelayedContract {
+		data {
+			Contract string
+			EveryBlock int
+			Conditions string
+			BlockID int "optional"
+			Limit int "optional"
+		}
+		conditions {
+			ValidateCondition($Conditions, $ecosystem_id)
+
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
+			}
+			
+			if GetContractByName($Contract) == 0 {
+				error Sprintf("Unknown contract %%s", $Contract)
+			}
+
+			if $BlockID == 0 {
+				$BlockID = $block + $EveryBlock
+			}
+
+			if $BlockID <= $block {
+				error "The blockID must be greater than the current blockID"
+			}
+		}
+		action {
+			DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,\"limit\",conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('29', 'contract EditDelayedContract {
+		data {
+			Id int
+			Contract string
+			EveryBlock int
+			Conditions string
+			BlockID int "optional"
+			Limit int "optional"
+			Deleted int "optional"
+		}
+		conditions {
+			ConditionById("delayed_contracts", true)
+
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
+			}
+
+			if GetContractByName($Contract) == 0 {
+				error Sprintf("Unknown contract %%s", $Contract)
+			}
+
+			if $BlockID == 0 {
+				$BlockID = $block + $EveryBlock
+			}
+
+			if $BlockID <= $block {
+				error "The blockID must be greater than the current blockID"
+			}
+		}
+		action {
+			DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,\"limit\",deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('30', 'contract CallDelayedContract {
+		data {
+			Id int
+		}
+		conditions {
+			var rows array
+			rows = DBFind("delayed_contracts").Where("id = ? and deleted = false", $Id)
+			if !Len(rows) {
+				error Sprintf("Delayed contract %%d does not exist", $Id)
+			}
+			$cur = rows[0]
+	
+			if $key_id != Int($cur["key_id"]) {
+				error "Access denied"
+			}
+	
+			if $block != Int($cur["block_id"]) {
+				error Sprintf("Delayed contract %%d must run on block %%s, current block %%d", $Id, $cur["block_id"], $block)
+			}
+		}
+		action {
+			var limit, counter, block_id int
+	
+			limit = Int($cur["limit"])
+			counter = Int($cur["counter"])+1
+			block_id = $block
+	
+			if limit == 0 || limit > counter {
+				block_id = block_id + Int($cur["every_block"])
+			}
+	
+			DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
+			CallContract($cur["contract"], nil)
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")');`
 )
