@@ -283,7 +283,7 @@ func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (in
 	ecosystemID := data.ecosystemId
 	if data.params[`ecosystem`].(int64) > 0 {
 		ecosystemID = data.params[`ecosystem`].(int64)
-		count, err := model.GetNextID(nil, `system_states`)
+		count, err := model.GetNextID(nil, "1_ecosystems")
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id system states")
 			return 0, ``, errorAPI(w, err, http.StatusBadRequest)
