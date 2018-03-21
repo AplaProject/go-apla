@@ -101,8 +101,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 
-	var role int64
 	if r, ok := data.params["role_id"]; ok {
+		var role int64
 		role = r.(int64)
 		if role > 0 {
 			ok, err := model.MemberHasRole(nil, state, wallet, role)
@@ -171,7 +171,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		KeyID:       result.KeyID,
 		EcosystemID: result.EcosystemID,
 		IsMobile:    isMobile,
-		RoleID:      converter.Int64ToStr(role),
+		RoleID:      converter.Int64ToStr(data.roleId),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Second * time.Duration(expire)).Unix(),
 		},
