@@ -205,6 +205,18 @@
 			"revisionTime": "2017-08-14T20:04:35Z"
 		},
 		{
+			"checksumSHA1": "uefllr2OtKBGo/kQSAPbW3w6p0A=",
+			"path": "github.com/stretchr/testify/suite",
+			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
+			"revisionTime": "2017-08-14T20:04:35Z"
+		},
+		{
+			"checksumSHA1": "G1tnrjQ9YZH7qfHAQI9vZmpNuYg=",
+			"path": "github.com/tevino/abool",
+			"revision": "9b9efcf221b50905aab9bbabd3daed56dc10f339",
+			"revisionTime": "2017-09-17T06:19:28Z"
+		},
+		{
 			"checksumSHA1": "iNE2KX9BQzCptlQC2DdQEVmn4R4=",
 			"path": "golang.org/x/crypto/sha3",
 			"revision": "9f005a07e0d31d45e6656d241bb5c0f2efd4bc94",
