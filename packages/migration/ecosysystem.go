@@ -758,12 +758,14 @@ var (
         INSERT INTO "%[1]d_sections" ("id","title","urlname","page","roles_access", "delete") 
 	            VALUES('1', 'Home', 'home', 'default_page', '', 0);
 
-		DROP TABLE IF EXISTS "%[1]d_menu"; CREATE TABLE "%[1]d_menu" (
+		DROP TABLE IF EXISTS "%[1]d_menu"; 
+		CREATE TABLE "%[1]d_menu" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"title" character varying(255) NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT ''
+			"conditions" text NOT NULL DEFAULT '',
+			"app_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
@@ -817,7 +819,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"value" text NOT NULL DEFAULT '',
 			"menu" character varying(255) NOT NULL DEFAULT '',
 			"validate_count" bigint NOT NULL DEFAULT '1',
-			"conditions" text NOT NULL DEFAULT ''
+			"conditions" text NOT NULL DEFAULT '',
+			"app_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
@@ -831,7 +834,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT ''
+			"conditions" text NOT NULL DEFAULT '',
+			"app_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
@@ -850,7 +854,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',
 		"active" character(1) NOT NULL DEFAULT '0',
-		"conditions" text  NOT NULL DEFAULT ''
+		"conditions" text  NOT NULL DEFAULT '',
+		"app_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 		
@@ -899,7 +904,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		"name" varchar(100) UNIQUE NOT NULL DEFAULT '',
 		"permissions" jsonb,
 		"columns" jsonb,
-		"conditions" text  NOT NULL DEFAULT ''
+		"conditions" text  NOT NULL DEFAULT '',
+		"app_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
@@ -1024,7 +1030,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 						"page": "ContractConditions(\"MainCondition\")",
 						"roles_access": "ContractConditions(\"MainCondition\")",
 						"delete": "ContractConditions(\"MainCondition\")"}', 
-						'ContractConditions(\"MainCondition\")');
+						'ContractConditions(\"MainCondition\")'),
+				('14', 'applications',
+					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"title": "ContractConditions(\"MainCondition\")",
+						"name": "ContractConditions(\"MainCondition\")",
+						"uuid": "false",
+						"condition": "ContractConditions(\"MainCondition\")",
+						"deleted": "ContractConditions(\"MainCondition\")"}', 
+					'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (
@@ -1113,6 +1127,16 @@ If("#key_id#" == EcosysParam("founder_account")){
 
 		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
 		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
+
+		DROP TABLE IF EXISTS "%[1]d_applications";
+		CREATE TABLE "%[1]d_applications" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"name" varchar(255) NOT NULL DEFAULT '',
+			"uuid" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
+			"condition" text NOT NULL DEFAULT '',
+			"deleted" bigint NOT NULL DEFAULT '0'
+		);
+		ALTER TABLE ONLY "%[1]d_applications" ADD CONSTRAINT "%[1]d_application_pkey" PRIMARY KEY ("id");
 		`
 
 	SchemaFirstEcosystem = `
@@ -1134,7 +1158,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		INSERT INTO "system_states" ("id") VALUES ('1');
 
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
-			('14', 'delayed_contracts', 
+			('15', 'delayed_contracts', 
 			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 			"new_column": "ContractConditions(\"MainCondition\")"}',
 			'{"contract": "ContractConditions(\"MainCondition\")",
