@@ -54,6 +54,7 @@ type apiData struct {
 	result      interface{}
 	params      map[string]interface{}
 	ecosystemId int64
+	systemName  string
 	keyId       int64
 	isMobile    string
 	vde         bool
