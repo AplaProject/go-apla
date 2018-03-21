@@ -52,6 +52,7 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 	vars[`_full`] = `0`
 	vars[`ecosystem_id`] = converter.Int64ToStr(data.ecosystemId)
 	vars[`key_id`] = converter.Int64ToStr(data.keyId)
+	vars[`role_id`] = converter.Int64ToStr(data.roleId)
 
 	if _, ok := vars[`lang`]; !ok {
 		vars[`lang`] = r.Header.Get(`Accept-Language`)
