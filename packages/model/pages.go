@@ -3,10 +3,11 @@ package model
 // Page is model
 type Page struct {
 	tableName  string
-	Name       string `gorm:"primary_key;not null;size:255"`
-	Value      string `gorm:"not null"`
-	Menu       string `gorm:"not null;size:255"`
-	Conditions string `gorm:"not null"`
+	ID         int64  `gorm:"primary_key;not null" json:"id"`
+	Name       string `gorm:"not null" json:"name"`
+	Value      string `gorm:"not null" json:"value"`
+	Menu       string `gorm:"not null;size:255" json:"menu"`
+	Conditions string `gorm:"not null" json:"conditions"`
 }
 
 // SetTablePrefix is setting table prefix
@@ -22,4 +23,9 @@ func (p *Page) TableName() string {
 // Get is retrieving model from database
 func (p *Page) Get(name string) (bool, error) {
 	return isFound(DBConn.Where("name = ?", name).First(p))
+}
+
+func (p *Page) Count() (count int64, err error) {
+	err = DBConn.Table(p.TableName()).Count(&count).Error
+	return
 }

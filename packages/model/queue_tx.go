@@ -13,8 +13,8 @@ func (qt *QueueTx) TableName() string {
 }
 
 // DeleteTx is deleting tx
-func (qt *QueueTx) DeleteTx() error {
-	return DBConn.Delete(qt).Error
+func (qt *QueueTx) DeleteTx(transaction *DbTransaction) error {
+	return GetDB(transaction).Delete(qt).Error
 }
 
 // Save is saving model

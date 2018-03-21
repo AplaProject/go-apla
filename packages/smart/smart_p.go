@@ -86,6 +86,14 @@ var (
 	}
 )
 
+const (
+	nActivateContract   = "ActivateContract"
+	nDeactivateContract = "DeactivateContract"
+	nEditContract       = "EditContract"
+	nImport             = "Import"
+	nNewContract        = "NewContract"
+)
+
 //SignRes contains the data of the signature
 type SignRes struct {
 	Param string `json:"name"`
@@ -499,8 +507,8 @@ func RollbackEcosystem(sc *SmartContract) error {
 	}
 
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
-		`contracts`, `parameters`, `blocks`, `history`, `keys`, `sections`, `member`, `roles_list`,
-		`roles_assign`, `notifications`} {
+		`contracts`, `parameters`, `blocks`, `history`, `keys`, `sections`, `members`, `roles_list`,
+		`roles_assign`, `notifications`, `applications`} {
 		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
@@ -611,9 +619,9 @@ func Substr(s string, off int64, slen int64) string {
 
 // Activate sets Active status of the contract in smartVM
 func Activate(sc *SmartContract, tblid int64, state int64) error {
-	if sc.TxContract.Name != `@1ActivateContract` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ActivateContract can be only called from @1ActivateContract")
-		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract`)
+	if !accessContracts(sc, nActivateContract, nDeactivateContract) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ActivateContract can be only called from @1ActivateContract or @1DeactivateContract")
+		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
 	}
 	ActivateContract(tblid, state, true)
 	return nil
@@ -621,9 +629,9 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 
 // DeactivateContract sets Active status of the contract in smartVM
 func Deactivate(sc *SmartContract, tblid int64, state int64) error {
-	if sc.TxContract.Name != `@1DeactivateContract` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1DeactivateContract")
-		return fmt.Errorf(`DeactivateContract can be only called from @1DeactivateContract`)
+	if !accessContracts(sc, nActivateContract, nDeactivateContract) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract")
+		return fmt.Errorf(`DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
 	}
 	ActivateContract(tblid, state, false)
 	return nil
@@ -687,4 +695,91 @@ func JSONToMap(input string) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return ret, nil
+}
+
+func RollbackContract(sc *SmartContract, name string) error {
+	if !accessContracts(sc, nNewContract, nImport) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract, "error": errAccessRollbackContract}).Error("Check contract access")
+		return errAccessRollbackContract
+	}
+
+	if c := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID)); c != nil {
+		id := c.Block.Info.(*script.ContractInfo).ID
+		if int(id) < len(sc.VM.Children) {
+			sc.VM.Children = sc.VM.Children[:id]
+		}
+		delete(sc.VM.Objects, c.Name)
+	}
+
+	return nil
+}
+
+func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
+	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get values of metric")
+		return nil, err
+	}
+	return result, nil
+}
+
+// RollbackEditContract rollbacks the contract
+func RollbackEditContract(sc *SmartContract) error {
+	if !accessContracts(sc, nEditContract) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackEditContract can be only called from @1EditContract")
+		return fmt.Errorf(`RollbackEditContract can be only called from @1EditContract`)
+	}
+	rollbackTx := &model.RollbackTx{}
+	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_contracts", sc.TxSmart.EcosystemID))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract from rollback table")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound}).Error("contract record in rollback table")
+		// if there is not such hash then EditContract was faulty. Do nothing.
+		return nil
+	}
+	var fields map[string]string
+	err = json.Unmarshal([]byte(rollbackTx.Data), &fields)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling contract values")
+		return err
+	}
+	if len(fields["value"]) > 0 {
+		var owner *script.OwnerInfo
+		for i, item := range smartVM.Block.Children {
+			if item != nil && item.Type == script.ObjContract {
+				cinfo := item.Info.(*script.ContractInfo)
+				if cinfo.Owner.TableID == converter.StrToInt64(rollbackTx.TableID) &&
+					cinfo.Owner.StateID == uint32(sc.TxSmart.EcosystemID) {
+					owner = smartVM.Children[i].Info.(*script.ContractInfo).Owner
+					break
+				}
+			}
+		}
+		if owner == nil {
+			err = errContractNotFound
+			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("getting existing contract")
+			return err
+		}
+		wallet := owner.WalletID
+		if len(fields["wallet_id"]) > 0 {
+			wallet = converter.StrToInt64(fields["wallet_id"])
+		}
+		root, err := CompileContract(sc, fields["value"], int64(owner.StateID), wallet, owner.TokenID)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("compiling contract")
+			return err
+		}
+		err = FlushContract(sc, root, owner.TableID, owner.Active)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("flushing contract")
+			return err
+		}
+	} else if len(fields["wallet_id"]) > 0 {
+		return SetContractWallet(sc, converter.StrToInt64(rollbackTx.TableID), sc.TxSmart.EcosystemID,
+			converter.StrToInt64(fields["wallet_id"]))
+	}
+	return nil
 }

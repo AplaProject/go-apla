@@ -81,6 +81,21 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(where)DBFind(contracts, src).Columns(id).Order(id).Limit(3).Custom(a){SetVar(where, #where# #id#)}
+	Div(){Table(src, "=x")}Div(){Table(src)}Div(){#where#}`,
+		`[{"tag":"dbfind","attr":{"columns":["id","a"],"data":[["1","null"],["2","null"],["3","null"]],"limit":"3","name":"contracts","order":"id","source":"src","types":["text","tags"]}},{"tag":"div","children":[{"tag":"table","attr":{"columns":[{"Name":"x","Title":""}],"source":"src"}}]},{"tag":"div","children":[{"tag":"table","attr":{"source":"src"}}]},{"tag":"div","children":[{"tag":"text","text":" 1 2 3"}]}]`},
+	{`If(#isMobile#){Span(Mobile)}.Else{Span(Desktop)}`,
+		`[{"tag":"span","children":[{"tag":"text","text":"Desktop"}]}]`},
+	{`DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(10)`,
+		`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["11"],["12"]],"limit":"2","name":"contracts","offset":"10","order":"id","source":"src_contracts","types":["text"]}}]`},
+	{`DBFind(contracts, src_pos).Columns(id).Where("id >= 1 and id <= 3")
+		ForList(src_pos, Index: index){
+			Div(list-group-item) {
+				DBFind(parameters, src_hol).Columns(id).Where("id=#id#").Vars("ret")
+				SetVar(qq, #ret_id#)
+				Div(Body: #index# ForList=#id# DBFind=#ret_id# SetVar=#qq#)  
+			}
+		}`, `[{"tag":"dbfind","attr":{"columns":["id"],"data":[["1"],["2"],["3"]],"name":"contracts","source":"src_pos","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"forlist","attr":{"index":"index","source":"src_pos"},"children":[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["1"]],"name":"parameters","source":"src_hol","types":["text"],"where":"id=1"}},{"tag":"div","children":[{"tag":"text","text":"1 ForList=1 DBFind=1 SetVar=1"}]}]},{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["2"]],"name":"parameters","source":"src_hol","types":["text"],"where":"id=2"}},{"tag":"div","children":[{"tag":"text","text":"2 ForList=2 DBFind=2 SetVar=2"}]}]},{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["3"]],"name":"parameters","source":"src_hol","types":["text"],"where":"id=3"}},{"tag":"div","children":[{"tag":"text","text":"3 ForList=3 DBFind=3 SetVar=3"}]}]}]}]`},
 	{`Data(Source: mysrc, Columns: "startdate,enddate", Data:
 		2017-12-10 10:11,2017-12-12 12:13
 		2017-12-17 16:17,2017-12-15 14:15
@@ -112,11 +127,28 @@ var forTest = tplList{
 	{`EcosysParam(gender, Source: mygender)`,
 		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1",""]],"source":"mygender","types":["text","text"]}}]`},
 	{`EcosysParam(new_table)`,
-		`[{"tag":"text","text":"ContractConditions(\u0026#34;MainCondition\u0026#34;)"}]`},
+		`[{"tag":"text","text":"ContractConditions("MainCondition")"}]`},
 	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
 		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","default_menu"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"default_menu"}]}]`},
 }
 
+func TestMobile(t *testing.T) {
+	var ret contentResult
+	gMobile = true
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	err := sendPost(`content`, &url.Values{`template`: {`If(#isMobile#){Span(Mobile)}.Else{Span(Desktop)}`}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(ret.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"Mobile"}]}]` {
+		t.Error(fmt.Errorf(`wrong mobile tree %s`, RawToString(ret.Tree)))
+		return
+	}
+}
 func TestImage(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)

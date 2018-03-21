@@ -64,6 +64,8 @@ const (
 	CommissionWallet = `commission_wallet`
 	// RbBlocks1 rollback from queue_bocks
 	RbBlocks1 = `rb_blocks_1`
+	// BlockReward value of reward, which is chrged on block generation
+	BlockReward = "block_reward"
 )
 
 var (

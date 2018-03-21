@@ -288,6 +288,23 @@ func ActivateContract(tblid, state int64, active bool) {
 	}
 }
 
+// SetContractWallet changes WalletID of the contract in smartVM
+func SetContractWallet(sc *SmartContract, tblid, state int64, wallet int64) error {
+	if sc.TxContract.Name != `@1EditContract` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SetContractWallet can be only called from @1EditContract")
+		return fmt.Errorf(`SetContractWallet can be only called from @1EditContract`)
+	}
+	for i, item := range smartVM.Block.Children {
+		if item != nil && item.Type == script.ObjContract {
+			cinfo := item.Info.(*script.ContractInfo)
+			if cinfo.Owner.TableID == tblid && cinfo.Owner.StateID == uint32(state) {
+				smartVM.Children[i].Info.(*script.ContractInfo).Owner.WalletID = wallet
+			}
+		}
+	}
+	return nil
+}
+
 // GetContract returns true if the contract exists in smartVM
 func GetContract(name string, state uint32) *Contract {
 	return VMGetContract(smartVM, name, state)

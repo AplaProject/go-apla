@@ -91,6 +91,21 @@ func (tr *DbTransaction) Connection() *gorm.DB {
 	return tr.conn
 }
 
+// Savepoint creates PostgreSQL savepoint
+func (tr *DbTransaction) Savepoint(idTx int) error {
+	return tr.Connection().Exec(fmt.Sprintf("SAVEPOINT \"tx-%d\";", idTx)).Error
+}
+
+// RollbackSavepoint rollbacks PostgreSQL savepoint
+func (tr *DbTransaction) RollbackSavepoint(idTx int) error {
+	return tr.Connection().Exec(fmt.Sprintf("ROLLBACK TO SAVEPOINT \"tx-%d\";", idTx)).Error
+}
+
+// ReleaseSavepoint releases PostgreSQL savepoint
+func (tr *DbTransaction) ReleaseSavepoint(idTx int) error {
+	return tr.Connection().Exec(fmt.Sprintf("RELEASE SAVEPOINT \"tx-%d\";", idTx)).Error
+}
+
 // GetDB is returning gorm.DB
 func GetDB(tr *DbTransaction) *gorm.DB {
 	if tr != nil && tr.conn != nil {
