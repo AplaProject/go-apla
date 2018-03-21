@@ -18,7 +18,6 @@ package parser
 
 import (
 	"encoding/hex"
-	"errors"
 	"io/ioutil"
 	"path/filepath"
 
@@ -40,9 +39,6 @@ import (
 type FirstBlockParser struct {
 	*Parser
 }
-
-// ErrFirstBlockHostIsEmpty host for first block is not specified
-var ErrFirstBlockHostIsEmpty = errors.New("FirstBlockHost is empty")
 
 // Init first block
 func (p *FirstBlockParser) Init() error {
@@ -84,12 +80,6 @@ func (p *FirstBlockParser) Action() error {
 	}
 	err = smart.LoadContract(p.DbTransaction, `1`)
 	if err != nil {
-		return p.ErrInfo(err)
-	}
-	node := &model.SystemParameter{Name: `full_nodes`}
-	if err = node.SaveArray([][]string{{data.Host, converter.Int64ToStr(myAddress),
-		hex.EncodeToString(data.NodePublicKey)}}); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving node array")
 		return p.ErrInfo(err)
 	}
 	commission := &model.SystemParameter{Name: `commission_wallet`}

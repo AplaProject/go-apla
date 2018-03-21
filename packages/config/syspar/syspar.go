@@ -69,18 +69,12 @@ const (
 	BlockReward = "block_reward"
 )
 
-// FullNode is storing full node data
-type FullNode struct {
-	Host   string
-	Public []byte
-}
-
 var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
 	}
 	nodes           = make(map[int64]*FullNode)
-	nodesByPosition = make([][]string, 0)
+	nodesByPosition = make([]*FullNode, 0)
 	fuels           = make(map[int64]string)
 	wallets         = make(map[int64]string)
 	mutex           = &sync.RWMutex{}
@@ -100,28 +94,10 @@ func SysUpdate(dbTransaction *model.DbTransaction) error {
 		cache[param.Name] = param.Value
 	}
 
-	nodes = make(map[int64]*FullNode)
-	nodesByPosition = make([][]string, 0)
-	if len(cache[FullNodes]) > 0 {
-		inodes := make([][]string, 0)
-		err = json.Unmarshal([]byte(cache[FullNodes]), &inodes)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling full nodes from json")
-			return err
-		}
-		nodesByPosition = inodes
-		for _, item := range inodes {
-			if len(item) < 3 {
-				continue
-			}
-			pub, err := hex.DecodeString(item[2])
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": item[2]}).Error("decoding inode from string")
-				return err
-			}
-			nodes[converter.StrToInt64(item[1])] = &FullNode{Host: item[0], Public: pub}
-		}
+	if err = updateNodes(); err != nil {
+		return err
 	}
+
 	getParams := func(name string) (map[int64]string, error) {
 		res := make(map[int64]string)
 		if len(cache[name]) > 0 {
@@ -146,6 +122,57 @@ func SysUpdate(dbTransaction *model.DbTransaction) error {
 	return err
 }
 
+func updateNodes() (err error) {
+	nodes = make(map[int64]*FullNode)
+	nodesByPosition = make([]*FullNode, 0)
+
+	items := make([]*FullNode, 0)
+	if len(cache[FullNodes]) > 0 {
+		err = json.Unmarshal([]byte(cache[FullNodes]), &items)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "v": cache[FullNodes]}).Error("unmarshalling full nodes from json")
+			return err
+		}
+	}
+
+	nodesByPosition = items
+	for _, item := range items {
+		nodes[item.KeyID] = item
+	}
+
+	return updateNodesFromConfig()
+}
+
+func updateNodesFromConfig() error {
+	for _, item := range conf.Config.FullNodes {
+		if _, ok := nodes[item.KeyID]; ok {
+			continue
+		}
+
+		fn := &FullNode{
+			KeyID:      item.KeyID,
+			TCPAddress: item.TCPAddress,
+			APIAddress: item.APIAddress,
+		}
+		var err error
+		if fn.PublicKey, err = hex.DecodeString(item.PublicKey); err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("Decoding public key from hex")
+			continue
+		}
+		if err = fn.Validate(); err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("Validating node from config")
+			continue
+		}
+
+		nodesByPosition = append(nodesByPosition, fn)
+		nodes[fn.KeyID] = fn
+
+		log.WithFields(log.Fields{"key_id": fn.KeyID, "tcp_host": fn.TCPAddress}).Debug("Added node from config")
+	}
+
+	return nil
+}
+
 // GetNode is retrieving node by wallet
 func GetNode(wallet int64) *FullNode {
 	mutex.RLock()
@@ -161,10 +188,7 @@ func GetNodePositionByKeyID(keyID int64) (int64, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
 	for i, item := range nodesByPosition {
-		if len(item) < 3 {
-			continue
-		}
-		if converter.StrToInt64(item[1]) == keyID {
+		if item.KeyID == keyID {
 			return int64(i), nil
 		}
 	}
@@ -183,7 +207,7 @@ func GetNodeByPosition(position int64) (*FullNode, error) {
 	if int64(len(nodesByPosition)) <= position {
 		return nil, fmt.Errorf("incorrect position")
 	}
-	return nodes[converter.StrToInt64(nodesByPosition[position][1])], nil
+	return nodesByPosition[position], nil
 }
 
 // GetNodeHostByPosition is retrieving node host by position
@@ -194,21 +218,18 @@ func GetNodeHostByPosition(position int64) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return nodeData.Host, nil
+	return nodeData.TCPAddress, nil
 }
 
 // GetNodePublicKeyByPosition is retrieving node public key by position
 func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
-	if int64(len(nodesByPosition)) <= position {
-		return nil, fmt.Errorf("incorrect position")
-	}
-	pkey, err := hex.DecodeString(nodesByPosition[position][2])
+	nodeData, err := GetNodeByPosition(position)
 	if err != nil {
 		return nil, err
 	}
-	return pkey, nil
+	return nodeData.PublicKey, nil
 }
 
 // GetSleepTimeByKey is returns sleep time by key
@@ -353,7 +374,7 @@ func GetRemoteHosts() []string {
 
 	for nodeID, item := range nodes {
 		if nodeID != conf.Config.KeyID {
-			ret = append(ret, item.Host)
+			ret = append(ret, item.TCPAddress)
 		}
 	}
 	return ret
