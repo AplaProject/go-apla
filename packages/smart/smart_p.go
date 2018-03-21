@@ -476,7 +476,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 		return fmt.Errorf(`RollbackEcosystem can be only called from @1NewEcosystem`)
 	}
 	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, "system_states")
+	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, "1_ecosystems")
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback tx")
 		return err
@@ -486,7 +486,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 		// if there is not such hash then NewEcosystem was faulty. Do nothing.
 		return nil
 	}
-	lastID, err := model.GetNextID(sc.DbTransaction, `system_states`)
+	lastID, err := model.GetNextID(sc.DbTransaction, "1_ecosystems")
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
 		return err
@@ -529,7 +529,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 			return err
 		}
 	}
-	rollbackTxToDel := &model.RollbackTx{TxHash: sc.TxHash, NameTable: "system_states"}
+	rollbackTxToDel := &model.RollbackTx{TxHash: sc.TxHash, NameTable: "1_ecosystems"}
 	err = rollbackTxToDel.DeleteByHashAndTableName(sc.DbTransaction)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback tx by hash and table name")
