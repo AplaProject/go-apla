@@ -1519,7 +1519,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('6','contract NewEcosystem {
 		data {
-			Name  string "optional"
+			Name  string
 		}
 		action {
 			$result = CreateEcosystem($key_id, $Name)

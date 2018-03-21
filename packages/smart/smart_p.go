@@ -395,11 +395,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateEcosystem can be only called from @1NewEcosystem")
 		return 0, fmt.Errorf(`CreateEcosystem can be only called from @1NewEcosystem`)
 	}
-	_, id, err := sc.selectiveLoggingAndUpd(nil, nil, `system_states`, nil, nil, !sc.VDE && sc.Rollback, false)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError}).Error("CreateEcosystem")
-		return 0, err
-	}
+
 	var sp model.StateParameter
 	sp.SetTablePrefix(`1`)
 	found, err := sp.Get(sc.DbTransaction, `founder_account`)
@@ -407,52 +403,67 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder")
 		return 0, err
 	}
+
 	if !found || len(sp.Value) == 0 {
 		log.WithFields(log.Fields{"type": consts.NotFound, "error": ErrFounderAccount}).Error("founder not found")
 		return 0, ErrFounderAccount
 	}
-	err = model.ExecSchemaEcosystem(sc.DbTransaction, converter.StrToInt(id), wallet, name,
-		converter.StrToInt64(sp.Value))
+
+	id, err := model.GetNextID(sc.DbTransaction, "1_ecosystems")
 	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("generating next ecosystem id")
+		return 0, err
+	}
+
+	if err = model.ExecSchemaEcosystem(sc.DbTransaction, int(id), wallet, name, converter.StrToInt64(sp.Value)); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return 0, err
 	}
 
-	err = LoadContract(sc.DbTransaction, id)
-	if err != nil {
+	idStr := converter.Int64ToStr(id)
+	if err := LoadContract(sc.DbTransaction, idStr); err != nil {
 		return 0, err
 	}
+
 	sc.Rollback = false
-	_, _, err = DBInsert(sc, id+"_pages", "id,name,value,menu,conditions", "1", "default_page",
-		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`)
-	if err != nil {
+	if _, _, err = DBInsert(sc, idStr+"_pages", "id,name,value,menu,conditions", "1", "default_page",
+		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
-	_, _, err = DBInsert(sc, id+"_menu", "id,name,value,title,conditions", "1", "default_menu",
-		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`)
-	if err != nil {
+
+	if _, _, err := DBInsert(sc, idStr+"_menu", "id,name,value,title,conditions", "1", "default_menu",
+		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
+
 	var (
 		ret []interface{}
 		pub string
 	)
+
 	_, ret, err = DBSelect(sc, "1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting pub key")
 		return 0, err
 	}
+
 	if Len(ret) > 0 {
 		pub = ret[0].(map[string]string)[`pub`]
 	}
-	_, _, err = DBInsert(sc, id+"_keys", "id,pub", wallet, pub)
-	if err != nil {
+
+	if _, _, err := DBInsert(sc, idStr+"_keys", "id,pub", wallet, pub); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
-	return converter.StrToInt64(id), err
+
+	if _, _, err := DBInsert(sc, "1_ecosystems", "id,name", id, name); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert new ecosystem to stat table")
+		return 0, err
+	}
+
+	return id, err
 }
 
 // RollbackEcosystem is rolling back ecosystem
@@ -521,8 +532,9 @@ func RollbackEcosystem(sc *SmartContract) error {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback tx by hash and table name")
 		return err
 	}
-	ssToDel := &model.SystemState{ID: lastID}
-	return ssToDel.Delete(sc.DbTransaction)
+
+	ecosysToDel := &model.Ecosystem{ID: lastID}
+	return ecosysToDel.Delete(sc.DbTransaction)
 }
 
 // RollbackTable is rolling back table

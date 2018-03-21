@@ -34,11 +34,12 @@ var (
 
 // JWTClaims is storing jwt claims
 type JWTClaims struct {
-	UID         string `json:"uid,omitempty"`
-	EcosystemID string `json:"ecosystem_id,omitempty"`
-	KeyID       string `json:"key_id,omitempty"`
-	IsMobile    string `json:"is_mobile,omitempty"`
-	RoleID      string `json:"role_id,omitempty"`
+	UID           string `json:"uid,omitempty"`
+	EcosystemID   string `json:"ecosystem_id,omitempty"`
+	EcosystemName string `json:"ecosystem_name,omitempty"`
+	KeyID         string `json:"key_id,omitempty"`
+	IsMobile      string `json:"is_mobile,omitempty"`
+	RoleID        string `json:"role_id,omitempty"`
 	jwt.StandardClaims
 }
 
