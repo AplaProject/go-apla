@@ -30,6 +30,12 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
+	"encoding/hex"
+
+	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -88,17 +94,45 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		if account.Delete == 1 {
 			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 		}
-	}
-	if state > 1 && len(pubkey) == 0 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty, and state is not default")
-		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
-	}
-	if len(pubkey) == 0 {
+	} else {
 		pubkey = data.params[`pubkey`].([]byte)
 		if len(pubkey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
 			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 		}
+		NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
+		if err != nil || len(NodePrivateKey) < 1 {
+			if err == nil {
+				log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+			}
+			return err
+		}
+
+		hexPubKey := hex.EncodeToString(pubkey)
+		params := make([]byte, 0)
+		params = append(append(params, converter.EncodeLength(int64(len(hexPubKey)))...), hexPubKey...)
+
+		vm := smart.GetVM(false, 0)
+		contract := smart.VMGetContract(vm, "NewUser", 1)
+		info := contract.Block.Info.(*script.ContractInfo)
+
+		err = tx.BuildTransaction(tx.SmartContract{
+			Header: tx.Header{
+				Type:        int(info.ID),
+				Time:        time.Now().Unix(),
+				EcosystemID: 1,
+				KeyID:       conf.Config.KeyID,
+			},
+			SignedBy: smart.PubToID(NodePublicKey),
+			Data:     params,
+		}, NodePrivateKey, NodePublicKey, string(hexPubKey))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+		}
+	}
+	if state > 1 && len(pubkey) == 0 {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty, and state is not default")
+		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
 	}
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {

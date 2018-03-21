@@ -2010,5 +2010,27 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
 			CallContract($cur["contract"], nil)
 		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('31', 'contract NewUser {
+		data {
+			NewPubkey string
+		}
+		conditions {
+			$newId = PubToID($NewPubkey)
+			if $newId == 0 {
+				error "Wrong pubkey"
+			}
+			if DBFind("keys").Columns("id").WhereId($newId).One("id") != nil {
+				error "User already exists"
+			}
+
+			$amount = 1000
+		}
+		action {
+			DBUpdate("keys", $key_id, "-amount", $amount)
+			DBInsert("keys", "id,amount,pub", $newId, $amount, $NewPubkey)
+           	DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
+                    $key_id, $newId, $amount, "New user deposit", $block, $txhash)
+		}
 	}','%[1]d', 'ContractConditions("MainCondition")');`
 )
