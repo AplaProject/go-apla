@@ -28,6 +28,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -36,6 +37,9 @@ import (
 // BlockGenerator is daemon that generates blocks
 func BlockGenerator(ctx context.Context, d *daemon) error {
 	d.sleepTime = time.Second
+	if service.IsNodePaused() {
+		return nil
+	}
 
 	_, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
 	if err != nil {
