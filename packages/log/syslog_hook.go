@@ -4,7 +4,6 @@ package log
 
 import (
 	"fmt"
-	"log/syslog"
 	"os"
 
 	b_syslog "github.com/blackjack/syslog"
@@ -18,8 +17,8 @@ type SyslogHook struct {
 	SyslogRaddr   string
 }
 
-func NewSyslogHook(appName string, priority syslog.Priority) (*SyslogHook, error) {
-	b_syslog.Openlog(appName, b_syslog.LOG_PID, b_syslog.Priority(priority))
+func NewSyslogHook(appName, facility string) (*SyslogHook, error) {
+	b_syslog.Openlog(appName, b_syslog.LOG_PID, syslogFacility(facility))
 	return &SyslogHook{nil, "", "localhost"}, nil
 }
 
@@ -68,4 +67,50 @@ func (hook *SyslogHook) Fire(entry *logrus.Entry) error {
 
 func (hook *SyslogHook) Levels() []logrus.Level {
 	return logrus.AllLevels
+}
+
+func syslogFacility(facility string) b_syslog.Priority {
+	switch facility {
+	case "kern":
+		return b_syslog.LOG_KERN
+	case "user":
+		return b_syslog.LOG_USER
+	case "mail":
+		return b_syslog.LOG_MAIL
+	case "daemon":
+		return b_syslog.LOG_DAEMON
+	case "auth":
+		return b_syslog.LOG_AUTH
+	case "syslog":
+		return b_syslog.LOG_SYSLOG
+	case "lpr":
+		return b_syslog.LOG_LPR
+	case "news":
+		return b_syslog.LOG_NEWS
+	case "uucp":
+		return b_syslog.LOG_UUCP
+	case "cron":
+		return b_syslog.LOG_CRON
+	case "authpriv":
+		return b_syslog.LOG_AUTHPRIV
+	case "ftp":
+		return b_syslog.LOG_FTP
+	case "local0":
+		return b_syslog.LOG_LOCAL0
+	case "local1":
+		return b_syslog.LOG_LOCAL1
+	case "local2":
+		return b_syslog.LOG_LOCAL2
+	case "local3":
+		return b_syslog.LOG_LOCAL3
+	case "local4":
+		return b_syslog.LOG_LOCAL4
+	case "local5":
+		return b_syslog.LOG_LOCAL5
+	case "local6":
+		return b_syslog.LOG_LOCAL6
+	case "local7":
+		return b_syslog.LOG_LOCAL7
+	}
+	return 0
 }

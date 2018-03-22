@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log/syslog"
 	"math/rand"
 	"net/http"
 	"os"
@@ -78,52 +77,6 @@ func killOld() {
 	}
 }
 
-func syslogFacility(facility string) syslog.Priority {
-	switch facility {
-	case "kern":
-		return syslog.LOG_KERN
-	case "user":
-		return syslog.LOG_USER
-	case "mail":
-		return syslog.LOG_MAIL
-	case "daemon":
-		return syslog.LOG_DAEMON
-	case "auth":
-		return syslog.LOG_AUTH
-	case "syslog":
-		return syslog.LOG_SYSLOG
-	case "lpr":
-		return syslog.LOG_LPR
-	case "news":
-		return syslog.LOG_NEWS
-	case "uucp":
-		return syslog.LOG_UUCP
-	case "cron":
-		return syslog.LOG_CRON
-	case "authpriv":
-		return syslog.LOG_AUTHPRIV
-	case "ftp":
-		return syslog.LOG_FTP
-	case "local0":
-		return syslog.LOG_LOCAL0
-	case "local1":
-		return syslog.LOG_LOCAL1
-	case "local2":
-		return syslog.LOG_LOCAL2
-	case "local3":
-		return syslog.LOG_LOCAL3
-	case "local4":
-		return syslog.LOG_LOCAL4
-	case "local5":
-		return syslog.LOG_LOCAL5
-	case "local6":
-		return syslog.LOG_LOCAL6
-	case "local7":
-		return syslog.LOG_LOCAL7
-	}
-	return 0
-}
-
 func initLogs() error {
 	switch conf.Config.LogConfig.LogFormat {
 	case "json":
@@ -135,7 +88,7 @@ func initLogs() error {
 	case "stdout":
 		log.SetOutput(os.Stdout)
 	case "syslog":
-		facility := syslogFacility(conf.Config.LogConfig.Syslog.Facility)
+		facility := conf.Config.LogConfig.Syslog.Facility
 		tag := conf.Config.LogConfig.Syslog.Tag
 		sysLogHook, err := logtools.NewSyslogHook(tag, facility)
 		if err != nil {
