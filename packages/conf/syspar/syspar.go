@@ -17,7 +17,6 @@
 package syspar
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -26,7 +25,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -66,6 +64,8 @@ const (
 	CommissionWallet = `commission_wallet`
 	// RbBlocks1 rollback from queue_bocks
 	RbBlocks1 = `rb_blocks_1`
+	// BlockReward value of reward, which is chrged on block generation
+	BlockReward = "block_reward"
 )
 
 var (
@@ -139,27 +139,18 @@ func updateNodes() (err error) {
 		nodes[item.KeyID] = item
 	}
 
-	// If the lists are empty, then add the current node
-	if len(nodesByPosition) == 0 && len(conf.Config.NodesAddr) == 0 {
-		return addCurrentNode()
-	}
-
 	return nil
 }
 
-func addCurrentNode() error {
-	fn := &FullNode{KeyID: conf.Config.KeyID}
+// AddFullNodeKeys adds node by keys to list of nodes
+func AddFullNodeKeys(keyID int64, publicKey []byte) {
+	mutex.Lock()
+	defer mutex.Unlock()
 
-	_, publicKeyStr, err := utils.GetNodeKeys()
-	if err != nil {
-		return err
-	}
-	if fn.PublicKey, err = hex.DecodeString(publicKeyStr); err != nil {
-		return err
-	}
-
-	nodesByPosition = append(nodesByPosition, fn)
-	return nil
+	nodesByPosition = append(nodesByPosition, &FullNode{
+		KeyID:     keyID,
+		PublicKey: publicKey,
+	})
 }
 
 // GetNode is retrieving node by wallet
