@@ -213,6 +213,22 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 	for _, ipar := range pars {
 		parnames[ipar] = true
 	}
+	if _, ok := (*rt.extend)[`loop_`+name]; ok {
+		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": name}).Error("there is loop in contract")
+		return nil, fmt.Errorf(eContractLoop, name)
+	}
+	(*rt.extend)[`loop_`+name] = true
+	defer delete(*rt.extend, `loop_`+name)
+
+	prevExtend := make(map[string]interface{})
+	for key, item := range *rt.extend {
+		if _, ok := sysVars[key]; ok || strings.HasPrefix(key, `loop_`) {
+			continue
+		}
+		prevExtend[key] = item
+		delete(*rt.extend, key)
+	}
+
 	var isSignature bool
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
@@ -228,12 +244,6 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 			}
 		}
 	}
-	if _, ok := (*rt.extend)[`loop_`+name]; ok {
-		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": name}).Error("there is loop in contract")
-		return nil, fmt.Errorf(eContractLoop, name)
-	}
-	(*rt.extend)[`loop_`+name] = true
-	defer delete(*rt.extend, `loop_`+name)
 	for i, ipar := range pars {
 		(*rt.extend)[ipar] = params[i]
 	}
@@ -291,7 +301,19 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 	(*rt.extend)[`parent`] = prevparent
 	(*rt.extend)[`this_contract`] = prevthis
 
-	return (*rt.extend)[`result`], nil
+	result := (*rt.extend)[`result`]
+	for key := range *rt.extend {
+		if _, ok := sysVars[key]; ok || strings.HasPrefix(key, `loop_`) {
+			continue
+		}
+		delete(*rt.extend, key)
+	}
+
+	for key, item := range prevExtend {
+		(*rt.extend)[key] = item
+	}
+
+	return result, nil
 }
 
 // NewVM creates a new virtual machine
