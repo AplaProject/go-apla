@@ -203,9 +203,12 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.JWTError, "expire": jwtExpire}).Warning("using expire from jwt")
 		expire = jwtExpire
 	}
-	var isMobile string
-	if data.params[`mobile`].(string) == `1` || data.params[`mobile`].(string) == `true` {
-		isMobile = `1`
+
+	isMobile := "0"
+	if mob, ok := data.params[`mobile`]; ok && mob != nil {
+		if mob.(string) == `1` || mob.(string) == `true` {
+			isMobile = `1`
+		}
 	}
 	claims := JWTClaims{
 		KeyID:       result.KeyID,
