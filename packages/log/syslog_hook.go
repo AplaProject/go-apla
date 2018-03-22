@@ -3,6 +3,7 @@
 package log
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -24,6 +25,14 @@ func NewSyslogHook(appName, facility string) (*SyslogHook, error) {
 
 func (hook *SyslogHook) Fire(entry *logrus.Entry) error {
 	line, err := entry.String()
+	jsonMap := map[string]interface{}{}
+	if err := json.Unmarshal([]byte(line), &jsonMap); err == nil {
+		delete(jsonMap, "time")
+		delete(jsonMap, "level")
+		if bString, err := json.Marshal(jsonMap); err == nil {
+			line = string(bString)
+		}
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to read entry, %v", err)
 		return err
