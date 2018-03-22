@@ -41,15 +41,21 @@ import (
 )
 
 type loginResult struct {
-	Token       string `json:"token,omitempty"`
-	Refresh     string `json:"refresh,omitempty"`
-	EcosystemID string `json:"ecosystem_id,omitempty"`
-	KeyID       string `json:"key_id,omitempty"`
-	Address     string `json:"address,omitempty"`
-	NotifyKey   string `json:"notify_key,omitempty"`
-	IsNode      bool   `json:"isnode,omitempty"`
-	IsOwner     bool   `json:"isowner,omitempty"`
-	IsVDE       bool   `json:"vde,omitempty"`
+	Token       string        `json:"token,omitempty"`
+	Refresh     string        `json:"refresh,omitempty"`
+	EcosystemID string        `json:"ecosystem_id,omitempty"`
+	KeyID       string        `json:"key_id,omitempty"`
+	Address     string        `json:"address,omitempty"`
+	NotifyKey   string        `json:"notify_key,omitempty"`
+	IsNode      bool          `json:"isnode,omitempty"`
+	IsOwner     bool          `json:"isowner,omitempty"`
+	IsVDE       bool          `json:"vde,omitempty"`
+	Roles       []rolesResult `json:"roles,omitempty"`
+}
+
+type rolesResult struct {
+	RoleId   int64  `json:"role_id"`
+	RoleName string `json:"role_name"`
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
@@ -193,6 +199,17 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	notificator.AddUser(wallet, state)
+
+	ra := &model.RolesAssign{}
+	roles, err := ra.SetTablePrefix(state).GetActiveMemberRoles(wallet)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting roles")
+		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
+	}
+
+	for _, r := range roles {
+		result.Roles = append(result.Roles, rolesResult{RoleId: r.RoleID, RoleName: r.RoleName})
+	}
 
 	return nil
 }
