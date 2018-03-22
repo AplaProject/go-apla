@@ -1,17 +1,23 @@
 package model
 
+const (
+	TransactionRateOnBlock transactionRate = 1
+)
+
+type transactionRate int8
+
 // Transaction is model
 type Transaction struct {
-	Hash     []byte `gorm:"private_key;not null"`
-	Data     []byte `gorm:"not null"`
-	Used     int8   `gorm:"not null"`
-	HighRate int8   `gorm:"not null"`
-	Type     int8   `gorm:"not null"`
-	KeyID    int64  `gorm:"not null"`
-	Counter  int8   `gorm:"not null"`
-	Sent     int8   `gorm:"not null"`
-	Attempt  int8   `gorm:"not null"`
-	Verified int8   `gorm:"not null;default:1"`
+	Hash     []byte          `gorm:"private_key;not null"`
+	Data     []byte          `gorm:"not null"`
+	Used     int8            `gorm:"not null"`
+	HighRate transactionRate `gorm:"not null"`
+	Type     int8            `gorm:"not null"`
+	KeyID    int64           `gorm:"not null"`
+	Counter  int8            `gorm:"not null"`
+	Sent     int8            `gorm:"not null"`
+	Attempt  int8            `gorm:"not null"`
+	Verified int8            `gorm:"not null;default:1"`
 }
 
 // GetAllTransactions is retrieving all transactions with limit
@@ -26,7 +32,7 @@ func GetAllTransactions(limit int) (*[]Transaction, error) {
 // GetAllUnusedTransactions is retrieving all unused transactions
 func GetAllUnusedTransactions() ([]Transaction, error) {
 	var transactions []Transaction
-	if err := DBConn.Where("used = ?", "0").Find(&transactions).Error; err != nil {
+	if err := DBConn.Where("used = ?", "0").Order("high_rate DESC").Find(&transactions).Error; err != nil {
 		return nil, err
 	}
 	return transactions, nil

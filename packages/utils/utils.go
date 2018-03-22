@@ -31,6 +31,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
@@ -430,6 +432,83 @@ func GetNodeKeys() (string, string, error) {
 		return "", "", err
 	}
 	return string(nprivkey), hex.EncodeToString(npubkey), nil
+}
+
+// best host is a host with the biggest last block ID
+func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (string, int64, error) {
+	type blockAndHost struct {
+		host    string
+		blockID int64
+		err     error
+	}
+	c := make(chan blockAndHost, len(hosts))
+
+	var wg sync.WaitGroup
+	for _, h := range hosts {
+		if ctx.Err() != nil {
+			logger.WithFields(log.Fields{"error": ctx.Err(), "type": consts.ContextError}).Error("context error")
+			return "", 0, ctx.Err()
+		}
+		wg.Add(1)
+
+		go func(host string) {
+			blockID, err := GetHostBlockID(host, logger)
+			wg.Done()
+
+			c <- blockAndHost{
+				host:    host,
+				blockID: blockID,
+				err:     err,
+			}
+		}(GetHostPort(h))
+	}
+	wg.Wait()
+
+	maxBlockID := int64(-1)
+	var bestHost string
+	for i := 0; i < len(hosts); i++ {
+		bl := <-c
+
+		if bl.blockID > maxBlockID {
+			maxBlockID = bl.blockID
+			bestHost = bl.host
+		}
+	}
+
+	return bestHost, maxBlockID, nil
+}
+
+func GetHostBlockID(host string, logger *log.Entry) (int64, error) {
+	conn, err := TCPConn(host)
+	if err != nil {
+		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Debug("error connecting to host")
+		return 0, err
+	}
+	defer conn.Close()
+
+	// get max block request
+	_, err = conn.Write(converter.DecToBin(consts.DATA_TYPE_MAX_BLOCK_ID, 2))
+	if err != nil {
+		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("writing max block id to host")
+		return 0, err
+	}
+
+	// response
+	blockIDBin := make([]byte, 4)
+	_, err = conn.Read(blockIDBin)
+	if err != nil {
+		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("reading max block id from host")
+		return 0, err
+	}
+
+	return converter.BinToDec(blockIDBin), nil
+}
+
+func GetHostPort(h string) string {
+	if strings.Contains(h, ":") {
+		return h
+	}
+	return fmt.Sprintf("%s:%d", h, consts.DEFAULT_TCP_PORT)
 }
 
 func BuildBlockTimeCalculator() (BlockTimeCalculator, error) {

@@ -35,6 +35,11 @@ func (b *Block) GetMaxBlock() (bool, error) {
 	return isFound(DBConn.Last(b))
 }
 
+// GetMaxNodeBlock returns last block generated not by key_id
+func (b *Block) GetMaxForeignBlock(keyId int64) (bool, error) {
+	return isFound(DBConn.Order("id DESC").Where("key_id != ?", keyId).First(b))
+}
+
 // GetBlockchain is retrieving chain of blocks from database
 func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
 	var err error

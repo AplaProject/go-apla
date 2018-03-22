@@ -38,6 +38,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Composite struct {
+	Name string      `json:"name"`
+	Data interface{} `json:"data,omitempty"`
+}
+
 var (
 	funcs = make(map[string]tplFunc)
 	tails = make(map[string]forTails)
@@ -90,8 +95,9 @@ func init() {
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
 
 	tails[`button`] = forTails{map[string]tailInfo{
-		`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
-		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		`Alert`:             {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
+		`Style`:             {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		`CompositeContract`: {tplFunc{compositeTag, defaultTailFull, `composite`, `Name,Data`}, false},
 	}}
 	tails[`div`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -591,6 +597,22 @@ func dbfindTag(par parFunc) string {
 	return ``
 }
 
+func compositeTag(par parFunc) string {
+	setAllAttr(par)
+	if len((*par.Pars)[`Name`]) == 0 {
+		return ``
+	}
+	if par.Owner.Attr[`composites`] == nil {
+		par.Owner.Attr[`composites`] = make([]string, 0)
+		par.Owner.Attr[`compositedata`] = make([]string, 0)
+	}
+	par.Owner.Attr[`composites`] = append(par.Owner.Attr[`composites`].([]string),
+		(*par.Pars)[`Name`])
+	par.Owner.Attr[`compositedata`] = append(par.Owner.Attr[`compositedata`].([]string),
+		macro((*par.Pars)[`Data`], par.Workspace.Vars))
+	return ``
+}
+
 func customTag(par parFunc) string {
 	setAllAttr(par)
 	if par.Owner.Attr[`customs`] == nil {
@@ -699,6 +721,24 @@ func defaultTailTag(par parFunc) string {
 func buttonTag(par parFunc) string {
 	defaultTag(par)
 	defaultTail(par, `button`)
+	defer func() {
+		delete(par.Node.Attr, `composites`)
+		delete(par.Node.Attr, `compositedata`)
+	}()
+	if par.Node.Attr[`composites`] != nil {
+		composites := make([]Composite, 0)
+		for i, name := range par.Node.Attr[`composites`].([]string) {
+			var data interface{}
+			input := par.Node.Attr[`compositedata`].([]string)[i]
+			if len(input) > 0 {
+				if err := json.Unmarshal([]byte(input), &data); err != nil {
+					return err.Error()
+				}
+			}
+			composites = append(composites, Composite{Name: name, Data: data})
+		}
+		par.Node.Attr[`composite`] = &composites
+	}
 	return ``
 }
 

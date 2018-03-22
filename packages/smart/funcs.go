@@ -45,6 +45,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/satori/go.uuid"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -204,6 +205,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RollbackEditContract": RollbackEditContract,
 		"check_signature":      CheckSignature,
 		"RowConditions":        RowConditions,
+		"UUID":                 UUID,
 	}
 
 	switch vt {
@@ -218,6 +220,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
+		f["GetBlock"] = GetBlock
 		ExtendCost(getCostP)
 		FuncCallsDB(funcCallsDBP)
 	}
@@ -477,7 +480,12 @@ func PrepareColumns(columns string) string {
 	for _, icol := range strings.Split(columns, `,`) {
 		if strings.Contains(icol, `->`) {
 			colfield := strings.Split(icol, `->`)
-			icol = fmt.Sprintf(`%s::jsonb->>'%s' as "%[1]s.%[2]s"`, colfield[0], colfield[1])
+			if len(colfield) == 2 {
+				icol = fmt.Sprintf(`%s::jsonb->>'%s' as "%[1]s.%[2]s"`, colfield[0], colfield[1])
+			} else {
+				icol = fmt.Sprintf(`%s::jsonb#>>'{%s}' as "%[1]s.%[3]s"`, colfield[0],
+					strings.Join(colfield[1:], `,`), strings.Join(colfield[1:], `.`))
+			}
 		}
 		colList = append(colList, icol)
 	}
@@ -1189,4 +1197,27 @@ func UpdateCron(sc *SmartContract, id int64) error {
 	}
 
 	return nil
+}
+
+func GetBlock(blockID int64) (map[string]int64, error) {
+	block := model.Block{}
+	ok, err := block.Get(blockID)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
+		return nil, err
+	}
+	if !ok {
+		return nil, nil
+	}
+
+	return map[string]int64{
+		"id":     block.ID,
+		"time":   block.Time,
+		"key_id": block.KeyID,
+	}, nil
+}
+
+// UUID returns new uuid
+func UUID(sc *SmartContract) string {
+	return uuid.Must(uuid.NewV4()).String()
 }
