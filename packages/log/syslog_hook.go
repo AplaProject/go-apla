@@ -29,6 +29,7 @@ func (hook *SyslogHook) Fire(entry *logrus.Entry) error {
 	if err := json.Unmarshal([]byte(line), &jsonMap); err == nil {
 		delete(jsonMap, "time")
 		delete(jsonMap, "level")
+		delete(jsonMap, "fields.time")
 		if bString, err := json.Marshal(jsonMap); err == nil {
 			line = string(bString)
 		}
