@@ -2018,6 +2018,22 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
 			CallContract($cur["contract"], nil)
 		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('31', 'contract EditEcosystemName {
+		data {
+			SystemID int
+			NewName string
+		}
+		conditions {
+			var rows array
+			rows = DBFind("1_ecosystems").Where("id = ?", $SystemID)
+			if !Len(rows) {
+				error Sprintf("Ecosystem %%d does not exist", $SystemID)
+			}
+		}
+		action {
+			EditEcosystemName($SystemID, NewName)
+		}
 	}','%[1]d', 'ContractConditions("MainCondition")');
 	
 	DROP TABLE IF EXISTS "1_ecosystems";
