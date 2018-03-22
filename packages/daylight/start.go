@@ -335,10 +335,10 @@ func Start() {
 		if err != nil {
 			os.Exit(1)
 		}
-		go func() {
-			na := service.NewNodeActualizer(service.DefaultBlockchainGap)
-			na.Run()
-		}()
+		//go func() {
+		//	na := service.NewNodeActualizer(service.DefaultBlockchainGap)
+		//	na.Run()
+		//}()
 	}
 
 	daemons.WaitForSignals()
