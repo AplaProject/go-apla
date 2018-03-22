@@ -2297,7 +2297,23 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("keys", $key_id, "-amount", $amount)
 			DBInsert("keys", "id,amount,pub", $newId, $amount, $NewPubkey)
            	DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
-                    $key_id, $newId, $amount, "New user deposit", $block, $txhash)
+					$key_id, $newId, $amount, "New user deposit", $block, $txhash)
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('33', 'contract EditEcosystemName {
+		data {
+			SystemID int
+			NewName string
+		}
+		conditions {
+			var rows array
+			rows = DBFind("1_ecosystems").Where("id = ?", $SystemID)
+			if !Len(rows) {
+				error Sprintf("Ecosystem %%d does not exist", $SystemID)
+			}
+		}
+		action {
+			EditEcosystemName($SystemID, NewName)
 		}
 	}', '%[1]d', 'ContractConditions("MainCondition")');`
 )
