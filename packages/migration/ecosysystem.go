@@ -1115,6 +1115,16 @@ If("#key_id#" == EcosysParam("founder_account")){
 		`
 
 	SchemaFirstEcosystem = `
+	DROP TABLE IF EXISTS "1_ecosystems";
+	CREATE TABLE "1_ecosystems" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"name"	varchar(255) NOT NULL DEFAULT '',
+			"is_valued" bigint NOT NULL DEFAULT '0'
+	);
+	ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
+
+	INSERT INTO "1_ecosystems" ("id", "name", "is_valued") VALUES ('1', 'base ecosystem', 1);
+
 		DROP TABLE IF EXISTS "1_delayed_contracts";
 		CREATE TABLE "1_delayed_contracts" (
 			"id" int NOT NULL default 0,
@@ -1147,7 +1157,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			),
 			(
 				'15',
-				'1_ecosystems',
+				'ecosystems',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"name": "ContractConditions(\"MainCondition\")"}',
 				'ContractConditions(\"MainCondition\")'
@@ -2032,18 +2042,10 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 		action {
-			EditEcosystemName($SystemID, NewName)
+			EditEcosystemName($SystemID, $NewName)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")');
 	
-	DROP TABLE IF EXISTS "1_ecosystems";
-	CREATE TABLE "1_ecosystems" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"name"	varchar(255) NOT NULL DEFAULT '',
-			"is_valued" bigint NOT NULL DEFAULT '0'
-	);
-	ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
-
-	INSERT INTO "1_ecosystems" ("id", "name", "is_valued") VALUES ('1', "base ecosystem", 1);
+	
 	`
 )

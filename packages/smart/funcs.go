@@ -204,7 +204,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RollbackEditContract": RollbackEditContract,
 		"check_signature":      CheckSignature,
 		"RowConditions":        RowConditions,
-		"EditEcosystemName":    EditEcosystemName,
+		"EditEcosysName":       EditEcosysName,
 	}
 
 	switch vt {

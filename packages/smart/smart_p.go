@@ -469,14 +469,14 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	return id, err
 }
 
-// EditEcosystemName set newName for ecosystem
-func EditEcosystemName(sc *SmartContract, sysID int64, newName string) error {
+// EditEcosysName set newName for ecosystem
+func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 	if sc.TxContract.Name != `@1EditEcosystemName` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditEcosystemName can be only called from @1EditEcosystemName")
 		return fmt.Errorf(`EditEcosystemName can be only called from @1EditEcosystemName`)
 	}
 
-	_, err := DBUpdate(sc, "1_ecosystems", sc.TxSmart.EcosystemID, "name", newName)
+	_, err := DBUpdate(sc, "1_ecosystems", sysID, "name", newName)
 	return err
 }
 
