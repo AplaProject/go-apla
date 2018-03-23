@@ -908,7 +908,6 @@ func TestGlobalVars(t *testing.T) {
 		data { Test string }
 		action {
 			$result = $Test + Str($ecosystem_id)
-			Println("C", $Test, $result)
 		}
 	}`}, `Conditions`: {`true`}}
 	err = postTx(`NewContract`, &form)
