@@ -479,7 +479,12 @@ func PrepareColumns(columns string) string {
 	for _, icol := range strings.Split(columns, `,`) {
 		if strings.Contains(icol, `->`) {
 			colfield := strings.Split(icol, `->`)
-			icol = fmt.Sprintf(`%s::jsonb->>'%s' as "%[1]s.%[2]s"`, colfield[0], colfield[1])
+			if len(colfield) == 2 {
+				icol = fmt.Sprintf(`%s::jsonb->>'%s' as "%[1]s.%[2]s"`, colfield[0], colfield[1])
+			} else {
+				icol = fmt.Sprintf(`%s::jsonb#>>'{%s}' as "%[1]s.%[3]s"`, colfield[0],
+					strings.Join(colfield[1:], `,`), strings.Join(colfield[1:], `.`))
+			}
 		}
 		colList = append(colList, icol)
 	}

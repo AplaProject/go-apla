@@ -364,7 +364,7 @@ func One(list array, name string) string {
 		   var colfield array
 		   var val string
 		   colfield = Split(ToLower(name), "->")
-		   val = row[colfield[0]+"."+ colfield[1]]
+		   val = row[Join(colfield, ".")]
 		   if !val {
 			   var fields map
 			   fields = JSONToMap(row[colfield[0]])

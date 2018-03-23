@@ -4,9 +4,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/url"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
 
 const publicKeyLength = 64
@@ -54,8 +55,26 @@ func (fn *FullNode) Validate() error {
 		return errFullNodeInvalidValues
 	}
 
-	if err := utils.ValidateURL(fn.APIAddress); err != nil {
+	if err := ValidateURL(fn.APIAddress); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// ValidateURL returns error if the URL is invalid
+func ValidateURL(rawurl string) error {
+	u, err := url.ParseRequestURI(rawurl)
+	if err != nil {
+		return err
+	}
+
+	if len(u.Scheme) == 0 {
+		return fmt.Errorf("Invalid scheme: %s", rawurl)
+	}
+
+	if len(u.Host) == 0 {
+		return fmt.Errorf("Invalid host: %s", rawurl)
 	}
 
 	return nil

@@ -29,6 +29,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
@@ -302,6 +303,11 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		return err
 	}
 
+	err = service.TryUpdate(uint64(blockID))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err, "blockID": blockID}).Fatal("update for blockID")
+		return err
+	}
 	return nil
 }
 
@@ -492,7 +498,6 @@ func (p *Parser) CallContract(flags int) (resultContract string, err error) {
 		DbTransaction: p.DbTransaction,
 	}
 	resultContract, err = sc.CallContract(flags)
-	p.TxFuel = sc.TxFuel
 	p.SysUpdate = sc.SysUpdate
 	return
 }
