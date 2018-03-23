@@ -333,10 +333,12 @@ func LoadContracts(transaction *model.DbTransaction) (err error) {
 	var states []map[string]string
 	var prefix []string
 	prefix = []string{`system`}
-	states, err = model.GetAll(`select id from "1_ecosystems" order by id`, -1)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting ids from ecosystems")
-		return err
+	if model.IsTable("1_ecosystems") {
+		states, err = model.GetAll(`select id from "1_ecosystems" order by id`, -1)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting ids from ecosystems")
+			return err
+		}
 	}
 
 	for _, istate := range states {
