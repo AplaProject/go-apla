@@ -882,10 +882,10 @@ func rangeTag(par parFunc) string {
 	setAllAttr(par)
 	step := int64(1)
 	data := make([][]string, 0, 32)
-	from := converter.StrToInt64((*par.Pars)["From"])
-	to := converter.StrToInt64((*par.Pars)["To"])
+	from := converter.StrToInt64(macro((*par.Pars)["From"], par.Workspace.Vars))
+	to := converter.StrToInt64(macro((*par.Pars)["To"], par.Workspace.Vars))
 	if len((*par.Pars)["Step"]) > 0 {
-		step = converter.StrToInt64((*par.Pars)["Step"])
+		step = converter.StrToInt64(macro((*par.Pars)["Step"], par.Workspace.Vars))
 	}
 	if step > 0 && from < to {
 		for i := from; i < to; i += step {
