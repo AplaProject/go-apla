@@ -2269,14 +2269,6 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")');
 	
-	DROP TABLE IF EXISTS "1_ecosystems";
-	CREATE TABLE "1_ecosystems" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"name"	varchar(255) NOT NULL DEFAULT '',
-			"is_valued" bigint NOT NULL DEFAULT '0'
-	);
-	ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
-
-	INSERT INTO "1_ecosystems" ("id", "name", "is_valued") VALUES ('1', "base ecosystem", 1);
+	
 	`
 )
