@@ -86,6 +86,13 @@ type RunTime struct {
 	unwrap bool
 }
 
+func isSysVar(name string) bool {
+	if _, ok := sysVars[name]; ok || strings.HasPrefix(name, `loop_`) {
+		return true
+	}
+	return false
+}
+
 func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 	var (
 		count, in int
@@ -454,7 +461,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			for ivar, item := range assign {
 				if item.Owner == nil {
 					if (*item).Obj.Type == ObjExtend {
-						if _, ok := sysVars[(*item).Obj.Value.(string)]; ok {
+						if isSysVar((*item).Obj.Value.(string)) {
 							err := fmt.Errorf(eSysVar, (*item).Obj.Value.(string))
 							rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("modifying system variable")
 							return 0, err

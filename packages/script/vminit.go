@@ -222,7 +222,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 
 	prevExtend := make(map[string]interface{})
 	for key, item := range *rt.extend {
-		if _, ok := sysVars[key]; ok || strings.HasPrefix(key, `loop_`) {
+		if isSysVar(key) {
 			continue
 		}
 		prevExtend[key] = item
@@ -303,7 +303,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 
 	result := (*rt.extend)[`result`]
 	for key := range *rt.extend {
-		if _, ok := sysVars[key]; ok || strings.HasPrefix(key, `loop_`) {
+		if isSysVar(key) {
 			continue
 		}
 		delete(*rt.extend, key)

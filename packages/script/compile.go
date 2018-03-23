@@ -515,7 +515,7 @@ func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 		ivar VarInfo
 	)
 	if lexem.Type == lexExtend {
-		if _, ok := sysVars[lexem.Value.(string)]; ok {
+		if isSysVar(lexem.Value.(string)) {
 			lexem.GetLogger().WithFields(log.Fields{"type": consts.ParseError, "lex_value": lexem.Value.(string)}).Error("modifying system variable")
 			return fmt.Errorf(eSysVar, lexem.Value.(string))
 		}
