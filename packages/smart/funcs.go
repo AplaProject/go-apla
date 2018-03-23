@@ -213,6 +213,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"DecodeBase64":         DecodeBase64,
 		"MD5":                  MD5,
 		"EditEcosystemName":    EditEcosystemName,
+		"EditEcosysName":       EditEcosysName,
 	}
 
 	switch vt {
