@@ -206,7 +206,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"check_signature":      CheckSignature,
 		"RowConditions":        RowConditions,
 		"UUID":                 UUID,
-		"EditEcosystemName":    EditEcosystemName,
+		"EditEcosysName":       EditEcosysName,
 	}
 
 	switch vt {
