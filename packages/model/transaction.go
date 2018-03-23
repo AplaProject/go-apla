@@ -1,7 +1,8 @@
 package model
 
 const (
-	TransactionRateOnBlock transactionRate = 1
+	TransactionRateOnBlock transactionRate = iota + 1
+	TransactionRateStopNetwork
 )
 
 type transactionRate int8

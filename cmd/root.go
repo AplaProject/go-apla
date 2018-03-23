@@ -24,6 +24,7 @@ func init() {
 		rollbackCmd,
 		startCmd,
 		configCmd,
+		stopNetworkCmd,
 	)
 
 	// This flags are visible for all child commands

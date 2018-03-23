@@ -343,7 +343,7 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 	} else if consts.IsStruct(int(txType)) {
 		p.TxBinaryData = buffer.Bytes()
 		if err := parseStructTransaction(p, buffer, txType); err != nil {
-			return nil, err
+			return p, err
 		}
 
 		// all other transactions
@@ -494,6 +494,12 @@ func parseStructTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	p.TxKeyID = head.KeyID
 	p.TxTime = int64(head.Time)
 	p.TxType = txType
+
+	err = trParser.Validate()
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+
 	return nil
 }
 

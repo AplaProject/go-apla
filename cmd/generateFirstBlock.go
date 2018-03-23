@@ -53,12 +53,13 @@ var generateFirstBlockCmd = &cobra.Command{
 		_, err := converter.BinMarshal(&tx,
 			&consts.FirstBlock{
 				TxHeader: consts.TxHeader{
-					Type:  1, // FirstBlock
+					Type:  consts.TxTypeFirstBlock,
 					Time:  uint32(now),
 					KeyID: conf.Config.KeyID,
 				},
-				PublicKey:     decodeKeyFile(consts.PublicKeyFilename),
-				NodePublicKey: decodeKeyFile(consts.NodePublicKeyFilename),
+				PublicKey:             decodeKeyFile(consts.PublicKeyFilename),
+				NodePublicKey:         decodeKeyFile(consts.NodePublicKeyFilename),
+				StopNetworkCertBundle: []byte(stopNetworkRoot),
 			},
 		)
 

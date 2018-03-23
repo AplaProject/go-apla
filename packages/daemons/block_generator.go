@@ -111,7 +111,9 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		bufTransaction := bytes.NewBuffer(txItem.Data)
 		p, err := parser.ParseTransaction(bufTransaction)
 		if err != nil {
-			p.ProcessBadTransaction(err)
+			if p != nil {
+				p.ProcessBadTransaction(err)
+			}
 			continue
 		}
 		if p.TxSmart != nil {
