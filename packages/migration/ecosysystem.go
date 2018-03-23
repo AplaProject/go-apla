@@ -1341,8 +1341,22 @@ If("#key_id#" == EcosysParam("founder_account")){
 				'ContractConditions(\"MainCondition\")'),
 
 			(
-				'17',
-				'1_ecosystems',
+				'17', 
+				'delayed_contracts', 
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"contract": "ContractConditions(\"MainCondition\")",
+					"key_id": "ContractConditions(\"MainCondition\")",
+					"block_id": "ContractConditions(\"MainCondition\")",
+					"every_block": "ContractConditions(\"MainCondition\")",
+					"counter": "ContractConditions(\"MainCondition\")",
+					"limit": "ContractConditions(\"MainCondition\")",
+					"deleted": "ContractConditions(\"MainCondition\")",
+					"conditions": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")'
+			),
+			(
+				'18',
+				'ecosystems',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"name": "ContractConditions(\"MainCondition\")"}',
 				'ContractConditions(\"MainCondition\")'
@@ -2313,7 +2327,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 		action {
-			EditEcosystemName($SystemID, NewName)
+			EditEcosystemName($SystemID, $NewName)
 		}
 	}', '%[1]d', 'ContractConditions("MainCondition")');`
 )
