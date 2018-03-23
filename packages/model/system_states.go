@@ -15,14 +15,20 @@ func (sys *Ecosystem) TableName() string {
 
 // GetAllSystemStatesIDs is retrieving all system states ids
 func GetAllSystemStatesIDs() ([]int64, error) {
+	if !IsTable("1_ecosystems") {
+		return nil, nil
+	}
+
 	states := new([]Ecosystem)
 	if err := DBConn.Find(&states).Order("id").Error; err != nil {
 		return nil, err
 	}
+
 	ids := make([]int64, 0, len(*states))
 	for _, s := range *states {
 		ids = append(ids, s.ID)
 	}
+
 	return ids, nil
 }
 

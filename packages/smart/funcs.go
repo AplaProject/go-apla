@@ -207,7 +207,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RowConditions":        RowConditions,
 		"UUID":                 UUID,
 		"MD5":                  MD5,
-		"EditEcosystemName":    EditEcosystemName,
+		"EditEcosysName":       EditEcosysName,
 	}
 
 	switch vt {
