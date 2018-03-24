@@ -66,6 +66,7 @@ func init() {
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
 	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
+	funcs[`Range`] = tplFunc{rangeTag, defaultTag, `range`, `Source,From,To,Step`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
 	funcs[`Strong`] = tplFunc{defaultTag, defaultTag, `strong`, `Body,Class`}
@@ -875,4 +876,32 @@ func chartTag(par parFunc) string {
 	}
 
 	return ""
+}
+
+func rangeTag(par parFunc) string {
+	setAllAttr(par)
+	step := int64(1)
+	data := make([][]string, 0, 32)
+	from := converter.StrToInt64(macro((*par.Pars)["From"], par.Workspace.Vars))
+	to := converter.StrToInt64(macro((*par.Pars)["To"], par.Workspace.Vars))
+	if len((*par.Pars)["Step"]) > 0 {
+		step = converter.StrToInt64(macro((*par.Pars)["Step"], par.Workspace.Vars))
+	}
+	if step > 0 && from < to {
+		for i := from; i < to; i += step {
+			data = append(data, []string{converter.Int64ToStr(i)})
+		}
+	} else if step < 0 && from > to {
+		for i := from; i > to; i += step {
+			data = append(data, []string{converter.Int64ToStr(i)})
+		}
+	}
+	delete(par.Node.Attr, `from`)
+	delete(par.Node.Attr, `to`)
+	delete(par.Node.Attr, `step`)
+	par.Node.Attr[`columns`] = &[]string{"id"}
+	par.Node.Attr[`data`] = &data
+	newSource(par)
+	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return ``
 }
