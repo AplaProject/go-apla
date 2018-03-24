@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 // Block is model
 type Block struct {
 	ID            int64  `gorm:"primary_key;not_null"`
@@ -31,6 +33,11 @@ func (b *Block) Get(blockID int64) (bool, error) {
 // GetMaxBlock returns last block existence
 func (b *Block) GetMaxBlock() (bool, error) {
 	return isFound(DBConn.Last(b))
+}
+
+// GetMaxNodeBlock returns last block generated not by key_id
+func (b *Block) GetMaxForeignBlock(keyId int64) (bool, error) {
+	return isFound(DBConn.Order("id DESC").Where("key_id != ?", keyId).First(b))
 }
 
 // GetBlockchain is retrieving chain of blocks from database
@@ -76,6 +83,13 @@ func (b *Block) GetReverseBlockchain(endBlockID int64, limit int32) ([]Block, er
 	var err error
 	blockchain := new([]Block)
 	err = DBConn.Model(&Block{}).Order("id DESC").Where("id <= ?", endBlockID).Limit(limit).Find(&blockchain).Error
+	return *blockchain, err
+}
+
+func (b *Block) GetNodeBlocksAtTime(from, to time.Time, node int64) ([]Block, error) {
+	var err error
+	blockchain := new([]Block)
+	err = DBConn.Model(&Block{}).Where("node_position = ? AND time BETWEEN ? AND ?", node, from.Unix(), to.Unix()).Find(&blockchain).Error
 	return *blockchain, err
 }
 
