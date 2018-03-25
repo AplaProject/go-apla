@@ -2042,7 +2042,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 		action {
-			EditEcosystemName($SystemID, $NewName)
+			EditEcosysName($SystemID, $NewName)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")');
 	
