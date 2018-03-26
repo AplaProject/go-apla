@@ -1,5 +1,11 @@
 package model
 
+import (
+	"fmt"
+)
+
+const ecosysTable = "1_ecosystems"
+
 // Ecosystem is model
 type Ecosystem struct {
 	ID       int64 `gorm:"primary_key;not null"`
@@ -10,22 +16,22 @@ type Ecosystem struct {
 // TableName returns name of table
 // only first ecosystem has this entity
 func (sys *Ecosystem) TableName() string {
-	return "1_ecosystems"
+	return ecosysTable
 }
 
-// GetAllSystemStatesIDs is retrieving all system states ids
+// GetAllSystemStatesIDs is retrieving all ecosystems ids
 func GetAllSystemStatesIDs() ([]int64, error) {
-	if !IsTable("1_ecosystems") {
-		return nil, nil
+	if !IsTable(ecosysTable) {
+		return nil, fmt.Errorf("%s does not exists", ecosysTable)
 	}
 
-	states := new([]Ecosystem)
-	if err := DBConn.Find(&states).Order("id").Error; err != nil {
+	ecosystems := new([]Ecosystem)
+	if err := DBConn.Find(&ecosystems).Order("id").Error; err != nil {
 		return nil, err
 	}
 
-	ids := make([]int64, 0, len(*states))
-	for _, s := range *states {
+	ids := make([]int64, 0, len(*ecosystems))
+	for _, s := range *ecosystems {
 		ids = append(ids, s.ID)
 	}
 

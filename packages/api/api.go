@@ -50,17 +50,17 @@ const (
 )
 
 type apiData struct {
-	status      int
-	result      interface{}
-	params      map[string]interface{}
-	ecosystemId int64
-	systemName  string
-	keyId       int64
-	isMobile    string
-	roleId      int64
-	vde         bool
-	vm          *script.VM
-	token       *jwt.Token
+	status        int
+	result        interface{}
+	params        map[string]interface{}
+	ecosystemId   int64
+	ecosystemName string
+	keyId         int64
+	isMobile      string
+	roleId        int64
+	vde           bool
+	vm            *script.VM
+	token         *jwt.Token
 }
 
 // ParamString reaturs string value of the api params

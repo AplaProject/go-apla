@@ -1290,7 +1290,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 	);
 	ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
 
-	INSERT INTO "1_ecosystems" ("id", "name", "is_valued") VALUES ('1', 'base ecosystem', 1);
+	INSERT INTO "1_ecosystems" ("id", "name", "is_valued") VALUES ('1', 'platform ecosystem', 1);
 
 		DROP TABLE IF EXISTS "1_delayed_contracts";
 		CREATE TABLE "1_delayed_contracts" (
@@ -2254,18 +2254,18 @@ If("#key_id#" == EcosysParam("founder_account")){
 	}','%[1]d', 'ContractConditions("MainCondition")'),
 	('33', 'contract EditEcosystemName {
 		data {
-			SystemID int
+			EcosystemID int
 			NewName string
 		}
 		conditions {
 			var rows array
-			rows = DBFind("1_ecosystems").Where("id = ?", $SystemID)
+			rows = DBFind("1_ecosystems").Where("id = ?", $EcosystemID)
 			if !Len(rows) {
-				error Sprintf("Ecosystem %%d does not exist", $SystemID)
+				error Sprintf("Ecosystem %%d does not exist", $EcosystemID)
 			}
 		}
 		action {
-			EditEcosysName($SystemID, $NewName)
+			EditEcosysName($EcosystemID, $NewName)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")');
 	
