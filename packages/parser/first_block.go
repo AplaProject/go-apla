@@ -131,8 +131,7 @@ func GetKeyIDFromPrivateKey() (int64, error) {
 	return crypto.Address(key), nil
 }
 
-// GetKeysFromFirstBlock returns the KeyID and the NodePublicKey of node that created the first block
-func GetKeysFromFirstBlock() (keyID int64, publicKey []byte, ok bool) {
+func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 	block := &model.Block{}
 	isFound, err := block.Get(1)
 	if err != nil {
@@ -156,9 +155,19 @@ func GetKeysFromFirstBlock() (keyID int64, publicKey []byte, ok bool) {
 	}
 
 	p := pb.Parsers[0]
-	data, ok := p.TxPtr.(*consts.FirstBlock)
+	data, ok = p.TxPtr.(*consts.FirstBlock)
 	if !ok {
 		log.WithFields(log.Fields{"type": consts.ParserError}).Error("getting data of first block")
+		return
+	}
+
+	return
+}
+
+// GetKeysFromFirstBlock returns the KeyID and the NodePublicKey of node that created the first block
+func GetKeysFromFirstBlock() (keyID int64, publicKey []byte, ok bool) {
+	data, ok := GetDataFromFirstBlock()
+	if !ok {
 		return
 	}
 

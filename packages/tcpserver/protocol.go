@@ -62,6 +62,14 @@ type DisHashResponse struct {
 	Data []byte
 }
 
+type StopNetworkRequest struct {
+	Data []byte
+}
+
+type StopNetworkResponse struct {
+	Hash []byte
+}
+
 // ReadRequest is reading request
 func ReadRequest(request interface{}, r io.Reader) error {
 	if reflect.ValueOf(request).Elem().Kind() != reflect.Struct {
@@ -170,6 +178,19 @@ func SendRequest(request interface{}, w io.Writer) error {
 
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			_, err := w.Write(converter.DecToBin(t.Int(), int64(t.Type().Size())))
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bytes")
+				return err
+			}
+
+		case reflect.Bool:
+			var bs []byte
+			if t.Bool() {
+				bs = []byte("1")
+			} else {
+				bs = []byte("0")
+			}
+			_, err := w.Write(bs)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bytes")
 				return err

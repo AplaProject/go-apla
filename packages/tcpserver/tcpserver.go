@@ -55,9 +55,6 @@ func HandleTCPRequest(rw net.Conn) {
 
 	switch dType.Type {
 	case 1:
-		if service.IsNodePaused() {
-			return
-		}
 		req := &DisRequest{}
 		err = ReadRequest(req, rw)
 		if err == nil {
@@ -72,6 +69,12 @@ func HandleTCPRequest(rw net.Conn) {
 		err = ReadRequest(req, rw)
 		if err == nil {
 			response, err = Type2(req)
+		}
+
+	case 3:
+		req := &StopNetworkRequest{}
+		if err = ReadRequest(req, rw); err == nil {
+			err = Type3(req, rw)
 		}
 
 	case 4:

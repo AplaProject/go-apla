@@ -1,16 +1,28 @@
 package cmd
 
 import (
-	"time"
+	"errors"
+	"io/ioutil"
+	"path/filepath"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+)
+
+const reqType = 3
+
+var (
+	addrsForStopping        []string
+	stopNetworkCertFilepath string
+
+	errNotAccepted = errors.New("Not accepted")
 )
 
 // stopNetworkCmd represents the stopNetworkCmd command
@@ -19,50 +31,61 @@ var stopNetworkCmd = &cobra.Command{
 	Short:  "Sending a special transaction to stop the network",
 	PreRun: loadConfigWKey,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := model.GormInit(
-			conf.Config.DB.Host,
-			conf.Config.DB.Port,
-			conf.Config.DB.User,
-			conf.Config.DB.Password,
-			conf.Config.DB.Name,
-		)
+		fp := filepath.Join(conf.Config.KeysDir, stopNetworkCertFilepath)
+		stopNetworkCert, err := ioutil.ReadFile(fp)
 		if err != nil {
-			log.WithError(err).Fatal("init db")
+			log.WithError(err).WithFields(log.Fields{"filepath": fp}).Fatal("Reading cert data")
 		}
 
-		var data []byte
-		_, err = converter.BinMarshal(&data,
-			&consts.StopNetwork{
-				TxHeader: consts.TxHeader{
-					Type:  consts.TxTypeStopNetwork,
-					Time:  uint32(time.Now().Unix()),
-					KeyID: conf.Config.KeyID,
-				},
-				StopNetworkCert: []byte(stopNetworkCert),
-			},
-		)
-		if err != nil {
-			log.WithError(err).Fatal("marshal")
+		req := &tcpserver.StopNetworkRequest{
+			Data: stopNetworkCert,
 		}
 
-		// daemons.SendDRequest(conf.Config.TCPServer.Str(), 1, data, nil, log.WithFields(nil))
+		errCount := 0
+		for _, addr := range addrsForStopping {
+			if err := sendStopNetworkCert(addr, req); err != nil {
+				log.WithError(err).Errorf("Sending request to %s", addr)
+				errCount++
+				continue
+			}
 
-		hash, err := crypto.Hash(data)
-		if err != nil {
-			log.WithError(err).Fatal("hash")
+			log.Infof("Sending request to %s", addr)
 		}
 
-		tx := &model.Transaction{
-			Hash:     hash,
-			Data:     data[:],
-			Type:     int8(converter.BinToDecBytesShift(&data, 1)),
-			KeyID:    conf.Config.KeyID,
-			HighRate: model.TransactionRateStopNetwork,
-		}
-		if err = tx.Create(); err != nil {
-			log.WithError(err).Fatal("insert tx")
-		}
-
-		log.WithFields(log.Fields{"hash": hash}).Info("Sent transaction of network stop")
+		log.Infof("Successful: %d, failed: %d", len(addrsForStopping)-errCount, errCount)
 	},
+}
+
+func sendStopNetworkCert(addr string, req *tcpserver.StopNetworkRequest) error {
+	conn, err := utils.TCPConn(addr)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	if _, err = conn.Write(converter.DecToBin(reqType, 2)); err != nil {
+		return err
+	}
+
+	if err = tcpserver.SendRequest(req, conn); err != nil {
+		return err
+	}
+
+	res := &tcpserver.StopNetworkResponse{}
+	if err = tcpserver.ReadRequest(res, conn); err != nil {
+		return err
+	}
+
+	if len(res.Hash) != consts.HashSize {
+		return errNotAccepted
+	}
+
+	return nil
+}
+
+func init() {
+	stopNetworkCmd.Flags().StringVar(&stopNetworkCertFilepath, "stopNetworkCert", "", "Filepath to certificate for network stopping")
+	stopNetworkCmd.Flags().StringArrayVar(&addrsForStopping, "addr", []string{}, "Node address")
+	stopNetworkCmd.MarkFlagRequired("stopNetworkCert")
+	stopNetworkCmd.MarkFlagRequired("addr")
 }

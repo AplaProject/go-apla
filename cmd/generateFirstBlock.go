@@ -17,6 +17,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var stopNetworkBundleFilepath string
+
 // generateFirstBlockCmd represents the generateFirstBlock command
 var generateFirstBlockCmd = &cobra.Command{
 	Use:    "generateFirstBlock",
@@ -49,6 +51,19 @@ var generateFirstBlockCmd = &cobra.Command{
 			return decodedKey
 		}
 
+		var stopNetworkCert []byte
+		if len(stopNetworkBundleFilepath) > 0 {
+			var err error
+			fp := filepath.Join(conf.Config.KeysDir, stopNetworkBundleFilepath)
+			if stopNetworkCert, err = ioutil.ReadFile(fp); err != nil {
+				log.WithError(err).WithFields(log.Fields{"filepath": fp}).Fatal("Reading cert data")
+			}
+		}
+
+		if len(stopNetworkCert) == 0 {
+			log.Warn("the fullchain of certificates for a network stopping is not specified")
+		}
+
 		var tx []byte
 		_, err := converter.BinMarshal(&tx,
 			&consts.FirstBlock{
@@ -59,7 +74,7 @@ var generateFirstBlockCmd = &cobra.Command{
 				},
 				PublicKey:             decodeKeyFile(consts.PublicKeyFilename),
 				NodePublicKey:         decodeKeyFile(consts.NodePublicKeyFilename),
-				StopNetworkCertBundle: []byte(stopNetworkRoot),
+				StopNetworkCertBundle: stopNetworkCert,
 			},
 		)
 
@@ -77,4 +92,8 @@ var generateFirstBlockCmd = &cobra.Command{
 		ioutil.WriteFile(conf.Config.FirstBlockPath, block, 0644)
 		log.Info("first block generated")
 	},
+}
+
+func init() {
+	generateFirstBlockCmd.Flags().StringVar(&stopNetworkBundleFilepath, "stopNetworkCert", "", "Filepath to the fullchain of certificates for network stopping")
 }

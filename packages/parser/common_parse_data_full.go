@@ -610,8 +610,8 @@ func playTransaction(p *Parser) (string, error) {
 		}
 
 		err := p.txParser.Action()
-		if _, ok := err.(error); ok {
-			return "", utils.ErrInfo(err.(error))
+		if err != nil {
+			return "", err
 		}
 	}
 	return "", nil
@@ -641,6 +641,10 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			err = limits.CheckLimit(p)
 		}
 		if err != nil {
+			if err == errNetworkStopping {
+				continue
+			}
+
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
 				model.IncrementTxAttemptCount(p.DbTransaction, p.TxHash)
