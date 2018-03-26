@@ -75,7 +75,8 @@ var (
 	  ('9','changing_contracts', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
 	  ('10','stylesheet', 'body { 
 		/* You can define your custom styles here or create custom CSS rules */
-	  }', 'ContractConditions("MainCondition")');
+	  }', 'ContractConditions("MainCondition")'),
+	  ('11','changing_blocks', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")');
 
 	  DROP TABLE IF EXISTS "%[1]d_vde_cron";
 	  CREATE TABLE "%[1]d_vde_cron" (
@@ -896,7 +897,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}', 'ContractConditions("MainCondition")'),
 		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")'),
 		('14','min_page_validate_count', '1', 'ContractConditions("MainCondition")'),
-		('15','max_page_validate_count', '6', 'ContractConditions("MainCondition")');
+		('15','max_page_validate_count', '6', 'ContractConditions("MainCondition")'),
+		('16','changing_blocks', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")');
 		
 		DROP TABLE IF EXISTS "%[1]d_tables";
 		CREATE TABLE "%[1]d_tables" (
