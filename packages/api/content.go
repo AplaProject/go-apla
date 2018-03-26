@@ -53,7 +53,7 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 	vars[`ecosystem_id`] = converter.Int64ToStr(data.ecosystemId)
 	vars[`key_id`] = converter.Int64ToStr(data.keyId)
 	vars[`isMobile`] = data.isMobile
-	vars[`system_name`] = data.systemName
+	vars[`ecosystem_name`] = data.ecosystemName
 
 	if _, ok := vars[`lang`]; !ok {
 		vars[`lang`] = r.Header.Get(`Accept-Language`)
