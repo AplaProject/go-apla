@@ -2316,18 +2316,18 @@ If("#key_id#" == EcosysParam("founder_account")){
 	}','%[1]d', 'ContractConditions("MainCondition")'),
 	('33', 'contract EditEcosystemName {
 		data {
-			SystemID int
+			EcosystemID int
 			NewName string
 		}
 		conditions {
 			var rows array
-			rows = DBFind("1_ecosystems").Where("id = ?", $SystemID)
+			rows = DBFind("1_ecosystems").Where("id = ?", $EcosystemID)
 			if !Len(rows) {
-				error Sprintf("Ecosystem %%d does not exist", $SystemID)
+				error Sprintf("Ecosystem %%d does not exist", $EcosystemID)
 			}
 		}
 		action {
-			EditEcosysName($SystemID, $NewName)
+			EditEcosysName($EcosystemID, $NewName)
 		}
 	}', '%[1]d', 'ContractConditions("MainCondition")');`
 )
