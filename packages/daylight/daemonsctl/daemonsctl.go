@@ -20,11 +20,8 @@ func RunAllDaemons() error {
 		return err
 	}
 
-	// If list of nodes is empty, then used node from the first block
-	if syspar.GetNumberOfNodes() == 0 {
-		if keyID, publicKey, ok := parser.GetKeysFromFirstBlock(); ok {
-			syspar.AddFullNodeKeys(keyID, publicKey)
-		}
+	if data, ok := parser.GetDataFromFirstBlock(); ok {
+		syspar.SetFirstBlockData(data)
 	}
 
 	log.Info("load contracts")

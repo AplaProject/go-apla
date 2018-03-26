@@ -80,6 +80,26 @@ func SendNotifications() {
 	})
 }
 
+// BroadcastMessage broadcasts a message to everyone client
+func BroadcastMessage(message map[string]string) error {
+	data, err := mapToString(message)
+	if err != nil {
+		return err
+	}
+
+	notifications.Range(func(key, value interface{}) bool {
+		ecosystemStats := value.(NotificationStats)
+		ecosystemStats.userIDs.Range(func(key, value interface{}) bool {
+			userID := int64(key.(UserID))
+			publisher.Write(userID, data)
+			return true
+		})
+		return true
+	})
+
+	return nil
+}
+
 func mapToString(value map[string]string) (string, error) {
 	bytes, err := json.Marshal(value)
 	if err != nil {

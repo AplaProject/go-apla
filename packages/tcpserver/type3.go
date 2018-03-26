@@ -5,38 +5,70 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // Type3
 func Type3(req *StopNetworkRequest, w net.Conn) error {
-	// TODO: validate cert
+	hash, err := processStopNetwork(req.Data)
+	if err != nil {
+		return err
+	}
+
+	res := &StopNetworkResponse{hash}
+	if err = SendRequest(res, w); err != nil {
+		log.WithError(err).Error("sending response")
+		return err
+	}
+
+	return nil
+}
+
+func processStopNetwork(b []byte) ([]byte, error) {
+	cert, err := utils.ParseCert(b)
+	if err != nil {
+		log.WithError(err).Error("parsing cert")
+		return nil, err
+	}
+
+	fbdata, err := syspar.GetFirstBlockData()
+	if err != nil {
+		log.WithError(err).Error("getting data of first block")
+		return nil, err
+	}
+
+	if err = cert.Validate(fbdata.StopNetworkCertBundle); err != nil {
+		log.WithError(err).Error("validating cert")
+		return nil, err
+	}
 
 	var data []byte
-	_, err := converter.BinMarshal(&data,
+	_, err = converter.BinMarshal(&data,
 		&consts.StopNetwork{
 			TxHeader: consts.TxHeader{
 				Type:  consts.TxTypeStopNetwork,
 				Time:  uint32(time.Now().Unix()),
 				KeyID: conf.Config.KeyID,
 			},
-			StopNetworkCert: req.Data,
+			StopNetworkCert: b,
 		},
 	)
 	if err != nil {
 		log.WithError(err).Error("binary marshaling")
-		return err
+		return nil, err
 	}
 
 	hash, err := crypto.Hash(data)
 	if err != nil {
 		log.WithError(err).Error("hashing data")
-		return err
+		return nil, err
 	}
 
 	tx := &model.Transaction{
@@ -48,16 +80,8 @@ func Type3(req *StopNetworkRequest, w net.Conn) error {
 	}
 	if err = tx.Create(); err != nil {
 		log.WithError(err).Error("inserting tx to database")
-		return err
+		return nil, err
 	}
 
-	res := &StopNetworkResponse{hash}
-	if err = SendRequest(res, w); err != nil {
-		log.WithError(err).Error("sending response")
-		return err
-	}
-
-	w.Read(make([]byte, 1))
-
-	return nil
+	return hash, nil
 }

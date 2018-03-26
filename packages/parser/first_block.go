@@ -95,7 +95,7 @@ func (p *FirstBlockParser) Action() error {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 		return p.ErrInfo(err)
 	}
-	syspar.AddFullNodeKeys(keyID, data.NodePublicKey)
+	syspar.SetFirstBlockData(data)
 	return nil
 }
 
@@ -131,6 +131,7 @@ func GetKeyIDFromPrivateKey() (int64, error) {
 	return crypto.Address(key), nil
 }
 
+// GetDataFromFirstBlock returns data of first block
 func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 	block := &model.Block{}
 	isFound, err := block.Get(1)
@@ -162,14 +163,4 @@ func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 	}
 
 	return
-}
-
-// GetKeysFromFirstBlock returns the KeyID and the NodePublicKey of node that created the first block
-func GetKeysFromFirstBlock() (keyID int64, publicKey []byte, ok bool) {
-	data, ok := GetDataFromFirstBlock()
-	if !ok {
-		return
-	}
-
-	return crypto.Address(data.PublicKey), data.NodePublicKey, ok
 }

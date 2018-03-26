@@ -1,26 +1,26 @@
 package parser
 
 import (
-	"crypto/x509"
-	"encoding/pem"
 	"errors"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/service"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 )
 
 var (
-	errParseNetworkStopCert     = errors.New("Failed to parse certificate of network stop")
-	errParseNetworkStopRootCert = errors.New("Failed to parse root certificate of network stop")
-	errFirstBlockData           = errors.New("Failed to get data of the first block")
-	errNetworkStopping          = errors.New("Network stopping")
+	messageNetworkStopping = "Attention! The network is stopped!"
+
+	errNetworkStopping = errors.New("Network is stopping")
 )
 
 type StopNetworkParser struct {
 	*Parser
 
-	cert *x509.Certificate
+	cert *utils.Cert
 }
 
 func (p *StopNetworkParser) Init() error {
@@ -29,7 +29,7 @@ func (p *StopNetworkParser) Init() error {
 
 func (p *StopNetworkParser) Validate() error {
 	if err := p.validate(); err != nil {
-		p.GetLogger().Error(err)
+		p.GetLogger().WithError(err).Error("validating tx")
 		return err
 	}
 
@@ -39,26 +39,21 @@ func (p *StopNetworkParser) Validate() error {
 func (p *StopNetworkParser) validate() error {
 	data := p.TxPtr.(*consts.StopNetwork)
 
-	cert, err := parseCert(data.StopNetworkCert)
+	cert, err := utils.ParseCert(data.StopNetworkCert)
 	if err != nil {
 		return err
 	}
-	p.cert = cert
 
-	firstBlockData, ok := GetDataFromFirstBlock()
-	if !ok {
-		return errFirstBlockData
-	}
-
-	roots := x509.NewCertPool()
-	if ok := roots.AppendCertsFromPEM(firstBlockData.StopNetworkCertBundle); !ok {
-		return errParseNetworkStopRootCert
-	}
-
-	if _, err := cert.Verify(x509.VerifyOptions{Roots: roots}); err != nil {
+	fbdata, err := syspar.GetFirstBlockData()
+	if err != nil {
 		return err
 	}
 
+	if err = cert.Validate(fbdata.StopNetworkCertBundle); err != nil {
+		return err
+	}
+
+	p.cert = cert
 	return nil
 }
 
@@ -69,8 +64,14 @@ func (p *StopNetworkParser) Action() error {
 	}
 
 	// Set the node in a pause state
-	p.GetLogger().Warn("Attention! The network is stopped!")
 	service.PauseNodeActivity(service.PauseTypeStopingNetwork)
+
+	notificator.BroadcastMessage(map[string]string{
+		"notification_type": "system",
+		"body_text":         messageNetworkStopping,
+	})
+
+	p.GetLogger().Warn(messageNetworkStopping)
 	return errNetworkStopping
 }
 
@@ -82,22 +83,12 @@ func (p StopNetworkParser) Header() *tx.Header {
 	return nil
 }
 
-func isUsedCert(cert *x509.Certificate) bool {
+func isUsedCert(cert *utils.Cert) bool {
 	for _, v := range consts.UsedStopNetworkCerts {
-		usedCert, _ := parseCert(v)
-		if cert.Equal(usedCert) {
+		if cert.EqualBytes(v) {
 			return true
 		}
 	}
 
 	return false
-}
-
-func parseCert(b []byte) (*x509.Certificate, error) {
-	block, _ := pem.Decode(b)
-	if block == nil {
-		return nil, errParseNetworkStopCert
-	}
-
-	return x509.ParseCertificate(block.Bytes)
 }
