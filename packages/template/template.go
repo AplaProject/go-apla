@@ -681,6 +681,11 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 	if root.Children == nil || *timeout {
 		return []byte(`[]`)
 	}
+	for i, v := range root.Children {
+		if v.Tag == `text` {
+			root.Children[i].Text = macro(v.Text, vars)
+		}
+	}
 	out, err := json.Marshal(root.Children)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling template data to json")
