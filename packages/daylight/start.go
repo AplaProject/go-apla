@@ -335,10 +335,21 @@ func Start() {
 		if err != nil {
 			os.Exit(1)
 		}
-		//go func() {
-		//	na := service.NewNodeActualizer(service.DefaultBlockchainGap)
-		//	na.Run()
-		//}()
+
+		go func() {
+			var availableBCGap int64
+			if syspar.GetRbBlocks1() > 4 {
+				availableBCGap = syspar.GetRbBlocks1() - 4
+			}
+
+			blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
+			blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
+			blockGenerationTime := blockGenerationDuration + blocksGapDuration
+
+			checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-6)
+			na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
+			na.Run()
+		}()
 	}
 
 	daemons.WaitForSignals()

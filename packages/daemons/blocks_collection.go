@@ -24,7 +24,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -33,9 +32,9 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
@@ -76,9 +75,12 @@ func initialLoad(ctx context.Context, d *daemon) error {
 func blocksCollection(ctx context.Context, d *daemon) error {
 
 	hosts := syspar.GetRemoteHosts()
+	if len(hosts) == 0 {
+		return nil
+	}
 
 	// get a host with the biggest block id
-	host, maxBlockID, err := chooseBestHost(ctx, hosts, d.logger)
+	host, maxBlockID, err := utils.ChooseBestHost(ctx, hosts, d.logger)
 	if err != nil {
 		return err
 	}
@@ -101,79 +103,13 @@ func blocksCollection(ctx context.Context, d *daemon) error {
 	}
 
 	DBLock()
-	defer DBUnlock()
+	defer func() {
+		DBUnlock()
+		service.NodeDoneUpdatingBlockchain()
+	}()
+
 	// update our chain till maxBlockID from the host
 	return UpdateChain(ctx, d, host, maxBlockID)
-}
-
-// best host is a host with the biggest last block ID
-func chooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (string, int64, error) {
-	type blockAndHost struct {
-		host    string
-		blockID int64
-		err     error
-	}
-	c := make(chan blockAndHost, len(hosts))
-
-	var wg sync.WaitGroup
-	for _, h := range hosts {
-		if ctx.Err() != nil {
-			logger.WithFields(log.Fields{"error": ctx.Err(), "type": consts.ContextError}).Error("context error")
-			return "", 0, ctx.Err()
-		}
-		wg.Add(1)
-
-		go func(host string) {
-			blockID, err := getHostBlockID(host, logger)
-			wg.Done()
-
-			c <- blockAndHost{
-				host:    host,
-				blockID: blockID,
-				err:     err,
-			}
-		}(getHostPort(h))
-	}
-	wg.Wait()
-
-	maxBlockID := int64(-1)
-	var bestHost string
-	for i := 0; i < len(hosts); i++ {
-		bl := <-c
-
-		if bl.blockID > maxBlockID {
-			maxBlockID = bl.blockID
-			bestHost = bl.host
-		}
-	}
-
-	return bestHost, maxBlockID, nil
-}
-
-func getHostBlockID(host string, logger *log.Entry) (int64, error) {
-	conn, err := utils.TCPConn(host)
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Debug("error connecting to host")
-		return 0, err
-	}
-	defer conn.Close()
-
-	// get max block request
-	_, err = conn.Write(converter.DecToBin(consts.DATA_TYPE_MAX_BLOCK_ID, 2))
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("writing max block id to host")
-		return 0, err
-	}
-
-	// response
-	blockIDBin := make([]byte, 4)
-	_, err = conn.Read(blockIDBin)
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("reading max block id from host")
-		return 0, err
-	}
-
-	return converter.BinToDec(blockIDBin), nil
 }
 
 // UpdateChain load from host all blocks from our last block to maxBlockID

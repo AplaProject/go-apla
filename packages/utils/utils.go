@@ -468,8 +468,7 @@ func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 	var bestHost string
 	for i := 0; i < len(hosts); i++ {
 		bl := <-c
-
-		if bl.blockID > maxBlockID {
+		if bl.err == nil && bl.blockID > 0 && bl.blockID > maxBlockID {
 			maxBlockID = bl.blockID
 			bestHost = bl.host
 		}
