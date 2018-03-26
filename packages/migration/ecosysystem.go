@@ -1103,6 +1103,11 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 			var list array
 			list = ContractsList($Value)
+			
+			if Len(list) == 0 {
+				error "must be the name"
+			}
+
 			var i int
 			while i < Len(list) {
 				if IsObject(list[i], $ecosystem_id) {
@@ -1154,6 +1159,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			if Len(list) != Len(curlist) {
 				error "Contracts cannot be removed or inserted"
 			}
+			
 			var i int
 			while i < Len(list) {
 				var j int
