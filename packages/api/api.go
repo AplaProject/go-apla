@@ -56,6 +56,7 @@ type apiData struct {
 	ecosystemId   int64
 	ecosystemName string
 	keyId         int64
+	roleId        int64
 	isMobile      string
 	vde           bool
 	vm            *script.VM

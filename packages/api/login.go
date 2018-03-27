@@ -151,13 +151,13 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	if r, ok := data.params["role_id"]; ok {
 		role := r.(int64)
 		if role > 0 {
-			ok, err := model.MemberHasRole(nil, state, wallet, role)
+			ok, err := model.MemberHasRole(nil, ecosystemID, wallet, role)
 			if err != nil {
 				logger.WithFields(log.Fields{
 					"type":      consts.DBError,
 					"member":    wallet,
 					"role":      role,
-					"ecosystem": state}).Error("check role")
+					"ecosystem": ecosystemID}).Error("check role")
 
 				return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
 			}
@@ -167,7 +167,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 					"type":      consts.NotFound,
 					"member":    wallet,
 					"role":      role,
-					"ecosystem": state,
+					"ecosystem": ecosystemID,
 				}).Error("member hasn't role")
 
 				return errorAPI(w, "E_CHECKROLE", http.StatusNotFound)
@@ -279,6 +279,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	for _, r := range roles {
 		result.Roles = append(result.Roles, rolesResult{RoleId: r.RoleID, RoleName: r.RoleName})
 	}
+	notificator.AddUser(wallet, ecosystemID)
+	notificator.UpdateNotifications(ecosystemID, []int64{wallet})
 
 	return nil
 }
