@@ -238,14 +238,8 @@ func ifValue(val string, workspace *Workspace) bool {
 	case `!=`:
 		return len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1])
 	case `>`, `<`, `<=`, `>=`:
-		ret0, err := decimal.NewFromString(strings.TrimSpace(cond[0]))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": strings.TrimSpace(cond[0])}).Error("converting left condition from string to decimal")
-		}
-		ret1, err := decimal.NewFromString(strings.TrimSpace(cond[1]))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": strings.TrimSpace(cond[1])}).Error("converting right condition from string to decimal")
-		}
+		ret0, _ := decimal.NewFromString(strings.TrimSpace(cond[0]))
+		ret1, _ := decimal.NewFromString(strings.TrimSpace(cond[1]))
 		if len(cond) == 2 {
 			var bin bool
 			if sep == `>` || sep == `<=` {
@@ -373,7 +367,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 			val := strings.TrimSpace(string(v))
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
-				pars[val[:off]] = trim(val[off+1:], true)
+				pars[val[:off]] = macro(trim(val[off+1:], true), workspace.Vars)
 			} else {
 				pars[strconv.Itoa(i)] = val
 			}

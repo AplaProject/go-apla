@@ -108,17 +108,16 @@ var contracts = []smartContract{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"runtime panic error"}`}},
 		}},
 	{`TestOneInput`, `contract TestOneInput {
-				data {
-					list array
-				}
-				action { 
-					Test("oneinput",  $list[0])
-				}
-			}`,
+		data {
+			list array
+		}
+		action { 
+			Test("oneinput",  $list[0])
+		}
+	}`,
 		[]smartParams{
 			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input value`}},
 		}},
-
 	{`DBProblem`, `contract DBProblem {
 		action{
 			DBFind("members").Where("name=?", "name")
