@@ -237,14 +237,11 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 }
 
 func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
-	if tblname[0] < '1' || tblname[0] > '9' || !strings.Contains(tblname, `_`) {
-		prefix := converter.Int64ToStr(ecosystem)
-		if sc.VDE {
-			prefix += `_vde`
-		}
-		tblname = fmt.Sprintf(`%s_%s`, prefix, tblname)
+	prefix := converter.Int64ToStr(ecosystem)
+	if sc.VDE {
+		prefix += `_vde`
 	}
-	return strings.ToLower(tblname)
+	return strings.ToLower(fmt.Sprintf(`%s_%s`, prefix, tblname))
 }
 
 func getDefTableName(sc *SmartContract, tblname string) string {
