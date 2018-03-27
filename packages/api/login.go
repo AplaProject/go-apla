@@ -188,8 +188,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 
-	notificator.AddUser(wallet, state)
-	notificator.UpdateNotifications(state, []int64{wallet})
+	notificator.AddUser(wallet, ecosystemID)
+	notificator.UpdateNotifications(ecosystemID, []int64{wallet})
 
 	return nil
 }
