@@ -1950,7 +1950,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdateSysParam($Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('28', 'contract NewDelayedContract {
+	('28', 'NewDelayedContract','contract NewDelayedContract {
 		data {
 			Contract string
 			EveryBlock int
@@ -1981,7 +1981,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,\"limit\",conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('29', 'contract EditDelayedContract {
+	('29', 'EditDelayedContract','contract EditDelayedContract {
 		data {
 			Id int
 			Contract string
@@ -2014,7 +2014,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,\"limit\",deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('30', 'contract CallDelayedContract {
+	('30', 'CallDelayedContract','contract CallDelayedContract {
 		data {
 			Id int
 		}
