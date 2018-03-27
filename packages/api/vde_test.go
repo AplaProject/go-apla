@@ -581,8 +581,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 		return
 	}
 	// You can specify the directory with NodePrivateKey & NodePublicKey files
-	conf.Config.PrivateDir = ``
-	if len(conf.Config.PrivateDir) > 0 {
+	if len(conf.Config.KeysDir) > 0 {
 		conf.Config.HTTP.Host = `localhost`
 		conf.Config.HTTP.Port = 7079
 

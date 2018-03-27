@@ -25,7 +25,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -34,7 +33,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
-	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -257,11 +255,6 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 
 	// for local tests
 	blockID := block.Header.BlockID
-	if block.Header.BlockID == 1 {
-		if *conf.StartBlockID != 0 {
-			blockID = *conf.StartBlockID
-		}
-	}
 
 	// record into the block chain
 	bl := &model.Block{}
@@ -307,11 +300,6 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		return err
 	}
 
-	err = service.TryUpdate(uint64(blockID))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err, "blockID": blockID}).Fatal("update for blockID")
-		return err
-	}
 	return nil
 }
 

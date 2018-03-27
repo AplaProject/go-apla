@@ -26,8 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/language"
@@ -504,7 +503,6 @@ func dbfindTag(par parFunc) string {
 
 	sc := par.Workspace.SmartContract
 	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
-
 	rows, err := model.GetAllColumnTypes(tblname)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column types from db")
@@ -526,7 +524,7 @@ func dbfindTag(par parFunc) string {
 		}
 	}
 
-	if sc.VDE && *conf.CheckReadAccess {
+	if sc.VDE {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
 		if err != nil || sc.AccessColumns(tblname, &queryColumns, false) != nil {
 			return `Access denied`
