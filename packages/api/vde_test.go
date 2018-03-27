@@ -456,6 +456,7 @@ func TestHTTPRequest(t *testing.T) {
 			action {
 				var ret string 
 				var pars, heads, json map
+				$ret_table = DBFind("tables").Columns("id").Where("name=$", "notable")
 				ret = HTTPRequest("http://www.instagram.com/", "GET", heads, pars)
 				if !Contains(ret, "react-root") {
 					error "instagram error"
@@ -580,8 +581,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 		return
 	}
 	// You can specify the directory with NodePrivateKey & NodePublicKey files
-	conf.Config.PrivateDir = ``
-	if len(conf.Config.PrivateDir) > 0 {
+	if len(conf.Config.KeysDir) > 0 {
 		conf.Config.HTTP.Host = `localhost`
 		conf.Config.HTTP.Port = 7079
 

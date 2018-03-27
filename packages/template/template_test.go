@@ -63,6 +63,8 @@ var forTest = tplList{
 	  Div(){
 		#false_condition# #true_condition# #ok# #problem# #if# #elseif# #else#
 	  }`, `[{"tag":"span","children":[{"tag":"text","text":"True"}]},{"tag":"div","children":[{"tag":"text","text":"#false_condition# 1 1 #problem# #if# 1 #else#"}]}]`},
+	{`Div(){Span(begin "You've" end<hr>)}Div(Body: ` + "`\"You've\"`" + `)
+	  Div(Body: "` + "`You've`" + `")`, `[{"tag":"div","children":[{"tag":"span","children":[{"tag":"text","text":"begin \"You've\" end\u003chr\u003e"}]}]},{"tag":"div","children":[{"tag":"text","text":"\"You've\""}]},{"tag":"div","children":[{"tag":"text","text":"` + "`You've`" + `"}]}]`},
 	{`Button(Body: addpage, 
 		Contract: NewPage, 
 		Params: "Name=hello_page2, Value=Div(fefe, dbbt), Menu=default_menu, Conditions=true")`,

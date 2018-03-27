@@ -19,11 +19,11 @@ package utils
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -36,12 +36,15 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/theckman/go-flock"
 )
 
 // BlockData is a structure of the block's header
@@ -287,7 +290,7 @@ func TypeInt(txType string) int64 {
 
 // TCPConn connects to the address
 func TCPConn(Addr string) (net.Conn, error) {
-	conn, err := net.DialTimeout("tcp", Addr, 10*time.Second)
+	conn, err := net.DialTimeout("tcp", Addr, consts.TCPConnTimeout)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "address": Addr}).Debug("dialing tcp")
 		return nil, ErrInfo(err)
@@ -416,7 +419,7 @@ func GetParent() string {
 
 // GetNodeKeys returns node private key and public key
 func GetNodeKeys() (string, string, error) {
-	nprivkey, err := ioutil.ReadFile(filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename))
+	nprivkey, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
 		return "", "", err
@@ -534,4 +537,35 @@ func BuildBlockTimeCalculator() (BlockTimeCalculator, error) {
 		syspar.GetNumberOfNodes(),
 	)
 	return btc, nil
+}
+
+func CreateDirIfNotExists(dir string, mode os.FileMode) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err := os.Mkdir(dir, mode)
+		if err != nil {
+			return errors.Wrapf(err, "creating dir %s", dir)
+		}
+	}
+	return nil
+}
+
+func LockOrDie(dir string) *flock.Flock {
+	f := flock.NewFlock(dir)
+	success, err := f.TryLock()
+	if err != nil {
+		log.WithError(err).Fatal("Locking go-genesis")
+	}
+
+	if !success {
+		log.Fatal("Go-genesis is locked")
+	}
+
+	return f
+}
+
+func ShuffleSlice(slice []string) {
+	for i, _ := range slice {
+		j := rand.Intn(i + 1)
+		slice[i], slice[j] = slice[j], slice[i]
+	}
 }
