@@ -162,6 +162,12 @@
 			"revisionTime": "2017-11-01T20:10:47Z"
 		},
 		{
+			"checksumSHA1": "eDQ6f1EsNf+frcRO/9XukSEchm8=",
+			"path": "github.com/satori/go.uuid",
+			"revision": "36e9d2ebbde5e3f13ab2e25625fd453271d6522e",
+			"revisionTime": "2018-01-03T17:44:51Z"
+		},
+		{
 			"checksumSHA1": "4nhXt+svWtwsjFzQMbBywcykuEo=",
 			"path": "github.com/shopspring/decimal",
 			"revision": "9ca7f51822d222ae4e246f070f9aad863599bd1a",
@@ -197,6 +203,18 @@
 			"path": "github.com/stretchr/testify/require",
 			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
 			"revisionTime": "2017-08-14T20:04:35Z"
+		},
+		{
+			"checksumSHA1": "uefllr2OtKBGo/kQSAPbW3w6p0A=",
+			"path": "github.com/stretchr/testify/suite",
+			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
+			"revisionTime": "2017-08-14T20:04:35Z"
+		},
+		{
+			"checksumSHA1": "G1tnrjQ9YZH7qfHAQI9vZmpNuYg=",
+			"path": "github.com/tevino/abool",
+			"revision": "9b9efcf221b50905aab9bbabd3daed56dc10f339",
+			"revisionTime": "2017-09-17T06:19:28Z"
 		},
 		{
 			"checksumSHA1": "iNE2KX9BQzCptlQC2DdQEVmn4R4=",

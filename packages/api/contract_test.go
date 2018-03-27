@@ -193,7 +193,7 @@ var contracts = []smartContract{
 				Test("3",  "0")	
 			} else {
 				vals = ret[0]
-				Test("3", vals["value"] + vals["id"])	
+				Test("3", vals["id"])	
 			}
 			ret = DBFind("contracts").Columns("id").Where("id='1'")
 			if Len(ret) != 1 {

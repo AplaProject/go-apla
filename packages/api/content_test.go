@@ -35,9 +35,23 @@ func TestContent(t *testing.T) {
 	}
 
 	if string(ret.Tree) != `[{"tag":"text","text":"input "},{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"text","text":"test value "},{"tag":"div","attr":{"class":"mypar"}},{"tag":"text","text":" the Div"}]}]` {
-		t.Error(fmt.Errorf(`wrong tree %s`, "ret.Tree"))
+		t.Error(fmt.Errorf(`wrong tree %s`, ret.Tree))
 		return
 	}
+	err = sendPost("content", &url.Values{
+		"template":  {"#test_page# input Div(myclass, #test_page# ok) #test_page#"},
+		"test_page": {"7"},
+	}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if string(ret.Tree) != `[{"tag":"text","text":"7 input "},{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"text","text":"7 ok"}]},{"tag":"text","text":" 7"}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, ret.Tree))
+		return
+	}
+
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return

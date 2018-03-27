@@ -637,7 +637,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		if err != nil {
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
-				model.IncrementTxAttemptCount(p.TxHash)
+				model.IncrementTxAttemptCount(p.DbTransaction, p.TxHash)
 			}
 			errRoll := dbTransaction.RollbackSavepoint(curTx)
 			if errRoll != nil {
@@ -645,7 +645,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 				return errRoll
 			}
 			// skip this transaction
-			model.MarkTransactionUsed(nil, p.TxHash)
+			model.MarkTransactionUsed(p.DbTransaction, p.TxHash)
 			p.processBadTransaction(p.TxHash, err.Error())
 			if p.SysUpdate {
 				if err = syspar.SysUpdate(p.DbTransaction); err != nil {
@@ -702,19 +702,25 @@ func (b *Block) CheckBlock() error {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("block id is larger then previous more than on 1")
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", b.Header.BlockID, b.PrevHeader.BlockID))
 		}
-		// check time interval between blocks
-		sleepTime, err := syspar.GetSleepTimeByPosition(b.Header.NodePosition, b.PrevHeader.NodePosition)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting sleep time")
-			return utils.ErrInfo(err)
-		}
 
-		errTime := syspar.GetGapsBetweenBlocks() - 1
-		if errTime < 0 {
-			errTime = 0
-		}
-		if b.PrevHeader.Time+sleepTime-b.Header.Time > errTime {
-			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", b.PrevHeader.Time, sleepTime, b.Header.Time, errTime))
+		// skip time validation for first block
+		if b.Header.BlockID > 1 {
+			blockTimeCalculator, err := utils.BuildBlockTimeCalculator()
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
+				return err
+			}
+
+			validBlockTime, err := blockTimeCalculator.ValidateBlock(b.Header.NodePosition, time.Unix(b.Header.Time, 0))
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
+				return err
+			}
+
+			if !validBlockTime {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("incorrect block time")
+				return utils.ErrInfo(fmt.Errorf("incorrect block time %d", b.PrevHeader.Time))
+			}
 		}
 	}
 

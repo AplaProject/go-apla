@@ -38,6 +38,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Composite struct {
+	Name string      `json:"name"`
+	Data interface{} `json:"data,omitempty"`
+}
+
 var (
 	funcs = make(map[string]tplFunc)
 	tails = make(map[string]forTails)
@@ -61,6 +66,7 @@ func init() {
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
 	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
+	funcs[`Range`] = tplFunc{rangeTag, defaultTag, `range`, `Source,From,To,Step`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
 	funcs[`Strong`] = tplFunc{defaultTag, defaultTag, `strong`, `Body,Class`}
@@ -91,8 +97,9 @@ func init() {
 	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,@MemberID"}
 
 	tails[`button`] = forTails{map[string]tailInfo{
-		`Alert`: {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
-		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		`Alert`:             {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
+		`Style`:             {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		`CompositeContract`: {tplFunc{compositeTag, defaultTailFull, `composite`, `Name,Data`}, false},
 	}}
 	tails[`div`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -213,7 +220,7 @@ func forlistTag(par parFunc) (ret string) {
 				}
 			}
 		}
-		body := replace((*par.Pars)[`Data`], 0, &vals)
+		body := macroReplace((*par.Pars)[`Data`], &vals)
 		process(body, &root, par.Workspace)
 	}
 	par.Node.Children = root.Children
@@ -408,7 +415,7 @@ func dataTag(par parFunc) string {
 				}
 				vals[icol] = ival
 			} else {
-				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &vals)
+				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &vals)
 				root := node{}
 				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
@@ -539,7 +546,7 @@ func dbfindTag(par parFunc) string {
 					item[icol] = ival
 				}
 			} else {
-				body := replace(par.Node.Attr[`custombody`].([]string)[i-defcol], 0, &item)
+				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &item)
 				root := node{}
 				process(body, &root, par.Workspace)
 				out, err := json.Marshal(root.Children)
@@ -592,6 +599,22 @@ func dbfindTag(par parFunc) string {
 	return ``
 }
 
+func compositeTag(par parFunc) string {
+	setAllAttr(par)
+	if len((*par.Pars)[`Name`]) == 0 {
+		return ``
+	}
+	if par.Owner.Attr[`composites`] == nil {
+		par.Owner.Attr[`composites`] = make([]string, 0)
+		par.Owner.Attr[`compositedata`] = make([]string, 0)
+	}
+	par.Owner.Attr[`composites`] = append(par.Owner.Attr[`composites`].([]string),
+		(*par.Pars)[`Name`])
+	par.Owner.Attr[`compositedata`] = append(par.Owner.Attr[`compositedata`].([]string),
+		macro((*par.Pars)[`Data`], par.Workspace.Vars))
+	return ``
+}
+
 func customTag(par parFunc) string {
 	setAllAttr(par)
 	if par.Owner.Attr[`customs`] == nil {
@@ -636,7 +659,7 @@ func setvarTag(par parFunc) string {
 		if strings.ContainsAny((*par.Pars)[`Value`], `({`) {
 			(*par.Pars)[`Value`] = processToText(par, (*par.Pars)[`Value`])
 		}
-		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = (*par.Pars)[`Value`]
+		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = macroReplace((*par.Pars)[`Value`], par.Workspace.Vars)
 	}
 	return ``
 }
@@ -700,6 +723,24 @@ func defaultTailTag(par parFunc) string {
 func buttonTag(par parFunc) string {
 	defaultTag(par)
 	defaultTail(par, `button`)
+	defer func() {
+		delete(par.Node.Attr, `composites`)
+		delete(par.Node.Attr, `compositedata`)
+	}()
+	if par.Node.Attr[`composites`] != nil {
+		composites := make([]Composite, 0)
+		for i, name := range par.Node.Attr[`composites`].([]string) {
+			var data interface{}
+			input := par.Node.Attr[`compositedata`].([]string)[i]
+			if len(input) > 0 {
+				if err := json.Unmarshal([]byte(input), &data); err != nil {
+					return err.Error()
+				}
+			}
+			composites = append(composites, Composite{Name: name, Data: data})
+		}
+		par.Node.Attr[`composite`] = &composites
+	}
 	return ``
 }
 
@@ -836,6 +877,34 @@ func chartTag(par parFunc) string {
 	}
 
 	return ""
+}
+
+func rangeTag(par parFunc) string {
+	setAllAttr(par)
+	step := int64(1)
+	data := make([][]string, 0, 32)
+	from := converter.StrToInt64(macro((*par.Pars)["From"], par.Workspace.Vars))
+	to := converter.StrToInt64(macro((*par.Pars)["To"], par.Workspace.Vars))
+	if len((*par.Pars)["Step"]) > 0 {
+		step = converter.StrToInt64(macro((*par.Pars)["Step"], par.Workspace.Vars))
+	}
+	if step > 0 && from < to {
+		for i := from; i < to; i += step {
+			data = append(data, []string{converter.Int64ToStr(i)})
+		}
+	} else if step < 0 && from > to {
+		for i := from; i > to; i += step {
+			data = append(data, []string{converter.Int64ToStr(i)})
+		}
+	}
+	delete(par.Node.Attr, `from`)
+	delete(par.Node.Attr, `to`)
+	delete(par.Node.Attr, `step`)
+	par.Node.Attr[`columns`] = &[]string{"id"}
+	par.Node.Attr[`data`] = &data
+	newSource(par)
+	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return ``
 }
 
 func imageTag(par parFunc) string {
