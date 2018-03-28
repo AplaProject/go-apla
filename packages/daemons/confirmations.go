@@ -22,8 +22,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -97,12 +96,7 @@ func Confirmations(ctx context.Context, d *daemon) error {
 			continue
 		}
 
-		var hosts []string
-		if conf.Config.TestMode {
-			hosts = []string{"localhost"}
-		} else {
-			hosts = syspar.GetRemoteHosts()
-		}
+		hosts := syspar.GetRemoteHosts()
 
 		ch := make(chan string)
 		for i := 0; i < len(hosts); i++ {
