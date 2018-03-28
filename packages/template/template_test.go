@@ -42,8 +42,13 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(from, 5).(to, -4).(step,-2)Range(my,0,5)ForList(my){#my_index#=#id#}Range(none,20,0)Range(Source: neg, From: #from#, To: #to#, Step: #step#)ForList(neg){#neg_index#=#id#}Range(zero,0,5,0)`,
+		`[{"tag":"range","attr":{"columns":["id"],"data":[["0"],["1"],["2"],["3"],["4"]],"source":"my"}},{"tag":"forlist","attr":{"source":"my"},"children":[{"tag":"text","text":"1=0"},{"tag":"text","text":"2=1"},{"tag":"text","text":"3=2"},{"tag":"text","text":"4=3"},{"tag":"text","text":"5=4"}]},{"tag":"range","attr":{"columns":["id"],"data":[],"source":"none"}},{"tag":"range","attr":{"columns":["id"],"data":[["5"],["3"],["1"],["-1"],["-3"]],"source":"neg"}},{"tag":"forlist","attr":{"source":"neg"},"children":[{"tag":"text","text":"1=5"},{"tag":"text","text":"2=3"},{"tag":"text","text":"3=1"},{"tag":"text","text":"4=-1"},{"tag":"text","text":"5=-3"}]},{"tag":"range","attr":{"columns":["id"],"data":[],"source":"zero"}}]`},
 	{`SetVar(t,7)
 		Button(Body: Span(my#t#, class#t#), PageParams: name=Val(#t#val),Contract: con#t#, Params: "T1=v#t#").Alert(Icon: icon#t#, Text: Alert #t#)`, `[{"tag":"button","attr":{"alert":{"icon":"icon7","text":"Alert 7"},"contract":"con7","pageparams":{"name":{"params":["7val"],"type":"Val"}},"params":{"T1":{"text":"v7","type":"text"}}},"children":[{"tag":"span","attr":{"class":"class7"},"children":[{"tag":"text","text":"my7"}]}]}]`},
+	{`SetVar(json,{"p1":"v1", "p2":"v2"})JsonToSource(none, ["q","p"])JsonToSource(pv, #json#)
+	 JsonToSource(dat, {"param":"va lue", "obj": {"sub":"one"}, "arr":["one"], "empty": null})`,
+		`[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[],"source":"none","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["p1","v1"],["p2","v2"]],"source":"pv","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["arr","[one]"],["empty",""],["obj","map[sub:one]"],["param","va lue"]],"source":"dat","types":["text","text"]}}]`},
 	{`Button(Body: addpage).CompositeContract().CompositeContract(NewPage, [{"param1": "Value 1"},
 		{"param2": "Value 2", "param3" : "#my#"}]).CompositeContract(EditPage)`,
 		`[{"tag":"button","attr":{"composite":[{"name":"NewPage","data":[{"param1":"Value 1"},{"param2":"Value 2","param3":"Span(test)"}]},{"name":"EditPage"}]},"children":[{"tag":"text","text":"addpage"}]}]`},
@@ -61,6 +66,8 @@ var forTest = tplList{
 	  Div(){
 		#false_condition# #true_condition# #ok# #problem# #if# #elseif# #else#
 	  }`, `[{"tag":"span","children":[{"tag":"text","text":"True"}]},{"tag":"div","children":[{"tag":"text","text":"#false_condition# 1 1 #problem# #if# 1 #else#"}]}]`},
+	{`Div(){Span(begin "You've" end<hr>)}Div(Body: ` + "`\"You've\"`" + `)
+	  Div(Body: "` + "`You've`" + `")`, `[{"tag":"div","children":[{"tag":"span","children":[{"tag":"text","text":"begin \"You've\" end\u003chr\u003e"}]}]},{"tag":"div","children":[{"tag":"text","text":"\"You've\""}]},{"tag":"div","children":[{"tag":"text","text":"` + "`You've`" + `"}]}]`},
 	{`Button(Body: addpage, 
 		Contract: NewPage, 
 		Params: "Name=hello_page2, Value=Div(fefe, dbbt), Menu=default_menu, Conditions=true")`,

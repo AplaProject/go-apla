@@ -30,20 +30,33 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
+	"encoding/hex"
+
+	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
 
 type loginResult struct {
-	Token       string `json:"token,omitempty"`
-	Refresh     string `json:"refresh,omitempty"`
-	EcosystemID string `json:"ecosystem_id,omitempty"`
-	KeyID       string `json:"key_id,omitempty"`
-	Address     string `json:"address,omitempty"`
-	NotifyKey   string `json:"notify_key,omitempty"`
-	IsNode      bool   `json:"isnode,omitempty"`
-	IsOwner     bool   `json:"isowner,omitempty"`
-	IsVDE       bool   `json:"vde,omitempty"`
+	Token       string        `json:"token,omitempty"`
+	Refresh     string        `json:"refresh,omitempty"`
+	EcosystemID string        `json:"ecosystem_id,omitempty"`
+	KeyID       string        `json:"key_id,omitempty"`
+	Address     string        `json:"address,omitempty"`
+	NotifyKey   string        `json:"notify_key,omitempty"`
+	IsNode      bool          `json:"isnode,omitempty"`
+	IsOwner     bool          `json:"isowner,omitempty"`
+	IsVDE       bool          `json:"vde,omitempty"`
+	Timestamp   string        `json:"timestamp,omitempty"`
+	Roles       []rolesResult `json:"roles,omitempty"`
+}
+
+type rolesResult struct {
+	RoleId   int64  `json:"role_id"`
+	RoleName string `json:"role_name"`
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
@@ -88,17 +101,45 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		if account.Delete == 1 {
 			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 		}
-	}
-	if state > 1 && len(pubkey) == 0 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty, and state is not default")
-		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
-	}
-	if len(pubkey) == 0 {
+	} else {
 		pubkey = data.params[`pubkey`].([]byte)
 		if len(pubkey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
 			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 		}
+		NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
+		if err != nil || len(NodePrivateKey) < 1 {
+			if err == nil {
+				log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+			}
+			return err
+		}
+
+		hexPubKey := hex.EncodeToString(pubkey)
+		params := make([]byte, 0)
+		params = append(append(params, converter.EncodeLength(int64(len(hexPubKey)))...), hexPubKey...)
+
+		vm := smart.GetVM(false, 0)
+		contract := smart.VMGetContract(vm, "NewUser", 1)
+		info := contract.Block.Info.(*script.ContractInfo)
+
+		err = tx.BuildTransaction(tx.SmartContract{
+			Header: tx.Header{
+				Type:        int(info.ID),
+				Time:        time.Now().Unix(),
+				EcosystemID: 1,
+				KeyID:       conf.Config.KeyID,
+			},
+			SignedBy: smart.PubToID(NodePublicKey),
+			Data:     params,
+		}, NodePrivateKey, NodePublicKey, string(hexPubKey))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+		}
+	}
+	if state > 1 && len(pubkey) == 0 {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty, and state is not default")
+		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
 	}
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
@@ -154,11 +195,23 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	result.NotifyKey, err = publisher.GetHMACSign(wallet)
+	result.NotifyKey, result.Timestamp, err = publisher.GetHMACSign(wallet)
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	notificator.AddUser(wallet, state)
+	notificator.UpdateNotifications(state, []int64{wallet})
+
+	ra := &model.RolesAssign{}
+	roles, err := ra.SetTablePrefix(state).GetActiveMemberRoles(wallet)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting roles")
+		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
+	}
+
+	for _, r := range roles {
+		result.Roles = append(result.Roles, rolesResult{RoleId: r.RoleID, RoleName: r.RoleName})
+	}
 
 	return nil
 }

@@ -197,23 +197,10 @@ func processToText(par parFunc, input string) (out string) {
 }
 
 func ifValue(val string, workspace *Workspace) bool {
-	var (
-		sep   string
-		owner node
-	)
+	var sep string
 
-	if strings.IndexByte(val, '(') != -1 {
-		process(val, &owner, workspace)
-		if len(owner.Children) > 0 {
-			inode := owner.Children[0]
-			if inode.Tag == tagText {
-				val = inode.Text
-			}
-		} else {
-			val = ``
-		}
+	val = parseArg(val, workspace)
 
-	}
 	if strings.Index(val, `;base64`) < 0 {
 		for _, item := range []string{`==`, `!=`, `<=`, `>=`, `<`, `>`} {
 			if strings.Index(val, item) >= 0 {
@@ -238,14 +225,8 @@ func ifValue(val string, workspace *Workspace) bool {
 	case `!=`:
 		return len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1])
 	case `>`, `<`, `<=`, `>=`:
-		ret0, err := decimal.NewFromString(strings.TrimSpace(cond[0]))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": strings.TrimSpace(cond[0])}).Error("converting left condition from string to decimal")
-		}
-		ret1, err := decimal.NewFromString(strings.TrimSpace(cond[1]))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": strings.TrimSpace(cond[1])}).Error("converting right condition from string to decimal")
-		}
+		ret0, _ := decimal.NewFromString(strings.TrimSpace(cond[0]))
+		ret1, _ := decimal.NewFromString(strings.TrimSpace(cond[1]))
 		if len(cond) == 2 {
 			var bin bool
 			if sep == `>` || sep == `<=` {
@@ -373,7 +354,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 			val := strings.TrimSpace(string(v))
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
-				pars[val[:off]] = trim(val[off+1:], true)
+				pars[val[:off]] = macro(trim(val[off+1:], true), workspace.Vars)
 			} else {
 				pars[strconv.Itoa(i)] = val
 			}
@@ -667,6 +648,23 @@ func process(input string, owner *node, workspace *Workspace) {
 	appendText(owner, string(name))
 }
 
+func parseArg(arg string, workspace *Workspace) (val string) {
+	if strings.IndexByte(arg, '(') == -1 {
+		return arg
+	}
+
+	var owner node
+	process(arg, &owner, workspace)
+	if len(owner.Children) > 0 {
+		inode := owner.Children[0]
+		if inode.Tag == tagText {
+			val = inode.Text
+		}
+	}
+
+	return
+}
+
 // Template2JSON converts templates to JSON data
 func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte {
 	root := node{}
@@ -680,6 +678,11 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 	process(input, &root, &Workspace{Vars: vars, Timeout: timeout, SmartContract: &sc})
 	if root.Children == nil || *timeout {
 		return []byte(`[]`)
+	}
+	for i, v := range root.Children {
+		if v.Tag == `text` {
+			root.Children[i].Text = macro(v.Text, vars)
+		}
 	}
 	out, err := json.Marshal(root.Children)
 	if err != nil {

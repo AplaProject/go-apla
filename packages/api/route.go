@@ -89,6 +89,7 @@ func Route(route *hr.Router) {
 	post(`signtest/`, `forsign private:string`, signTest)
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template:string`, jsonContent)
+	post(`updnotificator`, `ids:string`, updateNotificator)
 
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
 }

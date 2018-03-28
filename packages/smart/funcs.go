@@ -18,6 +18,7 @@ package smart
 
 import (
 	"bytes"
+	"crypto/md5"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
@@ -34,8 +35,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -206,6 +206,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"check_signature":      CheckSignature,
 		"RowConditions":        RowConditions,
 		"UUID":                 UUID,
+		"MD5":                  MD5,
 	}
 
 	switch vt {
@@ -350,31 +351,14 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		if colList[colname] {
 			return fmt.Errorf(`There are the same columns`)
 		}
-		colList[colname] = true
-		var colType string
-		colDef := ``
-		switch data[`type`] {
-		case "json":
-			colType = `jsonb`
-		case "varchar":
-			colType = `varchar(102400)`
-		case "character":
-			colType = `character(1)`
-			colDef = `NOT NULL DEFAULT '0'`
-		case "number":
-			colType = `bigint`
-			colDef = `NOT NULL DEFAULT '0'`
-		case "datetime":
-			colType = `timestamp`
-		case "double":
-			colType = `double precision`
-		case "money":
-			colType = `decimal (30, 0)`
-			colDef = `NOT NULL DEFAULT '0'`
-		default:
-			colType = data[`type`]
+
+		sqlColType, err := columnType(data["type"])
+		if err != nil {
+			return err
 		}
-		colsSQL += `"` + colname + `" ` + colType + " " + colDef + " ,\n"
+
+		colList[colname] = true
+		colsSQL += `"` + colname + `" ` + sqlColType + " ,\n"
 		colperm[colname] = data[`conditions`]
 	}
 	colout, err := json.Marshal(colperm)
@@ -441,6 +425,31 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 		}
 	}
 	return nil
+}
+
+func columnType(colType string) (sqlColType string, err error) {
+	switch colType {
+	case "json":
+		sqlColType = `jsonb`
+	case "varchar":
+		sqlColType = `varchar(102400)`
+	case "character":
+		sqlColType = `character(1) NOT NULL DEFAULT '0'`
+	case "number":
+		sqlColType = `bigint NOT NULL DEFAULT '0'`
+	case "datetime":
+		sqlColType = `timestamp`
+	case "double":
+		sqlColType = `double precision`
+	case "money":
+		sqlColType = `decimal (30, 0) NOT NULL DEFAULT '0'`
+	case "text":
+		sqlColType = "text"
+	default:
+		err = fmt.Errorf("Type '%s' of columns is not supported", colType)
+	}
+
+	return
 }
 
 // DBInsert inserts a record into the specified database table
@@ -524,7 +533,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		ecosystem = sc.TxSmart.EcosystemID
 	}
 	tblname = GetTableName(sc, tblname, ecosystem)
-	if sc.VDE && *conf.CheckReadAccess {
+	if sc.VDE {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
 		if err != nil {
 			return 0, nil, err
@@ -910,7 +919,7 @@ func RowConditions(sc *SmartContract, tblname string, id int64) error {
 }
 
 // CreateColumn is creating column
-func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions string) error {
+func CreateColumn(sc *SmartContract, tableName, name, colType, permissions string) error {
 	if !accessContracts(sc, `NewColumn`) {
 		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("CreateColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
@@ -919,26 +928,12 @@ func CreateColumn(sc *SmartContract, tableName, name, coltype, permissions strin
 	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
 
-	var colType string
-	switch coltype {
-	case "json":
-		colType = `jsonb`
-	case "varchar":
-		colType = `varchar(102400)`
-	case "number":
-		colType = `bigint NOT NULL DEFAULT '0'`
-	case "character":
-		colType = `character(1) NOT NULL DEFAULT '0'`
-	case "datetime":
-		colType = `timestamp`
-	case "double":
-		colType = `double precision`
-	case "money":
-		colType = `decimal (30, 0) NOT NULL DEFAULT '0'`
-	default:
-		colType = coltype
+	sqlColType, err := columnType(colType)
+	if err != nil {
+		return err
 	}
-	err := model.AlterTableAddColumn(sc.DbTransaction, tblname, name, colType)
+
+	err = model.AlterTableAddColumn(sc.DbTransaction, tblname, name, sqlColType)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("adding column to the table")
 		return err
@@ -1220,4 +1215,10 @@ func GetBlock(blockID int64) (map[string]int64, error) {
 // UUID returns new uuid
 func UUID(sc *SmartContract) string {
 	return uuid.Must(uuid.NewV4()).String()
+}
+
+// MD5 returns md5 hash sum of data
+func MD5(data string) string {
+	hash := md5.Sum([]byte(data))
+	return hex.EncodeToString(hash[:])
 }

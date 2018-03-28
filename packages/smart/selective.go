@@ -166,12 +166,18 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			}
 		}
 		for colname, colvals := range updJson {
+			var initial string
 			out, err := json.Marshal(colvals)
 			if err != nil {
 				log.WithFields(log.Fields{"error": err, "type": consts.JSONMarshallError}).Error("marshalling update columns for jsonb")
 				return 0, ``, err
 			}
-			addSQLUpdate += fmt.Sprintf(`%s=%[1]s || '%s',`, colname, string(out))
+			if len(logData[colname]) > 0 && logData[colname] != `NULL` {
+				initial = colname
+			} else {
+				initial = `'{}'`
+			}
+			addSQLUpdate += fmt.Sprintf(`%s=%s::jsonb || '%s'::jsonb,`, colname, initial, string(out))
 		}
 		addSQLUpdate = strings.TrimRight(addSQLUpdate, `,`)
 		if !sc.VDE {

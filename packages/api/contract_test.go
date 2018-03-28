@@ -108,17 +108,16 @@ var contracts = []smartContract{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"runtime panic error"}`}},
 		}},
 	{`TestOneInput`, `contract TestOneInput {
-				data {
-					list array
-				}
-				action { 
-					Test("oneinput",  $list[0])
-				}
-			}`,
+		data {
+			list array
+		}
+		action { 
+			Test("oneinput",  $list[0])
+		}
+	}`,
 		[]smartParams{
 			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input value`}},
 		}},
-
 	{`DBProblem`, `contract DBProblem {
 		action{
 			DBFind("members").Where("name=?", "name")
@@ -193,7 +192,7 @@ var contracts = []smartContract{
 				Test("3",  "0")	
 			} else {
 				vals = ret[0]
-				Test("3", vals["value"] + vals["id"])	
+				Test("3", vals["id"])	
 			}
 			ret = DBFind("contracts").Columns("id").Where("id='1'")
 			if Len(ret) != 1 {

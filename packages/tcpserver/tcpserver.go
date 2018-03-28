@@ -22,10 +22,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/service"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
