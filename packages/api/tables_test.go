@@ -150,7 +150,9 @@ func TestJSONTable(t *testing.T) {
 					      $Type, "new\"doc\" val")
 				DBUpdate("` + name + `", 2, "myname,Doc->Ind,Doc->type", "New name", 
 						$Type, "new\"doc\"")
-			  }}
+				DBUpdate("` + name + `", 3, "doc->flag,doc->sub", "Flag", 100)
+				DBUpdate("` + name + `", 3, "doc->temp", "Temp")
+		  }}
 		`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx("NewContract", &form)
@@ -215,6 +217,8 @@ func TestJSONTable(t *testing.T) {
 	forTest := tplList{
 		{`DBFind(` + name + `,my).Columns("id,doc->title->name").WhereId(3)`,
 			`[{"tag":"dbfind","attr":{"columns":["id","doc.title.name"],"data":[["3","Test att"]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"3"}}]`},
+		{`DBFind(` + name + `,my).Columns("doc").WhereId(3)`,
+			`[{"tag":"dbfind","attr":{"columns":["doc","id"],"data":[["{"sub": "100", "flag": "Flag", "temp": "Temp"}","3"]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"3"}}]`},
 		{`DBFind(` + name + `,my).Columns("id,doc,doc->type").Where(doc->ind='101' and doc->check='33')`,
 			`[{"tag":"dbfind","attr":{"columns":["id","doc","doc.type"],"data":[["1","{"ind": "101", "type": "new\\"doc\\" val", "check": "33"}","new"doc" val"]],"name":"` + name + `","source":"my","types":["text","text","text"],"where":"doc-\u003eind='101' and doc-\u003echeck='33'"}}]`},
 		{`DBFind(` + name + `,my).Columns("id,doc,doc->type").WhereId(2).Vars(my)
