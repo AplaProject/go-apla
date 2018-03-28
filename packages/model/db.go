@@ -232,6 +232,14 @@ func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]st
 		tableName, columnName).String()
 }
 
+// GetAllColumnTypes returns column types for table
+func GetAllColumnTypes(tblname string) ([]map[string]string, error) {
+	return GetAll(`SELECT column_name, data_type
+		FROM information_schema.columns
+		WHERE table_name = ?
+		ORDER BY ordinal_position ASC`, -1, tblname)
+}
+
 // GetColumnType is returns type of column
 func GetColumnType(tblname, column string) (itype string, err error) {
 	coltype, err := GetColumnDataTypeCharMaxLength(tblname, column)

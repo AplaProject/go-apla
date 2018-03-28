@@ -5,7 +5,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
@@ -65,11 +64,6 @@ func (p *StopNetworkParser) Action() error {
 
 	// Set the node in a pause state
 	service.PauseNodeActivity(service.PauseTypeStopingNetwork)
-
-	notificator.BroadcastMessage(map[string]string{
-		"notification_type": "system",
-		"body_text":         messageNetworkStopping,
-	})
 
 	p.GetLogger().Warn(messageNetworkStopping)
 	return errNetworkStopping

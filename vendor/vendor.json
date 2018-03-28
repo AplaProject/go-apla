@@ -349,17 +349,17 @@
 			"revisionTime": "2017-08-14T20:04:35Z"
 		},
 		{
+			"checksumSHA1": "G1tnrjQ9YZH7qfHAQI9vZmpNuYg=",
+			"path": "github.com/tevino/abool",
+			"revision": "9b9efcf221b50905aab9bbabd3daed56dc10f339",
+			"revisionTime": "2017-09-17T06:19:28Z"
+		},
+		{
 			"checksumSHA1": "CpcG17Q/0k1g2uy8AL26Uu7TouU=",
 			"path": "github.com/theckman/go-flock",
 			"revision": "b139a2487364247d91814e4a7c7b8fdc69e342b2",
 			"revisionTime": "2018-01-24T01:19:07Z"
 		},
-        {
-          "checksumSHA1": "G1tnrjQ9YZH7qfHAQI9vZmpNuYg=",
-          "path": "github.com/tevino/abool",
-          "revision": "9b9efcf221b50905aab9bbabd3daed56dc10f339",
-          "revisionTime": "2017-09-17T06:19:28Z"
-        },
 		{
 			"checksumSHA1": "iNE2KX9BQzCptlQC2DdQEVmn4R4=",
 			"path": "golang.org/x/crypto/sha3",

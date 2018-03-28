@@ -17,7 +17,6 @@
 package template
 
 import (
-	"crypto/md5"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -65,6 +64,7 @@ func init() {
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
 	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
+	funcs[`Range`] = tplFunc{rangeTag, defaultTag, `range`, `Source,From,To,Step`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
 	funcs[`Strong`] = tplFunc{defaultTag, defaultTag, `strong`, `Body,Class`}
@@ -134,6 +134,7 @@ func init() {
 		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
 		`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
 		`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
+		`Cutoff`:    {tplFunc{tailTag, defaultTailFull, `cutoff`, `Cutoff`}, false},
 	}}
 	tails[`p`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -444,6 +445,10 @@ func dbfindTag(par parFunc) string {
 		err    error
 		perm   map[string]string
 		offset string
+
+		cutoffColumns   = make(map[string]bool)
+		extendedColumns = make(map[string]string)
+		queryColumns    = make([]string, 0)
 	)
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
@@ -453,6 +458,7 @@ func dbfindTag(par parFunc) string {
 	where := ``
 	order := ``
 	limit := 25
+
 	if par.Node.Attr[`columns`] != nil {
 		fields = converter.Escape(par.Node.Attr[`columns`].(string))
 	}
@@ -489,18 +495,57 @@ func dbfindTag(par parFunc) string {
 	} else {
 		state = converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])
 	}
+	if par.Node.Attr["cutoff"] != nil {
+		for _, v := range strings.Split(par.Node.Attr["cutoff"].(string), ",") {
+			cutoffColumns[v] = true
+		}
+	}
+
 	sc := par.Workspace.SmartContract
 	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
+	rows, err := model.GetAllColumnTypes(tblname)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column types from db")
+		return err.Error()
+	}
+	columnTypes := make(map[string]string, len(rows))
+	for _, row := range rows {
+		columnTypes[row["column_name"]] = row["data_type"]
+	}
+
+	if fields != "*" {
+		if !strings.Contains(fields, "id") {
+			fields += ", id"
+		}
+		queryColumns = strings.Split(fields, ",")
+	} else {
+		for _, col := range rows {
+			queryColumns = append(queryColumns, col["column_name"])
+		}
+	}
+
 	if sc.VDE {
 		perm, err = sc.AccessTablePerm(tblname, `read`)
-		cols := strings.Split(fields, `,`)
-		if err != nil || sc.AccessColumns(tblname, &cols, false) != nil {
+		if err != nil || sc.AccessColumns(tblname, &queryColumns, false) != nil {
 			return `Access denied`
 		}
-		fields = strings.Join(cols, `,`)
 	}
-	if fields != `*` && !strings.Contains(fields, `id`) {
-		fields += `, id`
+
+	columnNames := make([]string, len(queryColumns))
+	copy(columnNames, queryColumns)
+	for i, col := range queryColumns {
+		switch columnTypes[col] {
+		case "bytea":
+			extendedColumns[col] = columnTypeBlob
+			queryColumns[i] = dbfindExpressionBlob(col)
+			break
+		case "text", "varchar", "character varying":
+			if cutoffColumns[col] {
+				extendedColumns[col] = columnTypeLongText
+				queryColumns[i] = dbfindExpressionLongText(col)
+			}
+			break
+		}
 	}
 	fields = smart.PrepareColumns(fields)
 
@@ -510,37 +555,58 @@ func dbfindTag(par parFunc) string {
 		return err.Error()
 	}
 	data := make([][]string, 0)
-	cols := make([]string, 0)
 	types := make([]string, 0)
 	lencol := 0
 	defcol := 0
 	for _, item := range list {
 		if lencol == 0 {
-			for key := range item {
-				cols = append(cols, key)
-				types = append(types, `text`)
+			for _, key := range columnNames {
+				if v, ok := extendedColumns[key]; ok {
+					types = append(types, v)
+				} else {
+					types = append(types, columnTypeText)
+				}
 			}
-			defcol = len(cols)
+			defcol = len(columnNames)
 			if par.Node.Attr[`customs`] != nil {
 				for _, v := range par.Node.Attr[`customs`].([]string) {
-					cols = append(cols, v)
+					columnNames = append(columnNames, v)
 					types = append(types, `tags`)
 				}
 			}
-			lencol = len(cols)
+			lencol = len(columnNames)
 		}
 		row := make([]string, lencol)
-		for i, icol := range cols {
+		for i, icol := range columnNames {
 			var ival string
 			if i < defcol {
 				ival = item[icol]
 				if ival == `NULL` {
 					ival = ``
 				}
-				if strings.HasPrefix(ival, `data:image/`) {
-					ival = fmt.Sprintf(`/data/%s/%s/%s/%x`, strings.Trim(tblname, `"`),
-						item[`id`], icol, md5.Sum([]byte(ival)))
-					item[icol] = ival
+
+				switch extendedColumns[icol] {
+				case columnTypeBlob:
+					link := &valueLink{id: item["id"], column: icol, table: tblname, hash: ival, title: ival}
+					ival, err = link.marshal()
+					if err != nil {
+						return err.Error()
+					}
+					item[icol] = link.link()
+					break
+				case columnTypeLongText:
+					var res []string
+					err = json.Unmarshal([]byte(ival), &res)
+					if err != nil {
+						log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling long text params from JSON")
+						return err.Error()
+					}
+					link := &valueLink{id: item["id"], column: icol, table: tblname, hash: res[1], title: res[0]}
+					ival, err = link.marshal()
+					if err != nil {
+						return err.Error()
+					}
+					break
 				}
 			} else {
 				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &item)
@@ -564,7 +630,7 @@ func dbfindTag(par parFunc) string {
 		result := make([]interface{}, len(data))
 		for i, item := range data {
 			row := make(map[string]string)
-			for j, col := range cols {
+			for j, col := range columnNames {
 				row[col] = item[j]
 			}
 			result[i] = reflect.ValueOf(row).Interface()
@@ -579,7 +645,7 @@ func dbfindTag(par parFunc) string {
 			return `Access denied`
 		}
 		for i := range data {
-			for j, col := range cols {
+			for j, col := range columnNames {
 				data[i][j] = result[i].(map[string]string)[col]
 			}
 		}
@@ -588,7 +654,7 @@ func dbfindTag(par parFunc) string {
 	delete(par.Node.Attr, `customs`)
 	delete(par.Node.Attr, `custombody`)
 	delete(par.Node.Attr, `prefix`)
-	par.Node.Attr[`columns`] = &cols
+	par.Node.Attr[`columns`] = &columnNames
 	par.Node.Attr[`types`] = &types
 	par.Node.Attr[`data`] = &data
 	newSource(par)
@@ -874,4 +940,32 @@ func chartTag(par parFunc) string {
 	}
 
 	return ""
+}
+
+func rangeTag(par parFunc) string {
+	setAllAttr(par)
+	step := int64(1)
+	data := make([][]string, 0, 32)
+	from := converter.StrToInt64(macro((*par.Pars)["From"], par.Workspace.Vars))
+	to := converter.StrToInt64(macro((*par.Pars)["To"], par.Workspace.Vars))
+	if len((*par.Pars)["Step"]) > 0 {
+		step = converter.StrToInt64(macro((*par.Pars)["Step"], par.Workspace.Vars))
+	}
+	if step > 0 && from < to {
+		for i := from; i < to; i += step {
+			data = append(data, []string{converter.Int64ToStr(i)})
+		}
+	} else if step < 0 && from > to {
+		for i := from; i > to; i += step {
+			data = append(data, []string{converter.Int64ToStr(i)})
+		}
+	}
+	delete(par.Node.Attr, `from`)
+	delete(par.Node.Attr, `to`)
+	delete(par.Node.Attr, `step`)
+	par.Node.Attr[`columns`] = &[]string{"id"}
+	par.Node.Attr[`data`] = &data
+	newSource(par)
+	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return ``
 }

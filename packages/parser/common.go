@@ -29,7 +29,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
@@ -239,7 +238,7 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	if txQueue {
 		// check for duplicate transaction from queue
 		qtx := &model.QueueTx{}
-		found, err := qtx.GetByHash(searchedHash)
+		found, err := qtx.GetByHash(nil, searchedHash)
 		if found {
 			log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in queue")
 			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %x", searchedHash))
@@ -303,11 +302,6 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		return err
 	}
 
-	err = service.TryUpdate(uint64(blockID))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err, "blockID": blockID}).Fatal("update for blockID")
-		return err
-	}
 	return nil
 }
 

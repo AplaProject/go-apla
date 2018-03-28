@@ -35,7 +35,6 @@ import (
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
-	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -207,13 +206,6 @@ func Start() {
 	conf.Config.Installed = true
 
 	initGorm(conf.Config.DB)
-
-	service.InitUpdater(conf.Config.Autoupdate)
-	err = service.Run()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err}).Error("run autoupdate")
-	}
-
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 
 	killOld()

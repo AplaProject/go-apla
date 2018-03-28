@@ -24,8 +24,6 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -34,6 +32,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrNodesUnavailable = errors.New("All nodes unvailabale")

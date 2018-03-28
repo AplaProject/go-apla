@@ -71,12 +71,6 @@ type TokenMovementConfig struct {
 	Subject  string
 }
 
-type AutoupdateConfig struct {
-	ServerAddress string
-	PublicKeyPath string
-	CheckInterval int
-}
-
 // GlobalConfig is storing all startup config as global struct
 type GlobalConfig struct {
 	Installed    bool   `toml:"-"`
@@ -103,7 +97,6 @@ type GlobalConfig struct {
 	Centrifugo    CentrifugoConfig
 	LogConfig     LogConfig
 	TokenMovement TokenMovementConfig
-	Autoupdate    AutoupdateConfig
 
 	NodesAddr []string
 }

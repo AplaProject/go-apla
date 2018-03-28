@@ -50,20 +50,8 @@ func (fn *FullNode) UnmarshalJSON(b []byte) (err error) {
 	return nil
 }
 
-func (fn *FullNode) Validate() error {
-	if fn.KeyID == 0 || len(fn.PublicKey) != publicKeyLength || len(fn.TCPAddress) == 0 {
-		return errFullNodeInvalidValues
-	}
-
-	if err := ValidateURL(fn.APIAddress); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // ValidateURL returns error if the URL is invalid
-func ValidateURL(rawurl string) error {
+func validateURL(rawurl string) error {
 	u, err := url.ParseRequestURI(rawurl)
 	if err != nil {
 		return err
@@ -75,6 +63,18 @@ func ValidateURL(rawurl string) error {
 
 	if len(u.Host) == 0 {
 		return fmt.Errorf("Invalid host: %s", rawurl)
+	}
+
+	return nil
+}
+
+func (fn *FullNode) Validate() error {
+	if fn.KeyID == 0 || len(fn.PublicKey) != publicKeyLength || len(fn.TCPAddress) == 0 {
+		return errFullNodeInvalidValues
+	}
+
+	if err := validateURL(fn.APIAddress); err != nil {
+		return err
 	}
 
 	return nil
