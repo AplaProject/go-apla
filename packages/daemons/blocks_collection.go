@@ -35,8 +35,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrNodesUnavailable = errors.New("All nodes unvailabale")
-
 // BlocksCollection collects and parses blocks
 func BlocksCollection(ctx context.Context, d *daemon) error {
 	if err := initialLoad(ctx, d); err != nil {
@@ -79,9 +77,9 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 	)
 	if len(hosts) > 0 {
 		// get a host with the biggest block id from system parameters
-		host, maxBlockID, err = chooseBestHost(ctx, hosts, d.logger)
+		host, maxBlockID, err = utils.ChooseBestHost(ctx, hosts, d.logger)
 		if err != nil {
-			if err == ErrNodesUnavailable {
+			if err == utils.ErrNodesUnavailable {
 				chooseFromConfig = true
 			} else {
 				return err
@@ -96,7 +94,7 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 		log.Debug("Getting a host with biggest block from config")
 		hosts = conf.GetNodesAddr()
 		if len(hosts) > 0 {
-			host, maxBlockID, err = utils.chooseBestHost(ctx, hosts, d.logger)
+			host, maxBlockID, err = utils.ChooseBestHost(ctx, hosts, d.logger)
 			if err != nil {
 				return err
 			}

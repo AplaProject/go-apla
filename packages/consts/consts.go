@@ -85,6 +85,10 @@ const BlockSize = 16
 
 const HashSize = 32
 
+const AvailableBCGap = 4
+
+const DefaultNodesConnectDelay = 6
+
 // TxTypes is the list of the embedded transactions
 var TxTypes = map[int]string{
 	1: "FirstBlock",

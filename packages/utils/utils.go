@@ -65,8 +65,9 @@ var (
 	// CancelFunc is represents cancel func
 	CancelFunc context.CancelFunc
 	// DaemonsCount is number of daemons
-	DaemonsCount      int
-	PrivateBlockchain = flag.Bool("privateBlockchain", false, "Is blockchain private")
+	DaemonsCount        int
+	PrivateBlockchain   = flag.Bool("privateBlockchain", false, "Is blockchain private")
+	ErrNodesUnavailable = errors.New("All nodes unvailabale")
 )
 
 // GetHTTPTextAnswer returns HTTP answer as a string
@@ -446,6 +447,8 @@ func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 	}
 	c := make(chan blockAndHost, len(hosts))
 
+	ShuffleSlice(hosts)
+
 	var wg sync.WaitGroup
 	for _, h := range hosts {
 		if ctx.Err() != nil {
@@ -469,12 +472,22 @@ func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 
 	maxBlockID := int64(-1)
 	var bestHost string
+	var errCount int
 	for i := 0; i < len(hosts); i++ {
 		bl := <-c
-		if bl.err == nil && bl.blockID > 0 && bl.blockID > maxBlockID {
+
+		if bl.err != nil && bl.blockID > maxBlockID {
 			maxBlockID = bl.blockID
 			bestHost = bl.host
 		}
+
+		if bl.err != nil {
+			errCount++
+		}
+	}
+
+	if errCount == len(hosts) {
+		return "", 0, ErrNodesUnavailable
 	}
 
 	return bestHost, maxBlockID, nil

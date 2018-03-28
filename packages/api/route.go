@@ -28,7 +28,7 @@ func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiH
 	route.Handle(
 		method,
 		consts.ApiPath+pattern,
-		DefaultHandler(method, pattern, processParams(pars), append(append([]apiHandle{}, blockchainUpdatingState), handler...)...),
+		DefaultHandler(method, pattern, processParams(pars), append([]apiHandle{blockchainUpdatingState}, handler...)...),
 	)
 }
 

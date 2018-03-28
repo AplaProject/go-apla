@@ -38,6 +38,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -236,20 +238,18 @@ func Start() {
 			os.Exit(1)
 		}
 
-		go func() {
-			var availableBCGap int64
-			if syspar.GetRbBlocks1() > 4 {
-				availableBCGap = syspar.GetRbBlocks1() - 4
-			}
+		var availableBCGap int64 = consts.AvailableBCGap
+		if syspar.GetRbBlocks1() > consts.AvailableBCGap {
+			availableBCGap = syspar.GetRbBlocks1() - consts.AvailableBCGap
+		}
 
-			blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
-			blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
-			blockGenerationTime := blockGenerationDuration + blocksGapDuration
+		blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
+		blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
+		blockGenerationTime := blockGenerationDuration + blocksGapDuration
 
-			checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-6)
-			na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
-			na.Run()
-		}()
+		checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
+		na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
+		na.Run()
 	}
 
 	daemons.WaitForSignals()

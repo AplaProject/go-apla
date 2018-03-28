@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tevino/abool"
 
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -76,7 +76,8 @@ func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
 	curBlock := &model.InfoBlock{}
 	_, err = curBlock.Get()
 	if err != nil {
-		return false, errors.Wrapf(err, "retrieving info block")
+		log.WithFields(log.Fields{"type": consts.DBError, "err": err}).Error("retrieving info block from db")
+		return false, errors.Wrapf(err, "retrieving info block from db")
 	}
 
 	remoteHosts := syspar.GetRemoteHosts()
