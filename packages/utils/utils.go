@@ -19,11 +19,11 @@ package utils
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -31,13 +31,20 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/theckman/go-flock"
 )
 
 // BlockData is a structure of the block's header
@@ -283,7 +290,7 @@ func TypeInt(txType string) int64 {
 
 // TCPConn connects to the address
 func TCPConn(Addr string) (net.Conn, error) {
-	conn, err := net.DialTimeout("tcp", Addr, 10*time.Second)
+	conn, err := net.DialTimeout("tcp", Addr, consts.TCPConnTimeout)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "address": Addr}).Debug("dialing tcp")
 		return nil, ErrInfo(err)
@@ -412,7 +419,7 @@ func GetParent() string {
 
 // GetNodeKeys returns node private key and public key
 func GetNodeKeys() (string, string, error) {
-	nprivkey, err := ioutil.ReadFile(filepath.Join(conf.Config.PrivateDir, consts.NodePrivateKeyFilename))
+	nprivkey, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
 		return "", "", err
@@ -428,4 +435,137 @@ func GetNodeKeys() (string, string, error) {
 		return "", "", err
 	}
 	return string(nprivkey), hex.EncodeToString(npubkey), nil
+}
+
+// best host is a host with the biggest last block ID
+func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (string, int64, error) {
+	type blockAndHost struct {
+		host    string
+		blockID int64
+		err     error
+	}
+	c := make(chan blockAndHost, len(hosts))
+
+	var wg sync.WaitGroup
+	for _, h := range hosts {
+		if ctx.Err() != nil {
+			logger.WithFields(log.Fields{"error": ctx.Err(), "type": consts.ContextError}).Error("context error")
+			return "", 0, ctx.Err()
+		}
+		wg.Add(1)
+
+		go func(host string) {
+			blockID, err := GetHostBlockID(host, logger)
+			wg.Done()
+
+			c <- blockAndHost{
+				host:    host,
+				blockID: blockID,
+				err:     err,
+			}
+		}(GetHostPort(h))
+	}
+	wg.Wait()
+
+	maxBlockID := int64(-1)
+	var bestHost string
+	for i := 0; i < len(hosts); i++ {
+		bl := <-c
+
+		if bl.blockID > maxBlockID {
+			maxBlockID = bl.blockID
+			bestHost = bl.host
+		}
+	}
+
+	return bestHost, maxBlockID, nil
+}
+
+func GetHostBlockID(host string, logger *log.Entry) (int64, error) {
+	conn, err := TCPConn(host)
+	if err != nil {
+		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Debug("error connecting to host")
+		return 0, err
+	}
+	defer conn.Close()
+
+	// get max block request
+	_, err = conn.Write(converter.DecToBin(consts.DATA_TYPE_MAX_BLOCK_ID, 2))
+	if err != nil {
+		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("writing max block id to host")
+		return 0, err
+	}
+
+	// response
+	blockIDBin := make([]byte, 4)
+	_, err = conn.Read(blockIDBin)
+	if err != nil {
+		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("reading max block id from host")
+		return 0, err
+	}
+
+	return converter.BinToDec(blockIDBin), nil
+}
+
+func GetHostPort(h string) string {
+	if strings.Contains(h, ":") {
+		return h
+	}
+	return fmt.Sprintf("%s:%d", h, consts.DEFAULT_TCP_PORT)
+}
+
+func BuildBlockTimeCalculator() (BlockTimeCalculator, error) {
+	var btc BlockTimeCalculator
+	firstBlock := model.Block{}
+	found, err := firstBlock.Get(1)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
+		return btc, err
+	}
+
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("first block not found")
+		return btc, err
+	}
+
+	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
+	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
+
+	btc = NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
+		blockGenerationDuration,
+		blocksGapDuration,
+		syspar.GetNumberOfNodes(),
+	)
+	return btc, nil
+}
+
+func CreateDirIfNotExists(dir string, mode os.FileMode) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err := os.Mkdir(dir, mode)
+		if err != nil {
+			return errors.Wrapf(err, "creating dir %s", dir)
+		}
+	}
+	return nil
+}
+
+func LockOrDie(dir string) *flock.Flock {
+	f := flock.NewFlock(dir)
+	success, err := f.TryLock()
+	if err != nil {
+		log.WithError(err).Fatal("Locking go-genesis")
+	}
+
+	if !success {
+		log.Fatal("Go-genesis is locked")
+	}
+
+	return f
+}
+
+func ShuffleSlice(slice []string) {
+	for i, _ := range slice {
+		j := rand.Intn(i + 1)
+		slice[i], slice[j] = slice[j], slice[i]
+	}
 }

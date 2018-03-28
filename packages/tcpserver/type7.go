@@ -19,10 +19,10 @@ package tcpserver
 import (
 	"net"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const BlocksPerRequest int32 = 1000

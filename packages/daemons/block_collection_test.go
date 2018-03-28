@@ -186,7 +186,7 @@ func TestChooseBlock(t *testing.T) {
 
 	}()
 
-	host, maxBlockID, err := chooseBestHost(context.Background(), []string{l.Addr().String()})
+	host, maxBlockID, err := ChooseBestHost(context.Background(), []string{l.Addr().String()})
 	if err != nil {
 		t.Fatalf("choose best host return: %s", err)
 	}

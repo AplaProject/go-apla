@@ -396,8 +396,9 @@ func TestUpdateSysParam(t *testing.T) {
 		{`fuel_rate`, `[["name", "100"]]`},
 		{`commission_wallet`, `[["1", "0"]]`},
 		{`commission_wallet`, `[{"1", "50"}]`},
-		{`full_nodes`, `[["", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7"]]`},
-		{`full_nodes`, `[["127.0.0.1", "0", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
+		{`full_nodes`, `[["", "http://127.0.0.1", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7"]]`},
+		{`full_nodes`, `[["127.0.0.1", "", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
+		{`full_nodes`, `[["127.0.0.1", "http://127.0.0.1", "0", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
 	}
 	for _, item := range notvalid {
 		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {item.Value}})
@@ -413,6 +414,9 @@ func TestUpdateSysParam(t *testing.T) {
 		if len(sysList.List) != 1 {
 			t.Error(`have got wrong parameter ` + item.Name)
 			return
+		}
+		if len(sysList.List[0].Value) == 0 {
+			continue
 		}
 		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {sysList.List[0].Value}})
 		if err != nil {

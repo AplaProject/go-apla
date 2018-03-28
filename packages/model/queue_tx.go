@@ -28,8 +28,8 @@ func (qt *QueueTx) Create() error {
 }
 
 // GetByHash is retrieving model from database by hash
-func (qt *QueueTx) GetByHash(hash []byte) (bool, error) {
-	return isFound(DBConn.Where("hash = ?", hash).First(qt))
+func (qt *QueueTx) GetByHash(transaction *DbTransaction, hash []byte) (bool, error) {
+	return isFound(GetDB(transaction).Where("hash = ?", hash).First(qt))
 }
 
 // DeleteQueueTxByHash is deleting queue tx by hash
