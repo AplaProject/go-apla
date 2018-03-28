@@ -19,10 +19,10 @@ package main
 import (
 	"runtime"
 
-	"github.com/GenesisKernel/go-genesis/packages/daylight"
+	"github.com/GenesisKernel/go-genesis/cmd"
 )
 
 func main() {
 	runtime.LockOSThread()
-	daylight.Start()
+	cmd.Execute()
 }

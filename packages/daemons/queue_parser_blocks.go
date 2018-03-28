@@ -21,9 +21,7 @@ import (
 	"fmt"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
-
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
-
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -88,7 +86,7 @@ func QueueParserBlocks(ctx context.Context, d *daemon) error {
 	}
 	blockID := queueBlock.BlockID
 
-	host := getHostPort(nodeHost)
+	host := utils.GetHostPort(nodeHost)
 	// update our chain till maxBlockID from the host
 	return UpdateChain(ctx, d, host, blockID)
 }

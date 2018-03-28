@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -222,7 +222,7 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
 		p, err := ParseTransaction(bufTransaction)
 		if err != nil {
-			if p.TxHash != nil {
+			if p != nil && p.TxHash != nil {
 				p.processBadTransaction(p.TxHash, err.Error())
 			}
 			return nil, fmt.Errorf("parse transaction error(%s)", err)
@@ -702,19 +702,25 @@ func (b *Block) CheckBlock() error {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("block id is larger then previous more than on 1")
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", b.Header.BlockID, b.PrevHeader.BlockID))
 		}
-		// check time interval between blocks
-		sleepTime, err := syspar.GetSleepTimeByPosition(b.Header.NodePosition, b.PrevHeader.NodePosition)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting sleep time")
-			return utils.ErrInfo(err)
-		}
 
-		errTime := syspar.GetGapsBetweenBlocks() - 1
-		if errTime < 0 {
-			errTime = 0
-		}
-		if b.PrevHeader.Time+sleepTime-b.Header.Time > errTime {
-			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", b.PrevHeader.Time, sleepTime, b.Header.Time, errTime))
+		// skip time validation for first block
+		if b.Header.BlockID > 1 {
+			blockTimeCalculator, err := utils.BuildBlockTimeCalculator()
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
+				return err
+			}
+
+			validBlockTime, err := blockTimeCalculator.ValidateBlock(b.Header.NodePosition, time.Unix(b.Header.Time, 0))
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
+				return err
+			}
+
+			if !validBlockTime {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("incorrect block time")
+				return utils.ErrInfo(fmt.Errorf("incorrect block time %d", b.PrevHeader.Time))
+			}
 		}
 	}
 
