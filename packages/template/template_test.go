@@ -43,8 +43,8 @@ func TestJSON(t *testing.T) {
 
 var forTest = tplList{
 	{`SetVar(json,{"p1":"v1", "p2":"v2"})JsonToSource(none, ["q","p"])JsonToSource(pv, #json#)
-	 JsonToSource(dat, {"param":"va lue", "obj": {"sub":"one"}, "arr":["one"]})`,
-		`[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[],"source":"none","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["p1","v1"],["p2","v2"]],"source":"pv","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["arr","[one]"],["obj","map[sub:one]"],["param","va lue"]],"source":"dat","types":["text","text"]}}]`},
+	 JsonToSource(dat, {"param":"va lue", "obj": {"sub":"one"}, "arr":["one"], "empty": null})`,
+		`[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[],"source":"none","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["p1","v1"],["p2","v2"]],"source":"pv","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["arr","[one]"],["empty",""],["obj","map[sub:one]"],["param","va lue"]],"source":"dat","types":["text","text"]}}]`},
 	{`Button(Body: addpage).CompositeContract().CompositeContract(NewPage, [{"param1": "Value 1"},
 		{"param2": "Value 2", "param3" : "#my#"}]).CompositeContract(EditPage)`,
 		`[{"tag":"button","attr":{"composite":[{"name":"NewPage","data":[{"param1":"Value 1"},{"param2":"Value 2","param3":"Span(test)"}]},{"name":"EditPage"}]},"children":[{"tag":"text","text":"addpage"}]}]`},

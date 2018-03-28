@@ -887,6 +887,9 @@ func jsontosourceTag(par parFunc) string {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON to source")
 	}
 	for key, item := range out {
+		if item == nil {
+			item = ``
+		}
 		data = append(data, []string{key, fmt.Sprint(item)})
 	}
 	sort.Sort(byFirst(data))
