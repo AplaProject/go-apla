@@ -24,7 +24,7 @@ func Type3(req *StopNetworkRequest, w net.Conn) error {
 
 	res := &StopNetworkResponse{hash}
 	if err = SendRequest(res, w); err != nil {
-		log.WithError(err).Error("sending response")
+		log.WithFields(log.Fields{"error": err, "type": consts.NetworkError}).Error("sending response")
 		return err
 	}
 
@@ -34,18 +34,18 @@ func Type3(req *StopNetworkRequest, w net.Conn) error {
 func processStopNetwork(b []byte) ([]byte, error) {
 	cert, err := utils.ParseCert(b)
 	if err != nil {
-		log.WithError(err).Error("parsing cert")
+		log.WithFields(log.Fields{"error": err, "type": consts.ParseError}).Error("parsing cert")
 		return nil, err
 	}
 
 	fbdata, err := syspar.GetFirstBlockData()
 	if err != nil {
-		log.WithError(err).Error("getting data of first block")
+		log.WithFields(log.Fields{"error": err, "type": consts.ConfigError}).Error("getting data of first block")
 		return nil, err
 	}
 
 	if err = cert.Validate(fbdata.StopNetworkCertBundle); err != nil {
-		log.WithError(err).Error("validating cert")
+		log.WithFields(log.Fields{"error": err, "type": consts.InvalidObject}).Error("validating cert")
 		return nil, err
 	}
 
@@ -61,13 +61,13 @@ func processStopNetwork(b []byte) ([]byte, error) {
 		},
 	)
 	if err != nil {
-		log.WithError(err).Error("binary marshaling")
+		log.WithFields(log.Fields{"error": err, "type": consts.MarshallingError}).Error("binary marshaling")
 		return nil, err
 	}
 
 	hash, err := crypto.Hash(data)
 	if err != nil {
-		log.WithError(err).Error("hashing data")
+		log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("hashing data")
 		return nil, err
 	}
 
@@ -79,7 +79,7 @@ func processStopNetwork(b []byte) ([]byte, error) {
 		HighRate: model.TransactionRateStopNetwork,
 	}
 	if err = tx.Create(); err != nil {
-		log.WithError(err).Error("inserting tx to database")
+		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("inserting tx to database")
 		return nil, err
 	}
 

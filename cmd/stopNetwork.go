@@ -34,7 +34,7 @@ var stopNetworkCmd = &cobra.Command{
 		fp := filepath.Join(conf.Config.KeysDir, stopNetworkCertFilepath)
 		stopNetworkCert, err := ioutil.ReadFile(fp)
 		if err != nil {
-			log.WithError(err).WithFields(log.Fields{"filepath": fp}).Fatal("Reading cert data")
+			log.WithFields(log.Fields{"error": err, "type": consts.IOError, "filepath": fp}).Fatal("Reading cert data")
 		}
 
 		req := &tcpserver.StopNetworkRequest{
@@ -44,15 +44,18 @@ var stopNetworkCmd = &cobra.Command{
 		errCount := 0
 		for _, addr := range addrsForStopping {
 			if err := sendStopNetworkCert(addr, req); err != nil {
-				log.WithError(err).Errorf("Sending request to %s", addr)
+				log.WithFields(log.Fields{"error": err, "type": consts.NetworkError, "addr": addr}).Errorf("Sending request")
 				errCount++
 				continue
 			}
 
-			log.Infof("Sending request to %s", addr)
+			log.WithFields(log.Fields{"addr": addr}).Info("Sending request")
 		}
 
-		log.Infof("Successful: %d, failed: %d", len(addrsForStopping)-errCount, errCount)
+		log.WithFields(log.Fields{
+			"successful": len(addrsForStopping) - errCount,
+			"failed":     errCount,
+		}).Info("Complete")
 	},
 }
 
