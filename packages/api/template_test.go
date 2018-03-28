@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/stretchr/testify/assert"
 )
 
 type tplItem struct {
@@ -154,6 +155,8 @@ func TestMobile(t *testing.T) {
 	}
 }
 
+var imageData = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
+
 func TestImage(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
@@ -221,7 +224,7 @@ func TestImage(t *testing.T) {
 		t.Errorf(`Too much time for template parsing`)
 		return
 	}
-	mydata = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
+	mydata = imageData
 	err = postTx(name, &url.Values{
 		"Image":     {mydata},
 		"ShortText": {shortText},
@@ -260,4 +263,22 @@ func TestImage(t *testing.T) {
 	if string(data) != longText {
 		t.Errorf("Wrong text %s", data)
 	}
+}
+
+func TestBinary(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	form := url.Values{
+		"AppID":    {"1"},
+		"MemberID": {"1"},
+		"Name":     {"file"},
+		"Data":     {imageData},
+	}
+	assert.NoError(t, postTx("UploadBinary", &form))
+
+	var ret contentResult
+	template := `Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`
+	err := sendPost(`content`, &url.Values{`template`: {template}}, &ret)
+	assert.NoError(t, err)
+	assert.Regexp(t, `\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/[a-f0-9]{32}"}}\]`, string(ret.Tree))
 }
