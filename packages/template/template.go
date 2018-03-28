@@ -238,14 +238,8 @@ func ifValue(val string, workspace *Workspace) bool {
 	case `!=`:
 		return len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1])
 	case `>`, `<`, `<=`, `>=`:
-		ret0, err := decimal.NewFromString(strings.TrimSpace(cond[0]))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": strings.TrimSpace(cond[0])}).Error("converting left condition from string to decimal")
-		}
-		ret1, err := decimal.NewFromString(strings.TrimSpace(cond[1]))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": strings.TrimSpace(cond[1])}).Error("converting right condition from string to decimal")
-		}
+		ret0, _ := decimal.NewFromString(strings.TrimSpace(cond[0]))
+		ret1, _ := decimal.NewFromString(strings.TrimSpace(cond[1]))
 		if len(cond) == 2 {
 			var bin bool
 			if sep == `>` || sep == `<=` {
@@ -373,7 +367,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 			val := strings.TrimSpace(string(v))
 			off := strings.IndexByte(val, ':')
 			if off != -1 {
-				pars[val[:off]] = trim(val[off+1:], true)
+				pars[val[:off]] = macro(trim(val[off+1:], true), workspace.Vars)
 			} else {
 				pars[strconv.Itoa(i)] = val
 			}
@@ -429,9 +423,30 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		out = curFunc.Func(parFunc)
 	}
 	for key, v := range parFunc.Node.Attr {
-		switch v.(type) {
+		switch attr := v.(type) {
 		case string:
-			parFunc.Node.Attr[key] = macro(v.(string), workspace.Vars)
+			parFunc.Node.Attr[key] = macro(attr, workspace.Vars)
+		case map[string]interface{}:
+			for parkey, parval := range attr {
+				switch parmap := parval.(type) {
+				case map[string]interface{}:
+					for textkey, textval := range parmap {
+						var result interface{}
+						switch val := textval.(type) {
+						case string:
+							result = macro(val, workspace.Vars)
+						case []string:
+							for i, ival := range val {
+								val[i] = macro(ival, workspace.Vars)
+							}
+							result = val
+						}
+						if result != nil {
+							parFunc.Node.Attr[key].(map[string]interface{})[parkey].(map[string]interface{})[textkey] = result
+						}
+					}
+				}
+			}
 		}
 	}
 	parFunc.Node.Text = macro(parFunc.Node.Text, workspace.Vars)
@@ -659,6 +674,11 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 	process(input, &root, &Workspace{Vars: vars, Timeout: timeout, SmartContract: &sc})
 	if root.Children == nil || *timeout {
 		return []byte(`[]`)
+	}
+	for i, v := range root.Children {
+		if v.Tag == `text` {
+			root.Children[i].Text = macro(v.Text, vars)
+		}
 	}
 	out, err := json.Marshal(root.Children)
 	if err != nil {

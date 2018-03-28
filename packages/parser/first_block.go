@@ -17,14 +17,14 @@
 package parser
 
 import (
+	"bytes"
 	"encoding/hex"
 	"errors"
 	"io/ioutil"
 	"path/filepath"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
-
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -58,14 +58,14 @@ func (p *FirstBlockParser) Validate() error {
 func (p *FirstBlockParser) Action() error {
 	logger := p.GetLogger()
 	data := p.TxPtr.(*consts.FirstBlock)
-	myAddress := crypto.Address(data.PublicKey)
-	err := model.ExecSchemaEcosystem(nil, 1, myAddress, ``, myAddress)
+	keyID := crypto.Address(data.PublicKey)
+	err := model.ExecSchemaEcosystem(nil, 1, keyID, ``, keyID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return p.ErrInfo(err)
 	}
 	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
-		myAddress, data.PublicKey, decimal.NewFromFloat(consts.FIRST_QDLT).String()).Error
+		keyID, data.PublicKey, decimal.NewFromFloat(consts.FIRST_QDLT).String()).Error
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return p.ErrInfo(err)
@@ -86,14 +86,8 @@ func (p *FirstBlockParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	node := &model.SystemParameter{Name: `full_nodes`}
-	if err = node.SaveArray([][]string{{data.Host, converter.Int64ToStr(myAddress),
-		hex.EncodeToString(data.NodePublicKey)}}); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving node array")
-		return p.ErrInfo(err)
-	}
 	commission := &model.SystemParameter{Name: `commission_wallet`}
-	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(myAddress)}}); err != nil {
+	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
 		return p.ErrInfo(err)
 	}
@@ -101,6 +95,7 @@ func (p *FirstBlockParser) Action() error {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 		return p.ErrInfo(err)
 	}
+	syspar.AddFullNodeKeys(keyID, data.NodePublicKey)
 	return nil
 }
 
@@ -117,7 +112,7 @@ func (p FirstBlockParser) Header() *tx.Header {
 // GetKeyIDFromPrivateKey load KeyID fron PrivateKey file
 func GetKeyIDFromPrivateKey() (int64, error) {
 
-	key, err := ioutil.ReadFile(filepath.Join(conf.Config.PrivateDir, consts.PrivateKeyFilename))
+	key, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.PrivateKeyFilename))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading private key file")
 		return 0, err
@@ -134,4 +129,38 @@ func GetKeyIDFromPrivateKey() (int64, error) {
 	}
 
 	return crypto.Address(key), nil
+}
+
+// GetKeysFromFirstBlock returns the KeyID and the NodePublicKey of node that created the first block
+func GetKeysFromFirstBlock() (keyID int64, publicKey []byte, ok bool) {
+	block := &model.Block{}
+	isFound, err := block.Get(1)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting record of first block")
+		return
+	}
+
+	if !isFound {
+		return
+	}
+
+	pb, err := parseBlock(bytes.NewBuffer(block.Data))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("parsing data of first block")
+		return
+	}
+
+	if len(pb.Parsers) == 0 {
+		log.WithFields(log.Fields{"type": consts.ParserError}).Error("list of parsers is empty")
+		return
+	}
+
+	p := pb.Parsers[0]
+	data, ok := p.TxPtr.(*consts.FirstBlock)
+	if !ok {
+		log.WithFields(log.Fields{"type": consts.ParserError}).Error("getting data of first block")
+		return
+	}
+
+	return crypto.Address(data.PublicKey), data.NodePublicKey, ok
 }

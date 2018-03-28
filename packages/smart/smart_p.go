@@ -24,7 +24,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -165,7 +165,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		case `max_block_size`, `max_tx_size`, `max_tx_count`, `max_columns`, `max_indexes`,
 			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`:
 			ok = ival > 0
-		case `fuel_rate`, `full_nodes`, `commission_wallet`:
+		case `fuel_rate`, `commission_wallet`:
 			err := json.Unmarshal([]byte(value), &list)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling system param")
@@ -179,15 +179,12 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 						(name == `commission_wallet` && converter.StrToInt64(item[1]) == 0) {
 						break check
 					}
-				case `full_nodes`:
-					if len(item) != 3 {
-						break check
-					}
-					key := converter.StrToInt64(item[1])
-					if key == 0 || len(item[2]) != 128 || len(item[0]) == 0 {
-						break check
-					}
 				}
+			}
+			checked = true
+		case syspar.FullNodes:
+			if err := json.Unmarshal([]byte(value), &[]syspar.FullNode{}); err != nil {
+				break check
 			}
 			checked = true
 		default:
@@ -511,7 +508,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
 		`contracts`, `parameters`, `blocks`, `history`, `keys`, `sections`, `members`, `roles_list`,
-		`roles_assign`, `notifications`} {
+		`roles_assign`, `notifications`, `applications`} {
 		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")

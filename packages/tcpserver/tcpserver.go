@@ -22,9 +22,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/service"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -54,6 +55,9 @@ func HandleTCPRequest(rw net.Conn) {
 
 	switch dType.Type {
 	case 1:
+		if service.IsNodePaused() {
+			return
+		}
 		req := &DisRequest{}
 		err = ReadRequest(req, rw)
 		if err == nil {
@@ -61,6 +65,9 @@ func HandleTCPRequest(rw net.Conn) {
 		}
 
 	case 2:
+		if service.IsNodePaused() {
+			return
+		}
 		req := &DisRequest{}
 		err = ReadRequest(req, rw)
 		if err == nil {
