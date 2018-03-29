@@ -25,7 +25,11 @@ import (
 )
 
 func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
+	route.Handle(
+		method,
+		consts.ApiPath+pattern,
+		DefaultHandler(method, pattern, processParams(pars), append([]apiHandle{blockchainUpdatingState}, handler...)...),
+	)
 }
 
 // Route sets routing pathes
@@ -41,7 +45,7 @@ func Route(route *hr.Router) {
 		if len(pars) > 0 {
 			pars = `,` + pars
 		}
-		methodRoute(route, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, authWallet, blockchainUpdatingState, handle)
+		methodRoute(route, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, authWallet, handle)
 	}
 	postTx := func(url string, params string, preHandle, handle apiHandle) {
 		anyTx(`POST`, url, params, preHandle, handle)

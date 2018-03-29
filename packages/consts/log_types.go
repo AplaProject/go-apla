@@ -49,6 +49,6 @@ const (
 	StatsdError              = "StatsdError"
 	MigrationError           = "MigrationError"
 	AutoupdateError          = "AutoupdateError"
-	BCActualizationError     = "BCActualizationError"
+	BCRelevanceError         = "BCRelevanceError"
 	SchedulerError           = "SchedulerError"
 )

@@ -75,6 +75,9 @@ func HandleTCPRequest(rw net.Conn) {
 		}
 
 	case 4:
+		if service.IsNodePaused() {
+			return
+		}
 		req := &ConfirmRequest{}
 		err = ReadRequest(req, rw)
 		if err == nil {
