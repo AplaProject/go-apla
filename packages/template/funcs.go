@@ -129,6 +129,7 @@ func init() {
 	}}
 	tails[`dbfind`] = forTails{map[string]tailInfo{
 		`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
+		`Count`:     {tplFunc{tailTag, defaultTailFull, `count`, `CountVar`}, false},
 		`Where`:     {tplFunc{tailTag, defaultTailFull, `where`, `Where`}, false},
 		`WhereId`:   {tplFunc{tailTag, defaultTailFull, `whereid`, `WhereId`}, false},
 		`Order`:     {tplFunc{tailTag, defaultTailFull, `order`, `Order`}, false},
@@ -551,7 +552,17 @@ func dbfindTag(par parFunc) string {
 		}
 	}
 	fields = smart.PrepareColumns(fields)
-
+	if par.Node.Attr[`countvar`] != nil {
+		var count int64
+		err = model.GetDB(nil).Table(tblname).Where(strings.Replace(where, `where`, ``, 1)).Count(&count).Error
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table in DBFind")
+		}
+		countStr := converter.Int64ToStr(count)
+		par.Node.Attr[`count`] = countStr
+		(*par.Workspace.Vars)[par.Node.Attr[`countvar`].(string)] = countStr
+		delete(par.Node.Attr, `countvar`)
+	}
 	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order+offset, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
