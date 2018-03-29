@@ -23,7 +23,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
@@ -70,20 +69,6 @@ func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *l
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
 		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}
-
-	account := &model.Key{}
-	account.SetTablePrefix(data.ecosystemId)
-	isAccount, err := account.Get(data.keyId)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting record from keys")
-		return errorAPI(w, err, http.StatusBadRequest)
-	}
-	if isAccount {
-		if account.Delete == 1 {
-			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
-		}
-	}
-
 	return nil
 }
 
