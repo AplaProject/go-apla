@@ -877,6 +877,95 @@ func TestUpdateFunc(t *testing.T) {
 	}
 }
 
+func TestGlobalVars(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`
+		contract ` + rnd + ` {
+		    data {
+				Par string
+			}
+			action {
+				$Par = $Par + "end"
+				$key_id = 1234
+				$result = Str($key_id) + $Par
+			}}
+		`}, `Conditions`: {`true`}}
+	err := postTx(`NewContract`, &form)
+	if err == nil {
+		t.Errorf(`must be error`)
+		return
+	} else if err.Error() != `{"type":"panic","error":"system variable $key_id cannot be changed"}` {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract c_` + rnd + ` {
+		data { Test string }
+		action {
+			$result = $Test + Str($ecosystem_id)
+		}
+	}`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	form = url.Values{`Value`: {`
+		contract a_` + rnd + ` {
+			data { Par string}
+			conditions {}
+			action {
+				var params map
+				params["Test"] = "TEST"
+				$aaa = 123
+				if $Par == "b" {
+				    $result = CallContract("b_` + rnd + `", params)
+				} else {
+				    $result = CallContract("c_` + rnd + `", params) + c_` + rnd + `("Test","OK")
+				}
+			}
+		}`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract b_` + rnd + ` {
+			data { Test string }
+			action {
+				$result = $Test + $aaa
+			}
+		}`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = postTx(`a_`+rnd, &url.Values{"Par": {"b"}})
+	if err == nil {
+		t.Errorf(`must be error aaa`)
+		return
+	} else if err.Error() != `{"type":"panic","error":"unknown extend identifier aaa"}` {
+		t.Error(err)
+		return
+	}
+	_, msg, err := postTxResult(`a_`+rnd, &url.Values{"Par": {"c"}})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `TEST1OK1` {
+		t.Errorf(`wrong result %s`, msg)
+		return
+	}
+}
+
 func TestContractChain(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)

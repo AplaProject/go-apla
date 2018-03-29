@@ -45,6 +45,25 @@ const (
 	brackets = `[]`
 )
 
+var sysVars = map[string]struct{}{
+	`block`:             {},
+	`block_key_id`:      {},
+	`block_time`:        {},
+	`data`:              {},
+	`ecosystem_id`:      {},
+	`key_id`:            {},
+	`node_position`:     {},
+	`parent`:            {},
+	`original_contract`: {},
+	`sc`:                {},
+	`stack_cont`:        {},
+	`this_contract`:     {},
+	`time`:              {},
+	`type`:              {},
+	`txcost`:            {},
+	`txhash`:            {},
+}
+
 type VMError struct {
 	Type  string `json:"type"`
 	Error string `json:"error"`
@@ -65,6 +84,13 @@ type RunTime struct {
 	cost   int64
 	err    error
 	unwrap bool
+}
+
+func isSysVar(name string) bool {
+	if _, ok := sysVars[name]; ok || strings.HasPrefix(name, `loop_`) {
+		return true
+	}
+	return false
 }
 
 func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
@@ -435,6 +461,11 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			for ivar, item := range assign {
 				if item.Owner == nil {
 					if (*item).Obj.Type == ObjExtend {
+						if isSysVar((*item).Obj.Value.(string)) {
+							err := fmt.Errorf(eSysVar, (*item).Obj.Value.(string))
+							rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("modifying system variable")
+							return 0, err
+						}
 						(*rt.extend)[(*item).Obj.Value.(string)] = rt.stack[len(rt.stack)-count+ivar]
 					}
 				} else {
