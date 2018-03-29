@@ -14,6 +14,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Types of requests
+const (
+	RequestTypeFullNode        = 1
+	RequestTypeNotFullNode     = 2
+	RequestTypeStopNetwork     = 3
+	RequestTypeConfirmation    = 4
+	RequestTypeBlockCollection = 7
+	RequestTypeMaxBlock        = 10
+)
+
 // RequestType is type of request
 type RequestType struct {
 	Type uint16
@@ -220,4 +230,9 @@ func readBytes(r io.Reader, size uint64) ([]byte, error) {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("cannot read bytes")
 	}
 	return value, err
+}
+
+func SendRequestType(reqType uint16, w io.Writer) error {
+	_, err := w.Write(converter.DecToBin(reqType, 2))
+	return err
 }

@@ -7,16 +7,12 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
-
-const reqType = 3
 
 var (
 	addrsForStopping        []string
@@ -66,7 +62,7 @@ func sendStopNetworkCert(addr string, req *tcpserver.StopNetworkRequest) error {
 	}
 	defer conn.Close()
 
-	if _, err = conn.Write(converter.DecToBin(reqType, 2)); err != nil {
+	if err = tcpserver.SendRequestType(tcpserver.RequestTypeStopNetwork, conn); err != nil {
 		return err
 	}
 
