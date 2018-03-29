@@ -1319,24 +1319,10 @@ If("#key_id#" == EcosysParam("founder_account")){
 				"limit": "ContractConditions(\"MainCondition\")",
 				"deleted": "ContractConditions(\"MainCondition\")",
 				"conditions": "ContractConditions(\"MainCondition\")"}',
-				'ContractConditions(\"MainCondition\")'),
-
-			(
-				'17', 
-				'delayed_contracts', 
-				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
-				'{"contract": "ContractConditions(\"MainCondition\")",
-					"key_id": "ContractConditions(\"MainCondition\")",
-					"block_id": "ContractConditions(\"MainCondition\")",
-					"every_block": "ContractConditions(\"MainCondition\")",
-					"counter": "ContractConditions(\"MainCondition\")",
-					"limit": "ContractConditions(\"MainCondition\")",
-					"deleted": "ContractConditions(\"MainCondition\")",
-					"conditions": "ContractConditions(\"MainCondition\")"}',
 				'ContractConditions(\"MainCondition\")'
 			),
 			(
-				'18',
+				'17',
 				'ecosystems',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"name": "ContractConditions(\"MainCondition\")"}',
@@ -1700,8 +1686,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		func price() int {
 			return  SysParamInt("page_price")
 		}
-	}
-	', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")'),
 	('13','contract EditPage {
 		data {
 			Id         int

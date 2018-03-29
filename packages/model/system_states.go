@@ -1,9 +1,5 @@
 package model
 
-import (
-	"fmt"
-)
-
 const ecosysTable = "1_ecosystems"
 
 // Ecosystem is model
@@ -22,7 +18,8 @@ func (sys *Ecosystem) TableName() string {
 // GetAllSystemStatesIDs is retrieving all ecosystems ids
 func GetAllSystemStatesIDs() ([]int64, error) {
 	if !IsTable(ecosysTable) {
-		return nil, fmt.Errorf("%s does not exists", ecosysTable)
+		//return nil, fmt.Errorf("%s does not exists", ecosysTable)
+		return nil, nil
 	}
 
 	ecosystems := new([]Ecosystem)
