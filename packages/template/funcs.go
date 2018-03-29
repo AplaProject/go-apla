@@ -77,7 +77,7 @@ func init() {
 	funcs[`ForList`] = tplFunc{forlistTag, defaultTag, `forlist`, `Source,Data,Index`}
 	funcs[`Form`] = tplFunc{defaultTailTag, defaultTailTag, `form`, `Class,Body`}
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
-	funcs[`Image`] = tplFunc{defaultTailTag, defaultTailTag, `image`, `Src,Alt,Class`}
+	funcs[`Image`] = tplFunc{imageTag, defaultTailTag, `image`, `Src,Alt,Class`}
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
 	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,@Value,Disabled`}
 	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
@@ -95,6 +95,7 @@ func init() {
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
+	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,@MemberID"}
 
 	tails[`button`] = forTails{map[string]tailInfo{
 		`Alert`:             {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
@@ -1037,4 +1038,38 @@ func rangeTag(par parFunc) string {
 	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
+}
+
+func imageTag(par parFunc) string {
+	(*par.Pars)["Src"] = parseArg((*par.Pars)["Src"], par.Workspace)
+	defaultTag(par)
+	defaultTail(par, par.Node.Tag)
+	return ``
+}
+
+func binaryTag(par parFunc) string {
+	var ecosystemID string
+	if par.Node.Attr[`ecosystem`] != nil {
+		ecosystemID = par.Node.Attr[`ecosystem`].(string)
+	} else {
+		ecosystemID = (*par.Workspace.Vars)[`ecosystem_id`]
+	}
+
+	binary := &model.Binary{}
+	binary.SetTablePrefix(ecosystemID)
+	ok, err := binary.Get(
+		converter.StrToInt64((*par.Pars)["AppID"]),
+		converter.StrToInt64((*par.Pars)["MemberID"]),
+		(*par.Pars)["Name"],
+	)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting record from db")
+		return err.Error()
+	}
+
+	if ok {
+		return binary.Link()
+	}
+
+	return ""
 }
