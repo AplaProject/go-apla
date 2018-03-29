@@ -23,7 +23,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
@@ -75,20 +74,6 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		logger.WithFields(log.Fields{"type": consts.JWTError}).Error("token wallet or state is invalid")
 		return errorAPI(w, `E_REFRESHTOKEN`, http.StatusBadRequest)
 	}
-
-	account := &model.Key{}
-	account.SetTablePrefix(converter.StrToInt64(claims.EcosystemID))
-	isAccount, err := account.Get(converter.StrToInt64(claims.KeyID))
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting record from keys")
-		return errorAPI(w, err, http.StatusBadRequest)
-	}
-	if isAccount {
-		if account.Delete == 1 {
-			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
-		}
-	}
-
 	var result refreshResult
 	data.result = &result
 
