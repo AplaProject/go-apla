@@ -212,6 +212,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UUID":                 UUID,
 		"DecodeBase64":         DecodeBase64,
 		"MD5":                  MD5,
+		"GetColumnType":        GetColumnType,
 	}
 
 	switch vt {
@@ -1248,4 +1249,25 @@ func DecodeBase64(input string) (out string, err error) {
 func MD5(data string) string {
 	hash := md5.Sum([]byte(data))
 	return hex.EncodeToString(hash[:])
+}
+
+func GetColumnType(sc *SmartContract, tableName, columnName string) (colType string, err error) {
+	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	if sc.VDE {
+		prefix += `_vde`
+	}
+	table := &model.Table{}
+	table.SetTablePrefix(prefix)
+	var found bool
+	found, err = table.Get(sc.DbTransaction, strings.ToLower(tableName))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table")
+		return
+	}
+	if !found {
+		err = fmt.Errorf(eTableNotFound, tableName)
+		return
+	}
+
+	return
 }
