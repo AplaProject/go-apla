@@ -18,7 +18,51 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_menu" ADD CONSTRAINT "%[1]d_vde_menu_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_menu_index_name" ON "%[1]d_vde_menu" (name);
-	  
+
+
+	  INSERT INTO "%[1]d_vde_menu" ("id","name","title","value","conditions") VALUES('2','admin_menu','Admin menu','MenuItem(
+    Icon: "icon-screen-desktop",
+    Page: "interface",
+    Vde: "true",
+    Title: "Interface"
+)
+MenuItem(
+    Icon: "icon-docs",
+    Page: "tables",
+    Vde: "true",
+    Title: "Tables"
+)
+MenuItem(
+    Icon: "icon-briefcase",
+    Page: "contracts",
+    Vde: "true",
+    Title: "Smart Contracts"
+)
+MenuItem(
+    Icon: "icon-settings",
+    Page: "parameters",
+    Vde: "true",
+    Title: "Ecosystem parameters"
+)
+MenuItem(
+    Icon: "icon-globe",
+    Page: "languages",
+    Vde: "true",
+    Title: "Language resources"
+)
+MenuItem(
+    Icon: "icon-cloud-upload",
+    Page: "import",
+    Vde: "true",
+    Title: "Import"
+)
+MenuItem(
+    Icon: "icon-cloud-download",
+    Page: "export",
+    Vde: "true",
+    Title: "Export"
+)','true');
+
 	  DROP TABLE IF EXISTS "%[1]d_vde_pages"; CREATE TABLE "%[1]d_vde_pages" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -28,7 +72,9 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_pages" ADD CONSTRAINT "%[1]d_vde_pages_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_pages_index_name" ON "%[1]d_vde_pages" (name);
-	  
+
+	  INSERT INTO "%[1]d_vde_pages" ("id","name","value","menu","conditions") VALUES('2','admin_index','','admin_menu','true');
+
 	  DROP TABLE IF EXISTS "%[1]d_vde_blocks"; CREATE TABLE "%[1]d_vde_blocks" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -89,6 +135,17 @@ var (
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_cron" ADD CONSTRAINT "%[1]d_vde_cron_pkey" PRIMARY KEY ("id");
 
+		DROP TABLE IF EXISTS "%[1]d_vde_binaries";
+		CREATE TABLE "%[1]d_vde_binaries" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"app_id" bigint NOT NULL DEFAULT '0',
+			"member_id" bigint NOT NULL DEFAULT '0',
+			"name" varchar(255) NOT NULL DEFAULT '',
+			"data" bytea NOT NULL DEFAULT '',
+			"hash" varchar(32) NOT NULL DEFAULT ''
+		);
+		ALTER TABLE ONLY "%[1]d_vde_binaries" ADD CONSTRAINT "%[1]d_vde_binaries_pkey" PRIMARY KEY (id);
+		CREATE UNIQUE INDEX "%[1]d_vde_binaries_index_app_id_member_id_name" ON "%[1]d_vde_binaries" (app_id, member_id, name);
 
 	  CREATE TABLE "%[1]d_vde_tables" (
 	  "id" bigint NOT NULL  DEFAULT '0',
@@ -148,8 +205,17 @@ var (
 				"contract": "ContractConditions(\"MainCondition\")",
 				"counter": "ContractConditions(\"MainCondition\")",
 				"till": "ContractConditions(\"MainCondition\")",
-                  "conditions": "ContractConditions(\"MainCondition\")"
-				}', 'ContractConditions(\"MainCondition\")');
+				  "conditions": "ContractConditions(\"MainCondition\")"
+				}', 'ContractConditions(\"MainCondition\")'),
+			  ('8', 'statics',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
+					"new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"app_id": "ContractConditions(\"MainCondition\")",
+					"member_id": "ContractConditions(\"MainCondition\")",
+					"name": "ContractConditions(\"MainCondition\")",
+					"data": "ContractConditions(\"MainCondition\")",
+					"hash": "ContractConditions(\"MainCondition\")"}',
+					'ContractConditions(\"MainCondition\")');
 	  
 	  INSERT INTO "%[1]d_vde_contracts" ("id", "value", "conditions") VALUES 
 	  ('1','contract MainCondition {
@@ -707,6 +773,27 @@ var (
 				$Cron, $Contract, $Limit, $Till, $Conditions)
 			UpdateCron($Id)
 		}
+	}', 'ContractConditions("MainCondition")'),
+	('23','contract UploadBinary {
+		data {
+			Name  string
+			Data  string
+			AppID int
+			MemberID int "optional"
+		}
+		conditions {
+			$Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $AppID, $MemberID, $Name).One("id"))
+		}
+		action {
+			var hash string
+			hash = MD5($Data)
+
+			if $Id != 0 {
+				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
+			} else {
+				DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
+			}
+		}
 	}', 'ContractConditions("MainCondition")');
 	`
 
@@ -758,7 +845,7 @@ var (
         INSERT INTO "%[1]d_sections" ("id","title","urlname","page","roles_access", "delete") 
 	            VALUES('1', 'Home', 'home', 'default_page', '', 0);
 
-		DROP TABLE IF EXISTS "%[1]d_menu"; 
+		DROP TABLE IF EXISTS "%[1]d_menu";
 		CREATE TABLE "%[1]d_menu" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -826,9 +913,45 @@ If("#key_id#" == EcosysParam("founder_account")){
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
 
 
-		INSERT INTO "%[1]d_pages" ("id","name","value","menu","conditions") VALUES('2','admin_index','','admin_menu','true');
-
-
+		INSERT INTO "%[1]d_pages" ("id","name","value","menu","conditions") VALUES
+			('2','admin_index','','admin_menu','true'),
+			('3','notifications','DBFind(Name: notifications, Source: noti_s).Where("closed=0 and notification_type=1 and recipient_id=#key_id#")
+				DBFind(Name: notifications, Source: noti_r).Where("closed=0 and notification_type=2 and (started_processing_id=0 or started_processing_id=#key_id#)")
+				
+				ForList(noti_s){
+						Div(Class: list-group-item){
+							LinkPage(Page: #page_name#, PageParams: "notific_id=#id#,notific_type=#notification_type#,notific_header=#header_text#,#page_params#"){        
+								Div(media-box){
+									Div(Class: pull-left){
+										Em(Class: fa #icon# fa-1x text-info)
+									} 
+									Div(media-box-body clearfix){ 
+										Div(Class: m0 text-normal, Body: #header_text#) 
+										Div(Class: m0 text-muted h6, Body: #body_text#)
+									}
+								}
+							}
+						}
+				}
+				
+				ForList(noti_r){
+					DBFind(Name: roles_assign, Source: src_roles).Where("member_id=#key_id# and role_id=#role_id# and delete=0").Vars(prefix)
+					If(#prefix_id# > 0){
+						Div(Class: list-group-item){
+							LinkPage(Page: #page_name#, PageParams: "notific_id=#id#,notific_type=#notification_type#,notific_header=#header_text#,#page_params#"){        
+								Div(media-box){
+									Div(Class: pull-left){
+										Em(Class: fa #icon# fa-1x text-primary)
+									} 
+									Div(media-box-body clearfix){ 
+										Div(Class: m0 text-normal, Body: #header_text#) 
+										Div(Class: m0 text-muted h6, Body: #body_text#)
+									}
+								}
+							}
+						}
+					}
+				}','default_menu','ContractAccess("@1EditPage")');
 
 		DROP TABLE IF EXISTS "%[1]d_blocks"; CREATE TABLE "%[1]d_blocks" (
 			"id" bigint  NOT NULL DEFAULT '0',
@@ -1037,7 +1160,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 						"name": "ContractConditions(\"MainCondition\")",
 						"uuid": "false",
 						"condition": "ContractConditions(\"MainCondition\")",
-						"deleted": "ContractConditions(\"MainCondition\")"}', 
+						"deleted": "ContractConditions(\"MainCondition\")"}',
+					'ContractConditions(\"MainCondition\")'),
+				('15', 'binaries',
+					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"app_id": "ContractConditions(\"MainCondition\")",
+						"member_id": "ContractConditions(\"MainCondition\")",
+						"name": "ContractConditions(\"MainCondition\")",
+						"data": "ContractConditions(\"MainCondition\")",
+						"hash": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
@@ -1112,7 +1243,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		CREATE INDEX "%[1]d_roles_assign_index_type" ON "%[1]d_roles_assign" (role_type);
 		CREATE INDEX "%[1]d_roles_assign_index_member" ON "%[1]d_roles_assign" (member_id);
 
-		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id", "member_name","date_start") 
+		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id", "member_name","date_start")
 		VALUES('1','1','3','Admin','%[4]d','founder', NOW()),
 			('2','6','3','Developer','%[4]d','founder', NOW());
 
@@ -1137,6 +1268,18 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"deleted" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_applications" ADD CONSTRAINT "%[1]d_application_pkey" PRIMARY KEY ("id");
+
+		DROP TABLE IF EXISTS "%[1]d_binaries";
+		CREATE TABLE "%[1]d_binaries" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"app_id" bigint NOT NULL DEFAULT '0',
+			"member_id" bigint NOT NULL DEFAULT '0',
+			"name" varchar(255) NOT NULL DEFAULT '',
+			"data" bytea NOT NULL DEFAULT '',
+			"hash" varchar(32) NOT NULL DEFAULT ''
+		);
+		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
+		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (app_id, member_id, name);
 		`
 
 	SchemaFirstEcosystem = `
@@ -1154,12 +1297,12 @@ If("#key_id#" == EcosysParam("founder_account")){
 		);
 		ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
-		
+
 		INSERT INTO "system_states" ("id") VALUES ('1');
 
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
-			('15', 'delayed_contracts', 
-			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+			('16', 'delayed_contracts',
+			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
 			"new_column": "ContractConditions(\"MainCondition\")"}',
 			'{"contract": "ContractConditions(\"MainCondition\")",
 				"key_id": "ContractConditions(\"MainCondition\")",
@@ -1952,7 +2095,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			if !HasPrefix($Contract, "@") {
 				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
-			
+
 			if GetContractByName($Contract) == 0 {
 				error Sprintf("Unknown contract %%s", $Contract)
 			}
@@ -2013,28 +2156,71 @@ If("#key_id#" == EcosysParam("founder_account")){
 				error Sprintf("Delayed contract %%d does not exist", $Id)
 			}
 			$cur = rows[0]
-	
+
 			if $key_id != Int($cur["key_id"]) {
 				error "Access denied"
 			}
-	
+
 			if $block != Int($cur["block_id"]) {
 				error Sprintf("Delayed contract %%d must run on block %%s, current block %%d", $Id, $cur["block_id"], $block)
 			}
 		}
 		action {
 			var limit, counter, block_id int
-	
+
 			limit = Int($cur["limit"])
 			counter = Int($cur["counter"])+1
 			block_id = $block
-	
+
 			if limit == 0 || limit > counter {
 				block_id = block_id + Int($cur["every_block"])
 			}
-	
+
 			DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
 			CallContract($cur["contract"], nil)
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('31','contract UploadBinary {
+		data {
+			Name  string
+			Data  string
+			AppID int
+			MemberID int "optional"
+		}
+		conditions {
+			$Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $AppID, $MemberID, $Name).One("id"))
+		}
+		action {
+			var hash string
+			hash = MD5($Data)
+
+			if $Id != 0 {
+				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
+			} else {
+				DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
+			}
+		}
+	}', '%[1]d','ContractConditions("MainCondition")'),
+	('32', 'contract NewUser {
+		data {
+			NewPubkey string
+		}
+		conditions {
+			$newId = PubToID($NewPubkey)
+			if $newId == 0 {
+				error "Wrong pubkey"
+			}
+			if DBFind("keys").Columns("id").WhereId($newId).One("id") != nil {
+				error "User already exists"
+			}
+
+			$amount = 1000
+		}
+		action {
+			DBUpdate("keys", $key_id, "-amount", $amount)
+			DBInsert("keys", "id,amount,pub", $newId, $amount, $NewPubkey)
+           	DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
+                    $key_id, $newId, $amount, "New user deposit", $block, $txhash)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")');`
 )

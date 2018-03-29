@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -829,7 +829,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				logger.WithFields(log.Fields{"user_id": sc.TxSmart.KeyID, "type": consts.NotFound}).Error("unknown node id")
 				return retError(ErrUnknownNodeID)
 			}
-			public = node.Public
+			public = node.PublicKey
 		}
 		if len(public) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty public key")

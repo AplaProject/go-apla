@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
@@ -146,7 +146,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	header := &utils.BlockData{
 		BlockID:      prevBlock.BlockID + 1,
 		Time:         time.Now().Unix(),
-		EcosystemID:  conf.Config.EcosystemID,
+		EcosystemID:  0,
 		KeyID:        conf.Config.KeyID,
 		NodePosition: nodePosition,
 		Version:      consts.BLOCK_VERSION,
