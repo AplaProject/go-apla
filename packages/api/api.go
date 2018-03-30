@@ -143,7 +143,7 @@ func getPrefix(data *apiData) (prefix string) {
 
 func getSignHeader(txName string, data *apiData) tx.Header {
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
-		EcosystemID: data.ecosystemId, KeyID: data.keyId}
+		EcosystemID: data.ecosystemId, KeyID: data.keyId, NetworkID: consts.NETWORK_ID}
 }
 
 func getHeader(txName string, data *apiData) (tx.Header, error) {
@@ -162,7 +162,7 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
 		EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
-		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
+		BinSignatures: converter.EncodeLengthPlusData(signature), NetworkID: consts.NETWORK_ID}, nil
 }
 
 // DefaultHandler is a common handle function for api requests
