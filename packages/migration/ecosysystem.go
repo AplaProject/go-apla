@@ -94,6 +94,7 @@ MenuItem(
 	  
 	  CREATE TABLE "%[1]d_vde_contracts" (
 	  "id" bigint NOT NULL  DEFAULT '0',
+	  "name" text NOT NULL DEFAULT '',
 	  "value" text  NOT NULL DEFAULT '',
 	  "conditions" text  NOT NULL DEFAULT ''
 	  );
@@ -160,7 +161,8 @@ MenuItem(
 	  INSERT INTO "%[1]d_vde_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts', 
 			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 				"new_column": "ContractConditions(\"MainCondition\")"}',
-			  '{"value": "ContractConditions(\"MainCondition\")",
+			  '{"name": "false",
+				"value": "ContractConditions(\"MainCondition\")",
 				"conditions": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("EditTable")'),
 			  ('2', 'languages', 
 			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
@@ -217,8 +219,8 @@ MenuItem(
 					"hash": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")');
 	  
-	  INSERT INTO "%[1]d_vde_contracts" ("id", "value", "conditions") VALUES 
-	  ('1','contract MainCondition {
+	  INSERT INTO "%[1]d_vde_contracts" ("id", "name", "value", "conditions") VALUES 
+	  ('1','MainCondition','contract MainCondition {
 		conditions {
 		  if EcosysParam("founder_account")!=$key_id
 		  {
@@ -226,7 +228,7 @@ MenuItem(
 		  }
 		}
 	  }', 'ContractConditions("MainCondition")'),
-	  ('2','contract NewContract {
+	  ('2','NewContract','contract NewContract {
 		  data {
 			  Value      string
 			  Conditions string
@@ -242,16 +244,17 @@ MenuItem(
 				  }
 				  i = i + 1
 			  }
+			  $contract_name=list[0]
 		  }
 		  action {
 			  var root, id int
 			  root = CompileContract($Value, $ecosystem_id, 0, 0)
-			  id = DBInsert("contracts", "value,conditions", $Value, $Conditions )
+			  id = DBInsert("contracts", "name,value,conditions", $contract_name, $Value, $Conditions )
 			  FlushContract(root, id, false)
 			  $result = id
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('3','contract EditContract {
+	  ('3','EditContract','contract EditContract {
 		  data {
 			  Id         int
 			  Value      string "optional"
@@ -315,7 +318,7 @@ MenuItem(
 			}
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('4','contract NewParameter {
+	  ('4','NewParameter','contract NewParameter {
 		  data {
 			  Name string
 			  Value string
@@ -333,7 +336,7 @@ MenuItem(
 			  $result = DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('5','contract EditParameter {
+	  ('5','EditParameter','contract EditParameter {
 		  data {
 			  Id int
 			  Value string
@@ -347,7 +350,7 @@ MenuItem(
 			  DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('6', 'contract NewMenu {
+	  ('6', 'NewMenu','contract NewMenu {
 		  data {
 			  Name       string
 			  Value      string
@@ -366,7 +369,7 @@ MenuItem(
 			  $result = DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('7','contract EditMenu {
+	  ('7','EditMenu','contract EditMenu {
 		  data {
 			  Id         int
 			  Value      string "optional"
@@ -398,7 +401,7 @@ MenuItem(
 		  }			
 		}
 	  }', 'ContractConditions("MainCondition")'),
-	  ('8','contract AppendMenu {
+	  ('8','AppendMenu','contract AppendMenu {
 		data {
 			Id     int
 			Value  string
@@ -412,7 +415,7 @@ MenuItem(
 			DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
 		}
 	  }', 'ContractConditions("MainCondition")'),
-	  ('9','contract NewPage {
+	  ('9','NewPage','contract NewPage {
 		  data {
 			  Name       string
 			  Value      string
@@ -431,7 +434,7 @@ MenuItem(
 			  $result = DBInsert("pages", "name,value,menu,conditions", $Name, $Value, $Menu, $Conditions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('10','contract EditPage {
+	  ('10','EditPage','contract EditPage {
 		  data {
 			Id         int
 			Value      string "optional"
@@ -463,7 +466,7 @@ MenuItem(
 		  }
 	  	}		  
 	  }', 'ContractConditions("MainCondition")'),
-	  ('11','contract AppendPage {
+	  ('11','AppendPage','contract AppendPage {
 		  data {
 			  Id         int
 			  Value      string
@@ -477,7 +480,7 @@ MenuItem(
 			  DBUpdate("pages", $Id, "value", row["value"] + "\r\n" + $Value)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('12','contract NewBlock {
+	  ('12','NewBlock','contract NewBlock {
 		  data {
 			  Name       string
 			  Value      string
@@ -495,7 +498,7 @@ MenuItem(
 			  $result = DBInsert("blocks", "name,value,conditions", $Name, $Value, $Conditions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('13','contract EditBlock {
+	  ('13','EditBlock','contract EditBlock {
 		  data {
 			Id         int
 			Value      string "optional"
@@ -522,7 +525,7 @@ MenuItem(
 		  }
 		}
 	  }', 'ContractConditions("MainCondition")'),
-	  ('14','contract NewTable {
+	  ('14','NewTable','contract NewTable {
 		  data {
 			  Name       string
 			  Columns      string
@@ -535,7 +538,7 @@ MenuItem(
 			  CreateTable($Name, $Columns, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('15','contract EditTable {
+	  ('15','EditTable','contract EditTable {
 		  data {
 			  Name       string
 			  Permissions string
@@ -547,7 +550,7 @@ MenuItem(
 			  PermTable($Name, $Permissions )
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('16','contract NewColumn {
+	  ('16','NewColumn','contract NewColumn {
 		  data {
 			  TableName   string
 			  Name        string
@@ -561,7 +564,7 @@ MenuItem(
 			  CreateColumn($TableName, $Name, $Type, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('17','contract EditColumn {
+	  ('17','EditColumn','contract EditColumn {
 		  data {
 			  TableName   string
 			  Name        string
@@ -574,7 +577,7 @@ MenuItem(
 			  PermColumn($TableName, $Name, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('18','contract NewLang {
+	  ('18','NewLang','contract NewLang {
 		data {
 			Name  string
 			Trans string
@@ -592,7 +595,7 @@ MenuItem(
 			UpdateLang($Name, $Trans)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('19','contract EditLang {
+	('19','EditLang','contract EditLang {
 		data {
 			Name  string
 			Trans string
@@ -605,7 +608,7 @@ MenuItem(
 			UpdateLang($Name, $Trans)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('20','contract Import {
+	('20','Import','contract Import {
 		data {
 			Data string
 		}
@@ -725,7 +728,7 @@ MenuItem(
 			ImportData($list["data"])
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('21', 'contract NewCron {
+	('21', 'NewCron','contract NewCron {
 		data {
 			Cron       string
 			Contract   string
@@ -749,7 +752,7 @@ MenuItem(
 			UpdateCron($result)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('22','contract EditCron {
+	('22','EditCron','contract EditCron {
 		data {
 			Id         int
 			Contract   string
@@ -973,6 +976,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		
 		CREATE TABLE "%[1]d_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
+		"name" text NOT NULL DEFAULT '',
 		"value" text  NOT NULL DEFAULT '',
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',
@@ -982,8 +986,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		);
 		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 		
-		INSERT INTO "%[1]d_contracts" ("id", "value", "wallet_id","active", "conditions") VALUES 
-		('1','contract MainCondition {
+		INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id","active", "conditions") VALUES 
+		('1','MainCondition','contract MainCondition {
 		  conditions {
 			if EcosysParam("founder_account")!=$key_id
 			{
@@ -1047,7 +1051,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		
 		INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions") VALUES 
 			('1', 'contracts', '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}', 
-			'{"value": "ContractConditions(\"MainCondition\")",
+			'{"name": "false", 
+				"value": "ContractConditions(\"MainCondition\")",
 				  "wallet_id": "ContractConditions(\"MainCondition\")",
 				  "token_id": "ContractConditions(\"MainCondition\")",
 				  "active": "ContractConditions(\"MainCondition\")",
@@ -1326,8 +1331,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 				"conditions": "ContractConditions(\"MainCondition\")"}',
 				'ContractConditions(\"MainCondition\")');
 
-	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
-	('2','contract MoneyTransfer {
+	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions") VALUES 
+	('2','MoneyTransfer','contract MoneyTransfer {
 		data {
 			Recipient string
 			Amount    string
@@ -1361,7 +1366,7 @@ If("#key_id#" == EcosysParam("founder_account")){
                     $key_id, $recipient, $amount, $Comment, $block, $txhash)
 		}
 	}', '%[1]d', 'ContractConditions("MainCondition")'),
-	('3','contract NewContract {
+	('3','NewContract','contract NewContract {
 		data {
 			Value      string
 			Conditions string
@@ -1379,6 +1384,11 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 			var list array
 			list = ContractsList($Value)
+			
+			if Len(list) == 0 {
+				error "must be the name"
+			}
+
 			var i int
 			while i < Len(list) {
 				if IsObject(list[i], $ecosystem_id) {
@@ -1386,6 +1396,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 				}
 				i = i + 1
 			}
+
+			$contract_name = list[0]
 			if !$TokenEcosystem {
 				$TokenEcosystem = 1
 			} else {
@@ -1397,8 +1409,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		action {
 			var root, id int
 			root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
-			id = DBInsert("contracts", "value,conditions, wallet_id, token_id", 
-				   $Value, $Conditions, $walletContract, $TokenEcosystem)
+			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id", 
+				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem)
 			FlushContract(root, id, false)
 			$result = id
 		}
@@ -1415,7 +1427,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			return  SysParamInt("contract_price")
 		}
 	}', '%[1]d', 'ContractConditions("MainCondition")'),
-	('4','contract EditContract {
+	('4','EditContract','contract EditContract {
 		data {
 			Id         int
 			Value      string "optional"
@@ -1498,7 +1510,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			RollbackEditContract()
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('5','contract ActivateContract {
+	('5','ActivateContract','contract ActivateContract {
 		data {
 			Id  int
 		}
@@ -1524,7 +1536,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('6','contract NewEcosystem {
+	('6','NewEcosystem','contract NewEcosystem {
 		data {
 			Name  string "optional"
 		}
@@ -1538,7 +1550,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			RollbackEcosystem()
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('7','contract NewParameter {
+	('7','NewParameter','contract NewParameter {
 		data {
 			Name string
 			Value string
@@ -1558,7 +1570,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('8','contract EditParameter {
+	('8','EditParameter','contract EditParameter {
 		data {
 			Id int
 			Value string
@@ -1572,7 +1584,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('9', 'contract NewMenu {
+	('9', 'NewMenu','contract NewMenu {
 		data {
 			Name       string
 			Value      string
@@ -1596,7 +1608,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			return  SysParamInt("menu_price")
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('10','contract EditMenu {
+	('10','EditMenu','contract EditMenu {
 		data {
 			Id         int
 			Value      string "optional"
@@ -1628,7 +1640,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}			
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('11','contract AppendMenu {
+	('11','AppendMenu','contract AppendMenu {
 		data {
 			Id     int
 			Value      string
@@ -1642,7 +1654,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('12','contract NewPage {
+	('12','NewPage','contract NewPage {
 		data {
 			Name       string
 			Value      string
@@ -1685,7 +1697,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 	}
 	', '%[1]d','ContractConditions("MainCondition")'),
-	('13','contract EditPage {
+	('13','EditPage','contract EditPage {
 		data {
 			Id         int
 			Value      string "optional"
@@ -1738,7 +1750,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('14','contract AppendPage {
+	('14','AppendPage','contract AppendPage {
 		data {
 			Id         int
 			Value      string
@@ -1759,7 +1771,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("pages", $Id, "value",  value )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('15','contract NewLang {
+	('15','NewLang','contract NewLang {
 		data {
 			Name  string
 			Trans string
@@ -1779,7 +1791,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			UpdateLang($Name, $Trans)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('16','contract EditLang {
+	('16','EditLang','contract EditLang {
 		data {
 			Name  string
 			Trans string
@@ -1792,7 +1804,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			UpdateLang($Name, $Trans)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('17','contract NewSign {
+	('17','NewSign','contract NewSign {
 		data {
 			Name       string
 			Value      string
@@ -1813,7 +1825,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBInsert("signatures", "name,value,conditions", $Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('18','contract EditSign {
+	('18','EditSign','contract EditSign {
 		data {
 			Id         int
 			Value      string
@@ -1827,7 +1839,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("signatures", $Id, "value,conditions", $Value, $Conditions)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('19','contract NewBlock {
+	('19','NewBlock','contract NewBlock {
 		data {
 			Name       string
 			Value      string
@@ -1847,7 +1859,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBInsert("blocks", "name,value,conditions", $Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('20','contract EditBlock {
+	('20','EditBlock','contract EditBlock {
 		data {
 			Id         int
 			Value      string "optional"
@@ -1874,7 +1886,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('21','contract NewTable {
+	('21','NewTable','contract NewTable {
 		data {
 			Name       string
 			Columns      string
@@ -1893,7 +1905,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			return  SysParamInt("table_price")
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('22','contract EditTable {
+	('22','EditTable','contract EditTable {
 		data {
 			Name       string
 			Permissions string
@@ -1905,7 +1917,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			PermTable($Name, $Permissions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('23','contract NewColumn {
+	('23','NewColumn','contract NewColumn {
 		data {
 			TableName   string
 			Name        string
@@ -1925,7 +1937,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			return  SysParamInt("column_price")
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('24','contract EditColumn {
+	('24','EditColumn','contract EditColumn {
 		data {
 			TableName   string
 			Name        string
@@ -1938,7 +1950,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			PermColumn($TableName, $Name, $Permissions)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('25','contract Import {
+	('25','Import','contract Import {
 		data {
 			Data string
 		}
@@ -2058,7 +2070,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			ImportData($list["data"])
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('26','contract DeactivateContract {
+	('26','DeactivateContract','contract DeactivateContract {
 		data {
 			Id         int
 		}
@@ -2083,7 +2095,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Activate($Id, $ecosystem_id)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('27','contract UpdateSysParam {
+	('27','UpdateSysParam','contract UpdateSysParam {
 		data {
 			Name  string
 			Value string
@@ -2093,7 +2105,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdateSysParam($Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('28','contract NewAppParam {
+	('28','NewAppParam','contract NewAppParam {
 		data {
 			App int
 			Name string
@@ -2115,7 +2127,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBInsert("app_param", "app_id,name,value,conditions", $App, $Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('29','contract EditAppParam {
+	('29','EditAppParam','contract EditAppParam {
 		data {
 			Id int
 			Value string
@@ -2129,7 +2141,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("app_param", $Id, "value,conditions", $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('30', 'contract NewDelayedContract {
+	('30', 'NewDelayedContract','contract NewDelayedContract {
 		data {
 			Contract string
 			EveryBlock int
@@ -2160,7 +2172,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,\"limit\",conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('31', 'contract EditDelayedContract {
+	('31', 'EditDelayedContract','contract EditDelayedContract {
 		data {
 			Id int
 			Contract string
@@ -2193,7 +2205,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,\"limit\",deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('32', 'contract CallDelayedContract {
+	('32', 'CallDelayedContract','contract CallDelayedContract {
 		data {
 			Id int
 		}
@@ -2228,7 +2240,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			CallContract($cur["contract"], nil)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('33','contract UploadBinary {
+	('33','UploadBinary','contract UploadBinary {
 		data {
 			Name  string
 			Data  string
@@ -2249,7 +2261,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('34', 'contract NewUser {
+	('34', 'NewUser','contract NewUser {
 		data {
 			NewPubkey string
 		}
