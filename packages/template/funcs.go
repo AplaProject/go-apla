@@ -504,10 +504,10 @@ func dbfindTag(par parFunc) string {
 		where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
 	}
 	if par.Node.Attr[`whereid`] != nil {
-		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(par.Node.Attr[`whereid`].(string)))
+		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
 	}
 	if par.Node.Attr[`order`] != nil {
-		order = ` order by ` + converter.EscapeName(par.Node.Attr[`order`].(string))
+		order = ` order by ` + converter.EscapeName(macro(par.Node.Attr[`order`].(string), par.Workspace.Vars))
 	}
 	if par.Node.Attr[`limit`] != nil {
 		limit = converter.StrToInt(par.Node.Attr[`limit`].(string))
