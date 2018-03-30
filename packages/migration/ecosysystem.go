@@ -2228,7 +2228,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			CallContract($cur["contract"], nil)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('31','contract UploadBinary {
+	('33','contract UploadBinary {
 		data {
 			Name  string
 			Data  string
@@ -2249,7 +2249,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
-	('32', 'contract NewUser {
+	('34', 'contract NewUser {
 		data {
 			NewPubkey string
 		}
