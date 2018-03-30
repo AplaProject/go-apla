@@ -141,6 +141,36 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty, and state is not default")
 		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
 	}
+
+	if r, ok := data.params["role_id"]; ok {
+		role := r.(int64)
+		if role > 0 {
+			ok, err := model.MemberHasRole(nil, state, wallet, role)
+			if err != nil {
+				logger.WithFields(log.Fields{
+					"type":      consts.DBError,
+					"member":    wallet,
+					"role":      role,
+					"ecosystem": state}).Error("check role")
+
+				return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
+			}
+
+			if !ok {
+				logger.WithFields(log.Fields{
+					"type":      consts.NotFound,
+					"member":    wallet,
+					"role":      role,
+					"ecosystem": state,
+				}).Error("member hasn't role")
+
+				return errorAPI(w, "E_CHECKROLE", http.StatusNotFound)
+			}
+
+			data.roleId = role
+		}
+	}
+
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("checking signature")
@@ -150,6 +180,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.InvalidObject, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("incorrect signature")
 		return errorAPI(w, `E_SIGNATURE`, http.StatusBadRequest)
 	}
+
 	address := crypto.KeyToAddress(pubkey)
 	var (
 		sp      model.StateParameter
@@ -172,14 +203,18 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.JWTError, "expire": jwtExpire}).Warning("using expire from jwt")
 		expire = jwtExpire
 	}
-	var isMobile string
-	if data.params[`mobile`].(string) == `1` || data.params[`mobile`].(string) == `true` {
-		isMobile = `1`
+
+	isMobile := "0"
+	if mob, ok := data.params[`mobile`]; ok && mob != nil {
+		if mob.(string) == `1` || mob.(string) == `true` {
+			isMobile = `1`
+		}
 	}
 	claims := JWTClaims{
 		KeyID:       result.KeyID,
 		EcosystemID: result.EcosystemID,
 		IsMobile:    isMobile,
+		RoleID:      converter.Int64ToStr(data.roleId),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Second * time.Duration(expire)).Unix(),
 		},

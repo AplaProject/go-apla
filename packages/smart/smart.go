@@ -392,7 +392,7 @@ func DBRow(table string).Columns(columns string).Where(where string, params ...)
    .WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
    
    var result array
-   result = DBFind(table).Columns(columns).Where(where, params ...).WhereId(id).Order(order).Ecosystem(ecosystem)
+   result = DBFind(table).Columns(columns).Where(where, params...).WhereId(id).Order(order).Ecosystem(ecosystem)
 
    var row map
    if Len(result) > 0 {
@@ -491,12 +491,26 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		blockKeyID = sc.BlockData.KeyID
 		blockTime = sc.BlockData.Time
 	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `ecosystem_id`: head.EcosystemID,
-		`node_position`: head.NodePosition,
-		`block`:         block, `key_id`: keyID, `block_key_id`: blockKeyID,
-		`parent`: ``, `txcost`: sc.GetContractLimit(), `txhash`: sc.TxHash, `result`: ``,
-		`sc`: sc, `contract`: sc.TxContract, `block_time`: blockTime,
-		`original_contract`: ``, `this_contract`: ``}
+	extend := map[string]interface{}{
+		`type`:              head.Type,
+		`time`:              head.Time,
+		`ecosystem_id`:      head.EcosystemID,
+		`node_position`:     head.NodePosition,
+		`block`:             block,
+		`key_id`:            keyID,
+		`block_key_id`:      blockKeyID,
+		`parent`:            ``,
+		`txcost`:            sc.GetContractLimit(),
+		`txhash`:            sc.TxHash,
+		`result`:            ``,
+		`sc`:                sc,
+		`contract`:          sc.TxContract,
+		`block_time`:        blockTime,
+		`original_contract`: ``,
+		`this_contract`:     ``,
+		`role_id`:           head.RoleID,
+	}
+
 	for key, val := range sc.TxData {
 		extend[key] = val
 	}
@@ -552,7 +566,7 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 	)
 	logger := sc.GetLogger()
 
-	if table == getDefTableName(sc, `parameters`) {
+	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_param`) {
 		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return tablePermission, nil
 		}
@@ -611,7 +625,7 @@ type colAccess struct {
 // AccessColumns checks access rights to the columns
 func (sc *SmartContract) AccessColumns(table string, columns *[]string, update bool) error {
 	logger := sc.GetLogger()
-	if table == getDefTableName(sc, `parameters`) {
+	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_param`) {
 		if update {
 			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 				return nil

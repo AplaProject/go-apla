@@ -140,9 +140,15 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 		}
 	}
 	toSerialize = tx.SmartContract{
-		Header: tx.Header{Type: int(info.ID), Time: converter.StrToInt64(data.params[`time`].(string)),
-			EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
-			BinSignatures: converter.EncodeLengthPlusData(signature)},
+		Header: tx.Header{
+			Type:          int(info.ID),
+			Time:          converter.StrToInt64(data.params[`time`].(string)),
+			EcosystemID:   data.ecosystemId,
+			KeyID:         data.keyId,
+			RoleID:        data.roleId,
+			PublicKey:     publicKey,
+			BinSignatures: converter.EncodeLengthPlusData(signature),
+		},
 		TokenEcosystem: data.params[`token_ecosystem`].(int64),
 		MaxSum:         data.params[`max_sum`].(string),
 		PayOver:        data.params[`payover`].(string),

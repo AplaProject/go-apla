@@ -392,6 +392,16 @@ func TestVMCompile(t *testing.T) {
 				myarr[2] = "9th item"
 				return Sprintf("RESULT=%s %d %v", myarr...)
 			}`, `result`, `RESULT=string 7 9th item`},
+		{`func find().Where(pattern string, params ...) string {
+				return Sprintf(pattern, params ...)
+			}
+			func row().Where(pattern string, params ...) string {
+				return find().Where(pattern, params ...)
+			}
+			func result() string {
+				return row().Where("%d %d", 10, 20)
+			}
+			`, `result`, `10 20`},
 	}
 	vm := NewVM()
 	vm.Extern = true

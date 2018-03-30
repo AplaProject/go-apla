@@ -20,6 +20,7 @@ import "errors"
 
 const (
 	eContractLoop    = `there is loop in %s contract`
+	eSysVar          = `system variable $%s cannot be changed`
 	eTypeParam       = `parameter %d has wrong type`
 	eUndefinedParam  = `%s is not defined`
 	eUnknownContract = `unknown contract %s`

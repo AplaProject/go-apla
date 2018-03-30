@@ -508,7 +508,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 
 	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
 		`contracts`, `parameters`, `blocks`, `history`, `keys`, `sections`, `members`, `roles_list`,
-		`roles_assign`, `notifications`, `applications`, `binaries`} {
+		`roles_assign`, `notifications`, `applications`, `binaries`, `app_param`} {
 		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")

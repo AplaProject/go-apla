@@ -100,6 +100,7 @@ var (
 		"CreateColumn":       50,
 		"CreateTable":        100,
 		"EcosysParam":        10,
+		"AppParam":           10,
 		"Eval":               10,
 		"EvalCondition":      20,
 		"FlushContract":      50,
@@ -159,6 +160,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"DBUpdateExt":          DBUpdateExt,
 		"DBSelectMetrics":      DBSelectMetrics,
 		"EcosysParam":          EcosysParam,
+		"AppParam":             AppParam,
 		"SysParamString":       SysParamString,
 		"SysParamInt":          SysParamInt,
 		"SysFuel":              SysFuel,
@@ -308,7 +310,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
 			}
 			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
-				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``})
+				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID})
 			if err != nil {
 				return false, err
 			}
@@ -621,6 +623,18 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 func EcosysParam(sc *SmartContract, name string) string {
 	val, _ := model.Single(`SELECT value FROM "`+getDefTableName(sc, `parameters`)+`" WHERE name = ?`, name).String()
 	return val
+}
+
+// AppParam returns the value of the specified app parameter for the ecosystem
+func AppParam(sc *SmartContract, app int64, name string) (string, error) {
+	ap := &model.AppParam{}
+	ap.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	_, err := ap.Get(sc.DbTransaction, app, name)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting app param")
+		return ``, err
+	}
+	return ap.Value, nil
 }
 
 // Eval evaluates the condition
