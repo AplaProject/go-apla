@@ -500,7 +500,7 @@ func dbfindTag(par parFunc) string {
 	}
 	fields = strings.ToLower(fields)
 	if par.Node.Attr[`where`] != nil {
-		where = ` where ` + converter.Escape(par.Node.Attr[`where`].(string))
+		where = ` where ` + converter.Escape(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars))
 		where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
 	}
 	if par.Node.Attr[`whereid`] != nil {
