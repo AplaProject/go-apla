@@ -132,6 +132,7 @@ var (
 		"menu":       "changing_menu",
 		"signatures": "changing_signature",
 		"contracts":  "changing_contracts",
+		"blocks":     "changing_blocks",
 	}
 )
 
