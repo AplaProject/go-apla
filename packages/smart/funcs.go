@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -208,6 +209,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"check_signature":      CheckSignature,
 		"RowConditions":        RowConditions,
 		"UUID":                 UUID,
+		"DecodeBase64":         DecodeBase64,
 		"MD5":                  MD5,
 	}
 
@@ -1229,6 +1231,16 @@ func GetBlock(blockID int64) (map[string]int64, error) {
 // UUID returns new uuid
 func UUID(sc *SmartContract) string {
 	return uuid.Must(uuid.NewV4()).String()
+}
+
+// DecodeBase64 decodes base64 string
+func DecodeBase64(input string) (out string, err error) {
+	var bin []byte
+	bin, err = base64.StdEncoding.DecodeString(input)
+	if err == nil {
+		out = string(bin)
+	}
+	return
 }
 
 // MD5 returns md5 hash sum of data
