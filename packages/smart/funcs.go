@@ -212,6 +212,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UUID":                 UUID,
 		"DecodeBase64":         DecodeBase64,
 		"MD5":                  MD5,
+		"AllowChangeCondition": AllowChangeCondition,
 	}
 
 	switch vt {
@@ -905,6 +906,15 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		return fmt.Errorf(`incorrect type`)
 	}
 	return sc.AccessTable(tblName, "new_column")
+}
+
+// AllowChangeCondition check acces to change condition throught supper contract
+func AllowChangeCondition(sc *SmartContract, tblname string) error {
+	if param, ok := tableParamConditions[tblname]; ok {
+		return sc.AccessRights(param, false)
+	}
+
+	return nil
 }
 
 // RowConditions checks conditions for table row by id
