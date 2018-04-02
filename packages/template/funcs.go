@@ -503,7 +503,7 @@ func dbfindTag(par parFunc) string {
 	}
 
 	sc := par.Workspace.SmartContract
-	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName((*par.Pars)[`Name`]), `"`), state)
+	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName(macro((*par.Pars)[`Name`], par.Workspace.Vars)), `"`), state)
 
 	rows, err := model.GetAllColumnTypes(tblname)
 	if err != nil {
