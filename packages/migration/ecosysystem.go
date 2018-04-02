@@ -1175,11 +1175,10 @@ If("#key_id#" == EcosysParam("founder_account")){
 						'ContractConditions(\"MainCondition\")'),
 				('14', 'applications',
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"title": "ContractConditions(\"MainCondition\")",
-						"name": "ContractConditions(\"MainCondition\")",
-						"uuid": "false",
-						"condition": "ContractConditions(\"MainCondition\")",
-						"deleted": "ContractConditions(\"MainCondition\")"}',
+					'{"name": "ContractConditions(\"MainCondition\")",
+					  "uuid": "false",
+					  "conditions": "ContractConditions(\"MainCondition\")",
+					  "deleted": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")'),
 				('15', 'binaries',
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1283,7 +1282,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"uuid" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
-			"condition" text NOT NULL DEFAULT '',
+			"conditions" text NOT NULL DEFAULT '',
 			"deleted" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_applications" ADD CONSTRAINT "%[1]d_application_pkey" PRIMARY KEY ("id");
