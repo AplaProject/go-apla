@@ -264,7 +264,7 @@ func paramToSource(par parFunc, val string) string {
 }
 
 func paramToIndex(par parFunc, val string) (ret string) {
-	ind := converter.StrToInt((*par.Pars)[`Index`])
+	ind := converter.StrToInt(macro((*par.Pars)[`Index`], par.Workspace.Vars))
 	if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 		ret, _ = language.LangText(alist[ind-1],
 			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]), (*par.Workspace.Vars)[`lang`],
@@ -291,6 +291,7 @@ func ecosysparTag(par parFunc) string {
 	}
 	val := sp.Value
 	if len((*par.Pars)[`Source`]) > 0 {
+
 		return paramToSource(par, val)
 	}
 	if len((*par.Pars)[`Index`]) > 0 {
