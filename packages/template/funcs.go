@@ -283,7 +283,8 @@ func ecosysparTag(par parFunc) string {
 	}
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(prefix)
-	_, err := sp.Get(nil, (*par.Pars)[`Name`])
+	parameterName := macro((*par.Pars)[`Name`], par.Workspace.Vars)
+	_, err := sp.Get(nil, parameterName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
 		return err.Error()
