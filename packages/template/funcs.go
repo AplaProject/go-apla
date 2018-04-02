@@ -255,7 +255,8 @@ func ecosysparTag(par parFunc) string {
 	}
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(prefix)
-	_, err := sp.Get(nil, (*par.Pars)[`Name`])
+	parameterName := macro((*par.Pars)[`Name`], par.Workspace.Vars)
+	_, err := sp.Get(nil, parameterName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
 		return err.Error()
@@ -276,7 +277,7 @@ func ecosysparTag(par parFunc) string {
 		return ``
 	}
 	if len((*par.Pars)[`Index`]) > 0 {
-		ind := converter.StrToInt((*par.Pars)[`Index`])
+		ind := converter.StrToInt(macro((*par.Pars)[`Index`], par.Workspace.Vars))
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 			val, _ = language.LangText(alist[ind-1], state, (*par.Workspace.Vars)[`lang`],
 				par.Workspace.SmartContract.VDE)
