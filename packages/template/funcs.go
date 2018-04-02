@@ -277,7 +277,7 @@ func ecosysparTag(par parFunc) string {
 		return ``
 	}
 	if len((*par.Pars)[`Index`]) > 0 {
-		ind := converter.StrToInt((*par.Pars)[`Index`])
+		ind := converter.StrToInt(macro((*par.Pars)[`Index`], par.Workspace.Vars))
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 			val, _ = language.LangText(alist[ind-1], state, (*par.Workspace.Vars)[`lang`],
 				par.Workspace.SmartContract.VDE)
