@@ -1113,7 +1113,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 					'{"insert": "ContractAccess(\"Profile_Edit\")", "update": "ContractAccess(\"Profile_Edit\")", 
 					  "new_column": "ContractConditions(\"MainCondition\")"}',
 					'{"member_name": "ContractAccess(\"Profile_Edit\")",
-					  "avatar": "ContractAccess(\"Profile_Edit\")"}', 'ContractConditions(\"MainCondition\")'),
+					  "image_id": "ContractAccess(\"Profile_Edit\")",
+					  "member_info": "ContractAccess(\"Profile_Edit\")"}', 'ContractConditions(\"MainCondition\")'),
 				('10', 'roles_list', 
 					'{"insert": "ContractAccess(\"Roles_Create\")", "update": "ContractAccess(\"Roles_Del\")", 
 					 "new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1271,7 +1272,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		CREATE TABLE "%[1]d_members" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
-			"avatar"	bytea NOT NULL DEFAULT ''
+			"image_id" 	bigint,
+			"member_info"   jsonb
 		);
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
