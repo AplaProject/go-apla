@@ -32,6 +32,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/utils/metric"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -721,6 +722,14 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 		return nil, err
 	}
 	return result, nil
+}
+
+func DBCollectMetrics() []interface{} {
+	c := metric.NewCollector(
+		metric.CollectMetricDataForEcosystemTables,
+		metric.CollectMetricDataForEcosystemTx,
+	)
+	return c.Values()
 }
 
 // RollbackEditContract rollbacks the contract

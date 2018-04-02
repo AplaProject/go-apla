@@ -1317,6 +1317,22 @@ If("#key_id#" == EcosysParam("founder_account")){
 		ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
 
+		INSERT INTO "1_delayed_contracts"
+			("id", "contract", "key_id", "block_id", "every_block", "conditions")
+		VALUES
+			(1, '@1UpdateMetrics', '%[1]d', '100', '100', 'ContractConditions("MainCondition")');
+
+		DROP TABLE IF EXISTS "1_metrics";
+		CREATE TABLE "1_metrics" (
+			"id" int NOT NULL default 0,
+			"time" bigint NOT NULL DEFAULT '0',
+			"metric" varchar(255) NOT NULL,
+			"key" varchar(255) NOT NULL,
+			"value" bigint NOT NULL
+		);
+		ALTER TABLE ONLY "1_metrics" ADD CONSTRAINT "1_metrics_pkey" PRIMARY KEY (id);
+		CREATE INDEX "1_metrics_unique_index" ON "1_metrics" (metric, time, "key");
+
 		INSERT INTO "system_states" ("id") VALUES ('1');
 
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
@@ -1331,7 +1347,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 				"limit": "ContractConditions(\"MainCondition\")",
 				"deleted": "ContractConditions(\"MainCondition\")",
 				"conditions": "ContractConditions(\"MainCondition\")"}',
-				'ContractConditions(\"MainCondition\")');
+				'ContractConditions(\"MainCondition\")'),
+			('17', 'metrics',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
+				"new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"time": "ContractConditions(\"MainCondition\")",
+					"metric": "ContractConditions(\"MainCondition\")",
+					"key": "ContractConditions(\"MainCondition\")",
+					"value": "ContractConditions(\"MainCondition\")"}',
+					'ContractConditions(\"MainCondition\")');
 
 	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions") VALUES 
 	('2','MoneyTransfer','contract MoneyTransfer {
@@ -2281,8 +2305,30 @@ If("#key_id#" == EcosysParam("founder_account")){
 		action {
 			DBUpdate("keys", $key_id, "-amount", $amount)
 			DBInsert("keys", "id,amount,pub", $newId, $amount, $NewPubkey)
-           	DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
-                    $key_id, $newId, $amount, "New user deposit", $block, $txhash)
+			DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
+				$key_id, $newId, $amount, "New user deposit", $block, $txhash)
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('35', 'contract UpdateMetrics {
+		conditions {
+			ContractConditions("MainCondition")
+		}
+		action {
+			var values array
+			values = DBCollectMetrics()
+
+			var i, id int
+			var v map
+			while (i < Len(values)) {
+				v = values[i]
+				id = Int(DBFind("metrics").Columns("id").Where("time = ? AND key = ? AND metric = ?", v["time"], v["key"], v["metric"]).One("id"))
+				if id != 0 {
+					DBUpdate("metrics", id, "value", Int(v["value"]))
+				} else {
+					DBInsert("metrics", "time,key,metric,value", v["time"], v["key"], v["metric"], Int(v["value"]))
+				}
+				i = i + 1
+			}
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")');`
 )

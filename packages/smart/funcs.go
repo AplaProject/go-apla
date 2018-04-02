@@ -160,7 +160,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"DBUpdate":             DBUpdate,
 		"DBUpdateSysParam":     UpdateSysParam,
 		"DBUpdateExt":          DBUpdateExt,
-		"DBSelectMetrics":      DBSelectMetrics,
 		"EcosysParam":          EcosysParam,
 		"AppParam":             AppParam,
 		"SysParamString":       SysParamString,
@@ -227,6 +226,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
 		f["GetBlock"] = GetBlock
+		f["DBSelectMetrics"] = DBSelectMetrics
+		f["DBCollectMetrics"] = DBCollectMetrics
 		ExtendCost(getCostP)
 		FuncCallsDB(funcCallsDBP)
 	}

@@ -230,20 +230,5 @@ var (
 		
 		DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 		"stop_time" int NOT NULL DEFAULT '0'
-		);
-
-		DROP SEQUENCE IF EXISTS system_metrics_id_seq CASCADE;
-		CREATE SEQUENCE system_metrics_id_seq START WITH 1;
-		DROP TABLE IF EXISTS "system_metrics";
-		CREATE TABLE "system_metrics" (
-			"id" int NOT NULL default nextval('system_metrics_id_seq'),
-			"time" bigint NOT NULL DEFAULT '0',
-			"metric" varchar(255) NOT NULL,
-			"key" varchar(255) NOT NULL,
-			"value" bigint NOT NULL
-		);
-		ALTER SEQUENCE system_metrics_id_seq owned by system_metrics.id;
-		ALTER TABLE ONLY "system_metrics" ADD CONSTRAINT system_metrics_pkey PRIMARY KEY (id);
-		CREATE INDEX "system_metrics_unique_index" ON "system_metrics" (metric, time, "key");
-		`
+		);`
 )
