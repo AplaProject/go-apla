@@ -1115,18 +1115,17 @@ If("#key_id#" == EcosysParam("founder_account")){
 					'{"member_name": "ContractAccess(\"Profile_Edit\")",
 					  "image_id": "ContractAccess(\"Profile_Edit\")",
 					  "member_info": "ContractAccess(\"Profile_Edit\")"}', 'ContractConditions(\"MainCondition\")'),
-				('10', 'roles_list', 
+				('10', 'roles', 
 					'{"insert": "ContractAccess(\"Roles_Create\")", "update": "ContractAccess(\"Roles_Del\")", 
 					 "new_column": "ContractConditions(\"MainCondition\")"}',
 					'{"default_page": "false",
 					  "role_name": "false",
-					  "delete": "ContractAccess(\"Roles_Del\")",
+					  "deleted": "ContractAccess(\"Roles_Del\")",
 					  "role_type": "false",
-					  "creator_id": "false",
-					  "date_create": "false",
-					  "date_delete": "ContractAccess(\"Roles_Del\")",
-					  "creator_name": "false",
-					  "creator_avatar": "false",
+					  "creator": "false",
+					  "date_created": "false",
+					  "date_deleted": "ContractAccess(\"Roles_Del\")",
+					  "image_id": "false",
 					  "company_id": "false"}',
 					   'ContractConditions(\"MainCondition\")'),
 				('11', 'roles_assign', 
@@ -1215,32 +1214,31 @@ If("#key_id#" == EcosysParam("founder_account")){
 		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
 
 
-		DROP TABLE IF EXISTS "%[1]d_roles_list";
-		CREATE TABLE "%[1]d_roles_list" (
+		DROP TABLE IF EXISTS "%[1]d_roles";
+		CREATE TABLE "%[1]d_roles" (
 			"id" 	bigint NOT NULL DEFAULT '0',
 			"default_page"	varchar(255) NOT NULL DEFAULT '',
 			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"delete"    bigint NOT NULL DEFAULT '0',
+			"deleted"    bigint NOT NULL DEFAULT '0',
 			"role_type" bigint NOT NULL DEFAULT '0',
-			"creator_id" bigint NOT NULL DEFAULT '0',
-			"date_create" timestamp,
-			"date_delete" timestamp,
-			"creator_name"	varchar(255) NOT NULL DEFAULT '',
-			"creator_avatar" bytea NOT NULL DEFAULT '',
-			"company_id" bigint NOT NULL DEFAULT '0'
+			"creator" jsonb NOT NULL DEFAULT '{}',
+			"date_created" timestamp,
+			"date_deleted" timestamp,
+			"company_id" bigint NOT NULL DEFAULT '0',
+			"image_id"   bigint
 		);
-		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
-		CREATE INDEX "%[1]d_roles_list_index_type" ON "%[1]d_roles_list" (role_type);
+		ALTER TABLE ONLY "%[1]d_roles" ADD CONSTRAINT "%[1]d_roles_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "%[1]d_roles_index_deleted" ON "%[1]d_roles" (deleted);
+		CREATE INDEX "%[1]d_roles_index_type" ON "%[1]d_roles" (role_type);
 
-		INSERT INTO "%[1]d_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
-			"date_create","creator_name") VALUES
-			('1','default_ecosystem_page', 'Admin', '0', '3', NOW(), ''),
-			('2','', 'Candidate for validators', '0', '3', NOW(), ''),
-			('3','', 'Validator', '0', '3', NOW(), ''),
-			('4','', 'Investor with voting rights', '0', '3', NOW(), ''),
-			('5','', 'Delegate', '0', '3', NOW(), ''),
-			('6','', 'Developer', '0', '3', NOW(), '');
+		INSERT INTO "%[1]d_roles" ("id", "default_page", "role_name", "deleted", "role_type",
+			"date_created","creator") VALUES
+			('1','default_ecosystem_page', 'Admin', '0', '3', NOW(), '{}'),
+			('2','', 'Candidate for validators', '0', '3', NOW(), '{}'),
+			('3','', 'Validator', '0', '3', NOW(), '{}'),
+			('4','', 'Investor with voting rights', '0', '3', NOW(), '{}'),
+			('5','', 'Delegate', '0', '3', NOW(), '{}'),
+			('6','', 'Developer', '0', '3', NOW(), '{}');
 
 
 		DROP TABLE IF EXISTS "%[1]d_roles_assign";
