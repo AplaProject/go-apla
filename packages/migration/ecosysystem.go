@@ -2300,7 +2300,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 					$key_id, $newId, $amount, "New user deposit", $block, $txhash)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('33', 'EditEcosystemName','contract EditEcosystemName {
+	('35', 'EditEcosystemName','contract EditEcosystemName {
 		data {
 			EcosystemID int
 			NewName string
