@@ -261,8 +261,17 @@ MenuItem(
 			  Value      string "optional"
 			  Conditions string "optional"
 		  }
+
+		  func onlyConditions() bool {
+            if $Conditions && !$Value {
+                return true
+            }
+
+            return false
+		  }
+		
 		  conditions {
-			RowConditions("contracts", $Id)
+			RowConditions("contracts", $Id, onlyConditions())
 			if $Conditions {
 	    		ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -343,8 +352,17 @@ MenuItem(
 			  Value string
 			  Conditions string
 		  }
+
+		  func onlyConditions() bool {
+            if $Conditions && !$Value {
+                return true
+            }
+
+            return false
+		  }
+		  
 		  conditions {
-			  RowConditions("parameters", $Id)
+			  RowConditions("parameters", $Id, onlyConditions())
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
@@ -376,9 +394,18 @@ MenuItem(
 			  Value      string "optional"
 			  Title      string "optional"
 			  Conditions string "optional"
-	  	}
+		  }
+		  
+		  func onlyConditions() bool {
+            if $Conditions && !$Value && !$Title {
+                return true
+            }
+
+            return false
+		  }
+		
 	  	conditions {
-		  RowConditions("menu", $Id)
+		  RowConditions("menu", $Id, onlyConditions())
 		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
@@ -408,7 +435,7 @@ MenuItem(
 			Value  string
 		}
 		conditions {
-			RowConditions("menu", $Id)
+			RowConditions("menu", $Id, false)
 		}
 		action {
 			var row map
@@ -441,9 +468,17 @@ MenuItem(
 			Value      string "optional"
 			Menu      string "optional"
 		  	Conditions string "optional"
-	  	}
+		  }
+		  
+		  func onlyConditions() bool {
+            if $Conditions && !$Value && !$Menu {
+                return true
+            }
+
+            return false
+          }
 	  	conditions {
-		  RowConditions("pages", $Id)
+		  RowConditions("pages", $Id, onlyConditions())
 		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
@@ -473,7 +508,7 @@ MenuItem(
 			  Value      string
 		  }
 		  conditions {
-			  RowConditions("pages", $Id)
+			  RowConditions("pages", $Id, false)
 		  }
 		  action {
 			  var row map
@@ -504,9 +539,18 @@ MenuItem(
 			Id         int
 			Value      string "optional"
 		  	Conditions string "optional"
-	  		}
+			  }
+			  
+		func onlyConditions() bool {
+			if $Conditions && !$Value {
+				return true
+			}
+
+			return false
+		}
+
 	  	conditions {
-		  RowConditions("blocks", $Id)
+		  RowConditions("blocks", $Id, onlyConditions())
 		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
@@ -1451,8 +1495,16 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Conditions string "optional"
 			WalletId   string "optional"
 		}
+
+		func onlyConditions() bool {
+			if $Conditions && !$Value && !$WalletId {
+				return true
+			}
+
+			return false
+		}
 		conditions {
-			RowConditions("contracts", $Id)
+			RowConditions("contracts", $Id, onlyConditions())
 			if $Conditions {
 			    ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1593,8 +1645,17 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Value string
 			Conditions string
 		}
+
+		func onlyConditions() bool {
+			if $Conditions && !$Value {
+				return true
+			}
+
+			return false
+		}
+
 		conditions {
-			RowConditions("parameters", $Id)
+			RowConditions("parameters", $Id, onlyConditions())
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
@@ -1632,8 +1693,17 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Title      string "optional"
 			Conditions string "optional"
 		}
+
+		func onlyConditions() bool {
+			if $Conditions && !$Value && !$Title {
+				return true
+			}
+
+			return false
+		}
+
 		conditions {
-			RowConditions("menu", $Id)
+			RowConditions("menu", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1720,7 +1790,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Value      string "optional"
 			Menu      string "optional"
 			Conditions string "optional"
-      ValidateCount int "optional"
+      		ValidateCount int "optional"
 		}
 		func preparePageValidateCount(count int) int {
 			var min, max int
@@ -1736,9 +1806,18 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 	
 			return count
-		}		
+		}
+		
+		func onlyConditions() bool {
+			if $Conditions && !$Value && !$Menu && !$ValidateCount {
+				return true
+			}
+
+			return false
+		}
+
 		conditions {
-			RowConditions("pages", $Id)
+			RowConditions("pages", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1773,7 +1852,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Value      string
 		}
 		conditions {
-			RowConditions("pages", $Id)
+			RowConditions("pages", $Id, false)
 		}
 		action {
 			var value string
@@ -1848,8 +1927,17 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Value      string
 			Conditions string
 		}
+
+		func onlyConditions() bool {
+			if $Conditions && !$Value {
+				return true
+			}
+
+			return false
+		}
+
 		conditions {
-			RowConditions("signatures", $Id)
+			RowConditions("signatures", $Id, onlyConditions())
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
@@ -1862,6 +1950,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Value      string
 			Conditions string
 		}
+
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
 
@@ -1882,8 +1971,17 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Value      string "optional"
 			Conditions string "optional"
 		}
+
+		func onlyConditions() bool {
+			if $Conditions && !$Value {
+				return true
+			}
+
+			return false
+		}
+
 		conditions {
-			RowConditions("blocks", $Id)
+			RowConditions("blocks", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -2150,8 +2248,17 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Value string
 			Conditions string
 		}
+
+		func onlyConditions() bool {
+			if $Conditions && !$Value {
+				return true
+			}
+
+			return false
+		}
+
 		conditions {
-			RowConditions("app_param", $Id)
+			RowConditions("app_param", $Id, onlyConditions())
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
