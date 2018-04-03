@@ -939,7 +939,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 				}
 				
 				ForList(noti_r){
-					DBFind(Name: roles_assign, Source: src_roles).Where("member_id=#key_id# and role_id=#role_id# and delete=0").Vars(prefix)
+					DBFind(Name: roles_participants, Source: src_roles).Where("member->member_id=#key_id# and role->id=#role_id# and delete=0").Vars(prefix)
 					If(#prefix_id# > 0){
 						Div(Class: list-group-item){
 							LinkPage(Page: #page_name#, PageParams: "notific_id=#id#,notific_type=#notification_type#,notific_header=#header_text#,#page_params#"){        
@@ -1128,21 +1128,16 @@ If("#key_id#" == EcosysParam("founder_account")){
 					  "image_id": "false",
 					  "company_id": "false"}',
 					   'ContractConditions(\"MainCondition\")'),
-				('11', 'roles_assign', 
-					'{"insert": "ContractAccess(\"Roles_Assign\", \"voting_CheckDecision\")", "update": "ContractAccess(\"Roles_Unassign\")", 
+				('11', 'roles_participants',
+					'{"insert": "ContractAccess(\"Roles_Assign\", \"voting_CheckDecision\")", "update": "ContractAccess(\"Roles_Unassign\")",
 					"new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"role_id": "false",
-						"role_type": "false",
-						"role_name": "false",
-						"member_id": "false",
-						"member_name": "false",
-						"member_avatar": "false",
-						"appointed_by_id": "false",
-						"appointed_by_name": "false",
-						"date_start": "false",
-						"date_end": "ContractAccess(\"Roles_Unassign\")",
-						"delete": "ContractAccess(\"Roles_Unassign\")"}', 
-						'ContractConditions(\"MainCondition\")'),
+					'{"role": "false",
+					  "member": "false",
+					  "appointed": "false",
+					  "date_created": "false",
+					  "date_deleted": "ContractAccess(\"Roles_Unassign\")",
+					  "deleted": "ContractAccess(\"Roles_Unassign\")"}', 
+					  'ContractConditions(\"MainCondition\")'),
 				('12', 'notifications', 
 						'{"insert": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")", "update": "true", 
 						"new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1241,30 +1236,21 @@ If("#key_id#" == EcosysParam("founder_account")){
 			('6','', 'Developer', '0', '3', NOW(), '{}');
 
 
-		DROP TABLE IF EXISTS "%[1]d_roles_assign";
-		CREATE TABLE "%[1]d_roles_assign" (
+		DROP TABLE IF EXISTS "%[1]d_roles_participants";
+		CREATE TABLE "%[1]d_roles_participants" (
 			"id" bigint NOT NULL DEFAULT '0',
-			"role_id" bigint NOT NULL DEFAULT '0',
-			"role_type" bigint NOT NULL DEFAULT '0',
-			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"member_id" bigint NOT NULL DEFAULT '0',
-			"member_name" varchar(255) NOT NULL DEFAULT '',
-			"member_avatar"	bytea NOT NULL DEFAULT '',
-			"appointed_by_id" bigint NOT NULL DEFAULT '0',
-			"appointed_by_name"	varchar(255) NOT NULL DEFAULT '',
-			"date_start" timestamp,
-			"date_end" timestamp,
-			"delete" bigint NOT NULL DEFAULT '0'
+			"role" jsonb,
+			"member" jsonb,
+			"appointed" jsonb,
+			"date_created" timestamp,
+			"date_deleted" timestamp,
+			"deleted" bigint NOT NULL DEFAULT '0'
 		);
-		ALTER TABLE ONLY "%[1]d_roles_assign" ADD CONSTRAINT "%[1]d_roles_assign_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "%[1]d_roles_assign_index_role" ON "%[1]d_roles_assign" (role_id);
-		CREATE INDEX "%[1]d_roles_assign_index_type" ON "%[1]d_roles_assign" (role_type);
-		CREATE INDEX "%[1]d_roles_assign_index_member" ON "%[1]d_roles_assign" (member_id);
+		ALTER TABLE ONLY "%[1]d_roles_participants" ADD CONSTRAINT "%[1]d_roles_participants_pkey" PRIMARY KEY ("id");
 
-		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id", "member_name","date_start")
-		VALUES('1','1','3','Admin','%[4]d','founder', NOW()),
-			('2','6','3','Developer','%[4]d','founder', NOW());
-
+		INSERT INTO "%[1]d_roles_participants" ("id","role" ,"member", "date_created")
+		VALUES ('1', '{"id": "1", "type": "3", "name": "Admin", "image_id":"0"}', '{"member_id": "%[4]d", "member_name": "founder", "image_id": "0"}', NOW()),
+		('2', '{"id": "6", "type": "3", "name": "Developer", "image_id":"0"}', '{"member_id": "%[4]d", "member_name": "founder", "image_id": "0"}', NOW());
 
 		DROP TABLE IF EXISTS "%[1]d_members";
 		CREATE TABLE "%[1]d_members" (
