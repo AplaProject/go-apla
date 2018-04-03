@@ -133,6 +133,8 @@ var (
 		"signatures": "changing_signature",
 		"contracts":  "changing_contracts",
 		"blocks":     "changing_blocks",
+		"languages":  "changing_language",
+		"tables":     "changing_tables",
 	}
 )
 

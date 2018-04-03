@@ -643,7 +643,15 @@ MenuItem(
 	('19','EditLang','contract EditLang {
 		data {
 			Name  string
-			Trans string
+			Trans string "optional"
+			Conditions string "optional"
+		}
+		func conditionOnly(){
+			if $Conditions && !$Trans {
+				return true
+			}
+
+			return false
 		}
 		conditions {
 			EvalCondition("parameters", "changing_language", "value")
