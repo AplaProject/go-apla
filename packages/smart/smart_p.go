@@ -357,7 +357,7 @@ func GetContractByName(sc *SmartContract, name string) int64 {
 
 // GetContractById returns the name of the contract with this id
 func GetContractById(sc *SmartContract, id int64) string {
-	_, ret, err := DBSelect(sc, "contracts", "value", id, `id`, 0, 1,
+	_, ret, err := DBSelect(sc, getDefTableName(sc, "contracts"), "value", id, `id`, 0, 1,
 		0, ``, []interface{}{})
 	if err != nil || len(ret) != 1 {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract name")
