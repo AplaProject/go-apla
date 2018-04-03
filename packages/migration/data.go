@@ -135,7 +135,10 @@ var (
 		('60','extend_cost_perm_column', '50', 'true'),
 		('61','extend_cost_json_to_map', '50', 'true'),
 		('62','max_block_generation_time', '2000', 'true'),
-		('63','block_reward','1000','true');
+		('63','block_reward','1000','true'),
+		('64','incorrect_blocks_per_day','10','true'),
+		('65','node_ban_time','86400000','true');
+
 		
 		CREATE TABLE "system_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
@@ -171,7 +174,7 @@ var (
 		"current_version" varchar(50) NOT NULL DEFAULT '0.0.1',
 		"sent" smallint NOT NULL DEFAULT '0'
 		);
-		
+
 		DROP TABLE IF EXISTS "queue_blocks"; CREATE TABLE "queue_blocks" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"full_node_id" bigint NOT NULL DEFAULT '0',

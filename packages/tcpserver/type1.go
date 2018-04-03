@@ -28,6 +28,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -56,6 +57,11 @@ func Type1(r *DisRequest, rw io.ReadWriter) error {
 	// full_node_id of the sender to know where to take a data when it will be downloaded by another daemon
 	fullNodeID := converter.BinToDec(buf.Next(8))
 	log.Debug("fullNodeID", fullNodeID)
+
+	n := syspar.GetNode(fullNodeID)
+	if n != nil && service.GetNodesBanService().IsBanned(*n) {
+		return nil
+	}
 
 	// get data type (0 - block and transactions, 1 - only transactions)
 	newDataType := converter.BinToDec(buf.Next(1))

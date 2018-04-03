@@ -1297,6 +1297,21 @@ If("#key_id#" == EcosysParam("founder_account")){
 		);
 		ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
+		
+		DROP TABLE IF EXISTS "1_bad_blocks"; CREATE TABLE "1_bad_blocks" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"producer_node_id" bigint NOT NULL,
+			"block_id" int NOT NULL,
+			"consumer_node_id" bigint NOT NULL
+		);
+		
+		DROP TABLE IF EXISTS "1_node_ban_logs"; CREATE TABLE "1_node_ban_logs" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"node_id" bigint NOT NULL,
+			"banned_at" timestamp NOT NULL,
+			"ban_time" bigint NOT NULL,
+			"reason" TEXT NOT NULL DEFAULT ''
+		);
 
 		INSERT INTO "system_states" ("id") VALUES ('1');
 
@@ -1313,6 +1328,17 @@ If("#key_id#" == EcosysParam("founder_account")){
 				"deleted": "ContractConditions(\"MainCondition\")",
 				"conditions": "ContractConditions(\"MainCondition\")"}',
 				'ContractConditions(\"MainCondition\")');
+
+		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
+			('17', 'bad_blocks',
+			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
+			"new_column": "ContractConditions(\"MainCondition\")"}',
+			'{"contract": "ContractConditions(\"MainCondition\")",
+			"id": "ContractConditions(\"MainCondition\")",
+			"block_id": "ContractConditions(\"MainCondition\")",
+			"producer_node_id": "ContractConditions(\"MainCondition\")",
+			"consumer_node_id": "ContractConditions(\"MainCondition\")"}',
+			'ContractConditions(\"MainCondition\")');
 
 	INSERT INTO "1_contracts" ("id","value", "wallet_id", "conditions") VALUES 
 	('2','contract MoneyTransfer {
@@ -2221,6 +2247,41 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBInsert("keys", "id,amount,pub", $newId, $amount, $NewPubkey)
            	DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
                     $key_id, $newId, $amount, "New user deposit", $block, $txhash)
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('33', 'contract NewBadBlock {
+		data {
+			ProducerNodeID int
+			ConsumerNodeID int
+			BlockID int
+		}
+		conditions {
+		}
+		action {
+			DBInsert("bad_blocks", "producer_node_id,consumer_node_id,block_id", $ProducerNodeID, $ConsumerNodeID, $BlockID)    
+			$rows = DBFind("bad_blocks").Where("producer_node_id=$", $ProducerNodeID)
+	
+			var nodes array
+			$i = 0
+			while ($i < Len($rows)) {
+				$row = $rows[$i]
+	
+				$n = 0
+				$exists = false
+				while ($n < Len(nodes)) {
+					if nodes[$n] == $row["consumer_node_id"] {
+						$exists = true
+					}
+	
+					$n = $n + 1
+				}
+	
+				if !$exists {
+					nodes[$n] = int($row["consumer_node_id"])
+				}
+	
+				$i = $i + 1
+			}
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")');`
 )

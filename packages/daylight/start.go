@@ -35,11 +35,11 @@ import (
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -250,6 +250,11 @@ func Start() {
 		checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
 		na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
 		na.Run()
+
+		err = service.InitNodesBanService(syspar.GetIncorrectBlocksPerDay())
+		if err != nil {
+			log.WithError(err).Fatal("Can't init ban service")
+		}
 	}
 
 	daemons.WaitForSignals()

@@ -26,6 +26,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
+	"time"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -66,6 +68,10 @@ const (
 	RbBlocks1 = `rb_blocks_1`
 	// BlockReward value of reward, which is chrged on block generation
 	BlockReward = "block_reward"
+	// IncorrectBlocksPerDay is value of incorrect blocks per day before global ban
+	IncorrectBlocksPerDay = `incorrect_blocks_per_day`
+	// NodeBanTime is value of ban time for bad nodes (in ms)
+	NodeBanTime = `node_ban_time`
 )
 
 var (
@@ -188,6 +194,18 @@ func GetNodeByPosition(position int64) (*FullNode, error) {
 		return nil, fmt.Errorf("incorrect position")
 	}
 	return nodesByPosition[position], nil
+}
+
+func GetNodeByHost(host string) (*FullNode, error) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	for k, n := range nodes {
+		if n.TCPAddress == host {
+			return nodes[k], nil
+		}
+	}
+
+	return nil, fmt.Errorf("incorrect host")
 }
 
 // GetNodeHostByPosition is retrieving node host by position
@@ -345,6 +363,14 @@ func GetMaxIndexes() int {
 // GetMaxBlockUserTx is returns max tx block user
 func GetMaxBlockUserTx() int {
 	return converter.StrToInt(SysString(MaxBlockUserTx))
+}
+
+func GetIncorrectBlocksPerDay() int {
+	return converter.StrToInt(SysString(IncorrectBlocksPerDay))
+}
+
+func GetNodeBanTime() time.Duration {
+	return time.Millisecond * time.Duration(converter.StrToInt64(SysString(NodeBanTime)))
 }
 
 // GetRemoteHosts returns array of hostnames excluding myself

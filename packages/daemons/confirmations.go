@@ -96,7 +96,10 @@ func Confirmations(ctx context.Context, d *daemon) error {
 			continue
 		}
 
-		hosts := syspar.GetRemoteHosts()
+		hosts, err := filterBannedHosts(syspar.GetRemoteHosts())
+		if err != nil {
+			return err
+		}
 
 		ch := make(chan string)
 		for i := 0; i < len(hosts); i++ {

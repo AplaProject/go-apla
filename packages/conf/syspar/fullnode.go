@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"time"
+
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
 
@@ -19,10 +21,11 @@ var (
 
 // FullNode is storing full node data
 type FullNode struct {
-	TCPAddress string
-	APIAddress string
-	KeyID      int64
-	PublicKey  []byte
+	TCPAddress      string
+	APIAddress      string
+	KeyID           int64
+	PublicKey       []byte
+	GlobalUnBanTime time.Time
 }
 
 func (fn *FullNode) UnmarshalJSON(b []byte) (err error) {
@@ -31,7 +34,7 @@ func (fn *FullNode) UnmarshalJSON(b []byte) (err error) {
 		return err
 	}
 
-	if len(data) != 4 {
+	if len(data) != 5 {
 		return errFullNodeInvalidFormat
 	}
 
@@ -42,6 +45,8 @@ func (fn *FullNode) UnmarshalJSON(b []byte) (err error) {
 	if fn.PublicKey, err = hex.DecodeString(data[3]); err != nil {
 		return err
 	}
+
+	fn.GlobalUnBanTime = time.Unix(converter.StrToInt64(data[4]), 0)
 
 	if err = fn.Validate(); err != nil {
 		return err
