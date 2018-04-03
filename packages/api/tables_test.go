@@ -51,13 +51,81 @@ func TestTable(t *testing.T) {
 		return
 	}
 	if len(ret.Columns) == 0 {
-		t.Error(err)
+		t.Errorf(`Wrong result columns`)
 		return
 	}
 	err = sendGet(`table/contracts`, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return
+	}
+}
+
+func TestTableName(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	name := randName(`tbl`)
+	form := url.Values{"Name": {`tbl-` + name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
+	  "conditions":"true"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action { 
+			DBInsert("tbl-` + name + `", "MyName", "test")
+			DBUpdate("tbl-` + name + `", 1, "MyName", "New test")
+		}}`},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	err = postTx("NewContract", &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(name, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret tableResult
+	err = sendGet(`table/tbl-`+name, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret.Columns) == 0 {
+		t.Errorf(`wrong table columns`)
+		return
+	}
+	var retList listResult
+	err = sendGet(`list/tbl-`+name, nil, &retList)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if retList.Count != `1` {
+		t.Errorf(`wrong table count`)
+		return
+	}
+	forTest := tplList{
+		{`DBFind(tbl-` + name + `,my).Columns("id,myname").WhereId(1)`,
+			`[{"tag":"dbfind","attr":{"columns":["id","myname"],"data":[["1","New test"]],"name":"tbl-` + name + `","source":"my","types":["text","text"],"whereid":"1"}}]`},
+	}
+	var retCont contentResult
+	for _, item := range forTest {
+		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &retCont)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if RawToString(retCont.Tree) != item.want {
+			t.Error(fmt.Errorf(`wrong tree %s != %s`, RawToString(retCont.Tree), item.want))
+			return
+		}
 	}
 }
 

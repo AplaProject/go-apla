@@ -499,9 +499,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			if rt.stack[mapoff] == nil {
 				rt.stack[mapoff] = make(map[string][]interface{})
 			}
-			params := make([]interface{}, ifunc.Count)
+			params := make([]interface{}, 0, ifunc.Count)
 			for i := 0; i < ifunc.Count; i++ {
-				params[i] = rt.stack[mapoff+1+i]
+				cur := rt.stack[mapoff+1+i]
+				if i == ifunc.Count-1 && rt.unwrap &&
+					reflect.TypeOf(cur).String() == `[]interface {}` {
+					params = append(params, cur.([]interface{})...)
+					rt.unwrap = false
+				} else {
+					params = append(params, cur)
+				}
 			}
 			rt.stack[mapoff].(map[string][]interface{})[ifunc.Name] = params
 			rt.stack = rt.stack[:mapoff+1]

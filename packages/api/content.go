@@ -166,7 +166,11 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 
 func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var timeout bool
-	ret := template.Template2JSON(data.params[`template`].(string), &timeout, initVars(r, data))
+	vars := initVars(r, data)
+	if data.params[`source`].(string) == `1` || data.params[`source`].(string) == `true` {
+		(*vars)["_full"] = "1"
+	}
+	ret := template.Template2JSON(data.params[`template`].(string), &timeout, vars)
 	data.result = &contentResult{Tree: ret}
 	return nil
 }

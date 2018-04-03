@@ -54,6 +54,8 @@ func Route(route *hr.Router) {
 	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
 	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
 
+	get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
+	get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
 	get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 	get(`contract/:name`, ``, authWallet, getContract)
 	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
@@ -88,7 +90,7 @@ func Route(route *hr.Router) {
 	post(`refresh`, `token:string,?expire:int64`, refresh)
 	post(`signtest/`, `forsign private:string`, signTest)
 	post(`test/:name`, ``, getTest)
-	post(`content`, `template:string`, jsonContent)
+	post(`content`, `template ?source:string`, jsonContent)
 	post(`updnotificator`, `ids:string`, updateNotificator)
 
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
