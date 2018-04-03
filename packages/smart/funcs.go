@@ -920,7 +920,7 @@ func AllowChangeCondition(sc *SmartContract, tblname string) error {
 }
 
 // RowConditions checks conditions for table row by id
-func RowConditions(sc *SmartContract, tblname string, id int64) error {
+func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bool) error {
 	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
 	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
 	if err != nil {
@@ -933,12 +933,9 @@ func RowConditions(sc *SmartContract, tblname string, id int64) error {
 		return fmt.Errorf("Item %d has not been found", id)
 	}
 
-	err = Eval(sc, condition)
-	if err != nil {
-		if err == errAccessDenied {
-			if param, ok := tableParamConditions[tblname]; ok {
-				return sc.AccessRights(param, false)
-			}
+	if err := Eval(sc, condition); err != nil {
+		if err == errAccessDenied && conditionOnly {
+			return AllowChangeCondition(sc, tblname)
 		}
 
 		return err
