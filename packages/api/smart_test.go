@@ -237,8 +237,8 @@ func TestNewTable(t *testing.T) {
 		return
 	}
 	name := randName(`tbl`)
-	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
-	  "conditions":"true"},
+	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", 
+				"conditions":"true"},
 	{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
 	{"name":"Doc", "type":"json","index": "0", "conditions":"true"},	
 	{"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
