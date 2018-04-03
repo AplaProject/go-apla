@@ -237,13 +237,52 @@ func TestNewTable(t *testing.T) {
 		return
 	}
 	name := randName(`tbl`)
-	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
-	  "conditions":"true"},
+	form := url.Values{"Name": {`1_` + name}, "Columns": {`[{"name":"MyName","type":"varchar", 
+				"conditions":"true"},
+			  {"name":"Name", "type":"varchar","index": "0", "conditions":"true"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"TableName": {`1_` + name}, "Name": {`newCol`},
+		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
+	err = postTx(`NewColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract sub` + name + ` {
+				action {
+					DBInsert("1_` + name + `", "name", "ok")
+					DBUpdate("1_` + name + `", 1, "name", "test value" )
+					$result = DBFind("1_` + name + `").Columns("name").WhereId(1).One("name")
+				}
+			}`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err := postTxResult(`sub`+name, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `test value` {
+		t.Errorf("wrong result %s", msg)
+		return
+	}
+
+	form = url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
+		
+	"conditions":"true"},
 	{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
 	{"name":"Doc", "type":"json","index": "0", "conditions":"true"},	
 	{"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err := postTx(`NewTable`, &form)
+	err = postTx(`NewTable`, &form)
 	if err != nil {
 		t.Error(err)
 		return
