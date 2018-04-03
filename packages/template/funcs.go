@@ -166,7 +166,7 @@ func defaultTag(par parFunc) string {
 }
 
 func lowerTag(par parFunc) string {
-	return strings.ToLower((*par.Pars)[`Text`])
+	return strings.ToLower(macro((*par.Pars)[`Text`], par.Workspace.Vars))
 }
 
 func menugroupTag(par parFunc) string {
@@ -232,6 +232,7 @@ func addressTag(par parFunc) string {
 	if len(idval) == 0 {
 		idval = (*par.Workspace.Vars)[`key_id`]
 	}
+	idval = macro(idval, par.Workspace.Vars)
 	id, _ := strconv.ParseInt(idval, 10, 64)
 	if id == 0 {
 		return `unknown address`
@@ -300,7 +301,7 @@ func langresTag(par parFunc) string {
 
 func sysparTag(par parFunc) (ret string) {
 	if len((*par.Pars)[`Name`]) > 0 {
-		ret = syspar.SysString((*par.Pars)[`Name`])
+		ret = syspar.SysString(macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	}
 	return
 }
@@ -311,8 +312,8 @@ func nowTag(par parFunc) string {
 		cut   int
 		query string
 	)
-	interval := (*par.Pars)[`Interval`]
-	format := (*par.Pars)[`Format`]
+	interval := macro((*par.Pars)[`Interval`], par.Workspace.Vars)
+	format := macro((*par.Pars)[`Format`], par.Workspace.Vars)
 	if len(interval) > 0 {
 		if interval[0] != '-' && interval[0] != '+' {
 			interval = `+` + interval
@@ -675,7 +676,7 @@ func compositeTag(par parFunc) string {
 		par.Owner.Attr[`compositedata`] = make([]string, 0)
 	}
 	par.Owner.Attr[`composites`] = append(par.Owner.Attr[`composites`].([]string),
-		(*par.Pars)[`Name`])
+		macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	par.Owner.Attr[`compositedata`] = append(par.Owner.Attr[`compositedata`].([]string),
 		macro((*par.Pars)[`Data`], par.Workspace.Vars))
 	return ``
@@ -743,7 +744,7 @@ func tableTag(par parFunc) string {
 	if len((*par.Pars)[`Columns`]) > 0 {
 		imap := make([]map[string]string, 0)
 		for _, v := range strings.Split((*par.Pars)[`Columns`], `,`) {
-			v = strings.TrimSpace(v)
+			v = macro(strings.TrimSpace(v), par.Workspace.Vars)
 			if off := strings.IndexByte(v, '='); off == -1 {
 				imap = append(imap, map[string]string{`Title`: v, `Name`: v})
 			} else {
@@ -935,7 +936,7 @@ func chartTag(par parFunc) string {
 	defaultTail(par, "chart")
 
 	if len((*par.Pars)["Colors"]) > 0 {
-		colors := strings.Split((*par.Pars)["Colors"], ",")
+		colors := strings.Split(macro((*par.Pars)["Colors"], par.Workspace.Vars), ",")
 		for i, v := range colors {
 			colors[i] = strings.TrimSpace(v)
 		}

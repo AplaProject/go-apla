@@ -128,6 +128,8 @@ var forTest = tplList{
 		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1",""]],"source":"mygender","types":["text","text"]}}]`},
 	{`EcosysParam(new_table)`,
 		`[{"tag":"text","text":"ContractConditions("MainCondition")"}]`},
+	{`SetVar(ind,2).(nodes, number_of_nodes).(int,1hour)EcosysParam(gender, #ind#)SysParam(#nodes#)Now(Interval:#int#)`,
+		`[{"tag":"text","text":"second"}]`},
 	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
 		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","government"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"government"}]}]`},
 	{`SetVar(varZero, 0) If(#varZero#>0) { the varZero should be hidden }
