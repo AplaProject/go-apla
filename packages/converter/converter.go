@@ -948,6 +948,8 @@ func ValueToInt(v interface{}) (ret int64) {
 	switch val := v.(type) {
 	case int64:
 		ret = val
+	case float64:
+		ret = int64(val)
 	case string:
 		ret, err = strconv.ParseInt(val, 10, 64)
 		if err != nil {
