@@ -552,6 +552,7 @@ func dbfindTag(par parFunc) string {
 		if !strings.Contains(fields, "id") {
 			fields += ", id"
 		}
+		fields = smart.PrepareColumns(fields)
 		queryColumns = strings.Split(fields, ",")
 	} else {
 		for _, col := range rows {
@@ -582,7 +583,7 @@ func dbfindTag(par parFunc) string {
 			break
 		}
 	}
-	fields = smart.PrepareColumns(fields)
+	fields = strings.Join(queryColumns, ", ")
 	if par.Node.Attr[`countvar`] != nil {
 		var count int64
 		err = model.GetDB(nil).Table(tblname).Where(strings.Replace(where, `where`, ``, 1)).Count(&count).Error
