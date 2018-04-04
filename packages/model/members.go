@@ -5,7 +5,8 @@ type Member struct {
 	tableName  string
 	ID         int64  `gorm:"primary_key;not null"`
 	MemberName string `gorm:"not null"`
-	Avatar     string `gorm:"not null"`
+	ImageID    *int64
+	MemberInfo []byte
 }
 
 // SetTablePrefix is setting table prefix
@@ -25,6 +26,6 @@ func (m *Member) Count() (count int64, err error) {
 }
 
 // Get init m as member with ID
-func (m *Member) Get(ID int64) error {
-	return DBConn.First(m, ID).Error
+func (m *Member) Get(id int64) (bool, error) {
+	return isFound(DBConn.Where("id = ?", id).First(m))
 }
