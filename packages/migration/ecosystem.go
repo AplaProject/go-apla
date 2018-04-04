@@ -919,43 +919,42 @@ If("#key_id#" == EcosysParam("founder_account")){
 
 		INSERT INTO "%[1]d_pages" ("id","name","value","menu","conditions") VALUES
 			('2','admin_index','','admin_menu','true'),
-			('3','notifications','DBFind(Name: notifications, Source: noti_s).Where("closed=0 and notification_type=1 and recipient_id=#key_id#")
-				DBFind(Name: notifications, Source: noti_r).Where("closed=0 and notification_type=2 and (started_processing_id=0 or started_processing_id=#key_id#)")
-				
-				ForList(noti_s){
-						Div(Class: list-group-item){
-							LinkPage(Page: #page_name#, PageParams: "notific_id=#id#,notific_type=#notification_type#,notific_header=#header_text#,#page_params#"){        
-								Div(media-box){
-									Div(Class: pull-left){
-										Em(Class: fa #icon# fa-1x text-info)
-									} 
-									Div(media-box-body clearfix){ 
-										Div(Class: m0 text-normal, Body: #header_text#) 
-										Div(Class: m0 text-muted h6, Body: #body_text#)
-									}
-								}
+			('3','notifications',$$DBFind(Name: notifications, Source: notifications_members).Columns("id,page_name,notification->icon,notification->header,notification->body").Where("closed=0 and notification->type='1' and recipient->member_id='#key_id#'")
+			ForList(notifications_members){
+				Div(Class: list-group-item){
+					LinkPage(Page: #page_name#, PageParams: "notific_id=#id#"){
+						Div(media-box){
+							Div(Class: pull-left){
+								Em(Class: fa #notification.icon# fa-1x text-primary)
+							}
+							Div(media-box-body clearfix){
+								Div(Class: m0 text-normal, Body: #notification.header#)
+								Div(Class: m0 text-muted h6, Body: #notification.body#)
 							}
 						}
+					}
 				}
-				
-				ForList(noti_r){
-					DBFind(Name: roles_participants, Source: src_roles).Where("member->member_id=#key_id# and role->id=#role_id# and delete=0").Vars(prefix)
-					If(#prefix_id# > 0){
-						Div(Class: list-group-item){
-							LinkPage(Page: #page_name#, PageParams: "notific_id=#id#,notific_type=#notification_type#,notific_header=#header_text#,#page_params#"){        
-								Div(media-box){
-									Div(Class: pull-left){
-										Em(Class: fa #icon# fa-1x text-primary)
-									} 
-									Div(media-box-body clearfix){ 
-										Div(Class: m0 text-normal, Body: #header_text#) 
-										Div(Class: m0 text-muted h6, Body: #body_text#)
-									}
+			}
+
+			DBFind(Name: notifications, Source: notifications_roles).Columns("id,page_name,notification->icon,notification->header,notification->body,recipient->role_id").Where("closed=0 and notification->type='2' and (date_start_processing is null or processing_info->member_id='#key_id#')")
+			ForList(notifications_roles){
+			    DBFind(Name: roles_participants, Source: src_roles).Columns("id").Where("member->member_id='#key_id#' and role->id='#recipient.role_id#' and deleted=0").Vars(prefix)
+			    If(#prefix_id# > 0){
+					Div(Class: list-group-item){
+						LinkPage(Page: #page_name#, PageParams: "notific_id=#id#"){
+							Div(media-box){
+								Div(Class: pull-left){
+									Em(Class: fa #notification.icon# fa-1x text-primary)
+								}
+								Div(media-box-body clearfix){
+									Div(Class: m0 text-normal, Body: #notification.header#)
+									Div(Class: m0 text-muted h6, Body: #notification.body#)
 								}
 							}
 						}
 					}
-				}','default_menu','ContractAccess("@1EditPage")');
+				}
+			}$$,'default_menu','ContractAccess("@1EditPage")');
 
 		DROP TABLE IF EXISTS "%[1]d_blocks"; CREATE TABLE "%[1]d_blocks" (
 			"id" bigint  NOT NULL DEFAULT '0',
@@ -1138,27 +1137,19 @@ If("#key_id#" == EcosysParam("founder_account")){
 					  "date_deleted": "ContractAccess(\"Roles_Unassign\")",
 					  "deleted": "ContractAccess(\"Roles_Unassign\")"}', 
 					  'ContractConditions(\"MainCondition\")'),
-				('12', 'notifications', 
-						'{"insert": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")", "update": "true", 
-						"new_column": "ContractConditions(\"MainCondition\")"}',
-						'{"icon": "false",
-							"started_processing_time": "ContractAccess(\"Notifications_Roles_Processing\")",
-							"date_create": "false",
-							"page_params": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")",
-							"body_text": "false",
-							"recipient_id": "false",
-							"started_processing_id": "ContractAccess(\"Notifications_Roles_Processing\")",
-							"role_id": "false",
-							"role_name": "false",
-							"recipient_name": "false",
-							"closed": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")", 
-							"header_text": "false", 
-							"recipient_avatar": "false", 
-							"notification_type": "false", 
-							"finished_processing_id": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")", 
-							"finished_processing_time": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")", 
-							"page_name": "false"}', 
-							'ContractAccess(\"@1EditTable\")'),
+				('12', 'notifications',
+					'{"insert": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")", "update": "true",
+					"new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"recipient": "false",
+					  "sender": "false",
+					  "notification": "false",
+					  "page_params": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")",
+					  "processing_info": "ContractAccess(\"Notifications_Roles_Processing\")",
+					  "page_name": "false",
+					  "date_created": "false",
+					  "date_start_processing": "ContractAccess(\"Notifications_Roles_Processing\")",
+					  "date_closed": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")",
+					  "closed": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")"}',							    'ContractAccess(\"@1EditTable\")'),
 				('13', 'sections', 
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 					"new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1187,24 +1178,17 @@ If("#key_id#" == EcosysParam("founder_account")){
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (
-			"id" 	bigint NOT NULL DEFAULT '0',
-			"icon"	varchar(255) NOT NULL DEFAULT '',
-			"closed" bigint NOT NULL DEFAULT '0',
-			"notification_type"	bigint NOT NULL DEFAULT '0',
-			"started_processing_time" timestamp,
+			"id"    bigint NOT NULL DEFAULT '0',
+			"recipient" jsonb,
+			"sender" jsonb,
+			"notification" jsonb,
+			"page_params"	jsonb,
+			"processing_info" jsonb,
 			"page_name"	varchar(255) NOT NULL DEFAULT '',
-			"recipient_avatar"	bytea NOT NULL DEFAULT '',
-			"date_create"	timestamp,
-			"page_params"	text NOT NULL DEFAULT '',
-			"recipient_name" varchar(255) NOT NULL DEFAULT '',
-			"finished_processing_id" bigint NOT NULL DEFAULT '0',
-			"finished_processing_time" timestamp,
-			"role_id"	bigint NOT NULL DEFAULT '0',
-			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"recipient_id"	bigint NOT NULL DEFAULT '0',
-			"started_processing_id"	bigint NOT NULL DEFAULT '0',
-			"body_text"	text NOT NULL DEFAULT '',
-			"header_text"	text NOT NULL DEFAULT ''
+			"date_created"	timestamp,
+			"date_start_processing" timestamp,
+			"date_closed" timestamp,
+			"closed" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
 
