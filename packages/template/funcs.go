@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -503,8 +502,8 @@ func dbfindTag(par parFunc) string {
 	}
 	fields = strings.ToLower(fields)
 	if par.Node.Attr[`where`] != nil {
-		where = ` where ` + converter.Escape(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars))
-		where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
+		where = smart.PrepareWhere(` where ` +
+			converter.Escape(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
 	}
 	if par.Node.Attr[`whereid`] != nil {
 		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
@@ -584,6 +583,12 @@ func dbfindTag(par parFunc) string {
 		}
 	}
 	fields = smart.PrepareColumns(fields)
+	for i, key := range columnNames {
+		if strings.Contains(key, `->`) {
+			columnNames[i] = strings.Replace(key, `->`, `.`, -1)
+		}
+		columnNames[i] = strings.TrimSpace(columnNames[i])
+	}
 	if par.Node.Attr[`countvar`] != nil {
 		var count int64
 		err = model.GetDB(nil).Table(tblname).Where(strings.Replace(where, `where`, ``, 1)).Count(&count).Error

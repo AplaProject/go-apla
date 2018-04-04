@@ -179,14 +179,15 @@ func TestJSONTable(t *testing.T) {
 			action {
 				var ret map
 				var list array
-				var out tmp string
+				var out tmp where string
 				ret = DBFind("` + name + `").Columns("Myname,doc,Doc->Ind").WhereId($Id).Row()
 				out = ret["doc.ind"]
 				out = out + DBFind("` + name + `").Columns("myname,doc->Type").WhereId($Id).One("Doc->type")
 				list = DBFind("` + name + `").Columns("Myname,doc,Doc->Ind").Where("Doc->ind = ?", "101")
 				out = out + Str(Len(list))
 				tmp = DBFind("` + name + `").Columns("doc->title->name").WhereId(3).One("doc->title->name")
-				$result = out + Str(DBFind("` + name + `").WhereId($Id).One("doc->check")) + tmp
+				where = DBFind("` + name + `").Columns("doc->title->name").Where("doc->title->text = ?", "low").One("doc->title->name")
+				$result = out + Str(DBFind("` + name + `").WhereId($Id).One("doc->check")) + tmp + where
 			}
 		}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
@@ -233,21 +234,21 @@ func TestJSONTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	checkGet(`2document099Test att`)
+	checkGet(`2document099Test attTest att`)
 
 	err = postTx(name+`Upd`, &url.Values{})
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	checkGet(`doc0Test att`)
+	checkGet(`doc0Test attTest att`)
 
 	err = postTx(name+`UpdOne`, &url.Values{"Type": {"101"}})
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	checkGet(`101new"doc"2Test att`)
+	checkGet(`101new"doc"2Test attTest att`)
 
 	form = url.Values{"Name": {`res` + name}, "Value": {`contract res` + name + ` {
 		data {
@@ -283,6 +284,8 @@ func TestJSONTable(t *testing.T) {
 	}
 
 	forTest := tplList{
+		{`DBFind(` + name + `,my).Columns("id").Where(doc->title->text='low')`,
+			`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["3"]],"name":"` + name + `","source":"my","types":["text"],"where":"doc-\u003etitle-\u003etext='low'"}}]`},
 		{`DBFind(` + name + `,my).Columns("id,doc->title->name").WhereId(3)`,
 			`[{"tag":"dbfind","attr":{"columns":["id","doc.title.name"],"data":[["3","Test att"]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"3"}}]`},
 		{`DBFind(` + name + `,my).Columns("doc").WhereId(3)`,
