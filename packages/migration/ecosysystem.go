@@ -1339,7 +1339,8 @@ MenuItem(
 		CREATE TABLE "%[1]d_members" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
-			"avatar"	bytea NOT NULL DEFAULT ''
+			"image_id"	bigint,
+			"member_info" jsonb
 		);
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
