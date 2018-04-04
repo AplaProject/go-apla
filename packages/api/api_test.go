@@ -280,16 +280,14 @@ func cutErr(err error) string {
 }
 
 func TestGetAvatar(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
 
-	err := keyLogin(1)
-	assert.NoError(t, err)
-
-	url := `http://localhost:7079` + consts.ApiPath + "avatar/-1744264011260937456"
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	assert.NoError(t, err)
-
-	if len(gAuth) > 0 {
-		req.Header.Set("Authorization", jwtPrefix+gAuth)
+	if err := sendGet("avatar/-1744264011260937456", nil, nil); err != nil {
+		t.Error(err)
+		return
 	}
 
 	cli := http.DefaultClient
