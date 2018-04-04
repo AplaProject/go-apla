@@ -854,7 +854,7 @@ MenuItem(
 			UpdateCron($Id)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('23','contract UploadBinary {
+	('23', 'UploadBinary', contract UploadBinary {
 		data {
 			Name  string
 			Data  string
