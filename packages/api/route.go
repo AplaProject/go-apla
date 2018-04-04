@@ -73,7 +73,7 @@ func Route(route *hr.Router) {
 	get(`block/:id`, ``, getBlockInfo)
 	get(`maxblockid`, ``, getMaxBlockID)
 	get(`version`, ``, getVersion)
-
+	get(`avatar/:member`, ``, getAvatar)
 	post(`content/source/:name`, ``, authWallet, getSource)
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
 	post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
