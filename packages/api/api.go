@@ -220,6 +220,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		if token != nil && token.Valid {
 			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
 				data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
+				data.ecosystemName = claims.EcosystemName
 				data.keyId = converter.StrToInt64(claims.KeyID)
 				data.isMobile = claims.IsMobile
 				data.roleId = converter.StrToInt64(claims.RoleID)

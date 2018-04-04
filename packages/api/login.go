@@ -237,7 +237,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 
 	var ecosystem model.Ecosystem
 	if err := ecosystem.Get(ecosystemID); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Errorf("find ecosystem %d", ecosystemID)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "id": ecosystemID}).Errorf("on getting ecosystem")
 		return errorAPI(w, err, http.StatusNotFound)
 	}
 
