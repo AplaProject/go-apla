@@ -1321,7 +1321,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"id" bigint NOT NULL DEFAULT '0',
 			"producer_node_id" bigint NOT NULL,
 			"block_id" int NOT NULL,
-			"consumer_node_id" bigint NOT NULL
+			"consumer_node_id" bigint NOT NULL,
+			"deleted" boolean NOT NULL DEFAULT 'false'
 		);
 		
 		DROP TABLE IF EXISTS "1_node_ban_logs"; CREATE TABLE "1_node_ban_logs" (
@@ -1356,7 +1357,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"id": "ContractConditions(\"MainCondition\")",
 			"block_id": "ContractConditions(\"MainCondition\")",
 			"producer_node_id": "ContractConditions(\"MainCondition\")",
-			"consumer_node_id": "ContractConditions(\"MainCondition\")"}',
+			"consumer_node_id": "ContractConditions(\"MainCondition\")",
+			"deleted": "ContractConditions(\"MainCondition\")"}',
 			'ContractConditions(\"MainCondition\")');
 
 	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions") VALUES 
@@ -2311,39 +2313,19 @@ If("#key_id#" == EcosysParam("founder_account")){
                     $key_id, $newId, $amount, "New user deposit", $block, $txhash)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('33', 'contract NewBadBlock {
+	('35', 'NewBadBlock', 'contract NewBadBlock {
 		data {
 			ProducerNodeID int
 			ConsumerNodeID int
 			BlockID int
 		}
-		conditions {
-		}
 		action {
-			DBInsert("bad_blocks", "producer_node_id,consumer_node_id,block_id", $ProducerNodeID, $ConsumerNodeID, $BlockID)    
-			$rows = DBFind("bad_blocks").Where("producer_node_id=$", $ProducerNodeID)
-	
-			var nodes array
-			$i = 0
-			while ($i < Len($rows)) {
-				$row = $rows[$i]
-	
-				$n = 0
-				$exists = false
-				while ($n < Len(nodes)) {
-					if nodes[$n] == $row["consumer_node_id"] {
-						$exists = true
-					}
-	
-					$n = $n + 1
-				}
-	
-				if !$exists {
-					nodes[$n] = int($row["consumer_node_id"])
-				}
-	
-				$i = $i + 1
-			}
+			DBInsert("bad_blocks", "producer_node_id,consumer_node_id,block_id", $ProducerNodeID, $ConsumerNodeID, $BlockID)
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('36', 'CheckNodesBan', 'contract CheckNodesBan {
+		action {
+			UpdateNodesBan($block_time)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")');`
 )
