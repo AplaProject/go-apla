@@ -235,13 +235,6 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 
-	// var ecosystem model.Ecosystem
-	// found, err := ecosystem.Get(ecosystemID)
-	// if err != nil {
-	// 	logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "id": ecosystemID}).Errorf("on getting ecosystem")
-	// 	return errorAPI(w, err, http.StatusInternalServerError)
-	// }
-
 	claims := JWTClaims{
 		KeyID:       result.KeyID,
 		EcosystemID: result.EcosystemID,
