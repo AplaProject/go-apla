@@ -96,6 +96,7 @@ func init() {
 	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
 	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,@MemberID"}
+	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
 
 	tails[`button`] = forTails{map[string]tailInfo{
 		`Alert`:             {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
@@ -1085,4 +1086,20 @@ func binaryTag(par parFunc) string {
 	}
 
 	return ""
+}
+
+func columntypeTag(par parFunc) string {
+	if len((*par.Pars)["Table"]) > 0 && len((*par.Pars)["Column"]) > 0 {
+		tableName := macro((*par.Pars)[`Table`], par.Workspace.Vars)
+		columnName := macro((*par.Pars)[`Column`], par.Workspace.Vars)
+		tblname := smart.GetTableName(par.Workspace.SmartContract,
+			strings.Trim(converter.EscapeName(tableName), `"`),
+			converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]))
+		colType, err := model.GetColumnType(tblname, columnName)
+		if err == nil {
+			return colType
+		}
+		return err.Error()
+	}
+	return ``
 }

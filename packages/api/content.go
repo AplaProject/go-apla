@@ -44,6 +44,11 @@ type hashResult struct {
 	Hash string `json:"hash"`
 }
 
+const (
+	strTrue = `true`
+	strOne  = `1`
+)
+
 func initVars(r *http.Request, data *apiData) *map[string]string {
 	vars := make(map[string]string)
 	for name := range r.Form {
@@ -168,8 +173,8 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var timeout bool
 	vars := initVars(r, data)
-	if data.params[`source`].(string) == `1` || data.params[`source`].(string) == `true` {
-		(*vars)["_full"] = "1"
+	if data.params[`source`].(string) == strOne || data.params[`source`].(string) == strTrue {
+		(*vars)["_full"] = strOne
 	}
 	ret := template.Template2JSON(data.params[`template`].(string), &timeout, vars)
 	data.result = &contentResult{Tree: ret}
@@ -183,7 +188,7 @@ func getSource(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	}
 	var timeout bool
 	vars := initVars(r, data)
-	(*vars)["_full"] = "1"
+	(*vars)["_full"] = strOne
 	ret := template.Template2JSON(page.Value, &timeout, vars)
 	data.result = &contentResult{Tree: ret}
 	return nil
