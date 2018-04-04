@@ -29,6 +29,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -278,13 +280,45 @@ func cutErr(err error) string {
 }
 
 func TestGetAvatar(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
+
+	// err := model.GormInit("localhost", 5432, "postgres", "postgres", "apla")
+	// if err != nil || model.DBConn == nil {
+	// 	log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("initializing DB")
+	// 	t.Error(err)
+	// 	return
+	// }
+
+	// b64 := `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
+
+	// bin := &model.Binary{
+	// 	ID:   1,
+	// 	Name: "avatar",
+	// 	Data: []byte(b64),
+	// }
+
+	// bin.SetTablePrefix("1")
+	// if err := model.DBConn.Create(bin).Error; err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
+
+	err := keyLogin(1)
+	assert.NoError(t, err)
+
+	url := `http://localhost:7079` + consts.ApiPath + "avatar/-1744264011260937456"
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	assert.NoError(t, err)
+
+	if len(gAuth) > 0 {
+		req.Header.Set("Authorization", jwtPrefix+gAuth)
 	}
 
-	if err := sendGet("avatar/-1744264011260937456", nil, nil); err != nil {
-		t.Error(err)
-		return
-	}
+	cli := http.DefaultClient
+	resp, err := cli.Do(req)
+	assert.NoError(t, err)
+
+	defer resp.Body.Close()
+	mime := resp.Header.Get("Content-Type")
+	expectedMime := "image/png"
+	assert.Equal(t, expectedMime, mime, "content type must be a '%s' but returns '%s'", expectedMime, mime)
 }
