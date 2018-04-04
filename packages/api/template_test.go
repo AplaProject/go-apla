@@ -20,6 +20,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -289,4 +290,48 @@ func TestBinary(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Regexp(t, v.result, string(ret.Tree))
 	}
+}
+
+func TestEncodeBase64ToBinary(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	contract := randName("binary")
+	content := randName("content")
+
+	form := url.Values{
+		"Value": {`
+			contract ` + contract + ` {
+				data {
+					Content string
+				}
+				conditions {}
+				action {
+					var params map
+					params["Name"] = "test"
+					params["AppID"] = 1
+					params["Data"] = "data:text/plain;base64," + EncodeBase64($Content)
+					CallContract("UploadBinary", params)
+				}
+			}
+		`},
+		"Conditions": {"true"},
+	}
+	assert.NoError(t, postTx("NewContract", &form))
+
+	form = url.Values{"Content": {content}}
+	assert.NoError(t, postTx(contract, &form))
+
+	form = url.Values{
+		"template": {`SetVar(link, Binary(Name: test, AppID: 1)) #link#`},
+	}
+	var ret struct {
+		Tree []struct {
+			Link string `json:"text"`
+		} `json:"tree"`
+	}
+	assert.NoError(t, sendPost(`content`, &form, &ret))
+
+	data, err := sendRawRequest("GET", strings.TrimSpace(ret.Tree[0].Link), nil)
+	assert.NoError(t, err)
+	assert.Equal(t, content, string(data))
 }
