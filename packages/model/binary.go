@@ -35,7 +35,5 @@ func (b *Binary) Link() string {
 
 // GetByID is retrieving model from db by id
 func (b *Binary) GetByID(id int64) (bool, error) {
-	DBConn.LogMode(true)
-	defer DBConn.LogMode(false)
 	return isFound(DBConn.Where("id=?", id).First(b))
 }
