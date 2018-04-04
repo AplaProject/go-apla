@@ -112,11 +112,13 @@ var contracts = []smartContract{
 			list array
 		}
 		action { 
-			Test("oneinput",  $list[0])
+			var coltype string
+			coltype = GetColumnType("keys", "amount" )
+			Test("oneinput",  $list[0]+coltype)
 		}
 	}`,
 		[]smartParams{
-			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input value`}},
+			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input valuemoney`}},
 		}},
 	{`DBProblem`, `contract DBProblem {
 		action{
