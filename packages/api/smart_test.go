@@ -121,11 +121,8 @@ func TestMoneyTransfer(t *testing.T) {
 }
 
 func TestPage(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
 
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
 	name := randName(`page`)
 	menuname := randName(`menu`)
 	menu := `government`
@@ -133,102 +130,59 @@ func TestPage(t *testing.T) {
 
 	form := url.Values{"Name": {name}, "Value": {`Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
+	assert.NoError(t, postTx(`NewParameter`, &form))
+
 	err := postTx(`NewParameter`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = postTx(`NewParameter`, &form)
-	if cutErr(err) != fmt.Sprintf(`{"type":"warning","error":"Parameter %s already exists"}`, name) {
-		t.Error(err)
-		return
-	}
+	assert.Equal(t, fmt.Sprintf(`{"type":"warning","error":"Parameter %s already exists"}`, name), cutErr(err))
 
 	form = url.Values{"Name": {menuname}, "Value": {`first
 			second
 			third`}, "Title": {`My Menu`},
 		"Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewMenu`, &form))
+
 	err = postTx(`NewMenu`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = postTx(`NewMenu`, &form)
-	if cutErr(err) != fmt.Sprintf(`{"type":"warning","error":"Menu %s already exists"}`, menuname) {
-		t.Error(err)
-		return
-	}
+	assert.Equal(t, fmt.Sprintf(`{"type":"warning","error":"Menu %s already exists"}`, menuname), cutErr(err))
 
 	form = url.Values{"Id": {`7123`}, "Value": {`New Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx(`EditParameter`, &form)
-	if cutErr(err) != `{"type":"panic","error":"Item 7123 has not been found"}` {
-		t.Error(err)
-		return
-	}
+	assert.Equal(t, `{"type":"panic","error":"Item 7123 has not been found"}`, cutErr(err))
+
 	form = url.Values{"Id": {`16`}, "Value": {`Changed Param Value`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	err = postTx(`EditParameter`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditParameter`, &form))
 
 	name = randName(`page`)
 	form = url.Values{"Name": {name}, "Value": {value},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
 	err = postTx(`NewPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = postTx(`NewPage`, &form)
-	if cutErr(err) != fmt.Sprintf(`{"type":"warning","error":"Page %s already exists"}`, name) {
-		t.Error(err)
-		return
-	}
+	assert.Equal(t, fmt.Sprintf(`{"type":"warning","error":"Page %s already exists"}`, name), cutErr(err))
 
 	form = url.Values{"Name": {name}, "Value": {value},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewBlock`, &form))
+
 	err = postTx(`NewBlock`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = postTx(`NewBlock`, &form)
-	if err.Error() != fmt.Sprintf(`{"type":"warning","error":"Block %s already exists"}`, name) {
-		t.Error(err)
-		return
-	}
+	assert.EqualError(t, err, fmt.Sprintf(`{"type":"warning","error":"Block %s already exists"}`, name))
+
 	form = url.Values{"Id": {`1`}, "Name": {name}, "Value": {value},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
-	err = postTx(`EditBlock`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditBlock`, &form))
 
 	form = url.Values{"Id": {`1`}, "Value": {value + `Span(Test)`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
-	err = postTx(`EditPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditPage`, &form))
+
 	form = url.Values{"Id": {`1112`}, "Value": {value + `Span(Test)`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	err = postTx(`EditPage`, &form)
-	if cutErr(err) != `{"type":"panic","error":"Item 1112 has not been found"}` {
-		t.Error(err)
-		return
-	}
+	assert.Equal(t, `{"type":"panic","error":"Item 1112 has not been found"}`, cutErr(err))
 
 	form = url.Values{"Id": {`1`}, "Value": {`Span(Append)`}}
-	err = postTx(`AppendPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`AppendPage`, &form))
 }
 
 func TestNewTable(t *testing.T) {
@@ -324,26 +278,16 @@ type invalidPar struct {
 }
 
 func TestUpdateSysParam(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
+
 	form := url.Values{"Name": {`max_columns`}, "Value": {`49`}}
-	err := postTx(`UpdateSysParam`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`UpdateSysParam`, &form))
+
 	var sysList ecosystemParamsResult
-	err = sendGet(`systemparams?names=max_columns`, nil, &sysList)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(sysList.List) != 1 || sysList.List[0].Value != `49` {
-		t.Error(`Wrong max_column value`)
-		return
-	}
+	assert.NoError(t, sendGet(`systemparams?names=max_columns`, nil, &sysList))
+	assert.Len(t, sysList.List, 1)
+	assert.Equal(t, "49", sysList.List[0].Value)
+
 	name := randName(`test`)
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
@@ -358,23 +302,14 @@ func TestUpdateSysParam(t *testing.T) {
 		}
 		}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	err = postTx("NewContract", &form)
+	assert.NoError(t, postTx("NewContract", &form))
+
+	err := postTx(name, &form)
 	if err != nil {
-		t.Error(err)
-		return
+		assert.EqualError(t, err, `{"type":"panic","error":"Access denied"}`)
 	}
-	err = postTx(name, &form)
-	if err != nil {
-		if err.Error() != `{"type":"panic","error":"Access denied"}` {
-			t.Error(err)
-			return
-		}
-	}
-	err = sendGet(`systemparams?names=max_columns,max_indexes`, nil, &sysList)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+
+	assert.NoError(t, sendGet(`systemparams?names=max_columns,max_indexes`, nil, &sysList))
 	if len(sysList.List) != 2 || !((sysList.List[0].Value == `51` && sysList.List[1].Value == `4`) ||
 		(sysList.List[0].Value == `4` && sysList.List[1].Value == `51`)) {
 		t.Error(`Wrong max_column or max_indexes value`)
@@ -385,6 +320,7 @@ func TestUpdateSysParam(t *testing.T) {
 		t.Error(`incorrect access to system parameter`)
 		return
 	}
+
 	notvalid := []invalidPar{
 		{`gap_between_blocks`, `100000`},
 		{`rb_blocks_1`, `-1`},
@@ -401,29 +337,16 @@ func TestUpdateSysParam(t *testing.T) {
 		{`full_nodes`, `[["127.0.0.1", "http://127.0.0.1", "0", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
 	}
 	for _, item := range notvalid {
-		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {item.Value}})
-		if err == nil {
-			t.Error(`must be invalid ` + item.Value)
-			return
-		}
-		err = sendGet(`systemparams?names=`+item.Name, nil, &sysList)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if len(sysList.List) != 1 {
-			t.Error(`have got wrong parameter ` + item.Name)
-			return
-		}
+		assert.Error(t, postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {item.Value}}))
+		assert.NoError(t, sendGet(`systemparams?names=`+item.Name, nil, &sysList))
+		assert.Len(t, sysList.List, 1, `have got wrong parameter `+item.Name)
+
 		if len(sysList.List[0].Value) == 0 {
 			continue
 		}
+
 		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {sysList.List[0].Value}})
-		if err != nil {
-			fmt.Println(item.Name, sysList.List[0].Value, sysList.List[0])
-			t.Error(err)
-			return
-		}
+		assert.NoError(t, err, item.Name, sysList.List[0].Value, sysList.List[0])
 	}
 }
 
@@ -480,140 +403,63 @@ func TestDBMetric(t *testing.T) {
 }
 
 func TestPartitialEdit(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
+
 	name := randName(`part`)
 	form := url.Values{"Name": {name}, "Value": {"Span(Original text)"},
 		"Menu": {"original_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
-	err := postTx(`NewPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
 	var retList listResult
-	err = sendGet(`list/pages`, nil, &retList)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`list/pages`, nil, &retList))
+
 	idItem := retList.Count
 	value := `Span(Temp)`
 	menu := `temp_menu`
-	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Value": {value},
-		"Menu": {menu}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditPage`, &url.Values{
+		"Id":    {idItem},
+		"Value": {value},
+		"Menu":  {menu},
+	}))
+
 	var ret rowResult
-	err = sendGet(`row/pages/`+idItem, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if ret.Value["value"] != value || ret.Value["menu"] != menu {
-		t.Errorf(`wrong value or menu`)
-		return
-	}
+	assert.NoError(t, sendGet(`row/pages/`+idItem, nil, &ret))
+	assert.Equal(t, value, ret.Value["value"])
+	assert.Equal(t, menu, ret.Value["menu"])
+
 	value = `Span(Updated)`
 	menu = `default_menu`
 	conditions := `true`
-	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Value": {value}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Menu": {menu}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = postTx(`EditPage`, &url.Values{"Id": {idItem}, "Conditions": {conditions}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendGet(`row/pages/`+idItem, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if ret.Value["value"] != value || ret.Value["menu"] != menu ||
-		ret.Value["conditions"] != conditions {
-		t.Errorf(`wrong page parameters`)
-		return
-	}
+	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {idItem}, "Value": {value}}))
+	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {idItem}, "Menu": {menu}}))
+	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {idItem}, "Conditions": {conditions}}))
+	assert.NoError(t, sendGet(`row/pages/`+idItem, nil, &ret))
+	assert.Equal(t, value, ret.Value["value"])
+	assert.Equal(t, menu, ret.Value["menu"])
 
 	form = url.Values{"Name": {name}, "Value": {`MenuItem(One)`}, "Title": {`My Menu`},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
-	err = postTx(`NewMenu`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendGet(`list/menu`, nil, &retList)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewMenu`, &form))
+	assert.NoError(t, sendGet(`list/menu`, nil, &retList))
 	idItem = retList.Count
 	value = `MenuItem(Two)`
-	err = postTx(`EditMenu`, &url.Values{"Id": {idItem}, "Value": {value}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = postTx(`EditMenu`, &url.Values{"Id": {idItem}, "Conditions": {conditions}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendGet(`row/menu/`+idItem, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if ret.Value["value"] != value || ret.Value["conditions"] != conditions {
-		t.Errorf(`wrong menu parameters`)
-		return
-	}
+	assert.NoError(t, postTx(`EditMenu`, &url.Values{"Id": {idItem}, "Value": {value}}))
+	assert.NoError(t, postTx(`EditMenu`, &url.Values{"Id": {idItem}, "Conditions": {conditions}}))
+	assert.NoError(t, sendGet(`row/menu/`+idItem, nil, &ret))
+	assert.Equal(t, value, ret.Value["value"])
+	assert.Equal(t, conditions, ret.Value["conditions"])
 
 	form = url.Values{"Name": {name}, "Value": {`Span(Block)`},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
-	err = postTx(`NewBlock`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendGet(`list/blocks`, nil, &retList)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewBlock`, &form))
+	assert.NoError(t, sendGet(`list/blocks`, nil, &retList))
 	idItem = retList.Count
 	value = `Span(Updated block)`
-	err = postTx(`EditBlock`, &url.Values{"Id": {idItem}, "Value": {value}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = postTx(`EditBlock`, &url.Values{"Id": {idItem}, "Conditions": {conditions}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendGet(`row/blocks/`+idItem, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if ret.Value["value"] != value || ret.Value["conditions"] != conditions {
-		t.Errorf(`wrong block parameters`)
-		return
-	}
-
+	assert.NoError(t, postTx(`EditBlock`, &url.Values{"Id": {idItem}, "Value": {value}}))
+	assert.NoError(t, postTx(`EditBlock`, &url.Values{"Id": {idItem}, "Conditions": {conditions}}))
+	assert.NoError(t, sendGet(`row/blocks/`+idItem, nil, &ret))
+	assert.Equal(t, value, ret.Value["value"])
+	assert.Equal(t, conditions, ret.Value["conditions"])
 }
 
 func TestContractEdit(t *testing.T) {

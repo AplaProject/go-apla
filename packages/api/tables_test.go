@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTables(t *testing.T) {
@@ -130,28 +132,18 @@ func TestTableName(t *testing.T) {
 }
 
 func TestJSONTable(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
+
 	name := randName(`json`)
 	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
-	  "conditions":"true"}, {"name":"Doc", "type":"json","index": "0", "conditions":"true"}]`},
+		"conditions":"true"}, {"name":"Doc", "type":"json","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err := postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewTable`, &form))
+
 	checkGet := func(want string) {
 		_, msg, err := postTxResult(name+`Get`, &url.Values{"Id": {`2`}})
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if msg != want {
-			t.Error(`wrong answer`, msg)
-		}
+		assert.NoError(t, err)
+		assert.Equal(t, want, msg)
 	}
 
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
@@ -168,11 +160,8 @@ func TestJSONTable(t *testing.T) {
 			DBInsert("` + name + `", "MyName,doc", "test4", "{\"languages\": {\"arr_id\":{\"1\":\"0\",\"2\":\"0\",\"3\":\"0\"}}}")
 		}}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	err = postTx("NewContract", &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx("NewContract", &form))
+
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Get {
 			data {
 				Id int
@@ -191,11 +180,8 @@ func TestJSONTable(t *testing.T) {
 			}
 		}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	err = postTx("NewContract", &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx("NewContract", &form))
+
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Upd {
 		action {
 			DBUpdate("` + name + `", 1, "Doc", "{\"type\": \"doc\", \"ind\": \"3\", \"check\": \"33\"}")
@@ -205,11 +191,8 @@ func TestJSONTable(t *testing.T) {
 			DBUpdate("` + name + `", 2, "myname,Doc", "test3", mydoc)
 		}}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	err = postTx("NewContract", &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx("NewContract", &form))
+
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `UpdOne {
 			data {
 				Type int
@@ -224,30 +207,15 @@ func TestJSONTable(t *testing.T) {
 		  }}
 		`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	err = postTx("NewContract", &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = postTx(name, &url.Values{})
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx("NewContract", &form))
+	assert.NoError(t, postTx(name, &url.Values{}))
+
 	checkGet(`2document099Test att`)
 
-	err = postTx(name+`Upd`, &url.Values{})
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(name+`Upd`, &url.Values{}))
 	checkGet(`doc0Test att`)
 
-	err = postTx(name+`UpdOne`, &url.Values{"Type": {"101"}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(name+`UpdOne`, &url.Values{"Type": {"101"}}))
 	checkGet(`101new"doc"2Test att`)
 
 	form = url.Values{"Name": {`res` + name}, "Value": {`contract res` + name + ` {
@@ -258,30 +226,19 @@ func TestJSONTable(t *testing.T) {
 			$result = DBFind("contracts").WhereId($Id).Row()
 		}}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	err = postTx("NewContract", &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx("NewContract", &form))
+
 	form = url.Values{"Name": {`run` + name}, "Value": {`contract run` + name + ` {
 		action { 
 			$temp = res` + name + `("Id",10)
 			$result = $temp["id"]
 		}}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
-	err = postTx("NewContract", &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx("NewContract", &form))
+
 	_, msg, err := postTxResult(`run`+name, &url.Values{})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if msg != `10` {
-		t.Error(`wrong answer`, msg)
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, "10", msg)
 
 	forTest := tplList{
 		{`DBFind(` + name + `,my).Columns("id,doc->languages->arr_id").WhereId(4).Custom(aa){Span(#doc.languages.arr_id#)}`,
@@ -302,14 +259,7 @@ func TestJSONTable(t *testing.T) {
 	}
 	var ret contentResult
 	for _, item := range forTest {
-		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if RawToString(ret.Tree) != item.want {
-			t.Error(fmt.Errorf(`wrong tree %s != %s`, RawToString(ret.Tree), item.want))
-			return
-		}
+		assert.NoError(t, sendPost(`content`, &url.Values{`template`: {item.input}}, &ret))
+		assert.Equal(t, item.want, RawToString(ret.Tree))
 	}
 }
