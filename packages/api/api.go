@@ -219,23 +219,10 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		data.token = token
 		if token != nil && token.Valid {
 			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
-				data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
-				data.keyId = converter.StrToInt64(claims.KeyID)
-				data.isMobile = claims.IsMobile
-				data.roleId = converter.StrToInt64(claims.RoleID)
-				ecosystem := &model.Ecosystem{}
-				found, err := ecosystem.Get(data.ecosystemId)
-				if err != nil {
-					errorAPI(w, "E_SERVER", http.StatusInternalServerError)
+				if err := fillAPIData(&data, claims); err != nil {
+					errorAPI(w, "E_SERVER", http.StatusNotFound, err)
 					return
 				}
-
-				if !found {
-					errorAPI(w, "E_SERVER", http.StatusNotFound)
-					return
-				}
-
-				data.ecosystemName = ecosystem.Name
 			}
 		}
 
@@ -312,4 +299,25 @@ func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (in
 		prefix += `_vde`
 	}
 	return ecosystemID, prefix, nil
+}
+
+func fillAPIData(data *apiData, claims *JWTClaims) error {
+	data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
+	data.keyId = converter.StrToInt64(claims.KeyID)
+	data.isMobile = claims.IsMobile
+	data.roleId = converter.StrToInt64(claims.RoleID)
+	ecosystem := &model.Ecosystem{}
+	found, err := ecosystem.Get(data.ecosystemId)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
+		return err
+	}
+
+	if !found {
+		err := fmt.Errorf("ecosystem not found")
+		log.WithFields(log.Fields{"type": consts.NotFound, "id": data.ecosystemId, "error": err}).Error("ecosystem not found")
+	}
+
+	data.ecosystemName = ecosystem.Name
+	return nil
 }
