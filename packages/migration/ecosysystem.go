@@ -2309,7 +2309,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 				$key_id, $newId, $amount, "New user deposit", $block, $txhash)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('35', 'contract UpdateMetrics {
+	('35', 'UpdateMetrics', 'contract UpdateMetrics {
 		conditions {
 			ContractConditions("MainCondition")
 		}
