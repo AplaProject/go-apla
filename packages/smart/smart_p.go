@@ -423,13 +423,13 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, err
 	}
 	sc.Rollback = false
-	_, _, err = DBInsert(sc, id+"_pages", "id,name,value,menu,conditions", "1", "default_page",
+	_, _, err = DBInsert(sc, `@`+id+"_pages", "id,name,value,menu,conditions", "1", "default_page",
 		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
-	_, _, err = DBInsert(sc, id+"_menu", "id,name,value,title,conditions", "1", "default_menu",
+	_, _, err = DBInsert(sc, `@`+id+"_menu", "id,name,value,title,conditions", "1", "default_menu",
 		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
@@ -439,7 +439,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		ret []interface{}
 		pub string
 	)
-	_, ret, err = DBSelect(sc, "1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
+	_, ret, err = DBSelect(sc, "@1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting pub key")
 		return 0, err
@@ -447,7 +447,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if Len(ret) > 0 {
 		pub = ret[0].(map[string]string)[`pub`]
 	}
-	_, _, err = DBInsert(sc, id+"_keys", "id,pub", wallet, pub)
+	_, _, err = DBInsert(sc, `@`+id+"_keys", "id,pub", wallet, pub)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
