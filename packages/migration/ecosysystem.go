@@ -1016,10 +1016,9 @@ If("#key_id#" == EcosysParam("founder_account")){
 		('6','changing_page', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
 		('7','changing_menu', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
 		('8','changing_contracts', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
-		('9','ecosystem_name', '%[3]s', 'ContractConditions("MainCondition")'),
-		('10','max_sum', '1000000', 'ContractConditions("MainCondition")'),
-		('11','money_digit', '2', 'ContractConditions("MainCondition")'),
-		('12','stylesheet', 'body {
+		('9','max_sum', '1000000', 'ContractConditions("MainCondition")'),
+		('10','money_digit', '2', 'ContractConditions("MainCondition")'),
+		('11','stylesheet', 'body {
 		  /* You can define your custom styles here or create custom CSS rules */
 		}', 'ContractConditions("MainCondition")'),
 		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")'),
@@ -1302,6 +1301,16 @@ If("#key_id#" == EcosysParam("founder_account")){
 		`
 
 	SchemaFirstEcosystem = `
+	DROP TABLE IF EXISTS "1_ecosystems";
+	CREATE TABLE "1_ecosystems" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"name"	varchar(255) NOT NULL DEFAULT '',
+			"is_valued" bigint NOT NULL DEFAULT '0'
+	);
+	ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
+
+	INSERT INTO "1_ecosystems" ("id", "name", "is_valued") VALUES ('1', 'platform ecosystem', 0);
+
 		DROP TABLE IF EXISTS "1_delayed_contracts";
 		CREATE TABLE "1_delayed_contracts" (
 			"id" int NOT NULL default 0,
@@ -1316,6 +1325,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		);
 		ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
+
 
 		INSERT INTO "1_delayed_contracts"
 			("id", "contract", "key_id", "block_id", "every_block", "conditions")
@@ -1333,8 +1343,6 @@ If("#key_id#" == EcosysParam("founder_account")){
 		ALTER TABLE ONLY "1_metrics" ADD CONSTRAINT "1_metrics_pkey" PRIMARY KEY (id);
 		CREATE INDEX "1_metrics_unique_index" ON "1_metrics" (metric, time, "key");
 
-		INSERT INTO "system_states" ("id") VALUES ('1');
-
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
 			('16', 'delayed_contracts',
 			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
@@ -1347,15 +1355,24 @@ If("#key_id#" == EcosysParam("founder_account")){
 				"limit": "ContractConditions(\"MainCondition\")",
 				"deleted": "ContractConditions(\"MainCondition\")",
 				"conditions": "ContractConditions(\"MainCondition\")"}',
-				'ContractConditions(\"MainCondition\")'),
-			('17', 'metrics',
-				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
-				"new_column": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")'
+			),
+			(
+				'17',
+				'ecosystems',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"name": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")'
+			),
+			(
+				'18',
+				'metrics',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")","new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"time": "ContractConditions(\"MainCondition\")",
-					"metric": "ContractConditions(\"MainCondition\")",
-					"key": "ContractConditions(\"MainCondition\")",
+					"metric": "ContractConditions(\"MainCondition\")","key": "ContractConditions(\"MainCondition\")",
 					"value": "ContractConditions(\"MainCondition\")"}',
-					'ContractConditions(\"MainCondition\")');
+				'ContractConditions(\"MainCondition\")'
+			);
 
 	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions") VALUES 
 	('2','MoneyTransfer','contract MoneyTransfer {
@@ -1564,7 +1581,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('6','NewEcosystem','contract NewEcosystem {
 		data {
-			Name  string "optional"
+			Name  string
 		}
 		action {
 			$result = CreateEcosystem($key_id, $Name)
@@ -2305,11 +2322,27 @@ If("#key_id#" == EcosysParam("founder_account")){
 		action {
 			DBUpdate("keys", $key_id, "-amount", $amount)
 			DBInsert("keys", "id,amount,pub", $newId, $amount, $NewPubkey)
-			DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
-				$key_id, $newId, $amount, "New user deposit", $block, $txhash)
+           	DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
+					$key_id, $newId, $amount, "New user deposit", $block, $txhash)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('35', 'UpdateMetrics', 'contract UpdateMetrics {
+	('35', 'EditEcosystemName','contract EditEcosystemName {
+		data {
+			EcosystemID int
+			NewName string
+		}
+		conditions {
+			var rows array
+			rows = DBFind("1_ecosystems").Where("id = ?", $EcosystemID)
+			if !Len(rows) {
+				error Sprintf("Ecosystem %%d does not exist", $EcosystemID)
+			}
+		}
+		action {
+			EditEcosysName($EcosystemID, $NewName)
+		}
+	}', '%[1]d', 'ContractConditions("MainCondition")'),
+	('36', 'UpdateMetrics', 'contract UpdateMetrics {
 		conditions {
 			ContractConditions("MainCondition")
 		}
