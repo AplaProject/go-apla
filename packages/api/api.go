@@ -220,12 +220,25 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		if token != nil && token.Valid {
 			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
 				data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
-				data.ecosystemName = claims.EcosystemName
 				data.keyId = converter.StrToInt64(claims.KeyID)
 				data.isMobile = claims.IsMobile
 				data.roleId = converter.StrToInt64(claims.RoleID)
 			}
 		}
+
+		ecosystem := &model.Ecosystem{}
+		found, err := ecosystem.Get(data.ecosystemId)
+		if err != nil {
+			errorAPI(w, "E_SERVER", http.StatusInternalServerError)
+			return
+		}
+
+		if !found {
+			errorAPI(w, "E_SERVER", http.StatusNotFound)
+			return
+		}
+
+		data.ecosystemName = ecosystem.Name
 		// Getting and validating request parameters
 		r.ParseForm()
 		data.params = make(map[string]interface{})
@@ -286,7 +299,7 @@ func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (in
 		ecosystemID = data.params[`ecosystem`].(int64)
 		count, err := model.GetNextID(nil, "1_ecosystems")
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id system states")
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id ecosystems")
 			return 0, ``, errorAPI(w, err, http.StatusBadRequest)
 		}
 		if ecosystemID >= count {
