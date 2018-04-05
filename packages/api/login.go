@@ -235,18 +235,18 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 
-	var ecosystem model.Ecosystem
-	if err := ecosystem.Get(ecosystemID); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "id": ecosystemID}).Errorf("on getting ecosystem")
-		return errorAPI(w, err, http.StatusNotFound)
-	}
+	// var ecosystem model.Ecosystem
+	// found, err := ecosystem.Get(ecosystemID)
+	// if err != nil {
+	// 	logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "id": ecosystemID}).Errorf("on getting ecosystem")
+	// 	return errorAPI(w, err, http.StatusInternalServerError)
+	// }
 
 	claims := JWTClaims{
-		KeyID:         result.KeyID,
-		EcosystemID:   result.EcosystemID,
-		EcosystemName: ecosystem.Name,
-		IsMobile:      isMobile,
-		RoleID:        converter.Int64ToStr(data.roleId),
+		KeyID:       result.KeyID,
+		EcosystemID: result.EcosystemID,
+		IsMobile:    isMobile,
+		RoleID:      converter.Int64ToStr(data.roleId),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Second * time.Duration(expire)).Unix(),
 		},
