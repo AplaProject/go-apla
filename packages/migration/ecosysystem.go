@@ -896,13 +896,7 @@ MenuItem(
     Page: "export",
     Title: "Export"
 )
-If("#key_id#" == EcosysParam("founder_account")){
-    MenuItem(
-        Icon: "icon-lock",
-        Page: "vde",
-        Title: "Dedicated Ecosystem"
-    )
-}','true');
+','true');
 
 		DROP TABLE IF EXISTS "%[1]d_pages"; CREATE TABLE "%[1]d_pages" (
 			"id" bigint  NOT NULL DEFAULT '0',
