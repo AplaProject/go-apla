@@ -9,14 +9,13 @@ import (
 
 func TestFullNode(t *testing.T) {
 	cases := []struct{ value, err string }{
-		{`[[]]`, `Invalid format of the full_node parameter`},
-		{`[["","","",""]]`, `Invalid values of the full_node parameter`},
-		{`[["127.0.0.1", "https://127.0.0.1", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7"]]`, `Invalid values of the full_node parameter`},
-		{`[["127.0.0.1", "https://127.0.0.1", "0", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`, `Invalid values of the full_node parameter`},
-		{`[["127.0.0.1", "https://", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`, `Invalid host: https://`},
-		{`[["127.0.0.1", "127.0.0.1", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`, `parse 127.0.0.1: invalid URI for request`},
-		{`[["", "https://127.0.0.1", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`, `Invalid values of the full_node parameter`},
-		{`[["127.0.0.1", "https://127.0.0.1", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`, ``},
+		{`[{"tcp_address":"127.0.0.1", "api_address":"https://127.0.0.1", "key_id":"100", "public_key":"c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"}]`, ``},
+		{`[{"tcp_address":"", "api_address":"https://127.0.0.1", "key_id":"100", "public_key":"c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"}]`, `Invalid values of the full_node parameter`},
+		{`[{"tcp_address":"127.0.0.1", "api_address":"127.0.0.1", "key_id":"100", "public_key":"c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"}]`, `parse 127.0.0.1: invalid URI for request`},
+		{`[{"tcp_address":"127.0.0.1", "api_address":"https://", "key_id":"100", "public_key":"c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"}]`, `Invalid host: https://`},
+		{`[{"tcp_address":"127.0.0.1", "api_address":"https://127.0.0.1", "key_id":"0", "public_key":"c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"}]`, `Invalid values of the full_node parameter`},
+		{`[{"tcp_address":"127.0.0.1", "api_address":"https://127.0.0.1", "key_id":"100", "public_key":"c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d00000000000"}]`, `Invalid values of the full_node parameter`},
+		{`[{}}]`, `invalid character '}' after array element`},
 	}
 	for _, v := range cases {
 		err := json.Unmarshal([]byte(v.value), &[]*FullNode{})
