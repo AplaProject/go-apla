@@ -170,7 +170,7 @@ func defaultTag(par parFunc) string {
 }
 
 func lowerTag(par parFunc) string {
-	return strings.ToLower((*par.Pars)[`Text`])
+	return strings.ToLower(macro((*par.Pars)[`Text`], par.Workspace.Vars))
 }
 
 func menugroupTag(par parFunc) string {
@@ -448,12 +448,17 @@ func dataTag(par parFunc) string {
 				}
 				vals[icol] = ival
 			} else {
-				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &vals)
 				root := node{}
-				process(body, &root, par.Workspace)
+				for key, item := range vals {
+					(*par.Workspace.Vars)[key] = item
+				}
+				process(par.Node.Attr[`custombody`].([]string)[i-defcol], &root, par.Workspace)
+				for key := range vals {
+					delete(*par.Workspace.Vars, key)
+				}
 				out, err := json.Marshal(root.Children)
 				if err == nil {
-					ival = string(out)
+					ival = macro(string(out), &vals)
 				} else {
 					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling custombody to JSON")
 				}
@@ -550,7 +555,7 @@ func dbfindTag(par parFunc) string {
 
 	if fields != "*" {
 		if !strings.Contains(fields, "id") {
-			fields += ", id"
+			fields += ",id"
 		}
 		queryColumns = strings.Split(fields, ",")
 	} else {
@@ -660,12 +665,17 @@ func dbfindTag(par parFunc) string {
 					break
 				}
 			} else {
-				body := macroReplace(par.Node.Attr[`custombody`].([]string)[i-defcol], &item)
 				root := node{}
-				process(body, &root, par.Workspace)
+				for key, val := range item {
+					(*par.Workspace.Vars)[key] = val
+				}
+				process(par.Node.Attr[`custombody`].([]string)[i-defcol], &root, par.Workspace)
+				for key := range item {
+					delete(*par.Workspace.Vars, key)
+				}
 				out, err := json.Marshal(root.Children)
 				if err == nil {
-					ival = string(out)
+					ival = macro(string(out), &item)
 				} else {
 					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling root children to JSON")
 				}

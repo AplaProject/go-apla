@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -329,25 +330,27 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 }
 
 // LoadContracts reads and compiles contracts from smart_contracts tables
-func LoadContracts(transaction *model.DbTransaction) (err error) {
-	var states []map[string]string
-	var prefix []string
-	prefix = []string{`system`}
-	states, err = model.GetAll(`select id from system_states order by id`, -1)
+func LoadContracts(transaction *model.DbTransaction) error {
+	ecosystemsIds, err := model.GetAllSystemStatesIDs()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting ids from system_states")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting ids from ecosystems")
 		return err
 	}
-	for _, istate := range states {
-		prefix = append(prefix, istate[`id`])
+
+	defer ExternOff()
+	if err := LoadContract(transaction, "system"); err != nil {
+		return err
 	}
-	for _, ipref := range prefix {
-		if err = LoadContract(transaction, ipref); err != nil {
-			break
+
+	for _, ecosystemID := range ecosystemsIds {
+		prefix := strconv.FormatInt(ecosystemID, 10)
+		if err := LoadContract(transaction, prefix); err != nil {
+			return err
 		}
 	}
+
 	ExternOff()
-	return
+	return nil
 }
 
 func LoadSysFuncs(vm *script.VM, state int) error {
