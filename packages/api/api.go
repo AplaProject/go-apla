@@ -223,22 +223,22 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 				data.keyId = converter.StrToInt64(claims.KeyID)
 				data.isMobile = claims.IsMobile
 				data.roleId = converter.StrToInt64(claims.RoleID)
+				ecosystem := &model.Ecosystem{}
+				found, err := ecosystem.Get(data.ecosystemId)
+				if err != nil {
+					errorAPI(w, "E_SERVER", http.StatusInternalServerError)
+					return
+				}
+
+				if !found {
+					errorAPI(w, "E_SERVER", http.StatusNotFound)
+					return
+				}
+
+				data.ecosystemName = ecosystem.Name
 			}
 		}
 
-		ecosystem := &model.Ecosystem{}
-		found, err := ecosystem.Get(data.ecosystemId)
-		if err != nil {
-			errorAPI(w, "E_SERVER", http.StatusInternalServerError)
-			return
-		}
-
-		if !found {
-			errorAPI(w, "E_SERVER", http.StatusNotFound)
-			return
-		}
-
-		data.ecosystemName = ecosystem.Name
 		// Getting and validating request parameters
 		r.ParseForm()
 		data.params = make(map[string]interface{})
