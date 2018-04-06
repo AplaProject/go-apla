@@ -263,11 +263,7 @@ MenuItem(
 		  }
 
 		  func onlyConditions() bool {
-            if $Conditions && !$Value {
-                return true
-            }
-
-            return false
+            return $Conditions && !$Value
 		  }
 		
 		  conditions {
@@ -354,11 +350,7 @@ MenuItem(
 		  }
 
 		  func onlyConditions() bool {
-            if $Conditions && !$Value {
-                return true
-            }
-
-            return false
+            return $Conditions && !$Value
 		  }
 		  
 		  conditions {
@@ -389,20 +381,16 @@ MenuItem(
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('7','EditMenu','contract EditMenu {
-		  data {
+		data {
 			  Id         int
 			  Value      string "optional"
 			  Title      string "optional"
 			  Conditions string "optional"
-		  }
+		}
 		  
-		  func onlyConditions() bool {
-            if $Conditions && !$Value && !$Title {
-                return true
-            }
-
-            return false
-		  }
+		func onlyConditions() bool {
+        	return $Conditions && !$Value && !$Title
+		}
 		
 	  	conditions {
 		  RowConditions("menu", $Id, onlyConditions())
@@ -463,20 +451,17 @@ MenuItem(
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('10','EditPage','contract EditPage {
-		  data {
+		data {
 			Id         int
 			Value      string "optional"
 			Menu      string "optional"
 		  	Conditions string "optional"
-		  }
+		}
 		  
-		  func onlyConditions() bool {
-            if $Conditions && !$Value && !$Menu {
-                return true
-            }
-
-            return false
-          }
+		func onlyConditions() bool {
+        	return $Conditions && !$Value && !$Menu
+		}
+		
 	  	conditions {
 		  RowConditions("pages", $Id, onlyConditions())
 		  if $Conditions {
@@ -535,18 +520,14 @@ MenuItem(
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('13','EditBlock','contract EditBlock {
-		  data {
+		data {
 			Id         int
 			Value      string "optional"
 		  	Conditions string "optional"
-			  }
+		}
 			  
 		func onlyConditions() bool {
-			if $Conditions && !$Value {
-				return true
-			}
-
-			return false
+			return $Conditions && !$Value
 		}
 
 	  	conditions {
@@ -1505,11 +1486,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 
 		func onlyConditions() bool {
-			if $Conditions && !$Value && !$WalletId {
-				return true
-			}
-
-			return false
+			return $Conditions && !$Value && !$WalletId
 		}
 		conditions {
 			RowConditions("contracts", $Id, onlyConditions())
@@ -1655,11 +1632,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 
 		func onlyConditions() bool {
-			if $Conditions && !$Value {
-				return true
-			}
-
-			return false
+			return $Conditions && !$Value
 		}
 
 		conditions {
@@ -1703,11 +1676,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 
 		func onlyConditions() bool {
-			if $Conditions && !$Value && !$Title {
-				return true
-			}
-
-			return false
+			return $Conditions && !$Value && !$Title
 		}
 
 		conditions {
@@ -1817,11 +1786,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 		
 		func onlyConditions() bool {
-			if $Conditions && !$Value && !$Menu && !$ValidateCount {
-				return true
-			}
-
-			return false
+			return $Conditions && !$Value && !$Menu && !$ValidateCount 
 		}
 
 		conditions {
@@ -1829,7 +1794,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
-      $ValidateCount = preparePageValidateCount($ValidateCount)
+      		$ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
 			var pars, vals array
@@ -1937,11 +1902,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 
 		func onlyConditions() bool {
-			if $Conditions && !$Value {
-				return true
-			}
-
-			return false
+			return $Conditions && !$Value
 		}
 
 		conditions {
@@ -1981,11 +1942,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 
 		func onlyConditions() bool {
-			if $Conditions && !$Value {
-				return true
-			}
-
-			return false
+			return $Conditions && !$Value
 		}
 
 		conditions {
@@ -2258,11 +2215,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 
 		func onlyConditions() bool {
-			if $Conditions && !$Value {
-				return true
-			}
-
-			return false
+			return $Conditions && !$Value
 		}
 
 		conditions {
