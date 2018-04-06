@@ -18,8 +18,9 @@ package daemons
 
 import (
 	"context"
+	"fmt"
 	"net"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -100,8 +101,12 @@ func Confirmations(ctx context.Context, d *daemon) error {
 
 		ch := make(chan string)
 		for i := 0; i < len(hosts); i++ {
-			// NOTE: host should not use default port number
-			host := hosts[i] + ":" + strconv.Itoa(consts.DEFAULT_TCP_PORT)
+			host, err := NormalizeHostAddress(hosts[i], consts.DEFAULT_TCP_PORT)
+			if err != nil {
+				d.logger.WithFields(log.Fields{"host": host[i], "type": consts.ParseError, "error": err}).Error("wrong host address")
+				continue
+			}
+
 			d.logger.WithFields(log.Fields{"host": host, "block_id": blockID}).Debug("checking block id confirmed at node")
 			go func() {
 				IsReachable(host, blockID, ch, d.logger)
@@ -191,4 +196,19 @@ func IsReachable(host string, blockID int64, ch0 chan string, logger *log.Entry)
 	case <-time.After(consts.WAIT_CONFIRMED_NODES * time.Second):
 		ch0 <- "0"
 	}
+}
+
+// NormalizeHostAddress get address. if port not defined returns combined string with ip and defaultPort
+func NormalizeHostAddress(address string, defaultPort int) (string, error) {
+
+	_, _, err := net.SplitHostPort(address)
+	if err != nil {
+		if strings.HasSuffix(err.Error(), "missing port in address") {
+			return fmt.Sprintf("%s:%d", address, defaultPort), nil
+		}
+
+		return "", err
+	}
+
+	return address, nil
 }

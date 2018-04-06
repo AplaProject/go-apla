@@ -86,7 +86,7 @@ func Route(route *hr.Router) {
 	post(`refresh`, `token:string,?expire:int64`, refresh)
 	post(`signtest/`, `forsign private:string`, signTest)
 	post(`test/:name`, ``, getTest)
-	post(`content`, `template:string`, jsonContent)
+	post(`content`, `template ?source:string`, jsonContent)
 	post(`updnotificator`, `ids:string`, updateNotificator)
 
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)

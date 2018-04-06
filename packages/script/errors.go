@@ -28,6 +28,8 @@ const (
 )
 
 var (
-	errContractPars   = errors.New(`wrong contract parameters`)
-	errWrongCountPars = errors.New(`wrong count of parameters`)
+	errContractPars    = errors.New(`wrong contract parameters`)
+	errWrongCountPars  = errors.New(`wrong count of parameters`)
+	errDivZero         = errors.New(`divided by zero`)
+	errUnsupportedType = errors.New(`unsupported type`)
 )
