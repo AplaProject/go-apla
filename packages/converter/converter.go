@@ -946,6 +946,8 @@ func RoundWithoutPrecision(num float64) int64 {
 func ValueToInt(v interface{}) (ret int64) {
 	var err error
 	switch val := v.(type) {
+	case float64:
+		ret = int64(val)
 	case int64:
 		ret = val
 	case string:

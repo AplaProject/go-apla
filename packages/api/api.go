@@ -50,16 +50,17 @@ const (
 )
 
 type apiData struct {
-	status      int
-	result      interface{}
-	params      map[string]interface{}
-	ecosystemId int64
-	keyId       int64
-	isMobile    string
-	roleId      int64
-	vde         bool
-	vm          *script.VM
-	token       *jwt.Token
+	status        int
+	result        interface{}
+	params        map[string]interface{}
+	ecosystemId   int64
+	ecosystemName string
+	keyId         int64
+	roleId        int64
+	isMobile      string
+	vde           bool
+	vm            *script.VM
+	token         *jwt.Token
 }
 
 // ParamString reaturs string value of the api params
@@ -282,7 +283,7 @@ func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (in
 	ecosystemID := data.ecosystemId
 	if data.params[`ecosystem`].(int64) > 0 {
 		ecosystemID = data.params[`ecosystem`].(int64)
-		count, err := model.GetNextID(nil, `system_states`)
+		count, err := model.GetNextID(nil, "1_ecosystems")
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id system states")
 			return 0, ``, errorAPI(w, err, http.StatusBadRequest)
