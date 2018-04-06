@@ -450,12 +450,12 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if Len(ret) > 0 {
 		pub = ret[0].(map[string]string)[`pub`]
 	}
-  if _, _, err := DBInsert(sc, `@`+idStr+"_keys", "id,pub", wallet, pub); err != nil {
+	if _, _, err := DBInsert(sc, `@`+idStr+"_keys", "id,pub", wallet, pub); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
 
-	if _, _, err := DBInsert(sc, "1_ecosystems", "id,name", id, name); err != nil {
+	if _, _, err := DBInsert(sc, "@1_ecosystems", "id,name", id, name); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert new ecosystem to stat table")
 		return 0, err
 	}
