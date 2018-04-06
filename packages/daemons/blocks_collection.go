@@ -36,7 +36,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrNodesUnavailable = errors.New("All nodes unvailabale")
+// ErrNodesUnavailable is returned when all nodes is unavailable
+var ErrNodesUnavailable = errors.New("All nodes unavailable")
 
 // BlocksCollection collects and parses blocks
 func BlocksCollection(ctx context.Context, d *daemon) error {

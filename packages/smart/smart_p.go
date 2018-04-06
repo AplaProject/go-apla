@@ -650,7 +650,7 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 	return nil
 }
 
-// DeactivateContract sets Active status of the contract in smartVM
+// Deactivate sets Active status of the contract in smartVM
 func Deactivate(sc *SmartContract, tblid int64, state int64) error {
 	if !accessContracts(sc, nActivateContract, nDeactivateContract) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract")
@@ -720,6 +720,7 @@ func JSONToMap(input string) (map[string]interface{}, error) {
 	return ret, nil
 }
 
+// RollbackContract performs rollback for the contract
 func RollbackContract(sc *SmartContract, name string) error {
 	if !accessContracts(sc, nNewContract, nImport) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract, "error": errAccessRollbackContract}).Error("Check contract access")
@@ -737,6 +738,7 @@ func RollbackContract(sc *SmartContract, name string) error {
 	return nil
 }
 
+// DBSelectMetrics returns list of metrics by name and time interval
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
 	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc)
 	if err != nil {

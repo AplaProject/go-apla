@@ -1,5 +1,6 @@
 package model
 
+// This constants contains values of transactions priority
 const (
 	TransactionRateOnBlock transactionRate = 1
 )

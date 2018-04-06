@@ -17,6 +17,7 @@ const (
 	metricEcosystemTx      = "ecosystem_tx"
 )
 
+// HandlerEcosystemTables returns metrics for some tables of ecosystems
 func HandlerEcosystemTables() (metricValues []*model.Metric, err error) {
 	stateIDs, err := model.GetAllSystemStatesIDs()
 	if err != nil {
@@ -62,6 +63,7 @@ func HandlerEcosystemTables() (metricValues []*model.Metric, err error) {
 	return metricValues, nil
 }
 
+// HandlerEcosystemTx returns metrics for transactions of ecosystems
 func HandlerEcosystemTx() (metricValues []*model.Metric, err error) {
 	ecosystemTx, err := model.GetEcosystemTxPerDay()
 	if err != nil {

@@ -48,11 +48,13 @@ type CentrifugoConfig struct {
 	URL    string
 }
 
+// Syslog represents parameters of syslog
 type Syslog struct {
 	Facility string
 	Tag      string
 }
 
+// LogConfig represents parameters of log
 type LogConfig struct {
 	LogTo     string
 	LogLevel  string
@@ -157,6 +159,7 @@ func SaveConfig(path string) error {
 	return nil
 }
 
+// FillRuntimePaths fills paths from runtime parameters
 func FillRuntimePaths() error {
 	if Config.DataDir == "" {
 		cwd, err := os.Getwd()
@@ -186,6 +189,7 @@ func FillRuntimePaths() error {
 	return nil
 }
 
+// FillRuntimeKey fills parameters of keys from runtime parameters
 func FillRuntimeKey() error {
 	keyIDFileName := filepath.Join(Config.KeysDir, consts.KeyIDFilename)
 	keyIDBytes, err := ioutil.ReadFile(keyIDFileName)
@@ -203,6 +207,7 @@ func FillRuntimeKey() error {
 	return nil
 }
 
+// GetNodesAddr returns addreses of nodes
 func GetNodesAddr() []string {
 	return Config.NodesAddr[:]
 }

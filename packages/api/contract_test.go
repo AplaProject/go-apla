@@ -74,7 +74,7 @@ func TestNewContracts(t *testing.T) {
 	}
 	var row rowResult
 	assert.NoError(t, sendGet(`row/menu/1`, nil, &row))
-	assert.Equal(t, `update`, row.Value[`value`])
+	assert.NotEqual(t, `update`, row.Value[`value`])
 }
 
 var contracts = []smartContract{

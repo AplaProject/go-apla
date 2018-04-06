@@ -1157,6 +1157,7 @@ main:
 	return nil
 }
 
+// ContractsList returns list of contracts names from source of code
 func ContractsList(value string) []string {
 	names := make([]string, 0)
 	lexems, err := lexParser([]rune(value))

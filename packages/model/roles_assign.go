@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// RolesAssign represents record of {prefix}_roles_assign table
 type RolesAssign struct {
 	prefix          int64
 	Id              int64
@@ -38,6 +39,7 @@ func (r RolesAssign) TableName() string {
 	return fmt.Sprintf("%d_roles_assign", r.prefix)
 }
 
+// GetActiveMemberRoles returns active assigned roles for memberID
 func (r *RolesAssign) GetActiveMemberRoles(memberID int64) ([]RolesAssign, error) {
 	roles := new([]RolesAssign)
 	err := DBConn.Table(r.TableName()).Where("member_id = ? AND delete = ?", memberID, 0).Find(&roles).Error

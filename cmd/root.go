@@ -30,6 +30,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&conf.Config.ConfigPath, "config", defautConfigPath(), "filepath to config.toml")
 }
 
+// Execute executes rootCmd command.
 // This is called by main.main(). It only needs to happen once to the rootCmd
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {

@@ -1,6 +1,7 @@
 package migration
 
 var (
+	// SchemaVDE contains SQL queries for creating vde
 	SchemaVDE = `DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d_vde_languages" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"name" character varying(100) NOT NULL DEFAULT '',
@@ -778,7 +779,7 @@ MenuItem(
 			UpdateCron($Id)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('23','contract UploadBinary {
+	('23', 'UploadBinary', 'contract UploadBinary {
 		data {
 			Name  string
 			Data  string
@@ -800,7 +801,7 @@ MenuItem(
 		}
 	}', 'ContractConditions("MainCondition")');
 	`
-
+	// SchemaEcosystem contains SQL queries for creating ecosystem
 	SchemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"pub" bytea  NOT NULL DEFAULT '',
@@ -1300,6 +1301,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (app_id, member_id, name);
 		`
 
+	// SchemaFirstEcosystem contains SQL queries for creating first ecosystem
 	SchemaFirstEcosystem = `
 	DROP TABLE IF EXISTS "1_ecosystems";
 	CREATE TABLE "1_ecosystems" (

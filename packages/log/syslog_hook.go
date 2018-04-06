@@ -18,11 +18,13 @@ type SyslogHook struct {
 	SyslogRaddr   string
 }
 
+// NewSyslogHook creats SyslogHook
 func NewSyslogHook(appName, facility string) (*SyslogHook, error) {
 	b_syslog.Openlog(appName, b_syslog.LOG_PID, syslogFacility(facility))
 	return &SyslogHook{nil, "", "localhost"}, nil
 }
 
+// Fire the log entry
 func (hook *SyslogHook) Fire(entry *logrus.Entry) error {
 	line, err := entry.String()
 	jsonMap := map[string]interface{}{}
@@ -75,6 +77,7 @@ func (hook *SyslogHook) Fire(entry *logrus.Entry) error {
 	}
 }
 
+// Levels returns list of levels
 func (hook *SyslogHook) Levels() []logrus.Level {
 	return logrus.AllLevels
 }

@@ -89,7 +89,7 @@ func NewLimits(b *Block) (limits *Limits) {
 	return
 }
 
-// CheckLimits calls each limiter
+// CheckLimit calls each limiter
 func (limits *Limits) CheckLimit(p *Parser) error {
 	for _, limiter := range limits.Limiters {
 		if err := limiter.check(p, limits.Mode); err != nil {

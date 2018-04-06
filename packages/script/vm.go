@@ -64,6 +64,7 @@ var sysVars = map[string]struct{}{
 	`txhash`:            {},
 }
 
+// VMError represents error of VM
 type VMError struct {
 	Type  string `json:"type"`
 	Error string `json:"error"`
@@ -344,6 +345,7 @@ func (vm *VM) RunInit(cost int64) *RunTime {
 	return &rt
 }
 
+// SetVMError sets error of VM
 func SetVMError(eType string, eText interface{}) error {
 	out, err := json.Marshal(&VMError{Type: eType, Error: fmt.Sprintf(`%v`, eText)})
 	if err != nil {

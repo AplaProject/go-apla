@@ -217,5 +217,5 @@ func TestAppParams(t *testing.T) {
 	}
 
 	assert.EqualError(t, sendGet(`appparam/1/myval`, nil, &ret2), `400 {"error": "", "msg": "" }`)
-	assert.True(t, len(ret2.Value) != 0)
+	assert.Len(t, ret2.Value, 0)
 }

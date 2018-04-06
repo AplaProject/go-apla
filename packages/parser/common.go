@@ -271,12 +271,13 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	}
 	buffer := bytes.Buffer{}
 	for _, rollbackTx := range blockRollbackTxs {
-		if rollbackTxBytes, err := json.Marshal(rollbackTx); err != nil {
+		rollbackTxBytes, err := json.Marshal(rollbackTx)
+		if err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback_tx to json")
 			return err
-		} else {
-			buffer.Write(rollbackTxBytes)
 		}
+
+		buffer.Write(rollbackTxBytes)
 	}
 	rollbackTxsHash, err := crypto.Hash(buffer.Bytes())
 	if err != nil {

@@ -40,10 +40,10 @@ func TestGetUID(t *testing.T) {
 				t.Error(err)
 			}
 			return
-		} else {
-			t.Error(err)
-			return
 		}
+
+		t.Error(err)
+		return
 	}
 	gAuth = ret.Token
 	priv, pub, err := crypto.GenHexKeys()

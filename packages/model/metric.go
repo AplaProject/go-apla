@@ -2,6 +2,7 @@ package model
 
 const tableNameMetrics = "system_metrics"
 
+// Metric represents record of system_metrics table
 type Metric struct {
 	ID     int64  `gorm:"primary_key;not null"`
 	Time   int64  `gorm:"not null"`
@@ -10,6 +11,7 @@ type Metric struct {
 	Value  int64  `gorm:"not null"`
 }
 
+// TableName returns name of table
 func (Metric) TableName() string {
 	return tableNameMetrics
 }
@@ -26,6 +28,7 @@ func PutMetrics(metrics []*Metric) error {
 	return nil
 }
 
+// EcosystemTx represents value of metric
 type EcosystemTx struct {
 	UnixTime  int64
 	Ecosystem string
