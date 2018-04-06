@@ -470,7 +470,7 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 		return fmt.Errorf(`EditEcosystemName can be only called from @1EditEcosystemName`)
 	}
 
-	_, err := DBUpdate(sc, "1_ecosystems", sysID, "name", newName)
+	_, err := DBUpdate(sc, "@1_ecosystems", sysID, "name", newName)
 	return err
 }
 
