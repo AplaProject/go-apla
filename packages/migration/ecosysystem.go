@@ -2307,7 +2307,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 		conditions {
 			var rows array
-			rows = DBFind("1_ecosystems").Where("id = ?", $EcosystemID)
+			rows = DBFind("@1_ecosystems").Where("id = ?", $EcosystemID)
 			if !Len(rows) {
 				error Sprintf("Ecosystem %%d does not exist", $EcosystemID)
 			}

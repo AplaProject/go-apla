@@ -239,14 +239,14 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 }
 
 func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
-	if tblname[0] < '1' || tblname[0] > '9' || !strings.Contains(tblname, `_`) {
-		prefix := converter.Int64ToStr(ecosystem)
-		if sc.VDE {
-			prefix += `_vde`
-		}
-		tblname = fmt.Sprintf(`%s_%s`, prefix, tblname)
+	if len(tblname) > 0 && tblname[0] == '@' {
+		return strings.ToLower(tblname[1:])
 	}
-	return strings.ToLower(tblname)
+	prefix := converter.Int64ToStr(ecosystem)
+	if sc.VDE {
+		prefix += `_vde`
+	}
+	return strings.ToLower(fmt.Sprintf(`%s_%s`, prefix, tblname))
 }
 
 func getDefTableName(sc *SmartContract, tblname string) string {
@@ -340,6 +340,9 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	var err error
 	if !accessContracts(sc, `NewTable`, `Import`) {
 		return fmt.Errorf(`CreateTable can be only called from NewTable`)
+	}
+	if len(name) > 0 && name[0] == '@' {
+		return fmt.Errorf(`The name of the table cannot begin with @`)
 	}
 	tableName := getDefTableName(sc, name)
 
