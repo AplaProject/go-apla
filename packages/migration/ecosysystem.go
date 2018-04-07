@@ -243,7 +243,7 @@ MenuItem(
 			   if $Wallet {
 				$walletContract = AddressToId($Wallet)
 				if $walletContract == 0 {
-				   error Sprintf("wrong wallet %s", $Wallet)
+				   error Sprintf("wrong wallet %%s", $Wallet)
 				}
 			}
 			var list array
@@ -256,7 +256,7 @@ MenuItem(
 			var i int
 			while i < Len(list) {
 				if IsObject(list[i], $ecosystem_id) {
-					warning Sprintf("Contract or function %s exists", list[i] )
+					warning Sprintf("Contract or function %%s exists", list[i] )
 				}
 				i = i + 1
 			}
@@ -266,7 +266,7 @@ MenuItem(
 				$TokenEcosystem = 1
 			} else {
 				if !SysFuel($TokenEcosystem) {
-					warning Sprintf("Ecosystem %d is not system", $TokenEcosystem )
+					warning Sprintf("Ecosystem %%d is not system", $TokenEcosystem )
 				}
 			}
 		}
@@ -388,24 +388,30 @@ MenuItem(
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('6', 'NewMenu','contract NewMenu {
-		  data {
-			  Name       string
-			  Value      string
-			  Title      string "optional"
-			  Conditions string
-		  }
-		  conditions {
-			  var ret int
-			  ValidateCondition($Conditions,$ecosystem_id)
-			  ret = DBFind("menu").Columns("id").Where("name=?", $Name).Limit(1)
-			  if Len(ret) > 0 {
-				  warning Sprintf( "Menu %%s already exists", $Name)
-			  }
-		  }
-		  action {
-			  $result = DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions )
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+		data {
+			Name       string
+			Value      string
+			Title      string "optional"
+			Conditions string
+			ApplicationId int "optional"
+		}
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+
+			var row map
+			row = DBRow("menu").Columns("id").Where("name = ?", $Name)
+
+			if row {
+				warning Sprintf( "Menu %s already exists", $Name)
+			}
+		}
+		action {
+			DBInsert("menu", "name,value,title,conditions,app_id", $Name, $Value, $Title, $Conditions, $ApplicationId )
+		}
+		func price() int {
+			return  SysParamInt("menu_price")
+		}
+	}', 'ContractConditions("MainCondition")'),
 	  ('7','EditMenu','contract EditMenu {
 		  data {
 			  Id         int
@@ -483,7 +489,7 @@ MenuItem(
 			row = DBRow("pages").Columns("id").Where("name = ?", $Name)
 
 			if row {
-				warning Sprintf( "Page %s already exists", $Name)
+				warning Sprintf( "Page %%s already exists", $Name)
 			}
 
 			$ValidateCount = preparePageValidateCount($ValidateCount)
@@ -555,7 +561,7 @@ MenuItem(
 			row = DBRow("blocks").Columns("id").Where("name = ?", $Name)
 
 			if row {
-				warning Sprintf( "Block %s already exists", $Name)
+				warning Sprintf( "Block %%s already exists", $Name)
 			}
 		}
 		action {
@@ -1467,7 +1473,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			   if $Wallet {
 				$walletContract = AddressToId($Wallet)
 				if $walletContract == 0 {
-				   error Sprintf("wrong wallet %s", $Wallet)
+				   error Sprintf("wrong wallet %%s", $Wallet)
 				}
 			}
 			var list array
@@ -1480,7 +1486,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			var i int
 			while i < Len(list) {
 				if IsObject(list[i], $ecosystem_id) {
-					warning Sprintf("Contract or function %s exists", list[i] )
+					warning Sprintf("Contract or function %%s exists", list[i] )
 				}
 				i = i + 1
 			}
@@ -1490,7 +1496,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 				$TokenEcosystem = 1
 			} else {
 				if !SysFuel($TokenEcosystem) {
-					warning Sprintf("Ecosystem %d is not system", $TokenEcosystem )
+					warning Sprintf("Ecosystem %%d is not system", $TokenEcosystem )
 				}
 			}
 		}
@@ -1678,6 +1684,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Value      string
 			Title      string "optional"
 			Conditions string
+			ApplicationId int "optional"
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1686,11 +1693,11 @@ If("#key_id#" == EcosysParam("founder_account")){
 			row = DBRow("menu").Columns("id").Where("name = ?", $Name)
 
 			if row {
-				warning Sprintf( "Menu %%s already exists", $Name)
+				warning Sprintf( "Menu %s already exists", $Name)
 			}
 		}
 		action {
-			DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions )
+			DBInsert("menu", "name,value,title,conditions,app_id", $Name, $Value, $Title, $Conditions, $ApplicationId )
 		}
 		func price() int {
 			return  SysParamInt("menu_price")
@@ -1773,7 +1780,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			row = DBRow("pages").Columns("id").Where("name = ?", $Name)
 
 			if row {
-				warning Sprintf( "Page %s already exists", $Name)
+				warning Sprintf( "Page %%s already exists", $Name)
 			}
 
 			$ValidateCount = preparePageValidateCount($ValidateCount)
@@ -1941,7 +1948,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			row = DBRow("blocks").Columns("id").Where("name = ?", $Name)
 
 			if row {
-				warning Sprintf( "Block %s already exists", $Name)
+				warning Sprintf( "Block %%s already exists", $Name)
 			}
 		}
 		action {
