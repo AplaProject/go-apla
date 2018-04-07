@@ -336,7 +336,7 @@ func contractsList(value string) []interface{} {
 }
 
 // CreateTable is creating smart contract table
-func CreateTable(sc *SmartContract, name string, columns, permissions string) error {
+func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) error {
 	var err error
 	if !accessContracts(sc, `NewTable`, `Import`) {
 		return fmt.Errorf(`CreateTable can be only called from NewTable`)
@@ -346,7 +346,7 @@ func CreateTable(sc *SmartContract, name string, columns, permissions string) er
 	var cols []map[string]string
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns to JSON")
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns to JSON")
 		return err
 	}
 
@@ -755,7 +755,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	var perm permTable
 	err = json.Unmarshal([]byte(permissions), &perm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling permissions from json")
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": permissions}).Error("unmarshalling permissions from json")
 		return
 	}
 	v := reflect.ValueOf(perm)
@@ -784,7 +784,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	var cols []map[string]string
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns permissions from json")
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns permissions from json")
 		return
 	}
 	if len(cols) == 0 {
