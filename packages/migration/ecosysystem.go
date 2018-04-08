@@ -1366,7 +1366,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			);
 
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
-			('17', 'bad_blocks',
+			('18', 'bad_blocks',
 			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
 			"new_column": "ContractConditions(\"MainCondition\")"}',
 			'{"contract": "ContractConditions(\"MainCondition\")",
@@ -2355,7 +2355,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			DBInsert("bad_blocks", "producer_node_id,consumer_node_id,block_id", $ProducerNodeID, $ConsumerNodeID, $BlockID)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('36', 'CheckNodesBan', 'contract CheckNodesBan {
+	('37', 'CheckNodesBan', 'contract CheckNodesBan {
 		action {
 			UpdateNodesBan($block_time)
 		}

@@ -169,16 +169,8 @@ func GetNode(wallet int64) *FullNode {
 	return nil
 }
 
-// GetNodes is returning all current nodes
-func GetNodes() []FullNode {
-	mutex.Lock()
-	defer mutex.Unlock()
-	ns := []FullNode{}
-	for _, n := range nodes {
-		ns = append(ns, *n)
-	}
-
-	return ns
+func GetNodes() map[int64]*FullNode {
+	return nodes
 }
 
 // GetNodePositionByKeyID is returning node position by key id

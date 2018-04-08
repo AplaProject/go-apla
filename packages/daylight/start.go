@@ -251,7 +251,7 @@ func Start() {
 		na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
 		na.Run()
 
-		err = service.InitNodesBanService(syspar.GetIncorrectBlocksPerDay())
+		err = service.InitNodesBanService(syspar.GetNodes())
 		if err != nil {
 			log.WithError(err).Fatal("Can't init ban service")
 		}

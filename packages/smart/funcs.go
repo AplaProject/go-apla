@@ -1225,36 +1225,32 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 	now := time.Unix(timestamp, 0)
 
 	curFullNodes := syspar.GetNodes()
-
 	var upd bool
 	for k, n := range curFullNodes {
-		// Removing ban in case time has already passed
-
-		if n.GlobalUnBanTime.After(now) {
-			curFullNodes[k].GlobalUnBanTime = time.Unix(0, 0)
+		// Removing ban in case ban time has already passed
+		if now.After(n.UnbanTime) {
+			curFullNodes[k].UnbanTime = time.Unix(0, 0)
 			upd = true
 		}
 
 		// Setting ban time if we have ban requests for the current node from 51% of all nodes
 		for _, br := range banRequests {
-			if br.ProducerNodeId == n.KeyID {
-				if br.Count >= int64((len(curFullNodes)/2)+1) {
-					curFullNodes[k].GlobalUnBanTime = now.Add(syspar.GetNodeBanTime())
+			if br.ProducerNodeId == n.KeyID && br.Count >= int64((len(curFullNodes)/2)+1) {
+				curFullNodes[k].UnbanTime = now.Add(syspar.GetNodeBanTime())
 
-					blocks, err := badBlocks.GetNodeBlocks(n.KeyID)
-					if err != nil {
-						log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node bad blocks for removing")
+				blocks, err := badBlocks.GetNodeBlocks(n.KeyID)
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node bad blocks for removing")
+					return err
+				}
+
+				for _, b := range blocks {
+					if _, err := DBUpdate(sc, badBlocks.TableName(), b.ID, "deleted", "1"); err != nil {
+						log.WithFields(log.Fields{"type": consts.DBError, "id": b.ID, "error": err}).Error("deleting bad block")
 						return err
 					}
-
-					for _, b := range blocks {
-						if _, err := DBUpdate(sc, badBlocks.TableName(), b.ID, "deleted", "1"); err != nil {
-							log.WithFields(log.Fields{"type": consts.DBError, "id": b.ID, "error": err}).Error("deleting bad block")
-							return err
-						}
-					}
-					upd = true
 				}
+				upd = true
 			}
 		}
 	}
@@ -1272,7 +1268,6 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating full nodes")
 			return err
 		}
-
 	}
 
 	return nil
