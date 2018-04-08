@@ -212,6 +212,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UUID":                 UUID,
 		"DecodeBase64":         DecodeBase64,
 		"MD5":                  MD5,
+		"EditEcosysName":       EditEcosysName,
+		"GetColumnType":        GetColumnType,
 	}
 
 	switch vt {
@@ -1313,4 +1315,9 @@ func DecodeBase64(input string) (out string, err error) {
 func MD5(data string) string {
 	hash := md5.Sum([]byte(data))
 	return hex.EncodeToString(hash[:])
+}
+
+// GetColumnType returns the type of the column
+func GetColumnType(sc *SmartContract, tableName, columnName string) (string, error) {
+	return model.GetColumnType(getDefTableName(sc, tableName), columnName)
 }

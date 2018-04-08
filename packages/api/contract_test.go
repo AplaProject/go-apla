@@ -100,6 +100,17 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`CheckFloat`, `contract CheckFloat {
+		action {
+		var fl float
+		fl = -3.67
+		Test("float2", Sprintf("%d %s", Int(1.2), Str(fl)))
+		Test("float3", Sprintf("%.2f %.2f", 10.7/7, 10/7.0))
+		Test("float4", Sprintf("%.2f %.2f %.2f", 10+7.0, 10-3.1, 5*2.5))
+		Test("float5", Sprintf("%t %t %t %t %t", 10 <= 7.0, 4.5 <= 5, 3>5.7, 6 == 6.0, 7 != 7.1))
+	}}`, []smartParams{
+		{nil, map[string]string{`float2`: `1 -3.670000`, `float3`: `1.53 1.43`, `float4`: `17.00 6.90 12.50`, `float5`: `false true false true true`}},
+	}},
 	{`Crash`, `contract Crash { data {} conditions {} action
 
 		{ $result=DBUpdate("menu", 1, "value", "updated") }
@@ -112,11 +123,13 @@ var contracts = []smartContract{
 			list array
 		}
 		action { 
-			Test("oneinput",  $list[0])
+			var coltype string
+			coltype = GetColumnType("keys", "amount" )
+			Test("oneinput",  $list[0]+coltype)
 		}
 	}`,
 		[]smartParams{
-			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input value`}},
+			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input valuemoney`}},
 		}},
 	{`DBProblem`, `contract DBProblem {
 		action{
