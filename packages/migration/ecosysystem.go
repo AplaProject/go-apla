@@ -582,31 +582,34 @@ MenuItem(
 		data {
 			Name  string
 			Trans string
+			AppID int
 		}
 		conditions {
 			EvalCondition("parameters", "changing_language", "value")
 			var row array
-			row = DBFind("languages").Columns("name").Where("name=?", $Name).Limit(1)
+			row = DBFind("languages").Columns("name").Where("name=? AND app_id=?", $Name, $AppID).Limit(1)
 			if Len(row) > 0 {
 				error Sprintf("The language resource %%s already exists", $Name)
 			}
 		}
 		action {
-			DBInsert("languages", "name,res", $Name, $Trans )
-			UpdateLang($Name, $Trans)
+			DBInsert("languages", "name,res,app_id", $Name, $Trans, $AppID)
+			UpdateLang($Name, $Trans, $AppID)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('19','EditLang','contract EditLang {
 		data {
+			Id    int
 			Name  string
 			Trans string
+			AppID int
 		}
 		conditions {
 			EvalCondition("parameters", "changing_language", "value")
 		}
 		action {
-			DBUpdateExt("languages", "name", $Name, "res", $Trans )
-			UpdateLang($Name, $Trans)
+			DBUpdate("languages", $Id, "name,res,app_id", $Name, $Trans, $AppID)
+			UpdateLang($Name, $Trans, $AppID)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('20','Import','contract Import {
@@ -829,6 +832,7 @@ MenuItem(
 		
 		DROP TABLE IF EXISTS "%[1]d_languages"; CREATE TABLE "%[1]d_languages" (
 		  "id" bigint  NOT NULL DEFAULT '0',
+		  "app_id" bigint NOT NULL DEFAULT '0',
 		  "name" character varying(100) NOT NULL DEFAULT '',
 		  "res" text NOT NULL DEFAULT '',
 		  "conditions" text NOT NULL DEFAULT ''
@@ -1075,7 +1079,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 				('4', 'languages', 
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
-				'{ "name": "ContractConditions(\"MainCondition\")",
+				'{"app_id": "ContractConditions(\"MainCondition\")",
+				  "name": "ContractConditions(\"MainCondition\")",
 				  "res": "ContractConditions(\"MainCondition\")",
 				  "conditions": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("@1EditTable")'),
 				('5', 'menu', 
@@ -1792,33 +1797,36 @@ If("#key_id#" == EcosysParam("founder_account")){
 		data {
 			Name  string
 			Trans string
+			AppID int
 		}
 		conditions {
 			EvalCondition("parameters", "changing_language", "value")
 
 			var row map
-			row = DBRow("languages").Columns("id").Where("name = ?", $Name)
+			row = DBRow("languages").Columns("id").Where("name = ? AND app_id = ?", $Name, $AppID)
 
 			if row {
 				error Sprintf("The language resource %%s already exists", $Name)
 			}
 		}
 		action {
-			DBInsert("languages", "name,res", $Name, $Trans )
-			UpdateLang($Name, $Trans)
+			DBInsert("languages", "name,res,app_id", $Name, $Trans, $AppID)
+			UpdateLang($Name, $Trans, $AppID)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('16','EditLang','contract EditLang {
 		data {
+			Id    int
 			Name  string
 			Trans string
+			AppID int
 		}
 		conditions {
 			EvalCondition("parameters", "changing_language", "value")
 		}
 		action {
-			DBUpdateExt("languages", "name", $Name, "res", $Trans )
-			UpdateLang($Name, $Trans)
+			DBUpdate("languages", $Id, "name,res,app_id", $Name, $Trans, $AppID)
+			UpdateLang($Name, $Trans, $AppID)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('17','NewSign','contract NewSign {

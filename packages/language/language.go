@@ -24,13 +24,15 @@ import (
 	"strconv"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	log "github.com/sirupsen/logrus"
 )
 
+//cacheLang is cache for language, first level map is app_id, second is lang_name, third is lang dictionary
 type cacheLang struct {
-	res map[string]*map[string]string
+	res map[int]map[string]*map[string]string
 }
 
 var (
@@ -61,12 +63,12 @@ func DefLang() string {
 }
 
 // UpdateLang updates language sources for the specified state
-func UpdateLang(state int, name, value string, vde bool) {
+func UpdateLang(state, appID int, name, value string, vde bool) {
 	if vde {
 		state = -state
 	}
 	if _, ok := lang[state]; !ok {
-		lang[state] = &cacheLang{make(map[string]*map[string]string)}
+		lang[state] = &cacheLang{make(map[int]map[string]*map[string]string)}
 	}
 	var ires map[string]string
 	err := json.Unmarshal([]byte(value), &ires)
@@ -77,7 +79,10 @@ func UpdateLang(state int, name, value string, vde bool) {
 		ires[strings.ToLower(key)] = val
 	}
 	if len(ires) > 0 {
-		(*lang[state]).res[name] = &ires
+		if _, ok := (*lang[state]).res[appID]; !ok {
+			(*lang[state]).res[appID] = map[string]*map[string]string{}
+		}
+		(*lang[state]).res[appID][name] = &ires
 	}
 }
 
@@ -97,7 +102,7 @@ func loadLang(state int, vde bool) error {
 	for _, l := range languages {
 		list = append(list, l.ToMap())
 	}
-	res := &cacheLang{make(map[string]*map[string]string)}
+	res := make(map[int]map[string]*map[string]string)
 	for _, ilist := range list {
 		var ires map[string]string
 		err := json.Unmarshal([]byte(ilist[`res`]), &ires)
@@ -107,18 +112,21 @@ func loadLang(state int, vde bool) error {
 		for key, val := range ires {
 			ires[strings.ToLower(key)] = val
 		}
-		(*res).res[ilist[`name`]] = &ires
+		if _, ok := res[converter.StrToInt(ilist[`app_id`])]; !ok {
+			res[converter.StrToInt(ilist[`app_id`])] = map[string]*map[string]string{}
+		}
+		res[converter.StrToInt(ilist[`app_id`])][ilist[`name`]] = &ires
 	}
 	if vde {
 		state = -state
 	}
-	lang[state] = res
+	lang[state] = &cacheLang{res}
 	return nil
 }
 
 // LangText looks for the specified word through language sources and returns the meaning of the source
 // if it is found. Search goes according to the languages specified in 'accept'
-func LangText(in string, state int, accept string, vde bool) (string, bool) {
+func LangText(in string, state, appID int, accept string, vde bool) (string, bool) {
 	if strings.IndexByte(in, ' ') >= 0 || state == 0 {
 		return in, false
 	}
@@ -132,7 +140,10 @@ func LangText(in string, state int, accept string, vde bool) (string, bool) {
 		}
 	}
 	langs := strings.Split(accept, `,`)
-	if lres, ok := (*lang[istate]).res[in]; ok {
+	if _, ok := (*lang[istate]).res[appID]; !ok {
+		return in, false
+	}
+	if lres, ok := (*lang[istate]).res[appID][in]; ok {
 		lng := DefLang()
 		for _, val := range langs {
 			val = strings.ToLower(val)
@@ -165,7 +176,7 @@ func LangText(in string, state int, accept string, vde bool) (string, bool) {
 
 // LangMacro replaces all inclusions of $resname$ in the incoming text with the corresponding language resources,
 // if they exist
-func LangMacro(input string, state int, accept string, vde bool) string {
+func LangMacro(input string, state, appID int, accept string, vde bool) string {
 	if !strings.ContainsRune(input, '$') {
 		return input
 	}
@@ -192,7 +203,7 @@ func LangMacro(input string, state int, accept string, vde bool) string {
 			continue
 		}
 		if isName {
-			value, ok := LangText(string(name), state, accept, vde)
+			value, ok := LangText(string(name), state, appID, accept, vde)
 			if ok {
 				result = append(result, []rune(value)...)
 				isName = false
