@@ -147,6 +147,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 			KeyID:         data.keyId,
 			RoleID:        data.roleId,
 			PublicKey:     publicKey,
+			NetworkID:     consts.NETWORK_ID,
 			BinSignatures: converter.EncodeLengthPlusData(signature),
 		},
 		TokenEcosystem: data.params[`token_ecosystem`].(int64),

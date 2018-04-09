@@ -134,6 +134,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 				Time:        time.Now().Unix(),
 				EcosystemID: 1,
 				KeyID:       conf.Config.KeyID,
+				NetworkID:   consts.NETWORK_ID,
 			},
 			SignedBy: smart.PubToID(NodePublicKey),
 			Data:     params,
