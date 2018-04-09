@@ -3,9 +3,12 @@ package storage
 import (
 	"encoding/json"
 
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+
 	"github.com/GenesisKernel/go-genesis/tools/update_server/model"
 	"github.com/boltdb/bolt"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type BoltStorage struct {
@@ -74,6 +77,7 @@ func (db *BoltStorage) Get(binary model.Build) (model.Build, error) {
 		if ub != nil {
 			err := json.Unmarshal(ub, &fb)
 			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": ub}).Error("on getting from bolt")
 				return err
 			}
 		}

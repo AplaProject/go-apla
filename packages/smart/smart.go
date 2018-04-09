@@ -613,7 +613,9 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 
 func getPermColumns(input string) (perm permColumn, err error) {
 	if strings.HasPrefix(input, `{`) {
-		err = json.Unmarshal([]byte(input), &perm)
+		if err = json.Unmarshal([]byte(input), &perm); err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": input}).Error("on perm columns")
+		}
 	} else {
 		perm.Update = input
 	}

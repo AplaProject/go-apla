@@ -859,6 +859,7 @@ func buttonTag(par parFunc) string {
 			input := par.Node.Attr[`compositedata`].([]string)[i]
 			if len(input) > 0 {
 				if err := json.Unmarshal([]byte(input), &data); err != nil {
+					log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "source": input}).Error("on button tag unmarshaling content")
 					return err.Error()
 				}
 			}
