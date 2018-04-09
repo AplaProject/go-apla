@@ -1395,7 +1395,24 @@ MenuItem(
 		);
 		ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
-		
+
+
+		INSERT INTO "1_delayed_contracts"
+			("id", "contract", "key_id", "block_id", "every_block", "conditions")
+		VALUES
+			(1, '@1UpdateMetrics', '%[1]d', '100', '100', 'ContractConditions("MainCondition")');
+
+		DROP TABLE IF EXISTS "1_metrics";
+		CREATE TABLE "1_metrics" (
+			"id" int NOT NULL default 0,
+			"time" bigint NOT NULL DEFAULT '0',
+			"metric" varchar(255) NOT NULL,
+			"key" varchar(255) NOT NULL,
+			"value" bigint NOT NULL
+		);
+		ALTER TABLE ONLY "1_metrics" ADD CONSTRAINT "1_metrics_pkey" PRIMARY KEY (id);
+		CREATE INDEX "1_metrics_unique_index" ON "1_metrics" (metric, time, "key");
+
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
 			('16', 'delayed_contracts',
 			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
@@ -1415,6 +1432,15 @@ MenuItem(
 				'ecosystems',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"name": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")'
+			),
+			(
+				'18',
+				'metrics',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")","new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"time": "ContractConditions(\"MainCondition\")",
+					"metric": "ContractConditions(\"MainCondition\")","key": "ContractConditions(\"MainCondition\")",
+					"value": "ContractConditions(\"MainCondition\")"}',
 				'ContractConditions(\"MainCondition\")'
 			);
 
@@ -2389,5 +2415,27 @@ MenuItem(
 		action {
 			EditEcosysName($EcosystemID, $NewName)
 		}
-	}', '%[1]d', 'ContractConditions("MainCondition")');`
+	}', '%[1]d', 'ContractConditions("MainCondition")'),
+	('36', 'UpdateMetrics', 'contract UpdateMetrics {
+		conditions {
+			ContractConditions("MainCondition")
+		}
+		action {
+			var values array
+			values = DBCollectMetrics()
+
+			var i, id int
+			var v map
+			while (i < Len(values)) {
+				v = values[i]
+				id = Int(DBFind("metrics").Columns("id").Where("time = ? AND key = ? AND metric = ?", v["time"], v["key"], v["metric"]).One("id"))
+				if id != 0 {
+					DBUpdate("metrics", id, "value", Int(v["value"]))
+				} else {
+					DBInsert("metrics", "time,key,metric,value", v["time"], v["key"], v["metric"], Int(v["value"]))
+				}
+				i = i + 1
+			}
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")');`
 )

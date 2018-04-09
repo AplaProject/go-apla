@@ -22,6 +22,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 
 	"github.com/stretchr/testify/assert"
@@ -489,32 +490,48 @@ func TestValidateConditions(t *testing.T) {
 	}
 }
 
-func TestDBMetric(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+func TestDBMetrics(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
 
-	name := randName("Metrics")
+	contract := randName("Metric")
 	form := url.Values{
 		"Value": {`
-			contract ` + name + ` {
-				data {}
+			contract ` + contract + ` {
+				data {
+					Metric string
+				}
 				conditions {}
 				action {
-					DBSelectMetrics("ecosystem_pages", "1 days", "max")
+					UpdateMetrics()
+					$result = One(DBSelectMetrics($Metric, "1 days", "max"), "value")
 				}
 			}`},
 		"Conditions": {"true"},
 	}
-	if err := postTx("NewContract", &form); err != nil {
-		t.Error(err)
-		return
+	assert.NoError(t, postTx("NewContract", &form))
+
+	metricValue := func(metric string) int {
+		assert.NoError(t, postTx("UpdateMetrics", &url.Values{}))
+
+		_, result, err := postTxResult(contract, &url.Values{"Metric": {metric}})
+		assert.NoError(t, err)
+		return converter.StrToInt(result)
 	}
-	if err := postTx(name, &url.Values{}); err != nil {
-		t.Error(err)
-		return
+
+	ecosystemPages := metricValue("ecosystem_pages")
+	ecosystemTx := metricValue("ecosystem_tx")
+
+	form = url.Values{
+		"Name":       {randName("page")},
+		"Value":      {"P()"},
+		"Menu":       {"default_menu"},
+		"Conditions": {"true"},
 	}
+	assert.NoError(t, postTx("NewPage", &form))
+
+	assert.Equal(t, 1, metricValue("ecosystem_pages")-ecosystemPages)
+	assert.True(t, metricValue("ecosystem_tx") > ecosystemTx)
+
 }
 
 func TestPartitialEdit(t *testing.T) {
