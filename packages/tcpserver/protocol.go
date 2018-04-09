@@ -232,7 +232,7 @@ func readBytes(r io.Reader, size uint64) ([]byte, error) {
 	return value, err
 }
 
-func SendRequestType(reqType uint16, w io.Writer) error {
+func SendRequestType(reqType int64, w io.Writer) error {
 	_, err := w.Write(converter.DecToBin(reqType, 2))
 	return err
 }
