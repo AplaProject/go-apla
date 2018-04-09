@@ -1366,16 +1366,42 @@ If("#key_id#" == EcosysParam("founder_account")){
 			);
 
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
-			('18', 'bad_blocks',
-			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
-			"new_column": "ContractConditions(\"MainCondition\")"}',
-			'{"contract": "ContractConditions(\"MainCondition\")",
-			"id": "ContractConditions(\"MainCondition\")",
-			"block_id": "ContractConditions(\"MainCondition\")",
-			"producer_node_id": "ContractConditions(\"MainCondition\")",
-			"consumer_node_id": "ContractConditions(\"MainCondition\")",
-			"deleted": "ContractConditions(\"MainCondition\")"}',
-			'ContractConditions(\"MainCondition\")');
+			('18',
+			'bad_blocks',
+			'{
+				"insert": "ContractConditions(\"MainCondition\")",
+				"update": "ContractConditions(\"MainCondition\")",
+				"new_column": "ContractConditions(\"MainCondition\")"
+			}',
+			'{
+				"contract": "ContractConditions(\"MainCondition\")",
+				"id": "ContractConditions(\"MainCondition\")",
+				"block_id": "ContractConditions(\"MainCondition\")",
+				"producer_node_id": "ContractConditions(\"MainCondition\")",
+				"consumer_node_id": "ContractConditions(\"MainCondition\")",
+				"deleted": "ContractConditions(\"MainCondition\")"
+			}',
+			'ContractConditions(\"MainCondition\")'
+		);
+
+		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
+			('19',
+			'node_ban_logs',
+			'{
+				"insert": "ContractConditions(\"MainCondition\")",
+				"update": "ContractConditions(\"MainCondition\")",
+				"new_column": "ContractConditions(\"MainCondition\")"
+			}',
+			'{
+				"contract": "ContractConditions(\"MainCondition\")",
+				"id": "ContractConditions(\"MainCondition\")",
+				"node_id": "ContractConditions(\"MainCondition\")",
+				"banned_at": "ContractConditions(\"MainCondition\")",
+				"ban_time": "ContractConditions(\"MainCondition\")",
+				"reason": "ContractConditions(\"MainCondition\")"
+			}',
+			'ContractConditions(\"MainCondition\")'
+		);
 
 	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions") VALUES 
 	('2','MoneyTransfer','contract MoneyTransfer {

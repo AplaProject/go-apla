@@ -1225,12 +1225,12 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 	now := time.Unix(timestamp, 0)
 
 	curFullNodes := syspar.GetNodes()
-	var upd bool
+	var updFullNodes bool
 	for k, n := range curFullNodes {
 		// Removing ban in case ban time has already passed
 		if now.After(n.UnbanTime) {
 			curFullNodes[k].UnbanTime = time.Unix(0, 0)
-			upd = true
+			updFullNodes = true
 		}
 
 		// Setting ban time if we have ban requests for the current node from 51% of all nodes
@@ -1250,13 +1250,27 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 						return err
 					}
 				}
-				upd = true
+
+				DBInsert(
+					sc,
+					model.NodeBanLogs{}.TableName(),
+					"node_id,banned_at,ban_time,reason",
+					n.KeyID,
+					now.Format(time.RFC3339),
+					int64(syspar.GetNodeBanTime().Seconds()), // NodeBanTime always will be integer of seconds. Nothing criminal here
+					fmt.Sprintf("%d/%d nodes voted for ban", br.Count, len(curFullNodes)),
+				)
+				updFullNodes = true
 			}
 		}
 	}
 
-	if upd {
-		d, err := json.Marshal(curFullNodes)
+	if updFullNodes {
+		var sfn []syspar.FullNode
+		for _, fn := range curFullNodes {
+			sfn = append(sfn, *fn)
+		}
+		d, err := json.Marshal(sfn)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling full nodes")
 			return err
