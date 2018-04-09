@@ -154,7 +154,8 @@ MenuItem(
 	  "name" varchar(100) UNIQUE NOT NULL DEFAULT '',
 	  "permissions" jsonb,
 	  "columns" jsonb,
-	  "conditions" text  NOT NULL DEFAULT ''
+	  "conditions" text  NOT NULL DEFAULT '',
+	  "app_id" bigint NOT NULL DEFAULT '0'
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_tables" ADD CONSTRAINT "%[1]d_vde_tables_pkey" PRIMARY KEY ("id");
 	  CREATE INDEX "%[1]d_vde_tables_index_name" ON "%[1]d_vde_tables" (name);

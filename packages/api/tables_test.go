@@ -68,7 +68,7 @@ func TestTableName(t *testing.T) {
 	}
 	name := randName(`tbl`)
 	form := url.Values{"Name": {`tbl-` + name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
-	  "conditions":"true"}]`},
+	  "conditions":"true"}]`}, "ApplicationId": {"100"},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
 	if err != nil {
@@ -97,8 +97,8 @@ func TestTableName(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if len(ret.Columns) == 0 {
-		t.Errorf(`wrong table columns`)
+	if len(ret.Columns) == 0 || ret.AppID != `100` {
+		t.Errorf(`wrong table columns or app_id`)
 		return
 	}
 	var retList listResult
