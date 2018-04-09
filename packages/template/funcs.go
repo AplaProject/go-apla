@@ -237,7 +237,7 @@ func addressTag(par parFunc) string {
 	if len(idval) == 0 {
 		idval = (*par.Workspace.Vars)[`key_id`]
 	}
-	idval = macro(idval, par.Workspace.Vars)
+	idval = processToText(par, macro(idval, par.Workspace.Vars))
 	id, _ := strconv.ParseInt(idval, 10, 64)
 	if id == 0 {
 		return `unknown address`
