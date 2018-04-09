@@ -214,6 +214,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"MD5":                  MD5,
 		"EditEcosysName":       EditEcosysName,
 		"GetColumnType":        GetColumnType,
+		"GetType":              GetType,
 	}
 
 	switch vt {
@@ -1287,4 +1288,11 @@ func MD5(data string) string {
 // GetColumnType returns the type of the column
 func GetColumnType(sc *SmartContract, tableName, columnName string) (string, error) {
 	return model.GetColumnType(getDefTableName(sc, tableName), columnName)
+}
+
+func GetType(val interface{}) string {
+	if val == nil {
+		return `nil`
+	}
+	return reflect.TypeOf(val).String()
 }

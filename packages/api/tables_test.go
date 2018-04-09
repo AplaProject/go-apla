@@ -180,7 +180,7 @@ func TestJSONTable(t *testing.T) {
 			action {
 				var ret map
 				var list array
-				var out tmp where string
+				var one out tmp where empty string
 				ret = DBFind("` + name + `").Columns("Myname,doc,Doc->Ind").WhereId($Id).Row()
 				out = ret["doc.ind"]
 				out = out + DBFind("` + name + `").Columns("myname,doc->Type").WhereId($Id).One("Doc->type")
@@ -188,7 +188,9 @@ func TestJSONTable(t *testing.T) {
 				out = out + Str(Len(list))
 				tmp = DBFind("` + name + `").Columns("doc->title->name").WhereId(3).One("doc->title->name")
 				where = DBFind("` + name + `").Columns("doc->title->name").Where("doc->title->text = ?", "low").One("doc->title->name")
-				$result = out + Str(DBFind("` + name + `").WhereId($Id).One("doc->check")) + tmp + where
+				one = DBFind("` + name + `").Where("doc->title->text = ?", "low").One("doc->title->text")
+				empty = DBFind("` + name + `").WhereId(4).One("doc->languages->arr_id->2")
+				$result = out + Str(DBFind("` + name + `").WhereId($Id).One("doc->check")) + tmp + where +one + empty
 			}
 		}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
@@ -235,21 +237,21 @@ func TestJSONTable(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	checkGet(`2document099Test attTest att`)
+	checkGet(`2document099Test attTest attlow0`)
 
 	err = postTx(name+`Upd`, &url.Values{})
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	checkGet(`doc0Test attTest att`)
+	checkGet(`doc0Test attTest attlow0`)
 
 	err = postTx(name+`UpdOne`, &url.Values{"Type": {"101"}})
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	checkGet(`101new"doc"2Test attTest att`)
+	checkGet(`101new"doc"2Test attTest attlow0`)
 
 	form = url.Values{"Name": {`res` + name}, "Value": {`contract res` + name + ` {
 		data {
