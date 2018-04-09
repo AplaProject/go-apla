@@ -230,31 +230,67 @@ MenuItem(
 		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('2','NewContract','contract NewContract {
-		  data {
-			  Value      string
-			  Conditions string
-		  }
-		  conditions {
+		data {
+			Value      string
+			Conditions string
+			Wallet         string "optional"
+			TokenEcosystem int "optional"
+			ApplicationId int "optional"
+		}
+		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
-			  var list array
-			  list = ContractsList($Value)
-			  var i int
-			  while i < Len(list) {
-				  if IsObject(list[i], $ecosystem_id) {
-					  warning Sprintf("Contract or function %%s exists", list[i] )
-				  }
-				  i = i + 1
-			  }
-			  $contract_name=list[0]
-		  }
-		  action {
-			  var root, id int
-			  root = CompileContract($Value, $ecosystem_id, 0, 0)
-			  id = DBInsert("contracts", "name,value,conditions", $contract_name, $Value, $Conditions )
-			  FlushContract(root, id, false)
-			  $result = id
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+			$walletContract = $key_id
+			   if $Wallet {
+				$walletContract = AddressToId($Wallet)
+				if $walletContract == 0 {
+				   error Sprintf("wrong wallet %%s", $Wallet)
+				}
+			}
+			var list array
+			list = ContractsList($Value)
+			
+			if Len(list) == 0 {
+				error "must be the name"
+			}
+
+			var i int
+			while i < Len(list) {
+				if IsObject(list[i], $ecosystem_id) {
+					warning Sprintf("Contract or function %%s exists", list[i] )
+				}
+				i = i + 1
+			}
+
+			$contract_name = list[0]
+			if !$TokenEcosystem {
+				$TokenEcosystem = 1
+			} else {
+				if !SysFuel($TokenEcosystem) {
+					warning Sprintf("Ecosystem %%d is not system", $TokenEcosystem )
+				}
+			}
+		}
+		action {
+			var root, id int
+			root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
+			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id,app_id", 
+				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
+			FlushContract(root, id, false)
+			$result = id
+		}
+		func rollback() {
+			var list array
+    		list = ContractsList($Value)
+			var i int
+			while i < Len(list) {
+				RollbackContract(list[i])
+				i = i + 1
+			}
+		}
+		func price() int {
+			return  SysParamInt("contract_price")
+		}
+	}', 'ContractConditions("MainCondition")'),
 	  ('3','EditContract','contract EditContract {
 		  data {
 			  Id         int
@@ -352,24 +388,30 @@ MenuItem(
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('6', 'NewMenu','contract NewMenu {
-		  data {
-			  Name       string
-			  Value      string
-			  Title      string "optional"
-			  Conditions string
-		  }
-		  conditions {
-			  var ret int
-			  ValidateCondition($Conditions,$ecosystem_id)
-			  ret = DBFind("menu").Columns("id").Where("name=?", $Name).Limit(1)
-			  if Len(ret) > 0 {
-				  warning Sprintf( "Menu %%s already exists", $Name)
-			  }
-		  }
-		  action {
-			  $result = DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions )
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+		data {
+			Name       string
+			Value      string
+			Title      string "optional"
+			Conditions string
+			ApplicationId int "optional"
+		}
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+
+			var row map
+			row = DBRow("menu").Columns("id").Where("name = ?", $Name)
+
+			if row {
+				warning Sprintf( "Menu %%s already exists", $Name)
+			}
+		}
+		action {
+			DBInsert("menu", "name,value,title,conditions,app_id", $Name, $Value, $Title, $Conditions, $ApplicationId )
+		}
+		func price() int {
+			return  SysParamInt("menu_price")
+		}
+	}', 'ContractConditions("MainCondition")'),
 	  ('7','EditMenu','contract EditMenu {
 		  data {
 			  Id         int
@@ -417,24 +459,48 @@ MenuItem(
 		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('9','NewPage','contract NewPage {
-		  data {
-			  Name       string
-			  Value      string
-			  Menu       string
-			  Conditions string
-		  }
-		  conditions {
-			  var ret int
-			  ValidateCondition($Conditions,$ecosystem_id)
-			  ret = DBFind("pages").Columns("id").Where("name=?", $Name).Limit(1)
-			  if Len(ret) > 0 {
-				  warning Sprintf( "Page %%s already exists", $Name)
-			  }
-		  }
-		  action {
-			  $result = DBInsert("pages", "name,value,menu,conditions", $Name, $Value, $Menu, $Conditions )
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+		data {
+			Name       string
+			Value      string
+			Menu       string
+			Conditions string
+			ValidateCount int "optional"
+			ApplicationId int "optional"
+		}
+		func preparePageValidateCount(count int) int {
+			var min, max int
+			min = Int(EcosysParam("min_page_validate_count"))
+			max = Int(EcosysParam("max_page_validate_count"))
+	
+			if count < min {
+				count = min
+			} else {
+				if count > max {
+					count = max
+				}
+			}
+	
+			return count
+		}
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+
+			var row map
+			row = DBRow("pages").Columns("id").Where("name = ?", $Name)
+
+			if row {
+				warning Sprintf( "Page %%s already exists", $Name)
+			}
+
+			$ValidateCount = preparePageValidateCount($ValidateCount)
+		}
+		action {
+			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId)
+		}
+		func price() int {
+			return  SysParamInt("page_price")
+		}
+	}', 'ContractConditions("MainCondition")'),
 	  ('10','EditPage','contract EditPage {
 		  data {
 			Id         int
@@ -482,23 +548,26 @@ MenuItem(
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('12','NewBlock','contract NewBlock {
-		  data {
-			  Name       string
-			  Value      string
-			  Conditions string
-		  }
-		  conditions {
-			  var ret int
-			  ValidateCondition($Conditions,$ecosystem_id)
-			  ret = DBFind("blocks").Columns("id").Where("name=?", $Name).Limit(1)
-			  if Len(ret) > 0 {
-				  warning Sprintf( "Block %%s already exists", $Name)
-			  }
-		  }
-		  action {
-			  $result = DBInsert("blocks", "name,value,conditions", $Name, $Value, $Conditions )
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+		data {
+			Name       string
+			Value      string
+			Conditions string
+			ApplicationId int "optional"
+		}
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+
+			var row map
+			row = DBRow("blocks").Columns("id").Where("name = ?", $Name)
+
+			if row {
+				warning Sprintf( "Block %%s already exists", $Name)
+			}
+		}
+		action {
+			DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId )
+		}
+	 }', 'ContractConditions("MainCondition")'),
 	  ('13','EditBlock','contract EditBlock {
 		  data {
 			Id         int
@@ -527,18 +596,25 @@ MenuItem(
 		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('14','NewTable','contract NewTable {
-		  data {
-			  Name       string
-			  Columns      string
-			  Permissions string
-		  }
-		  conditions {
-			  TableConditions($Name, $Columns, $Permissions)
-		  }
-		  action {
-			  CreateTable($Name, $Columns, $Permissions)
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+		data {
+			Name       string
+			Columns      string
+			Permissions string
+			ApplicationId int "optional"
+		}
+		conditions {
+			TableConditions($Name, $Columns, $Permissions)
+		}
+		action {
+			CreateTable($Name, $Columns, $Permissions, $ApplicationId)
+		}
+		func rollback() {
+			RollbackTable($Name)
+		}
+		func price() int {
+			return  SysParamInt("table_price")
+		}
+	}', 'ContractConditions("MainCondition")'),
 	  ('15','EditTable','contract EditTable {
 		  data {
 			  Name       string
@@ -1383,6 +1459,7 @@ MenuItem(
 			Conditions string
 			Wallet         string "optional"
 			TokenEcosystem int "optional"
+			ApplicationId int "optional"
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1420,8 +1497,8 @@ MenuItem(
 		action {
 			var root, id int
 			root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
-			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id", 
-				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem)
+			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id,app_id", 
+				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
 			FlushContract(root, id, false)
 			$result = id
 		}
@@ -1601,6 +1678,7 @@ MenuItem(
 			Value      string
 			Title      string "optional"
 			Conditions string
+			ApplicationId int "optional"
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1613,7 +1691,7 @@ MenuItem(
 			}
 		}
 		action {
-			DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions )
+			DBInsert("menu", "name,value,title,conditions,app_id", $Name, $Value, $Title, $Conditions, $ApplicationId )
 		}
 		func price() int {
 			return  SysParamInt("menu_price")
@@ -1672,6 +1750,7 @@ MenuItem(
 			Menu       string
 			Conditions string
 			ValidateCount int "optional"
+			ApplicationId int "optional"
 		}
 		func preparePageValidateCount(count int) int {
 			var min, max int
@@ -1701,13 +1780,12 @@ MenuItem(
 			$ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
-			DBInsert("pages", "name,value,menu,validate_count,conditions", $Name, $Value, $Menu, $ValidateCount, $Conditions)
+			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId)
 		}
 		func price() int {
 			return  SysParamInt("page_price")
 		}
-	}
-	', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")'),
 	('13','EditPage','contract EditPage {
 		data {
 			Id         int
@@ -1855,6 +1933,7 @@ MenuItem(
 			Name       string
 			Value      string
 			Conditions string
+			ApplicationId int "optional"
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1867,7 +1946,7 @@ MenuItem(
 			}
 		}
 		action {
-			DBInsert("blocks", "name,value,conditions", $Name, $Value, $Conditions )
+			DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('20','EditBlock','contract EditBlock {
@@ -1902,12 +1981,13 @@ MenuItem(
 			Name       string
 			Columns      string
 			Permissions string
+			ApplicationId int "optional"
 		}
 		conditions {
 			TableConditions($Name, $Columns, $Permissions)
 		}
 		action {
-			CreateTable($Name, $Columns, $Permissions)
+			CreateTable($Name, $Columns, $Permissions, $ApplicationId)
 		}
 		func rollback() {
 			RollbackTable($Name)
