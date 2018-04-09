@@ -402,7 +402,7 @@ MenuItem(
 			row = DBRow("menu").Columns("id").Where("name = ?", $Name)
 
 			if row {
-				warning Sprintf( "Menu %s already exists", $Name)
+				warning Sprintf( "Menu %%s already exists", $Name)
 			}
 		}
 		action {
@@ -1693,7 +1693,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			row = DBRow("menu").Columns("id").Where("name = ?", $Name)
 
 			if row {
-				warning Sprintf( "Menu %s already exists", $Name)
+				warning Sprintf( "Menu %%s already exists", $Name)
 			}
 		}
 		action {
