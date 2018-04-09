@@ -1,10 +1,15 @@
 package model
 
+import (
+	"time"
+)
+
 type BadBlocks struct {
 	ID             int64
 	ProducerNodeId int64
 	BlockId        int64
 	ConsumerNodeId int64
+	BlockTime      time.Time
 	Deleted        bool
 }
 
@@ -20,25 +25,52 @@ type BanRequests struct {
 }
 
 // GetNeedToBanNodes is returns list of ban requests for each node
-func (r *BadBlocks) GetNeedToBanNodes() ([]BanRequests, error) {
+func (r *BadBlocks) GetNeedToBanNodes(now time.Time, blocksPerNode int) ([]BanRequests, error) {
 	var res []BanRequests
+
 	err := DBConn.
-		Table(r.TableName()).
-		Select("producer_node_id, COUNT(DISTINCT consumer_node_id)").
-		Group("producer_node_id").
-		Where("deleted = ?", false).
+		Raw(
+			`SELECT
+				producer_node_id,
+				COUNT(consumer_node_id) as count
+			FROM (
+				SELECT
+					producer_node_id,
+					consumer_node_id,
+					count(DISTINCT block_id)
+				FROM
+				"1_bad_blocks"
+				WHERE
+					block_time > ?::date - interval '24 hours'
+					AND deleted = FALSE
+				GROUP BY
+					producer_node_id,
+					consumer_node_id
+				HAVING
+					count(DISTINCT block_id) >= ?) AS tbl
+			GROUP BY
+			producer_node_id`,
+			now,
+			blocksPerNode,
+		).
 		Scan(&res).
 		Error
 
 	return res, err
 }
 
-func (r *BadBlocks) GetNodeBlocks(nodeId int64) ([]BadBlocks, error) {
+func (r *BadBlocks) GetNodeBlocks(nodeId int64, now time.Time) ([]BadBlocks, error) {
+	return nil, nil
 	var res []BadBlocks
 	err := DBConn.
 		Table(r.TableName()).
 		Model(&BadBlocks{}).
-		Where("producer_node_id = ? AND deleted = ?", nodeId, false).
+		Where(
+			"producer_node_id = ? AND block_time > ?::date - interval '24 hours' AND deleted = ?",
+			nodeId,
+			now,
+			false,
+		).
 		Scan(&res).
 		Error
 

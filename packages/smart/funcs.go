@@ -1215,14 +1215,14 @@ func UpdateCron(sc *SmartContract, id int64) error {
 }
 
 func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
+	now := time.Unix(timestamp, 0)
+
 	badBlocks := &model.BadBlocks{}
-	banRequests, err := badBlocks.GetNeedToBanNodes()
+	banRequests, err := badBlocks.GetNeedToBanNodes(now, syspar.GetIncorrectBlocksPerDay())
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get nodes need to be banned")
 		return err
 	}
-
-	now := time.Unix(timestamp, 0)
 
 	curFullNodes := syspar.GetNodes()
 	var updFullNodes bool
@@ -1233,12 +1233,13 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 			updFullNodes = true
 		}
 
-		// Setting ban time if we have ban requests for the current node from 51% of all nodes
+		// Setting ban time if we have ban requests for the current node from 51% of all nodes.
+		// Ban request is mean that node have added more or equal N(system parameter) of bad blocks
 		for _, br := range banRequests {
 			if br.ProducerNodeId == n.KeyID && br.Count >= int64((len(curFullNodes)/2)+1) {
 				curFullNodes[k].UnbanTime = now.Add(syspar.GetNodeBanTime())
 
-				blocks, err := badBlocks.GetNodeBlocks(n.KeyID)
+				blocks, err := badBlocks.GetNodeBlocks(n.KeyID, now)
 				if err != nil {
 					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node bad blocks for removing")
 					return err
@@ -1257,8 +1258,13 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 					"node_id,banned_at,ban_time,reason",
 					n.KeyID,
 					now.Format(time.RFC3339),
-					int64(syspar.GetNodeBanTime().Seconds()), // NodeBanTime always will be integer of seconds. Nothing criminal here
-					fmt.Sprintf("%d/%d nodes voted for ban", br.Count, len(curFullNodes)),
+					int64(syspar.GetNodeBanTime()/time.Millisecond), // in ms
+					fmt.Sprintf(
+						"%d/%d nodes voted for ban with %d or more blocks each",
+						br.Count,
+						len(curFullNodes),
+						syspar.GetIncorrectBlocksPerDay(),
+					),
 				)
 				updFullNodes = true
 			}

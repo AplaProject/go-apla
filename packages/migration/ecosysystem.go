@@ -1332,6 +1332,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"producer_node_id" bigint NOT NULL,
 			"block_id" int NOT NULL,
 			"consumer_node_id" bigint NOT NULL,
+			"block_time" timestamp NOT NULL,
 			"deleted" boolean NOT NULL DEFAULT 'false'
 		);
 		
@@ -1379,6 +1380,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 				"block_id": "ContractConditions(\"MainCondition\")",
 				"producer_node_id": "ContractConditions(\"MainCondition\")",
 				"consumer_node_id": "ContractConditions(\"MainCondition\")",
+				"block_time": "ContractConditions(\"MainCondition\")",
 				"deleted": "ContractConditions(\"MainCondition\")"
 			}',
 			'ContractConditions(\"MainCondition\")'
@@ -2376,9 +2378,10 @@ If("#key_id#" == EcosysParam("founder_account")){
 			ProducerNodeID int
 			ConsumerNodeID int
 			BlockID int
+			Timestamp int
 		}
 		action {
-			DBInsert("bad_blocks", "producer_node_id,consumer_node_id,block_id", $ProducerNodeID, $ConsumerNodeID, $BlockID)
+			DBInsert("bad_blocks", "producer_node_id,consumer_node_id,block_id,timestamp block_time", $ProducerNodeID, $ConsumerNodeID, $BlockID, $Timestamp)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
 	('37', 'CheckNodesBan', 'contract CheckNodesBan {

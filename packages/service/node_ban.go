@@ -45,12 +45,12 @@ func InitNodesBanService(fullNodes map[int64]*syspar.FullNode) error {
 	return nil
 }
 
-func (nbs *NodesBanService) RegisterBadBlock(node syspar.FullNode, badBlockId int64) error {
+func (nbs *NodesBanService) RegisterBadBlock(node syspar.FullNode, badBlockId, blockTime int64) error {
 	if !nbs.IsBanned(node) {
 		nbs.localBan(node)
 	}
 
-	err := nbs.newBadBlock(node, badBlockId)
+	err := nbs.newBadBlock(node, badBlockId, blockTime)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (nbs *NodesBanService) localBan(node syspar.FullNode) {
 	}
 }
 
-func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId int64) error {
+func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, blockTime int64) error {
 	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
 	if err != nil || len(NodePrivateKey) < 1 {
 		if err == nil {
@@ -123,7 +123,7 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId int64)
 	}
 
 	params := make([]byte, 0)
-	for _, p := range []int64{producer.KeyID, cn.KeyID, blockId} {
+	for _, p := range []int64{producer.KeyID, cn.KeyID, blockId, blockTime} {
 		converter.EncodeLenInt64(&params, p)
 	}
 
@@ -146,6 +146,7 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId int64)
 		strconv.FormatInt(producer.KeyID, 10),
 		strconv.FormatInt(cn.KeyID, 10),
 		strconv.FormatInt(blockId, 10),
+		strconv.FormatInt(blockTime, 10),
 	)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
