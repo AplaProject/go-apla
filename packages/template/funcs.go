@@ -558,6 +558,7 @@ func dbfindTag(par parFunc) string {
 		if !strings.Contains(fields, "id") {
 			fields += ",id"
 		}
+		fields = smart.PrepareColumns(fields)
 		queryColumns = strings.Split(fields, ",")
 	} else {
 		for _, col := range rows {
@@ -588,7 +589,7 @@ func dbfindTag(par parFunc) string {
 			break
 		}
 	}
-	fields = smart.PrepareColumns(fields)
+	fields = strings.Join(queryColumns, ", ")
 	for i, key := range columnNames {
 		if strings.Contains(key, `->`) {
 			columnNames[i] = strings.Replace(key, `->`, `.`, -1)

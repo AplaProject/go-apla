@@ -211,6 +211,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RowConditions":        RowConditions,
 		"UUID":                 UUID,
 		"DecodeBase64":         DecodeBase64,
+		"EncodeBase64":         EncodeBase64,
 		"MD5":                  MD5,
 		"EditEcosysName":       EditEcosysName,
 		"GetColumnType":        GetColumnType,
@@ -1247,6 +1248,11 @@ func DecodeBase64(input string) (out string, err error) {
 		out = string(bin)
 	}
 	return
+}
+
+// EncodeBase64 encodes string in base64
+func EncodeBase64(input string) (out string) {
+	return base64.StdEncoding.EncodeToString([]byte(input))
 }
 
 // MD5 returns md5 hash sum of data

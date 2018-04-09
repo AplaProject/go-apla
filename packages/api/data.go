@@ -36,7 +36,7 @@ const (
 	base64header     = "base64,"
 )
 
-var base64regexp = regexp.MustCompile(`(?is)^data:([a-z0-9-]+\/[a-z0-9-]+);base64,$`)
+var base64regexp = regexp.MustCompile(`(?is)^data:([a-z0-9-]+\/[a-z0-9-]+)?;base64,$`)
 
 func dataHandler() hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
