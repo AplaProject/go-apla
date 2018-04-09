@@ -197,23 +197,10 @@ func processToText(par parFunc, input string) (out string) {
 }
 
 func ifValue(val string, workspace *Workspace) bool {
-	var (
-		sep   string
-		owner node
-	)
+	var sep string
 
-	if strings.IndexByte(val, '(') != -1 {
-		process(val, &owner, workspace)
-		if len(owner.Children) > 0 {
-			inode := owner.Children[0]
-			if inode.Tag == tagText {
-				val = inode.Text
-			}
-		} else {
-			val = ``
-		}
+	val = parseArg(val, workspace)
 
-	}
 	if strings.Index(val, `;base64`) < 0 {
 		for _, item := range []string{`==`, `!=`, `<=`, `>=`, `<`, `>`} {
 			if strings.Index(val, item) >= 0 {
@@ -661,6 +648,23 @@ func process(input string, owner *node, workspace *Workspace) {
 	appendText(owner, string(name))
 }
 
+func parseArg(arg string, workspace *Workspace) (val string) {
+	if strings.IndexByte(arg, '(') == -1 {
+		return arg
+	}
+
+	var owner node
+	process(arg, &owner, workspace)
+	if len(owner.Children) > 0 {
+		inode := owner.Children[0]
+		if inode.Tag == tagText {
+			val = inode.Text
+		}
+	}
+
+	return
+}
+
 // Template2JSON converts templates to JSON data
 func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte {
 	root := node{}
@@ -668,8 +672,14 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 	sc := smart.SmartContract{
 		VDE: isvde,
 		VM:  smart.GetVM(isvde, converter.StrToInt64((*vars)[`ecosystem_id`])),
-		TxSmart: tx.SmartContract{Header: tx.Header{EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
-			KeyID: converter.StrToInt64((*vars)[`key_id`])}},
+		TxSmart: tx.SmartContract{
+			Header: tx.Header{
+				EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
+				KeyID:       converter.StrToInt64((*vars)[`key_id`]),
+				RoleID:      converter.StrToInt64((*vars)[`role_id`]),
+				NetworkID:   consts.NETWORK_ID,
+			},
+		},
 	}
 	process(input, &root, &Workspace{Vars: vars, Timeout: timeout, SmartContract: &sc})
 	if root.Children == nil || *timeout {

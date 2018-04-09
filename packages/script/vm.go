@@ -45,6 +45,25 @@ const (
 	brackets = `[]`
 )
 
+var sysVars = map[string]struct{}{
+	`block`:             {},
+	`block_key_id`:      {},
+	`block_time`:        {},
+	`data`:              {},
+	`ecosystem_id`:      {},
+	`key_id`:            {},
+	`node_position`:     {},
+	`parent`:            {},
+	`original_contract`: {},
+	`sc`:                {},
+	`stack_cont`:        {},
+	`this_contract`:     {},
+	`time`:              {},
+	`type`:              {},
+	`txcost`:            {},
+	`txhash`:            {},
+}
+
 type VMError struct {
 	Type  string `json:"type"`
 	Error string `json:"error"`
@@ -65,6 +84,13 @@ type RunTime struct {
 	cost   int64
 	err    error
 	unwrap bool
+}
+
+func isSysVar(name string) bool {
+	if _, ok := sysVars[name]; ok || strings.HasPrefix(name, `loop_`) {
+		return true
+	}
+	return false
 }
 
 func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
@@ -435,6 +461,11 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			for ivar, item := range assign {
 				if item.Owner == nil {
 					if (*item).Obj.Type == ObjExtend {
+						if isSysVar((*item).Obj.Value.(string)) {
+							err := fmt.Errorf(eSysVar, (*item).Obj.Value.(string))
+							rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("modifying system variable")
+							return 0, err
+						}
 						(*rt.extend)[(*item).Obj.Value.(string)] = rt.stack[len(rt.stack)-count+ivar]
 					}
 				} else {
@@ -468,9 +499,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			if rt.stack[mapoff] == nil {
 				rt.stack[mapoff] = make(map[string][]interface{})
 			}
-			params := make([]interface{}, ifunc.Count)
+			params := make([]interface{}, 0, ifunc.Count)
 			for i := 0; i < ifunc.Count; i++ {
-				params[i] = rt.stack[mapoff+1+i]
+				cur := rt.stack[mapoff+1+i]
+				if i == ifunc.Count-1 && rt.unwrap &&
+					reflect.TypeOf(cur).String() == `[]interface {}` {
+					params = append(params, cur.([]interface{})...)
+					rt.unwrap = false
+				} else {
+					params = append(params, cur)
+				}
 			}
 			rt.stack[mapoff].(map[string][]interface{})[ifunc.Name] = params
 			rt.stack = rt.stack[:mapoff+1]
@@ -619,7 +657,18 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case float64:
 				bin = top[1].(float64) + ValueToFloat(top[0])
 			case int64:
-				bin = top[1].(int64) + top[0].(int64)
+				switch top[0].(type) {
+				case int64:
+					bin = top[1].(int64) + top[0].(int64)
+				case float64:
+					bin = ValueToFloat(top[1]) + top[0].(float64)
+				default:
+					if reflect.TypeOf(top[0]).String() == Decimal {
+						bin = ValueToDecimal(top[1]).Add(top[0].(decimal.Decimal))
+					} else {
+						return 0, errUnsupportedType
+					}
+				}
 			default:
 				switch reflect.TypeOf(top[1]).String() {
 				case Decimal:
@@ -642,7 +691,14 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case float64:
 				bin = top[1].(float64) - ValueToFloat(top[0])
 			case int64:
-				bin = top[1].(int64) - top[0].(int64)
+				switch top[0].(type) {
+				case int64:
+					bin = top[1].(int64) - top[0].(int64)
+				case float64:
+					bin = ValueToFloat(top[1]) - top[0].(float64)
+				default:
+					return 0, errUnsupportedType
+				}
 			default:
 				switch reflect.TypeOf(top[1]).String() {
 				case Decimal:
@@ -672,7 +728,14 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				if reflect.TypeOf(top[0]).String() == Decimal {
 					bin = ValueToDecimal(top[1]).Mul(top[0].(decimal.Decimal))
 				} else {
-					bin = top[1].(int64) * top[0].(int64)
+					switch top[0].(type) {
+					case int64:
+						bin = top[1].(int64) * top[0].(int64)
+					case float64:
+						bin = ValueToFloat(top[1]) * top[0].(float64)
+					default:
+						return 0, errUnsupportedType
+					}
 				}
 			default:
 				switch reflect.TypeOf(top[1]).String() {
@@ -696,11 +759,22 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case float64:
 				bin = top[1].(float64) / ValueToFloat(top[0])
 			case int64:
-				if top[0].(int64) == 0 {
-					log.WithFields(log.Fields{"type": consts.DivisionByZero}).Error("divided by zero")
-					return 0, fmt.Errorf(`divided by zero`)
+				switch top[0].(type) {
+				case int64:
+					if top[0].(int64) == 0 {
+						log.WithFields(log.Fields{"type": consts.DivisionByZero}).Error("divided by zero")
+						return 0, errDivZero
+					}
+					bin = top[1].(int64) / top[0].(int64)
+				case float64:
+					if top[0].(float64) == 0 {
+						log.WithFields(log.Fields{"type": consts.DivisionByZero}).Error("divided by zero")
+						return 0, errDivZero
+					}
+					bin = ValueToFloat(top[1]) / top[0].(float64)
+				default:
+					return 0, errUnsupportedType
 				}
-				bin = top[1].(int64) / top[0].(int64)
 			default:
 				switch reflect.TypeOf(top[1]).String() {
 				case Decimal:
@@ -732,7 +806,14 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = top[1].(float64) == ValueToFloat(top[0])
 				case int64:
-					bin = top[1].(int64) == top[0].(int64)
+					switch top[0].(type) {
+					case int64:
+						bin = top[1].(int64) == top[0].(int64)
+					case float64:
+						bin = ValueToFloat(top[1]) == top[0].(float64)
+					default:
+						return 0, errUnsupportedType
+					}
 				default:
 					bin = top[1].(decimal.Decimal).Cmp(ValueToDecimal(top[0])) == 0
 				}
@@ -758,7 +839,14 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case float64:
 				bin = top[1].(float64) < ValueToFloat(top[0])
 			case int64:
-				bin = top[1].(int64) < top[0].(int64)
+				switch top[0].(type) {
+				case int64:
+					bin = top[1].(int64) < top[0].(int64)
+				case float64:
+					bin = ValueToFloat(top[1]) < top[0].(float64)
+				default:
+					return 0, errUnsupportedType
+				}
 			default:
 				bin = top[1].(decimal.Decimal).Cmp(ValueToDecimal(top[0])) < 0
 			}
@@ -783,7 +871,14 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case float64:
 				bin = top[1].(float64) > ValueToFloat(top[0])
 			case int64:
-				bin = top[1].(int64) > top[0].(int64)
+				switch top[0].(type) {
+				case int64:
+					bin = top[1].(int64) > top[0].(int64)
+				case float64:
+					bin = ValueToFloat(top[1]) > top[0].(float64)
+				default:
+					return 0, errUnsupportedType
+				}
 			default:
 				bin = top[1].(decimal.Decimal).Cmp(ValueToDecimal(top[0])) > 0
 			}

@@ -42,7 +42,6 @@ type FirstBlock struct {
 	TxHeader
 	PublicKey     []byte
 	NodePublicKey []byte
-	Host          string
 }
 
 // Don't forget to insert the structure in init() - list

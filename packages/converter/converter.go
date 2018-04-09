@@ -432,7 +432,7 @@ func EscapeName(name string) string {
 	out[0] = '"'
 	available := `() ,`
 	for _, ch := range []byte(name) {
-		if (ch >= '0' && ch <= '9') || ch == '_' || (ch >= 'a' && ch <= 'z') ||
+		if (ch >= '0' && ch <= '9') || ch == '_' || ch == '-' || (ch >= 'a' && ch <= 'z') ||
 			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0 {
 			out = append(out, ch)
 		}
@@ -946,6 +946,8 @@ func RoundWithoutPrecision(num float64) int64 {
 func ValueToInt(v interface{}) (ret int64) {
 	var err error
 	switch val := v.(type) {
+	case float64:
+		ret = int64(val)
 	case int64:
 		ret = val
 	case string:

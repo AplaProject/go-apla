@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/stretchr/testify/assert"
 )
 
 type tplItem struct {
@@ -81,6 +82,10 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
+	{`DBFind(parameters, src_par).Columns("id").Order(id).Where("id >= 1 and id <= 3").Count(count)Span(#count#)`,
+		`[{"tag":"dbfind","attr":{"columns":["id"],"count":"3","data":[["1"],["2"],["3"]],"name":"parameters","order":"id","source":"src_par","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"span","children":[{"tag":"text","text":"3"}]}]`},
+	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
 	{`SetVar(where)DBFind(contracts, src).Columns(id).Order(id).Limit(3).Custom(a){SetVar(where, #where# #id#)}
 	Div(){Table(src, "=x")}Div(){Table(src)}Div(){#where#}`,
 		`[{"tag":"dbfind","attr":{"columns":["id","a"],"data":[["1","null"],["2","null"],["3","null"]],"limit":"3","name":"contracts","order":"id","source":"src","types":["text","tags"]}},{"tag":"div","children":[{"tag":"table","attr":{"columns":[{"Name":"x","Title":""}],"source":"src"}}]},{"tag":"div","children":[{"tag":"table","attr":{"source":"src"}}]},{"tag":"div","children":[{"tag":"text","text":" 1 2 3"}]}]`},
@@ -128,6 +133,8 @@ var forTest = tplList{
 		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1",""]],"source":"mygender","types":["text","text"]}}]`},
 	{`EcosysParam(new_table)`,
 		`[{"tag":"text","text":"ContractConditions("MainCondition")"}]`},
+	{`SetVar(ind,2).(nodes, number_of_nodes).(int,1hour)EcosysParam(gender, #ind#)SysParam(#nodes#)Now(Interval:#int#)`,
+		`[{"tag":"text","text":"second"}]`},
 	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
 		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","government"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"government"}]}]`},
 	{`SetVar(varZero, 0) If(#varZero#>0) { the varZero should be hidden }
@@ -153,6 +160,8 @@ func TestMobile(t *testing.T) {
 		return
 	}
 }
+
+var imageData = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
 
 func TestImage(t *testing.T) {
 	if err := keyLogin(1); err != nil {
@@ -221,7 +230,7 @@ func TestImage(t *testing.T) {
 		t.Errorf(`Too much time for template parsing`)
 		return
 	}
-	mydata = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
+	mydata = imageData
 	err = postTx(name, &url.Values{
 		"Image":     {mydata},
 		"ShortText": {shortText},
@@ -260,4 +269,22 @@ func TestImage(t *testing.T) {
 	if string(data) != longText {
 		t.Errorf("Wrong text %s", data)
 	}
+}
+
+func TestBinary(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	form := url.Values{
+		"AppID":    {"1"},
+		"MemberID": {"1"},
+		"Name":     {"file"},
+		"Data":     {imageData},
+	}
+	assert.NoError(t, postTx("UploadBinary", &form))
+
+	var ret contentResult
+	template := `Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`
+	err := sendPost(`content`, &url.Values{`template`: {template}}, &ret)
+	assert.NoError(t, err)
+	assert.Regexp(t, `\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/[a-f0-9]{32}"}}\]`, string(ret.Tree))
 }

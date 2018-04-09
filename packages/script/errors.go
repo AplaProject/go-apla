@@ -20,6 +20,7 @@ import "errors"
 
 const (
 	eContractLoop    = `there is loop in %s contract`
+	eSysVar          = `system variable $%s cannot be changed`
 	eTypeParam       = `parameter %d has wrong type`
 	eUndefinedParam  = `%s is not defined`
 	eUnknownContract = `unknown contract %s`
@@ -27,6 +28,8 @@ const (
 )
 
 var (
-	errContractPars   = errors.New(`wrong contract parameters`)
-	errWrongCountPars = errors.New(`wrong count of parameters`)
+	errContractPars    = errors.New(`wrong contract parameters`)
+	errWrongCountPars  = errors.New(`wrong count of parameters`)
+	errDivZero         = errors.New(`divided by zero`)
+	errUnsupportedType = errors.New(`unsupported type`)
 )

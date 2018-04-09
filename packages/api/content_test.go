@@ -75,4 +75,18 @@ func TestContent(t *testing.T) {
 		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
 		return
 	}
+
+	err = sendPost("content", &url.Values{
+		"template": {"SetVar(mytest, myvar)Div(myclass, Span(#mytest#) Div(mypar){Span(test)}#mytest#)"},
+		"source":   {"true"},
+	}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if string(ret.Tree) != `[{"tag":"setvar","attr":{"name":"mytest","value":"myvar"}},{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"span","children":[{"tag":"text","text":"#mytest#"}]},{"tag":"div","attr":{"class":"mypar"},"children":[{"tag":"span","children":[{"tag":"text","text":"test"}]}]},{"tag":"text","text":"#mytest#"}]}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, ret.Tree))
+		return
+	}
 }

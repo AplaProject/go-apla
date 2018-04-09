@@ -237,13 +237,51 @@ func TestNewTable(t *testing.T) {
 		return
 	}
 	name := randName(`tbl`)
-	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
+	form := url.Values{"Name": {`1_` + name}, "Columns": {`[{"name":"MyName","type":"varchar", 
+		"conditions":"true"},
+	  {"name":"Name", "type":"varchar","index": "0", "conditions":"true"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"TableName": {`1_` + name}, "Name": {`newCol`},
+		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
+	err = postTx(`NewColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract sub` + name + ` {
+		action {
+			DBInsert("1_` + name + `", "name", "ok")
+			DBUpdate("1_` + name + `", 1, "name", "test value" )
+			$result = DBFind("1_` + name + `").Columns("name").WhereId(1).One("name")
+		}
+	}`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err := postTxResult(`sub`+name, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `test value` {
+		t.Errorf("wrong result %s", msg)
+		return
+	}
+
+	form = url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
 	  "conditions":"true"},
 	{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
 	{"name":"Doc", "type":"json","index": "0", "conditions":"true"},	
 	{"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err := postTx(`NewTable`, &form)
+	err = postTx(`NewTable`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -396,8 +434,9 @@ func TestUpdateSysParam(t *testing.T) {
 		{`fuel_rate`, `[["name", "100"]]`},
 		{`commission_wallet`, `[["1", "0"]]`},
 		{`commission_wallet`, `[{"1", "50"}]`},
-		{`full_nodes`, `[["", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7"]]`},
-		{`full_nodes`, `[["127.0.0.1", "0", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
+		{`full_nodes`, `[["", "http://127.0.0.1", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7"]]`},
+		{`full_nodes`, `[["127.0.0.1", "", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
+		{`full_nodes`, `[["127.0.0.1", "http://127.0.0.1", "0", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
 	}
 	for _, item := range notvalid {
 		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {item.Value}})
@@ -413,6 +452,9 @@ func TestUpdateSysParam(t *testing.T) {
 		if len(sysList.List) != 1 {
 			t.Error(`have got wrong parameter ` + item.Name)
 			return
+		}
+		if len(sysList.List[0].Value) == 0 {
+			continue
 		}
 		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {sysList.List[0].Value}})
 		if err != nil {

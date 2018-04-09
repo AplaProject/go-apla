@@ -16,11 +16,18 @@
 
 package consts
 
+import (
+	"time"
+)
+
 // VERSION is current version
 const VERSION = "0.1.6b13"
 
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
+
+// NETWORK_ID is id of network
+const NETWORK_ID = 1
 
 // DEFAULT_TCP_PORT used when port number missed in host addr
 const DEFAULT_TCP_PORT = 7078
@@ -92,8 +99,13 @@ var ApiPath = `/api/v2/`
 // DefaultConfigFile name of config file (toml format)
 const DefaultConfigFile = "config.toml"
 
-// PidFilename name of pid file
-const PidFilename = "apla.pid"
+const DefaultWorkdirName = "genesis-data"
+
+// DefaultPidFilename is default filename of pid file
+const DefaultPidFilename = "go-genesis.pid"
+
+// DefaultLockFilename is default filename of lock file
+const DefaultLockFilename = "go-genesis.lock"
 
 // FirstBlockFilename name of first block binary file
 const FirstBlockFilename = "1block"
@@ -116,17 +128,10 @@ const KeyIDFilename = "KeyID"
 // RollbackResultFilename rollback result file
 const RollbackResultFilename = "rollback_result"
 
-// WellKnownRoute TLS route
-const WellKnownRoute = "/.well-known/*filepath"
-
-// TLSFullchainPem fullchain pem file
-const TLSFullchainPem = "/fullchain.pem"
-
-// TLSPrivkeyPem privkey pem file
-const TLSPrivkeyPem = "/privkey.pem"
-
 // FromToPerDayLimit day limit token transfer between accounts
 const FromToPerDayLimit = 10000
 
 // TokenMovementQtyPerBlockLimit block limit token transfer
 const TokenMovementQtyPerBlockLimit = 100
+
+const TCPConnTimeout = 5 * time.Second

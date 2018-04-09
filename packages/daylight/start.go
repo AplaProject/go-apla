@@ -28,20 +28,16 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/api"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
 	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
-	"github.com/GenesisKernel/go-genesis/packages/install"
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
-	"github.com/GenesisKernel/go-genesis/packages/service"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
+
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -54,7 +50,7 @@ func initStatsd() {
 }
 
 func killOld() {
-	pidPath := conf.GetPidFile()
+	pidPath := conf.Config.GetPidPath()
 	if _, err := os.Stat(pidPath); err == nil {
 		dat, err := ioutil.ReadFile(pidPath)
 		if err != nil {
@@ -65,13 +61,13 @@ func killOld() {
 		if err != nil {
 			log.WithFields(log.Fields{"data": dat, "error": err, "type": consts.JSONUnmarshallError}).Error("unmarshalling pid map")
 		}
-		log.WithFields(log.Fields{"path": conf.Config.WorkDir + pidMap["pid"]}).Debug("old pid path")
+		log.WithFields(log.Fields{"path": conf.Config.DataDir + pidMap["pid"]}).Debug("old pid path")
 
 		KillPid(pidMap["pid"])
 		if fmt.Sprintf("%s", err) != "null" {
 			// give 15 sec to end the previous process
 			for i := 0; i < 15; i++ {
-				if _, err := os.Stat(conf.GetPidFile()); err == nil {
+				if _, err := os.Stat(conf.Config.GetPidPath()); err == nil {
 					time.Sleep(time.Second)
 				} else {
 					break
@@ -82,11 +78,26 @@ func killOld() {
 }
 
 func initLogs() error {
-
-	if len(conf.Config.LogFileName) == 0 {
+	switch conf.Config.LogConfig.LogFormat {
+	case "json":
+		log.SetFormatter(&log.JSONFormatter{})
+	default:
+		log.SetFormatter(&log.TextFormatter{})
+	}
+	switch conf.Config.LogConfig.LogTo {
+	case "stdout":
 		log.SetOutput(os.Stdout)
-	} else {
-		fileName := filepath.Join(conf.Config.WorkDir, conf.Config.LogFileName)
+	case "syslog":
+		facility := conf.Config.LogConfig.Syslog.Facility
+		tag := conf.Config.LogConfig.Syslog.Tag
+		sysLogHook, err := logtools.NewSyslogHook(tag, facility)
+		if err != nil {
+			log.WithError(err).Error("initializing syslog hook")
+		} else {
+			log.AddHook(sysLogHook)
+		}
+	default:
+		fileName := filepath.Join(conf.Config.DataDir, conf.Config.LogConfig.LogTo)
 		openMode := os.O_APPEND
 		if _, err := os.Stat(fileName); os.IsNotExist(err) {
 			openMode = os.O_CREATE
@@ -100,7 +111,7 @@ func initLogs() error {
 		log.SetOutput(f)
 	}
 
-	switch conf.Config.LogLevel {
+	switch conf.Config.LogConfig.LogLevel {
 	case "DEBUG":
 		log.SetLevel(log.DebugLevel)
 	case "INFO":
@@ -125,54 +136,12 @@ func savePid() error {
 		log.WithFields(log.Fields{"pid": pid, "error": err, "type": consts.JSONMarshallError}).Error("marshalling pid to json")
 		return err
 	}
-	return ioutil.WriteFile(conf.GetPidFile(), PidAndVer, 0644)
+
+	return ioutil.WriteFile(conf.Config.GetPidPath(), PidAndVer, 0644)
 }
 
 func delPidFile() {
-	os.Remove(conf.GetPidFile())
-}
-
-func rollbackToBlock(blockID int64) error {
-	if err := smart.LoadContracts(nil); err != nil {
-		return err
-	}
-	parser := new(parser.Parser)
-	err := parser.RollbackToBlockID(*conf.RollbackToBlockID)
-	if err != nil {
-		return err
-	}
-
-	// block id = 1, is a special case for full rollback
-	if blockID != 1 {
-		return nil
-	}
-
-	// check blocks related tables
-	startData := map[string]int64{"1_menu": 1, "1_pages": 1, "1_contracts": 26, "1_parameters": 11, "1_keys": 1, "1_tables": 8, "stop_daemons": 1, "queue_blocks": 9999999, "system_tables": 1, "system_parameters": 27, "system_states": 1, "install": 1, "queue_tx": 9999999, "log_transactions": 1, "transactions_status": 9999999, "block_chain": 1, "info_block": 1, "confirmations": 9999999, "transactions": 9999999}
-	warn := 0
-	for table := range startData {
-		count, err := model.GetRecordsCountTx(nil, table)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting record count")
-			return err
-		}
-		if count > 0 && count > startData[table] {
-			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Warn("record count in table is larger then start")
-			warn++
-		} else {
-			log.WithFields(log.Fields{"count": count, "start_data": startData[table], "table": table}).Info("record count in table is ok")
-		}
-	}
-
-	if warn == 0 {
-		rbFile := filepath.Join(conf.Config.WorkDir, consts.RollbackResultFilename)
-		ioutil.WriteFile(rbFile, []byte("1"), 0644)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.WritingFile, "path": rbFile}).Error("rollback result flag")
-			return err
-		}
-	}
-	return nil
+	os.Remove(conf.Config.GetPidPath())
 }
 
 func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
@@ -185,9 +154,19 @@ func initRoutes(listenHost string) {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
-	route.Handler(`GET`, consts.WellKnownRoute, http.FileServer(http.Dir(*conf.TLS)))
-	if len(*conf.TLS) > 0 {
-		go http.ListenAndServeTLS(":443", *conf.TLS+consts.TLSFullchainPem, *conf.TLS+consts.TLSPrivkeyPem, route)
+	if conf.Config.TLS {
+		if len(conf.Config.TLSCert) == 0 || len(conf.Config.TLSKey) == 0 {
+			log.Fatal("-tls-cert/TLSCert and -tls-key/TLSKey must be specified with -tls/TLS")
+		}
+		if _, err := os.Stat(conf.Config.TLSCert); os.IsNotExist(err) {
+			log.WithError(err).Fatalf(`Filepath -tls-cert/TLSCert = %s is invalid`, conf.Config.TLSCert)
+		}
+		if _, err := os.Stat(conf.Config.TLSKey); os.IsNotExist(err) {
+			log.WithError(err).Fatalf(`Filepath -tls-key/TLSKey = %s is invalid`, conf.Config.TLSKey)
+		}
+		go http.ListenAndServeTLS(":443", conf.Config.TLSCert, conf.Config.TLSKey, route)
+	} else if len(conf.Config.TLSCert) != 0 || len(conf.Config.TLSKey) != 0 {
+		log.Fatal("-tls/TLS must be specified with -tls-cert/TLSCert and -tls-key/TLSKey")
 	}
 
 	httpListener(listenHost, route)
@@ -195,7 +174,6 @@ func initRoutes(listenHost string) {
 
 // Start starts the main code of the program
 func Start() {
-
 	var err error
 
 	defer func() {
@@ -222,74 +200,17 @@ func Start() {
 		}
 	}
 
-	conf.InitConfigFlags()
-	if conf.NoConfig() {
-		conf.Installed = false
-		log.Info("Config file missing.")
-	} else {
-		if !*conf.InitConfig {
-			if err := conf.LoadConfig(); err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("LoadConfig")
-				return
-			}
-			conf.Installed = true
-		}
-	}
-	conf.SetConfigParams()
+	f := utils.LockOrDie(conf.Config.LockFilePath)
+	defer f.Unlock()
 
-	service.InitUpdater(conf.Config.Autoupdate.ServerAddress, conf.Config.Autoupdate.PublicKeyPath)
+	conf.Config.Installed = true
 
-	// process directives
-	if *conf.GenerateFirstBlock {
-		if err := install.GenerateFirstBlock(); err != nil {
-			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("GenerateFirstBlock")
-			Exit(1)
-		}
-	}
-
-	if *conf.InitDatabase {
-		if err := model.InitDB(conf.Config.DB); err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("InitDB")
-			Exit(1)
-		}
-	}
-
-	if *conf.InitConfig {
-		if err := conf.SaveConfig(); err != nil {
-			log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
-			Exit(1)
-		}
-		log.Info("Config file created.")
-		conf.Installed = true
-	}
-
-	if conf.Installed {
-		if conf.Config.KeyID == 0 {
-			key, err := parser.GetKeyIDFromPrivateKey()
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Unable to get KeyID")
-				Exit(1)
-			}
-			conf.Config.KeyID = key
-			if err := conf.SaveConfig(); err != nil {
-				log.WithFields(log.Fields{"type": consts.ConfigError, "error": err}).Error("Error writing config file")
-				Exit(1)
-			}
-		}
-		initGorm(conf.Config.DB)
-
-		err = service.Run()
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.AutoupdateError, "error": err}).Error("run autoupdate")
-		}
-	}
-
-	log.WithFields(log.Fields{"work_dir": conf.Config.WorkDir, "version": consts.VERSION}).Info("started with")
+	initGorm(conf.Config.DB)
+	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 
 	killOld()
 
 	publisher.InitCentrifugo(conf.Config.Centrifugo)
-
 	initStatsd()
 
 	err = initLogs()
@@ -306,27 +227,6 @@ func Start() {
 		Exit(1)
 	}
 	defer delPidFile()
-
-	// database rollback to the specified block
-	if *conf.RollbackToBlockID > 0 {
-		err = syspar.SysUpdate(nil)
-		if err != nil {
-			log.WithError(err).Error("can't read system parameters")
-		}
-		log.WithFields(log.Fields{"block_id": *conf.RollbackToBlockID}).Info("Rollbacking to block ID")
-		err := rollbackToBlock(*conf.RollbackToBlockID)
-		log.WithFields(log.Fields{"block_id": *conf.RollbackToBlockID}).Info("Rollback is ok")
-		if err != nil {
-			log.WithError(err).Error("Rollback error")
-		} else {
-			log.Info("Rollback is OK")
-		}
-		Exit(0)
-	}
-
-	if *conf.NoStart {
-		Exit(0)
-	}
 
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)

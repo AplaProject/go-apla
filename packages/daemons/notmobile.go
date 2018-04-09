@@ -87,10 +87,10 @@ func WaitForSignals() {
 			}
 		}
 
-		err := os.Remove(conf.GetPidFile())
+		err := os.Remove(conf.Config.GetPidPath())
 		if err != nil {
 			log.WithFields(log.Fields{
-				"type": consts.IOError, "error": err, "path": conf.GetPidFile(),
+				"type": consts.IOError, "error": err, "path": conf.Config.GetPidPath(),
 			}).Error("removing file")
 		}
 

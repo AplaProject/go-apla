@@ -21,9 +21,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/config/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -329,25 +330,27 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 }
 
 // LoadContracts reads and compiles contracts from smart_contracts tables
-func LoadContracts(transaction *model.DbTransaction) (err error) {
-	var states []map[string]string
-	var prefix []string
-	prefix = []string{`system`}
-	states, err = model.GetAll(`select id from system_states order by id`, -1)
+func LoadContracts(transaction *model.DbTransaction) error {
+	ecosystemsIds, err := model.GetAllSystemStatesIDs()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting ids from system_states")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting ids from ecosystems")
 		return err
 	}
-	for _, istate := range states {
-		prefix = append(prefix, istate[`id`])
+
+	defer ExternOff()
+	if err := LoadContract(transaction, "system"); err != nil {
+		return err
 	}
-	for _, ipref := range prefix {
-		if err = LoadContract(transaction, ipref); err != nil {
-			break
+
+	for _, ecosystemID := range ecosystemsIds {
+		prefix := strconv.FormatInt(ecosystemID, 10)
+		if err := LoadContract(transaction, prefix); err != nil {
+			return err
 		}
 	}
+
 	ExternOff()
-	return
+	return nil
 }
 
 func LoadSysFuncs(vm *script.VM, state int) error {
@@ -392,7 +395,7 @@ func DBRow(table string).Columns(columns string).Where(where string, params ...)
    .WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
    
    var result array
-   result = DBFind(table).Columns(columns).Where(where, params ...).WhereId(id).Order(order).Ecosystem(ecosystem)
+   result = DBFind(table).Columns(columns).Where(where, params...).WhereId(id).Order(order).Ecosystem(ecosystem)
 
    var row map
    if Len(result) > 0 {
@@ -491,12 +494,26 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		blockKeyID = sc.BlockData.KeyID
 		blockTime = sc.BlockData.Time
 	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `ecosystem_id`: head.EcosystemID,
-		`node_position`: head.NodePosition,
-		`block`:         block, `key_id`: keyID, `block_key_id`: blockKeyID,
-		`parent`: ``, `txcost`: sc.GetContractLimit(), `txhash`: sc.TxHash, `result`: ``,
-		`sc`: sc, `contract`: sc.TxContract, `block_time`: blockTime,
-		`original_contract`: ``, `this_contract`: ``}
+	extend := map[string]interface{}{
+		`type`:              head.Type,
+		`time`:              head.Time,
+		`ecosystem_id`:      head.EcosystemID,
+		`node_position`:     head.NodePosition,
+		`block`:             block,
+		`key_id`:            keyID,
+		`block_key_id`:      blockKeyID,
+		`parent`:            ``,
+		`txcost`:            sc.GetContractLimit(),
+		`txhash`:            sc.TxHash,
+		`result`:            ``,
+		`sc`:                sc,
+		`contract`:          sc.TxContract,
+		`block_time`:        blockTime,
+		`original_contract`: ``,
+		`this_contract`:     ``,
+		`role_id`:           head.RoleID,
+	}
+
 	for key, val := range sc.TxData {
 		extend[key] = val
 	}
@@ -552,7 +569,7 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 	)
 	logger := sc.GetLogger()
 
-	if table == getDefTableName(sc, `parameters`) {
+	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_param`) {
 		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return tablePermission, nil
 		}
@@ -596,7 +613,9 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 
 func getPermColumns(input string) (perm permColumn, err error) {
 	if strings.HasPrefix(input, `{`) {
-		err = json.Unmarshal([]byte(input), &perm)
+		if err = json.Unmarshal([]byte(input), &perm); err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": input}).Error("on perm columns")
+		}
 	} else {
 		perm.Update = input
 	}
@@ -611,7 +630,7 @@ type colAccess struct {
 // AccessColumns checks access rights to the columns
 func (sc *SmartContract) AccessColumns(table string, columns *[]string, update bool) error {
 	logger := sc.GetLogger()
-	if table == getDefTableName(sc, `parameters`) {
+	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_param`) {
 		if update {
 			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 				return nil
@@ -829,7 +848,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				logger.WithFields(log.Fields{"user_id": sc.TxSmart.KeyID, "type": consts.NotFound}).Error("unknown node id")
 				return retError(ErrUnknownNodeID)
 			}
-			public = node.Public
+			public = node.PublicKey
 		}
 		if len(public) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty public key")
