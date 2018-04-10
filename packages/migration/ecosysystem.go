@@ -1213,7 +1213,7 @@ MenuItem(
 						"delete": "ContractAccess(\"Roles_Unassign\")"}', 
 						'ContractConditions(\"MainCondition\")'),
 				('12', 'notifications', 
-						'{"insert": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")", "update": "true", 
+						'{"insert": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\", \"CheckNodesBan\")", "update": "true", 
 						"new_column": "ContractConditions(\"MainCondition\")"}',
 						'{"icon": "false",
 							"started_processing_time": "ContractAccess(\"Notifications_Roles_Processing\")",

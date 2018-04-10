@@ -32,10 +32,12 @@ type NodesBanService struct {
 
 var nbs *NodesBanService
 
+// GetNodesBanService is returning nodes ban service
 func GetNodesBanService() *NodesBanService {
 	return nbs
 }
 
+// InitNodesBanService initializing nodes ban storage
 func InitNodesBanService(fullNodes map[int64]*syspar.FullNode) error {
 	nbs = &NodesBanService{
 		localBannedNodes: make(map[int64]localBannedNode),
@@ -45,6 +47,7 @@ func InitNodesBanService(fullNodes map[int64]*syspar.FullNode) error {
 	return nil
 }
 
+// RegisterBadBlock is set node to local ban and saving bad block to global registry
 func (nbs *NodesBanService) RegisterBadBlock(node syspar.FullNode, badBlockId, blockTime int64) error {
 	if !nbs.IsBanned(node) {
 		nbs.localBan(node)
@@ -58,6 +61,7 @@ func (nbs *NodesBanService) RegisterBadBlock(node syspar.FullNode, badBlockId, b
 	return nil
 }
 
+// IsBanned is allows to check node ban (local or global)
 func (nbs *NodesBanService) IsBanned(node syspar.FullNode) bool {
 	nbs.m.Lock()
 	defer nbs.m.Unlock()

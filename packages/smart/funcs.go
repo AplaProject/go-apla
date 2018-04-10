@@ -1290,6 +1290,13 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 					}
 				}
 
+				banMessage := fmt.Sprintf(
+					"%d/%d nodes voted for ban with %d or more blocks each",
+					br.Count,
+					len(curFullNodes),
+					syspar.GetIncorrectBlocksPerDay(),
+				)
+
 				_, _, err = DBInsert(
 					sc,
 					"node_ban_logs",
@@ -1297,15 +1304,25 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 					n.KeyID,
 					now.Format(time.RFC3339),
 					int64(syspar.GetNodeBanTime()/time.Millisecond), // in ms
-					fmt.Sprintf(
-						"%d/%d nodes voted for ban with %d or more blocks each",
-						br.Count,
-						len(curFullNodes),
-						syspar.GetIncorrectBlocksPerDay(),
-					),
+					banMessage,
 				)
+
 				if err != nil {
 					log.WithFields(log.Fields{"type": consts.DBError, "id": br.ProducerNodeId, "error": err}).Error("inserting log to node_ban_log")
+					return err
+				}
+
+				_, _, err = DBInsert(
+					sc,
+					"notifications",
+					"recipient_id,body_text,header_text",
+					n.KeyID,
+					banMessage,
+					"Your node was banned",
+				)
+
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "id": br.ProducerNodeId, "error": err}).Error("sending notification to node owner")
 					return err
 				}
 
