@@ -25,7 +25,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/scheduler/metrics"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -149,8 +148,6 @@ func StartDaemons() {
 
 		log.WithFields(log.Fields{"daemon_name": name}).Warning("unknown daemon name")
 	}
-
-	metrics.Run()
 }
 
 func getHostPort(h string) string {

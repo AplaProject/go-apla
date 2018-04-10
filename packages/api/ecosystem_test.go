@@ -34,7 +34,7 @@ func TestNewEcosystem(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form := url.Values{`Name`: {``}}
+	form := url.Values{`Name`: {`test`}}
 	if _, result, err = postTxResult(`NewEcosystem`, &form); err != nil {
 		t.Error(err)
 		return
@@ -125,7 +125,7 @@ func TestEcosystemParams(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if len(ret.List) != 2 {
+	if len(ret.List) != 1 {
 		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
 	}
 	err = sendGet(`systemparams`, nil, &ret)
