@@ -160,7 +160,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"DBUpdate":             DBUpdate,
 		"DBUpdateSysParam":     UpdateSysParam,
 		"DBUpdateExt":          DBUpdateExt,
-		"DBSelectMetrics":      DBSelectMetrics,
 		"EcosysParam":          EcosysParam,
 		"AppParam":             AppParam,
 		"SysParamString":       SysParamString,
@@ -211,6 +210,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RowConditions":        RowConditions,
 		"UUID":                 UUID,
 		"DecodeBase64":         DecodeBase64,
+		"EncodeBase64":         EncodeBase64,
 		"MD5":                  MD5,
 		"EditEcosysName":       EditEcosysName,
 		"GetColumnType":        GetColumnType,
@@ -230,6 +230,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
 		f["GetBlock"] = GetBlock
+		f["DBSelectMetrics"] = DBSelectMetrics
+		f["DBCollectMetrics"] = DBCollectMetrics
 		ExtendCost(getCostP)
 		FuncCallsDB(funcCallsDBP)
 	}
@@ -240,14 +242,14 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 }
 
 func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
-	if tblname[0] < '1' || tblname[0] > '9' || !strings.Contains(tblname, `_`) {
-		prefix := converter.Int64ToStr(ecosystem)
-		if sc.VDE {
-			prefix += `_vde`
-		}
-		tblname = fmt.Sprintf(`%s_%s`, prefix, tblname)
+	if len(tblname) > 0 && tblname[0] == '@' {
+		return strings.ToLower(tblname[1:])
 	}
-	return strings.ToLower(tblname)
+	prefix := converter.Int64ToStr(ecosystem)
+	if sc.VDE {
+		prefix += `_vde`
+	}
+	return strings.ToLower(fmt.Sprintf(`%s_%s`, prefix, tblname))
 }
 
 func getDefTableName(sc *SmartContract, tblname string) string {
@@ -337,17 +339,20 @@ func contractsList(value string) []interface{} {
 }
 
 // CreateTable is creating smart contract table
-func CreateTable(sc *SmartContract, name string, columns, permissions string) error {
+func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) error {
 	var err error
 	if !accessContracts(sc, `NewTable`, `Import`) {
 		return fmt.Errorf(`CreateTable can be only called from NewTable`)
+	}
+	if len(name) > 0 && name[0] == '@' {
+		return fmt.Errorf(`The name of the table cannot begin with @`)
 	}
 	tableName := getDefTableName(sc, name)
 
 	var cols []map[string]string
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns to JSON")
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns to JSON")
 		return err
 	}
 
@@ -788,7 +793,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	var perm permTable
 	err = json.Unmarshal([]byte(permissions), &perm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling permissions from json")
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": permissions}).Error("unmarshalling permissions from json")
 		return
 	}
 	v := reflect.ValueOf(perm)
@@ -817,7 +822,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	var cols []map[string]string
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns permissions from json")
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns permissions from json")
 		return
 	}
 	if len(cols) == 0 {
@@ -1277,6 +1282,11 @@ func DecodeBase64(input string) (out string, err error) {
 		out = string(bin)
 	}
 	return
+}
+
+// EncodeBase64 encodes string in base64
+func EncodeBase64(input string) (out string) {
+	return base64.StdEncoding.EncodeToString([]byte(input))
 }
 
 // MD5 returns md5 hash sum of data

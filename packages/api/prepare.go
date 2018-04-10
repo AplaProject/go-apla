@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
@@ -60,7 +61,7 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 	if data.params[`signed_by`] != nil {
 		smartTx.SignedBy = data.params[`signed_by`].(int64)
 	}
-	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, EcosystemID: data.ecosystemId, KeyID: data.keyId, RoleID: data.roleId}
+	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, EcosystemID: data.ecosystemId, KeyID: data.keyId, RoleID: data.roleId, NetworkID: consts.NETWORK_ID}
 	forsign := smartTx.ForSign()
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {

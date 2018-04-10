@@ -7,15 +7,24 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	log "github.com/sirupsen/logrus"
 )
 
 const publicKeyLength = 64
 
 var (
-	errFullNodeInvalidFormat = errors.New("Invalid format of the full_node parameter")
 	errFullNodeInvalidValues = errors.New("Invalid values of the full_node parameter")
 )
+
+//because of PublicKey is byte
+type fullNodeJSON struct {
+	TCPAddress string `json:"tcp_address"`
+	APIAddress string `json:"api_address"`
+	KeyID      string `json:"key_id"`
+	PublicKey  string `json:"public_key"`
+}
 
 // FullNode is storing full node data
 type FullNode struct {
@@ -26,20 +35,18 @@ type FullNode struct {
 }
 
 func (fn *FullNode) UnmarshalJSON(b []byte) (err error) {
-	var data []string
+	data := fullNodeJSON{}
 	if err = json.Unmarshal(b, &data); err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err, "value": string(b)}).Error("Unmarshalling full nodes to json")
 		return err
 	}
 
-	if len(data) != 4 {
-		return errFullNodeInvalidFormat
-	}
+	fn.TCPAddress = data.TCPAddress
+	fn.APIAddress = data.APIAddress
+	fn.KeyID = converter.StrToInt64(data.KeyID)
 
-	fn.TCPAddress = data[0]
-	fn.APIAddress = data[1]
-	fn.KeyID = converter.StrToInt64(data[2])
-
-	if fn.PublicKey, err = hex.DecodeString(data[3]); err != nil {
+	if fn.PublicKey, err = hex.DecodeString(data.PublicKey); err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": data.PublicKey}).Error("converting full nodes public key from hex")
 		return err
 	}
 

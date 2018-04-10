@@ -289,6 +289,8 @@ func TestJSONTable(t *testing.T) {
 	forTest := tplList{
 		{`DBFind(` + name + `,my).Columns("id").Where(doc->title->text='low')`,
 			`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["3"]],"name":"` + name + `","source":"my","types":["text"],"where":"doc-\u003etitle-\u003etext='low'"}}]`},
+		{`DBFind(` + name + `,my).Columns("id,doc->title->name").WhereId(3).Vars(prefix)Div(){#prefix_id# = #prefix_doc_title_name#}`,
+			`[{"tag":"dbfind","attr":{"columns":["id","doc.title.name"],"data":[["3","Test att"]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"3"}},{"tag":"div","children":[{"tag":"text","text":"3 = Test att"}]}]`},
 		{`DBFind(` + name + `,my).Columns("id,doc->languages->arr_id").WhereId(4).Custom(aa){Span(#doc.languages.arr_id#)}`,
 			`[{"tag":"dbfind","attr":{"columns":["id","doc.languages.arr_id","aa"],"data":[["4","{"1": "0", "2": "0", "3": "0"}","[{"tag":"span","children":[{"tag":"text","text":"{\\"1\\": \\"0\\", \\"2\\": \\"0\\", \\"3\\": \\"0\\"}"}]}]"]],"name":"` + name + `","source":"my","types":["text","text","tags"],"whereid":"4"}}]`},
 		{`DBFind(` + name + `,my).Columns("id,doc->title->name").WhereId(3)`,
