@@ -14,7 +14,7 @@ type SystemParameter struct {
 
 // TableName returns name of table
 func (sp SystemParameter) TableName() string {
-	return "system_parameters"
+	return "1_system_parameters"
 }
 
 // Get is retrieving model from database
@@ -25,7 +25,7 @@ func (sp *SystemParameter) Get(name string) (bool, error) {
 // GetJSONField returns fields as json
 func (sp *SystemParameter) GetJSONField(jsonField string, name string) (string, error) {
 	var result string
-	err := DBConn.Table("system_parameters").Where("name = ?", name).Select(jsonField).Row().Scan(&result)
+	err := DBConn.Table("1_system_parameters").Where("name = ?", name).Select(jsonField).Row().Scan(&result)
 	return result, err
 }
 
