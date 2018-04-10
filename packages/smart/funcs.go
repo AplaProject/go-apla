@@ -1284,15 +1284,15 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 				}
 
 				for _, b := range blocks {
-					if _, err := DBUpdate(sc, badBlocks.TableName(), b.ID, "deleted", "1"); err != nil {
+					if _, err := DBUpdate(sc, "bad_blocks", b.ID, "deleted", "1"); err != nil {
 						log.WithFields(log.Fields{"type": consts.DBError, "id": b.ID, "error": err}).Error("deleting bad block")
 						return err
 					}
 				}
 
-				DBInsert(
+				_, _, err = DBInsert(
 					sc,
-					model.NodeBanLogs{}.TableName(),
+					"node_ban_logs",
 					"node_id,banned_at,ban_time,reason",
 					n.KeyID,
 					now.Format(time.RFC3339),
@@ -1304,6 +1304,11 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 						syspar.GetIncorrectBlocksPerDay(),
 					),
 				)
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "id": br.ProducerNodeId, "error": err}).Error("inserting log to node_ban_log")
+					return err
+				}
+
 				updFullNodes = true
 			}
 		}

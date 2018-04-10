@@ -60,7 +60,6 @@ func (r *BadBlocks) GetNeedToBanNodes(now time.Time, blocksPerNode int) ([]BanRe
 }
 
 func (r *BadBlocks) GetNodeBlocks(nodeId int64, now time.Time) ([]BadBlocks, error) {
-	return nil, nil
 	var res []BadBlocks
 	err := DBConn.
 		Table(r.TableName()).

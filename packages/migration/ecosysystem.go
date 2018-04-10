@@ -1417,7 +1417,8 @@ MenuItem(
 		INSERT INTO "1_delayed_contracts"
 			("id", "contract", "key_id", "block_id", "every_block", "conditions")
 		VALUES
-			(1, '@1UpdateMetrics', '%[1]d', '100', '100', 'ContractConditions("MainCondition")');
+			(1, '@1UpdateMetrics', '%[1]d', '100', '100', 'ContractConditions("MainCondition")'),
+			(2, '@1CheckNodesBan', '%[1]d', '10', '10', 'ContractConditions("MainCondition")');
 
 		DROP TABLE IF EXISTS "1_metrics";
 		CREATE TABLE "1_metrics" (
@@ -1431,74 +1432,91 @@ MenuItem(
 		CREATE INDEX "1_metrics_unique_index" ON "1_metrics" (metric, time, "key");
 
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
-			('16', 'delayed_contracts',
-			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
-			"new_column": "ContractConditions(\"MainCondition\")"}',
-			'{"contract": "ContractConditions(\"MainCondition\")",
-				"key_id": "ContractConditions(\"MainCondition\")",
-				"block_id": "ContractConditions(\"MainCondition\")",
-				"every_block": "ContractConditions(\"MainCondition\")",
-				"counter": "ContractConditions(\"MainCondition\")",
-				"limit": "ContractConditions(\"MainCondition\")",
-				"deleted": "ContractConditions(\"MainCondition\")",
-				"conditions": "ContractConditions(\"MainCondition\")"}',
+			(
+				'16',
+				'delayed_contracts',
+				'{
+					"insert": "ContractConditions(\"MainCondition\")",
+					"update": "ContractConditions(\"MainCondition\")",
+					"new_column": "ContractConditions(\"MainCondition\")"
+				}',
+				'{
+					"contract": "ContractConditions(\"MainCondition\")",
+					"key_id": "ContractConditions(\"MainCondition\")",
+					"block_id": "ContractConditions(\"MainCondition\")",
+					"every_block": "ContractConditions(\"MainCondition\")",
+					"counter": "ContractConditions(\"MainCondition\")",
+					"limit": "ContractConditions(\"MainCondition\")",
+					"deleted": "ContractConditions(\"MainCondition\")",
+					"conditions": "ContractConditions(\"MainCondition\")"
+				}',
 				'ContractConditions(\"MainCondition\")'
 			),
 			(
 				'17',
 				'ecosystems',
-				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
-				'{"name": "ContractConditions(\"MainCondition\")"}',
+				'{
+					"insert": "ContractConditions(\"MainCondition\")",
+					"update": "ContractConditions(\"MainCondition\")",
+					"new_column": "ContractConditions(\"MainCondition\")"
+				}',
+				'{
+					"name": "ContractConditions(\"MainCondition\")"
+				}',
 				'ContractConditions(\"MainCondition\")'
 			),
 			(
 				'18',
 				'metrics',
-				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")","new_column": "ContractConditions(\"MainCondition\")"}',
-				'{"time": "ContractConditions(\"MainCondition\")",
+				'{
+					"insert": "ContractConditions(\"MainCondition\")",
+					"update": "ContractConditions(\"MainCondition\")",
+					"new_column": "ContractConditions(\"MainCondition\")"
+				}',
+				'{
+					"time": "ContractConditions(\"MainCondition\")",
 					"metric": "ContractConditions(\"MainCondition\")","key": "ContractConditions(\"MainCondition\")",
-					"value": "ContractConditions(\"MainCondition\")"}',
+					"value": "ContractConditions(\"MainCondition\")"
+				}',
+				'ContractConditions(\"MainCondition\")'
+			),
+			(
+				'19',
+				'bad_blocks',
+				'{
+					"insert": "ContractConditions(\"MainCondition\")",
+					"update": "ContractConditions(\"MainCondition\")",
+					"new_column": "ContractConditions(\"MainCondition\")"
+				}',
+				'{
+					"contract": "ContractConditions(\"MainCondition\")",
+					"id": "ContractConditions(\"MainCondition\")",
+					"block_id": "ContractConditions(\"MainCondition\")",
+					"producer_node_id": "ContractConditions(\"MainCondition\")",
+					"consumer_node_id": "ContractConditions(\"MainCondition\")",
+					"block_time": "ContractConditions(\"MainCondition\")",
+					"deleted": "ContractConditions(\"MainCondition\")"
+				}',
+				'ContractConditions(\"MainCondition\")'
+			),
+			(
+				'20',
+				'node_ban_logs',
+				'{
+					"insert": "ContractConditions(\"MainCondition\")",
+					"update": "ContractConditions(\"MainCondition\")",
+					"new_column": "ContractConditions(\"MainCondition\")"
+				}',
+				'{
+					"contract": "ContractConditions(\"MainCondition\")",
+					"id": "ContractConditions(\"MainCondition\")",
+					"node_id": "ContractConditions(\"MainCondition\")",
+					"banned_at": "ContractConditions(\"MainCondition\")",
+					"ban_time": "ContractConditions(\"MainCondition\")",
+					"reason": "ContractConditions(\"MainCondition\")"
+				}',
 				'ContractConditions(\"MainCondition\")'
 			);
-
-		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
-			('18',
-			'bad_blocks',
-			'{
-				"insert": "ContractConditions(\"MainCondition\")",
-				"update": "ContractConditions(\"MainCondition\")",
-				"new_column": "ContractConditions(\"MainCondition\")"
-			}',
-			'{
-				"contract": "ContractConditions(\"MainCondition\")",
-				"id": "ContractConditions(\"MainCondition\")",
-				"block_id": "ContractConditions(\"MainCondition\")",
-				"producer_node_id": "ContractConditions(\"MainCondition\")",
-				"consumer_node_id": "ContractConditions(\"MainCondition\")",
-				"block_time": "ContractConditions(\"MainCondition\")",
-				"deleted": "ContractConditions(\"MainCondition\")"
-			}',
-			'ContractConditions(\"MainCondition\")'
-		);
-
-		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
-			('19',
-			'node_ban_logs',
-			'{
-				"insert": "ContractConditions(\"MainCondition\")",
-				"update": "ContractConditions(\"MainCondition\")",
-				"new_column": "ContractConditions(\"MainCondition\")"
-			}',
-			'{
-				"contract": "ContractConditions(\"MainCondition\")",
-				"id": "ContractConditions(\"MainCondition\")",
-				"node_id": "ContractConditions(\"MainCondition\")",
-				"banned_at": "ContractConditions(\"MainCondition\")",
-				"ban_time": "ContractConditions(\"MainCondition\")",
-				"reason": "ContractConditions(\"MainCondition\")"
-			}',
-			'ContractConditions(\"MainCondition\")'
-		);
 
 	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions") VALUES 
 	('2','MoneyTransfer','contract MoneyTransfer {
