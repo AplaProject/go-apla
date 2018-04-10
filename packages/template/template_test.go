@@ -42,6 +42,9 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(ok, OK)Input(Type: text, Value: #ok# Now(YY))Input(Type:text, Value: #ok# Some text)`,
+		`[{"tag":"input","attr":{"type":"text","value":{"tag":[{"tag":"text","text":"OK "},{"tag":"now","attr":{"format":"YY"}}],"type":"tag"}}},{"tag":"input","attr":{"type":"text","value":{"text":"OK Some text","type":"text"}}}]`},
+	{`SetVar(format, MMYY)Now(#format#,1 day)Now()`, `[{"tag":"now","attr":{"format":"MMYY","interval":"1 day"}},{"tag":"now"}]`},
 	{`SetVar(name, -5728238900021).(no,false)Chart(Colors: #name#)Address(#name#)If(#no#){ERR}.Else{OK}Table(my,#name#=name)`, `[{"tag":"chart","attr":{"colors":["-5728238900021"]}},{"tag":"text","text":"1844-6738-3454-7065-1595"},{"tag":"text","text":"OK"},{"tag":"table","attr":{"columns":[{"Name":"name","Title":"-5728238900021"}],"source":"my"}}]`},
 	{`SetVar(from, 5).(to, -4).(step,-2)Range(my,0,5)ForList(my){#my_index#=#id#}Range(none,20,0)Range(Source: neg, From: #from#, To: #to#, Step: #step#)ForList(neg){#neg_index#=#id#}Range(zero,0,5,0)`,
 		`[{"tag":"range","attr":{"columns":["id"],"data":[["0"],["1"],["2"],["3"],["4"]],"source":"my"}},{"tag":"forlist","attr":{"source":"my"},"children":[{"tag":"text","text":"1=0"},{"tag":"text","text":"2=1"},{"tag":"text","text":"3=2"},{"tag":"text","text":"4=3"},{"tag":"text","text":"5=4"}]},{"tag":"range","attr":{"columns":["id"],"data":[],"source":"none"}},{"tag":"range","attr":{"columns":["id"],"data":[["5"],["3"],["1"],["-1"],["-3"]],"source":"neg"}},{"tag":"forlist","attr":{"source":"neg"},"children":[{"tag":"text","text":"1=5"},{"tag":"text","text":"2=3"},{"tag":"text","text":"3=1"},{"tag":"text","text":"4=-1"},{"tag":"text","text":"5=-3"}]},{"tag":"range","attr":{"columns":["id"],"data":[],"source":"zero"}}]`},
@@ -124,7 +127,7 @@ var forTest = tplList{
 	+CmpTime(2017-11-07T17:51:08,2017-11-07)CmpTime(2017-11-07T17:51:08,2017-11-07T20:22:01)CmpTime(2015-10-01T17:51:08,2015-10-01T17:51:08)=DateTime(NULL)`,
 		`[{"tag":"text","text":"2017-11-07 17:51:08"},{"tag":"text","text":"+09:01 27.08.2015"},{"tag":"text","text":"\n\t+1-10"},{"tag":"text","text":"="}]`},
 	{`SetVar(pref,unicode Р)Input(Name: myid, Value: #pref#)Strong(qqq)`,
-		`[{"tag":"input","attr":{"name":"myid","value":"unicode Р"}},{"tag":"strong","children":[{"tag":"text","text":"qqq"}]}]`},
+		`[{"tag":"input","attr":{"name":"myid","value":{"text":"unicode Р","type":"text"}}},{"tag":"strong","children":[{"tag":"text","text":"qqq"}]}]`},
 	{`ImageInput(myimg,100,40)`,
 		`[{"tag":"imageinput","attr":{"name":"myimg","ratio":"40","width":"100"}}]`},
 	{`LinkPage(My page,mypage,,"myvar1=Value 1, myvar2=Value2,myvar3=Val(myval)")`,
@@ -159,7 +162,7 @@ var forTest = tplList{
 			Div(Class: mydiv2,
 				Div(Body:
 					Input(Value: my default text))))`,
-		`[{"tag":"div","attr":{"class":"mydiv1"},"children":[{"tag":"div","attr":{"class":"mydiv2"},"children":[{"tag":"div","children":[{"tag":"input","attr":{"value":"my default text"}}]}]}]}]`},
+		`[{"tag":"div","attr":{"class":"mydiv1"},"children":[{"tag":"div","attr":{"class":"mydiv2"},"children":[{"tag":"div","children":[{"tag":"input","attr":{"value":{"text":"my default text","type":"text"}}}]}]}]}]`},
 	{`P(Some Span(fake(text) Strong(very Em(important Label(news)))))`,
 		`[{"tag":"p","children":[{"tag":"text","text":"Some "},{"tag":"span","children":[{"tag":"text","text":"fake(text) "},{"tag":"strong","children":[{"tag":"text","text":"very "},{"tag":"em","children":[{"tag":"text","text":"important "},{"tag":"label","children":[{"tag":"text","text":"news"}]}]}]}]}]}]`},
 	{`Form(myclass, Input(myid)Button(Submit,default_page,myclass))`,
