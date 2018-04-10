@@ -15,15 +15,20 @@ import (
 
 func getAvatar(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	parMember := data.params["member"].(string)
+	parEcosystem := data.params["ecosystem"].(string)
+
 	memberID := converter.StrToInt64(parMember)
+	ecosystemID := converter.StrToInt64(parEcosystem)
+
 	member := &model.Member{}
-	member.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
+	member.SetTablePrefix(converter.Int64ToStr(ecosystemID))
+
 	found, err := member.Get(memberID)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"type":      consts.DBError,
 			"error":     err,
-			"ecosystem": data.ecosystemId,
+			"ecosystem": ecosystemID,
 			"member_id": memberID,
 		}).Error("getting member")
 		return errorAPI(w, "E_SERVER", http.StatusInternalServerError)
@@ -38,7 +43,7 @@ func getAvatar(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	}
 
 	bin := &model.Binary{}
-	bin.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
+	bin.SetTablePrefix(converter.Int64ToStr(ecosystemID))
 	found, err = bin.GetByID(*member.ImageID)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "image_id": *member.ImageID}).Errorf("on getting binary by id")
