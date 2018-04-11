@@ -214,6 +214,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"MD5":                  MD5,
 		"EditEcosysName":       EditEcosysName,
 		"GetColumnType":        GetColumnType,
+		"GetType":              GetType,
 	}
 
 	switch vt {
@@ -513,6 +514,39 @@ func PrepareColumns(columns string) string {
 	return strings.Join(colList, `,`)
 }
 
+func PrepareWhere(where string) string {
+	whereSlice := regexp.MustCompile(`->([\w\d_]+)`).FindAllStringSubmatchIndex(where, -1)
+	startWhere := 0
+	out := ``
+	for i := 0; i < len(whereSlice); i++ {
+		slice := whereSlice[i]
+		if len(slice) != 4 {
+			continue
+		}
+		if i < len(whereSlice)-1 && slice[1] == whereSlice[i+1][0] {
+			colsWhere := []string{where[slice[2]:slice[3]]}
+			from := slice[0]
+			for i < len(whereSlice)-1 && slice[1] == whereSlice[i+1][0] {
+				i++
+				slice = whereSlice[i]
+				if len(slice) != 4 {
+					break
+				}
+				colsWhere = append(colsWhere, where[slice[2]:slice[3]])
+			}
+			out += fmt.Sprintf(`%s::jsonb#>>'{%s}'`, where[startWhere:from], strings.Join(colsWhere, `,`))
+			startWhere = slice[3]
+		} else {
+			out += fmt.Sprintf(`%s->>'%s'`, where[startWhere:slice[0]], where[slice[2]:slice[3]])
+			startWhere = slice[3]
+		}
+	}
+	if len(out) > 0 {
+		return out + where[startWhere:]
+	}
+	return where
+}
+
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
 	where string, params []interface{}) (int64, []interface{}, error) {
@@ -529,8 +563,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	if len(order) == 0 {
 		order = `id`
 	}
-	where = strings.Replace(converter.Escape(where), `$`, `?`, -1)
-	where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
+	where = PrepareWhere(strings.Replace(converter.Escape(where), `$`, `?`, -1))
 	if id != 0 {
 		where = fmt.Sprintf(`id='%d'`, id)
 		limit = 1
@@ -1265,4 +1298,11 @@ func MD5(data string) string {
 // GetColumnType returns the type of the column
 func GetColumnType(sc *SmartContract, tableName, columnName string) (string, error) {
 	return model.GetColumnType(getDefTableName(sc, tableName), columnName)
+}
+
+func GetType(val interface{}) string {
+	if val == nil {
+		return `nil`
+	}
+	return reflect.TypeOf(val).String()
 }

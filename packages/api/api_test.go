@@ -27,11 +27,11 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -287,28 +287,27 @@ func cutErr(err error) string {
 	return strings.TrimSpace(out)
 }
 
-func TestMoneyTransfer10(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
+func TestGetAvatar(t *testing.T) {
+
+	err := keyLogin(1)
+	assert.NoError(t, err)
+
+	url := `http://localhost:7079` + consts.ApiPath + "avatar/-1744264011260937456"
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	assert.NoError(t, err)
+
+	if len(gAuth) > 0 {
+		req.Header.Set("Authorization", jwtPrefix+gAuth)
 	}
 
-	var wg sync.WaitGroup
-	for i := 0; i < 30; i++ {
-		wg.Add(4)
-		for j := 0; j < 4; j++ {
-			go func(counter int) {
-				defer wg.Done()
+	cli := http.DefaultClient
+	resp, err := cli.Do(req)
+	assert.NoError(t, err)
 
-				form := url.Values{`Amount`: {strconv.FormatInt(int64(i+1), 10)}, `Recipient`: {`1028-0432-0934-8475-1098`}} //-8166311980224800518
-				if err := postTx(`MoneyTransfer`, &form); err != nil {
-					fmt.Println(err)
-				}
-			}(j)
-		}
-
-		wg.Wait()
-	}
+	defer resp.Body.Close()
+	mime := resp.Header.Get("Content-Type")
+	expectedMime := "image/png"
+	assert.Equal(t, expectedMime, mime, "content type must be a '%s' but returns '%s'", expectedMime, mime)
 }
 
 func postTxMultipart(txname string, params map[string]string, files map[string][]byte) (id int64, msg string, err error) {

@@ -136,11 +136,13 @@ var forTest = tplList{
 	{`EcosysParam(new_table)`,
 		`[{"tag":"text","text":"ContractConditions("MainCondition")"}]`},
 	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
-		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","government"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"government"}]}]`},
+		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","default_menu"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"default_menu"}]}]`},
 	{`SetVar(varZero, 0) If(#varZero#>0) { the varZero should be hidden }
 		SetVar(varNotZero, 1) If(#varNotZero#>0) { the varNotZero should be visible }
 		If(#varUndefined#>0) { the varUndefined should be hidden }`,
 		`[{"tag":"text","text":"the varNotZero should be visible"}]`},
+	{`Address(EcosysParam(founder_account))+EcosysParam(founder_account)`,
+		`[{"tag":"text","text":"1651-3553-1389-2023-2108"},{"tag":"text","text":"+-1933190934789319508"}]`},
 }
 
 func TestMobile(t *testing.T) {
