@@ -1267,7 +1267,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 	for k, fullNode := range curFullNodes {
 		// Removing ban in case ban time has already passed
 		if now.After(fullNode.UnbanTime) {
-			curFullNodes[k].UnbanTime = time.Unix(0, 0)
+			fullNode.UnbanTime = time.Unix(0, 0)
 			updFullNodes = true
 		}
 
@@ -1275,7 +1275,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 		// Ban request is mean that node have added more or equal N(system parameter) of bad blocks
 		for _, banReq := range banRequests {
 			if banReq.ProducerNodeId == fullNode.KeyID && banReq.Count >= int64((len(curFullNodes)/2)+1) {
-				curFullNodes[k].UnbanTime = now.Add(syspar.GetNodeBanTime())
+				fullNode.UnbanTime = now.Add(syspar.GetNodeBanTime())
 
 				blocks, err := badBlocks.GetNodeBlocks(fullNode.KeyID, now)
 				if err != nil {
@@ -1329,12 +1329,14 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				updFullNodes = true
 			}
 		}
+
+		curFullNodes[k] = fullNode
 	}
 
 	if updFullNodes {
 		var sfn []syspar.FullNode
 		for _, fn := range curFullNodes {
-			sfn = append(sfn, *fn)
+			sfn = append(sfn, fn)
 		}
 		d, err := json.Marshal(sfn)
 		if err != nil {

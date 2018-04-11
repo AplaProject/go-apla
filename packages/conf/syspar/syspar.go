@@ -169,13 +169,13 @@ func GetNode(wallet int64) *FullNode {
 	return nil
 }
 
-func GetNodes() map[int64]*FullNode {
+func GetNodes() map[int64]FullNode {
 	mutex.RLock()
 	defer mutex.RUnlock()
 
-	n := make(map[int64]*FullNode)
+	n := make(map[int64]FullNode)
 	for key, value := range nodes {
-		n[key] = value
+		n[key] = *value
 	}
 
 	return n

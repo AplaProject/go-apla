@@ -25,7 +25,7 @@ type localBannedNode struct {
 
 type NodesBanService struct {
 	localBannedNodes map[int64]localBannedNode
-	fullNodes        map[int64]*syspar.FullNode
+	fullNodes        map[int64]syspar.FullNode
 
 	m *sync.Mutex
 }
@@ -121,7 +121,7 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 	nbs.m.Lock()
 	for _, fn := range nbs.fullNodes {
 		if fn.KeyID == conf.Config.KeyID {
-			currentNode = *fn
+			currentNode = fn
 			break
 		}
 	}
