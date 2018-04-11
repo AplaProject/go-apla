@@ -334,8 +334,8 @@ func HexToBytes(hexdata string) ([]byte, error) {
 }
 
 // LangRes returns the language resource
-func LangRes(sc *SmartContract, appID int, idRes, lang string) string {
-	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), appID, lang, sc.VDE)
+func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
+	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), int(appID), lang, sc.VDE)
 	return ret
 }
 
@@ -619,8 +619,8 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 }
 
 // UpdateLang updates language resource
-func UpdateLang(sc *SmartContract, appID int, name, trans string) {
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), appID, name, trans, sc.VDE)
+func UpdateLang(sc *SmartContract, appID int64, name, trans string) {
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
 }
 
 // Size returns the length of the string

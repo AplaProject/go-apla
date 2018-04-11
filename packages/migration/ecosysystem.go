@@ -594,7 +594,7 @@ MenuItem(
 		}
 		action {
 			DBInsert("languages", "name,res,app_id", $Name, $Trans, $AppID)
-			UpdateLang($Name, $Trans, $AppID)
+			UpdateLang($AppID, $Name, $Trans)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('19','EditLang','contract EditLang {
@@ -609,7 +609,7 @@ MenuItem(
 		}
 		action {
 			DBUpdate("languages", $Id, "name,res,app_id", $Name, $Trans, $AppID)
-			UpdateLang($Name, $Trans, $AppID)
+			UpdateLang($AppID, $Name, $Trans)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('20','Import','contract Import {
@@ -1811,7 +1811,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 		action {
 			DBInsert("languages", "name,res,app_id", $Name, $Trans, $AppID)
-			UpdateLang($Name, $Trans, $AppID)
+			UpdateLang($AppID, $Name, $Trans)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('16','EditLang','contract EditLang {
@@ -1826,7 +1826,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 		action {
 			DBUpdate("languages", $Id, "name,res,app_id", $Name, $Trans, $AppID)
-			UpdateLang($Name, $Trans, $AppID)
+			UpdateLang($AppID, $Name, $Trans)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('17','NewSign','contract NewSign {
