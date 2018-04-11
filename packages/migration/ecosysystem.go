@@ -861,17 +861,27 @@ MenuItem(
 			Name  string
 			Data  bytes "file"
 			AppID int
+			DataMimeType string "optional"
 			MemberID int "optional"
 		}
 		conditions {
 			$Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $AppID, $MemberID, $Name).One("id"))
 		}
 		action {
-			if $Id != 0 {
-				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, $DataHash, $DataMimeType)
-			} else {
-				DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, $DataHash, $DataMimeType)
+			var hash string
+			hash = MD5($Data)
+
+			if $DataMimeType == "" {
+				$DataMimeType = "application/octet-stream"
 			}
+
+			if $Id != 0 {
+				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+			} else {
+				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, hash, $DataMimeType)
+			}
+
+			$result = $Id
 		}
 	}', 'ContractConditions("MainCondition")');
 	`
@@ -2363,17 +2373,27 @@ MenuItem(
 			Name  string
 			Data  bytes "file"
 			AppID int
+			DataMimeType string "optional"
 			MemberID int "optional"
 		}
 		conditions {
 			$Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $AppID, $MemberID, $Name).One("id"))
 		}
 		action {
-			if $Id != 0 {
-				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, $DataHash, $DataMimeType)
-			} else {
-				DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, $DataHash, $DataMimeType)
+			var hash string
+			hash = MD5($Data)
+
+			if $DataMimeType == "" {
+				$DataMimeType = "application/octet-stream"
 			}
+
+			if $Id != 0 {
+				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+			} else {
+				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, hash, $DataMimeType)
+			}
+
+			$result = $Id
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('34', 'NewUser','contract NewUser {

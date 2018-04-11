@@ -412,7 +412,6 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 
 				p.TxData[fitem.Name] = file.Data
 				p.TxData[fitem.Name+"MimeType"] = file.MimeType
-				p.TxData[fitem.Name+"Hash"] = file.Hash
 
 				forsign = append(forsign, file.MimeType, file.Hash)
 				continue
@@ -481,7 +480,9 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 				}
 				v = list
 			}
-			p.TxData[fitem.Name] = v
+			if p.TxData[fitem.Name] == nil {
+				p.TxData[fitem.Name] = v
+			}
 			if err != nil {
 				return err
 			}

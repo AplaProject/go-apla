@@ -215,6 +215,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"EditEcosysName":       EditEcosysName,
 		"GetColumnType":        GetColumnType,
 		"GetType":              GetType,
+		"StringToBytes":        StringToBytes,
 	}
 
 	switch vt {
@@ -1290,9 +1291,22 @@ func EncodeBase64(input string) (out string) {
 }
 
 // MD5 returns md5 hash sum of data
-func MD5(data string) string {
-	hash := md5.Sum([]byte(data))
-	return hex.EncodeToString(hash[:])
+func MD5(data interface{}) (string, error) {
+	var b []byte
+
+	switch v := data.(type) {
+	case []uint8:
+		b = []byte(v)
+	case string:
+		b = []byte(v)
+	default:
+		err := fmt.Errorf("Unsupported type %T", v)
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting to bytes")
+		return "", err
+	}
+
+	hash := md5.Sum(b)
+	return hex.EncodeToString(hash[:]), nil
 }
 
 // GetColumnType returns the type of the column
@@ -1305,4 +1319,9 @@ func GetType(val interface{}) string {
 		return `nil`
 	}
 	return reflect.TypeOf(val).String()
+}
+
+// StringToBytes converts string to bytes
+func StringToBytes(src string) []byte {
+	return []byte(src)
 }

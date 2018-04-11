@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"sync"
 	"time"
 
@@ -31,8 +30,7 @@ func (r *Request) GetValue(key string) string {
 }
 
 func (r *Request) WriteFile(key, mimeType string, reader io.ReadCloser) (*FileHeader, error) {
-	filePath := path.Join(conf.Config.TempDir, utils.UUID())
-	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := ioutil.TempFile(conf.Config.TempDir, "")
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +48,7 @@ func (r *Request) WriteFile(key, mimeType string, reader io.ReadCloser) (*FileHe
 
 	r.files[key] = &FileField{
 		FileHeader: fileHeader,
-		Path:       filePath,
+		Path:       file.Name(),
 	}
 
 	return &fileHeader, nil

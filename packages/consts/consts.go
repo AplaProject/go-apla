@@ -140,4 +140,4 @@ const TCPConnTimeout = 5 * time.Second
 const TxRequestExpire = 1 * time.Minute
 
 // DefaultTempDirName is default name of temporary directory
-const DefaultTempDirName = "temp"
+const DefaultTempDirName = "genesis-temp"

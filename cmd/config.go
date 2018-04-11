@@ -122,9 +122,7 @@ func init() {
 	)
 	configCmd.Flags().StringVar(&conf.Config.KeysDir, "keysDir", "", "Keys directory (default dataDir)")
 	configCmd.Flags().StringVar(&conf.Config.DataDir, "dataDir", "", "Data directory (default cwd/genesis-data)")
-	configCmd.Flags().StringVar(&conf.Config.TempDir, "tempDir", "",
-		fmt.Sprintf("Temporary directory (default dataDir/%s)", consts.DefaultTempDirName),
-	)
+	configCmd.Flags().StringVar(&conf.Config.TempDir, "tempDir", "", "Temporary directory (default temporary directory of OS)")
 	configCmd.Flags().StringVar(&conf.Config.FirstBlockPath, "firstBlock", "", "First block path (default dataDir/1block)")
 	configCmd.Flags().BoolVar(&conf.Config.TLS, "tls", false, "Enable https")
 	configCmd.Flags().StringVar(&conf.Config.TLSCert, "tls-cert", "", "Filepath to the fullchain of certificates")

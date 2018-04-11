@@ -23,16 +23,24 @@ import (
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
 
+const binaryColumn = "data"
+
 func dataHandler() hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 		tblname := ps.ByName("table")
 		column := ps.ByName("column")
+
+		if strings.Contains(tblname, model.BinaryTableSuffix) && column == binaryColumn {
+			binary(w, r, ps)
+			return
+		}
 
 		data, err := model.GetColumnByID(tblname, column, ps.ByName(`id`))
 		if err != nil {
@@ -52,4 +60,26 @@ func dataHandler() hr.Handle {
 		w.Write([]byte(data))
 		return
 	})
+}
+
+func binary(w http.ResponseWriter, r *http.Request, ps hr.Params) {
+	bin := model.Binary{}
+	bin.SetTableName(ps.ByName("table"))
+
+	found, err := bin.GetByID(converter.StrToInt64(ps.ByName("id")))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Errorf("getting binary by id")
+		errorAPI(w, "E_SERVER", http.StatusInternalServerError)
+		return
+	}
+
+	if !found {
+		errorAPI(w, "E_SERVER", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", bin.MimeType)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Write(bin.Data)
+	return
 }

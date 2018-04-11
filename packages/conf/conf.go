@@ -170,7 +170,7 @@ func FillRuntimePaths() error {
 	}
 
 	if Config.TempDir == "" {
-		Config.TempDir = path.Join(Config.DataDir, "temp")
+		Config.TempDir = path.Join(os.TempDir(), consts.DefaultTempDirName)
 	}
 
 	if Config.FirstBlockPath == "" {
