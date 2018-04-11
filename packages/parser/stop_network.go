@@ -57,8 +57,8 @@ func (p *StopNetworkParser) validate() error {
 }
 
 func (p *StopNetworkParser) Action() error {
-	// Allow execute transaction, If the certificate was used
-	if isUsedCert(p.cert) {
+	// Allow execute transaction, if the certificate was used
+	if p.cert.EqualBytes(consts.UsedStopNetworkCerts...) {
 		return nil
 	}
 
@@ -75,14 +75,4 @@ func (p *StopNetworkParser) Rollback() error {
 
 func (p StopNetworkParser) Header() *tx.Header {
 	return nil
-}
-
-func isUsedCert(cert *utils.Cert) bool {
-	for _, v := range consts.UsedStopNetworkCerts {
-		if cert.EqualBytes(v) {
-			return true
-		}
-	}
-
-	return false
 }

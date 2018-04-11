@@ -28,13 +28,19 @@ func (c *Cert) Validate(pem []byte) error {
 	return nil
 }
 
-func (c *Cert) EqualBytes(b []byte) bool {
-	other, err := parseCert(b)
-	if err != nil {
-		return false
+func (c *Cert) EqualBytes(bs ...[]byte) bool {
+	for _, b := range bs {
+		other, err := parseCert(b)
+		if err != nil {
+			return false
+		}
+
+		if c.cert.Equal(other) {
+			return true
+		}
 	}
 
-	return c.cert.Equal(other)
+	return false
 }
 
 func parseCert(b []byte) (*x509.Certificate, error) {

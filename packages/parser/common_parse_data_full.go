@@ -642,7 +642,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 		}
 		if err != nil {
 			if err == errNetworkStopping {
-				continue
+				return err
 			}
 
 			if b.GenBlock && err == ErrLimitStop {

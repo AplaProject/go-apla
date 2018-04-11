@@ -1,6 +1,7 @@
 package tcpserver
 
 import (
+	"errors"
 	"net"
 	"time"
 
@@ -14,6 +15,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
+
+var errStopCertAlreadyUsed = errors.New("Stop certificate is already used")
 
 // Type3
 func Type3(req *StopNetworkRequest, w net.Conn) error {
@@ -36,6 +39,11 @@ func processStopNetwork(b []byte) ([]byte, error) {
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.ParseError}).Error("parsing cert")
 		return nil, err
+	}
+
+	if cert.EqualBytes(consts.UsedStopNetworkCerts...) {
+		log.WithFields(log.Fields{"error": errStopCertAlreadyUsed, "type": consts.InvalidObject}).Error("checking cert")
+		return nil, errStopCertAlreadyUsed
 	}
 
 	fbdata, err := syspar.GetFirstBlockData()
