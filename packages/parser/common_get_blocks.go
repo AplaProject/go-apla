@@ -58,7 +58,7 @@ func GetBlocks(blockID int64, host string) error {
 			return utils.ErrInfo(errors.New("count > variables[rollback_blocks]"))
 		}
 
-		block, err := ProcessBlockWherePrevFromBlockchainTable(binaryBlock)
+		block, err := ProcessBlockWherePrevFromBlockchainTable(binaryBlock, true)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

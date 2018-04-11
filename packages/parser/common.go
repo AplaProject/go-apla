@@ -59,7 +59,7 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 		return BlockData, utils.ErrInfo(err)
 	}
 
-	header, err := ParseBlockHeader(bytes.NewBuffer(block.Data))
+	header, err := ParseBlockHeader(bytes.NewBuffer(block.Data), false)
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}
