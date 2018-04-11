@@ -85,7 +85,7 @@ func (nbs *NodesBanService) IsBanned(node syspar.FullNode) bool {
 	// that node is still banned (even if `unban` time has already passed)
 	for _, fn := range nbs.fullNodes {
 		if fn.KeyID == node.KeyID {
-			return fn.UnbanTime.Equal(time.Unix(0, 0))
+			return !fn.UnbanTime.Equal(time.Unix(0, 0))
 		}
 	}
 
