@@ -20,6 +20,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -82,6 +83,10 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
+	{`DBFind(parameters, src_par).Columns("id").Order(id).Where("id >= 1 and id <= 3").Count(count)Span(#count#)`,
+		`[{"tag":"dbfind","attr":{"columns":["id"],"count":"3","data":[["1"],["2"],["3"]],"name":"parameters","order":"id","source":"src_par","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"span","children":[{"tag":"text","text":"3"}]}]`},
+	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
 	{`SetVar(where)DBFind(contracts, src).Columns(id).Order(id).Limit(3).Custom(a){SetVar(where, #where# #id#)}
 	Div(){Table(src, "=x")}Div(){Table(src)}Div(){#where#}`,
 		`[{"tag":"dbfind","attr":{"columns":["id","a"],"data":[["1","null"],["2","null"],["3","null"]],"limit":"3","name":"contracts","order":"id","source":"src","types":["text","tags"]}},{"tag":"div","children":[{"tag":"table","attr":{"columns":[{"Name":"x","Title":""}],"source":"src"}}]},{"tag":"div","children":[{"tag":"table","attr":{"source":"src"}}]},{"tag":"div","children":[{"tag":"text","text":" 1 2 3"}]}]`},
@@ -130,11 +135,13 @@ var forTest = tplList{
 	{`EcosysParam(new_table)`,
 		`[{"tag":"text","text":"ContractConditions("MainCondition")"}]`},
 	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
-		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","government"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"government"}]}]`},
+		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","default_menu"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"default_menu"}]}]`},
 	{`SetVar(varZero, 0) If(#varZero#>0) { the varZero should be hidden }
 		SetVar(varNotZero, 1) If(#varNotZero#>0) { the varNotZero should be visible }
 		If(#varUndefined#>0) { the varUndefined should be hidden }`,
 		`[{"tag":"text","text":"the varNotZero should be visible"}]`},
+	{`Address(EcosysParam(founder_account))+EcosysParam(founder_account)`,
+		`[{"tag":"text","text":"1651-3553-1389-2023-2108"},{"tag":"text","text":"+-1933190934789319508"}]`},
 }
 
 func TestMobile(t *testing.T) {
@@ -155,9 +162,7 @@ func TestMobile(t *testing.T) {
 	}
 }
 
-var imageData = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
-
-func TestImage(t *testing.T) {
+func TestCutoff(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
@@ -167,10 +172,9 @@ func TestImage(t *testing.T) {
 		"Name": {name},
 		"Columns": {`[
 			{"name":"name","type":"varchar", "index": "1", "conditions":"true"},
-			{"name":"image", "type":"bytea","index": "0", "conditions":"true"},
 			{"name":"long_text", "type":"text", "index":"0", "conditions":"true"},
 			{"name":"short_text", "type":"varchar", "index":"0", "conditions":"true"}
-		]`},
+			]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`},
 	}
 	err := postTx(`NewTable`, &form)
@@ -178,28 +182,30 @@ func TestImage(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
-		 data {
-			 Image string
-			 LongText string
-			 ShortText string
-		 }
-		 action {
-			 DBInsert("` + name + `", "name,image,long_text,short_text", "myimage", $Image, $LongText, $ShortText)
-		 }
-		}`},
-		"Conditions": {`true`}}
+	form = url.Values{
+		"Name": {name},
+		"Value": {`
+			contract ` + name + ` {
+				data {
+					LongText string
+					ShortText string
+				}
+				action {
+					DBInsert("` + name + `", "name,long_text,short_text", "test", $LongText, $ShortText)
+				}
+			}
+		`},
+		"Conditions": {`true`},
+	}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
 
-	mydata := `data:image/png;base64,` + crypto.RandSeq(30000)
 	shortText := crypto.RandSeq(30)
 	longText := crypto.RandSeq(100)
 
 	err = postTx(name, &url.Values{
-		"Image":     {mydata},
 		"ShortText": {shortText},
 		"LongText":  {longText},
 	})
@@ -208,11 +214,7 @@ func TestImage(t *testing.T) {
 		return
 	}
 	var ret contentResult
-	template := `DBFind(Name: ` + name + `, Source: srcimage).Cutoff("short_text,long_text").Custom(custom_image){
-		Div(Body: Image(Src: "#image#").Style(width: 100px;  border: 1px solid #5A5D63 ;))
-	}
-	Table(Source: srcimage, Columns: "Name=name, Image=#custom_image#")
-	`
+	template := `DBFind(Name: ` + name + `, Source: mysrc).Cutoff("short_text,long_text")`
 	start := time.Now()
 	err = sendPost(`content`, &url.Values{`template`: {template}}, &ret)
 	duration := time.Since(start)
@@ -224,33 +226,21 @@ func TestImage(t *testing.T) {
 		t.Errorf(`Too much time for template parsing`)
 		return
 	}
-	mydata = imageData
 	err = postTx(name, &url.Values{
-		"Image":     {mydata},
 		"ShortText": {shortText},
 		"LongText":  {longText},
 	})
 
-	template = `Div(Class: list-group-item){
-		Div(panel-body){
-		   DBFind("` + name + `", mysrc).Columns("id,name,image,short_text,long_text").Cutoff("short_text,long_text").WhereId(2).Vars(prefix).Custom(leftImg){
-			   Image(Src: "#image#")
-		   }
-		   }
-		   Table(mysrc,"Image=leftImg")
-		   Image(Src: "#prefix_image#")
-		}`
+	template = `DBFind("` + name + `", mysrc).Columns("id,name,short_text,long_text").Cutoff("short_text,long_text").WhereId(2).Vars(prefix)`
 	err = sendPost(`content`, &url.Values{`template`: {template}}, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	hashImage := fmt.Sprintf("%x", md5.Sum([]byte(mydata)))
-	linkImage := fmt.Sprintf("/data/1_%s/2/image/%s", name, hashImage)
 	linkLongText := fmt.Sprintf("/data/1_%s/2/long_text/%x", name, md5.Sum([]byte(longText)))
 
-	want := `[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"div","attr":{"class":"panel-body"},"children":[{"tag":"dbfind","attr":{"columns":["id","name","image","short_text","long_text","leftImg"],"cutoff":"short_text,long_text","data":[["2","myimage","{"link":"` + linkImage + `","title":"` + hashImage + `"}","{"link":"","title":"` + shortText + `"}","{"link":"` + linkLongText + `","title":"` + longText[0:32] + `"}","[{"tag":"image","attr":{"src":"` + linkImage + `"}}]"]],"name":"` + name + `","source":"mysrc","types":["text","text","blob","long_text","long_text","tags"],"whereid":"2"}}]},{"tag":"table","attr":{"columns":[{"Name":"leftImg","Title":"Image"}],"source":"mysrc"}},{"tag":"image","attr":{"src":"` + linkImage + `"}}]}]`
+	want := `[{"tag":"dbfind","attr":{"columns":["id","name","short_text","long_text"],"cutoff":"short_text,long_text","data":[["2","test","{"link":"","title":"` + shortText + `"}","{"link":"` + linkLongText + `","title":"` + longText[:32] + `"}"]],"name":"` + name + `","source":"mysrc","types":["text","text","long_text","long_text"],"whereid":"2"}}]`
 	if RawToString(ret.Tree) != want {
 		t.Errorf("Wrong image tree %s != %s", RawToString(ret.Tree), want)
 	}
@@ -265,6 +255,8 @@ func TestImage(t *testing.T) {
 	}
 }
 
+var imageData = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
+
 func TestBinary(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
@@ -276,9 +268,74 @@ func TestBinary(t *testing.T) {
 	}
 	assert.NoError(t, postTx("UploadBinary", &form))
 
-	var ret contentResult
-	template := `Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`
-	err := sendPost(`content`, &url.Values{`template`: {template}}, &ret)
+	hashImage := fmt.Sprintf("%x", md5.Sum([]byte(imageData)))
+
+	cases := []struct {
+		source string
+		result string
+	}{
+		{
+			`Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = 1 AND name = 'file'").Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","img"\],"data":\[\["1","1","1","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","tags"\],"where":"app_id=1 AND member_id = 1 AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
+		},
+		{
+			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = 1 AND name = 'file'").Vars(prefix)Image(Src: "#prefix_data#")`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash"\],"data":\[\["1","1","1","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text"\],"where":"app_id=1 AND member_id = 1 AND name = 'file'"}},{"tag":"image","attr":{"src":"{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}"}}\]`,
+		},
+	}
+
+	for _, v := range cases {
+		var ret contentResult
+		err := sendPost(`content`, &url.Values{`template`: {v.source}}, &ret)
+		assert.NoError(t, err)
+		assert.Regexp(t, v.result, string(ret.Tree))
+	}
+}
+
+func TestEncodeBase64ToBinary(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	contract := randName("binary")
+	content := randName("content")
+
+	form := url.Values{
+		"Value": {`
+			contract ` + contract + ` {
+				data {
+					Content string
+				}
+				conditions {}
+				action {
+					var params map
+					params["Name"] = "test"
+					params["AppID"] = 1
+					params["Data"] = "data:text/plain;base64," + EncodeBase64($Content)
+					CallContract("UploadBinary", params)
+				}
+			}
+		`},
+		"Conditions": {"true"},
+	}
+	assert.NoError(t, postTx("NewContract", &form))
+
+	form = url.Values{"Content": {content}}
+	assert.NoError(t, postTx(contract, &form))
+
+	form = url.Values{
+		"template": {`SetVar(link, Binary(Name: test, AppID: 1)) #link#`},
+	}
+	var ret struct {
+		Tree []struct {
+			Link string `json:"text"`
+		} `json:"tree"`
+	}
+	assert.NoError(t, sendPost(`content`, &form, &ret))
+
+	data, err := sendRawRequest("GET", strings.TrimSpace(ret.Tree[0].Link), nil)
 	assert.NoError(t, err)
-	assert.Regexp(t, `\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/[a-f0-9]{32}"}}\]`, string(ret.Tree))
+	assert.Equal(t, content, string(data))
 }

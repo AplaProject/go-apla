@@ -50,15 +50,17 @@ const (
 )
 
 type apiData struct {
-	status      int
-	result      interface{}
-	params      map[string]interface{}
-	ecosystemId int64
-	keyId       int64
-	isMobile    string
-	vde         bool
-	vm          *script.VM
-	token       *jwt.Token
+	status        int
+	result        interface{}
+	params        map[string]interface{}
+	ecosystemId   int64
+	ecosystemName string
+	keyId         int64
+	roleId        int64
+	isMobile      string
+	vde           bool
+	vm            *script.VM
+	token         *jwt.Token
 }
 
 // ParamString reaturs string value of the api params
@@ -142,7 +144,7 @@ func getPrefix(data *apiData) (prefix string) {
 
 func getSignHeader(txName string, data *apiData) tx.Header {
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
-		EcosystemID: data.ecosystemId, KeyID: data.keyId}
+		EcosystemID: data.ecosystemId, KeyID: data.keyId, NetworkID: consts.NETWORK_ID}
 }
 
 func getHeader(txName string, data *apiData) (tx.Header, error) {
@@ -161,7 +163,7 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
 		EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
-		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
+		BinSignatures: converter.EncodeLengthPlusData(signature), NetworkID: consts.NETWORK_ID}, nil
 }
 
 // DefaultHandler is a common handle function for api requests
@@ -217,11 +219,13 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		data.token = token
 		if token != nil && token.Valid {
 			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
-				data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
-				data.keyId = converter.StrToInt64(claims.KeyID)
-				data.isMobile = claims.IsMobile
+				if err := fillAPIData(&data, claims); err != nil {
+					errorAPI(w, "E_SERVER", http.StatusNotFound, err)
+					return
+				}
 			}
 		}
+
 		// Getting and validating request parameters
 		r.ParseForm()
 		data.params = make(map[string]interface{})
@@ -280,9 +284,9 @@ func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (in
 	ecosystemID := data.ecosystemId
 	if data.params[`ecosystem`].(int64) > 0 {
 		ecosystemID = data.params[`ecosystem`].(int64)
-		count, err := model.GetNextID(nil, `system_states`)
+		count, err := model.GetNextID(nil, "1_ecosystems")
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id system states")
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id ecosystems")
 			return 0, ``, errorAPI(w, err, http.StatusBadRequest)
 		}
 		if ecosystemID >= count {
@@ -295,4 +299,25 @@ func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (in
 		prefix += `_vde`
 	}
 	return ecosystemID, prefix, nil
+}
+
+func fillAPIData(data *apiData, claims *JWTClaims) error {
+	data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
+	data.keyId = converter.StrToInt64(claims.KeyID)
+	data.isMobile = claims.IsMobile
+	data.roleId = converter.StrToInt64(claims.RoleID)
+	ecosystem := &model.Ecosystem{}
+	found, err := ecosystem.Get(data.ecosystemId)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
+		return err
+	}
+
+	if !found {
+		err := fmt.Errorf("ecosystem not found")
+		log.WithFields(log.Fields{"type": consts.NotFound, "id": data.ecosystemId, "error": err}).Error("ecosystem not found")
+	}
+
+	data.ecosystemName = ecosystem.Name
+	return nil
 }

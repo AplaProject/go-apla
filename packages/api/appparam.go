@@ -20,22 +20,30 @@ import (
 	"net/http"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	log "github.com/sirupsen/logrus"
 )
 
-type ecosystemsResult struct {
-	Number uint32 `json:"number"`
-}
-
-func ecosystems(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-
-	number, err := model.GetNextID(nil, "1_ecosystems")
+func appParam(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	_, prefix, err := checkEcosystem(w, data, logger)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error getting next ecosystem id")
 		return err
 	}
-	data.result = &ecosystemsResult{Number: uint32(number - 1)}
+	ap := &model.AppParam{}
+	ap.SetTablePrefix(prefix)
+	found, err := ap.Get(nil, converter.StrToInt64(data.params[`appid`].(string)), data.params[`name`].(string))
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting app parameter by name")
+		return errorAPI(w, err, http.StatusInternalServerError)
+	}
+	if !found {
+		logger.WithFields(log.Fields{"type": consts.NotFound, "key": data.params["name"].(string)}).Error("app parameter not found")
+		return errorAPI(w, err, http.StatusBadRequest)
+	}
+
+	data.result = &paramValue{ID: converter.Int64ToStr(ap.ID), Name: ap.Name, Value: ap.Value,
+		Conditions: ap.Conditions}
 	return
 }
