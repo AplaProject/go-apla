@@ -14,6 +14,9 @@ import (
 
 // RunAllDaemons start daemons, load contracts and tcpserver
 func RunAllDaemons() error {
+	logEntry := log.WithFields(log.Fields{"daemon_name": "block_collection"})
+
+	daemons.InitialLoad(logEntry)
 	err := syspar.SysUpdate(nil)
 	if err != nil {
 		log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))

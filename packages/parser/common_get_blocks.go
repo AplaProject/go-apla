@@ -92,7 +92,7 @@ func getBlocks(blockID int64, host string) ([]*Block, error) {
 			return nil, utils.ErrInfo(errors.New("count > variables[rollback_blocks]"))
 		}
 
-		block, err := ProcessBlockWherePrevFromBlockchainTable(binaryBlock)
+		block, err := ProcessBlockWherePrevFromBlockchainTable(binaryBlock, true)
 		if err != nil {
 			return nil, utils.ErrInfo(err)
 		}

@@ -36,7 +36,7 @@ func BlockRollback(data []byte) error {
 		return fmt.Errorf("empty buffer")
 	}
 
-	block, err := parseBlock(buf)
+	block, err := parseBlock(buf, false)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func RollbackTxFromBlock(data []byte) error {
 		return fmt.Errorf("empty buffer")
 	}
 
-	block, err := parseBlock(buf)
+	block, err := parseBlock(buf, false)
 	if err != nil {
 		return err
 	}
