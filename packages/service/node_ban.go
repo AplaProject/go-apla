@@ -112,22 +112,22 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 		return err
 	}
 
-	var cn syspar.FullNode
+	var currentNode syspar.FullNode
 	nbs.m.Lock()
 	for _, fn := range nbs.fullNodes {
 		if fn.KeyID == conf.Config.KeyID {
-			cn = *fn
+			currentNode = *fn
 			break
 		}
 	}
 	nbs.m.Unlock()
 
-	if cn.KeyID == 0 {
+	if currentNode.KeyID == 0 {
 		return errors.New("cant find current node in full nodes list")
 	}
 
 	params := make([]byte, 0)
-	for _, p := range []int64{producer.KeyID, cn.KeyID, blockId, blockTime} {
+	for _, p := range []int64{producer.KeyID, currentNode.KeyID, blockId, blockTime} {
 		converter.EncodeLenInt64(&params, p)
 	}
 
@@ -148,7 +148,7 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 		NodePrivateKey,
 		NodePublicKey,
 		strconv.FormatInt(producer.KeyID, 10),
-		strconv.FormatInt(cn.KeyID, 10),
+		strconv.FormatInt(currentNode.KeyID, 10),
 		strconv.FormatInt(blockId, 10),
 		strconv.FormatInt(blockTime, 10),
 	)

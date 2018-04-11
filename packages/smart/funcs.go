@@ -1252,7 +1252,7 @@ func UpdateCron(sc *SmartContract, id int64) error {
 	return nil
 }
 
-func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
+func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 	now := time.Unix(timestamp, 0)
 
 	badBlocks := &model.BadBlocks{}
@@ -1264,27 +1264,27 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 
 	curFullNodes := syspar.GetNodes()
 	var updFullNodes bool
-	for k, n := range curFullNodes {
+	for k, fullNode := range curFullNodes {
 		// Removing ban in case ban time has already passed
-		if now.After(n.UnbanTime) {
+		if now.After(fullNode.UnbanTime) {
 			curFullNodes[k].UnbanTime = time.Unix(0, 0)
 			updFullNodes = true
 		}
 
 		// Setting ban time if we have ban requests for the current node from 51% of all nodes.
 		// Ban request is mean that node have added more or equal N(system parameter) of bad blocks
-		for _, br := range banRequests {
-			if br.ProducerNodeId == n.KeyID && br.Count >= int64((len(curFullNodes)/2)+1) {
+		for _, banReq := range banRequests {
+			if banReq.ProducerNodeId == fullNode.KeyID && banReq.Count >= int64((len(curFullNodes)/2)+1) {
 				curFullNodes[k].UnbanTime = now.Add(syspar.GetNodeBanTime())
 
-				blocks, err := badBlocks.GetNodeBlocks(n.KeyID, now)
+				blocks, err := badBlocks.GetNodeBlocks(fullNode.KeyID, now)
 				if err != nil {
 					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node bad blocks for removing")
 					return err
 				}
 
 				for _, b := range blocks {
-					if _, err := DBUpdate(sc, "bad_blocks", b.ID, "deleted", "1"); err != nil {
+					if _, err := DBUpdate(smartContract, "bad_blocks", b.ID, "deleted", "1"); err != nil {
 						log.WithFields(log.Fields{"type": consts.DBError, "id": b.ID, "error": err}).Error("deleting bad block")
 						return err
 					}
@@ -1292,37 +1292,37 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 
 				banMessage := fmt.Sprintf(
 					"%d/%d nodes voted for ban with %d or more blocks each",
-					br.Count,
+					banReq.Count,
 					len(curFullNodes),
 					syspar.GetIncorrectBlocksPerDay(),
 				)
 
 				_, _, err = DBInsert(
-					sc,
+					smartContract,
 					"node_ban_logs",
 					"node_id,banned_at,ban_time,reason",
-					n.KeyID,
+					fullNode.KeyID,
 					now.Format(time.RFC3339),
 					int64(syspar.GetNodeBanTime()/time.Millisecond), // in ms
 					banMessage,
 				)
 
 				if err != nil {
-					log.WithFields(log.Fields{"type": consts.DBError, "id": br.ProducerNodeId, "error": err}).Error("inserting log to node_ban_log")
+					log.WithFields(log.Fields{"type": consts.DBError, "id": banReq.ProducerNodeId, "error": err}).Error("inserting log to node_ban_log")
 					return err
 				}
 
 				_, _, err = DBInsert(
-					sc,
+					smartContract,
 					"notifications",
 					"recipient_id,body_text,header_text",
-					n.KeyID,
+					fullNode.KeyID,
 					banMessage,
 					"Your node was banned",
 				)
 
 				if err != nil {
-					log.WithFields(log.Fields{"type": consts.DBError, "id": br.ProducerNodeId, "error": err}).Error("sending notification to node owner")
+					log.WithFields(log.Fields{"type": consts.DBError, "id": banReq.ProducerNodeId, "error": err}).Error("sending notification to node owner")
 					return err
 				}
 
@@ -1343,7 +1343,7 @@ func UpdateNodesBan(sc *SmartContract, timestamp int64) error {
 		}
 
 		err = json.Unmarshal(d, &[]syspar.FullNode{})
-		_, err = UpdateSysParam(sc, syspar.FullNodes, string(d), "")
+		_, err = UpdateSysParam(smartContract, syspar.FullNodes, string(d), "")
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating full nodes")
 			return err
