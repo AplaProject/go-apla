@@ -38,12 +38,13 @@ func GetNodesBanService() *NodesBanService {
 }
 
 // InitNodesBanService initializing nodes ban storage
-func InitNodesBanService(fullNodes map[int64]*syspar.FullNode) error {
+func InitNodesBanService() error {
 	nbs = &NodesBanService{
 		localBannedNodes: make(map[int64]localBannedNode),
-		fullNodes:        fullNodes,
 		m:                &sync.Mutex{},
 	}
+
+	nbs.refreshNodes()
 	return nil
 }
 
@@ -63,6 +64,8 @@ func (nbs *NodesBanService) RegisterBadBlock(node syspar.FullNode, badBlockId, b
 
 // IsBanned is allows to check node ban (local or global)
 func (nbs *NodesBanService) IsBanned(node syspar.FullNode) bool {
+	nbs.refreshNodes()
+
 	nbs.m.Lock()
 	defer nbs.m.Unlock()
 
@@ -82,15 +85,17 @@ func (nbs *NodesBanService) IsBanned(node syspar.FullNode) bool {
 	// that node is still banned (even if `unban` time has already passed)
 	for _, fn := range nbs.fullNodes {
 		if fn.KeyID == node.KeyID {
-			if fn.UnbanTime.Equal(time.Unix(0, 0)) {
-				return false
-			} else {
-				return true
-			}
+			return fn.UnbanTime.Equal(time.Unix(0, 0))
 		}
 	}
 
 	return false
+}
+
+func (nbs *NodesBanService) refreshNodes() {
+	nbs.m.Lock()
+	nbs.fullNodes = syspar.GetNodes()
+	nbs.m.Unlock()
 }
 
 func (nbs *NodesBanService) localBan(node syspar.FullNode) {
@@ -99,7 +104,7 @@ func (nbs *NodesBanService) localBan(node syspar.FullNode) {
 
 	nbs.localBannedNodes[node.KeyID] = localBannedNode{
 		FullNode:       &node,
-		LocalUnBanTime: time.Now().Add(time.Minute * 30),
+		LocalUnBanTime: time.Now().Add(consts.LocalBanTime),
 	}
 }
 

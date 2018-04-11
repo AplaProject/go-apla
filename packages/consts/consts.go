@@ -139,3 +139,5 @@ const FromToPerDayLimit = 10000
 const TokenMovementQtyPerBlockLimit = 100
 
 const TCPConnTimeout = 5 * time.Second
+
+const LocalBanTime = time.Minute * 30

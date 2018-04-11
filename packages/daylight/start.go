@@ -39,7 +39,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -238,20 +237,20 @@ func Start() {
 			os.Exit(1)
 		}
 
-		var availableBCGap int64 = consts.AvailableBCGap
-		if syspar.GetRbBlocks1() > consts.AvailableBCGap {
-			availableBCGap = syspar.GetRbBlocks1() - consts.AvailableBCGap
-		}
+		//var availableBCGap int64 = consts.AvailableBCGap
+		//if syspar.GetRbBlocks1() > consts.AvailableBCGap {
+		//	availableBCGap = syspar.GetRbBlocks1() - consts.AvailableBCGap
+		//}
+		//
+		//blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
+		//blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
+		//blockGenerationTime := blockGenerationDuration + blocksGapDuration
+		//
+		//checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
+		//na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
+		//na.Run()
 
-		blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
-		blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
-		blockGenerationTime := blockGenerationDuration + blocksGapDuration
-
-		checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
-		na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
-		na.Run()
-
-		err = service.InitNodesBanService(syspar.GetNodes())
+		err = service.InitNodesBanService()
 		if err != nil {
 			log.WithError(err).Fatal("Can't init ban service")
 		}

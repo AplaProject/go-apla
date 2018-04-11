@@ -170,7 +170,15 @@ func GetNode(wallet int64) *FullNode {
 }
 
 func GetNodes() map[int64]*FullNode {
-	return nodes
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	n := make(map[int64]*FullNode)
+	for key, value := range nodes {
+		n[key] = value
+	}
+
+	return n
 }
 
 // GetNodePositionByKeyID is returning node position by key id
