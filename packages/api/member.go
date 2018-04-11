@@ -54,6 +54,11 @@ func getAvatar(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 		return errorAPI(w, "E_SERVER", http.StatusNotFound)
 	}
 
+	if len(bin.Data) == 0 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject, "error": err, "image_id": *member.ImageID}).Errorf("on check avatar size")
+		return errorAPI(w, "E_SERVER", http.StatusNotFound)
+	}
+
 	// cut the prefix like a 'data:blah-blah;base64,'
 	b64data := bin.Data[bytes.IndexByte(bin.Data, ',')+1:]
 	buf, err := base64.StdEncoding.DecodeString(string(b64data))
