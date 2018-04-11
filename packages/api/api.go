@@ -227,7 +227,6 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		}
 
 		// Getting and validating request parameters
-		r.ParseForm()
 		data.params = make(map[string]interface{})
 		for _, par := range ps {
 			data.params[par.Key] = par.Value

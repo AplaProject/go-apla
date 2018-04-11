@@ -135,3 +135,9 @@ const FromToPerDayLimit = 10000
 const TokenMovementQtyPerBlockLimit = 100
 
 const TCPConnTimeout = 5 * time.Second
+
+// TxRequestExpire is expiration time for request of transaction
+const TxRequestExpire = 1 * time.Minute
+
+// DefaultTempDirName is default name of temporary directory
+const DefaultTempDirName = "temp"

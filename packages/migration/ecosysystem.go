@@ -144,7 +144,8 @@ MenuItem(
 			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
-			"hash" varchar(32) NOT NULL DEFAULT ''
+			"hash" varchar(32) NOT NULL DEFAULT '',
+			"mime_type" varchar(255) NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_vde_binaries" ADD CONSTRAINT "%[1]d_vde_binaries_pkey" PRIMARY KEY (id);
 		CREATE UNIQUE INDEX "%[1]d_vde_binaries_index_app_id_member_id_name" ON "%[1]d_vde_binaries" (app_id, member_id, name);
@@ -210,14 +211,15 @@ MenuItem(
 				"till": "ContractConditions(\"MainCondition\")",
 				  "conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractConditions(\"MainCondition\")'),
-			  ('8', 'statics',
+			  ('8', 'binaries',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
 					"new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"app_id": "ContractConditions(\"MainCondition\")",
 					"member_id": "ContractConditions(\"MainCondition\")",
 					"name": "ContractConditions(\"MainCondition\")",
 					"data": "ContractConditions(\"MainCondition\")",
-					"hash": "ContractConditions(\"MainCondition\")"}',
+					"hash": "ContractConditions(\"MainCondition\")",
+					"mime_type": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")');
 	  
 	  INSERT INTO "%[1]d_vde_contracts" ("id", "name", "value", "conditions") VALUES 
@@ -854,10 +856,10 @@ MenuItem(
 			UpdateCron($Id)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('23','contract UploadBinary {
+	('23','UploadBinary', 'contract UploadBinary {
 		data {
 			Name  string
-			Data  string
+			Data  bytes "file"
 			AppID int
 			MemberID int "optional"
 		}
@@ -865,13 +867,10 @@ MenuItem(
 			$Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $AppID, $MemberID, $Name).One("id"))
 		}
 		action {
-			var hash string
-			hash = MD5($Data)
-
 			if $Id != 0 {
-				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
+				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, $DataHash, $DataMimeType)
 			} else {
-				DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
+				DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, $DataHash, $DataMimeType)
 			}
 		}
 	}', 'ContractConditions("MainCondition")');
@@ -1256,7 +1255,8 @@ MenuItem(
 						"member_id": "ContractConditions(\"MainCondition\")",
 						"name": "ContractConditions(\"MainCondition\")",
 						"data": "ContractConditions(\"MainCondition\")",
-						"hash": "ContractConditions(\"MainCondition\")"}',
+						"hash": "ContractConditions(\"MainCondition\")",
+						"mime_type": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
@@ -1364,7 +1364,8 @@ MenuItem(
 			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
-			"hash" varchar(32) NOT NULL DEFAULT ''
+			"hash" varchar(32) NOT NULL DEFAULT '',
+			"mime_type" varchar(255) NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
 		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (app_id, member_id, name);
@@ -2357,10 +2358,10 @@ MenuItem(
 			CallContract($cur["contract"], nil)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('33','UploadBinary','contract UploadBinary {
+	('33', 'UploadBinary', 'contract UploadBinary {
 		data {
 			Name  string
-			Data  string
+			Data  bytes "file"
 			AppID int
 			MemberID int "optional"
 		}
@@ -2368,13 +2369,10 @@ MenuItem(
 			$Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $AppID, $MemberID, $Name).One("id"))
 		}
 		action {
-			var hash string
-			hash = MD5($Data)
-
 			if $Id != 0 {
-				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
+				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, $DataHash, $DataMimeType)
 			} else {
-				DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
+				DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, $DataHash, $DataMimeType)
 			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),

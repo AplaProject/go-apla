@@ -20,6 +20,8 @@ import (
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -36,15 +38,8 @@ func Route(route *hr.Router) {
 	post := func(pattern, params string, handler ...apiHandle) {
 		methodRoute(route, `POST`, pattern, params, handler...)
 	}
-	anyTx := func(method, pattern, pars string, preHandle, handle apiHandle) {
-		methodRoute(route, method, `prepare/`+pattern, pars, authWallet, preHandle)
-		if len(pars) > 0 {
-			pars = `,` + pars
-		}
-		methodRoute(route, method, `contract/`+pattern, `?pubkey signature:hex, time:string`+pars, authWallet, blockchainUpdatingState, handle)
-	}
-	postTx := func(url string, params string, preHandle, handle apiHandle) {
-		anyTx(`POST`, url, params, preHandle, handle)
+	contractHandlers := &contractHandlers{
+		requests: tx.NewRequestBuffer(consts.TxRequestExpire),
 	}
 
 	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
@@ -82,14 +77,15 @@ func Route(route *hr.Router) {
 	db_name db_pass db_user ?centrifugo_url ?centrifugo_secret:string,?generate_first_block:int64`, doInstall)
 	post(`vde/create`, ``, authWallet, vdeCreate)
 	post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
-	postTx(`:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, prepareContract, contract)
+	post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
+	post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
 	post(`signtest/`, `forsign private:string`, signTest)
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template ?source:string`, jsonContent)
 	post(`updnotificator`, `ids:string`, updateNotificator)
 
-	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
+	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, contractHandlers.nodeContract)
 }
 
 func processParams(input string) (params map[string]int) {

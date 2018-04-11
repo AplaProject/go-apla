@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -31,22 +30,23 @@ import (
 )
 
 type prepareResult struct {
+	ID      string            `json:"request_id"`
 	ForSign string            `json:"forsign"`
 	Signs   []TxSignJSON      `json:"signs"`
 	Values  map[string]string `json:"values"`
 	Time    string            `json:"time"`
 }
 
-func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+type contractHandlers struct {
+	requests *tx.RequestBuffer
+}
+
+func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var (
 		result  prepareResult
-		timeNow int64
 		smartTx tx.SmartContract
 	)
 
-	timeNow = time.Now().Unix()
-	result.Time = converter.Int64ToStr(timeNow)
-	result.Values = make(map[string]string)
 	contract, parerr, err := validateSmartContract(r, data, &result)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), `E_`) {
@@ -61,30 +61,63 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 	if data.params[`signed_by`] != nil {
 		smartTx.SignedBy = data.params[`signed_by`].(int64)
 	}
-	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, EcosystemID: data.ecosystemId, KeyID: data.keyId, RoleID: data.roleId, NetworkID: consts.NETWORK_ID}
-	forsign := smartTx.ForSign()
+
+	req := h.requests.NewRequest(contract.Name)
+
+	smartTx.RequestID = req.ID
+	smartTx.Header = tx.Header{
+		Type:        int(info.ID),
+		Time:        req.Time.Unix(),
+		EcosystemID: data.ecosystemId,
+		KeyID:       data.keyId,
+		RoleID:      data.roleId,
+		NetworkID:   consts.NETWORK_ID,
+	}
+
+	forsign := []string{smartTx.ForSign()}
+
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
-			if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `signature`) {
+			if strings.Contains(fitem.Tags, `signature`) {
 				continue
 			}
+
 			var val string
-			if fitem.Type.String() == `[]interface {}` {
+			if fitem.ContainsTag(script.TagFile) {
+				file, header, err := r.FormFile(fitem.Name)
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting multipart file")
+					return errorAPI(w, err.Error(), http.StatusBadRequest)
+				}
+				fileHeader, err := req.WriteFile(fitem.Name, header.Header.Get(`Content-Type`), file)
+				file.Close()
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing file")
+					return errorAPI(w, err.Error(), http.StatusInternalServerError)
+				}
+				forsign = append(forsign, fileHeader.MimeType, fileHeader.Hash)
+				continue
+			} else if fitem.Type.String() == `[]interface {}` {
 				for key, values := range r.Form {
 					if key == fitem.Name+`[]` && len(values) > 0 {
 						count := converter.StrToInt(values[0])
 						var list []string
 						for i := 0; i < count; i++ {
-							list = append(list, r.FormValue(fmt.Sprintf(`%s[%d]`, fitem.Name, i)))
+							k := fmt.Sprintf(`%s[%d]`, fitem.Name, i)
+							v := r.FormValue(k)
+							list = append(list, v)
+							req.SetValue(k, v)
 						}
 						val = strings.Join(list, `,`)
 					}
 				}
 				if len(val) == 0 {
 					val = r.FormValue(fitem.Name)
+					req.SetValue(fitem.Name, val)
 				}
 			} else {
 				val = strings.TrimSpace(r.FormValue(fitem.Name))
+				req.SetValue(fitem.Name, val)
 				if strings.Contains(fitem.Tags, `address`) {
 					val = converter.Int64ToStr(converter.StringToAddress(val))
 				} else if fitem.Type.String() == script.Decimal {
@@ -93,10 +126,15 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 					val = `0`
 				}
 			}
-			forsign += fmt.Sprintf(",%v", val)
+			forsign = append(forsign, val)
 		}
 	}
-	result.ForSign = forsign
+
+	result.ID = req.ID
+	result.ForSign = strings.Join(forsign, ",")
+	result.Time = converter.Int64ToStr(req.Time.Unix())
+	result.Values = make(map[string]string)
+
 	data.result = result
 	return nil
 }

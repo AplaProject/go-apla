@@ -41,6 +41,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -568,4 +569,8 @@ func ShuffleSlice(slice []string) {
 		j := rand.Intn(i + 1)
 		slice[i], slice[j] = slice[j], slice[i]
 	}
+}
+
+func UUID() string {
+	return uuid.Must(uuid.NewV4()).String()
 }

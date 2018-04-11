@@ -69,6 +69,11 @@ const (
 	VMTypeSmart VMType = 1
 	// VMTypeVDE is vde vm type
 	VMTypeVDE VMType = 2
+
+	TagFile      = "file"
+	TagAddress   = "address"
+	TagSignature = "signature"
+	TagOptional  = "optional"
 )
 
 // ExtFuncInfo is the structure for the extrended function
@@ -86,6 +91,11 @@ type FieldInfo struct {
 	Name string
 	Type reflect.Type
 	Tags string
+}
+
+// ContainsTag returns whether the tag is contained in this field
+func (fi *FieldInfo) ContainsTag(tag string) bool {
+	return strings.Contains(fi.Tags, tag)
 }
 
 // ContractInfo contains the contract information

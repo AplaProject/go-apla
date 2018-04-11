@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 
@@ -82,6 +83,7 @@ type GlobalConfig struct {
 	LockFilePath   string
 	DataDir        string // application work dir (cwd by default)
 	KeysDir        string // place for private keys files: NodePrivateKey, PrivateKey
+	TempDir        string // temporary dir
 	FirstBlockPath string
 	TLS            bool   // TLS is on/off. It is required for https
 	TLSCert        string // TLSCert is a filepath of the fullchain of certificate.
@@ -135,12 +137,8 @@ func LoadConfig(path string) error {
 
 // SaveConfig save global parameters to configFile
 func SaveConfig(path string) error {
-	dir := filepath.Dir(path)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err := os.Mkdir(dir, 0775)
-		if err != nil {
-			return errors.Wrapf(err, "creating dir %s", dir)
-		}
+	if err := makeDir(filepath.Dir(path)); err != nil {
+		return err
 	}
 
 	cf, err := os.Create(path)
@@ -169,6 +167,10 @@ func FillRuntimePaths() error {
 
 	if Config.KeysDir == "" {
 		Config.KeysDir = Config.DataDir
+	}
+
+	if Config.TempDir == "" {
+		Config.TempDir = path.Join(Config.DataDir, "temp")
 	}
 
 	if Config.FirstBlockPath == "" {
@@ -205,4 +207,32 @@ func FillRuntimeKey() error {
 
 func GetNodesAddr() []string {
 	return Config.NodesAddr[:]
+}
+
+func MakeDirs() error {
+	dirs := []string{
+		Config.DataDir,
+		Config.KeysDir,
+		Config.TempDir,
+	}
+
+	for _, dir := range dirs {
+		err := makeDir(dir)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func makeDir(dir string) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err := os.Mkdir(dir, 0775)
+		if err != nil {
+			return errors.Wrapf(err, "creating dir %s", dir)
+		}
+	}
+
+	return nil
 }

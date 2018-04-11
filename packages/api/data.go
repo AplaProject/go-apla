@@ -18,10 +18,8 @@ package api
 
 import (
 	"crypto/md5"
-	"encoding/base64"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -30,13 +28,6 @@ import (
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
-
-const (
-	base64columnType = "bytea"
-	base64header     = "base64,"
-)
-
-var base64regexp = regexp.MustCompile(`(?is)^data:([a-z0-9-]+\/[a-z0-9-]+)?;base64,$`)
 
 func dataHandler() hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
@@ -56,42 +47,9 @@ func dataHandler() hr.Handle {
 			return
 		}
 
-		columnType, err := model.GetColumnType(tblname, column)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting column type")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
-			return
-		}
-
-		if columnType != base64columnType {
-			w.Header().Set("Content-Type", "text/plain")
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Write([]byte(data))
-			return
-		}
-
-		offset := strings.Index(data, base64header)
-		if offset == -1 {
-			log.WithFields(log.Fields{"type": consts.InvalidObject, "error": fmt.Errorf("wrong data")}).Error("wrong data")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
-			return
-		}
-		ret := base64regexp.FindStringSubmatch(data[:offset+len(base64header)])
-		if len(ret) != 2 {
-			log.WithFields(log.Fields{"type": consts.InvalidObject, "error": fmt.Errorf("wrong data")}).Error("wrong data")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
-			return
-		}
-
-		datatype := ret[1]
-		bin, err := base64.StdEncoding.DecodeString(data[offset+len(base64header):])
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("encoding base64")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
-		}
-		w.Header().Set("Content-Type", datatype)
-		w.Header().Set("Cache-Control", "public,max-age=604800,immutable")
-		w.Write(bin)
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write([]byte(data))
 		return
 	})
 }
