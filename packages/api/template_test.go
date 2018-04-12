@@ -340,8 +340,6 @@ func TestStringToBinary(t *testing.T) {
 	}
 	assert.NoError(t, sendPost(`content`, &form, &ret))
 
-	fmt.Println(ret.Tree[0].Link)
-
 	data, err := sendRawRequest("GET", strings.TrimSpace(ret.Tree[0].Link), nil)
 	assert.NoError(t, err)
 	assert.Equal(t, content, string(data))

@@ -18,6 +18,7 @@ package api
 
 import (
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -31,6 +32,8 @@ import (
 )
 
 const binaryColumn = "data"
+
+var errWrongHash = errors.New("Wrong hash")
 
 func dataHandler() hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
@@ -50,7 +53,7 @@ func dataHandler() hr.Handle {
 		}
 
 		if fmt.Sprintf(`%x`, md5.Sum([]byte(data))) != strings.ToLower(ps.ByName(`hash`)) {
-			log.WithFields(log.Fields{"type": consts.InvalidObject, "error": fmt.Errorf("wrong hash")}).Error("wrong hash")
+			log.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
 			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 			return
 		}
@@ -75,6 +78,12 @@ func binary(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 
 	if !found {
 		errorAPI(w, "E_SERVER", http.StatusNotFound)
+		return
+	}
+
+	if bin.Hash != strings.ToLower(ps.ByName("hash")) {
+		log.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
+		errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 		return
 	}
 
