@@ -1897,8 +1897,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 	('18','EditSign','contract EditSign {
 		data {
 			Id         int
-			Value      string
-			Conditions string
+			Value      string "optional"
+			Conditions string "optional"
 		}
 
 		func onlyConditions() bool {
@@ -1907,10 +1907,23 @@ If("#key_id#" == EcosysParam("founder_account")){
 
 		conditions {
 			RowConditions("signatures", $Id, onlyConditions())
-			ValidateCondition($Conditions, $ecosystem_id)
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
 		}
 		action {
-			DBUpdate("signatures", $Id, "value,conditions", $Value, $Conditions)
+			var pars, vals array
+			if $Value {
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if Len(vals) > 0 {
+				DBUpdate("signatures", $Id, Join(pars, ","), vals...)
+			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('19','NewBlock','contract NewBlock {
