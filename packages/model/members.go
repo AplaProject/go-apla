@@ -6,7 +6,7 @@ type Member struct {
 	ID         int64  `gorm:"primary_key;not null"`
 	MemberName string `gorm:"not null"`
 	ImageID    *int64
-	MemberInfo []byte
+	MemberInfo string `gorm:"type:jsonb(PostgreSQL)"`
 }
 
 // SetTablePrefix is setting table prefix
