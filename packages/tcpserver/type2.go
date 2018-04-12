@@ -21,6 +21,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"io"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -33,7 +34,12 @@ import (
 )
 
 // Type2 serves requests from disseminator
-func Type2(r *DisRequest) (*DisTrResponse, error) {
+func Type2(rw io.ReadWriter) (*DisTrResponse, error) {
+	r := &DisRequest{}
+	if err := ReadRequest(r, rw); err != nil {
+		return nil, err
+	}
+
 	binaryData := r.Data
 	// take the transactions from usual users but not nodes.
 	_, _, decryptedBinData, err := DecryptData(&binaryData)

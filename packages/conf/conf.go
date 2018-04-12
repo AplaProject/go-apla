@@ -75,7 +75,6 @@ type TokenMovementConfig struct {
 
 // GlobalConfig is storing all startup config as global struct
 type GlobalConfig struct {
-	Installed    bool   `toml:"-"`
 	KeyID        int64  `toml:"-"`
 	ConfigPath   string `toml:"-"`
 	TestRollBack bool   `toml:"-"`

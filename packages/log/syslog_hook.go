@@ -11,6 +11,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var syslogFacilityPriority map[string]b_syslog.Priority
+
 // SyslogHook to send logs via syslog.
 type SyslogHook struct {
 	Writer        *b_syslog.Writer
@@ -83,47 +85,30 @@ func (hook *SyslogHook) Levels() []logrus.Level {
 }
 
 func syslogFacility(facility string) b_syslog.Priority {
-	switch facility {
-	case "kern":
-		return b_syslog.LOG_KERN
-	case "user":
-		return b_syslog.LOG_USER
-	case "mail":
-		return b_syslog.LOG_MAIL
-	case "daemon":
-		return b_syslog.LOG_DAEMON
-	case "auth":
-		return b_syslog.LOG_AUTH
-	case "syslog":
-		return b_syslog.LOG_SYSLOG
-	case "lpr":
-		return b_syslog.LOG_LPR
-	case "news":
-		return b_syslog.LOG_NEWS
-	case "uucp":
-		return b_syslog.LOG_UUCP
-	case "cron":
-		return b_syslog.LOG_CRON
-	case "authpriv":
-		return b_syslog.LOG_AUTHPRIV
-	case "ftp":
-		return b_syslog.LOG_FTP
-	case "local0":
-		return b_syslog.LOG_LOCAL0
-	case "local1":
-		return b_syslog.LOG_LOCAL1
-	case "local2":
-		return b_syslog.LOG_LOCAL2
-	case "local3":
-		return b_syslog.LOG_LOCAL3
-	case "local4":
-		return b_syslog.LOG_LOCAL4
-	case "local5":
-		return b_syslog.LOG_LOCAL5
-	case "local6":
-		return b_syslog.LOG_LOCAL6
-	case "local7":
-		return b_syslog.LOG_LOCAL7
+	return syslogFacilityPriority[facility]
+}
+
+func init() {
+	syslogFacilityPriority = map[string]b_syslog.Priority{
+		"kern":     b_syslog.LOG_KERN,
+		"user":     b_syslog.LOG_USER,
+		"mail":     b_syslog.LOG_MAIL,
+		"daemon":   b_syslog.LOG_DAEMON,
+		"auth":     b_syslog.LOG_AUTH,
+		"syslog":   b_syslog.LOG_SYSLOG,
+		"lpr":      b_syslog.LOG_LPR,
+		"news":     b_syslog.LOG_NEWS,
+		"uucp":     b_syslog.LOG_UUCP,
+		"cron":     b_syslog.LOG_CRON,
+		"authpriv": b_syslog.LOG_AUTHPRIV,
+		"ftp":      b_syslog.LOG_FTP,
+		"local0":   b_syslog.LOG_LOCAL0,
+		"local1":   b_syslog.LOG_LOCAL1,
+		"local2":   b_syslog.LOG_LOCAL2,
+		"local3":   b_syslog.LOG_LOCAL3,
+		"local4":   b_syslog.LOG_LOCAL4,
+		"local5":   b_syslog.LOG_LOCAL5,
+		"local6":   b_syslog.LOG_LOCAL6,
+		"local7":   b_syslog.LOG_LOCAL7,
 	}
-	return 0
 }

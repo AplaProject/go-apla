@@ -31,17 +31,6 @@ func TestGetUID(t *testing.T) {
 	if err != nil {
 		var v map[string]string
 		json.Unmarshal([]byte(err.Error()[4:]), &v)
-		if v[`error`] == `E_NOTINSTALLED` {
-			var instRes installResult
-			err := sendPost(`install`, &url.Values{`db_port`: {`5432`}, `db_host`: {`localhost`},
-				`type`: {`PRIVATE_NET`}, `db_name`: {`apla`}, `log_level`: {`ERROR`},
-				`db_pass`: {`postgres`}, `db_user`: {`postgres`}}, &instRes)
-			if err != nil {
-				t.Error(err)
-			}
-			return
-		}
-
 		t.Error(err)
 		return
 	}

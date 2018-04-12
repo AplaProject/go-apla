@@ -58,21 +58,13 @@ func HandleTCPRequest(rw net.Conn) {
 		if service.IsNodePaused() {
 			return
 		}
-		req := &DisRequest{}
-		err = ReadRequest(req, rw)
-		if err == nil {
-			err = Type1(req, rw)
-		}
+		err = Type1(rw)
 
 	case 2:
 		if service.IsNodePaused() {
 			return
 		}
-		req := &DisRequest{}
-		err = ReadRequest(req, rw)
-		if err == nil {
-			response, err = Type2(req)
-		}
+		response, err = Type2(rw)
 
 	case 4:
 		req := &ConfirmRequest{}
@@ -92,10 +84,7 @@ func HandleTCPRequest(rw net.Conn) {
 		response, err = Type10()
 	}
 
-	if err != nil {
-		return
-	}
-	if response == nil {
+	if err != nil || response == nil {
 		return
 	}
 
