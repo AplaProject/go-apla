@@ -31,9 +31,9 @@ type ecosystemsResult struct {
 
 func ecosystems(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 
-	number, err := model.GetNextID(nil, `system_states`)
+	number, err := model.GetNextID(nil, "1_ecosystems")
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error getting next system_states id")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error getting next ecosystem id")
 		return err
 	}
 	data.result = &ecosystemsResult{Number: uint32(number - 1)}

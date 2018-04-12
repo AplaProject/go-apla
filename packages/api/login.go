@@ -77,26 +77,31 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("UID is empty")
 		return errorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
 	}
-	state := data.ecosystemId
+
+	ecosystemID := data.ecosystemId
 	if data.params[`ecosystem`].(int64) > 0 {
-		state = data.params[`ecosystem`].(int64)
+		ecosystemID = data.params[`ecosystem`].(int64)
 	}
-	if state == 0 {
+
+	if ecosystemID == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Warning("state is empty, using 1 as a state")
-		state = 1
+		ecosystemID = 1
 	}
+
 	if len(data.params[`key_id`].(string)) > 0 {
 		wallet = converter.StringToAddress(data.params[`key_id`].(string))
 	} else if len(data.params[`pubkey`].([]byte)) > 0 {
 		wallet = crypto.Address(data.params[`pubkey`].([]byte))
 	}
+
 	account := &model.Key{}
-	account.SetTablePrefix(state)
+	account.SetTablePrefix(ecosystemID)
 	isAccount, err := account.Get(wallet)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
+
 	if isAccount {
 		pubkey = account.PublicKey
 		if account.Delete == 1 {
@@ -138,21 +143,22 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 		}
 	}
-	if state > 1 && len(pubkey) == 0 {
+
+	if ecosystemID > 1 && len(pubkey) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty, and state is not default")
-		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, state)
+		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, ecosystemID)
 	}
 
 	if r, ok := data.params["role_id"]; ok {
 		role := r.(int64)
 		if role > 0 {
-			ok, err := model.MemberHasRole(nil, state, wallet, role)
+			ok, err := model.MemberHasRole(nil, ecosystemID, wallet, role)
 			if err != nil {
 				logger.WithFields(log.Fields{
 					"type":      consts.DBError,
 					"member":    wallet,
 					"role":      role,
-					"ecosystem": state}).Error("check role")
+					"ecosystem": ecosystemID}).Error("check role")
 
 				return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
 			}
@@ -162,7 +168,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 					"type":      consts.NotFound,
 					"member":    wallet,
 					"role":      role,
-					"ecosystem": state,
+					"ecosystem": ecosystemID,
 				}).Error("member hasn't role")
 
 				return errorAPI(w, "E_CHECKROLE", http.StatusNotFound)
@@ -172,22 +178,33 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 
+	if len(pubkey) == 0 {
+		pubkey = data.params[`pubkey`].([]byte)
+		if len(pubkey) == 0 {
+			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
+			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
+		}
+	}
+
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("checking signature")
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
+
 	if !verify {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("incorrect signature")
 		return errorAPI(w, `E_SIGNATURE`, http.StatusBadRequest)
 	}
 
 	address := crypto.KeyToAddress(pubkey)
+
 	var (
 		sp      model.StateParameter
 		founder int64
 	)
-	sp.SetTablePrefix(converter.Int64ToStr(state))
+
+	sp.SetTablePrefix(converter.Int64ToStr(ecosystemID))
 	if ok, err := sp.Get(nil, "founder_account"); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder_account parameter")
 		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
@@ -195,9 +212,15 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		founder = converter.StrToInt64(sp.Value)
 	}
 
-	result := loginResult{EcosystemID: converter.Int64ToStr(state), KeyID: converter.Int64ToStr(wallet),
-		Address: address, IsOwner: founder == wallet, IsNode: conf.Config.KeyID == wallet,
-		IsVDE: model.IsTable(fmt.Sprintf(`%d_vde_tables`, state))}
+	result := loginResult{
+		EcosystemID: converter.Int64ToStr(ecosystemID),
+		KeyID:       converter.Int64ToStr(wallet),
+		Address:     address,
+		IsOwner:     founder == wallet,
+		IsNode:      conf.Config.KeyID == wallet,
+		IsVDE:       model.IsTable(fmt.Sprintf(`%d_vde_tables`, ecosystemID)),
+	}
+
 	data.result = &result
 	expire := data.params[`expire`].(int64)
 	if expire == 0 {
@@ -211,15 +234,24 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			isMobile = `1`
 		}
 	}
+
+	var ecosystem model.Ecosystem
+	if err := ecosystem.Get(ecosystemID); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Errorf("find ecosystem %d", ecosystemID)
+		return errorAPI(w, err, http.StatusNotFound)
+	}
+
 	claims := JWTClaims{
-		KeyID:       result.KeyID,
-		EcosystemID: result.EcosystemID,
-		IsMobile:    isMobile,
-		RoleID:      converter.Int64ToStr(data.roleId),
+		KeyID:         result.KeyID,
+		EcosystemID:   result.EcosystemID,
+		EcosystemName: ecosystem.Name,
+		IsMobile:      isMobile,
+		RoleID:        converter.Int64ToStr(data.roleId),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Second * time.Duration(expire)).Unix(),
 		},
 	}
+
 	result.Token, err = jwtGenerateToken(w, claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
@@ -235,11 +267,11 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	notificator.AddUser(wallet, state)
-	notificator.UpdateNotifications(state, []int64{wallet})
+	notificator.AddUser(wallet, ecosystemID)
+	notificator.UpdateNotifications(ecosystemID, []int64{wallet})
 
 	ra := &model.RolesParticipants{}
-	roles, err := ra.SetTablePrefix(state).GetActiveMemberRoles(wallet)
+	roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(wallet)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting roles")
 		return errorAPI(w, `E_SERVER`, http.StatusBadRequest)
@@ -254,6 +286,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			result.Roles = append(result.Roles, rolesResult{RoleId: converter.StrToInt64(res["id"]), RoleName: res["name"]})
 		}
 	}
+	notificator.AddUser(wallet, ecosystemID)
+	notificator.UpdateNotifications(ecosystemID, []int64{wallet})
 
 	return nil
 }

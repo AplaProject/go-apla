@@ -58,11 +58,6 @@ var (
 		);
 		ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
 		
-		DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
-		"id" bigint NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
-		
 		DROP TABLE IF EXISTS "system_parameters";
 		CREATE TABLE "system_parameters" (
 		"id" bigint NOT NULL DEFAULT '0',
@@ -155,11 +150,6 @@ var (
 		"conditions" text  NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "system_tables" ADD CONSTRAINT system_tables_pkey PRIMARY KEY (name);
-		
-		INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES  ('system_states',
-				'{"insert": "false", "update": "ContractAccess(\"@1EditParameter\")",
-				  "new_column": "false"}','{}', 'ContractAccess(\"@0UpdSysContract\")');
-		
 		
 		DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 		"hash" bytea  NOT NULL DEFAULT '',
