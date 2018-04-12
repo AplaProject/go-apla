@@ -89,6 +89,9 @@ func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
 	ctx, _ := context.WithCancel(context.Background())
 	_, maxBlockID, err := utils.ChooseBestHost(ctx, remoteHosts, &log.Entry{Logger: &log.Logger{}})
 	if err != nil {
+		if err == utils.ErrNodesUnavailable {
+			return false, nil
+		}
 		return false, errors.Wrapf(err, "choosing best host")
 	}
 
