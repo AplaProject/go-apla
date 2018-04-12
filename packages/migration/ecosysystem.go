@@ -855,7 +855,7 @@ MenuItem(
 			UpdateCron($Id)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('23','contract UploadBinary {
+	('23', 'UploadBinary', contract UploadBinary {
 		data {
 			Name  string
 			Data  string
@@ -1245,11 +1245,10 @@ MenuItem(
 						'ContractConditions(\"MainCondition\")'),
 				('14', 'applications',
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"title": "ContractConditions(\"MainCondition\")",
-						"name": "ContractConditions(\"MainCondition\")",
-						"uuid": "false",
-						"condition": "ContractConditions(\"MainCondition\")",
-						"deleted": "ContractConditions(\"MainCondition\")"}',
+					'{"name": "ContractConditions(\"MainCondition\")",
+					  "uuid": "false",
+					  "conditions": "ContractConditions(\"MainCondition\")",
+					  "deleted": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")'),
 				('15', 'binaries',
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1341,7 +1340,8 @@ MenuItem(
 		CREATE TABLE "%[1]d_members" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
-			"avatar"	bytea NOT NULL DEFAULT ''
+			"image_id"	bigint,
+			"member_info" jsonb
 		);
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
@@ -1353,7 +1353,7 @@ MenuItem(
 			"id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"uuid" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
-			"condition" text NOT NULL DEFAULT '',
+			"conditions" text NOT NULL DEFAULT '',
 			"deleted" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_applications" ADD CONSTRAINT "%[1]d_application_pkey" PRIMARY KEY ("id");
@@ -1396,7 +1396,24 @@ MenuItem(
 		);
 		ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
-		
+
+
+		INSERT INTO "1_delayed_contracts"
+			("id", "contract", "key_id", "block_id", "every_block", "conditions")
+		VALUES
+			(1, '@1UpdateMetrics', '%[1]d', '100', '100', 'ContractConditions("MainCondition")');
+
+		DROP TABLE IF EXISTS "1_metrics";
+		CREATE TABLE "1_metrics" (
+			"id" int NOT NULL default 0,
+			"time" bigint NOT NULL DEFAULT '0',
+			"metric" varchar(255) NOT NULL,
+			"key" varchar(255) NOT NULL,
+			"value" bigint NOT NULL
+		);
+		ALTER TABLE ONLY "1_metrics" ADD CONSTRAINT "1_metrics_pkey" PRIMARY KEY (id);
+		CREATE INDEX "1_metrics_unique_index" ON "1_metrics" (metric, time, "key");
+
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
 			('16', 'delayed_contracts',
 			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
@@ -1416,6 +1433,15 @@ MenuItem(
 				'ecosystems',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"name": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")'
+			),
+			(
+				'18',
+				'metrics',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")","new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"time": "ContractConditions(\"MainCondition\")",
+					"metric": "ContractConditions(\"MainCondition\")","key": "ContractConditions(\"MainCondition\")",
+					"value": "ContractConditions(\"MainCondition\")"}',
 				'ContractConditions(\"MainCondition\")'
 			);
 
@@ -2390,5 +2416,27 @@ MenuItem(
 		action {
 			EditEcosysName($EcosystemID, $NewName)
 		}
-	}', '%[1]d', 'ContractConditions("MainCondition")');`
+	}', '%[1]d', 'ContractConditions("MainCondition")'),
+	('36', 'UpdateMetrics', 'contract UpdateMetrics {
+		conditions {
+			ContractConditions("MainCondition")
+		}
+		action {
+			var values array
+			values = DBCollectMetrics()
+
+			var i, id int
+			var v map
+			while (i < Len(values)) {
+				v = values[i]
+				id = Int(DBFind("metrics").Columns("id").Where("time = ? AND key = ? AND metric = ?", v["time"], v["key"], v["metric"]).One("id"))
+				if id != 0 {
+					DBUpdate("metrics", id, "value", Int(v["value"]))
+				} else {
+					DBInsert("metrics", "time,key,metric,value", v["time"], v["key"], v["metric"], Int(v["value"]))
+				}
+				i = i + 1
+			}
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")');`
 )

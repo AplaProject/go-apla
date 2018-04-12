@@ -160,7 +160,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"DBUpdate":             DBUpdate,
 		"DBUpdateSysParam":     UpdateSysParam,
 		"DBUpdateExt":          DBUpdateExt,
-		"DBSelectMetrics":      DBSelectMetrics,
 		"EcosysParam":          EcosysParam,
 		"AppParam":             AppParam,
 		"SysParamString":       SysParamString,
@@ -211,9 +210,11 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RowConditions":        RowConditions,
 		"UUID":                 UUID,
 		"DecodeBase64":         DecodeBase64,
+		"EncodeBase64":         EncodeBase64,
 		"MD5":                  MD5,
 		"EditEcosysName":       EditEcosysName,
 		"GetColumnType":        GetColumnType,
+		"GetType":              GetType,
 	}
 
 	switch vt {
@@ -229,6 +230,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
 		f["GetBlock"] = GetBlock
+		f["DBSelectMetrics"] = DBSelectMetrics
+		f["DBCollectMetrics"] = DBCollectMetrics
 		ExtendCost(getCostP)
 		FuncCallsDB(funcCallsDBP)
 	}
@@ -346,7 +349,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	}
 	tableName := getDefTableName(sc, name)
 
-	var cols []map[string]string
+	var cols []map[string]interface{}
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns to JSON")
@@ -357,19 +360,31 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	colperm := make(map[string]string)
 	colList := make(map[string]bool)
 	for _, data := range cols {
-		colname := strings.ToLower(data[`name`])
+		colname := strings.ToLower(data[`name`].(string))
 		if colList[colname] {
 			return fmt.Errorf(`There are the same columns`)
 		}
 
-		sqlColType, err := columnType(data["type"])
+		sqlColType, err := columnType(data["type"].(string))
 		if err != nil {
 			return err
 		}
 
 		colList[colname] = true
 		colsSQL += `"` + colname + `" ` + sqlColType + " ,\n"
-		colperm[colname] = data[`conditions`]
+		condition := ``
+		switch v := data[`conditions`].(type) {
+		case string:
+			condition = v
+		case map[string]interface{}:
+			out, err := json.Marshal(v)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling conditions to json")
+				return err
+			}
+			condition = string(out)
+		}
+		colperm[colname] = condition
 	}
 	colout, err := json.Marshal(colperm)
 	if err != nil {
@@ -512,6 +527,39 @@ func PrepareColumns(columns string) string {
 	return strings.Join(colList, `,`)
 }
 
+func PrepareWhere(where string) string {
+	whereSlice := regexp.MustCompile(`->([\w\d_]+)`).FindAllStringSubmatchIndex(where, -1)
+	startWhere := 0
+	out := ``
+	for i := 0; i < len(whereSlice); i++ {
+		slice := whereSlice[i]
+		if len(slice) != 4 {
+			continue
+		}
+		if i < len(whereSlice)-1 && slice[1] == whereSlice[i+1][0] {
+			colsWhere := []string{where[slice[2]:slice[3]]}
+			from := slice[0]
+			for i < len(whereSlice)-1 && slice[1] == whereSlice[i+1][0] {
+				i++
+				slice = whereSlice[i]
+				if len(slice) != 4 {
+					break
+				}
+				colsWhere = append(colsWhere, where[slice[2]:slice[3]])
+			}
+			out += fmt.Sprintf(`%s::jsonb#>>'{%s}'`, where[startWhere:from], strings.Join(colsWhere, `,`))
+			startWhere = slice[3]
+		} else {
+			out += fmt.Sprintf(`%s->>'%s'`, where[startWhere:slice[0]], where[slice[2]:slice[3]])
+			startWhere = slice[3]
+		}
+	}
+	if len(out) > 0 {
+		return out + where[startWhere:]
+	}
+	return where
+}
+
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
 	where string, params []interface{}) (int64, []interface{}, error) {
@@ -528,8 +576,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	if len(order) == 0 {
 		order = `id`
 	}
-	where = strings.Replace(converter.Escape(where), `$`, `?`, -1)
-	where = regexp.MustCompile(`->([\w\d_]+)`).ReplaceAllString(where, "->>'$1'")
+	where = PrepareWhere(strings.Replace(converter.Escape(where), `$`, `?`, -1))
 	if id != 0 {
 		where = fmt.Sprintf(`id='%d'`, id)
 		limit = 1
@@ -785,7 +832,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		return nil
 	}
 
-	var cols []map[string]string
+	var cols []map[string]interface{}
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns permissions from json")
@@ -800,18 +847,30 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
 	for _, data := range cols {
-		if len(data[`name`]) == 0 || len(data[`type`]) == 0 {
+		if data[`name`] == nil || data[`type`] == nil {
 			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("wrong column")
 			return fmt.Errorf(`worng column`)
 		}
-		itype := data[`type`]
+		itype := data[`type`].(string)
 		if itype != `varchar` && itype != `number` && itype != `datetime` && itype != `text` &&
 			itype != `bytea` && itype != `double` && itype != `json` && itype != `money` &&
 			itype != `character` {
 			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect type")
 			return fmt.Errorf(`incorrect type`)
 		}
-		perm, err := getPermColumns(data[`conditions`])
+		condition := ``
+		switch v := data[`conditions`].(type) {
+		case string:
+			condition = v
+		case map[string]interface{}:
+			out, err := json.Marshal(v)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling conditions to json")
+				return err
+			}
+			condition = string(out)
+		}
+		perm, err := getPermColumns(condition)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Conditions is empty")
 			return err
@@ -1250,6 +1309,11 @@ func DecodeBase64(input string) (out string, err error) {
 	return
 }
 
+// EncodeBase64 encodes string in base64
+func EncodeBase64(input string) (out string) {
+	return base64.StdEncoding.EncodeToString([]byte(input))
+}
+
 // MD5 returns md5 hash sum of data
 func MD5(data string) string {
 	hash := md5.Sum([]byte(data))
@@ -1259,4 +1323,11 @@ func MD5(data string) string {
 // GetColumnType returns the type of the column
 func GetColumnType(sc *SmartContract, tableName, columnName string) (string, error) {
 	return model.GetColumnType(getDefTableName(sc, tableName), columnName)
+}
+
+func GetType(val interface{}) string {
+	if val == nil {
+		return `nil`
+	}
+	return reflect.TypeOf(val).String()
 }
