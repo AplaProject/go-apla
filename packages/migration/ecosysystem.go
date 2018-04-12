@@ -1,7 +1,20 @@
 package migration
 
 var (
-	SchemaVDE = `DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d_vde_languages" (
+	SchemaVDE = `
+		DROP TABLE IF EXISTS "%[1]d_vde_members";
+		CREATE TABLE "%[1]d_vde_members" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"member_name"	varchar(255) NOT NULL DEFAULT '',
+			"image_id"	bigint,
+			"member_info" jsonb
+		);
+		ALTER TABLE ONLY "%[1]d_vde_members" ADD CONSTRAINT "%[1]d_vde_members_pkey" PRIMARY KEY ("id");
+
+		INSERT INTO "%[1]d_vde_members" ("id", "member_name") VALUES('%[2]d', 'founder');
+		INSERT INTO "%[1]d_vde_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
+
+		DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d_vde_languages" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"name" character varying(100) NOT NULL DEFAULT '',
 		"res" text NOT NULL DEFAULT ''
@@ -1346,7 +1359,6 @@ MenuItem(
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
 		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
-		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
 
 		DROP TABLE IF EXISTS "%[1]d_applications";
 		CREATE TABLE "%[1]d_applications" (
