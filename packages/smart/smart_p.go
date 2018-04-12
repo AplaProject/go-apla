@@ -746,6 +746,8 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 	return result, nil
 }
 
+// DBCollectMetrics returns actual values of all metrics
+// This function used to further store these values
 func DBCollectMetrics() []interface{} {
 	c := metric.NewCollector(
 		metric.CollectMetricDataForEcosystemTables,

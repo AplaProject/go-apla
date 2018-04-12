@@ -187,27 +187,19 @@ func TestPage(t *testing.T) {
 }
 
 func TestNewTable(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
+
 	name := randName(`tbl`)
 	form := url.Values{"Name": {`1_` + name}, "Columns": {`[{"name":"MyName","type":"varchar", 
 		"conditions":"true"},
 	  {"name":"Name", "type":"varchar","index": "0", "conditions":"{\"read\":\"true\",\"update\":\"true\"}"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err := postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewTable`, &form))
+
 	form = url.Values{"TableName": {`1_` + name}, "Name": {`newCol`},
 		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
-	err = postTx(`NewColumn`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewColumn`, &form))
+
 	form = url.Values{`Value`: {`contract sub` + name + ` {
 		action {
 			DBInsert("1_` + name + `", "name", "ok")
@@ -215,20 +207,11 @@ func TestNewTable(t *testing.T) {
 			$result = DBFind("1_` + name + `").Columns("name").WhereId(1).One("name")
 		}
 	}`}, `Conditions`: {`true`}}
-	err = postTx(`NewContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
 	_, msg, err := postTxResult(`sub`+name, &url.Values{})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if msg != `test value` {
-		t.Errorf("wrong result %s", msg)
-		return
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, msg, "test value")
 
 	form = url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
 	  "conditions":"true"},
@@ -236,38 +219,23 @@ func TestNewTable(t *testing.T) {
 	{"name":"Doc", "type":"json","index": "0", "conditions":"true"},	
 	{"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err = postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = postTx(`NewTable`, &form)
-	if err.Error() != fmt.Sprintf(`{"type":"panic","error":"table %s exists"}`, name) {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewTable`, &form))
+
+	assert.EqualError(t, postTx(`NewTable`, &form), fmt.Sprintf(`{"type":"panic","error":"table %s exists"}`, name))
+
 	form = url.Values{"Name": {name},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")",
 				"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
-	err = postTx(`EditTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditTable`, &form))
+
 	form = url.Values{"TableName": {name}, "Name": {`newDoc`},
 		"Type": {"json"}, "Index": {"0"}, "Permissions": {"true"}}
-	err = postTx(`NewColumn`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewColumn`, &form))
+
 	form = url.Values{"TableName": {name}, "Name": {`newCol`},
 		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
-	err = postTx(`NewColumn`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewColumn`, &form))
+
 	err = postTx(`NewColumn`, &form)
 	if err.Error() != `{"type":"panic","error":"column newcol exists"}` {
 		t.Error(err)
@@ -275,40 +243,24 @@ func TestNewTable(t *testing.T) {
 	}
 	form = url.Values{"TableName": {name}, "Name": {`newCol`},
 		"Permissions": {"ContractConditions(\"MainCondition\")"}}
-	err = postTx(`EditColumn`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditColumn`, &form))
+
 	upname := strings.ToUpper(name)
 	form = url.Values{"TableName": {upname}, "Name": {`UPCol`},
 		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
-	err = postTx(`NewColumn`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewColumn`, &form))
+
 	form = url.Values{"TableName": {upname}, "Name": {`upCOL`},
 		"Permissions": {"ContractConditions(\"MainCondition\")"}}
-	err = postTx(`EditColumn`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditColumn`, &form))
+
 	form = url.Values{"Name": {upname},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
 			"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
-	err = postTx(`EditTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditTable`, &form))
+
 	var ret tablesResult
-	err = sendGet(`tables`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`tables`, nil, &ret))
 }
 
 type invalidPar struct {
