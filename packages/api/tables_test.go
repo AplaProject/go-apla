@@ -166,6 +166,7 @@ func TestJSONTable(t *testing.T) {
 			ret2 = DBInsert("` + name + `", "MyName,Doc", "test2", mydoc)
 			DBInsert("` + name + `", "MyName,Doc", "test3", "{\"title\": {\"name\":\"Test att\",\"text\":\"low\"}}")
 			DBInsert("` + name + `", "MyName,doc", "test4", "{\"languages\": {\"arr_id\":{\"1\":\"0\",\"2\":\"0\",\"3\":\"0\"}}}")
+			DBInsert("` + name + `", "MyName,doc", "test5", "{\"app_id\": \"33\"}")
 		}}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx("NewContract", &form)
@@ -287,6 +288,8 @@ func TestJSONTable(t *testing.T) {
 	}
 
 	forTest := tplList{
+		{`DBFind(` + name + `).Columns("id,doc->app_id").WhereId(5).Vars(buffer)Span(#buffer_doc_app_id#)`,
+			`[{"tag":"dbfind","attr":{"columns":["id","doc.app_id"],"data":[["5","33"]],"name":"` + name + `","types":["text","text"],"whereid":"5"}},{"tag":"span","children":[{"tag":"text","text":"33"}]}]`},
 		{`DBFind(` + name + `,my).Columns("id").Where(doc->title->text='low')`,
 			`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["3"]],"name":"` + name + `","source":"my","types":["text"],"where":"doc-\u003etitle-\u003etext='low'"}}]`},
 		{`DBFind(` + name + `,my).Columns("id,doc->title->name").WhereId(3).Vars(prefix)Div(){#prefix_id# = #prefix_doc_title_name#}`,
@@ -304,8 +307,8 @@ func TestJSONTable(t *testing.T) {
 			`[{"tag":"dbfind","attr":{"columns":["id","doc","doc.type"],"data":[["2","{"doc": "Some test text.", "ind": "101", "type": "new\\"doc\\""}","new"doc""]],"name":"` + name + `","source":"my","types":["text","text","text"],"whereid":"2"}},{"tag":"span","children":[{"tag":"text","text":"2new"doc""}]}]`},
 		{`DBFind(` + name + `,my).Columns("id,doc->type").WhereId(2)`,
 			`[{"tag":"dbfind","attr":{"columns":["id","doc.type"],"data":[["2","new"doc""]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"2"}}]`},
-		{`DBFind(` + name + `,my).Columns("doc->type").Custom(mytype, OK:#doc.type#)`,
-			`[{"tag":"dbfind","attr":{"columns":["doc.type","id","mytype"],"data":[["","4","[{"tag":"text","text":"OK:NULL"}]"],["new"doc" val","1","[{"tag":"text","text":"OK:new"doc" val"}]"],["new"doc"","2","[{"tag":"text","text":"OK:new"doc""}]"],["","3","[{"tag":"text","text":"OK:NULL"}]"]],"name":"` + name + `","source":"my","types":["text","text","tags"]}}]`},
+		{`DBFind(` + name + `,my).Columns("doc->type").Order(id).Custom(mytype, OK:#doc.type#)`,
+			`[{"tag":"dbfind","attr":{"columns":["doc.type","id","mytype"],"data":[["new"doc" val","1","[{"tag":"text","text":"OK:new"doc" val"}]"],["new"doc"","2","[{"tag":"text","text":"OK:new"doc""}]"],["","3","[{"tag":"text","text":"OK:NULL"}]"],["","4","[{"tag":"text","text":"OK:NULL"}]"],["","5","[{"tag":"text","text":"OK:NULL"}]"]],"name":"` + name + `","order":"id","source":"my","types":["text","text","tags"]}}]`},
 	}
 	var ret contentResult
 	for _, item := range forTest {
