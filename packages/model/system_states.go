@@ -36,8 +36,8 @@ func GetAllSystemStatesIDs() ([]int64, error) {
 }
 
 // Get is fill reciever from db
-func (sys *Ecosystem) Get(id int64) error {
-	return DBConn.First(sys, "id = ?", id).Error
+func (sys *Ecosystem) Get(id int64) (bool, error) {
+	return isFound(DBConn.First(sys, "id = ?", id))
 }
 
 // Delete is deleting record

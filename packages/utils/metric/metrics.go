@@ -1,4 +1,4 @@
-package metrics
+package metric
 
 import (
 	"strconv"
@@ -11,14 +11,13 @@ import (
 )
 
 const (
-	metricEcosystemTables  = "ecosystem_tables"
 	metricEcosystemPages   = "ecosystem_pages"
 	metricEcosystemMembers = "ecosystem_members"
 	metricEcosystemTx      = "ecosystem_tx"
 )
 
-// HandlerEcosystemTables returns metrics for some tables of ecosystems
-func HandlerEcosystemTables() (metricValues []*model.Metric, err error) {
+// CollectMetricDataForEcosystemTables returns metrics for some tables of ecosystems
+func CollectMetricDataForEcosystemTables() (metricValues []*Value, err error) {
 	stateIDs, err := model.GetAllSystemStatesIDs()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("get all system states ids")
@@ -39,7 +38,7 @@ func HandlerEcosystemTables() (metricValues []*model.Metric, err error) {
 			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("get count of pages")
 			return nil, err
 		}
-		metricValues = append(metricValues, &model.Metric{
+		metricValues = append(metricValues, &Value{
 			Time:   unixDate,
 			Metric: metricEcosystemPages,
 			Key:    tablePrefix,
@@ -52,7 +51,7 @@ func HandlerEcosystemTables() (metricValues []*model.Metric, err error) {
 			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("get count of members")
 			return nil, err
 		}
-		metricValues = append(metricValues, &model.Metric{
+		metricValues = append(metricValues, &Value{
 			Time:   unixDate,
 			Metric: metricEcosystemMembers,
 			Key:    tablePrefix,
@@ -63,8 +62,8 @@ func HandlerEcosystemTables() (metricValues []*model.Metric, err error) {
 	return metricValues, nil
 }
 
-// HandlerEcosystemTx returns metrics for transactions of ecosystems
-func HandlerEcosystemTx() (metricValues []*model.Metric, err error) {
+// CollectMetricDataForEcosystemTx returns metrics for transactions of ecosystems
+func CollectMetricDataForEcosystemTx() (metricValues []*Value, err error) {
 	ecosystemTx, err := model.GetEcosystemTxPerDay()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("get ecosystem transactions by period")
@@ -75,7 +74,7 @@ func HandlerEcosystemTx() (metricValues []*model.Metric, err error) {
 			continue
 		}
 
-		metricValues = append(metricValues, &model.Metric{
+		metricValues = append(metricValues, &Value{
 			Time:   item.UnixTime,
 			Metric: metricEcosystemTx,
 			Key:    item.Ecosystem,

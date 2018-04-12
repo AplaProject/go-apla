@@ -32,6 +32,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/utils/metric"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -354,7 +355,7 @@ func GetContractByName(sc *SmartContract, name string) int64 {
 
 // GetContractById returns the name of the contract with this id
 func GetContractById(sc *SmartContract, id int64) string {
-	_, ret, err := DBSelect(sc, getDefTableName(sc, "contracts"), "value", id, `id`, 0, 1,
+	_, ret, err := DBSelect(sc, "contracts", "value", id, `id`, 0, 1,
 		0, ``, []interface{}{})
 	if err != nil || len(ret) != 1 {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract name")
@@ -426,13 +427,12 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	sc.Rollback = false
-	if _, _, err = DBInsert(sc, idStr+"_pages", "id,name,value,menu,conditions", "1", "default_page",
+	if _, _, err = DBInsert(sc, `@`+idStr+"_pages", "id,name,value,menu,conditions", "1", "default_page",
 		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
-
-	if _, _, err := DBInsert(sc, idStr+"_menu", "id,name,value,title,conditions", "1", "default_menu",
+	if _, _, err = DBInsert(sc, `@`+idStr+"_menu", "id,name,value,title,conditions", "1", "default_menu",
 		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
@@ -442,8 +442,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		ret []interface{}
 		pub string
 	)
-
-	_, ret, err = DBSelect(sc, "1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
+	_, ret, err = DBSelect(sc, "@1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting pub key")
 		return 0, err
@@ -452,13 +451,12 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if Len(ret) > 0 {
 		pub = ret[0].(map[string]string)[`pub`]
 	}
-
-	if _, _, err := DBInsert(sc, idStr+"_keys", "id,pub", wallet, pub); err != nil {
+	if _, _, err := DBInsert(sc, `@`+idStr+"_keys", "id,pub", wallet, pub); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
 
-	if _, _, err := DBInsert(sc, "1_ecosystems", "id,name", id, name); err != nil {
+	if _, _, err := DBInsert(sc, "@1_ecosystems", "id,name", id, name); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert new ecosystem to stat table")
 		return 0, err
 	}
@@ -473,7 +471,7 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 		return fmt.Errorf(`EditEcosystemName can be only called from @1EditEcosystemName`)
 	}
 
-	_, err := DBUpdate(sc, "1_ecosystems", sysID, "name", newName)
+	_, err := DBUpdate(sc, "@1_ecosystems", sysID, "name", newName)
 	return err
 }
 
@@ -746,6 +744,14 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 		return nil, err
 	}
 	return result, nil
+}
+
+func DBCollectMetrics() []interface{} {
+	c := metric.NewCollector(
+		metric.CollectMetricDataForEcosystemTables,
+		metric.CollectMetricDataForEcosystemTx,
+	)
+	return c.Values()
 }
 
 // RollbackEditContract rollbacks the contract

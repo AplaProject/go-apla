@@ -58,6 +58,7 @@ func (dtx *DelayedTx) createTx(delayedContactID, keyID int64) error {
 			Time:        time.Now().Unix(),
 			EcosystemID: firstEcosystemID,
 			KeyID:       keyID,
+			NetworkID:   consts.NETWORK_ID,
 		},
 		SignedBy: smart.PubToID(dtx.publicKey),
 		Data:     params,

@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	log "github.com/sirupsen/logrus"
@@ -40,6 +41,7 @@ type tableResult struct {
 	Read       string       `json:"read,omitempty"`
 	Filter     string       `json:"filter,omitempty"`
 	Conditions string       `json:"conditions"`
+	AppID      string       `json:"app_id"`
 	Columns    []columnInfo `json:"columns"`
 }
 
@@ -86,6 +88,7 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			Read:       perm[`read`],
 			Filter:     perm[`filter`],
 			Conditions: table.Conditions,
+			AppID:      converter.Int64ToStr(table.AppID),
 			Columns:    columns,
 		}
 	} else {
