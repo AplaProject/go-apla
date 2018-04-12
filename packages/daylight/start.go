@@ -239,13 +239,11 @@ func Start() {
 
 	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		// ===============================
 		err := daemonsctl.RunAllDaemons()
 		log.Info("Daemons started")
 		if err != nil {
 			os.Exit(1)
 		}
-		// ===============================
 		//go func() {
 		//	na := service.NewNodeActualizer(service.DefaultBlockchainGap)
 		//	na.Run()
