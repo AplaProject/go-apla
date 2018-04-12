@@ -137,8 +137,12 @@ func LoadConfig(path string) error {
 
 // SaveConfig save global parameters to configFile
 func SaveConfig(path string) error {
-	if err := makeDir(filepath.Dir(path)); err != nil {
-		return err
+	dir := filepath.Dir(path)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err := os.Mkdir(dir, 0775)
+		if err != nil {
+			return errors.Wrapf(err, "creating dir %s", dir)
+		}
 	}
 
 	cf, err := os.Create(path)
@@ -207,32 +211,4 @@ func FillRuntimeKey() error {
 
 func GetNodesAddr() []string {
 	return Config.NodesAddr[:]
-}
-
-func MakeDirs() error {
-	dirs := []string{
-		Config.DataDir,
-		Config.KeysDir,
-		Config.TempDir,
-	}
-
-	for _, dir := range dirs {
-		err := makeDir(dir)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func makeDir(dir string) error {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err := os.Mkdir(dir, 0775)
-		if err != nil {
-			return errors.Wrapf(err, "creating dir %s", dir)
-		}
-	}
-
-	return nil
 }

@@ -205,7 +205,7 @@ func Start() {
 
 	conf.Config.Installed = true
 
-	utils.CleanDirectory(conf.Config.TempDir)
+	utils.MakeOrCleanDirectory(conf.Config.TempDir)
 
 	initGorm(conf.Config.DB)
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")

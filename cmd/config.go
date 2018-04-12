@@ -30,10 +30,6 @@ var configCmd = &cobra.Command{
 			configPath = filepath.Join(conf.Config.DataDir, consts.DefaultConfigFile)
 		}
 
-		if err = conf.MakeDirs(); err != nil {
-			log.WithError(err).Fatal("Making dirs")
-		}
-
 		err = conf.SaveConfig(configPath)
 		if err != nil {
 			log.WithError(err).Fatal("Saving config")

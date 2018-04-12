@@ -576,10 +576,19 @@ func UUID() string {
 	return uuid.Must(uuid.NewV4()).String()
 }
 
-// CleanDirecory removes all files in directory
-func CleanDirectory(dir string) error {
+// MakeOrCleanDirectory makes directory or removes all files in existing directory
+func MakeOrCleanDirectory(dir string) error {
 	d, err := os.Open(dir)
 	if err != nil {
+		if os.IsNotExist(err) {
+			if err = os.Mkdir(dir, 0775); err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating directory")
+				return err
+			}
+
+			return nil
+		}
+
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("opening directory")
 		return err
 	}
