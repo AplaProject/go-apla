@@ -307,7 +307,6 @@ func loadFirstBlock(logger *log.Entry) error {
 	return nil
 }
 
-//func firstLoad(ctx context.Context, d *daemon) error {
 func firstLoad(logger *log.Entry) error {
 	DBLock()
 	defer DBUnlock()
