@@ -553,16 +553,19 @@ func dbfindTag(par parFunc) string {
 	for _, row := range rows {
 		columnTypes[row["column_name"]] = row["data_type"]
 	}
+	columnNames := make([]string, 0)
 
 	if fields != "*" {
 		if !strings.Contains(fields, "id") {
 			fields += ",id"
 		}
+		columnNames = strings.Split(fields, ",")
 		fields = smart.PrepareColumns(fields)
 		queryColumns = strings.Split(fields, ",")
 	} else {
 		for _, col := range rows {
 			queryColumns = append(queryColumns, col["column_name"])
+			columnNames = append(columnNames, col["column_name"])
 		}
 	}
 
@@ -573,8 +576,6 @@ func dbfindTag(par parFunc) string {
 		}
 	}
 
-	columnNames := make([]string, len(queryColumns))
-	copy(columnNames, queryColumns)
 	for i, col := range queryColumns {
 		switch columnTypes[col] {
 		case "bytea":
