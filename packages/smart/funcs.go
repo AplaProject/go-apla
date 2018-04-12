@@ -429,6 +429,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		Columns:     string(colout),
 		Permissions: string(permout),
 		Conditions:  fmt.Sprintf(`ContractAccess("%sEditTable")`, state),
+		AppID:       applicationID,
 	}
 	t.SetTablePrefix(prefix)
 	err = t.Create(sc.DbTransaction)
