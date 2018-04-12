@@ -191,7 +191,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		}
 		err = model.Update(sc.DbTransaction, table, addSQLUpdate, addSQLWhere)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting update query")
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "sql": addSQLUpdate}).Error("getting update query")
 			return 0, tableID, err
 		}
 		tableID = logData[`id`]
