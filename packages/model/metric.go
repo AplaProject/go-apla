@@ -1,6 +1,6 @@
 package model
 
-const tableNameMetrics = "system_metrics"
+const tableNameMetrics = "1_metrics"
 
 type Metric struct {
 	ID     int64  `gorm:"primary_key;not null"`
@@ -12,18 +12,6 @@ type Metric struct {
 
 func (Metric) TableName() string {
 	return tableNameMetrics
-}
-
-// PutMetrics inserts or replaces metrics into the database
-func PutMetrics(metrics []*Metric) error {
-	for _, m := range metrics {
-		err := DBConn.Where(&Metric{Time: m.Time, Key: m.Key, Metric: m.Metric}).
-			Assign(&Metric{Value: m.Value}).FirstOrCreate(m).Error
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 type EcosystemTx struct {

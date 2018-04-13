@@ -154,7 +154,8 @@ MenuItem(
 	  "name" varchar(100) UNIQUE NOT NULL DEFAULT '',
 	  "permissions" jsonb,
 	  "columns" jsonb,
-	  "conditions" text  NOT NULL DEFAULT ''
+	  "conditions" text  NOT NULL DEFAULT '',
+	  "app_id" bigint NOT NULL DEFAULT '0'
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_tables" ADD CONSTRAINT "%[1]d_vde_tables_pkey" PRIMARY KEY ("id");
 	  CREATE INDEX "%[1]d_vde_tables_index_name" ON "%[1]d_vde_tables" (name);
@@ -230,31 +231,67 @@ MenuItem(
 		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('2','NewContract','contract NewContract {
-		  data {
-			  Value      string
-			  Conditions string
-		  }
-		  conditions {
+		data {
+			Value      string
+			Conditions string
+			Wallet         string "optional"
+			TokenEcosystem int "optional"
+			ApplicationId int "optional"
+		}
+		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
-			  var list array
-			  list = ContractsList($Value)
-			  var i int
-			  while i < Len(list) {
-				  if IsObject(list[i], $ecosystem_id) {
-					  warning Sprintf("Contract or function %%s exists", list[i] )
-				  }
-				  i = i + 1
-			  }
-			  $contract_name=list[0]
-		  }
-		  action {
-			  var root, id int
-			  root = CompileContract($Value, $ecosystem_id, 0, 0)
-			  id = DBInsert("contracts", "name,value,conditions", $contract_name, $Value, $Conditions )
-			  FlushContract(root, id, false)
-			  $result = id
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+			$walletContract = $key_id
+			   if $Wallet {
+				$walletContract = AddressToId($Wallet)
+				if $walletContract == 0 {
+				   error Sprintf("wrong wallet %%s", $Wallet)
+				}
+			}
+			var list array
+			list = ContractsList($Value)
+			
+			if Len(list) == 0 {
+				error "must be the name"
+			}
+
+			var i int
+			while i < Len(list) {
+				if IsObject(list[i], $ecosystem_id) {
+					warning Sprintf("Contract or function %%s exists", list[i] )
+				}
+				i = i + 1
+			}
+
+			$contract_name = list[0]
+			if !$TokenEcosystem {
+				$TokenEcosystem = 1
+			} else {
+				if !SysFuel($TokenEcosystem) {
+					warning Sprintf("Ecosystem %%d is not system", $TokenEcosystem )
+				}
+			}
+		}
+		action {
+			var root, id int
+			root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
+			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id,app_id", 
+				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
+			FlushContract(root, id, false)
+			$result = id
+		}
+		func rollback() {
+			var list array
+    		list = ContractsList($Value)
+			var i int
+			while i < Len(list) {
+				RollbackContract(list[i])
+				i = i + 1
+			}
+		}
+		func price() int {
+			return  SysParamInt("contract_price")
+		}
+	}', 'ContractConditions("MainCondition")'),
 	  ('3','EditContract','contract EditContract {
 		  data {
 			  Id         int
@@ -352,24 +389,30 @@ MenuItem(
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('6', 'NewMenu','contract NewMenu {
-		  data {
-			  Name       string
-			  Value      string
-			  Title      string "optional"
-			  Conditions string
-		  }
-		  conditions {
-			  var ret int
-			  ValidateCondition($Conditions,$ecosystem_id)
-			  ret = DBFind("menu").Columns("id").Where("name=?", $Name).Limit(1)
-			  if Len(ret) > 0 {
-				  warning Sprintf( "Menu %%s already exists", $Name)
-			  }
-		  }
-		  action {
-			  $result = DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions )
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+		data {
+			Name       string
+			Value      string
+			Title      string "optional"
+			Conditions string
+			ApplicationId int "optional"
+		}
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+
+			var row map
+			row = DBRow("menu").Columns("id").Where("name = ?", $Name)
+
+			if row {
+				warning Sprintf( "Menu %%s already exists", $Name)
+			}
+		}
+		action {
+			DBInsert("menu", "name,value,title,conditions,app_id", $Name, $Value, $Title, $Conditions, $ApplicationId )
+		}
+		func price() int {
+			return  SysParamInt("menu_price")
+		}
+	}', 'ContractConditions("MainCondition")'),
 	  ('7','EditMenu','contract EditMenu {
 		  data {
 			  Id         int
@@ -417,24 +460,48 @@ MenuItem(
 		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('9','NewPage','contract NewPage {
-		  data {
-			  Name       string
-			  Value      string
-			  Menu       string
-			  Conditions string
-		  }
-		  conditions {
-			  var ret int
-			  ValidateCondition($Conditions,$ecosystem_id)
-			  ret = DBFind("pages").Columns("id").Where("name=?", $Name).Limit(1)
-			  if Len(ret) > 0 {
-				  warning Sprintf( "Page %%s already exists", $Name)
-			  }
-		  }
-		  action {
-			  $result = DBInsert("pages", "name,value,menu,conditions", $Name, $Value, $Menu, $Conditions )
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+		data {
+			Name       string
+			Value      string
+			Menu       string
+			Conditions string
+			ValidateCount int "optional"
+			ApplicationId int "optional"
+		}
+		func preparePageValidateCount(count int) int {
+			var min, max int
+			min = Int(EcosysParam("min_page_validate_count"))
+			max = Int(EcosysParam("max_page_validate_count"))
+	
+			if count < min {
+				count = min
+			} else {
+				if count > max {
+					count = max
+				}
+			}
+	
+			return count
+		}
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+
+			var row map
+			row = DBRow("pages").Columns("id").Where("name = ?", $Name)
+
+			if row {
+				warning Sprintf( "Page %%s already exists", $Name)
+			}
+
+			$ValidateCount = preparePageValidateCount($ValidateCount)
+		}
+		action {
+			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId)
+		}
+		func price() int {
+			return  SysParamInt("page_price")
+		}
+	}', 'ContractConditions("MainCondition")'),
 	  ('10','EditPage','contract EditPage {
 		  data {
 			Id         int
@@ -482,23 +549,26 @@ MenuItem(
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('12','NewBlock','contract NewBlock {
-		  data {
-			  Name       string
-			  Value      string
-			  Conditions string
-		  }
-		  conditions {
-			  var ret int
-			  ValidateCondition($Conditions,$ecosystem_id)
-			  ret = DBFind("blocks").Columns("id").Where("name=?", $Name).Limit(1)
-			  if Len(ret) > 0 {
-				  warning Sprintf( "Block %%s already exists", $Name)
-			  }
-		  }
-		  action {
-			  $result = DBInsert("blocks", "name,value,conditions", $Name, $Value, $Conditions )
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+		data {
+			Name       string
+			Value      string
+			Conditions string
+			ApplicationId int "optional"
+		}
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+
+			var row map
+			row = DBRow("blocks").Columns("id").Where("name = ?", $Name)
+
+			if row {
+				warning Sprintf( "Block %%s already exists", $Name)
+			}
+		}
+		action {
+			DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId )
+		}
+	 }', 'ContractConditions("MainCondition")'),
 	  ('13','EditBlock','contract EditBlock {
 		  data {
 			Id         int
@@ -527,18 +597,25 @@ MenuItem(
 		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('14','NewTable','contract NewTable {
-		  data {
-			  Name       string
-			  Columns      string
-			  Permissions string
-		  }
-		  conditions {
-			  TableConditions($Name, $Columns, $Permissions)
-		  }
-		  action {
-			  CreateTable($Name, $Columns, $Permissions)
-		  }
-	  }', 'ContractConditions("MainCondition")'),
+		data {
+			Name       string
+			Columns      string
+			Permissions string
+			ApplicationId int "optional"
+		}
+		conditions {
+			TableConditions($Name, $Columns, $Permissions)
+		}
+		action {
+			CreateTable($Name, $Columns, $Permissions, $ApplicationId)
+		}
+		func rollback() {
+			RollbackTable($Name)
+		}
+		func price() int {
+			return  SysParamInt("table_price")
+		}
+	}', 'ContractConditions("MainCondition")'),
 	  ('15','EditTable','contract EditTable {
 		  data {
 			  Name       string
@@ -781,7 +858,7 @@ MenuItem(
 			UpdateCron($Id)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('23','contract UploadBinary {
+	('23', 'UploadBinary', contract UploadBinary {
 		data {
 			Name  string
 			Data  string
@@ -900,13 +977,7 @@ MenuItem(
     Page: "export",
     Title: "Export"
 )
-If("#key_id#" == EcosysParam("founder_account")){
-    MenuItem(
-        Icon: "icon-lock",
-        Page: "vde",
-        Title: "Dedicated Ecosystem"
-    )
-}','true');
+','true');
 
 		DROP TABLE IF EXISTS "%[1]d_pages"; CREATE TABLE "%[1]d_pages" (
 			"id" bigint  NOT NULL DEFAULT '0',
@@ -923,43 +994,42 @@ If("#key_id#" == EcosysParam("founder_account")){
 
 		INSERT INTO "%[1]d_pages" ("id","name","value","menu","conditions") VALUES
 			('2','admin_index','','admin_menu','true'),
-			('3','notifications','DBFind(Name: notifications, Source: noti_s).Where("closed=0 and notification_type=1 and recipient_id=#key_id#")
-				DBFind(Name: notifications, Source: noti_r).Where("closed=0 and notification_type=2 and (started_processing_id=0 or started_processing_id=#key_id#)")
-				
-				ForList(noti_s){
-						Div(Class: list-group-item){
-							LinkPage(Page: #page_name#, PageParams: "notific_id=#id#,notific_type=#notification_type#,notific_header=#header_text#,#page_params#"){        
-								Div(media-box){
-									Div(Class: pull-left){
-										Em(Class: fa #icon# fa-1x text-info)
-									} 
-									Div(media-box-body clearfix){ 
-										Div(Class: m0 text-normal, Body: #header_text#) 
-										Div(Class: m0 text-muted h6, Body: #body_text#)
-									}
-								}
+			('3','notifications',$$DBFind(Name: notifications, Source: notifications_members).Columns("id,page_name,notification->icon,notification->header,notification->body").Where("closed=0 and notification->type='1' and recipient->member_id='#key_id#'")
+			ForList(notifications_members){
+				Div(Class: list-group-item){
+					LinkPage(Page: #page_name#, PageParams: "notific_id=#id#"){
+						Div(media-box){
+							Div(Class: pull-left){
+								Em(Class: fa #notification.icon# fa-1x text-primary)
+							}
+							Div(media-box-body clearfix){
+								Div(Class: m0 text-normal, Body: #notification.header#)
+								Div(Class: m0 text-muted h6, Body: #notification.body#)
 							}
 						}
+					}
 				}
-				
-				ForList(noti_r){
-					DBFind(Name: roles_assign, Source: src_roles).Where("member_id=#key_id# and role_id=#role_id# and delete=0").Vars(prefix)
-					If(#prefix_id# > 0){
-						Div(Class: list-group-item){
-							LinkPage(Page: #page_name#, PageParams: "notific_id=#id#,notific_type=#notification_type#,notific_header=#header_text#,#page_params#"){        
-								Div(media-box){
-									Div(Class: pull-left){
-										Em(Class: fa #icon# fa-1x text-primary)
-									} 
-									Div(media-box-body clearfix){ 
-										Div(Class: m0 text-normal, Body: #header_text#) 
-										Div(Class: m0 text-muted h6, Body: #body_text#)
-									}
+			}
+
+			DBFind(Name: notifications, Source: notifications_roles).Columns("id,page_name,notification->icon,notification->header,notification->body,recipient->role_id").Where("closed=0 and notification->type='2' and (date_start_processing is null or processing_info->member_id='#key_id#')")
+			ForList(notifications_roles){
+			    DBFind(Name: roles_participants, Source: src_roles).Columns("id").Where("member->member_id='#key_id#' and role->id='#recipient.role_id#' and deleted=0").Vars(prefix)
+			    If(#prefix_id# > 0){
+					Div(Class: list-group-item){
+						LinkPage(Page: #page_name#, PageParams: "notific_id=#id#"){
+							Div(media-box){
+								Div(Class: pull-left){
+									Em(Class: fa #notification.icon# fa-1x text-primary)
+								}
+								Div(media-box-body clearfix){
+									Div(Class: m0 text-normal, Body: #notification.header#)
+									Div(Class: m0 text-muted h6, Body: #notification.body#)
 								}
 							}
 						}
 					}
-				}','default_menu','ContractAccess("@1EditPage")');
+				}
+			}$$,'default_menu','ContractAccess("@1EditPage")');
 
 		DROP TABLE IF EXISTS "%[1]d_blocks"; CREATE TABLE "%[1]d_blocks" (
 			"id" bigint  NOT NULL DEFAULT '0',
@@ -1117,57 +1187,44 @@ If("#key_id#" == EcosysParam("founder_account")){
 					'{"insert": "ContractAccess(\"Profile_Edit\")", "update": "ContractAccess(\"Profile_Edit\")", 
 					  "new_column": "ContractConditions(\"MainCondition\")"}',
 					'{"member_name": "ContractAccess(\"Profile_Edit\")",
-					  "avatar": "ContractAccess(\"Profile_Edit\")"}', 'ContractConditions(\"MainCondition\")'),
-				('10', 'roles_list', 
+					  "image_id": "ContractAccess(\"Profile_Edit\")",
+					  "member_info": "ContractAccess(\"Profile_Edit\")"}', 'ContractConditions(\"MainCondition\")'),
+				('10', 'roles', 
 					'{"insert": "ContractAccess(\"Roles_Create\")", "update": "ContractAccess(\"Roles_Del\")", 
 					 "new_column": "ContractConditions(\"MainCondition\")"}',
 					'{"default_page": "false",
 					  "role_name": "false",
-					  "delete": "ContractAccess(\"Roles_Del\")",
+					  "deleted": "ContractAccess(\"Roles_Del\")",
 					  "role_type": "false",
-					  "creator_id": "false",
-					  "date_create": "false",
-					  "date_delete": "ContractAccess(\"Roles_Del\")",
-					  "creator_name": "false",
-					  "creator_avatar": "false",
+					  "creator": "false",
+					  "date_created": "false",
+					  "date_deleted": "ContractAccess(\"Roles_Del\")",
+					  "image_id": "false",
 					  "company_id": "false"}',
 					   'ContractConditions(\"MainCondition\")'),
-				('11', 'roles_assign', 
-					'{"insert": "ContractAccess(\"Roles_Assign\", \"voting_CheckDecision\")", "update": "ContractAccess(\"Roles_Unassign\")", 
+				('11', 'roles_participants',
+					'{"insert": "ContractAccess(\"Roles_Assign\", \"voting_CheckDecision\")", "update": "ContractAccess(\"Roles_Unassign\")",
 					"new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"role_id": "false",
-						"role_type": "false",
-						"role_name": "false",
-						"member_id": "false",
-						"member_name": "false",
-						"member_avatar": "false",
-						"appointed_by_id": "false",
-						"appointed_by_name": "false",
-						"date_start": "false",
-						"date_end": "ContractAccess(\"Roles_Unassign\")",
-						"delete": "ContractAccess(\"Roles_Unassign\")"}', 
-						'ContractConditions(\"MainCondition\")'),
-				('12', 'notifications', 
-						'{"insert": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")", "update": "true", 
-						"new_column": "ContractConditions(\"MainCondition\")"}',
-						'{"icon": "false",
-							"started_processing_time": "ContractAccess(\"Notifications_Roles_Processing\")",
-							"date_create": "false",
-							"page_params": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")",
-							"body_text": "false",
-							"recipient_id": "false",
-							"started_processing_id": "ContractAccess(\"Notifications_Roles_Processing\")",
-							"role_id": "false",
-							"role_name": "false",
-							"recipient_name": "false",
-							"closed": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")", 
-							"header_text": "false", 
-							"recipient_avatar": "false", 
-							"notification_type": "false", 
-							"finished_processing_id": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")", 
-							"finished_processing_time": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")", 
-							"page_name": "false"}', 
-							'ContractAccess(\"@1EditTable\")'),
+					'{"role": "false",
+					  "member": "false",
+					  "appointed": "false",
+					  "date_created": "false",
+					  "date_deleted": "ContractAccess(\"Roles_Unassign\")",
+					  "deleted": "ContractAccess(\"Roles_Unassign\")"}', 
+					  'ContractConditions(\"MainCondition\")'),
+				('12', 'notifications',
+					'{"insert": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")", "update": "true",
+					"new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"recipient": "false",
+					  "sender": "false",
+					  "notification": "false",
+					  "page_params": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")",
+					  "processing_info": "ContractAccess(\"Notifications_Roles_Processing\")",
+					  "page_name": "false",
+					  "date_created": "false",
+					  "date_start_processing": "ContractAccess(\"Notifications_Roles_Processing\")",
+					  "date_closed": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")",
+					  "closed": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")"}',							    'ContractAccess(\"@1EditTable\")'),
 				('13', 'sections', 
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 					"new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1179,11 +1236,10 @@ If("#key_id#" == EcosysParam("founder_account")){
 						'ContractConditions(\"MainCondition\")'),
 				('14', 'applications',
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"title": "ContractConditions(\"MainCondition\")",
-						"name": "ContractConditions(\"MainCondition\")",
-						"uuid": "false",
-						"condition": "ContractConditions(\"MainCondition\")",
-						"deleted": "ContractConditions(\"MainCondition\")"}',
+					'{"name": "ContractConditions(\"MainCondition\")",
+					  "uuid": "false",
+					  "conditions": "ContractConditions(\"MainCondition\")",
+					  "deleted": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")'),
 				('15', 'binaries',
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1196,86 +1252,70 @@ If("#key_id#" == EcosysParam("founder_account")){
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (
-			"id" 	bigint NOT NULL DEFAULT '0',
-			"icon"	varchar(255) NOT NULL DEFAULT '',
-			"closed" bigint NOT NULL DEFAULT '0',
-			"notification_type"	bigint NOT NULL DEFAULT '0',
-			"started_processing_time" timestamp,
+			"id"    bigint NOT NULL DEFAULT '0',
+			"recipient" jsonb,
+			"sender" jsonb,
+			"notification" jsonb,
+			"page_params"	jsonb,
+			"processing_info" jsonb,
 			"page_name"	varchar(255) NOT NULL DEFAULT '',
-			"recipient_avatar"	bytea NOT NULL DEFAULT '',
-			"date_create"	timestamp,
-			"page_params"	text NOT NULL DEFAULT '',
-			"recipient_name" varchar(255) NOT NULL DEFAULT '',
-			"finished_processing_id" bigint NOT NULL DEFAULT '0',
-			"finished_processing_time" timestamp,
-			"role_id"	bigint NOT NULL DEFAULT '0',
-			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"recipient_id"	bigint NOT NULL DEFAULT '0',
-			"started_processing_id"	bigint NOT NULL DEFAULT '0',
-			"body_text"	text NOT NULL DEFAULT '',
-			"header_text"	text NOT NULL DEFAULT ''
+			"date_created"	timestamp,
+			"date_start_processing" timestamp,
+			"date_closed" timestamp,
+			"closed" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
 
 
-		DROP TABLE IF EXISTS "%[1]d_roles_list";
-		CREATE TABLE "%[1]d_roles_list" (
+		DROP TABLE IF EXISTS "%[1]d_roles";
+		CREATE TABLE "%[1]d_roles" (
 			"id" 	bigint NOT NULL DEFAULT '0',
 			"default_page"	varchar(255) NOT NULL DEFAULT '',
 			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"delete"    bigint NOT NULL DEFAULT '0',
+			"deleted"    bigint NOT NULL DEFAULT '0',
 			"role_type" bigint NOT NULL DEFAULT '0',
-			"creator_id" bigint NOT NULL DEFAULT '0',
-			"date_create" timestamp,
-			"date_delete" timestamp,
-			"creator_name"	varchar(255) NOT NULL DEFAULT '',
-			"creator_avatar" bytea NOT NULL DEFAULT '',
-			"company_id" bigint NOT NULL DEFAULT '0'
+			"creator" jsonb NOT NULL DEFAULT '{}',
+			"date_created" timestamp,
+			"date_deleted" timestamp,
+			"company_id" bigint NOT NULL DEFAULT '0',
+			"image_id"   bigint
 		);
-		ALTER TABLE ONLY "%[1]d_roles_list" ADD CONSTRAINT "%[1]d_roles_list_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "%[1]d_roles_list_index_delete" ON "%[1]d_roles_list" (delete);
-		CREATE INDEX "%[1]d_roles_list_index_type" ON "%[1]d_roles_list" (role_type);
+		ALTER TABLE ONLY "%[1]d_roles" ADD CONSTRAINT "%[1]d_roles_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "%[1]d_roles_index_deleted" ON "%[1]d_roles" (deleted);
+		CREATE INDEX "%[1]d_roles_index_type" ON "%[1]d_roles" (role_type);
 
-		INSERT INTO "%[1]d_roles_list" ("id", "default_page", "role_name", "delete", "role_type",
-			"date_create","creator_name") VALUES
-			('1','default_ecosystem_page', 'Admin', '0', '3', NOW(), ''),
-			('2','', 'Candidate for validators', '0', '3', NOW(), ''),
-			('3','', 'Validator', '0', '3', NOW(), ''),
-			('4','', 'Investor with voting rights', '0', '3', NOW(), ''),
-			('5','', 'Delegate', '0', '3', NOW(), ''),
-			('6','', 'Developer', '0', '3', NOW(), '');
+		INSERT INTO "%[1]d_roles" ("id", "default_page", "role_name", "deleted", "role_type",
+			"date_created","creator") VALUES
+			('1','default_ecosystem_page', 'Admin', '0', '3', NOW(), '{}'),
+			('2','', 'Candidate for validators', '0', '3', NOW(), '{}'),
+			('3','', 'Validator', '0', '3', NOW(), '{}'),
+			('4','', 'Investor with voting rights', '0', '3', NOW(), '{}'),
+			('5','', 'Delegate', '0', '3', NOW(), '{}'),
+			('6','', 'Developer', '0', '3', NOW(), '{}');
 
 
-		DROP TABLE IF EXISTS "%[1]d_roles_assign";
-		CREATE TABLE "%[1]d_roles_assign" (
+		DROP TABLE IF EXISTS "%[1]d_roles_participants";
+		CREATE TABLE "%[1]d_roles_participants" (
 			"id" bigint NOT NULL DEFAULT '0',
-			"role_id" bigint NOT NULL DEFAULT '0',
-			"role_type" bigint NOT NULL DEFAULT '0',
-			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"member_id" bigint NOT NULL DEFAULT '0',
-			"member_name" varchar(255) NOT NULL DEFAULT '',
-			"member_avatar"	bytea NOT NULL DEFAULT '',
-			"appointed_by_id" bigint NOT NULL DEFAULT '0',
-			"appointed_by_name"	varchar(255) NOT NULL DEFAULT '',
-			"date_start" timestamp,
-			"date_end" timestamp,
-			"delete" bigint NOT NULL DEFAULT '0'
+			"role" jsonb,
+			"member" jsonb,
+			"appointed" jsonb,
+			"date_created" timestamp,
+			"date_deleted" timestamp,
+			"deleted" bigint NOT NULL DEFAULT '0'
 		);
-		ALTER TABLE ONLY "%[1]d_roles_assign" ADD CONSTRAINT "%[1]d_roles_assign_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "%[1]d_roles_assign_index_role" ON "%[1]d_roles_assign" (role_id);
-		CREATE INDEX "%[1]d_roles_assign_index_type" ON "%[1]d_roles_assign" (role_type);
-		CREATE INDEX "%[1]d_roles_assign_index_member" ON "%[1]d_roles_assign" (member_id);
+		ALTER TABLE ONLY "%[1]d_roles_participants" ADD CONSTRAINT "%[1]d_roles_participants_pkey" PRIMARY KEY ("id");
 
-		INSERT INTO "%[1]d_roles_assign" ("id","role_id","role_type","role_name","member_id", "member_name","date_start")
-		VALUES('1','1','3','Admin','%[4]d','founder', NOW()),
-			('2','6','3','Developer','%[4]d','founder', NOW());
-
+		INSERT INTO "%[1]d_roles_participants" ("id","role" ,"member", "date_created")
+		VALUES ('1', '{"id": "1", "type": "3", "name": "Admin", "image_id":"0"}', '{"member_id": "%[4]d", "member_name": "founder", "image_id": "0"}', NOW()),
+		('2', '{"id": "6", "type": "3", "name": "Developer", "image_id":"0"}', '{"member_id": "%[4]d", "member_name": "founder", "image_id": "0"}', NOW());
 
 		DROP TABLE IF EXISTS "%[1]d_members";
 		CREATE TABLE "%[1]d_members" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
-			"avatar"	bytea NOT NULL DEFAULT ''
+			"image_id"	bigint,
+			"member_info"   jsonb
 		);
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
@@ -1287,7 +1327,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			"id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"uuid" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
-			"condition" text NOT NULL DEFAULT '',
+			"conditions" text NOT NULL DEFAULT '',
 			"deleted" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_applications" ADD CONSTRAINT "%[1]d_application_pkey" PRIMARY KEY ("id");
@@ -1330,7 +1370,24 @@ If("#key_id#" == EcosysParam("founder_account")){
 		);
 		ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
-		
+
+
+		INSERT INTO "1_delayed_contracts"
+			("id", "contract", "key_id", "block_id", "every_block", "conditions")
+		VALUES
+			(1, '@1UpdateMetrics', '%[1]d', '100', '100', 'ContractConditions("MainCondition")');
+
+		DROP TABLE IF EXISTS "1_metrics";
+		CREATE TABLE "1_metrics" (
+			"id" int NOT NULL default 0,
+			"time" bigint NOT NULL DEFAULT '0',
+			"metric" varchar(255) NOT NULL,
+			"key" varchar(255) NOT NULL,
+			"value" bigint NOT NULL
+		);
+		ALTER TABLE ONLY "1_metrics" ADD CONSTRAINT "1_metrics_pkey" PRIMARY KEY (id);
+		CREATE INDEX "1_metrics_unique_index" ON "1_metrics" (metric, time, "key");
+
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
 			('16', 'delayed_contracts',
 			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
@@ -1350,6 +1407,15 @@ If("#key_id#" == EcosysParam("founder_account")){
 				'ecosystems',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"name": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")'
+			),
+			(
+				'18',
+				'metrics',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")","new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"time": "ContractConditions(\"MainCondition\")",
+					"metric": "ContractConditions(\"MainCondition\")","key": "ContractConditions(\"MainCondition\")",
+					"value": "ContractConditions(\"MainCondition\")"}',
 				'ContractConditions(\"MainCondition\")'
 			);
 
@@ -1394,6 +1460,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Conditions string
 			Wallet         string "optional"
 			TokenEcosystem int "optional"
+			ApplicationId int "optional"
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1431,8 +1498,8 @@ If("#key_id#" == EcosysParam("founder_account")){
 		action {
 			var root, id int
 			root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
-			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id", 
-				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem)
+			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id,app_id", 
+				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
 			FlushContract(root, id, false)
 			$result = id
 		}
@@ -1612,6 +1679,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Value      string
 			Title      string "optional"
 			Conditions string
+			ApplicationId int "optional"
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1624,7 +1692,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 		action {
-			DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions )
+			DBInsert("menu", "name,value,title,conditions,app_id", $Name, $Value, $Title, $Conditions, $ApplicationId )
 		}
 		func price() int {
 			return  SysParamInt("menu_price")
@@ -1683,6 +1751,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Menu       string
 			Conditions string
 			ValidateCount int "optional"
+			ApplicationId int "optional"
 		}
 		func preparePageValidateCount(count int) int {
 			var min, max int
@@ -1712,13 +1781,12 @@ If("#key_id#" == EcosysParam("founder_account")){
 			$ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
-			DBInsert("pages", "name,value,menu,validate_count,conditions", $Name, $Value, $Menu, $ValidateCount, $Conditions)
+			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId)
 		}
 		func price() int {
 			return  SysParamInt("page_price")
 		}
-	}
-	', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")'),
 	('13','EditPage','contract EditPage {
 		data {
 			Id         int
@@ -1869,6 +1937,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Name       string
 			Value      string
 			Conditions string
+			ApplicationId int "optional"
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1881,7 +1950,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 			}
 		}
 		action {
-			DBInsert("blocks", "name,value,conditions", $Name, $Value, $Conditions )
+			DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('20','EditBlock','contract EditBlock {
@@ -1916,12 +1985,13 @@ If("#key_id#" == EcosysParam("founder_account")){
 			Name       string
 			Columns      string
 			Permissions string
+			ApplicationId int "optional"
 		}
 		conditions {
 			TableConditions($Name, $Columns, $Permissions)
 		}
 		action {
-			CreateTable($Name, $Columns, $Permissions)
+			CreateTable($Name, $Columns, $Permissions, $ApplicationId)
 		}
 		func rollback() {
 			RollbackTable($Name)
@@ -2315,7 +2385,7 @@ If("#key_id#" == EcosysParam("founder_account")){
 		}
 		conditions {
 			var rows array
-			rows = DBFind("1_ecosystems").Where("id = ?", $EcosystemID)
+			rows = DBFind("@1_ecosystems").Where("id = ?", $EcosystemID)
 			if !Len(rows) {
 				error Sprintf("Ecosystem %%d does not exist", $EcosystemID)
 			}
@@ -2323,5 +2393,27 @@ If("#key_id#" == EcosysParam("founder_account")){
 		action {
 			EditEcosysName($EcosystemID, $NewName)
 		}
-	}', '%[1]d', 'ContractConditions("MainCondition")');`
+	}', '%[1]d', 'ContractConditions("MainCondition")'),
+	('36', 'UpdateMetrics', 'contract UpdateMetrics {
+		conditions {
+			ContractConditions("MainCondition")
+		}
+		action {
+			var values array
+			values = DBCollectMetrics()
+
+			var i, id int
+			var v map
+			while (i < Len(values)) {
+				v = values[i]
+				id = Int(DBFind("metrics").Columns("id").Where("time = ? AND key = ? AND metric = ?", v["time"], v["key"], v["metric"]).One("id"))
+				if id != 0 {
+					DBUpdate("metrics", id, "value", Int(v["value"]))
+				} else {
+					DBInsert("metrics", "time,key,metric,value", v["time"], v["key"], v["metric"], Int(v["value"]))
+				}
+				i = i + 1
+			}
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")');`
 )

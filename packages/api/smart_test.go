@@ -22,6 +22,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 
 	"github.com/stretchr/testify/assert"
@@ -237,13 +238,51 @@ func TestNewTable(t *testing.T) {
 		return
 	}
 	name := randName(`tbl`)
-	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
+	form := url.Values{"Name": {`1_` + name}, "Columns": {`[{"name":"MyName","type":"varchar", 
+		"conditions":"true"},
+	  {"name":"Name", "type":"varchar","index": "0", "conditions":"{\"read\":\"true\",\"update\":\"true\"}"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	err := postTx(`NewTable`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"TableName": {`1_` + name}, "Name": {`newCol`},
+		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
+	err = postTx(`NewColumn`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract sub` + name + ` {
+		action {
+			DBInsert("1_` + name + `", "name", "ok")
+			DBUpdate("1_` + name + `", 1, "name", "test value" )
+			$result = DBFind("1_` + name + `").Columns("name").WhereId(1).One("name")
+		}
+	}`}, `Conditions`: {`true`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, msg, err := postTxResult(`sub`+name, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if msg != `test value` {
+		t.Errorf("wrong result %s", msg)
+		return
+	}
+
+	form = url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
 	  "conditions":"true"},
 	{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
 	{"name":"Doc", "type":"json","index": "0", "conditions":"true"},	
 	{"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err := postTx(`NewTable`, &form)
+	err = postTx(`NewTable`, &form)
 	if err != nil {
 		t.Error(err)
 		return
@@ -451,32 +490,48 @@ func TestValidateConditions(t *testing.T) {
 	}
 }
 
-func TestDBMetric(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+func TestDBMetrics(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
 
-	name := randName("Metrics")
+	contract := randName("Metric")
 	form := url.Values{
 		"Value": {`
-			contract ` + name + ` {
-				data {}
+			contract ` + contract + ` {
+				data {
+					Metric string
+				}
 				conditions {}
 				action {
-					DBSelectMetrics("ecosystem_pages", "1 days", "max")
+					UpdateMetrics()
+					$result = One(DBSelectMetrics($Metric, "1 days", "max"), "value")
 				}
 			}`},
 		"Conditions": {"true"},
 	}
-	if err := postTx("NewContract", &form); err != nil {
-		t.Error(err)
-		return
+	assert.NoError(t, postTx("NewContract", &form))
+
+	metricValue := func(metric string) int {
+		assert.NoError(t, postTx("UpdateMetrics", &url.Values{}))
+
+		_, result, err := postTxResult(contract, &url.Values{"Metric": {metric}})
+		assert.NoError(t, err)
+		return converter.StrToInt(result)
 	}
-	if err := postTx(name, &url.Values{}); err != nil {
-		t.Error(err)
-		return
+
+	ecosystemPages := metricValue("ecosystem_pages")
+	ecosystemTx := metricValue("ecosystem_tx")
+
+	form = url.Values{
+		"Name":       {randName("page")},
+		"Value":      {"P()"},
+		"Menu":       {"default_menu"},
+		"Conditions": {"true"},
 	}
+	assert.NoError(t, postTx("NewPage", &form))
+
+	assert.Equal(t, 1, metricValue("ecosystem_pages")-ecosystemPages)
+	assert.True(t, metricValue("ecosystem_tx") > ecosystemTx)
+
 }
 
 func TestPartitialEdit(t *testing.T) {

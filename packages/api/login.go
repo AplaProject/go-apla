@@ -31,6 +31,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	"encoding/hex"
+	"encoding/json"
 
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
@@ -134,6 +135,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 				Time:        time.Now().Unix(),
 				EcosystemID: 1,
 				KeyID:       conf.Config.KeyID,
+				NetworkID:   consts.NETWORK_ID,
 			},
 			SignedBy: smart.PubToID(NodePublicKey),
 			Data:     params,
@@ -234,18 +236,11 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 
-	var ecosystem model.Ecosystem
-	if err := ecosystem.Get(ecosystemID); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Errorf("find ecosystem %d", ecosystemID)
-		return errorAPI(w, err, http.StatusNotFound)
-	}
-
 	claims := JWTClaims{
-		KeyID:         result.KeyID,
-		EcosystemID:   result.EcosystemID,
-		EcosystemName: ecosystem.Name,
-		IsMobile:      isMobile,
-		RoleID:        converter.Int64ToStr(data.roleId),
+		KeyID:       result.KeyID,
+		EcosystemID: result.EcosystemID,
+		IsMobile:    isMobile,
+		RoleID:      converter.Int64ToStr(data.roleId),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Second * time.Duration(expire)).Unix(),
 		},
@@ -269,7 +264,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	notificator.AddUser(wallet, ecosystemID)
 	notificator.UpdateNotifications(ecosystemID, []int64{wallet})
 
-	ra := &model.RolesAssign{}
+	ra := &model.RolesParticipants{}
 	roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(wallet)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting roles")
@@ -277,7 +272,13 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	}
 
 	for _, r := range roles {
-		result.Roles = append(result.Roles, rolesResult{RoleId: r.RoleID, RoleName: r.RoleName})
+		var res map[string]string
+		if err := json.Unmarshal([]byte(r.Role), &res); err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling role")
+			return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
+		} else {
+			result.Roles = append(result.Roles, rolesResult{RoleId: converter.StrToInt64(res["id"]), RoleName: res["name"]})
+		}
 	}
 	notificator.AddUser(wallet, ecosystemID)
 	notificator.UpdateNotifications(ecosystemID, []int64{wallet})

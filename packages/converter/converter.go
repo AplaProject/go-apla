@@ -868,7 +868,7 @@ func IsValidAddress(address string) bool {
 // Escape deletes unaccessable characters
 func Escape(data string) string {
 	out := make([]byte, 0, len(data)+2)
-	available := `_ ,=!-'()"?*$<>: `
+	available := `_ ,=!-'()"?*$#{}<>: `
 	for _, ch := range []byte(data) {
 		if (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') ||
 			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0 {
