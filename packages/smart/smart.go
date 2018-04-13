@@ -1009,10 +1009,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				true, true,
 			)
 			if err != nil {
-				if err != errUpdNotExistRecord {
-					return err
-				}
-				return nil
+				return err
 			}
 
 			_, _, err = sc.selectiveLoggingAndUpd(
@@ -1028,14 +1025,18 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 
 		if err := payCommission(converter.Int64ToStr(toID), apl.Sub(commission)); err != nil {
-			return retError(err)
+			if err != errUpdNotExistRecord {
+				return retError(err)
+			}
+			apl = commission
 		}
-		apl = commission
 
 		if err := payCommission(syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem), commission); err != nil {
-			return retError(err)
+			if err != errUpdNotExistRecord {
+				return retError(err)
+			}
+			apl = apl.Sub(commission)
 		}
-		apl = apl.Sub(commission)
 
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
 			[]string{fromIDString}, true, true); ierr != nil {
