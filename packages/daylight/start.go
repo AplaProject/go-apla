@@ -172,6 +172,15 @@ func initRoutes(listenHost string) {
 	httpListener(listenHost, route)
 }
 
+func logBlockchainMode() {
+	non := ""
+	if !conf.Config.PrivateBlockchain {
+		non = "non "
+	}
+
+	log.Infof("node runing as %sprivate", non)
+}
+
 // Start starts the main code of the program
 func Start() {
 	var err error
@@ -199,6 +208,8 @@ func Start() {
 			Exit(1)
 		}
 	}
+
+	logBlockchainMode()
 
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()
