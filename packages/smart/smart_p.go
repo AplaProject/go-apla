@@ -214,7 +214,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
+	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "1_system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
 	if err != nil {
 		return 0, err
 	}

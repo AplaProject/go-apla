@@ -32,7 +32,7 @@ func (sp *SystemParameter) GetJSONField(jsonField string, name string) (string, 
 // GetValueParameterByName returns value parameter by name
 func (sp *SystemParameter) GetValueParameterByName(name, value string) (*string, error) {
 	var result *string
-	err := DBConn.Raw(`SELECT value->'`+value+`' FROM system_parameters WHERE name = ?`, name).Row().Scan(&result)
+	err := DBConn.Raw(`SELECT value->'`+value+`' FROM 1_system_parameters WHERE name = ?`, name).Row().Scan(&result)
 	if err != nil {
 		return nil, err
 	}
