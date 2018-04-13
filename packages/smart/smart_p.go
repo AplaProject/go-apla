@@ -526,9 +526,32 @@ func RollbackEcosystem(sc *SmartContract) error {
 		}
 	}
 
-	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
-		`contracts`, `parameters`, `blocks`, `history`, `keys`, `sections`, `members`, `roles`,
-		`roles_participants`, `notifications`, `applications`, `binaries`, `app_param`} {
+	rbTables := []string{
+		`menu`,
+		`pages`,
+		`languages`,
+		`signatures`,
+		`tables`,
+		`contracts`,
+		`parameters`,
+		`blocks`,
+		`history`,
+		`keys`,
+		`sections`,
+		`members`,
+		`roles`,
+		`roles_participants`,
+		`notifications`,
+		`applications`,
+		`binaries`,
+		`app_param`,
+	}
+
+	if rollbackTx.TableID == "1" {
+		rbTables = append(rbTables, `system_parameters`, `ecosystems`)
+	}
+
+	for _, name := range rbTables {
 		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")

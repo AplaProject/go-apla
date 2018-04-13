@@ -1488,7 +1488,15 @@ MenuItem(
 					"metric": "ContractConditions(\"MainCondition\")","key": "ContractConditions(\"MainCondition\")",
 					"value": "ContractConditions(\"MainCondition\")"}',
 				'ContractConditions(\"MainCondition\")'
+			),
+			(
+				'19',
+				'system_parameters',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")","new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"value": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")'
 			);
+
 
 	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions") VALUES 
 	('2','MoneyTransfer','contract MoneyTransfer {
