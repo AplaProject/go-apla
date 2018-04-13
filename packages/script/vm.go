@@ -43,6 +43,9 @@ const (
 	Interface = `interface`
 
 	brackets = `[]`
+
+	maxArrayIndex = 1000000
+	maxMapCount   = 100000
 )
 
 var sysVars = map[string]struct{}{
@@ -594,6 +597,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			itype := reflect.TypeOf(rt.stack[size-3]).String()
 			switch {
 			case itype[:3] == `map`:
+				if len(rt.stack[size-3].(map[string]interface{})) > maxMapCount {
+					err = errMaxMapCount
+					break
+				}
 				reflect.ValueOf(rt.stack[size-3]).SetMapIndex(reflect.ValueOf(rt.stack[size-2]), reflect.ValueOf(rt.stack[size-1]))
 				rt.stack = rt.stack[:size-2]
 			case itype[:2] == brackets:
@@ -601,6 +608,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				if strings.Contains(itype, Interface) {
 					slice := rt.stack[size-3].([]interface{})
 					if int(ind) >= len(slice) {
+						if ind > maxArrayIndex {
+							err = errMaxArrayIndex
+							break
+						}
 						slice = append(slice, make([]interface{}, int(ind)-len(slice)+1)...)
 						indexInfo := cmd.Value.(*IndexInfo)
 						if indexInfo.Owner == nil { // Extend variable $varname
