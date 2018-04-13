@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 
@@ -179,7 +178,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 
 func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	if service.IsNodePaused() {
-		return errorAPI(w, errors.New("Node is updating blockchain"), http.StatusServiceUnavailable)
+		return errorAPI(w, `E_UPDATING`, http.StatusServiceUnavailable)
 	}
 	return nil
 }
