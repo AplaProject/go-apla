@@ -32,4 +32,6 @@ var (
 	errWrongCountPars  = errors.New(`wrong count of parameters`)
 	errDivZero         = errors.New(`divided by zero`)
 	errUnsupportedType = errors.New(`unsupported type`)
+	errMaxArrayIndex   = errors.New(`The index is out of range`)
+	errMaxMapCount     = errors.New(`The maxumim length of map`)
 )
