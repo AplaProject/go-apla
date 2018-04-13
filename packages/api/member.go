@@ -1,8 +1,6 @@
 package api
 
 import (
-	"bytes"
-	"encoding/base64"
 	"net/http"
 	"strconv"
 
@@ -59,18 +57,9 @@ func getAvatar(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 		return errorAPI(w, "E_SERVER", http.StatusNotFound)
 	}
 
-	// cut the prefix like a 'data:blah-blah;base64,'
-	b64data := bin.Data[bytes.IndexByte(bin.Data, ',')+1:]
-	buf, err := base64.StdEncoding.DecodeString(string(b64data))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("on decoding avatar")
-		return errorAPI(w, "E_SERVER", http.StatusInternalServerError)
-	}
-
-	mime := http.DetectContentType(buf)
-	w.Header().Set("Content-Type", mime)
-	w.Header().Set("Content-Length", strconv.Itoa(len(buf)))
-	if _, err := w.Write(buf); err != nil {
+	w.Header().Set("Content-Type", bin.MimeType)
+	w.Header().Set("Content-Length", strconv.Itoa(len(bin.Data)))
+	if _, err := w.Write(bin.Data); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("unable to write image")
 		return err
 	}
