@@ -99,6 +99,7 @@ var (
 	},		
 	"dot": {
 		".": ["ddot", "", "next"],
+		"01": ["number", "", "next"],
 		"d": ["main", "sys", "pop"]
 	},
 	"ddot": {
