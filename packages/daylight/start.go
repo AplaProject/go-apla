@@ -173,12 +173,12 @@ func initRoutes(listenHost string) {
 }
 
 func logBlockchainMode() {
-	non := ""
+	mode := "private"
 	if !conf.Config.PrivateBlockchain {
-		non = "non "
+		mode = "non private"
 	}
 
-	log.Infof("node runing as %sprivate", non)
+	log.WithFields(log.Fields{"mode": mode}).Error("Node running mode")
 }
 
 // Start starts the main code of the program
