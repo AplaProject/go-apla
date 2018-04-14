@@ -1916,6 +1916,10 @@ MenuItem(
 			Value      string "optional"
 			Conditions string "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
 		conditions {
 			RowConditions("signatures", $Id, onlyConditions())
 			if $Conditions {
