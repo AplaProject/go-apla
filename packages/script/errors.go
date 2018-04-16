@@ -25,6 +25,8 @@ const (
 	eUndefinedParam  = `%s is not defined`
 	eUnknownContract = `unknown contract %s`
 	eWrongParams     = `function %s must have %d parameters`
+	eArrIndex        = `index of array cannot be type %s`
+	eMapIndex        = `index of map cannot be type %s`
 )
 
 var (

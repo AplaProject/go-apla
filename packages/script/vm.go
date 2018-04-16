@@ -575,6 +575,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			rv := reflect.ValueOf(rt.stack[size-2])
 			switch rv.Kind() {
 			case reflect.Map:
+				if reflect.TypeOf(rt.stack[size-1]).String() != `string` {
+					err = fmt.Errorf(eMapIndex, reflect.TypeOf(rt.stack[size-1]).String())
+					break
+				}
 				v := rv.MapIndex(reflect.ValueOf(rt.stack[size-1]))
 				if v.IsValid() {
 					rt.stack[size-2] = v.Interface()
@@ -583,6 +587,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 				rt.stack = rt.stack[:size-1]
 			case reflect.Slice:
+				if reflect.TypeOf(rt.stack[size-1]).String() != `int64` {
+					err = fmt.Errorf(eArrIndex, reflect.TypeOf(rt.stack[size-1]).String())
+					break
+				}
 				v := rv.Index(int(rt.stack[size-1].(int64)))
 				if v.IsValid() {
 					rt.stack[size-2] = v.Interface()
@@ -603,9 +611,17 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					err = errMaxMapCount
 					break
 				}
+				if reflect.TypeOf(rt.stack[size-2]).String() != `string` {
+					err = fmt.Errorf(eMapIndex, reflect.TypeOf(rt.stack[size-1]).String())
+					break
+				}
 				reflect.ValueOf(rt.stack[size-3]).SetMapIndex(reflect.ValueOf(rt.stack[size-2]), reflect.ValueOf(rt.stack[size-1]))
 				rt.stack = rt.stack[:size-2]
 			case itype[:2] == brackets:
+				if reflect.TypeOf(rt.stack[size-2]).String() != `int64` {
+					err = fmt.Errorf(eArrIndex, reflect.TypeOf(rt.stack[size-2]).String())
+					break
+				}
 				ind := rt.stack[size-2].(int64)
 				if strings.Contains(itype, Interface) {
 					slice := rt.stack[size-3].([]interface{})
@@ -671,6 +687,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(float64) + ValueToFloat(top[0])
 			case int64:
 				switch top[0].(type) {
+				case string:
+					bin = top[1].(int64) + converter.ValueToInt(top[0])
 				case int64:
 					bin = top[1].(int64) + top[0].(int64)
 				case float64:
@@ -709,6 +727,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					bin = top[1].(int64) - top[0].(int64)
 				case float64:
 					bin = ValueToFloat(top[1]) - top[0].(float64)
+				case string:
+					bin = top[1].(int64) - converter.ValueToInt(top[0])
 				default:
 					return 0, errUnsupportedType
 				}
@@ -746,6 +766,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 						bin = top[1].(int64) * top[0].(int64)
 					case float64:
 						bin = ValueToFloat(top[1]) * top[0].(float64)
+					case string:
+						bin = top[1].(int64) * converter.ValueToInt(top[0])
 					default:
 						return 0, errUnsupportedType
 					}
@@ -785,6 +807,13 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 						return 0, errDivZero
 					}
 					bin = ValueToFloat(top[1]) / top[0].(float64)
+				case string:
+					val := converter.ValueToInt(top[0])
+					if val == 0 {
+						log.WithFields(log.Fields{"type": consts.DivisionByZero}).Error("divided by zero")
+						return 0, errDivZero
+					}
+					bin = top[1].(int64) / val
 				default:
 					return 0, errUnsupportedType
 				}
