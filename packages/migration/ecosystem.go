@@ -299,8 +299,12 @@ MenuItem(
 			  Value      string "optional"
 			  Conditions string "optional"
 		  }
+
+		  func onlyConditions() bool {
+        	return $Conditions && !$Value
+		  }
 		  conditions {
-			RowConditions("contracts", $Id)
+			RowConditions("contracts", $Id, onlyConditions())
 			if $Conditions {
 	    		ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -381,8 +385,11 @@ MenuItem(
 			  Value string
 			  Conditions string
 		  }
+		  func onlyConditions() bool {
+            	return $Conditions && !$Value
+		  }
 		  conditions {
-			  RowConditions("parameters", $Id)
+			  RowConditions("parameters", $Id, onlyConditions())
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
@@ -420,9 +427,13 @@ MenuItem(
 			  Value      string "optional"
 			  Title      string "optional"
 			  Conditions string "optional"
-	  	}
+		  }
+		  
+		func onlyConditions() bool {
+        	return $Conditions && !$Value && !$Title
+		}
 	  	conditions {
-		  RowConditions("menu", $Id)
+		  RowConditions("menu", $Id, onlyConditions())
 		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
@@ -452,7 +463,7 @@ MenuItem(
 			Value  string
 		}
 		conditions {
-			RowConditions("menu", $Id)
+			RowConditions("menu", $Id, false)
 		}
 		action {
 			var row map
@@ -509,9 +520,13 @@ MenuItem(
 			Value      string "optional"
 			Menu      string "optional"
 		  	Conditions string "optional"
-	  	}
+		  }
+		  
+		func onlyConditions() bool {
+        	return $Conditions && !$Value && !$Menu
+		}
 	  	conditions {
-		  RowConditions("pages", $Id)
+		  RowConditions("pages", $Id, onlyConditions())
 		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
@@ -541,7 +556,7 @@ MenuItem(
 			  Value      string
 		  }
 		  conditions {
-			  RowConditions("pages", $Id)
+			  RowConditions("pages", $Id, false)
 		  }
 		  action {
 			  var row map
@@ -571,16 +586,21 @@ MenuItem(
 		}
 	 }', 'ContractConditions("MainCondition")'),
 	  ('13','EditBlock','contract EditBlock {
-		  data {
+		data {
 			Id         int
 			Value      string "optional"
 		  	Conditions string "optional"
-	  		}
+		}
+		
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 	  	conditions {
-		  RowConditions("blocks", $Id)
-		  if $Conditions {
-			  ValidateCondition($Conditions, $ecosystem_id)
-		  }
+			RowConditions("blocks", $Id, onlyConditions())
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
 	  	}
 	  	action {
 		  var pars, vals array
@@ -1520,8 +1540,13 @@ MenuItem(
 			Conditions string "optional"
 			WalletId   string "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value && !$WalletId
+		}
+
 		conditions {
-			RowConditions("contracts", $Id)
+			RowConditions("contracts", $Id, onlyConditions())
 			if $Conditions {
 			    ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1662,8 +1687,13 @@ MenuItem(
 			Value string
 			Conditions string
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 		conditions {
-			RowConditions("parameters", $Id)
+			RowConditions("parameters", $Id, onlyConditions())
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
@@ -1702,8 +1732,13 @@ MenuItem(
 			Title      string "optional"
 			Conditions string "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value && !$Title
+		}
+
 		conditions {
-			RowConditions("menu", $Id)
+			RowConditions("menu", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1790,8 +1825,13 @@ MenuItem(
 			Value      string "optional"
 			Menu      string "optional"
 			Conditions string "optional"
-      ValidateCount int "optional"
+      		ValidateCount int "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value && !$Menu && !$ValidateCount 
+		}
+
 		func preparePageValidateCount(count int) int {
 			var min, max int
 			min = Int(EcosysParam("min_page_validate_count"))
@@ -1808,7 +1848,7 @@ MenuItem(
 			return count
 		}		
 		conditions {
-			RowConditions("pages", $Id)
+			RowConditions("pages", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1843,7 +1883,7 @@ MenuItem(
 			Value      string
 		}
 		conditions {
-			RowConditions("pages", $Id)
+			RowConditions("pages", $Id, false)
 		}
 		action {
 			var value string
@@ -1966,8 +2006,13 @@ MenuItem(
 			Value      string "optional"
 			Conditions string "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 		conditions {
-			RowConditions("blocks", $Id)
+			RowConditions("blocks", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -2235,8 +2280,12 @@ MenuItem(
 			Value string
 			Conditions string
 		}
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 		conditions {
-			RowConditions("app_param", $Id)
+			RowConditions("app_param", $Id, onlyConditions())
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
