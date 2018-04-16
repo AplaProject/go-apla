@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/shopspring/decimal"
 )
 
 type TestVM struct {
@@ -59,6 +61,10 @@ func str(v interface{}) (ret string) {
 
 func lenArray(par []interface{}) int64 {
 	return int64(len(par))
+}
+
+func Money(v interface{}) (ret decimal.Decimal) {
+	return ValueToDecimal(v)
 }
 
 func TestVMCompile(t *testing.T) {
@@ -172,7 +178,7 @@ func TestVMCompile(t *testing.T) {
 					var my2, m1 money
 					my2 = 100
 					m1 = 1.2
-					return Sprintf( "Account %v %v", my2 - 5.6, m1*5 + my2)
+					return Sprintf( "Account %v %v", my2 - Money(5.6), m1*Money(5) + Money(my2))
 				}`, `money_test`, `Account 94.4 106`},
 
 		{`func line_test string {
@@ -420,7 +426,7 @@ func TestVMCompile(t *testing.T) {
 	vm.Extern = true
 	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
 		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray,
-		"str": str, "Replace": strings.Replace}, nil})
+		"str": str, "Money": Money, "Replace": strings.Replace}, nil})
 
 	for ikey, item := range test {
 		source := []rune(item.Input)
@@ -443,6 +449,7 @@ func TestVMCompile(t *testing.T) {
 					break
 				}
 			} else if err.Error() != item.Output {
+				fmt.Println(item.Output)
 				t.Error(err)
 				break
 			}
