@@ -23,6 +23,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewEcosystem(t *testing.T) {
@@ -128,14 +129,43 @@ func TestEcosystemParams(t *testing.T) {
 	if len(ret.List) != 1 {
 		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
 	}
-	err = sendGet(`systemparams`, nil, &ret)
+
+}
+
+func TestSystemParams(t *testing.T) {
+
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	var ret ecosystemParamsResult
+
+	err := sendGet(`systemparams`, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if len(ret.List) < 5 {
-		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
+
+	assert.Equal(t, 62, len(ret.List), `wrong count of parameters %d`, len(ret.List))
+}
+
+func TestSomeSystemParam(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
 	}
+
+	var ret ecosystemParamsResult
+
+	param := "gap_between_blocks"
+	err := sendGet(`systemparams/?names=`+param, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	assert.Equal(t, 1, len(ret.List), "parameter %s not found", param)
 }
 
 func TestEcosystemParam(t *testing.T) {
