@@ -672,38 +672,37 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			switch top[1].(type) {
 			case string:
 				switch top[0].(type) {
+				case string:
+					bin = top[1].(string) + top[0].(string)
 				case int64:
 					bin = converter.ValueToInt(top[1]) + top[0].(int64)
 				case float64:
 					bin = ValueToFloat(top[1]) + top[0].(float64)
 				default:
-					if reflect.TypeOf(top[0]).String() == Decimal {
-						bin = ValueToDecimal(top[1]).Add(top[0].(decimal.Decimal))
-					} else {
-						bin = top[1].(string) + top[0].(string)
-					}
+					return 0, errUnsupportedType
 				}
 			case float64:
-				bin = top[1].(float64) + ValueToFloat(top[0])
+				switch top[0].(type) {
+				case string, int64, float64:
+					bin = top[1].(float64) + ValueToFloat(top[0])
+				default:
+					return 0, errUnsupportedType
+				}
 			case int64:
 				switch top[0].(type) {
-				case string:
+				case string, int64:
 					bin = top[1].(int64) + converter.ValueToInt(top[0])
-				case int64:
-					bin = top[1].(int64) + top[0].(int64)
 				case float64:
 					bin = ValueToFloat(top[1]) + top[0].(float64)
 				default:
-					if reflect.TypeOf(top[0]).String() == Decimal {
-						bin = ValueToDecimal(top[1]).Add(top[0].(decimal.Decimal))
-					} else {
-						return 0, errUnsupportedType
-					}
+					return 0, errUnsupportedType
 				}
 			default:
-				switch reflect.TypeOf(top[1]).String() {
-				case Decimal:
-					bin = top[1].(decimal.Decimal).Add(ValueToDecimal(top[0]))
+				if reflect.TypeOf(top[1]).String() == Decimal &&
+					reflect.TypeOf(top[0]).String() == Decimal {
+					bin = top[1].(decimal.Decimal).Add(top[0].(decimal.Decimal))
+				} else {
+					return 0, errUnsupportedType
 				}
 			}
 		case cmdSub:
@@ -715,27 +714,30 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) - top[0].(float64)
 				default:
-					if reflect.TypeOf(top[0]).String() == Decimal {
-						bin = ValueToDecimal(top[1]).Sub(top[0].(decimal.Decimal))
-					}
+					return 0, errUnsupportedType
 				}
 			case float64:
-				bin = top[1].(float64) - ValueToFloat(top[0])
+				switch top[0].(type) {
+				case string, int64, float64:
+					bin = top[1].(float64) - ValueToFloat(top[0])
+				default:
+					return 0, errUnsupportedType
+				}
 			case int64:
 				switch top[0].(type) {
-				case int64:
-					bin = top[1].(int64) - top[0].(int64)
+				case int64, string:
+					bin = top[1].(int64) - converter.ValueToInt(top[0])
 				case float64:
 					bin = ValueToFloat(top[1]) - top[0].(float64)
-				case string:
-					bin = top[1].(int64) - converter.ValueToInt(top[0])
 				default:
 					return 0, errUnsupportedType
 				}
 			default:
-				switch reflect.TypeOf(top[1]).String() {
-				case Decimal:
-					bin = top[1].(decimal.Decimal).Sub(ValueToDecimal(top[0]))
+				if reflect.TypeOf(top[1]).String() == Decimal &&
+					reflect.TypeOf(top[0]).String() == Decimal {
+					bin = top[1].(decimal.Decimal).Sub(top[0].(decimal.Decimal))
+				} else {
+					return 0, errUnsupportedType
 				}
 			}
 		case cmdMul:
@@ -747,80 +749,85 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) * top[0].(float64)
 				default:
-					if reflect.TypeOf(top[0]).String() == Decimal {
-						bin = ValueToDecimal(top[1]).Mul(top[0].(decimal.Decimal))
-					}
+					return 0, errUnsupportedType
 				}
 			case float64:
-				if reflect.TypeOf(top[0]).String() == Decimal {
-					bin = ValueToDecimal(top[1]).Mul(top[0].(decimal.Decimal))
-				} else {
+				switch top[0].(type) {
+				case string, int64, float64:
 					bin = top[1].(float64) * ValueToFloat(top[0])
+				default:
+					return 0, errUnsupportedType
 				}
 			case int64:
-				if reflect.TypeOf(top[0]).String() == Decimal {
-					bin = ValueToDecimal(top[1]).Mul(top[0].(decimal.Decimal))
-				} else {
-					switch top[0].(type) {
-					case int64:
-						bin = top[1].(int64) * top[0].(int64)
-					case float64:
-						bin = ValueToFloat(top[1]) * top[0].(float64)
-					case string:
-						bin = top[1].(int64) * converter.ValueToInt(top[0])
-					default:
-						return 0, errUnsupportedType
-					}
+				switch top[0].(type) {
+				case int64, string:
+					bin = top[1].(int64) * converter.ValueToInt(top[0])
+				case float64:
+					bin = ValueToFloat(top[1]) * top[0].(float64)
+				default:
+					return 0, errUnsupportedType
 				}
 			default:
-				switch reflect.TypeOf(top[1]).String() {
-				case Decimal:
-					bin = top[1].(decimal.Decimal).Mul(ValueToDecimal(top[0]))
+				if reflect.TypeOf(top[1]).String() == Decimal &&
+					reflect.TypeOf(top[0]).String() == Decimal {
+					bin = top[1].(decimal.Decimal).Mul(top[0].(decimal.Decimal))
+				} else {
+					return 0, errUnsupportedType
 				}
 			}
 		case cmdDiv:
 			switch top[1].(type) {
 			case string:
-				switch top[0].(type) {
+				switch v := top[0].(type) {
 				case int64:
-					bin = converter.ValueToInt(top[1]) / top[0].(int64)
-				case float64:
-					bin = ValueToFloat(top[1]) / top[0].(float64)
-				default:
-					if reflect.TypeOf(top[0]).String() == Decimal {
-						bin = ValueToDecimal(top[1]).Div(top[0].(decimal.Decimal))
+					if v == 0 {
+						return 0, errDivZero
 					}
+					bin = converter.ValueToInt(top[1]) / v
+				case float64:
+					if v == 0 {
+						return 0, errDivZero
+					}
+					bin = ValueToFloat(top[1]) / v
+				default:
+					return 0, errUnsupportedType
 				}
 			case float64:
-				bin = top[1].(float64) / ValueToFloat(top[0])
-			case int64:
 				switch top[0].(type) {
-				case int64:
-					if top[0].(int64) == 0 {
-						log.WithFields(log.Fields{"type": consts.DivisionByZero}).Error("divided by zero")
+				case string, int64, float64:
+					vFloat := ValueToFloat(top[0])
+					if vFloat == 0 {
 						return 0, errDivZero
 					}
-					bin = top[1].(int64) / top[0].(int64)
+					bin = top[1].(float64) / vFloat
+				default:
+					return 0, errUnsupportedType
+				}
+			case int64:
+				switch top[0].(type) {
+				case int64, string:
+					vInt := converter.ValueToInt(top[0])
+					if vInt == 0 {
+						return 0, errDivZero
+					}
+					bin = top[1].(int64) / vInt
 				case float64:
 					if top[0].(float64) == 0 {
-						log.WithFields(log.Fields{"type": consts.DivisionByZero}).Error("divided by zero")
 						return 0, errDivZero
 					}
 					bin = ValueToFloat(top[1]) / top[0].(float64)
-				case string:
-					val := converter.ValueToInt(top[0])
-					if val == 0 {
-						log.WithFields(log.Fields{"type": consts.DivisionByZero}).Error("divided by zero")
-						return 0, errDivZero
-					}
-					bin = top[1].(int64) / val
 				default:
 					return 0, errUnsupportedType
 				}
 			default:
-				switch reflect.TypeOf(top[1]).String() {
-				case Decimal:
-					bin = top[1].(decimal.Decimal).Div(ValueToDecimal(top[0]))
+				if reflect.TypeOf(top[1]).String() == Decimal &&
+					reflect.TypeOf(top[0]).String() == Decimal {
+					if top[0].(decimal.Decimal).Cmp(decimal.New(0, 0)) == 0 {
+						return 0, errUnsupportedType
+					}
+					bin = top[1].(decimal.Decimal).Div(top[0].(decimal.Decimal))
+				} else {
+					return 0, errUnsupportedType
 				}
 			}
 		case cmdAnd:
