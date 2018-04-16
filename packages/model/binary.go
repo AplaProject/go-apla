@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-// Binary is model
+// Binary represents record of {prefix}_binaries table
 type Binary struct {
 	tableName string
 	ID        int64

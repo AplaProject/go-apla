@@ -598,16 +598,17 @@ func playTransaction(p *Parser) (string, error) {
 	if p.TxContract != nil {
 		// check that there are enough money in CallContract
 		return p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
-	} else {
-		if p.txParser == nil {
-			return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
-		}
-
-		err := p.txParser.Action()
-		if _, ok := err.(error); ok {
-			return "", utils.ErrInfo(err.(error))
-		}
 	}
+
+	if p.txParser == nil {
+		return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
+	}
+
+	err := p.txParser.Action()
+	if _, ok := err.(error); ok {
+		return "", utils.ErrInfo(err.(error))
+	}
+
 	return "", nil
 }
 

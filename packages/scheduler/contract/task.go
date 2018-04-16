@@ -7,10 +7,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// ContractHandler represents contract handler
 type ContractHandler struct {
 	Contract string
 }
 
+// Run executes task
 func (ch *ContractHandler) Run(t *scheduler.Task) {
 	_, err := NodeContract(ch.Contract)
 	if err != nil {

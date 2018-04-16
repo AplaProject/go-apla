@@ -12,6 +12,7 @@ import (
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
+// BuildTransaction creates transaction
 func BuildTransaction(smartTx SmartContract, privKey, pubKey string, params ...string) error {
 	signPrms := []string{smartTx.ForSign()}
 	signPrms = append(signPrms, params...)

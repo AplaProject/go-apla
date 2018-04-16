@@ -97,45 +97,9 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 	dtx.RunForBlockID(prevBlock.BlockID + 1)
 
-	p := new(parser.Parser)
-
-	// verify transactions
-	err = p.AllTxParser()
+	trs, err := processTransactions(d.logger)
 	if err != nil {
 		return err
-	}
-
-	trs, err := model.GetAllUnusedTransactions()
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
-		return err
-	}
-
-	limits := parser.NewLimits(nil)
-	// Checks preprocessing count limits
-	txList := make([]*model.Transaction, 0, len(trs))
-	for i, txItem := range trs {
-		bufTransaction := bytes.NewBuffer(txItem.Data)
-		p, err := parser.ParseTransaction(bufTransaction)
-		if err != nil {
-			p.ProcessBadTransaction(err)
-			continue
-		}
-		if p.TxSmart != nil {
-			err = limits.CheckLimit(p)
-			if err == parser.ErrLimitStop && i > 0 {
-				model.IncrementTxAttemptCount(nil, p.TxHash)
-				break
-			} else if err != nil {
-				if err == parser.ErrLimitSkip {
-					model.IncrementTxAttemptCount(nil, p.TxHash)
-				} else {
-					p.ProcessBadTransaction(err)
-				}
-				continue
-			}
-		}
-		txList = append(txList, &trs[i])
 	}
 
 	// Block generation will be started only if we have transactions
@@ -166,12 +130,56 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	return nil
 }
 
-func generateNextBlock(blockHeader *utils.BlockData, trs []model.Transaction, key string, prevBlockHash []byte) ([]byte, error) {
-
+func generateNextBlock(blockHeader *utils.BlockData, trs []*model.Transaction, key string, prevBlockHash []byte) ([]byte, error) {
 	trData := make([][]byte, 0, len(trs))
 	for _, tr := range trs {
 		trData = append(trData, tr.Data)
 	}
 
 	return parser.MarshallBlock(blockHeader, trData, prevBlockHash, key)
+}
+
+func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
+	p := new(parser.Parser)
+
+	// verify transactions
+	err := p.AllTxParser()
+	if err != nil {
+		return nil, err
+	}
+
+	trs, err := model.GetAllUnusedTransactions()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
+		return nil, err
+	}
+
+	limits := parser.NewLimits(nil)
+	// Checks preprocessing count limits
+	txList := make([]*model.Transaction, 0, len(trs))
+	for i, txItem := range trs {
+		bufTransaction := bytes.NewBuffer(txItem.Data)
+		p, err := parser.ParseTransaction(bufTransaction)
+		if err != nil {
+			p.ProcessBadTransaction(err)
+			continue
+		}
+		if p.TxSmart != nil {
+			err = limits.CheckLimit(p)
+			if err == parser.ErrLimitStop && i > 0 {
+				model.IncrementTxAttemptCount(nil, p.TxHash)
+				break
+			} else if err != nil {
+				if err == parser.ErrLimitSkip {
+					model.IncrementTxAttemptCount(nil, p.TxHash)
+				} else {
+					p.ProcessBadTransaction(err)
+				}
+				continue
+			}
+		}
+		txList = append(txList, trs[i])
+	}
+
+	return txList, nil
 }
