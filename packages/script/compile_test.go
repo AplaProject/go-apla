@@ -63,17 +63,6 @@ func lenArray(par []interface{}) int64 {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
-		{`func result string {
-			  var arr array
-			  var mymap map
-			  arr[100000] = 0
-			  var i int
-			  while i < 100 {
-				  mymap[str(i)] = 10
-				  i = i + 1
-			  }
-			  return Sprintf("%T %[1]v", .21 + 1.44)
-			}`, `result`, `float64 1.65`},
 		{`contract sets {
 			settings {
 				val = 1.56
@@ -413,6 +402,19 @@ func TestVMCompile(t *testing.T) {
 				return row().Where("%d %d", 10, 20)
 			}
 			`, `result`, `10 20`},
+		{`func result string {
+				var arr array
+				var mymap map
+				arr[100000] = 0
+				var i int
+				while i < 100 {
+					mymap[str(i)] = 10
+					i = i + 1
+				}
+				i = i + "2" 
+				i = (i - "10")/"2"*"3"
+				return Sprintf("%T %[1]v", .21 + i)
+			  }`, `result`, `float64 138.21`},
 	}
 	vm := NewVM()
 	vm.Extern = true
