@@ -23,6 +23,8 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewEcosystem(t *testing.T) {
@@ -165,75 +167,44 @@ func TestEcosystemParam(t *testing.T) {
 }
 
 func TestAppParams(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
+
 	rnd := `rnd` + crypto.RandSeq(3)
 	form := url.Values{`App`: {`1`}, `Name`: {rnd + `1`}, `Value`: {`simple string,index`}, `Conditions`: {`true`}}
-	if err := postTx(`NewAppParam`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewAppParam`, &form))
+
 	form[`Name`] = []string{rnd + `2`}
 	form[`Value`] = []string{`another string`}
-	if err := postTx(`NewAppParam`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewAppParam`, &form))
+
 	var ret appParamsResult
-	err := sendGet(`appparams/1`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`appparams/1`, nil, &ret))
 	if len(ret.List) < 2 {
 		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
 	}
-	err = sendGet(fmt.Sprintf(`appparams/1?names=%s1,%[1]s2&ecosystem=1`, rnd), nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(ret.List) != 2 {
-		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
-	}
+
+	assert.NoError(t, sendGet(fmt.Sprintf(`appparams/1?names=%s1,%[1]s2&ecosystem=1`, rnd), nil, &ret))
+	assert.Len(t, ret.List, 2)
 
 	var ret1, ret2 paramValue
-	err = sendGet(`appparam/1/`+rnd+`2`, nil, &ret1)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if ret1.Value != `another string` {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`appparam/1/`+rnd+`2`, nil, &ret1))
+	assert.Equal(t, `another string`, ret1.Value)
+
 	form[`Id`] = []string{ret1.ID}
 	form[`Name`] = []string{rnd + `2`}
 	form[`Value`] = []string{`{"par1":"value 1", "par2":"value 2"}`}
-	if err := postTx(`EditAppParam`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditAppParam`, &form))
+
 	form = url.Values{"Value": {`contract ` + rnd + `Par { data {} conditions {} action
 	{ var row map
 		row=JSONToMap(AppParam(1, "` + rnd + `2"))
 	    $result = row["par1"] }
 	}`}, "Conditions": {"true"}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
 	_, msg, err := postTxResult(rnd+`Par`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if msg != "value 1" {
-		t.Errorf(`wrong value %s`, msg)
-		return
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, "value 1", msg)
 
 	forTest := tplList{{`AppParam(` + rnd + `1, 1, Source: myname)`,
 		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","simple string"],["2","index"]],"source":"myname","types":["text","text"]}}]`},
@@ -241,24 +212,10 @@ func TestAppParams(t *testing.T) {
 			`[{"tag":"text","text":"{"par1":"value 1", "par2":"value 2"}"}]`}}
 	for _, item := range forTest {
 		var ret contentResult
-		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if RawToString(ret.Tree) != item.want {
-			t.Error(fmt.Errorf(`wrong tree %s != %s`, RawToString(ret.Tree), item.want))
-			return
-		}
+		assert.NoError(t, sendPost(`content`, &url.Values{`template`: {item.input}}, &ret))
+		assert.Equal(t, item.want, RawToString(ret.Tree))
 	}
 
-	err = sendGet(`appparam/1/myval`, nil, &ret2)
-	if err != nil && err.Error() != `400 {"error": "", "msg": "" }` {
-		t.Error(err)
-		return
-	}
-	if len(ret2.Value) != 0 {
-		t.Error(err)
-		return
-	}
+	assert.EqualError(t, sendGet(`appparam/1/myval`, nil, &ret2), `400 {"error": "", "msg": "" }`)
+	assert.Len(t, ret2.Value, 0)
 }

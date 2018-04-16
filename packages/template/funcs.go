@@ -36,6 +36,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Composite represents a composite contract
 type Composite struct {
 	Name string      `json:"name"`
 	Data interface{} `json:"data,omitempty"`

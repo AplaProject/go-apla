@@ -86,6 +86,7 @@ const PrivkeyLength = 32
 // BlockSize is size of block
 const BlockSize = 16
 
+// HashSize is size of hash
 const HashSize = 32
 
 const AvailableBCGap = 4
@@ -103,6 +104,7 @@ var ApiPath = `/api/v2/`
 // DefaultConfigFile name of config file (toml format)
 const DefaultConfigFile = "config.toml"
 
+// DefaultWorkdirName name of working directory
 const DefaultWorkdirName = "genesis-data"
 
 // DefaultPidFilename is default filename of pid file
@@ -138,4 +140,5 @@ const FromToPerDayLimit = 10000
 // TokenMovementQtyPerBlockLimit block limit token transfer
 const TokenMovementQtyPerBlockLimit = 100
 
+// TCPConnTimeout timeout of tcp connection
 const TCPConnTimeout = 5 * time.Second

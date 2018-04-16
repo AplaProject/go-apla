@@ -124,6 +124,8 @@ func init() {
 	configCmd.Flags().StringVar(&conf.Config.TLSKey, "tls-key", "", "Filepath to the private key")
 	configCmd.Flags().Int64Var(&conf.Config.MaxPageGenerationTime, "mpgt", 1000, "Max page generation time in ms")
 	configCmd.Flags().StringArrayVar(&conf.Config.NodesAddr, "nodesAddr", []string{}, "List of addresses for downloading blockchain")
+	configCmd.Flags().BoolVar(&conf.Config.PrivateBlockchain, "privateBlockchain", false, "Is blockchain private")
+
 	viper.BindPFlag("PidFilePath", configCmd.Flags().Lookup("pid"))
 	viper.BindPFlag("LockFilePath", configCmd.Flags().Lookup("lock"))
 	viper.BindPFlag("KeysDir", configCmd.Flags().Lookup("keysDir"))
@@ -133,4 +135,5 @@ func init() {
 	viper.BindPFlag("TLSCert", configCmd.Flags().Lookup("tls-cert"))
 	viper.BindPFlag("TLSKey", configCmd.Flags().Lookup("tls-key"))
 	viper.BindPFlag("MaxPageGenerationTime", configCmd.Flags().Lookup("mpgt"))
+	viper.BindPFlag("PrivateBlockchain", configCmd.Flags().Lookup("privateBlockchain"))
 }

@@ -19,7 +19,6 @@ package utils
 import (
 	"context"
 	"encoding/hex"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -66,7 +65,6 @@ var (
 	CancelFunc context.CancelFunc
 	// DaemonsCount is number of daemons
 	DaemonsCount        int
-	PrivateBlockchain   = flag.Bool("privateBlockchain", false, "Is blockchain private")
 	ErrNodesUnavailable = errors.New("All nodes unvailabale")
 )
 
