@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	log "github.com/sirupsen/logrus"
@@ -21,23 +22,21 @@ func getConfigOption(w http.ResponseWriter, r *http.Request, data *apiData, logg
 	var err error
 	switch option {
 	case "centrifugo":
-		err = centrifugoAddressHandler(w)
+		err = centrifugoAddressHandler(w, data)
+		break
 	default:
-		err = errorAPI(w, "E_SERVER", http.StatusBadRequest)
+		return errorAPI(w, "E_SERVER", http.StatusBadRequest)
 	}
 
 	return err
 }
 
-func centrifugoAddressHandler(w http.ResponseWriter) error {
+func centrifugoAddressHandler(w http.ResponseWriter, data *apiData) error {
 	if _, err := publisher.GetStats(); err != nil {
 		log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Warn("on getting centrifugo stats")
-		return errorAPI(w, "E_SERVER", http.StatusNotFound)
+		return errorAPI(w, err, http.StatusNotFound)
 	}
 
-	if _, err := w.Write([]byte(conf.Config.Centrifugo.URL)); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on write centrifugo address response")
-		return err
-	}
+	data.result = conf.Config.Centrifugo.URL
 	return nil
 }
