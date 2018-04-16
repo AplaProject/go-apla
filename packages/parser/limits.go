@@ -138,10 +138,15 @@ func (bl *timeBlockLimit) init(b *Block) {
 }
 
 func (bl *timeBlockLimit) check(p *Parser, mode int) error {
-	if time.Since(bl.Start) > bl.Limit {
+	if time.Since(bl.Start) < bl.Limit {
+		return nil
+	}
+
+	if mode == letPreprocess {
 		return ErrLimitStop
 	}
-	return nil
+
+	return limitError("txBlockTimeLimit", "Block generation time exceeded")
 }
 
 // Checking the max tx from one user in the block
