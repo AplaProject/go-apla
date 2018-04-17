@@ -74,6 +74,7 @@ func Route(route *hr.Router) {
 	get(`maxblockid`, ``, getMaxBlockID)
 	get(`version`, ``, getVersion)
 	get(`avatar/:ecosystem/:member`, ``, getAvatar)
+	get(`config/:option`, ``, getConfigOption)
 	post(`content/source/:name`, ``, authWallet, getSource)
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
 	post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
