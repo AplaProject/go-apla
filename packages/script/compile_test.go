@@ -402,6 +402,12 @@ func TestVMCompile(t *testing.T) {
 				return row().Where("%d %d", 10, 20)
 			}
 			`, `result`, `10 20`},
+		{`func long() int {
+				return  99999999999999999999
+				}
+				func result() string {
+					return Sprintf("ok=%d", long())
+					}`, `result`, `strconv.ParseInt: parsing "99999999999999999999": value out of range 99999999999999999999 [Ln:2 Col:33]`},
 	}
 	vm := NewVM()
 	vm.Extern = true
