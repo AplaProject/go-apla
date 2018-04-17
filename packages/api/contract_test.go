@@ -111,7 +111,7 @@ var contracts = []smartContract{
 		}},
 	{`DBProblem`, `contract DBProblem {
 		action{
-			DBFind("members").Where("name=?", "name")
+			DBFind("members").Where("member_name=?", "name")
 		}
 	}`,
 		[]smartParams{
