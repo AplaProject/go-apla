@@ -41,10 +41,6 @@ var ErrNodesUnavailable = errors.New("All nodes unavailable")
 
 // BlocksCollection collects and parses blocks
 func BlocksCollection(ctx context.Context, d *daemon) error {
-	if err := initialLoad(ctx, d); err != nil {
-		return err
-	}
-
 	if ctx.Err() != nil {
 		d.logger.WithFields(log.Fields{"type": consts.ContextError, "error": ctx.Err()}).Error("context error")
 		return ctx.Err()
@@ -53,18 +49,18 @@ func BlocksCollection(ctx context.Context, d *daemon) error {
 	return blocksCollection(ctx, d)
 }
 
-func initialLoad(ctx context.Context, d *daemon) error {
+func InitialLoad(logger *log.Entry) error {
 
 	// check for initial load
-	toLoad, err := needLoad(d.logger)
+	toLoad, err := needLoad(logger)
 	if err != nil {
 		return err
 	}
 
 	if toLoad {
-		d.logger.Debug("start first block loading")
+		logger.Debug("start first block loading")
 
-		if err := firstLoad(ctx, d); err != nil {
+		if err := firstLoad(logger); err != nil {
 			return err
 		}
 	}
@@ -225,7 +221,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 	playRawBlock := func(rawBlocksQueueCh chan []byte) error {
 		for rb := range rawBlocksQueueCh {
-			block, err := parser.ProcessBlockWherePrevFromBlockchainTable(rb)
+			block, err := parser.ProcessBlockWherePrevFromBlockchainTable(rb, true)
 			if err != nil {
 				// we got bad block and should ban this host
 				banNode(host, err)
@@ -304,7 +300,7 @@ func loadFirstBlock(logger *log.Entry) error {
 		}).Error("reading first block from file")
 	}
 
-	if err = parser.InsertBlockWOForks(newBlock, false); err != nil {
+	if err = parser.InsertBlockWOForks(newBlock, false, true); err != nil {
 		logger.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("inserting new block")
 		return err
 	}
@@ -312,12 +308,11 @@ func loadFirstBlock(logger *log.Entry) error {
 	return nil
 }
 
-func firstLoad(ctx context.Context, d *daemon) error {
-
+func firstLoad(logger *log.Entry) error {
 	DBLock()
 	defer DBUnlock()
 
-	return loadFirstBlock(d.logger)
+	return loadFirstBlock(logger)
 }
 
 func needLoad(logger *log.Entry) (bool, error) {

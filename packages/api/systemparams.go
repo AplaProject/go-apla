@@ -32,7 +32,7 @@ func systemParams(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 		names  map[string]bool
 	)
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(`system`)
+	sp.SetTablePrefix(`1_system`)
 	list, err := sp.GetAllStateParameters()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting all system parameters")
