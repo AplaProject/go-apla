@@ -214,7 +214,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
+	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "1_system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
 	if err != nil {
 		return 0, err
 	}
@@ -526,9 +526,32 @@ func RollbackEcosystem(sc *SmartContract) error {
 		}
 	}
 
-	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
-		`contracts`, `parameters`, `blocks`, `history`, `keys`, `sections`, `members`, `roles`,
-		`roles_participants`, `notifications`, `applications`, `binaries`, `app_param`} {
+	rbTables := []string{
+		`menu`,
+		`pages`,
+		`languages`,
+		`signatures`,
+		`tables`,
+		`contracts`,
+		`parameters`,
+		`blocks`,
+		`history`,
+		`keys`,
+		`sections`,
+		`members`,
+		`roles`,
+		`roles_participants`,
+		`notifications`,
+		`applications`,
+		`binaries`,
+		`app_param`,
+	}
+
+	if rollbackTx.TableID == "1" {
+		rbTables = append(rbTables, `system_parameters`, `ecosystems`)
+	}
+
+	for _, name := range rbTables {
 		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")

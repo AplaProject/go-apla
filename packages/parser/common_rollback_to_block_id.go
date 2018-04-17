@@ -65,7 +65,8 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		return p.ErrInfo(err)
 	}
 
-	header, err := ParseBlockHeader(bytes.NewBuffer(block.Data))
+	isFirstBlock := blockID == 1
+	header, err := ParseBlockHeader(bytes.NewBuffer(block.Data), !isFirstBlock)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
