@@ -76,6 +76,7 @@ var (
 	ErrInvalidValue   = errors.New(`Invalid value`)
 	ErrUnknownNodeID  = errors.New(`Unknown node id`)
 	ErrWrongPriceFunc = errors.New(`Wrong type of price function`)
+	ErrNegPrice       = errors.New(`Price value is negative`)
 )
 
 func testValue(name string, v ...interface{}) {
@@ -940,6 +941,9 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 						return retError(ErrWrongPriceFunc)
 					}
 					price = ret[0].(int64)
+					if price < 0 {
+						return retError(ErrNegPrice)
+					}
 				} else {
 					logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong type of price function")
 					return retError(ErrWrongPriceFunc)
