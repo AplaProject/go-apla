@@ -345,7 +345,7 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 	} else if consts.IsStruct(int(txType)) {
 		p.TxBinaryData = buffer.Bytes()
 		if err := parseStructTransaction(p, buffer, txType); err != nil {
-			return nil, err
+			return p, err
 		}
 
 		// all other transactions
@@ -496,6 +496,12 @@ func parseStructTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	p.TxKeyID = head.KeyID
 	p.TxTime = int64(head.Time)
 	p.TxType = txType
+
+	err = trParser.Validate()
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+
 	return nil
 }
 
@@ -606,10 +612,10 @@ func playTransaction(p *Parser) (string, error) {
 		return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
 	}
 
-	err := p.txParser.Action()
-	if _, ok := err.(error); ok {
-		return "", utils.ErrInfo(err.(error))
-	}
+		err := p.txParser.Action()
+		if err != nil {
+			return "", err
+		}
 
 	return "", nil
 }
@@ -638,6 +644,10 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			err = limits.CheckLimit(p)
 		}
 		if err != nil {
+			if err == errNetworkStopping {
+				return err
+			}
+
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
 				model.IncrementTxAttemptCount(p.DbTransaction, p.TxHash)

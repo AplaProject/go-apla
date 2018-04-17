@@ -89,9 +89,18 @@ const BlockSize = 16
 // HashSize is size of hash
 const HashSize = 32
 
+const (
+	TxTypeFirstBlock  = 1
+	TxTypeStopNetwork = 2
+
+	TxTypeParserFirstBlock  = "FirstBlock"
+	TxTypeParserStopNetwork = "StopNetwork"
+)
+
 // TxTypes is the list of the embedded transactions
 var TxTypes = map[int]string{
-	1: "FirstBlock",
+	TxTypeFirstBlock:  TxTypeParserFirstBlock,
+	TxTypeStopNetwork: TxTypeParserStopNetwork,
 }
 
 // ApiPath is the beginning of the api url

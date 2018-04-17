@@ -132,8 +132,10 @@ func GetTablePrefix(global string, stateId int64) (string, error) {
 // GetParser returns ParserInterface
 func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	switch txType {
-	case "FirstBlock":
+	case consts.TxTypeParserFirstBlock:
 		return &FirstBlockParser{p}, nil
+	case consts.TxTypeParserStopNetwork:
+		return &StopNetworkParser{p, nil}, nil
 	}
 	log.WithFields(log.Fields{"tx_type": txType, "type": consts.UnknownObject}).Error("unknown txType")
 	return nil, fmt.Errorf("Unknown txType: %s", txType)

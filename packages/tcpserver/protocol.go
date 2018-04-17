@@ -14,6 +14,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Types of requests
+const (
+	RequestTypeFullNode        = 1
+	RequestTypeNotFullNode     = 2
+	RequestTypeStopNetwork     = 3
+	RequestTypeConfirmation    = 4
+	RequestTypeBlockCollection = 7
+	RequestTypeMaxBlock        = 10
+)
+
 // RequestType is type of request
 type RequestType struct {
 	Type uint16
@@ -60,6 +70,14 @@ type DisTrResponse struct{}
 // DisHashResponse contains response data
 type DisHashResponse struct {
 	Data []byte
+}
+
+type StopNetworkRequest struct {
+	Data []byte
+}
+
+type StopNetworkResponse struct {
+	Hash []byte
 }
 
 // ReadRequest is reading request
@@ -159,6 +177,19 @@ func SendRequest(request interface{}, w io.Writer) error {
 				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bytes")
 				return err
 			}
+
+		case reflect.Bool:
+			var bs []byte
+			if t.Bool() {
+				bs = []byte("1")
+			} else {
+				bs = []byte("0")
+			}
+			_, err := w.Write(bs)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing bytes")
+				return err
+			}
 		}
 	}
 	return nil
@@ -195,4 +226,9 @@ func readSliceSize(r io.Reader, tagSize string) (size uint64, err error) {
 		}
 	}
 	return readUint(r, 4)
+}
+
+func SendRequestType(reqType int64, w io.Writer) error {
+	_, err := w.Write(converter.DecToBin(reqType, 2))
+	return err
 }
