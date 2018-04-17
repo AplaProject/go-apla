@@ -12,8 +12,10 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/migration"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 	log "github.com/sirupsen/logrus"
+
+	// Postgresql driver
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 var (
@@ -87,6 +89,7 @@ func (tr *DbTransaction) Commit() error {
 	return tr.conn.Commit().Error
 }
 
+// Connection returns connection of database
 func (tr *DbTransaction) Connection() *gorm.DB {
 	return tr.conn
 }
@@ -127,7 +130,7 @@ func DropTables() error {
 	`).Error
 }
 
-// GetRecordsCount is counting all records of table in transaction
+// GetRecordsCountTx is counting all records of table in transaction
 func GetRecordsCountTx(db *DbTransaction, tableName string) (int64, error) {
 	var count int64
 	err := GetDB(db).Table(tableName).Count(&count).Error

@@ -1,7 +1,11 @@
 package model
 
+import "github.com/GenesisKernel/go-genesis/packages/consts"
+
+// This constants contains values of transactions priority
 const (
-	TransactionRateOnBlock transactionRate = 1
+	TransactionRateOnBlock transactionRate = iota + 1
+	TransactionRateStopNetwork
 )
 
 type transactionRate int8
@@ -30,8 +34,8 @@ func GetAllTransactions(limit int) (*[]Transaction, error) {
 }
 
 // GetAllUnusedTransactions is retrieving all unused transactions
-func GetAllUnusedTransactions() ([]Transaction, error) {
-	var transactions []Transaction
+func GetAllUnusedTransactions() ([]*Transaction, error) {
+	var transactions []*Transaction
 	if err := DBConn.Where("used = ?", "0").Order("high_rate DESC").Find(&transactions).Error; err != nil {
 		return nil, err
 	}
@@ -130,6 +134,10 @@ func (t *Transaction) GetVerified(transactionHash []byte) (bool, error) {
 
 // Create is creating record of model
 func (t *Transaction) Create() error {
+	if t.HighRate == 0 {
+		t.HighRate = getTxRateByTxType(t.Type)
+	}
+
 	return DBConn.Create(t).Error
 }
 
@@ -138,4 +146,13 @@ func IncrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte)
 	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt>5 then 1 else 0 end where hash = ?",
 		transactionHash)
 	return query.RowsAffected, query.Error
+}
+
+func getTxRateByTxType(txType int8) transactionRate {
+	switch txType {
+	case consts.TxTypeStopNetwork:
+		return TransactionRateStopNetwork
+	default:
+		return 0
+	}
 }

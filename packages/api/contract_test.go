@@ -23,6 +23,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
@@ -30,22 +32,11 @@ func TestNewContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {
 		var ret getTestResult
-		err := sendPost(`test/`+name, nil, &ret)
-		if err != nil {
-			t.Error(err)
-			return false
-		}
-		if ret.Value != want {
-			t.Error(fmt.Errorf(`%s != %s`, ret.Value, want))
-			return false
-		}
-		return true
+		return assert.NoError(t, sendPost(`test/`+name, nil, &ret)) && assert.Equal(t, want, ret.Value)
 	}
 
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
+
 	for _, item := range contracts {
 		var ret getContractResult
 		err := sendGet(`contract/`+item.Name, nil, &ret)
@@ -54,10 +45,7 @@ func TestNewContracts(t *testing.T) {
 				form := url.Values{"Name": {item.Name}, "Value": {item.Value},
 					"Conditions": {`true`}}
 				if err := postTx(`NewContract`, &form); err != nil {
-					if item.Params[0].Results[`error`] != err.Error() {
-						t.Error(err)
-						return
-					}
+					assert.EqualError(t, err, item.Params[0].Results[`error`])
 					continue
 				}
 			} else {
@@ -74,10 +62,7 @@ func TestNewContracts(t *testing.T) {
 				form[key] = []string{value}
 			}
 			if err := postTx(item.Name, &form); err != nil {
-				if par.Results[`error`] != err.Error() {
-					t.Error(err)
-					return
-				}
+				assert.EqualError(t, err, par.Results[`error`])
 				continue
 			}
 			for key, value := range par.Results {
@@ -88,15 +73,8 @@ func TestNewContracts(t *testing.T) {
 		}
 	}
 	var row rowResult
-	err := sendGet(`row/menu/1`, nil, &row)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if row.Value[`value`] == `update` {
-		t.Errorf(`menu == update`)
-		return
-	}
+	assert.NoError(t, sendGet(`row/menu/1`, nil, &row))
+	assert.NotEqual(t, `update`, row.Value[`value`])
 }
 
 var contracts = []smartContract{
@@ -133,7 +111,7 @@ var contracts = []smartContract{
 		}},
 	{`DBProblem`, `contract DBProblem {
 		action{
-			DBFind("members").Where("name=?", "name")
+			DBFind("members").Where("member_name=?", "name")
 		}
 	}`,
 		[]smartParams{
@@ -437,89 +415,44 @@ func TestDeactivateContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {
 		var ret getTestResult
-		err := sendPost(`test/`+name, nil, &ret)
-		if err != nil {
-			t.Error(err)
-			return false
-		}
-		if ret.Value != want {
-			t.Error(fmt.Errorf(`%s != %s`, ret.Value, want))
-			return false
-		}
-		return true
+		return assert.NoError(t, sendPost(`test/`+name, nil, &ret)) && assert.Equal(t, want, ret.Value)
 	}
 
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
+
 	rnd := `rnd` + crypto.RandSeq(6)
 	form := url.Values{`Value`: {`contract ` + rnd + ` {
 		    data {
 				Par string
 			}
 			action { Test("active",  $Par)}}`}, `Conditions`: {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-	var ret getContractResult
-	err := sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if !ret.Active {
-		t.Error(fmt.Errorf(`Not activate ` + rnd))
-	}
-	var row rowResult
-	err = sendGet(`row/contracts/`+ret.TableID, nil, &row)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if row.Value[`active`] != `1` {
-		t.Error(fmt.Errorf(`row not activate ` + rnd))
-	}
+	assert.NoError(t, postTx(`NewContract`, &form))
 
-	if err := postTx(rnd, &url.Values{`Par`: {rnd}}); err != nil {
-		t.Error(err)
-		return
-	}
+	var ret getContractResult
+	assert.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
+
+	assert.NoError(t, postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}))
+	assert.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
+	assert.True(t, ret.Active, `Not activate `+rnd)
+
+	var row rowResult
+	assert.NoError(t, sendGet(`row/contracts/`+ret.TableID, nil, &row))
+	assert.Equal(t, "1", row.Value[`active`], `row not activate `+rnd)
+
+	assert.NoError(t, postTx(rnd, &url.Values{`Par`: {rnd}}))
+
 	if !wanted(`active`, rnd) {
 		return
 	}
 
-	if err := postTx(`DeactivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if ret.Active {
-		t.Error(fmt.Errorf(`Not deactivate ` + rnd))
-	}
+	assert.NoError(t, postTx(`DeactivateContract`, &url.Values{`Id`: {ret.TableID}}))
+
+	assert.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
+	assert.False(t, ret.Active, `Not deactivate `+rnd)
+
 	var row2 rowResult
-	err = sendGet(`row/contracts/`+ret.TableID, nil, &row2)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if row2.Value[`active`] != `0` {
-		t.Error(fmt.Errorf(`row not deactivate ` + rnd))
-	}
+	assert.NoError(t, sendGet(`row/contracts/`+ret.TableID, nil, &row2))
+	assert.Equal(t, "0", row2.Value[`active`])
 }
 
 func TestContracts(t *testing.T) {
@@ -751,10 +684,7 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 }
 
 func TestUpdateFunc(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
 
 	rnd := `rnd` + crypto.RandSeq(6)
 	form := url.Values{`Value`: {`contract f` + rnd + ` {
@@ -765,10 +695,7 @@ func TestUpdateFunc(t *testing.T) {
 			$result = Sprintf("X=%s %s %s", $par, $original_contract, $this_contract)
 		}}`}, `Conditions`: {`true`}}
 	_, id, err := postTxResult(`NewContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, err)
 
 	form = url.Values{`Value`: {`
 		contract one` + rnd + ` {
@@ -777,11 +704,7 @@ func TestUpdateFunc(t *testing.T) {
 				ret = DBFind("contracts").Columns("id,value").WhereId(10).Row()
 				$result = ret["id"]
 		}}`}, `Conditions`: {`true`}}
-	err = postTx(`NewContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewContract`, &form))
 
 	form = url.Values{`Value`: {`contract row` + rnd + ` {
 				action {
@@ -791,29 +714,15 @@ func TestUpdateFunc(t *testing.T) {
 				}}
 		
 			`}, `Conditions`: {`true`}}
-	err = postTx(`NewContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
 	_, msg, err := postTxResult(`one`+rnd, &url.Values{})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if msg != `10` {
-		t.Error(`wrong one`)
-		return
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, "10", msg)
+
 	_, msg, err = postTxResult(`row`+rnd, &url.Values{})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if msg != `11` {
-		t.Error(`wrong row`)
-		return
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, "11", msg)
 
 	form = url.Values{`Value`: {`
 		contract ` + rnd + ` {
@@ -830,22 +739,16 @@ func TestUpdateFunc(t *testing.T) {
 		return
 	}
 	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`my param`}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if msg != fmt.Sprintf(`X=my param %s f%[1]s %[1]s`, rnd) {
-		t.Error(fmt.Errorf(`wrong result %s`, msg))
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, fmt.Sprintf(`X=my param %s f%[1]s %[1]s`, rnd), msg)
+
 	form = url.Values{`Id`: {id}, `Value`: {`
 		func MyTest2(input string) string {
 			return "Y="+input
 		}`}, `Conditions`: {`true`}}
 	err = postTx(`EditContract`, &form)
-	if err.Error() != `{"type":"error","error":"Contracts or functions names cannot be changed"}` {
-		t.Error(err)
-		return
-	}
+	assert.EqualError(t, postTx(`EditContract`, &form), `{"type":"error","error":"Contracts or functions names cannot be changed"}`)
+
 	form = url.Values{`Id`: {id}, `Value`: {`contract f` + rnd + `{
 		data {
 			par string
@@ -853,19 +756,12 @@ func TestUpdateFunc(t *testing.T) {
 		action {
 			$result = "Y="+$par
 		}}`}, `Conditions`: {`true`}}
-	err = postTx(`EditContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditContract`, &form))
+
 	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`new param`}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if msg != `Y=new param `+rnd {
-		t.Errorf(`wrong result %s`, msg)
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, `Y=new param `+rnd, msg)
+
 	form = url.Values{`Id`: {idcnt}, `Value`: {`
 		contract ` + rnd + ` {
 		    data {
@@ -876,18 +772,11 @@ func TestUpdateFunc(t *testing.T) {
 			}}
 		`}, `Conditions`: {`true`}}
 	_, idcnt, err = postTxResult(`EditContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, err)
+
 	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`finish`}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if msg != `Y=finishY=OK` {
-		t.Errorf(`wrong result %s`, msg)
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, `Y=finishY=OK`, msg)
 }
 
 func TestGlobalVars(t *testing.T) {

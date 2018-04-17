@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -878,7 +879,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 			return retError(ErrIncorrectSign)
 		}
-		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !*utils.PrivateBlockchain {
+		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.PrivateBlockchain {
 			if sc.TxSmart.TokenEcosystem == 0 {
 				sc.TxSmart.TokenEcosystem = 1
 			}
@@ -985,7 +986,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 	}
 
-	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !*utils.PrivateBlockchain {
+	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.PrivateBlockchain {
 		apl := sc.TxUsedCost.Mul(fuelRate)
 		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
 		if ierr != nil {
@@ -995,24 +996,51 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		if wltAmount.Cmp(apl) < 0 {
 			apl = wltAmount
 		}
+
 		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
-		walletTable := fmt.Sprintf(`%d_keys`, sc.TxSmart.TokenEcosystem)
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{apl.Sub(commission)}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(toID)}, true, true); ierr != nil {
-			if ierr != errUpdNotExistRecord {
-				return retError(ierr)
+		walletTable := model.KeyTableName(sc.TxSmart.TokenEcosystem)
+		historyTable := model.HistoryTableName(sc.TxSmart.TokenEcosystem)
+		comment := fmt.Sprintf("Commission for execution of %s contract", sc.TxContract.Name)
+		fromIDString := converter.Int64ToStr(fromID)
+
+		payCommission := func(toID string, sum decimal.Decimal) error {
+			_, _, err := sc.selectiveLoggingAndUpd(
+				[]string{"+amount"}, []interface{}{sum}, walletTable,
+				[]string{"id"}, []string{toID},
+				true, true,
+			)
+			if err != nil {
+				return err
+			}
+
+			_, _, err = sc.selectiveLoggingAndUpd(
+				[]string{"sender_id", "recipient_id", "amount", "comment", "block_id", "txhash"},
+				[]interface{}{fromIDString, toID, sum, comment, sc.BlockData.BlockID, sc.TxHash},
+				historyTable, nil, nil, true, false,
+			)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		if err := payCommission(converter.Int64ToStr(toID), apl.Sub(commission)); err != nil {
+			if err != errUpdNotExistRecord {
+				return retError(err)
 			}
 			apl = commission
 		}
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, walletTable, []string{`id`},
-			[]string{syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem)}, true, true); ierr != nil {
-			if ierr != errUpdNotExistRecord {
-				return retError(ierr)
+
+		if err := payCommission(syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem), commission); err != nil {
+			if err != errUpdNotExistRecord {
+				return retError(err)
 			}
 			apl = apl.Sub(commission)
 		}
+
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
-			[]string{converter.Int64ToStr(fromID)}, true, true); ierr != nil {
+			[]string{fromIDString}, true, true); ierr != nil {
 			return retError(ierr)
 		}
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")

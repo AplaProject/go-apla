@@ -38,6 +38,7 @@ type FullNode struct {
 	UnbanTime  time.Time
 }
 
+// UnmarshalJSON is custom json unmarshaller
 func (fn *FullNode) UnmarshalJSON(b []byte) (err error) {
 	data := fullNodeJSON{}
 	if err = json.Unmarshal(b, &data); err != nil {
@@ -98,6 +99,7 @@ func validateURL(rawurl string) error {
 	return nil
 }
 
+// Validate checks values
 func (fn *FullNode) Validate() error {
 	if fn.KeyID == 0 || len(fn.PublicKey) != publicKeyLength || len(fn.TCPAddress) == 0 {
 		return errFullNodeInvalidValues

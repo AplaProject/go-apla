@@ -86,15 +86,25 @@ const PrivkeyLength = 32
 // BlockSize is size of block
 const BlockSize = 16
 
+// HashSize is size of hash
 const HashSize = 32
 
 const AvailableBCGap = 4
 
 const DefaultNodesConnectDelay = 6
 
+const (
+	TxTypeFirstBlock  = 1
+	TxTypeStopNetwork = 2
+
+	TxTypeParserFirstBlock  = "FirstBlock"
+	TxTypeParserStopNetwork = "StopNetwork"
+)
+
 // TxTypes is the list of the embedded transactions
 var TxTypes = map[int]string{
-	1: "FirstBlock",
+	TxTypeFirstBlock:  TxTypeParserFirstBlock,
+	TxTypeStopNetwork: TxTypeParserStopNetwork,
 }
 
 // ApiPath is the beginning of the api url
@@ -103,6 +113,7 @@ var ApiPath = `/api/v2/`
 // DefaultConfigFile name of config file (toml format)
 const DefaultConfigFile = "config.toml"
 
+// DefaultWorkdirName name of working directory
 const DefaultWorkdirName = "genesis-data"
 
 // DefaultPidFilename is default filename of pid file
@@ -138,6 +149,7 @@ const FromToPerDayLimit = 10000
 // TokenMovementQtyPerBlockLimit block limit token transfer
 const TokenMovementQtyPerBlockLimit = 100
 
+// TCPConnTimeout timeout of tcp connection
 const TCPConnTimeout = 5 * time.Second
 
 const LocalBanTime = time.Minute * 30

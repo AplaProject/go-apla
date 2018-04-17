@@ -23,6 +23,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -36,10 +38,8 @@ func TestVDECreate(t *testing.T) {
 		retid int64
 		ret   vdeCreateResult
 	)
-	if err = keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+
+	assert.NoError(t, keyLogin(1))
 
 	if err = sendPost(`vde/create`, nil, &ret); err != nil &&
 		err.Error() != `400 {"error": "E_VDECREATED", "msg": "Virtual Dedicated Ecosystem is already created" }` {
@@ -54,27 +54,22 @@ func TestVDECreate(t *testing.T) {
 			}
 			action { Test("active",  $Par)}}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
 
-	if retid, _, err = postTxResult(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	retid, _, err = postTxResult(`NewContract`, &form)
+	assert.NoError(t, err)
+
 	form = url.Values{`Id`: {converter.Int64ToStr(retid)}, `Value`: {`contract ` + rnd + ` {
 		data {
 			Par string
 		}
 		action { Test("active 5",  $Par)}}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
+	assert.NoError(t, postTx(`EditContract`, &form))
 
-	if err := postTx(`EditContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
 	form = url.Values{`Name`: {rnd}, `Value`: {`Test value`}, `Conditions`: {`ContractConditions("MainCondition")`},
 		`vde`: {`1`}}
 
-	if retid, _, err = postTxResult(`NewParameter`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	retid, _, err = postTxResult(`NewParameter`, &form)
+	assert.NoError(t, err)
+
 	form = url.Values{`Name`: {`new_table`}, `Value`: {`Test value`}, `Conditions`: {`ContractConditions("MainCondition")`},
 		`vde`: {`1`}}
 	if err = postTx(`NewParameter`, &form); err != nil && err.Error() !=
@@ -84,68 +79,46 @@ func TestVDECreate(t *testing.T) {
 	}
 	form = url.Values{`Id`: {converter.Int64ToStr(retid)}, `Value`: {`Test edit value`}, `Conditions`: {`true`},
 		`vde`: {`1`}}
-	if _, _, err = postTxResult(`EditParameter`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+
+	assert.NoError(t, postTx(`EditParameter`, &form))
 
 	form = url.Values{"Name": {`menu` + rnd}, "Value": {`first
 		second
 		third`}, "Title": {`My Menu`},
 		"Conditions": {`true`}, `vde`: {`1`}}
 	retid, _, err = postTxResult(`NewMenu`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, err)
+
 	form = url.Values{`Id`: {converter.Int64ToStr(retid)}, `Value`: {`Test edit value`},
 		`Conditions`: {`true`},
 		`vde`:        {`1`}}
-	if err = postTx(`EditMenu`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditMenu`, &form))
+
 	form = url.Values{"Id": {converter.Int64ToStr(retid)}, "Value": {`Span(Append)`},
 		`vde`: {`1`}}
-	err = postTx(`AppendMenu`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`AppendMenu`, &form))
 
 	form = url.Values{"Name": {`page` + rnd}, "Value": {`Page`}, "Menu": {`government`},
 		"Conditions": {`true`}, `vde`: {`1`}}
 	retid, _, err = postTxResult(`NewPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, err)
+
 	form = url.Values{`Id`: {converter.Int64ToStr(retid)}, `Value`: {`Test edit page value`},
 		`Conditions`: {`true`}, "Menu": {`government`},
 		`vde`: {`1`}}
-	if err = postTx(`EditPage`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditPage`, &form))
+
 	form = url.Values{"Id": {converter.Int64ToStr(retid)}, "Value": {`Span(Test Page)`},
 		`vde`: {`1`}}
-	err = postTx(`AppendPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`AppendPage`, &form))
+
 	form = url.Values{"Name": {`block` + rnd}, "Value": {`Page block`}, "Conditions": {`true`}, `vde`: {`1`}}
 	retid, _, err = postTxResult(`NewBlock`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, err)
+
 	form = url.Values{`Id`: {converter.Int64ToStr(retid)}, `Value`: {`Test edit block value`},
 		`Conditions`: {`true`}, `vde`: {`1`}}
-	if err = postTx(`EditBlock`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditBlock`, &form))
 
 	name := randName(`tbl`)
 	form = url.Values{"Name": {name}, `vde`: {`true`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1",
@@ -153,160 +126,96 @@ func TestVDECreate(t *testing.T) {
 			{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
 			{"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err = postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewTable`, &form))
+
 	form = url.Values{"Name": {name}, `vde`: {`true`},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")",
 						"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
-	err = postTx(`EditTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditTable`, &form))
+
 	form = url.Values{"TableName": {name}, "Name": {`newCol`}, `vde`: {`1`},
 		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
-	err = postTx(`NewColumn`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewColumn`, &form))
+
 	form = url.Values{"TableName": {name}, "Name": {`newColRead`}, `vde`: {`1`},
 		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {`{"update":"true", "read":"false"}`}}
-	err = postTx(`NewColumn`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewColumn`, &form))
 
 	form = url.Values{"TableName": {name}, "Name": {`newCol`}, `vde`: {`1`},
 		"Permissions": {"ContractConditions(\"MainCondition\")"}}
-	err = postTx(`EditColumn`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditColumn`, &form))
+
 	form = url.Values{"TableName": {name}, "Name": {`newCol`}, `vde`: {`1`},
 		"Permissions": {`{"update":"true", "read":"false"}`}}
-	err = postTx(`EditColumn`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`EditColumn`, &form))
 }
 
 func TestVDEParams(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
+
 	rnd := `rnd` + crypto.RandSeq(6)
 	form := url.Values{`Name`: {rnd}, `Value`: {`Test value`}, `Conditions`: {`ContractConditions("MainCondition")`},
 		`vde`: {`true`}}
-	if _, _, err := postTxResult(`NewParameter`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+
+	assert.NoError(t, postTx(`NewParameter`, &form))
 
 	var ret ecosystemParamsResult
-	err := sendGet(`ecosystemparams?vde=true`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`ecosystemparams?vde=true`, nil, &ret))
 	if len(ret.List) < 5 {
-		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
+		t.Errorf(`wrong count of parameters %d`, len(ret.List))
 	}
-	err = sendGet(`ecosystemparams?vde=true&names=stylesheet,`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(ret.List) != 2 {
-		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
-	}
+
+	assert.NoError(t, sendGet(`ecosystemparams?vde=true&names=stylesheet,`+rnd, nil, &ret))
+	assert.Len(t, ret.List, 2, fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
+
 	var parValue paramValue
-	err = sendGet(`ecosystemparam/`+rnd+`?vde=true`, nil, &parValue)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if parValue.Name != rnd {
-		t.Error(fmt.Errorf(`wrong value of parameter`))
-	}
+	assert.NoError(t, sendGet(`ecosystemparam/`+rnd+`?vde=true`, nil, &parValue))
+	assert.Equal(t, rnd, parValue.Name)
+
 	var tblResult tablesResult
-	err = sendGet(`tables?vde=true`, nil, &tblResult)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`tables?vde=true`, nil, &tblResult))
 	if tblResult.Count < 5 {
 		t.Error(fmt.Errorf(`wrong tables result`))
 	}
+
 	form = url.Values{"Name": {rnd}, `vde`: {`1`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1",
 		"conditions":"true"},
 	  {"name":"Amount", "type":"number","index": "0", "conditions":"true"},
 	  {"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err = postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewTable`, &form))
+
 	var tResult tableResult
-	err = sendGet(`table/`+rnd+`?vde=true`, nil, &tResult)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if tResult.Name != rnd {
-		t.Error(fmt.Errorf(`wrong table result`))
-		return
-	}
+	assert.NoError(t, sendGet(`table/`+rnd+`?vde=true`, nil, &tResult))
+	assert.Equal(t, rnd, tResult.Name)
+
 	var retList listResult
-	err = sendGet(`list/contracts?vde=true`, nil, &retList)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`list/contracts?vde=true`, nil, &retList))
 	if converter.StrToInt64(retList.Count) < 7 {
-		t.Error(fmt.Errorf(`The number of records %s < 7`, retList.Count))
+		t.Errorf(`The number of records %s < 7`, retList.Count)
 		return
 	}
+
 	var retRow rowResult
-	err = sendGet(`row/contracts/2?vde=true`, nil, &retRow)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`row/contracts/2?vde=true`, nil, &retRow))
 	if !strings.Contains(retRow.Value[`value`], `VDEFunctions`) {
 		t.Error(`wrong row result`)
 		return
 	}
+
 	var retCont contractsResult
-	err = sendGet(`contracts?vde=true`, nil, &retCont)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`contracts?vde=true`, nil, &retCont))
+
 	form = url.Values{`Value`: {`contract ` + rnd + ` {
 		data {
 			Par string
 		}
 		action { Test("active",  $Par)}}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
 
-	if _, _, err = postTxResult(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
 	var cont getContractResult
-	err = sendGet(`contract/`+rnd+`?vde=true`, nil, &cont)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`contract/`+rnd+`?vde=true`, nil, &cont))
 	if !strings.HasSuffix(cont.Name, rnd) {
 		t.Error(`wrong contract result`)
 		return
@@ -314,55 +223,28 @@ func TestVDEParams(t *testing.T) {
 
 	form = url.Values{"Name": {rnd}, "Value": {`Page`}, "Menu": {`government`},
 		"Conditions": {`true`}, `vde`: {`1`}}
-	err = postTx(`NewPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendPost(`content/page/`+rnd, &url.Values{`vde`: {`true`}}, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	assert.NoError(t, sendPost(`content/page/`+rnd, &url.Values{`vde`: {`true`}}, &ret))
+
 	form = url.Values{"Name": {rnd}, "Value": {`Menu`}, "Conditions": {`true`}, `vde`: {`1`}}
-	err = postTx(`NewMenu`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendPost(`content/menu/`+rnd, &url.Values{`vde`: {`true`}}, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewMenu`, &form))
+
+	assert.NoError(t, sendPost(`content/menu/`+rnd, &url.Values{`vde`: {`true`}}, &ret))
 
 	name := randName(`lng`)
 	value := `{"en": "My VDE test", "fr": "French VDE test"}`
 
 	form = url.Values{"Name": {name}, "Trans": {value}, "vde": {`true`}}
-	err = postTx(`NewLang`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewLang`, &form))
+
 	input := fmt.Sprintf(`Span($%s$)+LangRes(%[1]s,fr)`, name)
 	var retContent contentResult
-	err = sendPost(`content`, &url.Values{`template`: {input}, `vde`: {`true`}}, &retContent)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if RawToString(retContent.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"My VDE test"}]},{"tag":"text","text":"+French VDE test"}]` {
-		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(retContent.Tree)))
-		return
-	}
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {input}, `vde`: {`true`}}, &retContent))
+	assert.Equal(t, `[{"tag":"span","children":[{"tag":"text","text":"My VDE test"}]},{"tag":"text","text":"+French VDE test"}]`, RawToString(retContent.Tree))
 
 	name = crypto.RandSeq(4)
-	err = postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {fmt.Sprintf(imp, name)}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {fmt.Sprintf(imp, name)}}))
 }
 
 var vdeimp = `{
@@ -497,34 +379,21 @@ func TestHTTPRequest(t *testing.T) {
 
 func TestNodeHTTPRequest(t *testing.T) {
 	var err error
-	if err = keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
 
 	rnd := `rnd` + crypto.RandSeq(4)
-
 	form := url.Values{`Value`: {`contract for` + rnd + ` {
 		data {
 			Par string
 		}
 		action { $result = "Test NodeContract " + $Par + " ` + rnd + `"}
     }`}, `Conditions`: {`ContractConditions("MainCondition")`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
 
-	if err = postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
 	var ret getContractResult
-	err = sendGet(`contract/for`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`contract/for`+rnd, nil, &ret))
+
+	assert.NoError(t, postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}))
 
 	form = url.Values{`Value`: {`contract ` + rnd + ` {
 		    data {
@@ -540,27 +409,22 @@ func TestNodeHTTPRequest(t *testing.T) {
 				json = JSONToMap(ret)
 				$result = json["hash"]
 			}}`}, `Conditions`: {`true`}, `vde`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
 
-	if err = postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
 	var (
 		msg string
 		id  int64
 	)
-	if _, msg, err = postTxResult(rnd, &url.Values{`vde`: {`true`}, `Par`: {`node`}}); err != nil {
-		t.Error(err)
-		return
-	}
+	_, msg, err = postTxResult(rnd, &url.Values{`vde`: {`true`}, `Par`: {`node`}})
+	assert.NoError(t, err)
+
 	id, err = waitTx(msg)
 	if id != 0 && err != nil {
 		msg = err.Error()
 		err = nil
 	}
-	if msg != `Test NodeContract node `+rnd {
-		t.Error(`wrong result: ` + msg)
-	}
+	assert.Equal(t, `Test NodeContract node `+rnd, msg)
+
 	form = url.Values{`Value`: {`contract node` + rnd + ` {
 		data {
 		}
@@ -574,30 +438,23 @@ func TestNodeHTTPRequest(t *testing.T) {
 			json = JSONToMap(ret)
 			$result = json["hash"]
 		}
-    }`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
+	}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
 
-	if err = postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
 	// You can specify the directory with NodePrivateKey & NodePublicKey files
 	if len(conf.Config.KeysDir) > 0 {
 		conf.Config.HTTP.Host = `localhost`
 		conf.Config.HTTP.Port = 7079
 
 		nodeResult, err := taskContract.NodeContract(`@1node` + rnd)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		assert.NoError(t, err)
+
 		id, err = waitTx(nodeResult.Result)
 		if id != 0 && err != nil {
 			msg = err.Error()
 			err = nil
 		}
-		if msg != `Test NodeContract NodeContract testing `+rnd {
-			t.Error(`wrong result: ` + msg)
-		}
+		assert.Equal(t, `Test NodeContract NodeContract testing `+rnd, msg)
 	}
 }
 

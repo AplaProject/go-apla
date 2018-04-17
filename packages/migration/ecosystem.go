@@ -1,6 +1,7 @@
 package migration
 
 var (
+	// SchemaVDE contains SQL queries for creating vde
 	SchemaVDE = `DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d_vde_languages" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"name" character varying(100) NOT NULL DEFAULT '',
@@ -249,7 +250,7 @@ MenuItem(
 			}
 			var list array
 			list = ContractsList($Value)
-			
+
 			if Len(list) == 0 {
 				error "must be the name"
 			}
@@ -274,7 +275,7 @@ MenuItem(
 		action {
 			var root, id int
 			root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
-			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id,app_id", 
+			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id,app_id",
 				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
 			FlushContract(root, id, false)
 			$result = id
@@ -298,8 +299,12 @@ MenuItem(
 			  Value      string "optional"
 			  Conditions string "optional"
 		  }
+
+		  func onlyConditions() bool {
+        	return $Conditions && !$Value
+		  }
 		  conditions {
-			RowConditions("contracts", $Id)
+			RowConditions("contracts", $Id, onlyConditions())
 			if $Conditions {
 	    		ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -380,8 +385,11 @@ MenuItem(
 			  Value string
 			  Conditions string
 		  }
+		  func onlyConditions() bool {
+            	return $Conditions && !$Value
+		  }
 		  conditions {
-			  RowConditions("parameters", $Id)
+			  RowConditions("parameters", $Id, onlyConditions())
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
@@ -419,9 +427,13 @@ MenuItem(
 			  Value      string "optional"
 			  Title      string "optional"
 			  Conditions string "optional"
-	  	}
+		  }
+		  
+		func onlyConditions() bool {
+        	return $Conditions && !$Value && !$Title
+		}
 	  	conditions {
-		  RowConditions("menu", $Id)
+		  RowConditions("menu", $Id, onlyConditions())
 		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
@@ -451,7 +463,7 @@ MenuItem(
 			Value  string
 		}
 		conditions {
-			RowConditions("menu", $Id)
+			RowConditions("menu", $Id, false)
 		}
 		action {
 			var row map
@@ -472,7 +484,7 @@ MenuItem(
 			var min, max int
 			min = Int(EcosysParam("min_page_validate_count"))
 			max = Int(EcosysParam("max_page_validate_count"))
-	
+
 			if count < min {
 				count = min
 			} else {
@@ -480,7 +492,7 @@ MenuItem(
 					count = max
 				}
 			}
-	
+
 			return count
 		}
 		conditions {
@@ -508,9 +520,13 @@ MenuItem(
 			Value      string "optional"
 			Menu      string "optional"
 		  	Conditions string "optional"
-	  	}
+		  }
+		  
+		func onlyConditions() bool {
+        	return $Conditions && !$Value && !$Menu
+		}
 	  	conditions {
-		  RowConditions("pages", $Id)
+		  RowConditions("pages", $Id, onlyConditions())
 		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
@@ -540,7 +556,7 @@ MenuItem(
 			  Value      string
 		  }
 		  conditions {
-			  RowConditions("pages", $Id)
+			  RowConditions("pages", $Id, false)
 		  }
 		  action {
 			  var row map
@@ -570,16 +586,21 @@ MenuItem(
 		}
 	 }', 'ContractConditions("MainCondition")'),
 	  ('13','EditBlock','contract EditBlock {
-		  data {
+		data {
 			Id         int
 			Value      string "optional"
 		  	Conditions string "optional"
-	  		}
+		}
+		
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 	  	conditions {
-		  RowConditions("blocks", $Id)
-		  if $Conditions {
-			  ValidateCondition($Conditions, $ecosystem_id)
-		  }
+			RowConditions("blocks", $Id, onlyConditions())
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
 	  	}
 	  	action {
 		  var pars, vals array
@@ -877,7 +898,7 @@ MenuItem(
 		}
 	}', 'ContractConditions("MainCondition")');
 	`
-
+	// SchemaEcosystem contains SQL queries for creating ecosystem
 	SchemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"pub" bytea  NOT NULL DEFAULT '',
@@ -1340,6 +1361,7 @@ MenuItem(
 		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (app_id, member_id, name);
 		`
 
+	// SchemaFirstEcosystem contains SQL queries for creating first ecosystem
 	SchemaFirstEcosystem = `
 	DROP TABLE IF EXISTS "1_ecosystems";
 	CREATE TABLE "1_ecosystems" (
@@ -1351,6 +1373,83 @@ MenuItem(
 
 	INSERT INTO "1_ecosystems" ("id", "name", "is_valued") VALUES ('1', 'platform ecosystem', 0);
 
+	DROP TABLE IF EXISTS "1_system_parameters";
+		CREATE TABLE "1_system_parameters" (
+		"id" bigint NOT NULL DEFAULT '0',
+		"name" varchar(255)  NOT NULL DEFAULT '',
+		"value" text NOT NULL DEFAULT '',
+		"conditions" text  NOT NULL DEFAULT ''
+		);
+		ALTER TABLE ONLY "1_system_parameters" ADD CONSTRAINT "1_system_parameters_pkey" PRIMARY KEY (id);
+		CREATE INDEX "1_system_parameters_index_name" ON "1_system_parameters" (name);
+		
+		INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES 
+		('1','default_ecosystem_page', '', 'true'),
+		('2','default_ecosystem_menu', '', 'true'),
+		('3','default_ecosystem_contract', '', 'true'),
+		('4','gap_between_blocks', '2', 'true'),
+		('5','rb_blocks_1', '60', 'true'),
+		('7','new_version_url', 'upd.apla.io', 'true'),
+		('8','full_nodes', '', 'true'),
+		('9','number_of_nodes', '101', 'true'),
+		('10','ecosystem_price', '1000', 'true'),
+		('11','contract_price', '200', 'true'),
+		('12','column_price', '200', 'true'),
+		('13','table_price', '200', 'true'),
+		('14','menu_price', '100', 'true'),
+		('15','page_price', '100', 'true'),
+		('16','blockchain_url', '', 'true'),
+		('17','max_block_size', '67108864', 'true'),
+		('18','max_tx_size', '33554432', 'true'),
+		('19','max_tx_count', '1000', 'true'),
+		('20','max_columns', '50', 'true'),
+		('21','max_indexes', '5', 'true'),
+		('22','max_block_user_tx', '100', 'true'),
+		('23','max_fuel_tx', '20000', 'true'),
+		('24','max_fuel_block', '100000', 'true'),
+		('25','commission_size', '3', 'true'),
+		('26','commission_wallet', '', 'true'),
+		('27','fuel_rate', '[["1","1000000000000000"]]', 'true'),
+		('28','extend_cost_address_to_id', '10', 'true'),
+		('29','extend_cost_id_to_address', '10', 'true'),
+		('30','extend_cost_new_state', '1000', 'true'), -- What cost must be?
+		('31','extend_cost_sha256', '50', 'true'),
+		('32','extend_cost_pub_to_id', '10', 'true'),
+		('33','extend_cost_ecosys_param', '10', 'true'),
+		('34','extend_cost_sys_param_string', '10', 'true'),
+		('35','extend_cost_sys_param_int', '10', 'true'),
+		('36','extend_cost_sys_fuel', '10', 'true'),
+		('37','extend_cost_validate_condition', '30', 'true'),
+		('38','extend_cost_eval_condition', '20', 'true'),
+		('39','extend_cost_has_prefix', '10', 'true'),
+		('40','extend_cost_contains', '10', 'true'),
+		('41','extend_cost_replace', '10', 'true'),
+		('42','extend_cost_join', '10', 'true'),
+		('43','extend_cost_update_lang', '10', 'true'),
+		('44','extend_cost_size', '10', 'true'),
+		('45','extend_cost_substr', '10', 'true'),
+		('46','extend_cost_contracts_list', '10', 'true'),
+		('47','extend_cost_is_object', '10', 'true'),
+		('48','extend_cost_compile_contract', '100', 'true'),
+		('49','extend_cost_flush_contract', '50', 'true'),
+		('50','extend_cost_eval', '10', 'true'),
+		('51','extend_cost_len', '5', 'true'),
+		('52','extend_cost_activate', '10', 'true'),
+		('53','extend_cost_deactivate', '10', 'true'),
+		('54','extend_cost_create_ecosystem', '100', 'true'),
+		('55','extend_cost_table_conditions', '100', 'true'),
+		('56','extend_cost_create_table', '100', 'true'),
+		('57','extend_cost_perm_table', '100', 'true'),
+		('58','extend_cost_column_condition', '50', 'true'),
+		('59','extend_cost_create_column', '50', 'true'),
+		('60','extend_cost_perm_column', '50', 'true'),
+		('61','extend_cost_json_to_map', '50', 'true'),
+		('62','max_block_generation_time', '2000', 'true'),
+		('63','block_reward','1000','true'),
+		('64','incorrect_blocks_per_day','10','true'),
+		('65','node_ban_time','86400000','true');
+
+		
 		DROP TABLE IF EXISTS "1_delayed_contracts";
 		CREATE TABLE "1_delayed_contracts" (
 			"id" int NOT NULL default 0,
@@ -1452,6 +1551,13 @@ MenuItem(
 			),
 			(
 				'19',
+				'system_parameters',
+				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")","new_column": "ContractConditions(\"MainCondition\")"}',
+				'{"value": "ContractConditions(\"MainCondition\")"}',
+				'ContractConditions(\"MainCondition\")'
+			),
+			(
+				'20',
 				'bad_blocks',
 				'{
 					"insert": "ContractConditions(\"MainCondition\")",
@@ -1470,7 +1576,7 @@ MenuItem(
 				'ContractConditions(\"MainCondition\")'
 			),
 			(
-				'20',
+				'21',
 				'node_ban_logs',
 				'{
 					"insert": "ContractConditions(\"MainCondition\")",
@@ -1487,6 +1593,7 @@ MenuItem(
 				}',
 				'ContractConditions(\"MainCondition\")'
 			);
+
 
 	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions") VALUES 
 	('2','MoneyTransfer','contract MoneyTransfer {
@@ -1567,7 +1674,7 @@ MenuItem(
 		action {
 			var root, id int
 			root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
-			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id,app_id", 
+			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id,app_id",
 				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
 			FlushContract(root, id, false)
 			$result = id
@@ -1592,8 +1699,13 @@ MenuItem(
 			Conditions string "optional"
 			WalletId   string "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value && !$WalletId
+		}
+
 		conditions {
-			RowConditions("contracts", $Id)
+			RowConditions("contracts", $Id, onlyConditions())
 			if $Conditions {
 			    ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1734,8 +1846,13 @@ MenuItem(
 			Value string
 			Conditions string
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 		conditions {
-			RowConditions("parameters", $Id)
+			RowConditions("parameters", $Id, onlyConditions())
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
@@ -1774,8 +1891,13 @@ MenuItem(
 			Title      string "optional"
 			Conditions string "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value && !$Title
+		}
+
 		conditions {
-			RowConditions("menu", $Id)
+			RowConditions("menu", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1862,8 +1984,13 @@ MenuItem(
 			Value      string "optional"
 			Menu      string "optional"
 			Conditions string "optional"
-      ValidateCount int "optional"
+      		ValidateCount int "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value && !$Menu && !$ValidateCount 
+		}
+
 		func preparePageValidateCount(count int) int {
 			var min, max int
 			min = Int(EcosysParam("min_page_validate_count"))
@@ -1880,7 +2007,7 @@ MenuItem(
 			return count
 		}		
 		conditions {
-			RowConditions("pages", $Id)
+			RowConditions("pages", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1915,7 +2042,7 @@ MenuItem(
 			Value      string
 		}
 		conditions {
-			RowConditions("pages", $Id)
+			RowConditions("pages", $Id, false)
 		}
 		action {
 			var value string
@@ -1987,15 +2114,32 @@ MenuItem(
 	('18','EditSign','contract EditSign {
 		data {
 			Id         int
-			Value      string
-			Conditions string
+			Value      string "optional"
+			Conditions string "optional"
+		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value
 		}
 		conditions {
-			RowConditions("signatures", $Id)
-			ValidateCondition($Conditions, $ecosystem_id)
+			RowConditions("signatures", $Id, onlyConditions())
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
 		}
 		action {
-			DBUpdate("signatures", $Id, "value,conditions", $Value, $Conditions)
+			var pars, vals array
+			if $Value {
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if Len(vals) > 0 {
+				DBUpdate("signatures", $Id, Join(pars, ","), vals...)
+			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('19','NewBlock','contract NewBlock {
@@ -2025,8 +2169,13 @@ MenuItem(
 			Value      string "optional"
 			Conditions string "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 		conditions {
-			RowConditions("blocks", $Id)
+			RowConditions("blocks", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -2294,8 +2443,12 @@ MenuItem(
 			Value string
 			Conditions string
 		}
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 		conditions {
-			RowConditions("app_param", $Id)
+			RowConditions("app_param", $Id, onlyConditions())
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {

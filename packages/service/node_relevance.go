@@ -60,10 +60,6 @@ func (n *NodeRelevanceService) Run() {
 	}()
 }
 
-func IsNodePaused() bool {
-	return nodePaused.IsSet()
-}
-
 func NodeDoneUpdatingBlockchain() {
 	go func() {
 		if IsNodePaused() {
@@ -109,9 +105,9 @@ func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
 }
 
 func (n *NodeRelevanceService) pauseNodeActivity() {
-	nodePaused.Set()
+	np.Set(PauseTypeUpdatingBlockchain)
 }
 
 func (n *NodeRelevanceService) resumeNodeActivity() {
-	nodePaused.UnSet()
+	np.Unset()
 }

@@ -48,11 +48,13 @@ type CentrifugoConfig struct {
 	URL    string
 }
 
+// Syslog represents parameters of syslog
 type Syslog struct {
 	Facility string
 	Tag      string
 }
 
+// LogConfig represents parameters of log
 type LogConfig struct {
 	LogTo     string
 	LogLevel  string
@@ -73,19 +75,19 @@ type TokenMovementConfig struct {
 
 // GlobalConfig is storing all startup config as global struct
 type GlobalConfig struct {
-	Installed    bool   `toml:"-"`
 	KeyID        int64  `toml:"-"`
 	ConfigPath   string `toml:"-"`
 	TestRollBack bool   `toml:"-"`
 
-	PidFilePath    string
-	LockFilePath   string
-	DataDir        string // application work dir (cwd by default)
-	KeysDir        string // place for private keys files: NodePrivateKey, PrivateKey
-	FirstBlockPath string
-	TLS            bool   // TLS is on/off. It is required for https
-	TLSCert        string // TLSCert is a filepath of the fullchain of certificate.
-	TLSKey         string // TLSKey is a filepath of the private key.
+	PrivateBlockchain bool
+	PidFilePath       string
+	LockFilePath      string
+	DataDir           string // application work dir (cwd by default)
+	KeysDir           string // place for private keys files: NodePrivateKey, PrivateKey
+	FirstBlockPath    string
+	TLS               bool   // TLS is on/off. It is required for https
+	TLSCert           string // TLSCert is a filepath of the fullchain of certificate.
+	TLSKey            string // TLSKey is a filepath of the private key.
 
 	MaxPageGenerationTime int64 // in milliseconds
 
@@ -157,6 +159,7 @@ func SaveConfig(path string) error {
 	return nil
 }
 
+// FillRuntimePaths fills paths from runtime parameters
 func FillRuntimePaths() error {
 	if Config.DataDir == "" {
 		cwd, err := os.Getwd()
@@ -186,6 +189,7 @@ func FillRuntimePaths() error {
 	return nil
 }
 
+// FillRuntimeKey fills parameters of keys from runtime parameters
 func FillRuntimeKey() error {
 	keyIDFileName := filepath.Join(Config.KeysDir, consts.KeyIDFilename)
 	keyIDBytes, err := ioutil.ReadFile(keyIDFileName)
@@ -203,6 +207,7 @@ func FillRuntimeKey() error {
 	return nil
 }
 
+// GetNodesAddr returns addreses of nodes
 func GetNodesAddr() []string {
 	return Config.NodesAddr[:]
 }

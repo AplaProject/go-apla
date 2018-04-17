@@ -18,12 +18,14 @@ package syspar
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	"time"
@@ -83,6 +85,9 @@ var (
 	fuels           = make(map[int64]string)
 	wallets         = make(map[int64]string)
 	mutex           = &sync.RWMutex{}
+
+	firstBlockData    *consts.FirstBlock
+	errFirstBlockData = errors.New("Failed to get data of the first block")
 )
 
 // SysUpdate reloads/updates values of system parameters
@@ -148,11 +153,8 @@ func updateNodes() (err error) {
 	return nil
 }
 
-// AddFullNodeKeys adds node by keys to list of nodes
-func AddFullNodeKeys(keyID int64, publicKey []byte) {
-	mutex.Lock()
-	defer mutex.Unlock()
-
+// addFullNodeKeys adds node by keys to list of nodes
+func addFullNodeKeys(keyID int64, publicKey []byte) {
 	nodesByPosition = append(nodesByPosition, &FullNode{
 		KeyID:     keyID,
 		PublicKey: publicKey,
@@ -419,4 +421,30 @@ func HasSys(name string) bool {
 	_, ok := cache[name]
 	mutex.RUnlock()
 	return ok
+}
+
+// SetFirstBlockData sets data of first block to global variable
+func SetFirstBlockData(data *consts.FirstBlock) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	firstBlockData = data
+
+	// If list of nodes is empty, then used node from the first block
+	if len(nodesByPosition) == 0 {
+		keyID := crypto.Address(firstBlockData.PublicKey)
+		addFullNodeKeys(keyID, firstBlockData.NodePublicKey)
+	}
+}
+
+// GetFirstBlockData gets data of first block from global variable
+func GetFirstBlockData() (*consts.FirstBlock, error) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	if firstBlockData == nil {
+		return nil, errFirstBlockData
+	}
+
+	return firstBlockData, nil
 }

@@ -53,6 +53,7 @@ type Source struct {
 	Data    *[][]string
 }
 
+// Workspace represents a workspace of executable template
 type Workspace struct {
 	Sources       *map[string]Source
 	Vars          *map[string]string

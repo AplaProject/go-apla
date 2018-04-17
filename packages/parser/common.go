@@ -59,7 +59,7 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 		return BlockData, utils.ErrInfo(err)
 	}
 
-	header, err := ParseBlockHeader(bytes.NewBuffer(block.Data))
+	header, err := ParseBlockHeader(bytes.NewBuffer(block.Data), false)
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}
@@ -132,8 +132,10 @@ func GetTablePrefix(global string, stateId int64) (string, error) {
 // GetParser returns ParserInterface
 func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	switch txType {
-	case "FirstBlock":
+	case consts.TxTypeParserFirstBlock:
 		return &FirstBlockParser{p}, nil
+	case consts.TxTypeParserStopNetwork:
+		return &StopNetworkParser{p, nil}, nil
 	}
 	log.WithFields(log.Fields{"tx_type": txType, "type": consts.UnknownObject}).Error("unknown txType")
 	return nil, fmt.Errorf("Unknown txType: %s", txType)
@@ -271,12 +273,13 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	}
 	buffer := bytes.Buffer{}
 	for _, rollbackTx := range blockRollbackTxs {
-		if rollbackTxBytes, err := json.Marshal(rollbackTx); err != nil {
+		rollbackTxBytes, err := json.Marshal(rollbackTx)
+		if err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback_tx to json")
 			return err
-		} else {
-			buffer.Write(rollbackTxBytes)
 		}
+
+		buffer.Write(rollbackTxBytes)
 	}
 	rollbackTxsHash, err := crypto.Hash(buffer.Bytes())
 	if err != nil {

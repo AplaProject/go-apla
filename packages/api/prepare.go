@@ -64,39 +64,46 @@ func prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logg
 	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, EcosystemID: data.ecosystemId, KeyID: data.keyId, RoleID: data.roleId, NetworkID: consts.NETWORK_ID}
 	forsign := smartTx.ForSign()
 	if info.Tx != nil {
-		for _, fitem := range *info.Tx {
-			if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `signature`) {
-				continue
-			}
-			var val string
-			if fitem.Type.String() == `[]interface {}` {
-				for key, values := range r.Form {
-					if key == fitem.Name+`[]` && len(values) > 0 {
-						count := converter.StrToInt(values[0])
-						var list []string
-						for i := 0; i < count; i++ {
-							list = append(list, r.FormValue(fmt.Sprintf(`%s[%d]`, fitem.Name, i)))
-						}
-						val = strings.Join(list, `,`)
-					}
-				}
-				if len(val) == 0 {
-					val = r.FormValue(fitem.Name)
-				}
-			} else {
-				val = strings.TrimSpace(r.FormValue(fitem.Name))
-				if strings.Contains(fitem.Tags, `address`) {
-					val = converter.Int64ToStr(converter.StringToAddress(val))
-				} else if fitem.Type.String() == script.Decimal {
-					val = strings.TrimLeft(val, `0`)
-				} else if fitem.Type.String() == `int64` && len(val) == 0 {
-					val = `0`
-				}
-			}
-			forsign += fmt.Sprintf(",%v", val)
-		}
+		forsign += forsignFormData(r, *info.Tx)
 	}
 	result.ForSign = forsign
+
 	data.result = result
 	return nil
+}
+
+func forsignFormData(r *http.Request, fields []*script.FieldInfo) (forsign string) {
+	for _, fitem := range fields {
+		if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `signature`) {
+			continue
+		}
+		var val string
+		if fitem.Type.String() == `[]interface {}` {
+			for key, values := range r.Form {
+				if key == fitem.Name+`[]` && len(values) > 0 {
+					count := converter.StrToInt(values[0])
+					var list []string
+					for i := 0; i < count; i++ {
+						list = append(list, r.FormValue(fmt.Sprintf(`%s[%d]`, fitem.Name, i)))
+					}
+					val = strings.Join(list, `,`)
+				}
+			}
+			if len(val) == 0 {
+				val = r.FormValue(fitem.Name)
+			}
+		} else {
+			val = strings.TrimSpace(r.FormValue(fitem.Name))
+			if strings.Contains(fitem.Tags, `address`) {
+				val = converter.Int64ToStr(converter.StringToAddress(val))
+			} else if fitem.Type.String() == script.Decimal {
+				val = strings.TrimLeft(val, `0`)
+			} else if fitem.Type.String() == `int64` && len(val) == 0 {
+				val = `0`
+			}
+		}
+		forsign += fmt.Sprintf(",%v", val)
+	}
+
+	return
 }
