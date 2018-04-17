@@ -329,13 +329,13 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 	return true, nil
 }
 
-func contractsList(value string) []interface{} {
-	list := script.ContractsList(value)
+func contractsList(value string) ([]interface{}, error) {
+	list, err := script.ContractsList(value)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
 		result[i] = reflect.ValueOf(list[i]).Interface()
 	}
-	return result
+	return result, err
 }
 
 // CreateTable is creating smart contract table

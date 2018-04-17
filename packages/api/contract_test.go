@@ -78,6 +78,16 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`Price`, `contract Price {
+		action {
+			Test("price", 1)
+		}
+		func price() money {
+			return Money(100)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`price`: `1`}},
+	}},
 	{`CheckFloat`, `contract CheckFloat {
 		action {
 		var fl float

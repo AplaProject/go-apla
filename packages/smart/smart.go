@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -59,6 +60,8 @@ const (
 	CallAction = 0x04
 	// CallRollback is a flag for calling rollback function of the contract
 	CallRollback = 0x08
+
+	MaxPrice = 100000000000000000
 )
 
 var (
@@ -77,6 +80,7 @@ var (
 	ErrUnknownNodeID  = errors.New(`Unknown node id`)
 	ErrWrongPriceFunc = errors.New(`Wrong type of price function`)
 	ErrNegPrice       = errors.New(`Price value is negative`)
+	ErrMaxPrice       = errors.New(fmt.Sprintf(`Price value is more than %d`, MaxPrice))
 )
 
 func testValue(name string, v ...interface{}) {
@@ -447,7 +451,12 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	state := uint32(converter.StrToInt64(prefix))
 	LoadSysFuncs(smartVM, int(state))
 	for _, item := range contracts {
-		names := strings.Join(script.ContractsList(item[`value`]), `,`)
+		list, err := script.ContractsList(item[`value`])
+		if err != nil {
+			log.WithFields(log.Fields{"error": err}).Error("Getting ContractsList")
+			return err
+		}
+		names := strings.Join(list, `,`)
 		owner := script.OwnerInfo{
 			StateID:  state,
 			Active:   item[`active`] == `1`,
@@ -481,7 +490,12 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	smartVDE[state] = vm
 	LoadSysFuncs(vm, int(state))
 	for _, item := range contracts {
-		names := strings.Join(script.ContractsList(item[`value`]), `,`)
+		list, err := script.ContractsList(item[`value`])
+		if err != nil {
+			log.WithFields(log.Fields{"error": err}).Error("Getting ContractsList")
+			return err
+		}
+		names := strings.Join(list, `,`)
 		owner := script.OwnerInfo{
 			StateID:  uint32(state),
 			Active:   false,
@@ -936,13 +950,26 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				if ret, err = VMRun(sc.VM, cprice, nil, sc.TxContract.Extend); err != nil {
 					return retError(err)
 				} else if len(ret) == 1 {
-					if _, ok := ret[0].(int64); !ok {
+					switch reflect.TypeOf(ret[0]).String() {
+					case `int64`:
+						price = ret[0].(int64)
+						if price > MaxPrice {
+							return retError(ErrMaxPrice)
+						}
+						if price < 0 {
+							return retError(ErrNegPrice)
+						}
+					case script.Decimal:
+						if ret[0].(decimal.Decimal).GreaterThan(decimal.New(MaxPrice, 0)) {
+							return retError(ErrMaxPrice)
+						}
+						if ret[0].(decimal.Decimal).LessThan(decimal.New(0, 0)) {
+							return retError(ErrNegPrice)
+						}
+						price = converter.StrToInt64(ret[0].(decimal.Decimal).String())
+					default:
 						logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong result type of price function")
 						return retError(ErrWrongPriceFunc)
-					}
-					price = ret[0].(int64)
-					if price < 0 {
-						return retError(ErrNegPrice)
 					}
 				} else {
 					logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong type of price function")
