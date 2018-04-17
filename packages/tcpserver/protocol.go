@@ -90,17 +90,7 @@ func ReadRequest(request interface{}, r io.Reader) error {
 		t := reflect.ValueOf(request).Elem().Field(i)
 		switch t.Kind() {
 		case reflect.Slice:
-			var size uint64
-			var err error
-			sizeVal := reflect.TypeOf(request).Elem().Field(i).Tag.Get("size")
-			if sizeVal != "" {
-				size, err = strconv.ParseUint(sizeVal, 10, 0)
-				if err != nil {
-					log.WithFields(log.Fields{"value": sizeVal, "type": consts.ConversionError, "error": err}).Error("parsing uint")
-				}
-			} else {
-				size, err = readUint(r, 4) // read size
-			}
+			size, err := readSliceSize(r, reflect.TypeOf(request).Elem().Field(i).Tag.Get("size"))
 			if err != nil {
 				return err
 			}
@@ -129,12 +119,7 @@ func ReadRequest(request interface{}, r io.Reader) error {
 			if err != nil {
 				return err
 			}
-
-			if val[0] == 0 {
-				t.SetBool(false)
-			} else {
-				t.SetBool(true)
-			}
+			t.SetBool(val[0] == 0)
 		default:
 			log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("unsupported field")
 			panic("unsupported field")
@@ -230,6 +215,17 @@ func readBytes(r io.Reader, size uint64) ([]byte, error) {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("cannot read bytes")
 	}
 	return value, err
+}
+
+func readSliceSize(r io.Reader, tagSize string) (size uint64, err error) {
+	if len(tagSize) > 0 {
+		size, err = strconv.ParseUint(tagSize, 10, 0)
+		if err != nil {
+			log.WithFields(log.Fields{"value": tagSize, "type": consts.ConversionError, "error": err}).Error("parsing uint")
+			return
+		}
+	}
+	return readUint(r, 4)
 }
 
 func SendRequestType(reqType int64, w io.Writer) error {

@@ -515,6 +515,10 @@ func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 		ivar VarInfo
 	)
 	if lexem.Type == lexExtend {
+		if isSysVar(lexem.Value.(string)) {
+			lexem.GetLogger().WithFields(log.Fields{"type": consts.ParseError, "lex_value": lexem.Value.(string)}).Error("modifying system variable")
+			return fmt.Errorf(eSysVar, lexem.Value.(string))
+		}
 		ivar = VarInfo{&ObjInfo{ObjExtend, lexem.Value.(string)}, nil}
 	} else {
 		objInfo, tobj := findVar(lexem.Value.(string), buf)
@@ -1153,6 +1157,7 @@ main:
 	return nil
 }
 
+// ContractsList returns list of contracts names from source of code
 func ContractsList(value string) []string {
 	names := make([]string, 0)
 	lexems, err := lexParser([]rune(value))
@@ -1173,5 +1178,6 @@ func ContractsList(value string) []string {
 			}
 		}
 	}
+
 	return names
 }

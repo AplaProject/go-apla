@@ -172,6 +172,15 @@ func initRoutes(listenHost string) {
 	httpListener(listenHost, route)
 }
 
+func logBlockchainMode() {
+	mode := "private"
+	if !conf.Config.PrivateBlockchain {
+		mode = "non private"
+	}
+
+	log.WithFields(log.Fields{"mode": mode}).Error("Node running mode")
+}
+
 // Start starts the main code of the program
 func Start() {
 	var err error
@@ -200,10 +209,10 @@ func Start() {
 		}
 	}
 
+	logBlockchainMode()
+
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()
-
-	conf.Config.Installed = true
 
 	initGorm(conf.Config.DB)
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")

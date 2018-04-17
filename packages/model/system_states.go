@@ -1,29 +1,46 @@
 package model
 
-// SystemState is model
-type SystemState struct {
-	ID int64 `gorm:"primary_key;not null"`
+const ecosysTable = "1_ecosystems"
+
+// Ecosystem is model
+type Ecosystem struct {
+	ID       int64 `gorm:"primary_key;not null"`
+	Name     string
+	IsValued bool
 }
 
 // TableName returns name of table
-func (ss *SystemState) TableName() string {
-	return "system_states"
+// only first ecosystem has this entity
+func (sys *Ecosystem) TableName() string {
+	return ecosysTable
 }
 
-// GetAllSystemStatesIDs is retrieving all system states ids
+// GetAllSystemStatesIDs is retrieving all ecosystems ids
 func GetAllSystemStatesIDs() ([]int64, error) {
-	states := new([]SystemState)
-	if err := DBConn.Find(&states).Order("id").Error; err != nil {
+	if !IsTable(ecosysTable) {
+		//return nil, fmt.Errorf("%s does not exists", ecosysTable)
+		return nil, nil
+	}
+
+	ecosystems := new([]Ecosystem)
+	if err := DBConn.Find(&ecosystems).Order("id").Error; err != nil {
 		return nil, err
 	}
-	ids := make([]int64, 0, len(*states))
-	for _, s := range *states {
+
+	ids := make([]int64, 0, len(*ecosystems))
+	for _, s := range *ecosystems {
 		ids = append(ids, s.ID)
 	}
+
 	return ids, nil
 }
 
+// Get is fill reciever from db
+func (sys *Ecosystem) Get(id int64) (bool, error) {
+	return isFound(DBConn.First(sys, "id = ?", id))
+}
+
 // Delete is deleting record
-func (ss *SystemState) Delete(transaction *DbTransaction) error {
-	return GetDB(transaction).Delete(ss).Error
+func (sys *Ecosystem) Delete(transaction *DbTransaction) error {
+	return GetDB(transaction).Delete(sys).Error
 }

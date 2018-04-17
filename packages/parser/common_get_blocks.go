@@ -33,71 +33,9 @@ import (
 
 // GetBlocks is returning blocks
 func GetBlocks(blockID int64, host string) error {
-	rollback := syspar.GetRbBlocks1()
-
-	badBlocks := make(map[int64]string)
-
-	blocks := make([]*Block, 0)
-	var count int64
-
-	// load the block bodies from the host
-	blocksCh, err := utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, true)
+	blocks, err := getBlocks(blockID, host)
 	if err != nil {
-		return utils.ErrInfo(err)
-	}
-
-	for binaryBlock := range blocksCh {
-		if blockID < 2 {
-			log.WithFields(log.Fields{"type": consts.BlockIsFirst}).Error("block id is smaller than 2")
-			return utils.ErrInfo(errors.New("block_id < 2"))
-		}
-
-		// if the limit of blocks received from the node was exaggerated
-		if count > int64(rollback) {
-			log.WithFields(log.Fields{"count": count, "max_count": int64(rollback)}).Error("limit of received from the node was exaggerated")
-			return utils.ErrInfo(errors.New("count > variables[rollback_blocks]"))
-		}
-
-		block, err := ProcessBlockWherePrevFromBlockchainTable(binaryBlock)
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-
-		if badBlocks[block.Header.BlockID] == string(converter.BinToHex(block.Header.Sign)) {
-			log.WithFields(log.Fields{"block_id": block.Header.BlockID, "type": consts.InvalidObject}).Error("block is bad")
-			return utils.ErrInfo(errors.New("bad block"))
-		}
-		if block.Header.BlockID != blockID {
-			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
-			return utils.ErrInfo(errors.New("bad block_data['block_id']"))
-		}
-
-		// TODO: add checking for MAX_BLOCK_SIZE
-
-		// the public key of the one who has generated this block
-		nodePublicKey, err := syspar.GetNodePublicKeyByPosition(block.Header.NodePosition)
-		if err != nil {
-			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
-			return utils.ErrInfo(err)
-		}
-
-		// SIGN from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
-			block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time,
-			block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition,
-			block.MrklRoot,
-		)
-
-		// save the block
-		blocks = append(blocks, block)
-		blockID--
-		count++
-
-		// check the signature
-		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey}, forSign, block.Header.Sign, true)
-		if okSignErr == nil {
-			break
-		}
+		return err
 	}
 
 	// mark all transaction as unverified
@@ -125,6 +63,81 @@ func GetBlocks(blockID int64, host string) error {
 		}
 	}
 
+	return processBlocks(blocks)
+}
+
+func getBlocks(blockID int64, host string) ([]*Block, error) {
+	rollback := syspar.GetRbBlocks1()
+
+	badBlocks := make(map[int64]string)
+
+	blocks := make([]*Block, 0)
+	var count int64
+
+	// load the block bodies from the host
+	blocksCh, err := utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, true)
+	if err != nil {
+		return nil, utils.ErrInfo(err)
+	}
+
+	for binaryBlock := range blocksCh {
+		if blockID < 2 {
+			log.WithFields(log.Fields{"type": consts.BlockIsFirst}).Error("block id is smaller than 2")
+			return nil, utils.ErrInfo(errors.New("block_id < 2"))
+		}
+
+		// if the limit of blocks received from the node was exaggerated
+		if count > int64(rollback) {
+			log.WithFields(log.Fields{"count": count, "max_count": int64(rollback)}).Error("limit of received from the node was exaggerated")
+			return nil, utils.ErrInfo(errors.New("count > variables[rollback_blocks]"))
+		}
+
+		block, err := ProcessBlockWherePrevFromBlockchainTable(binaryBlock)
+		if err != nil {
+			return nil, utils.ErrInfo(err)
+		}
+
+		if badBlocks[block.Header.BlockID] == string(converter.BinToHex(block.Header.Sign)) {
+			log.WithFields(log.Fields{"block_id": block.Header.BlockID, "type": consts.InvalidObject}).Error("block is bad")
+			return nil, utils.ErrInfo(errors.New("bad block"))
+		}
+		if block.Header.BlockID != blockID {
+			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
+			return nil, utils.ErrInfo(errors.New("bad block_data['block_id']"))
+		}
+
+		// TODO: add checking for MAX_BLOCK_SIZE
+
+		// the public key of the one who has generated this block
+		nodePublicKey, err := syspar.GetNodePublicKeyByPosition(block.Header.NodePosition)
+		if err != nil {
+			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
+			return nil, utils.ErrInfo(err)
+		}
+
+		// SIGN from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
+			block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time,
+			block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition,
+			block.MrklRoot,
+		)
+
+		// save the block
+		blocks = append(blocks, block)
+		blockID--
+		count++
+
+		// check the signature
+		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey}, forSign, block.Header.Sign, true)
+		if okSignErr == nil {
+			break
+		}
+	}
+
+	return blocks, nil
+}
+
+func processBlocks(blocks []*Block) error {
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
@@ -197,6 +210,5 @@ func GetBlocks(blockID int64, host string) error {
 		}
 	}
 
-	err = dbTransaction.Commit()
-	return err
+	return dbTransaction.Commit()
 }

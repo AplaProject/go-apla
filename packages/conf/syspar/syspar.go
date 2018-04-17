@@ -97,11 +97,11 @@ func SysUpdate(dbTransaction *model.DbTransaction) error {
 	for _, param := range systemParameters {
 		cache[param.Name] = param.Value
 	}
-
-	if err = updateNodes(); err != nil {
-		return err
+	if len(cache[FullNodes]) > 0 {
+		if err = updateNodes(); err != nil {
+			return err
+		}
 	}
-
 	getParams := func(name string) (map[int64]string, error) {
 		res := make(map[int64]string)
 		if len(cache[name]) > 0 {

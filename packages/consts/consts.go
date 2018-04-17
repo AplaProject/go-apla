@@ -26,6 +26,9 @@ const VERSION = "0.1.6b13"
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
 
+// NETWORK_ID is id of network
+const NETWORK_ID = 1
+
 // DEFAULT_TCP_PORT used when port number missed in host addr
 const DEFAULT_TCP_PORT = 7078
 
@@ -83,6 +86,7 @@ const PrivkeyLength = 32
 // BlockSize is size of block
 const BlockSize = 16
 
+// HashSize is size of hash
 const HashSize = 32
 
 const (
@@ -105,6 +109,7 @@ var ApiPath = `/api/v2/`
 // DefaultConfigFile name of config file (toml format)
 const DefaultConfigFile = "config.toml"
 
+// DefaultWorkdirName name of working directory
 const DefaultWorkdirName = "genesis-data"
 
 // DefaultPidFilename is default filename of pid file
@@ -140,4 +145,5 @@ const FromToPerDayLimit = 10000
 // TokenMovementQtyPerBlockLimit block limit token transfer
 const TokenMovementQtyPerBlockLimit = 100
 
+// TCPConnTimeout timeout of tcp connection
 const TCPConnTimeout = 5 * time.Second

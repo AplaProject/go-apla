@@ -58,11 +58,6 @@ var (
 		);
 		ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
 		
-		DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
-		"id" bigint NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
-		
 		DROP TABLE IF EXISTS "system_parameters";
 		CREATE TABLE "system_parameters" (
 		"id" bigint NOT NULL DEFAULT '0',
@@ -156,11 +151,6 @@ var (
 		);
 		ALTER TABLE ONLY "system_tables" ADD CONSTRAINT system_tables_pkey PRIMARY KEY (name);
 		
-		INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES  ('system_states',
-				'{"insert": "false", "update": "ContractAccess(\"@1EditParameter\")",
-				  "new_column": "false"}','{}', 'ContractAccess(\"@0UpdSysContract\")');
-		
-		
 		DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"block_id" int NOT NULL DEFAULT '0',
@@ -230,20 +220,5 @@ var (
 		
 		DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 		"stop_time" int NOT NULL DEFAULT '0'
-		);
-
-		DROP SEQUENCE IF EXISTS system_metrics_id_seq CASCADE;
-		CREATE SEQUENCE system_metrics_id_seq START WITH 1;
-		DROP TABLE IF EXISTS "system_metrics";
-		CREATE TABLE "system_metrics" (
-			"id" int NOT NULL default nextval('system_metrics_id_seq'),
-			"time" bigint NOT NULL DEFAULT '0',
-			"metric" varchar(255) NOT NULL,
-			"key" varchar(255) NOT NULL,
-			"value" bigint NOT NULL
-		);
-		ALTER SEQUENCE system_metrics_id_seq owned by system_metrics.id;
-		ALTER TABLE ONLY "system_metrics" ADD CONSTRAINT system_metrics_pkey PRIMARY KEY (id);
-		CREATE INDEX "system_metrics_unique_index" ON "system_metrics" (metric, time, "key");
-		`
+		);`
 )

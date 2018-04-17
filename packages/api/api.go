@@ -26,8 +26,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-
 	"github.com/dgrijalva/jwt-go"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
@@ -45,20 +43,20 @@ import (
 const (
 	jwtPrefix = "Bearer "
 	jwtExpire = 36000 // By default, seconds
-
-	apiInstallRoute = `/api/v2/install`
 )
 
 type apiData struct {
-	status      int
-	result      interface{}
-	params      map[string]interface{}
-	ecosystemId int64
-	keyId       int64
-	isMobile    string
-	vde         bool
-	vm          *script.VM
-	token       *jwt.Token
+	status        int
+	result        interface{}
+	params        map[string]interface{}
+	ecosystemId   int64
+	ecosystemName string
+	keyId         int64
+	roleId        int64
+	isMobile      string
+	vde           bool
+	vm            *script.VM
+	token         *jwt.Token
 }
 
 // ParamString reaturs string value of the api params
@@ -142,7 +140,7 @@ func getPrefix(data *apiData) (prefix string) {
 
 func getSignHeader(txName string, data *apiData) tx.Header {
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
-		EcosystemID: data.ecosystemId, KeyID: data.keyId}
+		EcosystemID: data.ecosystemId, KeyID: data.keyId, NetworkID: consts.NETWORK_ID}
 }
 
 func getHeader(txName string, data *apiData) (tx.Header, error) {
@@ -161,19 +159,18 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
 		EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
-		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
+		BinSignatures: converter.EncodeLengthPlusData(signature), NetworkID: consts.NETWORK_ID}, nil
 }
 
 // DefaultHandler is a common handle function for api requests
 func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
-
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 		counterName := statsd.APIRouteCounterName(method, pattern)
 		statsd.Client.Inc(counterName+statsd.Count, 1, 1.0)
 		startTime := time.Now()
 		var (
 			err  error
-			data apiData
+			data = &apiData{}
 		)
 		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
 		requestLogger.Info("received http request")
@@ -190,50 +187,67 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if conf.Config.Installed {
-			if r.URL.Path == apiInstallRoute {
-				errorAPI(w, `E_INSTALLED`, http.StatusInternalServerError)
-				return
-			}
-		} else {
-			if r.URL.Path != apiInstallRoute {
-				errorAPI(w, `E_NOTINSTALLED`, http.StatusInternalServerError)
-				return
-			}
-		}
 
-		token, err := jwtToken(r)
-		if err != nil {
-			requestLogger.WithFields(log.Fields{"type": consts.JWTError, "params": params, "error": err}).Error("starting session")
-			errmsg := err.Error()
-			expired := `token is expired by`
-			if strings.HasPrefix(errmsg, expired) {
-				errorAPI(w, `E_TOKENEXPIRED`, http.StatusUnauthorized, errmsg[len(expired):])
-				return
-			}
-			errorAPI(w, err, http.StatusBadRequest)
-			return
-		}
-		data.token = token
-		if token != nil && token.Valid {
-			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
-				data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
-				data.keyId = converter.StrToInt64(claims.KeyID)
-				data.isMobile = claims.IsMobile
-			}
-		}
-		// Getting and validating request parameters
-		r.ParseForm()
 		data.params = make(map[string]interface{})
 		for _, par := range ps {
 			data.params[par.Key] = par.Value
 		}
+
+		handlers = append([]apiHandle{
+			fillToken,
+			fillParams(params),
+		}, handlers...)
+
+		for _, handler := range handlers {
+			if handler(w, r, data, requestLogger) != nil {
+				return
+			}
+		}
+
+		jsonResult, err := json.Marshal(data.result)
+		if err != nil {
+			requestLogger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marhsalling http response to json")
+			errorAPI(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		w.Write(jsonResult)
+	})
+}
+
+func fillToken(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	token, err := jwtToken(r)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("starting session")
+		errmsg := err.Error()
+		expired := `token is expired by`
+		if strings.HasPrefix(errmsg, expired) {
+			return errorAPI(w, `E_TOKENEXPIRED`, http.StatusUnauthorized, errmsg[len(expired):])
+		}
+		return errorAPI(w, err, http.StatusBadRequest)
+	}
+
+	data.token = token
+	if token != nil && token.Valid {
+		if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
+			if err := fillTokenData(data, claims, logger); err != nil {
+				return errorAPI(w, "E_SERVER", http.StatusNotFound, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func fillParams(params map[string]int) apiHandle {
+	return func(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+		// Getting and validating request parameters
+		r.ParseForm()
 		vde := r.FormValue(`vde`)
 		if vde == `1` || vde == `true` {
 			data.vm = smart.GetVM(true, data.ecosystemId)
 			if data.vm == nil {
-				errorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemId)
-				return
+				return errorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemId)
 			}
 			data.vde = true
 		} else {
@@ -242,9 +256,8 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {
-				requestLogger.WithFields(log.Fields{"type": consts.RouteError, "error": fmt.Sprintf("undefined val %s", key)}).Error("undefined val")
-				errorAPI(w, `E_UNDEFINEVAL`, http.StatusBadRequest, key)
-				return
+				logger.WithFields(log.Fields{"type": consts.RouteError, "error": fmt.Sprintf("undefined val %s", key)}).Error("undefined val")
+				return errorAPI(w, `E_UNDEFINEVAL`, http.StatusBadRequest, key)
 			}
 			switch par & 0xff {
 			case pInt64:
@@ -252,37 +265,26 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 			case pHex:
 				bin, err := hex.DecodeString(val)
 				if err != nil {
-					requestLogger.WithFields(log.Fields{"type": consts.ConversionError, "value": val, "error": err}).Error("decoding http parameter from hex")
-					errorAPI(w, err, http.StatusBadRequest)
-					return
+					logger.WithFields(log.Fields{"type": consts.ConversionError, "value": val, "error": err}).Error("decoding http parameter from hex")
+					return errorAPI(w, err, http.StatusBadRequest)
 				}
 				data.params[key] = bin
 			case pString:
 				data.params[key] = val
 			}
 		}
-		for _, handler := range handlers {
-			if handler(w, r, &data, requestLogger) != nil {
-				return
-			}
-		}
-		jsonResult, err := json.Marshal(data.result)
-		if err != nil {
-			requestLogger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marhsalling http response to json")
-			errorAPI(w, err, http.StatusInternalServerError)
-			return
-		}
-		w.Write(jsonResult)
-	})
+
+		return nil
+	}
 }
 
 func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (int64, string, error) {
 	ecosystemID := data.ecosystemId
 	if data.params[`ecosystem`].(int64) > 0 {
 		ecosystemID = data.params[`ecosystem`].(int64)
-		count, err := model.GetNextID(nil, `system_states`)
+		count, err := model.GetNextID(nil, "1_ecosystems")
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id system states")
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id ecosystems")
 			return 0, ``, errorAPI(w, err, http.StatusBadRequest)
 		}
 		if ecosystemID >= count {
@@ -295,4 +297,25 @@ func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (in
 		prefix += `_vde`
 	}
 	return ecosystemID, prefix, nil
+}
+
+func fillTokenData(data *apiData, claims *JWTClaims, logger *log.Entry) error {
+	data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
+	data.keyId = converter.StrToInt64(claims.KeyID)
+	data.isMobile = claims.IsMobile
+	data.roleId = converter.StrToInt64(claims.RoleID)
+	ecosystem := &model.Ecosystem{}
+	found, err := ecosystem.Get(data.ecosystemId)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
+		return err
+	}
+
+	if !found {
+		err := fmt.Errorf("ecosystem not found")
+		logger.WithFields(log.Fields{"type": consts.NotFound, "id": data.ecosystemId, "error": err}).Error("ecosystem not found")
+	}
+
+	data.ecosystemName = ecosystem.Name
+	return nil
 }

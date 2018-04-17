@@ -18,8 +18,9 @@ package daemons
 
 import (
 	"context"
+	"fmt"
 	"net"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -62,25 +63,29 @@ func Confirmations(ctx context.Context, d *daemon) error {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		return err
 	}
-	LastBlockID := infoBlock.BlockID
-	if LastBlockID == 0 {
+	lastBlockID := infoBlock.BlockID
+	if lastBlockID == 0 {
 		return nil
 	}
 
-	if LastBlockID-ConfirmedBlockID > 5 {
+	if lastBlockID-ConfirmedBlockID > 5 {
 		startBlockID = ConfirmedBlockID + 1
 		d.sleepTime = 10 * time.Second
 		tick = 0 // reset the tick
 	}
 	if startBlockID == 0 {
-		startBlockID = LastBlockID
+		startBlockID = lastBlockID
 	}
-	d.logger.WithFields(log.Fields{"start_block_id": startBlockID, "last_block_id": LastBlockID}).Info("confirming blocks from to")
+	d.logger.WithFields(log.Fields{"start_block_id": startBlockID, "last_block_id": lastBlockID}).Info("confirming blocks from to")
 
-	for blockID := LastBlockID; blockID >= startBlockID; blockID-- {
-		if ctx.Err() != nil {
+	return confirmationsBlocks(ctx, d, lastBlockID, startBlockID)
+}
+
+func confirmationsBlocks(ctx context.Context, d *daemon, lastBlockID, startBlockID int64) error {
+	for blockID := lastBlockID; blockID >= startBlockID; blockID-- {
+		if err := ctx.Err(); err != nil {
 			d.logger.WithFields(log.Fields{"type": consts.ContextError, "error": err}).Error("error in context")
-			return ctx.Err()
+			return err
 		}
 
 		block := model.Block{}
@@ -100,8 +105,12 @@ func Confirmations(ctx context.Context, d *daemon) error {
 
 		ch := make(chan string)
 		for i := 0; i < len(hosts); i++ {
-			// NOTE: host should not use default port number
-			host := hosts[i] + ":" + strconv.Itoa(consts.DEFAULT_TCP_PORT)
+			host, err := NormalizeHostAddress(hosts[i], consts.DEFAULT_TCP_PORT)
+			if err != nil {
+				d.logger.WithFields(log.Fields{"host": host[i], "type": consts.ParseError, "error": err}).Error("wrong host address")
+				continue
+			}
+
 			d.logger.WithFields(log.Fields{"host": host, "block_id": blockID}).Debug("checking block id confirmed at node")
 			go func() {
 				IsReachable(host, blockID, ch, d.logger)
@@ -118,35 +127,22 @@ func Confirmations(ctx context.Context, d *daemon) error {
 			}
 		}
 		confirmation := &model.Confirmation{}
-		_, err = confirmation.GetConfirmation(blockID)
-		if err == nil {
-			confirmation.BlockID = blockID
-			confirmation.Good = int32(st1)
-			confirmation.Bad = int32(st0)
-			confirmation.Time = int32(time.Now().Unix())
-			err = confirmation.Save()
-			if err != nil {
-				d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving confirmation")
-				return err
-			}
-		} else {
-			confirmation.BlockID = blockID
-			confirmation.Good = int32(st1)
-			confirmation.Bad = int32(st0)
-			confirmation.Time = int32(time.Now().Unix())
-			err = confirmation.Save()
-			if err != nil {
-				d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving confirmation")
-				return err
-			}
+		confirmation.GetConfirmation(blockID)
+		confirmation.BlockID = blockID
+		confirmation.Good = int32(st1)
+		confirmation.Bad = int32(st0)
+		confirmation.Time = int32(time.Now().Unix())
+		if err = confirmation.Save(); err != nil {
+			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving confirmation")
+			return err
 		}
+
 		if blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES {
 			break
 		}
 	}
 
 	return nil
-
 }
 
 func checkConf(host string, blockID int64, logger *log.Entry) string {
@@ -191,4 +187,19 @@ func IsReachable(host string, blockID int64, ch0 chan string, logger *log.Entry)
 	case <-time.After(consts.WAIT_CONFIRMED_NODES * time.Second):
 		ch0 <- "0"
 	}
+}
+
+// NormalizeHostAddress get address. if port not defined returns combined string with ip and defaultPort
+func NormalizeHostAddress(address string, defaultPort int) (string, error) {
+
+	_, _, err := net.SplitHostPort(address)
+	if err != nil {
+		if strings.HasSuffix(err.Error(), "missing port in address") {
+			return fmt.Sprintf("%s:%d", address, defaultPort), nil
+		}
+
+		return "", err
+	}
+
+	return address, nil
 }
