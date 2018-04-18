@@ -78,192 +78,199 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`IntOver`, `contract IntOver {
+				action {
+					info Int("123456789101112131415161718192021222324252627282930")
+				}
+			}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"strconv.ParseInt: parsing \"123456789101112131415161718192021222324252627282930\": value out of range"}`}},
+	}},
 	{`CheckFloat`, `contract CheckFloat {
-		action {
-		var fl float
-		fl = -3.67
-		Test("float2", Sprintf("%d %s", Int(1.2), Str(fl)))
-		Test("float3", Sprintf("%.2f %.2f", 10.7/7, 10/7.0))
-		Test("float4", Sprintf("%.2f %.2f %.2f", 10+7.0, 10-3.1, 5*2.5))
-		Test("float5", Sprintf("%t %t %t %t %t", 10 <= 7.0, 4.5 <= 5, 3>5.7, 6 == 6.0, 7 != 7.1))
-	}}`, []smartParams{
+			action {
+			var fl float
+			fl = -3.67
+			Test("float2", Sprintf("%d %s", Int(1.2), Str(fl)))
+			Test("float3", Sprintf("%.2f %.2f", 10.7/7, 10/7.0))
+			Test("float4", Sprintf("%.2f %.2f %.2f", 10+7.0, 10-3.1, 5*2.5))
+			Test("float5", Sprintf("%t %t %t %t %t", 10 <= 7.0, 4.5 <= 5, 3>5.7, 6 == 6.0, 7 != 7.1))
+		}}`, []smartParams{
 		{nil, map[string]string{`float2`: `1 -3.670000`, `float3`: `1.53 1.43`, `float4`: `17.00 6.90 12.50`, `float5`: `false true false true true`}},
 	}},
 	{`Crash`, `contract Crash { data {} conditions {} action
 
-		{ $result=DBUpdate("menu", 1, "value", "updated") }
-		}`,
+			{ $result=DBUpdate("menu", 1, "value", "updated") }
+			}`,
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"runtime panic error"}`}},
 		}},
 	{`TestOneInput`, `contract TestOneInput {
-		data {
-			list array
-		}
-		action { 
-			var coltype string
-			coltype = GetColumnType("keys", "amount" )
-			Test("oneinput",  $list[0]+coltype)
-		}
-	}`,
+			data {
+				list array
+			}
+			action {
+				var coltype string
+				coltype = GetColumnType("keys", "amount" )
+				Test("oneinput",  $list[0]+coltype)
+			}
+		}`,
 		[]smartParams{
 			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input valuemoney`}},
 		}},
 	{`DBProblem`, `contract DBProblem {
-		action{
-			DBFind("members").Where("member_name=?", "name")
-		}
-	}`,
+			action{
+				DBFind("members").Where("member_names=?", "name")
+			}
+		}`,
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"pq: current transaction is aborted, commands ignored until end of transaction block"}`}},
 		}},
 	{`TestMultiForm`, `contract TestMultiForm {
-			data {
-				list array
-			}
-			action { 
-				Test("multiform",  $list[0]+$list[1])
-			}
-		}`,
+				data {
+					list array
+				}
+				action {
+					Test("multiform",  $list[0]+$list[1])
+				}
+			}`,
 		[]smartParams{
 			{map[string]string{`list[]`: `2`, `list[0]`: `start`, `list[1]`: `finish`}, map[string]string{`multiform`: `startfinish`}},
 		}},
 	{`errTestMessage`, `contract errTestMessage {
-		conditions {
-		}
-		action { qvar ivar int}
-	}`,
+			conditions {
+			}
+			action { qvar ivar int}
+		}`,
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"unknown variable qvar"}`}},
 		}},
 
 	{`EditProfile9`, `contract EditProfile9 {
-		data {
-		}
-		conditions {
-		}
-		action {
-			var ar array
-			ar = Split("point 1,point 2", ",")
-			Test("split",  Str(ar[1]))
-			$ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
-			Test("edit",  "edit value 0")
-		}
-	}`,
+			data {
+			}
+			conditions {
+			}
+			action {
+				var ar array
+				ar = Split("point 1,point 2", ",")
+				Test("split",  Str(ar[1]))
+				$ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
+				Test("edit",  "edit value 0")
+			}
+		}`,
 		[]smartParams{
 			{nil, map[string]string{`edit`: `edit value 0`, `split`: `point 2`}},
 		}},
 
 	{`TestDBFindOK`, `
-		contract TestDBFindOK {
-		action {
-			var ret array
-			var vals map
-			ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
-			if Len(ret) {
-				Test("0",  "1")	
-			} else {
-				Test("0",  "0")	
+			contract TestDBFindOK {
+			action {
+				var ret array
+				var vals map
+				ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
+				if Len(ret) {
+					Test("0",  "1")
+				} else {
+					Test("0",  "0")
+				}
+				ret = DBFind("contracts").Limit(3)
+				if Len(ret) == 3 {
+					Test("1",  "1")
+				} else {
+					Test("1",  "0")
+				}
+				ret = DBFind("contracts").Order("id").Offset(1).Limit(1)
+				if Len(ret) != 1 {
+					Test("2",  "0")
+				} else {
+					vals = ret[0]
+					Test("2",  vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id").Order("id").Offset(1).Limit(1)
+				if Len(ret) != 1 {
+					Test("3",  "0")
+				} else {
+					vals = ret[0]
+					Test("3", vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id").Where("id='1'")
+				if Len(ret) != 1 {
+					Test("4",  "0")
+				} else {
+					vals = ret[0]
+					Test("4", vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id").Where("id='1'")
+				if Len(ret) != 1 {
+					Test("4",  "0")
+				} else {
+					vals = ret[0]
+					Test("4", vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id,value").Where("id> ? and id < ?", 3, 8).Order("id")
+				if Len(ret) != 4 {
+					Test("5",  "0")
+				} else {
+					vals = ret[0]
+					Test("5", vals["id"])
+				}
+				ret = DBFind("contracts").WhereId(7)
+				if Len(ret) != 1 {
+					Test("6",  "0")
+				} else {
+					vals = ret[0]
+					Test("6", vals["id"])
+				}
+				var one string
+				one = DBFind("contracts").WhereId(5).One("id")
+				Test("7",  one)
+				var row map
+				row = DBFind("contracts").WhereId(3).Row()
+				Test("8",  row["id"])
+				Test("255",  "255")
 			}
-			ret = DBFind("contracts").Limit(3)
-			if Len(ret) == 3 {
-				Test("1",  "1")	
-			} else {
-				Test("1",  "0")	
-			}
-			ret = DBFind("contracts").Order("id").Offset(1).Limit(1)
-			if Len(ret) != 1 {
-				Test("2",  "0")	
-			} else {
-				vals = ret[0]
-				Test("2",  vals["id"])	
-			}
-			ret = DBFind("contracts").Columns("id").Order("id").Offset(1).Limit(1)
-			if Len(ret) != 1 {
-				Test("3",  "0")	
-			} else {
-				vals = ret[0]
-				Test("3", vals["id"])	
-			}
-			ret = DBFind("contracts").Columns("id").Where("id='1'")
-			if Len(ret) != 1 {
-				Test("4",  "0")	
-			} else {
-				vals = ret[0]
-				Test("4", vals["id"])	
-			}
-			ret = DBFind("contracts").Columns("id").Where("id='1'")
-			if Len(ret) != 1 {
-				Test("4",  "0")	
-			} else {
-				vals = ret[0]
-				Test("4", vals["id"])	
-			}
-			ret = DBFind("contracts").Columns("id,value").Where("id> ? and id < ?", 3, 8).Order("id")
-			if Len(ret) != 4 {
-				Test("5",  "0")	
-			} else {
-				vals = ret[0]
-				Test("5", vals["id"])	
-			}
-			ret = DBFind("contracts").WhereId(7)
-			if Len(ret) != 1 {
-				Test("6",  "0")	
-			} else {
-				vals = ret[0]
-				Test("6", vals["id"])	
-			}
-			var one string
-			one = DBFind("contracts").WhereId(5).One("id")
-			Test("7",  one)	
-			var row map
-			row = DBFind("contracts").WhereId(3).Row()
-			Test("8",  row["id"])	
-			Test("255",  "255")	
-		}
-	}`,
+		}`,
 		[]smartParams{
 			{nil, map[string]string{`0`: `1`, `1`: `1`, `2`: `2`, `3`: `2`, `4`: `1`, `5`: `4`,
 				`6`: `7`, `7`: `5`, `8`: `3`, `255`: `255`}},
 		}},
 	{`testEmpty`, `contract testEmpty {
-				action { Test("empty",  "empty value")}}`,
+					action { Test("empty",  "empty value")}}`,
 		[]smartParams{
 			{nil, map[string]string{`empty`: `empty value`}},
 		}},
 	{`testUpd`, `contract testUpd {
-					action { Test("date",  "-2006.01.02-")}}`,
+						action { Test("date",  "-2006.01.02-")}}`,
 		[]smartParams{
 			{nil, map[string]string{`date`: `-` + time.Now().Format(`2006.01.02`) + `-`}},
 		}},
 	{`testLong`, `contract testLong {
-		action { Test("long",  "long result")
-			$result = DBFind("contracts").WhereId(2).One("value") + DBFind("contracts").WhereId(4).One("value")
-			Println("Result", $result)
-			Test("long",  "long result")
-		}}`,
+			action { Test("long",  "long result")
+				$result = DBFind("contracts").WhereId(2).One("value") + DBFind("contracts").WhereId(4).One("value")
+				Println("Result", $result)
+				Test("long",  "long result")
+			}}`,
 		[]smartParams{
 			{nil, map[string]string{`long`: `long result`}},
 		}},
 	{`testSimple`, `contract testSimple {
-				data {
-					amount int
-					name   string
-				}
-				conditions {
-					Test("scond", $amount, $name)
-				}
-				action { Test("sact", $name, $amount)}}`,
+					data {
+						amount int
+						name   string
+					}
+					conditions {
+						Test("scond", $amount, $name)
+					}
+					action { Test("sact", $name, $amount)}}`,
 		[]smartParams{
 			{map[string]string{`name`: `Simple name`, `amount`: `-56781`},
 				map[string]string{`scond`: `-56781Simple name`,
 					`sact`: `Simple name-56781`}},
 		}},
 	{`errTestVar`, `contract errTestVar {
-			conditions {
-			}
-			action { var ivar int}
-		}`,
+				conditions {
+				}
+				action { var ivar int}
+			}`,
 		nil},
 	{`testGetContract`, `contract testGetContract {
 			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
