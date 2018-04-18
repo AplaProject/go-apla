@@ -1284,6 +1284,9 @@ MenuItem(
 					'ContractConditions(\"MainCondition\")'),
 				('15', 'binaries',
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> small fix
 					'{"insert":"ContractAccess(\"UploadBinary\")",
 						"update":"ContractConditions(\"MainCondition\")",
 						"new_column":"ContractConditions(\"MainCondition\")"}',
@@ -1292,10 +1295,13 @@ MenuItem(
 						"data":"ContractAccess(\"UploadBinary\")",
 						"name":"false",
 						"app_id":"false"}',
+<<<<<<< HEAD
 =======
 					'{"insert":"ContractAccess(\"UploadBinary\")","update":"ContractConditions(\"MainCondition\")","new_column":"ContractConditions(\"MainCondition\")"}',
 					'{"hash":"ContractAccess(\"UploadBinary\")","member_id":"false","data":"ContractAccess(\"UploadBinary\")","name":"false","app_id":"false"}',
 >>>>>>> change right access
+=======
+>>>>>>> small fix
 					'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
