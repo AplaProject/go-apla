@@ -456,7 +456,6 @@ func TestVMCompile(t *testing.T) {
 					break
 				}
 			} else if err.Error() != item.Output {
-				fmt.Println(item.Output)
 				t.Error(err)
 				break
 			}
