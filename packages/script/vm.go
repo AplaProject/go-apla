@@ -612,7 +612,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					break
 				}
 				if reflect.TypeOf(rt.stack[size-2]).String() != `string` {
-					err = fmt.Errorf(eMapIndex, reflect.TypeOf(rt.stack[size-1]).String())
+					err = fmt.Errorf(eMapIndex, reflect.TypeOf(rt.stack[size-2]).String())
 					break
 				}
 				reflect.ValueOf(rt.stack[size-3]).SetMapIndex(reflect.ValueOf(rt.stack[size-2]), reflect.ValueOf(rt.stack[size-1]))
