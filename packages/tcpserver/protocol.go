@@ -222,8 +222,8 @@ func readSliceSize(r io.Reader, tagSize string) (size uint64, err error) {
 		size, err = strconv.ParseUint(tagSize, 10, 0)
 		if err != nil {
 			log.WithFields(log.Fields{"value": tagSize, "type": consts.ConversionError, "error": err}).Error("parsing uint")
-			return
 		}
+		return
 	}
 	return readUint(r, 4)
 }
