@@ -92,7 +92,7 @@ var forTest = tplList{
 		`[{"tag":"dbfind","attr":{"columns":["id","a"],"data":[["1","null"],["2","null"],["3","null"]],"limit":"3","name":"contracts","order":"id","source":"src","types":["text","tags"]}},{"tag":"div","children":[{"tag":"table","attr":{"columns":[{"Name":"x","Title":""}],"source":"src"}}]},{"tag":"div","children":[{"tag":"table","attr":{"source":"src"}}]},{"tag":"div","children":[{"tag":"text","text":" 1 2 3"}]}]`},
 	{`If(#isMobile#){Span(Mobile)}.Else{Span(Desktop)}`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Desktop"}]}]`},
-	{`DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(10)`,
+	{`DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(10).Custom(){}`,
 		`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["11"],["12"]],"limit":"2","name":"contracts","offset":"10","order":"id","source":"src_contracts","types":["text"]}}]`},
 	{`DBFind(contracts, src_pos).Columns(id).Where("id >= 1 and id <= 3")
 		ForList(src_pos, Index: index){

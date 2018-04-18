@@ -750,6 +750,9 @@ func compositeTag(par parFunc) string {
 
 func customTag(par parFunc) string {
 	setAllAttr(par)
+	if len((*par.Pars)[`Column`]) == 0 || len((*par.Pars)[`Body`]) == 0 {
+		return ``
+	}
 	if par.Owner.Attr[`customs`] == nil {
 		par.Owner.Attr[`customs`] = make([]string, 0)
 		par.Owner.Attr[`custombody`] = make([]string, 0)
