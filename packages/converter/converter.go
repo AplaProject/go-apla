@@ -943,8 +943,7 @@ func RoundWithoutPrecision(num float64) int64 {
 }
 
 // ValueToInt converts interface (string or int64) to int64
-func ValueToInt(v interface{}) (ret int64) {
-	var err error
+func ValueToInt(v interface{}) (ret int64, err error) {
 	switch val := v.(type) {
 	case float64:
 		ret = int64(val)
