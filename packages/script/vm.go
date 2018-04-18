@@ -402,7 +402,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	if block.Type == ObjFunc {
 		start -= len(block.Info.(*FuncInfo).Params)
 	}
-	var assign []*VarInfo
+	var (
+		assign []*VarInfo
+		tmpInt int64
+	)
 	labels := make([]int, 0)
 	for ci := 0; ci < len(block.Code); ci++ {
 		rt.cost--
@@ -646,7 +649,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = converter.ValueToInt(top[1]) + top[0].(int64)
+					if tmpInt, err = converter.ValueToInt(top[1]); err == nil {
+						bin = tmpInt + top[0].(int64)
+					}
 				case float64:
 					bin = ValueToFloat(top[1]) + top[0].(float64)
 				default:
@@ -682,7 +687,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = converter.ValueToInt(top[1]) - top[0].(int64)
+					if tmpInt, err = converter.ValueToInt(top[1]); err == nil {
+						bin = tmpInt - top[0].(int64)
+					}
 				case float64:
 					bin = ValueToFloat(top[1]) - top[0].(float64)
 				default:
@@ -712,7 +719,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = converter.ValueToInt(top[1]) * top[0].(int64)
+					if tmpInt, err = converter.ValueToInt(top[1]); err == nil {
+						bin = tmpInt * top[0].(int64)
+					}
 				case float64:
 					bin = ValueToFloat(top[1]) * top[0].(float64)
 				default:
@@ -750,10 +759,21 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = converter.ValueToInt(top[1]) / top[0].(int64)
+					if top[0].(int64) == 0 {
+						return 0, errDivZero
+					}
+					if tmpInt, err = converter.ValueToInt(top[1]); err == nil {
+						bin = tmpInt / top[0].(int64)
+					}
 				case float64:
+					if top[0].(float64) == 0 {
+						return 0, errDivZero
+					}
 					bin = ValueToFloat(top[1]) / top[0].(float64)
 				default:
+					if top[0].(decimal.Decimal).Equal(decimal.New(0, 0)) {
+						return 0, errDivZero
+					}
 					if reflect.TypeOf(top[0]).String() == Decimal {
 						bin = ValueToDecimal(top[1]).Div(top[0].(decimal.Decimal))
 					}
@@ -795,7 +815,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case string:
 					switch top[0].(type) {
 					case int64:
-						bin = converter.ValueToInt(top[1]) == top[0].(int64)
+						if tmpInt, err = converter.ValueToInt(top[1]); err == nil {
+							bin = tmpInt == top[0].(int64)
+						}
 					case float64:
 						bin = ValueToFloat(top[1]) == top[0].(float64)
 					default:
@@ -828,7 +850,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = converter.ValueToInt(top[1]) < top[0].(int64)
+					if tmpInt, err = converter.ValueToInt(top[1]); err == nil {
+						bin = tmpInt < top[0].(int64)
+					}
 				case float64:
 					bin = ValueToFloat(top[1]) < top[0].(float64)
 				default:
@@ -860,7 +884,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				switch top[0].(type) {
 				case int64:
-					bin = converter.ValueToInt(top[1]) > top[0].(int64)
+					if tmpInt, err = converter.ValueToInt(top[1]); err == nil {
+						bin = tmpInt > top[0].(int64)
+					}
 				case float64:
 					bin = ValueToFloat(top[1]) > top[0].(float64)
 				default:
