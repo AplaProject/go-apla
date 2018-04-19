@@ -904,8 +904,8 @@ MenuItem(
 		"pub" bytea  NOT NULL DEFAULT '',
 		"amount" decimal(30) NOT NULL DEFAULT '0',
 		"multi" int NOT NULL DEFAULT '0',
-		"delete" int NOT NULL DEFAULT '0',
-		"block" int NOT NULL DEFAULT '0'
+		"deleted" int NOT NULL DEFAULT '0',
+		"blocked" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
 		
