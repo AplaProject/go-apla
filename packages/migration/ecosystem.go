@@ -1129,17 +1129,17 @@ MenuItem(
 		('15','max_page_validate_count', '6', 'ContractConditions("MainCondition")'),
 		('16','changing_blocks', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")');
 
-		DROP TABLE IF EXISTS "%[1]d_app_param";
-		CREATE TABLE "%[1]d_app_param" (
+		DROP TABLE IF EXISTS "%[1]d_app_params";
+		CREATE TABLE "%[1]d_app_params" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"app_id" bigint NOT NULL  DEFAULT '0',
 		"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
 		"conditions" text  NOT NULL DEFAULT ''
 		);
-		ALTER TABLE ONLY "%[1]d_app_param" ADD CONSTRAINT "%[1]d_app_param_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "%[1]d_app_param_index_name" ON "%[1]d_app_param" (name);
-		CREATE INDEX "%[1]d_app_param_index_app" ON "%[1]d_app_param" (app_id);
+		ALTER TABLE ONLY "%[1]d_app_params" ADD CONSTRAINT "%[1]d_app_params_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "%[1]d_app_params_index_name" ON "%[1]d_app_params" (name);
+		CREATE INDEX "%[1]d_app_params_index_app" ON "%[1]d_app_params" (app_id);
 		
 		DROP TABLE IF EXISTS "%[1]d_tables";
 		CREATE TABLE "%[1]d_tables" (
@@ -2362,13 +2362,13 @@ MenuItem(
 				warning "App id cannot equal 0"
 			}
 			var row map
-			row = DBRow("app_param").Columns("id").Where("app_id = ? and name = ?", $App, $Name)
+			row = DBRow("app_params").Columns("id").Where("app_id = ? and name = ?", $App, $Name)
 			if row {
 				warning Sprintf( "App parameter %%s already exists", $Name)
 			}
 		}
 		action {
-			DBInsert("app_param", "app_id,name,value,conditions", $App, $Name, $Value, $Conditions )
+			DBInsert("app_params", "app_id,name,value,conditions", $App, $Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('29','EditAppParam','contract EditAppParam {
@@ -2382,11 +2382,11 @@ MenuItem(
 		}
 
 		conditions {
-			RowConditions("app_param", $Id, onlyConditions())
+			RowConditions("app_params", $Id, onlyConditions())
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
-			DBUpdate("app_param", $Id, "value,conditions", $Value, $Conditions )
+			DBUpdate("app_params", $Id, "value,conditions", $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('30', 'NewDelayedContract','contract NewDelayedContract {
