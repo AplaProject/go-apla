@@ -64,7 +64,8 @@ func lenArray(par []interface{}) int64 {
 }
 
 func Money(v interface{}) (ret decimal.Decimal) {
-	return ValueToDecimal(v)
+	ret, _ = ValueToDecimal(v)
+	return ret
 }
 
 func TestVMCompile(t *testing.T) {
@@ -174,13 +175,6 @@ func TestVMCompile(t *testing.T) {
 							}
 						}
 						`, `mytest.init`, `OK`},
-		{`func money_test string {
-					var my2, m1 money
-					my2 = 100
-					m1 = 1.2
-					return Sprintf( "Account %v %v", my2 - Money(5.6), m1*Money(5) + Money(my2))
-				}`, `money_test`, `Account 94.4 106`},
-
 		{`func line_test string {
 						return "Start " +
 						Sprintf( "My String %s %d %d",
@@ -421,6 +415,12 @@ func TestVMCompile(t *testing.T) {
 				i = (i - "10")/"2"*"3"
 				return Sprintf("%T %[1]v", .21 + i)
 			  }`, `result`, `float64 138.21`},
+		{`func money_test string {
+				var my2, m1 money
+				my2 = 100
+				m1 = 1.2
+				return Sprintf( "Account %v %v %v", my2/Money(3),  my2 - Money(5.6), m1*Money(5) + Money(my2))
+			}`, `money_test`, `Account 33 94 105`},
 	}
 	vm := NewVM()
 	vm.Extern = true

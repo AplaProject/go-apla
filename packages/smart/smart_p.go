@@ -278,7 +278,7 @@ func Str(v interface{}) (ret string) {
 }
 
 // Money converts the value into a numeric type for money
-func Money(v interface{}) (ret decimal.Decimal) {
+func Money(v interface{}) (decimal.Decimal, error) {
 	return script.ValueToDecimal(v)
 }
 
