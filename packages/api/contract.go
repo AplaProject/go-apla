@@ -69,7 +69,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	if key.Delete == 1 {
+	if key.Deleted == 1 {
 		return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 	}
 	if len(key.PublicKey) == 0 {

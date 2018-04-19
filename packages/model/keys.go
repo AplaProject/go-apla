@@ -10,7 +10,8 @@ type Key struct {
 	ID        int64  `gorm:"primary_key;not null"`
 	PublicKey []byte `gorm:"column:pub;not null"`
 	Amount    string `gorm:"not null"`
-	Delete    int64  `gorm:"not null"`
+	Deleted   int64  `gorm:"not null"`
+	Blocked   int64  `gorm:"not null"`
 }
 
 // SetTablePrefix is setting table prefix
