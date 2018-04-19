@@ -17,7 +17,7 @@ func (sp *AppParam) TableName() string {
 
 // SetTablePrefix is setting table prefix
 func (sp *AppParam) SetTablePrefix(tablePrefix string) {
-	sp.tableName = tablePrefix + "_app_param"
+	sp.tableName = tablePrefix + "_app_params"
 }
 
 // Get is retrieving model from database
