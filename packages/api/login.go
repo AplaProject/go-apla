@@ -150,9 +150,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, ecosystemID)
 	}
 
-	role := data.roleId
-	if roleParam, ok := data.params["role_id"]; ok {
-		role = roleParam.(int64)
+	if roleParam, ok := data.params["role_id"]; ok && data.roleId == 0 {
+		role := roleParam.(int64)
 		checkedRole, err := checkRoleFromParam(role, ecosystemID, wallet)
 		if err != nil {
 			return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
@@ -162,7 +161,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			return errorAPI(w, "E_CHECKROLE", http.StatusNotFound)
 		}
 
-		role = checkedRole
+		data.roleId = checkedRole
 	}
 
 	if len(pubkey) == 0 {
@@ -232,7 +231,6 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		},
 	}
 
-	fmt.Println(1, "CREATE CLAIMS ", claims.RoleID)
 	result.Token, err = jwtGenerateToken(w, claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
