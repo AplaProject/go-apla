@@ -893,8 +893,10 @@ MenuItem(
 			if $Id != 0 {
 				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
 			} else {
-				DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
+				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
 			}
+
+			$result = $Id
 		}
 	}', 'ContractConditions("MainCondition")');
 	`
@@ -2494,8 +2496,10 @@ MenuItem(
 			if $Id != 0 {
 				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
 			} else {
-				DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
+				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
 			}
+
+			$result = $Id
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('34', 'NewUser','contract NewUser {

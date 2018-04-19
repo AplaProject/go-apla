@@ -266,8 +266,10 @@ func TestBinary(t *testing.T) {
 		"Name":     {"file"},
 		"Data":     {imageData},
 	}
-	assert.NoError(t, postTx("UploadBinary", &form))
 
+	_, id, err := postTxResult("UploadBinary", &form)
+
+	assert.NoError(t, err)
 	hashImage := fmt.Sprintf("%x", md5.Sum([]byte(imageData)))
 
 	cases := []struct {
@@ -276,6 +278,10 @@ func TestBinary(t *testing.T) {
 	}{
 		{
 			`Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`Image(Src: Binary(ID: ` + id + `))`,
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{

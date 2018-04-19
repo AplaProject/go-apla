@@ -95,7 +95,7 @@ func init() {
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
-	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,@MemberID"}
+	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID,ID"}
 	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
 
 	tails[`button`] = forTails{map[string]tailInfo{
@@ -1091,11 +1091,23 @@ func binaryTag(par parFunc) string {
 
 	binary := &model.Binary{}
 	binary.SetTablePrefix(ecosystemID)
-	ok, err := binary.Get(
-		converter.StrToInt64((*par.Pars)["AppID"]),
-		converter.StrToInt64((*par.Pars)["MemberID"]),
-		(*par.Pars)["Name"],
+
+	var (
+		ok  bool
+		err error
 	)
+
+	id := (*par.Pars)["ID"]
+	if len(id) > 0 {
+		ok, err = binary.GetByID(converter.StrToInt64(id))
+	} else {
+		ok, err = binary.Get(
+			converter.StrToInt64((*par.Pars)["AppID"]),
+			converter.StrToInt64((*par.Pars)["MemberID"]),
+			(*par.Pars)["Name"],
+		)
+	}
+
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting record from db")
 		return err.Error()
