@@ -1225,7 +1225,7 @@ MenuItem(
 					'{"image_id":"ContractAccess(\"Profile_Edit\")","member_info":"ContractAccess(\"Profile_Edit\")","member_name":"false"}', 
 					'ContractConditions(\"MainCondition\")'),
 				('10', 'roles',
-					'{"insert":"ContractAccess(\"UploadBinary\")",
+					'{"insert":"ContractAccess(\"Roles_Create\")",
 						"update":"ContractConditions(\"MainCondition\")",
 						"new_column":"ContractConditions(\"MainCondition\")"}', 
 					'{"default_page":"false",
