@@ -430,7 +430,18 @@ func dataTag(par parFunc) string {
 
 	list, err := csv.NewReader(strings.NewReader((*par.Pars)[`Data`])).ReadAll()
 	if err != nil {
+		input := strings.Split((*par.Pars)[`Data`], "\n")
 		par.Node.Attr[`error`] = err.Error()
+		prefix := `line `
+		for err != nil && strings.HasPrefix(err.Error(), prefix) {
+			errText := err.Error()
+			line := converter.StrToInt64(errText[len(prefix):strings.IndexByte(errText, ',')])
+			if line < 1 {
+				break
+			}
+			input = append(input[:line-1], input[line:]...)
+			list, err = csv.NewReader(strings.NewReader(strings.Join(input, "\n"))).ReadAll()
+		}
 	}
 	lencol := 0
 	defcol := 0
