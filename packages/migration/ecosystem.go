@@ -1294,7 +1294,7 @@ MenuItem(
 			"date_created" timestamp,
 			"date_deleted" timestamp,
 			"company_id" bigint NOT NULL DEFAULT '0',
-			"image_id"   bigint
+			"image_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles" ADD CONSTRAINT "%[1]d_roles_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_index_deleted" ON "%[1]d_roles" (deleted);
@@ -1330,7 +1330,7 @@ MenuItem(
 		CREATE TABLE "%[1]d_members" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
-			"image_id"	bigint,
+			"image_id"	bigint NOT NULL DEFAULT '0',
 			"member_info"   jsonb
 		);
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
