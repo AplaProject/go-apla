@@ -53,13 +53,13 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		expire = jwtExpire
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Second * time.Duration(expire)).Unix()
-	result.Token, err = jwtGenerateToken(w, *claims)
+	result.Token, err = jwtGenerateToken(*claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
-	result.Refresh, err = jwtGenerateToken(w, *claims)
+	result.Refresh, err = jwtGenerateToken(*claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
@@ -83,14 +83,16 @@ func getRefreshTokenClaims(w http.ResponseWriter, data *apiData, logger *log.Ent
 		logger.WithFields(log.Fields{"type": consts.JWTError}).Error("getting jwt claims")
 		return nil, errorAPI(w, `E_TOKEN`, http.StatusBadRequest)
 	}
-	token, err := jwt.ParseWithClaims(data.params[`token`].(string), &JWTClaims{},
-		func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				logger.WithFields(log.Fields{"type": consts.JWTError, "signing_method": token.Header["alg"]}).Error("unexpected signing method")
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(jwtSecret), nil
-		})
+
+	tokenKeyFunc := func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			logger.WithFields(log.Fields{"type": consts.JWTError, "signing_method": token.Header["alg"]}).Error("unexpected signing method")
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(jwtSecret), nil
+	}
+
+	token, err := jwt.ParseWithClaims(data.params[`token`].(string), &JWTClaims{}, tokenKeyFunc)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "signing_method": token.Header["alg"]}).Error("unexpected signing method")
 		return nil, errorAPI(w, err, http.StatusInternalServerError)

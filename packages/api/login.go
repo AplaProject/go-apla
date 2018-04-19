@@ -153,24 +153,23 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	if r, ok := data.params["role_id"]; ok {
 		role := r.(int64)
 		if role > 0 {
-			ok, err := model.MemberHasRole(nil, ecosystemID, wallet, role)
-			if err != nil {
-				logger.WithFields(log.Fields{
+			getRoleErrorFields := func() log.Fields {
+				return log.Fields{
 					"type":      consts.DBError,
 					"member":    wallet,
 					"role":      role,
-					"ecosystem": ecosystemID}).Error("check role")
+					"ecosystem": ecosystemID}
+			}
+
+			ok, err := model.MemberHasRole(nil, ecosystemID, wallet, role)
+			if err != nil {
+				logger.WithFields(getRoleErrorFields()).Error("check role")
 
 				return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
 			}
 
 			if !ok {
-				logger.WithFields(log.Fields{
-					"type":      consts.NotFound,
-					"member":    wallet,
-					"role":      role,
-					"ecosystem": ecosystemID,
-				}).Error("member hasn't role")
+				logger.WithFields(getRoleErrorFields()).Error("member hasn't role")
 
 				return errorAPI(w, "E_CHECKROLE", http.StatusNotFound)
 			}
@@ -246,13 +245,13 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		},
 	}
 
-	result.Token, err = jwtGenerateToken(w, claims)
+	result.Token, err = jwtGenerateToken(claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
-	result.Refresh, err = jwtGenerateToken(w, claims)
+	result.Refresh, err = jwtGenerateToken(claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
