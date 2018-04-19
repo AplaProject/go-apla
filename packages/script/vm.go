@@ -313,15 +313,16 @@ func ValueToFloat(v interface{}) (ret float64) {
 }
 
 // ValueToDecimal converts interface (string, float64, Decimal or int64) to Decimal
-func ValueToDecimal(v interface{}) (ret decimal.Decimal) {
-	var err error
+func ValueToDecimal(v interface{}) (ret decimal.Decimal, err error) {
 	switch val := v.(type) {
 	case float64:
-		ret = decimal.NewFromFloat(val)
+		ret = decimal.NewFromFloat(val).Round(0)
 	case string:
 		ret, err = decimal.NewFromString(val)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting value from string to decimal")
+		} else {
+			ret = ret.Round(0)
 		}
 	case int64:
 		ret = decimal.New(val, 0)
@@ -403,7 +404,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	if block.Type == ObjFunc {
 		start -= len(block.Info.(*FuncInfo).Params)
 	}
-	var assign []*VarInfo
+	var (
+		assign []*VarInfo
+		tmpDec decimal.Decimal
+	)
 	labels := make([]int, 0)
 	for ci := 0; ci < len(block.Code); ci++ {
 		rt.cost--
@@ -477,7 +481,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 						if item.Owner == rt.blocks[i].Block {
 							switch rt.blocks[i].Block.Vars[item.Obj.Value.(int)].String() {
 							case Decimal:
-								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = ValueToDecimal(rt.stack[len(rt.stack)-count+ivar])
+								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)], err = ValueToDecimal(rt.stack[len(rt.stack)-count+ivar])
+								if err != nil {
+									return 0, err
+								}
 							default:
 								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = rt.stack[len(rt.stack)-count+ivar]
 							}
@@ -823,7 +830,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					if top[0].(decimal.Decimal).Cmp(decimal.New(0, 0)) == 0 {
 						return 0, errUnsupportedType
 					}
-					bin = top[1].(decimal.Decimal).Div(top[0].(decimal.Decimal))
+					bin = top[1].(decimal.Decimal).Div(top[0].(decimal.Decimal)).Round(0)
 				} else {
 					return 0, errUnsupportedType
 				}
@@ -845,7 +852,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 						bin = ValueToFloat(top[1]) == top[0].(float64)
 					default:
 						if reflect.TypeOf(top[0]).String() == Decimal {
-							bin = ValueToDecimal(top[1]).Cmp(top[0].(decimal.Decimal)) == 0
+							if tmpDec, err = ValueToDecimal(top[1]); err != nil {
+								return 0, err
+							}
+							bin = tmpDec.Cmp(top[0].(decimal.Decimal)) == 0
 						} else {
 							bin = top[1].(string) == top[0].(string)
 						}
@@ -862,7 +872,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 						return 0, errUnsupportedType
 					}
 				default:
-					bin = top[1].(decimal.Decimal).Cmp(ValueToDecimal(top[0])) == 0
+					if tmpDec, err = ValueToDecimal(top[0]); err != nil {
+						return 0, err
+					}
+					bin = top[1].(decimal.Decimal).Cmp(tmpDec) == 0
 				}
 			}
 			if cmd.Cmd == cmdNotEq {
@@ -878,7 +891,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					bin = ValueToFloat(top[1]) < top[0].(float64)
 				default:
 					if reflect.TypeOf(top[0]).String() == Decimal {
-						bin = ValueToDecimal(top[1]).Cmp(top[0].(decimal.Decimal)) < 0
+						if tmpDec, err = ValueToDecimal(top[1]); err != nil {
+							return 0, err
+						}
+						bin = tmpDec.Cmp(top[0].(decimal.Decimal)) < 0
 					} else {
 						bin = top[1].(string) < top[0].(string)
 					}
@@ -895,7 +911,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					return 0, errUnsupportedType
 				}
 			default:
-				bin = top[1].(decimal.Decimal).Cmp(ValueToDecimal(top[0])) < 0
+				if tmpDec, err = ValueToDecimal(top[0]); err != nil {
+					return 0, err
+				}
+				bin = top[1].(decimal.Decimal).Cmp(tmpDec) < 0
 			}
 			if cmd.Cmd == cmdNotLess {
 				bin = !bin.(bool)
@@ -910,7 +929,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					bin = ValueToFloat(top[1]) > top[0].(float64)
 				default:
 					if reflect.TypeOf(top[0]).String() == Decimal {
-						bin = ValueToDecimal(top[1]).Cmp(top[0].(decimal.Decimal)) > 0
+						if tmpDec, err = ValueToDecimal(top[1]); err != nil {
+							return 0, err
+						}
+						bin = tmpDec.Cmp(top[0].(decimal.Decimal)) > 0
 					} else {
 						bin = top[1].(string) > top[0].(string)
 					}
@@ -927,7 +949,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					return 0, errUnsupportedType
 				}
 			default:
-				bin = top[1].(decimal.Decimal).Cmp(ValueToDecimal(top[0])) > 0
+				if tmpDec, err = ValueToDecimal(top[0]); err != nil {
+					return 0, err
+				}
+				bin = top[1].(decimal.Decimal).Cmp(tmpDec) > 0
 			}
 			if cmd.Cmd == cmdNotGreat {
 				bin = !bin.(bool)
