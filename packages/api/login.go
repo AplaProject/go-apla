@@ -107,7 +107,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 
 	if isAccount {
 		pubkey = account.PublicKey
-		if account.Delete == 1 {
+		if account.Deleted == 1 {
 			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 		}
 	} else {

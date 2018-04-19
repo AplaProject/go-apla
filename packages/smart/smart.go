@@ -850,7 +850,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 			return retError(err)
 		}
-		if wallet.Delete == 1 {
+		if wallet.Deleted == 1 {
 			return retError(ErrDeletedKey)
 		}
 		if len(wallet.PublicKey) > 0 {
