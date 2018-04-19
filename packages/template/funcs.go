@@ -95,7 +95,7 @@ func init() {
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
-	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID,ID"}
+	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID"}
 	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
 
 	tails[`button`] = forTails{map[string]tailInfo{
@@ -161,6 +161,9 @@ func init() {
 	}}
 	tails[`inputMap`] = forTails{map[string]tailInfo{
 		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
+	}}
+	tails[`binary`] = forTails{map[string]tailInfo{
+		`ById`: {tplFunc{tailTag, defaultTailFull, `id`, `id`}, false},
 	}}
 }
 
@@ -1089,6 +1092,8 @@ func binaryTag(par parFunc) string {
 		ecosystemID = (*par.Workspace.Vars)[`ecosystem_id`]
 	}
 
+	defaultTail(par, `binary`)
+
 	binary := &model.Binary{}
 	binary.SetTablePrefix(ecosystemID)
 
@@ -1097,9 +1102,8 @@ func binaryTag(par parFunc) string {
 		err error
 	)
 
-	id := (*par.Pars)["ID"]
-	if len(id) > 0 {
-		ok, err = binary.GetByID(converter.StrToInt64(id))
+	if par.Node.Attr["id"] != nil {
+		ok, err = binary.GetByID(converter.StrToInt64(par.Node.Attr["id"].(string)))
 	} else {
 		ok, err = binary.Get(
 			converter.StrToInt64((*par.Pars)["AppID"]),
