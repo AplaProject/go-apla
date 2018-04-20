@@ -214,7 +214,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
+	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "1_system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
 	if err != nil {
 		return 0, err
 	}
@@ -456,6 +456,9 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, err
 	}
 
+	// because of we need to know which ecosystem to rollback.
+	// All tables will be deleted so it's no need to rollback data from tables
+	sc.Rollback = true
 	if _, _, err := DBInsert(sc, "@1_ecosystems", "id,name", id, name); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert new ecosystem to stat table")
 		return 0, err
@@ -526,9 +529,32 @@ func RollbackEcosystem(sc *SmartContract) error {
 		}
 	}
 
-	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
-		`contracts`, `parameters`, `blocks`, `history`, `keys`, `sections`, `members`, `roles`,
-		`roles_participants`, `notifications`, `applications`, `binaries`, `app_param`} {
+	rbTables := []string{
+		`menu`,
+		`pages`,
+		`languages`,
+		`signatures`,
+		`tables`,
+		`contracts`,
+		`parameters`,
+		`blocks`,
+		`history`,
+		`keys`,
+		`sections`,
+		`members`,
+		`roles`,
+		`roles_participants`,
+		`notifications`,
+		`applications`,
+		`binaries`,
+		`app_param`,
+	}
+
+	if rollbackTx.TableID == "1" {
+		rbTables = append(rbTables, `system_parameters`, `ecosystems`)
+	}
+
+	for _, name := range rbTables {
 		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
@@ -648,7 +674,7 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 	return nil
 }
 
-// DeactivateContract sets Active status of the contract in smartVM
+// Deactivate sets Active status of the contract in smartVM
 func Deactivate(sc *SmartContract, tblid int64, state int64) error {
 	if !accessContracts(sc, nActivateContract, nDeactivateContract) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract")
@@ -718,6 +744,7 @@ func JSONToMap(input string) (map[string]interface{}, error) {
 	return ret, nil
 }
 
+// RollbackContract performs rollback for the contract
 func RollbackContract(sc *SmartContract, name string) error {
 	if !accessContracts(sc, nNewContract, nImport) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract, "error": errAccessRollbackContract}).Error("Check contract access")
@@ -735,6 +762,7 @@ func RollbackContract(sc *SmartContract, name string) error {
 	return nil
 }
 
+// DBSelectMetrics returns list of metrics by name and time interval
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
 	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc)
 	if err != nil {
@@ -744,6 +772,8 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 	return result, nil
 }
 
+// DBCollectMetrics returns actual values of all metrics
+// This function used to further store these values
 func DBCollectMetrics() []interface{} {
 	c := metric.NewCollector(
 		metric.CollectMetricDataForEcosystemTables,

@@ -16,6 +16,7 @@ const (
 	metricEcosystemTx      = "ecosystem_tx"
 )
 
+// CollectMetricDataForEcosystemTables returns metrics for some tables of ecosystems
 func CollectMetricDataForEcosystemTables() (metricValues []*Value, err error) {
 	stateIDs, err := model.GetAllSystemStatesIDs()
 	if err != nil {
@@ -61,6 +62,7 @@ func CollectMetricDataForEcosystemTables() (metricValues []*Value, err error) {
 	return metricValues, nil
 }
 
+// CollectMetricDataForEcosystemTx returns metrics for transactions of ecosystems
 func CollectMetricDataForEcosystemTx() (metricValues []*Value, err error) {
 	ecosystemTx, err := model.GetEcosystemTxPerDay()
 	if err != nil {

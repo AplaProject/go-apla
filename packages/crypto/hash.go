@@ -17,6 +17,7 @@ const (
 	_SHA256 hashProvider = iota
 )
 
+// GetHMAC returns HMAC hash
 func GetHMAC(secret string, message string) ([]byte, error) {
 	switch hmacProv {
 	case _SHA256:
@@ -41,6 +42,7 @@ func GetHMACWithTimestamp(secret string, message string, timestamp string) ([]by
 	}
 }
 
+// Hash returns hash of passed bytes
 func Hash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": ErrHashingEmpty.Error()}).Debug(ErrHashingEmpty.Error())
@@ -53,6 +55,7 @@ func Hash(msg []byte) ([]byte, error) {
 	}
 }
 
+// DoubleHash returns double hash of passed bytes
 func DoubleHash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": ErrHashingEmpty.Error()}).Debug(ErrHashingEmpty.Error())

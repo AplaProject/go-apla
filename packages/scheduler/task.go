@@ -9,10 +9,12 @@ import (
 
 var zeroTime time.Time
 
+// Handler represents interface of task handler
 type Handler interface {
 	Run(*Task)
 }
 
+// Task represents task
 type Task struct {
 	ID       string
 	CronSpec string
@@ -22,10 +24,12 @@ type Task struct {
 	schedule cron.Schedule
 }
 
+// String returns description of task
 func (t *Task) String() string {
 	return fmt.Sprintf("%s %s", t.ID, t.CronSpec)
 }
 
+// ParseCron parsed cron format
 func (t *Task) ParseCron() error {
 	if len(t.CronSpec) == 0 {
 		return nil
@@ -36,6 +40,7 @@ func (t *Task) ParseCron() error {
 	return err
 }
 
+// Next returns time for next task
 func (t *Task) Next(tm time.Time) time.Time {
 	if len(t.CronSpec) == 0 {
 		return zeroTime
@@ -43,6 +48,7 @@ func (t *Task) Next(tm time.Time) time.Time {
 	return t.schedule.Next(tm)
 }
 
+// Run executes task
 func (t *Task) Run() {
 	t.Handler.Run(t)
 }

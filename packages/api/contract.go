@@ -200,8 +200,20 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 }
 
 func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if service.IsNodePaused() {
-		return errorAPI(w, errors.New("Node is updating blockchain"), http.StatusServiceUnavailable)
+	var reason string
+
+	switch service.NodePauseType() {
+	case service.NoPause:
+		return nil
+	case service.PauseTypeUpdatingBlockchain:
+		reason = "Node is updating blockchain"
+		break
+	case service.PauseTypeStopingNetwork:
+		reason = "Network is stopping"
+		break
+	default:
+		reason = "Node is paused"
 	}
-	return nil
+
+	return errorAPI(w, errors.New(reason), http.StatusServiceUnavailable)
 }

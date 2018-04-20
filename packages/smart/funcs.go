@@ -133,6 +133,8 @@ var (
 		"signatures": "changing_signature",
 		"contracts":  "changing_contracts",
 		"blocks":     "changing_blocks",
+		"languages":  "changing_language",
+		"tables":     "changing_tables",
 	}
 )
 
@@ -215,6 +217,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"EditEcosysName":       EditEcosysName,
 		"GetColumnType":        GetColumnType,
 		"GetType":              GetType,
+		"AllowChangeCondition": AllowChangeCondition,
 		"StringToBytes":        StringToBytes,
 	}
 
@@ -973,8 +976,17 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 	return sc.AccessTable(tblName, "new_column")
 }
 
+// AllowChangeCondition check acces to change condition throught supper contract
+func AllowChangeCondition(sc *SmartContract, tblname string) error {
+	if param, ok := tableParamConditions[tblname]; ok {
+		return sc.AccessRights(param, false)
+	}
+
+	return nil
+}
+
 // RowConditions checks conditions for table row by id
-func RowConditions(sc *SmartContract, tblname string, id int64) error {
+func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bool) error {
 	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
 	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
 	if err != nil {
@@ -987,12 +999,9 @@ func RowConditions(sc *SmartContract, tblname string, id int64) error {
 		return fmt.Errorf("Item %d has not been found", id)
 	}
 
-	err = Eval(sc, condition)
-	if err != nil {
-		if err == errAccessDenied {
-			if param, ok := tableParamConditions[tblname]; ok {
-				return sc.AccessRights(param, false)
-			}
+	if err := Eval(sc, condition); err != nil {
+		if err == errAccessDenied && conditionOnly {
+			return AllowChangeCondition(sc, tblname)
 		}
 
 		return err

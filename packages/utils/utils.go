@@ -19,7 +19,6 @@ package utils
 import (
 	"context"
 	"encoding/hex"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -67,8 +66,7 @@ var (
 	// CancelFunc is represents cancel func
 	CancelFunc context.CancelFunc
 	// DaemonsCount is number of daemons
-	DaemonsCount      int
-	PrivateBlockchain = flag.Bool("privateBlockchain", false, "Is blockchain private")
+	DaemonsCount int
 )
 
 // GetHTTPTextAnswer returns HTTP answer as a string

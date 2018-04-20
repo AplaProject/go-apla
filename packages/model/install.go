@@ -1,5 +1,6 @@
 package model
 
+// ProgressComplete status of installation progress
 const ProgressComplete = "complete"
 
 // Install is model

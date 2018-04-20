@@ -53,11 +53,21 @@ type Source struct {
 	Data    *[][]string
 }
 
+// Workspace represents a workspace of executable template
 type Workspace struct {
 	Sources       *map[string]Source
 	Vars          *map[string]string
 	SmartContract *smart.SmartContract
 	Timeout       *bool
+}
+
+// SetSource sets source to workspace
+func (w *Workspace) SetSource(name string, source *Source) {
+	if w.Sources == nil {
+		sources := make(map[string]Source)
+		w.Sources = &sources
+	}
+	(*w.Sources)[name] = *source
 }
 
 type parFunc struct {
@@ -91,14 +101,10 @@ func newSource(par parFunc) {
 	if par.Node.Attr[`source`] == nil {
 		return
 	}
-	if par.Workspace.Sources == nil {
-		sources := make(map[string]Source)
-		par.Workspace.Sources = &sources
-	}
-	(*par.Workspace.Sources)[par.Node.Attr[`source`].(string)] = Source{
+	par.Workspace.SetSource(par.Node.Attr[`source`].(string), &Source{
 		Columns: par.Node.Attr[`columns`].(*[]string),
 		Data:    par.Node.Attr[`data`].(*[][]string),
-	}
+	})
 }
 
 func setAttr(par parFunc, name string) {

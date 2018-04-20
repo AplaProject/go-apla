@@ -25,6 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// BlocksPerRequest contains count of blocks per request
 const BlocksPerRequest int32 = 1000
 
 // Type7 writes the body of the specified block

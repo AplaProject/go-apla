@@ -75,59 +75,12 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 	}
 
 	forsign := []string{smartTx.ForSign()}
-
 	if info.Tx != nil {
-		for _, fitem := range *info.Tx {
-			if strings.Contains(fitem.Tags, `signature`) {
-				continue
-			}
-
-			var val string
-			if fitem.ContainsTag(script.TagFile) {
-				file, header, err := r.FormFile(fitem.Name)
-				if err != nil {
-					log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting multipart file")
-					return errorAPI(w, err.Error(), http.StatusBadRequest)
-				}
-				fileHeader, err := req.WriteFile(fitem.Name, header.Header.Get(`Content-Type`), file)
-				file.Close()
-				if err != nil {
-					log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing file")
-					return errorAPI(w, err.Error(), http.StatusInternalServerError)
-				}
-				forsign = append(forsign, fileHeader.MimeType, fileHeader.Hash)
-				continue
-			} else if fitem.Type.String() == `[]interface {}` {
-				for key, values := range r.Form {
-					if key == fitem.Name+`[]` && len(values) > 0 {
-						count := converter.StrToInt(values[0])
-						var list []string
-						for i := 0; i < count; i++ {
-							k := fmt.Sprintf(`%s[%d]`, fitem.Name, i)
-							v := r.FormValue(k)
-							list = append(list, v)
-							req.SetValue(k, v)
-						}
-						val = strings.Join(list, `,`)
-					}
-				}
-				if len(val) == 0 {
-					val = r.FormValue(fitem.Name)
-					req.SetValue(fitem.Name, val)
-				}
-			} else {
-				val = strings.TrimSpace(r.FormValue(fitem.Name))
-				req.SetValue(fitem.Name, val)
-				if strings.Contains(fitem.Tags, `address`) {
-					val = converter.Int64ToStr(converter.StringToAddress(val))
-				} else if fitem.Type.String() == script.Decimal {
-					val = strings.TrimLeft(val, `0`)
-				} else if fitem.Type.String() == `int64` && len(val) == 0 {
-					val = `0`
-				}
-			}
-			forsign = append(forsign, val)
+		f, err := forsignFormData(w, r, logger, req, *info.Tx)
+		if err != nil {
+			return err
 		}
+		forsign = append(forsign, f...)
 	}
 
 	result.ID = req.ID
@@ -137,4 +90,60 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 
 	data.result = result
 	return nil
+}
+
+func forsignFormData(w http.ResponseWriter, r *http.Request, logger *log.Entry, req *tx.Request, fields []*script.FieldInfo) ([]string, error) {
+	forsign := []string{}
+	for _, fitem := range fields {
+		if strings.Contains(fitem.Tags, `signature`) {
+			continue
+		}
+		var val string
+		if fitem.ContainsTag(script.TagFile) {
+			file, header, err := r.FormFile(fitem.Name)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting multipart file")
+				return nil, errorAPI(w, err.Error(), http.StatusBadRequest)
+			}
+			fileHeader, err := req.WriteFile(fitem.Name, header.Header.Get(`Content-Type`), file)
+			file.Close()
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing file")
+				return nil, errorAPI(w, err.Error(), http.StatusInternalServerError)
+			}
+			forsign = append(forsign, fileHeader.MimeType, fileHeader.Hash)
+			continue
+		} else if fitem.Type.String() == `[]interface {}` {
+			for key, values := range r.Form {
+				if key == fitem.Name+`[]` && len(values) > 0 {
+					count := converter.StrToInt(values[0])
+					var list []string
+					for i := 0; i < count; i++ {
+						k := fmt.Sprintf(`%s[%d]`, fitem.Name, i)
+						v := r.FormValue(k)
+						list = append(list, v)
+						req.SetValue(k, v)
+					}
+					val = strings.Join(list, `,`)
+				}
+			}
+			if len(val) == 0 {
+				val = r.FormValue(fitem.Name)
+				req.SetValue(fitem.Name, val)
+			}
+		} else {
+			val = strings.TrimSpace(r.FormValue(fitem.Name))
+			req.SetValue(fitem.Name, val)
+			if strings.Contains(fitem.Tags, `address`) {
+				val = converter.Int64ToStr(converter.StringToAddress(val))
+			} else if fitem.Type.String() == script.Decimal {
+				val = strings.TrimLeft(val, `0`)
+			} else if fitem.Type.String() == `int64` && len(val) == 0 {
+				val = `0`
+			}
+		}
+		forsign = append(forsign, val)
+	}
+
+	return forsign, nil
 }
