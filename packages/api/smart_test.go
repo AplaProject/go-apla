@@ -174,6 +174,49 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	form = url.Values{"Name": {`app` + name}, "Value": {value}, "ValidateCount": {"2"},
+		"ValidateMode": {"1"},
+		"Menu":         {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var ret listResult
+	err = sendGet(`list/pages`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	id := ret.Count
+	var row rowResult
+	err = sendGet(`row/pages/`+id, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value["validate_mode"] != `1` {
+		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
+		return
+	}
+
+	form = url.Values{"Id": {id}, "Value": {value}, "ValidateCount": {"1"},
+		"ValidateMode": {"0"}}
+	err = postTx(`EditPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`row/pages/`+id, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value["validate_mode"] != `0` {
+		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
+		return
+	}
 
 	var ret listResult
 	err = sendGet(`list/pages`, nil, &ret)
