@@ -153,33 +153,18 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, ecosystemID)
 	}
 
-	if r, ok := data.params["role_id"]; ok {
-		role := r.(int64)
-		if role > 0 {
-			ok, err := model.MemberHasRole(nil, ecosystemID, wallet, role)
-			if err != nil {
-				logger.WithFields(log.Fields{
-					"type":      consts.DBError,
-					"member":    wallet,
-					"role":      role,
-					"ecosystem": ecosystemID}).Error("check role")
-
-				return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
-			}
-
-			if !ok {
-				logger.WithFields(log.Fields{
-					"type":      consts.NotFound,
-					"member":    wallet,
-					"role":      role,
-					"ecosystem": ecosystemID,
-				}).Error("member hasn't role")
-
-				return errorAPI(w, "E_CHECKROLE", http.StatusNotFound)
-			}
-
-			data.roleId = role
+	if roleParam, ok := data.params["role_id"]; ok && data.roleId == 0 {
+		role := roleParam.(int64)
+		checkedRole, err := checkRoleFromParam(role, ecosystemID, wallet)
+		if err != nil {
+			return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
 		}
+
+		if checkedRole != role {
+			return errorAPI(w, "E_CHECKROLE", http.StatusNotFound)
+		}
+
+		data.roleId = checkedRole
 	}
 
 	if len(pubkey) == 0 {
@@ -287,4 +272,31 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	notificator.UpdateNotifications(ecosystemID, []int64{wallet})
 
 	return nil
+}
+
+func checkRoleFromParam(role, ecosystemID, wallet int64) (int64, error) {
+	if role > 0 {
+		ok, err := model.MemberHasRole(nil, ecosystemID, wallet, role)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"type":      consts.DBError,
+				"member":    wallet,
+				"role":      role,
+				"ecosystem": ecosystemID}).Error("check role")
+
+			return 0, err
+		}
+
+		if !ok {
+			log.WithFields(log.Fields{
+				"type":      consts.NotFound,
+				"member":    wallet,
+				"role":      role,
+				"ecosystem": ecosystemID,
+			}).Error("member hasn't role")
+
+			return 0, nil
+		}
+	}
+	return role, nil
 }
