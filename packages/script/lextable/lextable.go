@@ -81,7 +81,8 @@ var (
 			"<>!": ["oneq", "", "push next"],
 			"*+-": ["main", "oper", "next"],
 			"01": ["number", "", "push next"],
-			"@$a_r": ["ident", "", "push next"],
+			"a_r": ["ident", "", "push next"],
+			"@$": ["mustident", "", "push next"],
 			".": ["dot", "", "push next"],
 			"d": ["error", "", ""]
 		},
@@ -135,6 +136,10 @@ var (
 			"01a_r": ["ident", "", "next"],
 			"d": ["main", "ident", "pop"]
 		},
+	"mustident": {
+		"01a_r": ["ident", "", "next"],
+		"d": ["error", "", ""]
+	},		
 	"comment": {
 			"*": ["comstop", "", "next"],
 			"d": ["comment", "", "next"]

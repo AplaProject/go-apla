@@ -476,7 +476,7 @@ func TestContractList(t *testing.T) {
 			`demo_сontract,another_contract,main`},
 	}
 	for _, item := range test {
-		list := ContractsList(item.Input)
+		list, _ := ContractsList(item.Input)
 		if strings.Join(list, `,`) != item.Output {
 			t.Error(`wrong names`, strings.Join(list, `,`))
 			break
