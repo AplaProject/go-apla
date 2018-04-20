@@ -953,6 +953,13 @@ func ValueToInt(v interface{}) (ret int64, err error) {
 		ret, err = strconv.ParseInt(val, 10, 64)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting value from string to int")
+			errText := err.Error()
+			if strings.Contains(errText, `:`) {
+				errText = errText[strings.LastIndexByte(errText, ':'):]
+			} else {
+				errText = ``
+			}
+			err = fmt.Errorf(`%s is not a valid integer %s`, val, errText)
 		}
 	}
 	return
