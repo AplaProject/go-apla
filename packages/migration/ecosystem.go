@@ -81,7 +81,10 @@ MenuItem(
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 		  "value" text NOT NULL DEFAULT '',
 		  "menu" character varying(255) NOT NULL DEFAULT '',
-		  "conditions" text NOT NULL DEFAULT ''
+		  "conditions" text NOT NULL DEFAULT '',
+		  "validate_count" bigint NOT NULL DEFAULT '1',
+		  "app_id" bigint NOT NULL DEFAULT '0',
+		  "validate_mode" character(1) NOT NULL DEFAULT '0'
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_pages" ADD CONSTRAINT "%[1]d_vde_pages_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_pages_index_name" ON "%[1]d_vde_pages" (name);
@@ -198,7 +201,10 @@ MenuItem(
 			  '{"name": "ContractConditions(\"MainCondition\")",
 		  "value": "ContractConditions(\"MainCondition\")",
 		  "menu": "ContractConditions(\"MainCondition\")",
-		  "conditions": "ContractConditions(\"MainCondition\")"
+		  "conditions": "ContractConditions(\"MainCondition\")",
+		  "validate_count": "ContractConditions(\"MainCondition\")",
+		  "validate_mode": "ContractConditions(\"MainCondition\")",
+		  "app_id": "ContractConditions(\"MainCondition\")"
 			  }', 'ContractAccess("EditTable")'),
 			  ('5', 'blocks', 
 			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
@@ -491,6 +497,7 @@ MenuItem(
 			Conditions string
 			ValidateCount int "optional"
 			ApplicationId int "optional"
+			ValidateMode int "optional"
 		}
 		func preparePageValidateCount(count int) int {
 			var min, max int
@@ -520,7 +527,8 @@ MenuItem(
 			$ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
-			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId)
+			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id,validate_mode", 
+				$Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId, $ValidateMode)
 		}
 		func price() int {
 			return  SysParamInt("page_price")
@@ -531,35 +539,63 @@ MenuItem(
 			Id         int
 			Value      string "optional"
 			Menu      string "optional"
-		  	Conditions string "optional"
+			Conditions string "optional"
+			ValidateCount int "optional"
+			ValidateMode  string "optional"
 		  }
-		  
-		func onlyConditions() bool {
+		  func onlyConditions() bool {
         	return $Conditions && !$Value && !$Menu
-		}
+			}
+		  func preparePageValidateCount(count int) int {
+			  var min, max int
+			  min = Int(EcosysParam("min_page_validate_count"))
+			  max = Int(EcosysParam("max_page_validate_count"))
+	  
+			  if count < min {
+				  count = min
+			  } else {
+				  if count > max {
+					  count = max
+				  }
+			  }
+	  
+			  return count
+		  }					  
 	  	conditions {
 		  RowConditions("pages", $Id, onlyConditions())
 		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
+		  $ValidateCount = preparePageValidateCount($ValidateCount)
 	  	}
 	  	action {
-		  var pars, vals array
-		  if $Value {
-			  pars[0] = "value"
-			  vals[0] = $Value
-		  }
-		  if $Menu {
-			  pars[Len(pars)] = "menu"
-			  vals[Len(vals)] = $Menu
-		  }
-		  if $Conditions {
-			  pars[Len(pars)] = "conditions"
-			  vals[Len(vals)] = $Conditions
-		  }
-		  if Len(vals) > 0 {
-			  DBUpdate("pages", $Id, Join(pars, ","), vals...)
-		  }
+			var pars, vals array
+			if $Value {
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Menu {
+				pars[Len(pars)] = "menu"
+				vals[Len(vals)] = $Menu
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if $ValidateCount {
+				pars[Len(pars)] = "validate_count"
+				vals[Len(vals)] = $ValidateCount
+			}
+			if $ValidateMode {
+				if $ValidateMode != "1" {
+					$ValidateMode = "0"
+				}
+				pars[Len(pars)] = "validate_mode"
+				vals[Len(vals)] = $ValidateMode
+			}
+			if Len(vals) > 0 {
+				DBUpdate("pages", $Id, Join(pars, ","), vals...)
+			}
 	  	}		  
 	  }', 'ContractConditions("MainCondition")'),
 	  ('11','AppendPage','contract AppendPage {
@@ -1015,7 +1051,8 @@ MenuItem(
 			"menu" character varying(255) NOT NULL DEFAULT '',
 			"validate_count" bigint NOT NULL DEFAULT '1',
 			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '0'
+			"app_id" bigint NOT NULL DEFAULT '0',
+			"validate_mode" character(1) NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
@@ -1195,6 +1232,8 @@ MenuItem(
 			"value": "ContractConditions(\"MainCondition\")",
 			"menu": "ContractConditions(\"MainCondition\")",
 			"validate_count": "ContractConditions(\"MainCondition\")",
+			"validate_mode": "ContractConditions(\"MainCondition\")",
+			"app_id": "ContractConditions(\"MainCondition\")",
 			"conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractAccess("@1EditTable")'),
 				('7', 'blocks', 
@@ -1877,6 +1916,7 @@ MenuItem(
 			Conditions string
 			ValidateCount int "optional"
 			ApplicationId int "optional"
+			ValidateMode  int "optional"
 		}
 		func preparePageValidateCount(count int) int {
 			var min, max int
@@ -1906,7 +1946,8 @@ MenuItem(
 			$ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
-			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId)
+			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id,validate_mode", 
+				$Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId, $ValidateMode)
 		}
 		func price() int {
 			return  SysParamInt("page_price")
@@ -1918,13 +1959,12 @@ MenuItem(
 			Value      string "optional"
 			Menu      string "optional"
 			Conditions string "optional"
-      		ValidateCount int "optional"
+			ValidateCount int "optional"
+			ValidateMode  string "optional"
 		}
-
 		func onlyConditions() bool {
 			return $Conditions && !$Value && !$Menu && !$ValidateCount 
 		}
-
 		func preparePageValidateCount(count int) int {
 			var min, max int
 			min = Int(EcosysParam("min_page_validate_count"))
@@ -1961,10 +2001,17 @@ MenuItem(
 				pars[Len(pars)] = "conditions"
 				vals[Len(vals)] = $Conditions
 			}
-      if $ValidateCount {
+			if $ValidateCount {
 				pars[Len(pars)] = "validate_count"
 				vals[Len(vals)] = $ValidateCount
-      }
+			}
+			if $ValidateMode {
+				if $ValidateMode != "1" {
+					$ValidateMode = "0"
+				}
+				pars[Len(pars)] = "validate_mode"
+				vals[Len(vals)] = $ValidateMode
+			}
 			if Len(vals) > 0 {
 				DBUpdate("pages", $Id, Join(pars, ","), vals...)
 			}
