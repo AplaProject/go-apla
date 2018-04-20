@@ -365,12 +365,10 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 			if i < len(*params) {
 				val := strings.TrimSpace(string((*params)[i]))
 				off := strings.IndexByte(val, ':')
-				if off != -1 {
-					if strings.Contains(curFunc.Params, `#`+val[:off]) {
-						pars[`#`+val[:off]] = trim(val[off+1:], val[:off] != `Data`)
-					} else if strings.Contains(curFunc.Params, val[:off]) {
-						pars[val[:off]] = trim(val[off+1:], val[:off] != `Data`)
-					}
+				if off != -1 && strings.Contains(curFunc.Params, `#`+val[:off]) {
+					pars[`#`+val[:off]] = trim(val[off+1:], val[:off] != `Data`)
+				} else if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
+					pars[val[:off]] = trim(val[off+1:], val[:off] != `Data`)
 				} else {
 					pars[v] = val
 				}
