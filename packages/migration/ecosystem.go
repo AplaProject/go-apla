@@ -1291,8 +1291,6 @@ MenuItem(
 						"data":"ContractAccess(\"UploadBinary\")",
 						"name":"false",
 						"app_id":"false"}',
-					'{"insert":"ContractAccess(\"UploadBinary\")","update":"ContractConditions(\"MainCondition\")","new_column":"ContractConditions(\"MainCondition\")"}',
-					'{"hash":"ContractAccess(\"UploadBinary\")","member_id":"false","data":"ContractAccess(\"UploadBinary\")","name":"false","app_id":"false"}',
 					'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
