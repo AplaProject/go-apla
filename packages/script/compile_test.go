@@ -70,17 +70,6 @@ func Money(v interface{}) (ret decimal.Decimal) {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
-		{`func result string {
-			  var arr array
-			  var mymap map
-			  arr[100000] = 0
-			  var i int
-			  while i < 100 {
-				  mymap[str(i)] = 10
-				  i = i + 1
-			  }
-			  return Sprintf("%T %[1]v", .21 + 1.44)
-			}`, `result`, `float64 1.65`},
 		{`contract sets {
 			settings {
 				val = 1.56
