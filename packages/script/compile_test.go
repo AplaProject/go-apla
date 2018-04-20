@@ -175,6 +175,13 @@ func TestVMCompile(t *testing.T) {
 							}
 						}
 						`, `mytest.init`, `OK`},
+		{`func money_test string {
+					var my2, m1 money
+					my2 = 100
+					m1 = 1.2
+					return Sprintf( "Account %v %v", my2 - Money(5.6), m1*Money(5) + Money(my2))
+				}`, `money_test`, `Account 94.4 106`},
+
 		{`func line_test string {
 						return "Start " +
 						Sprintf( "My String %s %d %d",
@@ -449,6 +456,7 @@ func TestVMCompile(t *testing.T) {
 					break
 				}
 			} else if err.Error() != item.Output {
+				fmt.Println(item.Output)
 				t.Error(err)
 				break
 			}
