@@ -2646,6 +2646,6 @@ MenuItem(
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")', 1);
 	
-	INSERT INTO "1_applications" (id, name, conditions)
-	VALUES(1, 'System', 'ContractConditions("MainCondition")');`
+	INSERT INTO "1_applications (id, name, uuid, conditions, deleted)
+	VALUES(1, 'System', '00000000-0000-0000-0000-000000000000', 'ContractConditions("MainCondition")', 0);`
 )
