@@ -420,7 +420,7 @@ func TestVMCompile(t *testing.T) {
 				my2 = 100
 				m1 = 1.2
 				return Sprintf( "Account %v %v %v", my2/Money(3),  my2 - Money(5.6), m1*Money(5) + Money(my2))
-			}`, `money_test`, `Account 33 94 105`},
+			}`, `money_test`, `Account 33 95 105`},
 	}
 	vm := NewVM()
 	vm.Extern = true

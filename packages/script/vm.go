@@ -317,13 +317,13 @@ func ValueToFloat(v interface{}) (ret float64) {
 func ValueToDecimal(v interface{}) (ret decimal.Decimal, err error) {
 	switch val := v.(type) {
 	case float64:
-		ret = decimal.NewFromFloat(val).Round(0)
+		ret = decimal.NewFromFloat(val).Floor()
 	case string:
 		ret, err = decimal.NewFromString(val)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting value from string to decimal")
 		} else {
-			ret = ret.Round(0)
+			ret = ret.Floor()
 		}
 	case int64:
 		ret = decimal.New(val, 0)
@@ -832,7 +832,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					if top[0].(decimal.Decimal).Cmp(decimal.New(0, 0)) == 0 {
 						return 0, errUnsupportedType
 					}
-					bin = top[1].(decimal.Decimal).Div(top[0].(decimal.Decimal)).Round(0)
+					bin = top[1].(decimal.Decimal).Div(top[0].(decimal.Decimal)).Floor()
 				} else {
 					return 0, errUnsupportedType
 				}
