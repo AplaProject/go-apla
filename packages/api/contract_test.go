@@ -83,7 +83,7 @@ var contracts = []smartContract{
 					info Int("123456789101112131415161718192021222324252627282930")
 				}
 			}`, []smartParams{
-		{nil, map[string]string{`error`: `{"type":"panic","error":"strconv.ParseInt: parsing \"123456789101112131415161718192021222324252627282930\": value out of range"}`}},
+		{nil, map[string]string{`error`: `{"type":"panic","error":"123456789101112131415161718192021222324252627282930 is not a valid integer : value out of range"}`}},
 	}},
 	{`CheckFloat`, `contract CheckFloat {
 			action {
