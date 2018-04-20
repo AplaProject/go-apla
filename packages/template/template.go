@@ -370,8 +370,12 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 			if i < len(*params) {
 				val := strings.TrimSpace(string((*params)[i]))
 				off := strings.IndexByte(val, ':')
-				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
-					pars[val[:off]] = trim(val[off+1:], val[:off] != `Data`)
+				if off != -1 {
+					if strings.Contains(curFunc.Params, `#`+val[:off]) {
+						pars[`#`+val[:off]] = trim(val[off+1:], val[:off] != `Data`)
+					} else if strings.Contains(curFunc.Params, val[:off]) {
+						pars[val[:off]] = trim(val[off+1:], val[:off] != `Data`)
+					}
 				} else {
 					pars[v] = val
 				}
@@ -418,7 +422,9 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 	for key, v := range parFunc.Node.Attr {
 		switch attr := v.(type) {
 		case string:
-			parFunc.Node.Attr[key] = macro(attr, workspace.Vars)
+			if !strings.HasPrefix(key, `#`) {
+				parFunc.Node.Attr[key] = macro(attr, workspace.Vars)
+			}
 		case map[string]interface{}:
 			for parkey, parval := range attr {
 				switch parmap := parval.(type) {
@@ -439,6 +445,15 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 						}
 					}
 				}
+			}
+		}
+	}
+	for key, v := range parFunc.Node.Attr {
+		switch attr := v.(type) {
+		case string:
+			if strings.HasPrefix(key, `#`) {
+				parFunc.Node.Attr[key[1:]] = attr
+				delete(parFunc.Node.Attr, key)
 			}
 		}
 	}
