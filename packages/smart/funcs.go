@@ -175,7 +175,9 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetContractById":      GetContractById,
 		"HMac":                 HMac,
 		"Join":                 Join,
-		"JSONToMap":            JSONToMap,
+		"JSONToMap":            JSONDecode, // Deprecated
+		"JSONDecode":           JSONDecode,
+		"JSONEncode":           JSONEncode,
 		"IdToAddress":          IDToAddress,
 		"Int":                  Int,
 		"IsObject":             IsObject,

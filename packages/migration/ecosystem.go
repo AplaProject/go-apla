@@ -726,7 +726,7 @@ MenuItem(
 			Data string
 		}
 		conditions {
-			$list = JSONToMap($Data)
+			$list = JSONDecode($Data)
 		}
 		func ImportList(row array, cnt string) {
 			if !row {
@@ -2210,7 +2210,7 @@ MenuItem(
 			Data string
 		}
 		conditions {
-			$list = JSONToMap($Data)
+			$list = JSONDecode($Data)
 		}
 		func ImportList(row array, cnt string) {
 			if !row {
