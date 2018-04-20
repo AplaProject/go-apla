@@ -153,23 +153,21 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	if r, ok := data.params["role_id"]; ok {
 		role := r.(int64)
 		if role > 0 {
-			getRoleErrorFields := func() log.Fields {
-				return log.Fields{
-					"type":      consts.DBError,
-					"member":    wallet,
-					"role":      role,
-					"ecosystem": ecosystemID}
-			}
+			requestLogger := logger.WithFields(log.Fields{
+				"type":      consts.DBError,
+				"member":    wallet,
+				"role":      role,
+				"ecosystem": ecosystemID})
 
 			ok, err := model.MemberHasRole(nil, ecosystemID, wallet, role)
 			if err != nil {
-				logger.WithFields(getRoleErrorFields()).Error("check role")
+				requestLogger.Error("check role")
 
 				return errorAPI(w, "E_CHECKROLE", http.StatusInternalServerError)
 			}
 
 			if !ok {
-				logger.WithFields(getRoleErrorFields()).Error("member hasn't role")
+				requestLogger.Error("member hasn't role")
 
 				return errorAPI(w, "E_CHECKROLE", http.StatusNotFound)
 			}
