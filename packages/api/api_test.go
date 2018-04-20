@@ -17,12 +17,14 @@
 package api
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -35,6 +37,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
+
+const apiAddress = "http://localhost:7079"
 
 var (
 	gAuth             string
@@ -67,7 +71,7 @@ func sendRawRequest(rtype, url string, form *url.Values) ([]byte, error) {
 	if form != nil {
 		ioform = strings.NewReader(form.Encode())
 	}
-	req, err := http.NewRequest(rtype, `http://localhost:7079`+consts.ApiPath+url, ioform)
+	req, err := http.NewRequest(rtype, apiAddress+consts.ApiPath+url, ioform)
 	if err != nil {
 		return nil, err
 	}
@@ -235,11 +239,15 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 	if err != nil {
 		return
 	}
+
+	form = &url.Values{}
 	if err = appendSign(ret, form); err != nil {
 		return
 	}
+	requestID := ret["request_id"].(string)
+
 	ret = map[string]interface{}{}
-	err = sendPost(`contract/`+txname, form, &ret)
+	err = sendPost(`contract/`+requestID, form, &ret)
 	if err != nil {
 		return
 	}
@@ -300,4 +308,85 @@ func TestGetAvatar(t *testing.T) {
 	mime := resp.Header.Get("Content-Type")
 	expectedMime := "image/png"
 	assert.Equal(t, expectedMime, mime, "content type must be a '%s' but returns '%s'", expectedMime, mime)
+}
+
+func postTxMultipart(txname string, params map[string]string, files map[string][]byte) (id int64, msg string, err error) {
+	ret := make(map[string]interface{})
+	if err = sendMultipart("/prepare/"+txname, params, files, &ret); err != nil {
+		return
+	}
+
+	form := url.Values{}
+	if err = appendSign(ret, &form); err != nil {
+		return
+	}
+	requestID := ret["request_id"].(string)
+
+	ret = make(map[string]interface{})
+	err = sendPost(`contract/`+requestID, &form, &ret)
+	if err != nil {
+		return
+	}
+
+	id, err = waitTx(ret[`hash`].(string))
+	if id != 0 && err != nil {
+		msg = err.Error()
+		err = nil
+	}
+
+	return
+}
+
+func sendMultipart(url string, params map[string]string, files map[string][]byte, v interface{}) error {
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+
+	for key, data := range files {
+		part, err := writer.CreateFormFile(key, key)
+		if err != nil {
+			return err
+		}
+		if _, err := part.Write(data); err != nil {
+			return err
+		}
+	}
+
+	for key, value := range params {
+		if err := writer.WriteField(key, value); err != nil {
+			return err
+		}
+	}
+
+	if err := writer.Close(); err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", apiAddress+consts.ApiPath+url, body)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	if len(gAuth) > 0 {
+		req.Header.Set("Authorization", jwtPrefix+gAuth)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
+	}
+
+	return json.Unmarshal(data, &v)
 }

@@ -64,10 +64,9 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 
 	if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-			if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `crypt`) {
+			if fitem.ContainsTag(script.TagFile) || strings.Contains(fitem.Tags, `crypt`) {
 				continue
-			}
-			if strings.Contains(fitem.Tags, `signature`) && result != nil {
+			} else if strings.Contains(fitem.Tags, `signature`) && result != nil {
 				if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					pref := getPrefix(data)
 					signature := &model.Signature{}

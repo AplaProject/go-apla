@@ -3,6 +3,8 @@ package crypto
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
+	"hash"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	log "github.com/sirupsen/logrus"
@@ -97,4 +99,16 @@ func hashSHA3256(msg []byte) []byte {
 	hash := make([]byte, 64)
 	sha3.ShakeSum256(hash, msg)
 	return hash[:]
+}
+
+func NewHash() hash.Hash {
+	return sha256.New()
+}
+
+func HashHex(input []byte) (string, error) {
+	hash, err := Hash(input)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hash), nil
 }
