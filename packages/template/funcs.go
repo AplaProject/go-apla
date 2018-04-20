@@ -1018,12 +1018,9 @@ func jsontosourceTag(par parFunc) string {
 	cols := []string{`key`, `value`}
 	types := []string{`text`, `text`}
 	var out map[string]interface{}
-	fmt.Println(`Data`, (*par.Pars)[`Data`], par.Workspace.Vars, macro((*par.Pars)[`Data`], par.Workspace.Vars))
 	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON to source")
-		fmt.Println(`ERR`, err)
 	}
-	fmt.Println(`JSON`, out)
 	for key, item := range out {
 		if item == nil {
 			item = ``
