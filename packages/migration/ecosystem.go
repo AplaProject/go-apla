@@ -1011,7 +1011,8 @@ MenuItem(
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"title" character varying(255) NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT ''
+			"conditions" text NOT NULL DEFAULT '',
+			"app_id" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
@@ -2645,6 +2646,6 @@ MenuItem(
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")', 1);
 	
-	INSERT INTO "1_applications (id, name, uuid, conditions, deleted)
-	VALUES(1, 'System', '00000000-0000-0000-0000-000000000000', 'ContractConditions("MainCondition")', 0);`
+	INSERT INTO "1_applications" (id, name, conditions)
+	VALUES(1, 'System', 'ContractConditions("MainCondition")');`
 )
