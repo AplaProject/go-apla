@@ -78,6 +78,16 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`Double`, `contract Double {
+		data {    }
+		conditions {    }
+		action {
+			$$$$$$$$result = "hello"
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"unknown lexem $ [Ln:5 Col:6]"}`}},
+	}},
+
 	{`Price`, `contract Price {
 		action {
 			Test("price", 1)
@@ -121,7 +131,7 @@ var contracts = []smartContract{
 		}},
 	{`DBProblem`, `contract DBProblem {
 		action{
-			DBFind("members").Where("member_name=?", "name")
+			DBFind("members1").Where("member_name=?", "name")
 		}
 	}`,
 		[]smartParams{
