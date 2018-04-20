@@ -153,7 +153,7 @@ MenuItem(
 		DROP TABLE IF EXISTS "%[1]d_vde_binaries";
 		CREATE TABLE "%[1]d_vde_binaries" (
 			"id" bigint NOT NULL DEFAULT '0',
-			"app_id" bigint NOT NULL DEFAULT '0',
+			"app_id" bigint NOT NULL DEFAULT '1',
 			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
@@ -169,7 +169,7 @@ MenuItem(
 	  "permissions" jsonb,
 	  "columns" jsonb,
 	  "conditions" text  NOT NULL DEFAULT '',
-	  "app_id" bigint NOT NULL DEFAULT '0'
+	  "app_id" bigint NOT NULL DEFAULT '1'
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_tables" ADD CONSTRAINT "%[1]d_vde_tables_pkey" PRIMARY KEY ("id");
 	  CREATE INDEX "%[1]d_vde_tables_index_name" ON "%[1]d_vde_tables" (name);
@@ -975,7 +975,7 @@ MenuItem(
 			"title" character varying(255) NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
 			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '0'
+			"app_id" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
@@ -1024,7 +1024,7 @@ MenuItem(
 			"menu" character varying(255) NOT NULL DEFAULT '',
 			"validate_count" bigint NOT NULL DEFAULT '1',
 			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '0'
+			"app_id" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
@@ -1074,7 +1074,7 @@ MenuItem(
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
 			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '0'
+			"app_id" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
@@ -1095,7 +1095,7 @@ MenuItem(
 		"token_id" bigint NOT NULL DEFAULT '1',
 		"active" character(1) NOT NULL DEFAULT '0',
 		"conditions" text  NOT NULL DEFAULT '',
-		"app_id" bigint NOT NULL DEFAULT '0'
+		"app_id" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 		
@@ -1157,7 +1157,7 @@ MenuItem(
 		"permissions" jsonb,
 		"columns" jsonb,
 		"conditions" text  NOT NULL DEFAULT '',
-		"app_id" bigint NOT NULL DEFAULT '0'
+		"app_id" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
@@ -1372,7 +1372,7 @@ MenuItem(
 		DROP TABLE IF EXISTS "%[1]d_binaries";
 		CREATE TABLE "%[1]d_binaries" (
 			"id" bigint NOT NULL DEFAULT '0',
-			"app_id" bigint NOT NULL DEFAULT '0',
+			"app_id" bigint NOT NULL DEFAULT '1',
 			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
@@ -2588,6 +2588,6 @@ MenuItem(
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")', 1);
 	
-	INSERT INTO "1_applications (id, name, uuid, conditions, deleted)
-	VALUES(1, 'System', '00000000-0000-0000-0000-000000000000', 'ContractConditions("MainCondition")', 0);`
+	INSERT INTO "1_applications" (id, name, conditions)
+	VALUES(1, 'System', 'ContractConditions("MainCondition")');`
 )
