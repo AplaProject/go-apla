@@ -1543,12 +1543,8 @@ MenuItem(
 			}
 			var total money
 			$amount = Money($Amount) 
-			if $amount == 0 {
-				error "Amount is zero"
-			}
-
-			if $amount < 0 {
-				error "Amount must be greater then 0"
+			if $amount <= 0 {
+				error "Amount must be greater then zero"
 			}
 
 			var row map
