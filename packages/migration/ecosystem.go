@@ -2548,7 +2548,7 @@ MenuItem(
            	DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
 					$key_id, $newId, $amount, "New user deposit", $block, $txhash)
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")'),
+	}','%[1]d', 'ContractConditions("NodeOwnerCondition")'),
 	('35', 'EditEcosystemName','contract EditEcosystemName {
 		data {
 			EcosystemID int
@@ -2585,6 +2585,21 @@ MenuItem(
 				}
 				i = i + 1
 			}
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('37', 'NodeOwnerCondition', 'contract NodeOwnerCondition {
+		conditions {
+			$full_nodes = JSONDecode(SysParamString("full_nodes"))
+			var i int
+			while i < Len($full_nodes) {
+				$fn = $full_nodes[i]
+				if $fn["key_id"] == $key_id {
+					return true
+				}
+				i = i + 1
+			}
+
+			warning "Sorry, you do not have access to this action."
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")');`
 )
