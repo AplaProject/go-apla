@@ -119,7 +119,7 @@ func ReadRequest(request interface{}, r io.Reader) error {
 			if err != nil {
 				return err
 			}
-			t.SetBool(val[0] == 0)
+			t.SetBool(val[0] == 1)
 		default:
 			log.WithFields(log.Fields{"type": consts.ProtocolError}).Error("unsupported field")
 			panic("unsupported field")
