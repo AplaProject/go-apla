@@ -1,8 +1,20 @@
 package migration
 
 var (
-	// SchemaVDE contains SQL queries for creating vde
-	SchemaVDE = `DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d_vde_languages" (
+	SchemaVDE = `
+		DROP TABLE IF EXISTS "%[1]d_vde_members";
+		CREATE TABLE "%[1]d_vde_members" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"member_name"	varchar(255) NOT NULL DEFAULT '',
+			"image_id"	bigint,
+			"member_info" jsonb
+		);
+		ALTER TABLE ONLY "%[1]d_vde_members" ADD CONSTRAINT "%[1]d_vde_members_pkey" PRIMARY KEY ("id");
+
+		INSERT INTO "%[1]d_vde_members" ("id", "member_name") VALUES('%[2]d', 'founder');
+		INSERT INTO "%[1]d_vde_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
+
+		DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d_vde_languages" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"name" character varying(100) NOT NULL DEFAULT '',
 		"res" text NOT NULL DEFAULT ''
@@ -145,7 +157,8 @@ MenuItem(
 			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
-			"hash" varchar(32) NOT NULL DEFAULT ''
+			"hash" varchar(32) NOT NULL DEFAULT '',
+			"mime_type" varchar(255) NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_vde_binaries" ADD CONSTRAINT "%[1]d_vde_binaries_pkey" PRIMARY KEY (id);
 		CREATE UNIQUE INDEX "%[1]d_vde_binaries_index_app_id_member_id_name" ON "%[1]d_vde_binaries" (app_id, member_id, name);
@@ -212,14 +225,15 @@ MenuItem(
 				"till": "ContractConditions(\"MainCondition\")",
 				  "conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractConditions(\"MainCondition\")'),
-			  ('8', 'statics',
+			  ('8', 'binaries',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
 					"new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"app_id": "ContractConditions(\"MainCondition\")",
 					"member_id": "ContractConditions(\"MainCondition\")",
 					"name": "ContractConditions(\"MainCondition\")",
 					"data": "ContractConditions(\"MainCondition\")",
-					"hash": "ContractConditions(\"MainCondition\")"}',
+					"hash": "ContractConditions(\"MainCondition\")",
+					"mime_type": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")');
 	  
 	  INSERT INTO "%[1]d_vde_contracts" ("id", "name", "value", "conditions") VALUES 
@@ -712,7 +726,7 @@ MenuItem(
 			Data string
 		}
 		conditions {
-			$list = JSONToMap($Data)
+			$list = JSONDecode($Data)
 		}
 		func ImportList(row array, cnt string) {
 			if !row {
@@ -879,8 +893,9 @@ MenuItem(
 	('23', 'UploadBinary', contract UploadBinary {
 		data {
 			Name  string
-			Data  string
+			Data  bytes "file"
 			AppID int
+			DataMimeType string "optional"
 			MemberID int "optional"
 		}
 		conditions {
@@ -890,10 +905,14 @@ MenuItem(
 			var hash string
 			hash = MD5($Data)
 
+			if $DataMimeType == "" {
+				$DataMimeType = "application/octet-stream"
+			}
+
 			if $Id != 0 {
-				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
+				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
 			} else {
-				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
+				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, hash, $DataMimeType)
 			}
 
 			$result = $Id
@@ -1265,7 +1284,8 @@ MenuItem(
 						"member_id": "ContractConditions(\"MainCondition\")",
 						"name": "ContractConditions(\"MainCondition\")",
 						"data": "ContractConditions(\"MainCondition\")",
-						"hash": "ContractConditions(\"MainCondition\")"}',
+						"hash": "ContractConditions(\"MainCondition\")",
+						"mime_type": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
@@ -1338,7 +1358,6 @@ MenuItem(
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
 		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
-		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
 
 		DROP TABLE IF EXISTS "%[1]d_applications";
 		CREATE TABLE "%[1]d_applications" (
@@ -1357,7 +1376,8 @@ MenuItem(
 			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
-			"hash" varchar(32) NOT NULL DEFAULT ''
+			"hash" varchar(32) NOT NULL DEFAULT '',
+			"mime_type" varchar(255) NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
 		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (app_id, member_id, name);
@@ -2190,7 +2210,7 @@ MenuItem(
 			Data string
 		}
 		conditions {
-			$list = JSONToMap($Data)
+			$list = JSONDecode($Data)
 		}
 		func ImportList(row array, cnt string) {
 			if !row {
@@ -2479,11 +2499,12 @@ MenuItem(
 			CallContract($cur["contract"], nil)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('33','UploadBinary','contract UploadBinary {
+	('33', 'UploadBinary', 'contract UploadBinary {
 		data {
 			Name  string
-			Data  string
+			Data  bytes "file"
 			AppID int
+			DataMimeType string "optional"
 			MemberID int "optional"
 		}
 		conditions {
@@ -2493,10 +2514,14 @@ MenuItem(
 			var hash string
 			hash = MD5($Data)
 
+			if $DataMimeType == "" {
+				$DataMimeType = "application/octet-stream"
+			}
+
 			if $Id != 0 {
-				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
+				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
 			} else {
-				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
+				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, hash, $DataMimeType)
 			}
 
 			$result = $Id

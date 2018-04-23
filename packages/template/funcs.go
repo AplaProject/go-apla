@@ -265,6 +265,12 @@ func paramToSource(par parFunc, val string) string {
 	node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
 		`data`: &data, `source`: (*par.Pars)[`Source`]}}
 	par.Owner.Children = append(par.Owner.Children, &node)
+
+	par.Workspace.SetSource((*par.Pars)[`Source`], &Source{
+		Columns: node.Attr[`columns`].(*[]string),
+		Data:    node.Attr[`data`].(*[][]string),
+	})
+
 	return ``
 }
 
@@ -296,7 +302,6 @@ func ecosysparTag(par parFunc) string {
 	}
 	val := sp.Value
 	if len((*par.Pars)[`Source`]) > 0 {
-
 		return paramToSource(par, val)
 	}
 	if len((*par.Pars)[`Index`]) > 0 {
@@ -916,6 +921,7 @@ func ifFull(par parFunc) string {
 func elseifTag(par parFunc) string {
 	cond := ifValue((*par.Pars)[`Condition`], par.Workspace)
 	if cond {
+		process((*par.Pars)[`Body`], par.Node, par.Workspace)
 		for _, item := range par.Node.Children {
 			par.Owner.Children = append(par.Owner.Children, item)
 		}

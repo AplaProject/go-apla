@@ -29,7 +29,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func (h *contractHandlers) nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var err error
 
 	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
@@ -47,18 +47,22 @@ func nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 	}
 	data.params[`signed_by`] = smart.PubToID(NodePublicKey)
 	prepareData := *data
-	if err = prepareContract(w, r, &prepareData, logger); err != nil {
+	if err = h.prepareContract(w, r, &prepareData, logger); err != nil {
 		return err
 	}
-	signature, err := crypto.Sign(NodePrivateKey, prepareData.result.(prepareResult).ForSign)
+	result := prepareData.result.(prepareResult)
+
+	signature, err := crypto.Sign(NodePrivateKey, result.ForSign)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
 		return err
 	}
+
+	data.params[`request_id`] = result.ID
 	data.params[`signature`] = signature
 	data.params[`pubkey`] = pubkey
-	data.params[`time`] = prepareData.result.(prepareResult).Time
-	if err = contract(w, r, data, logger); err != nil {
+	data.params[`time`] = result.Time
+	if err = h.contract(w, r, data, logger); err != nil {
 		return err
 	}
 	return nil

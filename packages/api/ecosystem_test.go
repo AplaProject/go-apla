@@ -225,7 +225,7 @@ func TestAppParams(t *testing.T) {
 
 	form = url.Values{"Value": {`contract ` + rnd + `Par { data {} conditions {} action
 	{ var row map
-		row=JSONToMap(AppParam(1, "` + rnd + `2"))
+		row=JSONDecode(AppParam(1, "` + rnd + `2"))
 	    $result = row["par1"] }
 	}`}, "Conditions": {"true"}}
 	assert.NoError(t, postTx(`NewContract`, &form))
