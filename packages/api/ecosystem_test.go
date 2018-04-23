@@ -236,7 +236,7 @@ func TestAppParams(t *testing.T) {
 
 	forTest := tplList{{`AppParam(` + rnd + `1, 1, Source: myname)`,
 		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","simple string"],["2","index"]],"source":"myname","types":["text","text"]}}]`},
-		{`AppParam(` + rnd + `2, App: 1)`,
+		{`SetVar(myapp, 1)AppParam(` + rnd + `2, App: #myapp#)`,
 			`[{"tag":"text","text":"{"par1":"value 1", "par2":"value 2"}"}]`}}
 	for _, item := range forTest {
 		var ret contentResult
