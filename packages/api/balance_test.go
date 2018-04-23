@@ -19,22 +19,23 @@ package api
 import (
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestBalance(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	err := keyLogin(1)
+	require.NoError(t, err)
+
 	var ret balanceResult
-	err := sendGet(`balance/`+gAddress, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	err = sendGet(`balance/`+gAddress, nil, &ret)
+	require.NoError(t, err)
+
 	if len(ret.Amount) < 10 {
 		t.Error(`too low balance`, ret)
 	}
+
+	expAmountLen := len(ret.Amount)
 	err = sendGet(`balance/3434341`, nil, &ret)
 	if err != nil {
 		t.Error(err)
