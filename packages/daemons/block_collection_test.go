@@ -9,6 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/jinzhu/gorm"
 
 	"io/ioutil"
@@ -69,9 +73,7 @@ func getAndResponse(t *testing.T, l net.Listener, getRequest, sendRequest []byte
 
 func TestChooseBlock(t *testing.T) {
 	l, err := net.Listen("tcp4", "localhost:0")
-	if err != nil {
-		t.Fatalf("can't start daemon: %s", err)
-	}
+	require.NoErrorf(t, err, "can't start daemon: %s", err)
 	defer l.Close()
 
 	var wg sync.WaitGroup
@@ -84,42 +86,24 @@ func TestChooseBlock(t *testing.T) {
 	}()
 
 	host, maxBlockID, err := ChooseBestHost(context.Background(), []string{l.Addr().String()})
-	if err != nil {
-		t.Fatalf("choose best host return: %s", err)
-	}
+	require.NoErrorf(t, err, "choose best host return: %s", err)
+	require.Equal(t, host, l.Addr().String(), "return bad host, want %s, got %s", l.Addr().String(), host)
+	require.Equal(t, 100, maxBlockID, "bad block id: want %d, got %d", 100, maxBlockID)
 
-	if host != l.Addr().String() {
-		t.Errorf("return bad host, want %s, got %s", l.Addr().String(), host)
-	}
-
-	if maxBlockID != 100 {
-		t.Errorf("bad block id: want %d, got %d", 100, maxBlockID)
-	}
 	wg.Wait()
 }
 
 func checkBlock(t *testing.T, id int64) {
 	b := &model.Block{}
-	err := b.GetBlock(1)
-	if err != nil {
-		t.Errorf("get block failed: %s", err)
-	} else {
-		if b.ID != id {
-			t.Errorf("bad blockID want %d, got %d", id, b.ID)
-		}
-	}
+	require.NoErrorf(t, b.GetBlock(1), "get block failed: %s", err)
+	require.Equalf(t, id, b.ID, "bad blockID want %d, got %d", id, b.ID)
 }
 
 func checkInfoBlock(t *testing.T, id int64) {
 	ib := &model.InfoBlock{}
-	err := ib.GetInfoBlock()
-	if err != nil {
-		t.Errorf("can't get info block: %s", err)
-	}
+	require.NoError(t, ib.GetInfoBlock())
 
-	if ib.BlockID != id {
-		t.Errorf("bad info block: want %d, got %d", id, ib.BlockID)
-	}
+	require.Equalf(t, id, ib.BlockID, "bad info block: want %d, got %d", id, ib.BlockID)
 }
 
 func TestFirstBlock(t *testing.T) {
@@ -127,11 +111,8 @@ func TestFirstBlock(t *testing.T) {
 	g := initGorm(t)
 	defer g.Close()
 
-	err := loadFirstBlock()
-	if err != nil {
-		t.Errorf("loadFirstBlock return error: %s", err)
-	}
-
+	entry := logrus.WithFields(logrus.Fields{"type": "test"})
+	require.NoError(t, loadFirstBlock(entry), "loadFirstBlock return error:")
 	checkBlock(t, 1)
 	checkInfoBlock(t, 1)
 
@@ -149,10 +130,7 @@ func TestLoadFromFile(t *testing.T) {
 		t.Fatalf("can't write to file: %s", err)
 	}
 
-	err = loadFromFile(context.Background(), fileName)
-	if err != nil {
-		t.Fatalf("load from file return error: %s", err)
-	}
+	require.NoError(t, loadFromFile(context.Background(), fileName), "load from file return error")
 }
 
 type testDltWallet struct {

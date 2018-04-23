@@ -8,6 +8,8 @@ import (
 	"os"
 	"regexp"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func getTmpFile(t *testing.T) string {
@@ -24,25 +26,20 @@ func TestEmptyFile(t *testing.T) {
 	fileName := getTmpFile(t)
 	defer os.Remove(fileName)
 
-	err := writeNextBlocks(fileName, 1)
-	if err == nil {
-		t.Errorf("should be emty_file error")
-	}
+	require.NoError(t, writeNextBlocks(fileName, 1), "should be emty_file error")
+
 	matched, regErr := regexp.Match("empty blockchain file", []byte(err.Error()))
 	if regErr != nil || !matched {
 		t.Errorf("bad error %s", err)
 	}
 }
+
 func getFirstBlock(t *testing.T) blockData {
 	newBlock, err := static.Asset("static/1block")
-	if err != nil {
-		t.Fatalf("Can't get first block")
-	}
+	require.NoError(t, "Can't get first block")
 
 	block, err := unmarshalBlockData(newBlock)
-	if err != nil {
-		t.Fatalf("readBlock error: %s", err)
-	}
+	require.NoError(t, err, "read block error")
 
 	return block
 }
@@ -50,9 +47,7 @@ func getFirstBlock(t *testing.T) blockData {
 func TestBlockUnmarshal(t *testing.T) {
 	block := getFirstBlock(t)
 
-	if block.ID != 1 {
-		t.Errorf("bad blockID, want 1, got %d", block.ID)
-	}
+	require.Equalf(t, 1, block.ID, "bad blockID, want 1, got %d", block.ID)
 }
 
 func TestLastBlock(t *testing.T) {
@@ -62,19 +57,12 @@ func TestLastBlock(t *testing.T) {
 	defer os.Remove(fileName)
 
 	fileBlockBin := marshallFileBlock(block)
-	err := ioutil.WriteFile(fileName, fileBlockBin, os.ModeAppend)
-	if err != nil {
-		t.Fatalf("can't write to file: %s", err)
-	}
+	require.NoError(t, ioutil.WriteFile(fileName, fileBlockBin, os.ModeAppend), "can't write to file")
 
 	blockID, err := getLastBlockID(fileName)
-	if err != nil {
-		t.Fatalf("can't get last id: %s", err)
-	}
+	require.NoError(t, err, "can't get last id")
 
-	if blockID != 1 {
-		t.Errorf("bad id, want 1, got %d", blockID)
-	}
+	require.Equalf(t, 1, blockI, "bad id, want 1, got %d", blockID)
 }
 
 func addBlockInfo(t *testing.T, blockID int64, db *sql.DB) {
