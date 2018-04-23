@@ -986,7 +986,8 @@ MenuItem(
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(100) NOT NULL DEFAULT '',
 		  "res" text NOT NULL DEFAULT '',
-		  "conditions" text NOT NULL DEFAULT ''
+		  "conditions" text NOT NULL DEFAULT '',
+		  "app_id" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_languages" ADD CONSTRAINT "%[1]d_languages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
@@ -1010,8 +1011,7 @@ MenuItem(
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"title" character varying(255) NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '1'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
