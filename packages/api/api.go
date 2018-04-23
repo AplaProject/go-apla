@@ -242,7 +242,6 @@ func fillToken(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 func fillParams(params map[string]int) apiHandle {
 	return func(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 		// Getting and validating request parameters
-		r.ParseForm()
 		vde := r.FormValue(`vde`)
 		if vde == `1` || vde == `true` {
 			data.vm = smart.GetVM(true, data.ecosystemId)
