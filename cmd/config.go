@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"strings"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,6 +32,11 @@ var configCmd = &cobra.Command{
 			configPath = filepath.Join(conf.Config.DataDir, consts.DefaultConfigFile)
 		}
 
+		err = viper.Unmarshal(&conf.Config)
+		if err != nil {
+			log.WithError(err).Fatal("Marshalling config to global struct variable")
+		}
+
 		err = conf.SaveConfig(configPath)
 		if err != nil {
 			log.WithError(err).Fatal("Saving config")
@@ -40,6 +47,10 @@ var configCmd = &cobra.Command{
 }
 
 func init() {
+	viper.SetEnvPrefix("GENESIS")
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
 	// Command flags
 	configCmd.Flags().String("path", "", "Generate config to (default dataDir/config.toml)")
 
@@ -82,11 +93,11 @@ func init() {
 	viper.BindPFlag("Centrifugo.URL", configCmd.Flags().Lookup("centUrl"))
 
 	// Log
-	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogTo, "logTo", "stdout", "Send logs to stdout|(filename)|syslog")
-	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogLevel, "verbosity", "ERROR", "Log verbosity (DEBUG | INFO | WARN | ERROR)")
-	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogFormat, "logFormat", "text", "log format, could be text|json")
-	configCmd.Flags().StringVar(&conf.Config.LogConfig.Syslog.Facility, "syslogFacility", "kern", "syslog facility")
-	configCmd.Flags().StringVar(&conf.Config.LogConfig.Syslog.Tag, "syslogTag", "go-genesis", "syslog program tag")
+	configCmd.Flags().StringVar(&conf.Config.Log.LogTo, "logTo", "stdout", "Send logs to stdout|(filename)|syslog")
+	configCmd.Flags().StringVar(&conf.Config.Log.LogLevel, "verbosity", "ERROR", "Log verbosity (DEBUG | INFO | WARN | ERROR)")
+	configCmd.Flags().StringVar(&conf.Config.Log.LogFormat, "logFormat", "text", "log format, could be text|json")
+	configCmd.Flags().StringVar(&conf.Config.Log.Syslog.Facility, "syslogFacility", "kern", "syslog facility")
+	configCmd.Flags().StringVar(&conf.Config.Log.Syslog.Tag, "syslogTag", "go-genesis", "syslog program tag")
 	viper.BindPFlag("Log.LogTo", configCmd.Flags().Lookup("logTo"))
 	viper.BindPFlag("Log.Verbosity", configCmd.Flags().Lookup("verbosity"))
 	viper.BindPFlag("Log.LogFormat", configCmd.Flags().Lookup("logFormat"))

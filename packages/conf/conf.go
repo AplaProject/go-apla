@@ -55,7 +55,7 @@ type Syslog struct {
 	Tag      string
 }
 
-// LogConfig represents parameters of log
+// Log represents parameters of log
 type LogConfig struct {
 	LogTo     string
 	LogLevel  string
@@ -99,7 +99,7 @@ type GlobalConfig struct {
 	DB            DBConfig
 	StatsD        StatsDConfig
 	Centrifugo    CentrifugoConfig
-	LogConfig     LogConfig
+	Log           LogConfig
 	TokenMovement TokenMovementConfig
 
 	NodesAddr []string

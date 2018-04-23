@@ -78,18 +78,18 @@ func killOld() {
 }
 
 func initLogs() error {
-	switch conf.Config.LogConfig.LogFormat {
+	switch conf.Config.Log.LogFormat {
 	case "json":
 		log.SetFormatter(&log.JSONFormatter{})
 	default:
 		log.SetFormatter(&log.TextFormatter{})
 	}
-	switch conf.Config.LogConfig.LogTo {
+	switch conf.Config.Log.LogTo {
 	case "stdout":
 		log.SetOutput(os.Stdout)
 	case "syslog":
-		facility := conf.Config.LogConfig.Syslog.Facility
-		tag := conf.Config.LogConfig.Syslog.Tag
+		facility := conf.Config.Log.Syslog.Facility
+		tag := conf.Config.Log.Syslog.Tag
 		sysLogHook, err := logtools.NewSyslogHook(tag, facility)
 		if err != nil {
 			log.WithError(err).Error("initializing syslog hook")
@@ -97,7 +97,7 @@ func initLogs() error {
 			log.AddHook(sysLogHook)
 		}
 	default:
-		fileName := filepath.Join(conf.Config.DataDir, conf.Config.LogConfig.LogTo)
+		fileName := filepath.Join(conf.Config.DataDir, conf.Config.Log.LogTo)
 		openMode := os.O_APPEND
 		if _, err := os.Stat(fileName); os.IsNotExist(err) {
 			openMode = os.O_CREATE
@@ -111,7 +111,7 @@ func initLogs() error {
 		log.SetOutput(f)
 	}
 
-	switch conf.Config.LogConfig.LogLevel {
+	switch conf.Config.Log.LogLevel {
 	case "DEBUG":
 		log.SetLevel(log.DebugLevel)
 	case "INFO":
