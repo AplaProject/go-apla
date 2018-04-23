@@ -1973,11 +1973,9 @@ MenuItem(
 			ValidateCount int "optional"
 			ValidateMode  string "optional"
 		}
-
 		func onlyConditions() bool {
 			return $Conditions && !$Value && !$Menu && !$ValidateCount 
 		}
-
 		func preparePageValidateCount(count int) int {
 			var min, max int
 			min = Int(EcosysParam("min_page_validate_count"))
