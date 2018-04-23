@@ -100,6 +100,7 @@ var (
 	},		
 	"dot": {
 		".": ["ddot", "", "next"],
+		"01": ["number", "", "next"],
 		"d": ["main", "sys", "pop"]
 	},
 	"ddot": {
@@ -139,7 +140,7 @@ var (
 	"mustident": {
 		"01a_r": ["ident", "", "next"],
 		"d": ["error", "", ""]
-	},		
+	},
 	"comment": {
 			"*": ["comstop", "", "next"],
 			"d": ["comment", "", "next"]
