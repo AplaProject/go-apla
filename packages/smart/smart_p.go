@@ -547,7 +547,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 		`notifications`,
 		`applications`,
 		`binaries`,
-		`app_param`,
+		`app_params`,
 	}
 
 	if rollbackTx.TableID == "1" {
