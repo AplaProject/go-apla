@@ -763,7 +763,12 @@ func customTag(par parFunc) string {
 func tailTag(par parFunc) string {
 	setAllAttr(par)
 	for key, v := range par.Node.Attr {
-		par.Owner.Attr[key] = v
+		switch v.(type) {
+		case string:
+			par.Owner.Attr[key] = macro(v.(string), par.Workspace.Vars)
+		default:
+			par.Owner.Attr[key] = v
+		}
 	}
 	return ``
 }
