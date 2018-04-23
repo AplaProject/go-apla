@@ -278,7 +278,7 @@ func Str(v interface{}) (ret string) {
 }
 
 // Money converts the value into a numeric type for money
-func Money(v interface{}) (ret decimal.Decimal) {
+func Money(v interface{}) (decimal.Decimal, error) {
 	return script.ValueToDecimal(v)
 }
 
@@ -456,6 +456,9 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, err
 	}
 
+	// because of we need to know which ecosystem to rollback.
+	// All tables will be deleted so it's no need to rollback data from tables
+	sc.Rollback = true
 	if _, _, err := DBInsert(sc, "@1_ecosystems", "id,name", id, name); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert new ecosystem to stat table")
 		return 0, err
@@ -544,7 +547,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 		`notifications`,
 		`applications`,
 		`binaries`,
-		`app_param`,
+		`app_params`,
 	}
 
 	if rollbackTx.TableID == "1" {
@@ -727,20 +730,6 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	return nil
 }
 
-// JSONToMap is converting json to map
-func JSONToMap(input string) (map[string]interface{}, error) {
-	var ret map[string]interface{}
-	if len(input) == 0 {
-		return make(map[string]interface{}), nil
-	}
-	err := json.Unmarshal([]byte(input), &ret)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling json to map")
-		return nil, err
-	}
-	return ret, nil
-}
-
 // RollbackContract performs rollback for the contract
 func RollbackContract(sc *SmartContract, name string) error {
 	if !accessContracts(sc, nNewContract, nImport) {
@@ -838,4 +827,25 @@ func RollbackEditContract(sc *SmartContract) error {
 			converter.StrToInt64(fields["wallet_id"]))
 	}
 	return nil
+}
+
+// JSONDecode converts json string to object
+func JSONDecode(input string) (interface{}, error) {
+	var ret interface{}
+	err := json.Unmarshal([]byte(input), &ret)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling json")
+		return nil, err
+	}
+	return ret, nil
+}
+
+// JSONEncode converts object to json string
+func JSONEncode(input interface{}) (string, error) {
+	b, err := json.Marshal(input)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling json")
+		return "", err
+	}
+	return string(b), nil
 }

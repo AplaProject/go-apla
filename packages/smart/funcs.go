@@ -133,6 +133,8 @@ var (
 		"signatures": "changing_signature",
 		"contracts":  "changing_contracts",
 		"blocks":     "changing_blocks",
+		"languages":  "changing_language",
+		"tables":     "changing_tables",
 	}
 )
 
@@ -173,7 +175,9 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetContractById":      GetContractById,
 		"HMac":                 HMac,
 		"Join":                 Join,
-		"JSONToMap":            JSONToMap,
+		"JSONToMap":            JSONDecode, // Deprecated
+		"JSONDecode":           JSONDecode,
+		"JSONEncode":           JSONEncode,
 		"IdToAddress":          IDToAddress,
 		"Int":                  Int,
 		"IsObject":             IsObject,
@@ -215,6 +219,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"EditEcosysName":       EditEcosysName,
 		"GetColumnType":        GetColumnType,
 		"GetType":              GetType,
+		"AllowChangeCondition": AllowChangeCondition,
+		"StringToBytes":        StringToBytes,
 	}
 
 	switch vt {
@@ -329,13 +335,13 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 	return true, nil
 }
 
-func contractsList(value string) []interface{} {
-	list := script.ContractsList(value)
+func contractsList(value string) ([]interface{}, error) {
+	list, err := script.ContractsList(value)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
 		result[i] = reflect.ValueOf(list[i]).Interface()
 	}
-	return result
+	return result, err
 }
 
 // CreateTable is creating smart contract table
@@ -972,8 +978,17 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 	return sc.AccessTable(tblName, "new_column")
 }
 
+// AllowChangeCondition check acces to change condition throught supper contract
+func AllowChangeCondition(sc *SmartContract, tblname string) error {
+	if param, ok := tableParamConditions[tblname]; ok {
+		return sc.AccessRights(param, false)
+	}
+
+	return nil
+}
+
 // RowConditions checks conditions for table row by id
-func RowConditions(sc *SmartContract, tblname string, id int64) error {
+func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bool) error {
 	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
 	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
 	if err != nil {
@@ -986,12 +1001,9 @@ func RowConditions(sc *SmartContract, tblname string, id int64) error {
 		return fmt.Errorf("Item %d has not been found", id)
 	}
 
-	err = Eval(sc, condition)
-	if err != nil {
-		if err == errAccessDenied {
-			if param, ok := tableParamConditions[tblname]; ok {
-				return sc.AccessRights(param, false)
-			}
+	if err := Eval(sc, condition); err != nil {
+		if err == errAccessDenied && conditionOnly {
+			return AllowChangeCondition(sc, tblname)
 		}
 
 		return err
@@ -1315,9 +1327,22 @@ func EncodeBase64(input string) (out string) {
 }
 
 // MD5 returns md5 hash sum of data
-func MD5(data string) string {
-	hash := md5.Sum([]byte(data))
-	return hex.EncodeToString(hash[:])
+func MD5(data interface{}) (string, error) {
+	var b []byte
+
+	switch v := data.(type) {
+	case []uint8:
+		b = []byte(v)
+	case string:
+		b = []byte(v)
+	default:
+		err := fmt.Errorf("Unsupported type %T", v)
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting to bytes")
+		return "", err
+	}
+
+	hash := md5.Sum(b)
+	return hex.EncodeToString(hash[:]), nil
 }
 
 // GetColumnType returns the type of the column
@@ -1330,4 +1355,9 @@ func GetType(val interface{}) string {
 		return `nil`
 	}
 	return reflect.TypeOf(val).String()
+}
+
+// StringToBytes converts string to bytes
+func StringToBytes(src string) []byte {
+	return []byte(src)
 }

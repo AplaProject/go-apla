@@ -1,8 +1,20 @@
 package migration
 
 var (
-	// SchemaVDE contains SQL queries for creating vde
-	SchemaVDE = `DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d_vde_languages" (
+	SchemaVDE = `
+		DROP TABLE IF EXISTS "%[1]d_vde_members";
+		CREATE TABLE "%[1]d_vde_members" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"member_name"	varchar(255) NOT NULL DEFAULT '',
+			"image_id"	bigint,
+			"member_info" jsonb
+		);
+		ALTER TABLE ONLY "%[1]d_vde_members" ADD CONSTRAINT "%[1]d_vde_members_pkey" PRIMARY KEY ("id");
+
+		INSERT INTO "%[1]d_vde_members" ("id", "member_name") VALUES('%[2]d', 'founder');
+		INSERT INTO "%[1]d_vde_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
+
+		DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d_vde_languages" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"name" character varying(100) NOT NULL DEFAULT '',
 		"res" text NOT NULL DEFAULT ''
@@ -145,7 +157,8 @@ MenuItem(
 			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
-			"hash" varchar(32) NOT NULL DEFAULT ''
+			"hash" varchar(32) NOT NULL DEFAULT '',
+			"mime_type" varchar(255) NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_vde_binaries" ADD CONSTRAINT "%[1]d_vde_binaries_pkey" PRIMARY KEY (id);
 		CREATE UNIQUE INDEX "%[1]d_vde_binaries_index_app_id_member_id_name" ON "%[1]d_vde_binaries" (app_id, member_id, name);
@@ -212,14 +225,15 @@ MenuItem(
 				"till": "ContractConditions(\"MainCondition\")",
 				  "conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractConditions(\"MainCondition\")'),
-			  ('8', 'statics',
+			  ('8', 'binaries',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
 					"new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"app_id": "ContractConditions(\"MainCondition\")",
 					"member_id": "ContractConditions(\"MainCondition\")",
 					"name": "ContractConditions(\"MainCondition\")",
 					"data": "ContractConditions(\"MainCondition\")",
-					"hash": "ContractConditions(\"MainCondition\")"}',
+					"hash": "ContractConditions(\"MainCondition\")",
+					"mime_type": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")');
 	  
 	  INSERT INTO "%[1]d_vde_contracts" ("id", "name", "value", "conditions") VALUES 
@@ -299,8 +313,12 @@ MenuItem(
 			  Value      string "optional"
 			  Conditions string "optional"
 		  }
+
+		  func onlyConditions() bool {
+        	return $Conditions && !$Value
+		  }
 		  conditions {
-			RowConditions("contracts", $Id)
+			RowConditions("contracts", $Id, onlyConditions())
 			if $Conditions {
 	    		ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -381,8 +399,11 @@ MenuItem(
 			  Value string
 			  Conditions string
 		  }
+		  func onlyConditions() bool {
+            	return $Conditions && !$Value
+		  }
 		  conditions {
-			  RowConditions("parameters", $Id)
+			  RowConditions("parameters", $Id, onlyConditions())
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
@@ -420,9 +441,13 @@ MenuItem(
 			  Value      string "optional"
 			  Title      string "optional"
 			  Conditions string "optional"
-	  	}
+		  }
+		  
+		func onlyConditions() bool {
+        	return $Conditions && !$Value && !$Title
+		}
 	  	conditions {
-		  RowConditions("menu", $Id)
+		  RowConditions("menu", $Id, onlyConditions())
 		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
@@ -452,7 +477,7 @@ MenuItem(
 			Value  string
 		}
 		conditions {
-			RowConditions("menu", $Id)
+			RowConditions("menu", $Id, false)
 		}
 		action {
 			var row map
@@ -509,9 +534,13 @@ MenuItem(
 			Value      string "optional"
 			Menu      string "optional"
 		  	Conditions string "optional"
-	  	}
+		  }
+		  
+		func onlyConditions() bool {
+        	return $Conditions && !$Value && !$Menu
+		}
 	  	conditions {
-		  RowConditions("pages", $Id)
+		  RowConditions("pages", $Id, onlyConditions())
 		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
@@ -541,7 +570,7 @@ MenuItem(
 			  Value      string
 		  }
 		  conditions {
-			  RowConditions("pages", $Id)
+			  RowConditions("pages", $Id, false)
 		  }
 		  action {
 			  var row map
@@ -571,16 +600,21 @@ MenuItem(
 		}
 	 }', 'ContractConditions("MainCondition")'),
 	  ('13','EditBlock','contract EditBlock {
-		  data {
+		data {
 			Id         int
 			Value      string "optional"
 		  	Conditions string "optional"
-	  		}
+		}
+		
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 	  	conditions {
-		  RowConditions("blocks", $Id)
-		  if $Conditions {
-			  ValidateCondition($Conditions, $ecosystem_id)
-		  }
+			RowConditions("blocks", $Id, onlyConditions())
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
 	  	}
 	  	action {
 		  var pars, vals array
@@ -692,7 +726,7 @@ MenuItem(
 			Data string
 		}
 		conditions {
-			$list = JSONToMap($Data)
+			$list = JSONDecode($Data)
 		}
 		func ImportList(row array, cnt string) {
 			if !row {
@@ -859,8 +893,9 @@ MenuItem(
 	('23', 'UploadBinary', contract UploadBinary {
 		data {
 			Name  string
-			Data  string
+			Data  bytes "file"
 			AppID int
+			DataMimeType string "optional"
 			MemberID int "optional"
 		}
 		conditions {
@@ -870,11 +905,17 @@ MenuItem(
 			var hash string
 			hash = MD5($Data)
 
-			if $Id != 0 {
-				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
-			} else {
-				DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
+			if $DataMimeType == "" {
+				$DataMimeType = "application/octet-stream"
 			}
+
+			if $Id != 0 {
+				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+			} else {
+				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, hash, $DataMimeType)
+			}
+
+			$result = $Id
 		}
 	}', 'ContractConditions("MainCondition")');
 	`
@@ -884,8 +925,8 @@ MenuItem(
 		"pub" bytea  NOT NULL DEFAULT '',
 		"amount" decimal(30) NOT NULL DEFAULT '0',
 		"multi" int NOT NULL DEFAULT '0',
-		"delete" int NOT NULL DEFAULT '0',
-		"block" int NOT NULL DEFAULT '0'
+		"deleted" int NOT NULL DEFAULT '0',
+		"blocked" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
 		
@@ -1097,17 +1138,17 @@ MenuItem(
 		('15','max_page_validate_count', '6', 'ContractConditions("MainCondition")'),
 		('16','changing_blocks', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")');
 
-		DROP TABLE IF EXISTS "%[1]d_app_param";
-		CREATE TABLE "%[1]d_app_param" (
+		DROP TABLE IF EXISTS "%[1]d_app_params";
+		CREATE TABLE "%[1]d_app_params" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"app_id" bigint NOT NULL  DEFAULT '0',
 		"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
 		"conditions" text  NOT NULL DEFAULT ''
 		);
-		ALTER TABLE ONLY "%[1]d_app_param" ADD CONSTRAINT "%[1]d_app_param_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "%[1]d_app_param_index_name" ON "%[1]d_app_param" (name);
-		CREATE INDEX "%[1]d_app_param_index_app" ON "%[1]d_app_param" (app_id);
+		ALTER TABLE ONLY "%[1]d_app_params" ADD CONSTRAINT "%[1]d_app_params_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "%[1]d_app_params_index_name" ON "%[1]d_app_params" (name);
+		CREATE INDEX "%[1]d_app_params_index_app" ON "%[1]d_app_params" (app_id);
 		
 		DROP TABLE IF EXISTS "%[1]d_tables";
 		CREATE TABLE "%[1]d_tables" (
@@ -1133,7 +1174,11 @@ MenuItem(
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"pub": "ContractConditions(\"MainCondition\")",
-				  "amount": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("@1EditTable")'),
+				  "amount": "ContractConditions(\"MainCondition\")",
+				  "deleted": "ContractConditions(\"MainCondition\")",
+				  "blocked": "ContractConditions(\"MainCondition\")",
+				  "multi": "ContractConditions(\"MainCondition\")"}', 
+				'ContractAccess("@1EditTable")'),
 				('3', 'history', 
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1243,7 +1288,8 @@ MenuItem(
 						"member_id": "ContractConditions(\"MainCondition\")",
 						"name": "ContractConditions(\"MainCondition\")",
 						"data": "ContractConditions(\"MainCondition\")",
-						"hash": "ContractConditions(\"MainCondition\")"}',
+						"hash": "ContractConditions(\"MainCondition\")",
+						"mime_type": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
@@ -1316,7 +1362,6 @@ MenuItem(
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
 		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('%[4]d', 'founder');
-		INSERT INTO "%[1]d_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
 
 		DROP TABLE IF EXISTS "%[1]d_applications";
 		CREATE TABLE "%[1]d_applications" (
@@ -1335,7 +1380,8 @@ MenuItem(
 			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
-			"hash" varchar(32) NOT NULL DEFAULT ''
+			"hash" varchar(32) NOT NULL DEFAULT '',
+			"mime_type" varchar(255) NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
 		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (app_id, member_id, name);
@@ -1602,8 +1648,13 @@ MenuItem(
 			Conditions string "optional"
 			WalletId   string "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value && !$WalletId
+		}
+
 		conditions {
-			RowConditions("contracts", $Id)
+			RowConditions("contracts", $Id, onlyConditions())
 			if $Conditions {
 			    ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1744,8 +1795,13 @@ MenuItem(
 			Value string
 			Conditions string
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 		conditions {
-			RowConditions("parameters", $Id)
+			RowConditions("parameters", $Id, onlyConditions())
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
@@ -1784,8 +1840,13 @@ MenuItem(
 			Title      string "optional"
 			Conditions string "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value && !$Title
+		}
+
 		conditions {
-			RowConditions("menu", $Id)
+			RowConditions("menu", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1872,8 +1933,13 @@ MenuItem(
 			Value      string "optional"
 			Menu      string "optional"
 			Conditions string "optional"
-      ValidateCount int "optional"
+      		ValidateCount int "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value && !$Menu && !$ValidateCount 
+		}
+
 		func preparePageValidateCount(count int) int {
 			var min, max int
 			min = Int(EcosysParam("min_page_validate_count"))
@@ -1890,7 +1956,7 @@ MenuItem(
 			return count
 		}		
 		conditions {
-			RowConditions("pages", $Id)
+			RowConditions("pages", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -1925,7 +1991,7 @@ MenuItem(
 			Value      string
 		}
 		conditions {
-			RowConditions("pages", $Id)
+			RowConditions("pages", $Id, false)
 		}
 		action {
 			var value string
@@ -1997,15 +2063,32 @@ MenuItem(
 	('18','EditSign','contract EditSign {
 		data {
 			Id         int
-			Value      string
-			Conditions string
+			Value      string "optional"
+			Conditions string "optional"
+		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value
 		}
 		conditions {
-			RowConditions("signatures", $Id)
-			ValidateCondition($Conditions, $ecosystem_id)
+			RowConditions("signatures", $Id, onlyConditions())
+			if $Conditions {
+				ValidateCondition($Conditions, $ecosystem_id)
+			}
 		}
 		action {
-			DBUpdate("signatures", $Id, "value,conditions", $Value, $Conditions)
+			var pars, vals array
+			if $Value {
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if Len(vals) > 0 {
+				DBUpdate("signatures", $Id, Join(pars, ","), vals...)
+			}
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('19','NewBlock','contract NewBlock {
@@ -2035,8 +2118,13 @@ MenuItem(
 			Value      string "optional"
 			Conditions string "optional"
 		}
+
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 		conditions {
-			RowConditions("blocks", $Id)
+			RowConditions("blocks", $Id, onlyConditions())
 			if $Conditions {
 				ValidateCondition($Conditions, $ecosystem_id)
 			}
@@ -2126,7 +2214,7 @@ MenuItem(
 			Data string
 		}
 		conditions {
-			$list = JSONToMap($Data)
+			$list = JSONDecode($Data)
 		}
 		func ImportList(row array, cnt string) {
 			if !row {
@@ -2289,13 +2377,13 @@ MenuItem(
 				warning "App id cannot equal 0"
 			}
 			var row map
-			row = DBRow("app_param").Columns("id").Where("app_id = ? and name = ?", $App, $Name)
+			row = DBRow("app_params").Columns("id").Where("app_id = ? and name = ?", $App, $Name)
 			if row {
 				warning Sprintf( "App parameter %%s already exists", $Name)
 			}
 		}
 		action {
-			DBInsert("app_param", "app_id,name,value,conditions", $App, $Name, $Value, $Conditions )
+			DBInsert("app_params", "app_id,name,value,conditions", $App, $Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('29','EditAppParam','contract EditAppParam {
@@ -2304,12 +2392,16 @@ MenuItem(
 			Value string
 			Conditions string
 		}
+		func onlyConditions() bool {
+			return $Conditions && !$Value
+		}
+
 		conditions {
-			RowConditions("app_param", $Id)
+			RowConditions("app_params", $Id, onlyConditions())
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
-			DBUpdate("app_param", $Id, "value,conditions", $Value, $Conditions )
+			DBUpdate("app_params", $Id, "value,conditions", $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('30', 'NewDelayedContract','contract NewDelayedContract {
@@ -2411,11 +2503,12 @@ MenuItem(
 			CallContract($cur["contract"], nil)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('33','UploadBinary','contract UploadBinary {
+	('33', 'UploadBinary', 'contract UploadBinary {
 		data {
 			Name  string
-			Data  string
+			Data  bytes "file"
 			AppID int
+			DataMimeType string "optional"
 			MemberID int "optional"
 		}
 		conditions {
@@ -2425,11 +2518,17 @@ MenuItem(
 			var hash string
 			hash = MD5($Data)
 
-			if $Id != 0 {
-				DBUpdate("binaries", $Id, "data,hash", $Data, hash)
-			} else {
-				DBInsert("binaries", "app_id,member_id,name,data,hash", $AppID, $MemberID, $Name, $Data, hash)
+			if $DataMimeType == "" {
+				$DataMimeType = "application/octet-stream"
 			}
+
+			if $Id != 0 {
+				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+			} else {
+				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, hash, $DataMimeType)
+			}
+
+			$result = $Id
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('34', 'NewUser','contract NewUser {

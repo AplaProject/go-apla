@@ -6,16 +6,12 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/tevino/abool"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
-
-// nodePaused is global state represents that node does not generate blocks only collect it
-var nodePaused = abool.New()
 
 var updatingEndWhilePaused = make(chan struct{})
 
@@ -58,10 +54,6 @@ func (n *NodeRelevanceService) Run() {
 			}
 		}
 	}()
-}
-
-func IsNodePaused() bool {
-	return nodePaused.IsSet()
 }
 
 func NodeDoneUpdatingBlockchain() {
@@ -109,9 +101,9 @@ func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
 }
 
 func (n *NodeRelevanceService) pauseNodeActivity() {
-	nodePaused.Set()
+	np.Set(PauseTypeUpdatingBlockchain)
 }
 
 func (n *NodeRelevanceService) resumeNodeActivity() {
-	nodePaused.UnSet()
+	np.Unset()
 }
