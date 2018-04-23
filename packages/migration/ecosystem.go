@@ -1208,16 +1208,16 @@ MenuItem(
 				  "active": "ContractConditions(\"MainCondition\")",
 				  "conditions": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("@1EditTable")'),
 				('2', 'keys', 
-				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+				'{"insert": "true", "update": "true", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"pub": "ContractConditions(\"MainCondition\")",
-				  "amount": "ContractConditions(\"MainCondition\")",
+				  "amount": "true",
 				  "deleted": "ContractConditions(\"MainCondition\")",
 				  "blocked": "ContractConditions(\"MainCondition\")",
 				  "multi": "ContractConditions(\"MainCondition\")"}', 
 				'ContractAccess("@1EditTable")'),
 				('3', 'history', 
-				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+				'{"insert": "true", "update": "true", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"sender_id": "ContractConditions(\"MainCondition\")",
 				  "recipient_id": "ContractConditions(\"MainCondition\")",
@@ -2605,7 +2605,7 @@ MenuItem(
            	DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
 					$key_id, $newId, $amount, "New user deposit", $block, $txhash)
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")'),
+	}','%[1]d', 'ContractConditions("NodeOwnerCondition")'),
 	('35', 'EditEcosystemName','contract EditEcosystemName {
 		data {
 			EcosystemID int
@@ -2643,5 +2643,20 @@ MenuItem(
 				i = i + 1
 			}
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")');`
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('37', 'NodeOwnerCondition', 'contract NodeOwnerCondition {
+		conditions {
+			$full_nodes = JSONDecode(SysParamString("full_nodes"))
+			var i int
+			while i < Len($full_nodes) {
+				$fn = $full_nodes[i]
+				if $fn["key_id"] == $key_id {
+					return true
+				}
+				i = i + 1
+			}
+
+			warning "Sorry, you are not node owner."
+		}
+	}','%[1]d', 'true');`
 )
