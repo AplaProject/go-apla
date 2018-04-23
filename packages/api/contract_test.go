@@ -23,6 +23,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -49,8 +51,7 @@ func TestNewContracts(t *testing.T) {
 					continue
 				}
 			} else {
-				t.Error(err)
-				return
+				assert.NoError(t, err)
 			}
 		}
 		if strings.HasSuffix(item.Name, `testUpd`) {
@@ -303,44 +304,27 @@ func TestEditContracts(t *testing.T) {
 			t.Error(err)
 			return false
 		}
-		if ret.Value != want {
-			t.Error(fmt.Errorf(`%s != %s`, ret.Value, want))
-			return false
-		}
-		return true
+
+		return assert.Equalf(t, want, ret.Value, `%s != %s`, ret.Value, want)
 	}
 
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, keyLogin(1))
+
 	var cntlist contractsResult
-	err := sendGet(`contracts`, nil, &cntlist)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`contracts`, nil, &cntlist))
+
 	var ret getContractResult
-	err = sendGet(`contract/testUpd`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`contract/testUpd`, nil, &ret))
+
 	sid := ret.TableID
 	var row rowResult
-	err = sendGet(`row/contracts/`+sid, nil, &row)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`row/contracts/`+sid, nil, &row))
+
 	code := row.Value[`value`]
 	off := strings.IndexByte(code, '-')
 	newCode := code[:off+1] + time.Now().Format(`2006.01.02`) + code[off+11:]
 	form := url.Values{`Id`: {sid}, `Value`: {newCode}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"01231234123412341230"}}
-	if err := postTx(`EditContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`EditContract`, &form))
 
 	for _, item := range contracts {
 		if !strings.HasSuffix(item.Name, `testUpd`) {
@@ -351,10 +335,8 @@ func TestEditContracts(t *testing.T) {
 			for key, value := range par.Params {
 				form[key] = []string{value}
 			}
-			if err := postTx(item.Name, &form); err != nil {
-				t.Error(err)
-				return
-			}
+			require.NoError(t, postTx(item.Name, &form))
+
 			for key, value := range par.Results {
 				if !wanted(key, value) {
 					return
@@ -373,59 +355,33 @@ func TestActivateContracts(t *testing.T) {
 			t.Error(err)
 			return false
 		}
-		if ret.Value != want {
-			t.Error(fmt.Errorf(`%s != %s`, ret.Value, want))
-			return false
-		}
-		return true
+
+		return assert.Equal(t, want, ret.Value, `%s != %s`, ret.Value, want)
 	}
 
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, keyLogin(1))
+
 	rnd := `rnd` + crypto.RandSeq(6)
 	form := url.Values{`Value`: {`contract ` + rnd + ` {
 		    data {
 				Par string
 			}
 			action { Test("active",  $Par)}}`}, `Conditions`: {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-	var ret getContractResult
-	err := sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if !ret.Active {
-		t.Error(fmt.Errorf(`Not activate ` + rnd))
-	}
-	var row rowResult
-	err = sendGet(`row/contracts/`+ret.TableID, nil, &row)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if row.Value[`active`] != `1` {
-		t.Error(fmt.Errorf(`row not activate ` + rnd))
-	}
 
-	if err := postTx(rnd, &url.Values{`Par`: {rnd}}); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	var ret getContractResult
+	require.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
+	require.NoError(t, postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}))
+	require.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
+
+	assert.True(t, ret.Active, `Not activate `+rnd)
+
+	var row rowResult
+	require.NoError(t, sendGet(`row/contracts/`+ret.TableID, nil, &row))
+	assert.True(t, row.Value[`active`] == `1`, `row not activate `+rnd)
+
+	require.NoError(t, postTx(rnd, &url.Values{`Par`: {rnd}}))
 	if !wanted(`active`, rnd) {
 		return
 	}
@@ -438,7 +394,7 @@ func TestDeactivateContracts(t *testing.T) {
 		return assert.NoError(t, sendPost(`test/`+name, nil, &ret)) && assert.Equal(t, want, ret.Value)
 	}
 
-	assert.NoError(t, keyLogin(1))
+	require.NoError(t, keyLogin(1))
 
 	rnd := `rnd` + crypto.RandSeq(6)
 	form := url.Values{`Value`: {`contract ` + rnd + ` {
@@ -477,24 +433,15 @@ func TestDeactivateContracts(t *testing.T) {
 
 func TestContracts(t *testing.T) {
 
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, keyLogin(1))
 
 	var ret contractsResult
-	err := sendGet(`contracts`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`contracts`, nil, &ret))
 }
 
 func TestSignature(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, keyLogin(1))
+
 	rnd := `rnd` + crypto.RandSeq(6)
 	form := url.Values{`Value`: {`contract ` + rnd + `Transfer {
 		    data {
@@ -505,10 +452,9 @@ func TestSignature(t *testing.T) {
 			action { 
 				$result = "OK " + Str($Amount)
 			}}`}, `Conditions`: {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
 	form = url.Values{`Value`: {`contract ` + rnd + `Test {
 			data {
 				Recipient int "hidden"
@@ -521,25 +467,17 @@ func TestSignature(t *testing.T) {
 			}
 		  }
 		`}, `Conditions`: {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+
+	require.NoError(t, postTx(`NewContract`, &form))
 
 	form = url.Values{`Name`: {rnd + `Transfer`}, `Value`: {`{"title": "Would you like to sign",
 		"params":[
 			{"name": "Receipient", "text": "Wallet"},
 			{"name": "Amount", "text": "Amount(EGS)"}
 			]}`}, `Conditions`: {`true`}}
-	if err := postTx(`NewSign`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-	err := postTx(rnd+`Test`, &url.Values{`Amount`: {`12345`}, `Recipient`: {`98765`}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
+
+	require.NoError(t, postTx(`NewSign`, &form))
+	require.NoError(t, postTx(rnd+`Test`, &url.Values{`Amount`: {`12345`}, `Recipient`: {`98765`}}))
 }
 
 var (
@@ -616,25 +554,16 @@ var (
 )
 
 func TestImport(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, keyLogin(1))
+
 	name := crypto.RandSeq(4)
 	form := url.Values{"Data": {fmt.Sprintf(imp, name)}}
-	err := postTx(`@1Import`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
+	require.NoError(t, postTx(`@1Import`, &form))
 }
 
 func TestEditContracts_ChangeWallet(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, keyLogin(1))
+
 	rnd := `rnd` + crypto.RandSeq(6)
 	code := `contract ` + rnd + ` {
 		data {
@@ -642,69 +571,33 @@ func TestEditContracts_ChangeWallet(t *testing.T) {
 		}
 		action { $result = $par}}`
 	form := url.Values{`Value`: {code}, `Conditions`: {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`NewContract`, &form))
 
 	var ret getContractResult
-	err := sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
+
 	keyID := ret.WalletID
 	sid := ret.TableID
 	var row rowResult
-	err = sendGet(`row/contracts/`+sid, nil, &row)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`row/contracts/`+sid, nil, &row))
 
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {sid}}); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`ActivateContract`, &url.Values{`Id`: {sid}}))
 
 	code = row.Value[`value`]
 	form = url.Values{`Id`: {sid}, `Value`: {code}, `Conditions`: {row.Value[`conditions`]}, `WalletId`: {"1248-5499-7861-4204-5166"}}
-	err = postTx(`EditContract`, &form)
-	if err == nil {
-		t.Error("Expected `Contract activated` error")
-		return
-	}
-	err = sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if ret.WalletID != keyID {
-		t.Error(`wrong walletID`, ret.WalletID, keyID)
-		return
-	}
-	if err := postTx(`DeactivateContract`, &url.Values{`Id`: {sid}}); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`EditContract`, &form))
+	require.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
 
-	if err := postTx(`EditContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if ret.Address != "1248-5499-7861-4204-5166" {
-		t.Error(`wrong address`, ret.Address, "!= 1248-5499-7861-4204-5166")
-		return
-	}
+	require.Equal(t, keyID, ret.WalletID, `wrong walletID`, ret.WalletID, keyID)
+	require.NoError(t, postTx(`DeactivateContract`, &url.Values{`Id`: {sid}}))
+	require.NoError(t, postTx(`EditContract`, &form))
+
+	require.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
+	require.Equal(t, "1248-5499-7861-4204-5166", ret.Address, `wrong address`, ret.Address, "!= 1248-5499-7861-4204-5166")
 }
 
 func TestUpdateFunc(t *testing.T) {
-	assert.NoError(t, keyLogin(1))
+	require.NoError(t, keyLogin(1))
 
 	rnd := `rnd` + crypto.RandSeq(6)
 	form := url.Values{`Value`: {`contract f` + rnd + ` {
@@ -715,7 +608,7 @@ func TestUpdateFunc(t *testing.T) {
 			$result = Sprintf("X=%s %s %s", $par, $original_contract, $this_contract)
 		}}`}, `Conditions`: {`true`}}
 	_, id, err := postTxResult(`NewContract`, &form)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	form = url.Values{`Value`: {`
 		contract one` + rnd + ` {
@@ -724,7 +617,7 @@ func TestUpdateFunc(t *testing.T) {
 				ret = DBFind("contracts").Columns("id,value").WhereId(10).Row()
 				$result = ret["id"]
 		}}`}, `Conditions`: {`true`}}
-	assert.NoError(t, postTx(`NewContract`, &form))
+	require.NoError(t, postTx(`NewContract`, &form))
 
 	form = url.Values{`Value`: {`contract row` + rnd + ` {
 				action {
@@ -734,14 +627,14 @@ func TestUpdateFunc(t *testing.T) {
 				}}
 		
 			`}, `Conditions`: {`true`}}
-	assert.NoError(t, postTx(`NewContract`, &form))
+	require.NoError(t, postTx(`NewContract`, &form))
 
 	_, msg, err := postTxResult(`one`+rnd, &url.Values{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "10", msg)
 
 	_, msg, err = postTxResult(`row`+rnd, &url.Values{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "11", msg)
 
 	form = url.Values{`Value`: {`
@@ -754,19 +647,16 @@ func TestUpdateFunc(t *testing.T) {
 			}}
 		`}, `Conditions`: {`true`}}
 	_, idcnt, err := postTxResult(`NewContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, err)
+
 	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`my param`}})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf(`X=my param %s f%[1]s %[1]s`, rnd), msg)
 
 	form = url.Values{`Id`: {id}, `Value`: {`
 		func MyTest2(input string) string {
 			return "Y="+input
 		}`}, `Conditions`: {`true`}}
-	err = postTx(`EditContract`, &form)
 	assert.EqualError(t, postTx(`EditContract`, &form), `{"type":"error","error":"Contracts or functions names cannot be changed"}`)
 
 	form = url.Values{`Id`: {id}, `Value`: {`contract f` + rnd + `{
@@ -776,10 +666,10 @@ func TestUpdateFunc(t *testing.T) {
 		action {
 			$result = "Y="+$par
 		}}`}, `Conditions`: {`true`}}
-	assert.NoError(t, postTx(`EditContract`, &form))
+	require.NoError(t, postTx(`EditContract`, &form))
 
 	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`new param`}})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, `Y=new param `+rnd, msg)
 
 	form = url.Values{`Id`: {idcnt}, `Value`: {`
@@ -792,18 +682,16 @@ func TestUpdateFunc(t *testing.T) {
 			}}
 		`}, `Conditions`: {`true`}}
 	_, idcnt, err = postTxResult(`EditContract`, &form)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	_, msg, err = postTxResult(rnd, &url.Values{`Par`: {`finish`}})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, `Y=finishY=OK`, msg)
 }
 
 func TestGlobalVars(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, keyLogin(1))
+
 	rnd := `rnd` + crypto.RandSeq(4)
 
 	form := url.Values{`Value`: {`
@@ -818,24 +706,17 @@ func TestGlobalVars(t *testing.T) {
 			}}
 		`}, `Conditions`: {`true`}}
 	err := postTx(`NewContract`, &form)
-	if err == nil {
-		t.Errorf(`must be error`)
-		return
-	} else if err.Error() != `{"type":"panic","error":"system variable $key_id cannot be changed"}` {
-		t.Error(err)
-		return
-	}
+	require.Error(t, err, "must be error")
+	require.EqualError(t, err, `{"type":"panic","error":"system variable $key_id cannot be changed"}`)
+
 	form = url.Values{`Value`: {`contract c_` + rnd + ` {
 		data { Test string }
 		action {
 			$result = $Test + Str($ecosystem_id)
 		}
 	}`}, `Conditions`: {`true`}}
-	err = postTx(`NewContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+
+	require.NoError(t, postTx(`NewContract`, &form))
 
 	form = url.Values{`Value`: {`
 		contract a_` + rnd + ` {
@@ -852,58 +733,38 @@ func TestGlobalVars(t *testing.T) {
 				}
 			}
 		}`}, `Conditions`: {`true`}}
-	err = postTx(`NewContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
 	form = url.Values{`Value`: {`contract b_` + rnd + ` {
 			data { Test string }
 			action {
 				$result = $Test + $aaa
 			}
 		}`}, `Conditions`: {`true`}}
-	err = postTx(`NewContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+
+	require.NoError(t, postTx(`NewContract`, &form))
 
 	err = postTx(`a_`+rnd, &url.Values{"Par": {"b"}})
-	if err == nil {
-		t.Errorf(`must be error aaa`)
-		return
-	} else if err.Error() != `{"type":"panic","error":"unknown extend identifier aaa"}` {
-		t.Error(err)
-		return
-	}
+	require.Error(t, err, `must be error aaa`)
+	require.EqualError(t, err, `{"type":"panic","error":"unknown extend identifier aaa"}`)
+
 	_, msg, err := postTxResult(`a_`+rnd, &url.Values{"Par": {"c"}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if msg != `TEST1OK1` {
-		t.Errorf(`wrong result %s`, msg)
-		return
-	}
+	require.Error(t, err)
+	require.Equal(t, msg, `TEST1OK1`, `wrong result %s`, msg)
 }
 
 func TestContractChain(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, keyLogin(1))
+
 	rnd := `rnd` + crypto.RandSeq(4)
 
 	form := url.Values{"Name": {rnd}, "Columns": {`[{"name":"value","type":"varchar", "index": "0", 
 	  "conditions":"true"},
 	{"name":"amount", "type":"number","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err := postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`NewTable`, &form))
+
 	form = url.Values{`Value`: {`contract sub` + rnd + ` {
 		data {
 			Id int
@@ -918,11 +779,8 @@ func TestContractChain(t *testing.T) {
 			DBUpdate("` + rnd + `", $Id, "value", $new+"="+$new )
 		}
 	}`}, `Conditions`: {`true`}}
-	err = postTx(`NewContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+
+	require.NoError(t, postTx(`NewContract`, &form))
 
 	form = url.Values{`Value`: {`contract ` + rnd + ` {
 		data {
@@ -940,17 +798,9 @@ func TestContractChain(t *testing.T) {
 		}
 	}
 		`}, `Conditions`: {`true`}}
-	err = postTx(`NewContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`NewContract`, &form))
+
 	_, msg, err := postTxResult(rnd, &url.Values{`Initial`: {rnd}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if msg != rnd+`=`+rnd {
-		t.Error(fmt.Errorf(`wrong result %s`, msg))
-	}
+	require.NoError(t, err)
+	require.Equal(t, rnd+`=`+rnd, msg, `wrong result %s`, msg)
 }

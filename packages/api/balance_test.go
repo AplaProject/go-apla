@@ -17,7 +17,6 @@
 package api
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,18 +30,10 @@ func TestBalance(t *testing.T) {
 	err = sendGet(`balance/`+gAddress, nil, &ret)
 	require.NoError(t, err)
 
-	if len(ret.Amount) < 10 {
-		t.Error(`too low balance`, ret)
-	}
-
 	expAmountLen := len(ret.Amount)
+	require.Truef(t, expAmountLen >= 10, "length of returning amount %d, should be greater or equal 10", expAmountLen)
 	err = sendGet(`balance/3434341`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(ret.Amount) > 0 {
-		t.Error(fmt.Errorf(`wrong balance %s`, ret.Amount))
-		return
-	}
+	require.NoError(t, err)
+
+	require.Truef(t, len(ret.Amount) > 0, `wrong balance %s`, ret.Amount)
 }
