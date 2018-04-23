@@ -402,6 +402,12 @@ func TestVMCompile(t *testing.T) {
 				return row().Where("%d %d", 10, 20)
 			}
 			`, `result`, `10 20`},
+		{`func long() int {
+				return  99999999999999999999
+				}
+				func result() string {
+					return Sprintf("ok=%d", long())
+					}`, `result`, `strconv.ParseInt: parsing "99999999999999999999": value out of range 99999999999999999999 [Ln:2 Col:33]`},
 	}
 	vm := NewVM()
 	vm.Extern = true
@@ -470,7 +476,7 @@ func TestContractList(t *testing.T) {
 			`demo_сontract,another_contract,main`},
 	}
 	for _, item := range test {
-		list := ContractsList(item.Input)
+		list, _ := ContractsList(item.Input)
 		if strings.Join(list, `,`) != item.Output {
 			t.Error(`wrong names`, strings.Join(list, `,`))
 			break
