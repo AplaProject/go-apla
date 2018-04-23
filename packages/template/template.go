@@ -398,7 +398,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		curNode.Tag = curFunc.Tag
 		curNode.Attr = make(map[string]interface{})
 		if len(pars[`Body`]) > 0 && curFunc.Tag != `custom` {
-			if curFunc.Tag != `if` || (*workspace.Vars)[`_full`] == `1` {
+			if (curFunc.Tag != `if` && curFunc.Tag != `elseif`) || (*workspace.Vars)[`_full`] == `1` {
 				process(pars[`Body`], &curNode, workspace)
 			}
 		}
@@ -661,13 +661,11 @@ func parseArg(arg string, workspace *Workspace) (val string) {
 
 	var owner node
 	process(arg, &owner, workspace)
-	if len(owner.Children) > 0 {
-		inode := owner.Children[0]
+	for _, inode := range owner.Children {
 		if inode.Tag == tagText {
-			val = inode.Text
+			val += inode.Text
 		}
 	}
-
 	return
 }
 
