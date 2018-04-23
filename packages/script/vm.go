@@ -65,6 +65,7 @@ var sysVars = map[string]struct{}{
 	`type`:              {},
 	`txcost`:            {},
 	`txhash`:            {},
+	`role_id`:           {},
 }
 
 // VMError represents error of VM
