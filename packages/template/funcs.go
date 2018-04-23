@@ -127,7 +127,7 @@ func init() {
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 	}}
 	tails[`data`] = forTails{map[string]tailInfo{
-		`Custom`: {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		`Custom`: {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
 	}}
 	tails[`dbfind`] = forTails{map[string]tailInfo{
 		`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
@@ -138,7 +138,7 @@ func init() {
 		`Limit`:     {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
 		`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
 		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
-		`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		`Custom`:    {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
 		`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
 		`Cutoff`:    {tplFunc{tailTag, defaultTailFull, `cutoff`, `Cutoff`}, false},
 	}}
@@ -756,6 +756,13 @@ func customTag(par parFunc) string {
 	}
 	par.Owner.Attr[`customs`] = append(par.Owner.Attr[`customs`].([]string), par.Node.Attr[`column`].(string))
 	par.Owner.Attr[`custombody`] = append(par.Owner.Attr[`custombody`].([]string), (*par.Pars)[`Body`])
+	return ``
+}
+
+func customTagFull(par parFunc) string {
+	setAllAttr(par)
+	process((*par.Pars)[`Body`], par.Node, par.Workspace)
+	par.Owner.Tail = append(par.Owner.Tail, par.Node)
 	return ``
 }
 
