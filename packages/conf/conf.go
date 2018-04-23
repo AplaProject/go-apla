@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 
@@ -84,6 +85,7 @@ type GlobalConfig struct {
 	LockFilePath      string
 	DataDir           string // application work dir (cwd by default)
 	KeysDir           string // place for private keys files: NodePrivateKey, PrivateKey
+	TempDir           string // temporary dir
 	FirstBlockPath    string
 	TLS               bool   // TLS is on/off. It is required for https
 	TLSCert           string // TLSCert is a filepath of the fullchain of certificate.
@@ -172,6 +174,10 @@ func FillRuntimePaths() error {
 
 	if Config.KeysDir == "" {
 		Config.KeysDir = Config.DataDir
+	}
+
+	if Config.TempDir == "" {
+		Config.TempDir = path.Join(os.TempDir(), consts.DefaultTempDirName)
 	}
 
 	if Config.FirstBlockPath == "" {

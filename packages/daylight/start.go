@@ -214,6 +214,8 @@ func Start() {
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()
 
+	utils.MakeOrCleanDirectory(conf.Config.TempDir)
+
 	initGorm(conf.Config.DB)
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 
