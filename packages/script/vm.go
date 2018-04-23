@@ -702,7 +702,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case int64:
 				switch top[0].(type) {
 				case string, int64:
-					bin = top[1].(int64) + converter.ValueToInt(top[0])
+					if tmpInt, err = converter.ValueToInt(top[0]); err == nil {
+						bin = top[1].(int64) + tmpInt
+					}
 				case float64:
 					bin = ValueToFloat(top[1]) + top[0].(float64)
 				default:
@@ -739,7 +741,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case int64:
 				switch top[0].(type) {
 				case int64, string:
-					bin = top[1].(int64) - converter.ValueToInt(top[0])
+					if tmpInt, err = converter.ValueToInt(top[0]); err == nil {
+						bin = top[1].(int64) - tmpInt
+					}
 				case float64:
 					bin = ValueToFloat(top[1]) - top[0].(float64)
 				default:
@@ -776,7 +780,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case int64:
 				switch top[0].(type) {
 				case int64, string:
-					bin = top[1].(int64) * converter.ValueToInt(top[0])
+					if tmpInt, err = converter.ValueToInt(top[0]); err == nil {
+						bin = top[1].(int64) * tmpInt
+					}
 				case float64:
 					bin = ValueToFloat(top[1]) * top[0].(float64)
 				default:
@@ -823,11 +829,12 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case int64:
 				switch top[0].(type) {
 				case int64, string:
-					vInt := converter.ValueToInt(top[0])
-					if vInt == 0 {
-						return 0, errDivZero
+					if tmpInt, err = converter.ValueToInt(top[0]); err == nil {
+						if tmpInt == 0 {
+							return 0, errDivZero
+						}
+						bin = top[1].(int64) / tmpInt
 					}
-					bin = top[1].(int64) / vInt
 				case float64:
 					if top[0].(float64) == 0 {
 						return 0, errDivZero
