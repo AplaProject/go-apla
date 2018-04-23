@@ -84,6 +84,7 @@ var contracts = []smartContract{
 				}
 			}`, []smartParams{
 		{nil, map[string]string{`error`: `{"type":"panic","error":"123456789101112131415161718192021222324252627282930 is not a valid integer : value out of range"}`}},
+	}},
 	{`Double`, `contract Double {
 		data {    }
 		conditions {    }
