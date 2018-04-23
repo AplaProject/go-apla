@@ -1558,9 +1558,10 @@ MenuItem(
 			}
 			var total money
 			$amount = Money($Amount) 
-			if $amount == 0 {
-				error "Amount is zero"
+			if $amount <= 0 {
+				error "Amount must be greater then zero"
 			}
+
 			var row map
 			row = DBRow("keys").Columns("amount").WhereId($key_id)
 			total = Money(row["amount"])
