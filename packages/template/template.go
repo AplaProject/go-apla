@@ -61,6 +61,15 @@ type Workspace struct {
 	Timeout       *bool
 }
 
+// SetSource sets source to workspace
+func (w *Workspace) SetSource(name string, source *Source) {
+	if w.Sources == nil {
+		sources := make(map[string]Source)
+		w.Sources = &sources
+	}
+	(*w.Sources)[name] = *source
+}
+
 type parFunc struct {
 	Owner     *node
 	Node      *node
@@ -92,14 +101,10 @@ func newSource(par parFunc) {
 	if par.Node.Attr[`source`] == nil {
 		return
 	}
-	if par.Workspace.Sources == nil {
-		sources := make(map[string]Source)
-		par.Workspace.Sources = &sources
-	}
-	(*par.Workspace.Sources)[par.Node.Attr[`source`].(string)] = Source{
+	par.Workspace.SetSource(par.Node.Attr[`source`].(string), &Source{
 		Columns: par.Node.Attr[`columns`].(*[]string),
 		Data:    par.Node.Attr[`data`].(*[][]string),
-	}
+	})
 }
 
 func setAttr(par parFunc, name string) {
@@ -393,7 +398,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		curNode.Tag = curFunc.Tag
 		curNode.Attr = make(map[string]interface{})
 		if len(pars[`Body`]) > 0 && curFunc.Tag != `custom` {
-			if curFunc.Tag != `if` || (*workspace.Vars)[`_full`] == `1` {
+			if (curFunc.Tag != `if` && curFunc.Tag != `elseif`) || (*workspace.Vars)[`_full`] == `1` {
 				process(pars[`Body`], &curNode, workspace)
 			}
 		}
@@ -656,13 +661,11 @@ func parseArg(arg string, workspace *Workspace) (val string) {
 
 	var owner node
 	process(arg, &owner, workspace)
-	if len(owner.Children) > 0 {
-		inode := owner.Children[0]
+	for _, inode := range owner.Children {
 		if inode.Tag == tagText {
-			val = inode.Text
+			val += inode.Text
 		}
 	}
-
 	return
 }
 
