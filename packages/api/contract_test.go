@@ -84,6 +84,25 @@ var contracts = []smartContract{
 				}
 			}`, []smartParams{
 		{nil, map[string]string{`error`: `{"type":"panic","error":"123456789101112131415161718192021222324252627282930 is not a valid integer : value out of range"}`}},
+	{`Double`, `contract Double {
+		data {    }
+		conditions {    }
+		action {
+			$$$$$$$$result = "hello"
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"unknown lexem $ [Ln:5 Col:6]"}`}},
+	}},
+
+	{`Price`, `contract Price {
+		action {
+			Test("price", 1)
+		}
+		func price() money {
+			return Money(100)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`price`: `1`}},
 	}},
 	{`CheckFloat`, `contract CheckFloat {
 			action {
@@ -117,10 +136,10 @@ var contracts = []smartContract{
 			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input valuemoney`}},
 		}},
 	{`DBProblem`, `contract DBProblem {
-			action{
-				DBFind("members").Where("member_names=?", "name")
-			}
-		}`,
+		action{
+			DBFind("members1").Where("member_name=?", "name")
+		}
+	}`,
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"pq: current transaction is aborted, commands ignored until end of transaction block"}`}},
 		}},

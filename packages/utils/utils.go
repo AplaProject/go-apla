@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -40,6 +41,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -566,4 +568,41 @@ func ShuffleSlice(slice []string) {
 		j := rand.Intn(i + 1)
 		slice[i], slice[j] = slice[j], slice[i]
 	}
+}
+
+func UUID() string {
+	return uuid.Must(uuid.NewV4()).String()
+}
+
+// MakeOrCleanDirectory makes directory or removes all files in existing directory
+func MakeOrCleanDirectory(dir string) error {
+	d, err := os.Open(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			if err = os.Mkdir(dir, 0775); err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating directory")
+				return err
+			}
+
+			return nil
+		}
+
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("opening directory")
+		return err
+	}
+	defer d.Close()
+
+	files, err := d.Readdirnames(-1)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading directory")
+		return err
+	}
+
+	for _, f := range files {
+		if err := os.RemoveAll(path.Join(dir, f)); err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("removing file")
+		}
+	}
+
+	return nil
 }

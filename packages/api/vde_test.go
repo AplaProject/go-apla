@@ -350,12 +350,12 @@ func TestHTTPRequest(t *testing.T) {
 				heads["Authorization"] = "Bearer " + $Auth
 				pars["vde"] = "true"
 				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `content/page/` + rnd + `", "POST", heads, pars)
-				json = JSONToMap(ret)
+				json = JSONDecode(ret)
 				if json["menu"] != "myvdemenu" {
 					error "Wrong vde menu"
 				}
 				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `contract/VDEFunctions?vde=true", "GET", heads, pars)
-				json = JSONToMap(ret)
+				json = JSONDecode(ret)
 				if json["name"] != "@1VDEFunctions" {
 					error "Wrong vde contract"
 				}
@@ -406,7 +406,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 				pars["vde"] = "false"
 				pars["Par"] = $Par
 				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)
-				json = JSONToMap(ret)
+				json = JSONDecode(ret)
 				$result = json["hash"]
 			}}`}, `Conditions`: {`true`}, `vde`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
@@ -435,7 +435,7 @@ func TestNodeHTTPRequest(t *testing.T) {
 			pars["vde"] = "false"
 			pars["Par"] = "NodeContract testing"
 			ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)
-			json = JSONToMap(ret)
+			json = JSONDecode(ret)
 			$result = json["hash"]
 		}
 	}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}

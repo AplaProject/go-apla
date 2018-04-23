@@ -147,3 +147,9 @@ const TokenMovementQtyPerBlockLimit = 100
 
 // TCPConnTimeout timeout of tcp connection
 const TCPConnTimeout = 5 * time.Second
+
+// TxRequestExpire is expiration time for request of transaction
+const TxRequestExpire = 1 * time.Minute
+
+// DefaultTempDirName is default name of temporary directory
+const DefaultTempDirName = "genesis-temp"

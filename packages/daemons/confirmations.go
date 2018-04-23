@@ -156,12 +156,15 @@ func checkConf(host string, blockID int64, logger *log.Entry) string {
 	conn.SetReadDeadline(time.Now().Add(consts.READ_TIMEOUT * time.Second))
 	conn.SetWriteDeadline(time.Now().Add(consts.WRITE_TIMEOUT * time.Second))
 
-	type confRequest struct {
-		Type    uint16
-		BlockID uint32
+	if err = tcpserver.SendRequestType(tcpserver.RequestTypeConfirmation, conn); err != nil {
+		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host, "block_id": blockID}).Error("sending request type")
+		return "0"
 	}
-	err = tcpserver.SendRequest(&confRequest{Type: 4, BlockID: uint32(blockID)}, conn)
-	if err != nil {
+
+	req := &tcpserver.ConfirmRequest{
+		BlockID: uint32(blockID),
+	}
+	if err = tcpserver.SendRequest(req, conn); err != nil {
 		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host, "block_id": blockID}).Error("sending confirmation request")
 		return "0"
 	}
