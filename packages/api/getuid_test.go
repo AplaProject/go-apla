@@ -22,42 +22,36 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/stretchr/testify/assert"
+
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
 func TestGetUID(t *testing.T) {
 	var ret getUIDResult
 	err := sendGet(`getuid`, nil, &ret)
-	if err != nil {
+	if !assert.NoError(t, err) {
 		var v map[string]string
 		json.Unmarshal([]byte(err.Error()[4:]), &v)
 		t.Error(err)
 		return
 	}
+
 	gAuth = ret.Token
 	priv, pub, err := crypto.GenHexKeys()
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, err)
+
 	sign, err := crypto.Sign(priv, ret.UID)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, err)
+
 	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)}}
 	var lret loginResult
-	err = sendPost(`login`, &form, &lret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendPost(`login`, &form, &lret))
+
 	gAuth = lret.Token
 	var ref refreshResult
-	err = sendPost(`refresh`, &url.Values{"token": {lret.Refresh}}, &ref)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendPost(`refresh`, &url.Values{"token": {lret.Refresh}}, &ref))
 	gAuth = ref.Token
 }
