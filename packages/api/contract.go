@@ -31,6 +31,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/service"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 )
 
@@ -41,18 +42,22 @@ type contractResult struct {
 	Result  string         `json:"result,omitempty"`
 }
 
-func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var (
 		hash, publicKey []byte
 		toSerialize     interface{}
+		requestID       = data.ParamString("request_id")
 	)
-	contract, parerr, err := validateSmartContract(r, data, nil)
-	if err != nil {
-		if strings.HasPrefix(err.Error(), `E_`) {
-			return errorAPI(w, err.Error(), http.StatusBadRequest, parerr)
-		}
-		return errorAPI(w, err, http.StatusBadRequest)
+
+	req, ok := c.requests.GetRequest(requestID)
+	if !ok {
+		return errorAPI(w, "E_REQUESTNOTFOUND", http.StatusNotFound, requestID)
 	}
+	contract := smart.VMGetContract(data.vm, req.Contract, uint32(data.ecosystemId))
+	if contract == nil {
+		return errorAPI(w, "E_CONTRACT", http.StatusBadRequest, req.Contract)
+	}
+
 	info := (*contract).Block.Info.(*script.ContractInfo)
 
 	var signedBy int64
@@ -64,7 +69,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 
 	key := &model.Key{}
 	key.SetTablePrefix(data.ecosystemId)
-	_, err = key.Get(signID)
+	_, err := key.Get(signID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		return errorAPI(w, err, http.StatusInternalServerError)
@@ -97,7 +102,23 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	if info.Tx != nil {
 	fields:
 		for _, fitem := range *info.Tx {
-			val := strings.TrimSpace(r.FormValue(fitem.Name))
+			if fitem.ContainsTag(script.TagFile) {
+				file, err := req.ReadFile(fitem.Name)
+				if err != nil {
+					return errorAPI(w, err.Error(), http.StatusInternalServerError)
+				}
+
+				serialFile, err := msgpack.Marshal(file)
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling file to msgpack")
+					return errorAPI(w, err, http.StatusInternalServerError)
+				}
+
+				idata = append(append(idata, converter.EncodeLength(int64(len(serialFile)))...), serialFile...)
+				continue
+			}
+
+			val := strings.TrimSpace(req.GetValue(fitem.Name))
 			if strings.Contains(fitem.Tags, `address`) {
 				val = converter.Int64ToStr(converter.StringToAddress(val))
 			}
@@ -150,6 +171,7 @@ func contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 			NetworkID:     consts.NETWORK_ID,
 			BinSignatures: converter.EncodeLengthPlusData(signature),
 		},
+		RequestID:      req.ID,
 		TokenEcosystem: data.params[`token_ecosystem`].(int64),
 		MaxSum:         data.params[`max_sum`].(string),
 		PayOver:        data.params[`payover`].(string),

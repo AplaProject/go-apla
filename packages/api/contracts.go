@@ -66,7 +66,12 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 		if val[`active`] == `NULL` {
 			list[ind][`active`] = ``
 		}
-		list[ind][`name`] = strings.Join(script.ContractsList(val[`value`]), `,`)
+		cntlist, err := script.ContractsList(val[`value`])
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Error("getting contract list")
+			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		}
+		list[ind][`name`] = strings.Join(cntlist, `,`)
 	}
 	data.result = &listResult{
 		Count: converter.Int64ToStr(count - 1), List: list,

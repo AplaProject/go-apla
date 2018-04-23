@@ -383,7 +383,7 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 		log.WithFields(log.Fields{"contract_type": smartTx.Type, "type": consts.NotFound}).Error("unknown contract")
 		return fmt.Errorf(`unknown contract %d`, smartTx.Type)
 	}
-	forsign := smartTx.ForSign()
+	forsign := []string{smartTx.ForSign()}
 
 	p.TxContract = contract
 	p.TxHeader = &smartTx.Header
@@ -397,6 +397,28 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 			var v interface{}
 			var forv string
 			var isforv bool
+
+			if fitem.ContainsTag(script.TagFile) {
+				var (
+					data []byte
+					file *tx.File
+				)
+				if err := converter.BinUnmarshal(&input, &data); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling file")
+					return err
+				}
+				if err := msgpack.Unmarshal(data, &file); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("unmarshalling file msgpack")
+					return err
+				}
+
+				p.TxData[fitem.Name] = file.Data
+				p.TxData[fitem.Name+"MimeType"] = file.MimeType
+
+				forsign = append(forsign, file.MimeType, file.Hash)
+				continue
+			}
+
 			switch fitem.Type.String() {
 			case `uint64`:
 				var val uint64
@@ -460,7 +482,9 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 				}
 				v = list
 			}
-			p.TxData[fitem.Name] = v
+			if p.TxData[fitem.Name] == nil {
+				p.TxData[fitem.Name] = v
+			}
 			if err != nil {
 				return err
 			}
@@ -470,10 +494,10 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 			if isforv {
 				v = forv
 			}
-			forsign += fmt.Sprintf(",%v", v)
+			forsign = append(forsign, fmt.Sprintf("%v", v))
 		}
 	}
-	p.TxData[`forsign`] = forsign
+	p.TxData[`forsign`] = strings.Join(forsign, ",")
 
 	return nil
 }
