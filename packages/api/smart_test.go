@@ -218,14 +218,12 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	var ret listResult
 	err = sendGet(`list/pages`, nil, &ret)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	id := ret.Count
-	var row rowResult
+	id = ret.Count
 	err = sendGet(`row/pages/`+id, nil, &row)
 	if err != nil {
 		t.Error(err)
