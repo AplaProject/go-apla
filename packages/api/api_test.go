@@ -31,6 +31,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -389,4 +391,8 @@ func sendMultipart(url string, params map[string]string, files map[string][]byte
 	}
 
 	return json.Unmarshal(data, &v)
+}
+
+func requireLogin(t *testing.T, num int64) {
+	require.NoError(t, keyLogin(1))
 }

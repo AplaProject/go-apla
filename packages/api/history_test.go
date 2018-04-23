@@ -17,32 +17,20 @@
 package api
 
 import (
-	stdErrors "errors"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHistory(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	requireLogin(t, 1)
 
 	var ret historyResult
-	err := sendGet("history/pages/1", nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(ret.List) == 0 {
-		t.Error(stdErrors.New("History should not be empty"))
-	}
+	require.NoError(t, sendGet("history/pages/1", nil, &ret))
 
-	err = sendGet("history/pages/1000", nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(ret.List) != 0 {
-		t.Error(stdErrors.New("History should be empty"))
-	}
+	assert.Len(t, ret.List, 0, "History should not be empty")
+
+	require.NoError(t, sendGet("history/pages/1000", nil, &ret))
+	require.Len(t, ret.List, 0, "History should be empty")
 }
