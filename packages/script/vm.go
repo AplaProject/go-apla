@@ -847,7 +847,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				if reflect.TypeOf(top[1]).String() == Decimal &&
 					reflect.TypeOf(top[0]).String() == Decimal {
 					if top[0].(decimal.Decimal).Cmp(decimal.New(0, 0)) == 0 {
-						return 0, errUnsupportedType
+						return 0, errDivZero
 					}
 					bin = top[1].(decimal.Decimal).Div(top[0].(decimal.Decimal)).Floor()
 				} else {
