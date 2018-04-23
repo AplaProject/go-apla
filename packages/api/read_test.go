@@ -19,33 +19,31 @@ package api
 import (
 	"fmt"
 	"net/url"
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRead(t *testing.T) {
 	var (
-		err     error
+		// err     error
 		ret     vdeCreateResult
 		retCont contentResult
 	)
 
-	assert.NoError(t, keyLogin(1))
+	requireLogin(t, 1)
 
-	if err = sendPost(`vde/create`, nil, &ret); err != nil &&
-		err.Error() != `400 {"error": "E_VDECREATED", "msg": "Virtual Dedicated Ecosystem is already created" }` {
-		t.Error(err)
-		return
-	}
+	require.Error(t, sendPost(`vde/create`, nil, &ret), `400 {"error": "E_VDECREATED", "msg": "Virtual Dedicated Ecosystem is already created" }`)
+
 	name := randName(`tbl`)
 	form := url.Values{"vde": {`true`}, "Name": {name}, "Columns": {`[{"name":"my","type":"varchar", "index": "1", 
 	  "conditions":"true"},
 	{"name":"amount", "type":"number","index": "0", "conditions":"{\"update\":\"true\", \"read\":\"true\"}"},
 	{"name":"active", "type":"character","index": "0", "conditions":"{\"update\":\"true\", \"read\":\"false\"}"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "read": "true", "new_column": "true"}`}}
-	assert.NoError(t, postTx(`NewTable`, &form))
+	require.NoError(t, postTx(`NewTable`, &form))
 
 	contFill := fmt.Sprintf(`contract %s {
 		action {
@@ -103,10 +101,7 @@ func TestRead(t *testing.T) {
 	assert.NoError(t, sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
 		`DBFind(` + name + `, src).Limit(2)`}}, &retCont))
 
-	if strings.Contains(RawToString(retCont.Tree), `active`) {
-		t.Errorf(`wrong tree %s`, RawToString(retCont.Tree))
-		return
-	}
+	require.Containsf(t, RawToString(retCont.Tree), `active`, `wrong tree %s`, RawToString(retCont.Tree))
 
 	assert.NoError(t, postTx(`GetOK`+name, &url.Values{"vde": {`true`}}))
 
@@ -121,13 +116,10 @@ func TestRead(t *testing.T) {
 	assert.NoError(t, postTx(`EditTable`, &form))
 
 	var tableInfo tableResult
-	assert.NoError(t, sendGet(`table/`+name+`?vde=true`, nil, &tableInfo))
-	assert.Equal(t, `ReadFilter`+name+`()`, tableInfo.Filter)
+	require.NoError(t, sendGet(`table/`+name+`?vde=true`, nil, &tableInfo))
+	require.Equal(t, `ReadFilter`+name+`()`, tableInfo.Filter)
 
-	assert.NoError(t, sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
+	require.NoError(t, sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
 		`DBFind(` + name + `, src).Limit(2)`}}, &retCont))
-	if !strings.Contains(RawToString(retCont.Tree), `No name`) {
-		t.Errorf(`wrong tree %s`, RawToString(retCont.Tree))
-		return
-	}
+	require.Containsf(t, RawToString(retCont.Tree), `No name`, `wrong tree %s`, RawToString(retCont.Tree))
 }

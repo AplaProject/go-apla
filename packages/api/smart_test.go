@@ -22,6 +22,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 
@@ -40,19 +42,18 @@ type smartContract struct {
 }
 
 func TestUpperName(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	requireLogin(t, 1)
+
 	rnd := crypto.RandSeq(4)
-	form := url.Values{"Name": {"testTable" + rnd}, "Columns": {`[{"name":"num","type":"text",   "conditions":"true"},
+	form := url.Values{
+		"Name": {"testTable" + rnd},
+		"Columns": {`[{"name":"num","type":"text",   "conditions":"true"},
 	{"name":"text", "type":"text","conditions":"true"}]`},
-		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err := postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`},
 	}
+
+	require.NoError(t, postTx(`NewTable`, &form))
+
 	form = url.Values{`Value`: {`contract AddRow` + rnd + ` {
 		data {
 		}
@@ -62,67 +63,38 @@ func TestUpperName(t *testing.T) {
 		   DBInsert("testTable` + rnd + `", "num, text", "fgdgf", "124234") 
 		}
 	}`}, `Conditions`: {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(`AddRow`+rnd, &url.Values{}); err != nil {
-		t.Error(err)
-		return
-	}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+	require.NoError(t, postTx(`AddRow`+rnd, &url.Values{}))
 }
 
 func TestSmartFields(t *testing.T) {
 
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	requireLogin(t, 1)
 	var cntResult getContractResult
-	err := sendGet(`contract/MainCondition`, nil, &cntResult)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(cntResult.Fields) != 0 {
-		t.Error(`MainCondition fields must be empty`)
-		return
-	}
-	if cntResult.Name != `@1MainCondition` {
-		t.Errorf(`MainCondition name is wrong: %s`, cntResult.Name)
-		return
-	}
-	if err := postTx(`MainCondition`, &url.Values{}); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`contract/MainCondition`, nil, &cntResult))
+
+	require.Len(t, cntResult.Fields, 0, `MainCondition fields must be empty`)
+	require.Equalf(t, `@1MainCondition`, cntResult.Name, `MainCondition name is wrong: %s`, cntResult.Name)
+
+	require.NoError(t, postTx(`MainCondition`, &url.Values{}))
 }
 
 func TestMoneyTransfer(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
-
+	requireLogin(t, 1)
 	form := url.Values{`Amount`: {`53330000`}, `Recipient`: {`0005-2070-2000-0006-0200`}}
-	if err := postTx(`MoneyTransfer`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`MoneyTransfer`, &form))
+
 	form = url.Values{`Amount`: {`2440000`}, `Recipient`: {`1109-7770-3360-6764-7059`}, `Comment`: {`Test`}}
-	if err := postTx(`MoneyTransfer`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`MoneyTransfer`, &form))
+
 	form = url.Values{`Amount`: {`53330000`}, `Recipient`: {`0005207000`}}
-	if err := postTx(`MoneyTransfer`, &form); cutErr(err) != `{"type":"error","error":"Recipient 0005207000 is invalid"}` {
-		t.Error(err)
-		return
-	}
+	expError := `{"type":"error","error":"Recipient 0005207000 is invalid"}`
+	require.Error(t, postTx(`MoneyTransfer`, &form), expError, "must returns error: ", expError)
 }
 
 func TestPage(t *testing.T) {
-	assert.NoError(t, keyLogin(1))
+	requireLogin(t, 1)
 
 	name := randName(`page`)
 	menuname := randName(`menu`)
@@ -269,7 +241,7 @@ type invalidPar struct {
 }
 
 func TestUpdateSysParam(t *testing.T) {
-	assert.NoError(t, keyLogin(1))
+	requireLogin(t, 1)
 
 	form := url.Values{"Name": {`max_columns`}, "Value": {`49`}}
 	assert.NoError(t, postTx(`UpdateSysParam`, &form))
@@ -358,15 +330,12 @@ func TestValidateConditions(t *testing.T) {
 
 	for contract, form := range contracts {
 		err := postTx(contract, &form)
-		if err.Error() != expectedErr {
-			t.Errorf("contract %s expected '%s' got '%s'", contract, expectedErr, err)
-			return
-		}
+		require.Errorf(t, err, expectedErr, "contract %s expected '%s' got '%s'", contract, expectedErr, err)
 	}
 }
 
 func TestDBMetrics(t *testing.T) {
-	assert.NoError(t, keyLogin(1))
+	requireLogin(t, 1)
 
 	contract := randName("Metric")
 	form := url.Values{
@@ -470,10 +439,8 @@ func TestPartitialEdit(t *testing.T) {
 }
 
 func TestContractEdit(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	requireLogin(t, 1)
+
 	name := randName(`part`)
 	form := url.Values{"Value": {`contract ` + name + ` {
 		    action {
@@ -481,17 +448,11 @@ func TestContractEdit(t *testing.T) {
 			}
 		}`},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
-	err := postTx(`NewContract`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`NewContract`, &form))
+
 	var retList listResult
-	err = sendGet(`list/contracts`, nil, &retList)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`list/contracts`, nil, &retList))
+
 	idItem := retList.Count
 	value := `contract ` + name + ` {
 		action {
@@ -500,43 +461,25 @@ func TestContractEdit(t *testing.T) {
 	}`
 	conditions := `true`
 	wallet := "1231234123412341230"
-	err = postTx(`EditContract`, &url.Values{"Id": {idItem}, "Value": {value}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = postTx(`EditContract`, &url.Values{"Id": {idItem}, "Conditions": {conditions},
-		"WalletId": {wallet}})
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`EditContract`, &url.Values{"Id": {idItem}, "Value": {value}}))
+
+	require.NoError(t, postTx(`EditContract`, &url.Values{"Id": {idItem}, "Conditions": {conditions}, "WalletId": {wallet}}))
+
 	var ret rowResult
-	err = sendGet(`row/contracts/`+idItem, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if ret.Value["value"] != value || ret.Value["conditions"] != conditions ||
-		ret.Value["wallet_id"] != wallet {
-		t.Errorf(`wrong parameters of contract`)
-		return
-	}
+	require.NoError(t, sendGet(`row/contracts/`+idItem, nil, &ret))
+
+	require.Equal(t, value, ret.Value["value"], `wrong value of contract`)
+	require.Equal(t, conditions, ret.Value["conditions"], `wrong condition of contract`)
+	require.Equal(t, wallet, ret.Value["wallet_id"], `wrong condition of contract`)
+
 	_, msg, err := postTxResult(name, &url.Values{})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if msg != "after" {
-		t.Errorf(`the wrong result of the contract %s`, msg)
-	}
+	require.NoError(t, err)
+
+	require.Equalf(t, "after", msg, `the wrong result of the contract %s`, msg)
 }
 
 func TestDelayedContracts(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	requireLogin(t, 1)
 
 	form := url.Values{
 		"Contract":   {"UnknownContract"},
@@ -544,16 +487,15 @@ func TestDelayedContracts(t *testing.T) {
 		"Limit":      {"2"},
 		"Conditions": {"true"},
 	}
-	err := postTx("NewDelayedContract", &form)
-	assert.EqualError(t, err, `{"type":"error","error":"Unknown contract @1UnknownContract"}`)
+
+	assert.EqualError(t, postTx("NewDelayedContract", &form), `{"type":"error","error":"Unknown contract @1UnknownContract"}`)
 
 	form.Set("Contract", "MainCondition")
-	err = postTx("NewDelayedContract", &form)
-	assert.NoError(t, err)
+
+	assert.NoError(t, postTx("NewDelayedContract", &form))
 
 	form.Set("BlockID", "1")
-	err = postTx("NewDelayedContract", &form)
-	assert.EqualError(t, err, `{"type":"error","error":"The blockID must be greater than the current blockID"}`)
+	assert.EqualError(t, postTx("NewDelayedContract", &form), `{"type":"error","error":"The blockID must be greater than the current blockID"}`)
 
 	form = url.Values{
 		"Id":         {"1"},
@@ -562,12 +504,12 @@ func TestDelayedContracts(t *testing.T) {
 		"Conditions": {"true"},
 		"Deleted":    {"1"},
 	}
-	err = postTx("EditDelayedContract", &form)
-	assert.NoError(t, err)
+
+	assert.NoError(t, postTx("EditDelayedContract", &form))
 }
 
 func TestJSON(t *testing.T) {
-	assert.NoError(t, keyLogin(1))
+	requireLogin(t, 1)
 
 	contract := randName("JSONEncode")
 	assert.NoError(t, postTx("NewContract", &url.Values{

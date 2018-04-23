@@ -25,6 +25,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/stretchr/testify/assert"
 )
@@ -39,48 +41,20 @@ type tplList []tplItem
 func TestAPI(t *testing.T) {
 	var ret contentResult
 
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
-	err := sendPost(`content/page/default_page`, &url.Values{}, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	requireLogin(t, 1)
+	require.NoError(t, sendPost(`content/page/default_page`, &url.Values{}, &ret))
 
 	var retHash hashResult
-	err = sendPost(`content/hash/default_page`, &url.Values{}, &retHash)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(retHash.Hash) != 64 {
-		t.Error(`wrong hash ` + retHash.Hash)
-		return
-	}
+	require.NoError(t, sendPost(`content/hash/default_page`, &url.Values{}, &retHash))
+	require.Len(t, retHash.Hash, 64, `wrong hash `, retHash.Hash)
 
 	for _, item := range forTest {
-		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &ret)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if RawToString(ret.Tree) != item.want {
-			t.Error(fmt.Errorf(`wrong tree %s != %s`, RawToString(ret.Tree), item.want))
-			return
-		}
+		require.NoError(t, sendPost(`content`, &url.Values{`template`: {item.input}}, &ret))
+		require.Equalf(t, item.want, RawToString(ret.Tree), `wrong tree %s != %s`, RawToString(ret.Tree), item.want)
 	}
-	err = sendPost(`content/page/mypage`, &url.Values{}, &ret)
-	if err != nil && err.Error() != `404 {"error": "E_NOTFOUND", "msg": "Page not found" }` {
-		t.Error(err)
-		return
-	}
-	err = sendPost(`content/menu/default_menu`, &url.Values{}, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+
+	require.Error(t, sendPost(`content/page/mypage`, &url.Values{}, &ret), `404 {"error": "E_NOTFOUND", "msg": "Page not found" }`)
+	require.NoError(t, sendPost(`content/menu/default_menu`, &url.Values{}, &ret))
 }
 
 var forTest = tplList{
@@ -148,26 +122,13 @@ var forTest = tplList{
 func TestMobile(t *testing.T) {
 	var ret contentResult
 	gMobile = true
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
-	err := sendPost(`content`, &url.Values{`template`: {`If(#isMobile#){Span(Mobile)}.Else{Span(Desktop)}`}}, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if RawToString(ret.Tree) != `[{"tag":"span","children":[{"tag":"text","text":"Mobile"}]}]` {
-		t.Error(fmt.Errorf(`wrong mobile tree %s`, RawToString(ret.Tree)))
-		return
-	}
+	requireLogin(t, 1)
+	require.NoError(t, sendPost(`content`, &url.Values{`template`: {`If(#isMobile#){Span(Mobile)}.Else{Span(Desktop)}`}}, &ret))
+	require.Equalf(t, `[{"tag":"span","children":[{"tag":"text","text":"Mobile"}]}]`, RawToString(ret.Tree), `wrong mobile tree %s`, RawToString(ret.Tree))
 }
 
 func TestCutoff(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	requireLogin(t, 1)
 	name := randName(`tbl`)
 	form := url.Values{
 		"Name": {name},
@@ -178,11 +139,8 @@ func TestCutoff(t *testing.T) {
 			]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`},
 	}
-	err := postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`NewTable`, &form))
+
 	form = url.Values{
 		"Name": {name},
 		"Value": {`
@@ -198,68 +156,45 @@ func TestCutoff(t *testing.T) {
 		`},
 		"Conditions": {`true`},
 	}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`NewContract`, &form))
 
 	shortText := crypto.RandSeq(30)
 	longText := crypto.RandSeq(100)
 
-	err = postTx(name, &url.Values{
+	require.NoError(t, postTx(name, &url.Values{
 		"ShortText": {shortText},
 		"LongText":  {longText},
-	})
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	}))
+
 	var ret contentResult
 	template := `DBFind(Name: ` + name + `, Source: mysrc).Cutoff("short_text,long_text")`
 	start := time.Now()
-	err = sendPost(`content`, &url.Values{`template`: {template}}, &ret)
 	duration := time.Since(start)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if int(duration.Seconds()) > 0 {
-		t.Errorf(`Too much time for template parsing`)
-		return
-	}
-	err = postTx(name, &url.Values{
+	require.NoError(t, sendPost(`content`, &url.Values{`template`: {template}}, &ret))
+	require.Equal(t, 0, int(duration.Seconds()), `Too much time for template parsing`)
+
+	require.NoError(t, postTx(name, &url.Values{
 		"ShortText": {shortText},
 		"LongText":  {longText},
-	})
+	}))
 
 	template = `DBFind("` + name + `", mysrc).Columns("id,name,short_text,long_text").Cutoff("short_text,long_text").WhereId(2).Vars(prefix)`
-	err = sendPost(`content`, &url.Values{`template`: {template}}, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendPost(`content`, &url.Values{`template`: {template}}, &ret))
 
 	linkLongText := fmt.Sprintf("/data/1_%s/2/long_text/%x", name, md5.Sum([]byte(longText)))
 
 	want := `[{"tag":"dbfind","attr":{"columns":["id","name","short_text","long_text"],"cutoff":"short_text,long_text","data":[["2","test","{"link":"","title":"` + shortText + `"}","{"link":"` + linkLongText + `","title":"` + longText[:32] + `"}"]],"name":"` + name + `","source":"mysrc","types":["text","text","long_text","long_text"],"whereid":"2"}}]`
-	if RawToString(ret.Tree) != want {
-		t.Errorf("Wrong image tree %s != %s", RawToString(ret.Tree), want)
-	}
+	require.Equalf(t, want, RawToString(ret.Tree), "Wrong image tree %s != %s", RawToString(ret.Tree), want)
 
 	data, err := sendRawRequest("GET", linkLongText, nil)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if string(data) != longText {
-		t.Errorf("Wrong text %s", data)
-	}
+	require.NoError(t, err)
+	require.Equalf(t, longText, string(data), "Wrong text %s", data)
 }
 
 var imageData = `iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
 
 func TestBinary(t *testing.T) {
-	assert.NoError(t, keyLogin(1))
+	requireLogin(t, 1)
 
 	params := map[string]string{
 		"AppID":    "1",
@@ -299,14 +234,13 @@ func TestBinary(t *testing.T) {
 
 	for _, v := range cases {
 		var ret contentResult
-		err := sendPost(`content`, &url.Values{`template`: {v.source}}, &ret)
-		assert.NoError(t, err)
+		require.NoError(t, sendPost(`content`, &url.Values{`template`: {v.source}}, &ret))
 		assert.Regexp(t, v.result, string(ret.Tree))
 	}
 }
 
 func TestStringToBinary(t *testing.T) {
-	assert.NoError(t, keyLogin(1))
+	requireLogin(t, 1)
 
 	contract := randName("binary")
 	content := randName("content")
@@ -338,9 +272,9 @@ func TestStringToBinary(t *testing.T) {
 			Link string `json:"text"`
 		} `json:"tree"`
 	}
-	assert.NoError(t, sendPost(`content`, &form, &ret))
+	require.NoError(t, sendPost(`content`, &form, &ret))
 
 	data, err := sendRawRequest("GET", strings.TrimSpace(ret.Tree[0].Link), nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, content, string(data))
 }

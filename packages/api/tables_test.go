@@ -17,133 +17,86 @@
 package api
 
 import (
-	"fmt"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTables(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	requireLogin(t, 1)
 	var ret tablesResult
-	err := sendGet(`tables`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if int64(ret.Count) < 7 {
-		t.Error(fmt.Errorf(`The number of tables %d < 7`, ret.Count))
-		return
-	}
+	require.NoError(t, sendGet(`tables`, nil, &ret))
+
+	require.Truef(t, int64(ret.Count) >= 7, `The number of tables %d < 7`, ret.Count)
 }
 
 func TestTable(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	requireLogin(t, 1)
+
 	var ret tableResult
-	err := sendGet(`table/keys`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(ret.Columns) == 0 {
-		t.Errorf(`Wrong result columns`)
-		return
-	}
-	err = sendGet(`table/contracts`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`table/keys`, nil, &ret))
+	require.True(t, len(ret.Columns) != 0, `Wrong result columns`)
+	require.NoError(t, sendGet(`table/contracts`, nil, &ret))
 }
 
 func TestTableName(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	requireLogin(t, 1)
 	name := randName(`tbl`)
 	form := url.Values{"Name": {`tbl-` + name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
 	  "conditions":{"update":"true", "read":"true"}}]`}, "ApplicationId": {"100"},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err := postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, postTx(`NewTable`, &form))
+
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
 			DBInsert("tbl-` + name + `", "MyName", "test")
 			DBUpdate("tbl-` + name + `", 1, "MyName", "New test")
 		}}`},
-		"Conditions": {`ContractConditions("MainCondition")`}}
-	err = postTx("NewContract", &form)
-	if err != nil {
-		t.Error(err)
-		return
+		"Conditions": {`ContractConditions("MainCondition")`},
 	}
-	err = postTx(name, &url.Values{})
-	if err != nil {
-		t.Error(err)
-		return
-	}
+
+	require.NoError(t, postTx("NewContract", &form))
+
+	require.NoError(t, postTx(name, &url.Values{}))
+
 	var ret tableResult
-	err = sendGet(`table/tbl-`+name, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(ret.Columns) == 0 || ret.AppID != `100` {
-		t.Errorf(`wrong table columns or app_id`)
-		return
-	}
+	require.NoError(t, sendGet(`table/tbl-`+name, nil, &ret))
+
+	require.True(t, len(ret.Columns) != 0, "wrong table columns")
+	require.Equal(t, `100`, ret.AppID, "wrong app_id")
+
 	var retList listResult
-	err = sendGet(`list/tbl-`+name, nil, &retList)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if retList.Count != `1` {
-		t.Errorf(`wrong table count`)
-		return
-	}
+	require.NoError(t, sendGet(`list/tbl-`+name, nil, &retList))
+
+	require.Equal(t, "1", retList.Count, `wrong table count`)
+
 	forTest := tplList{
 		{`DBFind(tbl-` + name + `,my).Columns("id,myname").WhereId(1)`,
 			`[{"tag":"dbfind","attr":{"columns":["id","myname"],"data":[["1","New test"]],"name":"tbl-` + name + `","source":"my","types":["text","text"],"whereid":"1"}}]`},
 	}
 	var retCont contentResult
 	for _, item := range forTest {
-		err := sendPost(`content`, &url.Values{`template`: {item.input}}, &retCont)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if RawToString(retCont.Tree) != item.want {
-			t.Error(fmt.Errorf(`wrong tree %s != %s`, RawToString(retCont.Tree), item.want))
-			return
-		}
+		require.NoError(t, sendPost(`content`, &url.Values{`template`: {item.input}}, &retCont))
+		require.Equalf(t, item.want, RawToString(retCont.Tree), `wrong tree %s != %s`, RawToString(retCont.Tree), item.want)
 	}
 }
 
 func TestJSONTable(t *testing.T) {
-	assert.NoError(t, keyLogin(1))
+	requireLogin(t, 1)
 
 	name := randName(`json`)
 	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
 		"conditions":"true"}, {"name":"Doc", "type":"json","index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	assert.NoError(t, postTx(`NewTable`, &form))
+	require.NoError(t, postTx(`NewTable`, &form))
 
 	checkGet := func(want string) {
 		_, msg, err := postTxResult(name+`Get`, &url.Values{"Id": {`2`}})
-		assert.NoError(t, err)
-		assert.Equal(t, want, msg)
+		require.NoError(t, err)
+		require.Equal(t, want, msg)
 	}
 
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {

@@ -22,10 +22,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLang(t *testing.T) {
-	assert.NoError(t, keyLogin(1))
+	requireLogin(t, 1)
 
 	name := randName("lng")
 	utfName := randName("lngutf")
@@ -126,7 +127,7 @@ func TestLang(t *testing.T) {
 			continue
 		}
 
-		assert.NoError(t, sendPost(v.url, &v.form, &ret))
+		require.NoError(t, sendPost(v.url, &v.form, &ret))
 		assert.Equal(t, v.expect, RawToString(ret.Tree))
 	}
 }

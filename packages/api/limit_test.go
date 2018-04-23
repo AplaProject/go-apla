@@ -23,18 +23,19 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
 
 func TestLimit(t *testing.T) {
-	assert.NoError(t, keyLogin(1))
+	requireLogin(t, 1)
 
 	rnd := randName(``)
 	form := url.Values{"Name": {"tbl" + rnd}, "Columns": {`[{"name":"name","type":"number",   "conditions":"true"},
 	{"name":"block", "type":"varchar","conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	assert.NoError(t, postTx(`NewTable`, &form))
+	require.NoError(t, postTx(`NewTable`, &form))
 
 	form = url.Values{`Value`: {`contract Limit` + rnd + ` {
 		data {
@@ -59,7 +60,7 @@ func TestLimit(t *testing.T) {
 		   DBUpdateSysParam($Name, $Value, "") 
 		}
 	}`}, `Conditions`: {`true`}}
-	assert.NoError(t, postTx(`NewContract`, &form))
+	require.NoError(t, postTx(`NewContract`, &form))
 
 	all := 10
 	sendList := func() {

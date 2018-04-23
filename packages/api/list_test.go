@@ -17,30 +17,19 @@
 package api
 
 import (
-	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
 
 func TestList(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	requireLogin(t, 1)
+
 	var ret listResult
-	err := sendGet(`list/contracts`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if converter.StrToInt64(ret.Count) < 7 {
-		t.Error(fmt.Errorf(`The number of records %s < 7`, ret.Count))
-		return
-	}
-	err = sendGet(`list/qwert`, nil, &ret)
-	if err.Error() != `400 {"error": "E_TABLENOTFOUND", "msg": "Table qwert has not been found" , "params": ["qwert"]}` {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`list/contracts`, nil, &ret))
+	require.True(t, converter.StrToInt64(ret.Count) >= 7, `The number of records %s < 7`, ret.Count)
+
+	require.Error(t, sendGet(`list/qwert`, nil, &ret), `400 {"error": "E_TABLENOTFOUND", "msg": "Table qwert has not been found" , "params": ["qwert"]}`)
 }
