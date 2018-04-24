@@ -255,9 +255,3 @@ func SaveConfigByPath(c SavedConfig, path string) error {
 	defer cf.Close()
 	return toml.NewEncoder(cf).Encode(c)
 }
-
-// // NoConfig config file does not exist
-// func NoConfig() bool {
-// 	_, err := os.Stat(GetConfigPath())
-// 	return os.IsNotExist(err)
-// }
