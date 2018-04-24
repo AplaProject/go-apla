@@ -49,5 +49,6 @@ var (
 		`E_VDECREATED`:      `Virtual Dedicated Ecosystem is already created`,
 		`E_REQUESTNOTFOUND`: `Request %s doesn't exist`,
 		`E_UPDATING`:        `Node is updating blockchain`,
+		`E_STOPPING`:        `Network is stopping`,
 	}
 )

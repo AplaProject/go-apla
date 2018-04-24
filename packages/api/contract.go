@@ -18,7 +18,6 @@ package api
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -206,14 +205,12 @@ func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiDa
 	case service.NoPause:
 		return nil
 	case service.PauseTypeUpdatingBlockchain:
-		reason = "Node is updating blockchain"
+		reason = "E_UPDATING"
 		break
 	case service.PauseTypeStopingNetwork:
-		reason = "Network is stopping"
+		reason = "E_STOPPING"
 		break
-	default:
-		reason = "Node is paused"
 	}
 
-	return errorAPI(w, errors.New(reason), http.StatusServiceUnavailable)
+	return errorAPI(w, reason, http.StatusServiceUnavailable)
 }
