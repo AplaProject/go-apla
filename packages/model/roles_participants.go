@@ -7,6 +7,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
 
+// RolesParticipants represents record of {prefix}roles_participants table
 type RolesParticipants struct {
 	prefix      int64
 	Id          int64
@@ -35,6 +36,7 @@ func (r RolesParticipants) TableName() string {
 	return fmt.Sprintf("%d_roles_participants", r.prefix)
 }
 
+// GetActiveMemberRoles returns active assigned roles for memberID
 func (r *RolesParticipants) GetActiveMemberRoles(memberID int64) ([]RolesParticipants, error) {
 	roles := new([]RolesParticipants)
 	err := DBConn.Table(r.TableName()).Where("member->>'member_id' = ? AND deleted = ?", converter.Int64ToStr(memberID), 0).Find(&roles).Error

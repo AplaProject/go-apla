@@ -117,11 +117,15 @@ func loadLang(state int, vde bool) error {
 		}
 		res[converter.StrToInt(ilist[`app_id`])][ilist[`name`]] = &ires
 	}
-	if vde {
-		state = -state
-	}
-	lang[state] = &cacheLang{res}
+	lang[langIndex(state, vde)].res = res
 	return nil
+}
+
+func langIndex(state int, vde bool) int {
+	if vde {
+		return -state
+	}
+	return state
 }
 
 // LangText looks for the specified word through language sources and returns the meaning of the source
@@ -130,10 +134,7 @@ func LangText(in string, state, appID int, accept string, vde bool) (string, boo
 	if strings.IndexByte(in, ' ') >= 0 || state == 0 {
 		return in, false
 	}
-	istate := state
-	if vde {
-		istate = -state
-	}
+	istate := langIndex(state, vde)
 	if _, ok := lang[istate]; !ok {
 		if err := loadLang(state, vde); err != nil {
 			return err.Error(), false

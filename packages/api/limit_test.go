@@ -22,23 +22,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
 
 func TestLimit(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
+
 	rnd := randName(``)
 	form := url.Values{"Name": {"tbl" + rnd}, "Columns": {`[{"name":"name","type":"number",   "conditions":"true"},
 	{"name":"block", "type":"varchar","conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err := postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewTable`, &form))
+
 	form = url.Values{`Value`: {`contract Limit` + rnd + ` {
 		data {
 			Num int
@@ -49,10 +46,7 @@ func TestLimit(t *testing.T) {
 		   DBInsert("tbl` + rnd + `", "name, block", $Num, $block) 
 		}
 	}`}, `Conditions`: {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewContract`, &form))
 
 	form = url.Values{`Value`: {`contract Upd` + rnd + ` {
 		data {
@@ -65,18 +59,15 @@ func TestLimit(t *testing.T) {
 		   DBUpdateSysParam($Name, $Value, "") 
 		}
 	}`}, `Conditions`: {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewContract`, &form))
 
 	all := 10
 	sendList := func() {
 		for i := 0; i < all; i++ {
-			if err := postTx(`Limit`+rnd, &url.Values{`Num`: {converter.IntToStr(i)}, `nowait`: {`true`}}); err != nil {
-				t.Error(err)
-				return
-			}
+			assert.NoError(t, postTx(`Limit`+rnd, &url.Values{
+				`Num`:    {converter.IntToStr(i)},
+				`nowait`: {`true`},
+			}))
 		}
 		time.Sleep(10 * time.Second)
 	}
@@ -103,18 +94,12 @@ func TestLimit(t *testing.T) {
 		return nil
 	}
 	sendList()
-	if err = checkList(10, 1); err != nil {
-		t.Error(err)
-		return
-	}
-	var syspar ecosystemParamsResult
-	err = sendGet(`systemparams?names=max_tx_count,max_block_user_tx`, nil, &syspar)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	var maxusers, maxtx string
+	assert.NoError(t, checkList(10, 1))
 
+	var syspar ecosystemParamsResult
+	assert.NoError(t, sendGet(`systemparams?names=max_tx_count,max_block_user_tx`, nil, &syspar))
+
+	var maxusers, maxtx string
 	if syspar.List[0].Name == "max_tx_count" {
 		maxusers = syspar.List[1].Value
 		maxtx = syspar.List[0].Value
@@ -123,57 +108,33 @@ func TestLimit(t *testing.T) {
 		maxtx = syspar.List[1].Value
 	}
 	restoreMax := func() {
-		if err := postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_count`}, `Value`: {maxtx}}); err != nil {
-			t.Error(err)
-			return
-		}
-		if err := postTx(`Upd`+rnd, &url.Values{`Name`: {`max_block_user_tx`}, `Value`: {maxusers}}); err != nil {
-			t.Error(err)
-			return
-		}
+		assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_count`}, `Value`: {maxtx}}))
+		assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_block_user_tx`}, `Value`: {maxusers}}))
 	}
 	defer restoreMax()
-	if err := postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_count`}, `Value`: {`7`}}); err != nil {
-		t.Error(err)
-		return
-	}
+
+	assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_count`}, `Value`: {`7`}}))
+
 	sendList()
-	if err = checkList(20, 3); err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(`Upd`+rnd, &url.Values{`Name`: {`max_block_user_tx`}, `Value`: {`3`}}); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, checkList(20, 3))
+	assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_block_user_tx`}, `Value`: {`3`}}))
+
 	sendList()
-	if err = checkList(30, 7); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, checkList(30, 7))
+
 	restoreMax()
-	err = sendGet(`systemparams?names=max_block_generation_time`, nil, &syspar)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendGet(`systemparams?names=max_block_generation_time`, nil, &syspar))
+
 	var maxtime string
 	maxtime = syspar.List[0].Value
 	defer func() {
-		if err := postTx(`Upd`+rnd, &url.Values{`Name`: {`max_block_generation_time`},
-			`Value`: {maxtime}}); err != nil {
-			t.Error(err)
-			return
-		}
+		assert.NoError(t, postTx(`Upd`+rnd, &url.Values{
+			`Name`:  {`max_block_generation_time`},
+			`Value`: {maxtime},
+		}))
 	}()
-	if err := postTx(`Upd`+rnd, &url.Values{`Name`: {`max_block_generation_time`}, `Value`: {`100`}}); err != nil {
-		t.Error(err)
-		return
-	}
-	sendList()
-	if err = checkList(40, 0); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_block_generation_time`}, `Value`: {`100`}}))
 
+	sendList()
+	assert.NoError(t, checkList(40, 0))
 }

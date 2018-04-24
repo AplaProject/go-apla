@@ -4,18 +4,26 @@ import (
 	"fmt"
 )
 
-// Binary is model
+const BinaryTableSuffix = "_binaries"
+
+// Binary represents record of {prefix}_binaries table
 type Binary struct {
 	tableName string
 	ID        int64
 	Name      string
 	Data      []byte
 	Hash      string
+	MimeType  string
 }
 
 // SetTablePrefix is setting table prefix
 func (b *Binary) SetTablePrefix(prefix string) {
-	b.tableName = prefix + "_binaries"
+	b.tableName = prefix + BinaryTableSuffix
+}
+
+// SetTableName sets name of table
+func (b *Binary) SetTableName(tableName string) {
+	b.tableName = tableName
 }
 
 // TableName returns name of table

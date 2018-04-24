@@ -20,12 +20,14 @@ func (rt *RollbackTx) GetRollbackTransactions(dbTransaction *DbTransaction, tran
 	return GetAllTx(dbTransaction, "SELECT * from rollback_tx WHERE tx_hash = ? ORDER BY ID DESC", -1, transactionHash)
 }
 
+// GetBlockRollbackTransactions returns records of rollback by blockID
 func (rt *RollbackTx) GetBlockRollbackTransactions(dbTransaction *DbTransaction, blockID int64) ([]RollbackTx, error) {
 	var rollbackTransactions []RollbackTx
 	err := GetDB(dbTransaction).Where("block_id = ?", blockID).Order("tx_hash asc").Find(&rollbackTransactions).Error
 	return rollbackTransactions, err
 }
 
+// GetRollbackTxsByTableIDAndTableName returns records of rollback by table name and id
 func (rt *RollbackTx) GetRollbackTxsByTableIDAndTableName(tableID, tableName string, limit int) (*[]RollbackTx, error) {
 	rollbackTx := new([]RollbackTx)
 	if err := DBConn.Where("table_id = ? AND table_name = ?", tableID, tableName).Limit(limit).Find(rollbackTx).Error; err != nil {

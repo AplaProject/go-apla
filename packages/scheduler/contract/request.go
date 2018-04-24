@@ -39,6 +39,8 @@ type contractResult struct {
 	Result string `json:"result,omitempty"`
 }
 
+// NodeContract creates a transaction to execute the contract.
+// The transaction is signed with a node key.
 func NodeContract(Name string) (result contractResult, err error) {
 	var (
 		sign                          []byte

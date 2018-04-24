@@ -13,10 +13,12 @@ func init() {
 	scheduler = NewScheduler()
 }
 
+// Scheduler represents wrapper over the cron library
 type Scheduler struct {
 	cron *cron.Cron
 }
 
+// AddTask adds task to cron
 func (s *Scheduler) AddTask(t *Task) error {
 	err := t.ParseCron()
 	if err != nil {
@@ -29,6 +31,7 @@ func (s *Scheduler) AddTask(t *Task) error {
 	return nil
 }
 
+// UpdateTask updates task
 func (s *Scheduler) UpdateTask(t *Task) error {
 	err := t.ParseCron()
 	if err != nil {
@@ -57,20 +60,24 @@ func (s *Scheduler) UpdateTask(t *Task) error {
 	return nil
 }
 
+// NewScheduler creates a new scheduler
 func NewScheduler() *Scheduler {
 	s := &Scheduler{cron: cron.New()}
 	s.cron.Start()
 	return s
 }
 
+// AddTask adds task to global scheduler
 func AddTask(t *Task) error {
 	return scheduler.AddTask(t)
 }
 
+// UpdateTask updates task in global scheduler
 func UpdateTask(t *Task) error {
 	return scheduler.UpdateTask(t)
 }
 
+// Parse parses cron format
 func Parse(cronSpec string) (cron.Schedule, error) {
 	sch, err := cron.ParseStandard(cronSpec)
 	if err != nil {

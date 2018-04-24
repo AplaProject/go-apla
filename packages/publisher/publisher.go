@@ -2,6 +2,7 @@ package publisher
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -60,4 +61,13 @@ func GetHMACSign(userID int64) (string, string, error) {
 // Write is publishing data to server
 func Write(userID int64, data string) (bool, error) {
 	return publisher.Publish("client"+strconv.FormatInt(userID, 10), []byte(data))
+}
+
+// GetStats returns Stats
+func GetStats() (gocent.Stats, error) {
+	if publisher == nil {
+		return gocent.Stats{}, fmt.Errorf("publisher not initialized")
+	}
+
+	return publisher.Stats()
 }

@@ -35,7 +35,7 @@ func (b *Block) GetMaxBlock() (bool, error) {
 	return isFound(DBConn.Last(b))
 }
 
-// GetMaxNodeBlock returns last block generated not by key_id
+// GetMaxForeignBlock returns last block generated not by key_id
 func (b *Block) GetMaxForeignBlock(keyId int64) (bool, error) {
 	return isFound(DBConn.Order("id DESC").Where("key_id != ?", keyId).First(b))
 }
@@ -79,6 +79,7 @@ func (b *Block) GetBlocksFrom(startFromID int64, ordering string, limit int32) (
 	return *blockchain, err
 }
 
+// GetReverseBlockchain returns records of blocks in reverse ordering
 func (b *Block) GetReverseBlockchain(endBlockID int64, limit int32) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
@@ -86,6 +87,7 @@ func (b *Block) GetReverseBlockchain(endBlockID int64, limit int32) ([]Block, er
 	return *blockchain, err
 }
 
+// GetNodeBlocksAtTime returns records of blocks for time interval and position of node
 func (b *Block) GetNodeBlocksAtTime(from, to time.Time, node int64) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)

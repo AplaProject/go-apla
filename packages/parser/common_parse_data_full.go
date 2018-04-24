@@ -57,8 +57,8 @@ func (b Block) GetLogger() *log.Entry {
 }
 
 // InsertBlockWOForks is inserting blocks
-func InsertBlockWOForks(data []byte, genBlock bool) error {
-	block, err := ProcessBlockWherePrevFromBlockchainTable(data)
+func InsertBlockWOForks(data []byte, genBlock, firstBlock bool) error {
+	block, err := ProcessBlockWherePrevFromBlockchainTable(data, !firstBlock)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,9 @@ func (b *Block) PlayBlockSafe() error {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marshalling new block")
 			return err
 		}
-		nb, err := parseBlock(bytes.NewBuffer(newBlockData))
+
+		isFirstBlock := b.Header.BlockID == 1
+		nb, err := parseBlock(bytes.NewBuffer(newBlockData), isFirstBlock)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
 			return err
@@ -152,7 +154,7 @@ func ProcessBlockWherePrevFromMemory(data []byte) (*Block, error) {
 		return nil, fmt.Errorf("empty buffer")
 	}
 
-	block, err := parseBlock(buf)
+	block, err := parseBlock(buf, false)
 	if err != nil {
 		return nil, err
 	}
@@ -165,9 +167,9 @@ func ProcessBlockWherePrevFromMemory(data []byte) (*Block, error) {
 }
 
 // ProcessBlockWherePrevFromBlockchainTable is processing block with in table previous block
-func ProcessBlockWherePrevFromBlockchainTable(data []byte) (*Block, error) {
-	if int64(len(data)) > syspar.GetMaxBlockSize() {
-		log.WithFields(log.Fields{"size": len(data), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
+func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Block, error) {
+	if checkSize && int64(len(data)) > syspar.GetMaxBlockSize() {
+		log.WithFields(log.Fields{"check_size": checkSize, "size": len(data), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
 		return nil, utils.ErrInfo(fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]`))
 	}
 
@@ -177,7 +179,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte) (*Block, error) {
 		return nil, fmt.Errorf("empty buffer")
 	}
 
-	block, err := parseBlock(buf)
+	block, err := parseBlock(buf, !checkSize)
 	if err != nil {
 		return nil, err
 	}
@@ -190,8 +192,8 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte) (*Block, error) {
 	return block, nil
 }
 
-func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
-	header, err := ParseBlockHeader(blockBuffer)
+func parseBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error) {
+	header, err := ParseBlockHeader(blockBuffer, !firstBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +257,7 @@ func parseBlock(blockBuffer *bytes.Buffer) (*Block, error) {
 }
 
 // ParseBlockHeader is parses block header
-func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
+func ParseBlockHeader(binaryBlock *bytes.Buffer, checkMaxSize bool) (utils.BlockData, error) {
 	var block utils.BlockData
 	var err error
 
@@ -266,7 +268,7 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer) (utils.BlockData, error) {
 
 	blockVersion := int(converter.BinToDec(binaryBlock.Next(2)))
 
-	if int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
+	if checkMaxSize && int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
 		log.WithFields(log.Fields{"size": binaryBlock.Len(), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
 		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
 			binaryBlock.Len(), syspar.GetMaxBlockSize())
@@ -343,7 +345,7 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 	} else if consts.IsStruct(int(txType)) {
 		p.TxBinaryData = buffer.Bytes()
 		if err := parseStructTransaction(p, buffer, txType); err != nil {
-			return nil, err
+			return p, err
 		}
 
 		// all other transactions
@@ -381,7 +383,7 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 		log.WithFields(log.Fields{"contract_type": smartTx.Type, "type": consts.NotFound}).Error("unknown contract")
 		return fmt.Errorf(`unknown contract %d`, smartTx.Type)
 	}
-	forsign := smartTx.ForSign()
+	forsign := []string{smartTx.ForSign()}
 
 	p.TxContract = contract
 	p.TxHeader = &smartTx.Header
@@ -395,6 +397,28 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 			var v interface{}
 			var forv string
 			var isforv bool
+
+			if fitem.ContainsTag(script.TagFile) {
+				var (
+					data []byte
+					file *tx.File
+				)
+				if err := converter.BinUnmarshal(&input, &data); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling file")
+					return err
+				}
+				if err := msgpack.Unmarshal(data, &file); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("unmarshalling file msgpack")
+					return err
+				}
+
+				p.TxData[fitem.Name] = file.Data
+				p.TxData[fitem.Name+"MimeType"] = file.MimeType
+
+				forsign = append(forsign, file.MimeType, file.Hash)
+				continue
+			}
+
 			switch fitem.Type.String() {
 			case `uint64`:
 				var val uint64
@@ -458,7 +482,9 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 				}
 				v = list
 			}
-			p.TxData[fitem.Name] = v
+			if p.TxData[fitem.Name] == nil {
+				p.TxData[fitem.Name] = v
+			}
 			if err != nil {
 				return err
 			}
@@ -468,10 +494,10 @@ func parseContractTransaction(p *Parser, buf *bytes.Buffer) error {
 			if isforv {
 				v = forv
 			}
-			forsign += fmt.Sprintf(",%v", v)
+			forsign = append(forsign, fmt.Sprintf("%v", v))
 		}
 	}
-	p.TxData[`forsign`] = forsign
+	p.TxData[`forsign`] = strings.Join(forsign, ",")
 
 	return nil
 }
@@ -494,6 +520,12 @@ func parseStructTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 	p.TxKeyID = head.KeyID
 	p.TxTime = int64(head.Time)
 	p.TxType = txType
+
+	err = trParser.Validate()
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+
 	return nil
 }
 
@@ -598,16 +630,17 @@ func playTransaction(p *Parser) (string, error) {
 	if p.TxContract != nil {
 		// check that there are enough money in CallContract
 		return p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
-	} else {
-		if p.txParser == nil {
-			return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
-		}
+	}
+
+	if p.txParser == nil {
+		return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
+	}
 
 		err := p.txParser.Action()
-		if _, ok := err.(error); ok {
-			return "", utils.ErrInfo(err.(error))
+		if err != nil {
+			return "", err
 		}
-	}
+
 	return "", nil
 }
 
@@ -635,6 +668,10 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 			err = limits.CheckLimit(p)
 		}
 		if err != nil {
+			if err == errNetworkStopping {
+				return err
+			}
+
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
 				model.IncrementTxAttemptCount(p.DbTransaction, p.TxHash)
@@ -684,6 +721,7 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 
 // CheckBlock is checking block
 func (b *Block) CheckBlock() error {
+
 	logger := b.GetLogger()
 	// exclude blocks from future
 	if b.Header.Time > time.Now().Unix() {
@@ -696,6 +734,11 @@ func (b *Block) CheckBlock() error {
 			return utils.ErrInfo(err)
 		}
 	}
+
+	if b.Header.BlockID == 1 {
+		return nil
+	}
+
 	// is this block too early? Allowable error = error_time
 	if b.PrevHeader != nil {
 		if b.Header.BlockID != b.PrevHeader.BlockID+1 {

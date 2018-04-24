@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/tevino/abool"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -17,9 +16,6 @@ import (
 
 // DefaultBlockchainGap is default value for the number of lagging blocks
 const DefaultBlockchainGap int64 = 10
-
-// nodePaused is global flag represents that node is not generate blocks, only collect it
-var nodePaused = abool.New()
 
 type NodeActualizer struct {
 	availableBlockchainGap int64
@@ -57,10 +53,6 @@ func (n *NodeActualizer) Run() {
 	}()
 }
 
-func IsNodePaused() bool {
-	return nodePaused.IsSet()
-}
-
 func (n *NodeActualizer) checkBlockchainActuality() (bool, error) {
 	curBlock := &model.InfoBlock{}
 	_, err := curBlock.Get()
@@ -96,9 +88,9 @@ func (n *NodeActualizer) checkBlockchainActuality() (bool, error) {
 }
 
 func (n *NodeActualizer) pauseNodeActivity() {
-	nodePaused.Set()
+	np.Set(PauseTypeUpdatingBlockchain)
 }
 
 func (n *NodeActualizer) resumeNodeActivity() {
-	nodePaused.UnSet()
+	np.Unset()
 }

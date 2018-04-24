@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type ComponentModel interface {
+type componentModel interface {
 	SetTablePrefix(prefix string)
 	Get(name string) (bool, error)
 }
@@ -25,7 +25,7 @@ func getBlockInterfaceRow(w http.ResponseWriter, r *http.Request, data *apiData,
 	return getInterfaceRow(w, r, data, logger, &model.BlockInterface{})
 }
 
-func getInterfaceRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, c ComponentModel) error {
+func getInterfaceRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, c componentModel) error {
 	c.SetTablePrefix(getPrefix(data))
 	ok, err := c.Get(data.ParamString("name"))
 	if err != nil {
