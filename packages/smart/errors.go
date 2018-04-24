@@ -22,7 +22,8 @@ import (
 )
 
 const (
-	eTableNotFound = `Table %s has not been found`
+	eTableNotFound  = `Table %s has not been found`
+	eAccessContract = `%s can be only called from %s`
 )
 
 var (
@@ -39,7 +40,11 @@ var (
 	errIncorrectSign          = errors.New(`Incorrect sign`)
 	errInvalidValue           = errors.New(`Invalid value`)
 	errNegPrice               = errors.New(`Price value is negative`)
+	errOneContract            = errors.New(`Оnly one contract must be in the record`)
+	errSameColumns            = errors.New(`There are the same columns`)
+	errTableName              = errors.New(`The name of the table cannot begin with @`)
 	errUnknownNodeID          = errors.New(`Unknown node id`)
+	errValues                 = errors.New(`values are undefined`)
 	errWrongPriceFunc         = errors.New(`Wrong type of price function`)
 
 	errMaxPrice = fmt.Errorf(`Price value is more than %d`, MaxPrice)

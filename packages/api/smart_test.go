@@ -174,14 +174,6 @@ func TestPage(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Name": {`app` + name}, "Value": {value}, "ValidateCount": {"2"},
-		"ValidateMode": {"1"},
-		"Menu":         {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
-	err = postTx(`NewPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
 
 	var ret listResult
 	err = sendGet(`list/pages`, nil, &ret)
