@@ -90,42 +90,6 @@ var (
 		"DBUpdate":    {},
 		"DBUpdateExt": {},
 	}
-	extendCost = map[string]int64{
-		"AddressToId":        10,
-		"ColumnCondition":    50,
-		"CompileContract":    100,
-		"Contains":           10,
-		"ContractAccess":     50,
-		"ContractConditions": 50,
-		"ContractsList":      10,
-		"CreateColumn":       50,
-		"CreateTable":        100,
-		"EcosysParam":        10,
-		"AppParam":           10,
-		"Eval":               10,
-		"EvalCondition":      20,
-		"FlushContract":      50,
-		"GetContractByName":  20,
-		"GetContractById":    20,
-		"HMac":               50,
-		"Join":               10,
-		"JSONToMap":          50,
-		"Sha256":             50,
-		"IdToAddress":        10,
-		"IsObject":           10,
-		"Len":                5,
-		"Replace":            10,
-		"PermColumn":         50,
-		"Split":              50,
-		"PermTable":          100,
-		"Substr":             10,
-		"Size":               10,
-		"ToLower":            10,
-		"TrimSpace":          10,
-		"TableConditions":    100,
-		"UpdateLang":         10,
-		"ValidateCondition":  30,
-	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
 		"pages":      "changing_page",
@@ -137,13 +101,6 @@ var (
 		"tables":     "changing_tables",
 	}
 )
-
-func getCost(name string) int64 {
-	if val, ok := extendCost[name]; ok {
-		return val
-	}
-	return -1
-}
 
 // EmbedFuncs is extending vm with embedded functions
 func EmbedFuncs(vm *script.VM, vt script.VMType) {
@@ -232,7 +189,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["HTTPPostJSON"] = HTTPPostJSON
 		f["ValidateCron"] = ValidateCron
 		f["UpdateCron"] = UpdateCron
-		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
 		f["GetBlock"] = GetBlock

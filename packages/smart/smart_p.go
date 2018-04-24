@@ -196,8 +196,8 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			checked = true
 		}
 		if !checked && (!ok || converter.Int64ToStr(ival) != value) {
-			log.WithFields(log.Fields{"type": consts.InvalidObject, "value": value, "name": name}).Error(ErrInvalidValue.Error())
-			return 0, ErrInvalidValue
+			log.WithFields(log.Fields{"type": consts.InvalidObject, "value": value, "name": name}).Error(errInvalidValue.Error())
+			return 0, errInvalidValue
 		}
 		fields = append(fields, "value")
 		values = append(values, value)
@@ -406,8 +406,8 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	if !found || len(sp.Value) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": ErrFounderAccount}).Error("founder not found")
-		return 0, ErrFounderAccount
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": errFounderAccount}).Error("founder not found")
+		return 0, errFounderAccount
 	}
 
 	id, err := model.GetNextID(sc.DbTransaction, "1_ecosystems")
