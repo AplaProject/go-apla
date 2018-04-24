@@ -123,7 +123,7 @@ func checkAccount(w http.ResponseWriter, logger *log.Entry, claims *JWTClaims) e
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	if isAccount {
-		if account.Delete == 1 {
+		if account.Deleted == 1 {
 			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 		}
 	}
