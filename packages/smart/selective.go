@@ -113,6 +113,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "query": selectQuery}).Error("updating for not existing record")
 		return 0, tableID, errUpdNotExistRecord
 	}
+	jsonFields := make(map[string]map[string]string)
 	if whereFields != nil && len(logData) > 0 {
 		rollbackInfo := make(map[string]string)
 		for k, v := range logData {
@@ -138,7 +139,6 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			return 0, tableID, err
 		}
 		rollbackInfoStr = string(jsonRollbackInfo)
-		updJson := make(map[string]map[string]string)
 		addSQLUpdate := ""
 		for i := 0; i < len(fields); i++ {
 			if isBytea[fields[i]] && len(values[i]) != 0 {
@@ -156,16 +156,16 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			} else if strings.Contains(fields[i], `->`) {
 				colfield := strings.Split(fields[i], `->`)
 				if len(colfield) == 2 {
-					if updJson[colfield[0]] == nil {
-						updJson[colfield[0]] = make(map[string]string)
+					if jsonFields[colfield[0]] == nil {
+						jsonFields[colfield[0]] = make(map[string]string)
 					}
-					updJson[colfield[0]][colfield[1]] = values[i]
+					jsonFields[colfield[0]][colfield[1]] = values[i]
 				}
 			} else {
 				addSQLUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
-		for colname, colvals := range updJson {
+		for colname, colvals := range jsonFields {
 			var initial string
 			out, err := json.Marshal(colvals)
 			if err != nil {
@@ -197,31 +197,52 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		tableID = logData[`id`]
 	} else {
 		isID := false
-		addSQLIns0 := ""
-		addSQLIns1 := ""
+		addSQLIns0 := []string{}
+		addSQLIns1 := []string{}
 		for i := 0; i < len(fields); i++ {
 			if fields[i] == `id` {
 				isID = true
 				tableID = fmt.Sprint(values[i])
 			}
+
+			if strings.Contains(fields[i], `->`) {
+				colfield := strings.Split(fields[i], `->`)
+				if len(colfield) == 2 {
+					if jsonFields[colfield[0]] == nil {
+						jsonFields[colfield[0]] = make(map[string]string)
+					}
+					jsonFields[colfield[0]][colfield[1]] = values[i]
+					continue
+				}
+			}
+
 			if fields[i][:1] == "+" || fields[i][:1] == "-" {
-				addSQLIns0 += fields[i][1:len(fields[i])] + `,`
+				addSQLIns0 = append(addSQLIns0, fields[i][1:len(fields[i])])
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
-				addSQLIns0 += fields[i][len(`timestamp `):] + `,`
+				addSQLIns0 = append(addSQLIns0, fields[i][len(`timestamp `):])
 			} else {
-				addSQLIns0 += fields[i] + `,`
+				addSQLIns0 = append(addSQLIns0, fields[i])
 			}
 			if isBytea[fields[i]] && len(values[i]) != 0 {
-				addSQLIns1 += `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
+				addSQLIns1 = append(addSQLIns1, `decode('`+hex.EncodeToString([]byte(values[i]))+`','HEX')`)
 			} else if values[i] == `NULL` {
-				addSQLIns1 += `NULL,`
-			} else if strings.HasPrefix(fields[i], `timestamp `) {
-				addSQLIns1 += `to_timestamp('` + values[i] + `'),`
-			} else if strings.HasPrefix(values[i], `timestamp `) {
-				addSQLIns1 += `timestamp '` + values[i][len(`timestamp `):] + `',`
+				addSQLIns1 = append(addSQLIns1, `NULL`)
+			} else if strings.HasPrefix(fields[i], `timestamp`) {
+				addSQLIns1 = append(addSQLIns1, `to_timestamp('`+values[i]+`')`)
+			} else if strings.HasPrefix(values[i], `timestamp`) {
+				addSQLIns1 = append(addSQLIns1, `timestamp '`+values[i][len(`timestamp `):]+`'`)
 			} else {
-				addSQLIns1 += `'` + strings.Replace(values[i], `'`, `''`, -1) + `',`
+				addSQLIns1 = append(addSQLIns1, `'`+strings.Replace(values[i], `'`, `''`, -1)+`'`)
 			}
+		}
+		for colname, colvals := range jsonFields {
+			out, err := json.Marshal(colvals)
+			if err != nil {
+				log.WithFields(log.Fields{"error": err, "type": consts.JSONMarshallError}).Error("marshalling update columns for jsonb")
+				return 0, ``, err
+			}
+			addSQLIns0 = append(addSQLIns0, colname)
+			addSQLIns1 = append(addSQLIns1, fmt.Sprintf(`'%s'::jsonb`, string(out)))
 		}
 		if whereFields != nil && whereValues != nil {
 			for i := 0; i < len(whereFields); i++ {
@@ -229,8 +250,8 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 					isID = true
 					tableID = fmt.Sprint(whereValues[i])
 				}
-				addSQLIns0 += `` + whereFields[i] + `,`
-				addSQLIns1 += `'` + whereValues[i] + `',`
+				addSQLIns0 = append(addSQLIns0, whereFields[i])
+				addSQLIns1 = append(addSQLIns1, whereValues[i])
 			}
 		}
 		if !isID {
@@ -240,11 +261,11 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 				return 0, ``, err
 			}
 			tableID = converter.Int64ToStr(id)
-			addSQLIns0 += `id,`
-			addSQLIns1 += `'` + tableID + `',`
+			addSQLIns0 = append(addSQLIns0, `id`)
+			addSQLIns1 = append(addSQLIns1, `'`+tableID+`'`)
 		}
-		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0[:len(addSQLIns0)-1] +
-			`) VALUES (` + addSQLIns1[:len(addSQLIns1)-1] + `)`
+		insertQuery := `INSERT INTO "` + table + `" (` + strings.Join(addSQLIns0, ",") +
+			`) VALUES (` + strings.Join(addSQLIns1, ",") + `)`
 		insertCost, err := queryCoster.QueryCost(sc.DbTransaction, insertQuery)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")
