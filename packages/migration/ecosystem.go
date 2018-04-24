@@ -81,7 +81,10 @@ MenuItem(
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 		  "value" text NOT NULL DEFAULT '',
 		  "menu" character varying(255) NOT NULL DEFAULT '',
-		  "conditions" text NOT NULL DEFAULT ''
+		  "conditions" text NOT NULL DEFAULT '',
+		  "validate_count" bigint NOT NULL DEFAULT '1',
+		  "app_id" bigint NOT NULL DEFAULT '0',
+		  "validate_mode" character(1) NOT NULL DEFAULT '0'
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_pages" ADD CONSTRAINT "%[1]d_vde_pages_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_pages_index_name" ON "%[1]d_vde_pages" (name);
@@ -199,7 +202,10 @@ MenuItem(
 			  '{"name": "ContractConditions(\"MainCondition\")",
 		  "value": "ContractConditions(\"MainCondition\")",
 		  "menu": "ContractConditions(\"MainCondition\")",
-		  "conditions": "ContractConditions(\"MainCondition\")"
+		  "conditions": "ContractConditions(\"MainCondition\")",
+		  "validate_count": "ContractConditions(\"MainCondition\")",
+		  "validate_mode": "ContractConditions(\"MainCondition\")",
+		  "app_id": "ContractConditions(\"MainCondition\")"
 			  }', 'ContractAccess("EditTable")'),
 			  ('5', 'blocks', 
 			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
@@ -493,6 +499,7 @@ MenuItem(
 			Conditions string
 			ValidateCount int "optional"
 			ApplicationId int "optional"
+			ValidateMode int "optional"
 		}
 		func preparePageValidateCount(count int) int {
 			var min, max int
@@ -522,7 +529,8 @@ MenuItem(
 			$ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
-			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId)
+			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id,validate_mode", 
+				$Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId, $ValidateMode)
 		}
 		func price() int {
 			return  SysParamInt("page_price")
@@ -533,35 +541,63 @@ MenuItem(
 			Id         int
 			Value      string "optional"
 			Menu      string "optional"
-		  	Conditions string "optional"
+			Conditions string "optional"
+			ValidateCount int "optional"
+			ValidateMode  string "optional"
 		  }
-		  
-		func onlyConditions() bool {
+		  func onlyConditions() bool {
         	return $Conditions && !$Value && !$Menu
-		}
+		  }
+		  func preparePageValidateCount(count int) int {
+			  var min, max int
+			  min = Int(EcosysParam("min_page_validate_count"))
+			  max = Int(EcosysParam("max_page_validate_count"))
+	  
+			  if count < min {
+				  count = min
+			  } else {
+				  if count > max {
+					  count = max
+				  }
+			  }
+	  
+			  return count
+		  }					  
 	  	conditions {
 		  RowConditions("pages", $Id, onlyConditions())
 		  if $Conditions {
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
+		  $ValidateCount = preparePageValidateCount($ValidateCount)
 	  	}
 	  	action {
-		  var pars, vals array
-		  if $Value {
-			  pars[0] = "value"
-			  vals[0] = $Value
-		  }
-		  if $Menu {
-			  pars[Len(pars)] = "menu"
-			  vals[Len(vals)] = $Menu
-		  }
-		  if $Conditions {
-			  pars[Len(pars)] = "conditions"
-			  vals[Len(vals)] = $Conditions
-		  }
-		  if Len(vals) > 0 {
-			  DBUpdate("pages", $Id, Join(pars, ","), vals...)
-		  }
+			var pars, vals array
+			if $Value {
+				pars[0] = "value"
+				vals[0] = $Value
+			}
+			if $Menu {
+				pars[Len(pars)] = "menu"
+				vals[Len(vals)] = $Menu
+			}
+			if $Conditions {
+				pars[Len(pars)] = "conditions"
+				vals[Len(vals)] = $Conditions
+			}
+			if $ValidateCount {
+				pars[Len(pars)] = "validate_count"
+				vals[Len(vals)] = $ValidateCount
+			}
+			if $ValidateMode {
+				if $ValidateMode != "1" {
+					$ValidateMode = "0"
+				}
+				pars[Len(pars)] = "validate_mode"
+				vals[Len(vals)] = $ValidateMode
+			}
+			if Len(vals) > 0 {
+				DBUpdate("pages", $Id, Join(pars, ","), vals...)
+			}
 	  	}		  
 	  }', 'ContractConditions("MainCondition")'),
 	  ('11','AppendPage','contract AppendPage {
@@ -925,8 +961,8 @@ MenuItem(
 		"pub" bytea  NOT NULL DEFAULT '',
 		"amount" decimal(30) NOT NULL DEFAULT '0',
 		"multi" int NOT NULL DEFAULT '0',
-		"delete" int NOT NULL DEFAULT '0',
-		"block" int NOT NULL DEFAULT '0'
+		"deleted" int NOT NULL DEFAULT '0',
+		"blocked" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
 		
@@ -1024,7 +1060,8 @@ MenuItem(
 			"menu" character varying(255) NOT NULL DEFAULT '',
 			"validate_count" bigint NOT NULL DEFAULT '1',
 			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '0'
+			"app_id" bigint NOT NULL DEFAULT '0',
+			"validate_mode" character(1) NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
@@ -1138,17 +1175,17 @@ MenuItem(
 		('15','max_page_validate_count', '6', 'ContractConditions("MainCondition")'),
 		('16','changing_blocks', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")');
 
-		DROP TABLE IF EXISTS "%[1]d_app_param";
-		CREATE TABLE "%[1]d_app_param" (
+		DROP TABLE IF EXISTS "%[1]d_app_params";
+		CREATE TABLE "%[1]d_app_params" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"app_id" bigint NOT NULL  DEFAULT '0',
 		"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
 		"conditions" text  NOT NULL DEFAULT ''
 		);
-		ALTER TABLE ONLY "%[1]d_app_param" ADD CONSTRAINT "%[1]d_app_param_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "%[1]d_app_param_index_name" ON "%[1]d_app_param" (name);
-		CREATE INDEX "%[1]d_app_param_index_app" ON "%[1]d_app_param" (app_id);
+		ALTER TABLE ONLY "%[1]d_app_params" ADD CONSTRAINT "%[1]d_app_params_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "%[1]d_app_params_index_name" ON "%[1]d_app_params" (name);
+		CREATE INDEX "%[1]d_app_params_index_app" ON "%[1]d_app_params" (app_id);
 		
 		DROP TABLE IF EXISTS "%[1]d_tables";
 		CREATE TABLE "%[1]d_tables" (
@@ -1174,7 +1211,11 @@ MenuItem(
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"pub": "ContractConditions(\"MainCondition\")",
-				  "amount": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("@1EditTable")'),
+				  "amount": "ContractConditions(\"MainCondition\")",
+				  "deleted": "ContractConditions(\"MainCondition\")",
+				  "blocked": "ContractConditions(\"MainCondition\")",
+				  "multi": "ContractConditions(\"MainCondition\")"}', 
+				'ContractAccess("@1EditTable")'),
 				('3', 'history', 
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1204,6 +1245,8 @@ MenuItem(
 			"value": "ContractConditions(\"MainCondition\")",
 			"menu": "ContractConditions(\"MainCondition\")",
 			"validate_count": "ContractConditions(\"MainCondition\")",
+			"validate_mode": "ContractConditions(\"MainCondition\")",
+			"app_id": "ContractConditions(\"MainCondition\")",
 			"conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractAccess("@1EditTable")'),
 				('7', 'blocks', 
@@ -1221,47 +1264,49 @@ MenuItem(
 			"conditions": "ContractConditions(\"MainCondition\")"
 				}', 'ContractAccess("@1EditTable")'),
 				('9', 'members', 
-					'{"insert": "ContractAccess(\"Profile_Edit\")", "update": "ContractAccess(\"Profile_Edit\")", 
-					  "new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"member_name": "ContractAccess(\"Profile_Edit\")",
-					  "image_id": "ContractAccess(\"Profile_Edit\")",
-					  "member_info": "ContractAccess(\"Profile_Edit\")"}', 'ContractConditions(\"MainCondition\")'),
-				('10', 'roles', 
-					'{"insert": "ContractAccess(\"Roles_Create\")", "update": "ContractAccess(\"Roles_Del\")", 
-					 "new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"default_page": "false",
-					  "role_name": "false",
-					  "deleted": "ContractAccess(\"Roles_Del\")",
-					  "role_type": "false",
-					  "creator": "false",
-					  "date_created": "false",
-					  "date_deleted": "ContractAccess(\"Roles_Del\")",
-					  "image_id": "false",
-					  "company_id": "false"}',
-					   'ContractConditions(\"MainCondition\")'),
+					'{"insert":"ContractAccess(\"Profile_Edit\")","update":"ContractConditions(\"MainCondition\")","new_column":"ContractConditions(\"MainCondition\")"}',
+					'{"image_id":"ContractAccess(\"Profile_Edit\")","member_info":"ContractAccess(\"Profile_Edit\")","member_name":"false"}', 
+					'ContractConditions(\"MainCondition\")'),
+				('10', 'roles',
+					'{"insert":"ContractAccess(\"Roles_Create\")",
+						"update":"ContractConditions(\"MainCondition\")",
+						"new_column":"ContractConditions(\"MainCondition\")"}', 
+					'{"default_page":"false",
+						"creator":"false",
+						"deleted":"ContractAccess(\"Roles_Del\")",
+						"company_id":"false",
+						"date_deleted":"ContractAccess(\"Roles_Del\")",
+						"image_id":"ContractAccess(\"Roles_Create\")",
+						"role_name":"false",
+						"date_created":"false",
+						"role_type":"false"}',
+					'ContractConditions(\"MainCondition\")'),
 				('11', 'roles_participants',
-					'{"insert": "ContractAccess(\"Roles_Assign\", \"voting_CheckDecision\")", "update": "ContractAccess(\"Roles_Unassign\")",
-					"new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"role": "false",
-					  "member": "false",
-					  "appointed": "false",
-					  "date_created": "false",
-					  "date_deleted": "ContractAccess(\"Roles_Unassign\")",
-					  "deleted": "ContractAccess(\"Roles_Unassign\")"}', 
-					  'ContractConditions(\"MainCondition\")'),
+					'{"insert":"ContractAccess(\"Roles_Assign\",\"voting_CheckDecision\")",
+						"update":"ContractConditions(\"MainCondition\")",
+						"new_column":"ContractConditions(\"MainCondition\")"}',
+					'{"deleted":"ContractAccess(\"Roles_Unassign\")",
+						"date_deleted":"ContractAccess(\"Roles_Unassign\")",
+						"member":"false",
+						"role":"false",
+						"date_created":"false",
+						"appointed":"false"}', 
+					'ContractConditions(\"MainCondition\")'),
 				('12', 'notifications',
-					'{"insert": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")", "update": "true",
-					"new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"recipient": "false",
-					  "sender": "false",
-					  "notification": "false",
-					  "page_params": "ContractAccess(\"Notifications_Single_Send\",\"Notifications_Roles_Send\")",
-					  "processing_info": "ContractAccess(\"Notifications_Roles_Processing\")",
-					  "page_name": "false",
-					  "date_created": "false",
-					  "date_start_processing": "ContractAccess(\"Notifications_Roles_Processing\")",
-					  "date_closed": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")",
-					  "closed": "ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Finishing\")"}',							    'ContractAccess(\"@1EditTable\")'),
+					'{"insert":"ContractAccess(\"Notifications_Single_Send_map\",\"Notifications_Roles_Send_map\")",
+						"update":"ContractConditions(\"MainCondition\")",
+						"new_column":"ContractConditions(\"MainCondition\")"}',
+					'{"date_closed":"ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Close\")",
+						"sender":"false",
+						"processing_info":"ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Processing\")",
+						"date_start_processing":"ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Processing\")",
+						"notification":"false",
+						"page_name":"false",
+						"page_params":"false",
+						"closed":"ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Close\")",
+						"date_created":"false",
+						"recipient":"false"}',
+					'ContractAccess(\"@1EditTable\")'),
 				('13', 'sections', 
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 					"new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1272,20 +1317,23 @@ MenuItem(
 						"delete": "ContractConditions(\"MainCondition\")"}', 
 						'ContractConditions(\"MainCondition\")'),
 				('14', 'applications',
-					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"insert": "ContractConditions(\"MainCondition\")",
+						 "update": "ContractConditions(\"MainCondition\")", 
+						 "new_column": "ContractConditions(\"MainCondition\")"}',
 					'{"name": "ContractConditions(\"MainCondition\")",
 					  "uuid": "false",
 					  "conditions": "ContractConditions(\"MainCondition\")",
 					  "deleted": "ContractConditions(\"MainCondition\")"}',
 					'ContractConditions(\"MainCondition\")'),
 				('15', 'binaries',
-					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
-					'{"app_id": "ContractConditions(\"MainCondition\")",
-						"member_id": "ContractConditions(\"MainCondition\")",
-						"name": "ContractConditions(\"MainCondition\")",
-						"data": "ContractConditions(\"MainCondition\")",
-						"hash": "ContractConditions(\"MainCondition\")",
-						"mime_type": "ContractConditions(\"MainCondition\")"}',
+					'{"insert":"ContractAccess(\"UploadBinary\")",
+						"update":"ContractConditions(\"MainCondition\")",
+						"new_column":"ContractConditions(\"MainCondition\")"}',
+					'{"hash":"ContractAccess(\"UploadBinary\")",
+						"member_id":"false",
+						"data":"ContractAccess(\"UploadBinary\")",
+						"name":"false",
+						"app_id":"false"}',
 					'ContractConditions(\"MainCondition\")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
@@ -1316,7 +1364,7 @@ MenuItem(
 			"date_created" timestamp,
 			"date_deleted" timestamp,
 			"company_id" bigint NOT NULL DEFAULT '0',
-			"image_id"   bigint
+			"image_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles" ADD CONSTRAINT "%[1]d_roles_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_index_deleted" ON "%[1]d_roles" (deleted);
@@ -1352,7 +1400,7 @@ MenuItem(
 		CREATE TABLE "%[1]d_members" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
-			"image_id"	bigint,
+			"image_id"	bigint NOT NULL DEFAULT '0',
 			"member_info"   jsonb
 		);
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
@@ -1554,9 +1602,10 @@ MenuItem(
 			}
 			var total money
 			$amount = Money($Amount) 
-			if $amount == 0 {
-				error "Amount is zero"
+			if $amount <= 0 {
+				error "Amount must be greater then zero"
 			}
+
 			var row map
 			row = DBRow("keys").Columns("amount").WhereId($key_id)
 			total = Money(row["amount"])
@@ -1888,6 +1937,7 @@ MenuItem(
 			Conditions string
 			ValidateCount int "optional"
 			ApplicationId int "optional"
+			ValidateMode  int "optional"
 		}
 		func preparePageValidateCount(count int) int {
 			var min, max int
@@ -1917,7 +1967,8 @@ MenuItem(
 			$ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
-			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId)
+			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id,validate_mode", 
+				$Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId, $ValidateMode)
 		}
 		func price() int {
 			return  SysParamInt("page_price")
@@ -1929,13 +1980,12 @@ MenuItem(
 			Value      string "optional"
 			Menu      string "optional"
 			Conditions string "optional"
-      		ValidateCount int "optional"
+			ValidateCount int "optional"
+			ValidateMode  string "optional"
 		}
-
 		func onlyConditions() bool {
 			return $Conditions && !$Value && !$Menu && !$ValidateCount 
 		}
-
 		func preparePageValidateCount(count int) int {
 			var min, max int
 			min = Int(EcosysParam("min_page_validate_count"))
@@ -1972,10 +2022,17 @@ MenuItem(
 				pars[Len(pars)] = "conditions"
 				vals[Len(vals)] = $Conditions
 			}
-      if $ValidateCount {
+			if $ValidateCount {
 				pars[Len(pars)] = "validate_count"
 				vals[Len(vals)] = $ValidateCount
-      }
+			}
+			if $ValidateMode {
+				if $ValidateMode != "1" {
+					$ValidateMode = "0"
+				}
+				pars[Len(pars)] = "validate_mode"
+				vals[Len(vals)] = $ValidateMode
+			}
 			if Len(vals) > 0 {
 				DBUpdate("pages", $Id, Join(pars, ","), vals...)
 			}
@@ -2373,13 +2430,13 @@ MenuItem(
 				warning "App id cannot equal 0"
 			}
 			var row map
-			row = DBRow("app_param").Columns("id").Where("app_id = ? and name = ?", $App, $Name)
+			row = DBRow("app_params").Columns("id").Where("app_id = ? and name = ?", $App, $Name)
 			if row {
 				warning Sprintf( "App parameter %%s already exists", $Name)
 			}
 		}
 		action {
-			DBInsert("app_param", "app_id,name,value,conditions", $App, $Name, $Value, $Conditions )
+			DBInsert("app_params", "app_id,name,value,conditions", $App, $Name, $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('29','EditAppParam','contract EditAppParam {
@@ -2393,11 +2450,11 @@ MenuItem(
 		}
 
 		conditions {
-			RowConditions("app_param", $Id, onlyConditions())
+			RowConditions("app_params", $Id, onlyConditions())
 			ValidateCondition($Conditions, $ecosystem_id)
 		}
 		action {
-			DBUpdate("app_param", $Id, "value,conditions", $Value, $Conditions )
+			DBUpdate("app_params", $Id, "value,conditions", $Value, $Conditions )
 		}
 	}', '%[1]d','ContractConditions("MainCondition")'),
 	('30', 'NewDelayedContract','contract NewDelayedContract {
@@ -2548,7 +2605,7 @@ MenuItem(
            	DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
 					$key_id, $newId, $amount, "New user deposit", $block, $txhash)
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")'),
+	}','%[1]d', 'ContractConditions("NodeOwnerCondition")'),
 	('35', 'EditEcosystemName','contract EditEcosystemName {
 		data {
 			EcosystemID int
@@ -2585,6 +2642,21 @@ MenuItem(
 				}
 				i = i + 1
 			}
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")'),
+	('37', 'NodeOwnerCondition', 'contract NodeOwnerCondition {
+		conditions {
+			$full_nodes = JSONDecode(SysParamString("full_nodes"))
+			var i int
+			while i < Len($full_nodes) {
+				$fn = $full_nodes[i]
+				if $fn["key_id"] == $key_id {
+					return true
+				}
+				i = i + 1
+			}
+
+			warning "Sorry, you do not have access to this action."
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")');`
 )

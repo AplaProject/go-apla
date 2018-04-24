@@ -632,7 +632,7 @@ func process(input string, owner *node, workspace *Workspace) {
 				if *workspace.Timeout {
 					return
 				}
-				appendText(owner, string(name[:nameOff]))
+				appendText(owner, macro(string(name[:nameOff]), workspace.Vars))
 				name = name[:0]
 				nameOff = 0
 				params, shift, tailpars = getFunc(input[off:], curFunc)

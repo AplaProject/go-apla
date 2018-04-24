@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 
@@ -74,7 +73,7 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	if key.Delete == 1 {
+	if key.Deleted == 1 {
 		return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 	}
 	if len(key.PublicKey) == 0 {
@@ -206,14 +205,12 @@ func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiDa
 	case service.NoPause:
 		return nil
 	case service.PauseTypeUpdatingBlockchain:
-		reason = "Node is updating blockchain"
+		reason = "E_UPDATING"
 		break
 	case service.PauseTypeStopingNetwork:
-		reason = "Network is stopping"
+		reason = "E_STOPPING"
 		break
-	default:
-		reason = "Node is paused"
 	}
 
-	return errorAPI(w, errors.New(reason), http.StatusServiceUnavailable)
+	return errorAPI(w, reason, http.StatusServiceUnavailable)
 }
