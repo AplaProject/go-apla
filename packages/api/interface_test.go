@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetInterfaceRow(t *testing.T) {
@@ -44,4 +45,8 @@ func TestGetInterfaceRow(t *testing.T) {
 		assert.NoError(t, sendGet(c.url+name, &url.Values{}, &result))
 		checkEqualAttrs(form, result, c.equalAttrs)
 	}
+}
+
+func TestNewMenu(t *testing.T) {
+	require.NoError(t, keyLogin(1))
 }
