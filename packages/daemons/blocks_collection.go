@@ -259,9 +259,10 @@ func banNode(host string, blockId int64, blockTime int64, err error) {
 	n, err := syspar.GetNodeByHost(host)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("getting node by host")
+		return
 	}
 
-	err = service.GetNodesBanService().RegisterBadBlock(*n, blockId, blockTime)
+	err = service.GetNodesBanService().RegisterBadBlock(n, blockId, blockTime)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "node": n.KeyID, "block": blockId}).Error("registering bad block from node")
 	}
@@ -276,7 +277,7 @@ func filterBannedHosts(hosts []string) ([]string, error) {
 			return nil, err
 		}
 
-		if !service.GetNodesBanService().IsBanned(*n) {
+		if !service.GetNodesBanService().IsBanned(n) {
 			goodHosts = append(goodHosts, n.TCPAddress)
 		}
 	}

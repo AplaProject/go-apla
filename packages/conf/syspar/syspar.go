@@ -210,16 +210,16 @@ func GetNodeByPosition(position int64) (*FullNode, error) {
 	return nodesByPosition[position], nil
 }
 
-func GetNodeByHost(host string) (*FullNode, error) {
+func GetNodeByHost(host string) (FullNode, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
-	for k, n := range nodes {
+	for _, n := range nodes {
 		if n.TCPAddress == host {
-			return nodes[k], nil
+			return *n, nil
 		}
 	}
 
-	return nil, fmt.Errorf("incorrect host")
+	return FullNode{}, fmt.Errorf("incorrect host")
 }
 
 // GetNodeHostByPosition is retrieving node host by position

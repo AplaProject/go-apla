@@ -50,9 +50,11 @@ func InitNodesBanService() error {
 
 // RegisterBadBlock is set node to local ban and saving bad block to global registry
 func (nbs *NodesBanService) RegisterBadBlock(node syspar.FullNode, badBlockId, blockTime int64) error {
-	if !nbs.IsBanned(node) {
-		nbs.localBan(node)
+	if nbs.IsBanned(node) {
+		return nil
 	}
+
+	nbs.localBan(node)
 
 	err := nbs.newBadBlock(node, badBlockId, blockTime)
 	if err != nil {
@@ -85,7 +87,11 @@ func (nbs *NodesBanService) IsBanned(node syspar.FullNode) bool {
 	// that node is still banned (even if `unban` time has already passed)
 	for _, fn := range nbs.fullNodes {
 		if fn.KeyID == node.KeyID {
-			return !fn.UnbanTime.Equal(time.Unix(0, 0))
+			if !fn.UnbanTime.Equal(time.Unix(0, 0)) {
+				return true
+			} else {
+				break
+			}
 		}
 	}
 
