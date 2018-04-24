@@ -614,3 +614,25 @@ func TestJSON(t *testing.T) {
 		assert.EqualError(t, postTx(contract, &url.Values{"Input": {v.source}}), v.result)
 	}
 }
+
+func TestBytesToString(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	contract := randName("BytesToString")
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + contract + ` {
+			data {
+				File bytes "file"
+			}
+			action {
+				$result = BytesToString($File)
+			}
+		}`},
+		"Conditions": {"true"},
+	}))
+
+	content := crypto.RandSeq(100)
+	_, res, err := postTxMultipart(contract, nil, map[string][]byte{"File": []byte(content)})
+	assert.NoError(t, err)
+	assert.Equal(t, content, res)
+}

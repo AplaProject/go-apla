@@ -221,6 +221,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetType":              GetType,
 		"AllowChangeCondition": AllowChangeCondition,
 		"StringToBytes":        StringToBytes,
+		"BytesToString":        BytesToString,
 	}
 
 	switch vt {
@@ -1360,4 +1361,9 @@ func GetType(val interface{}) string {
 // StringToBytes converts string to bytes
 func StringToBytes(src string) []byte {
 	return []byte(src)
+}
+
+// BytesToString converts bytes to string
+func BytesToString(src []byte) string {
+	return string(src)
 }
