@@ -2736,7 +2736,7 @@ MenuItem(
 			warning "Sorry, you do not have access to this action."
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('37', 'NewBadBlock', 'contract NewBadBlock {
+	('38', 'NewBadBlock', 'contract NewBadBlock {
 		data {
 			ProducerNodeID int
 			ConsumerNodeID int
@@ -2747,7 +2747,7 @@ MenuItem(
 			DBInsert("bad_blocks", "producer_node_id,consumer_node_id,block_id,timestamp block_time", $ProducerNodeID, $ConsumerNodeID, $BlockID, $Timestamp)
 		}
 	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('38', 'CheckNodesBan', 'contract CheckNodesBan {
+	('39', 'CheckNodesBan', 'contract CheckNodesBan {
 		action {
 			UpdateNodesBan($block_time)
 		}
