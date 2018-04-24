@@ -430,7 +430,18 @@ func dataTag(par parFunc) string {
 
 	list, err := csv.NewReader(strings.NewReader((*par.Pars)[`Data`])).ReadAll()
 	if err != nil {
+		input := strings.Split((*par.Pars)[`Data`], "\n")
 		par.Node.Attr[`error`] = err.Error()
+		prefix := `line `
+		for err != nil && strings.HasPrefix(err.Error(), prefix) {
+			errText := err.Error()
+			line := converter.StrToInt64(errText[len(prefix):strings.IndexByte(errText, ',')])
+			if line < 1 {
+				break
+			}
+			input = append(input[:line-1], input[line:]...)
+			list, err = csv.NewReader(strings.NewReader(strings.Join(input, "\n"))).ReadAll()
+		}
 	}
 	lencol := 0
 	defcol := 0
@@ -750,6 +761,9 @@ func compositeTag(par parFunc) string {
 
 func customTag(par parFunc) string {
 	setAllAttr(par)
+	if len((*par.Pars)[`Column`]) == 0 || len((*par.Pars)[`Body`]) == 0 {
+		return ``
+	}
 	if par.Owner.Attr[`customs`] == nil {
 		par.Owner.Attr[`customs`] = make([]string, 0)
 		par.Owner.Attr[`custombody`] = make([]string, 0)
