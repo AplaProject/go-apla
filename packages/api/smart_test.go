@@ -161,6 +161,95 @@ func TestPage(t *testing.T) {
 
 	err = postTx(`NewPage`, &form)
 	assert.Equal(t, fmt.Sprintf(`{"type":"warning","error":"Page %s already exists"}`, name), cutErr(err))
+	err = postTx(`NewPage`, &form)
+	if cutErr(err) != fmt.Sprintf(`{"type":"warning","error":"Page %s already exists"}`, name) {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {`app` + name}, "Value": {value}, "ValidateCount": {"2"},
+		"ValidateMode": {"1"},
+		"Menu":         {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {`app` + name}, "Value": {value}, "ValidateCount": {"2"},
+		"ValidateMode": {"1"},
+		"Menu":         {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var ret listResult
+	err = sendGet(`list/pages`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	id := ret.Count
+	var row rowResult
+	err = sendGet(`row/pages/`+id, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value["validate_mode"] != `1` {
+		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
+		return
+	}
+
+	form = url.Values{"Id": {id}, "Value": {value}, "ValidateCount": {"1"},
+		"ValidateMode": {"0"}}
+	err = postTx(`EditPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`row/pages/`+id, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value["validate_mode"] != `0` {
+		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
+		return
+	}
+
+	err = sendGet(`list/pages`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	id = ret.Count
+	err = sendGet(`row/pages/`+id, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value["validate_mode"] != `1` {
+		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
+		return
+	}
+
+	form = url.Values{"Id": {id}, "Value": {value}, "ValidateCount": {"1"},
+		"ValidateMode": {"0"}}
+	err = postTx(`EditPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`row/pages/`+id, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value["validate_mode"] != `0` {
+		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
+		return
+	}
 
 	form = url.Values{"Name": {name}, "Value": {value},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
@@ -564,4 +653,53 @@ func TestDelayedContracts(t *testing.T) {
 	}
 	err = postTx("EditDelayedContract", &form)
 	assert.NoError(t, err)
+}
+
+func TestJSON(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	contract := randName("JSONEncode")
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + contract + ` {
+			action {
+				var a array, m map
+				m["k1"] = 1
+				m["k2"] = 2
+				a[0] = m
+				a[1] = m
+
+				info JSONEncode(a)
+			}
+		}`},
+		"Conditions": {"true"},
+	}))
+	assert.EqualError(t, postTx(contract, &url.Values{}), `{"type":"info","error":"[{\"k1\":1,\"k2\":2},{\"k1\":1,\"k2\":2}]"}`)
+
+	contract = randName("JSONDecode")
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + contract + ` {
+			data {
+				Input string
+			}
+			action {
+				info Sprintf("%#v", JSONDecode($Input))
+			}
+		}`},
+		"Conditions": {"true"},
+	}))
+
+	cases := []struct {
+		source string
+		result string
+	}{
+		{`"test"`, `{"type":"info","error":"\"test\""}`},
+		{`["test"]`, `{"type":"info","error":"[]interface {}{\"test\"}"}`},
+		{`{"test":1}`, `{"type":"info","error":"map[string]interface {}{\"test\":1}"}`},
+		{`[{"test":1}]`, `{"type":"info","error":"[]interface {}{map[string]interface {}{\"test\":1}}"}`},
+		{`{"test":1`, `{"type":"panic","error":"unexpected end of JSON input"}`},
+	}
+
+	for _, v := range cases {
+		assert.EqualError(t, postTx(contract, &url.Values{"Input": {v.source}}), v.result)
+	}
 }

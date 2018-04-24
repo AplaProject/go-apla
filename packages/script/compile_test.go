@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/shopspring/decimal"
 )
 
 type TestVM struct {
@@ -59,6 +61,11 @@ func str(v interface{}) (ret string) {
 
 func lenArray(par []interface{}) int64 {
 	return int64(len(par))
+}
+
+func Money(v interface{}) (ret decimal.Decimal) {
+	ret, _ = ValueToDecimal(v)
+	return ret
 }
 
 func TestVMCompile(t *testing.T) {
@@ -168,13 +175,6 @@ func TestVMCompile(t *testing.T) {
 							}
 						}
 						`, `mytest.init`, `OK`},
-		{`func money_test string {
-					var my2, m1 money
-					my2 = 100
-					m1 = 1.2
-					return Sprintf( "Account %v %v", my2 - 5.6, m1*5 + my2)
-				}`, `money_test`, `Account 94.4 106`},
-
 		{`func line_test string {
 						return "Start " +
 						Sprintf( "My String %s %d %d",
@@ -402,12 +402,37 @@ func TestVMCompile(t *testing.T) {
 				return row().Where("%d %d", 10, 20)
 			}
 			`, `result`, `10 20`},
+		{`func result string {
+				var arr array
+				var mymap map
+				arr[100000] = 0
+				var i int
+				while i < 100 {
+					mymap[str(i)] = 10
+					i = i + 1
+				}
+				i = i + "2" 
+				i = (i - "10")/"2"*"3"
+				return Sprintf("%T %[1]v", .21 + i)
+			  }`, `result`, `float64 138.21`},
+		{`func money_test string {
+				var my2, m1 money
+				my2 = 100
+				m1 = 1.2
+				return Sprintf( "Account %v %v %v", my2/Money(3),  my2 - Money(5.6), m1*Money(5) + Money(my2))
+			}`, `money_test`, `Account 33 95 105`},
+		{`func long() int {
+				return  99999999999999999999
+				}
+				func result() string {
+					return Sprintf("ok=%d", long())
+					}`, `result`, `strconv.ParseInt: parsing "99999999999999999999": value out of range 99999999999999999999 [Ln:2 Col:34]`},
 	}
 	vm := NewVM()
 	vm.Extern = true
 	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
 		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray,
-		"str": str, "Replace": strings.Replace}, nil})
+		"str": str, "Money": Money, "Replace": strings.Replace}, nil})
 
 	for ikey, item := range test {
 		source := []rune(item.Input)
@@ -470,7 +495,7 @@ func TestContractList(t *testing.T) {
 			`demo_сontract,another_contract,main`},
 	}
 	for _, item := range test {
-		list := ContractsList(item.Input)
+		list, _ := ContractsList(item.Input)
 		if strings.Join(list, `,`) != item.Output {
 			t.Error(`wrong names`, strings.Join(list, `,`))
 			break

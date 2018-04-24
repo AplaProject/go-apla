@@ -25,11 +25,15 @@ const (
 	eUndefinedParam  = `%s is not defined`
 	eUnknownContract = `unknown contract %s`
 	eWrongParams     = `function %s must have %d parameters`
+	eArrIndex        = `index of array cannot be type %s`
+	eMapIndex        = `index of map cannot be type %s`
 )
 
 var (
 	errContractPars    = errors.New(`wrong contract parameters`)
 	errWrongCountPars  = errors.New(`wrong count of parameters`)
 	errDivZero         = errors.New(`divided by zero`)
-	errUnsupportedType = errors.New(`unsupported type`)
+	errUnsupportedType = errors.New(`unsupported combination of types in the operator`)
+	errMaxArrayIndex   = errors.New(`The index is out of range`)
+	errMaxMapCount     = errors.New(`The maxumim length of map`)
 )
