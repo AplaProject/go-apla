@@ -42,6 +42,14 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar("Name1", "Value1")GetVar("Name1")#Name1#Span(#Name1#)SetVar("Name1", "Value2")GetVar("Name1")#Name1#
+		SetVar("Name1", "Value3")#Name1#`, `[{"tag":"text","text":"Value1"},{"tag":"text","text":"Value1"},{"tag":"span","children":[{"tag":"text","text":"Value1"}]},{"tag":"text","text":"Value2"},{"tag":"text","text":"Value2\n\t\t"},{"tag":"text","text":"Value3"}]`},
+	{`Data(src1, "name,value,cost"){
+        1, 1, 0
+        2, 2
+        3, 3, 4
+        5, 6
+    }`, `[{"tag":"data","attr":{"columns":["name","value","cost"],"data":[["1","1","0"],["3","3","4"]],"error":"line 2, column 0: wrong number of fields in line","source":"src1","types":["text","text","text"]}}]`},
 	{`Data(Columns: "a"){a
 		b}.Custom(){}`,
 		`[{"tag":"data","attr":{"columns":["a"],"data":[["a"],["b"]],"types":["text"]}}]`},
@@ -156,7 +164,7 @@ var forTest = tplList{
 		"1",John Silver,2
 		2,"Mark, Smith"
 	)`,
-		`[{"tag":"data","attr":{"columns":["id","name"],"data":[],"error":"line 2, column 0: wrong number of fields in line","source":"mysrc","types":["text","text"]}}]`},
+		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","John Silver"]],"error":"line 2, column 0: wrong number of fields in line","source":"mysrc","types":["text","text"]}}]`},
 	{`Select(myselect,mysrc,name,id,0,myclass)`,
 		`[{"tag":"select","attr":{"class":"myclass","name":"myselect","namecolumn":"name","source":"mysrc","value":"0","valuecolumn":"id"}}]`},
 	{`Data(mysrc,"id,name"){
