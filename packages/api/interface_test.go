@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 	"testing"
@@ -47,6 +48,38 @@ func TestGetInterfaceRow(t *testing.T) {
 	}
 }
 
-func TestNewMenu(t *testing.T) {
+func TestNewMenuNoError(t *testing.T) {
 	require.NoError(t, keyLogin(1))
+	menuname := "myTestMenu"
+	form := url.Values{"Name": {menuname}, "Value": {`first
+		second
+		third`}, "Title": {`My Test Menu`},
+		"Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewMenu`, &form))
+
+	err := postTx(`NewMenu`, &form)
+	assert.Equal(t, fmt.Sprintf(`{"type":"warning","error":"Menu %s already exists"}`, menuname), cutErr(err))
+}
+
+func TestEditMenuNoError(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{
+		"Id": {"3"},
+		"Value": {`first
+		second
+		third
+		andmore`},
+		"Title": {`My edited Test Menu`},
+	}
+	assert.NoError(t, postTx(`EditMenu`, &form))
+}
+
+func TestAppendMenuNoError(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{
+		"Id":    {"3"},
+		"Value": {"appended item"},
+	}
+
+	assert.NoError(t, postTx("AppendMenu", &form))
 }
