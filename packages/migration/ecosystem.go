@@ -1859,7 +1859,6 @@ MenuItem(
 			Value      string
 			Title      string "optional"
 			Conditions string
-			ApplicationId int "optional"
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1872,7 +1871,7 @@ MenuItem(
 			}
 		}
 		action {
-			DBInsert("menu", "name,value,title,conditions,app_id", $Name, $Value, $Title, $Conditions, $ApplicationId )
+			DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions)
 		}
 		func price() int {
 			return  SysParamInt("menu_price")
