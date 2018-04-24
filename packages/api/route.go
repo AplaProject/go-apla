@@ -27,7 +27,11 @@ import (
 )
 
 func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
+	route.Handle(
+		method,
+		consts.ApiPath+pattern,
+		DefaultHandler(method, pattern, processParams(pars), append([]apiHandle{blockchainUpdatingState}, handler...)...),
+	)
 }
 
 // Route sets routing pathes
