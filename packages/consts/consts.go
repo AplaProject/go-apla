@@ -18,6 +18,8 @@ package consts
 
 import (
 	"time"
+
+	"github.com/GenesisKernel/go-genesis/packages"
 )
 
 // VERSION is current version
@@ -159,3 +161,15 @@ const DefaultVDE = 1
 
 // NodeExecutableFileName executable file name
 const NodeExecutableFileName = "go-genesis"
+
+// PrivateBlockchain const label for running mode
+const PrivateBlockchain packages.RunMode = "PrivateBlockchain"
+
+// PublicBlockchain const label for running mode
+const PublicBlockchain packages.RunMode = "PublicBlockchain"
+
+// VDEManager const label for running mode
+const VDEManager packages.RunMode = "VDEManager"
+
+// VDE const label for running mode
+const VDE packages.RunMode = "VDE"

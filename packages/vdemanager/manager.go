@@ -37,7 +37,7 @@ type VDEManager struct {
 }
 
 var (
-	Manager          VDEManager
+	Manager          *VDEManager
 	childConfigsPath string
 )
 
@@ -51,7 +51,7 @@ func InitVDEManager() error {
 }
 
 func prepareWorkDir() error {
-	childConfigsPath = path.Join(conf.Config.WorkDir, childFolder)
+	childConfigsPath = path.Join(conf.Config.DataDir, childFolder)
 
 	if _, err := os.Stat(childConfigsPath); os.IsNotExist(err) {
 		if err := os.Mkdir(childConfigsPath, 0700); err != nil {
@@ -82,12 +82,12 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 	vdeDir := path.Join(childConfigsPath, name)
 	vdeConfigPath := filepath.Join(vdeDir, consts.DefaultConfigFile)
 	vdeConfig := conf.Config
-	vdeConfig.WorkDir = vdeDir
+	vdeConfig.DataDir = vdeDir
 	vdeConfig.DB.User = dbUser
 	vdeConfig.DB.Password = dbPassword
 	vdeConfig.DB.Name = name
 	vdeConfig.HTTP.Port = port
-	vdeConfig.PrivateDir = vdeConfigPath
+	vdeConfig.KeysDir = vdeConfigPath
 
 	if err := conf.SaveConfigByPath(vdeConfig, vdeConfigPath); err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("saving VDE config")
@@ -243,7 +243,7 @@ func (mgr *VDEManager) initVDEDir(vdeName string) error {
 }
 
 func initProcessManager() error {
-	Manager = VDEManager{
+	Manager = &VDEManager{
 		processes: process.NewProcessManager(),
 	}
 
@@ -273,5 +273,5 @@ func initProcessManager() error {
 }
 
 func bin() string {
-	return path.Join(conf.Config.WorkDir, consts.NodeExecutableFileName)
+	return path.Join(conf.Config.DataDir, consts.NodeExecutableFileName)
 }

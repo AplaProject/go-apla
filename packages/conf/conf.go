@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/GenesisKernel/go-genesis/packages"
+
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -80,16 +82,16 @@ type GlobalConfig struct {
 	ConfigPath   string `toml:"-"`
 	TestRollBack bool   `toml:"-"`
 
-	PrivateBlockchain bool
-	PidFilePath       string
-	LockFilePath      string
-	DataDir           string // application work dir (cwd by default)
-	KeysDir           string // place for private keys files: NodePrivateKey, PrivateKey
-	TempDir           string // temporary dir
-	FirstBlockPath    string
-	TLS               bool   // TLS is on/off. It is required for https
-	TLSCert           string // TLSCert is a filepath of the fullchain of certificate.
-	TLSKey            string // TLSKey is a filepath of the private key.
+	PidFilePath    string
+	LockFilePath   string
+	DataDir        string // application work dir (cwd by default)
+	KeysDir        string // place for private keys files: NodePrivateKey, PrivateKey
+	TempDir        string // temporary dir
+	FirstBlockPath string
+	TLS            bool   // TLS is on/off. It is required for https
+	TLSCert        string // TLSCert is a filepath of the fullchain of certificate.
+	TLSKey         string // TLSKey is a filepath of the private key.
+	RunningMode    packages.RunMode
 
 	MaxPageGenerationTime int64 // in milliseconds
 
@@ -146,8 +148,8 @@ func LoadConfigFromPath(path string) error {
 }
 
 // GetConfigFromPath returns new config from path
-func GetConfigFromPath(path string) (*SavedConfig, error) {
-	config := &SavedConfig{}
+func GetConfigFromPath(path string) (*GlobalConfig, error) {
+	config := &GlobalConfig{}
 	log.WithFields(log.Fields{"path": path}).Info("Loading config")
 	_, err := toml.DecodeFile(path, config)
 	return config, err
@@ -235,7 +237,7 @@ func GetNodesAddr() []string {
 }
 
 // SaveConfigByPath save config by path
-func SaveConfigByPath(c SavedConfig, path string) error {
+func SaveConfigByPath(c GlobalConfig, path string) error {
 	var cf *os.File
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {

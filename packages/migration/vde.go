@@ -9,10 +9,8 @@ var SchemaVDE = `
 			"member_info" jsonb
 		);
 		ALTER TABLE ONLY "%[1]d_vde_members" ADD CONSTRAINT "%[1]d_vde_members_pkey" PRIMARY KEY ("id");
-
 		INSERT INTO "%[1]d_vde_members" ("id", "member_name") VALUES('%[2]d', 'founder');
 		INSERT INTO "%[1]d_vde_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
-
 		DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d_vde_languages" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"name" character varying(100) NOT NULL DEFAULT '',
@@ -30,8 +28,6 @@ var SchemaVDE = `
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_menu" ADD CONSTRAINT "%[1]d_vde_menu_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_menu_index_name" ON "%[1]d_vde_menu" (name);
-
-
 	  INSERT INTO "%[1]d_vde_menu" ("id","name","title","value","conditions") VALUES('2','admin_menu','Admin menu','MenuItem(
     Icon: "icon-screen-desktop",
     Page: "interface",
@@ -74,7 +70,6 @@ MenuItem(
     Vde: "true",
     Title: "Export"
 )','true');
-
 	  DROP TABLE IF EXISTS "%[1]d_vde_pages"; CREATE TABLE "%[1]d_vde_pages" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -87,9 +82,7 @@ MenuItem(
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_pages" ADD CONSTRAINT "%[1]d_vde_pages_pkey" PRIMARY KEY (id);
 	  CREATE INDEX "%[1]d_vde_pages_index_name" ON "%[1]d_vde_pages" (name);
-
 	  INSERT INTO "%[1]d_vde_pages" ("id","name","value","menu","conditions") VALUES('2','admin_index','','admin_menu','true');
-
 	  DROP TABLE IF EXISTS "%[1]d_vde_blocks"; CREATE TABLE "%[1]d_vde_blocks" (
 		  "id" bigint  NOT NULL DEFAULT '0',
 		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
@@ -139,7 +132,6 @@ MenuItem(
 		/* You can define your custom styles here or create custom CSS rules */
 	  }', 'ContractConditions("MainCondition")'),
 	  ('11','changing_blocks', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")');
-
 	  DROP TABLE IF EXISTS "%[1]d_vde_cron";
 	  CREATE TABLE "%[1]d_vde_cron" (
 		  "id"        bigint NOT NULL DEFAULT '0',
@@ -151,7 +143,6 @@ MenuItem(
 		  "conditions" text  NOT NULL DEFAULT ''
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_cron" ADD CONSTRAINT "%[1]d_vde_cron_pkey" PRIMARY KEY ("id");
-
 		DROP TABLE IF EXISTS "%[1]d_vde_binaries";
 		CREATE TABLE "%[1]d_vde_binaries" (
 			"id" bigint NOT NULL DEFAULT '0',
@@ -164,7 +155,6 @@ MenuItem(
 		);
 		ALTER TABLE ONLY "%[1]d_vde_binaries" ADD CONSTRAINT "%[1]d_vde_binaries_pkey" PRIMARY KEY (id);
 		CREATE UNIQUE INDEX "%[1]d_vde_binaries_index_app_id_member_id_name" ON "%[1]d_vde_binaries" (app_id, member_id, name);
-
 	  CREATE TABLE "%[1]d_vde_tables" (
 	  "id" bigint NOT NULL  DEFAULT '0',
 	  "name" varchar(100) UNIQUE NOT NULL DEFAULT '',
@@ -269,11 +259,9 @@ MenuItem(
 			}
 			var list array
 			list = ContractsList($Value)
-
 			if Len(list) == 0 {
 				error "must be the name"
 			}
-
 			var i int
 			while i < Len(list) {
 				if IsObject(list[i], $ecosystem_id) {
@@ -281,7 +269,6 @@ MenuItem(
 				}
 				i = i + 1
 			}
-
 			$contract_name = list[0]
 			if !$TokenEcosystem {
 				$TokenEcosystem = 1
@@ -318,7 +305,6 @@ MenuItem(
 			  Value      string "optional"
 			  Conditions string "optional"
 		  }
-
 		  func onlyConditions() bool {
         	return $Conditions && !$Value
 		  }
@@ -327,7 +313,6 @@ MenuItem(
 			if $Conditions {
 	    		ValidateCondition($Conditions, $ecosystem_id)
 			}
-
 			var row array
 			row = DBFind("contracts").Columns("id,value,conditions").WhereId($Id)
 			if !Len(row) {
@@ -362,7 +347,6 @@ MenuItem(
 		  action {
 			var root int
 			var pars, vals array
-
 			if $Value {
 				root = CompileContract($Value, $ecosystem_id, 0, 0)
 				pars[0] = "value"
@@ -425,10 +409,8 @@ MenuItem(
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
-
 			var row map
 			row = DBRow("menu").Columns("id").Where("name = ?", $Name)
-
 			if row {
 				warning Sprintf( "Menu %%s already exists", $Name)
 			}
@@ -504,7 +486,6 @@ MenuItem(
 			var min, max int
 			min = Int(EcosysParam("min_page_validate_count"))
 			max = Int(EcosysParam("max_page_validate_count"))
-
 			if count < min {
 				count = min
 			} else {
@@ -512,19 +493,15 @@ MenuItem(
 					count = max
 				}
 			}
-
 			return count
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
-
 			var row map
 			row = DBRow("pages").Columns("id").Where("name = ?", $Name)
-
 			if row {
 				warning Sprintf( "Page %%s already exists", $Name)
 			}
-
 			$ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
@@ -622,10 +599,8 @@ MenuItem(
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
-
 			var row map
 			row = DBRow("blocks").Columns("id").Where("name = ?", $Name)
-
 			if row {
 				warning Sprintf( "Block %%s already exists", $Name)
 			}
@@ -644,7 +619,6 @@ MenuItem(
 		func onlyConditions() bool {
 			return $Conditions && !$Value
 		}
-
 	  	conditions {
 			RowConditions("blocks", $Id, onlyConditions())
 			if $Conditions {
@@ -839,138 +813,115 @@ MenuItem(
 				i = i + 1
 			}
 		}
-		if(cnt == "menus"){
-			$ret_menu = DBFind("menu").Columns("id,value").Where("name=$", idata["Name"])
-			$menu_id = One($ret_menu, "id") 
-			$menu_value = One($ret_menu, "value") 
-			if ($menu_id != nil){
-				idata["Id"] = Int($menu_id)
-				idata["Value"] = Str($menu_value) + "\n" + Str(idata["Value"])
-				CallContract("EditMenu", idata)
-			} else {
-				CallContract("NewMenu", idata)
+		func ImportData(row array) {
+			if !row {
+				return
+			}
+			var i int
+			while i < Len(row) {
+				var idata map
+				var list array
+				var tblname, columns string
+				idata = row[i]
+				i = i + 1
+				tblname = idata["Table"]
+				columns = Join(idata["Columns"], ",")
+				list = idata["Data"] 
+				if !list {
+					continue
+				}
+				var j int
+				while j < Len(list) {
+					var ilist array
+					ilist = list[j]
+					DBInsert(tblname, columns, ilist)
+					j=j+1
+				}
 			}
 		}
-		if(cnt == "parameters"){
-			$ret_param = DBFind("parameters").Columns("id").Where("name=$", idata["Name"])
-			$param_id = One($ret_param, "id")
-			if ($param_id != nil){ 
-				idata["Id"] = Int($param_id) 
-				CallContract("EditParameter", idata)
-			} else {
-				CallContract("NewParameter", idata)
+		action {
+			ImportList($list["pages"], "pages")
+			ImportList($list["blocks"], "blocks")
+			ImportList($list["menus"], "menus")
+			ImportList($list["parameters"], "parameters")
+			ImportList($list["languages"], "languages")
+			ImportList($list["contracts"], "contracts")
+			ImportList($list["tables"], "tables")
+			ImportData($list["data"])
+		}
+	}', 'ContractConditions("MainCondition")'),
+	('21', 'NewCron','contract NewCron {
+		data {
+			Cron       string
+			Contract   string
+			Limit      int "optional"
+			Till       string "optional date"
+			Conditions string
+		}
+		conditions {
+			ValidateCondition($Conditions,$ecosystem_id)
+			ValidateCron($Cron)
+		}
+		action {
+			if !$Till {
+				$Till = "1970-01-01 00:00:00"
 			}
-		}
-		if(cnt == "languages"){
-			$ret_lang = DBFind("languages").Columns("id").Where("name=$", idata["Name"])
-			$lang_id = One($ret_lang, "id")
-			if ($lang_id != nil){
-				CallContract("EditLang", idata)
-			} else {
-				CallContract("NewLang", idata)
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
+			$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions",
+				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
+			UpdateCron($result)
 		}
-		if(cnt == "contracts"){
-			if IsObject(idata["Name"], $ecosystem_id){
-			} else {
-				CallContract("NewContract", idata)
-			} 
+	}', 'ContractConditions("MainCondition")'),
+	('22','EditCron','contract EditCron {
+		data {
+			Id         int
+			Contract   string
+			Cron       string "optional"
+			Limit      int "optional"
+			Till       string "optional date"
+			Conditions string
 		}
-		if(cnt == "tables"){
-			$ret_table = DBFind("tables").Columns("id").Where("name=$", idata["Name"])
-			$table_id = One($ret_table, "id")
-			if ($table_id != nil){	
-			} else {
-				CallContract("NewTable", idata)
+		conditions {
+			ConditionById("cron", true)
+			ValidateCron($Cron)
+		}
+		action {
+			if !$Till {
+				$Till = "1970-01-01 00:00:00"
 			}
+			if !HasPrefix($Contract, "@") {
+				$Contract = "@" + Str($ecosystem_id) + $Contract
+			}
+			DBUpdate("cron", $Id, "cron,contract,counter,till,conditions",
+				$Cron, $Contract, $Limit, $Till, $Conditions)
+			UpdateCron($Id)
 		}
-		i = i + 1
-	}
-}
-func ImportData(row array) {
-	if !row {
-		return
-	}
-	var i int
-	while i < Len(row) {
-		var idata map
-		var list array
-		var tblname, columns string
-		idata = row[i]
-		i = i + 1
-		tblname = idata["Table"]
-		columns = Join(idata["Columns"], ",")
-		list = idata["Data"] 
-		if !list {
-			continue
+	}', 'ContractConditions("MainCondition")'),
+	('23', 'UploadBinary', contract UploadBinary {
+		data {
+			Name  string
+			Data  bytes "file"
+			AppID int
+			DataMimeType string "optional"
+			MemberID int "optional"
 		}
-		var j int
-		while j < Len(list) {
-			var ilist array
-			ilist = list[j]
-			DBInsert(tblname, columns, ilist)
-			j=j+1
+		conditions {
+			$Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $AppID, $MemberID, $Name).One("id"))
 		}
-	}
-}
-action {
-	ImportList($list["pages"], "pages")
-	ImportList($list["blocks"], "blocks")
-	ImportList($list["menus"], "menus")
-	ImportList($list["parameters"], "parameters")
-	ImportList($list["languages"], "languages")
-	ImportList($list["contracts"], "contracts")
-	ImportList($list["tables"], "tables")
-	ImportData($list["data"])
-}
-}', 'ContractConditions("MainCondition")'),
-('21', 'contract NewCron {
-data {
-	Cron       string
-	Contract   string
-	Limit      int "optional"
-	Till       string "optional date"
-	Conditions string
-}
-conditions {
-	ValidateCondition($Conditions,$ecosystem_id)
-	ValidateCron($Cron)
-}
-action {
-	if !$Till {
-		$Till = "1970-01-01 00:00:00"
-	}
-	if !HasPrefix($Contract, "@") {
-		$Contract = "@" + Str($ecosystem_id) + $Contract
-	}
-	$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions",
-		$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
-	UpdateCron($result)
-}
-}', 'ContractConditions("MainCondition")'),
-('22','contract EditCron {
-data {
-	Id         int
-	Contract   string
-	Cron       string "optional"
-	Limit      int "optional"
-	Till       string "optional date"
-	Conditions string
-}
-conditions {
-	ConditionById("cron", true)
-	ValidateCron($Cron)
-}
-action {
-	if !$Till {
-		$Till = "1970-01-01 00:00:00"
-	}
-	if !HasPrefix($Contract, "@") {
-		$Contract = "@" + Str($ecosystem_id) + $Contract
-	}
-	DBUpdate("cron", $Id, "cron,contract,counter,till,conditions",
-		$Cron, $Contract, $Limit, $Till, $Conditions)
-	UpdateCron($Id)
-}
-}', 'ContractConditions("MainCondition")');
-`
+		action {
+			var hash string
+			hash = MD5($Data)
+			if $DataMimeType == "" {
+				$DataMimeType = "application/octet-stream"
+			}
+			if $Id != 0 {
+				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+			} else {
+				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, hash, $DataMimeType)
+			}
+			$result = $Id
+		}
+	}', 'ContractConditions("MainCondition")');
+	`
