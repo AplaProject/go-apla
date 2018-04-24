@@ -117,6 +117,7 @@ func forsignFormData(w http.ResponseWriter, r *http.Request, logger *log.Entry, 
 			for key, values := range r.Form {
 				if key == fitem.Name+`[]` && len(values) > 0 {
 					count := converter.StrToInt(values[0])
+					req.SetValue(key, values[0])
 					var list []string
 					for i := 0; i < count; i++ {
 						k := fmt.Sprintf(`%s[%d]`, fitem.Name, i)
