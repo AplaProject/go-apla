@@ -262,7 +262,7 @@ func SysFuel(state int64) string {
 }
 
 // Int converts the value to a number
-func Int(v interface{}) int64 {
+func Int(v interface{}) (int64, error) {
 	return converter.ValueToInt(v)
 }
 
@@ -547,7 +547,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 		`notifications`,
 		`applications`,
 		`binaries`,
-		`app_param`,
+		`app_params`,
 	}
 
 	if rollbackTx.TableID == "1" {

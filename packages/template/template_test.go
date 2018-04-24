@@ -42,6 +42,9 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Data(Columns: "a"){a
+		b}.Custom(){}`,
+		`[{"tag":"data","attr":{"columns":["a"],"data":[["a"],["b"]],"types":["text"]}}]`},
 	{`SetVar("Condition4", 1)If(GetVar(Condition4) == 2){Span(1)}.ElseIf(GetVar(Condition4) == 1){
 		Span(2)SetVar("Condition4", 2)}.ElseIf(GetVar(Condition3) == 2){Span(3)
 		}.Else{	SetVar("Condition4", 5)Span(else)}Span(Last#Condition4#)`,
