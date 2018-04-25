@@ -51,5 +51,6 @@ const (
 	MigrationError           = "MigrationError"
 	AutoupdateError          = "AutoupdateError"
 	BCRelevanceError         = "BCRelevanceError"
+	BCActualizationError     = "BCActualizationError"
 	SchedulerError           = "SchedulerError"
 )

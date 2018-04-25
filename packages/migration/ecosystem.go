@@ -729,31 +729,34 @@ MenuItem(
 		data {
 			Name  string
 			Trans string
+			AppID int
 		}
 		conditions {
 			EvalCondition("parameters", "changing_language", "value")
 			var row array
-			row = DBFind("languages").Columns("name").Where("name=?", $Name).Limit(1)
+			row = DBFind("languages").Columns("name").Where("name=? AND app_id=?", $Name, $AppID).Limit(1)
 			if Len(row) > 0 {
 				error Sprintf("The language resource %%s already exists", $Name)
 			}
 		}
 		action {
-			DBInsert("languages", "name,res", $Name, $Trans )
-			UpdateLang($Name, $Trans)
+			DBInsert("languages", "name,res,app_id", $Name, $Trans, $AppID)
+			UpdateLang($AppID, $Name, $Trans)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('19','EditLang','contract EditLang {
 		data {
+			Id    int
 			Name  string
 			Trans string
+			AppID int
 		}
 		conditions {
 			EvalCondition("parameters", "changing_language", "value")
 		}
 		action {
-			DBUpdateExt("languages", "name", $Name, "res", $Trans )
-			UpdateLang($Name, $Trans)
+			DBUpdate("languages", $Id, "name,res,app_id", $Name, $Trans, $AppID)
+			UpdateLang($AppID, $Name, $Trans)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('20','Import','contract Import {
@@ -1227,7 +1230,8 @@ MenuItem(
 				('4', 'languages', 
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
-				'{ "name": "ContractConditions(\"MainCondition\")",
+				'{"app_id": "ContractConditions(\"MainCondition\")",
+				  "name": "ContractConditions(\"MainCondition\")",
 				  "res": "ContractConditions(\"MainCondition\")",
 				  "conditions": "ContractConditions(\"MainCondition\")",
 				  "app_id": "ContractConditions(\"MainConditions\")"}', 'ContractAccess("@1EditTable")'),
@@ -1588,7 +1592,7 @@ MenuItem(
 			);
 
 
-	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions", "app_id") VALUES 
+	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions", "app_id") VALUES
 	('2','MoneyTransfer','contract MoneyTransfer {
 		data {
 			Recipient string
@@ -2062,33 +2066,36 @@ MenuItem(
 		data {
 			Name  string
 			Trans string
+			AppID int
 		}
 		conditions {
 			EvalCondition("parameters", "changing_language", "value")
 
 			var row map
-			row = DBRow("languages").Columns("id").Where("name = ?", $Name)
+			row = DBRow("languages").Columns("id").Where("name = ? AND app_id = ?", $Name, $AppID)
 
 			if row {
 				error Sprintf("The language resource %%s already exists", $Name)
 			}
 		}
 		action {
-			DBInsert("languages", "name,res", $Name, $Trans )
-			UpdateLang($Name, $Trans)
+			DBInsert("languages", "name,res,app_id", $Name, $Trans, $AppID)
+			UpdateLang($AppID, $Name, $Trans)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('16','EditLang','contract EditLang {
 		data {
+			Id    int
 			Name  string
 			Trans string
+			AppID int
 		}
 		conditions {
 			EvalCondition("parameters", "changing_language", "value")
 		}
 		action {
-			DBUpdateExt("languages", "name", $Name, "res", $Trans )
-			UpdateLang($Name, $Trans)
+			DBUpdate("languages", $Id, "name,res,app_id", $Name, $Trans, $AppID)
+			UpdateLang($AppID, $Name, $Trans)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('17','NewSign','contract NewSign {
