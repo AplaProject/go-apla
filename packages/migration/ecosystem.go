@@ -1483,7 +1483,7 @@ MenuItem(
 		('24','max_fuel_block', '100000', 'true'),
 		('25','commission_size', '3', 'true'),
 		('26','commission_wallet', '', 'true'),
-		('27','fuel_rate', '[["1","1000000000000000"]]', 'true'),
+		('27','fuel_rate', '[["1","0.1"]]', 'true'),
 		('28','extend_cost_address_to_id', '10', 'true'),
 		('29','extend_cost_id_to_address', '10', 'true'),
 		('30','extend_cost_new_state', '1000', 'true'), -- What cost must be?
