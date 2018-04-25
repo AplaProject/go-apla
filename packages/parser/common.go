@@ -20,10 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 	"reflect"
-	"strconv"
-	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -84,28 +81,6 @@ func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64
 	return nil
 }
 
-// IsState returns if country is state
-func IsState(transaction *model.DbTransaction, country string) (int64, error) {
-	ids, err := model.GetAllSystemStatesIDs()
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("get all system states ids")
-		return 0, err
-	}
-	for _, id := range ids {
-		sp := &model.StateParameter{}
-		sp.SetTablePrefix(converter.Int64ToStr(id))
-		_, err = sp.Get(transaction, "state_name")
-		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("state get by name transaction")
-			return 0, err
-		}
-		if strings.ToLower(sp.Name) == strings.ToLower(country) {
-			return id, nil
-		}
-	}
-	return 0, nil
-}
-
 // ParserInterface is parsing transactions
 type ParserInterface interface {
 	Init() error
@@ -113,20 +88,6 @@ type ParserInterface interface {
 	Action() error
 	Rollback() error
 	Header() *tx.Header
-}
-
-// GetTablePrefix returns table prefix
-func GetTablePrefix(global string, stateId int64) (string, error) {
-	globalInt, err := strconv.Atoi(global)
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.ConversionError}).Error("converting global to int")
-		return "", err
-	}
-	stateIdStr := converter.Int64ToStr(stateId)
-	if globalInt == 1 {
-		return "global", nil
-	}
-	return stateIdStr, nil
 }
 
 // GetParser returns ParserInterface
@@ -194,13 +155,6 @@ func (p Parser) GetLogger() *log.Entry {
 	}
 	logger := log.WithFields(log.Fields{"tx_type": p.TxType, "tx_time": p.TxTime, "tx_state_id": p.TxEcosystemID, "tx_wallet_id": p.TxKeyID})
 	return logger
-}
-
-// ClearTmp deletes temporary files
-func ClearTmp(blocks map[int64]string) {
-	for _, tmpFileName := range blocks {
-		os.Remove(tmpFileName)
-	}
 }
 
 // CheckLogTx checks if this transaction exists
@@ -356,20 +310,6 @@ func (p *Parser) ErrInfo(verr interface{}) error {
 	return fmt.Errorf("[ERROR] %s (%s)\n%s\n%s", err, utils.Caller(1), p.FormatBlockData(), p.FormatTxMap())
 }
 
-// BlockError writes the error of the transaction in the transactions_status table
-func (p *Parser) BlockError(err error) {
-	if len(p.TxHash) == 0 {
-		return
-	}
-	errText := err.Error()
-	if len(errText) > 255 {
-		errText = errText[:255]
-	}
-	p.DeleteQueueTx(p.TxHash)
-	ts := &model.TransactionStatus{}
-	ts.SetError(p.DbTransaction, errText, p.TxHash)
-}
-
 // AccessRights checks the access right by executing the condition value
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	logger := p.GetLogger()
@@ -399,80 +339,6 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 		return fmt.Errorf(`There is not %s in state_parameters`, condition)
 	}
 	return nil
-}
-
-// AccessChange is changing access
-func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
-	logger := p.GetLogger()
-	prefix, err := GetTablePrefix(global, stateId)
-	if err != nil {
-		return err
-	}
-	var conditions string
-	switch table {
-	case "pages":
-		page := &model.Page{}
-		page.SetTablePrefix(prefix)
-		if _, err := page.Get(name); err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
-			return err
-		}
-		conditions = page.Conditions
-	case "menus":
-		menu := &model.Menu{}
-		menu.SetTablePrefix(prefix)
-		if _, err := menu.Get(name); err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
-			return err
-		}
-		conditions = menu.Conditions
-	}
-
-	if len(conditions) > 0 {
-		ret, err := p.SmartContract.EvalIf(conditions)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("evaluating conditions")
-			return err
-		}
-		if !ret {
-			log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-			return fmt.Errorf(`Access denied`)
-		}
-	} else {
-		log.WithFields(log.Fields{"type": consts.EmptyObject, "table": prefix + "_" + table}).Error("There is not conditions in")
-		return fmt.Errorf(`There is not conditions in %s`, prefix+`_`+table)
-	}
-	return nil
-}
-
-func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
-	logger := p.GetLogger()
-	syspar := &model.SystemParameter{}
-	fPrice, err := syspar.GetValueParameterByName("op_price", name)
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting value parameter by name")
-		return decimal.New(0, 0), p.ErrInfo(err)
-	}
-	if fPrice == nil {
-		return decimal.New(0, 0), nil
-	}
-	p.TxCost = 0
-	p.TxUsedCost, _ = decimal.NewFromString(*fPrice)
-	systemParam := &model.SystemParameter{}
-	_, err = systemParam.Get("fuel_rate")
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.DBError}).Fatal("getting system parameter")
-	}
-	fuelRate, err := decimal.NewFromString(systemParam.Value)
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConversionError, "value": systemParam.Value}).Error("converting fuel rate system parameter from string to decimal")
-		return decimal.New(0, 0), p.ErrInfo(err)
-	}
-	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
-		logger.Error("fuel rate is less than zero")
-		return decimal.New(0, 0), fmt.Errorf(`fuel rate must be greater than 0`)
-	}
-	return p.TxUsedCost.Mul(fuelRate), nil
 }
 
 // CallContract calls the contract functions according to the specified flags
