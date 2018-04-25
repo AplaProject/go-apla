@@ -161,6 +161,95 @@ func TestPage(t *testing.T) {
 
 	err = postTx(`NewPage`, &form)
 	assert.Equal(t, fmt.Sprintf(`{"type":"warning","error":"Page %s already exists"}`, name), cutErr(err))
+	err = postTx(`NewPage`, &form)
+	if cutErr(err) != fmt.Sprintf(`{"type":"warning","error":"Page %s already exists"}`, name) {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {`app` + name}, "Value": {value}, "ValidateCount": {"2"},
+		"ValidateMode": {"1"},
+		"Menu":         {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{"Name": {`app` + name}, "Value": {value}, "ValidateCount": {"2"},
+		"ValidateMode": {"1"},
+		"Menu":         {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	err = postTx(`NewPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var ret listResult
+	err = sendGet(`list/pages`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	id := ret.Count
+	var row rowResult
+	err = sendGet(`row/pages/`+id, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value["validate_mode"] != `1` {
+		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
+		return
+	}
+
+	form = url.Values{"Id": {id}, "Value": {value}, "ValidateCount": {"1"},
+		"ValidateMode": {"0"}}
+	err = postTx(`EditPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`row/pages/`+id, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value["validate_mode"] != `0` {
+		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
+		return
+	}
+
+	err = sendGet(`list/pages`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	id = ret.Count
+	err = sendGet(`row/pages/`+id, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value["validate_mode"] != `1` {
+		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
+		return
+	}
+
+	form = url.Values{"Id": {id}, "Value": {value}, "ValidateCount": {"1"},
+		"ValidateMode": {"0"}}
+	err = postTx(`EditPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendGet(`row/pages/`+id, nil, &row)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if row.Value["validate_mode"] != `0` {
+		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
+		return
+	}
 
 	form = url.Values{"Name": {name}, "Value": {value},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
@@ -613,4 +702,26 @@ func TestJSON(t *testing.T) {
 	for _, v := range cases {
 		assert.EqualError(t, postTx(contract, &url.Values{"Input": {v.source}}), v.result)
 	}
+}
+
+func TestBytesToString(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	contract := randName("BytesToString")
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + contract + ` {
+			data {
+				File bytes "file"
+			}
+			action {
+				$result = BytesToString($File)
+			}
+		}`},
+		"Conditions": {"true"},
+	}))
+
+	content := crypto.RandSeq(100)
+	_, res, err := postTxMultipart(contract, nil, map[string][]byte{"File": []byte(content)})
+	assert.NoError(t, err)
+	assert.Equal(t, content, res)
 }

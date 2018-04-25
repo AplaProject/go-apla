@@ -598,7 +598,7 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 	)
 	logger := sc.GetLogger()
 
-	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_param`) {
+	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
 		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return tablePermission, nil
 		}
@@ -659,7 +659,7 @@ type colAccess struct {
 // AccessColumns checks access rights to the columns
 func (sc *SmartContract) AccessColumns(table string, columns *[]string, update bool) error {
 	logger := sc.GetLogger()
-	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_param`) {
+	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
 		if update {
 			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 				return nil
@@ -865,7 +865,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 			return retError(err)
 		}
-		if wallet.Delete == 1 {
+		if wallet.Deleted == 1 {
 			return retError(ErrDeletedKey)
 		}
 		if len(wallet.PublicKey) > 0 {
