@@ -274,15 +274,15 @@ var contracts = []smartContract{
 		}},
 	{`testSimple`, `contract testSimple {
 					data {
-						amount int
-						name   string
+						Amount int
+						Name   string
 					}
 					conditions {
-						Test("scond", $amount, $name)
+						Test("scond", $Amount, $Name)
 					}
-					action { Test("sact", $name, $amount)}}`,
+					action { Test("sact", $Name, $Amount)}}`,
 		[]smartParams{
-			{map[string]string{`name`: `Simple name`, `amount`: `-56781`},
+			{map[string]string{`Name`: `Simple name`, `Amount`: `-56781`},
 				map[string]string{`scond`: `-56781Simple name`,
 					`sact`: `Simple name-56781`}},
 		}},
