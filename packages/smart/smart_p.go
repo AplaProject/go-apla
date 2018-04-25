@@ -135,23 +135,19 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 	par := &model.SystemParameter{}
 	found, err := par.Get(name)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("system parameter get")
-		return 0, err
+		return 0, logErrorDB(err, "system parameter get")
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("system parameter get")
-		return 0, fmt.Errorf(`Parameter %s has not been found`, name)
+		return 0, logError(fmt.Errorf(eParamNotFound, name), consts.NotFound, "system parameter get")
 	}
 	cond := par.Conditions
 	if len(cond) > 0 {
 		ret, err := sc.EvalIf(cond)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("evaluating conditions")
-			return 0, err
+			return 0, logError(err, consts.EvalError, "evaluating conditions")
 		}
 		if !ret {
-			log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-			return 0, errAccessDenied
+			return 0, logError(errAccessDenied, consts.AccessDenied, "Access denied")
 		}
 	}
 	if len(value) > 0 {
@@ -175,8 +171,8 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		case `fuel_rate`, `commission_wallet`:
 			err := json.Unmarshal([]byte(value), &list)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling system param")
-				return 0, err
+				return 0, logErrorValue(err, consts.JSONUnmarshallError,
+					"unmarshalling system param", value)
 			}
 			for _, item := range list {
 				switch name {
@@ -202,16 +198,15 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			checked = true
 		}
 		if !checked && (!ok || converter.Int64ToStr(ival) != value) {
-			log.WithFields(log.Fields{"type": consts.InvalidObject, "value": value, "name": name}).Error(errInvalidValue.Error())
-			return 0, errInvalidValue
+			return 0, logErrorValue(errInvalidValue, consts.InvalidObject, errInvalidValue.Error(),
+				value)
 		}
 		fields = append(fields, "value")
 		values = append(values, value)
 	}
 	if len(conditions) > 0 {
 		if err := CompileEval(conditions, 0); err != nil {
-			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": 0, "type": consts.EvalError}).Error("compiling eval")
-			return 0, err
+			return 0, logErrorValue(err, consts.EvalError, "compiling eval", conditions)
 		}
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
@@ -226,8 +221,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 	}
 	err = syspar.SysUpdate(sc.DbTransaction)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
-		return 0, err
+		return 0, logErrorDB(err, "updating syspar")
 	}
 	sc.SysUpdate = true
 	return 0, nil
@@ -241,7 +235,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 		return
 	}
 	if strings.Contains(tblname, `_reports_`) {
-		err = fmt.Errorf(`Access denied to report table`)
+		err = errAccessReport
 		return
 	}
 	columns := strings.Split(params, `,`)
@@ -364,7 +358,7 @@ func GetContractById(sc *SmartContract, id int64) string {
 	_, ret, err := DBSelect(sc, "contracts", "value", id, `id`, 0, 1,
 		0, ``, []interface{}{})
 	if err != nil || len(ret) != 1 {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract name")
+		logErrorDB(err, "getting contract name")
 		return ``
 	}
 
@@ -381,8 +375,7 @@ func EvalCondition(sc *SmartContract, table, name, condfield string) error {
 	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM "`+getDefTableName(sc, table)+
 		`" WHERE name = ?`, name).String()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
-		return err
+		return logErrorDB(err, "executing single query")
 	}
 	if len(conditions) == 0 {
 		log.WithFields(log.Fields{"type": consts.NotFound, "name": name}).Error("Record not found")
@@ -406,24 +399,20 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	sp.SetTablePrefix(`1`)
 	found, err := sp.Get(sc.DbTransaction, `founder_account`)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder")
-		return 0, err
+		return 0, logErrorDB(err, "getting founder")
 	}
 
 	if !found || len(sp.Value) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": errFounderAccount}).Error("founder not found")
-		return 0, errFounderAccount
+		return 0, logError(errFounderAccount, consts.NotFound, "founder not found")
 	}
 
 	id, err := model.GetNextID(sc.DbTransaction, "1_ecosystems")
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("generating next ecosystem id")
-		return 0, err
+		return 0, logErrorDB(err, "generating next ecosystem id")
 	}
 
 	if err = model.ExecSchemaEcosystem(sc.DbTransaction, int(id), wallet, name, converter.StrToInt64(sp.Value)); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
-		return 0, err
+		return 0, logErrorDB(err, "executing ecosystem schema")
 	}
 
 	idStr := converter.Int64ToStr(id)
@@ -434,13 +423,11 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	sc.Rollback = false
 	if _, _, err = DBInsert(sc, `@`+idStr+"_pages", "id,name,value,menu,conditions", "1", "default_page",
 		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
-		return 0, err
+		return 0, logErrorDB(err, "inserting default page")
 	}
 	if _, _, err = DBInsert(sc, `@`+idStr+"_menu", "id,name,value,title,conditions", "1", "default_menu",
 		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
-		return 0, err
+		return 0, logErrorDB(err, "inserting default page")
 	}
 
 	var (
@@ -449,24 +436,21 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	)
 	_, ret, err = DBSelect(sc, "@1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting pub key")
-		return 0, err
+		return 0, logErrorDB(err, "getting pub key")
 	}
 
 	if Len(ret) > 0 {
 		pub = ret[0].(map[string]string)[`pub`]
 	}
 	if _, _, err := DBInsert(sc, `@`+idStr+"_keys", "id,pub", wallet, pub); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
-		return 0, err
+		return 0, logErrorDB(err, "inserting default page")
 	}
 
 	// because of we need to know which ecosystem to rollback.
 	// All tables will be deleted so it's no need to rollback data from tables
 	sc.Rollback = true
 	if _, _, err := DBInsert(sc, "@1_ecosystems", "id,name", id, name); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert new ecosystem to stat table")
-		return 0, err
+		return 0, logErrorDB(err, "insert new ecosystem to stat table")
 	}
 
 	return id, err
@@ -490,8 +474,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, "1_ecosystems")
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback tx")
-		return err
+		return logErrorDB(err, "getting rollback tx")
 	}
 	if !found {
 		log.WithFields(log.Fields{"type": consts.NotFound}).Error("system states in rollback table")
@@ -500,8 +483,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 	}
 	lastID, err := model.GetNextID(sc.DbTransaction, "1_ecosystems")
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
-		return err
+		return logErrorDB(err, "getting next id")
 	}
 	lastID--
 	if converter.StrToInt64(rollbackTx.TableID) != lastID {
@@ -560,15 +542,13 @@ func RollbackEcosystem(sc *SmartContract) error {
 	for _, name := range rbTables {
 		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
-			return err
+			return logErrorDB(err, "dropping table")
 		}
 	}
 	rollbackTxToDel := &model.RollbackTx{TxHash: sc.TxHash, NameTable: "1_ecosystems"}
 	err = rollbackTxToDel.DeleteByHashAndTableName(sc.DbTransaction)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback tx by hash and table name")
-		return err
+		return logErrorDB(err, "deleting rollback tx by hash and table name")
 	}
 
 	ecosysToDel := &model.Ecosystem{ID: lastID}
@@ -585,8 +565,7 @@ func RollbackTable(sc *SmartContract, name string) error {
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, tableName)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback table")
-		return err
+		return logErrorDB(err, "getting rollback table")
 	}
 	if !found {
 		log.WithFields(log.Fields{"type": consts.NotFound}).Error("table record in rollback table")
@@ -595,30 +574,26 @@ func RollbackTable(sc *SmartContract, name string) error {
 	}
 	err = rollbackTx.DeleteByHashAndTableName(sc.DbTransaction)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting record from rollback table")
-		return err
+		return logErrorDB(err, "deleting record from rollback table")
 	}
 
 	err = model.DropTable(sc.DbTransaction, tableName)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
-		return err
+		return logErrorDB(err, "dropping table")
 	}
 	t := model.Table{}
 	t.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
 	found, err = t.Get(sc.DbTransaction, name)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
-		return err
+		return logErrorDB(err, "getting table info")
 	}
 	if found {
 		err = t.Delete(sc.DbTransaction)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
-			return err
+			return logErrorDB(err, "deleting table")
 		}
 	} else {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
+		logError(err, consts.NotFound, "not found table info")
 	}
 	return nil
 }
@@ -632,8 +607,7 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.EcosystemID))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column from rollback table")
-		return err
+		return logErrorDB(err, "getting column from rollback table")
 	}
 	if !found {
 		log.WithFields(log.Fields{"type": consts.NotFound}).Error("column record in rollback table")
@@ -690,8 +664,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	sc := (*i)[`sc`].(*SmartContract)
 	value, err := model.Single(`select value from "`+pref+`_signatures" where name=?`, name).String()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
-		return err
+		return logErrorDB(err, "executing single query")
 	}
 	if len(value) == 0 {
 		return nil
@@ -705,8 +678,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	var sign TxSignJSON
 	err = json.Unmarshal([]byte(value), &sign)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling sign")
-		return err
+		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling sign", value)
 	}
 	wallet := (*i)[`key_id`].(int64)
 	forsign := fmt.Sprintf(`%d,%d`, uint64((*i)[`time`].(int64)), uint64(wallet))
@@ -749,8 +721,7 @@ func RollbackContract(sc *SmartContract, name string) error {
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
 	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get values of metric")
-		return nil, err
+		return nil, logErrorDB(err, "get values of metric")
 	}
 	return result, nil
 }
@@ -773,8 +744,7 @@ func RollbackEditContract(sc *SmartContract) error {
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_contracts", sc.TxSmart.EcosystemID))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract from rollback table")
-		return err
+		return logErrorDB(err, "getting contract from rollback table")
 	}
 	if !found {
 		log.WithFields(log.Fields{"type": consts.NotFound}).Error("contract record in rollback table")
@@ -784,8 +754,8 @@ func RollbackEditContract(sc *SmartContract) error {
 	var fields map[string]string
 	err = json.Unmarshal([]byte(rollbackTx.Data), &fields)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling contract values")
-		return err
+		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling contract values",
+			rollbackTx.Data)
 	}
 	if len(fields["value"]) > 0 {
 		var owner *script.OwnerInfo
@@ -800,9 +770,7 @@ func RollbackEditContract(sc *SmartContract) error {
 			}
 		}
 		if owner == nil {
-			err = errContractNotFound
-			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("getting existing contract")
-			return err
+			return logError(errContractNotFound, consts.VMError, "getting existing contract")
 		}
 		wallet := owner.WalletID
 		if len(fields["wallet_id"]) > 0 {
@@ -810,13 +778,11 @@ func RollbackEditContract(sc *SmartContract) error {
 		}
 		root, err := CompileContract(sc, fields["value"], int64(owner.StateID), wallet, owner.TokenID)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("compiling contract")
-			return err
+			return logError(err, consts.VMError, "compiling contract")
 		}
 		err = FlushContract(sc, root, owner.TableID, owner.Active)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("flushing contract")
-			return err
+			return logError(err, consts.VMError, "flushing contract")
 		}
 	} else if len(fields["wallet_id"]) > 0 {
 		return SetContractWallet(sc, converter.StrToInt64(rollbackTx.TableID), sc.TxSmart.EcosystemID,
@@ -830,8 +796,7 @@ func JSONDecode(input string) (interface{}, error) {
 	var ret interface{}
 	err := json.Unmarshal([]byte(input), &ret)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling json")
-		return nil, err
+		return nil, logError(err, consts.JSONUnmarshallError, "unmarshalling json")
 	}
 	return ret, nil
 }
@@ -840,8 +805,7 @@ func JSONDecode(input string) (interface{}, error) {
 func JSONEncode(input interface{}) (string, error) {
 	b, err := json.Marshal(input)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling json")
-		return "", err
+		return "", logError(err, consts.JSONMarshallError, "marshalling json")
 	}
 	return string(b), nil
 }
