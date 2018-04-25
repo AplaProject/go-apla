@@ -426,7 +426,7 @@ func TestVMCompile(t *testing.T) {
 				}
 				func result() string {
 					return Sprintf("ok=%d", long())
-					}`, `result`, `strconv.ParseInt: parsing "99999999999999999999": value out of range 99999999999999999999 [Ln:2 Col:33]`},
+					}`, `result`, `strconv.ParseInt: parsing "99999999999999999999": value out of range 99999999999999999999 [Ln:2 Col:34]`},
 	}
 	vm := NewVM()
 	vm.Extern = true

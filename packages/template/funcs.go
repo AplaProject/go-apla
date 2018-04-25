@@ -128,7 +128,7 @@ func init() {
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 	}}
 	tails[`data`] = forTails{map[string]tailInfo{
-		`Custom`: {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		`Custom`: {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
 	}}
 	tails[`dbfind`] = forTails{map[string]tailInfo{
 		`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
@@ -139,7 +139,7 @@ func init() {
 		`Limit`:     {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
 		`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
 		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
-		`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		`Custom`:    {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
 		`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
 		`Cutoff`:    {tplFunc{tailTag, defaultTailFull, `cutoff`, `Cutoff`}, false},
 	}}
@@ -314,7 +314,8 @@ func appparTag(par parFunc) string {
 	}
 	ap := &model.AppParam{}
 	ap.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
-	_, err := ap.Get(nil, converter.StrToInt64((*par.Pars)[`App`]), (*par.Pars)[`Name`])
+	_, err := ap.Get(nil, converter.StrToInt64(macro((*par.Pars)[`App`], par.Workspace.Vars)),
+		macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting app param")
 		return err.Error()
@@ -431,7 +432,18 @@ func dataTag(par parFunc) string {
 
 	list, err := csv.NewReader(strings.NewReader((*par.Pars)[`Data`])).ReadAll()
 	if err != nil {
+		input := strings.Split((*par.Pars)[`Data`], "\n")
 		par.Node.Attr[`error`] = err.Error()
+		prefix := `line `
+		for err != nil && strings.HasPrefix(err.Error(), prefix) {
+			errText := err.Error()
+			line := converter.StrToInt64(errText[len(prefix):strings.IndexByte(errText, ',')])
+			if line < 1 {
+				break
+			}
+			input = append(input[:line-1], input[line:]...)
+			list, err = csv.NewReader(strings.NewReader(strings.Join(input, "\n"))).ReadAll()
+		}
 	}
 	lencol := 0
 	defcol := 0
@@ -751,6 +763,9 @@ func compositeTag(par parFunc) string {
 
 func customTag(par parFunc) string {
 	setAllAttr(par)
+	if len((*par.Pars)[`Column`]) == 0 || len((*par.Pars)[`Body`]) == 0 {
+		return ``
+	}
 	if par.Owner.Attr[`customs`] == nil {
 		par.Owner.Attr[`customs`] = make([]string, 0)
 		par.Owner.Attr[`custombody`] = make([]string, 0)
@@ -760,10 +775,22 @@ func customTag(par parFunc) string {
 	return ``
 }
 
+func customTagFull(par parFunc) string {
+	setAllAttr(par)
+	process((*par.Pars)[`Body`], par.Node, par.Workspace)
+	par.Owner.Tail = append(par.Owner.Tail, par.Node)
+	return ``
+}
+
 func tailTag(par parFunc) string {
 	setAllAttr(par)
 	for key, v := range par.Node.Attr {
-		par.Owner.Attr[key] = v
+		switch v.(type) {
+		case string:
+			par.Owner.Attr[key] = macro(v.(string), par.Workspace.Vars)
+		default:
+			par.Owner.Attr[key] = v
+		}
 	}
 	return ``
 }
