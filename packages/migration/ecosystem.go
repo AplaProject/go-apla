@@ -2656,5 +2656,7 @@ MenuItem(
 
 			warning "Sorry, you do not have access to this action."
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")', 1);`
+	}','%[1]d', 'ContractConditions("MainCondition")', 1);
+	
+	INSERT INTO "1_applications" (id, name, conditions) VALUES (1, 'System', 'ContractConditions("MainCondition")');`
 )
