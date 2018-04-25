@@ -1109,12 +1109,12 @@ func binaryTag(par parFunc) string {
 	)
 
 	if par.Node.Attr["id"] != nil {
-		ok, err = binary.GetByID(converter.StrToInt64(par.Node.Attr["id"].(string)))
+		ok, err = binary.GetByID(converter.StrToInt64(macro(par.Node.Attr["id"].(string), par.Workspace.Vars)))
 	} else {
 		ok, err = binary.Get(
-			converter.StrToInt64((*par.Pars)["AppID"]),
-			converter.StrToInt64((*par.Pars)["MemberID"]),
-			(*par.Pars)["Name"],
+			converter.StrToInt64(macro((*par.Pars)["AppID"], par.Workspace.Vars)),
+			converter.StrToInt64(macro((*par.Pars)["MemberID"], par.Workspace.Vars)),
+			macro((*par.Pars)["Name"], par.Workspace.Vars),
 		)
 	}
 
