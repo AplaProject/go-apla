@@ -109,32 +109,27 @@ type Parser struct {
 	dataType       int
 	blockData      []byte
 	CurrentVersion string
-	MrklRoot       []byte
 	PublicKeys     [][]byte
 
-	TxBinaryData     []byte // transaction binary data
-	TxFullData       []byte // full transaction, with type and data
-	TxHash           []byte
-	TxSlice          [][]byte
-	TxMap            map[string][]byte
-	TxIds            int // count of transactions
-	TxKeyID          int64
-	TxEcosystemIDStr string
-	TxEcosystemID    int64
-	TxNodePosition   uint32
-	TxTime           int64
-	TxType           int64
-	TxCost           int64           // Maximum cost of executing contract
-	TxFuel           int64           // The fuel cost of executed contract
-	TxUsedCost       decimal.Decimal // Used cost of CPU resources
-	TxPtr            interface{}     // Pointer to the corresponding struct in consts/struct.go
-	TxData           map[string]interface{}
-	TxSmart          *tx.SmartContract
-	TxContract       *smart.Contract
-	TxHeader         *tx.Header
-	txParser         ParserInterface
-	DbTransaction    *model.DbTransaction
-	SysUpdate        bool
+	TxBinaryData   []byte // transaction binary data
+	TxFullData     []byte // full transaction, with type and data
+	TxHash         []byte
+	TxKeyID        int64
+	TxEcosystemID  int64
+	TxNodePosition uint32
+	TxTime         int64
+	TxType         int64
+	TxCost         int64           // Maximum cost of executing contract
+	TxFuel         int64           // The fuel cost of executed contract
+	TxUsedCost     decimal.Decimal // Used cost of CPU resources
+	TxPtr          interface{}     // Pointer to the corresponding struct in consts/struct.go
+	TxData         map[string]interface{}
+	TxSmart        *tx.SmartContract
+	TxContract     *smart.Contract
+	TxHeader       *tx.Header
+	txParser       ParserInterface
+	DbTransaction  *model.DbTransaction
+	SysUpdate      bool
 
 	SmartContract smart.SmartContract
 }
@@ -284,20 +279,6 @@ func (p *Parser) FormatBlockData() string {
 	return result
 }
 
-// FormatTxMap returns the formated TxMap
-func (p *Parser) FormatTxMap() string {
-	result := ""
-	for k, v := range p.TxMap {
-		switch k {
-		case "sign":
-			result += "[" + k + "] = " + fmt.Sprintf("%x\n", v)
-		default:
-			result += "[" + k + "] = " + fmt.Sprintf("%s\n", v)
-		}
-	}
-	return result
-}
-
 // ErrInfo returns the more detailed error
 func (p *Parser) ErrInfo(verr interface{}) error {
 	var err error
@@ -307,7 +288,7 @@ func (p *Parser) ErrInfo(verr interface{}) error {
 	case string:
 		err = fmt.Errorf(verr.(string))
 	}
-	return fmt.Errorf("[ERROR] %s (%s)\n%s\n%s", err, utils.Caller(1), p.FormatBlockData(), p.FormatTxMap())
+	return fmt.Errorf("[ERROR] %s (%s)\n%s", err, utils.Caller(1), p.FormatBlockData())
 }
 
 // AccessRights checks the access right by executing the condition value
