@@ -36,7 +36,7 @@ func RunAllDaemons() error {
 	log.Info("start daemons")
 	daemons.StartDaemons()
 
-	if conf.IsVDE() {
+	if conf.Config.IsSupportingVDE() {
 		return nil
 	}
 

@@ -91,7 +91,7 @@ type GlobalConfig struct {
 	TLS            bool   // TLS is on/off. It is required for https
 	TLSCert        string // TLSCert is a filepath of the fullchain of certificate.
 	TLSKey         string // TLSKey is a filepath of the private key.
-	RunningMode    packages.RunMode
+	RunningMode    string
 
 	MaxPageGenerationTime int64 // in milliseconds
 
@@ -113,6 +113,31 @@ var Config GlobalConfig
 // GetPidPath returns path to pid file
 func (c *GlobalConfig) GetPidPath() string {
 	return c.PidFilePath
+}
+
+// IsPrivateBlockchain check running mode
+func (c *GlobalConfig) IsPrivateBlockchain() bool {
+	return packages.RunMode(c.RunningMode).IsPrivateBlockchain()
+}
+
+// IsPublicBlockchain check running mode
+func (c *GlobalConfig) IsPublicBlockchain() bool {
+	return packages.RunMode(c.RunningMode).IsPublicBlockchain()
+}
+
+// IsVDE check running mode
+func (c *GlobalConfig) IsVDE() bool {
+	return packages.RunMode(c.RunningMode).IsVDE()
+}
+
+// IsVDEMaster check running mode
+func (c *GlobalConfig) IsVDEMaster() bool {
+	return packages.RunMode(c.RunningMode).IsVDEMaster()
+}
+
+// IsSupportingVDE check running mode
+func (c *GlobalConfig) IsSupportingVDE() bool {
+	return packages.RunMode(c.RunningMode).IsSupportingVDE()
 }
 
 // LoadConfig from configFile

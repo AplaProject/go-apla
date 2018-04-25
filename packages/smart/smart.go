@@ -489,9 +489,9 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	vm := newVM()
 
 	var vmt script.VMType
-	if conf.Config.RunningMode.IsVDE() {
+	if conf.Config.IsVDE() {
 		vmt = script.VMTypeVDE
-	} else if conf.Config.RunningMode.IsVDEMaster() {
+	} else if conf.Config.IsVDEMaster() {
 		vmt = script.VMTypeVDEMaster
 	}
 
@@ -903,7 +903,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 			return retError(ErrIncorrectSign)
 		}
-		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.RunningMode.IsPrivateBlockchain() {
+		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
 			if sc.TxSmart.TokenEcosystem == 0 {
 				sc.TxSmart.TokenEcosystem = 1
 			}
@@ -1026,7 +1026,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 	}
 
-	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.RunningMode.IsPrivateBlockchain() {
+	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
 		apl := sc.TxUsedCost.Mul(fuelRate)
 		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
 		if ierr != nil {

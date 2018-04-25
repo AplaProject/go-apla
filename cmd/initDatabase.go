@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 )
 
@@ -20,7 +21,7 @@ var initDatabaseCmd = &cobra.Command{
 	},
 }
 
-func initVDE()
+func initVDE() {
 	if err := model.CreateVDEIfNotExists(consts.DefaultVDE, conf.Config.KeyID); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("error on init VDE schema")
 	}

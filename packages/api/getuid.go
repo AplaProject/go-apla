@@ -42,7 +42,7 @@ type getUIDResult struct {
 
 func getUID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	result := &getUIDResult{
-		IsVDE: *conf.IsVDEMode,
+		IsVDE: conf.Config.IsSupportingVDE(),
 	}
 
 	data.result = result

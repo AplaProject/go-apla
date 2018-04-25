@@ -174,7 +174,7 @@ func initRoutes(listenHost string) {
 
 func logBlockchainMode() {
 	mode := "private"
-	if !conf.Config.PrivateBlockchain {
+	if !conf.Config.IsPrivateBlockchain() {
 		mode = "non private"
 	}
 
@@ -219,7 +219,7 @@ func Start() {
 	initGorm(conf.Config.DB)
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 
-	if *conf.IsVDEMasterMode {
+	if conf.Config.IsVDEMaster() {
 		if err := vdemanager.InitVDEManager(); err != nil {
 			Exit(1)
 		}
