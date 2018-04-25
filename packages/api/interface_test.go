@@ -1,11 +1,13 @@
 package api
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetInterfaceRow(t *testing.T) {
@@ -44,4 +46,40 @@ func TestGetInterfaceRow(t *testing.T) {
 		assert.NoError(t, sendGet(c.url+name, &url.Values{}, &result))
 		checkEqualAttrs(form, result, c.equalAttrs)
 	}
+}
+
+func TestNewMenuNoError(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	menuname := "myTestMenu"
+	form := url.Values{"Name": {menuname}, "Value": {`first
+		second
+		third`}, "Title": {`My Test Menu`},
+		"Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewMenu`, &form))
+
+	err := postTx(`NewMenu`, &form)
+	assert.Equal(t, fmt.Sprintf(`{"type":"warning","error":"Menu %s already exists"}`, menuname), cutErr(err))
+}
+
+func TestEditMenuNoError(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{
+		"Id": {"3"},
+		"Value": {`first
+		second
+		third
+		andmore`},
+		"Title": {`My edited Test Menu`},
+	}
+	assert.NoError(t, postTx(`EditMenu`, &form))
+}
+
+func TestAppendMenuNoError(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{
+		"Id":    {"3"},
+		"Value": {"appended item"},
+	}
+
+	assert.NoError(t, postTx("AppendMenu", &form))
 }

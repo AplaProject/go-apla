@@ -73,6 +73,9 @@ func HandleTCPRequest(rw net.Conn) {
 		}
 
 	case RequestTypeConfirmation:
+		if service.IsNodePaused() {
+			return
+		}
 		req := &ConfirmRequest{}
 		err = ReadRequest(req, rw)
 		if err == nil {

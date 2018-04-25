@@ -156,7 +156,7 @@ MenuItem(
 		DROP TABLE IF EXISTS "%[1]d_vde_binaries";
 		CREATE TABLE "%[1]d_vde_binaries" (
 			"id" bigint NOT NULL DEFAULT '0',
-			"app_id" bigint NOT NULL DEFAULT '0',
+			"app_id" bigint NOT NULL DEFAULT '1',
 			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
@@ -172,7 +172,7 @@ MenuItem(
 	  "permissions" jsonb,
 	  "columns" jsonb,
 	  "conditions" text  NOT NULL DEFAULT '',
-	  "app_id" bigint NOT NULL DEFAULT '0'
+	  "app_id" bigint NOT NULL DEFAULT '1'
 	  );
 	  ALTER TABLE ONLY "%[1]d_vde_tables" ADD CONSTRAINT "%[1]d_vde_tables_pkey" PRIMARY KEY ("id");
 	  CREATE INDEX "%[1]d_vde_tables_index_name" ON "%[1]d_vde_tables" (name);
@@ -422,7 +422,6 @@ MenuItem(
 			Value      string
 			Title      string "optional"
 			Conditions string
-			ApplicationId int "optional"
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -435,7 +434,7 @@ MenuItem(
 			}
 		}
 		action {
-			DBInsert("menu", "name,value,title,conditions,app_id", $Name, $Value, $Title, $Conditions, $ApplicationId )
+			DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions )
 		}
 		func price() int {
 			return  SysParamInt("menu_price")
@@ -963,9 +962,9 @@ MenuItem(
 		"id" bigint  NOT NULL DEFAULT '0',
 		"pub" bytea  NOT NULL DEFAULT '',
 		"amount" decimal(30) NOT NULL DEFAULT '0',
-		"multi" int NOT NULL DEFAULT '0',
-		"deleted" int NOT NULL DEFAULT '0',
-		"blocked" int NOT NULL DEFAULT '0'
+		"multi" bigint NOT NULL DEFAULT '0',
+		"deleted" bigint NOT NULL DEFAULT '0',
+		"blocked" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
 		
@@ -987,10 +986,10 @@ MenuItem(
 		
 		DROP TABLE IF EXISTS "%[1]d_languages"; CREATE TABLE "%[1]d_languages" (
 		  "id" bigint  NOT NULL DEFAULT '0',
-		  "app_id" bigint NOT NULL DEFAULT '0',
 		  "name" character varying(100) NOT NULL DEFAULT '',
 		  "res" text NOT NULL DEFAULT '',
-		  "conditions" text NOT NULL DEFAULT ''
+		  "conditions" text NOT NULL DEFAULT '',
+		  "app_id" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_languages" ADD CONSTRAINT "%[1]d_languages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
@@ -1014,8 +1013,7 @@ MenuItem(
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"title" character varying(255) NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '0'
+			"conditions" text NOT NULL DEFAULT ''
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
@@ -1064,7 +1062,7 @@ MenuItem(
 			"menu" character varying(255) NOT NULL DEFAULT '',
 			"validate_count" bigint NOT NULL DEFAULT '1',
 			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '0',
+			"app_id" bigint NOT NULL DEFAULT '1',
 			"validate_mode" character(1) NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
@@ -1115,7 +1113,7 @@ MenuItem(
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
 			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '0'
+			"app_id" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
@@ -1136,7 +1134,7 @@ MenuItem(
 		"token_id" bigint NOT NULL DEFAULT '1',
 		"active" character(1) NOT NULL DEFAULT '0',
 		"conditions" text  NOT NULL DEFAULT '',
-		"app_id" bigint NOT NULL DEFAULT '0'
+		"app_id" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 		
@@ -1198,7 +1196,7 @@ MenuItem(
 		"permissions" jsonb,
 		"columns" jsonb,
 		"conditions" text  NOT NULL DEFAULT '',
-		"app_id" bigint NOT NULL DEFAULT '0'
+		"app_id" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
@@ -1235,7 +1233,8 @@ MenuItem(
 				'{"app_id": "ContractConditions(\"MainCondition\")",
 				  "name": "ContractConditions(\"MainCondition\")",
 				  "res": "ContractConditions(\"MainCondition\")",
-				  "conditions": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("@1EditTable")'),
+				  "conditions": "ContractConditions(\"MainCondition\")",
+				  "app_id": "ContractConditions(\"MainConditions\")"}', 'ContractAccess("@1EditTable")'),
 				('5', 'menu', 
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1369,7 +1368,7 @@ MenuItem(
 			"date_created" timestamp,
 			"date_deleted" timestamp,
 			"company_id" bigint NOT NULL DEFAULT '0',
-			"image_id"   bigint
+			"image_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles" ADD CONSTRAINT "%[1]d_roles_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_index_deleted" ON "%[1]d_roles" (deleted);
@@ -1405,7 +1404,7 @@ MenuItem(
 		CREATE TABLE "%[1]d_members" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
-			"image_id"	bigint,
+			"image_id"	bigint NOT NULL DEFAULT '0',
 			"member_info"   jsonb
 		);
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
@@ -1425,7 +1424,7 @@ MenuItem(
 		DROP TABLE IF EXISTS "%[1]d_binaries";
 		CREATE TABLE "%[1]d_binaries" (
 			"id" bigint NOT NULL DEFAULT '0',
-			"app_id" bigint NOT NULL DEFAULT '0',
+			"app_id" bigint NOT NULL DEFAULT '1',
 			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
@@ -1593,7 +1592,7 @@ MenuItem(
 			);
 
 
-	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions") VALUES 
+	INSERT INTO "1_contracts" ("id", "name","value", "wallet_id", "conditions", "app_id") VALUES
 	('2','MoneyTransfer','contract MoneyTransfer {
 		data {
 			Recipient string
@@ -1628,7 +1627,7 @@ MenuItem(
             DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
                     $key_id, $recipient, $amount, $Comment, $block, $txhash)
 		}
-	}', '%[1]d', 'ContractConditions("MainCondition")'),
+	}', '%[1]d', 'ContractConditions("MainCondition")', 1),
 	('3','NewContract','contract NewContract {
 		data {
 			Value      string
@@ -1690,7 +1689,7 @@ MenuItem(
 		func price() int {
 			return  SysParamInt("contract_price")
 		}
-	}', '%[1]d', 'ContractConditions("MainCondition")'),
+	}', '%[1]d', 'ContractConditions("MainCondition")', 1),
 	('4','EditContract','contract EditContract {
 		data {
 			Id         int
@@ -1778,7 +1777,7 @@ MenuItem(
 		func rollback() {
 			RollbackEditContract()
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('5','ActivateContract','contract ActivateContract {
 		data {
 			Id  int
@@ -1804,7 +1803,7 @@ MenuItem(
 			Deactivate($Id, $ecosystem_id)
 		}
 
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('6','NewEcosystem','contract NewEcosystem {
 		data {
 			Name  string
@@ -1818,7 +1817,7 @@ MenuItem(
 		func rollback() {
 			RollbackEcosystem()
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('7','NewParameter','contract NewParameter {
 		data {
 			Name string
@@ -1838,7 +1837,7 @@ MenuItem(
 		action {
 			DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions )
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('8','EditParameter','contract EditParameter {
 		data {
 			Id int
@@ -1857,14 +1856,13 @@ MenuItem(
 		action {
 			DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('9', 'NewMenu','contract NewMenu {
 		data {
 			Name       string
 			Value      string
 			Title      string "optional"
 			Conditions string
-			ApplicationId int "optional"
 		}
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
@@ -1877,12 +1875,12 @@ MenuItem(
 			}
 		}
 		action {
-			DBInsert("menu", "name,value,title,conditions,app_id", $Name, $Value, $Title, $Conditions, $ApplicationId )
+			DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions)
 		}
 		func price() int {
 			return  SysParamInt("menu_price")
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('10','EditMenu','contract EditMenu {
 		data {
 			Id         int
@@ -1919,7 +1917,7 @@ MenuItem(
 				DBUpdate("menu", $Id, Join(pars, ","), vals...)
 			}			
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('11','AppendMenu','contract AppendMenu {
 		data {
 			Id     int
@@ -1933,7 +1931,7 @@ MenuItem(
 			row = DBRow("menu").Columns("value").WhereId($Id)
 			DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('12','NewPage','contract NewPage {
 		data {
 			Name       string
@@ -1978,7 +1976,7 @@ MenuItem(
 		func price() int {
 			return  SysParamInt("page_price")
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('13','EditPage','contract EditPage {
 		data {
 			Id         int
@@ -2042,7 +2040,7 @@ MenuItem(
 				DBUpdate("pages", $Id, Join(pars, ","), vals...)
 			}
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('14','AppendPage','contract AppendPage {
 		data {
 			Id         int
@@ -2063,7 +2061,7 @@ MenuItem(
 			}
 			DBUpdate("pages", $Id, "value",  value )
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('15','NewLang','contract NewLang {
 		data {
 			Name  string
@@ -2084,7 +2082,7 @@ MenuItem(
 			DBInsert("languages", "name,res,app_id", $Name, $Trans, $AppID)
 			UpdateLang($AppID, $Name, $Trans)
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('16','EditLang','contract EditLang {
 		data {
 			Id    int
@@ -2099,7 +2097,7 @@ MenuItem(
 			DBUpdate("languages", $Id, "name,res,app_id", $Name, $Trans, $AppID)
 			UpdateLang($AppID, $Name, $Trans)
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('17','NewSign','contract NewSign {
 		data {
 			Name       string
@@ -2120,7 +2118,7 @@ MenuItem(
 		action {
 			DBInsert("signatures", "name,value,conditions", $Name, $Value, $Conditions )
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('18','EditSign','contract EditSign {
 		data {
 			Id         int
@@ -2151,7 +2149,7 @@ MenuItem(
 				DBUpdate("signatures", $Id, Join(pars, ","), vals...)
 			}
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('19','NewBlock','contract NewBlock {
 		data {
 			Name       string
@@ -2172,7 +2170,7 @@ MenuItem(
 		action {
 			DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId )
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('20','EditBlock','contract EditBlock {
 		data {
 			Id         int
@@ -2204,7 +2202,7 @@ MenuItem(
 				DBUpdate("blocks", $Id, Join(pars, ","), vals...)
 			}
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('21','NewTable','contract NewTable {
 		data {
 			Name       string
@@ -2224,7 +2222,7 @@ MenuItem(
 		func price() int {
 			return  SysParamInt("table_price")
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('22','EditTable','contract EditTable {
 		data {
 			Name       string
@@ -2236,7 +2234,7 @@ MenuItem(
 		action {
 			PermTable($Name, $Permissions )
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('23','NewColumn','contract NewColumn {
 		data {
 			TableName   string
@@ -2256,7 +2254,7 @@ MenuItem(
 		func price() int {
 			return  SysParamInt("column_price")
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('24','EditColumn','contract EditColumn {
 		data {
 			TableName   string
@@ -2269,7 +2267,7 @@ MenuItem(
 		action {
 			PermColumn($TableName, $Name, $Permissions)
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('25','Import','contract Import {
 		data {
 			Data string
@@ -2389,7 +2387,7 @@ MenuItem(
 			ImportList($list["tables"], "tables")
 			ImportData($list["data"])
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('26','DeactivateContract','contract DeactivateContract {
 		data {
 			Id         int
@@ -2414,7 +2412,7 @@ MenuItem(
 		func rollback() {
 			Activate($Id, $ecosystem_id)
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('27','UpdateSysParam','contract UpdateSysParam {
 		data {
 			Name  string
@@ -2424,7 +2422,7 @@ MenuItem(
 		action {
 			DBUpdateSysParam($Name, $Value, $Conditions )
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('28','NewAppParam','contract NewAppParam {
 		data {
 			App int
@@ -2446,7 +2444,7 @@ MenuItem(
 		action {
 			DBInsert("app_params", "app_id,name,value,conditions", $App, $Name, $Value, $Conditions )
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('29','EditAppParam','contract EditAppParam {
 		data {
 			Id int
@@ -2464,7 +2462,7 @@ MenuItem(
 		action {
 			DBUpdate("app_params", $Id, "value,conditions", $Value, $Conditions )
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('30', 'NewDelayedContract','contract NewDelayedContract {
 		data {
 			Contract string
@@ -2495,7 +2493,7 @@ MenuItem(
 		action {
 			DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,\"limit\",conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")'),
+	}','%[1]d', 'ContractConditions("MainCondition")', 1),
 	('31', 'EditDelayedContract','contract EditDelayedContract {
 		data {
 			Id int
@@ -2528,7 +2526,7 @@ MenuItem(
 		action {
 			DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,\"limit\",deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")'),
+	}','%[1]d', 'ContractConditions("MainCondition")', 1),
 	('32', 'CallDelayedContract','contract CallDelayedContract {
 		data {
 			Id int
@@ -2563,8 +2561,8 @@ MenuItem(
 			DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
 			CallContract($cur["contract"], nil)
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")'),
-	('33', 'UploadBinary', 'contract UploadBinary {
+	}','%[1]d', 'ContractConditions("MainCondition")', 1),
+	('33','UploadBinary','contract UploadBinary {
 		data {
 			Name  string
 			Data  bytes "file"
@@ -2591,7 +2589,7 @@ MenuItem(
 
 			$result = $Id
 		}
-	}', '%[1]d','ContractConditions("MainCondition")'),
+	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('34', 'NewUser','contract NewUser {
 		data {
 			NewPubkey string
@@ -2613,7 +2611,7 @@ MenuItem(
            	DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
 					$key_id, $newId, $amount, "New user deposit", $block, $txhash)
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")'),
+	}','%[1]d', 'ContractConditions("NodeOwnerCondition")', 1),
 	('35', 'EditEcosystemName','contract EditEcosystemName {
 		data {
 			EcosystemID int
@@ -2629,7 +2627,7 @@ MenuItem(
 		action {
 			EditEcosysName($EcosystemID, $NewName)
 		}
-	}', '%[1]d', 'ContractConditions("MainCondition")'),
+	}', '%[1]d', 'ContractConditions("MainCondition")', 1),
 	('36', 'UpdateMetrics', 'contract UpdateMetrics {
 		conditions {
 			ContractConditions("MainCondition")
@@ -2651,5 +2649,22 @@ MenuItem(
 				i = i + 1
 			}
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")');`
+	}','%[1]d', 'ContractConditions("MainCondition")', 1),
+	('37', 'NodeOwnerCondition', 'contract NodeOwnerCondition {
+		conditions {
+			$full_nodes = JSONDecode(SysParamString("full_nodes"))
+			var i int
+			while i < Len($full_nodes) {
+				$fn = $full_nodes[i]
+				if $fn["key_id"] == $key_id {
+					return true
+				}
+				i = i + 1
+			}
+
+			warning "Sorry, you do not have access to this action."
+		}
+	}','%[1]d', 'ContractConditions("MainCondition")', 1);
+	
+	INSERT INTO "1_applications" (id, name, conditions) VALUES (1, 'System', 'ContractConditions("MainCondition")');`
 )
