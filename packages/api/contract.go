@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 
@@ -125,11 +124,11 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 			switch fitem.Type.String() {
 			case `[]interface {}`:
 				var list []string
-				for key, values := range r.Form {
-					if key == fitem.Name+`[]` && len(values) > 0 {
-						count := converter.StrToInt(values[0])
+				for key, value := range req.AllValues() {
+					if key == fitem.Name+`[]` && len(value) > 0 {
+						count := converter.StrToInt(value)
 						for i := 0; i < count; i++ {
-							list = append(list, r.FormValue(fmt.Sprintf(`%s[%d]`, fitem.Name, i)))
+							list = append(list, req.GetValue(fmt.Sprintf(`%s[%d]`, fitem.Name, i)))
 						}
 					}
 				}
@@ -206,14 +205,12 @@ func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiDa
 	case service.NoPause:
 		return nil
 	case service.PauseTypeUpdatingBlockchain:
-		reason = "Node is updating blockchain"
+		reason = "E_UPDATING"
 		break
 	case service.PauseTypeStopingNetwork:
-		reason = "Network is stopping"
+		reason = "E_STOPPING"
 		break
-	default:
-		reason = "Node is paused"
 	}
 
-	return errorAPI(w, errors.New(reason), http.StatusServiceUnavailable)
+	return errorAPI(w, reason, http.StatusServiceUnavailable)
 }
