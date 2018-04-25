@@ -313,7 +313,8 @@ func appparTag(par parFunc) string {
 	}
 	ap := &model.AppParam{}
 	ap.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
-	_, err := ap.Get(nil, converter.StrToInt64((*par.Pars)[`App`]), (*par.Pars)[`Name`])
+	_, err := ap.Get(nil, converter.StrToInt64(macro((*par.Pars)[`App`], par.Workspace.Vars)),
+		macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting app param")
 		return err.Error()
@@ -783,7 +784,12 @@ func customTagFull(par parFunc) string {
 func tailTag(par parFunc) string {
 	setAllAttr(par)
 	for key, v := range par.Node.Attr {
-		par.Owner.Attr[key] = v
+		switch v.(type) {
+		case string:
+			par.Owner.Attr[key] = macro(v.(string), par.Workspace.Vars)
+		default:
+			par.Owner.Attr[key] = v
+		}
 	}
 	return ``
 }
