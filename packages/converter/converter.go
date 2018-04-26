@@ -950,9 +950,11 @@ func ValueToInt(v interface{}) (ret int64, err error) {
 	case int64:
 		ret = val
 	case string:
+		if len(val) == 0 {
+			return 0, nil
+		}
 		ret, err = strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting value from string to int")
 			errText := err.Error()
 			if strings.Contains(errText, `:`) {
 				errText = errText[strings.LastIndexByte(errText, ':'):]
@@ -961,6 +963,12 @@ func ValueToInt(v interface{}) (ret int64, err error) {
 			}
 			err = fmt.Errorf(`%s is not a valid integer %s`, val, errText)
 		}
+	default:
+		err = fmt.Errorf(`%v is not a valid integer`, val)
+	}
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err,
+			"value": fmt.Sprint(v)}).Error("converting value to int")
 	}
 	return
 }

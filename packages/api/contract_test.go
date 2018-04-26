@@ -97,13 +97,14 @@ var contracts = []smartContract{
 
 	{`Price`, `contract Price {
 		action {
+			Test("int", Int("")+2)
 			Test("price", 1)
 		}
 		func price() money {
 			return Money(100)
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`price`: `1`}},
+		{nil, map[string]string{`price`: `1`, `int`: `2`}},
 	}},
 	{`CheckFloat`, `contract CheckFloat {
 			action {
