@@ -215,7 +215,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "1_system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
+	_, _, err = sc.update(fields, values, "1_system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)})
 	if err != nil {
 		return 0, err
 	}
@@ -242,7 +242,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && sc.Rollback, true)
+	qcost, _, err = sc.update(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)})
 	return
 }
 
