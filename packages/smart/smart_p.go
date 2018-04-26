@@ -214,7 +214,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
+	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "1_system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
 	if err != nil {
 		return 0, err
 	}
@@ -262,7 +262,7 @@ func SysFuel(state int64) string {
 }
 
 // Int converts the value to a number
-func Int(v interface{}) int64 {
+func Int(v interface{}) (int64, error) {
 	return converter.ValueToInt(v)
 }
 
@@ -278,7 +278,7 @@ func Str(v interface{}) (ret string) {
 }
 
 // Money converts the value into a numeric type for money
-func Money(v interface{}) (ret decimal.Decimal) {
+func Money(v interface{}) (decimal.Decimal, error) {
 	return script.ValueToDecimal(v)
 }
 
@@ -335,8 +335,8 @@ func HexToBytes(hexdata string) ([]byte, error) {
 }
 
 // LangRes returns the language resource
-func LangRes(sc *SmartContract, idRes, lang string) string {
-	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang, sc.VDE)
+func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
+	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), int(appID), lang, sc.VDE)
 	return ret
 }
 
@@ -456,6 +456,9 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, err
 	}
 
+	// because of we need to know which ecosystem to rollback.
+	// All tables will be deleted so it's no need to rollback data from tables
+	sc.Rollback = true
 	if _, _, err := DBInsert(sc, "@1_ecosystems", "id,name", id, name); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert new ecosystem to stat table")
 		return 0, err
@@ -526,9 +529,32 @@ func RollbackEcosystem(sc *SmartContract) error {
 		}
 	}
 
-	for _, name := range []string{`menu`, `pages`, `languages`, `signatures`, `tables`,
-		`contracts`, `parameters`, `blocks`, `history`, `keys`, `sections`, `members`, `roles_list`,
-		`roles_assign`, `notifications`, `applications`, `binaries`, `app_param`} {
+	rbTables := []string{
+		`menu`,
+		`pages`,
+		`languages`,
+		`signatures`,
+		`tables`,
+		`contracts`,
+		`parameters`,
+		`blocks`,
+		`history`,
+		`keys`,
+		`sections`,
+		`members`,
+		`roles`,
+		`roles_participants`,
+		`notifications`,
+		`applications`,
+		`binaries`,
+		`app_params`,
+	}
+
+	if rollbackTx.TableID == "1" {
+		rbTables = append(rbTables, `system_parameters`, `ecosystems`)
+	}
+
+	for _, name := range rbTables {
 		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
@@ -617,8 +643,8 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 }
 
 // UpdateLang updates language resource
-func UpdateLang(sc *SmartContract, name, trans string) {
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans, sc.VDE)
+func UpdateLang(sc *SmartContract, appID int64, name, trans string) {
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
 }
 
 // Size returns the length of the string
@@ -648,7 +674,7 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 	return nil
 }
 
-// DeactivateContract sets Active status of the contract in smartVM
+// Deactivate sets Active status of the contract in smartVM
 func Deactivate(sc *SmartContract, tblid int64, state int64) error {
 	if !accessContracts(sc, nActivateContract, nDeactivateContract) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract")
@@ -704,20 +730,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	return nil
 }
 
-// JSONToMap is converting json to map
-func JSONToMap(input string) (map[string]interface{}, error) {
-	var ret map[string]interface{}
-	if len(input) == 0 {
-		return make(map[string]interface{}), nil
-	}
-	err := json.Unmarshal([]byte(input), &ret)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling json to map")
-		return nil, err
-	}
-	return ret, nil
-}
-
+// RollbackContract performs rollback for the contract
 func RollbackContract(sc *SmartContract, name string) error {
 	if !accessContracts(sc, nNewContract, nImport) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract, "error": errAccessRollbackContract}).Error("Check contract access")
@@ -735,6 +748,7 @@ func RollbackContract(sc *SmartContract, name string) error {
 	return nil
 }
 
+// DBSelectMetrics returns list of metrics by name and time interval
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
 	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc)
 	if err != nil {
@@ -744,6 +758,8 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 	return result, nil
 }
 
+// DBCollectMetrics returns actual values of all metrics
+// This function used to further store these values
 func DBCollectMetrics() []interface{} {
 	c := metric.NewCollector(
 		metric.CollectMetricDataForEcosystemTables,
@@ -811,4 +827,25 @@ func RollbackEditContract(sc *SmartContract) error {
 			converter.StrToInt64(fields["wallet_id"]))
 	}
 	return nil
+}
+
+// JSONDecode converts json string to object
+func JSONDecode(input string) (interface{}, error) {
+	var ret interface{}
+	err := json.Unmarshal([]byte(input), &ret)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling json")
+		return nil, err
+	}
+	return ret, nil
+}
+
+// JSONEncode converts object to json string
+func JSONEncode(input interface{}) (string, error) {
+	b, err := json.Marshal(input)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling json")
+		return "", err
+	}
+	return string(b), nil
 }

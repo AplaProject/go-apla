@@ -17,7 +17,7 @@ func (sp *AppParam) TableName() string {
 
 // SetTablePrefix is setting table prefix
 func (sp *AppParam) SetTablePrefix(tablePrefix string) {
-	sp.tableName = tablePrefix + "_app_param"
+	sp.tableName = tablePrefix + "_app_params"
 }
 
 // Get is retrieving model from database
@@ -25,7 +25,7 @@ func (sp *AppParam) Get(transaction *DbTransaction, app int64, name string) (boo
 	return isFound(GetDB(transaction).Where("app_id=? and name = ?", app, name).First(sp))
 }
 
-// GetAllAppParams is returning all state parameters
+// GetAllAppParameters is returning all state parameters
 func (sp *AppParam) GetAllAppParameters(app int64) ([]AppParam, error) {
 	parameters := make([]AppParam, 0)
 	err := DBConn.Table(sp.TableName()).Find(&parameters).Error

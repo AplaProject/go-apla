@@ -1157,12 +1157,13 @@ main:
 	return nil
 }
 
-func ContractsList(value string) []string {
+// ContractsList returns list of contracts names from source of code
+func ContractsList(value string) ([]string, error) {
 	names := make([]string, 0)
 	lexems, err := lexParser([]rune(value))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("getting contract list")
-		return names
+		return names, err
 	}
 	var level int
 	for i, lexem := range lexems {
@@ -1178,5 +1179,5 @@ func ContractsList(value string) []string {
 		}
 	}
 
-	return names
+	return names, nil
 }

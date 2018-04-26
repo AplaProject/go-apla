@@ -21,6 +21,8 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRead(t *testing.T) {
@@ -30,10 +32,7 @@ func TestRead(t *testing.T) {
 		retCont contentResult
 	)
 
-	if err = keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
 
 	if err = sendPost(`vde/create`, nil, &ret); err != nil &&
 		err.Error() != `400 {"error": "E_VDECREATED", "msg": "Virtual Dedicated Ecosystem is already created" }` {
@@ -46,11 +45,7 @@ func TestRead(t *testing.T) {
 	{"name":"amount", "type":"number","index": "0", "conditions":"{\"update\":\"true\", \"read\":\"true\"}"},
 	{"name":"active", "type":"character","index": "0", "conditions":"{\"update\":\"true\", \"read\":\"false\"}"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "read": "true", "new_column": "true"}`}}
-	err = postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewTable`, &form))
 
 	contFill := fmt.Sprintf(`contract %s {
 		action {
@@ -100,67 +95,37 @@ func TestRead(t *testing.T) {
 	`, name)
 	form = url.Values{"Value": {contFill},
 		"Conditions": {`true`}, "vde": {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(name, &url.Values{"vde": {`true`}}); err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(`GetData`+name, &url.Values{"vde": {`true`}}); err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"Access denied\"}" }` {
-		t.Errorf(`access problem`)
-		return
-	}
-	err = sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
-		`DBFind(` + name + `, src).Limit(2)`}}, &retCont)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.NoError(t, postTx(name, &url.Values{"vde": {`true`}}))
+
+	assert.EqualError(t, postTx(`GetData`+name, &url.Values{"vde": {`true`}}), `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"Access denied\"}" }`)
+
+	assert.NoError(t, sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
+		`DBFind(` + name + `, src).Limit(2)`}}, &retCont))
+
 	if strings.Contains(RawToString(retCont.Tree), `active`) {
 		t.Errorf(`wrong tree %s`, RawToString(retCont.Tree))
 		return
 	}
 
-	if err := postTx(`GetOK`+name, &url.Values{"vde": {`true`}}); err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(`EditColumn`, &url.Values{"vde": {`true`}, `TableName`: {name}, `Name`: {`active`},
-		`Permissions`: {`{"update":"true", "read":"ContractConditions(\"MainCondition\")"}`}}); err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(`Get`+name, &url.Values{"vde": {`true`}}); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`GetOK`+name, &url.Values{"vde": {`true`}}))
+
+	assert.NoError(t, postTx(`EditColumn`, &url.Values{"vde": {`true`}, `TableName`: {name}, `Name`: {`active`},
+		`Permissions`: {`{"update":"true", "read":"ContractConditions(\"MainCondition\")"}`}}))
+
+	assert.NoError(t, postTx(`Get`+name, &url.Values{"vde": {`true`}}))
+
 	form = url.Values{"Name": {name}, "vde": {`true`},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
 		"update" : "true", "filter": "ReadFilter` + name + `()", "new_column": "ContractConditions(\"MainCondition\")"}`}}
-	err = postTx(`EditTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	var tableInfo tableResult
-	err = sendGet(`table/`+name+`?vde=true`, nil, &tableInfo)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if tableInfo.Filter != `ReadFilter`+name+`()` {
-		t.Errorf(`wrong filter ` + tableInfo.Filter)
-		return
-	}
+	assert.NoError(t, postTx(`EditTable`, &form))
 
-	err = sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
-		`DBFind(` + name + `, src).Limit(2)`}}, &retCont)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	var tableInfo tableResult
+	assert.NoError(t, sendGet(`table/`+name+`?vde=true`, nil, &tableInfo))
+	assert.Equal(t, `ReadFilter`+name+`()`, tableInfo.Filter)
+
+	assert.NoError(t, sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
+		`DBFind(` + name + `, src).Limit(2)`}}, &retCont))
 	if !strings.Contains(RawToString(retCont.Tree), `No name`) {
 		t.Errorf(`wrong tree %s`, RawToString(retCont.Tree))
 		return

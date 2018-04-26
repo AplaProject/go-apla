@@ -1,18 +1,19 @@
 package api
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetMaxBlockID(t *testing.T) {
-	var ret GetMaxBlockIDResult
+	var ret getMaxBlockIDResult
 	err := sendGet(`maxblockid`, nil, &ret)
 	assert.NoError(t, err)
 }
 
 func TestGetBlockInfo(t *testing.T) {
-	var ret GetBlockInfoResult
+	var ret getBlockInfoResult
 	err := sendGet(`block/1`, nil, &ret)
 	assert.NoError(t, err)
 }

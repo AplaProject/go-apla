@@ -8,6 +8,7 @@ type Table struct {
 	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
 	Columns     string `gorm:"not null"`
 	Conditions  string `gorm:"not null"`
+	AppID       int64  `gorm:"not null"`
 }
 
 // TableVDE is model
@@ -18,6 +19,7 @@ type TableVDE struct {
 	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
 	Columns     string `gorm:"not null"`
 	Conditions  string `gorm:"not null"`
+	AppID       int64  `gorm:"not null"`
 }
 
 // SetTablePrefix is setting table prefix

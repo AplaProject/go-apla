@@ -22,12 +22,14 @@ const (
 	firstEcosystemID    = 1
 )
 
+// DelayedTx represents struct which works with delayed contracts
 type DelayedTx struct {
 	logger     *log.Entry
 	privateKey string
 	publicKey  string
 }
 
+// RunForBlockID creates the transactions that need to be run for blockID
 func (dtx *DelayedTx) RunForBlockID(blockID int64) {
 	contracts, err := model.GetAllDelayedContractsForBlockID(blockID)
 	if err != nil {

@@ -3,6 +3,7 @@ package consts
 // LogEventType is storing numeric event type
 type LogEventType int
 
+// Types of log errors
 const (
 	NetworkError             = "Network"
 	JSONMarshallError        = "JSONMarshall"
@@ -49,6 +50,7 @@ const (
 	StatsdError              = "StatsdError"
 	MigrationError           = "MigrationError"
 	AutoupdateError          = "AutoupdateError"
+	BCRelevanceError         = "BCRelevanceError"
 	BCActualizationError     = "BCActualizationError"
 	SchedulerError           = "SchedulerError"
 )

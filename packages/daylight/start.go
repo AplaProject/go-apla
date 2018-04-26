@@ -38,6 +38,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -172,6 +174,15 @@ func initRoutes(listenHost string) {
 	httpListener(listenHost, route)
 }
 
+func logBlockchainMode() {
+	mode := "private"
+	if !conf.Config.PrivateBlockchain {
+		mode = "non private"
+	}
+
+	log.WithFields(log.Fields{"mode": mode}).Error("Node running mode")
+}
+
 // Start starts the main code of the program
 func Start() {
 	var err error
@@ -200,10 +211,12 @@ func Start() {
 		}
 	}
 
+	logBlockchainMode()
+
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()
 
-	conf.Config.Installed = true
+	utils.MakeOrCleanDirectory(conf.Config.TempDir)
 
 	initGorm(conf.Config.DB)
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
@@ -235,10 +248,19 @@ func Start() {
 		if err != nil {
 			os.Exit(1)
 		}
-		//go func() {
-		//	na := service.NewNodeActualizer(service.DefaultBlockchainGap)
-		//	na.Run()
-		//}()
+
+		var availableBCGap int64 = consts.AvailableBCGap
+		if syspar.GetRbBlocks1() > consts.AvailableBCGap {
+			availableBCGap = syspar.GetRbBlocks1() - consts.AvailableBCGap
+		}
+
+		blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
+		blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
+		blockGenerationTime := blockGenerationDuration + blocksGapDuration
+
+		checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
+		na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
+		na.Run()
 	}
 
 	daemons.WaitForSignals()

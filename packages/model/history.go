@@ -9,6 +9,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const historyTableSuffix = "_history"
+
 var errLowBalance = errors.New("not enough APL on the balance")
 
 // History represent record of history table
@@ -26,19 +28,12 @@ type History struct {
 
 // SetTablePrefix is setting table prefix
 func (h *History) SetTablePrefix(prefix int64) *History {
-	if prefix == 0 {
-		prefix = 1
-	}
-	h.tableName = fmt.Sprintf("%d_history", prefix)
+	h.tableName = HistoryTableName(prefix)
 	return h
 }
 
 // TableName returns table name
 func (h *History) TableName() string {
-	if h.tableName == "" {
-		h.tableName = "1_history"
-	}
-
 	return h.tableName
 }
 
@@ -93,4 +88,9 @@ func GetExcessTokenMovementQtyPerBlock(tx *DbTransaction, blockID int64) (excess
 		Scan(&excess).Error
 
 	return excess, err
+}
+
+// HistoryTableName returns name of history table
+func HistoryTableName(prefix int64) string {
+	return fmt.Sprintf("%d%s", prefix, historyTableSuffix)
 }

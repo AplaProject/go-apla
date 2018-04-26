@@ -36,6 +36,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Composite represents a composite contract
 type Composite struct {
 	Name string      `json:"name"`
 	Data interface{} `json:"data,omitempty"`
@@ -56,6 +57,7 @@ func init() {
 	funcs[`Calculate`] = tplFunc{calculateTag, defaultTag, `calculate`, `Exp,Type,Prec`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
 	funcs[`Code`] = tplFunc{defaultTag, defaultTag, `code`, `Text`}
+	funcs[`CodeAsIs`] = tplFunc{defaultTag, defaultTag, `code`, `#Text`}
 	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format`}
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
@@ -127,7 +129,7 @@ func init() {
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 	}}
 	tails[`data`] = forTails{map[string]tailInfo{
-		`Custom`: {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		`Custom`: {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
 	}}
 	tails[`dbfind`] = forTails{map[string]tailInfo{
 		`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
@@ -138,7 +140,7 @@ func init() {
 		`Limit`:     {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
 		`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
 		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
-		`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		`Custom`:    {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
 		`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
 		`Cutoff`:    {tplFunc{tailTag, defaultTailFull, `cutoff`, `Cutoff`}, false},
 	}}
@@ -256,12 +258,19 @@ func paramToSource(par parFunc, val string) string {
 	types := []string{`text`, `text`}
 	for key, item := range strings.Split(val, `,`) {
 		item, _ = language.LangText(item, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
 			(*par.Workspace.Vars)[`lang`], par.Workspace.SmartContract.VDE)
 		data = append(data, []string{converter.IntToStr(key + 1), item})
 	}
 	node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
 		`data`: &data, `source`: (*par.Pars)[`Source`]}}
 	par.Owner.Children = append(par.Owner.Children, &node)
+
+	par.Workspace.SetSource((*par.Pars)[`Source`], &Source{
+		Columns: node.Attr[`columns`].(*[]string),
+		Data:    node.Attr[`data`].(*[][]string),
+	})
+
 	return ``
 }
 
@@ -269,7 +278,9 @@ func paramToIndex(par parFunc, val string) (ret string) {
 	ind := converter.StrToInt(macro((*par.Pars)[`Index`], par.Workspace.Vars))
 	if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 		ret, _ = language.LangText(alist[ind-1],
-			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]), (*par.Workspace.Vars)[`lang`],
+			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
+			(*par.Workspace.Vars)[`lang`],
 			par.Workspace.SmartContract.VDE)
 	}
 	return
@@ -293,7 +304,6 @@ func ecosysparTag(par parFunc) string {
 	}
 	val := sp.Value
 	if len((*par.Pars)[`Source`]) > 0 {
-
 		return paramToSource(par, val)
 	}
 	if len((*par.Pars)[`Index`]) > 0 {
@@ -308,7 +318,8 @@ func appparTag(par parFunc) string {
 	}
 	ap := &model.AppParam{}
 	ap.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
-	_, err := ap.Get(nil, converter.StrToInt64((*par.Pars)[`App`]), (*par.Pars)[`Name`])
+	_, err := ap.Get(nil, converter.StrToInt64(macro((*par.Pars)[`App`], par.Workspace.Vars)),
+		macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting app param")
 		return err.Error()
@@ -328,7 +339,9 @@ func langresTag(par parFunc) string {
 	if len(lang) == 0 {
 		lang = (*par.Workspace.Vars)[`lang`]
 	}
-	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
+	ret, _ := language.LangText((*par.Pars)[`Name`],
+		int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
+		converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
 		lang, par.Workspace.SmartContract.VDE)
 	return ret
 }
@@ -385,7 +398,18 @@ func dataTag(par parFunc) string {
 
 	list, err := csv.NewReader(strings.NewReader((*par.Pars)[`Data`])).ReadAll()
 	if err != nil {
+		input := strings.Split((*par.Pars)[`Data`], "\n")
 		par.Node.Attr[`error`] = err.Error()
+		prefix := `line `
+		for err != nil && strings.HasPrefix(err.Error(), prefix) {
+			errText := err.Error()
+			line := converter.StrToInt64(errText[len(prefix):strings.IndexByte(errText, ',')])
+			if line < 1 {
+				break
+			}
+			input = append(input[:line-1], input[line:]...)
+			list, err = csv.NewReader(strings.NewReader(strings.Join(input, "\n"))).ReadAll()
+		}
 	}
 	lencol := 0
 	defcol := 0
@@ -514,16 +538,19 @@ func dbfindTag(par parFunc) string {
 	for _, row := range rows {
 		columnTypes[row["column_name"]] = row["data_type"]
 	}
+	columnNames := make([]string, 0)
 
 	if fields != "*" {
 		if !strings.Contains(fields, "id") {
 			fields += ",id"
 		}
+		columnNames = strings.Split(fields, ",")
 		fields = smart.PrepareColumns(fields)
 		queryColumns = strings.Split(fields, ",")
 	} else {
 		for _, col := range rows {
 			queryColumns = append(queryColumns, col["column_name"])
+			columnNames = append(columnNames, col["column_name"])
 		}
 	}
 
@@ -534,8 +561,6 @@ func dbfindTag(par parFunc) string {
 		}
 	}
 
-	columnNames := make([]string, len(queryColumns))
-	copy(columnNames, queryColumns)
 	for i, col := range queryColumns {
 		switch columnTypes[col] {
 		case "bytea":
@@ -726,6 +751,9 @@ func compositeTag(par parFunc) string {
 
 func customTag(par parFunc) string {
 	setAllAttr(par)
+	if len((*par.Pars)[`Column`]) == 0 || len((*par.Pars)[`Body`]) == 0 {
+		return ``
+	}
 	if par.Owner.Attr[`customs`] == nil {
 		par.Owner.Attr[`customs`] = make([]string, 0)
 		par.Owner.Attr[`custombody`] = make([]string, 0)
@@ -735,10 +763,22 @@ func customTag(par parFunc) string {
 	return ``
 }
 
+func customTagFull(par parFunc) string {
+	setAllAttr(par)
+	process((*par.Pars)[`Body`], par.Node, par.Workspace)
+	par.Owner.Tail = append(par.Owner.Tail, par.Node)
+	return ``
+}
+
 func tailTag(par parFunc) string {
 	setAllAttr(par)
 	for key, v := range par.Node.Attr {
-		par.Owner.Attr[key] = v
+		switch v.(type) {
+		case string:
+			par.Owner.Attr[key] = macro(v.(string), par.Workspace.Vars)
+		default:
+			par.Owner.Attr[key] = v
+		}
 	}
 	return ``
 }
@@ -894,6 +934,7 @@ func ifFull(par parFunc) string {
 func elseifTag(par parFunc) string {
 	cond := ifValue((*par.Pars)[`Condition`], par.Workspace)
 	if cond {
+		process((*par.Pars)[`Body`], par.Node, par.Workspace)
 		for _, item := range par.Node.Children {
 			par.Owner.Children = append(par.Owner.Children, item)
 		}
@@ -936,7 +977,9 @@ func dateTimeTag(par parFunc) string {
 	}
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
-		format, _ = language.LangText(`timeformat`, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+		format, _ = language.LangText(`timeformat`,
+			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
 			(*par.Workspace.Vars)[`lang`], par.Workspace.SmartContract.VDE)
 		if format == `timeformat` {
 			format = `2006-01-02 15:04:05`

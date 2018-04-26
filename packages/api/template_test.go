@@ -18,6 +18,7 @@ package api
 
 import (
 	"crypto/md5"
+	"encoding/base64"
 	"fmt"
 	"net/url"
 	"strings"
@@ -87,12 +88,12 @@ var forTest = tplList{
 	{`DBFind(parameters, src_par).Columns("id").Order(id).Where("id >= 1 and id <= 3").Count(count)Span(#count#)`,
 		`[{"tag":"dbfind","attr":{"columns":["id"],"count":"3","data":[["1"],["2"],["3"]],"name":"parameters","order":"id","source":"src_par","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"span","children":[{"tag":"text","text":"3"}]}]`},
 	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
-	{`SetVar(where)DBFind(contracts, src).Columns(id).Order(id).Limit(3).Custom(a){SetVar(where, #where# #id#)}
+	{`SetVar(where).(lim,3)DBFind(contracts, src).Columns(id).Order(id).Limit(#lim#).Custom(a){SetVar(where, #where# #id#)}
 	Div(){Table(src, "=x")}Div(){Table(src)}Div(){#where#}`,
 		`[{"tag":"dbfind","attr":{"columns":["id","a"],"data":[["1","null"],["2","null"],["3","null"]],"limit":"3","name":"contracts","order":"id","source":"src","types":["text","tags"]}},{"tag":"div","children":[{"tag":"table","attr":{"columns":[{"Name":"x","Title":""}],"source":"src"}}]},{"tag":"div","children":[{"tag":"table","attr":{"source":"src"}}]},{"tag":"div","children":[{"tag":"text","text":" 1 2 3"}]}]`},
 	{`If(#isMobile#){Span(Mobile)}.Else{Span(Desktop)}`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Desktop"}]}]`},
-	{`DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(10)`,
+	{`SetVar(off, 10)DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(#off#).Custom(){}`,
 		`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["11"],["12"]],"limit":"2","name":"contracts","offset":"10","order":"id","source":"src_contracts","types":["text"]}}]`},
 	{`DBFind(contracts, src_pos).Columns(id).Where("id >= 1 and id <= 3")
 		ForList(src_pos, Index: index){
@@ -255,20 +256,28 @@ func TestCutoff(t *testing.T) {
 	}
 }
 
-var imageData = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
+var imageData = `iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
 
 func TestBinary(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
-	form := url.Values{
-		"AppID":    {"1"},
-		"MemberID": {"1"},
-		"Name":     {"file"},
-		"Data":     {imageData},
+	params := map[string]string{
+		"AppID":    "1",
+		"MemberID": "1",
+		"Name":     "file",
 	}
-	assert.NoError(t, postTx("UploadBinary", &form))
 
-	hashImage := fmt.Sprintf("%x", md5.Sum([]byte(imageData)))
+	data, err := base64.StdEncoding.DecodeString(imageData)
+	assert.NoError(t, err)
+
+	files := map[string][]byte{
+		"Data": data,
+	}
+
+	_, _, err = postTxMultipart("UploadBinary", params, files)
+	assert.NoError(t, err)
+
+	hashImage := fmt.Sprintf("%x", md5.Sum(data))
 
 	cases := []struct {
 		source string
@@ -280,11 +289,11 @@ func TestBinary(t *testing.T) {
 		},
 		{
 			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = 1 AND name = 'file'").Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
-			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","img"\],"data":\[\["1","1","1","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","tags"\],"where":"app_id=1 AND member_id = 1 AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type","img"\],"data":\[\["\d+","1","1","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","application/octet-stream","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text","tags"\],"where":"app_id=1 AND member_id = 1 AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
 		},
 		{
 			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = 1 AND name = 'file'").Vars(prefix)Image(Src: "#prefix_data#")`,
-			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash"\],"data":\[\["1","1","1","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text"\],"where":"app_id=1 AND member_id = 1 AND name = 'file'"}},{"tag":"image","attr":{"src":"{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}"}}\]`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type"\],"data":\[\["\d+","1","1","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","application/octet-stream"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text"\],"where":"app_id=1 AND member_id = 1 AND name = 'file'"}},{"tag":"image","attr":{"src":"{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}"}}\]`,
 		},
 	}
 
@@ -296,7 +305,7 @@ func TestBinary(t *testing.T) {
 	}
 }
 
-func TestEncodeBase64ToBinary(t *testing.T) {
+func TestStringToBinary(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	contract := randName("binary")
@@ -310,11 +319,7 @@ func TestEncodeBase64ToBinary(t *testing.T) {
 				}
 				conditions {}
 				action {
-					var params map
-					params["Name"] = "test"
-					params["AppID"] = 1
-					params["Data"] = "data:text/plain;base64," + EncodeBase64($Content)
-					CallContract("UploadBinary", params)
+					UploadBinary("Name,AppID,Data,DataMimeType", "test", 1, StringToBytes($Content), "text/plain")
 				}
 			}
 		`},

@@ -40,8 +40,14 @@ type TxHeader struct {
 // FirstBlock is the header of FirstBlock transaction
 type FirstBlock struct {
 	TxHeader
-	PublicKey     []byte
-	NodePublicKey []byte
+	PublicKey             []byte
+	NodePublicKey         []byte
+	StopNetworkCertBundle []byte
+}
+
+type StopNetwork struct {
+	TxHeader
+	StopNetworkCert []byte
 }
 
 // Don't forget to insert the structure in init() - list
@@ -49,7 +55,11 @@ type FirstBlock struct {
 var blockStructs = make(map[string]reflect.Type)
 
 func init() {
-	list := []interface{}{FirstBlock{}} // New structures must be inserted here
+	// New structures must be inserted here
+	list := []interface{}{
+		FirstBlock{},
+		StopNetwork{},
+	}
 
 	for _, item := range list {
 		blockStructs[reflect.TypeOf(item).Name()] = reflect.TypeOf(item)
@@ -64,7 +74,7 @@ func MakeStruct(name string) interface{} {
 
 // IsStruct is only used for FirstBlock now
 func IsStruct(tx int) bool {
-	return tx == 1
+	return tx == TxTypeFirstBlock || tx == TxTypeStopNetwork
 }
 
 // Header returns TxHeader

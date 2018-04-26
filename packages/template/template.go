@@ -53,11 +53,21 @@ type Source struct {
 	Data    *[][]string
 }
 
+// Workspace represents a workspace of executable template
 type Workspace struct {
 	Sources       *map[string]Source
 	Vars          *map[string]string
 	SmartContract *smart.SmartContract
 	Timeout       *bool
+}
+
+// SetSource sets source to workspace
+func (w *Workspace) SetSource(name string, source *Source) {
+	if w.Sources == nil {
+		sources := make(map[string]Source)
+		w.Sources = &sources
+	}
+	(*w.Sources)[name] = *source
 }
 
 type parFunc struct {
@@ -91,14 +101,10 @@ func newSource(par parFunc) {
 	if par.Node.Attr[`source`] == nil {
 		return
 	}
-	if par.Workspace.Sources == nil {
-		sources := make(map[string]Source)
-		par.Workspace.Sources = &sources
-	}
-	(*par.Workspace.Sources)[par.Node.Attr[`source`].(string)] = Source{
+	par.Workspace.SetSource(par.Node.Attr[`source`].(string), &Source{
 		Columns: par.Node.Attr[`columns`].(*[]string),
 		Data:    par.Node.Attr[`data`].(*[][]string),
-	}
+	})
 }
 
 func setAttr(par parFunc, name string) {
@@ -364,7 +370,9 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 			if i < len(*params) {
 				val := strings.TrimSpace(string((*params)[i]))
 				off := strings.IndexByte(val, ':')
-				if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
+				if off != -1 && strings.Contains(curFunc.Params, `#`+val[:off]) {
+					pars[`#`+val[:off]] = trim(val[off+1:], val[:off] != `Data`)
+				} else if off != -1 && strings.Contains(curFunc.Params, val[:off]) {
 					pars[val[:off]] = trim(val[off+1:], val[:off] != `Data`)
 				} else {
 					pars[v] = val
@@ -375,9 +383,10 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		}
 	}
 	state := int(converter.StrToInt64((*workspace.Vars)[`ecosystem_id`]))
+	appID := int(converter.StrToInt64((*workspace.Vars)[`app_id`]))
 	if (*workspace.Vars)[`_full`] != `1` {
 		for i, v := range pars {
-			pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`lang`],
+			pars[i] = language.LangMacro(v, state, appID, (*workspace.Vars)[`lang`],
 				workspace.SmartContract.VDE)
 			if pars[i] != v {
 				if parFunc.RawPars == nil {
@@ -392,7 +401,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		curNode.Tag = curFunc.Tag
 		curNode.Attr = make(map[string]interface{})
 		if len(pars[`Body`]) > 0 && curFunc.Tag != `custom` {
-			if curFunc.Tag != `if` || (*workspace.Vars)[`_full`] == `1` {
+			if (curFunc.Tag != `if` && curFunc.Tag != `elseif`) || (*workspace.Vars)[`_full`] == `1` {
 				process(pars[`Body`], &curNode, workspace)
 			}
 		}
@@ -412,7 +421,9 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 	for key, v := range parFunc.Node.Attr {
 		switch attr := v.(type) {
 		case string:
-			parFunc.Node.Attr[key] = macro(attr, workspace.Vars)
+			if !strings.HasPrefix(key, `#`) {
+				parFunc.Node.Attr[key] = macro(attr, workspace.Vars)
+			}
 		case map[string]interface{}:
 			for parkey, parval := range attr {
 				switch parmap := parval.(type) {
@@ -433,6 +444,15 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 						}
 					}
 				}
+			}
+		}
+	}
+	for key, v := range parFunc.Node.Attr {
+		switch attr := v.(type) {
+		case string:
+			if strings.HasPrefix(key, `#`) {
+				parFunc.Node.Attr[key[1:]] = attr
+				delete(parFunc.Node.Attr, key)
 			}
 		}
 	}
@@ -626,7 +646,7 @@ func process(input string, owner *node, workspace *Workspace) {
 				if *workspace.Timeout {
 					return
 				}
-				appendText(owner, string(name[:nameOff]))
+				appendText(owner, macro(string(name[:nameOff]), workspace.Vars))
 				name = name[:0]
 				nameOff = 0
 				params, shift, tailpars = getFunc(input[off:], curFunc)
@@ -655,13 +675,11 @@ func parseArg(arg string, workspace *Workspace) (val string) {
 
 	var owner node
 	process(arg, &owner, workspace)
-	if len(owner.Children) > 0 {
-		inode := owner.Children[0]
+	for _, inode := range owner.Children {
 		if inode.Tag == tagText {
-			val = inode.Text
+			val += inode.Text
 		}
 	}
-
 	return
 }
 

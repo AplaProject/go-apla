@@ -14,17 +14,17 @@ import (
 
 // RunAllDaemons start daemons, load contracts and tcpserver
 func RunAllDaemons() error {
+	logEntry := log.WithFields(log.Fields{"daemon_name": "block_collection"})
+
+	daemons.InitialLoad(logEntry)
 	err := syspar.SysUpdate(nil)
 	if err != nil {
 		log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
 		return err
 	}
 
-	// If list of nodes is empty, then used node from the first block
-	if syspar.GetNumberOfNodes() == 0 {
-		if keyID, publicKey, ok := parser.GetKeysFromFirstBlock(); ok {
-			syspar.AddFullNodeKeys(keyID, publicKey)
-		}
+	if data, ok := parser.GetDataFromFirstBlock(); ok {
+		syspar.SetFirstBlockData(data)
 	}
 
 	log.Info("load contracts")

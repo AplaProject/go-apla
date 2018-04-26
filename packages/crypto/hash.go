@@ -3,6 +3,8 @@ package crypto
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
+	"hash"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	log "github.com/sirupsen/logrus"
@@ -15,6 +17,7 @@ const (
 	_SHA256 hashProvider = iota
 )
 
+// GetHMAC returns HMAC hash
 func GetHMAC(secret string, message string) ([]byte, error) {
 	switch hmacProv {
 	case _SHA256:
@@ -39,6 +42,7 @@ func GetHMACWithTimestamp(secret string, message string, timestamp string) ([]by
 	}
 }
 
+// Hash returns hash of passed bytes
 func Hash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": ErrHashingEmpty.Error()}).Debug(ErrHashingEmpty.Error())
@@ -51,6 +55,7 @@ func Hash(msg []byte) ([]byte, error) {
 	}
 }
 
+// DoubleHash returns double hash of passed bytes
 func DoubleHash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": ErrHashingEmpty.Error()}).Debug(ErrHashingEmpty.Error())
@@ -94,4 +99,16 @@ func hashSHA3256(msg []byte) []byte {
 	hash := make([]byte, 64)
 	sha3.ShakeSum256(hash, msg)
 	return hash[:]
+}
+
+func NewHash() hash.Hash {
+	return sha256.New()
+}
+
+func HashHex(input []byte) (string, error) {
+	hash, err := Hash(input)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hash), nil
 }

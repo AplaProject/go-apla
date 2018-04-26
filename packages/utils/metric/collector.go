@@ -1,7 +1,9 @@
 package metric
 
+// CollectorFunc represents function for collects values of metrics
 type CollectorFunc func() ([]*Value, error)
 
+// Value represents value of metrics
 type Value struct {
 	Time   int64
 	Metric string
@@ -9,6 +11,7 @@ type Value struct {
 	Value  int64
 }
 
+// ToMap returns values as map
 func (v *Value) ToMap() map[string]interface{} {
 	return map[string]interface{}{
 		"time":   v.Time,
@@ -18,10 +21,12 @@ func (v *Value) ToMap() map[string]interface{} {
 	}
 }
 
+// Collector represents struct that works with the collection of metrics
 type Collector struct {
 	funcs []CollectorFunc
 }
 
+// Values returns values of all metrics
 func (c *Collector) Values() []interface{} {
 	values := make([]interface{}, 0)
 	for _, fn := range c.funcs {
@@ -37,6 +42,7 @@ func (c *Collector) Values() []interface{} {
 	return values
 }
 
+// NewCollector creates new collector
 func NewCollector(funcs ...CollectorFunc) *Collector {
 	c := &Collector{}
 	c.funcs = make([]CollectorFunc, 0, len(funcs))

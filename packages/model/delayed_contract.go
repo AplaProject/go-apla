@@ -2,6 +2,7 @@ package model
 
 const tableDelayedContracts = "1_delayed_contracts"
 
+// DelayedContract represents record of 1_delayed_contracts table
 type DelayedContract struct {
 	ID         int64  `gorm:"primary_key;not null"`
 	Contract   string `gorm:"not null"`

@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type GetMaxBlockIDResult struct {
+type getMaxBlockIDResult struct {
 	MaxBlockID int64 `json:"max_block_id"`
 }
 
@@ -25,11 +25,11 @@ func getMaxBlockID(w http.ResponseWriter, r *http.Request, data *apiData, logger
 		log.WithFields(log.Fields{"type": consts.NotFound}).Error("last block not found")
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
-	data.result = &GetMaxBlockIDResult{block.ID}
+	data.result = &getMaxBlockIDResult{block.ID}
 	return nil
 }
 
-type GetBlockInfoResult struct {
+type getBlockInfoResult struct {
 	Hash          []byte `json:"hash"`
 	EcosystemID   int64  `json:"ecosystem_id"`
 	KeyID         int64  `json:"key_id"`
@@ -50,6 +50,6 @@ func getBlockInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 		log.WithFields(log.Fields{"type": consts.NotFound, "id": blockID}).Error("block with id not found")
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
-	data.result = &GetBlockInfoResult{Hash: block.Hash, EcosystemID: block.EcosystemID, KeyID: block.KeyID, Time: block.Time, Tx: block.Tx, RollbacksHash: block.RollbacksHash}
+	data.result = &getBlockInfoResult{Hash: block.Hash, EcosystemID: block.EcosystemID, KeyID: block.KeyID, Time: block.Time, Tx: block.Tx, RollbacksHash: block.RollbacksHash}
 	return nil
 }

@@ -45,6 +45,37 @@ var forTest = tplList{
 	{`SetVar(ok, OK)Input(Type: text, Value: #ok# Now(YY))Input(Type:text, Value: #ok# Some text)`,
 		`[{"tag":"input","attr":{"type":"text","value":{"tag":[{"tag":"text","text":"OK "},{"tag":"now","attr":{"format":"YY"}}],"type":"tag"}}},{"tag":"input","attr":{"type":"text","value":{"text":"OK Some text","type":"text"}}}]`},
 	{`SetVar(format, MMYY)Now(#format#,1 day)Now()`, `[{"tag":"now","attr":{"format":"MMYY","interval":"1 day"}},{"tag":"now"}]`},
+	{`SetVar(textc, test)Code(P(Some #textc#))CodeAsIs(P(No Some #textc#))Div(){CodeAsIs(Text:#textc#)}`,
+		`[{"tag":"code","attr":{"text":"P(Some test)"}},{"tag":"code","attr":{"text":"P(No Some #textc#)"}},{"tag":"div","children":[{"tag":"code","attr":{"text":"#textc#"}}]}]`},
+	{`SetVar("Name1", "Value1")GetVar("Name1")#Name1#Span(#Name1#)SetVar("Name1", "Value2")GetVar("Name1")#Name1#
+		SetVar("Name1", "Value3")#Name1#`, `[{"tag":"text","text":"Value1"},{"tag":"text","text":"Value1"},{"tag":"span","children":[{"tag":"text","text":"Value1"}]},{"tag":"text","text":"Value2"},{"tag":"text","text":"Value2\n\t\t"},{"tag":"text","text":"Value3"}]`},
+	{`Data(src1, "name,value,cost"){
+        1, 1, 0
+        2, 2
+        3, 3, 4
+        5, 6
+    }`, `[{"tag":"data","attr":{"columns":["name","value","cost"],"data":[["1","1","0"],["3","3","4"]],"error":"line 2, column 0: wrong number of fields in line","source":"src1","types":["text","text","text"]}}]`},
+	{`Data(Columns: "a"){a
+		b}.Custom(){}`,
+		`[{"tag":"data","attr":{"columns":["a"],"data":[["a"],["b"]],"types":["text"]}}]`},
+	{`SetVar("Condition4", 1)If(GetVar(Condition4) == 2){Span(1)}.ElseIf(GetVar(Condition4) == 1){
+		Span(2)SetVar("Condition4", 2)}.ElseIf(GetVar(Condition3) == 2){Span(3)
+		}.Else{	SetVar("Condition4", 5)Span(else)}Span(Last#Condition4#)`,
+		`[{"tag":"span","children":[{"tag":"text","text":"2"}]},{"tag":"span","children":[{"tag":"text","text":"Last2"}]}]`},
+	{`SetVar("Condition3", 1)If(#Condition3# == 2){Span(1)
+		}.ElseIf(#Condition3# == 1){Span(2)SetVar("Condition3", 2)
+		}.ElseIf(#Condition3# == 2){Span(3)
+		}.Else{Span(else)}`, `[{"tag":"span","children":[{"tag":"text","text":"2"}]}]`},
+	{`SetVar("Condition1", 1).("Condition2", 0.3)
+		If(And(GetVar("Condition2") == 0.3, And(GetVar("Condition1") == 1, Or(GetVar("Condition2") == 0, GetVar("Condition1") == 0)))){
+						Span(fail)
+					}.Else{
+						Span(success)
+					}`, `[{"tag":"span","children":[{"tag":"text","text":"success"}]}]`},
+	{`SetVar("Condition5", 1)If(GetVar("Condition5") < -1){fail}.Else{success}`,
+		`[{"tag":"text","text":"success"}]`},
+	{`SetVar("Condition5", 1)If(GetVar("Condition5") < -1){fail}.Else{success}`,
+		`[{"tag":"text","text":"success"}]`},
 	{`SetVar(name, -5728238900021).(no,false)Chart(Colors: #name#)Address(#name#)If(#no#){ERR}.Else{OK}Table(my,#name#=name)`, `[{"tag":"chart","attr":{"colors":["-5728238900021"]}},{"tag":"text","text":"1844-6738-3454-7065-1595"},{"tag":"text","text":"OK"},{"tag":"table","attr":{"columns":[{"Name":"name","Title":"-5728238900021"}],"source":"my"}}]`},
 	{`SetVar(from, 5).(to, -4).(step,-2)Range(my,0,5)ForList(my){#my_index#=#id#}Range(none,20,0)Range(Source: neg, From: #from#, To: #to#, Step: #step#)ForList(neg){#neg_index#=#id#}Range(zero,0,5,0)`,
 		`[{"tag":"range","attr":{"columns":["id"],"data":[["0"],["1"],["2"],["3"],["4"]],"source":"my"}},{"tag":"forlist","attr":{"source":"my"},"children":[{"tag":"text","text":"1=0"},{"tag":"text","text":"2=1"},{"tag":"text","text":"3=2"},{"tag":"text","text":"4=3"},{"tag":"text","text":"5=4"}]},{"tag":"range","attr":{"columns":["id"],"data":[],"source":"none"}},{"tag":"range","attr":{"columns":["id"],"data":[["5"],["3"],["1"],["-1"],["-3"]],"source":"neg"}},{"tag":"forlist","attr":{"source":"neg"},"children":[{"tag":"text","text":"1=5"},{"tag":"text","text":"2=3"},{"tag":"text","text":"3=1"},{"tag":"text","text":"4=-1"},{"tag":"text","text":"5=-3"}]},{"tag":"range","attr":{"columns":["id"],"data":[],"source":"zero"}}]`},
@@ -138,7 +169,7 @@ var forTest = tplList{
 		"1",John Silver,2
 		2,"Mark, Smith"
 	)`,
-		`[{"tag":"data","attr":{"columns":["id","name"],"data":[],"error":"line 2, column 0: wrong number of fields in line","source":"mysrc","types":["text","text"]}}]`},
+		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","John Silver"]],"error":"line 2, column 0: wrong number of fields in line","source":"mysrc","types":["text","text"]}}]`},
 	{`Select(myselect,mysrc,name,id,0,myclass)`,
 		`[{"tag":"select","attr":{"class":"myclass","name":"myselect","namecolumn":"name","source":"mysrc","value":"0","valuecolumn":"id"}}]`},
 	{`Data(mysrc,"id,name"){

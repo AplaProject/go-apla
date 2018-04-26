@@ -34,7 +34,11 @@ import (
 // Type1 get the list of transactions which belong to the sender from 'disseminator' daemon
 // do not load the blocks here because here could be the chain of blocks that are loaded for a long time
 // download the transactions here, because they are small and definitely will be downloaded in 60 sec
-func Type1(r *DisRequest, rw io.ReadWriter) error {
+func Type1(rw io.ReadWriter) error {
+	r := &DisRequest{}
+	if err := ReadRequest(r, rw); err != nil {
+		return err
+	}
 
 	buf := bytes.NewBuffer(r.Data)
 

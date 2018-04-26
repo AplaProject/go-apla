@@ -121,6 +121,7 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 	return nil
 }
 
+// ProcessBadTransaction processes bad transactions
 func (p *Parser) ProcessBadTransaction(err error) {
 	if p.TxHash != nil {
 		model.MarkTransactionUsed(p.DbTransaction, p.TxHash)
