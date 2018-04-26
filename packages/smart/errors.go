@@ -60,6 +60,7 @@ var (
 	errPermEmpty         = errors.New(`Permissions are empty`)
 	errSameColumns       = errors.New(`There are the same columns`)
 	errTableName         = errors.New(`The name of the table cannot begin with @`)
+	errUndefBlock        = errors.New(`It is impossible to write to DB when Block is undefined`)
 	errUndefColumns      = errors.New(`Columns are undefined`)
 	errUnknownNodeID     = errors.New(`Unknown node id`)
 	errUpdNotExistRecord = errors.New(`Update for not existing record`)
