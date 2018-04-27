@@ -1210,16 +1210,16 @@ MenuItem(
 				  "active": "ContractConditions(\"MainCondition\")",
 				  "conditions": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("@1EditTable")'),
 				('2', 'keys', 
-				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+				'{"insert": "true", "update": "true", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"pub": "ContractConditions(\"MainCondition\")",
-				  "amount": "ContractConditions(\"MainCondition\")",
+				  "amount": "true",
 				  "deleted": "ContractConditions(\"MainCondition\")",
 				  "blocked": "ContractConditions(\"MainCondition\")",
 				  "multi": "ContractConditions(\"MainCondition\")"}', 
 				'ContractAccess("@1EditTable")'),
 				('3', 'history', 
-				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+				'{"insert": "true", "update": "true", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"sender_id": "ContractConditions(\"MainCondition\")",
 				  "recipient_id": "ContractConditions(\"MainCondition\")",
@@ -2649,7 +2649,7 @@ MenuItem(
 				i = i + 1
 			}
 		}
-	}','%[1]d', 'ContractConditions("MainCondition")', 1),
+	}','%[1]d', 'true', 1),
 	('37', 'NodeOwnerCondition', 'contract NodeOwnerCondition {
 		conditions {
 			$full_nodes = JSONDecode(SysParamString("full_nodes"))
