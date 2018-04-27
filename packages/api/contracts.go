@@ -39,9 +39,9 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 
 	table := getPrefix(data) + `_contracts`
 
-	count, err := model.GetNextID(nil, table)
+	count, err := model.GetRecordsCountTx(nil, table)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -74,7 +74,7 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 		list[ind][`name`] = strings.Join(cntlist, `,`)
 	}
 	data.result = &listResult{
-		Count: converter.Int64ToStr(count - 1), List: list,
+		Count: converter.Int64ToStr(count), List: list,
 	}
 	return
 }
