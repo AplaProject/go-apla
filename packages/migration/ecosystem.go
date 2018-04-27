@@ -2603,7 +2603,7 @@ MenuItem(
 				error "User already exists"
 			}
 
-			$amount = Money(1000) * Money(1000000000000000000)
+			$amount = Money(1000)
 		}
 		action {
 			MoneyTransfer("Recipient,Amount,Comment", Str($newId), Str($amount), "New user deposit")

@@ -30,6 +30,10 @@ func (m *Key) Get(wallet int64) (bool, error) {
 	return isFound(DBConn.Where("id = ?", wallet).First(m))
 }
 
+func (m *Key) GetTrans(transaction *DbTransaction, wallet int64) (bool, error) {
+	return isFound(GetDB(transaction).Where("id = ?", wallet).First(m))
+}
+
 // KeyTableName returns name of keys table
 func KeyTableName(prefix int64) string {
 	return fmt.Sprintf("%d%s", prefix, keyTableSuffix)

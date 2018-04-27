@@ -1017,8 +1017,13 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 	}
 
-	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.PrivateBlockchain {
+	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.PrivateBlockchain {
 		apl := sc.TxUsedCost.Mul(fuelRate)
+
+		if _, err := payWallet.GetTrans(sc.DbTransaction, fromID); err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
+			return retError(err)
+		}
 		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
 		if ierr != nil {
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": ierr, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
