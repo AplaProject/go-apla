@@ -30,7 +30,8 @@ func (m *Key) Get(wallet int64) (bool, error) {
 	return isFound(DBConn.Where("id = ?", wallet).First(m))
 }
 
-func (m *Key) GetTrans(transaction *DbTransaction, wallet int64) (bool, error) {
+// GetWallet is retrieving keys model from database
+func (m *Key) GetWallet(transaction *DbTransaction, wallet int64) (bool, error) {
 	return isFound(GetDB(transaction).Where("id = ?", wallet).First(m))
 }
 
