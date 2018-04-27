@@ -63,7 +63,6 @@ var (
 		"Contains":          "extend_cost_contains",
 		"Replace":           "extend_cost_replace",
 		"Join":              "extend_cost_join",
-		"UpdateLang":        "extend_cost_update_lang",
 		"Size":              "extend_cost_size",
 		"Substr":            "extend_cost_substr",
 		"ContractsList":     "extend_cost_contracts_list",
@@ -338,6 +337,36 @@ func HexToBytes(hexdata string) ([]byte, error) {
 func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
 	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), int(appID), lang, sc.VDE)
 	return ret
+}
+
+// NewLang creates new language
+func CreateLanguage(sc *SmartContract, name, trans string, appID int64) error {
+	if sc.TxContract.Name != `@1NewLang` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("NewLang can be only called from @1NewLang")
+		return fmt.Errorf(`NewLang can be only called from @1NewLang`)
+	}
+	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	if _, _, err := DBInsert(sc, `@`+idStr+"_languages", "name,res,app_id", name, trans, appID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
+		return err
+	}
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
+	return nil
+}
+
+// EditLang edits language
+func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) error {
+	if sc.TxContract.Name != `@1EditLang` {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditLang can be only called from @1EditLang")
+		return fmt.Errorf(`EditLang can be only called from @1EditLang`)
+	}
+	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	if _, err := DBUpdate(sc, `@`+idStr+"_languages", id, "name,res,app_id", name, trans, appID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
+		return err
+	}
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
+	return nil
 }
 
 // GetContractByName returns id of the contract with this name
@@ -640,11 +669,6 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 		return nil
 	}
 	return model.AlterTableDropColumn(getDefTableName(sc, tableName), name)
-}
-
-// UpdateLang updates language resource
-func UpdateLang(sc *SmartContract, appID int64, name, trans string) {
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
 }
 
 // Size returns the length of the string
