@@ -41,7 +41,6 @@ const (
 
 var (
 	errAccessDenied      = errors.New(`Access denied`)
-	errAccessReport      = errors.New(`Access denied to report table`)
 	errConditionEmpty    = errors.New(`Condition is empty`)
 	errContractNotFound  = errors.New(`Contract has not been found`)
 	errCurrentBalance    = errors.New(`Current balance is not enough`)

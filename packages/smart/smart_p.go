@@ -234,10 +234,6 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
 	}
-	if strings.Contains(tblname, `_reports_`) {
-		err = errAccessReport
-		return
-	}
 	columns := strings.Split(params, `,`)
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
@@ -489,29 +485,6 @@ func RollbackEcosystem(sc *SmartContract) error {
 	if converter.StrToInt64(rollbackTx.TableID) != lastID {
 		log.WithFields(log.Fields{"table_id": rollbackTx.TableID, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
 		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
-	}
-
-	if model.IsTable(fmt.Sprintf(`%s_vde_tables`, rollbackTx.TableID)) {
-		// Drop all _local_ tables
-		table := &model.Table{}
-		prefix := fmt.Sprintf(`%s_vde`, rollbackTx.TableID)
-		table.SetTablePrefix(prefix)
-		list, err := table.GetAll(prefix)
-		if err != nil {
-			return err
-		}
-		for _, item := range list {
-			err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", prefix, item.Name))
-			if err != nil {
-				return err
-			}
-		}
-		for _, name := range []string{`tables`, `parameters`} {
-			err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", prefix, name))
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	rbTables := []string{
