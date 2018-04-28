@@ -694,55 +694,25 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         UploadBinary("Name,Data,ApplicationId,DataMimeType", "export", full_result, 1, "application/json")
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
-('11', 'NewTable', 'contract NewTable {
-    data {
-        ApplicationId int "optional"
-        Name string "optional"
-        Columns string "optional"
-        Permissions string "optional"
-        TableName string "optional"
-        Id array "optional"
-        Shareholding array "optional"
+('11', 'EditTable', 'contract EditTable {
+	data {
+		Name string
+		Permissions string "optional"
         Insert_con string "optional"
-        Update_con string "optional"
-        New_column_con string "optional"
-    }
-    conditions {
-        if $ApplicationId == 0 {
-            warning "Application id cannot equal 0"
-        }
+    	Update_con string "optional"
+    	New_column_con string "optional"
 	}
-    
-    action {
-        if Size($Name) > 0 && Size($Columns) > 0 && Size($Permissions) > 0{
-            CreateTable($Name, $Columns, $Permissions, $ApplicationId)
-        } else {
-            var i,len int
-            var res string
-            len = Len($Id)
-			
-            while i < len {
-                if i + 1 == len {
-                    res = res + Sprintf("{\"name\":%%q,\"type\":%%q,\"conditions\":\"true\"}",$Id[i],$Shareholding[i])
-                }
-                else {
-                    res = res + Sprintf("{\"name\":%%q,\"type\":%%q,\"conditions\":\"true\"},",$Id[i],$Shareholding[i])
-                }
-				i = i + 1
-            }
-
-            $Name = $TableName
-            $Columns = Sprintf("["+"%%v"+"]", res)
-            $Permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
-            CreateTable($Name, $Columns, $Permissions, $ApplicationId)
-        }
-    }
-    func rollback() {
-        RollbackTable($Name)
-    }
-    func price() int {
-        return SysParamInt("table_price")
-    }
+	
+	conditions {
+        var permissions string
+        permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
+        $Permissions = permissions
+		TableConditions($Name, "", $Permissions)
+	}
+	
+	action {
+		PermTable($Name, $Permissions )
+	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('12', 'Import_Upload', 'contract Import_Upload {
     data {
