@@ -1219,7 +1219,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             var page_map map
             page_map = pages_ret[i]
 
-            pages_array[Len(pages_array)] = Sprintf("\'%%v\'", Str(page_map["menu"]))
+            pages_array[Len(pages_array)] = Sprintf("''%%v''", Str(page_map["menu"]))
             i = i + 1
         }
 
