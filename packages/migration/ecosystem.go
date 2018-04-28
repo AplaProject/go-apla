@@ -1170,10 +1170,10 @@ MenuItem(
 		('11','stylesheet', 'body {
 		  /* You can define your custom styles here or create custom CSS rules */
 		}', 'ContractConditions("MainCondition")'),
-		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")'),
-		('14','min_page_validate_count', '1', 'ContractConditions("MainCondition")'),
-		('15','max_page_validate_count', '6', 'ContractConditions("MainCondition")'),
-		('16','changing_blocks', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")');
+		('12','max_block_user_tx', '100', 'ContractConditions("MainCondition")'),
+		('13','min_page_validate_count', '1', 'ContractConditions("MainCondition")'),
+		('14','max_page_validate_count', '6', 'ContractConditions("MainCondition")'),
+		('15','changing_blocks', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")');
 
 		DROP TABLE IF EXISTS "%[1]d_app_params";
 		CREATE TABLE "%[1]d_app_params" (
@@ -1336,7 +1336,22 @@ MenuItem(
 						"data":"ContractAccess(\"UploadBinary\")",
 						"name":"false",
 						"app_id":"false"}',
-					'ContractConditions(\"MainCondition\")');
+					'ContractConditions(\"MainCondition\")'),
+					('16', 'parameters', 
+					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+					  "new_column": "ContractConditions(\"MainCondition\")"}',
+					'{"name": "ContractConditions(\"MainCondition\")",
+					"value": "ContractConditions(\"MainCondition\")",
+					"conditions": "ContractConditions(\"MainCondition\")"
+						}', 'ContractAccess("@1EditTable")'),
+					('17', 'app_params', 
+							'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+							  "new_column": "ContractConditions(\"MainCondition\")"}',
+							'{"app_id": "ContractConditions(\"MainCondition\")",
+							"name": "ContractConditions(\"MainCondition\")",
+							"value": "ContractConditions(\"MainCondition\")",
+							"conditions": "ContractConditions(\"MainCondition\")"
+						}', 'ContractAccess("@1EditTable")');
 
 		DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (
@@ -1554,7 +1569,7 @@ MenuItem(
 		CREATE INDEX "1_metrics_unique_index" ON "1_metrics" (metric, time, "key");
 
 		INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
-			('16', 'delayed_contracts',
+			('18', 'delayed_contracts',
 			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
 			"new_column": "ContractConditions(\"MainCondition\")"}',
 			'{"contract": "ContractConditions(\"MainCondition\")",
@@ -1568,14 +1583,14 @@ MenuItem(
 				'ContractConditions(\"MainCondition\")'
 			),
 			(
-				'17',
+				'19',
 				'ecosystems',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"name": "ContractConditions(\"MainCondition\")"}',
 				'ContractConditions(\"MainCondition\")'
 			),
 			(
-				'18',
+				'20',
 				'metrics',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")","new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"time": "ContractConditions(\"MainCondition\")",
@@ -1584,7 +1599,7 @@ MenuItem(
 				'ContractConditions(\"MainCondition\")'
 			),
 			(
-				'19',
+				'21',
 				'system_parameters',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")","new_column": "ContractConditions(\"MainCondition\")"}',
 				'{"value": "ContractConditions(\"MainCondition\")"}',
