@@ -63,7 +63,6 @@ func TestNewContracts(t *testing.T) {
 			}
 			if err := postTx(item.Name, &form); err != nil {
 				assert.EqualError(t, err, par.Results[`error`])
-				return
 				continue
 			}
 			for key, value := range par.Results {
