@@ -174,7 +174,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 	}
 }', 'ContractConditions(\"MainConditions\")', 1),
-('8', 'EditTable', 'contract NewTable {
+('8', 'NewTable', 'contract NewTable {
     data {
         ApplicationId int "optional"
         Name string "optional"
