@@ -359,8 +359,7 @@ func EvalCondition(sc *SmartContract, table, name, condfield string) error {
 		return logErrorDB(err, "executing single query")
 	}
 	if len(conditions) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound, "name": name}).Error("Record not found")
-		return fmt.Errorf(`Record %s has not been found`, name)
+		return logError(fmt.Errorf(eRecordNotFound, name), consts.NotFound, "Record not found")
 	}
 	return Eval(sc, conditions)
 }
