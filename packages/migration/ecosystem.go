@@ -261,4 +261,5 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 			"value" jsonb,
 			"member_id" bigint NOT NULL DEFAULT '0'
 		);
+		ALTER TABLE ONLY "%[1]d_buffer_data" ADD CONSTRAINT "%[1]d_buffer_data_pkey" PRIMARY KEY ("id");
 		`

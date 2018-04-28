@@ -14,5 +14,5 @@ MenuGroup(Title:"Resources", Icon:"icon-share"){
     MenuItem(Title:"Application parameters", Page:app_params, Icon:"icon-wrench")
     MenuItem(Title:"Language resources", Page:app_langres, Icon:"icon-globe")
     MenuItem(Title:"Binary data", Page:app_binary, Icon:"icon-layers")
-}', 'ContractConditions(\"MainCondition\")');
+}', 'ContractConditions("MainCondition")');
 `
