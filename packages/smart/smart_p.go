@@ -227,21 +227,6 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 	return 0, nil
 }
 
-// DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
-	params string, val ...interface{}) (qcost int64, err error) {
-	tblname = getDefTableName(sc, tblname)
-	if err = sc.AccessTable(tblname, "update"); err != nil {
-		return
-	}
-	columns := strings.Split(params, `,`)
-	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
-		return
-	}
-	qcost, _, err = sc.update(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)})
-	return
-}
-
 // SysParamString returns the value of the system parameter
 func SysParamString(name string) string {
 	return syspar.SysString(name)
