@@ -858,7 +858,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
 
         if DBFind("app_params").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf( "Application parameter %s already exists", $Name)
+            warning Sprintf( "Application parameter %%s already exists", $Name)
         }
     }
 
@@ -952,7 +952,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         if $Wallet {
             $walletContract = AddressToId($Wallet)
             if $walletContract == 0 {
-                error Sprintf("wrong wallet %s", $Wallet)
+                error Sprintf("wrong wallet %%s", $Wallet)
             }
         }
         var list array
@@ -965,7 +965,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         var i int
         while i < Len(list) {
             if IsObject(list[i], $ecosystem_id) {
-                warning Sprintf("Contract or function %s exists", list[i])
+                warning Sprintf("Contract or function %%s exists", list[i])
             }
             i = i + 1
         }
@@ -1475,7 +1475,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		if $WalletId != "" {
 			$recipient = AddressToId($WalletId)
 			if $recipient == 0 {
-				error Sprintf("New contract owner %s is invalid", $WalletId)
+				error Sprintf("New contract owner %%s is invalid", $WalletId)
 			}
 			if Int($cur["active"]) == 1 {
 				error "Contract must be deactivated before wallet changing"
