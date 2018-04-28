@@ -1,7 +1,7 @@
 package migration
 
 var firstEcosystemContractsSQL = `
-INSERT INTO "1_contracts" (id, name, value, conditions, app_id)
+INSERT INTO "1_contracts" (id, name, value, wallet_id, conditions, app_id)
 VALUES ('2', 'DelApplication', 'contract DelApplication {
     data {
         ApplicationId int
@@ -20,7 +20,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             DBUpdate("applications", $ApplicationId, "deleted", 0)
         } 
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('3', 'EditAppParam', 'contract EditAppParam {
 	data {
 		Id int
@@ -52,7 +52,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			DBUpdate("app_params", $Id, Join(pars, ","), vals...)
 		}
 	}
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('4', 'EditApplication', 'contract EditApplication {
     data {
         ApplicationId int
@@ -79,7 +79,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			DBUpdate("applications", $ApplicationId, Join(pars, ","), vals...)
 		}
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('5', 'EditColumn', 'contract EditColumn {
 	data {
 		TableName string
@@ -94,7 +94,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	action {
 		PermColumn($TableName, $Name, $Permissions)
 	}
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('6', 'EditLang', 'contract EditLang {
 	data {
         Id int
@@ -141,7 +141,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			//UpdateLang($Id, $Trans)
 		}
 	}
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('7', 'EditParameter', 'contract EditParameter {
 	data {
 		Id int
@@ -173,7 +173,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			DBUpdate("parameters", $Id, Join(pars, ","), vals...)
 		}
 	}
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('8', 'NewTable', 'contract NewTable {
     data {
         ApplicationId int "optional"
@@ -223,7 +223,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     func price() int {
         return SysParamInt("table_price")
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('9', 'UploadBinary', 'contract UploadBinary {
     data {
         ApplicationId int "optional"
@@ -257,7 +257,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
         $result = $Id
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('10', 'Export', 'contract Export {
 
     func ReplaceValue(s string) string {
@@ -693,7 +693,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         full_result = AssignAll($ApplicationName, all_blocks, all_contracts, all_data, all_languages, all_menus, all_pages, all_parameters, all_tables)
         UploadBinary("Name,Data,ApplicationId,DataMimeType", "export", full_result, 1, "application/json")
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('11', 'NewTable', 'contract NewTable {
     data {
         ApplicationId int "optional"
@@ -743,7 +743,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     func price() int {
         return SysParamInt("table_price")
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('12', 'Import_Upload', 'contract Import_Upload {
     data {
         input_file string "file"
@@ -841,7 +841,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             DBInsert("applications", "name,conditions", Str(json["name"]), "true")
         }
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('13', 'NewAppParam', 'contract NewAppParam {
     data {
         ApplicationId int "optional"
@@ -865,7 +865,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     action {
         DBInsert("app_params", "app_id,name,value,conditions", $ApplicationId, $Name, $Value, $Conditions)
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('14', 'NewApplication', 'contract NewApplication {
     data {
         Name string
@@ -887,7 +887,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     action {
         $result = DBInsert("applications", "name,conditions", $Name, $Conditions)
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('15', 'NewBlock', 'contract NewBlock {
     data {
         ApplicationId int "optional"
@@ -911,7 +911,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     action {
         DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId)
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('16', 'NewColumn', 'contract NewColumn {
     data {
         TableName string
@@ -931,7 +931,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     func price() int {
         return SysParamInt("column_price")
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('17', 'NewContract', 'contract NewContract {
     data {
         ApplicationId int "optional"
@@ -999,7 +999,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     func price() int {
         return SysParamInt("contract_price")
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('18', 'NewLang', 'contract NewLang {
     data {
         ApplicationId int "optional"
@@ -1054,7 +1054,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             //UpdateLang($Id, $Trans)
         }
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('19', 'NewMenu', 'contract NewMenu {
     data {
         Name string
@@ -1077,7 +1077,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     func price() int {
         return SysParamInt("menu_price")
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('20', 'NewPage', 'contract NewPage {
     data {
         ApplicationId int "optional"
@@ -1122,7 +1122,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     func price() int {
         return SysParamInt("page_price")
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('21', 'NewParameter', 'contract NewParameter {
     data {
         Name string
@@ -1141,7 +1141,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     action {
         DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions)
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('22', 'Import', 'contract Import {
     data {
         Type string
@@ -1220,7 +1220,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             CallContract(contractName, cdata)
         }
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('23', 'Export_NewApp', 'contract Export_NewApp {
     data {
         app_id int
@@ -1294,7 +1294,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             DBUpdate("buffer_data", Int($buffer_id), "value", value)
         }
     }
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('24', 'EditBlock', 'contract EditBlock {
 	data {
 		Id int
@@ -1326,7 +1326,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			DBUpdate("blocks", $Id, Join(pars, ","), vals...)
 		}
 	}
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('25', 'EditMenu', 'contract EditMenu {
 	data {
 		Id int
@@ -1363,7 +1363,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			DBUpdate("menu", $Id, Join(pars, ","), vals...)
 		}			
 	}
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('26', 'EditPage', 'contract EditPage {
 	data {
 		Id int
@@ -1427,7 +1427,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			DBUpdate("pages", $Id, Join(pars, ","), vals...)
 		}
 	}
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('27', 'EditContract', 'contract EditContract {
 	data {
 		Id int
@@ -1515,7 +1515,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	func rollback() {
 		RollbackEditContract()
 	}
-}', 'ContractConditions(\"MainConditions\")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('28','MoneyTransfer','contract MoneyTransfer {
 	data {
 		Recipient string
@@ -1550,7 +1550,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
 				$key_id, $recipient, $amount, $Comment, $block, $txhash)
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('29','ActivateContract','contract ActivateContract {
 	data {
 		Id  int
@@ -1576,7 +1576,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		Deactivate($Id, $ecosystem_id)
 	}
 
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('30','NewEcosystem','contract NewEcosystem {
 	data {
 		Name  string
@@ -1590,7 +1590,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	func rollback() {
 		RollbackEcosystem()
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('31','AppendMenu','contract AppendMenu {
 	data {
 		Id     int
@@ -1604,7 +1604,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		row = DBRow("menu").Columns("value").WhereId($Id)
 		DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('32','AppendPage','contract AppendPage {
 	data {
 		Id         int
@@ -1625,7 +1625,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 		DBUpdate("pages", $Id, "value",  value )
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('33','NewSign','contract NewSign {
 	data {
 		Name       string
@@ -1646,7 +1646,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	action {
 		DBInsert("signatures", "name,value,conditions", $Name, $Value, $Conditions )
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('34','EditSign','contract EditSign {
 	data {
 		Id         int
@@ -1677,7 +1677,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			DBUpdate("signatures", $Id, Join(pars, ","), vals...)
 		}
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('35','DeactivateContract','contract DeactivateContract {
 	data {
 		Id         int
@@ -1702,7 +1702,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	func rollback() {
 		Activate($Id, $ecosystem_id)
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('36','UpdateSysParam','contract UpdateSysParam {
 	data {
 		Name  string
@@ -1712,7 +1712,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	action {
 		DBUpdateSysParam($Name, $Value, $Conditions )
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('37', 'NewDelayedContract','contract NewDelayedContract {
 	data {
 		Contract string
@@ -1743,7 +1743,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	action {
 		DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,\"limit\",conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('38', 'EditDelayedContract','contract EditDelayedContract {
 	data {
 		Id int
@@ -1776,7 +1776,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	action {
 		DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,\"limit\",deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('39', 'CallDelayedContract','contract CallDelayedContract {
 	data {
 		Id int
@@ -1811,7 +1811,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
 		CallContract($cur["contract"], nil)
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('40', 'NewUser','contract NewUser {
 	data {
 		NewPubkey string
@@ -1833,7 +1833,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		   DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
 				$key_id, $newId, $amount, "New user deposit", $block, $txhash)
 	}
-}', 'ContractConditions("NodeOwnerCondition")', 1),
+}', %[1]d, 'ContractConditions("NodeOwnerCondition")', 1),
 ('41', 'EditEcosystemName','contract EditEcosystemName {
 	data {
 		EcosystemID int
@@ -1849,7 +1849,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	action {
 		EditEcosysName($EcosystemID, $NewName)
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('42', 'UpdateMetrics', 'contract UpdateMetrics {
 	conditions {
 		ContractConditions("MainCondition")
@@ -1871,7 +1871,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			i = i + 1
 		}
 	}
-}', 'ContractConditions("MainCondition")', 1),
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('43', 'NodeOwnerCondition', 'contract NodeOwnerCondition {
 	conditions {
 		$full_nodes = JSONDecode(SysParamString("full_nodes"))
@@ -1886,5 +1886,5 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
 		warning "Sorry, you do not have access to this action."
 	}
-}', 'ContractConditions("MainCondition")', 1);
+}', %[1]d, 'ContractConditions("MainCondition")', 1);
 `
