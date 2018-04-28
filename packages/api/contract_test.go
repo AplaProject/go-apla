@@ -63,6 +63,7 @@ func TestNewContracts(t *testing.T) {
 			}
 			if err := postTx(item.Name, &form); err != nil {
 				assert.EqualError(t, err, par.Results[`error`])
+				return
 				continue
 			}
 			for key, value := range par.Results {
@@ -78,6 +79,18 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`Price3`, `contract Price3 {
+		action {
+			Println("OOPS", nil)
+			Test("int", Int("")+Int(nil)+2)
+			Test("price", 1)
+		}
+		func price() money {
+			return Money(100)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`price`: `1`, `int`: `3`}},
+	}},
 	{`IntOver`, `contract IntOver {
 				action {
 					info Int("123456789101112131415161718192021222324252627282930")
@@ -95,17 +108,6 @@ var contracts = []smartContract{
 		{nil, map[string]string{`error`: `{"type":"panic","error":"unknown lexem $ [Ln:5 Col:6]"}`}},
 	}},
 
-	{`Price`, `contract Price {
-		action {
-			Test("int", Int("")+2)
-			Test("price", 1)
-		}
-		func price() money {
-			return Money(100)
-		}
-	}`, []smartParams{
-		{nil, map[string]string{`price`: `1`, `int`: `2`}},
-	}},
 	{`CheckFloat`, `contract CheckFloat {
 			action {
 			var fl float
