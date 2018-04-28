@@ -229,7 +229,7 @@ MenuItem(
 				"counter": "ContractConditions(\"MainCondition\")",
 				"till": "ContractConditions(\"MainCondition\")",
 				  "conditions": "ContractConditions(\"MainCondition\")"
-				}', 'ContractConditions(\"MainCondition\")'),
+				}', 'ContractConditions("MainCondition")'),
 			  ('8', 'binaries',
 				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
 					"new_column": "ContractConditions(\"MainCondition\")"}',
@@ -239,7 +239,7 @@ MenuItem(
 					"data": "ContractConditions(\"MainCondition\")",
 					"hash": "ContractConditions(\"MainCondition\")",
 					"mime_type": "ContractConditions(\"MainCondition\")"}',
-					'ContractConditions(\"MainCondition\")');
+					'ContractConditions("MainCondition")');
 	  
 	  INSERT INTO "%[1]d_vde_contracts" ("id", "name", "value", "conditions") VALUES 
 	  ('1','MainCondition','contract MainCondition {

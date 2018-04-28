@@ -52,7 +52,7 @@ If(#buffer_value_app_id# > 0){
     Div(breadcrumb){
         Span(Class: text-muted, Body: "You did not select the application. Viewing resources is not available")
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (3, 'app_blocks', 'DBFind(buffer_data, src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 
 If(#buffer_value_app_id# > 0){
@@ -103,7 +103,7 @@ If(#buffer_value_app_id# > 0){
     Div(breadcrumb){
         Span(Class: text-muted, Body: "You did not select the application. Viewing resources is not available")
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (4, 'app_contracts', 'DBFind(buffer_data, src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 
 If(#buffer_value_app_id# > 0){
@@ -161,7 +161,7 @@ If(#buffer_value_app_id# > 0){
     Div(breadcrumb){
         Span(Class: text-muted, Body: "You did not select the application. Viewing resources is not available")
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (5, 'app_edit', 'Div(content-wrapper){
     SetTitle("Application")
     Div(breadcrumb){
@@ -225,7 +225,7 @@ If(#buffer_value_app_id# > 0){
 			}
 		}
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (6, 'app_langres', 'DBFind(buffer_data, src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 
 If(#buffer_value_app_id# > 0){
@@ -275,7 +275,7 @@ If(#buffer_value_app_id# > 0){
     Div(breadcrumb){
         Span(Class: text-muted, Body: "You did not select the application. Viewing resources is not available")
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (7, 'app_pages', 'DBFind(buffer_data, src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 
 If(#buffer_value_app_id# > 0){
@@ -326,7 +326,7 @@ If(#buffer_value_app_id# > 0){
     Div(breadcrumb){
         Span(Class: text-muted, Body: "You did not select the application. Viewing resources is not available")
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (8, 'app_params', 'DBFind(buffer_data, src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 
 If(#buffer_value_app_id# > 0){
@@ -374,7 +374,7 @@ If(#buffer_value_app_id# > 0){
     Div(breadcrumb){
         Span(Class: text-muted, Body: "You did not select the application. Viewing resources is not available")
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (9, 'app_params_edit', 'Div(content-wrapper){
     If(#create# == create){
         SetVar(param_name, "New")
@@ -421,7 +421,7 @@ If(#buffer_value_app_id# > 0){
             }
         }
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (10, 'app_tables', 'DBFind(buffer_data, src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 
 If(#buffer_value_app_id# > 0){
@@ -475,7 +475,7 @@ If(#buffer_value_app_id# > 0){
     Div(breadcrumb){
         Span(Class: text-muted, Body: "You did not select the application. Viewing resources is not available")
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (11, 'app_upload_binary', 'Div(content-wrapper){
     SetTitle("Binary data")
     Div(breadcrumb){
@@ -510,7 +510,7 @@ If(#buffer_value_app_id# > 0){
 			Button(Body: "Upload", Contract: UploadBinary, Class: btn btn-primary, Params: "Name=Val(name),ApplicationId=#app_id#,Data=Val(databin),MemberID=#key_id#", Page: app_binary)
 		}
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (12, 'apps_list', 'Div(fullscreen){
     If(#deleted# == deleted){
         SetTitle("Inactive applications")
@@ -599,7 +599,7 @@ If(#buffer_value_app_id# > 0){
             }
         )
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (13, 'column_add', 'Div(content-wrapper){
 	SetTitle("Tables")
 	Div(breadcrumb){
@@ -641,7 +641,7 @@ If(#buffer_value_app_id# > 0){
 			Button(Body: "Add column", Contract: NewColumn, Class: btn btn-primary, Page: table_edit, PageParams: "tabl_id=#tabl_id#", Params: "TableName=#next_table_name#,Name=Val(ColumnName),Type=Val(Coltype),Permissions=Val(ColumnUp)")
 		}
 	}
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (14, 'column_edit', 'Div(content-wrapper){
 	SetTitle("Edit column")
 	Div(breadcrumb){
@@ -713,7 +713,7 @@ If(#buffer_value_app_id# > 0){
 			Button(Body: "Save", Contract: EditColumn, Class: btn btn-primary, Page: table_edit, PageParams: "tabl_id=#tabl_id#", Params: "TableName=#pre_name#,Name=Val(ColumnName),Type=Val(Coltype),Permissions=Val(ColumnUp)")
 		}
 	}
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (15, 'export_download', 'Div(fullscreen){
     SetTitle("Export")
     Div(breadcrumb){
@@ -749,7 +749,7 @@ If(#buffer_value_app_id# > 0){
             background-color: #eee;
         }
     )
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (16, 'export_resources', 'Div(content-wrapper){
     SetTitle("Export")
     Div(breadcrumb){
@@ -830,7 +830,7 @@ If(#buffer_value_app_id# > 0){
             Include(export_info)
         }
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (17, 'import_app', 'Div(content-wrapper){
     DBFind(buffer_data, src_buffer).Columns("id,value->name,value->data").Where("key=''import'' and member_id=#key_id#").Vars(prefix)
     DBFind(buffer_data, src_buffer).Columns("value->app_name,value->pages,value->pages_count,value->blocks,value->blocks_count,value->menu,value->menu_count,value->parameters,value->parameters_count,value->languages,value->languages_count,value->contracts,value->contracts_count,value->tables,value->tables_count").Where("key=''import_info'' and member_id=#key_id#").Vars(info)
@@ -881,7 +881,7 @@ If(#buffer_value_app_id# > 0){
             }
         }
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (18, 'import_upload', 'Div(content-wrapper){
     SetTitle("Import")
     Div(breadcrumb){
@@ -895,7 +895,7 @@ If(#buffer_value_app_id# > 0){
             Button(Body: "Load", Class: btn btn-primary, Contract: Import_Upload, Page: import_app)
         }
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (19, 'langres_edit', 'Div(content-wrapper){
 	SetTitle("Language resources")
 	Div(Class: breadcrumb){
@@ -974,7 +974,7 @@ If(#buffer_value_app_id# > 0){
 			Button(Body: "Save", Class: btn btn-primary, Contract: @1EditLang, Params: "Value=Val(share),IdLanguage=Val(idshare),Id=#lang_id#", Page: app_langres)
 		}
 	}
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (20, 'langres_add', 'Div(content-wrapper){
 	SetTitle("Language resources")
 	Div(Class: breadcrumb){
@@ -1038,7 +1038,7 @@ If(#buffer_value_app_id# > 0){
 			Button(Body: "Save", Class: btn btn-primary, Contract:@1NewLang, Page: app_langres, Params: "ApplicationId=#app_id#,Name=Val(LangName),Value=Val(share),IdLanguage=Val(idshare)")
 		}
 	}
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (21, 'menus_list', 'Div(fullscreen){
     SetTitle("Menu")
     AddToolButton(Title: "Create", Page: editor, Icon: icon-plus, PageParams: "create=menu,appId=0")
@@ -1075,7 +1075,7 @@ If(#buffer_value_app_id# > 0){
     thead {
         background-color: #eee;
     })
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (22, 'params_edit', 'Div(content-wrapper){
 	If(#stylesheet# == stylesheet){
 		DBFind(parameters, src_params).Where(name=''#stylesheet#'').Vars("param")
@@ -1126,7 +1126,7 @@ If(#buffer_value_app_id# > 0){
 			}
 		}
 	}
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (23, 'params_list', 'Div(fullscreen){
     SetTitle("Ecosystem parameters")
     AddToolButton(Title: "Manage stylesheet", Page: params_edit, Icon: icon-picture, PageParams:"stylesheet=stylesheet")
@@ -1164,7 +1164,7 @@ If(#buffer_value_app_id# > 0){
             background-color: #eee;
         }
     )
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (24, 'properties_edit', 'Div(Class: content-wrapper){
 	SetTitle("Edit properties")
 	Div(breadcrumb){
@@ -1261,7 +1261,7 @@ If(#buffer_value_app_id# > 0){
 			}
 		}
     }
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (25, 'table_create', 'Div(content-wrapper){
 	SetTitle("Create table")
 	Div(breadcrumb){
@@ -1360,7 +1360,7 @@ If(#buffer_value_app_id# > 0){
 			}
 		}
 	}
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (26, 'table_edit', 'Div(content-wrapper){
 	SetTitle(Tables)
 	Div(breadcrumb){
@@ -1480,7 +1480,7 @@ If(#buffer_value_app_id# > 0){
 			}
 		}
 	}
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (27, 'table_view', 'Div(content-wrapper){
     SetTitle("Tables")
     Div(breadcrumb){
@@ -1497,7 +1497,7 @@ If(#buffer_value_app_id# > 0){
 			}
 		}
 	}
-}', 'admin_menu', 'ContractAccess(\"@1EditPage\")'),
+}', 'admin_menu', 'ContractAccess("@1EditPage")'),
 (28, 'admin_index', '', 'admin_menu', true),
 (29,'notifications',$$DBFind(Name: notifications, Source: notifications_members).Columns("id,page_name,notification->icon,notification->header,notification->body").Where("closed=0 and notification->type='1' and recipient->member_id='#key_id#'")
 			ForList(notifications_members){

@@ -126,14 +126,14 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 				res = res + Sprintf("%%q: %%q", $IdLanguage[i],$Value[i])
 			}
 			else {
-				res = res + Sprintf("%%q: %%q", $IdLanguage[i],$Value[i])
+				res = res + Sprintf("%%q: %%q, ", $IdLanguage[i],$Value[i])
 			}
 			i = i + 1
 		}
 		if (len > 0){
 			langarr = Sprintf("{"+"%%v"+"}", res)
 			$Trans = langarr
-            DBUpdate("languages", $Id, "res", $Trans)
+			DBUpdate("languages", $Id, "res", $Trans)
 			//UpdateLang($Id, $Trans)
 		}
 		else {
@@ -206,7 +206,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
                     res = res + Sprintf("{\"name\":%%q,\"type\":%%q,\"conditions\":\"true\"}", $Id[i],$Shareholding[i])
                 }
                 else {
-                    res = res + Sprintf("{\"name\":%%q,\"type\":%%q,\"conditions\":\"true\"}", $Id[i],$Shareholding[i])
+                    res = res + Sprintf("{\"name\":%%q,\"type\":%%q,\"conditions\":\"true\"},", $Id[i],$Shareholding[i])
                 }
 				i = i + 1
             }
@@ -985,7 +985,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
 
         if DBFind("languages").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf( "Language resource %s already exists", $Name)
+            warning Sprintf( "Language resource %%s already exists", $Name)
         }
 	
 		var j int

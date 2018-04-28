@@ -56,7 +56,7 @@ VALUES
 				Span(Button(Body: Sort by NAME, Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=3,width=#width#,current_page=#current_page#")).Style(margin-right:10px;)
 			}
 		}
-	}', 'ContractConditions(\"MainCondition\")'),
+	}', 'ContractConditions("MainCondition")'),
 ('2', 'export_info', 'DBFind(Name: buffer_data, Source: src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 
 If(#buffer_value_app_id# > 0){
@@ -259,7 +259,7 @@ Div(panel panel-primary){
 			}
 		}
 	}
-}', 'ContractConditions(\"MainCondition\")'),
+}', 'ContractConditions("MainCondition")'),
 ('3', 'export_link', 'If(And(#res_type#!="pages",#res_type#!="blocks",#res_type#!="menu",#res_type#!="parameters",#res_type#!="languages",#res_type#!="contracts",#res_type#!="tables")){
 	SetVar(res_type, "pages")
 }
@@ -306,7 +306,7 @@ Div(breadcrumb){
 	}.Else{
 	   LinkPage(Body: "Tables", Page: export_resources,, "res_type=tables")
 	}
-}', 'ContractConditions(\"MainCondition\")'),
+}', 'ContractConditions("MainCondition")'),
 ('4', 'pager', 'DBFind(#pager_table#, src_records).Where(#pager_where#).Count(records_count)
 
 SetVar(previous_page, Calculate(Exp: #current_page# - 1, Type: int))
@@ -381,10 +381,10 @@ Div(){
 			Button(Body: Em(Class: fa fa-angle-double-right), Class: btn btn-default, Page: #pager_page#, PageParams: "current_page=#last_page#,sort=#sort#,width=#width#")
 		}
 	}
-}.Style("div {display:inline-block;}")', 'ContractConditions(\"MainCondition\")'),
+}.Style("div {display:inline-block;}")', 'ContractConditions("MainCondition")'),
 ('5', 'pager_header', 'If(#current_page# > 0){}.Else{
 	SetVar(current_page, 1)
 }
 SetVar(pager_offset, Calculate(Exp: (#current_page# - 1) * #pager_limit#, Type: int))
-SetVar(current_page, #current_page#)', 'ContractConditions(\"MainCondition\")');
+SetVar(current_page, #current_page#)', 'ContractConditions("MainCondition")');
 `
