@@ -740,8 +740,7 @@ MenuItem(
 			}
 		}
 		action {
-			DBInsert("languages", "name,res,app_id", $Name, $Trans, $AppID)
-			UpdateLang($AppID, $Name, $Trans)
+			CreateLanguage($Name, $Trans, $AppID)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('19','EditLang','contract EditLang {
@@ -755,8 +754,7 @@ MenuItem(
 			EvalCondition("parameters", "changing_language", "value")
 		}
 		action {
-			DBUpdate("languages", $Id, "name,res,app_id", $Name, $Trans, $AppID)
-			UpdateLang($AppID, $Name, $Trans)
+			EditLanguage($Id, $Name, $Trans, $AppID)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('20','Import','contract Import {
@@ -1234,7 +1232,7 @@ MenuItem(
 				  "name": "ContractConditions(\"MainCondition\")",
 				  "res": "ContractConditions(\"MainCondition\")",
 				  "conditions": "ContractConditions(\"MainCondition\")",
-				  "app_id": "ContractConditions(\"MainConditions\")"}', 'ContractAccess("@1EditTable")'),
+				  "app_id": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("@1EditTable")'),
 				('5', 'menu', 
 					'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 				  "new_column": "ContractConditions(\"MainCondition\")"}',
@@ -1519,8 +1517,10 @@ MenuItem(
 		('60','extend_cost_perm_column', '50', 'true'),
 		('61','extend_cost_json_to_map', '50', 'true'),
 		('62','max_block_generation_time', '2000', 'true'),
-		('63','block_reward','1000','true');
-		
+		('63','block_reward','1000','true'),
+		('64','extend_cost_create_language', '50', 'true'),
+		('65','extend_cost_edit_language', '50', 'true');
+
 		DROP TABLE IF EXISTS "1_delayed_contracts";
 		CREATE TABLE "1_delayed_contracts" (
 			"id" int NOT NULL default 0,
@@ -2079,8 +2079,7 @@ MenuItem(
 			}
 		}
 		action {
-			DBInsert("languages", "name,res,app_id", $Name, $Trans, $AppID)
-			UpdateLang($AppID, $Name, $Trans)
+			CreateLanguage($Name, $Trans, $AppID)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('16','EditLang','contract EditLang {
@@ -2094,8 +2093,7 @@ MenuItem(
 			EvalCondition("parameters", "changing_language", "value")
 		}
 		action {
-			DBUpdate("languages", $Id, "name,res,app_id", $Name, $Trans, $AppID)
-			UpdateLang($AppID, $Name, $Trans)
+			EditLanguage($Id, $Name, $Trans, $AppID)
 		}
 	}', '%[1]d','ContractConditions("MainCondition")', 1),
 	('17','NewSign','contract NewSign {
