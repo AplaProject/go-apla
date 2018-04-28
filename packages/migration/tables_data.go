@@ -9,7 +9,7 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 	  "active": "ContractConditions(\"MainCondition\")",
 	  "conditions": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("@1EditTable")'),
 	('2', 'keys', 
-	'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+	'{"insert": "true", "update": "true", 
 	  "new_column": "ContractConditions(\"MainCondition\")"}',
 	'{"pub": "ContractConditions(\"MainCondition\")",
 	  "amount": "ContractConditions(\"MainCondition\")",
