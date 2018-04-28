@@ -944,7 +944,6 @@ func RoundWithoutPrecision(num float64) int64 {
 
 // ValueToInt converts interface (string or int64) to int64
 func ValueToInt(v interface{}) (ret int64, err error) {
-	fmt.Println(`V0`, v)
 	switch val := v.(type) {
 	case float64:
 		ret = int64(val)
@@ -965,7 +964,6 @@ func ValueToInt(v interface{}) (ret int64, err error) {
 			err = fmt.Errorf(`%s is not a valid integer %s`, val, errText)
 		}
 	default:
-		fmt.Println(`V`, v, val)
 		if v == nil {
 			return 0, nil
 		}
