@@ -216,7 +216,10 @@ func Start() {
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()
 
-	utils.MakeOrCleanDirectory(conf.Config.TempDir)
+	if err := utils.MakeDirectory(conf.Config.TempDir); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "dir": conf.Config.TempDir}).Error("can't create temporary directory")
+		Exit(1)
+	}
 
 	initGorm(conf.Config.DB)
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")

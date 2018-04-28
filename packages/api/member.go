@@ -33,11 +33,11 @@ func getAvatar(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	}
 
 	if !found {
-		return errorAPI(w, "E_SERVER", http.StatusNotFound)
+		return errorAPI(w, "E_NOTFOUND", http.StatusNotFound)
 	}
 
 	if member.ImageID == nil {
-		return errorAPI(w, "E_SERVER", http.StatusNotFound)
+		return errorAPI(w, "E_NOTFOUND", http.StatusNotFound)
 	}
 
 	bin := &model.Binary{}
