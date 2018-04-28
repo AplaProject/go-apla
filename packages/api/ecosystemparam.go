@@ -23,26 +23,36 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
-func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	_, prefix, err := checkEcosystem(w, data, logger)
-	if err != nil {
-		return err
-	}
-	sp := &model.StateParameter{}
-	sp.SetTablePrefix(prefix)
-	found, err := sp.Get(nil, data.params[`name`].(string))
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting state parameter by name")
-		return errorAPI(w, err, http.StatusInternalServerError)
-	}
-	if !found {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "key": data.params["name"].(string)}).Error("state parameter not found")
-		return errorAPI(w, err, http.StatusBadRequest)
+func ecosystemParamHandler(w http.ResponseWriter, r *http.Request) {
+	form := &ecosystemForm{}
+	if ok := ParseForm(w, r, form); !ok {
+		return
 	}
 
-	data.result = &paramValue{ID: converter.Int64ToStr(sp.ID), Name: sp.Name, Value: sp.Value, Conditions: sp.Conditions}
-	return
+	params := mux.Vars(r)
+	logger := getLogger(r)
+
+	sp := &model.StateParameter{}
+	sp.SetTablePrefix(form.EcosystemPrefix)
+
+	if found, err := sp.Get(nil, params[keyName]); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting state parameter by name")
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
+	} else if !found {
+		logger.WithFields(log.Fields{"type": consts.NotFound, "key": params[keyName]}).Error("state parameter not found")
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	jsonResponse(w, &paramResult{
+		ID:         converter.Int64ToStr(sp.ID),
+		Name:       sp.Name,
+		Value:      sp.Value,
+		Conditions: sp.Conditions,
+	})
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
+	"github.com/gorilla/mux"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -30,61 +31,60 @@ func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiH
 	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
 }
 
-// Route sets routing pathes
-func Route(route *hr.Router) {
-	get := func(pattern, params string, handler ...apiHandle) {
-		methodRoute(route, `GET`, pattern, params, handler...)
-	}
-	post := func(pattern, params string, handler ...apiHandle) {
-		methodRoute(route, `POST`, pattern, params, handler...)
-	}
-	contractHandlers := &contractHandlers{
+// Route sets routing paths
+func Route(router *mux.Router) {
+	router.Use(LoggerMiddleware)
+
+	// api router with prefix path
+	api := router.PathPrefix("/api/v2").Subrouter()
+	api.Use(TokenMiddleware, ClientMiddleware)
+
+	callContract := &callContractHandlers{
 		requests: tx.NewRequestBuffer(consts.TxRequestExpire),
 	}
 
-	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
-	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
+	api.HandleFunc("/data/{table}/{id}/{column}/{hash}", dataHandler).Methods("GET")
+	api.HandleFunc("/data/{prefix}_binaries/{id}/data/{hash}", binaryHandler).Methods("GET")
+	api.HandleFunc("/appparam/{id}/{name}", AuthRequire(appParamHandler)).Methods("GET")        // get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
+	api.HandleFunc("/appparams/{id}", AuthRequire(appParamsHandler)).Methods("GET")             // get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
+	api.HandleFunc("/balance/{wallet}", AuthRequire(balanceHandler)).Methods("GET")             // get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
+	api.HandleFunc("/contract/{name}", AuthRequire(contractInfoHandler)).Methods("GET")         // get(`contract/:name`, ``, authWallet, getContract)
+	api.HandleFunc("/contracts", AuthRequire(contractsHandler)).Methods("GET")                  // get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
+	api.HandleFunc("/ecosystemparam/{name}", AuthRequire(ecosystemParamHandler)).Methods("GET") // get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
+	api.HandleFunc("/ecosystemparams", AuthRequire(ecosystemParamsHandler)).Methods("GET")      // get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
+	api.HandleFunc("/ecosystems", AuthRequire(ecosystemsHandler)).Methods("GET")                // get(`ecosystems`, ``, authWallet, ecosystems)
+	api.HandleFunc("/getuid", uidHandler).Methods("GET")
+	api.HandleFunc("/list/{name}", AuthRequire(listHandler)).Methods("GET")                           // get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
+	api.HandleFunc("/row/{name}/{id}", AuthRequire(rowHandler)).Methods("GET")                        // get(`row/:name/:id`, `?columns:string`, authWallet, row)
+	api.HandleFunc("/interface/page/{name}", AuthRequire(pageRowHandler())).Methods("GET")            // get(`interface/page/:name`, ``, authWallet, getPageRow)
+	api.HandleFunc("/interface/menu/{name}", AuthRequire(menuRowHandler())).Methods("GET")            // get(`interface/menu/:name`, ``, authWallet, getMenuRow)
+	api.HandleFunc("/interface/block/{name}", AuthRequire(blockInterfaceRowHandler())).Methods("GET") // get(`interface/block/:name`, ``, authWallet, getBlockInterfaceRow)
+	api.HandleFunc("/systemparams", AuthRequire(systemParamsHandler)).Methods("GET")                  // get(`systemparams`, `?names:string`, authWallet, systemParams)
+	api.HandleFunc("/table/{name}", AuthRequire(tableHandler)).Methods("GET")                         // get(`table/:name`, ``, authWallet, table)
+	api.HandleFunc("/tables", AuthRequire(tablesHandler)).Methods("GET")                              // get(`tables`, `?limit ?offset:int64`, authWallet, tables)
+	api.HandleFunc("/txstatus/{hash}", AuthRequire(txstatusHandler)).Methods("GET")                   // get(`txstatus/:hash`, ``, authWallet, txstatus)
+	// get(`test/:name`, ``, getTest)
+	api.HandleFunc("/history/{table}/{id}", AuthRequire(historyHandler)).Methods("GET") // get(`history/:table/:id`, ``, authWallet, getHistory)
+	api.HandleFunc("/block/{id}", blockInfoHandler).Methods("GET")
+	api.HandleFunc("/maxblockid", maxBlockHandler).Methods("GET")
+	api.HandleFunc("/version", versionHandler).Methods("GET")
+	api.HandleFunc("/avatar/{ecosystem}/{member}", avatarHandler).Methods("GET")            // get(`avatar/:ecosystem/:member`, ``, getAvatar)
+	api.HandleFunc("/config/{option}", configOptionHandler).Methods("GET")                  // get(`config/:option`, ``, getConfigOption)
+	api.HandleFunc("/content/source/{name}", AuthRequire(getSourceHandler)).Methods("POST") // post(`content/source/:name`, ``, authWallet, getSource)
+	api.HandleFunc("/content/page/{name}", AuthRequire(getPageHandler)).Methods("POST")     // post(`content/page/:name`, `?lang:string`, authWallet, getPage)
+	api.HandleFunc("/content/menu/{name}", AuthRequire(getMenuHandler)).Methods("POST")     // post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
+	api.HandleFunc("/content/hash/{name}", AuthRequire(getPageHashHandler)).Methods("POST") // post(`content/hash/:name`, ``, authWallet, getPageHash)
+	// post(`vde/create`, ``, authWallet, vdeCreate)
+	api.HandleFunc("/login", loginHandler).Methods("POST")                                              // post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
+	api.HandleFunc("/prepare/{name}", AuthRequire(callContract.PrepareHandler)).Methods("POST")         // post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
+	api.HandleFunc("/contract/{request_id}", AuthRequire(callContract.ContractHandler)).Methods("POST") // post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
+	api.HandleFunc("/refresh", refreshHandler).Methods("POST")                                          // post(`refresh`, `token:string,?expire:int64`, refresh)
+	api.HandleFunc("/signtest", signTestHandler).Methods("POST")                                        // post(`signtest/`, `forsign private:string`, signTest)
+	// post(`test/:name`, ``, getTest)
+	api.HandleFunc("/content", jsonContentHandler).Methods("POST")              // post(`content`, `template ?source:string`, jsonContent)
+	api.HandleFunc("/updnotificator", updateNotificatorHandler).Methods("POST") // post(`updnotificator`, `ids:string`, updateNotificator)
 
-	get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
-	get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
-	get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
-	get(`contract/:name`, ``, authWallet, getContract)
-	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
-	get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
-	get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
-	get(`ecosystems`, ``, authWallet, ecosystems)
-	get(`getuid`, ``, getUID)
-	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
-	get(`row/:name/:id`, `?columns:string`, authWallet, row)
-	get(`interface/page/:name`, ``, authWallet, getPageRow)
-	get(`interface/menu/:name`, ``, authWallet, getMenuRow)
-	get(`interface/block/:name`, ``, authWallet, getBlockInterfaceRow)
-	get(`systemparams`, `?names:string`, authWallet, systemParams)
-	get(`table/:name`, ``, authWallet, table)
-	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
-	get(`txstatus/:hash`, ``, authWallet, txstatus)
-	get(`test/:name`, ``, getTest)
-	get(`history/:table/:id`, ``, authWallet, getHistory)
-	get(`block/:id`, ``, getBlockInfo)
-	get(`maxblockid`, ``, getMaxBlockID)
-	get(`version`, ``, getVersion)
-	get(`avatar/:ecosystem/:member`, ``, getAvatar)
-	get(`config/:option`, ``, getConfigOption)
-	post(`content/source/:name`, ``, authWallet, getSource)
-	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
-	post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
-	post(`content/hash/:name`, ``, authWallet, getPageHash)
-	post(`vde/create`, ``, authWallet, vdeCreate)
-	post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
-	post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
-	post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
-	post(`refresh`, `token:string,?expire:int64`, refresh)
-	post(`signtest/`, `forsign private:string`, signTest)
-	post(`test/:name`, ``, getTest)
-	post(`content`, `template ?source:string`, jsonContent)
-	post(`updnotificator`, `ids:string`, updateNotificator)
-
-	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, contractHandlers.nodeContract)
+	// methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, contractHandlers.nodeContract)
 }
 
 func processParams(input string) (params map[string]int) {

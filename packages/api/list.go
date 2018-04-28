@@ -21,6 +21,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/mux"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -33,34 +35,46 @@ type listResult struct {
 	List  []map[string]string `json:"list"`
 }
 
-func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var limit int
+type listForm struct {
+	paginatorForm
+	Columns string `schema:"columns"`
+}
 
-	table := converter.EscapeName(getPrefix(data) + `_` + data.params[`name`].(string))
+func listHandler(w http.ResponseWriter, r *http.Request) {
+	form := &listForm{}
+	if ok := ParseForm(w, r, form); !ok {
+		return
+	}
+
+	params := mux.Vars(r)
+	client := getClient(r)
+	logger := getLogger(r)
+
+	// TODO: переделать на getPrefix(data)
+	// TODO: перенести в модели
+	table := converter.EscapeName(fmt.Sprintf("%d_%s", client.EcosystemID, params[keyName]))
 	cols := `*`
-	if len(data.params[`columns`].(string)) > 0 {
-		cols = `id,` + converter.EscapeName(data.params[`columns`].(string))
+	if len(form.Columns) > 0 {
+		cols = `id,` + converter.EscapeName(form.Columns)
 	}
 
 	count, err := model.GetNextID(nil, strings.Trim(table, `"`))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting next table id")
-		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
+		errorResponse(w, errTableNotFound, http.StatusBadRequest, params[keyName])
+		return
 	}
 
-	if data.params[`limit`].(int64) > 0 {
-		limit = int(data.params[`limit`].(int64))
-	} else {
-		limit = 25
-	}
 	list, err := model.GetAll(`select `+cols+` from `+table+` order by id desc`+
-		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
+		fmt.Sprintf(` offset %d `, form.Offset), form.Limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
-	data.result = &listResult{
-		Count: converter.Int64ToStr(count - 1), List: list,
-	}
-	return
+
+	jsonResponse(w, &listResult{
+		Count: converter.Int64ToStr(count - 1),
+		List:  list,
+	})
 }

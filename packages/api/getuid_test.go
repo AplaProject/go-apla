@@ -26,7 +26,7 @@ import (
 )
 
 func TestGetUID(t *testing.T) {
-	var ret getUIDResult
+	var ret uidResult
 	err := sendGet(`getuid`, nil, &ret)
 	if err != nil {
 		var v map[string]string
@@ -40,7 +40,7 @@ func TestGetUID(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	sign, err := crypto.Sign(priv, ret.UID)
+	sign, err := crypto.Sign(priv, nonceSalt+ret.UID)
 	if err != nil {
 		t.Error(err)
 		return

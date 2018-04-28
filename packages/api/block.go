@@ -7,29 +7,17 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
-type getMaxBlockIDResult struct {
+const keyBlockID = "id"
+
+type maxBlockIDResult struct {
 	MaxBlockID int64 `json:"max_block_id"`
 }
 
-func getMaxBlockID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	block := &model.Block{}
-	found, err := block.GetMaxBlock()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max block")
-		return errorAPI(w, err, http.StatusInternalServerError)
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("last block not found")
-		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
-	}
-	data.result = &getMaxBlockIDResult{block.ID}
-	return nil
-}
-
-type getBlockInfoResult struct {
+type blockInfoResult struct {
 	Hash          []byte `json:"hash"`
 	EcosystemID   int64  `json:"ecosystem_id"`
 	KeyID         int64  `json:"key_id"`
@@ -38,18 +26,49 @@ type getBlockInfoResult struct {
 	RollbacksHash []byte `json:"rollbacks_hash"`
 }
 
-func getBlockInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	blockID := converter.StrToInt64(data.params["id"].(string))
+func maxBlockHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
+
+	block := &model.Block{}
+	found, err := block.GetMaxBlock()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max block")
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+	if !found {
+		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("last block not found")
+		errorResponse(w, errNotFound, http.StatusNotFound)
+		return
+	}
+
+	jsonResponse(w, &maxBlockIDResult{block.ID})
+}
+
+func blockInfoHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
+	params := mux.Vars(r)
+
+	blockID := converter.StrToInt64(params[keyBlockID])
 	block := model.Block{}
 	found, err := block.Get(blockID)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "id": blockID}).Error("block with id not found")
-		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		logger.WithFields(log.Fields{"type": consts.NotFound, "id": blockID}).Error("block with id not found")
+		errorResponse(w, errNotFound, http.StatusNotFound)
+		return
 	}
-	data.result = &getBlockInfoResult{Hash: block.Hash, EcosystemID: block.EcosystemID, KeyID: block.KeyID, Time: block.Time, Tx: block.Tx, RollbacksHash: block.RollbacksHash}
-	return nil
+
+	jsonResponse(w, &blockInfoResult{
+		Hash:          block.Hash,
+		EcosystemID:   block.EcosystemID,
+		KeyID:         block.KeyID,
+		Time:          block.Time,
+		Tx:            block.Tx,
+		RollbacksHash: block.RollbacksHash,
+	})
 }

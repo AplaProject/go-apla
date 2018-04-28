@@ -38,6 +38,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
+	"github.com/gorilla/mux"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -151,7 +152,11 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 }
 
 func initRoutes(listenHost string) {
-	route := httprouter.New()
+	router := mux.NewRouter()
+	api.Route(router)
+
+	// TODO: добавить
+	/*route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
 	if conf.Config.TLS {
@@ -167,9 +172,9 @@ func initRoutes(listenHost string) {
 		go http.ListenAndServeTLS(":443", conf.Config.TLSCert, conf.Config.TLSKey, route)
 	} else if len(conf.Config.TLSCert) != 0 || len(conf.Config.TLSKey) != 0 {
 		log.Fatal("-tls/TLS must be specified with -tls-cert/TLSCert and -tls-key/TLSKey")
-	}
+	}*/
 
-	httpListener(listenHost, route)
+	httpListener(listenHost, router)
 }
 
 func logBlockchainMode() {

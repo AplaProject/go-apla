@@ -22,6 +22,22 @@ import (
 	hr "github.com/julienschmidt/httprouter"
 )
 
+func CorsMw(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		if http.MethodOptions == r.Method {
+			w.Header().Set("Content-Type", "text/plain")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+			w.Header().Set("Access-Control-Max-Age", "86400")
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func optionsHandler() hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 		w.Header().Set("Content-Type", "text/plain")

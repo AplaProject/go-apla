@@ -3,6 +3,8 @@ package api
 import (
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -10,33 +12,33 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type configOptionHandler func(w http.ResponseWriter, option string) error
+func configOptionHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
 
-func getConfigOption(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	option := data.params["option"].(string)
-	if len(option) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject, "error": "option not specified"}).Error("on getting option in config handler")
-		return errorAPI(w, "E_SERVER", http.StatusBadRequest)
+	if len(params["option"]) == 0 {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject, "error": "option not specified"}).Error("on getting option in config handler")
+		errorResponse(w, errServer, http.StatusBadRequest)
+		return
 	}
 
-	var err error
-	switch option {
+	switch params["option"] {
 	case "centrifugo":
-		err = centrifugoAddressHandler(w, data)
-		break
-	default:
-		return errorAPI(w, "E_SERVER", http.StatusBadRequest)
+		centrifugoAddressHandler(w, r)
+		return
 	}
 
-	return err
+	errorResponse(w, errServer, http.StatusBadRequest)
 }
 
-func centrifugoAddressHandler(w http.ResponseWriter, data *apiData) error {
+func centrifugoAddressHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
+
 	if _, err := publisher.GetStats(); err != nil {
-		log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Warn("on getting centrifugo stats")
-		return errorAPI(w, err, http.StatusNotFound)
+		logger.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Warn("on getting centrifugo stats")
+		errorResponse(w, err, http.StatusNotFound)
+		return
 	}
 
-	data.result = conf.Config.Centrifugo.URL
-	return nil
+	jsonResponse(w, conf.Config.Centrifugo.URL)
 }

@@ -41,23 +41,43 @@ func getTest(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	return nil
 }
 
-func signTest(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+type signTestForm struct {
+	Form
+	Private string `schema:"private"`
+	Forsign string `schema:"forsign"`
+}
 
-	sign, err := crypto.Sign(data.params[`private`].(string), data.params[`forsign`].(string))
+func signTestHandler(w http.ResponseWriter, r *http.Request) {
+	form := &signTestForm{}
+	if ok := ParseForm(w, r, form); !ok {
+		return
+	}
+
+	logger := getLogger(r)
+
+	sign, err := crypto.Sign(form.Private, form.Forsign)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing data with private key")
-		return errorAPI(w, err, http.StatusBadRequest)
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
-	private, err := hex.DecodeString(data.params[`private`].(string))
+
+	priv, err := hex.DecodeString(form.Private)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": data.params["private"].(string)}).Error("decoding private from hex")
-		return errorAPI(w, err.Error(), http.StatusBadRequest)
+		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": form.Private}).Error("decoding private from hex")
+		errorResponse(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	pub, err := crypto.PrivateToPublic(private)
+
+	pub, err := crypto.PrivateToPublic(priv)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
-		return errorAPI(w, err, http.StatusBadRequest)
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
-	data.result = &signTestResult{Signature: hex.EncodeToString(sign), Public: hex.EncodeToString(pub)}
-	return nil
+
+	jsonResponse(w, &signTestResult{
+		Signature: hex.EncodeToString(sign),
+		Public:    hex.EncodeToString(pub),
+	})
 }

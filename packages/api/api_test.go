@@ -127,7 +127,7 @@ func keyLogin(state int64) (err error) {
 	if len(key) > 64 {
 		key = key[:64]
 	}
-	var ret getUIDResult
+	var ret uidResult
 	err = sendGet(`getuid`, nil, &ret)
 	if err != nil {
 		return
@@ -312,7 +312,7 @@ func TestGetAvatar(t *testing.T) {
 
 func postTxMultipart(txname string, params map[string]string, files map[string][]byte) (id int64, msg string, err error) {
 	ret := make(map[string]interface{})
-	if err = sendMultipart("/prepare/"+txname, params, files, &ret); err != nil {
+	if err = sendMultipart("prepare/"+txname, params, files, &ret); err != nil {
 		return
 	}
 

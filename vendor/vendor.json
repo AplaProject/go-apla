@@ -76,6 +76,24 @@
 			"revisionTime": "2017-11-13T18:07:20Z"
 		},
 		{
+			"checksumSHA1": "g/V4qrXjUGG9B+e3hB+4NAYJ5Gs=",
+			"path": "github.com/gorilla/context",
+			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
+			"revisionTime": "2016-08-17T18:46:32Z"
+		},
+		{
+			"checksumSHA1": "YuYKzn2jczaM6DQcFDmukvAHUX4=",
+			"path": "github.com/gorilla/mux",
+			"revision": "b57cb1605fd11ba2ecfa7f68992b4b9cc791934d",
+			"revisionTime": "2018-04-16T20:45:19Z"
+		},
+		{
+			"checksumSHA1": "PCLeuW5D0dEk1Vc29lUsXEPLmuY=",
+			"path": "github.com/gorilla/schema",
+			"revision": "d0e4c24cff97ae983e9847e0ed5a02dc10013d41",
+			"revisionTime": "2018-03-21T16:33:53Z"
+		},
+		{
 			"checksumSHA1": "SGSXlSU1TFtg5aTlVA9v4Ka86lU=",
 			"origin": "github.com/centrifugal/centrifugo/vendor/github.com/gorilla/securecookie",
 			"path": "github.com/gorilla/securecookie",

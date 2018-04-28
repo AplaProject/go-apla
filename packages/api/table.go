@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -45,55 +47,67 @@ type tableResult struct {
 	Columns    []columnInfo `json:"columns"`
 }
 
-func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var result tableResult
+func tableHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
+	client := getClient(r)
 
-	prefix := getPrefix(data)
+	prefix := client.Prefix()
+
 	table := &model.Table{}
 	table.SetTablePrefix(prefix)
-	_, err = table.Get(nil, data.params[`name`].(string))
+	_, err := table.Get(nil, params[keyName])
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
 
-	if len(table.Name) > 0 {
-		var perm map[string]string
-		err := json.Unmarshal([]byte(table.Permissions), &perm)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table permissions to json")
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
-		}
-		var cols map[string]string
-		err = json.Unmarshal([]byte(table.Columns), &cols)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table columns to json")
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
-		}
-		columns := make([]columnInfo, 0)
-		for key, value := range cols {
-			colType, err := model.GetColumnType(prefix+`_`+data.params[`name`].(string), key)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column type from db")
-				return errorAPI(w, err.Error(), http.StatusInternalServerError)
-			}
-			columns = append(columns, columnInfo{Name: key, Perm: value,
-				Type: colType})
-		}
-		result = tableResult{
-			Name:       table.Name,
-			Insert:     perm[`insert`],
-			NewColumn:  perm[`new_column`],
-			Update:     perm[`update`],
-			Read:       perm[`read`],
-			Filter:     perm[`filter`],
-			Conditions: table.Conditions,
-			AppID:      converter.Int64ToStr(table.AppID),
-			Columns:    columns,
-		}
-	} else {
-		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
+	if len(table.Name) == 0 {
+		errorResponse(w, errTableNotFound, http.StatusBadRequest, params[keyName])
+		return
 	}
-	data.result = &result
-	return
+
+	var perm map[string]string
+
+	// TODO: перенести в модель как отдельную структуру
+	if err = json.Unmarshal([]byte(table.Permissions), &perm); err != nil {
+		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table permissions to json")
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	var cols map[string]string
+	err = json.Unmarshal([]byte(table.Columns), &cols)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table columns to json")
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+	columns := make([]columnInfo, 0)
+	for key, value := range cols {
+		colType, err := model.GetColumnType(prefix+`_`+params[keyName], key)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column type from db")
+			errorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		columns = append(columns, columnInfo{
+			Name: key,
+			Perm: value,
+			Type: colType,
+		})
+	}
+
+	jsonResponse(w, &tableResult{
+		Name:       table.Name,
+		Insert:     perm[`insert`],
+		NewColumn:  perm[`new_column`],
+		Update:     perm[`update`],
+		Read:       perm[`read`],
+		Filter:     perm[`filter`],
+		Conditions: table.Conditions,
+		AppID:      converter.Int64ToStr(table.AppID),
+		Columns:    columns,
+	})
 }

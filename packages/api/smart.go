@@ -55,11 +55,13 @@ type EncryptKey struct {
 	Error     string `json:"error"`
 }
 
-func validateSmartContract(r *http.Request, data *apiData, result *prepareResult) (contract *smart.Contract, parerr interface{}, err error) {
-	cntname := data.params[`name`].(string)
-	contract = smart.VMGetContract(data.vm, cntname, uint32(data.ecosystemId))
+func validateSmartContract(r *http.Request, name string, result *prepareResult) (contract *smart.Contract, parerr interface{}, err error) {
+	// TODO: вынести в отдельную функцию
+	client := getClient(r)
+	vm := smart.GetVM(false, client.EcosystemID)
+	contract = smart.VMGetContract(vm, name, uint32(client.EcosystemID))
 	if contract == nil {
-		return nil, cntname, fmt.Errorf(`E_CONTRACT`)
+		return nil, name, errContract
 	}
 
 	if contract.Block.Info.(*script.ContractInfo).Tx != nil {
@@ -68,7 +70,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 				continue
 			} else if strings.Contains(fitem.Tags, `signature`) && result != nil {
 				if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-					pref := getPrefix(data)
+					pref := client.Prefix()
 					signature := &model.Signature{}
 					signature.SetTablePrefix(pref)
 					found, err := signature.Get(ret[1])
@@ -78,7 +80,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 					}
 					if !found {
 						log.WithFields(log.Fields{"type": consts.NotFound, "signature": ret[1]}).Error("unknown signature")
-						return contract, ret[1], fmt.Errorf(apiErrors["E_UNKNOWNSIGN"])
+						return contract, ret[1], errUnknownSign
 					}
 					var sign TxSignJSON
 					err = json.Unmarshal([]byte(signature.Value), &sign)
@@ -86,7 +88,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 						log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling sign from json")
 						break
 					}
-					sign.ForSign = fmt.Sprintf(`%s,%d`, (*result).Time, uint64(data.keyId))
+					sign.ForSign = fmt.Sprintf(`%s,%d`, (*result).Time, uint64(client.KeyID))
 					for _, isign := range sign.Params {
 						sign.ForSign += fmt.Sprintf(`,%v`, strings.TrimSpace(r.FormValue(isign.Param)))
 					}

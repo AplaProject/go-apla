@@ -5,38 +5,50 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
-type componentModel interface {
+type component interface {
 	SetTablePrefix(prefix string)
 	Get(name string) (bool, error)
 }
 
-func getPageRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	return getInterfaceRow(w, r, data, logger, &model.Page{})
+func pageRowHandler() func(w http.ResponseWriter, r *http.Request) {
+	return interfaceRowHandler(func() component {
+		return &model.Page{}
+	})
 }
 
-func getMenuRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	return getInterfaceRow(w, r, data, logger, &model.Menu{})
+func menuRowHandler() func(w http.ResponseWriter, r *http.Request) {
+	return interfaceRowHandler(func() component {
+		return &model.Menu{}
+	})
 }
 
-func getBlockInterfaceRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	return getInterfaceRow(w, r, data, logger, &model.BlockInterface{})
+func blockInterfaceRowHandler() func(w http.ResponseWriter, r *http.Request) {
+	return interfaceRowHandler(func() component {
+		return &model.BlockInterface{}
+	})
 }
 
-func getInterfaceRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, c componentModel) error {
-	c.SetTablePrefix(getPrefix(data))
-	ok, err := c.Get(data.ParamString("name"))
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
-		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)
+func interfaceRowHandler(fn func() component) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		logger := getLogger(r)
+		client := getClient(r)
+
+		c := fn()
+		c.SetTablePrefix(client.Prefix())
+		if ok, err := c.Get(params[keyName]); err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
+			errorResponse(w, errQuery, http.StatusInternalServerError)
+			return
+		} else if !ok {
+			errorResponse(w, errNotFound, http.StatusInternalServerError)
+			return
+		}
+
+		jsonResponse(w, c)
 	}
-	if !ok {
-		return errorAPI(w, `E_NOTFOUND`, http.StatusInternalServerError)
-	}
-
-	data.result = c
-
-	return nil
 }

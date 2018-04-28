@@ -7,13 +7,13 @@ import (
 )
 
 func TestGetMaxBlockID(t *testing.T) {
-	var ret getMaxBlockIDResult
+	var ret maxBlockIDResult
 	err := sendGet(`maxblockid`, nil, &ret)
 	assert.NoError(t, err)
 }
 
 func TestGetBlockInfo(t *testing.T) {
-	var ret getBlockInfoResult
+	var ret blockInfoResult
 	err := sendGet(`block/1`, nil, &ret)
 	assert.NoError(t, err)
 }

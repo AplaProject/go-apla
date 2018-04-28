@@ -25,8 +25,11 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
+
+const keyHash = "hash"
 
 type txstatusError struct {
 	Type  string `json:"type,omitempty"`
@@ -39,22 +42,27 @@ type txstatusResult struct {
 	Result  string         `json:"result"`
 }
 
-func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var status txstatusResult
+func txstatusHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
 
-	if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
+	status := &txstatusResult{}
+
+	if _, err := hex.DecodeString(params[keyHash]); err != nil {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding tx hash from hex")
-		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
+		errorResponse(w, errHashWrong, http.StatusBadRequest)
+		return
 	}
 	ts := &model.TransactionStatus{}
-	found, err := ts.Get([]byte(converter.HexToBin(data.params["hash"].(string))))
-	if err != nil {
+	hash := []byte(converter.HexToBin(params[keyHash]))
+	if found, err := ts.Get(hash); err != nil {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("getting transaction status by hash")
-		return errorAPI(w, err, http.StatusInternalServerError)
-	}
-	if !found {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "key": []byte(converter.HexToBin(data.params["hash"].(string)))}).Error("getting transaction status by hash")
-		return errorAPI(w, `E_HASHNOTFOUND`, http.StatusBadRequest)
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
+	} else if !found {
+		logger.WithFields(log.Fields{"type": consts.NotFound, "key": hash}).Error("getting transaction status by hash")
+		errorResponse(w, `E_HASHNOTFOUND`, http.StatusBadRequest)
+		return
 	}
 	if ts.BlockID > 0 {
 		status.BlockID = converter.Int64ToStr(ts.BlockID)
@@ -68,6 +76,6 @@ func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 			}
 		}
 	}
-	data.result = &status
-	return nil
+
+	jsonResponse(w, status)
 }

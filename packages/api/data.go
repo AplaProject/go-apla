@@ -27,7 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
-	hr "github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -35,55 +35,54 @@ const binaryColumn = "data"
 
 var errWrongHash = errors.New("Wrong hash")
 
-func dataHandler() hr.Handle {
-	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
-		tblname := ps.ByName("table")
-		column := ps.ByName("column")
+func dataHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
 
-		if strings.Contains(tblname, model.BinaryTableSuffix) && column == binaryColumn {
-			binary(w, r, ps)
-			return
-		}
+	// TODO убрать
+	// if strings.Contains(table, model.BinaryTableSuffix) && column == binaryColumn {
+	// 	binaryHandler(w, r)
+	// 	return
+	// }
 
-		data, err := model.GetColumnByID(tblname, column, ps.ByName(`id`))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting data from table")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
-			return
-		}
-
-		if fmt.Sprintf(`%x`, md5.Sum([]byte(data))) != strings.ToLower(ps.ByName(`hash`)) {
-			log.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Write([]byte(data))
+	data, err := model.GetColumnByID(params["table"], params["column"], params["id"])
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting data from table")
+		errorResponse(w, errNotFound, http.StatusNotFound)
 		return
-	})
+	}
+
+	if fmt.Sprintf(`%x`, md5.Sum([]byte(data))) != strings.ToLower(params["hash"]) {
+		logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
+		errorResponse(w, errNotFound, http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Write([]byte(data))
+	return
 }
 
-func binary(w http.ResponseWriter, r *http.Request, ps hr.Params) {
+func binaryHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
+
 	bin := model.Binary{}
-	bin.SetTableName(ps.ByName("table"))
+	bin.SetTablePrefix(params["prefix"])
 
-	found, err := bin.GetByID(converter.StrToInt64(ps.ByName("id")))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Errorf("getting binary by id")
-		errorAPI(w, "E_SERVER", http.StatusInternalServerError)
+	if found, err := bin.GetByID(converter.StrToInt64(params["id"])); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Errorf("getting binary by id")
+		errorResponse(w, errServer, http.StatusInternalServerError)
+		return
+	} else if !found {
+		errorResponse(w, errNotFound, http.StatusNotFound)
 		return
 	}
 
-	if !found {
-		errorAPI(w, "E_SERVER", http.StatusNotFound)
-		return
-	}
-
-	if bin.Hash != strings.ToLower(ps.ByName("hash")) {
-		log.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
-		errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+	if bin.Hash != strings.ToLower(params["hash"]) {
+		logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
+		errorResponse(w, errNotFound, http.StatusNotFound)
 		return
 	}
 

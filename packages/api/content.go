@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -49,17 +51,19 @@ const (
 	strOne  = `1`
 )
 
-func initVars(r *http.Request, data *apiData) *map[string]string {
+func initVars(r *http.Request) *map[string]string {
+	client := getClient(r)
+
 	vars := make(map[string]string)
 	for name := range r.Form {
 		vars[name] = r.FormValue(name)
 	}
 	vars[`_full`] = `0`
-	vars[`ecosystem_id`] = converter.Int64ToStr(data.ecosystemId)
-	vars[`key_id`] = converter.Int64ToStr(data.keyId)
-	vars[`isMobile`] = data.isMobile
-	vars[`role_id`] = converter.Int64ToStr(data.roleId)
-	vars[`ecosystem_name`] = data.ecosystemName
+	vars[`ecosystem_id`] = converter.Int64ToStr(client.EcosystemID)
+	vars[`key_id`] = converter.Int64ToStr(client.KeyID)
+	vars[`isMobile`] = client.IsMobile
+	vars[`role_id`] = converter.Int64ToStr(client.RoleID)
+	vars[`ecosystem_name`] = client.EcosystemName
 
 	if _, ok := vars[`lang`]; !ok {
 		vars[`lang`] = r.Header.Get(`Accept-Language`)
@@ -68,48 +72,68 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 	return &vars
 }
 
-func pageValue(w http.ResponseWriter, data *apiData, logger *log.Entry) (*model.Page, error) {
+func pageValue(w http.ResponseWriter, r *http.Request) (*model.Page, bool) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
+	client := getClient(r)
+
 	page := &model.Page{}
-	page.SetTablePrefix(getPrefix(data))
-	found, err := page.Get(data.params[`name`].(string))
-	if err != nil {
+	page.SetTablePrefix(client.Prefix())
+	if found, err := page.Get(params[keyName]); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
-		return nil, errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
-	}
-	if !found {
+		errorResponse(w, errServer, http.StatusInternalServerError)
+		return nil, false
+	} else if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("page not found")
-		return nil, errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		errorResponse(w, errNotFound, http.StatusNotFound)
+		return nil, false
 	}
-	return page, nil
+	return page, true
 }
 
-func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	page, err := pageValue(w, data, logger)
-	if err != nil {
-		return err
+func getPage(w http.ResponseWriter, r *http.Request) (result *contentResult, ok bool) {
+	page, ok := pageValue(w, r)
+	if !ok {
+		return
 	}
-	menu, err := model.Single(`SELECT value FROM "`+getPrefix(data)+`_menu" WHERE name = ?`,
+
+	client := getClient(r)
+	logger := getLogger(r)
+
+	// TODO: перенести в модели
+	menu, err := model.Single(`SELECT value FROM "`+client.Prefix()+`_menu" WHERE name = ?`,
 		page.Menu).String()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting single from DB")
-		return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting single from DB")
+		errorResponse(w, errServer, http.StatusInternalServerError)
+		return
 	}
-	var wg sync.WaitGroup
-	var timeout bool
+
+	var (
+		wg      sync.WaitGroup
+		timeout bool
+	)
+
 	wg.Add(2)
 	success := make(chan bool, 1)
 	go func() {
 		defer wg.Done()
 
-		ret := template.Template2JSON(page.Value, &timeout, initVars(r, data))
+		vars := initVars(r)
+
+		ret := template.Template2JSON(page.Value, &timeout, vars)
 		if timeout {
 			return
 		}
-		retmenu := template.Template2JSON(menu, &timeout, initVars(r, data))
+		retmenu := template.Template2JSON(menu, &timeout, vars)
 		if timeout {
 			return
 		}
-		data.result = &contentResult{Tree: ret, Menu: page.Menu, MenuTree: retmenu}
+		result = &contentResult{
+			Tree:     ret,
+			Menu:     page.Menu,
+			MenuTree: retmenu,
+		}
 		success <- true
 	}()
 	go func() {
@@ -125,71 +149,107 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	}()
 	wg.Wait()
 	close(success)
+
 	if timeout {
-		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error(page.Name + " is a heavy page")
-		return errorAPI(w, `E_HEAVYPAGE`, http.StatusInternalServerError)
+		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error(page.Name + " is a heavy page")
+		errorResponse(w, errHeavyPage, http.StatusInternalServerError)
+		return
 	}
-	return nil
+
+	return result, true
 }
 
-func getPageHash(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	err = getPage(w, r, data, logger)
-	if err == nil {
-		var out, ret []byte
-		out, err = json.Marshal(data.result.(*contentResult))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("getting string for hash")
-			return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
-		}
-		ret, err = crypto.Hash(out)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating hash of the page")
-			return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
-		}
-		data.result = &hashResult{Hash: hex.EncodeToString(ret)}
+func getPageHandler(w http.ResponseWriter, r *http.Request) {
+	result, ok := getPage(w, r)
+	if !ok {
+		return
 	}
-	return
+
+	jsonResponse(w, result)
 }
 
-func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	menu := &model.Menu{}
-	menu.SetTablePrefix(getPrefix(data))
-	found, err := menu.Get(data.params[`name`].(string))
+func getPageHashHandler(w http.ResponseWriter, r *http.Request) {
+	result, ok := getPage(w, r)
+	if !ok {
+		return
+	}
 
+	logger := getLogger(r)
+
+	out, err := json.Marshal(result)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
-		return errorAPI(w, err, http.StatusBadRequest)
+		logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("getting string for hash")
+		errorResponse(w, errServer, http.StatusInternalServerError)
+		return
 	}
-	if !found {
-		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("menu not found")
-		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+	ret, err := crypto.Hash(out)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating hash of the page")
+		errorResponse(w, errServer, http.StatusInternalServerError)
+		return
 	}
-	var timeout bool
-	ret := template.Template2JSON(menu.Value, &timeout, initVars(r, data))
-	data.result = &contentResult{Tree: ret, Title: menu.Title}
-	return nil
+
+	jsonResponse(w, &hashResult{Hash: hex.EncodeToString(ret)})
 }
 
-func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func getMenuHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	client := getClient(r)
+	logger := getLogger(r)
+
+	menu := &model.Menu{}
+	menu.SetTablePrefix(client.Prefix())
+	if found, err := menu.Get(params[keyName]); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
+		errorResponse(w, err, http.StatusBadRequest)
+	} else if !found {
+		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("menu not found")
+		errorResponse(w, errNotFound, http.StatusNotFound)
+	}
+
 	var timeout bool
-	vars := initVars(r, data)
-	if data.params[`source`].(string) == strOne || data.params[`source`].(string) == strTrue {
+	ret := template.Template2JSON(menu.Value, &timeout, initVars(r))
+
+	jsonResponse(w, &contentResult{
+		Tree:  ret,
+		Title: menu.Title,
+	})
+}
+
+type jsonContentForm struct {
+	Form
+	Template string `schema:"template"`
+	Source   string `schema:"source"`
+}
+
+func jsonContentHandler(w http.ResponseWriter, r *http.Request) {
+	form := &jsonContentForm{}
+	if ok := ParseForm(w, r, form); !ok {
+		return
+	}
+
+	var timeout bool
+	vars := initVars(r)
+
+	// TODO: bool
+	if form.Source == strOne || form.Source == strTrue {
 		(*vars)["_full"] = strOne
 	}
-	ret := template.Template2JSON(data.params[`template`].(string), &timeout, vars)
-	data.result = &contentResult{Tree: ret}
-	return nil
+
+	ret := template.Template2JSON(form.Template, &timeout, vars)
+	jsonResponse(w, &contentResult{Tree: ret})
 }
 
-func getSource(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	page, err := pageValue(w, data, logger)
-	if err != nil {
-		return err
+func getSourceHandler(w http.ResponseWriter, r *http.Request) {
+	page, ok := pageValue(w, r)
+	if !ok {
+		return
 	}
+
 	var timeout bool
-	vars := initVars(r, data)
+	vars := initVars(r)
 	(*vars)["_full"] = strOne
 	ret := template.Template2JSON(page.Value, &timeout, vars)
-	data.result = &contentResult{Tree: ret}
-	return nil
+
+	jsonResponse(w, &contentResult{Tree: ret})
 }

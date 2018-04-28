@@ -29,13 +29,17 @@ type ecosystemsResult struct {
 	Number uint32 `json:"number"`
 }
 
-func ecosystems(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+func ecosystemsHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
 
 	number, err := model.GetNextID(nil, "1_ecosystems")
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error getting next ecosystem id")
-		return err
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
-	data.result = &ecosystemsResult{Number: uint32(number - 1)}
-	return
+
+	jsonResponse(w, &ecosystemsResult{
+		Number: uint32(number - 1),
+	})
 }

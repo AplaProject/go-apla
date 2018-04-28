@@ -285,7 +285,7 @@ func TestBinary(t *testing.T) {
 	}{
 		{
 			`Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`,
-			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/d` + hashImage + `"}}\]`,
 		},
 		{
 			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = 1 AND name = 'file'").Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,

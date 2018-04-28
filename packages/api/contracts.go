@@ -29,52 +29,68 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	defaultPaginatorLimit = 25
+)
+
 type contractsResult struct {
 	Count string              `json:"count"`
 	List  []map[string]string `json:"list"`
 }
 
-func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var limit int
+type paginatorForm struct {
+	Form
+	Limit  int   `schema:"limit"`
+	Offset int64 `schema:"offset"`
+}
 
-	table := getPrefix(data) + `_contracts`
+func (f *paginatorForm) Validate(w http.ResponseWriter, r *http.Request) bool {
+	if f.Limit <= 0 {
+		f.Limit = defaultPaginatorLimit
+	}
+	return true
+}
 
+func contractsHandler(w http.ResponseWriter, r *http.Request) {
+	form := &paginatorForm{}
+	if ok := ParseForm(w, r, form); !ok {
+		return
+	}
+
+	client := getClient(r)
+	logger := getLogger(r)
+
+	// TODO: перенести запрос в модели
+	// table := getPrefix(data) + `_contracts`
+	table := fmt.Sprintf("%d_contracts", client.EcosystemID)
 	count, err := model.GetNextID(nil, table)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
 
-	if data.params[`limit`].(int64) > 0 {
-		limit = int(data.params[`limit`].(int64))
-	} else {
-		limit = 25
-	}
 	list, err := model.GetAll(`select * from "`+table+`" order by id desc`+
-		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
+		fmt.Sprintf(` offset %d `, form.Offset), form.Limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
 	for ind, val := range list {
-		if val[`wallet_id`] == `NULL` {
-			list[ind][`wallet_id`] = ``
-			list[ind][`address`] = ``
-		} else {
-			list[ind][`address`] = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
-		}
-		if val[`active`] == `NULL` {
-			list[ind][`active`] = ``
-		}
-		cntlist, err := script.ContractsList(val[`value`])
+		list[ind]["address"] = converter.AddressToString(converter.StrToInt64(val["wallet_id"]))
+		cntlist, err := script.ContractsList(val["value"])
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Error("getting contract list")
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+			errorResponse(w, err, http.StatusInternalServerError)
+			return
 		}
-		list[ind][`name`] = strings.Join(cntlist, `,`)
+		list[ind]["name"] = strings.Join(cntlist, `,`)
 	}
-	data.result = &listResult{
-		Count: converter.Int64ToStr(count - 1), List: list,
-	}
+
+	jsonResponse(w, &listResult{
+		Count: converter.Int64ToStr(count - 1),
+		List:  list,
+	})
 	return
 }

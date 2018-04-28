@@ -22,10 +22,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/vmihailenco/msgpack.v2"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -33,6 +29,11 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type contractResult struct {
@@ -42,44 +43,71 @@ type contractResult struct {
 	Result  string         `json:"result,omitempty"`
 }
 
-func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+type contractForm struct {
+	Form
+	PublicKey      hexValue `schema:"pubkey"`
+	Signature      hexValue `schema:"signature"`
+	Time           int64    `schema:"time"`
+	TokenEcosystem int64    `schema:"token_ecosystem"`
+	MaxSum         string   `schema:"max_sum"`
+	PayOver        string   `schema:"payover"`
+	SignedBy       int64    `schema:"signed_by"`
+}
+
+func (h *callContractHandlers) ContractHandler(w http.ResponseWriter, r *http.Request) {
+	form := &contractForm{}
+	if ok := ParseForm(w, r, form); !ok {
+		return
+	}
+
+	params := mux.Vars(r)
+	client := getClient(r)
+	logger := getLogger(r)
+
 	var (
 		hash, publicKey []byte
 		toSerialize     interface{}
-		requestID       = data.ParamString("request_id")
+		requestID       = params["request_id"]
 	)
 
-	req, ok := c.requests.GetRequest(requestID)
+	req, ok := h.requests.GetRequest(requestID)
 	if !ok {
-		return errorAPI(w, "E_REQUESTNOTFOUND", http.StatusNotFound, requestID)
+		errorResponse(w, errRequestNotFound, http.StatusNotFound, requestID)
+		return
 	}
-	contract := smart.VMGetContract(data.vm, req.Contract, uint32(data.ecosystemId))
+
+	// TODO: вынести в отдельную функцию
+	vm := smart.GetVM(false, client.EcosystemID)
+	contract := smart.VMGetContract(vm, req.Contract, uint32(client.EcosystemID))
 	if contract == nil {
-		return errorAPI(w, "E_CONTRACT", http.StatusBadRequest, req.Contract)
+		errorResponse(w, errContract, http.StatusBadRequest, req.Contract)
+		return
 	}
 
 	info := (*contract).Block.Info.(*script.ContractInfo)
 
 	var signedBy int64
-	signID := data.keyId
-	if data.params[`signed_by`] != nil {
-		signedBy = data.params[`signed_by`].(int64)
-		signID = signedBy
+	signID := client.KeyID
+	if form.SignedBy != 0 {
+		signedBy = form.SignedBy
+		signID = form.SignedBy
 	}
 
 	key := &model.Key{}
-	key.SetTablePrefix(data.ecosystemId)
+	key.SetTablePrefix(client.EcosystemID)
 	_, err := key.Get(signID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
 	if key.Deleted == 1 {
-		return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
+		errorResponse(w, errDeletedKey, http.StatusForbidden)
+		return
 	}
 	if len(key.PublicKey) == 0 {
-		if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
-			publicKey = data.params[`pubkey`].([]byte)
+		if len(form.PublicKey.Value()) > 0 {
+			publicKey = form.PublicKey.Value()
 			lenpub := len(publicKey)
 			if lenpub > 64 {
 				publicKey = publicKey[lenpub-64:]
@@ -87,16 +115,18 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		}
 		if len(publicKey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
-			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
+			errorResponse(w, errEmptyPublic, http.StatusBadRequest)
+			return
 		}
 	} else {
 		logger.Warning("public key for wallet not found")
 		publicKey = []byte("null")
 	}
-	signature := data.params[`signature`].([]byte)
+	signature := form.Signature.Value()
 	if len(signature) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signature is empty")
-		return errorAPI(w, `E_EMPTYSIGN`, http.StatusBadRequest)
+		errorResponse(w, errEmptySign, http.StatusBadRequest)
+		return
 	}
 	idata := make([]byte, 0)
 	if info.Tx != nil {
@@ -105,13 +135,15 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 			if fitem.ContainsTag(script.TagFile) {
 				file, err := req.ReadFile(fitem.Name)
 				if err != nil {
-					return errorAPI(w, err.Error(), http.StatusInternalServerError)
+					errorResponse(w, err, http.StatusInternalServerError)
+					return
 				}
 
 				serialFile, err := msgpack.Marshal(file)
 				if err != nil {
 					logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling file to msgpack")
-					return errorAPI(w, err, http.StatusInternalServerError)
+					errorResponse(w, err, http.StatusInternalServerError)
+					return
 				}
 
 				idata = append(append(idata, converter.EncodeLength(int64(len(serialFile)))...), serialFile...)
@@ -163,40 +195,43 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 	toSerialize = tx.SmartContract{
 		Header: tx.Header{
 			Type:          int(info.ID),
-			Time:          converter.StrToInt64(data.params[`time`].(string)),
-			EcosystemID:   data.ecosystemId,
-			KeyID:         data.keyId,
-			RoleID:        data.roleId,
+			Time:          form.Time,
+			EcosystemID:   client.EcosystemID,
+			KeyID:         client.KeyID,
+			RoleID:        client.RoleID,
 			PublicKey:     publicKey,
 			NetworkID:     consts.NETWORK_ID,
 			BinSignatures: converter.EncodeLengthPlusData(signature),
 		},
 		RequestID:      req.ID,
-		TokenEcosystem: data.params[`token_ecosystem`].(int64),
-		MaxSum:         data.params[`max_sum`].(string),
-		PayOver:        data.params[`payover`].(string),
+		TokenEcosystem: form.TokenEcosystem,
+		MaxSum:         form.MaxSum,
+		PayOver:        form.PayOver,
 		SignedBy:       signedBy,
 		Data:           idata,
 	}
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
-	if data.vde {
-		ret, err := VDEContract(serializedData, data)
-		if err != nil {
-			return errorAPI(w, err, http.StatusInternalServerError)
-		}
-		data.result = ret
-		return nil
+	if client.IsVDE {
+		// TODO: сделать поддержку vde
+		// ret, err := VDEContract(serializedData, data)
+		// if err != nil {
+		// 	return errorAPI(w, err, http.StatusInternalServerError)
+		// }
+		// data.result = ret
+		return
 	}
-	if hash, err = model.SendTx(int64(info.ID), data.keyId,
+	if hash, err = model.SendTx(int64(info.ID), client.KeyID,
 		append([]byte{128}, serializedData...)); err != nil {
-		return errorAPI(w, err, http.StatusInternalServerError)
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
-	data.result = &contractResult{Hash: hex.EncodeToString(hash)}
-	return nil
+
+	jsonResponse(w, &contractResult{Hash: hex.EncodeToString(hash)})
 }
 
 func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {

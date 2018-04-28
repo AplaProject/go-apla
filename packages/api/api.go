@@ -26,10 +26,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
-	hr "github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -38,13 +34,14 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/schema"
+	hr "github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
 )
 
-const (
-	jwtPrefix = "Bearer "
-	jwtExpire = 36000 // By default, seconds
-)
-
+// TODO удалить
 type apiData struct {
 	status        int
 	result        interface{}
@@ -57,6 +54,23 @@ type apiData struct {
 	vde           bool
 	vm            *script.VM
 	token         *jwt.Token
+}
+
+type Client struct {
+	KeyID         int64
+	EcosystemID   int64
+	EcosystemName string
+	RoleID        int64
+	IsMobile      string
+	IsVDE         bool
+}
+
+func (c *Client) Prefix() (prefix string) {
+	prefix = converter.Int64ToStr(c.EcosystemID)
+	if c.IsVDE {
+		prefix += `_vde`
+	}
+	return
 }
 
 // ParamString reaturs string value of the api params
@@ -94,8 +108,10 @@ const (
 	pOptional = 0x100
 )
 
+// TODO: убрать
 type apiHandle func(http.ResponseWriter, *http.Request, *apiData, *log.Entry) error
 
+// TODO: убрать
 func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
 	var (
 		msg, errCode, errParams string
@@ -172,6 +188,8 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 			err  error
 			data = &apiData{}
 		)
+
+		// TODO: перенесено в LoggerMiddleware
 		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
 		requestLogger.Info("received http request")
 
@@ -215,26 +233,27 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 	})
 }
 
+// TODO: удалить, перенесено в TokenMiddleware
 func fillToken(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	token, err := jwtToken(r)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("starting session")
-		errmsg := err.Error()
-		expired := `token is expired by`
-		if strings.HasPrefix(errmsg, expired) {
-			return errorAPI(w, `E_TOKENEXPIRED`, http.StatusUnauthorized, errmsg[len(expired):])
-		}
-		return errorAPI(w, err, http.StatusBadRequest)
-	}
+	// token, err := jwtToken(r)
+	// if err != nil {
+	// 	logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("starting session")
+	// 	errmsg := err.Error()
+	// 	expired := `token is expired by`
+	// 	if strings.HasPrefix(errmsg, expired) {
+	// 		return errorAPI(w, `E_TOKENEXPIRED`, http.StatusUnauthorized, errmsg[len(expired):])
+	// 	}
+	// 	return errorAPI(w, err, http.StatusBadRequest)
+	// }
 
-	data.token = token
-	if token != nil && token.Valid {
-		if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
-			if err := fillTokenData(data, claims, logger); err != nil {
-				return errorAPI(w, "E_SERVER", http.StatusNotFound, err)
-			}
-		}
-	}
+	// data.token = token
+	// if token != nil && token.Valid {
+	// 	if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
+	// 		if err := fillTokenData(data, claims, logger); err != nil {
+	// 			return errorAPI(w, "E_SERVER", http.StatusNotFound, err)
+	// 		}
+	// 	}
+	// }
 
 	return nil
 }
@@ -277,25 +296,30 @@ func fillParams(params map[string]int) apiHandle {
 	}
 }
 
-func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (int64, string, error) {
-	ecosystemID := data.ecosystemId
-	if data.params[`ecosystem`].(int64) > 0 {
-		ecosystemID = data.params[`ecosystem`].(int64)
+func checkEcosystem(w http.ResponseWriter, r *http.Request) (ecosystemID int64, prefix string, ok bool) {
+	client := getClient(r)
+	ecosystemID = client.EcosystemID
+	paramEcosystemID := converter.StrToInt64(r.FormValue("ecosystem"))
+	if paramEcosystemID > 0 {
+		logger := getLogger(r)
 		count, err := model.GetNextID(nil, "1_ecosystems")
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id ecosystems")
-			return 0, ``, errorAPI(w, err, http.StatusBadRequest)
+			errorResponse(w, err, http.StatusInternalServerError)
+			return
 		}
-		if ecosystemID >= count {
+		if paramEcosystemID >= count {
 			logger.WithFields(log.Fields{"state_id": ecosystemID, "count": count, "type": consts.ParameterExceeded}).Error("state_id is larger then max count")
-			return 0, ``, errorAPI(w, `E_ECOSYSTEM`, http.StatusBadRequest, ecosystemID)
+			errorResponse(w, errEcosystem, http.StatusBadRequest, ecosystemID)
+			return
 		}
+		ecosystemID = paramEcosystemID
 	}
-	prefix := converter.Int64ToStr(ecosystemID)
-	if data.vde {
+	prefix = converter.Int64ToStr(ecosystemID)
+	if client.IsVDE {
 		prefix += `_vde`
 	}
-	return ecosystemID, prefix, nil
+	return ecosystemID, prefix, true
 }
 
 func fillTokenData(data *apiData, claims *JWTClaims, logger *log.Entry) error {
@@ -317,4 +341,63 @@ func fillTokenData(data *apiData, claims *JWTClaims, logger *log.Entry) error {
 
 	data.ecosystemName = ecosystem.Name
 	return nil
+}
+
+type Form struct{}
+
+func (f *Form) Validate(w http.ResponseWriter, r *http.Request) bool {
+	return true
+}
+
+type FormValidater interface {
+	Validate(w http.ResponseWriter, r *http.Request) bool
+}
+
+func ParseForm(w http.ResponseWriter, r *http.Request, f FormValidater) bool {
+	r.ParseForm()
+	decoder := schema.NewDecoder()
+	decoder.IgnoreUnknownKeys(true)
+	if err := decoder.Decode(f, r.PostForm); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return false
+	}
+	return f.Validate(w, r)
+}
+
+type ecosystemForm struct {
+	Form
+	EcosystemID     int64  `schema:"ecosystem"`
+	EcosystemPrefix string `schema:"-"`
+}
+
+func (f *ecosystemForm) Validate(w http.ResponseWriter, r *http.Request) bool {
+	return f.ValidateEcosystem(w, r)
+}
+
+func (f *ecosystemForm) ValidateEcosystem(w http.ResponseWriter, r *http.Request) bool {
+	client := getClient(r)
+	logger := getLogger(r)
+
+	if f.EcosystemID > 0 {
+		count, err := model.GetNextID(nil, "1_ecosystems")
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id of ecosystems")
+			errorResponse(w, err, http.StatusInternalServerError)
+			return false
+		}
+		if f.EcosystemID >= count {
+			logger.WithFields(log.Fields{"state_id": f.EcosystemID, "count": count, "type": consts.ParameterExceeded}).Error("ecosystem is larger then max count")
+			errorResponse(w, errEcosystem, http.StatusBadRequest, f.EcosystemID)
+			return false
+		}
+	} else {
+		f.EcosystemID = client.EcosystemID
+	}
+
+	f.EcosystemPrefix = converter.Int64ToStr(f.EcosystemID)
+	if client.IsVDE {
+		f.EcosystemPrefix += `_vde`
+	}
+
+	return true
 }

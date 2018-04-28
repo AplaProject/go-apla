@@ -21,6 +21,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/mux"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/script"
@@ -28,6 +30,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
+
+const multipartFormMaxMemory = 32 << 20 // 32 MB
 
 type prepareResult struct {
 	ID      string            `json:"request_id"`
@@ -37,29 +41,46 @@ type prepareResult struct {
 	Time    string            `json:"time"`
 }
 
-type contractHandlers struct {
+type prepareForm struct {
+	Form
+	TokenEcosystem int64  `schema:"token_ecosystem"`
+	MaxSum         string `schema:"max_sum"`
+	PayOver        string `schema:"payover"`
+	SignedBy       int64  `schema:"signed_by"`
+}
+
+type callContractHandlers struct {
 	requests *tx.RequestBuffer
 }
 
-func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func (h *callContractHandlers) PrepareHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseMultipartForm(multipartFormMaxMemory)
+
+	form := &prepareForm{}
+	if ok := ParseForm(w, r, form); !ok {
+		return
+	}
+
+	params := mux.Vars(r)
+	client := getClient(r)
+
 	var (
 		result  prepareResult
 		smartTx tx.SmartContract
 	)
 
-	contract, parerr, err := validateSmartContract(r, data, &result)
+	contract, parerr, err := validateSmartContract(r, params["name"], &result)
 	if err != nil {
-		if strings.HasPrefix(err.Error(), `E_`) {
-			return errorAPI(w, err.Error(), http.StatusBadRequest, parerr)
-		}
-		return errorAPI(w, err, http.StatusBadRequest)
+		errorResponse(w, err, http.StatusBadRequest, parerr)
+		return
 	}
+
 	info := (*contract).Block.Info.(*script.ContractInfo)
-	smartTx.TokenEcosystem = data.params[`token_ecosystem`].(int64)
-	smartTx.MaxSum = data.params[`max_sum`].(string)
-	smartTx.PayOver = data.params[`payover`].(string)
-	if data.params[`signed_by`] != nil {
-		smartTx.SignedBy = data.params[`signed_by`].(int64)
+	smartTx.TokenEcosystem = form.TokenEcosystem
+	smartTx.MaxSum = form.MaxSum
+	smartTx.PayOver = form.PayOver
+	if form.SignedBy != 0 {
+		smartTx.SignedBy = form.SignedBy
 	}
 
 	req := h.requests.NewRequest(contract.Name)
@@ -68,17 +89,17 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 	smartTx.Header = tx.Header{
 		Type:        int(info.ID),
 		Time:        req.Time.Unix(),
-		EcosystemID: data.ecosystemId,
-		KeyID:       data.keyId,
-		RoleID:      data.roleId,
+		EcosystemID: client.EcosystemID,
+		KeyID:       client.KeyID,
+		RoleID:      client.RoleID,
 		NetworkID:   consts.NETWORK_ID,
 	}
 
 	forsign := []string{smartTx.ForSign()}
 	if info.Tx != nil {
-		f, err := forsignFormData(w, r, logger, req, *info.Tx)
-		if err != nil {
-			return err
+		f, ok := forsignFormData(w, r, req, *info.Tx)
+		if !ok {
+			return
 		}
 		forsign = append(forsign, f...)
 	}
@@ -88,28 +109,31 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 	result.Time = converter.Int64ToStr(req.Time.Unix())
 	result.Values = make(map[string]string)
 
-	data.result = result
-	return nil
+	jsonResponse(w, result)
 }
 
-func forsignFormData(w http.ResponseWriter, r *http.Request, logger *log.Entry, req *tx.Request, fields []*script.FieldInfo) ([]string, error) {
+func forsignFormData(w http.ResponseWriter, r *http.Request, req *tx.Request, fields []*script.FieldInfo) ([]string, bool) {
+	logger := getLogger(r)
+
 	forsign := []string{}
 	for _, fitem := range fields {
-		if strings.Contains(fitem.Tags, `signature`) {
+		if fitem.ContainsTag(script.TagSignature) {
 			continue
 		}
 		var val string
 		if fitem.ContainsTag(script.TagFile) {
 			file, header, err := r.FormFile(fitem.Name)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting multipart file")
-				return nil, errorAPI(w, err.Error(), http.StatusBadRequest)
+				logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting multipart file")
+				errorResponse(w, err, http.StatusBadRequest)
+				return nil, false
 			}
 			fileHeader, err := req.WriteFile(fitem.Name, header.Header.Get(`Content-Type`), file)
 			file.Close()
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing file")
-				return nil, errorAPI(w, err.Error(), http.StatusInternalServerError)
+				logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing file")
+				errorResponse(w, err, http.StatusInternalServerError)
+				return nil, false
 			}
 			forsign = append(forsign, fileHeader.MimeType, fileHeader.Hash)
 			continue
@@ -145,5 +169,5 @@ func forsignFormData(w http.ResponseWriter, r *http.Request, logger *log.Entry, 
 		forsign = append(forsign, val)
 	}
 
-	return forsign, nil
+	return forsign, true
 }

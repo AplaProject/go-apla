@@ -17,19 +17,31 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
 
+const tokenExpireMsg = "token is expired by"
+
 var (
-	jwtSecret = crypto.RandSeq(15)
+	jwtSecret       = []byte(crypto.RandSeq(15))
+	jwtPrefix       = "Bearer "
+	jwtExpire int64 = 36000 // By default, seconds
+
+	authHeader = "AUTHORIZATION"
+
+	errJWTAuthValue      = errors.New("wrong authorization value")
+	errEcosystemNotFound = errors.New("ecosystem not found")
 )
 
 // JWTClaims is storing jwt claims
@@ -42,17 +54,78 @@ type JWTClaims struct {
 	jwt.StandardClaims
 }
 
-func jwtToken(r *http.Request) (*jwt.Token, error) {
-	auth := r.Header.Get(`Authorization`)
-	if len(auth) == 0 {
+func TokenMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := getLogger(r)
+
+		token, err := parseJWTToken(r.Header.Get(authHeader))
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("starting session")
+			if err, ok := err.(jwt.ValidationError); ok {
+				if (err.Errors & jwt.ValidationErrorExpired) != 0 {
+					errorResponse(w, errTokenExpired, http.StatusUnauthorized, err.Error())
+					return
+				}
+			}
+			errorResponse(w, err, http.StatusBadRequest)
+			return
+		}
+
+		if token != nil && token.Valid {
+			r = setToken(r, token)
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func ClientMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := getToken(r)
+
+		var client *Client
+		if token != nil { // get client from token
+			var err error
+			if client, err = getClientFromToken(token); err != nil {
+				errorResponse(w, errServer, http.StatusInternalServerError)
+				return
+			}
+		}
+		if client == nil {
+			client = &Client{}
+		}
+		r = setClient(r, client)
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func AuthRequire(next func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		client := getClient(r)
+		if client != nil && client.KeyID != 0 {
+			next(w, r)
+			return
+		}
+
+		logger := getLogger(r)
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
+		errorResponse(w, errUnauthorized, http.StatusUnauthorized)
+	}
+}
+
+func parseJWTToken(header string) (*jwt.Token, error) {
+	if len(header) == 0 {
 		return nil, nil
 	}
-	if strings.HasPrefix(auth, jwtPrefix) {
-		auth = auth[len(jwtPrefix):]
+
+	if strings.HasPrefix(header, jwtPrefix) {
+		header = header[len(jwtPrefix):]
 	} else {
-		return nil, fmt.Errorf(`wrong authorization value`)
+		return nil, errJWTAuthValue
 	}
-	return jwt.ParseWithClaims(auth, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+
+	return jwt.ParseWithClaims(header, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
@@ -60,11 +133,42 @@ func jwtToken(r *http.Request) (*jwt.Token, error) {
 	})
 }
 
-func jwtGenerateToken(w http.ResponseWriter, claims JWTClaims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(jwtSecret))
+func getClientFromToken(token *jwt.Token) (*Client, error) {
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok {
+		return nil, nil
+	}
+	if len(claims.KeyID) == 0 {
+		return nil, nil
+	}
+
+	ecosystemID := converter.StrToInt64(claims.EcosystemID)
+	ecosystem := &model.Ecosystem{}
+	found, err := ecosystem.Get(ecosystemID)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
+		return nil, err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "id": ecosystemID, "error": errEcosystemNotFound}).Error("ecosystem not found")
+		return nil, err
+	}
+
+	return &Client{
+		EcosystemID:   converter.StrToInt64(claims.EcosystemID),
+		EcosystemName: ecosystem.Name,
+		KeyID:         converter.StrToInt64(claims.KeyID),
+		IsMobile:      claims.IsMobile,
+		RoleID:        converter.StrToInt64(claims.RoleID),
+	}, nil
 }
 
+func generateJWTToken(claims JWTClaims) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
+}
+
+// TODO: удалить перенесено в AuthRequire
 func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	if data.keyId == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
@@ -73,6 +177,7 @@ func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *l
 	return nil
 }
 
+// TODO: удалить
 func authState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	if data.keyId == 0 || data.ecosystemId <= 1 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("state is empty")

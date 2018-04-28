@@ -16,37 +16,111 @@
 
 package api
 
-var (
-	apiErrors = map[string]string{
-		`E_CONTRACT`:        `There is not %s contract`,
-		`E_DBNIL`:           `DB is nil`,
-		`E_DELETEDKEY`:      `The key is deleted`,
-		`E_ECOSYSTEM`:       `Ecosystem %d doesn't exist`,
-		`E_EMPTYPUBLIC`:     `Public key is undefined`,
-		`E_EMPTYSIGN`:       `Signature is undefined`,
-		`E_HASHWRONG`:       `Hash is incorrect`,
-		`E_HASHNOTFOUND`:    `Hash has not been found`,
-		`E_HEAVYPAGE`:       `This page is heavy`,
-		`E_INSTALLED`:       `Apla is already installed`,
-		`E_INVALIDWALLET`:   `Wallet %s is not valid`,
-		`E_NOTFOUND`:        `Page not found`,
-		`E_NOTINSTALLED`:    `Apla is not installed`,
-		`E_PERMISSION`:      `Permission denied`,
-		`E_QUERY`:           `DB query is wrong`,
-		`E_RECOVERED`:       `API recovered`,
-		`E_REFRESHTOKEN`:    `Refresh token is not valid`,
-		`E_SERVER`:          `Server error`,
-		`E_SIGNATURE`:       `Signature is incorrect`,
-		`E_UNKNOWNSIGN`:     `Unknown signature`,
-		`E_STATELOGIN`:      `%s is not a membership of ecosystem %s`,
-		`E_TABLENOTFOUND`:   `Table %s has not been found`,
-		`E_TOKEN`:           `Token is not valid`,
-		`E_TOKENEXPIRED`:    `Token is expired by %s`,
-		`E_UNAUTHORIZED`:    `Unauthorized`,
-		`E_UNDEFINEVAL`:     `Value %s is undefined`,
-		`E_UNKNOWNUID`:      `Unknown uid`,
-		`E_VDE`:             `Virtual Dedicated Ecosystem %d doesn't exist`,
-		`E_VDECREATED`:      `Virtual Dedicated Ecosystem is already created`,
-		`E_REQUESTNOTFOUND`: `Request %s doesn't exist`,
-	}
+import (
+	"fmt"
+	"net/http"
 )
+
+type errorType string
+
+func (et errorType) Error() string {
+	return string(et)
+}
+
+const (
+	errContract        errorType = "E_CONTRACT"
+	errDBNil           errorType = "E_DBNIL"
+	errDeletedKey      errorType = "E_DELETEDKEY"
+	errEcosystem       errorType = "E_ECOSYSTEM"
+	errEmptyPublic     errorType = "E_EMPTYPUBLIC"
+	errEmptySign       errorType = "E_EMPTYSIGN"
+	errHashWrong       errorType = "E_HASHWRONG"
+	errHashNotFound    errorType = "E_HASHNOTFOUND"
+	errHeavyPage       errorType = "E_HEAVYPAGE"
+	errInstalled       errorType = "E_INSTALLED"
+	errInvalidWallet   errorType = "E_INVALIDWALLET"
+	errNotFound        errorType = "E_NOTFOUND"
+	errNotInstalled    errorType = "E_NOTINSTALLED"
+	errPermission      errorType = "E_PERMISSION"
+	errQuery           errorType = "E_QUERY"
+	errRecovered       errorType = "E_RECOVERED"
+	errRefreshToken    errorType = "E_REFRESHTOKEN"
+	errServer          errorType = "E_SERVER"
+	errSignature       errorType = "E_SIGNATURE"
+	errUnknownSign     errorType = "E_UNKNOWNSIGN"
+	errStateLogin      errorType = "E_STATELOGIN"
+	errTableNotFound   errorType = "E_TABLENOTFOUND"
+	errToken           errorType = "E_TOKEN"
+	errTokenExpired    errorType = "E_TOKENEXPIRED"
+	errUnauthorized    errorType = "E_UNAUTHORIZED"
+	errUndefineVal     errorType = "E_UNDEFINEVAL"
+	errUnknownUID      errorType = "E_UNKNOWNUID"
+	errVDE             errorType = "E_VDE"
+	errVDECreated      errorType = "E_VDECREATED"
+	errRequestNotFound errorType = "E_REQUESTNOTFOUND"
+	errCheckRole       errorType = "E_CHECKROLE"
+)
+
+var (
+	errorDescriptions = map[errorType]string{
+		errContract:        "There is not %s contract",
+		errDBNil:           "DB is nil",
+		errDeletedKey:      "The key is deleted",
+		errEcosystem:       "Ecosystem %d doesn't exist",
+		errEmptyPublic:     "Public key is undefined",
+		errEmptySign:       "Signature is undefined",
+		errHashWrong:       "Hash is incorrect",
+		errHashNotFound:    "Hash has not been found",
+		errHeavyPage:       "This page is heavy",
+		errInstalled:       "Apla is already installed",
+		errInvalidWallet:   "Wallet %s is not valid",
+		errNotFound:        "Page not found",
+		errNotInstalled:    "Apla is not installed",
+		errPermission:      "Permission denied",
+		errQuery:           "DB query is wrong",
+		errRecovered:       "API recovered",
+		errRefreshToken:    "Refresh token is not valid",
+		errServer:          "Server error",
+		errSignature:       "Signature is incorrect",
+		errUnknownSign:     "Unknown signature",
+		errStateLogin:      "%s is not a membership of ecosystem %s",
+		errTableNotFound:   "Table %s has not been found",
+		errToken:           "Token is not valid",
+		errTokenExpired:    "Token is expired by %s",
+		errUnauthorized:    "Unauthorized",
+		errUndefineVal:     "Value %s is undefined",
+		errUnknownUID:      "Unknown uid",
+		errVDE:             "Virtual Dedicated Ecosystem %d doesn't exist",
+		errVDECreated:      "Virtual Dedicated Ecosystem is already created",
+		errRequestNotFound: "Request %s doesn't exist",
+		errCheckRole:       "Check role",
+	}
+
+	//TODO: remove
+	apiErrors = map[string]string{}
+)
+
+type errResult struct {
+	Error   errorType `json:"error"`
+	Message string    `json:"msg"`
+}
+
+func errorResponse(w http.ResponseWriter, err interface{}, code int, params ...interface{}) {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(code)
+
+	result := &errResult{}
+
+	switch v := err.(type) {
+	case errorType:
+		result.Error = v
+		result.Message = fmt.Sprintf(errorDescriptions[v], params...)
+	case interface{}:
+		result.Error = errServer
+		if err, ok := v.(error); ok {
+			result.Message = err.Error()
+		}
+	}
+
+	jsonResponse(w, result)
+}

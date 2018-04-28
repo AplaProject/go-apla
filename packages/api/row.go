@@ -17,7 +17,10 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -26,22 +29,40 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const keyColumns = "columns"
+const keyID = "id"
+
 type rowResult struct {
 	Value map[string]string `json:"value"`
 }
 
-func row(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	cols := `*`
-	if len(data.params[`columns`].(string)) > 0 {
-		cols = converter.EscapeName(data.params[`columns`].(string))
-	}
-	table := converter.EscapeName(getPrefix(data) + `_` + data.params[`name`].(string))
-	row, err := model.GetOneRow(`SELECT `+cols+` FROM `+table+` WHERE id = ?`, data.params[`id`].(string)).String()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": data.params["name"].(string), "id": data.params["id"].(string)}).Error("getting one row")
-		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)
+type rowForm struct {
+	Columns string `schema:"columns"`
+}
+
+func rowHandler(w http.ResponseWriter, r *http.Request) {
+	columns := r.FormValue(keyColumns)
+	if len(columns) > 0 {
+		columns = converter.EscapeName(columns)
+	} else {
+		columns = "*"
 	}
 
-	data.result = &rowResult{Value: row}
-	return
+	params := mux.Vars(r)
+	client := getClient(r)
+	logger := getLogger(r)
+
+	// TODO: переделать на getPrefix(data)
+	// TODO: перенести в модели
+	table := converter.EscapeName(fmt.Sprintf("%d_%s", client.EcosystemID, params[keyName]))
+	row, err := model.GetOneRow(`SELECT `+columns+` FROM `+table+` WHERE id = ?`, params[keyID]).String()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": params[keyName], "id": params[keyID]}).Error("getting one row")
+		errorResponse(w, errQuery, http.StatusInternalServerError)
+		return
+	}
+
+	jsonResponse(w, &rowResult{
+		Value: row,
+	})
 }

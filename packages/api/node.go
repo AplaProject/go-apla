@@ -16,20 +16,7 @@
 
 package api
 
-import (
-	"encoding/hex"
-	"errors"
-	"net/http"
-
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
-
-	log "github.com/sirupsen/logrus"
-)
-
-func (h *contractHandlers) nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+/* func (h *callContractHandlers) nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var err error
 
 	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
@@ -47,7 +34,7 @@ func (h *contractHandlers) nodeContract(w http.ResponseWriter, r *http.Request, 
 	}
 	data.params[`signed_by`] = smart.PubToID(NodePublicKey)
 	prepareData := *data
-	if err = h.prepareContract(w, r, &prepareData, logger); err != nil {
+	if err = h.PrepareHandler(w, r); err != nil {
 		return err
 	}
 	result := prepareData.result.(prepareResult)
@@ -67,3 +54,4 @@ func (h *contractHandlers) nodeContract(w http.ResponseWriter, r *http.Request, 
 	}
 	return nil
 }
+*/

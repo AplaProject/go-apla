@@ -24,9 +24,12 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/gorilla/mux"
 
 	log "github.com/sirupsen/logrus"
 )
+
+const keyContractName = "name"
 
 type contractField struct {
 	Name string `json:"name"`
@@ -46,26 +49,30 @@ type getContractResult struct {
 	Name     string          `json:"name"`
 }
 
-func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var result getContractResult
+func contractInfoHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	client := getClient(r)
+	logger := getLogger(r)
 
-	cntname := data.params[`name`].(string)
-	contract := smart.VMGetContract(data.vm, cntname, uint32(data.ecosystemId))
+	// TODO: перенести в trash
+	vm := smart.GetVM(true, client.EcosystemID)
+
+	contract := smart.VMGetContract(vm, params[keyContractName], uint32(client.EcosystemID))
 	if contract == nil {
-		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": cntname}).Error("contract name")
-		return errorAPI(w, `E_CONTRACT`, http.StatusBadRequest, cntname)
+		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": params[keyContractName]}).Error("contract name")
+		errorResponse(w, errContract, http.StatusBadRequest, params[keyContractName])
+		return
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
-	fields := make([]contractField, 0)
-	result = getContractResult{Name: info.Name, StateID: info.Owner.StateID,
-		Active: info.Owner.Active, TableID: converter.Int64ToStr(info.Owner.TableID),
-		WalletID: converter.Int64ToStr(info.Owner.WalletID),
-		TokenID:  converter.Int64ToStr(info.Owner.TokenID),
-		Address:  converter.AddressToString(info.Owner.WalletID)}
 
+	fields := make([]contractField, 0)
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
-			field := contractField{Name: fitem.Name, Type: fitem.Type.String(), Tags: fitem.Tags}
+			field := contractField{
+				Name: fitem.Name,
+				Type: fitem.Type.String(),
+				Tags: fitem.Tags,
+			}
 
 			if strings.Contains(fitem.Tags, `hidden`) || strings.Contains(fitem.Tags, `signature`) {
 				field.HTML = `hidden`
@@ -87,8 +94,13 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *
 			fields = append(fields, field)
 		}
 	}
-	result.Fields = fields
 
-	data.result = result
-	return nil
+	jsonResponse(w, &getContractResult{
+		Name: info.Name, StateID: info.Owner.StateID,
+		Active: info.Owner.Active, TableID: converter.Int64ToStr(info.Owner.TableID),
+		WalletID: converter.Int64ToStr(info.Owner.WalletID),
+		TokenID:  converter.Int64ToStr(info.Owner.TokenID),
+		Address:  converter.AddressToString(info.Owner.WalletID),
+		Fields:   fields,
+	})
 }
