@@ -261,11 +261,11 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 ('10', 'Export', 'contract Export {
 
     func ReplaceValue(s string) string {
-		s = Replace(s, ` + "`" + `\` + "`" + `,` + "`" + `\\` + "`" + `)
-        s = Replace(s, "	", ` + "`\t`" + `)
-        s = Replace(s, "\n", ` + "`\n`" + `)
-        s = Replace(s, "\r", ` + "`\r`" + `)
-        s = Replace(s, ` + "`" + `"` + "`, " + "`\"`" + `)
+		s = Replace(s, ` + "`" + `\` + "`" + `, ` + "`" + `\\` + "`" + `)
+        s = Replace(s, ` + "`" + `	` + "`" + `, ` + "`" + `\t` + "`" + `)
+        s = Replace(s, "\n", ` + "`" + `\n` + "`" + `)
+        s = Replace(s, "\r", ` + "`" + `\r` + "`" + `)
+        s = Replace(s, ` + "`" + `"` + "`" + `, ` + "`" + `\"` + "`" + `)
         return s
     }
 
@@ -309,90 +309,91 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
         res_str = res_str + all_tables
 
-        res_str = Sprintf("{
-    \"name\": \"%%v\",
-    \"data\": [%%v]
-}", app_name, res_str)
+        res_str = Sprintf(` + "`" + `{
+    "name": "%%v",
+    "data": [%%v
+    ]
+}` + "`" + `, app_name, res_str)
 
         return res_str
     }
 
     func AddPage(page_name string, page_value string, page_conditions string, page_menu string) string {
         var s string
-        s = Sprintf("        {
-            \"Type\": \"pages\",
-            \"Name\": \"%%v\",
-            \"Value\": \"%%v\",
-            \"Conditions\": \"%%v\",
-            \"Menu\": \"%%v\"
-        }", page_name, page_value, page_conditions, page_menu)
+        s = Sprintf(` + "`" + `        {
+            "Type": "pages",
+            "Name": "%%v",
+            "Value": "%%v",
+            "Conditions": "%%v",
+            "Menu": "%%v"
+        }` + "`" + `, page_name, page_value, page_conditions, page_menu)
         return s
     }
 
     func AddMenu(menu_name string, menu_value string, menu_title string, menu_conditions string) string {
         var s string
-        s = Sprintf("        {
-            \Type\": \"menu\",
-            \"Name\": \"%%v\",
-            \"Value\": \"%%v\",
-            \"Title\": \"%%v\",
-            \"Conditions\": \"%%v\"
-        }", menu_name, menu_value, menu_title, menu_conditions)
+        s = Sprintf(` + "`" + `        {
+            "Type": "menu",
+            "Name": "%%v",
+            "Value": "%%v",
+            "Title": "%%v",
+            "Conditions": "%%v"
+        }` + "`" + `, menu_name, menu_value, menu_title, menu_conditions)
         return s
     }
 
     func AddContract(contract_name string, contract_value string, contract_conditions string) string {
         var s string
-        s = Sprintf("        {
-            \"Type\": \"contracts\",
-            \"Name\": \"%%v\",
-            \"Value\": \"%%v\",
-            \"Conditions\": \"%%v\"
-        }", contract_name, contract_value, contract_conditions)
+        s = Sprintf(` + "`" + `        {
+            "Type": "contracts",
+            "Name": "%%v",
+            "Value": "%%v",
+            "Conditions": "%%v"
+        }` + "`" + `, contract_name, contract_value, contract_conditions)
         return s
     }
 
     func AddBlock(block_name string, block_value string, block_conditions string) string {
         var s string
-        s = Sprintf("        {
-            \"Type\": \"blocks\",
-            \"Name\": \"%%v\",
-            \"Value\": \"%%v\",
-            \"Conditions\": \"%%v\"
-        }", block_name, block_value, block_conditions)
+        s = Sprintf(` + "`" + `        {
+            "Type": "blocks",
+            "Name": "%%v",
+            "Value": "%%v",
+            "Conditions": "%%v"
+        }` + "`" + `, block_name, block_value, block_conditions)
         return s
     }
 
     func AddLanguage(language_name string, language_conditions string, language_trans string) string {
         var s string
-        s = Sprintf("        {
-            \"Type\": \"languages\",
-            \"Name\": \"%%v\",
-            \"Conditions\": \"%%v\",
-            \"Trans\": \"%%v\"
-        }", language_name, language_conditions, language_trans)
+        s = Sprintf(` + "`" + `        {
+            "Type": "languages",
+            "Name": "%%v",
+            "Conditions": "%%v",
+            "Trans": "%%v"
+        }` + "`" + `, language_name, language_conditions, language_trans)
         return s
     }
 
     func AddParameter(parameter_name string, parameter_value string, parameter_conditions string) string {
         var s string
-        s = Sprintf("        {
-            \"Type\": \"app_params\",
-            \"Name\": \"%%v\",
-            \"Value\": \"%%v\",
-            \"Conditions\": \"%%v\"
-        }", parameter_name, parameter_value, parameter_conditions)
+        s = Sprintf(` + "`" + `        {
+            "Type": "app_params",
+            "Name": "%%v",
+            "Value": "%%v",
+            "Conditions": "%%v"
+        }` + "`" + `, parameter_name, parameter_value, parameter_conditions)
         return s
     }
 
     func AddTable(table_name string, table_columns string, table_permissions string) string {
         var s string
-        s = Sprintf("        {
-            \"Type\": \"tables\",
-            \"Name\": \"%%v\",
-            \"Columns\": \"%%v\",
-            \"Permissions\": \"%%v\"
-        }", table_name, table_columns, table_permissions)
+        s = Sprintf(` + "`" + `        {
+            "Type": "tables",
+            "Name": "%%v",
+            "Columns": "%%v",
+            "Permissions": "%%v"
+        }` + "`" + `, table_name, table_columns, table_permissions)
         return s
     }
 
@@ -422,11 +423,11 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 					var col_cond string
 					var col_type string
 
-					col_name = Replace(Str(clm[0]), "\"", "")
+					col_name = Replace(Str(clm[0]), ` + "`" + `"` + "`" + `, "")
 					col_cond = Str(clm[1])
 					col_type = GetColumnType(table_name, col_name)
 
-					s = Sprintf("{\"name\":\"%%v\",\"type\":\"%%v\",\"conditions\":%%v}", col_name, col_type, col_cond)
+					s = Sprintf(` + "`" + `{"name":"%%v","type":"%%v","conditions":%%v}` + "`" + `, col_name, col_type, col_cond)
 				}
 
                 if Size(result) > 0 {
@@ -499,7 +500,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             if Size(string_for_menu) > 0 {
                 string_for_menu = string_for_menu + ","
             }
-            string_for_menu = string_for_menu + Sprintf("%%v", page_menu)           
+            string_for_menu = string_for_menu + Sprintf("''%%v''", page_menu)           
 
             all_pages = all_pages + AddPage(page_name, page_value, page_conditions, page_menu)
             i = i + 1
