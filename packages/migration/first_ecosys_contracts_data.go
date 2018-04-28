@@ -1446,7 +1446,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 		$cur = DBFind("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id).Row()
 		if !$cur {
-			error Sprintf("Contract !%d does not exist", $Id)
+			error Sprintf("Contract %%d does not exist", $Id)
 		}
 		if $Value {
 			var list, curlist array
