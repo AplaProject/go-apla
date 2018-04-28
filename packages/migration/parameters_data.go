@@ -15,8 +15,8 @@ INSERT INTO "%[1]d_parameters" ("id","name", "value", "conditions") VALUES
 		('11','stylesheet', 'body {
 		  /* You can define your custom styles here or create custom CSS rules */
 		}', 'ContractConditions("MainCondition")'),
-		('13','max_block_user_tx', '100', 'ContractConditions("MainCondition")'),
-		('14','min_page_validate_count', '1', 'ContractConditions("MainCondition")'),
-		('15','max_page_validate_count', '6', 'ContractConditions("MainCondition")'),
-		('16','changing_blocks', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")');
+		('12','max_block_user_tx', '100', 'ContractConditions("MainCondition")'),
+		('13','min_page_validate_count', '1', 'ContractConditions("MainCondition")'),
+		('14','max_page_validate_count', '6', 'ContractConditions("MainCondition")'),
+		('15','changing_blocks', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")');
 `
