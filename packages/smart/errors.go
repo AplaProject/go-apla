@@ -32,6 +32,7 @@ const (
 	eManyColumns       = `Too many columns. Limit is %d`
 	eNotCondition      = `There is not %s in parameters`
 	eParamNotFound     = `Parameter %s has not been found`
+	eRecordNotFound    = `Record %s has not been found`
 	eTableExists       = `Table %s exists`
 	eTableNotFound     = `Table %s has not been found`
 	eUnknownContract   = `Unknown contract %s`
