@@ -1073,7 +1073,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
 			[]string{fromIDString}, true, true); ierr != nil {
-			return retError(ierr)
+			return retError(errCommission)
 		}
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")
 	}
