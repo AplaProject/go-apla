@@ -149,7 +149,6 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 		);
 		ALTER TABLE ONLY "%[1]d_parameters" ADD CONSTRAINT "%[1]d_parameters_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_parameters_index_name" ON "%[1]d_parameters" (name);
-	
 
 		DROP TABLE IF EXISTS "%[1]d_app_params";
 		CREATE TABLE "%[1]d_app_params" (
@@ -174,7 +173,6 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 		);
 		ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
-		
 		
 		DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (

@@ -94,16 +94,16 @@ var contracts = []smartContract{
 	}`, []smartParams{
 		{nil, map[string]string{`error`: `{"type":"panic","error":"unknown lexem $ [Ln:5 Col:6]"}`}},
 	}},
-
 	{`Price`, `contract Price {
 		action {
+			Test("int", Int("")+Int(nil)+2)
 			Test("price", 1)
 		}
 		func price() money {
 			return Money(100)
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`price`: `1`}},
+		{nil, map[string]string{`price`: `1`, `int`: `2`}},
 	}},
 	{`CheckFloat`, `contract CheckFloat {
 			action {
