@@ -251,7 +251,7 @@ func addressTag(par parFunc) string {
 
 func calculateTag(par parFunc) string {
 	return calculate(macro((*par.Pars)[`Exp`], par.Workspace.Vars), (*par.Pars)[`Type`],
-		converter.StrToInt((*par.Pars)[`Prec`]))
+		converter.StrToInt(macro((*par.Pars)[`Prec`], par.Workspace.Vars)))
 }
 
 func paramToSource(par parFunc, val string) string {
