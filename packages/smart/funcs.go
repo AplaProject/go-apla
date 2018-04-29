@@ -356,7 +356,11 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	if len(name) > 0 && name[0] == '@' {
 		return fmt.Errorf(`The name of the table cannot begin with @`)
 	}
+
 	tableName := getDefTableName(sc, name)
+	if model.IsTable(tableName) {
+		return fmt.Errorf("table %s exists", tableName)
+	}
 
 	var cols []map[string]interface{}
 	err = json.Unmarshal([]byte(columns), &cols)
