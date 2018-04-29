@@ -359,7 +359,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 
 	tableName := getDefTableName(sc, name)
 	if model.IsTable(tableName) {
-		return fmt.Errorf("table %s exists", tableName)
+		return fmt.Errorf("table %s exists", name)
 	}
 
 	var cols []map[string]interface{}
