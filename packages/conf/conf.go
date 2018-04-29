@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 
@@ -177,7 +176,7 @@ func FillRuntimePaths() error {
 	}
 
 	if Config.TempDir == "" {
-		Config.TempDir = path.Join(os.TempDir(), consts.DefaultTempDirName)
+		Config.TempDir = filepath.Join(os.TempDir(), consts.DefaultTempDirName)
 	}
 
 	if Config.FirstBlockPath == "" {

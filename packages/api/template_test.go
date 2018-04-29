@@ -274,7 +274,7 @@ func TestBinary(t *testing.T) {
 		"Data": data,
 	}
 
-	_, _, err = postTxMultipart("UploadBinary", params, files)
+	_, id, err := postTxMultipart("UploadBinary", params, files)
 	assert.NoError(t, err)
 
 	hashImage := fmt.Sprintf("%x", md5.Sum(data))
@@ -285,6 +285,18 @@ func TestBinary(t *testing.T) {
 	}{
 		{
 			`Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`Image(Src: Binary().ById(` + id + `)`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`SetVar(name, file)SetVar(app_id, 1)SetVar(member_id, 1)Image(Src: Binary(Name: #name#, AppID: #app_id#, MemberID: #member_id#))`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`SetVar(id, "` + id + `")Image(Src: Binary().ById(#id#)`,
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{

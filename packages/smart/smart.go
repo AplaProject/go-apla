@@ -453,7 +453,7 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	for _, item := range contracts {
 		list, err := script.ContractsList(item[`value`])
 		if err != nil {
-			log.WithFields(log.Fields{"error": err}).Error("Getting ContractsList")
+			log.WithFields(log.Fields{"contract": item["name"], "error": err}).Error("Getting ContractsList")
 			return err
 		}
 		names := strings.Join(list, `,`)
