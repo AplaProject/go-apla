@@ -166,7 +166,14 @@ func initRoutes(listenHost string) {
 		if _, err := os.Stat(conf.Config.TLSKey); os.IsNotExist(err) {
 			log.WithError(err).Fatalf(`Filepath -tls-key/TLSKey = %s is invalid`, conf.Config.TLSKey)
 		}
-		go http.ListenAndServeTLS(":443", conf.Config.TLSCert, conf.Config.TLSKey, route)
+		go func() {
+			err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, route)
+			if err != nil {
+				log.WithFields(log.Fields{"host": listenHost, "error": err, "type": consts.NetworkError}).Fatal("Listening TLS server")
+			}
+		}()
+		log.WithFields(log.Fields{"host": listenHost}).Info("listening with TLS at")
+		return
 	} else if len(conf.Config.TLSCert) != 0 || len(conf.Config.TLSKey) != 0 {
 		log.Fatal("-tls/TLS must be specified with -tls-cert/TLSCert and -tls-key/TLSKey")
 	}
