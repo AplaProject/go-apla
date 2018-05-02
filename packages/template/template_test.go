@@ -106,8 +106,8 @@ var forTest = tplList{
 		`[{"tag":"button","attr":{"contract":"NewPage","params":{"Conditions":{"text":"true","type":"text"},"Menu":{"text":"default_menu","type":"text"},"Name":{"text":"hello_page2","type":"text"},"Value":{"params":["fefe","dbbt"],"type":"Div"}}},"children":[{"tag":"text","text":"addpage"}]}]`},
 	{"Button(Body: add table1, Contract: NewTable, Params: `Name=name,Columns=[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"1\",  \"conditions\":\"true\"}, {\"name\":\"Amount\", \"type\":\"number\",\"index\": \"0\", \"conditions\":\"true\"}],Permissions={\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}`)", `[{"tag":"button","attr":{"contract":"NewTable","params":{"Columns":{"text":"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"1\",  \"conditions\":\"true\"}, {\"name\":\"Amount\", \"type\":\"number\",\"index\": \"0\", \"conditions\":\"true\"}]","type":"text"},"Name":{"text":"name","type":"text"},"Permissions":{"text":"{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}","type":"text"}}},"children":[{"tag":"text","text":"add table1"}]}]`},
 	{`Calculate( Exp: 342278783438/0, Type: money )Calculate( Exp: 5.2/0, Type: float )
-		Calculate( Exp: 7/0)`,
-		`[{"tag":"text","text":"dividing by zerodividing by zerodividing by zero"}]`},
+	Calculate( Exp: 7/0)SetVar(moneyDigit, 2)Calculate(10/2, Type: money, Prec: #moneyDigit#)`,
+		`[{"tag":"text","text":"dividing by zerodividing by zerodividing by zero0.05"}]`},
 	{`SetVar(val, 2200000034343443343430000)SetVar(zero, 0)Calculate( Exp: (342278783438+5000)*(#val#-932780000), Type: money, Prec:18 )Calculate( Exp: (2+50)*(#zero#-9), Type: money )`,
 		`[{"tag":"text","text":"753013346318631859.1075080680647-468"}]`},
 	{`SetVar(val, 100)Calculate(10000-(34+5)*#val#)=Calculate("((10+#val#-45)*3.0-10)/4.5 + #val#", Prec: 4)`,

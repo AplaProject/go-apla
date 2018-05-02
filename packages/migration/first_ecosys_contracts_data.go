@@ -1081,7 +1081,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
 
         if DBFind("pages").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf( "Block %%s already exists", $Name)
+            warning Sprintf( "Page %%s already exists", $Name)
         }
 
         $ValidateCount = preparePageValidateCount($ValidateCount)
@@ -1504,11 +1504,13 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			error "Amount must be greater then zero"
 		}
 
-		var row map
+        var row map
+        var req money
 		row = DBRow("keys").Columns("amount").WhereId($key_id)
-		total = Money(row["amount"])
-		if $amount >= total {
-			error Sprintf("Money is not enough %%v < %%v",total, $amount)
+        total = Money(row["amount"])
+        req = $amount + Money(100000000000000000) 
+        if req > total {
+			error Sprintf("Money is not enough. You have got %%v but you should reserve %%v", $total, $req)
 		}
 	}
 	action {
@@ -1796,13 +1798,10 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			error "User already exists"
 		}
 
-		$amount = 1000
+        $amount = Money(1000) * Money(1000000000000000000)
 	}
 	action {
-		DBUpdate("keys", $key_id, "-amount", $amount)
-		DBInsert("keys", "id,amount,pub", $newId, $amount, $NewPubkey)
-		   DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
-				$key_id, $newId, $amount, "New user deposit", $block, $txhash)
+        MoneyTransfer("Recipient,Amount,Comment", Str($newId), Str($amount), "New user deposit")
 	}
 }', %[1]d, 'ContractConditions("NodeOwnerCondition")', 1),
 ('41', 'EditEcosystemName','contract EditEcosystemName {

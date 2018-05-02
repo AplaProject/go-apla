@@ -40,7 +40,7 @@ func GetFirstEcosystemScript() string {
 var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"pub" bytea  NOT NULL DEFAULT '',
-		"amount" decimal(30) NOT NULL DEFAULT '0',
+		"amount" decimal(30) NOT NULL DEFAULT '0' CHECK (amount >= 0),
 		"multi" bigint NOT NULL DEFAULT '0',
 		"deleted" bigint NOT NULL DEFAULT '0',
 		"blocked" bigint NOT NULL DEFAULT '0'
@@ -262,4 +262,4 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 			"member_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_buffer_data" ADD CONSTRAINT "%[1]d_buffer_data_pkey" PRIMARY KEY ("id");
-		`
+`
