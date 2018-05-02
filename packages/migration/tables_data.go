@@ -18,7 +18,7 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 	  "multi": "ContractConditions(\"MainCondition\")"}', 
 	'ContractAccess("@1EditTable")'),
 	('3', 'history', 
-	'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
+	'{"insert": "ContractConditions(\"NodeOwnerCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 	  "new_column": "ContractConditions(\"MainCondition\")"}',
 	'{"sender_id": "ContractConditions(\"MainCondition\")",
 	  "recipient_id": "ContractConditions(\"MainCondition\")",
