@@ -1844,10 +1844,6 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('43', 'NodeOwnerCondition', 'contract NodeOwnerCondition {
 	conditions {
-        if ContractConditions("MainCondition") {
-            return true
-        }
-
 		$full_nodes = JSONDecode(SysParamString("full_nodes"))
 		var i int
 		while i < Len($full_nodes) {
