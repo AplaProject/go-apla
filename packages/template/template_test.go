@@ -42,8 +42,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
-	{`SetVar(digit, 2)Money(12345, #digit#)=Money(#digit#, #digit#)`,
-		`[{"tag":"text","text":"123.45"},{"tag":"text","text":"=0.02"}]`},
+	{`SetVar(digit, 2)Money(12345, #digit#)=Money(#digit#, #digit#)=Money(123456000, 7)`,
+		`[{"tag":"text","text":"123.45"},{"tag":"text","text":"=0.02"},{"tag":"text","text":"=12.3456"}]`},
 	{`SetVar(textc, test)Code(P(Some #textc#))CodeAsIs(P(No Some #textc#))Div(){CodeAsIs(Text:#textc#)}`,
 		`[{"tag":"code","attr":{"text":"P(Some test)"}},{"tag":"code","attr":{"text":"P(No Some #textc#)"}},{"tag":"div","children":[{"tag":"code","attr":{"text":"#textc#"}}]}]`},
 	{`SetVar("Name1", "Value1")GetVar("Name1")#Name1#Span(#Name1#)SetVar("Name1", "Value2")GetVar("Name1")#Name1#

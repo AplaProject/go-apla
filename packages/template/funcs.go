@@ -33,6 +33,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -200,10 +201,12 @@ func moneyTag(par parFunc) string {
 		cents = converter.StrToInt(sp.Value)
 	}
 	if cents > 0 && strings.IndexByte(ret, '.') < 0 {
-		if len(ret) < cents+1 {
-			ret = strings.Repeat(`0`, cents+1-len(ret)) + ret
+		retDec, err := decimal.NewFromString(ret)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting money")
+			return `wrong money`
 		}
-		ret = ret[:len(ret)-cents] + `.` + ret[len(ret)-cents:]
+		ret = retDec.Shift(int32(-cents)).String()
 	}
 	return ret
 }
