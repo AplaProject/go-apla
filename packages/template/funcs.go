@@ -67,6 +67,7 @@ func init() {
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
+	funcs[`Money`] = tplFunc{moneyTag, defaultTag, `money`, `Exp,Digit`}
 	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
 	funcs[`Range`] = tplFunc{rangeTag, defaultTag, `range`, `Source,From,To,Step`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
@@ -176,6 +177,35 @@ func defaultTag(par parFunc) string {
 
 func lowerTag(par parFunc) string {
 	return strings.ToLower(macro((*par.Pars)[`Text`], par.Workspace.Vars))
+}
+
+func moneyTag(par parFunc) string {
+	var cents int
+
+	ret := macro((*par.Pars)[`Exp`], par.Workspace.Vars)
+	if ret == `NULL` || len(ret) == 0 {
+		ret = `0`
+	}
+	if len((*par.Pars)[`Digit`]) > 0 {
+		cents = converter.StrToInt(macro((*par.Pars)[`Digit`], par.Workspace.Vars))
+	} else {
+		prefix := (*par.Workspace.Vars)[`ecosystem_id`]
+		sp := &model.StateParameter{}
+		sp.SetTablePrefix(prefix)
+		_, err := sp.Get(nil, `money_digit`)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
+			return `unknown money_digit`
+		}
+		cents = converter.StrToInt(sp.Value)
+	}
+	if cents > 0 && strings.IndexByte(ret, '.') < 0 {
+		if len(ret) < cents+1 {
+			ret = strings.Repeat(`0`, cents+1-len(ret)) + ret
+		}
+		ret = ret[:len(ret)-cents] + `.` + ret[len(ret)-cents:]
+	}
+	return ret
 }
 
 func menugroupTag(par parFunc) string {
