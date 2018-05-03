@@ -250,8 +250,23 @@ func addressTag(par parFunc) string {
 }
 
 func calculateTag(par parFunc) string {
-	return calculate(macro((*par.Pars)[`Exp`], par.Workspace.Vars), (*par.Pars)[`Type`],
-		converter.StrToInt(macro((*par.Pars)[`Prec`], par.Workspace.Vars)))
+	etype := (*par.Pars)[`Type`]
+	prec := converter.StrToInt(macro((*par.Pars)[`Prec`], par.Workspace.Vars))
+	exp := macro((*par.Pars)[`Exp`], par.Workspace.Vars)
+	if etype == "money" {
+		sp := &model.StateParameter{}
+		sp.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
+		found, err := sp.Get(nil, "money_digit")
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting state param")
+		}
+		if found {
+			prec = converter.StrToInt(sp.Value)
+		} else {
+			log.WithFields(log.Fields{"type": consts.NotFound}).Error("money_digit state parameter not found")
+		}
+	}
+	return calculate(exp, etype, prec)
 }
 
 func paramToSource(par parFunc, val string) string {
