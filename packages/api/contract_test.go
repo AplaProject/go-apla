@@ -94,16 +94,16 @@ var contracts = []smartContract{
 	}`, []smartParams{
 		{nil, map[string]string{`error`: `{"type":"panic","error":"unknown lexem $ [Ln:5 Col:6]"}`}},
 	}},
-
 	{`Price`, `contract Price {
 		action {
+			Test("int", Int("")+Int(nil)+2)
 			Test("price", 1)
 		}
 		func price() money {
 			return Money(100)
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`price`: `1`}},
+		{nil, map[string]string{`price`: `1`, `int`: `2`}},
 	}},
 	{`CheckFloat`, `contract CheckFloat {
 			action {
@@ -274,15 +274,15 @@ var contracts = []smartContract{
 		}},
 	{`testSimple`, `contract testSimple {
 					data {
-						amount int
-						name   string
+						Amount int
+						Name   string
 					}
 					conditions {
-						Test("scond", $amount, $name)
+						Test("scond", $Amount, $Name)
 					}
-					action { Test("sact", $name, $amount)}}`,
+					action { Test("sact", $Name, $Amount)}}`,
 		[]smartParams{
-			{map[string]string{`name`: `Simple name`, `amount`: `-56781`},
+			{map[string]string{`Name`: `Simple name`, `Amount`: `-56781`},
 				map[string]string{`scond`: `-56781Simple name`,
 					`sact`: `Simple name-56781`}},
 		}},

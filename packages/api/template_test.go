@@ -88,12 +88,12 @@ var forTest = tplList{
 	{`DBFind(parameters, src_par).Columns("id").Order(id).Where("id >= 1 and id <= 3").Count(count)Span(#count#)`,
 		`[{"tag":"dbfind","attr":{"columns":["id"],"count":"3","data":[["1"],["2"],["3"]],"name":"parameters","order":"id","source":"src_par","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"span","children":[{"tag":"text","text":"3"}]}]`},
 	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
-	{`SetVar(where)DBFind(contracts, src).Columns(id).Order(id).Limit(3).Custom(a){SetVar(where, #where# #id#)}
+	{`SetVar(where).(lim,3)DBFind(contracts, src).Columns(id).Order(id).Limit(#lim#).Custom(a){SetVar(where, #where# #id#)}
 	Div(){Table(src, "=x")}Div(){Table(src)}Div(){#where#}`,
 		`[{"tag":"dbfind","attr":{"columns":["id","a"],"data":[["1","null"],["2","null"],["3","null"]],"limit":"3","name":"contracts","order":"id","source":"src","types":["text","tags"]}},{"tag":"div","children":[{"tag":"table","attr":{"columns":[{"Name":"x","Title":""}],"source":"src"}}]},{"tag":"div","children":[{"tag":"table","attr":{"source":"src"}}]},{"tag":"div","children":[{"tag":"text","text":" 1 2 3"}]}]`},
 	{`If(#isMobile#){Span(Mobile)}.Else{Span(Desktop)}`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Desktop"}]}]`},
-	{`DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(10).Custom(){}`,
+	{`SetVar(off, 10)DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(#off#).Custom(){}`,
 		`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["11"],["12"]],"limit":"2","name":"contracts","offset":"10","order":"id","source":"src_contracts","types":["text"]}}]`},
 	{`DBFind(contracts, src_pos).Columns(id).Where("id >= 1 and id <= 3")
 		ForList(src_pos, Index: index){
@@ -274,7 +274,7 @@ func TestBinary(t *testing.T) {
 		"Data": data,
 	}
 
-	_, _, err = postTxMultipart("UploadBinary", params, files)
+	_, id, err := postTxMultipart("UploadBinary", params, files)
 	assert.NoError(t, err)
 
 	hashImage := fmt.Sprintf("%x", md5.Sum(data))
@@ -285,6 +285,18 @@ func TestBinary(t *testing.T) {
 	}{
 		{
 			`Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`Image(Src: Binary().ById(` + id + `)`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`SetVar(name, file)SetVar(app_id, 1)SetVar(member_id, 1)Image(Src: Binary(Name: #name#, AppID: #app_id#, MemberID: #member_id#))`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`SetVar(id, "` + id + `")Image(Src: Binary().ById(#id#)`,
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{

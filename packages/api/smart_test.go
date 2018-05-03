@@ -26,6 +26,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type smartParams struct {
@@ -430,6 +431,19 @@ func TestUpdateSysParam(t *testing.T) {
 	}
 }
 
+func TestUpdateFullNodes(t *testing.T) {
+	require.NoErrorf(t, keyLogin(1), "on login")
+
+	byteNodes := `[{"tcp_address":"127.0.0.1", "api_address":"https://127.0.0.1", "key_id":"-7987340929414886272", "public_key":"088fa30f2da970ccd60090a85a245d73e7c46fac38141124d471ebd19900b27619644f1bcb3a86fa69d1895dd20e2ff9b9ea03c5aca7d58615164fd940869bb2"},`
+	byteNodes += `{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"5462687003324713865", "public_key":"4ea2433951ca21e6817426675874b2a6d98e5051c1100eddefa1847b0388e4834facf9abf427c46e2bc6cd5e3277fba533d03db553e499eb368194b3f1e514d4"}]`
+	form := &url.Values{
+		"Name":  {"full_nodes"},
+		"Value": {string(byteNodes)},
+	}
+
+	require.NoError(t, postTx(`UpdateSysParam`, form))
+}
+
 func TestValidateConditions(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
@@ -702,4 +716,26 @@ func TestJSON(t *testing.T) {
 	for _, v := range cases {
 		assert.EqualError(t, postTx(contract, &url.Values{"Input": {v.source}}), v.result)
 	}
+}
+
+func TestBytesToString(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	contract := randName("BytesToString")
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + contract + ` {
+			data {
+				File bytes "file"
+			}
+			action {
+				$result = BytesToString($File)
+			}
+		}`},
+		"Conditions": {"true"},
+	}))
+
+	content := crypto.RandSeq(100)
+	_, res, err := postTxMultipart(contract, nil, map[string][]byte{"File": []byte(content)})
+	assert.NoError(t, err)
+	assert.Equal(t, content, res)
 }

@@ -56,6 +56,7 @@ func init() {
 	funcs[`Calculate`] = tplFunc{calculateTag, defaultTag, `calculate`, `Exp,Type,Prec`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
 	funcs[`Code`] = tplFunc{defaultTag, defaultTag, `code`, `Text`}
+	funcs[`CodeAsIs`] = tplFunc{defaultTag, defaultTag, `code`, `#Text`}
 	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format`}
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
@@ -95,7 +96,7 @@ func init() {
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
-	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,@MemberID"}
+	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID"}
 	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
 
 	tails[`button`] = forTails{map[string]tailInfo{
@@ -161,6 +162,9 @@ func init() {
 	}}
 	tails[`inputMap`] = forTails{map[string]tailInfo{
 		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
+	}}
+	tails[`binary`] = forTails{map[string]tailInfo{
+		`ById`: {tplFunc{tailTag, defaultTailFull, `id`, `id`}, false},
 	}}
 }
 
@@ -247,7 +251,7 @@ func addressTag(par parFunc) string {
 
 func calculateTag(par parFunc) string {
 	return calculate(macro((*par.Pars)[`Exp`], par.Workspace.Vars), (*par.Pars)[`Type`],
-		converter.StrToInt((*par.Pars)[`Prec`]))
+		converter.StrToInt(macro((*par.Pars)[`Prec`], par.Workspace.Vars)))
 }
 
 func paramToSource(par parFunc, val string) string {
@@ -256,6 +260,7 @@ func paramToSource(par parFunc, val string) string {
 	types := []string{`text`, `text`}
 	for key, item := range strings.Split(val, `,`) {
 		item, _ = language.LangText(item, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
 			(*par.Workspace.Vars)[`lang`], par.Workspace.SmartContract.VDE)
 		data = append(data, []string{converter.IntToStr(key + 1), item})
 	}
@@ -275,7 +280,9 @@ func paramToIndex(par parFunc, val string) (ret string) {
 	ind := converter.StrToInt(macro((*par.Pars)[`Index`], par.Workspace.Vars))
 	if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 		ret, _ = language.LangText(alist[ind-1],
-			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]), (*par.Workspace.Vars)[`lang`],
+			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
+			(*par.Workspace.Vars)[`lang`],
 			par.Workspace.SmartContract.VDE)
 	}
 	return
@@ -313,7 +320,8 @@ func appparTag(par parFunc) string {
 	}
 	ap := &model.AppParam{}
 	ap.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
-	_, err := ap.Get(nil, converter.StrToInt64((*par.Pars)[`App`]), (*par.Pars)[`Name`])
+	_, err := ap.Get(nil, converter.StrToInt64(macro((*par.Pars)[`App`], par.Workspace.Vars)),
+		macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting app param")
 		return err.Error()
@@ -333,7 +341,9 @@ func langresTag(par parFunc) string {
 	if len(lang) == 0 {
 		lang = (*par.Workspace.Vars)[`lang`]
 	}
-	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
+	ret, _ := language.LangText((*par.Pars)[`Name`],
+		int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
+		converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
 		lang, par.Workspace.SmartContract.VDE)
 	return ret
 }
@@ -783,7 +793,12 @@ func customTagFull(par parFunc) string {
 func tailTag(par parFunc) string {
 	setAllAttr(par)
 	for key, v := range par.Node.Attr {
-		par.Owner.Attr[key] = v
+		switch v.(type) {
+		case string:
+			par.Owner.Attr[key] = macro(v.(string), par.Workspace.Vars)
+		default:
+			par.Owner.Attr[key] = v
+		}
 	}
 	return ``
 }
@@ -982,7 +997,9 @@ func dateTimeTag(par parFunc) string {
 	}
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
-		format, _ = language.LangText(`timeformat`, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+		format, _ = language.LangText(`timeformat`,
+			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
 			(*par.Workspace.Vars)[`lang`], par.Workspace.SmartContract.VDE)
 		if format == `timeformat` {
 			format = `2006-01-02 15:04:05`
@@ -1116,13 +1133,26 @@ func binaryTag(par parFunc) string {
 		ecosystemID = (*par.Workspace.Vars)[`ecosystem_id`]
 	}
 
+	defaultTail(par, `binary`)
+
 	binary := &model.Binary{}
 	binary.SetTablePrefix(ecosystemID)
-	ok, err := binary.Get(
-		converter.StrToInt64((*par.Pars)["AppID"]),
-		converter.StrToInt64((*par.Pars)["MemberID"]),
-		(*par.Pars)["Name"],
+
+	var (
+		ok  bool
+		err error
 	)
+
+	if par.Node.Attr["id"] != nil {
+		ok, err = binary.GetByID(converter.StrToInt64(macro(par.Node.Attr["id"].(string), par.Workspace.Vars)))
+	} else {
+		ok, err = binary.Get(
+			converter.StrToInt64(macro((*par.Pars)["AppID"], par.Workspace.Vars)),
+			converter.StrToInt64(macro((*par.Pars)["MemberID"], par.Workspace.Vars)),
+			macro((*par.Pars)["Name"], par.Workspace.Vars),
+		)
+	}
+
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting record from db")
 		return err.Error()

@@ -100,6 +100,8 @@ var (
 		"ContractsList":      10,
 		"CreateColumn":       50,
 		"CreateTable":        100,
+		"CreateLanguage":     50,
+		"EditLanguage":       50,
 		"EcosysParam":        10,
 		"AppParam":           10,
 		"Eval":               10,
@@ -123,7 +125,6 @@ var (
 		"ToLower":            10,
 		"TrimSpace":          10,
 		"TableConditions":    100,
-		"UpdateLang":         10,
 		"ValidateCondition":  30,
 	}
 	// map for table name to parameter with conditions
@@ -204,7 +205,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RollbackTable":        RollbackTable,
 		"TableConditions":      TableConditions,
 		"RollbackColumn":       RollbackColumn,
-		"UpdateLang":           UpdateLang,
+		"CreateLanguage":       CreateLanguage,
+		"EditLanguage":         EditLanguage,
 		"Activate":             Activate,
 		"Deactivate":           Deactivate,
 		"SetContractWallet":    SetContractWallet,
@@ -221,6 +223,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetType":              GetType,
 		"AllowChangeCondition": AllowChangeCondition,
 		"StringToBytes":        StringToBytes,
+		"BytesToString":        BytesToString,
 	}
 
 	switch vt {
@@ -354,7 +357,11 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	if len(name) > 0 && name[0] == '@' {
 		return fmt.Errorf(`The name of the table cannot begin with @`)
 	}
+
 	tableName := getDefTableName(sc, name)
+	if model.IsTable(tableName) {
+		return fmt.Errorf("table %s exists", name)
+	}
 
 	var cols []map[string]interface{}
 	err = json.Unmarshal([]byte(columns), &cols)
@@ -1464,4 +1471,9 @@ func GetType(val interface{}) string {
 // StringToBytes converts string to bytes
 func StringToBytes(src string) []byte {
 	return []byte(src)
+}
+
+// BytesToString converts bytes to string
+func BytesToString(src []byte) string {
+	return string(src)
 }

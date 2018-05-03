@@ -29,6 +29,10 @@ func (r *Request) GetValue(key string) string {
 	return r.values[key]
 }
 
+func (r *Request) AllValues() map[string]string {
+	return r.values
+}
+
 func (r *Request) WriteFile(key, mimeType string, reader io.ReadCloser) (*FileHeader, error) {
 	file, err := ioutil.TempFile(conf.Config.TempDir, "")
 	if err != nil {

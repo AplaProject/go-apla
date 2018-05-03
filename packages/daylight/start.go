@@ -165,7 +165,14 @@ func initRoutes(listenHost string) {
 		if _, err := os.Stat(conf.Config.TLSKey); os.IsNotExist(err) {
 			log.WithError(err).Fatalf(`Filepath -tls-key/TLSKey = %s is invalid`, conf.Config.TLSKey)
 		}
-		go http.ListenAndServeTLS(":443", conf.Config.TLSCert, conf.Config.TLSKey, route)
+		go func() {
+			err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, route)
+			if err != nil {
+				log.WithFields(log.Fields{"host": listenHost, "error": err, "type": consts.NetworkError}).Fatal("Listening TLS server")
+			}
+		}()
+		log.WithFields(log.Fields{"host": listenHost}).Info("listening with TLS at")
+		return
 	} else if len(conf.Config.TLSCert) != 0 || len(conf.Config.TLSKey) != 0 {
 		log.Fatal("-tls/TLS must be specified with -tls-cert/TLSCert and -tls-key/TLSKey")
 	}
@@ -215,7 +222,10 @@ func Start() {
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()
 
-	utils.MakeOrCleanDirectory(conf.Config.TempDir)
+	if err := utils.MakeDirectory(conf.Config.TempDir); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "dir": conf.Config.TempDir}).Error("can't create temporary directory")
+		Exit(1)
+	}
 
 	initGorm(conf.Config.DB)
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")

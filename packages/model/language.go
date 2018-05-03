@@ -1,8 +1,11 @@
 package model
 
+import "github.com/GenesisKernel/go-genesis/packages/converter"
+
 // Language is model
 type Language struct {
 	tableName  string
+	AppID      int    `gorm:"column:app_id,not null"`
 	Name       string `gorm:"primary_key;not null;size:100"`
 	Res        string `gorm:"type:jsonb(PostgreSQL)"`
 	Conditions string `gorm:"not null"`
@@ -31,5 +34,6 @@ func (l *Language) ToMap() map[string]string {
 	result["name"] = l.Name
 	result["res"] = l.Res
 	result["conditions"] = l.Conditions
+	result["app_id"] = converter.IntToStr(l.AppID)
 	return result
 }

@@ -125,3 +125,6 @@ tools/update_server/update_server
 .vscode/
 genesis-data/go-genesis.lock
 genesis-data/go-genesis.pid
+genesis-data2/g.lock
+genesis-data2/go-genesis.lock
+genesis-data2/go-genesis.pid
