@@ -148,4 +148,6 @@ func init() {
 	viper.BindPFlag("TLSKey", configCmd.Flags().Lookup("tls-key"))
 	viper.BindPFlag("MaxPageGenerationTime", configCmd.Flags().Lookup("mpgt"))
 	viper.BindPFlag("PrivateBlockchain", configCmd.Flags().Lookup("privateBlockchain"))
+	viper.BindPFlag("TempDir", configCmd.Flags().Lookup("tempDir"))
+	viper.BindPFlag("NodesAddr", configCmd.Flags().Lookup("nodesAddr"))
 }
