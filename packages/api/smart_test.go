@@ -280,7 +280,7 @@ func TestNewTable(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	name := randName(`tbl`)
-	form := url.Values{"Name": {`1_` + name}, "Columns": {`[{"name":"MyName","type":"varchar", 
+	form := url.Values{"Name": {`1_` + name}, "ApplicationId": {"1"}, "Columns": {`[{"name":"MyName","type":"varchar", 
 		"conditions":"true"},
 	  {"name":"Name", "type":"varchar","index": "0", "conditions":"{\"read\":\"true\",\"update\":\"true\"}"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
@@ -296,14 +296,14 @@ func TestNewTable(t *testing.T) {
 			DBUpdate("1_` + name + `", 1, "name", "test value" )
 			$result = DBFind("1_` + name + `").Columns("name").WhereId(1).One("name")
 		}
-	}`}, `Conditions`: {`true`}}
+	}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	_, msg, err := postTxResult(`sub`+name, &url.Values{})
 	assert.NoError(t, err)
 	assert.Equal(t, msg, "test value")
 
-	form = url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
+	form = url.Values{"Name": {name}, "ApplicationId": {"1"}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
 	  "conditions":"true"},
 	{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
 	{"name":"Doc", "type":"json","index": "0", "conditions":"true"},	
