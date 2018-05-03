@@ -213,12 +213,8 @@ func calcExp(tokens []token, resType, prec int) string {
 			return strconv.FormatFloat(stack[0].(float64), 'f', prec, 64)
 		}
 		if resType == expMoney {
-			money := fmt.Sprint(stack[0])
-			if len(money) < prec+1 {
-				money = strings.Repeat(`0`, prec+1-len(money)) + money
-			}
-			money = money[:len(money)-prec] + `.` + money[len(money)-prec:]
-			return strings.TrimRight(strings.TrimRight(money, `0`), `.`)
+			money := stack[0].(decimal.Decimal)
+			return money.StringFixed(int32(prec))
 		}
 	}
 	return fmt.Sprint(stack[0])

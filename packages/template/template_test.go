@@ -107,9 +107,9 @@ var forTest = tplList{
 	{"Button(Body: add table1, Contract: NewTable, Params: `Name=name,Columns=[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"1\",  \"conditions\":\"true\"}, {\"name\":\"Amount\", \"type\":\"number\",\"index\": \"0\", \"conditions\":\"true\"}],Permissions={\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}`)", `[{"tag":"button","attr":{"contract":"NewTable","params":{"Columns":{"text":"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"1\",  \"conditions\":\"true\"}, {\"name\":\"Amount\", \"type\":\"number\",\"index\": \"0\", \"conditions\":\"true\"}]","type":"text"},"Name":{"text":"name","type":"text"},"Permissions":{"text":"{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}","type":"text"}}},"children":[{"tag":"text","text":"add table1"}]}]`},
 	{`Calculate( Exp: 342278783438/0, Type: money )Calculate( Exp: 5.2/0, Type: float )
 	Calculate( Exp: 7/0)SetVar(moneyDigit, 2)Calculate(10/2, Type: money, Prec: #moneyDigit#)`,
-		`[{"tag":"text","text":"dividing by zerodividing by zerodividing by zero0.05"}]`},
+		`[{"tag":"text","text":"dividing by zerodividing by zerodividing by zero5.00"}]`},
 	{`SetVar(val, 2200000034343443343430000)SetVar(zero, 0)Calculate( Exp: (342278783438+5000)*(#val#-932780000), Type: money, Prec:18 )Calculate( Exp: (2+50)*(#zero#-9), Type: money )`,
-		`[{"tag":"text","text":"753013346318631859.1075080680647-468"}]`},
+		`[{"tag":"text","text":"753013346318631859107508068064700000.000000000000000000-468"}]`},
 	{`SetVar(val, 100)Calculate(10000-(34+5)*#val#)=Calculate("((10+#val#-45)*3.0-10)/4.5 + #val#", Prec: 4)`,
 		`[{"tag":"text","text":"6100"},{"tag":"text","text":"=141.1111"}]`},
 	{`Span((span text), ok )Span(((span text), ok) )Div(){{My #my# body}}`,
