@@ -1510,7 +1510,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         total = Money(row["amount"])
         req = $amount + Money(100000000000000000) 
         if req > total {
-			error Sprintf("Money is not enough. You have got %%v but you should reserve %%v", $total, $req)
+			error Sprintf("Money is not enough. You have got %%v but you should reserve %%v", total, req)
 		}
 	}
 	action {
@@ -1802,6 +1802,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	}
 	action {
         MoneyTransfer("Recipient,Amount,Comment", Str($newId), Str($amount), "New user deposit")
+        DBUpdate("keys", $newId, "pub", $NewPubkey)
 	}
 }', %[1]d, 'ContractConditions("NodeOwnerCondition")', 1),
 ('41', 'EditEcosystemName','contract EditEcosystemName {
