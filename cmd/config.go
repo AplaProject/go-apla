@@ -94,12 +94,12 @@ func init() {
 
 	// Log
 	configCmd.Flags().StringVar(&conf.Config.Log.LogTo, "logTo", "stdout", "Send logs to stdout|(filename)|syslog")
-	configCmd.Flags().StringVar(&conf.Config.Log.LogLevel, "verbosity", "ERROR", "Log verbosity (DEBUG | INFO | WARN | ERROR)")
+	configCmd.Flags().StringVar(&conf.Config.Log.LogLevel, "logLevel", "ERROR", "Log verbosity (DEBUG | INFO | WARN | ERROR)")
 	configCmd.Flags().StringVar(&conf.Config.Log.LogFormat, "logFormat", "text", "log format, could be text|json")
 	configCmd.Flags().StringVar(&conf.Config.Log.Syslog.Facility, "syslogFacility", "kern", "syslog facility")
 	configCmd.Flags().StringVar(&conf.Config.Log.Syslog.Tag, "syslogTag", "go-genesis", "syslog program tag")
 	viper.BindPFlag("Log.LogTo", configCmd.Flags().Lookup("logTo"))
-	viper.BindPFlag("Log.Verbosity", configCmd.Flags().Lookup("verbosity"))
+	viper.BindPFlag("Log.LogLevel", configCmd.Flags().Lookup("logLevel"))
 	viper.BindPFlag("Log.LogFormat", configCmd.Flags().Lookup("logFormat"))
 	viper.BindPFlag("Log.Syslog.Facility", configCmd.Flags().Lookup("syslogFacility"))
 	viper.BindPFlag("Log.Syslog.Tag", configCmd.Flags().Lookup("syslogTag"))
