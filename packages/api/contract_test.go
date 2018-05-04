@@ -43,7 +43,7 @@ func TestNewContracts(t *testing.T) {
 		if err != nil {
 			if strings.Contains(err.Error(), fmt.Sprintf(apiErrors[`E_CONTRACT`], item.Name)) {
 				form := url.Values{"Name": {item.Name}, "Value": {item.Value},
-					"Conditions": {`true`}}
+					"ApplicationId": {`1`}, "Conditions": {`true`}}
 				if err := postTx(`NewContract`, &form); err != nil {
 					assert.EqualError(t, err, item.Params[0].Results[`error`])
 					continue
@@ -296,7 +296,7 @@ var contracts = []smartContract{
 			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
 				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
 		[]smartParams{
-			{nil, map[string]string{`ByName`: `0 5`,
+			{nil, map[string]string{`ByName`: `0 29`,
 				`ById`: `EditLang`}},
 		}},
 }
