@@ -213,7 +213,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
             $Name = $TableName
             $Columns = Sprintf("["+"%%v"+"]", res)
-            $Permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
+            if !$Permissions {
+                $Permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
+            }
             CreateTable($Name, $Columns, $Permissions, $ApplicationId)
         }
     }
@@ -705,9 +707,11 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	}
 	
 	conditions {
-        var permissions string
-        permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
-        $Permissions = permissions
+        if !$Permissions {
+            var permissions string
+            permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
+            $Permissions = permissions
+        }
 		TableConditions($Name, "", $Permissions)
 	}
 	
