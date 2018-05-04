@@ -216,6 +216,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             if !$Permissions {
                 $Permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
             }
+            TableConditions($Name, $Columns, $Permissions)
             CreateTable($Name, $Columns, $Permissions, $ApplicationId)
         }
     }
