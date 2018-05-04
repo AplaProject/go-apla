@@ -212,8 +212,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		values = append(values, conditions)
 	}
 	if len(fields) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
-		return 0, fmt.Errorf(`empty value and condition`)
+		return 0, logError(errEmpty, consts.EmptyObject, `empty value and condition`)
 	}
 	_, _, err = sc.update(fields, values, "1_system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)})
 	if err != nil {
