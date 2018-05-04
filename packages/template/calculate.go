@@ -23,6 +23,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/shopspring/decimal"
 )
 
@@ -129,7 +130,7 @@ func parsing(input string, itype int) (*[]token, error) {
 	return &tokens, nil
 }
 
-func calcExp(tokens []token, resType, prec int) string {
+func calcExp(tokens []token, resType int, prec string) string {
 	var top int
 
 	stack := make([]interface{}, 0, 16)
@@ -208,19 +209,20 @@ func calcExp(tokens []token, resType, prec int) string {
 	if len(stack) != 1 {
 		return errExp.Error()
 	}
-	if prec > 0 {
+	if prec != "" {
+		precInt := converter.StrToInt(prec)
 		if resType == expFloat {
-			return strconv.FormatFloat(stack[0].(float64), 'f', prec, 64)
+			return strconv.FormatFloat(stack[0].(float64), 'f', precInt, 64)
 		}
 		if resType == expMoney {
 			money := stack[0].(decimal.Decimal)
-			return money.StringFixed(int32(prec))
+			return money.StringFixed(int32(precInt))
 		}
 	}
 	return fmt.Sprint(stack[0])
 }
 
-func calculate(exp, etype string, prec int) string {
+func calculate(exp, etype, prec string) string {
 	var resType int
 	if len(etype) == 0 && strings.Contains(exp, `.`) {
 		etype = `float`
