@@ -47,6 +47,7 @@ var (
 	errCurrentBalance    = errors.New(`Current balance is not enough`)
 	errDeletedKey        = errors.New(`The key is deleted`)
 	errDiffKeys          = errors.New(`Contract and user public keys are different`)
+	errEmpty             = errors.New(`empty value and condition`)
 	errEmptyCond         = errors.New(`The condition is empty`)
 	errEmptyContract     = errors.New(`Empty contract name in ContractConditions`)
 	errEmptyPublicKey    = errors.New(`Empty public key`)
