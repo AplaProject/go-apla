@@ -616,25 +616,25 @@ func Deactivate(sc *SmartContract, tblid int64, state int64) error {
 // CheckSignature checks the additional signatures for the contract
 func CheckSignature(i *map[string]interface{}, name string) error {
 	state, name := script.ParseContract(name)
-	pref := converter.Int64ToStr(int64(state))
 	sc := (*i)[`sc`].(*SmartContract)
-	value, err := model.Single(`select value from "`+pref+`_signatures" where name=?`, name).String()
+	sn := model.Signature{}
+	sn.SetTablePrefix(converter.Int64ToStr(int64(state)))
+	_, err := sn.Get(name)
 	if err != nil {
 		return logErrorDB(err, "executing single query")
 	}
-	if len(value) == 0 {
+	if len(sn.Value) == 0 {
 		return nil
 	}
 	hexsign, err := hex.DecodeString((*i)[`Signature`].(string))
 	if len(hexsign) == 0 || err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("comverting signature to hex")
-		return fmt.Errorf(`wrong signature`)
+		return logError(errWrongSignature, consts.ConversionError, "converting signature to hex")
 	}
 
 	var sign TxSignJSON
-	err = json.Unmarshal([]byte(value), &sign)
+	err = json.Unmarshal([]byte(sn.Value), &sign)
 	if err != nil {
-		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling sign", value)
+		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling sign", sn.Value)
 	}
 	wallet := (*i)[`key_id`].(int64)
 	forsign := fmt.Sprintf(`%d,%d`, uint64((*i)[`time`].(int64)), uint64(wallet))
@@ -651,8 +651,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 		return err
 	}
 	if !CheckSignResult {
-		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect signature")
-		return fmt.Errorf(`incorrect signature ` + forsign)
+		return logError(fmt.Errorf(eIncorrectSignature, forsign), consts.InvalidObject, "incorrect signature")
 	}
 	return nil
 }

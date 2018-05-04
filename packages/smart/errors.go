@@ -22,22 +22,23 @@ import (
 )
 
 const (
-	eAccessContract    = `%s can be only called from %s`
-	eColumnExist       = `Column %s exists`
-	eColumnNotExist    = `Column %s doesn't exist`
-	eColumnType        = `Type '%s' of columns is not supported`
-	eContractCondition = `There is not conditions in contract %s`
-	eEmptyCond         = `%v condition is empty`
-	eItemNotFound      = `Item %d has not been found`
-	eManyColumns       = `Too many columns. Limit is %d`
-	eNotCondition      = `There is not %s in parameters`
-	eParamNotFound     = `Parameter %s has not been found`
-	eRecordNotFound    = `Record %s has not been found`
-	eTableExists       = `Table %s exists`
-	eTableNotFound     = `Table %s has not been found`
-	eUnknownContract   = `Unknown contract %s`
-	eUnsupportedType   = "Unsupported type %T"
-	eWrongRandom       = `Wrong random parameters %d %d`
+	eAccessContract     = `%s can be only called from %s`
+	eColumnExist        = `Column %s exists`
+	eColumnNotExist     = `Column %s doesn't exist`
+	eColumnType         = `Type '%s' of columns is not supported`
+	eContractCondition  = `There is not conditions in contract %s`
+	eEmptyCond          = `%v condition is empty`
+	eIncorrectSignature = `incorrect signature %s`
+	eItemNotFound       = `Item %d has not been found`
+	eManyColumns        = `Too many columns. Limit is %d`
+	eNotCondition       = `There is not %s in parameters`
+	eParamNotFound      = `Parameter %s has not been found`
+	eRecordNotFound     = `Record %s has not been found`
+	eTableExists        = `Table %s exists`
+	eTableNotFound      = `Table %s has not been found`
+	eUnknownContract    = `Unknown contract %s`
+	eUnsupportedType    = "Unsupported type %T"
+	eWrongRandom        = `Wrong random parameters %d %d`
 )
 
 var (
@@ -68,6 +69,7 @@ var (
 	errValues            = errors.New(`Values are undefined`)
 	errWrongColumn       = errors.New(`Parameters of column are wrong`)
 	errWrongPriceFunc    = errors.New(`Wrong type of price function`)
+	errWrongSignature    = errors.New(`wrong signature`)
 
 	errMaxPrice = fmt.Errorf(`Price value is more than %d`, MaxPrice)
 )
