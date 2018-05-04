@@ -11,7 +11,7 @@ INSERT INTO "%[1]d_parameters" ("id","name", "value", "conditions") VALUES
 		('7','changing_menu', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
 		('8','changing_contracts', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
 		('9','max_sum', '1000000', 'ContractConditions("MainCondition")'),
-		('10','money_digit', '2', 'ContractConditions("MainCondition")'),
+		('10','money_digit', '18', 'ContractConditions("MainCondition")'),
 		('11','stylesheet', 'body {
 		  /* You can define your custom styles here or create custom CSS rules */
 		}', 'ContractConditions("MainCondition")'),
