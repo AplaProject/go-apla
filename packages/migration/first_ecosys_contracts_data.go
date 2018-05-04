@@ -97,7 +97,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('6', 'EditLang', 'contract EditLang {
 	data {
-        Id int
+		Id int
+		Name string "optional"
+		ApplicationId int "optional"
 		Trans string "optional"
 		Value array "optional"
 		IdLanguage array "optional"
@@ -130,15 +132,25 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			}
 			i = i + 1
 		}
+
+		$row = DBFind("languages").Columns("name,app_id").WhereId($Id).Row()
+		if !$row{
+			warning "Language not found"
+		}
+
+		if $ApplicationId == 0 {
+			$ApplicationId = Int($row["app_id"])
+		}
+		if $Name == "" {
+			$Name = $row["name"]
+		}
+
 		if (len > 0){
 			langarr = Sprintf("{"+"%%v"+"}", res)
 			$Trans = langarr
-			DBUpdate("languages", $Id, "res", $Trans)
-			//UpdateLang($Id, $Trans)
-		}
-		else {
-			DBUpdate("languages", $Id, "res", $Trans)
-			//UpdateLang($Id, $Trans)
+			EditLanguage($Id, $Name, $Trans, $ApplicationId)
+		} else {
+			EditLanguage($Id, $Name, $Trans, $ApplicationId)
 		}
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
@@ -1020,15 +1032,15 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			i = i + 1
 		}
 		if len > 0 {
-            langarr = Sprintf("{"+"%%v"+"}", res)
-            $Trans = langarr
-            $Id = DBInsert("languages", "name,res,app_id", $Name, $Trans, $ApplicationId)
-            //UpdateLang($Id, $Trans)
-        } else {
-            $Id = DBInsert("languages", "name,res,app_id", $Name, $Trans, $ApplicationId)
-            //UpdateLang($Id, $Trans)
-        }
-    }
+			langarr = Sprintf("{"+"%%v"+"}", res)
+			$Trans = langarr
+			$Id = CreateLanguage($Name, $Trans, $ApplicationId)
+		} else {
+			$Id = CreateLanguage($Name, $Trans, $ApplicationId)
+		}
+		
+		$result = $Id
+	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('19', 'NewMenu', 'contract NewMenu {
     data {

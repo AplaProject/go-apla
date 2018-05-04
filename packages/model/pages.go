@@ -7,6 +7,7 @@ type Page struct {
 	Name       string `gorm:"not null" json:"name"`
 	Value      string `gorm:"not null" json:"value"`
 	Menu       string `gorm:"not null;size:255" json:"menu"`
+	AppID      int64  `gorm:"column:app_id;not null" json:"app_id"`
 	Conditions string `gorm:"not null" json:"conditions"`
 }
 
