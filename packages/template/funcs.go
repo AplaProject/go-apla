@@ -187,6 +187,9 @@ func moneyTag(par parFunc) string {
 	if ret == `NULL` || len(ret) == 0 {
 		ret = `0`
 	}
+	if strings.IndexByte(ret, '.') >= 0 {
+		return `wrong money`
+	}
 	if len((*par.Pars)[`Digit`]) > 0 {
 		cents = converter.StrToInt(macro((*par.Pars)[`Digit`], par.Workspace.Vars))
 	} else {
@@ -200,7 +203,7 @@ func moneyTag(par parFunc) string {
 		}
 		cents = converter.StrToInt(sp.Value)
 	}
-	if cents > 0 && strings.IndexByte(ret, '.') < 0 {
+	if cents != 0 {
 		retDec, err := decimal.NewFromString(ret)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting money")
