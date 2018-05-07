@@ -31,10 +31,10 @@ func (c ChildVDEConfig) configCommand() *exec.Cmd {
 		fmt.Sprintf("--dbUser=%s", c.DBUser),
 		fmt.Sprintf("--dbPassword=%s", c.DBPassword),
 		fmt.Sprintf("--dbName=%s", c.Name),
-		fmt.Sprintf("--httpPort=%d", c.HTTPPort),
+		fmt.Sprintf("--httpPort=%d", c.HTTPPort)
 		fmt.Sprintf("--dataDir=%s", c.Directory),
 		fmt.Sprintf("--keysDir=%s", c.Directory),
-		"--runMode=VDE",
+		fmt.Sprintf("--runMode=VDE")
 	}
 
 	return exec.Command(c.Executable, args...)
