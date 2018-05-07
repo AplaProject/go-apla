@@ -85,14 +85,15 @@ func Route(route *hr.Router) {
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, contractHandlers.nodeContract)
 
 	if !conf.Config.IsSupportingVDE() {
+		get(`txstatus/:hash`, ``, authWallet, txstatus)
+		get(`txstatusMultiple`, `data:string`, authWallet, txstatusMulti)
 		get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
 		get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
-		get(`txstatus/:hash`, ``, authWallet, txstatus)
 		get(`history/:table/:id`, ``, authWallet, getHistory)
 		get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 		get(`block/:id`, ``, getBlockInfo)
 		get(`maxblockid`, ``, getMaxBlockID)
-
+		get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
 		get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
 		get(`systemparams`, `?names:string`, authWallet, systemParams)
 		get(`ecosystems`, ``, authWallet, ecosystems)
