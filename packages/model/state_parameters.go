@@ -1,5 +1,9 @@
 package model
 
+const (
+	ParamMoneyDigit = "money_digit"
+)
+
 // StateParameter is model
 type StateParameter struct {
 	tableName  string

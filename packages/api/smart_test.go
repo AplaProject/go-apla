@@ -24,6 +24,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/shopspring/decimal"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -280,7 +281,7 @@ func TestNewTable(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	name := randName(`tbl`)
-	form := url.Values{"Name": {`1_` + name}, "Columns": {`[{"name":"MyName","type":"varchar", 
+	form := url.Values{"Name": {`1_` + name}, "ApplicationId": {"1"}, "Columns": {`[{"name":"MyName","type":"varchar", 
 		"conditions":"true"},
 	  {"name":"Name", "type":"varchar","index": "0", "conditions":"{\"read\":\"true\",\"update\":\"true\"}"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
@@ -296,14 +297,14 @@ func TestNewTable(t *testing.T) {
 			DBUpdate("1_` + name + `", 1, "name", "test value" )
 			$result = DBFind("1_` + name + `").Columns("name").WhereId(1).One("name")
 		}
-	}`}, `Conditions`: {`true`}}
+	}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	_, msg, err := postTxResult(`sub`+name, &url.Values{})
 	assert.NoError(t, err)
 	assert.Equal(t, msg, "test value")
 
-	form = url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
+	form = url.Values{"Name": {name}, "ApplicationId": {"1"}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
 	  "conditions":"true"},
 	{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
 	{"name":"Doc", "type":"json","index": "0", "conditions":"true"},	
@@ -738,4 +739,33 @@ func TestBytesToString(t *testing.T) {
 	_, res, err := postTxMultipart(contract, nil, map[string][]byte{"File": []byte(content)})
 	assert.NoError(t, err)
 	assert.Equal(t, content, res)
+}
+
+func TestMoneyDigits(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	var v paramValue
+	assert.NoError(t, sendGet("/ecosystemparam/money_digit", &url.Values{}, &v))
+
+	contract := randName("MoneyDigits")
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + contract + ` {
+			data {
+				Value money
+			}
+			action {
+				$result = $Value
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}))
+
+	_, result, err := postTxResult(contract, &url.Values{
+		"Value": {"1"},
+	})
+	assert.NoError(t, err)
+
+	d := decimal.New(1, int32(converter.StrToInt(v.Value)))
+	assert.Equal(t, d.StringFixed(0), result)
 }

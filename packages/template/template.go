@@ -176,7 +176,8 @@ func setAllAttr(par parFunc) {
 			if len(imap) > 0 {
 				par.Node.Attr[strings.ToLower(key)] = imap
 			}
-		} else if key != `Body` && key != `Data` && len(v) > 0 {
+		} else if key != `Body` && (key != `Data` || (*par.Workspace.Vars)[`_full`] == `1`) &&
+			len(v) > 0 {
 			par.Node.Attr[strings.ToLower(key)] = v
 		}
 	}

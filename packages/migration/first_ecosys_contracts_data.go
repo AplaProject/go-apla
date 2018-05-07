@@ -97,7 +97,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('6', 'EditLang', 'contract EditLang {
 	data {
-        Id int
+		Id int
+		Name string "optional"
+		ApplicationId int "optional"
 		Trans string "optional"
 		Value array "optional"
 		IdLanguage array "optional"
@@ -130,16 +132,25 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			}
 			i = i + 1
 		}
+
+		$row = DBFind("languages").Columns("name,app_id").WhereId($Id).Row()
+		if !$row{
+			warning "Language not found"
+		}
+
+		if $ApplicationId == 0 {
+			$ApplicationId = Int($row["app_id"])
+		}
+		if $Name == "" {
+			$Name = $row["name"]
+		}
+
 		if (len > 0){
 			langarr = Sprintf("{"+"%%v"+"}", res)
 			$Trans = langarr
-			DBUpdate("languages", $Id, "res", $Trans)
-			//UpdateLang($Id, $Trans)
+			
 		}
-		else {
-			DBUpdate("languages", $Id, "res", $Trans)
-			//UpdateLang($Id, $Trans)
-		}
+		EditLanguage($Id, $Name, $Trans, $ApplicationId)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('7', 'EditParameter', 'contract EditParameter {
@@ -213,7 +224,10 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
             $Name = $TableName
             $Columns = Sprintf("["+"%%v"+"]", res)
-            $Permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
+            if !$Permissions {
+                $Permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
+            }
+            TableConditions($Name, $Columns, $Permissions)
             CreateTable($Name, $Columns, $Permissions, $ApplicationId)
         }
     }
@@ -705,9 +719,11 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	}
 	
 	conditions {
-        var permissions string
-        permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
-        $Permissions = permissions
+        if !$Permissions {
+            var permissions string
+            permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
+            $Permissions = permissions
+        }
 		TableConditions($Name, "", $Permissions)
 	}
 	
@@ -1016,15 +1032,11 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			i = i + 1
 		}
 		if len > 0 {
-            langarr = Sprintf("{"+"%%v"+"}", res)
-            $Trans = langarr
-            $Id = DBInsert("languages", "name,res,app_id", $Name, $Trans, $ApplicationId)
-            //UpdateLang($Id, $Trans)
-        } else {
-            $Id = DBInsert("languages", "name,res,app_id", $Name, $Trans, $ApplicationId)
-            //UpdateLang($Id, $Trans)
-        }
-    }
+			langarr = Sprintf("{"+"%%v"+"}", res)
+			$Trans = langarr
+		}
+		$result = CreateLanguage($Name, $Trans, $ApplicationId)
+	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('19', 'NewMenu', 'contract NewMenu {
     data {
@@ -1510,7 +1522,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         total = Money(row["amount"])
         req = $amount + Money(100000000000000000) 
         if req > total {
-			error Sprintf("Money is not enough. You have got %%v but you should reserve %%v", $total, $req)
+			error Sprintf("Money is not enough. You have got %%v but you should reserve %%v", total, req)
 		}
 	}
 	action {
@@ -1782,7 +1794,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 
 		DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
-		CallContract($cur["contract"], nil)
+
+		var params map
+		CallContract($cur["contract"], params)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('40', 'NewUser','contract NewUser {
@@ -1844,17 +1858,21 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('43', 'NodeOwnerCondition', 'contract NodeOwnerCondition {
 	conditions {
-		$full_nodes = JSONDecode(SysParamString("full_nodes"))
-		var i int
-		while i < Len($full_nodes) {
-			$fn = $full_nodes[i]
-			if $fn["key_id"] == $key_id {
-				return true
-			}
-			i = i + 1
-		}
-
-		warning "Sorry, you do not have access to this action."
+        $raw_full_nodes = SysParamString("full_nodes")
+        if Size($raw_full_nodes) == 0 {
+            ContractConditions("MainCondition")
+        } else {
+            $full_nodes = JSONDecode($raw_full_nodes)
+            var i int
+            while i < Len($full_nodes) {
+                $fn = $full_nodes[i]
+                if $fn["key_id"] == $key_id {
+                    return true
+                }
+                i = i + 1
+            }
+            warning "Sorry, you do not have access to this action."
+        }
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('44', 'NewBadBlock', 'contract NewBadBlock {

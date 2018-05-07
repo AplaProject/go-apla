@@ -340,18 +340,18 @@ func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
 }
 
 // NewLang creates new language
-func CreateLanguage(sc *SmartContract, name, trans string, appID int64) error {
+func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int64, err error) {
 	if sc.TxContract.Name != `@1NewLang` {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("NewLang can be only called from @1NewLang")
-		return fmt.Errorf(`NewLang can be only called from @1NewLang`)
+		return 0, fmt.Errorf(`NewLang can be only called from @1NewLang`)
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if _, _, err := DBInsert(sc, `@`+idStr+"_languages", "name,res,app_id", name, trans, appID); err != nil {
+	if _, id, err = DBInsert(sc, `@`+idStr+"_languages", "name,res,app_id", name, trans, appID); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
-		return err
+		return 0, err
 	}
 	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
-	return nil
+	return id, nil
 }
 
 // EditLang edits language
