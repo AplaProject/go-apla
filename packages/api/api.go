@@ -30,6 +30,7 @@ import (
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -241,10 +242,8 @@ func fillToken(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 
 func fillParams(params map[string]int) apiHandle {
 	return func(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-		// Getting and validating request parameters
-		vde := r.FormValue(`vde`)
-		if vde == `1` || vde == `true` {
-			data.vm = smart.GetVM(true, data.ecosystemId)
+		if conf.Config.IsSupportingVDE() {
+			data.vm = smart.GetVM(true, consts.DefaultVDE)
 			if data.vm == nil {
 				return errorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemId)
 			}
@@ -252,6 +251,7 @@ func fillParams(params map[string]int) apiHandle {
 		} else {
 			data.vm = smart.GetVM(false, 0)
 		}
+
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {
