@@ -53,4 +53,6 @@ const (
 	BCRelevanceError         = "BCRelevanceError"
 	BCActualizationError     = "BCActualizationError"
 	SchedulerError           = "SchedulerError"
+	WrongModeError           = "WrongModeError"
+	VDEManagerError          = "VDEManagerError"
 )

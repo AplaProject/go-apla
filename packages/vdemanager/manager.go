@@ -66,10 +66,16 @@ func prepareWorkDir() error {
 // CreateVDE creates one instance of VDE
 func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) error {
 
+	execPath, err := os.Executable()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on getting executable path")
+		return err
+	}
+
 	config := ChildVDEConfig{
-		Executable:     path.Join(conf.Config.DataDir, consts.NodeExecutableFileName),
+		Executable:     execPath,
 		Name:           name,
-		Directory:      path.Join(childConfigsPath, name)
+		Directory:      path.Join(childConfigsPath, name),
 		DBUser:         dbUser,
 		DBPassword:     dbPassword,
 		ConfigFileName: consts.DefaultConfigFile,
