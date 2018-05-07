@@ -20,6 +20,7 @@ import "errors"
 
 const (
 	eTableNotFound = `Table %s has not been found`
+	eParamNotFound = `Parameter %s has not been found`
 )
 
 var (

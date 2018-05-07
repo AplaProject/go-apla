@@ -688,9 +688,18 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 }
 
 // EcosysParam returns the value of the specified parameter for the ecosystem
-func EcosysParam(sc *SmartContract, name string) string {
-	val, _ := model.Single(`SELECT value FROM "`+getDefTableName(sc, `parameters`)+`" WHERE name = ?`, name).String()
-	return val
+func EcosysParam(sc *SmartContract, name string) (string, error) {
+	sp := &model.StateParameter{}
+	sp.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	found, err := sp.Get(nil, name)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosys param")
+		return ``, err
+	}
+	if !found {
+		return ``, fmt.Errorf(eParamNotFound, name)
+	}
+	return sp.Value, nil
 }
 
 // AppParam returns the value of the specified app parameter for the ecosystem
