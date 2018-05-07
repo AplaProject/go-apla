@@ -38,25 +38,24 @@ type tplList []tplItem
 
 func TestAPI(t *testing.T) {
 	var ret contentResult
-
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
-	err := sendPost(`content/page/default_page`, &url.Values{}, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
 	var retHash hashResult
-	err = sendPost(`content/hash/default_page`, &url.Values{}, &retHash)
+	err := sendPost(`content/hash/default_page`, &url.Values{}, &retHash)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	if len(retHash.Hash) != 64 {
 		t.Error(`wrong hash ` + retHash.Hash)
+		return
+	}
+
+	if err = keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendPost(`content/page/default_page`, &url.Values{}, &ret)
+	if err != nil {
+		t.Error(err)
 		return
 	}
 
