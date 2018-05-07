@@ -148,10 +148,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		if (len > 0){
 			langarr = Sprintf("{"+"%%v"+"}", res)
 			$Trans = langarr
-			EditLanguage($Id, $Name, $Trans, $ApplicationId)
-		} else {
-			EditLanguage($Id, $Name, $Trans, $ApplicationId)
+			
 		}
+		EditLanguage($Id, $Name, $Trans, $ApplicationId)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('7', 'EditParameter', 'contract EditParameter {
@@ -1034,12 +1033,8 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		if len > 0 {
 			langarr = Sprintf("{"+"%%v"+"}", res)
 			$Trans = langarr
-			$Id = CreateLanguage($Name, $Trans, $ApplicationId)
-		} else {
-			$Id = CreateLanguage($Name, $Trans, $ApplicationId)
 		}
-		
-		$result = $Id
+		$result = CreateLanguage($Name, $Trans, $ApplicationId)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('19', 'NewMenu', 'contract NewMenu {
