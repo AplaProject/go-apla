@@ -227,6 +227,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             if !$Permissions {
                 $Permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
             }
+            TableConditions($Name, $Columns, $Permissions)
             CreateTable($Name, $Columns, $Permissions, $ApplicationId)
         }
     }
@@ -1793,7 +1794,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 
 		DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
-		CallContract($cur["contract"], nil)
+
+		var params map
+		CallContract($cur["contract"], params)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('40', 'NewUser','contract NewUser {

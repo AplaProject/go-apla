@@ -24,6 +24,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/shopspring/decimal"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -738,4 +739,33 @@ func TestBytesToString(t *testing.T) {
 	_, res, err := postTxMultipart(contract, nil, map[string][]byte{"File": []byte(content)})
 	assert.NoError(t, err)
 	assert.Equal(t, content, res)
+}
+
+func TestMoneyDigits(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	var v paramValue
+	assert.NoError(t, sendGet("/ecosystemparam/money_digit", &url.Values{}, &v))
+
+	contract := randName("MoneyDigits")
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + contract + ` {
+			data {
+				Value money
+			}
+			action {
+				$result = $Value
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}))
+
+	_, result, err := postTxResult(contract, &url.Values{
+		"Value": {"1"},
+	})
+	assert.NoError(t, err)
+
+	d := decimal.New(1, int32(converter.StrToInt(v.Value)))
+	assert.Equal(t, d.StringFixed(0), result)
 }
