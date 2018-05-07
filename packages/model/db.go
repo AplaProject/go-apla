@@ -10,6 +10,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration"
+	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
@@ -155,7 +156,7 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 
 // ExecSchemaLocalData is executing schema with local data
 func ExecSchemaLocalData(id int, wallet int64) error {
-	return DBConn.Exec(fmt.Sprintf(migration.SchemaVDE, id, wallet)).Error
+	return DBConn.Exec(fmt.Sprintf(vde.SchemaVDE, id, wallet)).Error
 }
 
 // ExecSchema is executing schema
