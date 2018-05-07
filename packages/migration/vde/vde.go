@@ -1,4 +1,4 @@
-package migration
+package vde
 
 var SchemaVDE = `
 		DROP TABLE IF EXISTS "%[1]d_vde_members";
