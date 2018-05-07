@@ -28,10 +28,11 @@ func TestContent(t *testing.T) {
 
 	name := randName(`page`)
 	assert.NoError(t, postTx(`NewPage`, &url.Values{
-		"Name":       {name},
-		"Value":      {`If(true){Div(){Span(My text)Address()}}.Else{Div(Body: Hidden text)}`},
-		"Menu":       {`default_menu`},
-		"Conditions": {"true"},
+		"ApplicationId": {`1`},
+		"Name":          {name},
+		"Value":         {`If(true){Div(){Span(My text)Address()}}.Else{Div(Body: Hidden text)}`},
+		"Menu":          {`default_menu`},
+		"Conditions":    {"true"},
 	}))
 
 	cases := []struct {
@@ -89,6 +90,18 @@ func TestContent(t *testing.T) {
 				"source": {"true"},
 			},
 			`[{"tag":"data","attr":{"source":"src"},"tail":[{"tag":"custom","attr":{"column":"custom_col"},"children":[{"tag":"span","children":[{"tag":"text","text":"test"}]}]}]}]`,
+		},
+		{
+			"content",
+			url.Values{
+				"template": {`Data(myforlist,"id,name",
+					"1",Test message 1
+					2,"Test message 2"
+					3,"Test message 3"
+					)`},
+				"source": {"true"},
+			},
+			`[{"tag":"data","attr":{"columns":"id,name","data":"1,Test message 1\n\t\t\t\t\t2,\"Test message 2\"\n\t\t\t\t\t3,\"Test message 3\"","source":"myforlist"}}]`,
 		},
 	}
 
