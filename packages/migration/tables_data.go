@@ -33,7 +33,7 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 	  "name": "ContractConditions(\"MainCondition\")",
 	  "res": "ContractConditions(\"MainCondition\")",
 	  "conditions": "ContractConditions(\"MainCondition\")",
-	  "app_id": "ContractConditions(\"MainConditions\")"}', 'ContractAccess("@1EditTable")'),
+	  "app_id": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("@1EditTable")'),
 	('5', 'menu', 
 		'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
 	  "new_column": "ContractConditions(\"MainCondition\")"}',
