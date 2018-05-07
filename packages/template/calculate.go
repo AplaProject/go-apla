@@ -19,6 +19,7 @@ package template
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"unicode"
@@ -49,9 +50,24 @@ type token struct {
 type opFunc func()
 
 var (
-	errExp = errors.New(`wrong expression`)
-	errDiv = errors.New(`dividing by zero`)
+	errExp            = errors.New(`wrong expression`)
+	errDiv            = errors.New(`dividing by zero`)
+	errPrecIsNegative = errors.New(`precision is negative`)
 )
+
+func roundFloat(val float64, places int) (newVal float64) {
+	var round float64
+	pow := math.Pow(10, float64(places))
+	digit := pow * val
+	_, div := math.Modf(digit)
+	if div >= 0.5 {
+		round = math.Ceil(digit)
+	} else {
+		round = math.Floor(digit)
+	}
+	newVal = round / pow
+	return
+}
 
 func parsing(input string, itype int) (*[]token, error) {
 	var err error
@@ -211,12 +227,15 @@ func calcExp(tokens []token, resType int, prec string) string {
 	}
 	if prec != "" {
 		precInt := converter.StrToInt(prec)
+		if precInt < 0 {
+			return errPrecIsNegative.Error()
+		}
 		if resType == expFloat {
-			return strconv.FormatFloat(stack[0].(float64), 'f', precInt, 64)
+			return fmt.Sprintf("%."+prec+"f", roundFloat(stack[0].(float64), precInt))
 		}
 		if resType == expMoney {
 			money := stack[0].(decimal.Decimal)
-			return money.StringFixed(int32(precInt))
+			return money.Round(int32(precInt)).String()
 		}
 	}
 	return fmt.Sprint(stack[0])
