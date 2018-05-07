@@ -1858,17 +1858,21 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('43', 'NodeOwnerCondition', 'contract NodeOwnerCondition {
 	conditions {
-		$full_nodes = JSONDecode(SysParamString("full_nodes"))
-		var i int
-		while i < Len($full_nodes) {
-			$fn = $full_nodes[i]
-			if $fn["key_id"] == $key_id {
-				return true
-			}
-			i = i + 1
-		}
-
-		warning "Sorry, you do not have access to this action."
+        $raw_full_nodes = SysParamString("full_nodes")
+        if Size($raw_full_nodes) == 0 {
+            ContractConditions("MainCondition")
+        } else {
+            $full_nodes = JSONDecode($raw_full_nodes)
+            var i int
+            while i < Len($full_nodes) {
+                $fn = $full_nodes[i]
+                if $fn["key_id"] == $key_id {
+                    return true
+                }
+                i = i + 1
+            }
+            warning "Sorry, you do not have access to this action."
+        }
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1);
 `
