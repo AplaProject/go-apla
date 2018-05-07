@@ -486,7 +486,15 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	}
 	state := converter.StrToInt64(prefix)
 	vm := newVM()
-	EmbedFuncs(vm, script.VMTypeVDE)
+
+	var vmt script.VMType
+	if conf.Config.IsVDE() {
+		vmt = script.VMTypeVDE
+	} else if conf.Config.IsVDEMaster() {
+		vmt = script.VMTypeVDEMaster
+	}
+
+	EmbedFuncs(vm, vmt)
 	smartVDE[state] = vm
 	LoadSysFuncs(vm, int(state))
 	for _, item := range contracts {
