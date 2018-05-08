@@ -33,14 +33,15 @@ func appParam(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	}
 	ap := &model.AppParam{}
 	ap.SetTablePrefix(prefix)
-	found, err := ap.Get(nil, converter.StrToInt64(data.params[`appid`].(string)), data.params[`name`].(string))
+	name := data.params[`name`].(string)
+	found, err := ap.Get(nil, converter.StrToInt64(data.params[`appid`].(string)), name)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting app parameter by name")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if !found {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "key": data.params["name"].(string)}).Error("app parameter not found")
-		return errorAPI(w, err, http.StatusBadRequest)
+		logger.WithFields(log.Fields{"type": consts.NotFound, "key": name}).Error("app parameter not found")
+		return errorAPI(w, `E_PARAMNOTFOUND`, http.StatusBadRequest, name)
 	}
 
 	data.result = &paramValue{ID: converter.Int64ToStr(ap.ID), Name: ap.Name, Value: ap.Value,
