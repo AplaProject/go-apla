@@ -43,7 +43,7 @@ func TestJSON(t *testing.T) {
 
 var forTest = tplList{
 	{`SetVar(ok, OK)Input(Type: text, Value: #ok# Now(YY))Input(Type:text, Value: #ok# Some text)`,
-		`[{"tag":"input","attr":{"type":"text","value":{"tag":[{"tag":"text","text":"OK "},{"tag":"now","attr":{"format":"YY"}}],"type":"tag"}}},{"tag":"input","attr":{"type":"text","value":{"text":"OK Some text","type":"text"}}}]`},
+		`[{"tag":"input","attr":{"type":"text","value":"OK Now(YY)"}},{"tag":"input","attr":{"type":"text","value":"OK Some text"}}]`},
 	{`SetVar(format, MMYY)Now(#format#,1 day)Now()`, `[{"tag":"now","attr":{"format":"MMYY","interval":"1 day"}},{"tag":"now"}]`},
 	{`SetVar(digit, 2)Money(12345, #digit#)=Money(#digit#, #digit#)=Money(123456000, 7)=Money(12, -3)`,
 		`[{"tag":"text","text":"123.45"},{"tag":"text","text":"=0.02"},{"tag":"text","text":"=12.3456"},{"tag":"text","text":"=12000"}]`},
@@ -160,7 +160,7 @@ var forTest = tplList{
 	+CmpTime(2017-11-07T17:51:08,2017-11-07)CmpTime(2017-11-07T17:51:08,2017-11-07T20:22:01)CmpTime(2015-10-01T17:51:08,2015-10-01T17:51:08)=DateTime(NULL)`,
 		`[{"tag":"text","text":"2017-11-07 17:51:08"},{"tag":"text","text":"+09:01 27.08.2015"},{"tag":"text","text":"\n\t+1-10"},{"tag":"text","text":"="}]`},
 	{`SetVar(pref,unicode Р)Input(Name: myid, Value: #pref#)Strong(qqq)`,
-		`[{"tag":"input","attr":{"name":"myid","value":{"text":"unicode Р","type":"text"}}},{"tag":"strong","children":[{"tag":"text","text":"qqq"}]}]`},
+		`[{"tag":"input","attr":{"name":"myid","value":"unicode Р"}},{"tag":"strong","children":[{"tag":"text","text":"qqq"}]}]`},
 	{`ImageInput(myimg,100,40)`,
 		`[{"tag":"imageinput","attr":{"name":"myimg","ratio":"40","width":"100"}}]`},
 	{`LinkPage(My page,mypage,,"myvar1=Value 1, myvar2=Value2,myvar3=Val(myval)")`,
@@ -195,7 +195,7 @@ var forTest = tplList{
 			Div(Class: mydiv2,
 				Div(Body:
 					Input(Value: my default text))))`,
-		`[{"tag":"div","attr":{"class":"mydiv1"},"children":[{"tag":"div","attr":{"class":"mydiv2"},"children":[{"tag":"div","children":[{"tag":"input","attr":{"value":{"text":"my default text","type":"text"}}}]}]}]}]`},
+		`[{"tag":"div","attr":{"class":"mydiv1"},"children":[{"tag":"div","attr":{"class":"mydiv2"},"children":[{"tag":"div","children":[{"tag":"input","attr":{"value":"my default text"}}]}]}]}]`},
 	{`P(Some Span(fake(text) Strong(very Em(important Label(news)))))`,
 		`[{"tag":"p","children":[{"tag":"text","text":"Some "},{"tag":"span","children":[{"tag":"text","text":"fake(text) "},{"tag":"strong","children":[{"tag":"text","text":"very "},{"tag":"em","children":[{"tag":"text","text":"important "},{"tag":"label","children":[{"tag":"text","text":"news"}]}]}]}]}]}]`},
 	{`Form(myclass, Input(myid)Button(Submit,default_page,myclass))`,
