@@ -24,7 +24,7 @@ const (
 
 	dropDBTemplate     = `DROP OWNED BY %s CASCADE`
 	dropDBRoleTemplate = `DROP ROLE IF EXISTS %s`
-	commandTemplate    = `%s -VDEMode=true -configPath=%s -workDir=%s`
+	commandTemplate    = `%s start --config=%s`
 )
 
 var (
@@ -33,49 +33,35 @@ var (
 
 // VDEManager struct
 type VDEManager struct {
-	processes *process.ProcessManager
+	processes        *process.ProcessManager
+	execPath         string
+	childConfigsPath string
 }
 
 var (
-	Manager          *VDEManager
-	childConfigsPath string
+	Manager *VDEManager
 )
 
-// InitVDEManager create init instance of VDEManager
-func InitVDEManager() error {
-	if err := prepareWorkDir(); err != nil {
-		return err
-	}
-
-	return initProcessManager()
-}
-
-func prepareWorkDir() error {
-	childConfigsPath = path.Join(conf.Config.DataDir, childFolder)
+func prepareWorkDir() (string, error) {
+	childConfigsPath := path.Join(conf.Config.DataDir, childFolder)
 
 	if _, err := os.Stat(childConfigsPath); os.IsNotExist(err) {
 		if err := os.Mkdir(childConfigsPath, 0700); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating configs directory")
-			return err
+			return "", err
 		}
 	}
 
-	return nil
+	return childConfigsPath, nil
 }
 
 // CreateVDE creates one instance of VDE
 func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) error {
 
-	execPath, err := os.Executable()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on getting executable path")
-		return err
-	}
-
 	config := ChildVDEConfig{
-		Executable:     execPath,
+		Executable:     mgr.execPath,
 		Name:           name,
-		Directory:      path.Join(childConfigsPath, name),
+		Directory:      path.Join(mgr.childConfigsPath, name),
 		DBUser:         dbUser,
 		DBPassword:     dbPassword,
 		ConfigFileName: consts.DefaultConfigFile,
@@ -117,7 +103,7 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 	procConfEntry.Name = "program:" + name
 	command := fmt.Sprintf("%s --configPath=%s", config.Executable, config.Directory)
 	procConfEntry.AddKeyValue("command", command)
-	proc := process.NewProcess("vdeMaster", confEntry)
+	proc := process.NewProcess("vdeMaster", procConfEntry)
 
 	mgr.processes.Add(name, proc)
 	mgr.processes.Find(name).Start(true)
@@ -153,7 +139,7 @@ func (mgr *VDEManager) DeleteVDE(name string) error {
 		p.Stop(true)
 	}
 
-	vdeDir := path.Join(childConfigsPath, name)
+	vdeDir := path.Join(mgr.childConfigsPath, name)
 	vdeConfigPath := filepath.Join(vdeDir, consts.DefaultConfigFile)
 	vdeConfig, err := conf.GetConfigFromPath(vdeConfigPath)
 	if err != nil {
@@ -250,7 +236,7 @@ func (mgr *VDEManager) createVDEDB(vdeName, login, pass string) error {
 
 func (mgr *VDEManager) initVDEDir(vdeName string) error {
 
-	vdeDirName := path.Join(childConfigsPath, vdeName)
+	vdeDirName := path.Join(mgr.childConfigsPath, vdeName)
 	if _, err := os.Stat(vdeDirName); os.IsNotExist(err) {
 		if err := os.Mkdir(vdeDirName, 0700); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating VDE directory")
@@ -261,21 +247,33 @@ func (mgr *VDEManager) initVDEDir(vdeName string) error {
 	return nil
 }
 
-func initProcessManager() error {
+func InitVDEManager() {
+
+	execPath, err := os.Executable()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Fatal("on determine executable path")
+	}
+
+	childConfigsPath, err := prepareWorkDir()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Fatal("on prepare child configs folder")
+	}
+
 	Manager = &VDEManager{
-		processes: process.NewProcessManager(),
+		processes:        process.NewProcessManager(),
+		execPath:         execPath,
+		childConfigsPath: childConfigsPath,
 	}
 
 	list, err := ioutil.ReadDir(childConfigsPath)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": childConfigsPath}).Error("Initialising VDE list")
-		return err
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": childConfigsPath}).Fatal("on read child VDE directory")
 	}
 
 	for _, item := range list {
 		if item.IsDir() {
-			procDir := path.Join(childConfigsPath, item.Name())
-			commandStr := fmt.Sprintf(commandTemplate, bin(), filepath.Join(procDir, consts.DefaultConfigFile), procDir)
+			procDir := path.Join(Manager.childConfigsPath, item.Name())
+			commandStr := fmt.Sprintf(commandTemplate, Manager.execPath, filepath.Join(procDir, consts.DefaultConfigFile))
 			confEntry := pConf.NewConfigEntry(procDir)
 			confEntry.Name = "program:" + item.Name()
 			confEntry.AddKeyValue("command", commandStr)
@@ -287,6 +285,4 @@ func initProcessManager() error {
 			Manager.processes.Add(item.Name(), proc)
 		}
 	}
-
-	return nil
 }
