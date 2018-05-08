@@ -34,10 +34,11 @@ import (
 )
 
 type contentResult struct {
-	Menu     string          `json:"menu,omitempty"`
-	MenuTree json.RawMessage `json:"menutree,omitempty"`
-	Title    string          `json:"title,omitempty"`
-	Tree     json.RawMessage `json:"tree"`
+	Menu       string          `json:"menu,omitempty"`
+	MenuTree   json.RawMessage `json:"menutree,omitempty"`
+	Title      string          `json:"title,omitempty"`
+	Tree       json.RawMessage `json:"tree"`
+	NodesCount int64           `json:"nodesCount,omitempty"`
 }
 
 type hashResult struct {
@@ -101,15 +102,18 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	go func() {
 		defer wg.Done()
 
-		ret := template.Template2JSON(page.Value, &timeout, initVars(r, data))
+		vars := initVars(r, data)
+		(*vars)["app_id"] = converter.Int64ToStr(page.AppID)
+
+		ret := template.Template2JSON(page.Value, &timeout, vars)
 		if timeout {
 			return
 		}
-		retmenu := template.Template2JSON(menu, &timeout, initVars(r, data))
+		retmenu := template.Template2JSON(menu, &timeout, vars)
 		if timeout {
 			return
 		}
-		data.result = &contentResult{Tree: ret, Menu: page.Menu, MenuTree: retmenu}
+		data.result = &contentResult{Tree: ret, Menu: page.Menu, MenuTree: retmenu, NodesCount: page.ValidateCount}
 		success <- true
 	}()
 	go func() {

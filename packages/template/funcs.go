@@ -33,6 +33,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -68,6 +69,7 @@ func init() {
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
 	funcs[`Now`] = tplFunc{defaultTag, defaultTag, `now`, `Format,Interval`}
+	funcs[`Money`] = tplFunc{moneyTag, defaultTag, `money`, `Exp,Digit`}
 	funcs[`Range`] = tplFunc{rangeTag, defaultTag, `range`, `Source,From,To,Step`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
@@ -96,7 +98,7 @@ func init() {
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
-	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,@MemberID"}
+	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID"}
 	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
 
 	tails[`button`] = forTails{map[string]tailInfo{
@@ -163,6 +165,9 @@ func init() {
 	tails[`inputMap`] = forTails{map[string]tailInfo{
 		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
 	}}
+	tails[`binary`] = forTails{map[string]tailInfo{
+		`ById`: {tplFunc{tailTag, defaultTailFull, `id`, `id`}, false},
+	}}
 }
 
 func defaultTag(par parFunc) string {
@@ -173,6 +178,40 @@ func defaultTag(par parFunc) string {
 
 func lowerTag(par parFunc) string {
 	return strings.ToLower(macro((*par.Pars)[`Text`], par.Workspace.Vars))
+}
+
+func moneyTag(par parFunc) string {
+	var cents int
+
+	ret := macro((*par.Pars)[`Exp`], par.Workspace.Vars)
+	if ret == `NULL` || len(ret) == 0 {
+		ret = `0`
+	}
+	if strings.IndexByte(ret, '.') >= 0 {
+		return `wrong money`
+	}
+	if len((*par.Pars)[`Digit`]) > 0 {
+		cents = converter.StrToInt(macro((*par.Pars)[`Digit`], par.Workspace.Vars))
+	} else {
+		prefix := (*par.Workspace.Vars)[`ecosystem_id`]
+		sp := &model.StateParameter{}
+		sp.SetTablePrefix(prefix)
+		_, err := sp.Get(nil, `money_digit`)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
+			return `unknown money_digit`
+		}
+		cents = converter.StrToInt(sp.Value)
+	}
+	if cents != 0 {
+		retDec, err := decimal.NewFromString(ret)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting money")
+			return `wrong money`
+		}
+		ret = retDec.Shift(int32(-cents)).String()
+	}
+	return ret
 }
 
 func menugroupTag(par parFunc) string {
@@ -248,7 +287,7 @@ func addressTag(par parFunc) string {
 
 func calculateTag(par parFunc) string {
 	return calculate(macro((*par.Pars)[`Exp`], par.Workspace.Vars), (*par.Pars)[`Type`],
-		converter.StrToInt((*par.Pars)[`Prec`]))
+		converter.StrToInt(macro((*par.Pars)[`Prec`], par.Workspace.Vars)))
 }
 
 func paramToSource(par parFunc, val string) string {
@@ -1090,13 +1129,26 @@ func binaryTag(par parFunc) string {
 		ecosystemID = (*par.Workspace.Vars)[`ecosystem_id`]
 	}
 
+	defaultTail(par, `binary`)
+
 	binary := &model.Binary{}
 	binary.SetTablePrefix(ecosystemID)
-	ok, err := binary.Get(
-		converter.StrToInt64((*par.Pars)["AppID"]),
-		converter.StrToInt64((*par.Pars)["MemberID"]),
-		(*par.Pars)["Name"],
+
+	var (
+		ok  bool
+		err error
 	)
+
+	if par.Node.Attr["id"] != nil {
+		ok, err = binary.GetByID(converter.StrToInt64(macro(par.Node.Attr["id"].(string), par.Workspace.Vars)))
+	} else {
+		ok, err = binary.Get(
+			converter.StrToInt64(macro((*par.Pars)["AppID"], par.Workspace.Vars)),
+			converter.StrToInt64(macro((*par.Pars)["MemberID"], par.Workspace.Vars)),
+			macro((*par.Pars)["Name"], par.Workspace.Vars),
+		)
+	}
+
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting record from db")
 		return err.Error()

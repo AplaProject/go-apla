@@ -190,7 +190,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 				pars[count-i] = reflect.ValueOf(rt.stack[size-i+auto])
 			}
 			if !pars[count-i].IsValid() {
-				pars[count-i] = reflect.Zero(reflect.TypeOf(map[string]interface{}{}))
+				pars[count-i] = reflect.Zero(reflect.TypeOf(int64(0)))
 			}
 		}
 		if i > 0 {
@@ -1022,7 +1022,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			rt.vm.logger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "stack": string(debug.Stack())}).Error("runtime panic error")
+			rt.vm.logger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error_info": r, "stack": string(debug.Stack())}).Error("runtime panic error")
 			err = fmt.Errorf(`runtime panic error`)
 		}
 	}()

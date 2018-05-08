@@ -453,7 +453,7 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	for _, item := range contracts {
 		list, err := script.ContractsList(item[`value`])
 		if err != nil {
-			log.WithFields(log.Fields{"error": err}).Error("Getting ContractsList")
+			log.WithFields(log.Fields{"contract": item["name"], "error": err}).Error("Getting ContractsList")
 			return err
 		}
 		names := strings.Join(list, `,`)
@@ -624,7 +624,7 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 	if len(tablePermission[action]) > 0 {
 		ret, err := sc.EvalIf(tablePermission[action])
 		if err != nil {
-			logger.WithFields(log.Fields{"action": action, "permissions": tablePermission[action], "error": err, "type": consts.EvalError}).Error("evaluating table permissions for action")
+			logger.WithFields(log.Fields{"table": table, "action": action, "permissions": tablePermission[action], "error": err, "type": consts.EvalError}).Error("evaluating table permissions for action")
 			return tablePermission, err
 		}
 		if !ret {
@@ -1017,8 +1017,9 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 	}
 
-	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.PrivateBlockchain {
+	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.PrivateBlockchain {
 		apl := sc.TxUsedCost.Mul(fuelRate)
+
 		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
 		if ierr != nil {
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": ierr, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
@@ -1072,7 +1073,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 
 		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
 			[]string{fromIDString}, true, true); ierr != nil {
-			return retError(ierr)
+			return retError(errCommission)
 		}
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")
 	}
