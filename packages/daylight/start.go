@@ -39,6 +39,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
@@ -181,15 +182,6 @@ func initRoutes(listenHost string) {
 	httpListener(listenHost, route)
 }
 
-func logBlockchainMode() {
-	mode := "private"
-	if !conf.Config.PrivateBlockchain {
-		mode = "non private"
-	}
-
-	log.WithFields(log.Fields{"mode": mode}).Error("Node running mode")
-}
-
 // Start starts the main code of the program
 func Start() {
 	var err error
@@ -218,7 +210,7 @@ func Start() {
 		}
 	}
 
-	logBlockchainMode()
+	log.WithFields(log.Fields{"mode": conf.Config.RunningMode}).Info("Node running mode")
 
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()
@@ -259,22 +251,28 @@ func Start() {
 			os.Exit(1)
 		}
 
-		var availableBCGap int64 = consts.AvailableBCGap
-		if syspar.GetRbBlocks1() > consts.AvailableBCGap {
-			availableBCGap = syspar.GetRbBlocks1() - consts.AvailableBCGap
+		if !conf.Config.IsSupportingVDE() {
+			var availableBCGap int64 = consts.AvailableBCGap
+			if syspar.GetRbBlocks1() > consts.AvailableBCGap {
+				availableBCGap = syspar.GetRbBlocks1() - consts.AvailableBCGap
+			}
+
+			blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
+			blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
+			blockGenerationTime := blockGenerationDuration + blocksGapDuration
+
+			checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
+			na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
+			na.Run()
+
+			err = service.InitNodesBanService()
+			if err != nil {
+				log.WithError(err).Fatal("Can't init ban service")
+			}
 		}
 
-		blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
-		blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
-		blockGenerationTime := blockGenerationDuration + blocksGapDuration
-
-		checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
-		na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
-		na.Run()
-
-		err = service.InitNodesBanService()
-		if err != nil {
-			log.WithError(err).Fatal("Can't init ban service")
+		if conf.Config.IsVDEMaster() {
+			vdemanager.InitVDEManager()
 		}
 	}
 
