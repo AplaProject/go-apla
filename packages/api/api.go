@@ -170,7 +170,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		startTime := time.Now()
 		var (
 			err  error
-			data = &apiData{}
+			data = &apiData{ecosystemId: 1}
 		)
 		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
 		requestLogger.Info("received http request")
