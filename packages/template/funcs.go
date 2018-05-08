@@ -43,10 +43,9 @@ type Composite struct {
 }
 
 var (
-	funcs      = make(map[string]tplFunc)
-	tails      = make(map[string]forTails)
-	modes      = [][]rune{{'(', ')'}, {'{', '}'}}
-	frontFuncs = []string{`Now`}
+	funcs = make(map[string]tplFunc)
+	tails = make(map[string]forTails)
+	modes = [][]rune{{'(', ')'}, {'{', '}'}}
 )
 
 func init() {
@@ -81,7 +80,7 @@ func init() {
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Image`] = tplFunc{imageTag, defaultTailTag, `image`, `Src,Alt,Class`}
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
-	funcs[`Input`] = tplFunc{inputTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,@Value,Disabled`}
+	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,@Value,Disabled`}
 	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
 	funcs[`LinkPage`] = tplFunc{defaultTailTag, defaultTailTag, `linkpage`, `Body,Page,Class,PageParams`}
 	funcs[`Data`] = tplFunc{dataTag, defaultTailTag, `data`, `Source,Columns,Data`}
@@ -708,28 +707,6 @@ func dbfindTag(par parFunc) string {
 	par.Node.Attr[`data`] = &data
 	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
-	return ``
-}
-
-func inputTag(par parFunc) string {
-	var isObj bool
-	defaultTailTag(par)
-	value := macro((*par.Pars)["Value"], par.Workspace.Vars)
-	if len(value) == 0 {
-		return ``
-	}
-	for _, name := range frontFuncs {
-		if strings.Contains(value, name+`(`) {
-			isObj = true
-		}
-	}
-	if isObj {
-		root := node{}
-		process(value, &root, par.Workspace)
-		par.Node.Attr[`value`] = map[string]interface{}{"type": "tag", "tag": root.Children}
-	} else {
-		par.Node.Attr[`value`] = map[string]interface{}{"type": "text", "text": value}
-	}
 	return ``
 }
 
