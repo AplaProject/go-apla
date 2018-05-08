@@ -89,6 +89,7 @@ var (
 		"DBSelect":    {},
 		"DBUpdate":    {},
 		"DBUpdateExt": {},
+		"SetPubKey":   {},
 	}
 	extendCost = map[string]int64{
 		"AddressToId":        10,
@@ -1072,12 +1073,22 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 }
 
 // SetPubKey updates the publis key
-func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (int64, error) {
+func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err error) {
 	if !accessContracts(sc, `NewUser`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SetPubKey can be only called from NewUser")
 		return 0, fmt.Errorf(`SetPubKey can be only called from NewUser contract`)
 	}
-	return DBUpdate(sc, "keys", id, `pub`, pubKey)
+	if len(pubKey) == consts.PubkeySizeLength*2 {
+		pubKey, err = hex.DecodeString(string(pubKey))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
+			return
+		}
+	}
+	qcost, _, err = sc.selectiveLoggingAndUpd([]string{`pub`}, []interface{}{pubKey},
+		getDefTableName(sc, `keys`), []string{`id`}, []string{converter.Int64ToStr(id)},
+		!sc.VDE && sc.Rollback, true)
+	return qcost, err
 }
 
 // PermColumn is contract func
