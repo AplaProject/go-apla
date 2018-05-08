@@ -226,6 +226,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"StringToBytes":        StringToBytes,
 		"BytesToString":        BytesToString,
 		"SetPubKey":            SetPubKey,
+		"NewMoney":             NewMoney,
 	}
 
 	switch vt {
@@ -1089,6 +1090,26 @@ func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err err
 		getDefTableName(sc, `keys`), []string{`id`}, []string{converter.Int64ToStr(id)},
 		!sc.VDE && sc.Rollback, true)
 	return qcost, err
+}
+
+func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
+	if !accessContracts(sc, `NewUser`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("NewMoney can be only called from NewUser")
+		return fmt.Errorf(`NewMoney can be only called from NewUser contract`)
+	}
+	_, _, err = sc.selectiveLoggingAndUpd([]string{`id`, `amount`}, []interface{}{id, amount},
+		getDefTableName(sc, `keys`), nil, nil, !sc.VDE && sc.Rollback, false)
+	if err == nil {
+		var block int64
+		if sc.BlockData != nil {
+			block = sc.BlockData.BlockID
+		}
+		_, _, err = sc.selectiveLoggingAndUpd([]string{`sender_id`, `recipient_id`, `amount`,
+			`comment`, `block_id`, `txhash`},
+			[]interface{}{0, id, amount, comment, block, sc.TxHash},
+			getDefTableName(sc, `history`), nil, nil, !sc.VDE && sc.Rollback, false)
+	}
+	return err
 }
 
 // PermColumn is contract func
