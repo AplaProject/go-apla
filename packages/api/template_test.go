@@ -38,25 +38,24 @@ type tplList []tplItem
 
 func TestAPI(t *testing.T) {
 	var ret contentResult
-
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
-	err := sendPost(`content/page/default_page`, &url.Values{}, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
 	var retHash hashResult
-	err = sendPost(`content/hash/default_page`, &url.Values{}, &retHash)
+	err := sendPost(`content/hash/default_page`, &url.Values{}, &retHash)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	if len(retHash.Hash) != 64 {
 		t.Error(`wrong hash ` + retHash.Hash)
+		return
+	}
+
+	if err = keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendPost(`content/page/default_page`, &url.Values{}, &ret)
+	if err != nil {
+		t.Error(err)
 		return
 	}
 
@@ -84,6 +83,7 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(val, 123456789)Money(#val#)`, `[{"tag":"text","text":"1234567.89"}]`},
 	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
 	{`DBFind(parameters, src_par).Columns("id").Order(id).Where("id >= 1 and id <= 3").Count(count)Span(#count#)`,
 		`[{"tag":"dbfind","attr":{"columns":["id"],"count":"3","data":[["1"],["2"],["3"]],"name":"parameters","order":"id","source":"src_par","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"span","children":[{"tag":"text","text":"3"}]}]`},
@@ -274,7 +274,7 @@ func TestBinary(t *testing.T) {
 		"Data": data,
 	}
 
-	_, _, err = postTxMultipart("UploadBinary", params, files)
+	_, id, err := postTxMultipart("UploadBinary", params, files)
 	assert.NoError(t, err)
 
 	hashImage := fmt.Sprintf("%x", md5.Sum(data))
@@ -285,6 +285,18 @@ func TestBinary(t *testing.T) {
 	}{
 		{
 			`Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`Image(Src: Binary().ById(` + id + `)`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`SetVar(name, file)SetVar(app_id, 1)SetVar(member_id, 1)Image(Src: Binary(Name: #name#, AppID: #app_id#, MemberID: #member_id#))`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`SetVar(id, "` + id + `")Image(Src: Binary().ById(#id#)`,
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{

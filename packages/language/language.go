@@ -117,7 +117,11 @@ func loadLang(state int, vde bool) error {
 		}
 		res[converter.StrToInt(ilist[`app_id`])][ilist[`name`]] = &ires
 	}
-	lang[langIndex(state, vde)].res = res
+	langInd := langIndex(state, vde)
+	if _, ok := lang[langInd]; !ok {
+		lang[langInd] = &cacheLang{}
+	}
+	lang[langInd].res = res
 	return nil
 }
 
