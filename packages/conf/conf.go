@@ -242,26 +242,26 @@ func GetNodesAddr() []string {
 }
 
 // IsPrivateBlockchain check running mode
-func (c *GlobalConfig) IsPrivateBlockchain() bool {
+func (c GlobalConfig) IsPrivateBlockchain() bool {
 	return RunMode(c.RunningMode).IsPrivateBlockchain()
 }
 
 // IsPublicBlockchain check running mode
-func (c *GlobalConfig) IsPublicBlockchain() bool {
+func (c GlobalConfig) IsPublicBlockchain() bool {
 	return RunMode(c.RunningMode).IsPublicBlockchain()
 }
 
 // IsVDE check running mode
-func (c *GlobalConfig) IsVDE() bool {
+func (c GlobalConfig) IsVDE() bool {
 	return RunMode(c.RunningMode).IsVDE()
 }
 
 // IsVDEMaster check running mode
-func (c *GlobalConfig) IsVDEMaster() bool {
+func (c GlobalConfig) IsVDEMaster() bool {
 	return RunMode(c.RunningMode).IsVDEMaster()
 }
 
 // IsSupportingVDE check running mode
-func (c *GlobalConfig) IsSupportingVDE() bool {
+func (c GlobalConfig) IsSupportingVDE() bool {
 	return RunMode(c.RunningMode).IsSupportingVDE()
 }
