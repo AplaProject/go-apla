@@ -101,7 +101,22 @@ func TestContent(t *testing.T) {
 					)`},
 				"source": {"true"},
 			},
-			`[{"tag":"data","attr":{"columns":"id,name","data":"1,Test message 1\n\t\t\t\t\t2,\"Test message 2\"\n\t\t\t\t\t3,\"Test message 3\"","source":"myforlist"}}]`,
+			`[{"tag":"data","attr":{"columns":"id,name","data":"1,Test message 1\n\t\t\t\t\t2,"Test message 2"\n\t\t\t\t\t3,"Test message 3"","source":"myforlist"}}]`,
+		},
+		{
+			"content",
+			url.Values{
+				"template": {`
+					Data(src_test,"type"){
+						text
+					}
+					ForList(src_test){
+					If(#type#==text){
+						Span(:#type#)
+					}
+				}`},
+			},
+			`[{"tag":"data","attr":{"columns":["type"],"data":[["text"]],"source":"src_test","types":["text"]}},{"tag":"forlist","attr":{"source":"src_test"},"children":[{"tag":"span","attr":{"":"text"}}]}]`,
 		},
 	}
 

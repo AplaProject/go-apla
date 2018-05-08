@@ -182,13 +182,15 @@ func setAllAttr(par parFunc) {
 		}
 	}
 	for key := range *par.Pars {
-		if key[0] == '@' {
-			key = strings.ToLower(key[1:])
-			if par.Node.Attr[key] == nil {
-				continue
-			}
-			par.Node.Attr[key] = processToText(par, par.Node.Attr[key].(string))
+		if len(key) == 0 || key[0] != '@' {
+			continue
 		}
+
+		key = strings.ToLower(key[1:])
+		if par.Node.Attr[key] == nil {
+			continue
+		}
+		par.Node.Attr[key] = processToText(par, par.Node.Attr[key].(string))
 	}
 }
 
