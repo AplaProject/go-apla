@@ -224,6 +224,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"AllowChangeCondition": AllowChangeCondition,
 		"StringToBytes":        StringToBytes,
 		"BytesToString":        BytesToString,
+		"SetPubKey":            SetPubKey,
 	}
 
 	switch vt {
@@ -1068,6 +1069,15 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	}
 
 	return nil
+}
+
+// SetPubKey updates the publis key
+func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (int64, error) {
+	if !accessContracts(sc, `NewUser`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SetPubKey can be only called from NewUser")
+		return 0, fmt.Errorf(`SetPubKey can be only called from NewUser contract`)
+	}
+	return DBUpdate(sc, "keys", id, `pub`, pubKey)
 }
 
 // PermColumn is contract func
