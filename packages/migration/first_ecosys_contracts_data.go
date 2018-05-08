@@ -1816,6 +1816,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	}
 	action {
         MoneyTransfer("Recipient,Amount,Comment", Str($newId), Str($amount), "New user deposit")
+        SetPubKey($newId, StringToBytes($NewPubkey))
 	}
 }', %[1]d, 'ContractConditions("NodeOwnerCondition")', 1),
 ('41', 'EditEcosystemName','contract EditEcosystemName {

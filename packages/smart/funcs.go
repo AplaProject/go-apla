@@ -89,6 +89,7 @@ var (
 		"DBSelect":    {},
 		"DBUpdate":    {},
 		"DBUpdateExt": {},
+		"SetPubKey":   {},
 	}
 	extendCost = map[string]int64{
 		"AddressToId":        10,
@@ -224,6 +225,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"AllowChangeCondition": AllowChangeCondition,
 		"StringToBytes":        StringToBytes,
 		"BytesToString":        BytesToString,
+		"SetPubKey":            SetPubKey,
 	}
 
 	switch vt {
@@ -1069,6 +1071,25 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	}
 
 	return nil
+}
+
+// SetPubKey updates the publis key
+func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err error) {
+	if !accessContracts(sc, `NewUser`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SetPubKey can be only called from NewUser")
+		return 0, fmt.Errorf(`SetPubKey can be only called from NewUser contract`)
+	}
+	if len(pubKey) == consts.PubkeySizeLength*2 {
+		pubKey, err = hex.DecodeString(string(pubKey))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
+			return
+		}
+	}
+	qcost, _, err = sc.selectiveLoggingAndUpd([]string{`pub`}, []interface{}{pubKey},
+		getDefTableName(sc, `keys`), []string{`id`}, []string{converter.Int64ToStr(id)},
+		!sc.VDE && sc.Rollback, true)
+	return qcost, err
 }
 
 // PermColumn is contract func
