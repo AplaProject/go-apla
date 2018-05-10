@@ -127,10 +127,11 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 
 		pubkey = data.params[`pubkey`].([]byte)
 		hexPubKey := hex.EncodeToString(pubkey)
-		params := converter.EncodeLength(int64(len(hexPubKey)))
-		params = append(params, hexPubKey...)
+		params := make([]byte, 0)
+		params = append(append(params, converter.EncodeLength(int64(len(hexPubKey)))...), hexPubKey...)
 
 		contract := smart.GetContract("NewUser", 1)
+		info := contract.Block.Info.(*script.ContractInfo)
 
 		sc := tx.SmartContract{
 			Header: tx.Header{
