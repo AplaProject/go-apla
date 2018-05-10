@@ -24,9 +24,11 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -157,7 +159,7 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 
 	forsign := []string{smartTx.ForSign()}
 	if info.Tx != nil {
-		f, err := forsignFormData(w, r, logger, req, *info.Tx)
+		f, err := forsignFormData(w, r, data, logger, req, *info.Tx)
 		if err != nil {
 			return err
 		}
@@ -216,7 +218,7 @@ func forsignJSONData(w http.ResponseWriter, params map[string]string, logger *lo
 	return forsign, requestParams, nil
 }
 
-func forsignFormData(w http.ResponseWriter, r *http.Request, logger *log.Entry, req *tx.Request, fields []*script.FieldInfo) ([]string, error) {
+func forsignFormData(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, req *tx.Request, fields []*script.FieldInfo) ([]string, error) {
 	forsign := []string{}
 	for _, fitem := range fields {
 		if strings.Contains(fitem.Tags, `signature`) {
@@ -237,7 +239,10 @@ func forsignFormData(w http.ResponseWriter, r *http.Request, logger *log.Entry, 
 			}
 			forsign = append(forsign, fileHeader.MimeType, fileHeader.Hash)
 			continue
-		} else if fitem.Type.String() == `[]interface {}` {
+		}
+
+		switch fitem.Type.String() {
+		case `[]interface {}`:
 			for key, values := range r.Form {
 				if key == fitem.Name+`[]` && len(values) > 0 {
 					count := converter.StrToInt(values[0])
@@ -256,7 +261,26 @@ func forsignFormData(w http.ResponseWriter, r *http.Request, logger *log.Entry, 
 				val = r.FormValue(fitem.Name)
 				req.SetValue(fitem.Name, val)
 			}
-		} else {
+
+		case script.Decimal:
+			d, err := decimal.NewFromString(r.FormValue(fitem.Name))
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting to decimal")
+				return nil, errorAPI(w, err, http.StatusBadRequest)
+			}
+
+			sp := &model.StateParameter{}
+			sp.SetTablePrefix(getPrefix(data))
+			if _, err = sp.Get(nil, model.ParamMoneyDigit); err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting value from db")
+				return nil, errorAPI(w, err, http.StatusInternalServerError)
+			}
+			exp := int32(converter.StrToInt(sp.Value))
+
+			val = d.Mul(decimal.New(1, exp)).StringFixed(0)
+			req.SetValue(fitem.Name, val)
+
+		default:
 			val = strings.TrimSpace(r.FormValue(fitem.Name))
 			req.SetValue(fitem.Name, val)
 			if strings.Contains(fitem.Tags, `address`) {
@@ -267,6 +291,7 @@ func forsignFormData(w http.ResponseWriter, r *http.Request, logger *log.Entry, 
 				val = `0`
 			}
 		}
+
 		forsign = append(forsign, val)
 	}
 

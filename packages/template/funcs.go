@@ -33,6 +33,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -67,7 +68,8 @@ func init() {
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
-	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
+	funcs[`Now`] = tplFunc{defaultTag, defaultTag, `now`, `Format,Interval`}
+	funcs[`Money`] = tplFunc{moneyTag, defaultTag, `money`, `Exp,Digit`}
 	funcs[`Range`] = tplFunc{rangeTag, defaultTag, `range`, `Source,From,To,Step`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
@@ -80,7 +82,7 @@ func init() {
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Image`] = tplFunc{imageTag, defaultTailTag, `image`, `Src,Alt,Class`}
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
-	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,@Value,Disabled`}
+	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,Value,Disabled`}
 	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
 	funcs[`LinkPage`] = tplFunc{defaultTailTag, defaultTailTag, `linkpage`, `Body,Page,Class,PageParams`}
 	funcs[`Data`] = tplFunc{dataTag, defaultTailTag, `data`, `Source,Columns,Data`}
@@ -178,6 +180,40 @@ func lowerTag(par parFunc) string {
 	return strings.ToLower(macro((*par.Pars)[`Text`], par.Workspace.Vars))
 }
 
+func moneyTag(par parFunc) string {
+	var cents int
+
+	ret := macro((*par.Pars)[`Exp`], par.Workspace.Vars)
+	if ret == `NULL` || len(ret) == 0 {
+		ret = `0`
+	}
+	if strings.IndexByte(ret, '.') >= 0 {
+		return `wrong money`
+	}
+	if len((*par.Pars)[`Digit`]) > 0 {
+		cents = converter.StrToInt(macro((*par.Pars)[`Digit`], par.Workspace.Vars))
+	} else {
+		prefix := (*par.Workspace.Vars)[`ecosystem_id`]
+		sp := &model.StateParameter{}
+		sp.SetTablePrefix(prefix)
+		_, err := sp.Get(nil, `money_digit`)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
+			return `unknown money_digit`
+		}
+		cents = converter.StrToInt(sp.Value)
+	}
+	if cents != 0 {
+		retDec, err := decimal.NewFromString(ret)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting money")
+			return `wrong money`
+		}
+		ret = retDec.Shift(int32(-cents)).String()
+	}
+	return ret
+}
+
 func menugroupTag(par parFunc) string {
 	setAllAttr(par)
 	name := (*par.Pars)[`Title`]
@@ -251,7 +287,7 @@ func addressTag(par parFunc) string {
 
 func calculateTag(par parFunc) string {
 	return calculate(macro((*par.Pars)[`Exp`], par.Workspace.Vars), (*par.Pars)[`Type`],
-		converter.StrToInt((*par.Pars)[`Prec`]))
+		macro((*par.Pars)[`Prec`], par.Workspace.Vars))
 }
 
 func paramToSource(par parFunc, val string) string {
@@ -353,46 +389,6 @@ func sysparTag(par parFunc) (ret string) {
 		ret = syspar.SysString(macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	}
 	return
-}
-
-// Now returns the current time of postgresql
-func nowTag(par parFunc) string {
-	var (
-		cut   int
-		query string
-	)
-	interval := macro((*par.Pars)[`Interval`], par.Workspace.Vars)
-	format := macro((*par.Pars)[`Format`], par.Workspace.Vars)
-	if len(interval) > 0 {
-		if interval[0] != '-' && interval[0] != '+' {
-			interval = `+` + interval
-		}
-		interval = fmt.Sprintf(` %s interval '%s'`, interval[:1], strings.TrimSpace(interval[1:]))
-	}
-	if format == `` {
-		query = `select round(extract(epoch from now()` + interval + `))::integer`
-		cut = 10
-	} else {
-		query = `select now()` + interval
-		switch format {
-		case `datetime`:
-			cut = 19
-		default:
-			if strings.Index(format, `HH`) >= 0 && strings.Index(format, `HH24`) < 0 {
-				format = strings.Replace(format, `HH`, `HH24`, -1)
-			}
-			query = fmt.Sprintf(`select to_char(now()%s, '%s')`, interval, format)
-		}
-	}
-	ret, err := model.Single(query).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting single from DB")
-		return err.Error()
-	}
-	if cut > 0 {
-		ret = strings.Replace(ret[:cut], `T`, ` `, -1)
-	}
-	return ret
 }
 
 func andTag(par parFunc) string {

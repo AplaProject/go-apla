@@ -89,6 +89,7 @@ var (
 		"DBSelect":    {},
 		"DBUpdate":    {},
 		"DBUpdateExt": {},
+		"SetPubKey":   {},
 	}
 	extendCost = map[string]int64{
 		"AddressToId":        10,
@@ -100,6 +101,8 @@ var (
 		"ContractsList":      10,
 		"CreateColumn":       50,
 		"CreateTable":        100,
+		"CreateLanguage":     50,
+		"EditLanguage":       50,
 		"EcosysParam":        10,
 		"AppParam":           10,
 		"Eval":               10,
@@ -123,7 +126,6 @@ var (
 		"ToLower":            10,
 		"TrimSpace":          10,
 		"TableConditions":    100,
-		"UpdateLang":         10,
 		"ValidateCondition":  30,
 	}
 	// map for table name to parameter with conditions
@@ -204,7 +206,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RollbackTable":        RollbackTable,
 		"TableConditions":      TableConditions,
 		"RollbackColumn":       RollbackColumn,
-		"UpdateLang":           UpdateLang,
+		"CreateLanguage":       CreateLanguage,
+		"EditLanguage":         EditLanguage,
 		"Activate":             Activate,
 		"Deactivate":           Deactivate,
 		"SetContractWallet":    SetContractWallet,
@@ -222,6 +225,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"AllowChangeCondition": AllowChangeCondition,
 		"StringToBytes":        StringToBytes,
 		"BytesToString":        BytesToString,
+		"SetPubKey":            SetPubKey,
+		"NewMoney":             NewMoney,
 	}
 
 	switch vt {
@@ -354,7 +359,11 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	if len(name) > 0 && name[0] == '@' {
 		return fmt.Errorf(`The name of the table cannot begin with @`)
 	}
+
 	tableName := getDefTableName(sc, name)
+	if model.IsTable(tableName) {
+		return fmt.Errorf("table %s exists", name)
+	}
 
 	var cols []map[string]interface{}
 	err = json.Unmarshal([]byte(columns), &cols)
@@ -1062,6 +1071,45 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	}
 
 	return nil
+}
+
+// SetPubKey updates the publis key
+func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err error) {
+	if !accessContracts(sc, `NewUser`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SetPubKey can be only called from NewUser")
+		return 0, fmt.Errorf(`SetPubKey can be only called from NewUser contract`)
+	}
+	if len(pubKey) == consts.PubkeySizeLength*2 {
+		pubKey, err = hex.DecodeString(string(pubKey))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
+			return
+		}
+	}
+	qcost, _, err = sc.selectiveLoggingAndUpd([]string{`pub`}, []interface{}{pubKey},
+		getDefTableName(sc, `keys`), []string{`id`}, []string{converter.Int64ToStr(id)},
+		!sc.VDE && sc.Rollback, true)
+	return qcost, err
+}
+
+func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
+	if !accessContracts(sc, `NewUser`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("NewMoney can be only called from NewUser")
+		return fmt.Errorf(`NewMoney can be only called from NewUser contract`)
+	}
+	_, _, err = sc.selectiveLoggingAndUpd([]string{`id`, `amount`}, []interface{}{id, amount},
+		getDefTableName(sc, `keys`), nil, nil, !sc.VDE && sc.Rollback, false)
+	if err == nil {
+		var block int64
+		if sc.BlockData != nil {
+			block = sc.BlockData.BlockID
+		}
+		_, _, err = sc.selectiveLoggingAndUpd([]string{`sender_id`, `recipient_id`, `amount`,
+			`comment`, `block_id`, `txhash`},
+			[]interface{}{0, id, amount, comment, block, sc.TxHash},
+			getDefTableName(sc, `history`), nil, nil, !sc.VDE && sc.Rollback, false)
+	}
+	return err
 }
 
 // PermColumn is contract func

@@ -176,18 +176,21 @@ func setAllAttr(par parFunc) {
 			if len(imap) > 0 {
 				par.Node.Attr[strings.ToLower(key)] = imap
 			}
-		} else if key != `Body` && key != `Data` && len(v) > 0 {
+		} else if key != `Body` && (key != `Data` || (*par.Workspace.Vars)[`_full`] == `1`) &&
+			len(v) > 0 {
 			par.Node.Attr[strings.ToLower(key)] = v
 		}
 	}
 	for key := range *par.Pars {
-		if key[0] == '@' {
-			key = strings.ToLower(key[1:])
-			if par.Node.Attr[key] == nil {
-				continue
-			}
-			par.Node.Attr[key] = processToText(par, par.Node.Attr[key].(string))
+		if len(key) == 0 || key[0] != '@' {
+			continue
 		}
+
+		key = strings.ToLower(key[1:])
+		if par.Node.Attr[key] == nil {
+			continue
+		}
+		par.Node.Attr[key] = processToText(par, par.Node.Attr[key].(string))
 	}
 }
 

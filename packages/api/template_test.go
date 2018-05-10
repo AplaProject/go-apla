@@ -38,25 +38,24 @@ type tplList []tplItem
 
 func TestAPI(t *testing.T) {
 	var ret contentResult
-
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
-	err := sendPost(`content/page/default_page`, &url.Values{}, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
 	var retHash hashResult
-	err = sendPost(`content/hash/default_page`, &url.Values{}, &retHash)
+	err := sendPost(`content/hash/default_page`, &url.Values{}, &retHash)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	if len(retHash.Hash) != 64 {
 		t.Error(`wrong hash ` + retHash.Hash)
+		return
+	}
+
+	if err = keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	err = sendPost(`content/page/default_page`, &url.Values{}, &ret)
+	if err != nil {
+		t.Error(err)
 		return
 	}
 
@@ -84,6 +83,7 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(val, 123456789)Money(#val#)`, `[{"tag":"text","text":"0.000000000123456789"}]`},
 	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
 	{`DBFind(parameters, src_par).Columns("id").Order(id).Where("id >= 1 and id <= 3").Count(count)Span(#count#)`,
 		`[{"tag":"dbfind","attr":{"columns":["id"],"count":"3","data":[["1"],["2"],["3"]],"name":"parameters","order":"id","source":"src_par","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"span","children":[{"tag":"text","text":"3"}]}]`},
@@ -123,8 +123,8 @@ var forTest = tplList{
 		SetVar(Name: vCmpStartDate, Value: CmpTime(#vStartDate#,#vDateNow#))
 		Span(#vCmpStartDate# #simple#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"0 TestFunc(my value)"}]}]`},
-	{`Input(Type: text, Value: OK Now(YY)+Strong(Ooops))`,
-		`[{"tag":"input","attr":{"type":"text","value":"OK 18+"}}]`},
+	{`Input(Type: text, Value: Now(MMYY))`,
+		`[{"tag":"input","attr":{"type":"text","value":"Now(MMYY)"}}]`},
 	{`Button(Body: LangRes(savex), Class: btn btn-primary, Contract: EditProfile, 
 		Page:members_list,).Alert(Text: $want_save_changesx$, 
 		ConfirmButton: $yesx$, CancelButton: $nox$, Icon: question)`,
