@@ -483,38 +483,113 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			  PermColumn($TableName, $Name, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('18','NewLang','contract NewLang {
+	  ('18','NewLang', 'contract NewLang {
 		data {
-			Name  string
-			Trans string
-			AppID int
+			ApplicationId int "optional"
+			Name string
+			Trans string "optional"
+			Value array "optional"
+			IdLanguage array "optional"
 		}
+	
 		conditions {
-			EvalCondition("parameters", "changing_language", "value")
-			var row array
-			row = DBFind("languages").Columns("name").Where("name=? AND app_id=?", $Name, $AppID).Limit(1)
-			if Len(row) > 0 {
-				error Sprintf("The language resource %%s already exists", $Name)
+			if $ApplicationId == 0 {
+				warning "Application id cannot equal 0"
 			}
+	
+			if DBFind("languages").Columns("id").Where("name = ?", $Name).One("id") {
+				warning Sprintf( "Language resource %%s already exists", $Name)
+			}
+		
+			var j int
+			while j < Len($IdLanguage) {
+				if $IdLanguage[j] == "" {
+					info("Locale empty")
+				}
+				if $Value[j] == "" {
+					info("Value empty")
+				}
+				j = j + 1
+			}
+			EvalCondition("parameters", "changing_language", "value")
 		}
+	
 		action {
-			DBInsert("languages", "name,res,app_id", $Name, $Trans, $AppID)
-			UpdateLang($AppID, $Name, $Trans)
+			var i,len,lenshar int
+			var res,langarr string
+			len = Len($IdLanguage)
+			lenshar = Len($Value)	
+			while i < len {
+				if i + 1 == len {
+					res = res + Sprintf("%%q: %%q",$IdLanguage[i],$Value[i])
+				} else {
+					res = res + Sprintf("%%q: %%q,",$IdLanguage[i],$Value[i])
+				}
+				i = i + 1
+			}
+			if len > 0 {
+				langarr = Sprintf("{"+"%%v"+"}", res)
+				$Trans = langarr
+			}
+			$result = CreateLanguage($Name, $Trans, $ApplicationId)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('19','EditLang','contract EditLang {
 		data {
-			Id    int
-			Name  string
-			Trans string
-			AppID int
+			Id int
+			Name string "optional"
+			ApplicationId int "optional"
+			Trans string "optional"
+			Value array "optional"
+			IdLanguage array "optional"
 		}
+		
 		conditions {
+			var j int
+			while j < Len($IdLanguage) {
+				if ($IdLanguage[j] == ""){
+					info("Locale empty")
+				}
+				if ($Value[j] == ""){
+					info("Value empty")
+				}
+				j = j + 1
+			}
 			EvalCondition("parameters", "changing_language", "value")
 		}
+		
 		action {
-			DBUpdate("languages", $Id, "name,res,app_id", $Name, $Trans, $AppID)
-			UpdateLang($AppID, $Name, $Trans)
+			var i,len int
+			var res,langarr string
+			len = Len($IdLanguage)
+			while i < len {
+				if (i + 1 == len){
+					res = res + Sprintf("%%q: %%q", $IdLanguage[i],$Value[i])
+				}
+				else {
+					res = res + Sprintf("%%q: %%q, ", $IdLanguage[i],$Value[i])
+				}
+				i = i + 1
+			}
+	
+			$row = DBFind("languages").Columns("name,app_id").WhereId($Id).Row()
+			if !$row{
+				warning "Language not found"
+			}
+	
+			if $ApplicationId == 0 {
+				$ApplicationId = Int($row["app_id"])
+			}
+			if $Name == "" {
+				$Name = $row["name"]
+			}
+	
+			if (len > 0){
+				langarr = Sprintf("{"+"%%v"+"}", res)
+				$Trans = langarr
+				
+			}
+			EditLanguage($Id, $Name, $Trans, $ApplicationId)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('20','Import','contract Import {
@@ -726,8 +801,6 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			if DBFind("keys").Columns("id").WhereId($newId).One("id") != nil {
 				error "User already exists"
 			}
-	
-			$amount = Money(1000) * Money(1000000000000000000)
 		}
 		action {
 			DBInsert("keys", "id, pub", $newId, $NewPubKey)
