@@ -31,6 +31,7 @@ var (
 		`E_INVALIDWALLET`:   `Wallet %s is not valid`,
 		`E_NOTFOUND`:        `Page not found`,
 		`E_NOTINSTALLED`:    `Apla is not installed`,
+		`E_PARAMNOTFOUND`:   `Parameter %s has not been found`,
 		`E_PERMISSION`:      `Permission denied`,
 		`E_QUERY`:           `DB query is wrong`,
 		`E_RECOVERED`:       `API recovered`,

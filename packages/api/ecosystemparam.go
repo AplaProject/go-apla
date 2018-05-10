@@ -33,14 +33,15 @@ func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData, logge
 	}
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(prefix)
-	found, err := sp.Get(nil, data.params[`name`].(string))
+	name := data.params[`name`].(string)
+	found, err := sp.Get(nil, name)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting state parameter by name")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if !found {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "key": data.params["name"].(string)}).Error("state parameter not found")
-		return errorAPI(w, err, http.StatusBadRequest)
+		logger.WithFields(log.Fields{"type": consts.NotFound, "key": name}).Error("state parameter not found")
+		return errorAPI(w, `E_PARAMNOTFOUND`, http.StatusBadRequest, name)
 	}
 
 	data.result = &paramValue{ID: converter.Int64ToStr(sp.ID), Name: sp.Name, Value: sp.Value, Conditions: sp.Conditions}
