@@ -594,12 +594,17 @@ func (sc *SmartContract) IsCustomTable(table string) (isCustom bool, err error) 
 func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]string, error) {
 	var (
 		err             error
+		founder         string
 		tablePermission map[string]string
 	)
 	logger := sc.GetLogger()
 
 	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
-		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
+		founder, err = EcosysParam(sc, `founder_account`)
+		if err != nil {
+			return nil, err
+		}
+		if sc.TxSmart.KeyID == converter.StrToInt64(founder) {
 			return tablePermission, nil
 		}
 		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
@@ -661,7 +666,11 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 	logger := sc.GetLogger()
 	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
 		if update {
-			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
+			founder, err := EcosysParam(sc, `founder_account`)
+			if err != nil {
+				return err
+			}
+			if sc.TxSmart.KeyID == converter.StrToInt64(founder) {
 				return nil
 			}
 			return errAccessDenied
@@ -809,7 +818,7 @@ func (sc *SmartContract) GetContractLimit() (ret int64) {
 		if len(sc.TxSmart.MaxSum) > 0 {
 			sc.TxCost = converter.StrToInt64(sc.TxSmart.MaxSum)
 		} else {
-			cost := EcosysParam(sc, `max_sum`)
+			cost, _ := EcosysParam(sc, `max_sum`)
 			if len(cost) > 0 {
 				sc.TxCost = converter.StrToInt64(cost)
 			}

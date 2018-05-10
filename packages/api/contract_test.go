@@ -78,6 +78,13 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`ErrParam`, `contract ErrParam {
+		action {
+			EcosysParam("notexisted")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"Parameter notexisted has not been found"}`}},
+	}},
 	{`IntOver`, `contract IntOver {
 				action {
 					info Int("123456789101112131415161718192021222324252627282930")
@@ -297,7 +304,7 @@ var contracts = []smartContract{
 				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
 		[]smartParams{
 			{nil, map[string]string{`ByName`: `0 29`,
-				`ById`: `EditLang`}},
+				`ById`: `NewColumn`}},
 		}},
 }
 
