@@ -19,10 +19,12 @@ package template
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"unicode"
 
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/shopspring/decimal"
 )
 
@@ -48,9 +50,24 @@ type token struct {
 type opFunc func()
 
 var (
-	errExp = errors.New(`wrong expression`)
-	errDiv = errors.New(`dividing by zero`)
+	errExp            = errors.New(`wrong expression`)
+	errDiv            = errors.New(`dividing by zero`)
+	errPrecIsNegative = errors.New(`precision is negative`)
 )
+
+func roundFloat(val float64, places int) (newVal float64) {
+	var round float64
+	pow := math.Pow(10, float64(places))
+	digit := pow * val
+	_, div := math.Modf(digit)
+	if div >= 0.5 {
+		round = math.Ceil(digit)
+	} else {
+		round = math.Floor(digit)
+	}
+	newVal = round / pow
+	return
+}
 
 func parsing(input string, itype int) (*[]token, error) {
 	var err error
@@ -129,7 +146,7 @@ func parsing(input string, itype int) (*[]token, error) {
 	return &tokens, nil
 }
 
-func calcExp(tokens []token, resType, prec int) string {
+func calcExp(tokens []token, resType int, prec string) string {
 	var top int
 
 	stack := make([]interface{}, 0, 16)
@@ -208,23 +225,23 @@ func calcExp(tokens []token, resType, prec int) string {
 	if len(stack) != 1 {
 		return errExp.Error()
 	}
-	if prec > 0 {
+	if prec != "" {
+		precInt := converter.StrToInt(prec)
+		if precInt < 0 {
+			return errPrecIsNegative.Error()
+		}
 		if resType == expFloat {
-			return strconv.FormatFloat(stack[0].(float64), 'f', prec, 64)
+			return fmt.Sprintf("%."+prec+"f", roundFloat(stack[0].(float64), precInt))
 		}
 		if resType == expMoney {
-			money := fmt.Sprint(stack[0])
-			if len(money) < prec+1 {
-				money = strings.Repeat(`0`, prec+1-len(money)) + money
-			}
-			money = money[:len(money)-prec] + `.` + money[len(money)-prec:]
-			return strings.TrimRight(strings.TrimRight(money, `0`), `.`)
+			money := stack[0].(decimal.Decimal)
+			return money.Round(int32(precInt)).String()
 		}
 	}
 	return fmt.Sprint(stack[0])
 }
 
-func calculate(exp, etype string, prec int) string {
+func calculate(exp, etype, prec string) string {
 	var resType int
 	if len(etype) == 0 && strings.Contains(exp, `.`) {
 		etype = `float`
