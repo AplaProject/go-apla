@@ -279,6 +279,13 @@ func Start() {
 			}
 		}
 
+		if conf.Config.IsSupportingVDE() {
+			if err := smart.LoadVDEContracts(nil, converter.Int64ToStr(consts.DefaultVDE)); err != nil {
+				log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Fatal("on loading vde virtual mashine")
+				Exit(1)
+			}
+		}
+
 		if conf.Config.IsVDEMaster() {
 			vdemanager.InitVDEManager()
 		}
