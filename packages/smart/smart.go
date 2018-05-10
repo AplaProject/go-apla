@@ -66,7 +66,6 @@ const (
 
 var (
 	smartVM   *script.VM
-	smartVDE  map[int64]*script.VM
 	smartTest = make(map[string]string)
 
 	ErrCurrentBalance = errors.New(`current balance is not enough`)
@@ -118,17 +117,10 @@ func newVM() *script.VM {
 
 func init() {
 	smartVM = newVM()
-	smartVDE = make(map[int64]*script.VM)
 }
 
 // GetVM is returning smart vm
-func GetVM(vde bool, ecosystemID int64) *script.VM {
-	if vde {
-		if v, ok := smartVDE[ecosystemID]; ok {
-			return v
-		}
-		return nil
-	}
+func GetVM() *script.VM {
 	return smartVM
 }
 
@@ -495,7 +487,6 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	}
 
 	EmbedFuncs(vm, vmt)
-	smartVDE[state] = vm
 	LoadSysFuncs(vm, int(state))
 	for _, item := range contracts {
 		list, err := script.ContractsList(item[`value`])
@@ -828,7 +819,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
 	sc.AppendStack(sc.TxContract.Name)
-	sc.VM = GetVM(sc.VDE, sc.TxSmart.EcosystemID)
+	sc.VM = GetVM()
 	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 {
 		if !sc.VDE {
 			toID = sc.BlockData.KeyID
