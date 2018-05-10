@@ -52,6 +52,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const nodeBanNotificationHeader = "Your node was banned"
+
 type permTable struct {
 	Insert    string `json:"insert"`
 	Update    string `json:"update"`
@@ -1380,10 +1382,11 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				_, _, err = DBInsert(
 					smartContract,
 					"notifications",
-					"recipient_id,body_text,header_text",
+					"recipient->member_id,notification->type,notification->header,notification->body",
 					fullNode.KeyID,
+					model.NotificationTypeSingle,
+					nodeBanNotificationHeader,
 					banMessage,
-					"Your node was banned",
 				)
 
 				if err != nil {

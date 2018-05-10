@@ -256,13 +256,19 @@ func needLoad(logger *log.Entry) (bool, error) {
 }
 
 func banNode(host string, blockId int64, blockTime int64, err error) {
+	var reason string
+	if err != nil {
+		reason = err.Error()
+	}
+	log.WithFields(log.Fields{"reason": reason, "host": host, "block_id": blockId, "block_time": blockTime}).Debug("ban node")
+
 	n, err := syspar.GetNodeByHost(host)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("getting node by host")
 		return
 	}
 
-	err = service.GetNodesBanService().RegisterBadBlock(n, blockId, blockTime)
+	err = service.GetNodesBanService().RegisterBadBlock(n, blockId, blockTime, reason)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "node": n.KeyID, "block": blockId}).Error("registering bad block from node")
 	}

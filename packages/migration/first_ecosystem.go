@@ -54,6 +54,7 @@ DROP TABLE IF EXISTS "1_system_parameters";
 		"block_id" int NOT NULL,
 		"consumer_node_id" bigint NOT NULL,
 		"block_time" timestamp NOT NULL,
+		"reason" TEXT NOT NULL DEFAULT '',
 		"deleted" boolean NOT NULL DEFAULT 'false'
 	);
 	ALTER TABLE ONLY "1_bad_blocks" ADD CONSTRAINT "1_bad_blocks_pkey" PRIMARY KEY ("id");

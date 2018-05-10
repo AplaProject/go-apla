@@ -43,7 +43,7 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
 			'bad_blocks',
 			'{
 				"insert": "ContractAccess(\"NewBadBlock\")",
-				"update": "ContractAccess(\"NewBadBlock\")",
+				"update": "ContractAccess(\"NewBadBlock\", \"CheckNodesBan\")",
 				"new_column": "ContractConditions(\"MainCondition\")"
 			}',
 			'{
@@ -53,7 +53,8 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
 				"producer_node_id": "ContractConditions(\"MainCondition\")",
 				"consumer_node_id": "ContractConditions(\"MainCondition\")",
 				"block_time": "ContractConditions(\"MainCondition\")",
-				"deleted": "ContractAccess(\"NewBadBlock\")"
+				"reason": "ContractConditions(\"MainCondition\")",
+				"deleted": "ContractAccess(\"NewBadBlock\", \"CheckNodesBan\")"
 			}',
 			'ContractConditions(\"MainCondition\")'
 		),
@@ -61,7 +62,7 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
 			'25',
 			'node_ban_logs',
 			'{
-				"insert": "ContractAccess(\"NewBadBlock\")",
+				"insert": "ContractAccess(\"CheckNodesBan\")",
 				"update": "ContractConditions(\"MainCondition\")",
 				"new_column": "ContractConditions(\"MainCondition\")"
 			}',

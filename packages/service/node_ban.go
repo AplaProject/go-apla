@@ -49,14 +49,14 @@ func InitNodesBanService() error {
 }
 
 // RegisterBadBlock is set node to local ban and saving bad block to global registry
-func (nbs *NodesBanService) RegisterBadBlock(node syspar.FullNode, badBlockId, blockTime int64) error {
+func (nbs *NodesBanService) RegisterBadBlock(node syspar.FullNode, badBlockId, blockTime int64, reason string) error {
 	if nbs.IsBanned(node) {
 		return nil
 	}
 
 	nbs.localBan(node)
 
-	err := nbs.newBadBlock(node, badBlockId, blockTime)
+	err := nbs.newBadBlock(node, badBlockId, blockTime, reason)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func (nbs *NodesBanService) localBan(node syspar.FullNode) {
 	}
 }
 
-func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, blockTime int64) error {
+func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, blockTime int64, reason string) error {
 	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
 	if err != nil || len(NodePrivateKey) < 1 {
 		if err == nil {
@@ -141,6 +141,7 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 	for _, p := range []int64{producer.KeyID, currentNode.KeyID, blockId, blockTime} {
 		converter.EncodeLenInt64(&params, p)
 	}
+	params = append(append(params, converter.EncodeLength(int64(len(reason)))...), []byte(reason)...)
 
 	vm := smart.GetVM(false, 0)
 	contract := smart.VMGetContract(vm, "NewBadBlock", 1)
@@ -162,6 +163,7 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 		strconv.FormatInt(currentNode.KeyID, 10),
 		strconv.FormatInt(blockId, 10),
 		strconv.FormatInt(blockTime, 10),
+		reason,
 	)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
