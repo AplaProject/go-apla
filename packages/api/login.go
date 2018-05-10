@@ -128,7 +128,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		params := make([]byte, 0)
 		params = append(append(params, converter.EncodeLength(int64(len(hexPubKey)))...), hexPubKey...)
 
-		vm := smart.GetVM(false, 0)
+		vm := smart.GetVM()
+
 		contract := smart.VMGetContract(vm, "NewUser", 1)
 		info := contract.Block.Info.(*script.ContractInfo)
 
@@ -207,7 +208,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		Address:     address,
 		IsOwner:     founder == wallet,
 		IsNode:      conf.Config.KeyID == wallet,
-		IsVDE:       model.IsTable(fmt.Sprintf(`%d_vde_tables`, ecosystemID)),
+		IsVDE:       model.IsTable(fmt.Sprintf(`%d_vde_tables`, consts.DefaultVDE)),
 	}
 
 	data.result = &result

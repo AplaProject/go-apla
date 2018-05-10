@@ -243,14 +243,10 @@ func fillToken(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 func fillParams(params map[string]int) apiHandle {
 	return func(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 		if conf.Config.IsSupportingVDE() {
-			data.vm = smart.GetVM(true, consts.DefaultVDE)
-			if data.vm == nil {
-				return errorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemId)
-			}
 			data.vde = true
-		} else {
-			data.vm = smart.GetVM(false, 0)
 		}
+
+		data.vm = smart.GetVM()
 
 		for key, par := range params {
 			val := r.FormValue(key)
