@@ -1815,7 +1815,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         $amount = Money(1000) * Money(1000000000000000000)
 	}
 	action {
-        MoneyTransfer("Recipient,Amount,Comment", Str($newId), Str($amount), "New user deposit")
+        NewMoney($newId, Str($amount), "New user deposit")
         SetPubKey($newId, StringToBytes($NewPubkey))
 	}
 }', %[1]d, 'ContractConditions("NodeOwnerCondition")', 1),
