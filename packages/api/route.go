@@ -68,6 +68,7 @@ func Route(route *hr.Router) {
 	get(`table/:name`, ``, authWallet, table)
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
 	get(`txstatus/:hash`, ``, authWallet, txstatus)
+	get(`multiTxstatus/:data`, ``, authWallet, multiTxstatus)
 	get(`test/:name`, ``, getTest)
 	get(`history/:table/:id`, ``, authWallet, getHistory)
 	get(`block/:id`, ``, getBlockInfo)
