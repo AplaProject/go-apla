@@ -156,7 +156,7 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 
 // ExecSchemaLocalData is executing schema with local data
 func ExecSchemaLocalData(id int, wallet int64) error {
-	return DBConn.Exec(fmt.Sprintf(vde.SchemaVDE, id, wallet)).Error
+	return DBConn.Exec(fmt.Sprintf(vde.GetVDEScript(), id, wallet)).Error
 }
 
 // ExecSchema is executing schema
@@ -383,6 +383,13 @@ func InitDB(cfg conf.DBConfig) error {
 	if err = install.Create(); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating install")
 		return err
+	}
+
+	if conf.Config.IsSupportingVDE() {
+		if err := ExecSchemaLocalData(consts.DefaultVDE, conf.Config.KeyID); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE schema")
+			return err
+		}
 	}
 
 	return nil

@@ -1,247 +1,6 @@
 package vde
 
-var SchemaVDE = `
-		DROP TABLE IF EXISTS "%[1]d_vde_members";
-		CREATE TABLE "%[1]d_vde_members" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"member_name"	varchar(255) NOT NULL DEFAULT '',
-			"image_id"	bigint,
-			"member_info" jsonb
-		);
-		ALTER TABLE ONLY "%[1]d_vde_members" ADD CONSTRAINT "%[1]d_vde_members_pkey" PRIMARY KEY ("id");
-
-		INSERT INTO "%[1]d_vde_members" ("id", "member_name") VALUES('%[2]d', 'founder');
-		INSERT INTO "%[1]d_vde_members" ("id", "member_name") VALUES('4544233900443112470', 'guest');
-
-		DROP TABLE IF EXISTS "%[1]d_vde_languages"; CREATE TABLE "%[1]d_vde_languages" (
-		"id" bigint  NOT NULL DEFAULT '0',
-		"name" character varying(100) NOT NULL DEFAULT '',
-		"res" text NOT NULL DEFAULT ''
-	  );
-	  ALTER TABLE ONLY "%[1]d_vde_languages" ADD CONSTRAINT "%[1]d_vde_languages_pkey" PRIMARY KEY (id);
-	  CREATE INDEX "%[1]d_vde_languages_index_name" ON "%[1]d_vde_languages" (name);
-	  
-	  DROP TABLE IF EXISTS "%[1]d_vde_menu"; CREATE TABLE "%[1]d_vde_menu" (
-		  "id" bigint  NOT NULL DEFAULT '0',
-		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
-		  "title" character varying(255) NOT NULL DEFAULT '',
-		  "value" text NOT NULL DEFAULT '',
-		  "conditions" text NOT NULL DEFAULT ''
-	  );
-	  ALTER TABLE ONLY "%[1]d_vde_menu" ADD CONSTRAINT "%[1]d_vde_menu_pkey" PRIMARY KEY (id);
-	  CREATE INDEX "%[1]d_vde_menu_index_name" ON "%[1]d_vde_menu" (name);
-
-
-	  INSERT INTO "%[1]d_vde_menu" ("id","name","title","value","conditions") VALUES('2','admin_menu','Admin menu','MenuItem(
-    Icon: "icon-screen-desktop",
-    Page: "interface",
-    Vde: "true",
-    Title: "Interface"
-)
-MenuItem(
-    Icon: "icon-docs",
-    Page: "tables",
-    Vde: "true",
-    Title: "Tables"
-)
-MenuItem(
-    Icon: "icon-briefcase",
-    Page: "contracts",
-    Vde: "true",
-    Title: "Smart Contracts"
-)
-MenuItem(
-    Icon: "icon-settings",
-    Page: "parameters",
-    Vde: "true",
-    Title: "Ecosystem parameters"
-)
-MenuItem(
-    Icon: "icon-globe",
-    Page: "languages",
-    Vde: "true",
-    Title: "Language resources"
-)
-MenuItem(
-    Icon: "icon-cloud-upload",
-    Page: "import",
-    Vde: "true",
-    Title: "Import"
-)
-MenuItem(
-    Icon: "icon-cloud-download",
-    Page: "export",
-    Vde: "true",
-    Title: "Export"
-)','true');
-
-	  DROP TABLE IF EXISTS "%[1]d_vde_pages"; CREATE TABLE "%[1]d_vde_pages" (
-		  "id" bigint  NOT NULL DEFAULT '0',
-		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
-		  "value" text NOT NULL DEFAULT '',
-		  "menu" character varying(255) NOT NULL DEFAULT '',
-		  "conditions" text NOT NULL DEFAULT '',
-		  "validate_count" bigint NOT NULL DEFAULT '1',
-		  "app_id" bigint NOT NULL DEFAULT '0',
-		  "validate_mode" character(1) NOT NULL DEFAULT '0'
-	  );
-	  ALTER TABLE ONLY "%[1]d_vde_pages" ADD CONSTRAINT "%[1]d_vde_pages_pkey" PRIMARY KEY (id);
-	  CREATE INDEX "%[1]d_vde_pages_index_name" ON "%[1]d_vde_pages" (name);
-
-	  INSERT INTO "%[1]d_vde_pages" ("id","name","value","menu","conditions") VALUES('2','admin_index','','admin_menu','true');
-
-	  DROP TABLE IF EXISTS "%[1]d_vde_blocks"; CREATE TABLE "%[1]d_vde_blocks" (
-		  "id" bigint  NOT NULL DEFAULT '0',
-		  "name" character varying(255) UNIQUE NOT NULL DEFAULT '',
-		  "value" text NOT NULL DEFAULT '',
-		  "conditions" text NOT NULL DEFAULT ''
-	  );
-	  ALTER TABLE ONLY "%[1]d_vde_blocks" ADD CONSTRAINT "%[1]d_vde_blocks_pkey" PRIMARY KEY (id);
-	  CREATE INDEX "%[1]d_vde_blocks_index_name" ON "%[1]d_vde_blocks" (name);
-	  
-	  DROP TABLE IF EXISTS "%[1]d_vde_signatures"; CREATE TABLE "%[1]d_vde_signatures" (
-		  "id" bigint  NOT NULL DEFAULT '0',
-		  "name" character varying(100) NOT NULL DEFAULT '',
-		  "value" jsonb,
-		  "conditions" text NOT NULL DEFAULT ''
-	  );
-	  ALTER TABLE ONLY "%[1]d_vde_signatures" ADD CONSTRAINT "%[1]d_vde_signatures_pkey" PRIMARY KEY (name);
-	  
-	  CREATE TABLE "%[1]d_vde_contracts" (
-	  "id" bigint NOT NULL  DEFAULT '0',
-	  "name" text NOT NULL DEFAULT '',
-	  "value" text  NOT NULL DEFAULT '',
-	  "conditions" text  NOT NULL DEFAULT ''
-	  );
-	  ALTER TABLE ONLY "%[1]d_vde_contracts" ADD CONSTRAINT "%[1]d_vde_contracts_pkey" PRIMARY KEY (id);
-	  
-	  DROP TABLE IF EXISTS "%[1]d_vde_parameters";
-	  CREATE TABLE "%[1]d_vde_parameters" (
-	  "id" bigint NOT NULL  DEFAULT '0',
-	  "name" varchar(255) UNIQUE NOT NULL DEFAULT '',
-	  "value" text NOT NULL DEFAULT '',
-	  "conditions" text  NOT NULL DEFAULT ''
-	  );
-	  ALTER TABLE ONLY "%[1]d_vde_parameters" ADD CONSTRAINT "%[1]d_vde_parameters_pkey" PRIMARY KEY ("id");
-	  CREATE INDEX "%[1]d_vde_parameters_index_name" ON "%[1]d_vde_parameters" (name);
-	  
-	  INSERT INTO "%[1]d_vde_parameters" ("id","name", "value", "conditions") VALUES 
-	  ('1','founder_account', '%[2]d', 'ContractConditions("MainCondition")'),
-	  ('2','new_table', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
-	  ('3','new_column', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
-	  ('4','changing_tables', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
-	  ('5','changing_language', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
-	  ('6','changing_signature', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
-	  ('7','changing_page', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
-	  ('8','changing_menu', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
-	  ('9','changing_contracts', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")'),
-	  ('10','stylesheet', 'body { 
-		/* You can define your custom styles here or create custom CSS rules */
-	  }', 'ContractConditions("MainCondition")'),
-	  ('11','changing_blocks', 'ContractConditions("MainCondition")', 'ContractConditions("MainCondition")');
-
-	  DROP TABLE IF EXISTS "%[1]d_vde_cron";
-	  CREATE TABLE "%[1]d_vde_cron" (
-		  "id"        bigint NOT NULL DEFAULT '0',
-		  "owner"	  bigint NOT NULL DEFAULT '0',
-		  "cron"      varchar(255) NOT NULL DEFAULT '',
-		  "contract"  varchar(255) NOT NULL DEFAULT '',
-		  "counter"   bigint NOT NULL DEFAULT '0',
-		  "till"      timestamp NOT NULL DEFAULT timestamp '1970-01-01 00:00:00',
-		  "conditions" text  NOT NULL DEFAULT ''
-	  );
-	  ALTER TABLE ONLY "%[1]d_vde_cron" ADD CONSTRAINT "%[1]d_vde_cron_pkey" PRIMARY KEY ("id");
-
-		DROP TABLE IF EXISTS "%[1]d_vde_binaries";
-		CREATE TABLE "%[1]d_vde_binaries" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"app_id" bigint NOT NULL DEFAULT '1',
-			"member_id" bigint NOT NULL DEFAULT '0',
-			"name" varchar(255) NOT NULL DEFAULT '',
-			"data" bytea NOT NULL DEFAULT '',
-			"hash" varchar(32) NOT NULL DEFAULT '',
-			"mime_type" varchar(255) NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "%[1]d_vde_binaries" ADD CONSTRAINT "%[1]d_vde_binaries_pkey" PRIMARY KEY (id);
-		CREATE UNIQUE INDEX "%[1]d_vde_binaries_index_app_id_member_id_name" ON "%[1]d_vde_binaries" (app_id, member_id, name);
-
-	  CREATE TABLE "%[1]d_vde_tables" (
-	  "id" bigint NOT NULL  DEFAULT '0',
-	  "name" varchar(100) UNIQUE NOT NULL DEFAULT '',
-	  "permissions" jsonb,
-	  "columns" jsonb,
-	  "conditions" text  NOT NULL DEFAULT '',
-	  "app_id" bigint NOT NULL DEFAULT '1'
-	  );
-	  ALTER TABLE ONLY "%[1]d_vde_tables" ADD CONSTRAINT "%[1]d_vde_tables_pkey" PRIMARY KEY ("id");
-	  CREATE INDEX "%[1]d_vde_tables_index_name" ON "%[1]d_vde_tables" (name);
-	  
-	  INSERT INTO "%[1]d_vde_tables" ("id", "name", "permissions","columns", "conditions") VALUES ('1', 'contracts', 
-			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
-				"new_column": "ContractConditions(\"MainCondition\")"}',
-			  '{"name": "false",
-				"value": "ContractConditions(\"MainCondition\")",
-				"conditions": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("EditTable")'),
-			  ('2', 'languages', 
-			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
-				"new_column": "ContractConditions(\"MainCondition\")"}',
-			  '{ "name": "ContractConditions(\"MainCondition\")",
-				"res": "ContractConditions(\"MainCondition\")",
-				"conditions": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("EditTable")'),
-			  ('3', 'menu', 
-			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
-				"new_column": "ContractConditions(\"MainCondition\")"}',
-			  '{"name": "ContractConditions(\"MainCondition\")",
-		  "value": "ContractConditions(\"MainCondition\")",
-		  "conditions": "ContractConditions(\"MainCondition\")"
-			  }', 'ContractAccess("EditTable")'),
-			  ('4', 'pages', 
-			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
-				"new_column": "ContractConditions(\"MainCondition\")"}',
-			  '{"name": "ContractConditions(\"MainCondition\")",
-		  "value": "ContractConditions(\"MainCondition\")",
-		  "menu": "ContractConditions(\"MainCondition\")",
-		  "conditions": "ContractConditions(\"MainCondition\")",
-		  "validate_count": "ContractConditions(\"MainCondition\")",
-		  "validate_mode": "ContractConditions(\"MainCondition\")",
-		  "app_id": "ContractConditions(\"MainCondition\")"
-			  }', 'ContractAccess("EditTable")'),
-			  ('5', 'blocks', 
-			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
-				"new_column": "ContractConditions(\"MainCondition\")"}',
-			  '{"name": "ContractConditions(\"MainCondition\")",
-		  "value": "ContractConditions(\"MainCondition\")",
-		  "conditions": "ContractConditions(\"MainCondition\")"
-			  }', 'ContractAccess("EditTable")'),
-			  ('6', 'signatures', 
-			  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
-				"new_column": "ContractConditions(\"MainCondition\")"}',
-			  '{"name": "ContractConditions(\"MainCondition\")",
-		  "value": "ContractConditions(\"MainCondition\")",
-		  "conditions": "ContractConditions(\"MainCondition\")"
-			  }', 'ContractAccess("EditTable")'),
-			  ('7', 'cron',
-				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
-				  "new_column": "ContractConditions(\"MainCondition\")"}',
-				'{"owner": "ContractConditions(\"MainCondition\")",
-				"cron": "ContractConditions(\"MainCondition\")",
-				"contract": "ContractConditions(\"MainCondition\")",
-				"counter": "ContractConditions(\"MainCondition\")",
-				"till": "ContractConditions(\"MainCondition\")",
-				  "conditions": "ContractConditions(\"MainCondition\")"
-				}', 'ContractConditions("MainCondition")'),
-			  ('8', 'binaries',
-				'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
-					"new_column": "ContractConditions(\"MainCondition\")"}',
-				'{"app_id": "ContractConditions(\"MainCondition\")",
-					"member_id": "ContractConditions(\"MainCondition\")",
-					"name": "ContractConditions(\"MainCondition\")",
-					"data": "ContractConditions(\"MainCondition\")",
-					"hash": "ContractConditions(\"MainCondition\")",
-					"mime_type": "ContractConditions(\"MainCondition\")"}',
-					'ContractConditions("MainCondition")');
-	  
-	  INSERT INTO "%[1]d_vde_contracts" ("id", "name", "value", "conditions") VALUES 
+var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "conditions") VALUES 
 	  ('1','MainCondition','contract MainCondition {
 		conditions {
 		  if EcosysParam("founder_account")!=$key_id
@@ -927,7 +686,7 @@ MenuItem(
 			UpdateCron($Id)
 		}
 	}', 'ContractConditions("MainCondition")'),
-	('23', 'UploadBinary', contract UploadBinary {
+	('23', 'UploadBinary', 'contract UploadBinary {
 		data {
 			Name  string
 			Data  bytes "file"
@@ -954,5 +713,23 @@ MenuItem(
 
 			$result = $Id
 		}
-	}', 'ContractConditions("MainCondition")');
-	`
+	}', 'ContractConditions("MainCondition")'),
+	('24', 'NewUser','contract NewUser {
+		data {
+			NewPubkey string
+		}
+		conditions {
+			$newId = PubToID($NewPubkey)
+			if $newId == 0 {
+				error "Wrong pubkey"
+			}
+			if DBFind("keys").Columns("id").WhereId($newId).One("id") != nil {
+				error "User already exists"
+			}
+	
+			$amount = Money(1000) * Money(1000000000000000000)
+		}
+		action {
+			DBInsert("keys", "id, pub", $newId, $NewPubKey)
+		}
+	}', 'ContractConditions("MainCondition")');`
