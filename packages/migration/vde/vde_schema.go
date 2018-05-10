@@ -140,4 +140,33 @@ var schemaVDE = `
 	  );
 	  ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
 	  CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name); 
+
+	  DROP TABLE IF EXISTS "%[1]d_notifications";
+		CREATE TABLE "%[1]d_notifications" (
+			"id"    bigint NOT NULL DEFAULT '0',
+			"recipient" jsonb,
+			"sender" jsonb,
+			"notification" jsonb,
+			"page_params"	jsonb,
+			"processing_info" jsonb,
+			"page_name"	varchar(255) NOT NULL DEFAULT '',
+			"date_created"	timestamp,
+			"date_start_processing" timestamp,
+			"date_closed" timestamp,
+			"closed" bigint NOT NULL DEFAULT '0'
+		);
+		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
+
+		DROP TABLE IF EXISTS "%[1]d_roles_participants";
+		CREATE TABLE "%[1]d_roles_participants" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"role" jsonb,
+			"member" jsonb,
+			"appointed" jsonb,
+			"date_created" timestamp,
+			"date_deleted" timestamp,
+			"deleted" bigint NOT NULL DEFAULT '0'
+		);
+		ALTER TABLE ONLY "%[1]d_roles_participants" ADD CONSTRAINT "%[1]d_roles_participants_pkey" PRIMARY KEY ("id");
+
 	`

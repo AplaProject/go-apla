@@ -133,9 +133,6 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 
 func getPrefix(data *apiData) (prefix string) {
 	prefix = converter.Int64ToStr(data.ecosystemId)
-	if data.vde {
-		prefix += `_vde`
-	}
 	return
 }
 
@@ -274,6 +271,10 @@ func fillParams(params map[string]int) apiHandle {
 }
 
 func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (int64, string, error) {
+	if conf.Config.IsSupportingVDE() {
+		return consts.DefaultVDE, "1", nil
+	}
+
 	ecosystemID := data.ecosystemId
 	if data.params[`ecosystem`].(int64) > 0 {
 		ecosystemID = data.params[`ecosystem`].(int64)
@@ -288,9 +289,9 @@ func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (in
 		}
 	}
 	prefix := converter.Int64ToStr(ecosystemID)
-	if data.vde {
-		prefix += `_vde`
-	}
+	// if data.vde {
+	// 	prefix += `_vde`
+	// }
 	return ecosystemID, prefix, nil
 }
 
@@ -299,18 +300,20 @@ func fillTokenData(data *apiData, claims *JWTClaims, logger *log.Entry) error {
 	data.keyId = converter.StrToInt64(claims.KeyID)
 	data.isMobile = claims.IsMobile
 	data.roleId = converter.StrToInt64(claims.RoleID)
-	ecosystem := &model.Ecosystem{}
-	found, err := ecosystem.Get(data.ecosystemId)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
-		return err
-	}
+	if !conf.Config.IsSupportingVDE() {
+		ecosystem := &model.Ecosystem{}
+		found, err := ecosystem.Get(data.ecosystemId)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
+			return err
+		}
 
-	if !found {
-		err := fmt.Errorf("ecosystem not found")
-		logger.WithFields(log.Fields{"type": consts.NotFound, "id": data.ecosystemId, "error": err}).Error("ecosystem not found")
-	}
+		if !found {
+			err := fmt.Errorf("ecosystem not found")
+			logger.WithFields(log.Fields{"type": consts.NotFound, "id": data.ecosystemId, "error": err}).Error("ecosystem not found")
+		}
 
-	data.ecosystemName = ecosystem.Name
+		data.ecosystemName = ecosystem.Name
+	}
 	return nil
 }

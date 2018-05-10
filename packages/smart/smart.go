@@ -174,6 +174,7 @@ func VMRun(vm *script.VM, block *script.Block, params []interface{}, extend *map
 func VMGetContract(vm *script.VM, name string, state uint32) *Contract {
 	name = script.StateName(state, name)
 	obj, ok := vm.Objects[name]
+
 	if ok && obj.Type == script.ObjContract {
 		return &Contract{Name: name, Block: obj.Value.(*script.Block)}
 	}
@@ -469,15 +470,15 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
 
-	if !model.IsTable(prefix + `_vde_contracts`) {
+	if !model.IsTable(prefix + `_contracts`) {
 		return
 	}
-	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_vde_contracts" order by id`, -1)
+	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
 	if err != nil {
 		return err
 	}
 	state := converter.StrToInt64(prefix)
-	vm := newVM()
+	vm := GetVM()
 
 	var vmt script.VMType
 	if conf.Config.IsVDE() {
@@ -502,6 +503,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 			WalletID: 0,
 			TokenID:  0,
 		}
+
 		if err = vmCompile(vm, item[`value`], &owner); err != nil {
 			log.WithFields(log.Fields{"names": names, "error": err}).Error("Load VDE Contract")
 		} else {
