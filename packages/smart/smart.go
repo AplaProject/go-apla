@@ -1016,8 +1016,8 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			result = result[:255]
 		}
 	}
-
-	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.PrivateBlockchain {
+	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 &&
+		!sc.VDE && !conf.Config.PrivateBlockchain && sc.TxContract.Name != `@1NewUser` {
 		apl := sc.TxUsedCost.Mul(fuelRate)
 
 		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
