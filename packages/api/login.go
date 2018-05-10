@@ -128,9 +128,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		params := make([]byte, 0)
 		params = append(append(params, converter.EncodeLength(int64(len(hexPubKey)))...), hexPubKey...)
 
-		vm := smart.GetVM()
-
-		contract := smart.VMGetContract(vm, "NewUser", 1)
+		contract := smart.GetContract("NewUser", 1)
 		info := contract.Block.Info.(*script.ContractInfo)
 
 		err = tx.BuildTransaction(tx.SmartContract{
