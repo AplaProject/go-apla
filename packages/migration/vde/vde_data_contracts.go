@@ -483,113 +483,38 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			  PermColumn($TableName, $Name, $Permissions)
 		  }
 	  }', 'ContractConditions("MainCondition")'),
-	  ('18','NewLang', 'contract NewLang {
+	  ('18','NewLang','contract NewLang {
 		data {
-			ApplicationId int "optional"
-			Name string
-			Trans string "optional"
-			Value array "optional"
-			IdLanguage array "optional"
+			Name  string
+			Trans string
+			AppID int
 		}
-	
 		conditions {
-			if $ApplicationId == 0 {
-				warning "Application id cannot equal 0"
-			}
-	
-			if DBFind("languages").Columns("id").Where("name = ?", $Name).One("id") {
-				warning Sprintf( "Language resource %%s already exists", $Name)
-			}
-		
-			var j int
-			while j < Len($IdLanguage) {
-				if $IdLanguage[j] == "" {
-					info("Locale empty")
-				}
-				if $Value[j] == "" {
-					info("Value empty")
-				}
-				j = j + 1
-			}
 			EvalCondition("parameters", "changing_language", "value")
+			var row array
+			row = DBFind("languages").Columns("name").Where("name=? AND app_id=?", $Name, $AppID).Limit(1)
+			if Len(row) > 0 {
+				error Sprintf("The language resource %%s already exists", $Name)
+			}
 		}
-	
 		action {
-			var i,len,lenshar int
-			var res,langarr string
-			len = Len($IdLanguage)
-			lenshar = Len($Value)	
-			while i < len {
-				if i + 1 == len {
-					res = res + Sprintf("%%q: %%q",$IdLanguage[i],$Value[i])
-				} else {
-					res = res + Sprintf("%%q: %%q,",$IdLanguage[i],$Value[i])
-				}
-				i = i + 1
-			}
-			if len > 0 {
-				langarr = Sprintf("{"+"%%v"+"}", res)
-				$Trans = langarr
-			}
-			$result = CreateLanguage($Name, $Trans, $ApplicationId)
+			DBInsert("languages", "name,res,app_id", $Name, $Trans, $AppID)
+			UpdateLang($AppID, $Name, $Trans)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('19','EditLang','contract EditLang {
 		data {
-			Id int
-			Name string "optional"
-			ApplicationId int "optional"
-			Trans string "optional"
-			Value array "optional"
-			IdLanguage array "optional"
+			Id    int
+			Name  string
+			Trans string
+			AppID int
 		}
-		
 		conditions {
-			var j int
-			while j < Len($IdLanguage) {
-				if ($IdLanguage[j] == ""){
-					info("Locale empty")
-				}
-				if ($Value[j] == ""){
-					info("Value empty")
-				}
-				j = j + 1
-			}
 			EvalCondition("parameters", "changing_language", "value")
 		}
-		
 		action {
-			var i,len int
-			var res,langarr string
-			len = Len($IdLanguage)
-			while i < len {
-				if (i + 1 == len){
-					res = res + Sprintf("%%q: %%q", $IdLanguage[i],$Value[i])
-				}
-				else {
-					res = res + Sprintf("%%q: %%q, ", $IdLanguage[i],$Value[i])
-				}
-				i = i + 1
-			}
-	
-			$row = DBFind("languages").Columns("name,app_id").WhereId($Id).Row()
-			if !$row{
-				warning "Language not found"
-			}
-	
-			if $ApplicationId == 0 {
-				$ApplicationId = Int($row["app_id"])
-			}
-			if $Name == "" {
-				$Name = $row["name"]
-			}
-	
-			if (len > 0){
-				langarr = Sprintf("{"+"%%v"+"}", res)
-				$Trans = langarr
-				
-			}
-			EditLanguage($Id, $Name, $Trans, $ApplicationId)
+			DBUpdate("languages", $Id, "name,res,app_id", $Name, $Trans, $AppID)
+			UpdateLang($AppID, $Name, $Trans)
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('20','Import','contract Import {
@@ -794,7 +719,6 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			NewPubkey string
 		}
 		conditions {
-			Println($NewPubkey)
 			$newId = PubToID($NewPubkey)
 			if $newId == 0 {
 				error "Wrong pubkey"
@@ -802,66 +726,10 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			if DBFind("keys").Columns("id").WhereId($newId).One("id") != nil {
 				error "User already exists"
 			}
+	
+			$amount = Money(1000) * Money(1000000000000000000)
 		}
 		action {
-			DBInsert("keys", "id", $newId)
-			SetPubKey($newId, StringToBytes($NewPubkey))
-		}
-	}', 'ContractConditions("MainCondition")'),
-	('25', 'NewVDE', 'contract NewVDE {
-		data {
-			VDEName string
-			DBUser string
-			DBPassword string
-			VDEAPIPort int
-		}
-	
-		conditions {
-		}
-	
-		action {
-			CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
-		}
-	}', 'ContractConditions("MainCondition")'),
-	('26', 'ListVDE', 'contract ListVDE {
-		data {}
-	
-		conditions {}
-	
-		action {
-			GetVDEList()
-		}
-	}', 'ContractConditions("MainCondition")'),
-	('27', 'RunVDE', 'contract RunVDE {
-		data {
-			VDEName string
-		}
-	
-		conditions {
-		}
-	
-		action {
-			StartVDE($VDEName)
-		}
-	}', 'ContractConditions("MainCondition")'),
-	('28', 'StopVDE', 'contract StopVDE {
-		data {
-			VDEName string
-		}
-	
-		conditions {
-		}
-	
-		action {
-			StopVDEProcess($VDEName)
-		}
-	}', 'ContractConditions("MainCondition")'),
-	('29', 'RemoveVDE', 'contract RemoveVDE {
-		data {
-			VDEName string
-		}
-		conditions {}
-		action{
-			DeleteVDE($VDEName)
+			DBInsert("keys", "id, pub", $newId, $NewPubKey)
 		}
 	}', 'ContractConditions("MainCondition")');`
