@@ -17,6 +17,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -37,8 +38,88 @@ type prepareResult struct {
 	Time    string            `json:"time"`
 }
 
+type multiPrepareResult struct {
+	ID       string   `json:"request_id"`
+	ForSigns []string `json:"forsign"`
+	Time     string   `json:"time"`
+}
+
+type multiPrepareRequestItem struct {
+	TokenEcosystem string              `json:"token_ecosystem"`
+	MaxSum         string              `json:"max_sum"`
+	Payover        string              `json:"payover"`
+	SignedBy       string              `json:"signed_by"`
+	Params         []map[string]string `json:"params"`
+}
+
 type contractHandlers struct {
-	requests *tx.RequestBuffer
+	requests      *tx.RequestBuffer
+	multiRequests *tx.MultiRequestBuffer
+}
+
+func (h *contractHandlers) prepareMultipleContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	requests := multiPrepareRequestItem{}
+	if err := json.Unmarshal([]byte(r.FormValue("data")), &requests); err != nil {
+		return errorAPI(w, err, http.StatusBadRequest)
+	}
+	contractName := data.params["name"].(string)
+	tokenEcosystem := data.params[`token_ecosystem`].(int64)
+	maxSum := data.params[`max_sum`].(string)
+	payOver := data.params[`payover`].(string)
+	var signedBy int64
+	if data.params[`signed_by`] != nil {
+		signedBy = data.params[`signed_by`].(int64)
+	}
+	req := h.multiRequests.NewMultiRequest(contractName)
+	forSigns := []string{}
+	requestsParams := []map[string]string{}
+	for _, params := range requests.Params {
+		var smartTx tx.SmartContract
+		contract, parerr, err := validateSmartContractJSON(r, data, contractName, params)
+		if err != nil {
+			if strings.HasPrefix(err.Error(), `E_`) {
+				return errorAPI(w, err.Error(), http.StatusBadRequest, parerr)
+			}
+			return errorAPI(w, err, http.StatusBadRequest)
+		}
+		info := (*contract).Block.Info.(*script.ContractInfo)
+		smartTx.TokenEcosystem = tokenEcosystem
+		smartTx.MaxSum = maxSum
+		smartTx.PayOver = payOver
+		if signedBy != 0 {
+			smartTx.SignedBy = signedBy
+		}
+
+		smartTx.RequestID = req.ID
+		smartTx.Header = tx.Header{
+			Type:        int(info.ID),
+			Time:        req.Time.Unix(),
+			EcosystemID: data.ecosystemId,
+			KeyID:       data.keyId,
+			RoleID:      data.roleId,
+			NetworkID:   consts.NETWORK_ID,
+		}
+		forsign := []string{smartTx.ForSign()}
+		if info.Tx != nil {
+			f, requestParams, err := forsignJSONData(w, params, logger, *info.Tx)
+			if err != nil {
+				return err
+			}
+			forsign = append(forsign, f...)
+			requestsParams = append(requestsParams, requestParams)
+		}
+		forSigns = append(forSigns, strings.Join(forsign, ","))
+	}
+	req.Values = requestsParams
+	h.multiRequests.AddRequest(req)
+
+	result := multiPrepareResult{
+		ID:       req.ID,
+		ForSigns: forSigns,
+		Time:     converter.Int64ToStr(req.Time.Unix()),
+	}
+	data.result = result
+	return nil
 }
 
 func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
@@ -47,7 +128,7 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 		smartTx tx.SmartContract
 	)
 
-	contract, parerr, err := validateSmartContract(r, data, &result)
+	contract, parerr, err := validateSmartContract(r, data, &result, data.params["name"].(string))
 	if err != nil {
 		if strings.HasPrefix(err.Error(), `E_`) {
 			return errorAPI(w, err.Error(), http.StatusBadRequest, parerr)
@@ -86,10 +167,53 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 	result.ID = req.ID
 	result.ForSign = strings.Join(forsign, ",")
 	result.Time = converter.Int64ToStr(req.Time.Unix())
-	result.Values = make(map[string]string)
 
 	data.result = result
 	return nil
+}
+
+func forsignJSONData(w http.ResponseWriter, params map[string]string, logger *log.Entry, fields []*script.FieldInfo) ([]string, map[string]string, error) {
+	forsign := []string{}
+	requestParams := map[string]string{}
+	for _, fitem := range fields {
+		if fitem.ContainsTag(`signature`) || fitem.ContainsTag(script.TagFile) {
+			continue
+		}
+		var val string
+		if fitem.Type.String() == `[]interface {}` {
+			for key, values := range params {
+				if key == fitem.Name+`[]` && len(values) > 0 {
+					count := converter.StrToInt(string(values[0]))
+					requestParams[key] = string(values[0])
+					var list []string
+					for i := 0; i < count; i++ {
+						k := fmt.Sprintf(`%s[%d]`, fitem.Name, i)
+						v := params[k]
+						list = append(list, v)
+						requestParams[k] = v
+					}
+					val = strings.Join(list, `,`)
+				}
+			}
+			if len(val) == 0 {
+				val = params[fitem.Name]
+				requestParams[fitem.Name] = val
+			}
+		} else {
+			val = strings.TrimSpace(params[fitem.Name])
+			requestParams[fitem.Name] = val
+			if fitem.ContainsTag(`address`) {
+				val = converter.Int64ToStr(converter.StringToAddress(val))
+			} else if fitem.Type.String() == script.Decimal {
+				val = strings.TrimLeft(val, `0`)
+			} else if fitem.Type.String() == `int64` && len(val) == 0 {
+				val = `0`
+			}
+		}
+		forsign = append(forsign, val)
+	}
+
+	return forsign, requestParams, nil
 }
 
 func forsignFormData(w http.ResponseWriter, r *http.Request, logger *log.Entry, req *tx.Request, fields []*script.FieldInfo) ([]string, error) {

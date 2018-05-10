@@ -34,11 +34,229 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 )
 
+func getPublicKey(signID int64, data *apiData, w http.ResponseWriter, logger *log.Entry) ([]byte, error) {
+	var publicKey []byte
+	key := &model.Key{}
+	key.SetTablePrefix(data.ecosystemId)
+	_, err := key.Get(signID)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
+		return []byte(""), errorAPI(w, err, http.StatusInternalServerError)
+	}
+	if key.Deleted == 1 {
+		return []byte(""), errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
+	}
+	if len(key.PublicKey) == 0 {
+		if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
+			publicKey = data.params[`pubkey`].([]byte)
+			lenpub := len(publicKey)
+			if lenpub > 64 {
+				publicKey = publicKey[lenpub-64:]
+			}
+		}
+		if len(publicKey) == 0 {
+			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
+			return []byte(""), errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
+		}
+	} else {
+		logger.Warning("public key for wallet not found")
+		publicKey = []byte("null")
+	}
+	return publicKey, nil
+}
+
+func getDataMultiRequestParams(fields []*script.FieldInfo, params map[string]string, w http.ResponseWriter, logger *log.Entry) ([]byte, error) {
+	idata := []byte{}
+	var err error
+	for _, fitem := range fields {
+		val := strings.TrimSpace(params[fitem.Name])
+		if strings.Contains(fitem.Tags, `address`) {
+			val = converter.Int64ToStr(converter.StringToAddress(val))
+		}
+		switch fitem.Type.String() {
+		case `[]interface {}`:
+			var list []string
+			for key, value := range params {
+				if key == fitem.Name+`[]` && len(value) > 0 {
+					count := converter.StrToInt(value)
+					for i := 0; i < count; i++ {
+						list = append(list, params[fmt.Sprintf(`%s[%d]`, fitem.Name, i)])
+					}
+				}
+			}
+			if len(list) == 0 && len(val) > 0 {
+				list = append(list, val)
+			}
+			idata = append(idata, converter.EncodeLength(int64(len(list)))...)
+			for _, ilist := range list {
+				blist := []byte(ilist)
+				idata = append(append(idata, converter.EncodeLength(int64(len(blist)))...), blist...)
+			}
+		case `uint64`:
+			converter.BinMarshal(&idata, converter.StrToUint64(val))
+		case `int64`:
+			converter.EncodeLenInt64(&idata, converter.StrToInt64(val))
+		case `float64`:
+			converter.BinMarshal(&idata, converter.StrToFloat64(val))
+		case `string`, script.Decimal:
+			idata = append(append(idata, converter.EncodeLength(int64(len(val)))...), []byte(val)...)
+		case `[]uint8`:
+			var bytes []byte
+			bytes, err = hex.DecodeString(val)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("decoding value from hex")
+				return idata, err
+			}
+			idata = append(append(idata, converter.EncodeLength(int64(len(bytes)))...), bytes...)
+		}
+	}
+	return idata, nil
+}
+
+func getData(fields []*script.FieldInfo, req *tx.Request, w http.ResponseWriter, logger *log.Entry) ([]byte, error) {
+	idata := []byte{}
+	var err error
+	for _, fitem := range fields {
+		if fitem.ContainsTag(script.TagFile) {
+			file, err := req.ReadFile(fitem.Name)
+			if err != nil {
+				return idata, errorAPI(w, err.Error(), http.StatusInternalServerError)
+			}
+
+			serialFile, err := msgpack.Marshal(file)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling file to msgpack")
+				return idata, errorAPI(w, err, http.StatusInternalServerError)
+			}
+
+			idata = append(append(idata, converter.EncodeLength(int64(len(serialFile)))...), serialFile...)
+			continue
+		}
+
+		val := strings.TrimSpace(req.GetValue(fitem.Name))
+		if strings.Contains(fitem.Tags, `address`) {
+			val = converter.Int64ToStr(converter.StringToAddress(val))
+		}
+		switch fitem.Type.String() {
+		case `[]interface {}`:
+			var list []string
+			for key, value := range req.AllValues() {
+				if key == fitem.Name+`[]` && len(value) > 0 {
+					count := converter.StrToInt(value)
+					for i := 0; i < count; i++ {
+						list = append(list, req.GetValue(fmt.Sprintf(`%s[%d]`, fitem.Name, i)))
+					}
+				}
+			}
+			if len(list) == 0 && len(val) > 0 {
+				list = append(list, val)
+			}
+			idata = append(idata, converter.EncodeLength(int64(len(list)))...)
+			for _, ilist := range list {
+				blist := []byte(ilist)
+				idata = append(append(idata, converter.EncodeLength(int64(len(blist)))...), blist...)
+			}
+		case `uint64`:
+			converter.BinMarshal(&idata, converter.StrToUint64(val))
+		case `int64`:
+			converter.EncodeLenInt64(&idata, converter.StrToInt64(val))
+		case `float64`:
+			converter.BinMarshal(&idata, converter.StrToFloat64(val))
+		case `string`, script.Decimal:
+			idata = append(append(idata, converter.EncodeLength(int64(len(val)))...), []byte(val)...)
+		case `[]uint8`:
+			var bytes []byte
+			bytes, err = hex.DecodeString(val)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("decoding value from hex")
+				return idata, err
+			}
+			idata = append(append(idata, converter.EncodeLength(int64(len(bytes)))...), bytes...)
+		}
+	}
+	return idata, nil
+}
+
 type contractResult struct {
 	Hash string `json:"hash"`
 	// These fields are used for VDE
 	Message *txstatusError `json:"errmsg,omitempty"`
 	Result  string         `json:"result,omitempty"`
+}
+
+type contractMultiResult struct {
+	Hashes []string `json:"hashes"`
+}
+
+func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	requestID := data.ParamString("request_id")
+	var publicKey []byte
+	req, ok := c.multiRequests.GetRequest(requestID)
+	if !ok {
+		return errorAPI(w, "E_REQUESTNOTFOUND", http.StatusNotFound, requestID)
+	}
+	contract := smart.VMGetContract(data.vm, req.Contract, uint32(data.ecosystemId))
+	if contract == nil {
+		return errorAPI(w, "E_CONTRACT", http.StatusBadRequest, req.Contract)
+	}
+	info := (*contract).Block.Info.(*script.ContractInfo)
+	var signedBy int64
+	signID := data.keyId
+	if data.params[`signed_by`] != nil {
+		signedBy = data.params[`signed_by`].(int64)
+		signID = signedBy
+	}
+	var err error
+	publicKey, err = getPublicKey(signID, data, w, logger)
+	if err != nil {
+		return err
+	}
+	signature := data.params[`signature`].([]byte)
+	if len(signature) == 0 {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signature is empty")
+		return errorAPI(w, `E_EMPTYSIGN`, http.StatusBadRequest)
+	}
+	hashes := []string{}
+	for _, params := range req.Values {
+		idata := make([]byte, 0)
+		if info.Tx != nil {
+			idata, err = getDataMultiRequestParams(*info.Tx, params, w, logger)
+			if err != nil {
+				return err
+			}
+		}
+		toSerialize := tx.SmartContract{
+			Header: tx.Header{
+				Type:          int(info.ID),
+				Time:          converter.StrToInt64(data.params[`time`].(string)),
+				EcosystemID:   data.ecosystemId,
+				KeyID:         data.keyId,
+				RoleID:        data.roleId,
+				PublicKey:     publicKey,
+				NetworkID:     consts.NETWORK_ID,
+				BinSignatures: converter.EncodeLengthPlusData(signature),
+			},
+			RequestID:      req.ID,
+			TokenEcosystem: data.params[`token_ecosystem`].(int64),
+			MaxSum:         data.params[`max_sum`].(string),
+			PayOver:        data.params[`payover`].(string),
+			SignedBy:       signedBy,
+			Data:           idata,
+		}
+		serializedData, err := msgpack.Marshal(toSerialize)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
+			return errorAPI(w, err, http.StatusInternalServerError)
+		}
+		if hash, err := model.SendTx(int64(info.ID), data.keyId,
+			append([]byte{128}, serializedData...)); err != nil {
+			return errorAPI(w, err, http.StatusInternalServerError)
+		} else {
+			hashes = append(hashes, hex.EncodeToString(hash))
+		}
+	}
+	data.result = &contractMultiResult{Hashes: hashes}
+	return nil
 }
 
 func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
@@ -66,32 +284,12 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		signID = signedBy
 	}
 
-	key := &model.Key{}
-	key.SetTablePrefix(data.ecosystemId)
-	_, err := key.Get(signID)
+	var err error
+	publicKey, err = getPublicKey(signID, data, w, logger)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		return err
 	}
-	if key.Deleted == 1 {
-		return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
-	}
-	if len(key.PublicKey) == 0 {
-		if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
-			publicKey = data.params[`pubkey`].([]byte)
-			lenpub := len(publicKey)
-			if lenpub > 64 {
-				publicKey = publicKey[lenpub-64:]
-			}
-		}
-		if len(publicKey) == 0 {
-			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
-			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
-		}
-	} else {
-		logger.Warning("public key for wallet not found")
-		publicKey = []byte("null")
-	}
+
 	signature := data.params[`signature`].([]byte)
 	if len(signature) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signature is empty")
@@ -99,64 +297,9 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 	}
 	idata := make([]byte, 0)
 	if info.Tx != nil {
-	fields:
-		for _, fitem := range *info.Tx {
-			if fitem.ContainsTag(script.TagFile) {
-				file, err := req.ReadFile(fitem.Name)
-				if err != nil {
-					return errorAPI(w, err.Error(), http.StatusInternalServerError)
-				}
-
-				serialFile, err := msgpack.Marshal(file)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling file to msgpack")
-					return errorAPI(w, err, http.StatusInternalServerError)
-				}
-
-				idata = append(append(idata, converter.EncodeLength(int64(len(serialFile)))...), serialFile...)
-				continue
-			}
-
-			val := strings.TrimSpace(req.GetValue(fitem.Name))
-			if strings.Contains(fitem.Tags, `address`) {
-				val = converter.Int64ToStr(converter.StringToAddress(val))
-			}
-			switch fitem.Type.String() {
-			case `[]interface {}`:
-				var list []string
-				for key, value := range req.AllValues() {
-					if key == fitem.Name+`[]` && len(value) > 0 {
-						count := converter.StrToInt(value)
-						for i := 0; i < count; i++ {
-							list = append(list, req.GetValue(fmt.Sprintf(`%s[%d]`, fitem.Name, i)))
-						}
-					}
-				}
-				if len(list) == 0 && len(val) > 0 {
-					list = append(list, val)
-				}
-				idata = append(idata, converter.EncodeLength(int64(len(list)))...)
-				for _, ilist := range list {
-					blist := []byte(ilist)
-					idata = append(append(idata, converter.EncodeLength(int64(len(blist)))...), blist...)
-				}
-			case `uint64`:
-				converter.BinMarshal(&idata, converter.StrToUint64(val))
-			case `int64`:
-				converter.EncodeLenInt64(&idata, converter.StrToInt64(val))
-			case `float64`:
-				converter.BinMarshal(&idata, converter.StrToFloat64(val))
-			case `string`, script.Decimal:
-				idata = append(append(idata, converter.EncodeLength(int64(len(val)))...), []byte(val)...)
-			case `[]uint8`:
-				var bytes []byte
-				bytes, err = hex.DecodeString(val)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("decoding value from hex")
-					break fields
-				}
-				idata = append(append(idata, converter.EncodeLength(int64(len(bytes)))...), bytes...)
-			}
+		idata, err = getData(*info.Tx, req, w, logger)
+		if err != nil {
+			return err
 		}
 	}
 	toSerialize = tx.SmartContract{
