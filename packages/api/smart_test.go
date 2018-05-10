@@ -769,8 +769,3 @@ func TestMoneyDigits(t *testing.T) {
 	d := decimal.New(1, int32(converter.StrToInt(v.Value)))
 	assert.Equal(t, d.StringFixed(0), result)
 }
-
-func TestBanNode(t *testing.T) {
-	assert.NoError(t, keyLogin(1))
-	// assert.NoError(t, postTx("CheckNodesBan", &url.Values{}))
-}

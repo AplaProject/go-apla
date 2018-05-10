@@ -1884,17 +1884,11 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		Timestamp int
 		Reason string
 	}
-	conditions {
-		ContractConditions("NodeOwnerCondition")
-	}
 	action {
 		DBInsert("bad_blocks", "producer_node_id,consumer_node_id,block_id,timestamp block_time,reason", $ProducerNodeID, $ConsumerNodeID, $BlockID, $Timestamp, $Reason)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('45', 'CheckNodesBan', 'contract CheckNodesBan {
-	conditions {
-		ContractConditions("MainCondition")
-	}
 	action {
 		UpdateNodesBan($block_time)
 	}
