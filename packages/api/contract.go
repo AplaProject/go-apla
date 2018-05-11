@@ -18,6 +18,7 @@ package api
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -34,10 +35,10 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 )
 
-func getPublicKey(signID int64, data *apiData, w http.ResponseWriter, logger *log.Entry) ([]byte, error) {
+func getPublicKey(signID int64, ecosystemID int64, pubkey []byte, w http.ResponseWriter, logger *log.Entry) ([]byte, error) {
 	var publicKey []byte
 	key := &model.Key{}
-	key.SetTablePrefix(data.ecosystemId)
+	key.SetTablePrefix(ecosystemID)
 	_, err := key.Get(signID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
@@ -47,8 +48,8 @@ func getPublicKey(signID int64, data *apiData, w http.ResponseWriter, logger *lo
 		return []byte(""), errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 	}
 	if len(key.PublicKey) == 0 {
-		if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
-			publicKey = data.params[`pubkey`].([]byte)
+		if len(pubkey) > 0 {
+			publicKey = pubkey
 			lenpub := len(publicKey)
 			if lenpub > 64 {
 				publicKey = publicKey[lenpub-64:]
@@ -184,6 +185,16 @@ type contractResult struct {
 	Result  string         `json:"result,omitempty"`
 }
 
+type contractMultiRequest struct {
+	Pubkey         string   `json:"pubkey"`
+	TokenEcosystem string   `json:"token_ecosystem"`
+	MaxSum         string   `json:"max_sum"`
+	Payover        string   `json:"payover"`
+	SignedBy       string   `json:"signed_by"`
+	Signatures     []string `json:"signatures"`
+	Time           string   `json:"time"`
+}
+
 type contractMultiResult struct {
 	Hashes []string `json:"hashes"`
 }
@@ -195,6 +206,10 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 	if !ok {
 		return errorAPI(w, "E_REQUESTNOTFOUND", http.StatusNotFound, requestID)
 	}
+	multiRequest := contractMultiRequest{}
+	if err := json.Unmarshal([]byte(r.FormValue("data")), &multiRequest); err != nil {
+		return errorAPI(w, err, http.StatusBadRequest)
+	}
 	contract := smart.VMGetContract(data.vm, req.Contract, uint32(data.ecosystemId))
 	if contract == nil {
 		return errorAPI(w, "E_CONTRACT", http.StatusBadRequest, req.Contract)
@@ -202,22 +217,33 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 	info := (*contract).Block.Info.(*script.ContractInfo)
 	var signedBy int64
 	signID := data.keyId
-	if data.params[`signed_by`] != nil {
-		signedBy = data.params[`signed_by`].(int64)
+	if multiRequest.SignedBy != "" {
+		signedBy = converter.StrToInt64(multiRequest.SignedBy)
 		signID = signedBy
 	}
 	var err error
-	publicKey, err = getPublicKey(signID, data, w, logger)
+	pubkey := []byte{}
+	if multiRequest.Pubkey != "" {
+		pubkey, err = hex.DecodeString(multiRequest.Pubkey)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting signature from hex")
+			return err
+		}
+	}
+	publicKey, err = getPublicKey(signID, data.ecosystemId, pubkey, w, logger)
 	if err != nil {
 		return err
 	}
-	signature := data.params[`signature`].([]byte)
-	if len(signature) == 0 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signature is empty")
+	signatures := multiRequest.Signatures
+	if len(signatures) == 0 {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signatures is empty")
 		return errorAPI(w, `E_EMPTYSIGN`, http.StatusBadRequest)
 	}
+	tokenEcosystem := converter.StrToInt64(multiRequest.TokenEcosystem)
+	maxSum := multiRequest.MaxSum
+	payover := multiRequest.Payover
 	hashes := []string{}
-	for _, params := range req.Values {
+	for i, params := range req.Values {
 		idata := make([]byte, 0)
 		if info.Tx != nil {
 			idata, err = getDataMultiRequestParams(*info.Tx, params, w, logger)
@@ -225,21 +251,26 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 				return err
 			}
 		}
+		signatureBytes, err := hex.DecodeString(signatures[i])
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting signature from hex")
+			return err
+		}
 		toSerialize := tx.SmartContract{
 			Header: tx.Header{
 				Type:          int(info.ID),
-				Time:          converter.StrToInt64(data.params[`time`].(string)),
+				Time:          converter.StrToInt64(multiRequest.Time),
 				EcosystemID:   data.ecosystemId,
 				KeyID:         data.keyId,
 				RoleID:        data.roleId,
 				PublicKey:     publicKey,
 				NetworkID:     consts.NETWORK_ID,
-				BinSignatures: converter.EncodeLengthPlusData(signature),
+				BinSignatures: converter.EncodeLengthPlusData(signatureBytes),
 			},
 			RequestID:      req.ID,
-			TokenEcosystem: data.params[`token_ecosystem`].(int64),
-			MaxSum:         data.params[`max_sum`].(string),
-			PayOver:        data.params[`payover`].(string),
+			TokenEcosystem: tokenEcosystem,
+			MaxSum:         maxSum,
+			PayOver:        payover,
 			SignedBy:       signedBy,
 			Data:           idata,
 		}
@@ -284,8 +315,12 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		signID = signedBy
 	}
 
+	pubkey := []byte{}
+	if _, ok := data.params["public_key"]; ok {
+		pubkey = data.params["public_key"].([]byte)
+	}
 	var err error
-	publicKey, err = getPublicKey(signID, data, w, logger)
+	publicKey, err = getPublicKey(signID, data.ecosystemId, pubkey, w, logger)
 	if err != nil {
 		return err
 	}

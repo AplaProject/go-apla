@@ -39,10 +39,6 @@ type txstatusResult struct {
 	Result  string         `json:"result"`
 }
 
-type multiTxStatusResult struct {
-	status map[string]*txstatusResult `json:"status"`
-}
-
 func getTxStatus(hash string, w http.ResponseWriter, logger *log.Entry) (*txstatusResult, error) {
 	var status txstatusResult
 	if _, err := hex.DecodeString(hash); err != nil {
@@ -74,6 +70,10 @@ func getTxStatus(hash string, w http.ResponseWriter, logger *log.Entry) (*txstat
 	return &status, nil
 }
 
+type multiTxStatusResult struct {
+	Results map[string]*txstatusResult `json:"results"`
+}
+
 func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	status, err := getTxStatus(data.params[`hash`].(string), w, logger)
 	if err != nil {
@@ -83,21 +83,22 @@ func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log
 	return nil
 }
 
-func multiTxstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var result multiTxStatusResult
+func txstatusMulti(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	result := &multiTxStatusResult{}
+	result.Results = map[string]*txstatusResult{}
 	var request struct {
-		hashes []string `json:"data"`
+		Hashes []string `json:"hashes"`
 	}
-	if err := json.Unmarshal(data.params["data"].([]byte), &request); err != nil {
+	if err := json.Unmarshal([]byte(data.params["data"].(string)), &request); err != nil {
 		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
 	}
-	for _, hash := range request.hashes {
+	for _, hash := range request.Hashes {
 		status, err := getTxStatus(hash, w, logger)
 		if err != nil {
 			return err
 		}
-		result.status[hash] = status
+		result.Results[hash] = status
 	}
-	data.result = &result
+	data.result = result
 	return nil
 }

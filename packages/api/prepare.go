@@ -65,12 +65,12 @@ func (h *contractHandlers) prepareMultipleContract(w http.ResponseWriter, r *htt
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	contractName := data.params["name"].(string)
-	tokenEcosystem := data.params[`token_ecosystem`].(int64)
-	maxSum := data.params[`max_sum`].(string)
-	payOver := data.params[`payover`].(string)
+	tokenEcosystem := converter.StrToInt64(requests.TokenEcosystem)
+	maxSum := requests.MaxSum
+	payOver := requests.Payover
 	var signedBy int64
-	if data.params[`signed_by`] != nil {
-		signedBy = data.params[`signed_by`].(int64)
+	if requests.SignedBy != "" {
+		signedBy = converter.StrToInt64(requests.SignedBy)
 	}
 	req := h.multiRequests.NewMultiRequest(contractName)
 	forSigns := []string{}
