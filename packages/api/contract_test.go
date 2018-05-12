@@ -36,13 +36,15 @@ func TestNewContracts(t *testing.T) {
 	}
 
 	assert.NoError(t, keyLogin(1))
-
+	rnd := crypto.RandSeq(4)
 	for _, item := range contracts {
 		var ret getContractResult
-		err := sendGet(`contract/`+item.Name, nil, &ret)
+		name := strings.Replace(item.Name, `#rnd#`, rnd, -1)
+		err := sendGet(`contract/`+name, nil, &ret)
 		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(apiErrors[`E_CONTRACT`], item.Name)) {
-				form := url.Values{"Name": {item.Name}, "Value": {item.Value},
+			if strings.Contains(err.Error(), fmt.Sprintf(apiErrors[`E_CONTRACT`], name)) {
+				form := url.Values{"Name": {name}, "Value": {strings.Replace(item.Value,
+					`#rnd#`, rnd, -1)},
 					"ApplicationId": {`1`}, "Conditions": {`true`}}
 				if err := postTx(`NewContract`, &form); err != nil {
 					assert.EqualError(t, err, item.Params[0].Results[`error`])
@@ -53,7 +55,7 @@ func TestNewContracts(t *testing.T) {
 				return
 			}
 		}
-		if strings.HasSuffix(item.Name, `testUpd`) {
+		if strings.HasSuffix(name, `testUpd`) {
 			continue
 		}
 		for _, par := range item.Params {
@@ -61,7 +63,7 @@ func TestNewContracts(t *testing.T) {
 			for key, value := range par.Params {
 				form[key] = []string{value}
 			}
-			if err := postTx(item.Name, &form); err != nil {
+			if err := postTx(name, &form); err != nil {
 				assert.EqualError(t, err, par.Results[`error`])
 				continue
 			}
@@ -78,6 +80,23 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`MyTable#rnd#`, `contract MyTable#rnd# {
+		action {
+			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1", 
+				"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]", 100,
+				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
+			var cols array
+			cols[0] = "{\"conditions\":\"true\",\"name\":\"column1\",\"type\":\"text\"}"
+			cols[1] = "{\"conditions\":\"true\",\"name\":\"column2\",\"type\":\"text\"}"
+			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#2", 
+				JSONEncode(cols), 100,
+				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
+			
+			Test("ok", "1")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`ok`: `1`}},
+	}},
 	{`IntOver`, `contract IntOver {
 				action {
 					info Int("123456789101112131415161718192021222324252627282930")
@@ -297,7 +316,7 @@ var contracts = []smartContract{
 				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
 		[]smartParams{
 			{nil, map[string]string{`ByName`: `0 29`,
-				`ById`: `EditLang`}},
+				`ById`: `NewColumn`}},
 		}},
 }
 

@@ -353,7 +353,7 @@ func contractsList(value string) ([]interface{}, error) {
 // CreateTable is creating smart contract table
 func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) error {
 	var err error
-	if !accessContracts(sc, `NewTable`, `Import`) {
+	if !ContractAccess(sc, `NewTable`, `Import`) {
 		return fmt.Errorf(`CreateTable can be only called from NewTable`)
 	}
 	if len(name) > 0 && name[0] == '@' {
@@ -365,7 +365,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return fmt.Errorf("table %s exists", name)
 	}
 
-	var cols []map[string]interface{}
+	var cols []interface{}
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns to JSON")
@@ -375,7 +375,19 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	colsSQL := ""
 	colperm := make(map[string]string)
 	colList := make(map[string]bool)
-	for _, data := range cols {
+	for _, icol := range cols {
+		var data map[string]interface{}
+		switch v := icol.(type) {
+		case string:
+			err = json.Unmarshal([]byte(v), &data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err,
+					"source": v}).Error("unmarshalling columns permissions from json")
+				return err
+			}
+		default:
+			data = v.(map[string]interface{})
+		}
 		colname := strings.ToLower(data[`name`].(string))
 		if colList[colname] {
 			return fmt.Errorf(`There are the same columns`)
@@ -792,7 +804,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 			log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1EditTable")
 			return fmt.Errorf(`TableConditions can be only called from EditTable`)
 		}
-	} else if !accessContracts(sc, `NewTable`, `Import`) {
+	} else if !ContractAccess(sc, `NewTable`, `Import`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1NewTable")
 		return fmt.Errorf(`TableConditions can be only called from NewTable or Import`)
 	}
@@ -848,7 +860,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		return nil
 	}
 
-	var cols []map[string]interface{}
+	var cols []interface{}
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns permissions from json")
@@ -862,7 +874,19 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		log.WithFields(log.Fields{"size": len(cols), "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
-	for _, data := range cols {
+	for _, icol := range cols {
+		var data map[string]interface{}
+		switch v := icol.(type) {
+		case string:
+			err = json.Unmarshal([]byte(v), &data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err,
+					"source": v}).Error("unmarshalling columns permissions from json")
+				return
+			}
+		default:
+			data = v.(map[string]interface{})
+		}
 		if data[`name`] == nil || data[`type`] == nil {
 			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("wrong column")
 			return fmt.Errorf(`worng column`)
