@@ -885,6 +885,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			return retError(ErrEmptyPublicKey)
 		}
 		sc.PublicKeys = append(sc.PublicKeys, public)
+
 		var CheckSignResult bool
 		CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.BinSignatures, false)
 		if err != nil {

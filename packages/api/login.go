@@ -19,12 +19,14 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
+	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -131,20 +133,60 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		contract := smart.GetContract("NewUser", 1)
 		info := contract.Block.Info.(*script.ContractInfo)
 
-		err = tx.BuildTransaction(tx.SmartContract{
+		// scHeader, err := getHeader("NewUser", data)
+		if err != nil {
+			return errorAPI(w, "E_EMPTYOBJECT", http.StatusBadRequest)
+		}
+
+		sc := tx.SmartContract{
 			Header: tx.Header{
 				Type:        int(info.ID),
 				Time:        time.Now().Unix(),
 				EcosystemID: 1,
 				KeyID:       conf.Config.KeyID,
 				NetworkID:   consts.NETWORK_ID,
+				PublicKey:   pubkey,
 			},
 			SignedBy: smart.PubToID(NodePublicKey),
 			Data:     params,
-		}, NodePrivateKey, NodePublicKey, string(hexPubKey))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 		}
+
+		if conf.Config.IsSupportingVDE() {
+
+			signPrms := []string{sc.ForSign()}
+			signPrms = append(signPrms, string(hexPubKey))
+			signature, err := crypto.Sign(
+				NodePrivateKey,
+				strings.Join(signPrms, ","),
+			)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
+				return err
+			}
+			sc.BinSignatures = converter.EncodeLengthPlusData(signature)
+			serializedContract, err := msgpack.Marshal(sc)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
+				return errorAPI(w, err, http.StatusInternalServerError)
+			}
+			// signature := data.params[`signature`].([]byte)
+			// if len(signature) == 0 {
+			// 	log.WithFields(log.Fields{"type": consts.EmptyObject, "params": data.params}).Error("signature is empty")
+			// }
+
+			fmt.Println(len(signature))
+			ret, err := VDEContract(serializedContract, data)
+			if err != nil {
+				return errorAPI(w, err, http.StatusInternalServerError)
+			}
+			data.result = ret
+		} else {
+			err = tx.BuildTransaction(sc, NodePrivateKey, NodePublicKey, string(hexPubKey))
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+			}
+		}
+
 	}
 
 	if ecosystemID > 1 && len(pubkey) == 0 {
