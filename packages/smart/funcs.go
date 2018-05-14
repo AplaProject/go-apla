@@ -625,7 +625,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
-	return DBUpdateExt(sc, tblname, `id`, id, params, val)
+	return DBUpdateExt(sc, tblname, `id`, id, params, val...)
 }
 
 // EcosysParam returns the value of the specified parameter for the ecosystem
