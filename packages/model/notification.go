@@ -6,7 +6,12 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
 
-const notificationTableSuffix = "_notifications"
+const (
+	notificationTableSuffix = "_notifications"
+
+	NotificationTypeSingle = 1
+	NotificationTypeRole   = 2
+)
 
 // Notification structure
 type Notification struct {
@@ -38,7 +43,7 @@ func (n *Notification) TableName() string {
 // if userIDs is nil or empty then filter will be skipped
 func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
 	filter, params := getNotificationCountFilter(userIDs)
-	query := `SELECT recipient->>'member_id', recipient->>'role_id', count(*) cnt 
+	query := `SELECT recipient->>'member_id' "recipient_id", recipient->>'role_id' "role_id", count(*) cnt
 	FROM "` + strconv.FormatInt(ecosystemID, 10) + notificationTableSuffix + `" 
 	` + filter + ` 
 	GROUP BY 1,2`

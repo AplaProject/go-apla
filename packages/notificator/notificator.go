@@ -141,6 +141,10 @@ func parseRecipientNotification(rows []map[string]string, systemID int64) map[in
 
 	for _, r := range rows {
 		recipientID := converter.StrToInt64(r["recipient_id"])
+		if recipientID == 0 {
+			continue
+		}
+
 		roleID := converter.StrToInt64(r["role_id"])
 		count := converter.StrToInt64(r["cnt"])
 
