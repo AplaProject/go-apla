@@ -206,6 +206,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     
     action {
         if Size($Name) > 0 && Size($Columns) > 0 && Size($Permissions) > 0{
+            TableConditions($Name, $Columns, $Permissions)
             CreateTable($Name, $Columns, $Permissions, $ApplicationId)
         } else {
             var i,len int
