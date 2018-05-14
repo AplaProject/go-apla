@@ -134,6 +134,7 @@ func TestPage(t *testing.T) {
 	assert.NoError(t, postTx(`NewParameter`, &form))
 
 	err := postTx(`NewParameter`, &form)
+	fmt.Println(`NEWPARAM`, err, name)
 	assert.Equal(t, fmt.Sprintf(`{"type":"warning","error":"Parameter %s already exists"}`, name), cutErr(err))
 
 	form = url.Values{"Name": {menuname}, "Value": {`first
