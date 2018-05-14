@@ -93,7 +93,7 @@ func Route(route *hr.Router) {
 		get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
 		get(`block/:id`, ``, getBlockInfo)
 		get(`maxblockid`, ``, getMaxBlockID)
-		get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
+
 		get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
 		get(`systemparams`, `?names:string`, authWallet, systemParams)
 		get(`ecosystems`, ``, authWallet, ecosystems)

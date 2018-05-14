@@ -794,6 +794,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			NewPubkey string
 		}
 		conditions {
+			Println($NewPubkey)
 			$newId = PubToID($NewPubkey)
 			if $newId == 0 {
 				error "Wrong pubkey"
@@ -804,5 +805,45 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		}
 		action {
 			DBInsert("keys", "id, pub", $newId, $NewPubKey)
+		}
+	}', 'ContractConditions("MainCondition")'),
+	('25', 'NewVDE', 'contract NewVDE {
+		data {
+			VDEName string
+			DBUser string
+			DBPassword string
+			VDEAPIPort int
+		}
+	
+		conditions {
+		}
+	
+		action {
+			CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
+		}
+	}', 'ContractConditions("MainCondition")'),
+	('26', 'ListVDE', 'contract ListVDE {
+		data {
+			VDEName string
+		}
+	
+		conditions {
+	
+		}
+	
+		action {
+			GetVDEList($VDEName)
+		}
+	}', 'ContractConditions("MainCondition")'),
+	('27', 'RunVDE', 'contract RunVDE {
+		data {
+			VDEName string
+		}
+	
+		conditions {
+		}
+	
+		action {
+			StartVDE($VDEName)
 		}
 	}', 'ContractConditions("MainCondition")');`
