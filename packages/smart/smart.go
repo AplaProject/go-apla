@@ -1071,7 +1071,9 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 
 	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE &&
 		!conf.Config.PrivateBlockchain {
-		err = sc.payContract(fuelRate, payWallet, fromID, toID)
+		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
+			err = ierr
+		}
 	}
 	if err != nil {
 		return retError(err)

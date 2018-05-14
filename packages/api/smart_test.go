@@ -134,7 +134,6 @@ func TestPage(t *testing.T) {
 	assert.NoError(t, postTx(`NewParameter`, &form))
 
 	err := postTx(`NewParameter`, &form)
-	fmt.Println(`NEWPARAM`, err, name)
 	assert.Equal(t, fmt.Sprintf(`{"type":"warning","error":"Parameter %s already exists"}`, name), cutErr(err))
 
 	form = url.Values{"Name": {menuname}, "Value": {`first
@@ -312,7 +311,7 @@ func TestNewTable(t *testing.T) {
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	assert.NoError(t, postTx(`NewTable`, &form))
 
-	assert.EqualError(t, postTx(`NewTable`, &form), fmt.Sprintf(`{"type":"panic","error":"table %s exists"}`, name))
+	assert.EqualError(t, postTx(`NewTable`, &form), fmt.Sprintf(`{"type":"panic","error":"Table %s exists"}`, name))
 
 	form = url.Values{"Name": {name},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")",
@@ -328,7 +327,7 @@ func TestNewTable(t *testing.T) {
 	assert.NoError(t, postTx(`NewColumn`, &form))
 
 	err = postTx(`NewColumn`, &form)
-	if err.Error() != `{"type":"panic","error":"column newcol exists"}` {
+	if err.Error() != `{"type":"panic","error":"Column newcol exists"}` {
 		t.Error(err)
 		return
 	}
