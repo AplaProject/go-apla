@@ -25,7 +25,7 @@ type localBannedNode struct {
 
 type NodesBanService struct {
 	localBannedNodes map[int64]localBannedNode
-	fullNodes        map[int64]syspar.FullNode
+	fullNodes        []syspar.FullNode
 
 	m *sync.Mutex
 }

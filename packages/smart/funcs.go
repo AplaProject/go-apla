@@ -1374,11 +1374,11 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 		return err
 	}
 
-	curFullNodes := syspar.GetNodes()
+	fullNodes := syspar.GetNodes()
 	var updFullNodes bool
-	for k, fullNode := range curFullNodes {
+	for i, fullNode := range fullNodes {
 		// Removing ban in case ban time has already passed
-		if now.After(fullNode.UnbanTime) {
+		if fullNode.UnbanTime.Unix() > 0 && now.After(fullNode.UnbanTime) {
 			fullNode.UnbanTime = time.Unix(0, 0)
 			updFullNodes = true
 		}
@@ -1386,7 +1386,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 		// Setting ban time if we have ban requests for the current node from 51% of all nodes.
 		// Ban request is mean that node have added more or equal N(system parameter) of bad blocks
 		for _, banReq := range banRequests {
-			if banReq.ProducerNodeId == fullNode.KeyID && banReq.Count >= int64((len(curFullNodes)/2)+1) {
+			if banReq.ProducerNodeId == fullNode.KeyID && banReq.Count >= int64((len(fullNodes)/2)+1) {
 				fullNode.UnbanTime = now.Add(syspar.GetNodeBanTime())
 
 				blocks, err := badBlocks.GetNodeBlocks(fullNode.KeyID, now)
@@ -1405,7 +1405,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				banMessage := fmt.Sprintf(
 					"%d/%d nodes voted for ban with %d or more blocks each",
 					banReq.Count,
-					len(curFullNodes),
+					len(fullNodes),
 					syspar.GetIncorrectBlocksPerDay(),
 				)
 
@@ -1443,22 +1443,17 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 			}
 		}
 
-		curFullNodes[k] = fullNode
+		fullNodes[i] = fullNode
 	}
 
 	if updFullNodes {
-		var sfn []syspar.FullNode
-		for _, fn := range curFullNodes {
-			sfn = append(sfn, fn)
-		}
-		d, err := json.Marshal(sfn)
+		data, err := json.Marshal(fullNodes)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling full nodes")
 			return err
 		}
 
-		err = json.Unmarshal(d, &[]syspar.FullNode{})
-		_, err = UpdateSysParam(smartContract, syspar.FullNodes, string(d), "")
+		_, err = UpdateSysParam(smartContract, syspar.FullNodes, string(data), "")
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating full nodes")
 			return err
