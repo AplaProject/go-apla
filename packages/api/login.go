@@ -114,6 +114,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	} else {
 		pubkey = data.params[`pubkey`].([]byte)
+		fmt.Println(string(pubkey))
 		if len(pubkey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
 			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
@@ -126,21 +127,16 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			return err
 		}
 
+		pubkey = data.params[`pubkey`].([]byte)
 		hexPubKey := hex.EncodeToString(pubkey)
-		params := make([]byte, 0)
-		params = append(append(params, converter.EncodeLength(int64(len(hexPubKey)))...), hexPubKey...)
+		params := converter.EncodeLength(int64(len(hexPubKey)))
+		params = append(params, hexPubKey...)
 
 		contract := smart.GetContract("NewUser", 1)
-		info := contract.Block.Info.(*script.ContractInfo)
-
-		// scHeader, err := getHeader("NewUser", data)
-		if err != nil {
-			return errorAPI(w, "E_EMPTYOBJECT", http.StatusBadRequest)
-		}
 
 		sc := tx.SmartContract{
 			Header: tx.Header{
-				Type:        int(info.ID),
+				Type:        int(contract.Block.Info.(*script.ContractInfo).ID),
 				Time:        time.Now().Unix(),
 				EcosystemID: 1,
 				KeyID:       conf.Config.KeyID,
@@ -154,34 +150,34 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		if conf.Config.IsSupportingVDE() {
 
 			signPrms := []string{sc.ForSign()}
-			signPrms = append(signPrms, string(hexPubKey))
-			signature, err := crypto.Sign(
-				NodePrivateKey,
-				strings.Join(signPrms, ","),
-			)
+			signPrms = append(signPrms, hexPubKey)
+			signData := strings.Join(signPrms, ",")
+			signature, err := crypto.Sign(NodePrivateKey, signData)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
 				return err
 			}
+
 			sc.BinSignatures = converter.EncodeLengthPlusData(signature)
+
+			if sc.PublicKey, err = hex.DecodeString(NodePublicKey); err != nil {
+				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
+				return err
+			}
+
 			serializedContract, err := msgpack.Marshal(sc)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
 				return errorAPI(w, err, http.StatusInternalServerError)
 			}
-			// signature := data.params[`signature`].([]byte)
-			// if len(signature) == 0 {
-			// 	log.WithFields(log.Fields{"type": consts.EmptyObject, "params": data.params}).Error("signature is empty")
-			// }
 
-			fmt.Println(len(signature))
 			ret, err := VDEContract(serializedContract, data)
 			if err != nil {
 				return errorAPI(w, err, http.StatusInternalServerError)
 			}
 			data.result = ret
 		} else {
-			err = tx.BuildTransaction(sc, NodePrivateKey, NodePublicKey, string(hexPubKey))
+			err = tx.BuildTransaction(sc, NodePrivateKey, NodePublicKey, hexPubKey)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 			}
@@ -216,6 +212,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 
+	fmt.Println(string(pubkey))
 	verify, err := crypto.CheckSign(pubkey, nonceSalt+msg, data.params[`signature`].([]byte))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("checking signature")
