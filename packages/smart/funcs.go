@@ -304,9 +304,6 @@ func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
 		return strings.ToLower(tblname[1:])
 	}
 	prefix := converter.Int64ToStr(ecosystem)
-	if sc.VDE {
-		prefix += `_vde`
-	}
 	return strings.ToLower(fmt.Sprintf(`%s_%s`, prefix, tblname))
 }
 
