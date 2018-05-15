@@ -64,5 +64,13 @@ INSERT INTO "%[1]d_tables" ("id", "name", "permissions","columns", "conditions")
 		  "data": "ContractConditions(\"MainCondition\")",
 		  "hash": "ContractConditions(\"MainCondition\")",
 		  "mime_type": "ContractConditions(\"MainCondition\")"}',
-		  'ContractConditions("MainCondition")');	 
+			'ContractConditions("MainCondition")'),
+	('9', 'keys',
+	  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
+			"new_column": "ContractConditions(\"MainCondition\")"}',
+		'{"pub": "ContractConditions(\"MainCondition\")",
+			"multi": "ContractConditions(\"MainCondition\")",
+			"deleted": "ContractConditions(\"MainCondition\")",
+			"blocked": "ContractConditions(\"MainCondition\")"}',
+		'ContractConditions("MainCondition")');	 
 `
