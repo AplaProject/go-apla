@@ -804,7 +804,8 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			}
 		}
 		action {
-			DBInsert("keys", "id, pub", $newId, $NewPubKey)
+			DBInsert("keys", "id", $newId)
+			SetPubKey($newId, StringToBytes($NewPubkey))
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('25', 'NewVDE', 'contract NewVDE {

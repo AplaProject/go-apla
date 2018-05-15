@@ -17,6 +17,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -113,6 +114,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	} else {
 		pubkey = data.params[`pubkey`].([]byte)
+		fmt.Println(string(pubkey))
 		if len(pubkey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
 			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
@@ -127,11 +129,10 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 
 		pubkey = data.params[`pubkey`].([]byte)
 		hexPubKey := hex.EncodeToString(pubkey)
-		params := make([]byte, 0)
-		params = append(append(params, converter.EncodeLength(int64(len(hexPubKey)))...), hexPubKey...)
+		params := converter.EncodeLength(int64(len(hexPubKey)))
+		params = append(params, hexPubKey...)
 
 		contract := smart.GetContract("NewUser", 1)
-		info := contract.Block.Info.(*script.ContractInfo)
 
 		sc := tx.SmartContract{
 			Header: tx.Header{
@@ -210,6 +211,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 
+	fmt.Println(string(pubkey))
 	verify, err := crypto.CheckSign(pubkey, nonceSalt+msg, data.params[`signature`].([]byte))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("checking signature")
