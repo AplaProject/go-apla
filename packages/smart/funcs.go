@@ -252,7 +252,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["CreateVDE"] = CreateVDE
 		f["DeleteVDE"] = DeleteVDE
 		f["StartVDE"] = StartVDE
-		f["StopVDE"] = StopVDE
+		f["StopVDEProcess"] = StopVDEProcess
 		f["GetVDEList"] = GetVDEList
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
@@ -1468,12 +1468,12 @@ func StartVDE(sc *SmartContract, name string) error {
 	return vdemanager.Manager.StartVDE(name)
 }
 
-// StopVDE stops VDE process
-func StopVDE(sc *SmartContract, name string) error {
+// StopVDEProcess stops VDE process
+func StopVDEProcess(sc *SmartContract, name string) error {
 	return vdemanager.Manager.StopVDE(name)
 }
 
 // GetVDEList returns list VDE process with statuses
-func GetVDEList(sc *SmartContract, name string) (map[string]string, error) {
+func GetVDEList(sc *SmartContract) (map[string]string, error) {
 	return vdemanager.Manager.ListProcess()
 }
