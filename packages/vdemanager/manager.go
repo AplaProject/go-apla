@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 
@@ -22,7 +23,8 @@ const (
 	createRoleTemplate = `CREATE ROLE %s WITH ENCRYPTED PASSWORD '%s' NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN`
 	createDBTemplate   = `CREATE DATABASE %s OWNER %s`
 
-	dropDBTemplate     = `DROP OWNED BY %s CASCADE`
+	dropDBTemplate     = `DROP DATABASE IF EXISTS %s`
+	dropOwnedTemplate  = `DROP OWNED BY %s CASCADE`
 	dropDBRoleTemplate = `DROP ROLE IF EXISTS %s`
 	commandTemplate    = `%s start --config=%s`
 )
@@ -101,7 +103,8 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 
 	procConfEntry := pConf.NewConfigEntry(config.Directory)
 	procConfEntry.Name = "program:" + name
-	command := fmt.Sprintf("%s --configPath=%s", config.Executable, config.Directory)
+	command := fmt.Sprintf("%s start --config=%s", config.Executable, filepath.Join(config.Directory, consts.DefaultConfigFile))
+	log.Infoln(command)
 	procConfEntry.AddKeyValue("command", command)
 	proc := process.NewProcess("vdeMaster", procConfEntry)
 
@@ -134,10 +137,7 @@ func (mgr *VDEManager) DeleteVDE(name string) error {
 		return errWrongMode
 	}
 
-	p := mgr.processes.Find(name)
-	if p != nil {
-		p.Stop(true)
-	}
+	mgr.StopVDE(name)
 
 	vdeDir := path.Join(mgr.childConfigsPath, name)
 	vdeConfigPath := filepath.Join(vdeDir, consts.DefaultConfigFile)
@@ -147,8 +147,8 @@ func (mgr *VDEManager) DeleteVDE(name string) error {
 		return err
 	}
 
-	dropDBquery := fmt.Sprintf(dropDBTemplate, vdeConfig.DB.User)
-	if err := model.DBConn.Exec(dropDBquery).Error; err != nil {
+	time.Sleep(1 * time.Second)
+	if err := model.DropDatabase(vdeConfig.DB.Name); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Deleting vde db")
 		return err
 	}
@@ -274,6 +274,7 @@ func InitVDEManager() {
 		if item.IsDir() {
 			procDir := path.Join(Manager.childConfigsPath, item.Name())
 			commandStr := fmt.Sprintf(commandTemplate, Manager.execPath, filepath.Join(procDir, consts.DefaultConfigFile))
+			log.Info(commandStr)
 			confEntry := pConf.NewConfigEntry(procDir)
 			confEntry.Name = "program:" + item.Name()
 			confEntry.AddKeyValue("command", commandStr)
@@ -283,6 +284,7 @@ func InitVDEManager() {
 
 			proc := process.NewProcess("vdeMaster", confEntry)
 			Manager.processes.Add(item.Name(), proc)
+			proc.Start(true)
 		}
 	}
 }

@@ -824,16 +824,12 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('26', 'ListVDE', 'contract ListVDE {
-		data {
-			VDEName string
-		}
+		data {}
 	
-		conditions {
-	
-		}
+		conditions {}
 	
 		action {
-			GetVDEList($VDEName)
+			GetVDEList()
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('27', 'RunVDE', 'contract RunVDE {
@@ -846,5 +842,26 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 	
 		action {
 			StartVDE($VDEName)
+		}
+	}', 'ContractConditions("MainCondition")'),
+	('28', 'StopVDE', 'contract StopVDE {
+		data {
+			VDEName string
+		}
+	
+		conditions {
+		}
+	
+		action {
+			StopVDEProcess($VDEName)
+		}
+	}', 'ContractConditions("MainCondition")'),
+	('29', 'RemoveVDE', 'contract RemoveVDE {
+		data {
+			VDEName string
+		}
+		conditions {}
+		action{
+			DeleteVDE($VDEName)
 		}
 	}', 'ContractConditions("MainCondition")');`
