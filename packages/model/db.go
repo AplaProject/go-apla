@@ -394,3 +394,25 @@ func InitDB(cfg conf.DBConfig) error {
 
 	return nil
 }
+
+// DropDatabase kill all process and drop database
+func DropDatabase(name string) error {
+	query := `SELECT
+	pg_terminate_backend (pg_stat_activity.pid)
+   FROM
+	pg_stat_activity
+   WHERE
+	pg_stat_activity.datname = ?`
+
+	if err := DBConn.Exec(query, name).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "dbname": name}).Error("on kill db process")
+		return err
+	}
+
+	if err := DBConn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", name)).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "dbname": name}).Error("on drop db")
+		return err
+	}
+
+	return nil
+}
