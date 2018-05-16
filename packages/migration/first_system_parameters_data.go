@@ -62,7 +62,7 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('59','extend_cost_create_column', '50', 'true'),
 	('60','extend_cost_perm_column', '50', 'true'),
 	('61','extend_cost_json_to_map', '50', 'true'),
-	('62','max_block_generation_time', '5000', 'true'),
+	('62','max_block_generation_time', '2000', 'true'),
 	('63','block_reward','1000','true'),
 	('64','incorrect_blocks_per_day','10','true'),
 	('65','node_ban_time','86400000','true');
