@@ -37,15 +37,43 @@ func TestVDECreate(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 
 	form := url.Values{
-		"VDEName":    {"testvde"},
-		"DBUser":     {"vdeuser"},
+		"VDEName":    {"myvde3"},
+		"DBUser":     {"myvdeuser3"},
 		"DBPassword": {"vdepassword"},
-		"VDEAPIPort": {"8000"},
+		"VDEAPIPort": {"8004"},
 	}
-	require.NoError(t, postTx("NewVDE", &form))
-
+	assert.NoError(t, postTx("NewVDE", &form))
 }
 
+func TestVDEList(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+
+	fmt.Println(postTx("ListVDE", nil))
+}
+
+func TestStopVDE(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{
+		"VDEName": {"myvde3"},
+	}
+	require.NoError(t, postTx("StopVDE", &form))
+}
+
+func TestRunVDE(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{
+		"VDEName": {"myvde3"},
+	}
+	require.NoError(t, postTx("RunVDE", &form))
+}
+
+func TestRemoveVDE(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{
+		"VDEName": {"myvde3"},
+	}
+	require.NoError(t, postTx("RemoveVDE", &form))
+}
 func TestVDEParams(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
