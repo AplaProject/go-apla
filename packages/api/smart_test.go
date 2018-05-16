@@ -417,6 +417,7 @@ func TestUpdateSysParam(t *testing.T) {
 		{`full_nodes`, `[["", "http://127.0.0.1", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7"]]`},
 		{`full_nodes`, `[["127.0.0.1", "", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
 		{`full_nodes`, `[["127.0.0.1", "http://127.0.0.1", "0", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
+		{"full_nodes", "[]"},
 	}
 	for _, item := range notvalid {
 		assert.Error(t, postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {item.Value}}))
@@ -432,17 +433,17 @@ func TestUpdateSysParam(t *testing.T) {
 	}
 }
 
-func TestUpdateFullNodes(t *testing.T) {
+func TestUpdateFullNodesWithEmptyArray(t *testing.T) {
 	require.NoErrorf(t, keyLogin(1), "on login")
 
-	byteNodes := `[{"tcp_address":"127.0.0.1", "api_address":"https://127.0.0.1", "key_id":"-7987340929414886272", "public_key":"088fa30f2da970ccd60090a85a245d73e7c46fac38141124d471ebd19900b27619644f1bcb3a86fa69d1895dd20e2ff9b9ea03c5aca7d58615164fd940869bb2"},`
-	byteNodes += `{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"5462687003324713865", "public_key":"4ea2433951ca21e6817426675874b2a6d98e5051c1100eddefa1847b0388e4834facf9abf427c46e2bc6cd5e3277fba533d03db553e499eb368194b3f1e514d4"}]`
+	byteNodes := `[]`
+	// byteNodes += `{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"5462687003324713865", "public_key":"4ea2433951ca21e6817426675874b2a6d98e5051c1100eddefa1847b0388e4834facf9abf427c46e2bc6cd5e3277fba533d03db553e499eb368194b3f1e514d4"}]`
 	form := &url.Values{
 		"Name":  {"full_nodes"},
 		"Value": {string(byteNodes)},
 	}
 
-	require.NoError(t, postTx(`UpdateSysParam`, form))
+	require.EqualError(t, postTx(`UpdateSysParam`, form), `{"type":"panic","error":"Invalid value"}`)
 }
 
 func TestValidateConditions(t *testing.T) {

@@ -183,10 +183,11 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			}
 			checked = true
 		case syspar.FullNodes:
-			if err := json.Unmarshal([]byte(value), &[]syspar.FullNode{}); err != nil {
+			fnodes := []syspar.FullNode{}
+			if err := json.Unmarshal([]byte(value), &fnodes); err != nil {
 				break check
 			}
-			checked = true
+			checked = len(fnodes) > 0
 		default:
 			if strings.HasPrefix(name, `extend_cost_`) {
 				ok = ival >= 0
