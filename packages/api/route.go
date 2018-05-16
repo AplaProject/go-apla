@@ -43,7 +43,8 @@ func Route(route *hr.Router) {
 		methodRoute(route, `POST`, pattern, params, handler...)
 	}
 	contractHandlers := &contractHandlers{
-		requests: tx.NewRequestBuffer(consts.TxRequestExpire),
+		requests:      tx.NewRequestBuffer(consts.TxRequestExpire),
+		multiRequests: tx.NewMultiRequestBuffer(consts.TxRequestExpire),
 	}
 
 	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
@@ -67,6 +68,7 @@ func Route(route *hr.Router) {
 	get(`table/:name`, ``, authWallet, table)
 	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
 	get(`txstatus/:hash`, ``, authWallet, txstatus)
+	get(`txstatusMultiple`, `data:string`, authWallet, txstatusMulti)
 	get(`test/:name`, ``, getTest)
 	get(`history/:table/:id`, ``, authWallet, getHistory)
 	get(`block/:id`, ``, getBlockInfo)
@@ -81,7 +83,9 @@ func Route(route *hr.Router) {
 	post(`vde/create`, ``, authWallet, vdeCreate)
 	post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
 	post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
+	post(`prepareMultiple/:name`, `data:string`, authWallet, contractHandlers.prepareMultipleContract)
 	post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
+	post(`contractMultiple/:request_id`, `data:string`, authWallet, blockchainUpdatingState, contractHandlers.contractMulti)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
 	post(`signtest/`, `forsign private:string`, signTest)
 	post(`test/:name`, ``, getTest)
