@@ -110,7 +110,7 @@ func (nbs *NodesBanService) localBan(node syspar.FullNode) {
 
 	nbs.localBannedNodes[node.KeyID] = localBannedNode{
 		FullNode:       &node,
-		LocalUnBanTime: time.Now().Add(consts.LocalBanTime),
+		LocalUnBanTime: time.Now().Add(syspar.GetLocalNodeBanTime()),
 	}
 }
 

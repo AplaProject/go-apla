@@ -74,6 +74,8 @@ const (
 	IncorrectBlocksPerDay = `incorrect_blocks_per_day`
 	// NodeBanTime is value of ban time for bad nodes (in ms)
 	NodeBanTime = `node_ban_time`
+	// LocalNodeBanTime is value of local ban time for bad nodes (in ms)
+	LocalNodeBanTime = `local_node_ban_time`
 )
 
 var (
@@ -385,6 +387,10 @@ func GetIncorrectBlocksPerDay() int {
 
 func GetNodeBanTime() time.Duration {
 	return time.Millisecond * time.Duration(converter.StrToInt64(SysString(NodeBanTime)))
+}
+
+func GetLocalNodeBanTime() time.Duration {
+	return time.Millisecond * time.Duration(converter.StrToInt64(SysString(LocalNodeBanTime)))
 }
 
 // GetRemoteHosts returns array of hostnames excluding myself

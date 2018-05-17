@@ -157,5 +157,3 @@ const TxRequestExpire = 1 * time.Minute
 
 // DefaultTempDirName is default name of temporary directory
 const DefaultTempDirName = "genesis-temp"
-
-const LocalBanTime = time.Minute * 30
