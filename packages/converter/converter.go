@@ -801,6 +801,11 @@ func ValidateEmail(email string) bool {
 	return Re.MatchString(email)
 }
 
+func ValidateTable(name, suffix string) bool {
+	re := regexp.MustCompile(`(?i)^\d+_` + suffix + `$`)
+	return re.MatchString(name)
+}
+
 // SliceReverse reverses the slice of int64
 func SliceReverse(s []int64) []int64 {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
