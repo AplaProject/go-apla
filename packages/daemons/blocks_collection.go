@@ -149,7 +149,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			block, err := parser.ProcessBlockWherePrevFromBlockchainTable(rb, true)
 			if err != nil {
 				// we got bad block and should ban this host
-				banNode(host, block.Header.BlockID, block.Header.Time, err)
+				banNode(host, block, err)
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
 				return err
 			}
@@ -165,22 +165,22 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				err := parser.GetBlocks(block.Header.BlockID-1, host)
 				if err != nil {
 					d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
-					banNode(host, block.Header.BlockID, block.Header.Time, err)
+					banNode(host, block, err)
 					return err
 				}
 			}
 
 			block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
 			if err != nil {
-				banNode(host, block.Header.BlockID, block.Header.Time, err)
+				banNode(host, block, err)
 				return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
 			}
 			if err = block.CheckBlock(); err != nil {
-				banNode(host, block.Header.BlockID, block.Header.Time, err)
+				banNode(host, block, err)
 				return err
 			}
 			if err = block.PlayBlockSafe(); err != nil {
-				banNode(host, block.Header.BlockID, block.Header.Time, err)
+				banNode(host, block, err)
 				return err
 			}
 		}
@@ -255,11 +255,21 @@ func needLoad(logger *log.Entry) (bool, error) {
 	return false, nil
 }
 
-func banNode(host string, blockId int64, blockTime int64, err error) {
-	var reason string
+func banNode(host string, block *parser.Block, err error) {
+	var (
+		reason             string
+		blockId, blockTime int64
+	)
 	if err != nil {
 		reason = err.Error()
 	}
+
+	if block != nil {
+		blockId, blockTime = block.Header.BlockID, block.Header.Time
+	} else {
+		blockId, blockTime = -1, time.Now().Unix()
+	}
+
 	log.WithFields(log.Fields{"reason": reason, "host": host, "block_id": blockId, "block_time": blockTime}).Debug("ban node")
 
 	n, err := syspar.GetNodeByHost(host)
