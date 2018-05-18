@@ -231,12 +231,19 @@ func calcExp(tokens []token, resType int, prec string) string {
 			return errPrecIsNegative.Error()
 		}
 		if resType == expFloat {
-			return fmt.Sprintf("%."+prec+"f", roundFloat(stack[0].(float64), precInt))
+			return decimal.NewFromFloat(roundFloat(stack[0].(float64), precInt)).String()
 		}
 		if resType == expMoney {
 			money := stack[0].(decimal.Decimal)
 			return money.Round(int32(precInt)).String()
 		}
+	}
+	if resType == expFloat {
+		decStr, _ := decimal.NewFromString(fmt.Sprintf("%f", stack[0].(float64)))
+		return decStr.String()
+	}
+	if resType == expMoney {
+		return stack[0].(decimal.Decimal).String()
 	}
 	return fmt.Sprint(stack[0])
 }
