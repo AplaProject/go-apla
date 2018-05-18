@@ -802,7 +802,7 @@ func ValidateEmail(email string) bool {
 }
 
 func IsByteColumn(table, column string) bool {
-	predefined := map[string]string{"txhash": "history", "pub": "keys"}
+	predefined := map[string]string{"txhash": "history", "pub": "keys", "data": "binaries"}
 	if suffix, ok := predefined[column]; ok {
 		re := regexp.MustCompile(`(?i)^\d+_` + suffix + `$`)
 		return re.MatchString(table)
