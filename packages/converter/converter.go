@@ -871,7 +871,7 @@ func Escape(data string) string {
 	available := `_ ,=!-'()"?*$#{}<>: `
 	for _, ch := range []byte(data) {
 		if (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') ||
-			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0 {
+			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0  || ch >= 128{
 			out = append(out, ch)
 		}
 	}
