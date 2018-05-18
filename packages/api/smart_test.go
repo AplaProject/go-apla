@@ -157,7 +157,7 @@ func TestPage(t *testing.T) {
 	assert.NoError(t, postTx(`EditParameter`, &form))
 
 	name = randName(`page`)
-	form = url.Values{"Name": {name}, "Value": {value},
+	form = url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
@@ -169,16 +169,8 @@ func TestPage(t *testing.T) {
 		return
 	}
 	form = url.Values{"Name": {`app` + name}, "Value": {value}, "ValidateCount": {"2"},
-		"ValidateMode": {"1"},
-		"Menu":         {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
-	err = postTx(`NewPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	form = url.Values{"Name": {`app` + name}, "Value": {value}, "ValidateCount": {"2"},
-		"ValidateMode": {"1"},
-		"Menu":         {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"ValidateMode": {"1"}, "ApplicationId": {`1`},
+		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	err = postTx(`NewPage`, &form)
 	if err != nil {
 		t.Error(err)
@@ -192,12 +184,19 @@ func TestPage(t *testing.T) {
 		return
 	}
 	id := ret.Count
+	form = url.Values{"Id": {id}, "ValidateCount": {"2"}, "ValidateMode": {"1"}}
+	err = postTx(`EditPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	var row rowResult
 	err = sendGet(`row/pages/`+id, nil, &row)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+
 	if row.Value["validate_mode"] != `1` {
 		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
 		return
@@ -220,22 +219,6 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	err = sendGet(`list/pages`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	id = ret.Count
-	err = sendGet(`row/pages/`+id, nil, &row)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if row.Value["validate_mode"] != `1` {
-		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
-		return
-	}
-
 	form = url.Values{"Id": {id}, "Value": {value}, "ValidateCount": {"1"},
 		"ValidateMode": {"0"}}
 	err = postTx(`EditPage`, &form)
@@ -253,7 +236,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	form = url.Values{"Name": {name}, "Value": {value},
+	form = url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
 	assert.NoError(t, postTx(`NewBlock`, &form))
 

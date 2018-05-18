@@ -801,9 +801,13 @@ func ValidateEmail(email string) bool {
 	return Re.MatchString(email)
 }
 
-func ValidateTable(name, suffix string) bool {
-	re := regexp.MustCompile(`(?i)^\d+_` + suffix + `$`)
-	return re.MatchString(name)
+func IsByteColumn(table, column string) bool {
+	predefined := map[string]string{"txhash": "history", "pub": "keys"}
+	if suffix, ok := predefined[column]; ok {
+		re := regexp.MustCompile(`(?i)^\d+_` + suffix + `$`)
+		return re.MatchString(table)
+	}
+	return false
 }
 
 // SliceReverse reverses the slice of int64

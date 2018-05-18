@@ -120,8 +120,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			if k == `id` {
 				continue
 			}
-			if (isBytea[k] || (k == "txhash" && converter.ValidateTable(table, `history`)) ||
-				(k == "pub" && converter.ValidateTable(table, `keys`))) && v != "" {
+			if (isBytea[k] || converter.IsByteColumn(table, k)) && v != "" {
 				rollbackInfo[k] = string(converter.BinToHex([]byte(v)))
 			} else {
 				rollbackInfo[k] = v
