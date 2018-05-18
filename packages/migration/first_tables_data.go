@@ -34,7 +34,7 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
 		(
 			'23',
 			'system_parameters',
-			'{"insert": false, "update": "ContractAccess(\"1@UpdateSysParam\")","new_column": "ContractConditions(\"MainCondition\")"}',
+			'{"insert": "false", "update": "ContractAccess(\"1@UpdateSysParam\")","new_column": "ContractConditions(\"MainCondition\")"}',
 			'{"value": "ContractConditions(\"MainCondition\")"}',
 			'ContractConditions("MainCondition")'
 		);
