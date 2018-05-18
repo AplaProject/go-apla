@@ -525,6 +525,10 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 	if reflect.TypeOf(val[0]) == reflect.TypeOf([]interface{}{}) {
 		val = val[0].([]interface{})
 	}
+	if len(val) == 1 && reflect.TypeOf(val[0]).Kind() == reflect.Slice{
+		val = val[0].([]interface{})
+
+	}
 	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil,
 		nil, !sc.VDE && sc.Rollback, false)
 	if ind > 0 {
@@ -697,6 +701,10 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	columns := strings.Split(params, `,`)
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
+	}
+	if len(val) == 1 && reflect.TypeOf(val[0]).Kind() == reflect.Slice{
+		val = val[0].([]interface{})
+
 	}
 	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, true)
 	return
