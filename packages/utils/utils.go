@@ -65,7 +65,8 @@ var (
 	// CancelFunc is represents cancel func
 	CancelFunc context.CancelFunc
 	// DaemonsCount is number of daemons
-	DaemonsCount        int
+	DaemonsCount int
+
 	ErrNodesUnavailable = errors.New("All nodes unvailabale")
 )
 
@@ -439,6 +440,9 @@ func GetNodeKeys() (string, string, error) {
 
 // best host is a host with the biggest last block ID
 func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (string, int64, error) {
+	maxBlockID := int64(-1)
+	var bestHost string
+
 	type blockAndHost struct {
 		host    string
 		blockID int64
@@ -452,8 +456,9 @@ func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 	for _, h := range hosts {
 		if ctx.Err() != nil {
 			logger.WithFields(log.Fields{"error": ctx.Err(), "type": consts.ContextError}).Error("context error")
-			return "", 0, ctx.Err()
+			return "", maxBlockID, ctx.Err()
 		}
+
 		wg.Add(1)
 
 		go func(host string) {
@@ -469,8 +474,6 @@ func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 	}
 	wg.Wait()
 
-	maxBlockID := int64(-1)
-	var bestHost string
 	var errCount int
 	for i := 0; i < len(hosts); i++ {
 		bl := <-c

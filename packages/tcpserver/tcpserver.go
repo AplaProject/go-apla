@@ -97,7 +97,7 @@ func HandleTCPRequest(rw net.Conn) {
 		return
 	}
 
-	log.WithFields(log.Fields{"response": response}).Debug("tcpserver responded")
+	log.WithFields(log.Fields{"response": response, "request_type": dType.Type}).Debug("tcpserver responded")
 	err = SendRequest(response, rw)
 	if err != nil {
 		log.Errorf("tcpserver handle error: %s", err)

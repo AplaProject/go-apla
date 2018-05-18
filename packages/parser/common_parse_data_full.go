@@ -636,10 +636,10 @@ func playTransaction(p *Parser) (string, error) {
 		return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", p.TxType))
 	}
 
-		err := p.txParser.Action()
-		if err != nil {
-			return "", err
-		}
+	err := p.txParser.Action()
+	if err != nil {
+		return "", err
+	}
 
 	return "", nil
 }
