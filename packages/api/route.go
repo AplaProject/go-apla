@@ -87,7 +87,6 @@ func Route(route *hr.Router) {
 	post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
 	post(`contractMultiple/:request_id`, `data:string`, authWallet, blockchainUpdatingState, contractHandlers.contractMulti)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
-	post(`signtest/`, `forsign private:string`, signTest)
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template ?source:string`, jsonContent)
 	post(`updnotificator`, `ids:string`, updateNotificator)
