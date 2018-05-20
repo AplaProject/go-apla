@@ -511,6 +511,10 @@ func columnType(colType string) (sqlColType string, err error) {
 
 // DBInsert inserts a record into the specified database table
 func DBInsert(sc *SmartContract, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
+	if tblname == "system_parameters" {
+		return 0, 0, fmt.Errorf("system parameters access denied")
+	}
+
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "insert"); err != nil {
 		return
@@ -689,6 +693,10 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
+	if tblname == "system_parameters" {
+		return 0, fmt.Errorf("system parameters access denied")
+	}
+
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
