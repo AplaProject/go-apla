@@ -260,6 +260,7 @@ func banNode(host string, block *parser.Block, err error) {
 		reason             string
 		blockId, blockTime int64
 	)
+	return
 	if err != nil {
 		reason = err.Error()
 	}
