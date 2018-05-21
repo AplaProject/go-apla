@@ -578,6 +578,8 @@ func RollbackEcosystem(sc *SmartContract) error {
 		`applications`,
 		`binaries`,
 		`app_params`,
+		`bad_blocks`,
+		`node_ban_logs`,
 	}
 
 	if rollbackTx.TableID == "1" {
