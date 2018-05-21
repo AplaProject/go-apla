@@ -46,6 +46,7 @@ const (
 
 	maxArrayIndex = 1000000
 	maxMapCount   = 100000
+	maxCallDepth  = 1000
 )
 
 var sysVars = map[string]struct{}{
@@ -81,14 +82,15 @@ type blockStack struct {
 
 // RunTime is needed for the execution of the byte-code
 type RunTime struct {
-	stack  []interface{}
-	blocks []*blockStack
-	vars   []interface{}
-	extend *map[string]interface{}
-	vm     *VM
-	cost   int64
-	err    error
-	unwrap bool
+	stack     []interface{}
+	blocks    []*blockStack
+	vars      []interface{}
+	extend    *map[string]interface{}
+	vm        *VM
+	cost      int64
+	err       error
+	unwrap    bool
+	callDepth uint16
 }
 
 func isSysVar(name string) bool {
@@ -102,6 +104,16 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 	var (
 		count, in int
 	)
+
+	if rt.callDepth >= maxCallDepth {
+		return fmt.Errorf("max call depth")
+	}
+
+	rt.callDepth++
+	defer func() {
+		rt.callDepth--
+	}()
+
 	size := len(rt.stack)
 	in = rt.vm.getInParams(obj)
 	if rt.unwrap && cmd == cmdCallVari && size > 1 &&
