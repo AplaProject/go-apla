@@ -192,13 +192,17 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		for _, par := range ps {
 			data.params[par.Key] = par.Value
 		}
+		var ihandlers []apiHandle
+		if pattern != `check` {
+			ihandlers = append([]apiHandle{
+				fillToken,
+				fillParams(params),
+			}, handlers...)
+		} else {
+			ihandlers = handlers
+		}
 
-		handlers = append([]apiHandle{
-			fillToken,
-			fillParams(params),
-		}, handlers...)
-
-		for _, handler := range handlers {
+		for _, handler := range ihandlers {
 			if handler(w, r, data, requestLogger) != nil {
 				return
 			}

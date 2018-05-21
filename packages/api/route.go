@@ -59,6 +59,7 @@ func Route(route *hr.Router) {
 	get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
 	get(`ecosystems`, ``, authWallet, ecosystems)
 	get(`getuid`, ``, getUID)
+	get(`check`, ``, check)
 	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
 	get(`row/:name/:id`, `?columns:string`, authWallet, row)
 	get(`interface/page/:name`, ``, authWallet, getPageRow)
