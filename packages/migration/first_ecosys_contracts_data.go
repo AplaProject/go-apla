@@ -199,6 +199,10 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         New_column_con string "optional"
     }
     conditions {
+        if Size($Name) == 0 {
+            error "Table name cannot be empty"
+        }
+
         if $ApplicationId == 0 {
             warning "Application id cannot equal 0"
         }

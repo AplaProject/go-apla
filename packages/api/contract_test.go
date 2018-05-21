@@ -23,6 +23,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -388,6 +390,19 @@ func TestEditContracts(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestNewTableWithEmptyName(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+
+	form := url.Values{
+		"Name":          {""},
+		"Columns":       {"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]"},
+		"ApplicationId": {"1"},
+		"Permissions":   {"{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}"},
+	}
+
+	require.NoError(t, postTx("NewTable", &form))
 }
 
 func TestActivateContracts(t *testing.T) {
