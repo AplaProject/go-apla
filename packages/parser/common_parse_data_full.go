@@ -690,6 +690,9 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 				}
 				p.SysUpdate = false
 			}
+			if b.GenBlock && err == ErrLimitStop {
+				break
+			}
 			continue
 		}
 		err = dbTransaction.ReleaseSavepoint(curTx)

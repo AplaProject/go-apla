@@ -45,12 +45,12 @@ func main() {
 		node := 0 //Random(0, 2)
 		rnd := crypto.RandSeq(5)
 		apiAddress = fmt.Sprintf("http://localhost:%d", port[node])
-		/*		if node == 0 && i&1 == 0 {
-				if err = CreateEcosystem(rnd); err != nil {
-					fmt.Println(err)
-					break
-				}
-			}*/
+		if node == 0 && i&1 == 0 {
+			if err = CreateEcosystem(rnd); err != nil {
+				fmt.Println(err)
+				break
+			}
+		}
 		for j := 0; j < 90; j++ {
 			fmt.Print(j)
 			postTx("NewLang", &url.Values{
@@ -58,21 +58,21 @@ func main() {
 				"Trans":         {`{"en": "My test", "ru": "Русский текст", "en-US": "US locale"}`},
 				"ApplicationId": {"1"},
 			})
-			/*			form := url.Values{"ApplicationId": {`1`}, "Name": {rnd + converter.IntToStr(j)}, "Value": {`P(paragraph)`},
-							"Menu": {`default_menu`}, "Conditions": {"ContractConditions(`MainCondition`)"},
-							`nowait`: {`true`}}
-						if err = postTx(`@1NewPage`, &form); err != nil {
-							fmt.Println(err)
-							break
-						}*/
-			//			time.Sleep(time.Duration(Random(1, 50)*10) * time.Millisecond)
-			/*			form = url.Values{"ApplicationId": {`1`}, "Id": {converter.IntToStr(j + 1)}, "Value": {`Div(paragraph)`},
-							"Menu": {`default_menu`}, "Conditions": {"ContractConditions(`MainCondition`)"},
-							`nowait`: {`true`}}
-						if err = postTx(`@1EditPage`, &form); err != nil {
-							fmt.Println(err)
-							break
-						}*/
+			form := url.Values{"ApplicationId": {`1`}, "Name": {rnd + converter.IntToStr(j)}, "Value": {`P(paragraph)`},
+				"Menu": {`default_menu`}, "Conditions": {"ContractConditions(`MainCondition`)"},
+				`nowait`: {`true`}}
+			if err = postTx(`@1NewPage`, &form); err != nil {
+				fmt.Println(err)
+				break
+			}
+			time.Sleep(time.Duration(Random(1, 50)*10) * time.Millisecond)
+			form = url.Values{"ApplicationId": {`1`}, "Id": {converter.IntToStr(j + 1)}, "Value": {`Div(paragraph)`},
+				"Menu": {`default_menu`}, "Conditions": {"ContractConditions(`MainCondition`)"},
+				`nowait`: {`true`}}
+			if err = postTx(`@1EditPage`, &form); err != nil {
+				fmt.Println(err)
+				break
+			}
 		}
 		/*		rets := make([]checkResult, 5)
 				time.Sleep(time.Duration(10000 * time.Millisecond))
@@ -88,19 +88,19 @@ func main() {
 						return
 					}
 				}*/
-		/*		time.Sleep(time.Duration(Random(1, 50)*20) * time.Millisecond)
-				fmt.Println(`upd`)
-				for j := 1; j < 50; j++ {
-					fmt.Print(j)
-					postTx("EditLang", &url.Values{
-						"Id":            {converter.IntToStr(j)},
-						"Trans":         {`{"en": "My test", "ru": "Русский текст новый", "en-US": "US locale"}`},
-						"ApplicationId": {"1"},
-					})
-				}*/
-		//		time.Sleep(time.Duration(Random(1, 50)*50) * time.Millisecond)
+		time.Sleep(time.Duration(Random(1, 50)*20) * time.Millisecond)
+		fmt.Println(`upd`)
+		for j := 1; j < 50; j++ {
+			fmt.Print(j)
+			postTx("EditLang", &url.Values{
+				"Id":            {converter.IntToStr(j)},
+				"Trans":         {`{"en": "My test", "ru": "Русский текст новый", "en-US": "US locale"}`},
+				"ApplicationId": {"1"},
+			})
+		}
+		time.Sleep(time.Duration(Random(1, 50)*50) * time.Millisecond)
 	}
-	time.Sleep(time.Duration(8000 * time.Millisecond))
+	time.Sleep(time.Duration(10000 * time.Millisecond))
 	fmt.Println(`=======`)
 	for i := 0; i < 3; i++ {
 		apiAddress = fmt.Sprintf("http://localhost:%d", port[i])
