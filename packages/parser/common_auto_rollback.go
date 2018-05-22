@@ -37,7 +37,7 @@ func (p *Parser) restoreUpdatedDBRowToPreviousData(tx map[string]string, where s
 	}
 	addSQLUpdate := ""
 	for k, v := range rollbackInfo {
-		if converter.InSliceString(k, []string{"hash", "pub", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
+		if converter.IsByteColumn(tx["table_name"], k) && len(v) != 0 {
 			addSQLUpdate += k + `=decode('` + string(converter.BinToHex([]byte(v))) + `','HEX'),`
 		} else {
 			addSQLUpdate += k + `='` + strings.Replace(v, `'`, `''`, -1) + `',`

@@ -154,17 +154,3 @@ func TestLoadFromFile(t *testing.T) {
 		t.Fatalf("load from file return error: %s", err)
 	}
 }
-
-type testDltWallet struct {
-	WalletID           int64  `gorm:"primary_key;not null"`
-	Amount             int64  `gorm:"not null"`
-	PublicKey          []byte `gorm:"column:public_key_0;not null"`
-	NodePublicKey      []byte `gorm:"not null"`
-	LastForgingDataUpd int64  `gorm:"not null default 0"`
-	Host               string `gorm:"not null default ''"`
-	AddressVote        string `gorm:"not null default ''"`
-	FuelRate           int64  `gorm:"not null default 0"`
-	SpendingContract   string `gorm:"not null default ''"`
-	ConditionsChange   string `gorm:"not null default ''"`
-	RollbackID         int64  `gorm:"not null default 0"`
-}
