@@ -332,11 +332,17 @@ func NewVM() *VM {
 	vm.Objects = make(map[string]*ObjInfo)
 	// Reserved 256 indexes for system purposes
 	vm.Children = make(Blocks, 256, 1024)
-	vm.Extend(&ExtendData{map[string]interface{}{"ExecContract": ExecContract, "CallContract": ExContract,
-		"Settings": GetSettings},
+	vm.Extend(&ExtendData{
+		map[string]interface{}{
+			"ExecContract": ExecContract,
+			"CallContract": ExContract,
+			"Settings":     GetSettings,
+			"MemoryUsage":  MemoryUsage,
+		},
 		map[string]string{
 			`*script.RunTime`: `rt`,
-		}})
+		},
+	})
 	vm.logger = log.WithFields(log.Fields{"extern": vm.Extern, "vm_block_type": vm.Block.Type})
 	return &vm
 }
@@ -503,4 +509,8 @@ func GetSettings(rt *RunTime, cntname, name string) (interface{}, error) {
 		}
 	}
 	return ``, nil
+}
+
+func MemoryUsage(rt *RunTime) int64 {
+	return rt.mem
 }

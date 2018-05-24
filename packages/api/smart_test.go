@@ -753,3 +753,27 @@ func TestMoneyDigits(t *testing.T) {
 	d := decimal.New(1, int32(converter.StrToInt(v.Value)))
 	assert.Equal(t, d.StringFixed(0), result)
 }
+
+func TestMemoryLimit(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	contract := randName("Contract")
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + contract + ` {
+			data {
+				Count int "optional"
+			}
+			action {
+				var a array
+				while (true) {
+					$Count = $Count + 1
+					a[Len(a)] = JSONEncode(a)
+				}
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}))
+
+	assert.EqualError(t, postTx(contract, &url.Values{}), `{"type":"panic","error":"Memory limit exceeded"}`)
+}
