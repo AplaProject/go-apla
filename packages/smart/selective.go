@@ -51,9 +51,8 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
-	isBytea := GetBytea(sc.DbTransaction, table)
 	for i, v := range ivalues {
-		if len(fields) > i && isBytea[fields[i]] {
+		if len(fields) > i && converter.IsByteColumn(table, fields[i]) {
 			switch v.(type) {
 			case string:
 				if vbyte, err := hex.DecodeString(v.(string)); err == nil {
@@ -120,7 +119,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			if k == `id` {
 				continue
 			}
-			if (isBytea[k] || converter.InSliceString(k, []string{"hash", "tx_hash", "pub", "tx_hash", "public_key_0", "node_public_key"})) && v != "" {
+			if converter.IsByteColumn(table, k) && v != "" {
 				rollbackInfo[k] = string(converter.BinToHex([]byte(v)))
 			} else {
 				rollbackInfo[k] = v
@@ -141,7 +140,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		rollbackInfoStr = string(jsonRollbackInfo)
 		addSQLUpdate := ""
 		for i := 0; i < len(fields); i++ {
-			if isBytea[fields[i]] && len(values[i]) != 0 {
+			if converter.IsByteColumn(table, fields[i]) && len(values[i]) != 0 {
 				addSQLUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if fields[i][:1] == "+" {
 				addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + values[i] + `,`
@@ -223,7 +222,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			} else {
 				addSQLIns0 = append(addSQLIns0, fields[i])
 			}
-			if isBytea[fields[i]] && len(values[i]) != 0 {
+			if converter.IsByteColumn(table, fields[i]) && len(values[i]) != 0 {
 				addSQLIns1 = append(addSQLIns1, `decode('`+hex.EncodeToString([]byte(values[i]))+`','HEX')`)
 			} else if values[i] == `NULL` {
 				addSQLIns1 = append(addSQLIns1, `NULL`)

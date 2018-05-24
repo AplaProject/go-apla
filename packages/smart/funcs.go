@@ -359,6 +359,11 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	if !ContractAccess(sc, `NewTable`, `Import`) {
 		return fmt.Errorf(`CreateTable can be only called from NewTable`)
 	}
+
+	if len(name) == 0 {
+		return fmt.Errorf("The table name cannot be empty")
+	}
+
 	if len(name) > 0 && name[0] == '@' {
 		return fmt.Errorf(`The name of the table cannot begin with @`)
 	}
