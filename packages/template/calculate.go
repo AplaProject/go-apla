@@ -19,7 +19,6 @@ package template
 import (
 	"errors"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"unicode"
@@ -54,20 +53,6 @@ var (
 	errDiv            = errors.New(`dividing by zero`)
 	errPrecIsNegative = errors.New(`precision is negative`)
 )
-
-func roundFloat(val float64, places int) (newVal float64) {
-	var round float64
-	pow := math.Pow(10, float64(places))
-	digit := pow * val
-	_, div := math.Modf(digit)
-	if div >= 0.5 {
-		round = math.Ceil(digit)
-	} else {
-		round = math.Floor(digit)
-	}
-	newVal = round / pow
-	return
-}
 
 func parsing(input string, itype int) (*[]token, error) {
 	var err error
@@ -227,16 +212,25 @@ func calcExp(tokens []token, resType int, prec string) string {
 	}
 	if prec != "" {
 		precInt := converter.StrToInt(prec)
-		if precInt < 0 {
-			return errPrecIsNegative.Error()
+		if resType != expInt {
+			if precInt < 0 {
+				return errPrecIsNegative.Error()
+			}
 		}
 		if resType == expFloat {
-			return fmt.Sprintf("%."+prec+"f", roundFloat(stack[0].(float64), precInt))
+			return decimal.NewFromFloat(stack[0].(float64)).Round(int32(precInt)).String()
 		}
 		if resType == expMoney {
 			money := stack[0].(decimal.Decimal)
 			return money.Round(int32(precInt)).String()
 		}
+	}
+	if resType == expFloat {
+		decStr, _ := decimal.NewFromString(fmt.Sprintf("%f", stack[0].(float64)))
+		return decStr.String()
+	}
+	if resType == expMoney {
+		return stack[0].(decimal.Decimal).String()
 	}
 	return fmt.Sprint(stack[0])
 }

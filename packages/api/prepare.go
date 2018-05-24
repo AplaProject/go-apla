@@ -109,6 +109,8 @@ func (h *contractHandlers) prepareMultipleContract(w http.ResponseWriter, r *htt
 			}
 			forsign = append(forsign, f...)
 			requestsParams = append(requestsParams, requestParams)
+		} else {
+			requestsParams = append(requestsParams, params)
 		}
 		forSigns = append(forSigns, strings.Join(forsign, ","))
 	}

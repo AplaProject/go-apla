@@ -96,7 +96,7 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 			"appointed":"false"}', 
 		'ContractConditions("MainCondition")'),
 	('12', 'notifications',
-		'{"insert":"ContractAccess(\"Notifications_Single_Send_map\",\"Notifications_Roles_Send_map\")",
+		'{"insert":"ContractAccess(\"Notifications_Single_Send_map\", \"Notifications_Roles_Send_map\", \"CheckNodesBan\")",
 			"update":"ContractConditions(\"MainCondition\")",
 			"new_column":"ContractConditions(\"MainCondition\")"}',
 		'{"date_closed":"ContractAccess(\"Notifications_Single_Close\",\"Notifications_Roles_Close\")",

@@ -199,6 +199,10 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         New_column_con string "optional"
     }
     conditions {
+        if Size($Name) == 0 {
+            error "Table name cannot be empty"
+        }
+
         if $ApplicationId == 0 {
             warning "Application id cannot equal 0"
         }
@@ -212,7 +216,11 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             var i,len int
             var res string
             len = Len($Id)
-			
+            
+            if Size($TableName) == 0 {
+                error "Table name cannot be empty"
+            }
+            
             while i < len {
                 if i + 1 == len {
                     res = res + Sprintf("{\"name\":%%q,\"type\":%%q,\"conditions\":\"true\"}", $Id[i],$Shareholding[i])
@@ -1875,6 +1883,23 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             }
             warning "Sorry, you do not have access to this action."
         }
+	}
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
+('44', 'NewBadBlock', 'contract NewBadBlock {
+	data {
+		ProducerNodeID int
+		ConsumerNodeID int
+		BlockID int
+		Timestamp int
+		Reason string
+	}
+	action {
+		DBInsert("bad_blocks", "producer_node_id,consumer_node_id,block_id,timestamp block_time,reason", $ProducerNodeID, $ConsumerNodeID, $BlockID, $Timestamp, $Reason)
+	}
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
+('45', 'CheckNodesBan', 'contract CheckNodesBan {
+	action {
+		UpdateNodesBan($block_time)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1);
 `

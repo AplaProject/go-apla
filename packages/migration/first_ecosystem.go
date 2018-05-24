@@ -47,4 +47,24 @@ DROP TABLE IF EXISTS "1_system_parameters";
 	);
 	ALTER TABLE ONLY "1_metrics" ADD CONSTRAINT "1_metrics_pkey" PRIMARY KEY (id);
 	CREATE INDEX "1_metrics_unique_index" ON "1_metrics" (metric, time, "key");
+
+	DROP TABLE IF EXISTS "1_bad_blocks"; CREATE TABLE "1_bad_blocks" (
+		"id" bigint NOT NULL DEFAULT '0',
+		"producer_node_id" bigint NOT NULL,
+		"block_id" int NOT NULL,
+		"consumer_node_id" bigint NOT NULL,
+		"block_time" timestamp NOT NULL,
+		"reason" TEXT NOT NULL DEFAULT '',
+		"deleted" boolean NOT NULL DEFAULT 'false'
+	);
+	ALTER TABLE ONLY "1_bad_blocks" ADD CONSTRAINT "1_bad_blocks_pkey" PRIMARY KEY ("id");
+
+	DROP TABLE IF EXISTS "1_node_ban_logs"; CREATE TABLE "1_node_ban_logs" (
+		"id" bigint NOT NULL DEFAULT '0',
+		"node_id" bigint NOT NULL,
+		"banned_at" timestamp NOT NULL,
+		"ban_time" bigint NOT NULL,
+		"reason" TEXT NOT NULL DEFAULT ''
+	);
+	ALTER TABLE ONLY "1_node_ban_logs" ADD CONSTRAINT "1_node_ban_logs_pkey" PRIMARY KEY ("id");
 `

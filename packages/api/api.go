@@ -193,12 +193,12 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 			data.params[par.Key] = par.Value
 		}
 
-		handlers = append([]apiHandle{
+		ihandlers := append([]apiHandle{
 			fillToken,
 			fillParams(params),
 		}, handlers...)
 
-		for _, handler := range handlers {
+		for _, handler := range ihandlers {
 			if handler(w, r, data, requestLogger) != nil {
 				return
 			}

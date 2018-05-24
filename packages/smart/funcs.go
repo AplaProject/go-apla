@@ -52,6 +52,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const nodeBanNotificationHeader = "Your node was banned"
+
 type permTable struct {
 	Insert    string `json:"insert"`
 	Update    string `json:"update"`
@@ -242,6 +244,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
 		f["GetBlock"] = GetBlock
+		f["UpdateNodesBan"] = UpdateNodesBan
 		f["DBSelectMetrics"] = DBSelectMetrics
 		f["DBCollectMetrics"] = DBCollectMetrics
 		ExtendCost(getCostP)
@@ -356,6 +359,11 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	if !ContractAccess(sc, `NewTable`, `Import`) {
 		return fmt.Errorf(`CreateTable can be only called from NewTable`)
 	}
+
+	if len(name) == 0 {
+		return fmt.Errorf("The table name cannot be empty")
+	}
+
 	if len(name) > 0 && name[0] == '@' {
 		return fmt.Errorf(`The name of the table cannot begin with @`)
 	}
@@ -508,6 +516,10 @@ func columnType(colType string) (sqlColType string, err error) {
 
 // DBInsert inserts a record into the specified database table
 func DBInsert(sc *SmartContract, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
+	if tblname == "system_parameters" {
+		return 0, 0, fmt.Errorf("system parameters access denied")
+	}
+
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "insert"); err != nil {
 		return
@@ -686,6 +698,10 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
+	if tblname == "system_parameters" {
+		return 0, fmt.Errorf("system parameters access denied")
+	}
+
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
@@ -1356,6 +1372,105 @@ func UpdateCron(sc *SmartContract, id int64) error {
 	})
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
+	now := time.Unix(timestamp, 0)
+
+	badBlocks := &model.BadBlocks{}
+	banRequests, err := badBlocks.GetNeedToBanNodes(now, syspar.GetIncorrectBlocksPerDay())
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get nodes need to be banned")
+		return err
+	}
+
+	fullNodes := syspar.GetNodes()
+	var updFullNodes bool
+	for i, fullNode := range fullNodes {
+		// Removing ban in case ban time has already passed
+		if fullNode.UnbanTime.Unix() > 0 && now.After(fullNode.UnbanTime) {
+			fullNode.UnbanTime = time.Unix(0, 0)
+			updFullNodes = true
+		}
+
+		// Setting ban time if we have ban requests for the current node from 51% of all nodes.
+		// Ban request is mean that node have added more or equal N(system parameter) of bad blocks
+		for _, banReq := range banRequests {
+			if banReq.ProducerNodeId == fullNode.KeyID && banReq.Count >= int64((len(fullNodes)/2)+1) {
+				fullNode.UnbanTime = now.Add(syspar.GetNodeBanTime())
+
+				blocks, err := badBlocks.GetNodeBlocks(fullNode.KeyID, now)
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node bad blocks for removing")
+					return err
+				}
+
+				for _, b := range blocks {
+					if _, err := DBUpdate(smartContract, "bad_blocks", b.ID, "deleted", "1"); err != nil {
+						log.WithFields(log.Fields{"type": consts.DBError, "id": b.ID, "error": err}).Error("deleting bad block")
+						return err
+					}
+				}
+
+				banMessage := fmt.Sprintf(
+					"%d/%d nodes voted for ban with %d or more blocks each",
+					banReq.Count,
+					len(fullNodes),
+					syspar.GetIncorrectBlocksPerDay(),
+				)
+
+				_, _, err = DBInsert(
+					smartContract,
+					"node_ban_logs",
+					"node_id,banned_at,ban_time,reason",
+					fullNode.KeyID,
+					now.Format(time.RFC3339),
+					int64(syspar.GetNodeBanTime()/time.Millisecond), // in ms
+					banMessage,
+				)
+
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "id": banReq.ProducerNodeId, "error": err}).Error("inserting log to node_ban_log")
+					return err
+				}
+
+				_, _, err = DBInsert(
+					smartContract,
+					"notifications",
+					"recipient->member_id,notification->type,notification->header,notification->body",
+					fullNode.KeyID,
+					model.NotificationTypeSingle,
+					nodeBanNotificationHeader,
+					banMessage,
+				)
+
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "id": banReq.ProducerNodeId, "error": err}).Error("sending notification to node owner")
+					return err
+				}
+
+				updFullNodes = true
+			}
+		}
+
+		fullNodes[i] = fullNode
+	}
+
+	if updFullNodes {
+		data, err := json.Marshal(fullNodes)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling full nodes")
+			return err
+		}
+
+		_, err = UpdateSysParam(smartContract, syspar.FullNodes, string(data), "")
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating full nodes")
+			return err
+		}
 	}
 
 	return nil
