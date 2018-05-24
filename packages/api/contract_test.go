@@ -82,6 +82,15 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`Recursion`, `contract Recursion {
+		data {    }
+		conditions {    }
+		action {
+			Recursion()
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"The contract can't call itself recursively"}`}},
+	}},
 	{`MyTable#rnd#`, `contract MyTable#rnd# {
 		action {
 			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1", 
