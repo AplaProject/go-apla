@@ -681,6 +681,9 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("rolling back to previous savepoint")
 				return errRoll
 			}
+			if b.GenBlock && err == ErrLimitStop {
+				break
+			}
 			// skip this transaction
 			model.MarkTransactionUsed(p.DbTransaction, p.TxHash)
 			p.processBadTransaction(p.TxHash, err.Error())
@@ -689,9 +692,6 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 				}
 				p.SysUpdate = false
-			}
-			if b.GenBlock && err == ErrLimitStop {
-				break
 			}
 			continue
 		}

@@ -56,6 +56,7 @@ func GetBlocks(blockID int64, host string) error {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting rollback blocks from blockID")
 		return utils.ErrInfo(err)
 	}
+	fmt.Println(`GetBlocks rollback`, len(myRollbackBlocks), blockID)
 	for _, block := range myRollbackBlocks {
 		err := RollbackTxFromBlock(block.Data)
 		if err != nil {

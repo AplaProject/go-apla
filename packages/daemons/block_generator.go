@@ -116,6 +116,17 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		Version:      consts.BLOCK_VERSION,
 	}
 
+	timeToGenerate, err = blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition)
+	if err != nil {
+		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
+		return err
+	}
+
+	if !timeToGenerate {
+		d.logger.WithFields(log.Fields{"type": consts.JustWaiting}).Debug("not my generation time")
+		return nil
+	}
+
 	blockBin, err := generateNextBlock(header, trs, NodePrivateKey, prevBlock.Hash)
 	if err != nil {
 		return err

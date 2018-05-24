@@ -1404,7 +1404,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				}
 
 				for _, b := range blocks {
-					if _, err := DBUpdate(smartContract, "bad_blocks", b.ID, "deleted", "1"); err != nil {
+					if _, err := DBUpdate(smartContract, "@1_bad_blocks", b.ID, "deleted", "1"); err != nil {
 						log.WithFields(log.Fields{"type": consts.DBError, "id": b.ID, "error": err}).Error("deleting bad block")
 						return err
 					}
@@ -1419,7 +1419,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 
 				_, _, err = DBInsert(
 					smartContract,
-					"node_ban_logs",
+					"@1_node_ban_logs",
 					"node_id,banned_at,ban_time,reason",
 					fullNode.KeyID,
 					now.Format(time.RFC3339),

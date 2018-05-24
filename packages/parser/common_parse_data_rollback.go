@@ -97,6 +97,7 @@ func RollbackTxFromBlock(data []byte) error {
 }
 
 func doBlockRollback(transaction *model.DbTransaction, block *Block) error {
+	fmt.Println(`doBlockRollback`)
 	// rollback transactions in reverse order
 	logger := block.GetLogger()
 	for i := len(block.Parsers) - 1; i >= 0; i-- {

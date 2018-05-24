@@ -578,12 +578,10 @@ func RollbackEcosystem(sc *SmartContract) error {
 		`applications`,
 		`binaries`,
 		`app_params`,
-		`bad_blocks`,
-		`node_ban_logs`,
 	}
 
 	if rollbackTx.TableID == "1" {
-		rbTables = append(rbTables, `system_parameters`, `ecosystems`)
+		rbTables = append(rbTables, `node_ban_logs`, `bad_blocks`, `system_parameters`, `ecosystems`)
 	}
 
 	for _, name := range rbTables {
