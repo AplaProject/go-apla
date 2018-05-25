@@ -168,12 +168,20 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				if block.PrevHeader.BlockID == block.Header.BlockID-1 {
 					from--
 				}
+				b := &model.Block{}
+				blist, err := b.GetBlocks(0, 100)
+				fmt.Println(`BEFORE ROLLBACK`, len(blist))
 				err = parser.GetBlocks(from, host)
+				blist, err = b.GetBlocks(0, 100)
+				curBlock.BlockID = int64(len(blist))
+				err = curBlock.Update(nil)
+				fmt.Println(`AFTER ROLLBACK`, err, len(blist))
 				if err != nil {
 					d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 					banNode(host, block, err)
 					return err
 				}
+				return fmt.Errorf(`OOOPS`)
 			}
 
 			block.PrevHeader, err = parser.GetBlockDataFromBlockChain(from)

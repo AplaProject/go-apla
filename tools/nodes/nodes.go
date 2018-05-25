@@ -40,7 +40,7 @@ func main() {
 		fmt.Println(`Login`, err)
 		return
 	}
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 10; i++ {
 		fmt.Println(`Step`, i)
 		node := 0 //Random(0, 2)
 		rnd := crypto.RandSeq(5)
@@ -97,7 +97,8 @@ func main() {
 	}
 	time.Sleep(time.Duration(10000 * time.Millisecond))
 	fmt.Println(`=======`)
-	for k := 0; k < 30; k++ {
+	for k := 0; k < 200; k++ {
+		fmt.Println(`---------- {rollback_tx, ecosystems, blocks}`)
 		for i := 0; i < 3; i++ {
 			apiAddress = fmt.Sprintf("http://localhost:%d", port[i])
 			var ret checkResult
@@ -105,7 +106,7 @@ func main() {
 				fmt.Println(err)
 				break
 			}
-			fmt.Println(`Counts`, ret)
+			fmt.Println(`node`, i, `counts`, ret)
 		}
 		time.Sleep(time.Duration(3000 * time.Millisecond))
 	}

@@ -143,7 +143,7 @@ func (t *Transaction) Create() error {
 
 // IncrementTxAttemptCount increases attempt column
 func IncrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte) (int64, error) {
-	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt>5 then 1 else 0 end where hash = ?",
+	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt>10 then 1 else 0 end where hash = ?",
 		transactionHash)
 	return query.RowsAffected, query.Error
 }

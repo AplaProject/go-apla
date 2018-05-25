@@ -33,10 +33,11 @@ import (
 
 // GetBlocks is returning blocks
 func GetBlocks(blockID int64, host string) error {
-	blocks, err := getBlocks(blockID, host)
-	if err != nil {
-		return err
-	}
+	var err error
+	/*	blocks, err := getBlocks(blockID, host)
+		if err != nil {
+			return err
+		}*/
 
 	// mark all transaction as unverified
 	_, err = model.MarkVerifiedAndNotUsedTransactionsUnverified()
@@ -72,7 +73,7 @@ func GetBlocks(blockID int64, host string) error {
 		for k := 0; k < len(blocks); k++ {
 			fmt.Println(`blocks`, blocks[k].Header.BlockID)
 		}*/
-	return processBlocks(blocks)
+	return nil // processBlocks(blocks)
 }
 
 func getBlocks(blockID int64, host string) ([]*Block, error) {
