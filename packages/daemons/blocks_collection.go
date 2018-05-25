@@ -162,8 +162,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 			from := block.Header.BlockID - 1
 			if !hashMatched {
-				fmt.Println(`COLLECTION`, block.PrevHeader.BlockID, block.Header.BlockID,
-					block.PrevHeader.Time, block.Header.Time)
+				d.logger.WithFields(log.Fields{"block": block.String(), "type": consts.SyncProcess}).Error("check hash failed, fork located!!!")
 				//it should be fork, replace our previous blocks to ones from the host
 				if block.PrevHeader.BlockID == block.Header.BlockID-1 {
 					from--
@@ -194,7 +193,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	}
 
 	st := time.Now()
-	d.logger.Infof("starting downloading blocks from %d to %d (%d) \n", curBlock.BlockID, maxBlockID, maxBlockID-curBlock.BlockID)
+	d.logger.WithFields(log.Fields{"type": consts.SyncProcess, "curBlockID": curBlock.BlockID, "maxBlockID": maxBlockID}).Info("starting downloading blocks")
 
 	count := 0
 	var err error

@@ -53,4 +53,5 @@ const (
 	BCRelevanceError         = "BCRelevanceError"
 	BCActualizationError     = "BCActualizationError"
 	SchedulerError           = "SchedulerError"
+	SyncProcess              = "SyncProcess"
 )

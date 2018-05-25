@@ -59,6 +59,10 @@ type BlockData struct {
 	Version      int
 }
 
+func (b BlockData) String() string {
+	return fmt.Sprintf("BlockID:%d, Time:%d, NodePosition %d", b.BlockID, b.Time, b.NodePosition)
+}
+
 var (
 	// ReturnCh is chan for returns
 	ReturnCh chan string
