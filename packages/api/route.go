@@ -76,6 +76,7 @@ func Route(route *hr.Router) {
 	get(`version`, ``, getVersion)
 	get(`avatar/:ecosystem/:member`, ``, getAvatar)
 	get(`config/:option`, ``, getConfigOption)
+	get("ecosystemname", "?id:int64", getEcosystemName)
 	post(`content/source/:name`, ``, authWallet, getSource)
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
 	post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
