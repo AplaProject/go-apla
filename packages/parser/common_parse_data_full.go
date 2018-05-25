@@ -764,6 +764,7 @@ func (b *Block) CheckBlock() error {
 			}
 
 			if !validBlockTime {
+				fmt.Println(`HEADER`, b.Header.BlockID, b.Header.NodePosition, b.Header.Time)
 				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("incorrect block time")
 				return utils.ErrInfo(fmt.Errorf("incorrect block time %d", b.PrevHeader.Time))
 			}

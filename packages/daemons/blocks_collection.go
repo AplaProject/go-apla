@@ -160,9 +160,15 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
 			}
 
+			from := block.Header.BlockID - 1
 			if !hashMatched {
+				fmt.Println(`COLLECTION`, block.PrevHeader.BlockID, block.Header.BlockID,
+					block.PrevHeader.Time, block.Header.Time)
 				//it should be fork, replace our previous blocks to ones from the host
-				err := parser.GetBlocks(block.Header.BlockID-1, host)
+				if block.PrevHeader.BlockID == block.Header.BlockID-1 {
+					from--
+				}
+				err = parser.GetBlocks(from, host)
 				if err != nil {
 					d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 					banNode(host, block, err)
@@ -170,7 +176,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				}
 			}
 
-			block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
+			block.PrevHeader, err = parser.GetBlockDataFromBlockChain(from)
 			if err != nil {
 				banNode(host, block, err)
 				return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))

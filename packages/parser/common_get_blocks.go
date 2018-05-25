@@ -56,14 +56,22 @@ func GetBlocks(blockID int64, host string) error {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting rollback blocks from blockID")
 		return utils.ErrInfo(err)
 	}
-	fmt.Println(`GetBlocks rollback`, len(myRollbackBlocks), blockID)
+	/*	b := &model.Block{}
+		fmt.Println(`GetBlocks rollback`, len(myRollbackBlocks), blockID, host)
+		blist, err := b.GetBlocks(0, 100)
+		fmt.Println(`BEFORE ROLLBACK`, err, len(blist))*/
 	for _, block := range myRollbackBlocks {
 		err := RollbackTxFromBlock(block.Data)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 	}
+	/*	blist, err = b.GetBlocks(0, 100)
+		fmt.Println(`AFTER ROLLBACK`, err, len(blist))
 
+		for k := 0; k < len(blocks); k++ {
+			fmt.Println(`blocks`, blocks[k].Header.BlockID)
+		}*/
 	return processBlocks(blocks)
 }
 
