@@ -59,7 +59,7 @@ func getEcosystemName(w http.ResponseWriter, r *http.Request, data *apiData, log
 
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "ecosystem_id": ecosystemID}).Error("ecosystem by id not found")
-		return errorAPI(w, `E_PARAMNOTFOUND`, http.StatusBadRequest, "name")
+		return errorAPI(w, `E_PARAMNOTFOUND`, http.StatusNotFound, "name")
 	}
 
 	data.result = &struct {
