@@ -50,6 +50,10 @@ type Block struct {
 	StopCount  int  // The count of good tx in the block
 }
 
+func (b Block) String() string {
+	return fmt.Sprintf("header: %s, prevHeader: %s", b.Header, b.PrevHeader)
+}
+
 // GetLogger is returns logger
 func (b Block) GetLogger() *log.Entry {
 	return log.WithFields(log.Fields{"block_id": b.Header.BlockID, "block_time": b.Header.Time, "block_wallet_id": b.Header.KeyID,

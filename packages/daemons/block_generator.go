@@ -136,6 +136,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	if err != nil {
 		return err
 	}
+	log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Error("Generated block ID")
 
 	go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockID)
 	return nil
