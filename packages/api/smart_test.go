@@ -770,3 +770,40 @@ func TestMoneyDigits(t *testing.T) {
 	d := decimal.New(1, int32(converter.StrToInt(v.Value)))
 	assert.Equal(t, d.StringFixed(0), result)
 }
+
+func TestHelper_InsertNodeKey(t *testing.T) {
+
+	require.NoError(t, keyLogin(1))
+
+	form := url.Values{
+		`Value`: {`contract InsertNodeKey {
+			data {
+				KeyID string
+				PubKey string
+			}
+			conditions {}
+			action {
+				DBInsert("keys", "id,pub,amount", $KeyID, $PubKey, "100000000000000000000")
+			}
+		}`},
+		`ApplicationId`: {`1`},
+		`Conditions`:    {`true`},
+	}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	nodes := []url.Values{
+		url.Values{
+			`KeyID`:  {"542353610328569127"},
+			`PubKey`: {"a8ada71764fd2f0c9fa1d2986455288f11f0f3931492d27dc62862fdff9c97c38923ef46679488ad1cd525342d4d974621db58f809be6f8d1c19fdab50abc06b"},
+		},
+		url.Values{
+			`KeyID`:  {"5972241339967729614"},
+			`PubKey`: {"de1b74d36ae39422f2478cba591f4d14eb017306f6ffdc3b577cc52ee50edb8fe7c7b2eb191a24c8ddfc567cef32152bab17de698ed7b3f2ab75f3bcc8b9b372"},
+		},
+	}
+
+	for _, form := range nodes {
+		require.NoError(t, postTx(`InsertNodeKey`, &form))
+	}
+}
