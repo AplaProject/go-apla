@@ -19,6 +19,8 @@ package smart
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/GenesisKernel/go-genesis/packages/script"
 )
 
@@ -64,4 +66,30 @@ func TestNewContract(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+func TestCheckAppend(t *testing.T) {
+	appendTestContract := `contract AppendTest {
+		action {
+			var list array
+			list = Append(list, "naw_value")
+			Println(list)
+		}
+	}`
+
+	owner := script.OwnerInfo{
+		StateID:  1,
+		Active:   false,
+		TableID:  1,
+		WalletID: 0,
+		TokenID:  0,
+	}
+
+	require.NoError(t, Compile(appendTestContract, &owner))
+
+	cnt := GetContract("AppendTest", 1)
+	cfunc := cnt.GetFunc("action")
+
+	_, err := Run(cfunc, nil, &map[string]interface{}{})
+	require.NoError(t, err)
 }

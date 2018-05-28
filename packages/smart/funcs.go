@@ -229,6 +229,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"BytesToString":        BytesToString,
 		"SetPubKey":            SetPubKey,
 		"NewMoney":             NewMoney,
+		"Append":               Append,
 	}
 
 	switch vt {

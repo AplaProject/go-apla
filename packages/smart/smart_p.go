@@ -876,3 +876,8 @@ func JSONEncode(input interface{}) (string, error) {
 	}
 	return string(b), nil
 }
+
+// Append syn for golang 'append' function
+func Append(slice []interface{}, val interface{}) []interface{} {
+	return append(slice, val)
+}
