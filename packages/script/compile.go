@@ -1118,6 +1118,19 @@ main:
 						count++
 					}
 					if lexem.Value.(string) == `CallContract` {
+						if len(*lexems) > i+1 {
+							if v, ok := (*lexems)[i+1].Value.(string); ok {
+								name := StateName((*block)[0].Info.(uint32), v)
+								for j := len(*block) - 1; j >= 0; j-- {
+									topblock := (*block)[j]
+									if topblock.Type == ObjContract {
+										if name == topblock.Info.(*ContractInfo).Name {
+											return errRecursion
+										}
+									}
+								}
+							}
+						}
 						count++
 						bytecode = append(bytecode, &ByteCode{cmdPush, (*block)[0].Info.(uint32)})
 					}

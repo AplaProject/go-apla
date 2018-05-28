@@ -82,6 +82,16 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`RecCall`, `contract RecCall {
+		data {    }
+		conditions {    }
+		action {
+			var par map
+			CallContract("RecCall", par)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"there is loop in @1RecCall contract"}`}},
+	}},
 	{`Recursion`, `contract Recursion {
 		data {    }
 		conditions {    }
