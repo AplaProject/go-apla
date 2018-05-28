@@ -26,8 +26,8 @@ import (
 )
 
 var (
-	Nodes      = `/home/ak/two/data/`
-	PathNodes  = Nodes + `node%d/`
+	Nodes      = `/home/losaped/go/src/github.com/GenesisKernel/go-genesis/`
+	PathNodes  = Nodes + `node%d-data/`
 	apiAddress = "http://localhost:7079"
 	port       = []int{7079, 7081, 7083}
 )
