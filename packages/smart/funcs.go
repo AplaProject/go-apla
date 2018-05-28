@@ -242,6 +242,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"NewMoney":                     NewMoney,
 		"GetMapKeys":                   GetMapKeys,
 		"SortedKeys":                   SortedKeys,
+		"Append":                       Append,
 	}
 
 	switch vt {
