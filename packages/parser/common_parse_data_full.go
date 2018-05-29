@@ -38,6 +38,8 @@ import (
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
+var txCache = make(map[string]*Parser)
+
 // Block is storing block data
 type Block struct {
 	Header     utils.BlockData
@@ -323,6 +325,10 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 		return nil, err
 	}
 
+	if p, ok := txCache[string(hash)]; ok {
+		return p, nil
+	}
+
 	p := new(Parser)
 	p.TxHash = hash
 	p.TxUsedCost = decimal.New(0, 0)
@@ -361,6 +367,8 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 			return p, err
 		}
 	}
+
+	txCache[string(hash)] = p
 
 	return p, nil
 }
@@ -889,4 +897,8 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	buf.Write(blockDataTx)
 
 	return buf.Bytes(), nil
+}
+
+func CleanCache() {
+	txCache = make(map[string]*Parser)
 }

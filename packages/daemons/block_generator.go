@@ -162,7 +162,7 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 		return nil, err
 	}
 
-	trs, err := model.GetAllUnusedTransactions()
+	trs, err := model.GetAllUnusedTransactions(syspar.GetMaxTxCount())
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
 		return nil, err
