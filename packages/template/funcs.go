@@ -103,6 +103,7 @@ func init() {
 
 	tails[`button`] = forTails{map[string]tailInfo{
 		`Alert`:             {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
+		`Popup`:             {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
 		`Style`:             {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		`CompositeContract`: {tplFunc{compositeTag, defaultTailFull, `composite`, `Name,Data`}, false},
 	}}
@@ -762,6 +763,15 @@ func compositeTag(par parFunc) string {
 		macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	par.Owner.Attr[`compositedata`] = append(par.Owner.Attr[`compositedata`].([]string),
 		macro((*par.Pars)[`Data`], par.Workspace.Vars))
+	return ``
+}
+
+func popupTag(par parFunc) string {
+	setAllAttr(par)
+	if len((*par.Pars)[`Width`]) == 0 {
+		return ``
+	}
+	par.Owner.Attr[`popup`] = par.Node.Attr
 	return ``
 }
 
