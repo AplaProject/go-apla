@@ -47,3 +47,25 @@ func ecosystemParam(w http.ResponseWriter, r *http.Request, data *apiData, logge
 	data.result = &paramValue{ID: converter.Int64ToStr(sp.ID), Name: sp.Name, Value: sp.Value, Conditions: sp.Conditions}
 	return
 }
+
+func getEcosystemName(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	ecosystemID := data.params["id"].(int64)
+	ecosystems := model.Ecosystem{}
+	found, err := ecosystems.Get(ecosystemID)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem name")
+		return errorAPI(w, err, http.StatusInternalServerError)
+	}
+
+	if !found {
+		logger.WithFields(log.Fields{"type": consts.NotFound, "ecosystem_id": ecosystemID}).Error("ecosystem by id not found")
+		return errorAPI(w, `E_PARAMNOTFOUND`, http.StatusNotFound, "name")
+	}
+
+	data.result = &struct {
+		EcosystemName string `json:"ecosystem_name"`
+	}{
+		EcosystemName: ecosystems.Name,
+	}
+	return nil
+}
