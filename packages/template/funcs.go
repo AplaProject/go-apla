@@ -768,9 +768,12 @@ func compositeTag(par parFunc) string {
 
 func popupTag(par parFunc) string {
 	setAllAttr(par)
-	if len((*par.Pars)[`Width`]) == 0 {
+
+	width := converter.StrToInt((*par.Pars)[`Width`])
+	if width < 1 || width > 100 {
 		return ``
 	}
+
 	par.Owner.Attr[`popup`] = par.Node.Attr
 	return ``
 }
