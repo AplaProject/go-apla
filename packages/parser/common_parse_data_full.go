@@ -21,6 +21,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -38,7 +39,7 @@ import (
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-var txCache = make(map[string]*Parser)
+var txParserCache = &parserCache{cache: make(map[string]*Parser)}
 
 // Block is storing block data
 type Block struct {
@@ -325,7 +326,7 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 		return nil, err
 	}
 
-	if p, ok := txCache[string(hash)]; ok {
+	if p, ok := txParserCache.Get(string(hash)); ok {
 		return p, nil
 	}
 
@@ -368,7 +369,7 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 		}
 	}
 
-	txCache[string(hash)] = p
+	txParserCache.Set(p)
 
 	return p, nil
 }
@@ -899,6 +900,34 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	return buf.Bytes(), nil
 }
 
+type parserCache struct {
+	mutex sync.RWMutex
+	cache map[string]*Parser
+}
+
+func (pc *parserCache) Get(hash string) (p *Parser, ok bool) {
+	pc.mutex.RLock()
+	defer pc.mutex.RUnlock()
+
+	p, ok = pc.cache[hash]
+	return
+}
+
+func (pc *parserCache) Set(p *Parser) {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
+
+	pc.cache[string(p.TxHash)] = p
+}
+
+func (pc *parserCache) Clean() {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
+
+	pc.cache = make(map[string]*Parser)
+}
+
+// CleanCache cleans cache of transaction parsers
 func CleanCache() {
-	txCache = make(map[string]*Parser)
+	txParserCache.Clean()
 }
