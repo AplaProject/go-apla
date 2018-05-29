@@ -36,4 +36,5 @@ var (
 	errUnsupportedType = errors.New(`unsupported combination of types in the operator`)
 	errMaxArrayIndex   = errors.New(`The index is out of range`)
 	errMaxMapCount     = errors.New(`The maxumim length of map`)
+	errRecursion       = errors.New(`The contract can't call itself recursively`)
 )

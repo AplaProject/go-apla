@@ -1100,6 +1100,9 @@ main:
 						for j := len(*block) - 1; j >= 0; j-- {
 							topblock := (*block)[j]
 							if topblock.Type == ObjContract {
+								if name == topblock.Info.(*ContractInfo).Name {
+									return errRecursion
+								}
 								if topblock.Info.(*ContractInfo).Used == nil {
 									topblock.Info.(*ContractInfo).Used = make(map[string]bool)
 								}
