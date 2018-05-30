@@ -318,7 +318,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 			return err
 		}
 	} else {
-		err := fmt.Errorf("Invalid block time: %s", block.Header.Time)
+		err := fmt.Errorf("Invalid block time: %d", block.Header.Time)
 		log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("invalid block time")
 		return err
 	}
