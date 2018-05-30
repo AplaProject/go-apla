@@ -142,7 +142,7 @@ func (bl *timeBlockLimit) check(p *Parser, mode int) error {
 		return nil
 	}
 
-	if mode == letPreprocess {
+	if mode == letGenBlock {
 		return ErrLimitStop
 	}
 
