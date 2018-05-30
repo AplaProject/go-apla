@@ -160,30 +160,17 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
 			}
 
-			from := block.Header.BlockID - 1
 			if !hashMatched {
-				d.logger.WithFields(log.Fields{"block": block.String(), "type": consts.SyncProcess}).Error("check hash failed, fork located!!!")
 				//it should be fork, replace our previous blocks to ones from the host
-				if block.PrevHeader.BlockID == block.Header.BlockID-1 {
-					from--
-				}
-				b := &model.Block{}
-				blist, err := b.GetBlocks(0, 100)
-				fmt.Println(`BEFORE ROLLBACK`, len(blist))
-				err = parser.GetBlocks(from, host)
-				blist, err = b.GetBlocks(0, 100)
-				curBlock.BlockID = int64(len(blist))
-				err = curBlock.Update(nil)
-				fmt.Println(`AFTER ROLLBACK`, err, len(blist))
+				err := parser.GetBlocks(block.Header.BlockID-1, host)
 				if err != nil {
 					d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 					banNode(host, block, err)
 					return err
 				}
-				return fmt.Errorf(`OOOPS`)
 			}
 
-			block.PrevHeader, err = parser.GetBlockDataFromBlockChain(from)
+			block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
 			if err != nil {
 				banNode(host, block, err)
 				return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
@@ -201,7 +188,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	}
 
 	st := time.Now()
-	d.logger.WithFields(log.Fields{"type": consts.SyncProcess, "curBlockID": curBlock.BlockID, "maxBlockID": maxBlockID}).Info("starting downloading blocks")
+	d.logger.Infof("starting downloading blocks from %d to %d (%d) \n", curBlock.BlockID, maxBlockID, maxBlockID-curBlock.BlockID)
 
 	count := 0
 	var err error

@@ -33,11 +33,10 @@ import (
 
 // GetBlocks is returning blocks
 func GetBlocks(blockID int64, host string) error {
-	var err error
-	/*	blocks, err := getBlocks(blockID, host)
-		if err != nil {
-			return err
-		}*/
+	blocks, err := getBlocks(blockID, host)
+	if err != nil {
+		return err
+	}
 
 	// mark all transaction as unverified
 	_, err = model.MarkVerifiedAndNotUsedTransactionsUnverified()
@@ -49,31 +48,27 @@ func GetBlocks(blockID int64, host string) error {
 		return utils.ErrInfo(err)
 	}
 
+	// get starting blockID from slice of blocks
+	if len(blocks) > 0 {
+		blockID = blocks[len(blocks)-1].Header.BlockID
+	}
+
 	// we have the slice of blocks for applying
 	// first of all we should rollback old blocks
 	block := &model.Block{}
-	myRollbackBlocks, err := block.GetBlocksFrom(blockID, "desc", 0)
+	myRollbackBlocks, err := block.GetBlocksFrom(blockID-1, "desc", 0)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting rollback blocks from blockID")
 		return utils.ErrInfo(err)
 	}
-	/*	b := &model.Block{}
-		fmt.Println(`GetBlocks rollback`, len(myRollbackBlocks), blockID, host)
-		blist, err := b.GetBlocks(0, 100)
-		fmt.Println(`BEFORE ROLLBACK`, err, len(blist))*/
 	for _, block := range myRollbackBlocks {
 		err := RollbackTxFromBlock(block.Data)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 	}
-	/*	blist, err = b.GetBlocks(0, 100)
-		fmt.Println(`AFTER ROLLBACK`, err, len(blist))
 
-		for k := 0; k < len(blocks); k++ {
-			fmt.Println(`blocks`, blocks[k].Header.BlockID)
-		}*/
-	return nil // processBlocks(blocks)
+	return processBlocks(blocks)
 }
 
 func getBlocks(blockID int64, host string) ([]*Block, error) {

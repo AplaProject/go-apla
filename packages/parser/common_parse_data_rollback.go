@@ -91,20 +91,12 @@ func RollbackTxFromBlock(data []byte) error {
 		dbTransaction.Rollback()
 		return err
 	}
-	b := &model.Block{}
-	err = b.DeleteById(dbTransaction, block.Header.BlockID)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
-		dbTransaction.Rollback()
-		return err
-	}
 
 	err = dbTransaction.Commit()
 	return err
 }
 
 func doBlockRollback(transaction *model.DbTransaction, block *Block) error {
-	fmt.Println(`doBlockRollback`, len(block.Parsers))
 	// rollback transactions in reverse order
 	logger := block.GetLogger()
 	for i := len(block.Parsers) - 1; i >= 0; i-- {
