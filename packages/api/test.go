@@ -17,11 +17,8 @@
 package api
 
 import (
-	"encoding/hex"
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
 	log "github.com/sirupsen/logrus"
@@ -31,33 +28,7 @@ type getTestResult struct {
 	Value string `json:"value"`
 }
 
-type signTestResult struct {
-	Signature string `json:"signature"`
-	Public    string `json:"pubkey"`
-}
-
 func getTest(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	data.result = &getTestResult{Value: smart.GetTestValue(data.params[`name`].(string))}
-	return nil
-}
-
-func signTest(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-
-	sign, err := crypto.Sign(data.params[`private`].(string), data.params[`forsign`].(string))
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing data with private key")
-		return errorAPI(w, err, http.StatusBadRequest)
-	}
-	private, err := hex.DecodeString(data.params[`private`].(string))
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": data.params["private"].(string)}).Error("decoding private from hex")
-		return errorAPI(w, err.Error(), http.StatusBadRequest)
-	}
-	pub, err := crypto.PrivateToPublic(private)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
-		return errorAPI(w, err, http.StatusBadRequest)
-	}
-	data.result = &signTestResult{Signature: hex.EncodeToString(sign), Public: hex.EncodeToString(pub)}
 	return nil
 }
