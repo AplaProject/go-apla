@@ -112,6 +112,8 @@ func (btc *BlockTimeCalculator) countBlockTime(blockTime time.Time) (blockGenera
 			return bgs, nil
 		}
 
-		curNodeIndex = (curNodeIndex + 1) % btc.nodesCount
+		if btc.nodesCount > 0 {
+			curNodeIndex = (curNodeIndex + 1) % btc.nodesCount
+		}
 	}
 }
