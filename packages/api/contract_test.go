@@ -23,6 +23,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -80,6 +82,25 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`RecCall`, `contract RecCall {
+		data {    }
+		conditions {    }
+		action {
+			var par map
+			CallContract("RecCall", par)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"there is loop in @1RecCall contract"}`}},
+	}},
+	{`Recursion`, `contract Recursion {
+		data {    }
+		conditions {    }
+		action {
+			Recursion()
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"The contract can't call itself recursively"}`}},
+	}},
 	{`MyTable#rnd#`, `contract MyTable#rnd# {
 		action {
 			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1", 
@@ -388,6 +409,19 @@ func TestEditContracts(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestNewTableWithEmptyName(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+
+	form := url.Values{
+		"Name":          {""},
+		"Columns":       {"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]"},
+		"ApplicationId": {"1"},
+		"Permissions":   {"{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}"},
+	}
+
+	require.NoError(t, postTx("NewTable", &form))
 }
 
 func TestActivateContracts(t *testing.T) {

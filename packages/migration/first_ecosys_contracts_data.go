@@ -199,6 +199,10 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         New_column_con string "optional"
     }
     conditions {
+        if Size($Name) == 0 {
+            error "Table name cannot be empty"
+        }
+
         if $ApplicationId == 0 {
             warning "Application id cannot equal 0"
         }
@@ -212,7 +216,11 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             var i,len int
             var res string
             len = Len($Id)
-			
+            
+            if Size($TableName) == 0 {
+                error "Table name cannot be empty"
+            }
+            
             while i < len {
                 if i + 1 == len {
                     res = res + Sprintf("{\"name\":%%q,\"type\":%%q,\"conditions\":\"true\"}", $Id[i],$Shareholding[i])
