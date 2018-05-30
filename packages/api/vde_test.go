@@ -244,7 +244,7 @@ func TestVDEParams(t *testing.T) {
 	assert.Equal(t, `[{"tag":"span","children":[{"tag":"text","text":"My VDE test"}]},{"tag":"text","text":"+French VDE test"}]`, RawToString(retContent.Tree))
 
 	name = crypto.RandSeq(4)
-	assert.NoError(t, postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {fmt.Sprintf(imp, name)}}))
+	assert.NoError(t, postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {fmt.Sprintf(vdeimp, name)}}))
 }
 
 var vdeimp = `{
