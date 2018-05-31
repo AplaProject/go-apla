@@ -82,6 +82,25 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`RecCall`, `contract RecCall {
+		data {    }
+		conditions {    }
+		action {
+			var par map
+			CallContract("RecCall", par)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"there is loop in @1RecCall contract"}`}},
+	}},
+	{`Recursion`, `contract Recursion {
+		data {    }
+		conditions {    }
+		action {
+			Recursion()
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"The contract can't call itself recursively"}`}},
+	}},
 	{`MyTable#rnd#`, `contract MyTable#rnd# {
 		action {
 			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1", 

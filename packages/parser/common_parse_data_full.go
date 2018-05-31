@@ -21,6 +21,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -38,6 +39,8 @@ import (
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
+var txParserCache = &parserCache{cache: make(map[string]*Parser)}
+
 // Block is storing block data
 type Block struct {
 	Header     utils.BlockData
@@ -48,6 +51,10 @@ type Block struct {
 	SysUpdate  bool
 	GenBlock   bool // it equals true when we are generating a new block
 	StopCount  int  // The count of good tx in the block
+}
+
+func (b Block) String() string {
+	return fmt.Sprintf("header: %s, prevHeader: %s", b.Header, b.PrevHeader)
 }
 
 // GetLogger is returns logger
@@ -319,6 +326,10 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 		return nil, err
 	}
 
+	if p, ok := txParserCache.Get(string(hash)); ok {
+		return p, nil
+	}
+
 	p := new(Parser)
 	p.TxHash = hash
 	p.TxUsedCost = decimal.New(0, 0)
@@ -357,6 +368,8 @@ func ParseTransaction(buffer *bytes.Buffer) (*Parser, error) {
 			return p, err
 		}
 	}
+
+	txParserCache.Set(p)
 
 	return p, nil
 }
@@ -681,6 +694,9 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": p.TxHash}).Error("rolling back to previous savepoint")
 				return errRoll
 			}
+			if b.GenBlock && err == ErrLimitStop {
+				break
+			}
 			// skip this transaction
 			model.MarkTransactionUsed(p.DbTransaction, p.TxHash)
 			p.processBadTransaction(p.TxHash, err.Error())
@@ -881,4 +897,36 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	buf.Write(blockDataTx)
 
 	return buf.Bytes(), nil
+}
+
+type parserCache struct {
+	mutex sync.RWMutex
+	cache map[string]*Parser
+}
+
+func (pc *parserCache) Get(hash string) (p *Parser, ok bool) {
+	pc.mutex.RLock()
+	defer pc.mutex.RUnlock()
+
+	p, ok = pc.cache[hash]
+	return
+}
+
+func (pc *parserCache) Set(p *Parser) {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
+
+	pc.cache[string(p.TxHash)] = p
+}
+
+func (pc *parserCache) Clean() {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
+
+	pc.cache = make(map[string]*Parser)
+}
+
+// CleanCache cleans cache of transaction parsers
+func CleanCache() {
+	txParserCache.Clean()
 }

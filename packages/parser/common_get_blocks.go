@@ -48,10 +48,15 @@ func GetBlocks(blockID int64, host string) error {
 		return utils.ErrInfo(err)
 	}
 
+	// get starting blockID from slice of blocks
+	if len(blocks) > 0 {
+		blockID = blocks[len(blocks)-1].Header.BlockID
+	}
+
 	// we have the slice of blocks for applying
 	// first of all we should rollback old blocks
 	block := &model.Block{}
-	myRollbackBlocks, err := block.GetBlocksFrom(blockID, "desc", 0)
+	myRollbackBlocks, err := block.GetBlocksFrom(blockID-1, "desc", 0)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting rollback blocks from blockID")
 		return utils.ErrInfo(err)
