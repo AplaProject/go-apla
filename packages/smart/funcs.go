@@ -94,41 +94,41 @@ var (
 		"SetPubKey":   {},
 	}
 	extendCost = map[string]int64{
-		"AddressToId":        10,
-		"ColumnCondition":    50,
-		"CompileContract":    100,
-		"Contains":           10,
-		"ContractAccess":     50,
-		"ContractConditions": 50,
-		"ContractsList":      10,
-		"CreateColumn":       50,
-		"CreateTable":        100,
-		"CreateLanguage":     50,
-		"EditLanguage":       50,
-		"EcosysParam":        10,
-		"AppParam":           10,
-		"Eval":               10,
-		"EvalCondition":      20,
-		"FlushContract":      50,
-		"GetContractByName":  20,
-		"GetContractById":    20,
-		"HMac":               50,
-		"Join":               10,
-		"JSONToMap":          50,
-		"Sha256":             50,
-		"IdToAddress":        10,
-		"IsObject":           10,
-		"Len":                5,
-		"Replace":            10,
-		"PermColumn":         50,
-		"Split":              50,
-		"PermTable":          100,
-		"Substr":             10,
-		"Size":               10,
-		"ToLower":            10,
-		"TrimSpace":          10,
-		"TableConditions":    100,
-		"ValidateCondition":  30,
+		"AddressToId":                  10,
+		"ColumnCondition":              50,
+		"Contains":                     10,
+		"ContractAccess":               50,
+		"ContractConditions":           50,
+		"ContractName":                 10,
+		"CreateColumn":                 50,
+		"CreateTable":                  100,
+		"CreateLanguage":               50,
+		"EditLanguage":                 50,
+		"CreateContract":               60,
+		"UpdateContract":               60,
+		"EcosysParam":                  10,
+		"AppParam":                     10,
+		"Eval":                         10,
+		"EvalCondition":                20,
+		"GetContractByName":            20,
+		"GetContractById":              20,
+		"HMac":                         50,
+		"Join":                         10,
+		"JSONToMap":                    50,
+		"Sha256":                       50,
+		"IdToAddress":                  10,
+		"Len":                          5,
+		"Replace":                      10,
+		"PermColumn":                   50,
+		"Split":                        50,
+		"PermTable":                    100,
+		"Substr":                       10,
+		"Size":                         10,
+		"ToLower":                      10,
+		"TrimSpace":                    10,
+		"TableConditions":              100,
+		"ValidateCondition":            30,
+		"ValidateEditContractNewValue": 10,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -152,83 +152,83 @@ func getCost(name string) int64 {
 // EmbedFuncs is extending vm with embedded functions
 func EmbedFuncs(vm *script.VM, vt script.VMType) {
 	f := map[string]interface{}{
-		"AddressToId":          AddressToID,
-		"ColumnCondition":      ColumnCondition,
-		"CompileContract":      CompileContract,
-		"Contains":             strings.Contains,
-		"ContractAccess":       ContractAccess,
-		"ContractConditions":   ContractConditions,
-		"ContractsList":        contractsList,
-		"CreateColumn":         CreateColumn,
-		"CreateTable":          CreateTable,
-		"DBInsert":             DBInsert,
-		"DBSelect":             DBSelect,
-		"DBUpdate":             DBUpdate,
-		"DBUpdateSysParam":     UpdateSysParam,
-		"DBUpdateExt":          DBUpdateExt,
-		"EcosysParam":          EcosysParam,
-		"AppParam":             AppParam,
-		"SysParamString":       SysParamString,
-		"SysParamInt":          SysParamInt,
-		"SysFuel":              SysFuel,
-		"Eval":                 Eval,
-		"EvalCondition":        EvalCondition,
-		"Float":                Float,
-		"FlushContract":        FlushContract,
-		"GetContractByName":    GetContractByName,
-		"GetContractById":      GetContractById,
-		"HMac":                 HMac,
-		"Join":                 Join,
-		"JSONToMap":            JSONDecode, // Deprecated
-		"JSONDecode":           JSONDecode,
-		"JSONEncode":           JSONEncode,
-		"IdToAddress":          IDToAddress,
-		"Int":                  Int,
-		"IsObject":             IsObject,
-		"Len":                  Len,
-		"Money":                Money,
-		"PermColumn":           PermColumn,
-		"PermTable":            PermTable,
-		"Random":               Random,
-		"Split":                Split,
-		"Str":                  Str,
-		"Substr":               Substr,
-		"Replace":              Replace,
-		"Size":                 Size,
-		"Sha256":               Sha256,
-		"PubToID":              PubToID,
-		"HexToBytes":           HexToBytes,
-		"LangRes":              LangRes,
-		"HasPrefix":            strings.HasPrefix,
-		"ValidateCondition":    ValidateCondition,
-		"TrimSpace":            strings.TrimSpace,
-		"ToLower":              strings.ToLower,
-		"CreateEcosystem":      CreateEcosystem,
-		"RollbackEcosystem":    RollbackEcosystem,
-		"RollbackTable":        RollbackTable,
-		"TableConditions":      TableConditions,
-		"RollbackColumn":       RollbackColumn,
-		"CreateLanguage":       CreateLanguage,
-		"EditLanguage":         EditLanguage,
-		"Activate":             Activate,
-		"Deactivate":           Deactivate,
-		"SetContractWallet":    SetContractWallet,
-		"RollbackContract":     RollbackContract,
-		"RollbackEditContract": RollbackEditContract,
-		"check_signature":      CheckSignature,
-		"RowConditions":        RowConditions,
-		"UUID":                 UUID,
-		"DecodeBase64":         DecodeBase64,
-		"EncodeBase64":         EncodeBase64,
-		"MD5":                  MD5,
-		"EditEcosysName":       EditEcosysName,
-		"GetColumnType":        GetColumnType,
-		"GetType":              GetType,
-		"AllowChangeCondition": AllowChangeCondition,
-		"StringToBytes":        StringToBytes,
-		"BytesToString":        BytesToString,
-		"SetPubKey":            SetPubKey,
-		"NewMoney":             NewMoney,
+		"AddressToId":                  AddressToID,
+		"ColumnCondition":              ColumnCondition,
+		"Contains":                     strings.Contains,
+		"ContractAccess":               ContractAccess,
+		"ContractConditions":           ContractConditions,
+		"ContractName":                 contractName,
+		"ValidateEditContractNewValue": ValidateEditContractNewValue,
+		"CreateColumn":                 CreateColumn,
+		"CreateTable":                  CreateTable,
+		"DBInsert":                     DBInsert,
+		"DBSelect":                     DBSelect,
+		"DBUpdate":                     DBUpdate,
+		"DBUpdateSysParam":             UpdateSysParam,
+		"DBUpdateExt":                  DBUpdateExt,
+		"EcosysParam":                  EcosysParam,
+		"AppParam":                     AppParam,
+		"SysParamString":               SysParamString,
+		"SysParamInt":                  SysParamInt,
+		"SysFuel":                      SysFuel,
+		"Eval":                         Eval,
+		"EvalCondition":                EvalCondition,
+		"Float":                        Float,
+		"GetContractByName":            GetContractByName,
+		"GetContractById":              GetContractById,
+		"HMac":                         HMac,
+		"Join":                         Join,
+		"JSONToMap":                    JSONDecode, // Deprecated
+		"JSONDecode":                   JSONDecode,
+		"JSONEncode":                   JSONEncode,
+		"IdToAddress":                  IDToAddress,
+		"Int":                          Int,
+		"Len":                          Len,
+		"Money":                        Money,
+		"PermColumn":                   PermColumn,
+		"PermTable":                    PermTable,
+		"Random":                       Random,
+		"Split":                        Split,
+		"Str":                          Str,
+		"Substr":                       Substr,
+		"Replace":                      Replace,
+		"Size":                         Size,
+		"Sha256":                       Sha256,
+		"PubToID":                      PubToID,
+		"HexToBytes":                   HexToBytes,
+		"LangRes":                      LangRes,
+		"HasPrefix":                    strings.HasPrefix,
+		"ValidateCondition":            ValidateCondition,
+		"TrimSpace":                    strings.TrimSpace,
+		"ToLower":                      strings.ToLower,
+		"CreateEcosystem":              CreateEcosystem,
+		"RollbackEcosystem":            RollbackEcosystem,
+		"CreateContract":               CreateContract,
+		"UpdateContract":               UpdateContract,
+		"RollbackTable":                RollbackTable,
+		"TableConditions":              TableConditions,
+		"RollbackColumn":               RollbackColumn,
+		"CreateLanguage":               CreateLanguage,
+		"EditLanguage":                 EditLanguage,
+		"Activate":                     Activate,
+		"Deactivate":                   Deactivate,
+		"RollbackContract":             RollbackContract,
+		"RollbackEditContract":         RollbackEditContract,
+		"RollbackNewContract":          RollbackNewContract,
+		"check_signature":              CheckSignature,
+		"RowConditions":                RowConditions,
+		"UUID":                         UUID,
+		"DecodeBase64":                 DecodeBase64,
+		"EncodeBase64":                 EncodeBase64,
+		"MD5":                          MD5,
+		"EditEcosysName":               EditEcosysName,
+		"GetColumnType":                GetColumnType,
+		"GetType":                      GetType,
+		"AllowChangeCondition":         AllowChangeCondition,
+		"StringToBytes":                StringToBytes,
+		"BytesToString":                BytesToString,
+		"SetPubKey":                    SetPubKey,
+		"NewMoney":                     NewMoney,
 	}
 
 	switch vt {
@@ -344,13 +344,122 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 	return true, nil
 }
 
-func contractsList(value string) ([]interface{}, error) {
+func contractName(value string) (string, error) {
 	list, err := script.ContractsList(value)
-	result := make([]interface{}, len(list))
-	for i := 0; i < len(list); i++ {
-		result[i] = reflect.ValueOf(list[i]).Interface()
+	if err != nil {
+		return "", err
 	}
-	return result, err
+	if len(list) > 0 {
+		return list[0], nil
+	} else {
+		return "", nil
+	}
+}
+
+func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) error {
+	list, err := script.ContractsList(newValue)
+	if err != nil {
+		return err
+	}
+	curlist, err := script.ContractsList(oldValue)
+	if err != nil {
+		return err
+	}
+	if len(list) != len(curlist) {
+		return fmt.Errorf("Contract cannot be removed or inserted")
+	}
+	for i := 0; i < len(list); i++ {
+		var ok bool
+		for j := 0; j < len(curlist); j++ {
+			if curlist[j] == list[i] {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return fmt.Errorf("Contracts or functions names cannot be changed")
+		}
+	}
+	return nil
+}
+
+func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID string, recipient int64, active, tokenID string) error {
+	if !accessContracts(sc, `EditContract`, `Import`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("UpdateContract can be only called from EditContract")
+		return fmt.Errorf(`UpdateContract can be only called from EditContract`)
+	}
+	var pars []string
+	var vals []interface{}
+	ecosystemID := sc.TxSmart.EcosystemID
+	var root interface{}
+	if value != "" {
+		var err error
+		root, err = CompileContract(sc, value, ecosystemID, recipient, converter.StrToInt64(tokenID))
+		if err != nil {
+			return err
+		}
+		pars = append(pars, "value")
+		vals = append(vals, value)
+	}
+	if conditions != "" {
+		pars = append(pars, "conditions")
+		vals = append(vals, conditions)
+	}
+	if walletID != "" {
+		pars = append(pars, "wallet_id")
+		vals = append(vals, recipient)
+	}
+	if len(vals) > 0 {
+		if _, err := DBUpdate(sc, "contracts", id, strings.Join(pars, ","), vals...); err != nil {
+			return err
+		}
+	}
+	if value != "" {
+		if err := FlushContract(sc, root, id, converter.StrToInt64(active) == 1); err != nil {
+			return err
+		}
+	} else {
+		if walletID != "" {
+			if err := SetContractWallet(sc, id, ecosystemID, recipient); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func CreateContract(sc *SmartContract, name, value, conditions string, walletID, tokenEcosystem, appID int64) (int64, error) {
+	if !accessContracts(sc, `NewContract`, `Import`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateContract can be only called from NewContract")
+		return 0, fmt.Errorf(`CreateContract can be only called from NewContract`)
+	}
+	var id int64
+	var err error
+	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, walletID, tokenEcosystem)
+	if err != nil {
+		return 0, err
+	}
+	_, id, err = DBInsert(sc, "contracts", "name,value,conditions,wallet_id,token_id,app_id", name, value, conditions, walletID, tokenEcosystem, appID)
+	if err != nil {
+		return 0, err
+	}
+	if err := FlushContract(sc, root, id, false); err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func RollbackNewContract(sc *SmartContract, value string) error {
+	contractList, err := script.ContractsList(value)
+	if err != nil {
+		return err
+	}
+	for _, contract := range contractList {
+		if err := RollbackContract(sc, contract); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // CreateTable is creating smart contract table
@@ -774,11 +883,6 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 	}
 	VMFlushBlock(sc.VM, root)
 	return nil
-}
-
-// IsObject returns true if there is the specified contract
-func IsObject(sc *SmartContract, name string, state int64) bool {
-	return VMObjectExists(sc.VM, name, uint32(state))
 }
 
 // Len returns the length of the slice

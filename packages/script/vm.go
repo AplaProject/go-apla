@@ -96,8 +96,8 @@ type RunTime struct {
 	err       error
 	unwrap    bool
 	callDepth uint16
-	mem     int64
-	memVars map[interface{}]int64
+	mem       int64
+	memVars   map[interface{}]int64
 }
 
 func isSysVar(name string) bool {

@@ -939,11 +939,11 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
     conditions {
         ValidateCondition($Conditions,$ecosystem_id)
-		
+
         if $ApplicationId == 0 {
             warning "Application id cannot equal 0"
         }
-		
+
         $walletContract = $key_id
         if $Wallet {
             $walletContract = AddressToId($Wallet)
@@ -951,22 +951,12 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
                 error Sprintf("wrong wallet %%s", $Wallet)
             }
         }
-        var list array
-        list = ContractsList($Value)
+	$contract_name = ContractName($Value)
 
-        if Len(list) == 0 {
+        if !$contract_name {
             error "must be the name"
         }
 
-        var i int
-        while i < Len(list) {
-            if IsObject(list[i], $ecosystem_id) {
-                warning Sprintf("Contract or function %%s exists", list[i])
-            }
-            i = i + 1
-        }
-
-        $contract_name = list[0]
         if !$TokenEcosystem {
             $TokenEcosystem = 1
         } else {
@@ -977,20 +967,10 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        var root, id int
-        root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
-        id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id,app_id", $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
-        FlushContract(root, id, false)
-        $result = id
+	$result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
     }
     func rollback() {
-        var list array
-        list = ContractsList($Value)
-        var i int
-        while i < Len(list) {
-            RollbackContract(list[i])
-            i = i + 1
-        }
+	RollbackNewContract($Value)
     }
     func price() int {
         return SysParamInt("contract_price")
@@ -1441,28 +1421,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			error Sprintf("Contract %%d does not exist", $Id)
 		}
 		if $Value {
-			var list, curlist array
-			list = ContractsList($Value)
-			curlist = ContractsList($cur["value"])
-			if Len(list) != Len(curlist) {
-				error "Contracts cannot be removed or inserted"
-			}
-			var i int
-			while i < Len(list) {
-				var j int
-				var ok bool
-				while j < Len(curlist) {
-					if curlist[j] == list[i] {
-						ok = true
-						break
-					}
-					j = j + 1 
-				}
-				if !ok {
-					error "Contracts or functions names cannot be changed"
-				}
-				i = i + 1
-			}
+			ValidateEditContractNewValue($Value, $cur["value"])
 		}
 		if $WalletId != "" {
 			$recipient = AddressToId($WalletId)
@@ -1476,33 +1435,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			$recipient = Int($cur["wallet_id"])
 		}
 	}
-	
+
 	action {
-		var root int
-		var pars, vals array
-		if $Value {
-			root = CompileContract($Value, $ecosystem_id, $recipient, Int($cur["token_id"]))
-			pars[0] = "value"
-			vals[0] = $Value
-		}
-		if $Conditions {
-			pars[Len(pars)] = "conditions"
-			vals[Len(vals)] = $Conditions
-		}
-		if $WalletId != "" {
-			pars[Len(pars)] = "wallet_id"
-			vals[Len(vals)] = $recipient
-		}
-		if Len(vals) > 0 {
-			DBUpdate("contracts", $Id, Join(pars, ","), vals...)
-		}		
-		if $Value {
-			FlushContract(root, $Id, Int($cur["active"]) == 1)
-		} else {
-			if $WalletId != "" {
-				SetContractWallet($Id, $ecosystem_id, $recipient)
-			}
-		}
+		UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
 	}
 	func rollback() {
 		RollbackEditContract()
