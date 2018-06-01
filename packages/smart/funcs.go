@@ -607,12 +607,9 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	return 0, result, nil
 }
 
-// DBUpdate updates the item with the specified id in the table
-func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
-	if tblname == "system_parameters" {
-		return 0, fmt.Errorf("system parameters access denied")
-	}
-
+// DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
+func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
+	params string, val ...interface{}) (qcost int64, err error) {
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
@@ -621,8 +618,14 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.update(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)})
+	qcost, _, err = sc.update(columns, val, tblname, []string{column},
+		[]string{fmt.Sprint(value)})
 	return
+}
+
+// DBUpdate updates the item with the specified id in the table
+func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
+	return DBUpdateExt(sc, tblname, `id`, id, params, val)
 }
 
 // EcosysParam returns the value of the specified parameter for the ecosystem
@@ -1115,28 +1118,11 @@ func Date(time_format string, timestamp int64) string {
 	return t.Format(time_format)
 }
 
-// HTTPRequest sends http request
-func HTTPRequest(requrl, method string, headers map[string]interface{},
-	params map[string]interface{}) (string, error) {
-
-	var ioform io.Reader
-
-	form := &url.Values{}
-	client := &http.Client{}
-	for key, v := range params {
-		form.Set(key, fmt.Sprint(v))
-	}
-	if len(*form) > 0 {
-		ioform = strings.NewReader(form.Encode())
-	}
-	req, err := http.NewRequest(method, requrl, ioform)
-	if err != nil {
-		return ``, logError(err, consts.NetworkError, "new http request")
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+func httpRequest(req *http.Request, headers map[string]interface{}) (string, error) {
 	for key, v := range headers {
 		req.Header.Set(key, fmt.Sprint(v))
 	}
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return ``, logError(err, consts.NetworkError, "http request")
@@ -1153,33 +1139,33 @@ func HTTPRequest(requrl, method string, headers map[string]interface{},
 	return string(data), nil
 }
 
+// HTTPRequest sends http request
+func HTTPRequest(requrl, method string, headers map[string]interface{},
+	params map[string]interface{}) (string, error) {
+	var ioform io.Reader
+
+	form := &url.Values{}
+	for key, v := range params {
+		form.Set(key, fmt.Sprint(v))
+	}
+	if len(*form) > 0 {
+		ioform = strings.NewReader(form.Encode())
+	}
+	req, err := http.NewRequest(method, requrl, ioform)
+	if err != nil {
+		return ``, logError(err, consts.NetworkError, "new http request")
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	return httpRequest(req, headers)
+}
+
 // HTTPPostJSON sends post http request with json
 func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string) (string, error) {
-
-	client := &http.Client{}
-
 	req, err := http.NewRequest("POST", requrl, bytes.NewBuffer([]byte(json_str)))
 	if err != nil {
 		return ``, logError(err, consts.NetworkError, "new http request")
 	}
-
-	for key, v := range headers {
-		req.Header.Set(key, fmt.Sprint(v))
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return ``, logError(err, consts.NetworkError, "http request")
-	}
-	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return ``, logError(err, consts.IOError, "reading http answer")
-	}
-	if resp.StatusCode != http.StatusOK {
-		return ``, logError(fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data))),
-			consts.NetworkError, "http status code")
-	}
-	return string(data), nil
+	return httpRequest(req, headers)
 }
 
 // Random returns a random value between min and max
