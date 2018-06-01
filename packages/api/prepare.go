@@ -33,11 +33,12 @@ import (
 )
 
 type prepareResult struct {
-	ID      string            `json:"request_id"`
-	ForSign string            `json:"forsign"`
-	Signs   []TxSignJSON      `json:"signs"`
-	Values  map[string]string `json:"values"`
-	Time    string            `json:"time"`
+	ID         string            `json:"request_id"`
+	ForSign    string            `json:"forsign"`
+	Signs      []TxSignJSON      `json:"signs"`
+	Values     map[string]string `json:"values"`
+	Time       string            `json:"time"`
+	Expiration string            `json:"expiration"`
 }
 
 type multiPrepareResult struct {
@@ -177,7 +178,7 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 	result.ID = req.ID
 	result.ForSign = strings.Join(forsign, ",")
 	result.Time = converter.Int64ToStr(req.Time.Unix())
-
+	result.Expiration = converter.Int64ToStr(req.Time.Add(h.requests.ExpireDuration()).Unix())
 	data.result = result
 	return nil
 }
