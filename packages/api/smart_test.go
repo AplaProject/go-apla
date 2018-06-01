@@ -295,7 +295,7 @@ func TestNewTable(t *testing.T) {
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	assert.NoError(t, postTx(`NewTable`, &form))
 
-	assert.EqualError(t, postTx(`NewTable`, &form), fmt.Sprintf(`{"type":"panic","error":"table %s exists"}`, name))
+	assert.EqualError(t, postTx(`NewTable`, &form), fmt.Sprintf(`{"type":"panic","error":"Table %s exists"}`, name))
 
 	form = url.Values{"Name": {name},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")",
@@ -311,7 +311,7 @@ func TestNewTable(t *testing.T) {
 	assert.NoError(t, postTx(`NewColumn`, &form))
 
 	err = postTx(`NewColumn`, &form)
-	if err.Error() != `{"type":"panic","error":"column newcol exists"}` {
+	if err.Error() != `{"type":"panic","error":"Column newcol exists"}` {
 		t.Error(err)
 		return
 	}
