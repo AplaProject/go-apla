@@ -929,6 +929,67 @@ func (sc *SmartContract) checkContract() (fromID, price, sizeFuel int64, payWall
 	return
 }
 
+func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.Key,
+	fromID, toID int64) error {
+	logger := sc.GetLogger()
+
+	apl := sc.TxUsedCost.Mul(fuelRate)
+	wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
+	if ierr != nil {
+		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": ierr, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
+		return ierr
+	}
+	if wltAmount.Cmp(apl) < 0 {
+		apl = wltAmount
+	}
+
+	commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
+	walletTable := model.KeyTableName(sc.TxSmart.TokenEcosystem)
+	historyTable := model.HistoryTableName(sc.TxSmart.TokenEcosystem)
+	comment := fmt.Sprintf("Commission for execution of %s contract", sc.TxContract.Name)
+	fromIDString := converter.Int64ToStr(fromID)
+
+	payCommission := func(toID string, sum decimal.Decimal) error {
+		_, _, err := sc.update(
+			[]string{"+amount"}, []interface{}{sum}, walletTable,
+			[]string{"id"}, []string{toID},
+		)
+		if err != nil {
+			return err
+		}
+
+		_, _, err = sc.insert(
+			[]string{"sender_id", "recipient_id", "amount", "comment", "block_id", "txhash"},
+			[]interface{}{fromIDString, toID, sum, comment, sc.BlockData.BlockID, sc.TxHash},
+			historyTable)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	if err := payCommission(converter.Int64ToStr(toID), apl.Sub(commission)); err != nil {
+		if err != errUpdNotExistRecord {
+			return err
+		}
+		apl = commission
+	}
+
+	if err := payCommission(syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem), commission); err != nil {
+		if err != errUpdNotExistRecord {
+			return err
+		}
+		apl = apl.Sub(commission)
+	}
+
+	if _, _, ierr := sc.update([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
+		[]string{fromIDString}); ierr != nil {
+		return ierr
+	}
+	return nil
+}
+
 // CallContract calls the contract functions according to the specified flags
 func (sc *SmartContract) CallContract(flags int) (string, error) {
 	var (
@@ -938,7 +999,6 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		fuelRate                      decimal.Decimal
 		payWallet                     *model.Key
 	)
-	logger := sc.GetLogger()
 	sc.TxContract.Extend = sc.getExtend()
 
 	retError := func(err error) (string, error) {
@@ -995,64 +1055,10 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			result = result[:255]
 		}
 	}
-	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 &&
-		!sc.VDE && !conf.Config.PrivateBlockchain && sc.TxContract.Name != `@1NewUser` {
-		apl := sc.TxUsedCost.Mul(fuelRate)
 
-		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
-		if ierr != nil {
-			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": ierr, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
-			return retError(ierr)
-		}
-		if wltAmount.Cmp(apl) < 0 {
-			apl = wltAmount
-		}
-
-		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
-		walletTable := model.KeyTableName(sc.TxSmart.TokenEcosystem)
-		historyTable := model.HistoryTableName(sc.TxSmart.TokenEcosystem)
-		comment := fmt.Sprintf("Commission for execution of %s contract", sc.TxContract.Name)
-		fromIDString := converter.Int64ToStr(fromID)
-
-		payCommission := func(toID string, sum decimal.Decimal) error {
-			_, _, err := sc.update(
-				[]string{"+amount"}, []interface{}{sum}, walletTable,
-				[]string{"id"}, []string{toID},
-			)
-			if err != nil {
-				return err
-			}
-
-			_, _, err = sc.insert(
-				[]string{"sender_id", "recipient_id", "amount", "comment", "block_id", "txhash"},
-				[]interface{}{fromIDString, toID, sum, comment, sc.BlockData.BlockID, sc.TxHash},
-				historyTable)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		}
-
-		if err := payCommission(converter.Int64ToStr(toID), apl.Sub(commission)); err != nil {
-			if err != errUpdNotExistRecord {
-				return retError(err)
-			}
-			apl = commission
-		}
-
-		if err := payCommission(syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem), commission); err != nil {
-			if err != errUpdNotExistRecord {
-				return retError(err)
-			}
-			apl = apl.Sub(commission)
-		}
-
-		if _, _, ierr := sc.update([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
-			[]string{fromIDString}); ierr != nil {
-			return retError(ierr)
-		}
-		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")
+	if (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE &&
+		!conf.Config.PrivateBlockchain {
+		err = sc.payContract(fuelRate, payWallet, fromID, toID)
 	}
 	if err != nil {
 		return retError(err)
