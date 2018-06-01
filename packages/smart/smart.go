@@ -19,7 +19,6 @@ package smart
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -61,6 +60,7 @@ const (
 	// CallRollback is a flag for calling rollback function of the contract
 	CallRollback = 0x08
 
+	// MaxPrice is a maximal value that price function can return
 	MaxPrice = 100000000000000000
 )
 
@@ -68,19 +68,6 @@ var (
 	smartVM   *script.VM
 	smartVDE  map[int64]*script.VM
 	smartTest = make(map[string]string)
-
-	ErrCurrentBalance = errors.New(`current balance is not enough`)
-	ErrDeletedKey     = errors.New(`The key is deleted`)
-	ErrDiffKeys       = errors.New(`Contract and user public keys are different`)
-	ErrEmptyPublicKey = errors.New(`empty public key`)
-	ErrFounderAccount = errors.New(`Unknown founder account`)
-	ErrFuelRate       = errors.New(`Fuel rate must be greater than 0`)
-	ErrIncorrectSign  = errors.New(`incorrect sign`)
-	ErrInvalidValue   = errors.New(`Invalid value`)
-	ErrUnknownNodeID  = errors.New(`Unknown node id`)
-	ErrWrongPriceFunc = errors.New(`Wrong type of price function`)
-	ErrNegPrice       = errors.New(`Price value is negative`)
-	ErrMaxPrice       = errors.New(fmt.Sprintf(`Price value is more than %d`, MaxPrice))
 )
 
 func testValue(name string, v ...interface{}) {
@@ -853,7 +840,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			return retError(err)
 		}
 		if wallet.Deleted == 1 {
-			return retError(ErrDeletedKey)
+			return retError(errDeletedKey)
 		}
 		if len(wallet.PublicKey) > 0 {
 			public = wallet.PublicKey
@@ -862,13 +849,13 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			node := syspar.GetNode(sc.TxSmart.KeyID)
 			if node == nil {
 				logger.WithFields(log.Fields{"user_id": sc.TxSmart.KeyID, "type": consts.NotFound}).Error("unknown node id")
-				return retError(ErrUnknownNodeID)
+				return retError(errUnknownNodeID)
 			}
 			public = node.PublicKey
 		}
 		if len(public) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty public key")
-			return retError(ErrEmptyPublicKey)
+			return retError(errEmptyPublicKey)
 		}
 		sc.PublicKeys = append(sc.PublicKeys, public)
 		var CheckSignResult bool
@@ -879,7 +866,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		if !CheckSignResult {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
-			return retError(ErrIncorrectSign)
+			return retError(errIncorrectSign)
 		}
 		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.PrivateBlockchain {
 			if sc.TxSmart.TokenEcosystem == 0 {
@@ -892,7 +879,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			}
 			if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 				logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("Fuel rate must be greater than 0")
-				return retError(ErrFuelRate)
+				return retError(errFuelRate)
 			}
 			var payOver decimal.Decimal
 			if len(sc.TxSmart.PayOver) > 0 {
@@ -918,13 +905,13 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
 			if found, err := payWallet.Get(fromID); err != nil || !found {
 				if !found {
-					return retError(ErrCurrentBalance)
+					return retError(errCurrentBalance)
 				}
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 				return retError(err)
 			}
 			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
-				return retError(ErrDiffKeys)
+				return retError(errDiffKeys)
 			}
 			var amount decimal.Decimal
 			amount, err = decimal.NewFromString(payWallet.Amount)
@@ -941,32 +928,32 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 					case `int64`:
 						price = ret[0].(int64)
 						if price > MaxPrice {
-							return retError(ErrMaxPrice)
+							return retError(errMaxPrice)
 						}
 						if price < 0 {
-							return retError(ErrNegPrice)
+							return retError(errNegPrice)
 						}
 					case script.Decimal:
 						if ret[0].(decimal.Decimal).GreaterThan(decimal.New(MaxPrice, 0)) {
-							return retError(ErrMaxPrice)
+							return retError(errMaxPrice)
 						}
 						if ret[0].(decimal.Decimal).LessThan(decimal.New(0, 0)) {
-							return retError(ErrNegPrice)
+							return retError(errNegPrice)
 						}
 						price = converter.StrToInt64(ret[0].(decimal.Decimal).String())
 					default:
 						logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong result type of price function")
-						return retError(ErrWrongPriceFunc)
+						return retError(errWrongPriceFunc)
 					}
 				} else {
 					logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong type of price function")
-					return retError(ErrWrongPriceFunc)
+					return retError(errWrongPriceFunc)
 				}
 			}
 			sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024
 			if amount.Cmp(decimal.New(sizeFuel+price, 0).Mul(fuelRate)) <= 0 {
 				logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")
-				return retError(ErrCurrentBalance)
+				return retError(errCurrentBalance)
 			}
 		}
 	}
