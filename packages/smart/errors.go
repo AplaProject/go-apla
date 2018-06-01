@@ -22,8 +22,21 @@ import (
 )
 
 const (
-	eTableNotFound  = `Table %s has not been found`
-	eAccessContract = `%s can be only called from %s`
+	eAccessContract    = `%s can be only called from %s`
+	eColumnExist       = `Column %s exists`
+	eColumnNotExist    = `Column %s doesn't exist`
+	eColumnType        = `Type '%s' of columns is not supported`
+	eContractCondition = `There is not conditions in contract %s`
+	eEmptyCond         = `%v condition is empty`
+	eItemNotFound      = `Item %d has not been found`
+	eManyColumns       = `Too many columns. Limit is %d`
+	eNotCondition      = `There is not %s in parameters`
+	eParamNotFound     = `Parameter %s has not been found`
+	eTableExists       = `Table %s exists`
+	eTableNotFound     = `Table %s has not been found`
+	eUnknownContract   = `Unknown contract %s`
+	eUnsupportedType   = "Unsupported type %T"
+	eWrongRandom       = `Wrong random parameters %d %d`
 )
 
 var (

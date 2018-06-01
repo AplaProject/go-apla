@@ -284,9 +284,8 @@ func ActivateContract(tblid, state int64, active bool) {
 
 // SetContractWallet changes WalletID of the contract in smartVM
 func SetContractWallet(sc *SmartContract, tblid, state int64, wallet int64) error {
-	if sc.TxContract.Name != `@1EditContract` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SetContractWallet can be only called from @1EditContract")
-		return fmt.Errorf(`SetContractWallet can be only called from @1EditContract`)
+	if err := validateAccess(`SetContractWallet`, sc, nEditContract); err != nil {
+		return err
 	}
 	for i, item := range smartVM.Block.Children {
 		if item != nil && item.Type == script.ObjContract {
@@ -326,8 +325,7 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 func LoadContracts(transaction *model.DbTransaction) error {
 	ecosystemsIds, err := model.GetAllSystemStatesIDs()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting ids from ecosystems")
-		return err
+		return logErrorDB(err, "selecting ids from ecosystems")
 	}
 
 	defer ExternOff()
@@ -432,15 +430,13 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
 	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting all transactions from contracts")
-		return err
+		return logErrorDB(err, "selecting all transactions from contracts")
 	}
 	state := uint32(converter.StrToInt64(prefix))
 	LoadSysFuncs(smartVM, int(state))
 	for _, item := range contracts {
 		list, err := script.ContractsList(item[`value`])
 		if err != nil {
-			log.WithFields(log.Fields{"contract": item["name"], "error": err}).Error("Getting ContractsList")
 			return err
 		}
 		names := strings.Join(list, `,`)
@@ -452,9 +448,7 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 			TokenID:  converter.StrToInt64(item[`token_id`]),
 		}
 		if err = Compile(item[`value`], &owner); err != nil {
-			log.WithFields(log.Fields{"type": consts.EvalError, "names": names, "error": err}).Error("Load Contract")
-		} else {
-			log.WithFields(log.Fields{"contract_name": names, "contract_id": item["id"], "contract_active": item["active"]}).Info("OK Loading Contract")
+			logErrorValue(err, consts.EvalError, "Load Contract", names)
 		}
 	}
 	LoadVDEContracts(transaction, prefix)
@@ -479,7 +473,6 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	for _, item := range contracts {
 		list, err := script.ContractsList(item[`value`])
 		if err != nil {
-			log.WithFields(log.Fields{"error": err}).Error("Getting ContractsList")
 			return err
 		}
 		names := strings.Join(list, `,`)
@@ -491,9 +484,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 			TokenID:  0,
 		}
 		if err = vmCompile(vm, item[`value`], &owner); err != nil {
-			log.WithFields(log.Fields{"names": names, "error": err}).Error("Load VDE Contract")
-		} else {
-			log.WithFields(log.Fields{"names": names, "contract_id": item["id"]}).Info("OK Load VDE Contract")
+			logErrorValue(err, consts.EvalError, "Load VDE Contract", names)
 		}
 	}
 
@@ -630,7 +621,7 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 func getPermColumns(input string) (perm permColumn, err error) {
 	if strings.HasPrefix(input, `{`) {
 		if err = json.Unmarshal([]byte(input), &perm); err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": input}).Error("on perm columns")
+			logErrorValue(err, consts.JSONUnmarshallError, "on perm columns", input)
 		}
 	} else {
 		perm.Update = input
@@ -759,7 +750,7 @@ func (sc *SmartContract) AccessRights(condition string, iscondition bool) error 
 			return errAccessDenied
 		}
 	} else {
-		return fmt.Errorf(`There is not %s in parameters`, condition)
+		return fmt.Errorf(eNotCondition, condition)
 	}
 	return nil
 }

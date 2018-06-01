@@ -49,7 +49,6 @@ import (
 	"github.com/satori/go.uuid"
 
 	"github.com/shopspring/decimal"
-	log "github.com/sirupsen/logrus"
 )
 
 const nodeBanNotificationHeader = "Your node was banned"
@@ -276,14 +275,14 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			if contract == nil {
 				contract = VMGetContract(sc.VM, name, 0)
 				if contract == nil {
-					log.WithFields(log.Fields{"contract_name": name, "type": consts.NotFound}).Error("Unknown contract")
-					return false, fmt.Errorf(`Unknown contract %s`, name)
+					return false, logErrorValue(fmt.Errorf(eUnknownContract, name), consts.NotFound,
+						"Unknown contract", name)
 				}
 			}
 			block := contract.GetFunc(`conditions`)
 			if block == nil {
-				log.WithFields(log.Fields{"contract_name": name, "type": consts.EmptyObject}).Error("There is not conditions in contract")
-				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
+				return false, logErrorValue(fmt.Errorf(eContractCondition, name), consts.EmptyObject,
+					"There is not conditions in contract", name)
 			}
 			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
 				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID})
@@ -291,8 +290,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 				return false, err
 			}
 		} else {
-			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty contract name in ContractConditions")
-			return false, fmt.Errorf(`empty contract name in ContractConditions`)
+			return false, logError(errEmptyContract, consts.EmptyObject, "ContractConditions")
 		}
 	}
 	return true, nil
@@ -331,8 +329,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	var cols []interface{}
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns to JSON")
-		return err
+		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling columns to JSON", columns)
 	}
 
 	colsSQL := ""
@@ -370,8 +367,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		case map[string]interface{}:
 			out, err := json.Marshal(v)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling conditions to json")
-				return err
+				return logError(err, consts.JSONMarshallError, "marshalling conditions to json")
 			}
 			condition = string(out)
 		}
@@ -379,8 +375,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	}
 	colout, err := json.Marshal(colperm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling columns to JSON")
-		return err
+		return logError(err, consts.JSONMarshallError, "marshalling columns to json")
 	}
 	if sc.VDE {
 		err = model.CreateVDETable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
@@ -388,20 +383,18 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		err = model.CreateTable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
 	}
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE tables")
-		return err
+		return logErrorDB(err, "creating tables")
 	}
 
 	var perm permTable
 	err = json.Unmarshal([]byte(permissions), &perm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling permissions to JSON")
-		return err
+		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling permissions to JSON",
+			permissions)
 	}
 	permout, err := json.Marshal(perm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling permissions to JSON")
-		return err
+		return logError(err, consts.JSONMarshallError, "marshalling permissions to JSON")
 	}
 	prefix, name := PrefixName(tableName)
 	var state string
@@ -410,8 +403,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	}
 	id, err := model.GetNextID(sc.DbTransaction, getDefTableName(sc, `tables`))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next ID")
-		return err
+		return logErrorDB(err, "getting next ID")
 	}
 
 	t := &model.TableVDE{
@@ -425,8 +417,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	t.SetTablePrefix(prefix)
 	err = t.Create(sc.DbTransaction)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert vde table info")
-		return err
+		return logErrorDB(err, "insert vde table info")
 	}
 	if !sc.VDE {
 		rollbackTx := &model.RollbackTx{
@@ -437,8 +428,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		}
 		err = rollbackTx.Create(sc.DbTransaction)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating CreateTable rollback")
-			return err
+			return logErrorDB(err, "creating CreateTable rollback")
 		}
 	}
 	return nil
@@ -463,7 +453,7 @@ func columnType(colType string) (sqlColType string, err error) {
 	case "text":
 		sqlColType = "text"
 	default:
-		err = fmt.Errorf("Type '%s' of columns is not supported", colType)
+		err = fmt.Errorf(eColumnType, colType)
 	}
 
 	return
@@ -482,7 +472,7 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 	var ind int
 	var lastID string
 	if ind, err = model.NumIndexes(tblname); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("num indexes")
+		err = logErrorDB(err, "num indexes")
 		return
 	}
 	if len(val) == 0 {
@@ -602,14 +592,12 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting rows from table")
-		return 0, nil, err
+		return 0, nil, logErrorDB(err, "selecting rows from table")
 	}
 	defer rows.Close()
 	cols, err := rows.Columns()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rows columns")
-		return 0, nil, err
+		return 0, nil, logErrorDB(err, "getting rows columns")
 	}
 	values := make([][]byte, len(cols))
 	scanArgs := make([]interface{}, len(values))
@@ -621,8 +609,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("scanning next row")
-			return 0, nil, err
+			return 0, nil, logErrorDB(err, "scanning next row")
 		}
 		row := make(map[string]string)
 		for i, col := range values {
@@ -662,7 +649,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 		return
 	}
 	if strings.Contains(tblname, `_reports_`) {
-		err = fmt.Errorf(`Access denied to report table`)
+		err = errAccessReport
 		return
 	}
 	columns := strings.Split(params, `,`)
@@ -685,8 +672,7 @@ func AppParam(sc *SmartContract, app int64, name string) (string, error) {
 	ap.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
 	_, err := ap.Get(sc.DbTransaction, app, name)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting app param")
-		return ``, err
+		return ``, logErrorDB(err, "getting app param")
 	}
 	return ap.Value, nil
 }
@@ -694,17 +680,14 @@ func AppParam(sc *SmartContract, app int64, name string) (string, error) {
 // Eval evaluates the condition
 func Eval(sc *SmartContract, condition string) error {
 	if len(condition) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("The condition is empty")
-		return fmt.Errorf(`The condition is empty`)
+		return logError(errEmptyCond, consts.EmptyObject, "The condition is empty")
 	}
 	ret, err := sc.EvalIf(condition)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("eval condition")
-		return err
+		return logError(err, consts.EvalError, "eval condition")
 	}
 	if !ret {
-		log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-		return errAccessDenied
+		return logError(errAccessDenied, consts.AccessDenied, "Access denied")
 	}
 	return nil
 }
@@ -751,13 +734,12 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 	var perm permTable
 	err := json.Unmarshal([]byte(permissions), &perm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling table permissions to json")
-		return err
+		return logErrorValue(err, consts.JSONUnmarshallError,
+			"unmarshalling table permissions to json", permissions)
 	}
 	permout, err := json.Marshal(perm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling permission list to json")
-		return err
+		return logError(err, consts.JSONMarshallError, "marshalling permission list to json")
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
 		getDefTableName(sc, `tables`), []string{`name`}, []string{strings.ToLower(name)}, !sc.VDE && sc.Rollback, false)
@@ -785,36 +767,32 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	t.SetTablePrefix(prefix)
 	exists, err := t.ExistsByName(sc.DbTransaction, name)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("table is exists")
-		return err
+		return logErrorDB(err, "table exists")
 	}
 	if isEdit {
 		if !exists {
-			log.WithFields(log.Fields{"table_name": name, "type": consts.NotFound}).Error("table does not exists")
-			return fmt.Errorf(eTableNotFound, name)
+			return logErrorValue(fmt.Errorf(eTableNotFound, name), consts.NotFound,
+				"table does not exists", name)
 		}
 	} else if exists {
-		log.WithFields(log.Fields{"table_name": name, "type": consts.Found}).Error("table exists")
-		return fmt.Errorf(`table %s exists`, name)
+		return logErrorValue(fmt.Errorf(eTableExists, name), consts.Found, "table exists", name)
 	}
 
 	var perm permTable
 	err = json.Unmarshal([]byte(permissions), &perm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": permissions}).Error("unmarshalling permissions from json")
-		return
+		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling permissions from json",
+			permissions)
 	}
 	v := reflect.ValueOf(perm)
 	for i := 0; i < v.NumField(); i++ {
 		cond := v.Field(i).Interface().(string)
 		name := v.Type().Field(i).Name
 		if len(cond) == 0 && name != `Read` && name != `Filter` {
-			log.WithFields(log.Fields{"condition_type": name, "type": consts.EmptyObject}).Error("condition is empty")
-			return fmt.Errorf(`%v condition is empty`, name)
+			return logError(fmt.Errorf(eEmptyCond, name), consts.EmptyObject, "condition is empty")
 		}
 		if err = VMCompileEval(sc.VM, cond, uint32(sc.TxSmart.EcosystemID)); err != nil {
-			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("compile evaluating permissions")
-			return err
+			return logError(err, consts.EvalError, "compile evaluating permissions")
 		}
 	}
 
@@ -830,16 +808,15 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	var cols []interface{}
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns permissions from json")
-		return
+		return logErrorValue(err, consts.JSONUnmarshallError,
+			"unmarshalling columns permissions from json", columns)
 	}
 	if len(cols) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Columns are empty")
-		return fmt.Errorf(`len(cols) == 0`)
+		return logError(errUndefColumns, consts.EmptyObject, "Columns are empty")
 	}
 	if len(cols) > syspar.GetMaxColumns() {
-		log.WithFields(log.Fields{"size": len(cols), "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
-		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
+		return logError(fmt.Errorf(eManyColumns, syspar.GetMaxColumns()), consts.ParameterExceeded,
+			"Too many columns")
 	}
 	for _, icol := range cols {
 		var data map[string]interface{}
@@ -855,15 +832,13 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 			data = v.(map[string]interface{})
 		}
 		if data[`name`] == nil || data[`type`] == nil {
-			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("wrong column")
-			return fmt.Errorf(`worng column`)
+			return logError(errWrongColumn, consts.InvalidObject, `wrong column`)
 		}
 		itype := data[`type`].(string)
 		if itype != `varchar` && itype != `number` && itype != `datetime` && itype != `text` &&
 			itype != `bytea` && itype != `double` && itype != `json` && itype != `money` &&
 			itype != `character` {
-			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect type")
-			return fmt.Errorf(`incorrect type`)
+			return logError(errIncorrectType, consts.InvalidObject, `incorrect type`)
 		}
 		condition := ``
 		switch v := data[`conditions`].(type) {
@@ -872,28 +847,23 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		case map[string]interface{}:
 			out, err := json.Marshal(v)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling conditions to json")
-				return err
+				return logError(err, consts.JSONMarshallError, "marshalling conditions to json")
 			}
 			condition = string(out)
 		}
 		perm, err := getPermColumns(condition)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Conditions is empty")
-			return err
+			return logError(err, consts.EmptyObject, "Conditions is empty")
 		}
 		if len(perm.Update) == 0 {
-			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Update condition is empty")
-			return errConditionEmpty
+			return logError(errConditionEmpty, consts.EmptyObject, "Update condition is empty")
 		}
 		if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
-			log.WithFields(log.Fields{"type": consts.EvalError}).Error("compile update conditions")
-			return err
+			return logError(err, consts.EvalError, "compile update conditions")
 		}
 		if len(perm.Read) > 0 {
 			if err = VMCompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.EcosystemID)); err != nil {
-				log.WithFields(log.Fields{"type": consts.EvalError}).Error("compile read conditions")
-				return err
+				return logError(err, consts.EvalError, "compile read conditions")
 			}
 		}
 
@@ -908,8 +878,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 // ValidateCondition checks if the condition can be compiled
 func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 	if len(condition) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("conditions cannot be empty")
-		return fmt.Errorf("Conditions cannot be empty")
+		return logError(errConditionEmpty, consts.EmptyObject, "conditions cannot be empty")
 	}
 	return VMCompileEval(sc.VM, condition, uint32(state))
 }
@@ -933,21 +902,17 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 
 	exists, err := tEx.IsExistsByPermissionsAndTableName(sc.DbTransaction, name, tableName)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("querying that table is exists by permissions and table name")
-		return err
+		return logErrorDB(err, "querying that table is exists by permissions and table name")
 	}
 	if isExist {
 		if !exists {
-			log.WithFields(log.Fields{"column_name": name, "type": consts.NotFound}).Error("column does not exists")
-			return fmt.Errorf(`column %s doesn't exists`, name)
+			return logError(fmt.Errorf(eColumnNotExist, name), consts.NotFound, "column does not exists")
 		}
 	} else if exists {
-		log.WithFields(log.Fields{"column_name": name, "type": consts.Found}).Error("column exists")
-		return fmt.Errorf(`column %s exists`, name)
+		return logError(fmt.Errorf(eColumnExist, name), consts.Found, "column exists")
 	}
 	if len(permissions) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Permissions are empty")
-		return fmt.Errorf(`Permissions is empty`)
+		return logError(errPermEmpty, consts.EmptyObject, "Permissions are empty")
 	}
 	perm, err := getPermColumns(permissions)
 	if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
@@ -964,18 +929,16 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 	}
 	count, err := model.GetColumnCount(tblName)
 	if err != nil {
-		log.WithFields(log.Fields{"table": tblName, "type": consts.DBError}).Error("counting table columns")
-		return err
+		return logErrorDB(err, "counting table columns")
 	}
 	if count >= int64(syspar.GetMaxColumns()) {
-		log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
-		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
+		return logError(fmt.Errorf(eManyColumns, syspar.GetMaxColumns()), consts.ParameterExceeded,
+			"Too many columns")
 	}
 	if coltype != `varchar` && coltype != `number` && coltype != `datetime` &&
 		coltype != `character` && coltype != `json` &&
 		coltype != `text` && coltype != `bytea` && coltype != `double` && coltype != `money` {
-		log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("Unknown column type")
-		return fmt.Errorf(`incorrect type`)
+		return logErrorValue(errIncorrectType, consts.InvalidObject, "Unknown column type", coltype)
 	}
 	return sc.AccessTable(tblName, "new_column")
 }
@@ -985,7 +948,6 @@ func AllowChangeCondition(sc *SmartContract, tblname string) error {
 	if param, ok := tableParamConditions[tblname]; ok {
 		return sc.AccessRights(param, false)
 	}
-
 	return nil
 }
 
@@ -994,13 +956,12 @@ func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bo
 	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
 	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing row condition query")
-		return err
+		return logErrorDB(err, "executing row condition query")
 	}
 
 	if len(condition) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound, "name": tblname, "id": id}).Error("record not found")
-		return fmt.Errorf("Item %d has not been found", id)
+		return logErrorValue(fmt.Errorf(eItemNotFound, id), consts.NotFound, "record not found",
+			tblname)
 	}
 
 	if err := Eval(sc, condition); err != nil {
@@ -1030,8 +991,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 
 	err = model.AlterTableAddColumn(sc.DbTransaction, tblname, name, sqlColType)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("adding column to the table")
-		return err
+		return logErrorDB(err, "adding column to the table")
 	}
 
 	tables := getDefTableName(sc, `tables`)
@@ -1046,14 +1006,12 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	var perm map[string]string
 	err = json.Unmarshal([]byte(temp.Columns), &perm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting columns from the table")
-		return err
+		return logErrorDB(err, "selecting columns from the table")
 	}
 	perm[name] = permissions
 	permout, err := json.Marshal(perm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns to json")
-		return err
+		return logError(err, consts.JSONMarshallError, "marshalling permissions to json")
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
 		tables, []string{`name`}, []string{tableName}, !sc.VDE && sc.Rollback, false)
@@ -1117,20 +1075,18 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 	temp := &cols{}
 	err := model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("querying columns by table name")
-		return err
+		return logErrorDB(err, "querying columns by table name")
 	}
 	var perm map[string]string
 	err = json.Unmarshal([]byte(temp.Columns), &perm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns permissions from json")
-		return err
+		return logErrorValue(err, consts.JSONUnmarshallError,
+			"unmarshalling columns permissions from json", temp.Columns)
 	}
 	perm[name] = permissions
 	permout, err := json.Marshal(perm)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling column permissions to json")
-		return err
+		return logError(err, consts.JSONMarshallError, "marshalling column permissions to json")
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
 		tables, []string{`name`}, []string{tableName}, !sc.VDE && sc.Rollback, false)
@@ -1178,7 +1134,7 @@ func HMac(key, data string, raw_output bool) (ret string, err error) {
 	}
 }
 
-//Returns the array of keys of the map
+// GetMapKeys returns the array of keys of the map
 func GetMapKeys(in map[string]interface{}) []interface{} {
 	keys := make([]interface{}, 0, len(in))
 	for k := range in {
@@ -1203,7 +1159,7 @@ func SortedKeys(m map[string]interface{}) []interface{} {
 	return ret
 }
 
-//Formats timestamp to specified date format
+// Date formats timestamp to specified date format
 func Date(time_format string, timestamp int64) string {
 	t := time.Unix(timestamp, 0)
 	return t.Format(time_format)
@@ -1278,18 +1234,14 @@ func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string
 
 func Random(min int64, max int64) (int64, error) {
 	if min < 0 || max < 0 || min >= max {
-		return 0, logError(fmt.Errorf(`wrong random parameters %d %d`, min, max),
-			consts.InvalidObject, "getting random")
+		return 0, logError(fmt.Errorf(eWrongRandom, min, max), consts.InvalidObject, "getting random")
 	}
 	return min + rand.New(rand.NewSource(time.Now().Unix())).Int63n(max-min), nil
 }
 
-func ValidateCron(cronSpec string) error {
-	_, err := scheduler.Parse(cronSpec)
-	if err != nil {
-		return err
-	}
-	return nil
+func ValidateCron(cronSpec string) (err error) {
+	_, err = scheduler.Parse(cronSpec)
+	return
 }
 
 func UpdateCron(sc *SmartContract, id int64) error {
@@ -1298,8 +1250,7 @@ func UpdateCron(sc *SmartContract, id int64) error {
 
 	ok, err := cronTask.Get(id)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get cron record")
-		return err
+		return logErrorDB(err, "get cron record")
 	}
 
 	if !ok {
@@ -1423,8 +1374,7 @@ func GetBlock(blockID int64) (map[string]int64, error) {
 	block := model.Block{}
 	ok, err := block.Get(blockID)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
-		return nil, err
+		return nil, logErrorDB(err, "getting block")
 	}
 	if !ok {
 		return nil, nil
@@ -1467,7 +1417,7 @@ func MD5(data interface{}) (string, error) {
 	case string:
 		b = []byte(v)
 	default:
-		return "", logError(fmt.Errorf("Unsupported type %T", v), consts.ConversionError,
+		return "", logError(fmt.Errorf(eUnsupportedType, v), consts.ConversionError,
 			"converting to bytes")
 	}
 

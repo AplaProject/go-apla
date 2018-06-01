@@ -35,6 +35,10 @@ func logErrorValue(err error, errType string, comment, value string) error {
 	return err
 }
 
+func logErrorDB(err error, comment string) error {
+	return logError(err, consts.DBError, comment)
+}
+
 func validateAccess(funcName string, sc *SmartContract, contracts ...string) error {
 	if !accessContracts(sc, contracts...) {
 		err := fmt.Errorf(eAccessContract, funcName, strings.Join(contracts, ` or `))
