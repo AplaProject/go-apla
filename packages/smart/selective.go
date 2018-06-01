@@ -208,7 +208,6 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 	if len(addSQLWhere) > 0 {
 		addSQLWhere = " WHERE " + addSQLWhere[0:len(addSQLWhere)-5]
 	}
-	addSQLFields = strings.TrimRight(addSQLFields, ",")
 	selectQuery := `SELECT ` + addSQLFields + ` FROM "` + table + `" ` + addSQLWhere
 	selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
 	if err != nil {

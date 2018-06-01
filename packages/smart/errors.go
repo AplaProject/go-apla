@@ -41,7 +41,6 @@ const (
 
 var (
 	errAccessDenied      = errors.New(`Access denied`)
-	errAccessReport      = errors.New(`Access denied to report table`)
 	errConditionEmpty    = errors.New(`Condition is empty`)
 	errContractNotFound  = errors.New(`Contract has not been found`)
 	errCurrentBalance    = errors.New(`Current balance is not enough`)
@@ -59,6 +58,7 @@ var (
 	errOneContract       = errors.New(`Оnly one contract must be in the record`)
 	errPermEmpty         = errors.New(`Permissions are empty`)
 	errSameColumns       = errors.New(`There are the same columns`)
+	errSetPubKey         = errors.New(`SetPubKey can be only called from NewUser contract`)
 	errTableName         = errors.New(`The name of the table cannot begin with @`)
 	errUndefBlock        = errors.New(`It is impossible to write to DB when Block is undefined`)
 	errUndefColumns      = errors.New(`Columns are undefined`)
