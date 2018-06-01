@@ -210,11 +210,6 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 	if err := json.Unmarshal([]byte(r.FormValue("data")), &multiRequest); err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
-	contract := smart.VMGetContract(data.vm, req.Contract, uint32(data.ecosystemId))
-	if contract == nil {
-		return errorAPI(w, "E_CONTRACT", http.StatusBadRequest, req.Contract)
-	}
-	info := (*contract).Block.Info.(*script.ContractInfo)
 	var signedBy int64
 	signID := data.keyId
 	if multiRequest.SignedBy != "" {
@@ -243,10 +238,16 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 	maxSum := multiRequest.MaxSum
 	payover := multiRequest.Payover
 	hashes := []string{}
-	for i, params := range req.Values {
+	for i, c := range req.Contracts {
+		contract := smart.VMGetContract(data.vm, c.Contract, uint32(data.ecosystemId))
+		if contract == nil {
+			return errorAPI(w, "E_CONTRACT", http.StatusBadRequest, c.Contract)
+		}
+		info := (*contract).Block.Info.(*script.ContractInfo)
+
 		idata := make([]byte, 0)
 		if info.Tx != nil {
-			idata, err = getDataMultiRequestParams(*info.Tx, params, w, logger)
+			idata, err = getDataMultiRequestParams(*info.Tx, c.Params, w, logger)
 			if err != nil {
 				return err
 			}
