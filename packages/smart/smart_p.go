@@ -89,9 +89,15 @@ var (
 const (
 	nActivateContract   = "ActivateContract"
 	nDeactivateContract = "DeactivateContract"
+	nEditColumn         = "EditColumn"
 	nEditContract       = "EditContract"
+	nEditEcosystemName  = "EditEcosystemName"
+	nEditTable          = "EditTable"
 	nImport             = "Import"
+	nNewColumn          = "NewColumn"
 	nNewContract        = "NewContract"
+	nNewEcosystem       = "NewEcosystem"
+	nNewTable           = "NewTable"
 )
 
 //SignRes contains the data of the signature
@@ -310,20 +316,20 @@ func Split(input, sep string) []interface{} {
 }
 
 // Sha256 returns SHA256 hash value
-func Sha256(text string) string {
+func Sha256(text string) (string, error) {
 	hash, err := crypto.Hash([]byte(text))
 	if err != nil {
-		log.WithFields(log.Fields{"value": text, "error": err, "type": consts.CryptoError}).Fatal("hashing text")
+		return ``, logErrorValue(err, consts.CryptoError, "hashing text", text)
 	}
 	hash = converter.BinToHex(hash)
-	return string(hash)
+	return string(hash), nil
 }
 
 // PubToID returns a numeric identifier for the public key specified in the hexadecimal form.
 func PubToID(hexkey string) int64 {
 	pubkey, err := hex.DecodeString(hexkey)
 	if err != nil {
-		log.WithFields(log.Fields{"value": hexkey, "error": err, "type": consts.CryptoError}).Error("decoding hexkey to string")
+		logErrorValue(err, consts.CryptoError, "decoding hexkey to string", hexkey)
 		return 0
 	}
 	return crypto.Address(pubkey)
@@ -422,9 +428,8 @@ func Replace(s, old, new string) string {
 
 // CreateEcosystem creates a new ecosystem
 func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error) {
-	if sc.TxContract.Name != `@1NewEcosystem` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateEcosystem can be only called from @1NewEcosystem")
-		return 0, fmt.Errorf(`CreateEcosystem can be only called from @1NewEcosystem`)
+	if err := validateAccess(`CreateEcosystem`, sc, nNewEcosystem); err != nil {
+		return 0, err
 	}
 
 	var sp model.StateParameter
@@ -499,21 +504,19 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 
 // EditEcosysName set newName for ecosystem
 func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
-	if sc.TxContract.Name != `@1EditEcosystemName` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditEcosystemName can be only called from @1EditEcosystemName")
-		return fmt.Errorf(`EditEcosystemName can be only called from @1EditEcosystemName`)
+	if err := validateAccess(`EditEcosysName`, sc, nEditEcosystemName); err != nil {
+		return err
 	}
-
 	_, err := DBUpdate(sc, "@1_ecosystems", sysID, "name", newName)
 	return err
 }
 
 // RollbackEcosystem is rolling back ecosystem
 func RollbackEcosystem(sc *SmartContract) error {
-	if sc.TxContract.Name != `@1NewEcosystem` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackEcosystem can be only called from @1NewEcosystem")
-		return fmt.Errorf(`RollbackEcosystem can be only called from @1NewEcosystem`)
+	if err := validateAccess(`RollbackEcosystem`, sc, nNewEcosystem); err != nil {
+		return err
 	}
+
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, "1_ecosystems")
 	if err != nil {
@@ -604,9 +607,8 @@ func RollbackEcosystem(sc *SmartContract) error {
 
 // RollbackTable is rolling back table
 func RollbackTable(sc *SmartContract, name string) error {
-	if sc.TxContract.Name != `@1NewTable` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from @1NewTable")
-		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
+	if err := validateAccess(`RollbackTable`, sc, nNewTable); err != nil {
+		return err
 	}
 	name = strings.ToLower(name)
 	tableName := getDefTableName(sc, name)
@@ -653,9 +655,8 @@ func RollbackTable(sc *SmartContract, name string) error {
 
 // RollbackColumn is rolling back column
 func RollbackColumn(sc *SmartContract, tableName, name string) error {
-	if sc.TxContract.Name != `@1NewColumn` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackColumn can be only called from @1NewColumn")
-		return fmt.Errorf(`RollbackColumn can be only called from @1NewColumn`)
+	if err := validateAccess(`RollbackColumn`, sc, nNewColumn); err != nil {
+		return err
 	}
 	name = strings.ToLower(name)
 	rollbackTx := &model.RollbackTx{}
@@ -691,9 +692,8 @@ func Substr(s string, off int64, slen int64) string {
 
 // Activate sets Active status of the contract in smartVM
 func Activate(sc *SmartContract, tblid int64, state int64) error {
-	if !accessContracts(sc, nActivateContract, nDeactivateContract) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ActivateContract can be only called from @1ActivateContract or @1DeactivateContract")
-		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
+	if err := validateAccess(`Activate`, sc, nActivateContract, nDeactivateContract); err != nil {
+		return err
 	}
 	ActivateContract(tblid, state, true)
 	return nil
@@ -701,9 +701,8 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 
 // Deactivate sets Active status of the contract in smartVM
 func Deactivate(sc *SmartContract, tblid int64, state int64) error {
-	if !accessContracts(sc, nActivateContract, nDeactivateContract) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract")
-		return fmt.Errorf(`DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
+	if err := validateAccess(`Deactivate`, sc, nActivateContract, nDeactivateContract); err != nil {
+		return err
 	}
 	ActivateContract(tblid, state, false)
 	return nil
@@ -757,11 +756,9 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 
 // RollbackContract performs rollback for the contract
 func RollbackContract(sc *SmartContract, name string) error {
-	if !accessContracts(sc, nNewContract, nImport) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract, "error": errAccessRollbackContract}).Error("Check contract access")
-		return errAccessRollbackContract
+	if err := validateAccess(`RollbackContract`, sc, nNewContract, nImport); err != nil {
+		return err
 	}
-
 	if c := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID)); c != nil {
 		id := c.Block.Info.(*script.ContractInfo).ID
 		if int(id) < len(sc.VM.Children) {
@@ -795,9 +792,8 @@ func DBCollectMetrics() []interface{} {
 
 // RollbackEditContract rollbacks the contract
 func RollbackEditContract(sc *SmartContract) error {
-	if !accessContracts(sc, nEditContract) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackEditContract can be only called from @1EditContract")
-		return fmt.Errorf(`RollbackEditContract can be only called from @1EditContract`)
+	if err := validateAccess(`RollbackEditContract`, sc, nEditContract); err != nil {
+		return err
 	}
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_contracts", sc.TxSmart.EcosystemID))
