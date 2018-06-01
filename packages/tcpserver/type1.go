@@ -194,7 +194,9 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 
 func saveNewTransactions(r *DisRequest) error {
 	binaryTxs := r.Data
+	queue := []model.QueueTx{}
 	log.WithFields(log.Fields{"binaryTxs": binaryTxs}).Debug("trying to save binary txs")
+
 	for len(binaryTxs) > 0 {
 		txSize, err := converter.DecodeLength(&binaryTxs)
 		if err != nil {
@@ -222,12 +224,14 @@ func saveNewTransactions(r *DisRequest) error {
 			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "value": txBinData}).Fatal("cannot hash bindata")
 		}
 
-		queueTx := &model.QueueTx{Hash: hash, Data: txBinData, FromGate: 1}
+		queue = append(queue, &model.QueueTx{Hash: hash, Data: txBinData, FromGate: 1})
 		err = queueTx.Create()
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("error creating QueueTx")
-			return err
-		}
 	}
+
+	if err := model.BatchInsert(queue, []string{"hash", "data", "from_gate"}); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("error creating QueueTx")
+		return err
+	}
+
 	return nil
 }
