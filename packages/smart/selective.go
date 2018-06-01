@@ -31,15 +31,14 @@ import (
 )
 
 func prepareValues(sc *SmartContract, table string, fields []string,
-	ivalues []interface{}) ([]string, map[string]bool, error) {
+	ivalues []interface{}) ([]string, error) {
 
 	if !sc.VDE && sc.Rollback && sc.BlockData == nil {
-		return nil, nil, logError(errUndefBlock, consts.EmptyObject, "Block is undefined")
+		return nil, logError(errUndefBlock, consts.EmptyObject, "Block is undefined")
 	}
 
-	isBytea := GetBytea(sc.DbTransaction, table)
 	for i, v := range ivalues {
-		if len(fields) > i && isBytea[fields[i]] {
+		if len(fields) > i && converter.IsByteColumn(table, fields[i]) {
 			switch v.(type) {
 			case string:
 				if vbyte, err := hex.DecodeString(v.(string)); err == nil {
@@ -51,9 +50,9 @@ func prepareValues(sc *SmartContract, table string, fields []string,
 
 	values, err := converter.InterfaceSliceToStr(ivalues)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return values, isBytea, nil
+	return values, nil
 }
 
 func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) error {
@@ -81,7 +80,7 @@ func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 		cost    int64
 	)
 	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
-	values, isBytea, err := prepareValues(sc, table, fields, ivalues)
+	values, err := prepareValues(sc, table, fields, ivalues)
 	if err != nil {
 		return 0, ``, err
 	}
@@ -115,7 +114,7 @@ func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 		addSQLIns0 = append(addSQLIns0, insField)
 
 		var insVal string
-		if isBytea[fields[i]] && len(values[i]) != 0 {
+		if converter.IsByteColumn(table, fields[i]) && len(values[i]) != 0 {
 			insVal = `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX')`
 		} else if values[i] == `NULL` {
 			insVal = `NULL`
@@ -173,7 +172,7 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
 	logger := sc.GetLogger()
 
-	values, isBytea, err := prepareValues(sc, table, fields, ivalues)
+	values, err := prepareValues(sc, table, fields, ivalues)
 	if err != nil {
 		return 0, ``, err
 	}
@@ -231,7 +230,7 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 		if k == `id` {
 			continue
 		}
-		if (isBytea[k] || converter.InSliceString(k, []string{"hash", "tx_hash", "pub", "tx_hash", "public_key_0", "node_public_key"})) && v != "" {
+		if converter.IsByteColumn(table, k) && v != "" {
 			rollbackInfo[k] = string(converter.BinToHex([]byte(v)))
 		} else {
 			rollbackInfo[k] = v
@@ -251,7 +250,7 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 	rollbackInfoStr = string(jsonRollbackInfo)
 	addSQLUpdate := ""
 	for i := 0; i < len(fields); i++ {
-		if isBytea[fields[i]] && len(values[i]) != 0 {
+		if converter.IsByteColumn(table, fields[i]) && len(values[i]) != 0 {
 			addSQLUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 		} else if fields[i][:1] == "+" {
 			addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + values[i] + `,`
