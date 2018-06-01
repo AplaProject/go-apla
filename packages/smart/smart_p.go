@@ -342,7 +342,7 @@ func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
 
 // NewLang creates new language
 func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int64, err error) {
-	if sc.TxContract.Name != `@1NewLang` {
+	if !accessContracts(sc, "NewLang", "Import") {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("NewLang can be only called from @1NewLang")
 		return 0, fmt.Errorf(`NewLang can be only called from @1NewLang`)
 	}
@@ -355,9 +355,9 @@ func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int6
 	return id, nil
 }
 
-// EditLang edits language
+// EditLanguage edits language
 func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) error {
-	if sc.TxContract.Name != `@1EditLang` {
+	if !accessContracts(sc, "EditLang", "Import") {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditLang can be only called from @1EditLang")
 		return fmt.Errorf(`EditLang can be only called from @1EditLang`)
 	}
