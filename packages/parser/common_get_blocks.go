@@ -33,6 +33,7 @@ import (
 
 // GetBlocks is returning blocks
 func GetBlocks(blockID int64, host string) error {
+	b := blockID
 	blocks, err := getBlocks(blockID, host)
 	if err != nil {
 		return err
@@ -67,7 +68,10 @@ func GetBlocks(blockID int64, host string) error {
 			return utils.ErrInfo(err)
 		}
 	}
-
+	blocks, err = getBlocks(b, host)
+	if err != nil {
+		return err
+	}
 	return processBlocks(blocks)
 }
 

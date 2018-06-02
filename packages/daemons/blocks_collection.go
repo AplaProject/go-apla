@@ -175,6 +175,10 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				banNode(host, block, err)
 				return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
 			}
+			block, err = parser.ProcessBlockWherePrevFromBlockchainTable(rb, true)
+			if err != nil {
+				return err
+			}
 			if err = block.CheckBlock(); err != nil {
 				banNode(host, block, err)
 				return err
