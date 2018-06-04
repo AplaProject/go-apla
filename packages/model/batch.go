@@ -58,7 +58,7 @@ func batchQueue(rows []BatchModel, fields []string) (queries []string, values []
 
 func prepareQuery(rows []BatchModel, fields []string) (query string, values []interface{}, err error) {
 	valueTemplates := make([]string, 0, len(rows))
-	valueArgs := make([]interface{}, 0, len(rows)*len(fields))
+	values = make([]interface{}, 0, len(rows)*len(fields))
 	query = fmt.Sprintf(`INSERT INTO "%s" (%s) VALUES `, rows[0].TableName(), strings.Join(fields, ","))
 
 	rowQSlice := make([]string, 0, len(fields))
@@ -76,7 +76,7 @@ func prepareQuery(rows []BatchModel, fields []string) (query string, values []in
 				return query, values, err
 			}
 
-			valueArgs = append(valueArgs, val)
+			values = append(values, val)
 		}
 	}
 
