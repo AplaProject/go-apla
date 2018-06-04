@@ -161,6 +161,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			}
 
 			if !hashMatched {
+				parser.CleanCache()
 				//it should be fork, replace our previous blocks to ones from the host
 				err := parser.GetBlocks(block.Header.BlockID-1, host)
 				if err != nil {
@@ -174,10 +175,6 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			if err != nil {
 				banNode(host, block, err)
 				return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
-			}
-			block, err = parser.ProcessBlockWherePrevFromBlockchainTable(rb, true)
-			if err != nil {
-				return err
 			}
 			if err = block.CheckBlock(); err != nil {
 				banNode(host, block, err)
