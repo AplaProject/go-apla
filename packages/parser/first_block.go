@@ -36,6 +36,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const firstEcosystemID = 1
+
 // FirstBlockParser is parser wrapper
 type FirstBlockParser struct {
 	*Parser
@@ -59,13 +61,23 @@ func (p *FirstBlockParser) Action() error {
 	logger := p.GetLogger()
 	data := p.TxPtr.(*consts.FirstBlock)
 	keyID := crypto.Address(data.PublicKey)
-	err := model.ExecSchemaEcosystem(nil, 1, keyID, ``, keyID)
+	err := model.ExecSchemaEcosystem(nil, firstEcosystemID, keyID, ``, keyID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return p.ErrInfo(err)
 	}
+
+	sp := &model.StateParameter{}
+	sp.SetTablePrefix(converter.IntToStr(firstEcosystemID))
+	_, err = sp.Get(nil, model.ParamMoneyDigit)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
+		return err
+	}
+	amount := decimal.New(consts.FounderAmount, int32(converter.StrToInt64(sp.Value))).String()
+
 	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
-		keyID, data.PublicKey, decimal.NewFromFloat(consts.FIRST_QDLT).String()).Error
+		keyID, data.PublicKey, amount).Error
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return p.ErrInfo(err)

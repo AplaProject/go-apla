@@ -48,10 +48,15 @@ func GetBlocks(blockID int64, host string) error {
 		return utils.ErrInfo(err)
 	}
 
+	// get starting blockID from slice of blocks
+	if len(blocks) > 0 {
+		blockID = blocks[len(blocks)-1].Header.BlockID
+	}
+
 	// we have the slice of blocks for applying
 	// first of all we should rollback old blocks
 	block := &model.Block{}
-	myRollbackBlocks, err := block.GetBlocksFrom(blockID, "desc", 0)
+	myRollbackBlocks, err := block.GetBlocksFrom(blockID-1, "desc", 0)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting rollback blocks from blockID")
 		return utils.ErrInfo(err)
@@ -82,14 +87,12 @@ func getBlocks(blockID int64, host string) ([]*Block, error) {
 
 	for binaryBlock := range blocksCh {
 		if blockID < 2 {
-			log.WithFields(log.Fields{"type": consts.BlockIsFirst}).Error("block id is smaller than 2")
-			return nil, utils.ErrInfo(errors.New("block_id < 2"))
+			break
 		}
 
 		// if the limit of blocks received from the node was exaggerated
 		if count > int64(rollback) {
-			log.WithFields(log.Fields{"count": count, "max_count": int64(rollback)}).Error("limit of received from the node was exaggerated")
-			return nil, utils.ErrInfo(errors.New("count > variables[rollback_blocks]"))
+			break
 		}
 
 		block, err := ProcessBlockWherePrevFromBlockchainTable(binaryBlock, true)

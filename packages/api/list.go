@@ -42,9 +42,9 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Ent
 		cols = `id,` + converter.EscapeName(data.params[`columns`].(string))
 	}
 
-	count, err := model.GetNextID(nil, strings.Trim(table, `"`))
+	count, err := model.GetRecordsCountTx(nil, strings.Trim(table, `"`))
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting next table id")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
 		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
 	}
 
@@ -60,7 +60,7 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Ent
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &listResult{
-		Count: converter.Int64ToStr(count - 1), List: list,
+		Count: converter.Int64ToStr(count), List: list,
 	}
 	return
 }

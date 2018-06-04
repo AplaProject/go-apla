@@ -801,6 +801,15 @@ func ValidateEmail(email string) bool {
 	return Re.MatchString(email)
 }
 
+func IsByteColumn(table, column string) bool {
+	predefined := map[string]string{"txhash": "history", "pub": "keys", "data": "binaries"}
+	if suffix, ok := predefined[column]; ok {
+		re := regexp.MustCompile(`(?i)^\d+_` + suffix + `$`)
+		return re.MatchString(table)
+	}
+	return false
+}
+
 // SliceReverse reverses the slice of int64
 func SliceReverse(s []int64) []int64 {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
@@ -950,9 +959,11 @@ func ValueToInt(v interface{}) (ret int64, err error) {
 	case int64:
 		ret = val
 	case string:
+		if len(val) == 0 {
+			return 0, nil
+		}
 		ret, err = strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": val}).Error("converting value from string to int")
 			errText := err.Error()
 			if strings.Contains(errText, `:`) {
 				errText = errText[strings.LastIndexByte(errText, ':'):]
@@ -961,6 +972,15 @@ func ValueToInt(v interface{}) (ret int64, err error) {
 			}
 			err = fmt.Errorf(`%s is not a valid integer %s`, val, errText)
 		}
+	default:
+		if v == nil {
+			return 0, nil
+		}
+		err = fmt.Errorf(`%v is not a valid integer`, val)
+	}
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err,
+			"value": fmt.Sprint(v)}).Error("converting value to int")
 	}
 	return
 }

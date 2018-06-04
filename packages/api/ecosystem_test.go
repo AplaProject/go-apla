@@ -184,7 +184,7 @@ func TestEcosystemParam(t *testing.T) {
 		return
 	}
 	err = sendGet(`ecosystemparam/myval`, nil, &ret1)
-	if err != nil && err.Error() != `400 {"error": "", "msg": "" }` {
+	if err != nil && err.Error() != `400 {"error": "E_PARAMNOTFOUND", "msg": "Parameter myval has not been found" , "params": ["myval"]}` {
 		t.Error(err)
 		return
 	}
@@ -198,7 +198,7 @@ func TestAppParams(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	rnd := `rnd` + crypto.RandSeq(3)
-	form := url.Values{`App`: {`1`}, `Name`: {rnd + `1`}, `Value`: {`simple string,index`}, `Conditions`: {`true`}}
+	form := url.Values{`ApplicationId`: {`1`}, `Name`: {rnd + `1`}, `Value`: {`simple string,index`}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewAppParam`, &form))
 
 	form[`Name`] = []string{rnd + `2`}
@@ -227,7 +227,7 @@ func TestAppParams(t *testing.T) {
 	{ var row map
 		row=JSONDecode(AppParam(1, "` + rnd + `2"))
 	    $result = row["par1"] }
-	}`}, "Conditions": {"true"}}
+	}`}, "Conditions": {"true"}, `ApplicationId`: {`1`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	_, msg, err := postTxResult(rnd+`Par`, &form)
@@ -236,7 +236,7 @@ func TestAppParams(t *testing.T) {
 
 	forTest := tplList{{`AppParam(` + rnd + `1, 1, Source: myname)`,
 		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","simple string"],["2","index"]],"source":"myname","types":["text","text"]}}]`},
-		{`AppParam(` + rnd + `2, App: 1)`,
+		{`SetVar(myapp, 1)AppParam(` + rnd + `2, App: #myapp#)`,
 			`[{"tag":"text","text":"{"par1":"value 1", "par2":"value 2"}"}]`}}
 	for _, item := range forTest {
 		var ret contentResult
@@ -244,6 +244,6 @@ func TestAppParams(t *testing.T) {
 		assert.Equal(t, item.want, RawToString(ret.Tree))
 	}
 
-	assert.EqualError(t, sendGet(`appparam/1/myval`, nil, &ret2), `400 {"error": "", "msg": "" }`)
+	assert.EqualError(t, sendGet(`appparam/1/myval`, nil, &ret2), `400 {"error": "E_PARAMNOTFOUND", "msg": "Parameter myval has not been found" , "params": ["myval"]}`)
 	assert.Len(t, ret2.Value, 0)
 }

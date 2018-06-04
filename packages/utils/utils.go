@@ -27,7 +27,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -60,6 +59,10 @@ type BlockData struct {
 	Version      int
 }
 
+func (b BlockData) String() string {
+	return fmt.Sprintf("BlockID:%d, Time:%d, NodePosition %d", b.BlockID, b.Time, b.NodePosition)
+}
+
 var (
 	// ReturnCh is chan for returns
 	ReturnCh chan string
@@ -67,6 +70,8 @@ var (
 	CancelFunc context.CancelFunc
 	// DaemonsCount is number of daemons
 	DaemonsCount int
+
+	ErrNodesUnavailable = errors.New("All nodes unvailabale")
 )
 
 // GetHTTPTextAnswer returns HTTP answer as a string
@@ -439,6 +444,9 @@ func GetNodeKeys() (string, string, error) {
 
 // best host is a host with the biggest last block ID
 func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (string, int64, error) {
+	maxBlockID := int64(-1)
+	var bestHost string
+
 	type blockAndHost struct {
 		host    string
 		blockID int64
@@ -446,12 +454,15 @@ func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 	}
 	c := make(chan blockAndHost, len(hosts))
 
+	ShuffleSlice(hosts)
+
 	var wg sync.WaitGroup
 	for _, h := range hosts {
 		if ctx.Err() != nil {
 			logger.WithFields(log.Fields{"error": ctx.Err(), "type": consts.ContextError}).Error("context error")
-			return "", 0, ctx.Err()
+			return "", maxBlockID, ctx.Err()
 		}
+
 		wg.Add(1)
 
 		go func(host string) {
@@ -467,15 +478,24 @@ func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (str
 	}
 	wg.Wait()
 
-	maxBlockID := int64(-1)
-	var bestHost string
+	var errCount int
 	for i := 0; i < len(hosts); i++ {
 		bl := <-c
 
+		if bl.err != nil {
+			errCount++
+			continue
+		}
+
+		// If blockID is maximal then the current host is the best
 		if bl.blockID > maxBlockID {
 			maxBlockID = bl.blockID
 			bestHost = bl.host
 		}
+	}
+
+	if errCount == len(hosts) {
+		return "", 0, ErrNodesUnavailable
 	}
 
 	return bestHost, maxBlockID, nil
@@ -574,35 +594,13 @@ func UUID() string {
 	return uuid.Must(uuid.NewV4()).String()
 }
 
-// MakeOrCleanDirectory makes directory or removes all files in existing directory
-func MakeOrCleanDirectory(dir string) error {
-	d, err := os.Open(dir)
-	if err != nil {
+// MakeDirectory makes directory if is not exists
+func MakeDirectory(dir string) error {
+	if _, err := os.Stat(dir); err != nil {
 		if os.IsNotExist(err) {
-			if err = os.Mkdir(dir, 0775); err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating directory")
-				return err
-			}
-
-			return nil
+			return os.Mkdir(dir, 0775)
 		}
-
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("opening directory")
 		return err
 	}
-	defer d.Close()
-
-	files, err := d.Readdirnames(-1)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading directory")
-		return err
-	}
-
-	for _, f := range files {
-		if err := os.RemoveAll(path.Join(dir, f)); err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("removing file")
-		}
-	}
-
 	return nil
 }

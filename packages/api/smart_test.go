@@ -24,8 +24,10 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/shopspring/decimal"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type smartParams struct {
@@ -155,7 +157,7 @@ func TestPage(t *testing.T) {
 	assert.NoError(t, postTx(`EditParameter`, &form))
 
 	name = randName(`page`)
-	form = url.Values{"Name": {name}, "Value": {value},
+	form = url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
@@ -167,16 +169,8 @@ func TestPage(t *testing.T) {
 		return
 	}
 	form = url.Values{"Name": {`app` + name}, "Value": {value}, "ValidateCount": {"2"},
-		"ValidateMode": {"1"},
-		"Menu":         {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
-	err = postTx(`NewPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	form = url.Values{"Name": {`app` + name}, "Value": {value}, "ValidateCount": {"2"},
-		"ValidateMode": {"1"},
-		"Menu":         {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"ValidateMode": {"1"}, "ApplicationId": {`1`},
+		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	err = postTx(`NewPage`, &form)
 	if err != nil {
 		t.Error(err)
@@ -190,12 +184,19 @@ func TestPage(t *testing.T) {
 		return
 	}
 	id := ret.Count
+	form = url.Values{"Id": {id}, "ValidateCount": {"2"}, "ValidateMode": {"1"}}
+	err = postTx(`EditPage`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	var row rowResult
 	err = sendGet(`row/pages/`+id, nil, &row)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+
 	if row.Value["validate_mode"] != `1` {
 		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
 		return
@@ -218,22 +219,6 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	err = sendGet(`list/pages`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	id = ret.Count
-	err = sendGet(`row/pages/`+id, nil, &row)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if row.Value["validate_mode"] != `1` {
-		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
-		return
-	}
-
 	form = url.Values{"Id": {id}, "Value": {value}, "ValidateCount": {"1"},
 		"ValidateMode": {"0"}}
 	err = postTx(`EditPage`, &form)
@@ -251,7 +236,7 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	form = url.Values{"Name": {name}, "Value": {value},
+	form = url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
 	assert.NoError(t, postTx(`NewBlock`, &form))
 
@@ -279,7 +264,7 @@ func TestNewTable(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	name := randName(`tbl`)
-	form := url.Values{"Name": {`1_` + name}, "Columns": {`[{"name":"MyName","type":"varchar", 
+	form := url.Values{"Name": {`1_` + name}, "ApplicationId": {"1"}, "Columns": {`[{"name":"MyName","type":"varchar", 
 		"conditions":"true"},
 	  {"name":"Name", "type":"varchar","index": "0", "conditions":"{\"read\":\"true\",\"update\":\"true\"}"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
@@ -295,14 +280,14 @@ func TestNewTable(t *testing.T) {
 			DBUpdate("1_` + name + `", 1, "name", "test value" )
 			$result = DBFind("1_` + name + `").Columns("name").WhereId(1).One("name")
 		}
-	}`}, `Conditions`: {`true`}}
+	}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	_, msg, err := postTxResult(`sub`+name, &url.Values{})
 	assert.NoError(t, err)
 	assert.Equal(t, msg, "test value")
 
-	form = url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
+	form = url.Values{"Name": {name}, "ApplicationId": {"1"}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1", 
 	  "conditions":"true"},
 	{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
 	{"name":"Doc", "type":"json","index": "0", "conditions":"true"},	
@@ -415,6 +400,7 @@ func TestUpdateSysParam(t *testing.T) {
 		{`full_nodes`, `[["", "http://127.0.0.1", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7"]]`},
 		{`full_nodes`, `[["127.0.0.1", "", "100", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
 		{`full_nodes`, `[["127.0.0.1", "http://127.0.0.1", "0", "c1a9e7b2fb8cea2a272e183c3e27e2d59a3ebe613f51873a46885c9201160bd263ef43b583b631edd1284ab42483712fd2ccc40864fe9368115ceeee47a7c7d0"]]`},
+		{"full_nodes", "[]"},
 	}
 	for _, item := range notvalid {
 		assert.Error(t, postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {item.Value}}))
@@ -428,6 +414,19 @@ func TestUpdateSysParam(t *testing.T) {
 		err = postTx(`UpdateSysParam`, &url.Values{`Name`: {item.Name}, `Value`: {sysList.List[0].Value}})
 		assert.NoError(t, err, item.Name, sysList.List[0].Value, sysList.List[0])
 	}
+}
+
+func TestUpdateFullNodesWithEmptyArray(t *testing.T) {
+	require.NoErrorf(t, keyLogin(1), "on login")
+
+	byteNodes := `[]`
+	// byteNodes += `{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"5462687003324713865", "public_key":"4ea2433951ca21e6817426675874b2a6d98e5051c1100eddefa1847b0388e4834facf9abf427c46e2bc6cd5e3277fba533d03db553e499eb368194b3f1e514d4"}]`
+	form := &url.Values{
+		"Name":  {"full_nodes"},
+		"Value": {string(byteNodes)},
+	}
+
+	require.EqualError(t, postTx(`UpdateSysParam`, form), `{"type":"panic","error":"Invalid value"}`)
 }
 
 func TestValidateConditions(t *testing.T) {
@@ -702,4 +701,79 @@ func TestJSON(t *testing.T) {
 	for _, v := range cases {
 		assert.EqualError(t, postTx(contract, &url.Values{"Input": {v.source}}), v.result)
 	}
+}
+
+func TestBytesToString(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	contract := randName("BytesToString")
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + contract + ` {
+			data {
+				File bytes "file"
+			}
+			action {
+				$result = BytesToString($File)
+			}
+		}`},
+		"Conditions": {"true"},
+	}))
+
+	content := crypto.RandSeq(100)
+	_, res, err := postTxMultipart(contract, nil, map[string][]byte{"File": []byte(content)})
+	assert.NoError(t, err)
+	assert.Equal(t, content, res)
+}
+
+func TestMoneyDigits(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	var v paramValue
+	assert.NoError(t, sendGet("/ecosystemparam/money_digit", &url.Values{}, &v))
+
+	contract := randName("MoneyDigits")
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + contract + ` {
+			data {
+				Value money
+			}
+			action {
+				$result = $Value
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}))
+
+	_, result, err := postTxResult(contract, &url.Values{
+		"Value": {"1"},
+	})
+	assert.NoError(t, err)
+
+	d := decimal.New(1, int32(converter.StrToInt(v.Value)))
+	assert.Equal(t, d.StringFixed(0), result)
+}
+
+func TestMemoryLimit(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	contract := randName("Contract")
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + contract + ` {
+			data {
+				Count int "optional"
+			}
+			action {
+				var a array
+				while (true) {
+					$Count = $Count + 1
+					a[Len(a)] = JSONEncode(a)
+				}
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}))
+
+	assert.EqualError(t, postTx(contract, &url.Values{}), `{"type":"panic","error":"Memory limit exceeded"}`)
 }

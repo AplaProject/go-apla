@@ -52,6 +52,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const nodeBanNotificationHeader = "Your node was banned"
+
 type permTable struct {
 	Insert    string `json:"insert"`
 	Update    string `json:"update"`
@@ -89,6 +91,7 @@ var (
 		"DBSelect":    {},
 		"DBUpdate":    {},
 		"DBUpdateExt": {},
+		"SetPubKey":   {},
 	}
 	extendCost = map[string]int64{
 		"AddressToId":        10,
@@ -100,6 +103,8 @@ var (
 		"ContractsList":      10,
 		"CreateColumn":       50,
 		"CreateTable":        100,
+		"CreateLanguage":     50,
+		"EditLanguage":       50,
 		"EcosysParam":        10,
 		"AppParam":           10,
 		"Eval":               10,
@@ -123,7 +128,6 @@ var (
 		"ToLower":            10,
 		"TrimSpace":          10,
 		"TableConditions":    100,
-		"UpdateLang":         10,
 		"ValidateCondition":  30,
 	}
 	// map for table name to parameter with conditions
@@ -204,7 +208,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"RollbackTable":        RollbackTable,
 		"TableConditions":      TableConditions,
 		"RollbackColumn":       RollbackColumn,
-		"UpdateLang":           UpdateLang,
+		"CreateLanguage":       CreateLanguage,
+		"EditLanguage":         EditLanguage,
 		"Activate":             Activate,
 		"Deactivate":           Deactivate,
 		"SetContractWallet":    SetContractWallet,
@@ -221,6 +226,9 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetType":              GetType,
 		"AllowChangeCondition": AllowChangeCondition,
 		"StringToBytes":        StringToBytes,
+		"BytesToString":        BytesToString,
+		"SetPubKey":            SetPubKey,
+		"NewMoney":             NewMoney,
 	}
 
 	switch vt {
@@ -236,6 +244,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
 		f["GetBlock"] = GetBlock
+		f["UpdateNodesBan"] = UpdateNodesBan
 		f["DBSelectMetrics"] = DBSelectMetrics
 		f["DBCollectMetrics"] = DBCollectMetrics
 		ExtendCost(getCostP)
@@ -347,15 +356,24 @@ func contractsList(value string) ([]interface{}, error) {
 // CreateTable is creating smart contract table
 func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) error {
 	var err error
-	if !accessContracts(sc, `NewTable`, `Import`) {
+	if !ContractAccess(sc, `NewTable`, `Import`) {
 		return fmt.Errorf(`CreateTable can be only called from NewTable`)
 	}
+
+	if len(name) == 0 {
+		return fmt.Errorf("The table name cannot be empty")
+	}
+
 	if len(name) > 0 && name[0] == '@' {
 		return fmt.Errorf(`The name of the table cannot begin with @`)
 	}
-	tableName := getDefTableName(sc, name)
 
-	var cols []map[string]interface{}
+	tableName := getDefTableName(sc, name)
+	if model.IsTable(tableName) {
+		return fmt.Errorf("table %s exists", name)
+	}
+
+	var cols []interface{}
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns to JSON")
@@ -365,7 +383,19 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	colsSQL := ""
 	colperm := make(map[string]string)
 	colList := make(map[string]bool)
-	for _, data := range cols {
+	for _, icol := range cols {
+		var data map[string]interface{}
+		switch v := icol.(type) {
+		case string:
+			err = json.Unmarshal([]byte(v), &data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err,
+					"source": v}).Error("unmarshalling columns permissions from json")
+				return err
+			}
+		default:
+			data = v.(map[string]interface{})
+		}
 		colname := strings.ToLower(data[`name`].(string))
 		if colList[colname] {
 			return fmt.Errorf(`There are the same columns`)
@@ -486,6 +516,10 @@ func columnType(colType string) (sqlColType string, err error) {
 
 // DBInsert inserts a record into the specified database table
 func DBInsert(sc *SmartContract, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
+	if tblname == "system_parameters" {
+		return 0, 0, fmt.Errorf("system parameters access denied")
+	}
+
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "insert"); err != nil {
 		return
@@ -664,6 +698,10 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
+	if tblname == "system_parameters" {
+		return 0, fmt.Errorf("system parameters access denied")
+	}
+
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
@@ -782,7 +820,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 			log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1EditTable")
 			return fmt.Errorf(`TableConditions can be only called from EditTable`)
 		}
-	} else if !accessContracts(sc, `NewTable`, `Import`) {
+	} else if !ContractAccess(sc, `NewTable`, `Import`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1NewTable")
 		return fmt.Errorf(`TableConditions can be only called from NewTable or Import`)
 	}
@@ -838,7 +876,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		return nil
 	}
 
-	var cols []map[string]interface{}
+	var cols []interface{}
 	err = json.Unmarshal([]byte(columns), &cols)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": columns}).Error("unmarshalling columns permissions from json")
@@ -852,7 +890,19 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		log.WithFields(log.Fields{"size": len(cols), "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
-	for _, data := range cols {
+	for _, icol := range cols {
+		var data map[string]interface{}
+		switch v := icol.(type) {
+		case string:
+			err = json.Unmarshal([]byte(v), &data)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err,
+					"source": v}).Error("unmarshalling columns permissions from json")
+				return
+			}
+		default:
+			data = v.(map[string]interface{})
+		}
 		if data[`name`] == nil || data[`type`] == nil {
 			log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("wrong column")
 			return fmt.Errorf(`worng column`)
@@ -1061,6 +1111,45 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	}
 
 	return nil
+}
+
+// SetPubKey updates the publis key
+func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err error) {
+	if !accessContracts(sc, `NewUser`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SetPubKey can be only called from NewUser")
+		return 0, fmt.Errorf(`SetPubKey can be only called from NewUser contract`)
+	}
+	if len(pubKey) == consts.PubkeySizeLength*2 {
+		pubKey, err = hex.DecodeString(string(pubKey))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
+			return
+		}
+	}
+	qcost, _, err = sc.selectiveLoggingAndUpd([]string{`pub`}, []interface{}{pubKey},
+		getDefTableName(sc, `keys`), []string{`id`}, []string{converter.Int64ToStr(id)},
+		!sc.VDE && sc.Rollback, true)
+	return qcost, err
+}
+
+func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
+	if !accessContracts(sc, `NewUser`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("NewMoney can be only called from NewUser")
+		return fmt.Errorf(`NewMoney can be only called from NewUser contract`)
+	}
+	_, _, err = sc.selectiveLoggingAndUpd([]string{`id`, `amount`}, []interface{}{id, amount},
+		getDefTableName(sc, `keys`), nil, nil, !sc.VDE && sc.Rollback, false)
+	if err == nil {
+		var block int64
+		if sc.BlockData != nil {
+			block = sc.BlockData.BlockID
+		}
+		_, _, err = sc.selectiveLoggingAndUpd([]string{`sender_id`, `recipient_id`, `amount`,
+			`comment`, `block_id`, `txhash`},
+			[]interface{}{0, id, amount, comment, block, sc.TxHash},
+			getDefTableName(sc, `history`), nil, nil, !sc.VDE && sc.Rollback, false)
+	}
+	return err
 }
 
 // PermColumn is contract func
@@ -1288,6 +1377,105 @@ func UpdateCron(sc *SmartContract, id int64) error {
 	return nil
 }
 
+func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
+	now := time.Unix(timestamp, 0)
+
+	badBlocks := &model.BadBlocks{}
+	banRequests, err := badBlocks.GetNeedToBanNodes(now, syspar.GetIncorrectBlocksPerDay())
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get nodes need to be banned")
+		return err
+	}
+
+	fullNodes := syspar.GetNodes()
+	var updFullNodes bool
+	for i, fullNode := range fullNodes {
+		// Removing ban in case ban time has already passed
+		if fullNode.UnbanTime.Unix() > 0 && now.After(fullNode.UnbanTime) {
+			fullNode.UnbanTime = time.Unix(0, 0)
+			updFullNodes = true
+		}
+
+		// Setting ban time if we have ban requests for the current node from 51% of all nodes.
+		// Ban request is mean that node have added more or equal N(system parameter) of bad blocks
+		for _, banReq := range banRequests {
+			if banReq.ProducerNodeId == fullNode.KeyID && banReq.Count >= int64((len(fullNodes)/2)+1) {
+				fullNode.UnbanTime = now.Add(syspar.GetNodeBanTime())
+
+				blocks, err := badBlocks.GetNodeBlocks(fullNode.KeyID, now)
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node bad blocks for removing")
+					return err
+				}
+
+				for _, b := range blocks {
+					if _, err := DBUpdate(smartContract, "@1_bad_blocks", b.ID, "deleted", "1"); err != nil {
+						log.WithFields(log.Fields{"type": consts.DBError, "id": b.ID, "error": err}).Error("deleting bad block")
+						return err
+					}
+				}
+
+				banMessage := fmt.Sprintf(
+					"%d/%d nodes voted for ban with %d or more blocks each",
+					banReq.Count,
+					len(fullNodes),
+					syspar.GetIncorrectBlocksPerDay(),
+				)
+
+				_, _, err = DBInsert(
+					smartContract,
+					"@1_node_ban_logs",
+					"node_id,banned_at,ban_time,reason",
+					fullNode.KeyID,
+					now.Format(time.RFC3339),
+					int64(syspar.GetNodeBanTime()/time.Millisecond), // in ms
+					banMessage,
+				)
+
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "id": banReq.ProducerNodeId, "error": err}).Error("inserting log to node_ban_log")
+					return err
+				}
+
+				_, _, err = DBInsert(
+					smartContract,
+					"notifications",
+					"recipient->member_id,notification->type,notification->header,notification->body",
+					fullNode.KeyID,
+					model.NotificationTypeSingle,
+					nodeBanNotificationHeader,
+					banMessage,
+				)
+
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "id": banReq.ProducerNodeId, "error": err}).Error("sending notification to node owner")
+					return err
+				}
+
+				updFullNodes = true
+			}
+		}
+
+		fullNodes[i] = fullNode
+	}
+
+	if updFullNodes {
+		data, err := json.Marshal(fullNodes)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling full nodes")
+			return err
+		}
+
+		_, err = UpdateSysParam(smartContract, syspar.FullNodes, string(data), "")
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating full nodes")
+			return err
+		}
+	}
+
+	return nil
+}
+
 func GetBlock(blockID int64) (map[string]int64, error) {
 	block := model.Block{}
 	ok, err := block.Get(blockID)
@@ -1360,4 +1548,9 @@ func GetType(val interface{}) string {
 // StringToBytes converts string to bytes
 func StringToBytes(src string) []byte {
 	return []byte(src)
+}
+
+// BytesToString converts bytes to string
+func BytesToString(src []byte) string {
+	return string(src)
 }

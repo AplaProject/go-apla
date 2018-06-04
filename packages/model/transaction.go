@@ -34,9 +34,15 @@ func GetAllTransactions(limit int) (*[]Transaction, error) {
 }
 
 // GetAllUnusedTransactions is retrieving all unused transactions
-func GetAllUnusedTransactions() ([]*Transaction, error) {
+func GetAllUnusedTransactions(limit int) ([]*Transaction, error) {
 	var transactions []*Transaction
-	if err := DBConn.Where("used = ?", "0").Order("high_rate DESC").Find(&transactions).Error; err != nil {
+
+	query := DBConn.Where("used = ?", "0").Order("high_rate DESC")
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	if err := query.Find(&transactions).Error; err != nil {
 		return nil, err
 	}
 	return transactions, nil
@@ -143,7 +149,7 @@ func (t *Transaction) Create() error {
 
 // IncrementTxAttemptCount increases attempt column
 func IncrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte) (int64, error) {
-	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt>5 then 1 else 0 end where hash = ?",
+	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt>10 then 1 else 0 end where hash = ?",
 		transactionHash)
 	return query.RowsAffected, query.Error
 }

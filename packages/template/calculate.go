@@ -23,6 +23,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/shopspring/decimal"
 )
 
@@ -48,8 +49,9 @@ type token struct {
 type opFunc func()
 
 var (
-	errExp = errors.New(`wrong expression`)
-	errDiv = errors.New(`dividing by zero`)
+	errExp            = errors.New(`wrong expression`)
+	errDiv            = errors.New(`dividing by zero`)
+	errPrecIsNegative = errors.New(`precision is negative`)
 )
 
 func parsing(input string, itype int) (*[]token, error) {
@@ -129,7 +131,7 @@ func parsing(input string, itype int) (*[]token, error) {
 	return &tokens, nil
 }
 
-func calcExp(tokens []token, resType, prec int) string {
+func calcExp(tokens []token, resType int, prec string) string {
 	var top int
 
 	stack := make([]interface{}, 0, 16)
@@ -208,23 +210,32 @@ func calcExp(tokens []token, resType, prec int) string {
 	if len(stack) != 1 {
 		return errExp.Error()
 	}
-	if prec > 0 {
+	if prec != "" {
+		precInt := converter.StrToInt(prec)
+		if resType != expInt {
+			if precInt < 0 {
+				return errPrecIsNegative.Error()
+			}
+		}
 		if resType == expFloat {
-			return strconv.FormatFloat(stack[0].(float64), 'f', prec, 64)
+			return decimal.NewFromFloat(stack[0].(float64)).Round(int32(precInt)).String()
 		}
 		if resType == expMoney {
-			money := fmt.Sprint(stack[0])
-			if len(money) < prec+1 {
-				money = strings.Repeat(`0`, prec+1-len(money)) + money
-			}
-			money = money[:len(money)-prec] + `.` + money[len(money)-prec:]
-			return strings.TrimRight(strings.TrimRight(money, `0`), `.`)
+			money := stack[0].(decimal.Decimal)
+			return money.Round(int32(precInt)).String()
 		}
+	}
+	if resType == expFloat {
+		decStr, _ := decimal.NewFromString(fmt.Sprintf("%f", stack[0].(float64)))
+		return decStr.String()
+	}
+	if resType == expMoney {
+		return stack[0].(decimal.Decimal).String()
 	}
 	return fmt.Sprint(stack[0])
 }
 
-func calculate(exp, etype string, prec int) string {
+func calculate(exp, etype, prec string) string {
 	var resType int
 	if len(etype) == 0 && strings.Contains(exp, `.`) {
 		etype = `float`

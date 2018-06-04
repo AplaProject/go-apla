@@ -48,6 +48,8 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return nil
 	}
 
+	QueueParserBlocks(ctx, d)
+
 	DBLock()
 	defer DBUnlock()
 
@@ -116,6 +118,17 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		Version:      consts.BLOCK_VERSION,
 	}
 
+	timeToGenerate, err = blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition)
+	if err != nil {
+		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
+		return err
+	}
+
+	if !timeToGenerate {
+		d.logger.WithFields(log.Fields{"type": consts.JustWaiting}).Debug("not my generation time")
+		return nil
+	}
+
 	blockBin, err := generateNextBlock(header, trs, NodePrivateKey, prevBlock.Hash)
 	if err != nil {
 		return err
@@ -125,6 +138,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	if err != nil {
 		return err
 	}
+	log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Error("Generated block ID")
 
 	go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockID)
 	return nil
@@ -148,7 +162,7 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 		return nil, err
 	}
 
-	trs, err := model.GetAllUnusedTransactions()
+	trs, err := model.GetAllUnusedTransactions(syspar.GetMaxTxCount())
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
 		return nil, err

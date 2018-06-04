@@ -32,8 +32,8 @@ const NETWORK_ID = 1
 // DEFAULT_TCP_PORT used when port number missed in host addr
 const DEFAULT_TCP_PORT = 7078
 
-// FIRST_QDLT is default amount
-const FIRST_QDLT = 1e+26
+// FounderAmount is the starting amount of founder
+const FounderAmount = 50000
 
 // EGS_DIGIT money_digit for EGS 1000000000000000000
 const EGS_DIGIT = 18
@@ -88,6 +88,10 @@ const BlockSize = 16
 
 // HashSize is size of hash
 const HashSize = 32
+
+const AvailableBCGap = 4
+
+const DefaultNodesConnectDelay = 6
 
 const (
 	TxTypeFirstBlock  = 1

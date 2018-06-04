@@ -27,7 +27,11 @@ import (
 )
 
 func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
+	route.Handle(
+		method,
+		consts.ApiPath+pattern,
+		DefaultHandler(method, pattern, processParams(pars), append([]apiHandle{blockchainUpdatingState}, handler...)...),
+	)
 }
 
 // Route sets routing pathes
@@ -39,7 +43,8 @@ func Route(route *hr.Router) {
 		methodRoute(route, `POST`, pattern, params, handler...)
 	}
 	contractHandlers := &contractHandlers{
-		requests: tx.NewRequestBuffer(consts.TxRequestExpire),
+		requests:      tx.NewRequestBuffer(consts.TxRequestExpire),
+		multiRequests: tx.NewMultiRequestBuffer(consts.TxRequestExpire),
 	}
 
 	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
@@ -70,16 +75,19 @@ func Route(route *hr.Router) {
 	get(`version`, ``, getVersion)
 	get(`avatar/:ecosystem/:member`, ``, getAvatar)
 	get(`config/:option`, ``, getConfigOption)
+	get("ecosystemname", "?id:int64", getEcosystemName)
 	post(`content/source/:name`, ``, authWallet, getSource)
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
 	post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
-	post(`content/hash/:name`, ``, authWallet, getPageHash)
+	post(`content/hash/:name`, ``, getPageHash)
 	post(`vde/create`, ``, authWallet, vdeCreate)
 	post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
 	post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
+	post(`prepareMultiple`, `data:string`, authWallet, contractHandlers.prepareMultipleContract)
+	post(`txstatusMultiple`, `data:string`, authWallet, txstatusMulti)
 	post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
+	post(`contractMultiple/:request_id`, `data:string`, authWallet, blockchainUpdatingState, contractHandlers.contractMulti)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
-	post(`signtest/`, `forsign private:string`, signTest)
 	post(`test/:name`, ``, getTest)
 	post(`content`, `template ?source:string`, jsonContent)
 	post(`updnotificator`, `ids:string`, updateNotificator)

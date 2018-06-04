@@ -2,12 +2,14 @@ package model
 
 // Page is model
 type Page struct {
-	tableName  string
-	ID         int64  `gorm:"primary_key;not null" json:"id"`
-	Name       string `gorm:"not null" json:"name"`
-	Value      string `gorm:"not null" json:"value"`
-	Menu       string `gorm:"not null;size:255" json:"menu"`
-	Conditions string `gorm:"not null" json:"conditions"`
+	tableName     string
+	ID            int64  `gorm:"primary_key;not null" json:"id"`
+	Name          string `gorm:"not null" json:"name"`
+	Value         string `gorm:"not null" json:"value"`
+	Menu          string `gorm:"not null;size:255" json:"menu"`
+	ValidateCount int64  `gorm:"not null" json:"nodesCount"`
+	AppID         int64  `gorm:"column:app_id;not null" json:"app_id"`
+	Conditions    string `gorm:"not null" json:"conditions"`
 }
 
 // SetTablePrefix is setting table prefix

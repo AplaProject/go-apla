@@ -29,6 +29,10 @@ func (r *Request) GetValue(key string) string {
 	return r.values[key]
 }
 
+func (r *Request) AllValues() map[string]string {
+	return r.values
+}
+
 func (r *Request) WriteFile(key, mimeType string, reader io.ReadCloser) (*FileHeader, error) {
 	file, err := ioutil.TempFile(conf.Config.TempDir, "")
 	if err != nil {
@@ -96,6 +100,10 @@ type RequestBuffer struct {
 	requestExpire time.Duration
 
 	requests map[string]*Request
+}
+
+func (rb *RequestBuffer) ExpireDuration() time.Duration {
+	return rb.requestExpire
 }
 
 func (rb *RequestBuffer) NewRequest(contract string) *Request {
