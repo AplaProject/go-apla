@@ -145,37 +145,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		publicKey = account.PublicKey
 	} else {
-		// TODO: вынести в отдельную функцию
-		// 	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
-		// 	if err != nil || len(NodePrivateKey) < 1 {
-		// 		if err == nil {
-		// 			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
-		// 		}
-		// 		return err
-		// 	}
-
-		// 	hexPubKey := hex.EncodeToString(pubkey)
-		// 	params := make([]byte, 0)
-		// 	params = append(append(params, converter.EncodeLength(int64(len(hexPubKey)))...), hexPubKey...)
-
-		// 	vm := smart.GetVM(false, 0)
-		// 	contract := smart.VMGetContract(vm, "NewUser", 1)
-		// 	info := contract.Block.Info.(*script.ContractInfo)
-
-		// 	err = tx.BuildTransaction(tx.SmartContract{
-		// 		Header: tx.Header{
-		// 			Type:        int(info.ID),
-		// 			Time:        time.Now().Unix(),
-		// 			EcosystemID: 1,
-		// 			KeyID:       conf.Config.KeyID,
-		// 			NetworkID:   consts.NETWORK_ID,
-		// 		},
-		// 		SignedBy: smart.PubToID(NodePublicKey),
-		// 		Data:     params,
-		// 	}, NodePrivateKey, NodePublicKey, string(hexPubKey))
-		// 	if err != nil {
-		// 		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
-		// 	}
+		contract := getContract(r, "NewUser")
+		createTx(contract, hex.EncodeToString(publicKey))
 	}
 
 	// TODO: может удалить?

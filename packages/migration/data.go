@@ -87,7 +87,7 @@ var (
 		"current_version" varchar(50) NOT NULL DEFAULT '0.0.1',
 		"sent" smallint NOT NULL DEFAULT '0'
 		);
-		
+
 		DROP TABLE IF EXISTS "queue_blocks"; CREATE TABLE "queue_blocks" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"full_node_id" bigint NOT NULL DEFAULT '0',

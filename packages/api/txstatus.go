@@ -42,27 +42,25 @@ type txstatusResult struct {
 	Result  string         `json:"result"`
 }
 
-func txstatusHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
+func getTxStatus(w http.ResponseWriter, r *http.Request, hash string) (*txstatusResult, bool) {
+	var status txstatusResult
 	logger := getLogger(r)
-
-	status := &txstatusResult{}
-
-	if _, err := hex.DecodeString(params[keyHash]); err != nil {
+	if _, err := hex.DecodeString(hash); err != nil {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding tx hash from hex")
-		errorResponse(w, errHashWrong, http.StatusBadRequest)
-		return
+		errorResponse(w, errWrongHash, http.StatusBadRequest)
+		return nil, false
 	}
 	ts := &model.TransactionStatus{}
-	hash := []byte(converter.HexToBin(params[keyHash]))
-	if found, err := ts.Get(hash); err != nil {
+	found, err := ts.Get([]byte(converter.HexToBin(hash)))
+	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("getting transaction status by hash")
 		errorResponse(w, err, http.StatusInternalServerError)
-		return
-	} else if !found {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "key": hash}).Error("getting transaction status by hash")
-		errorResponse(w, `E_HASHNOTFOUND`, http.StatusBadRequest)
-		return
+		return nil, false
+	}
+	if !found {
+		logger.WithFields(log.Fields{"type": consts.NotFound, "key": []byte(converter.HexToBin(hash))}).Error("getting transaction status by hash")
+		errorResponse(w, errHashNotFound, http.StatusBadRequest)
+		return nil, false
 	}
 	if ts.BlockID > 0 {
 		status.BlockID = converter.Int64ToStr(ts.BlockID)
@@ -76,6 +74,62 @@ func txstatusHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	return &status, true
+}
 
+type multiTxStatusResult struct {
+	Results map[string]*txstatusResult `json:"results"`
+}
+
+type multiTxStatusForm struct {
+	Form
+	Data string `schema:"data"`
+}
+
+func (f *multiTxStatusForm) Hashes() ([]string, error) {
+	var result struct {
+		Hashes []string `json:"hashes"`
+	}
+
+	if err := json.Unmarshal([]byte(f.Data), &result); err != nil {
+		return nil, err
+	}
+
+	return result.Hashes, nil
+}
+
+func txstatusHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	status, ok := getTxStatus(w, r, params[keyHash])
+	if !ok {
+		return
+	}
 	jsonResponse(w, status)
+}
+
+func txstatusMultiHandler(w http.ResponseWriter, r *http.Request) {
+	form := &multiTxStatusForm{}
+	if ok := ParseForm(w, r, form); !ok {
+		return
+	}
+
+	result := &multiTxStatusResult{}
+	result.Results = map[string]*txstatusResult{}
+
+	hashes, err := form.Hashes()
+	if err != nil {
+		errorResponse(w, errHashWrong, http.StatusBadRequest)
+		return
+	}
+
+	for _, hash := range hashes {
+		status, ok := getTxStatus(w, r, hash)
+		if !ok {
+			return
+		}
+		result.Results[hash] = status
+	}
+
+	jsonResponse(w, result)
 }

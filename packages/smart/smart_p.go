@@ -63,7 +63,6 @@ var (
 		"Contains":          "extend_cost_contains",
 		"Replace":           "extend_cost_replace",
 		"Join":              "extend_cost_join",
-		"UpdateLang":        "extend_cost_update_lang",
 		"Size":              "extend_cost_size",
 		"Substr":            "extend_cost_substr",
 		"ContractsList":     "extend_cost_contracts_list",
@@ -184,10 +183,11 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			}
 			checked = true
 		case syspar.FullNodes:
-			if err := json.Unmarshal([]byte(value), &[]syspar.FullNode{}); err != nil {
+			fnodes := []syspar.FullNode{}
+			if err := json.Unmarshal([]byte(value), &fnodes); err != nil {
 				break check
 			}
-			checked = true
+			checked = len(fnodes) > 0
 		default:
 			if strings.HasPrefix(name, `extend_cost_`) {
 				ok = ival >= 0
@@ -335,9 +335,39 @@ func HexToBytes(hexdata string) ([]byte, error) {
 }
 
 // LangRes returns the language resource
-func LangRes(sc *SmartContract, idRes, lang string) string {
-	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang, sc.VDE)
+func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
+	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), int(appID), lang, sc.VDE)
 	return ret
+}
+
+// NewLang creates new language
+func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int64, err error) {
+	if !accessContracts(sc, "NewLang", "Import") {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("NewLang can be only called from @1NewLang")
+		return 0, fmt.Errorf(`NewLang can be only called from @1NewLang`)
+	}
+	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	if _, id, err = DBInsert(sc, `@`+idStr+"_languages", "name,res,app_id", name, trans, appID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
+		return 0, err
+	}
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
+	return id, nil
+}
+
+// EditLanguage edits language
+func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) error {
+	if !accessContracts(sc, "EditLang", "Import") {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditLang can be only called from @1EditLang")
+		return fmt.Errorf(`EditLang can be only called from @1EditLang`)
+	}
+	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	if _, err := DBUpdate(sc, `@`+idStr+"_languages", id, "name,res,app_id", name, trans, appID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
+		return err
+	}
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
+	return nil
 }
 
 // GetContractByName returns id of the contract with this name
@@ -551,7 +581,7 @@ func RollbackEcosystem(sc *SmartContract) error {
 	}
 
 	if rollbackTx.TableID == "1" {
-		rbTables = append(rbTables, `system_parameters`, `ecosystems`)
+		rbTables = append(rbTables, `node_ban_logs`, `bad_blocks`, `system_parameters`, `ecosystems`)
 	}
 
 	for _, name := range rbTables {
@@ -640,11 +670,6 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 		return nil
 	}
 	return model.AlterTableDropColumn(getDefTableName(sc, tableName), name)
-}
-
-// UpdateLang updates language resource
-func UpdateLang(sc *SmartContract, name, trans string) {
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans, sc.VDE)
 }
 
 // Size returns the length of the string

@@ -63,13 +63,14 @@ func contractsHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: перенести запрос в модели
 	// table := getPrefix(data) + `_contracts`
 	table := fmt.Sprintf("%d_contracts", client.EcosystemID)
-	count, err := model.GetNextID(nil, table)
+	count, err := model.GetRecordsCountTx(nil, table)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
 		errorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
+	// TODO: перенести запрос в модели
 	list, err := model.GetAll(`select * from "`+table+`" order by id desc`+
 		fmt.Sprintf(` offset %d `, form.Offset), form.Limit)
 	if err != nil {
@@ -89,7 +90,7 @@ func contractsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonResponse(w, &listResult{
-		Count: converter.Int64ToStr(count - 1),
+		Count: converter.Int64ToStr(count),
 		List:  list,
 	})
 	return

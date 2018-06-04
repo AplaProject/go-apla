@@ -23,8 +23,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/mux"
-
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -32,14 +30,16 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/template"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
 type contentResult struct {
-	Menu     string          `json:"menu,omitempty"`
-	MenuTree json.RawMessage `json:"menutree,omitempty"`
-	Title    string          `json:"title,omitempty"`
-	Tree     json.RawMessage `json:"tree"`
+	Menu       string          `json:"menu,omitempty"`
+	MenuTree   json.RawMessage `json:"menutree,omitempty"`
+	Title      string          `json:"title,omitempty"`
+	Tree       json.RawMessage `json:"tree"`
+	NodesCount int64           `json:"nodesCount,omitempty"`
 }
 
 type hashResult struct {
@@ -54,6 +54,7 @@ const (
 func initVars(r *http.Request) *map[string]string {
 	client := getClient(r)
 
+	r.ParseForm()
 	vars := make(map[string]string)
 	for name := range r.Form {
 		vars[name] = r.FormValue(name)
@@ -120,6 +121,7 @@ func getPage(w http.ResponseWriter, r *http.Request) (result *contentResult, ok 
 		defer wg.Done()
 
 		vars := initVars(r)
+		(*vars)["app_id"] = converter.Int64ToStr(page.AppID)
 
 		ret := template.Template2JSON(page.Value, &timeout, vars)
 		if timeout {
@@ -130,9 +132,10 @@ func getPage(w http.ResponseWriter, r *http.Request) (result *contentResult, ok 
 			return
 		}
 		result = &contentResult{
-			Tree:     ret,
-			Menu:     page.Menu,
-			MenuTree: retmenu,
+			Tree:       ret,
+			Menu:       page.Menu,
+			MenuTree:   retmenu,
+			NodesCount: page.ValidateCount,
 		}
 		success <- true
 	}()

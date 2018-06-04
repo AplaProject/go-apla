@@ -18,11 +18,13 @@ package script
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -46,6 +48,8 @@ const (
 
 	maxArrayIndex = 1000000
 	maxMapCount   = 100000
+	maxCallDepth  = 1000
+	memoryLimit   = 128 << 20 // 128 MB
 )
 
 var sysVars = map[string]struct{}{
@@ -68,6 +72,8 @@ var sysVars = map[string]struct{}{
 	`role_id`:           {},
 }
 
+var ErrMemoryLimit = errors.New("Memory limit exceeded")
+
 // VMError represents error of VM
 type VMError struct {
 	Type  string `json:"type"`
@@ -81,14 +87,17 @@ type blockStack struct {
 
 // RunTime is needed for the execution of the byte-code
 type RunTime struct {
-	stack  []interface{}
-	blocks []*blockStack
-	vars   []interface{}
-	extend *map[string]interface{}
-	vm     *VM
-	cost   int64
-	err    error
-	unwrap bool
+	stack     []interface{}
+	blocks    []*blockStack
+	vars      []interface{}
+	extend    *map[string]interface{}
+	vm        *VM
+	cost      int64
+	err       error
+	unwrap    bool
+	callDepth uint16
+	mem     int64
+	memVars map[interface{}]int64
 }
 
 func isSysVar(name string) bool {
@@ -102,6 +111,16 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 	var (
 		count, in int
 	)
+
+	if rt.callDepth >= maxCallDepth {
+		return fmt.Errorf("max call depth")
+	}
+
+	rt.callDepth++
+	defer func() {
+		rt.callDepth--
+	}()
+
 	size := len(rt.stack)
 	in = rt.vm.getInParams(obj)
 	if rt.unwrap && cmd == cmdCallVari && size > 1 &&
@@ -190,7 +209,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 				pars[count-i] = reflect.ValueOf(rt.stack[size-i+auto])
 			}
 			if !pars[count-i].IsValid() {
-				pars[count-i] = reflect.Zero(reflect.TypeOf(map[string]interface{}{}))
+				pars[count-i] = reflect.Zero(reflect.TypeOf(int64(0)))
 			}
 		}
 		if i > 0 {
@@ -262,6 +281,73 @@ func (rt *RunTime) extendFunc(name string) error {
 		}
 	}
 	return nil
+}
+
+func calcMem(v interface{}) (mem int64) {
+	rv := reflect.ValueOf(v)
+
+	switch rv.Kind() {
+	case reflect.Bool:
+		mem = 1
+	case reflect.Int8, reflect.Uint8:
+		mem = 1
+	case reflect.Int16, reflect.Uint16:
+		mem = 2
+	case reflect.Int32, reflect.Uint32:
+		mem = 4
+	case reflect.Int64, reflect.Uint64, reflect.Int, reflect.Uint:
+		mem = 8
+	case reflect.Float32:
+		mem = 4
+	case reflect.Float64:
+		mem = 8
+	case reflect.String:
+		mem += int64(rv.Len())
+	case reflect.Slice, reflect.Array:
+		mem = 12
+		for i := 0; i < rv.Len(); i++ {
+			mem += calcMem(rv.Index(i).Interface())
+		}
+	case reflect.Map:
+		mem = 4
+		for _, k := range rv.MapKeys() {
+			mem += calcMem(k.Interface())
+			mem += calcMem(rv.MapIndex(k).Interface())
+		}
+	default:
+		mem = int64(unsafe.Sizeof(v))
+	}
+
+	return
+}
+
+func (rt *RunTime) setExtendVar(k string, v interface{}) {
+	(*rt.extend)[k] = v
+	rt.recalcMemExtendVar(k)
+}
+
+func (rt *RunTime) recalcMemExtendVar(k string) {
+	mem := calcMem((*rt.extend)[k])
+	rt.mem += mem - rt.memVars[k]
+	rt.memVars[k] = mem
+}
+
+func (rt *RunTime) addVar(v interface{}) {
+	rt.vars = append(rt.vars, v)
+	mem := calcMem(v)
+	rt.memVars[len(rt.vars)-1] = mem
+	rt.mem += mem
+}
+
+func (rt *RunTime) setVar(k int, v interface{}) {
+	rt.vars[k] = v
+	rt.recalcMemVar(k)
+}
+
+func (rt *RunTime) recalcMemVar(k int) {
+	mem := calcMem(rt.vars[k])
+	rt.mem += mem - rt.memVars[k]
+	rt.memVars[k] = mem
 }
 
 func valueToBool(v interface{}) bool {
@@ -346,7 +432,12 @@ func (rt *RunTime) Cost() int64 {
 
 // RunInit creates a new RunTime for the virtual machine
 func (vm *VM) RunInit(cost int64) *RunTime {
-	rt := RunTime{stack: make([]interface{}, 0, 1024), vm: vm, cost: cost}
+	rt := RunTime{
+		stack:   make([]interface{}, 0, 1024),
+		vm:      vm,
+		cost:    cost,
+		memVars: make(map[interface{}]int64),
+	}
 	return &rt
 }
 
@@ -386,7 +477,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				value = make([]interface{}, 0, len(rt.vars)+1)
 			}
 		}
-		rt.vars = append(rt.vars, value)
+		rt.addVar(value)
 	}
 	if namemap != nil {
 		for key, item := range namemap {
@@ -397,9 +488,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			for i, value := range item {
 				if params.Variadic && i >= len(params.Params)-1 {
 					off := varoff + params.Offset[len(params.Params)-1]
-					rt.vars[off] = append(rt.vars[off].([]interface{}), value)
+					rt.setVar(off, append(rt.vars[off].([]interface{}), value))
 				} else {
-					rt.vars[varoff+params.Offset[i]] = value
+					rt.setVar(varoff+params.Offset[i], value)
 				}
 			}
 		}
@@ -419,6 +510,12 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Warn("paid CPU resource is over")
 			return 0, fmt.Errorf(`paid CPU resource is over`)
 		}
+
+		if rt.mem > memoryLimit {
+			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Warn(ErrMemoryLimit)
+			return 0, ErrMemoryLimit
+		}
+
 		cmd := block.Code[ci]
 		var bin interface{}
 		size := len(rt.stack)
@@ -477,20 +574,22 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 							rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("modifying system variable")
 							return 0, err
 						}
-						(*rt.extend)[(*item).Obj.Value.(string)] = rt.stack[len(rt.stack)-count+ivar]
+						rt.setExtendVar((*item).Obj.Value.(string), rt.stack[len(rt.stack)-count+ivar])
 					}
 				} else {
 					var i int
 					for i = len(rt.blocks) - 1; i >= 0; i-- {
 						if item.Owner == rt.blocks[i].Block {
+							k := rt.blocks[i].Offset + item.Obj.Value.(int)
 							switch rt.blocks[i].Block.Vars[item.Obj.Value.(int)].String() {
 							case Decimal:
-								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)], err = ValueToDecimal(rt.stack[len(rt.stack)-count+ivar])
+								v, err := ValueToDecimal(rt.stack[len(rt.stack)-count+ivar])
 								if err != nil {
 									return 0, err
 								}
+								rt.setVar(k, v)
 							default:
-								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = rt.stack[len(rt.stack)-count+ivar]
+								rt.setVar(k, rt.stack[len(rt.stack)-count+ivar])
 							}
 							break
 						}
@@ -614,6 +713,17 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 		case cmdSetIndex:
 			itype := reflect.TypeOf(rt.stack[size-3]).String()
+			indexInfo := cmd.Value.(*IndexInfo)
+			var indexKey int
+			if indexInfo.Owner != nil {
+				for i := len(rt.blocks) - 1; i >= 0; i-- {
+					if indexInfo.Owner == rt.blocks[i].Block {
+						indexKey = rt.blocks[i].Offset + indexInfo.VarOffset
+						break
+					}
+				}
+			}
+
 			switch {
 			case itype[:3] == `map`:
 				if len(rt.stack[size-3].(map[string]interface{})) > maxMapCount {
@@ -644,12 +754,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 						if indexInfo.Owner == nil { // Extend variable $varname
 							(*rt.extend)[indexInfo.Extend] = slice
 						} else {
-							for i := len(rt.blocks) - 1; i >= 0; i-- {
-								if indexInfo.Owner == rt.blocks[i].Block {
-									rt.vars[rt.blocks[i].Offset+indexInfo.VarOffset] = slice
-									break
-								}
-							}
+							rt.vars[indexKey] = slice
 						}
 						rt.stack[size-3] = slice
 					}
@@ -662,6 +767,12 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_type": itype}).Error("type does not support indexing")
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
+			}
+
+			if indexInfo.Owner == nil {
+				rt.recalcMemExtendVar(indexInfo.Extend)
+			} else {
+				rt.recalcMemVar(indexKey)
 			}
 		case cmdUnwrapArr:
 			if reflect.TypeOf(rt.stack[size-1]).String() == `[]interface {}` {
@@ -1022,7 +1133,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			rt.vm.logger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "stack": string(debug.Stack())}).Error("runtime panic error")
+			rt.vm.logger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error_info": r, "stack": string(debug.Stack())}).Error("runtime panic error")
 			err = fmt.Errorf(`runtime panic error`)
 		}
 	}()

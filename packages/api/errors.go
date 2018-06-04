@@ -41,6 +41,7 @@ const (
 	errInvalidWallet   errorType = "E_INVALIDWALLET"
 	errNotFound        errorType = "E_NOTFOUND"
 	errNotInstalled    errorType = "E_NOTINSTALLED"
+	errParamNotFound   errorType = "E_PARAMNOTFOUND"
 	errPermission      errorType = "E_PERMISSION"
 	errQuery           errorType = "E_QUERY"
 	errRecovered       errorType = "E_RECOVERED"
@@ -59,6 +60,8 @@ const (
 	errVDECreated      errorType = "E_VDECREATED"
 	errRequestNotFound errorType = "E_REQUESTNOTFOUND"
 	errCheckRole       errorType = "E_CHECKROLE"
+	errUpdating        errorType = "E_UPDATING"
+	errStopping        errorType = "E_STOPPING"
 )
 
 var (
@@ -76,6 +79,7 @@ var (
 		errInvalidWallet:   "Wallet %s is not valid",
 		errNotFound:        "Page not found",
 		errNotInstalled:    "Apla is not installed",
+		errParamNotFound:   "Parameter %s has not been found",
 		errPermission:      "Permission denied",
 		errQuery:           "DB query is wrong",
 		errRecovered:       "API recovered",
@@ -94,6 +98,8 @@ var (
 		errVDECreated:      "Virtual Dedicated Ecosystem is already created",
 		errRequestNotFound: "Request %s doesn't exist",
 		errCheckRole:       "Check role",
+		errUpdating:        "Node is updating blockchain",
+		errStopping:        "Network is stopping",
 	}
 
 	//TODO: remove

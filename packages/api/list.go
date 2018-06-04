@@ -21,13 +21,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gorilla/mux"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/gorilla/mux"
 )
 
 type listResult struct {
@@ -58,9 +57,9 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		cols = `id,` + converter.EscapeName(form.Columns)
 	}
 
-	count, err := model.GetNextID(nil, strings.Trim(table, `"`))
+	count, err := model.GetRecordsCountTx(nil, strings.Trim(table, `"`))
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting next table id")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
 		errorResponse(w, errTableNotFound, http.StatusBadRequest, params[keyName])
 		return
 	}
@@ -74,7 +73,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonResponse(w, &listResult{
-		Count: converter.Int64ToStr(count - 1),
+		Count: converter.Int64ToStr(count),
 		List:  list,
 	})
 }

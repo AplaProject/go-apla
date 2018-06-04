@@ -56,6 +56,7 @@ func TestBlockTimeCalculator_TimeToGenerate(t *testing.T) {
 			}(),
 
 			result: false,
+			err:    DuplicateBlockError,
 		},
 
 		{
@@ -140,6 +141,7 @@ func TestBlockTimeCalculator_ValidateBlock(t *testing.T) {
 			}(),
 
 			result: false,
+			err:    DuplicateBlockError,
 		},
 
 		{

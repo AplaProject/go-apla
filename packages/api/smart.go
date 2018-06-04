@@ -55,11 +55,56 @@ type EncryptKey struct {
 	Error     string `json:"error"`
 }
 
+func validateSmartContractJSON(w http.ResponseWriter, r *http.Request, name string, params map[string]string) (contract *smart.Contract, parerr interface{}, err error) {
+	contract = getContract(r, name)
+	if contract == nil {
+		return nil, name, errContract
+	}
+
+	if contract.Block.Info.(*script.ContractInfo).Tx != nil {
+		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+			if fitem.ContainsTag(script.TagFile) || fitem.ContainsTag(`crypt`) || fitem.ContainsTag(`signature`) {
+				continue
+			} else {
+				var val string
+				val = strings.TrimSpace(params[fitem.Name])
+				if fitem.Type.String() == `[]interface {}` {
+					count := params[fitem.Name+`[]`]
+					if converter.StrToInt(count) > 0 || len(val) > 0 {
+						continue
+					}
+					val = ``
+				}
+				if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
+					log.WithFields(log.Fields{"type": consts.EmptyObject, "item_name": fitem.Name}).Error("route item is empty")
+					err = fmt.Errorf(`%s is empty`, fitem.Name)
+					break
+				}
+				if strings.Contains(fitem.Tags, `address`) {
+					addr := converter.StringToAddress(val)
+					if addr == 0 {
+						log.WithFields(log.Fields{"type": consts.ConversionError, "value": val}).Error("converting string to address")
+						err = fmt.Errorf(`Address %s is not valid`, val)
+						break
+					}
+				}
+				if fitem.Type.String() == script.Decimal {
+					re := regexp.MustCompile(`^\d+$`)
+					if !re.Match([]byte(val)) {
+						log.WithFields(log.Fields{"type": consts.InvalidObject, "value": val}).Error("The value of money is not valid")
+						err = fmt.Errorf(`The value of money %s is not valid`, val)
+						break
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
 func validateSmartContract(r *http.Request, name string, result *prepareResult) (contract *smart.Contract, parerr interface{}, err error) {
-	// TODO: вынести в отдельную функцию
 	client := getClient(r)
-	vm := smart.GetVM(false, client.EcosystemID)
-	contract = smart.VMGetContract(vm, name, uint32(client.EcosystemID))
+	contract = getContract(r, name)
 	if contract == nil {
 		return nil, name, errContract
 	}

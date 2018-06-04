@@ -24,6 +24,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -297,9 +298,28 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		RollbacksHash: rollbackTxsHash,
 		Tx:            int32(len(block.Parsers)),
 	}
-	err = b.Create(transaction)
+	blockTimeCalculator, err := utils.BuildBlockTimeCalculator()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
+		return err
+	}
+	validBlockTime := true
+	if blockID > 1 {
+		validBlockTime, err = blockTimeCalculator.ValidateBlock(b.NodePosition, time.Unix(b.Time, 0))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("block validation")
+			return err
+		}
+	}
+	if validBlockTime {
+		err = b.Create(transaction)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
+			return err
+		}
+	} else {
+		err := fmt.Errorf("Invalid block time: %d", block.Header.Time)
+		log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("invalid block time")
 		return err
 	}
 

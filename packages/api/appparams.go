@@ -41,6 +41,9 @@ type paramsForm struct {
 func (f *paramsForm) AcceptNames() map[string]bool {
 	names := make(map[string]bool)
 	for _, item := range strings.Split(f.Names, ",") {
+		if len(item) == 0 {
+			continue
+		}
 		names[item] = true
 	}
 	return names

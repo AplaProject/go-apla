@@ -186,7 +186,7 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 		startTime := time.Now()
 		var (
 			err  error
-			data = &apiData{}
+			data = &apiData{ecosystemId: 1}
 		)
 
 		// TODO: перенесено в LoggerMiddleware
@@ -211,12 +211,12 @@ func DefaultHandler(method, pattern string, params map[string]int, handlers ...a
 			data.params[par.Key] = par.Value
 		}
 
-		handlers = append([]apiHandle{
+		ihandlers := append([]apiHandle{
 			fillToken,
 			fillParams(params),
 		}, handlers...)
 
-		for _, handler := range handlers {
+		for _, handler := range ihandlers {
 			if handler(w, r, data, requestLogger) != nil {
 				return
 			}
@@ -357,7 +357,7 @@ func ParseForm(w http.ResponseWriter, r *http.Request, f FormValidater) bool {
 	r.ParseForm()
 	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true)
-	if err := decoder.Decode(f, r.PostForm); err != nil {
+	if err := decoder.Decode(f, r.Form); err != nil {
 		errorResponse(w, err, http.StatusBadRequest)
 		return false
 	}

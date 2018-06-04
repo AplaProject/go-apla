@@ -33,6 +33,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -56,6 +57,7 @@ func init() {
 	funcs[`Calculate`] = tplFunc{calculateTag, defaultTag, `calculate`, `Exp,Type,Prec`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
 	funcs[`Code`] = tplFunc{defaultTag, defaultTag, `code`, `Text`}
+	funcs[`CodeAsIs`] = tplFunc{defaultTag, defaultTag, `code`, `#Text`}
 	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format`}
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
@@ -66,7 +68,8 @@ func init() {
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
-	funcs[`Now`] = tplFunc{nowTag, defaultTag, `now`, `Format,Interval`}
+	funcs[`Now`] = tplFunc{defaultTag, defaultTag, `now`, `Format,Interval`}
+	funcs[`Money`] = tplFunc{moneyTag, defaultTag, `money`, `Exp,Digit`}
 	funcs[`Range`] = tplFunc{rangeTag, defaultTag, `range`, `Source,From,To,Step`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
 	funcs[`SetVar`] = tplFunc{setvarTag, defaultTag, `setvar`, `Name,Value`}
@@ -79,7 +82,7 @@ func init() {
 	funcs[`If`] = tplFunc{ifTag, ifFull, `if`, `Condition,Body`}
 	funcs[`Image`] = tplFunc{imageTag, defaultTailTag, `image`, `Src,Alt,Class`}
 	funcs[`Include`] = tplFunc{includeTag, defaultTag, `include`, `Name`}
-	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,@Value,Disabled`}
+	funcs[`Input`] = tplFunc{defaultTailTag, defaultTailTag, `input`, `Name,Class,Placeholder,Type,Value,Disabled`}
 	funcs[`Label`] = tplFunc{defaultTailTag, defaultTailTag, `label`, `Body,Class,For`}
 	funcs[`LinkPage`] = tplFunc{defaultTailTag, defaultTailTag, `linkpage`, `Body,Page,Class,PageParams`}
 	funcs[`Data`] = tplFunc{dataTag, defaultTailTag, `data`, `Source,Columns,Data`}
@@ -95,7 +98,7 @@ func init() {
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
-	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,@MemberID"}
+	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID"}
 	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
 
 	tails[`button`] = forTails{map[string]tailInfo{
@@ -127,7 +130,7 @@ func init() {
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 	}}
 	tails[`data`] = forTails{map[string]tailInfo{
-		`Custom`: {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		`Custom`: {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
 	}}
 	tails[`dbfind`] = forTails{map[string]tailInfo{
 		`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
@@ -138,7 +141,7 @@ func init() {
 		`Limit`:     {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
 		`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
 		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
-		`Custom`:    {tplFunc{customTag, defaultTailFull, `custom`, `Column,Body`}, false},
+		`Custom`:    {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
 		`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
 		`Cutoff`:    {tplFunc{tailTag, defaultTailFull, `cutoff`, `Cutoff`}, false},
 	}}
@@ -162,6 +165,9 @@ func init() {
 	tails[`inputMap`] = forTails{map[string]tailInfo{
 		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
 	}}
+	tails[`binary`] = forTails{map[string]tailInfo{
+		`ById`: {tplFunc{tailTag, defaultTailFull, `id`, `id`}, false},
+	}}
 }
 
 func defaultTag(par parFunc) string {
@@ -172,6 +178,40 @@ func defaultTag(par parFunc) string {
 
 func lowerTag(par parFunc) string {
 	return strings.ToLower(macro((*par.Pars)[`Text`], par.Workspace.Vars))
+}
+
+func moneyTag(par parFunc) string {
+	var cents int
+
+	ret := macro((*par.Pars)[`Exp`], par.Workspace.Vars)
+	if ret == `NULL` || len(ret) == 0 {
+		ret = `0`
+	}
+	if strings.IndexByte(ret, '.') >= 0 {
+		return `wrong money`
+	}
+	if len((*par.Pars)[`Digit`]) > 0 {
+		cents = converter.StrToInt(macro((*par.Pars)[`Digit`], par.Workspace.Vars))
+	} else {
+		prefix := (*par.Workspace.Vars)[`ecosystem_id`]
+		sp := &model.StateParameter{}
+		sp.SetTablePrefix(prefix)
+		_, err := sp.Get(nil, `money_digit`)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
+			return `unknown money_digit`
+		}
+		cents = converter.StrToInt(sp.Value)
+	}
+	if cents != 0 {
+		retDec, err := decimal.NewFromString(ret)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting money")
+			return `wrong money`
+		}
+		ret = retDec.Shift(int32(-cents)).String()
+	}
+	return ret
 }
 
 func menugroupTag(par parFunc) string {
@@ -247,7 +287,7 @@ func addressTag(par parFunc) string {
 
 func calculateTag(par parFunc) string {
 	return calculate(macro((*par.Pars)[`Exp`], par.Workspace.Vars), (*par.Pars)[`Type`],
-		converter.StrToInt((*par.Pars)[`Prec`]))
+		macro((*par.Pars)[`Prec`], par.Workspace.Vars))
 }
 
 func paramToSource(par parFunc, val string) string {
@@ -256,6 +296,7 @@ func paramToSource(par parFunc, val string) string {
 	types := []string{`text`, `text`}
 	for key, item := range strings.Split(val, `,`) {
 		item, _ = language.LangText(item, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
 			(*par.Workspace.Vars)[`lang`], par.Workspace.SmartContract.VDE)
 		data = append(data, []string{converter.IntToStr(key + 1), item})
 	}
@@ -275,7 +316,9 @@ func paramToIndex(par parFunc, val string) (ret string) {
 	ind := converter.StrToInt(macro((*par.Pars)[`Index`], par.Workspace.Vars))
 	if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 		ret, _ = language.LangText(alist[ind-1],
-			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]), (*par.Workspace.Vars)[`lang`],
+			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
+			(*par.Workspace.Vars)[`lang`],
 			par.Workspace.SmartContract.VDE)
 	}
 	return
@@ -313,7 +356,8 @@ func appparTag(par parFunc) string {
 	}
 	ap := &model.AppParam{}
 	ap.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
-	_, err := ap.Get(nil, converter.StrToInt64((*par.Pars)[`App`]), (*par.Pars)[`Name`])
+	_, err := ap.Get(nil, converter.StrToInt64(macro((*par.Pars)[`App`], par.Workspace.Vars)),
+		macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting app param")
 		return err.Error()
@@ -333,7 +377,9 @@ func langresTag(par parFunc) string {
 	if len(lang) == 0 {
 		lang = (*par.Workspace.Vars)[`lang`]
 	}
-	ret, _ := language.LangText((*par.Pars)[`Name`], int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
+	ret, _ := language.LangText((*par.Pars)[`Name`],
+		int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
+		converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
 		lang, par.Workspace.SmartContract.VDE)
 	return ret
 }
@@ -343,46 +389,6 @@ func sysparTag(par parFunc) (ret string) {
 		ret = syspar.SysString(macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	}
 	return
-}
-
-// Now returns the current time of postgresql
-func nowTag(par parFunc) string {
-	var (
-		cut   int
-		query string
-	)
-	interval := macro((*par.Pars)[`Interval`], par.Workspace.Vars)
-	format := macro((*par.Pars)[`Format`], par.Workspace.Vars)
-	if len(interval) > 0 {
-		if interval[0] != '-' && interval[0] != '+' {
-			interval = `+` + interval
-		}
-		interval = fmt.Sprintf(` %s interval '%s'`, interval[:1], strings.TrimSpace(interval[1:]))
-	}
-	if format == `` {
-		query = `select round(extract(epoch from now()` + interval + `))::integer`
-		cut = 10
-	} else {
-		query = `select now()` + interval
-		switch format {
-		case `datetime`:
-			cut = 19
-		default:
-			if strings.Index(format, `HH`) >= 0 && strings.Index(format, `HH24`) < 0 {
-				format = strings.Replace(format, `HH`, `HH24`, -1)
-			}
-			query = fmt.Sprintf(`select to_char(now()%s, '%s')`, interval, format)
-		}
-	}
-	ret, err := model.Single(query).String()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting single from DB")
-		return err.Error()
-	}
-	if cut > 0 {
-		ret = strings.Replace(ret[:cut], `T`, ` `, -1)
-	}
-	return ret
 }
 
 func andTag(par parFunc) string {
@@ -430,7 +436,18 @@ func dataTag(par parFunc) string {
 
 	list, err := csv.NewReader(strings.NewReader((*par.Pars)[`Data`])).ReadAll()
 	if err != nil {
+		input := strings.Split((*par.Pars)[`Data`], "\n")
 		par.Node.Attr[`error`] = err.Error()
+		prefix := `line `
+		for err != nil && strings.HasPrefix(err.Error(), prefix) {
+			errText := err.Error()
+			line := converter.StrToInt64(errText[len(prefix):strings.IndexByte(errText, ',')])
+			if line < 1 {
+				break
+			}
+			input = append(input[:line-1], input[line:]...)
+			list, err = csv.NewReader(strings.NewReader(strings.Join(input, "\n"))).ReadAll()
+		}
 	}
 	lencol := 0
 	defcol := 0
@@ -762,10 +779,22 @@ func customTag(par parFunc) string {
 	return ``
 }
 
+func customTagFull(par parFunc) string {
+	setAllAttr(par)
+	process((*par.Pars)[`Body`], par.Node, par.Workspace)
+	par.Owner.Tail = append(par.Owner.Tail, par.Node)
+	return ``
+}
+
 func tailTag(par parFunc) string {
 	setAllAttr(par)
 	for key, v := range par.Node.Attr {
-		par.Owner.Attr[key] = v
+		switch v.(type) {
+		case string:
+			par.Owner.Attr[key] = macro(v.(string), par.Workspace.Vars)
+		default:
+			par.Owner.Attr[key] = v
+		}
 	}
 	return ``
 }
@@ -964,7 +993,9 @@ func dateTimeTag(par parFunc) string {
 	}
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
-		format, _ = language.LangText(`timeformat`, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+		format, _ = language.LangText(`timeformat`,
+			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
+			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
 			(*par.Workspace.Vars)[`lang`], par.Workspace.SmartContract.VDE)
 		if format == `timeformat` {
 			format = `2006-01-02 15:04:05`
@@ -1098,13 +1129,26 @@ func binaryTag(par parFunc) string {
 		ecosystemID = (*par.Workspace.Vars)[`ecosystem_id`]
 	}
 
+	defaultTail(par, `binary`)
+
 	binary := &model.Binary{}
 	binary.SetTablePrefix(ecosystemID)
-	ok, err := binary.Get(
-		converter.StrToInt64((*par.Pars)["AppID"]),
-		converter.StrToInt64((*par.Pars)["MemberID"]),
-		(*par.Pars)["Name"],
+
+	var (
+		ok  bool
+		err error
 	)
+
+	if par.Node.Attr["id"] != nil {
+		ok, err = binary.GetByID(converter.StrToInt64(macro(par.Node.Attr["id"].(string), par.Workspace.Vars)))
+	} else {
+		ok, err = binary.Get(
+			converter.StrToInt64(macro((*par.Pars)["AppID"], par.Workspace.Vars)),
+			converter.StrToInt64(macro((*par.Pars)["MemberID"], par.Workspace.Vars)),
+			macro((*par.Pars)["Name"], par.Workspace.Vars),
+		)
+	}
+
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting record from db")
 		return err.Error()

@@ -58,7 +58,7 @@ func ecosystemParamsHandler(w http.ResponseWriter, r *http.Request) {
 
 	acceptNames := form.AcceptNames()
 	for _, item := range list {
-		if !acceptNames[item.Name] {
+		if len(acceptNames) > 0 && !acceptNames[item.Name] {
 			continue
 		}
 		result.List = append(result.List, paramResult{

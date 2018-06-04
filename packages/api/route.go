@@ -28,19 +28,27 @@ import (
 )
 
 func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(method, consts.ApiPath+pattern, DefaultHandler(method, pattern, processParams(pars), handler...))
+	route.Handle(
+		method,
+		consts.ApiPath+pattern,
+		DefaultHandler(method, pattern, processParams(pars), append([]apiHandle{blockchainUpdatingState}, handler...)...),
+	)
 }
 
 // Route sets routing paths
 func Route(router *mux.Router) {
+	// TODO: cors
+
+	router.StrictSlash(true)
 	router.Use(LoggerMiddleware)
 
 	// api router with prefix path
 	api := router.PathPrefix("/api/v2").Subrouter()
 	api.Use(TokenMiddleware, ClientMiddleware)
 
-	callContract := &callContractHandlers{
-		requests: tx.NewRequestBuffer(consts.TxRequestExpire),
+	contractHandlers := &contractHandlers{
+		requests:      tx.NewRequestBuffer(consts.TxRequestExpire),
+		multiRequests: tx.NewMultiRequestBuffer(consts.TxRequestExpire),
 	}
 
 	api.HandleFunc("/data/{table}/{id}/{column}/{hash}", dataHandler).Methods("GET")
@@ -70,16 +78,19 @@ func Route(router *mux.Router) {
 	api.HandleFunc("/version", versionHandler).Methods("GET")
 	api.HandleFunc("/avatar/{ecosystem}/{member}", avatarHandler).Methods("GET")            // get(`avatar/:ecosystem/:member`, ``, getAvatar)
 	api.HandleFunc("/config/{option}", configOptionHandler).Methods("GET")                  // get(`config/:option`, ``, getConfigOption)
+	api.HandleFunc("/ecosystemname", ecosystemNameHandler).Methods("GET")                   //get("ecosystemname", "?id:int64", getEcosystemName)
 	api.HandleFunc("/content/source/{name}", AuthRequire(getSourceHandler)).Methods("POST") // post(`content/source/:name`, ``, authWallet, getSource)
 	api.HandleFunc("/content/page/{name}", AuthRequire(getPageHandler)).Methods("POST")     // post(`content/page/:name`, `?lang:string`, authWallet, getPage)
 	api.HandleFunc("/content/menu/{name}", AuthRequire(getMenuHandler)).Methods("POST")     // post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
 	api.HandleFunc("/content/hash/{name}", AuthRequire(getPageHashHandler)).Methods("POST") // post(`content/hash/:name`, ``, authWallet, getPageHash)
 	// post(`vde/create`, ``, authWallet, vdeCreate)
-	api.HandleFunc("/login", loginHandler).Methods("POST")                                              // post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
-	api.HandleFunc("/prepare/{name}", AuthRequire(callContract.PrepareHandler)).Methods("POST")         // post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
-	api.HandleFunc("/contract/{request_id}", AuthRequire(callContract.ContractHandler)).Methods("POST") // post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
-	api.HandleFunc("/refresh", refreshHandler).Methods("POST")                                          // post(`refresh`, `token:string,?expire:int64`, refresh)
-	api.HandleFunc("/signtest", signTestHandler).Methods("POST")                                        // post(`signtest/`, `forsign private:string`, signTest)
+	api.HandleFunc("/login", loginHandler).Methods("POST")                                                               // post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
+	api.HandleFunc("/prepare/{name}", AuthRequire(contractHandlers.PrepareHandler)).Methods("POST")                      // post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
+	api.HandleFunc("/prepareMultiple", AuthRequire(contractHandlers.PrepareMultiHandler)).Methods("POST")                //post(`prepareMultiple`, `data:string`, authWallet, contractHandlers.prepareMultipleContract)
+	api.HandleFunc("/txstatusMultiple", AuthRequire(txstatusMultiHandler)).Methods("POST")                               // post(`txstatusMultiple`, `data:string`, authWallet, txstatusMulti)
+	api.HandleFunc("/contract/{request_id}", AuthRequire(contractHandlers.ContractHandler)).Methods("POST")              // post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
+	api.HandleFunc("/contractMultiple/{request_id}", AuthRequire(contractHandlers.ContractMultiHandler)).Methods("POST") // post(`contractMultiple/:request_id`, `data:string`, authWallet, blockchainUpdatingState, contractHandlers.contractMulti)
+	api.HandleFunc("/refresh", refreshHandler).Methods("POST")                                                           // post(`refresh`, `token:string,?expire:int64`, refresh)
 	// post(`test/:name`, ``, getTest)
 	api.HandleFunc("/content", jsonContentHandler).Methods("POST")              // post(`content`, `template ?source:string`, jsonContent)
 	api.HandleFunc("/updnotificator", updateNotificatorHandler).Methods("POST") // post(`updnotificator`, `ids:string`, updateNotificator)

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"strings"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,6 +32,11 @@ var configCmd = &cobra.Command{
 			configPath = filepath.Join(conf.Config.DataDir, consts.DefaultConfigFile)
 		}
 
+		err = viper.Unmarshal(&conf.Config)
+		if err != nil {
+			log.WithError(err).Fatal("Marshalling config to global struct variable")
+		}
+
 		err = conf.SaveConfig(configPath)
 		if err != nil {
 			log.WithError(err).Fatal("Saving config")
@@ -40,6 +47,10 @@ var configCmd = &cobra.Command{
 }
 
 func init() {
+	viper.SetEnvPrefix("GENESIS")
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
 	// Command flags
 	configCmd.Flags().String("path", "", "Generate config to (default dataDir/config.toml)")
 
@@ -82,13 +93,13 @@ func init() {
 	viper.BindPFlag("Centrifugo.URL", configCmd.Flags().Lookup("centUrl"))
 
 	// Log
-	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogTo, "logTo", "stdout", "Send logs to stdout|(filename)|syslog")
-	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogLevel, "verbosity", "ERROR", "Log verbosity (DEBUG | INFO | WARN | ERROR)")
-	configCmd.Flags().StringVar(&conf.Config.LogConfig.LogFormat, "logFormat", "text", "log format, could be text|json")
-	configCmd.Flags().StringVar(&conf.Config.LogConfig.Syslog.Facility, "syslogFacility", "kern", "syslog facility")
-	configCmd.Flags().StringVar(&conf.Config.LogConfig.Syslog.Tag, "syslogTag", "go-genesis", "syslog program tag")
+	configCmd.Flags().StringVar(&conf.Config.Log.LogTo, "logTo", "stdout", "Send logs to stdout|(filename)|syslog")
+	configCmd.Flags().StringVar(&conf.Config.Log.LogLevel, "logLevel", "ERROR", "Log verbosity (DEBUG | INFO | WARN | ERROR)")
+	configCmd.Flags().StringVar(&conf.Config.Log.LogFormat, "logFormat", "text", "log format, could be text|json")
+	configCmd.Flags().StringVar(&conf.Config.Log.Syslog.Facility, "syslogFacility", "kern", "syslog facility")
+	configCmd.Flags().StringVar(&conf.Config.Log.Syslog.Tag, "syslogTag", "go-genesis", "syslog program tag")
 	viper.BindPFlag("Log.LogTo", configCmd.Flags().Lookup("logTo"))
-	viper.BindPFlag("Log.Verbosity", configCmd.Flags().Lookup("verbosity"))
+	viper.BindPFlag("Log.LogLevel", configCmd.Flags().Lookup("logLevel"))
 	viper.BindPFlag("Log.LogFormat", configCmd.Flags().Lookup("logFormat"))
 	viper.BindPFlag("Log.Syslog.Facility", configCmd.Flags().Lookup("syslogFacility"))
 	viper.BindPFlag("Log.Syslog.Tag", configCmd.Flags().Lookup("syslogTag"))
@@ -124,7 +135,7 @@ func init() {
 	configCmd.Flags().StringVar(&conf.Config.TLSCert, "tls-cert", "", "Filepath to the fullchain of certificates")
 	configCmd.Flags().StringVar(&conf.Config.TLSKey, "tls-key", "", "Filepath to the private key")
 	configCmd.Flags().Int64Var(&conf.Config.MaxPageGenerationTime, "mpgt", 1000, "Max page generation time in ms")
-	configCmd.Flags().StringArrayVar(&conf.Config.NodesAddr, "nodesAddr", []string{}, "List of addresses for downloading blockchain")
+	configCmd.Flags().StringSliceVar(&conf.Config.NodesAddr, "nodesAddr", []string{}, "List of addresses for downloading blockchain")
 	configCmd.Flags().BoolVar(&conf.Config.PrivateBlockchain, "privateBlockchain", false, "Is blockchain private")
 
 	viper.BindPFlag("PidFilePath", configCmd.Flags().Lookup("pid"))
@@ -137,4 +148,6 @@ func init() {
 	viper.BindPFlag("TLSKey", configCmd.Flags().Lookup("tls-key"))
 	viper.BindPFlag("MaxPageGenerationTime", configCmd.Flags().Lookup("mpgt"))
 	viper.BindPFlag("PrivateBlockchain", configCmd.Flags().Lookup("privateBlockchain"))
+	viper.BindPFlag("TempDir", configCmd.Flags().Lookup("tempDir"))
+	viper.BindPFlag("NodesAddr", configCmd.Flags().Lookup("nodesAddr"))
 }

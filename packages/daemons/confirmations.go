@@ -101,7 +101,10 @@ func confirmationsBlocks(ctx context.Context, d *daemon, lastBlockID, startBlock
 			continue
 		}
 
-		hosts := syspar.GetRemoteHosts()
+		hosts, err := filterBannedHosts(syspar.GetRemoteHosts())
+		if err != nil {
+			return err
+		}
 
 		ch := make(chan string)
 		for i := 0; i < len(hosts); i++ {

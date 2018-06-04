@@ -33,6 +33,7 @@ const (
 )
 
 func appParamHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: _, prefix, err := checkEcosystem(w, data, logger)
 	form := &ecosystemForm{}
 	if ok := ParseForm(w, r, form); !ok {
 		return
@@ -48,10 +49,9 @@ func appParamHandler(w http.ResponseWriter, r *http.Request) {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting app parameter by name")
 		errorResponse(w, err, http.StatusInternalServerError)
 		return
-	}
-	if !found {
+	} else if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "key": params[keyName]}).Error("app parameter not found")
-		errorResponse(w, err, http.StatusBadRequest)
+		errorResponse(w, errParamNotFound, http.StatusBadRequest, params[keyName])
 		return
 	}
 
