@@ -194,7 +194,7 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 
 func saveNewTransactions(r *DisRequest) error {
 	binaryTxs := r.Data
-	queue := []model.QueueTx{}
+	queue := []model.BatchModel{}
 	log.WithFields(log.Fields{"binaryTxs": binaryTxs}).Debug("trying to save binary txs")
 
 	for len(binaryTxs) > 0 {
@@ -225,7 +225,7 @@ func saveNewTransactions(r *DisRequest) error {
 		}
 
 		queue = append(queue, &model.QueueTx{Hash: hash, Data: txBinData, FromGate: 1})
-		err = queueTx.Create()
+		// err = queueTx.Create()
 	}
 
 	if err := model.BatchInsert(queue, []string{"hash", "data", "from_gate"}); err != nil {

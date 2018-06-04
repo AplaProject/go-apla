@@ -37,7 +37,7 @@ func TestPrepareQuery(t *testing.T) {
 	require.NoError(t, err)
 
 	checkQuery := `INSERT INTO "test_batch" (id,name) VALUES (?,?),(?,?)`
-	checkArgs := []interface{}{1, "first", 2, "second"}
+	checkArgs := []interface{}{int64(1), "first", int64(2), "second"}
 
 	require.Equal(t, checkQuery, query)
 	require.Equal(t, checkArgs, args)
