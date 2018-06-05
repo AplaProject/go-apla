@@ -92,7 +92,7 @@ func (b *Block) PlayBlockSafe() error {
 		return err
 	}
 
-	err = b.playBlock(dbTransaction)
+	err = b.PlayBlock(dbTransaction)
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Parsers[:b.StopCount]
 		trData := make([][]byte, 0, b.StopCount)
@@ -112,7 +112,7 @@ func (b *Block) PlayBlockSafe() error {
 		}
 
 		isFirstBlock := b.Header.BlockID == 1
-		nb, err := parseBlock(bytes.NewBuffer(newBlockData), isFirstBlock)
+		nb, err := ParseBlock(bytes.NewBuffer(newBlockData), isFirstBlock)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
 			return err
@@ -161,7 +161,7 @@ func ProcessBlockWherePrevFromMemory(data []byte) (*Block, error) {
 		return nil, fmt.Errorf("empty buffer")
 	}
 
-	block, err := parseBlock(buf, false)
+	block, err := ParseBlock(buf, false)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Blo
 		return nil, fmt.Errorf("empty buffer")
 	}
 
-	block, err := parseBlock(buf, !checkSize)
+	block, err := ParseBlock(buf, !checkSize)
 	if err != nil {
 		return nil, err
 	}
@@ -199,8 +199,8 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Blo
 	return block, nil
 }
 
-func parseBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error) {
-	header, err := ParseBlockHeader(blockBuffer, !firstBlock)
+func ParseBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error) {
+	header, err := utils.ParseBlockHeader(blockBuffer, !firstBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -261,55 +261,6 @@ func parseBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error) {
 		Parsers:  parsers,
 		MrklRoot: utils.MerkleTreeRoot(mrklSlice),
 	}, nil
-}
-
-// ParseBlockHeader is parses block header
-func ParseBlockHeader(binaryBlock *bytes.Buffer, checkMaxSize bool) (utils.BlockData, error) {
-	var block utils.BlockData
-	var err error
-
-	if binaryBlock.Len() < 9 {
-		log.WithFields(log.Fields{"size": binaryBlock.Len(), "type": consts.SizeDoesNotMatch}).Error("binary block size is too small")
-		return utils.BlockData{}, fmt.Errorf("bad binary block length")
-	}
-
-	blockVersion := int(converter.BinToDec(binaryBlock.Next(2)))
-
-	if checkMaxSize && int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
-		log.WithFields(log.Fields{"size": binaryBlock.Len(), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
-		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
-			binaryBlock.Len(), syspar.GetMaxBlockSize())
-
-		return utils.BlockData{}, err
-	}
-
-	block.BlockID = converter.BinToDec(binaryBlock.Next(4))
-	block.Time = converter.BinToDec(binaryBlock.Next(4))
-	block.Version = blockVersion
-	block.EcosystemID = converter.BinToDec(binaryBlock.Next(4))
-	block.KeyID, err = converter.DecodeLenInt64Buf(binaryBlock)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "block_time": block.Time, "block_version": block.Version, "error": err}).Error("decoding binary block walletID")
-		return utils.BlockData{}, err
-	}
-	block.NodePosition = converter.BinToDec(binaryBlock.Next(1))
-
-	if block.BlockID > 1 {
-		signSize, err := converter.DecodeLengthBuf(binaryBlock)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign size")
-			return utils.BlockData{}, err
-		}
-		if binaryBlock.Len() < signSize {
-			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign")
-			return utils.BlockData{}, fmt.Errorf("bad block format (no sign)")
-		}
-		block.Sign = binaryBlock.Next(int(signSize))
-	} else {
-		binaryBlock.Next(1)
-	}
-
-	return block, nil
 }
 
 // ParseTransaction is parsing transaction
@@ -657,7 +608,7 @@ func playTransaction(p *Parser) (string, error) {
 	return "", nil
 }
 
-func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
+func (b *Block) PlayBlock(dbTransaction *model.DbTransaction) error {
 	logger := b.GetLogger()
 	if _, err := model.DeleteUsedTransactions(dbTransaction); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")

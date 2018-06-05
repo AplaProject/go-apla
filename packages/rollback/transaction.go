@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package parser
+package rollback
 
 import (
 	"encoding/json"
@@ -23,17 +23,15 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func (p *Parser) restoreUpdatedDBRowToPreviousData(tx map[string]string, where string) error {
-	logger := p.GetLogger()
+func rollbackUpdatedRow(tx map[string]string, where string, dbTransaction *model.DbTransaction, logger *log.Entry) error {
 	var rollbackInfo map[string]string
 	if err := json.Unmarshal([]byte(tx["data"]), &rollbackInfo); err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollback.Data from json")
-		return p.ErrInfo(err)
+		return err
 	}
 	addSQLUpdate := ""
 	for k, v := range rollbackInfo {
@@ -46,47 +44,45 @@ func (p *Parser) restoreUpdatedDBRowToPreviousData(tx map[string]string, where s
 		}
 	}
 	addSQLUpdate = addSQLUpdate[0 : len(addSQLUpdate)-1]
-	if err := model.Update(p.DbTransaction, tx["table_name"], addSQLUpdate, where); err != nil {
+	if err := model.Update(dbTransaction, tx["table_name"], addSQLUpdate, where); err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "query": addSQLUpdate}).Error("updating table")
-		return p.ErrInfo(err)
+		return err
 	}
 	return nil
 }
 
-func (p *Parser) deleteInsertedDBRow(tx map[string]string, where string) error {
-	logger := p.GetLogger()
+func rollbackInsertedRow(tx map[string]string, where string, logger *log.Entry) error {
 	if err := model.Delete(tx["table_name"], where); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting from table")
-		return p.ErrInfo(err)
+		return err
 	}
 	return nil
 }
 
-func (p *Parser) autoRollback() error {
-	logger := p.GetLogger()
+func rollbackTransaction(txHash []byte, dbTransaction *model.DbTransaction, logger *log.Entry) error {
 	rollbackTx := &model.RollbackTx{}
-	txs, err := rollbackTx.GetRollbackTransactions(p.DbTransaction, p.TxHash)
+	txs, err := rollbackTx.GetRollbackTransactions(dbTransaction, txHash)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback transactions")
-		return utils.ErrInfo(err)
+		return err
 	}
 	for _, tx := range txs {
 		where := " WHERE id='" + tx["table_id"] + `'`
 		if len(tx["data"]) > 0 {
-			if err := p.restoreUpdatedDBRowToPreviousData(tx, where); err != nil {
+			if err := rollbackUpdatedRow(tx, where, dbTransaction, logger); err != nil {
 				return err
 			}
 		} else {
-			if err := p.deleteInsertedDBRow(tx, where); err != nil {
+			if err := rollbackInsertedRow(tx, where, logger); err != nil {
 				return err
 			}
 		}
 	}
-	txForDelete := &model.RollbackTx{TxHash: p.TxHash}
-	err = txForDelete.DeleteByHash(p.DbTransaction)
+	txForDelete := &model.RollbackTx{TxHash: txHash}
+	err = txForDelete.DeleteByHash(dbTransaction)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback transaction by hash")
-		return p.ErrInfo(err)
+		return err
 	}
 	return nil
 }
