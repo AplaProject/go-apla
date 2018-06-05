@@ -779,11 +779,11 @@ func (sc *SmartContract) GetContractLimit() (ret int64) {
 	return sc.TxCost
 }
 
-func (sc *SmartContract) checkContract() (fromID, price, sizeFuel int64, payWallet *model.Key, err error) {
+func (sc *SmartContract) checkContract() (fromID, price, sizeFuel int64, payWallet *model.Key,
+	fuelRate decimal.Decimal, err error) {
 	var (
-		public   []byte
-		found    bool
-		fuelRate decimal.Decimal
+		public []byte
+		found  bool
 	)
 	logger := sc.GetLogger()
 
@@ -1017,7 +1017,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		if !sc.VDE {
 			toID = sc.BlockData.KeyID
 		}
-		fromID, price, sizeFuel, payWallet, err = sc.checkContract()
+		fromID, price, sizeFuel, payWallet, fuelRate, err = sc.checkContract()
 		if err != nil {
 			return retError(err)
 		}

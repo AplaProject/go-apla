@@ -37,6 +37,7 @@ func GetBlocks(blockID int64, host string) error {
 	if err != nil {
 		return err
 	}
+	CleanCache()
 
 	// mark all transaction as unverified
 	_, err = model.MarkVerifiedAndNotUsedTransactionsUnverified()
