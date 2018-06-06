@@ -17,6 +17,7 @@
 package template
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -65,6 +66,7 @@ func init() {
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
 	funcs[`JsonToSource`] = tplFunc{jsontosourceTag, defaultTag, `jsontosource`, `Source,Data`}
+	funcs[`ArrayToSource`] = tplFunc{arraytosourceTag, defaultTag, `arraytosource`, `Source,Data`}
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
@@ -1075,6 +1077,34 @@ func jsontosourceTag(par parFunc) string {
 		data = append(data, []string{key, fmt.Sprint(item)})
 	}
 	sort.Sort(byFirst(data))
+	setAllAttr(par)
+	par.Node.Attr[`columns`] = &cols
+	par.Node.Attr[`types`] = &types
+	par.Node.Attr[`data`] = &data
+	newSource(par)
+	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return ``
+}
+
+func arraytosourceTag(par parFunc) string {
+	setAllAttr(par)
+
+	data := make([][]string, 0, 16)
+	cols := []string{`key`, `value`}
+	types := []string{`text`, `text`}
+	var out []json.RawMessage
+	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON Array to source")
+	}
+	for key, item := range out {
+		if item == nil {
+			item = []byte("")
+		}
+
+		item = bytes.Trim(item, `"`)
+
+		data = append(data, []string{fmt.Sprint(key), string(item)})
+	}
 	setAllAttr(par)
 	par.Node.Attr[`columns`] = &cols
 	par.Node.Attr[`types`] = &types
