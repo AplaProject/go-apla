@@ -23,7 +23,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
@@ -51,7 +50,7 @@ func refreshHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ok := checkAccount(w, r, claims); !ok {
+	if _, ok := getAccount(w, r, converter.StrToInt64(claims.EcosystemID), converter.StrToInt64(claims.KeyID)); !ok {
 		return
 	}
 
@@ -126,24 +125,4 @@ func getRefreshTokenClaims(w http.ResponseWriter, r *http.Request, val string) (
 	}
 
 	return refClaims, true
-}
-
-func checkAccount(w http.ResponseWriter, r *http.Request, claims *JWTClaims) bool {
-	logger := getLogger(r)
-
-	account := &model.Key{}
-	account.SetTablePrefix(converter.StrToInt64(claims.EcosystemID))
-	isAccount, err := account.Get(converter.StrToInt64(claims.KeyID))
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting record from keys")
-		errorResponse(w, err, http.StatusBadRequest)
-		return false
-	}
-	if isAccount {
-		if account.Deleted == 1 {
-			errorResponse(w, errDeletedKey, http.StatusBadRequest)
-			return false
-		}
-	}
-	return true
 }

@@ -72,6 +72,14 @@ type multiPrepareRequestItem struct {
 	Params   map[string]string `json:"params"`
 }
 
+func (p multiPrepareRequestItem) Get(key string) string {
+	return p.Params[key]
+}
+
+func (p multiPrepareRequestItem) Set(key, value string) {
+	p.Params[key] = value
+}
+
 type contractHandlers struct {
 	requests      *tx.RequestBuffer
 	multiRequests *tx.MultiRequestBuffer
@@ -99,11 +107,18 @@ func (h *contractHandlers) PrepareMultiHandler(w http.ResponseWriter, r *http.Re
 
 	for _, c := range requests.Contracts {
 		var smartTx tx.SmartContract
-		contract, parerr, err := validateSmartContractJSON(w, r, c.Contract, c.Params)
-		if err != nil {
-			errorResponse(w, err, http.StatusBadRequest, parerr)
+
+		contract := getContract(r, c.Contract)
+		if contract == nil {
+			errorResponse(w, errContract, http.StatusBadRequest, c.Contract)
 			return
 		}
+
+		if err := validateParamsContract(contract, c); err != nil {
+			errorResponse(w, err, http.StatusBadRequest)
+			return
+		}
+
 		info := (*contract).Block.Info.(*script.ContractInfo)
 		smartTx.TokenEcosystem = tokenEcosystem
 		smartTx.MaxSum = maxSum
@@ -159,11 +174,17 @@ func (h *contractHandlers) PrepareHandler(w http.ResponseWriter, r *http.Request
 	params := mux.Vars(r)
 	client := getClient(r)
 
-	contract, parerr, err := validateSmartContract(r, params[keyName], &result)
-	if err != nil {
-		errorResponse(w, err, http.StatusBadRequest, parerr)
+	contract := getContract(r, params[keyName])
+	if contract == nil {
+		errorResponse(w, errContract, http.StatusBadRequest, params[keyName])
 		return
 	}
+
+	if err := validateParamsContract(contract, r.Form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
 	info := (*contract).Block.Info.(*script.ContractInfo)
 	smartTx.TokenEcosystem = form.TokenEcosystem
 	smartTx.MaxSum = form.MaxSum

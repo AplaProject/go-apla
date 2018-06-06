@@ -18,20 +18,14 @@ package api
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
 	"github.com/shopspring/decimal"
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -39,28 +33,28 @@ type vdeCreateResult struct {
 	Result bool `json:"result"`
 }
 
-func vdeCreate(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, data.ecosystemId)) {
-		return errorAPI(w, `E_VDECREATED`, http.StatusBadRequest)
-	}
-	sp := &model.StateParameter{}
-	sp.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
-	if _, err := sp.Get(nil, `founder_account`); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
-		return errorAPI(w, err, http.StatusBadRequest)
-	}
-	if converter.StrToInt64(sp.Value) != data.keyId {
-		logger.WithFields(log.Fields{"type": consts.AccessDenied, "error": fmt.Errorf(`Access denied`)}).Error("creating vde")
-		return errorAPI(w, `E_PERMISSION`, http.StatusUnauthorized)
-	}
-	if err := model.ExecSchemaLocalData(int(data.ecosystemId), data.keyId); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
-		return errorAPI(w, err, http.StatusInternalServerError)
-	}
-	smart.LoadVDEContracts(nil, converter.Int64ToStr(data.ecosystemId))
-	data.result = vdeCreateResult{Result: true}
-	return nil
-}
+// func vdeCreate(w http.ResponseWriter, r *http.Request) error {
+// 	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, data.ecosystemId)) {
+// 		errorResponse(w, `E_VDECREATED`, http.StatusBadRequest)
+// 	}
+// 	sp := &model.StateParameter{}
+// 	sp.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
+// 	if _, err := sp.Get(nil, `founder_account`); err != nil {
+// 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
+// 		errorResponse(w, err, http.StatusBadRequest)
+// 	}
+// 	if converter.StrToInt64(sp.Value) != data.keyId {
+// 		logger.WithFields(log.Fields{"type": consts.AccessDenied, "error": fmt.Errorf(`Access denied`)}).Error("creating vde")
+// 		errorResponse(w, `E_PERMISSION`, http.StatusUnauthorized)
+// 	}
+// 	if err := model.ExecSchemaLocalData(int(data.ecosystemId), data.keyId); err != nil {
+// 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
+// 		errorResponse(w, err, http.StatusInternalServerError)
+// 	}
+// 	smart.LoadVDEContracts(nil, converter.Int64ToStr(data.ecosystemId))
+// 	data.result = vdeCreateResult{Result: true}
+// 	return nil
+// }
 
 // InitSmartContract is initializes smart contract
 func InitSmartContract(sc *smart.SmartContract, data []byte) error {
@@ -157,35 +151,35 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 	return nil
 }
 
-// VDEContract is init VDE contract
-func VDEContract(contractData []byte, data *apiData) (result *contractResult, err error) {
-	var ret string
-	hash, err := crypto.Hash(contractData)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of contract data")
-		return
-	}
-	result = &contractResult{Hash: hex.EncodeToString(hash)}
+// // VDEContract is init VDE contract
+// func VDEContract(contractData []byte, data *apiData) (result *contractResult, err error) {
+// 	var ret string
+// 	hash, err := crypto.Hash(contractData)
+// 	if err != nil {
+// 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of contract data")
+// 		return
+// 	}
+// 	result = &contractResult{Hash: hex.EncodeToString(hash)}
 
-	sc := smart.SmartContract{VDE: true, TxHash: hash}
-	err = InitSmartContract(&sc, contractData)
-	if err != nil {
-		result.Message = &txstatusError{Type: "panic", Error: err.Error()}
-		return
-	}
-	if data.token != nil && data.token.Valid {
-		if auth, err := data.token.SignedString([]byte(jwtSecret)); err == nil {
-			sc.TxData[`auth_token`] = auth
-		}
-	}
-	if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
-		result.Result = ret
-	} else {
-		if errResult := json.Unmarshal([]byte(err.Error()), &result.Message); errResult != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": err.Error(),
-				"error": errResult}).Error("unmarshalling contract error")
-			result.Message = &txstatusError{Type: "panic", Error: errResult.Error()}
-		}
-	}
-	return
-}
+// 	sc := smart.SmartContract{VDE: true, TxHash: hash}
+// 	err = InitSmartContract(&sc, contractData)
+// 	if err != nil {
+// 		result.Message = &txstatusError{Type: "panic", Error: err.Error()}
+// 		return
+// 	}
+// 	if data.token != nil && data.token.Valid {
+// 		if auth, err := data.token.SignedString([]byte(jwtSecret)); err == nil {
+// 			sc.TxData[`auth_token`] = auth
+// 		}
+// 	}
+// 	if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
+// 		result.Result = ret
+// 	} else {
+// 		if errResult := json.Unmarshal([]byte(err.Error()), &result.Message); errResult != nil {
+// 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": err.Error(),
+// 				"error": errResult}).Error("unmarshalling contract error")
+// 			result.Message = &txstatusError{Type: "panic", Error: errResult.Error()}
+// 		}
+// 	}
+// 	return
+// }

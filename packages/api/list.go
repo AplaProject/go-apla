@@ -25,8 +25,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 )
 
 type listResult struct {
@@ -49,9 +49,8 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	// TODO: переделать на getPrefix(data)
 	// TODO: перенести в модели
-	table := converter.EscapeName(fmt.Sprintf("%d_%s", client.EcosystemID, params[keyName]))
+	table := converter.EscapeName(fmt.Sprintf("%s_%s", client.Prefix(), params[keyName]))
 	cols := `*`
 	if len(form.Columns) > 0 {
 		cols = `id,` + converter.EscapeName(form.Columns)

@@ -50,22 +50,6 @@ type loginForm struct {
 	IsMobile    bool     `schema:"mobile"`
 }
 
-type hexValue struct {
-	value []byte
-}
-
-func (hv hexValue) Value() []byte {
-	return hv.value
-}
-
-func (hv *hexValue) UnmarshalText(v []byte) (err error) {
-	hv.value, err = hex.DecodeString(string(v))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "value": string(v), "error": err}).Error("decoding from hex")
-	}
-	return
-}
-
 type loginResult struct {
 	Token       string       `json:"token,omitempty"`
 	Refresh     string       `json:"refresh,omitempty"`
@@ -86,33 +70,25 @@ type roleResult struct {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	form := &loginForm{}
-	if ok := ParseForm(w, r, form); !ok {
-		return
-	}
-
 	var (
+		ok        bool
 		uid       string
 		publicKey []byte
 		wallet    int64
 		err       error
+		form      = &loginForm{}
 	)
 
-	logger := getLogger(r)
-
-	token := getToken(r)
-	if token != nil {
-		if claims, ok := token.Claims.(*JWTClaims); ok {
-			uid = claims.UID
-		}
+	if ok := ParseForm(w, r, form); !ok {
+		return
 	}
-	if len(uid) == 0 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("UID is empty")
-		errorResponse(w, errUnknownUID, http.StatusBadRequest)
+
+	if uid, ok = getUID(w, r); !ok {
 		return
 	}
 
 	client := getClient(r)
+	logger := getLogger(r)
 
 	if form.EcosystemID > 0 {
 		client.EcosystemID = form.EcosystemID
@@ -129,33 +105,19 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	wallet = crypto.Address(publicKey)
 
-	account := &model.Key{}
-	account.SetTablePrefix(client.EcosystemID)
-	isAccount, err := account.Get(wallet)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
-		errorAPI(w, err, http.StatusBadRequest)
+	account, ok := getAccount(w, r, client.EcosystemID, wallet)
+	if !ok {
 		return
 	}
 
-	if isAccount {
-		if account.Deleted == 1 {
-			errorResponse(w, errDeletedKey, http.StatusForbidden)
-			return
-		}
-		publicKey = account.PublicKey
-	} else {
+	if account == nil {
 		contract := getContract(r, "NewUser")
 		createTx(contract, hex.EncodeToString(publicKey))
+	} else {
+		publicKey = account.PublicKey
 	}
 
-	// TODO: может удалить?
-	// if ecosystemID > 1 && len(pubkey) == 0 {
-	// 	logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty, and state is not default")
-	// 	return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, wallet, ecosystemID)
-	// }
-
-	if client.RoleID == 0 {
+	if client.RoleID == 0 && form.RoleID != 0 {
 		checkedRole, err := checkRoleFromParam(form.RoleID, client.EcosystemID, wallet)
 		if err != nil {
 			errorResponse(w, errCheckRole, http.StatusInternalServerError)
@@ -182,26 +144,15 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	address := crypto.KeyToAddress(publicKey)
-
-	var (
-		sp      model.StateParameter
-		founder int64
-	)
-
-	sp.SetTablePrefix(converter.Int64ToStr(client.EcosystemID))
-	if ok, err := sp.Get(nil, "founder_account"); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder_account parameter")
-		errorResponse(w, errServer, http.StatusBadRequest)
+	var founder int64
+	if founder, ok = getFounder(w, r, client.EcosystemID); !ok {
 		return
-	} else if ok {
-		founder = converter.StrToInt64(sp.Value)
 	}
 
 	result := loginResult{
 		EcosystemID: converter.Int64ToStr(client.EcosystemID),
 		KeyID:       converter.Int64ToStr(wallet),
-		Address:     address,
+		Address:     crypto.KeyToAddress(publicKey),
 		IsOwner:     founder == wallet,
 		IsNode:      conf.Config.KeyID == wallet,
 		IsVDE:       model.IsTable(fmt.Sprintf(`%d_vde_tables`, client.EcosystemID)),
@@ -241,8 +192,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
-	notificator.AddUser(wallet, client.EcosystemID)
-	notificator.UpdateNotifications(client.EcosystemID, []int64{wallet})
 
 	ra := &model.RolesParticipants{}
 	roles, err := ra.SetTablePrefix(client.EcosystemID).GetActiveMemberRoles(wallet)
@@ -271,6 +220,41 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, result)
 }
 
+func getUID(w http.ResponseWriter, r *http.Request) (string, bool) {
+	var uid string
+
+	token := getToken(r)
+	if token != nil {
+		if claims, ok := token.Claims.(*JWTClaims); ok {
+			uid = claims.UID
+		}
+	} else if len(uid) == 0 {
+		getLogger(r).WithFields(log.Fields{"type": consts.EmptyObject}).Error("UID is empty")
+		errorResponse(w, errUnknownUID, http.StatusBadRequest)
+		return "", false
+	}
+
+	return uid, true
+}
+
+func getAccount(w http.ResponseWriter, r *http.Request, ecosystemID, keyID int64) (*model.Key, bool) {
+	account := &model.Key{}
+	account.SetTablePrefix(ecosystemID)
+	found, err := account.Get(keyID)
+	if err != nil {
+		logger := getLogger(r)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting record from keys")
+		errorResponse(w, err, http.StatusBadRequest)
+		return nil, false
+	} else if found {
+		if account.Deleted == 1 {
+			errorResponse(w, errDeletedKey, http.StatusBadRequest)
+			return nil, false
+		}
+	}
+	return account, true
+}
+
 func checkRoleFromParam(role, ecosystemID, wallet int64) (int64, error) {
 	if role > 0 {
 		ok, err := model.MemberHasRole(nil, ecosystemID, wallet, role)
@@ -296,4 +280,22 @@ func checkRoleFromParam(role, ecosystemID, wallet int64) (int64, error) {
 		}
 	}
 	return role, nil
+}
+
+func getFounder(w http.ResponseWriter, r *http.Request, ecosystemID int64) (int64, bool) {
+	var (
+		sp      model.StateParameter
+		founder int64
+	)
+
+	sp.SetTablePrefix(converter.Int64ToStr(ecosystemID))
+	if ok, err := sp.Get(nil, "founder_account"); err != nil {
+		getLogger(r).WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder_account parameter")
+		errorResponse(w, errServer, http.StatusBadRequest)
+		return founder, false
+	} else if ok {
+		founder = converter.StrToInt64(sp.Value)
+	}
+
+	return founder, true
 }

@@ -19,6 +19,7 @@ package api
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -223,6 +224,14 @@ type jsonContentForm struct {
 	Form
 	Template string `schema:"template"`
 	Source   string `schema:"source"`
+}
+
+func (f *jsonContentForm) Validate(w http.ResponseWriter, r *http.Request) bool {
+	if len(f.Template) == 0 {
+		errorResponse(w, fmt.Errorf("Empty template"), http.StatusBadRequest)
+		return false
+	}
+	return true
 }
 
 func jsonContentHandler(w http.ResponseWriter, r *http.Request) {

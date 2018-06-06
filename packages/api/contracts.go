@@ -60,9 +60,7 @@ func contractsHandler(w http.ResponseWriter, r *http.Request) {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	// TODO: перенести запрос в модели
-	// table := getPrefix(data) + `_contracts`
-	table := fmt.Sprintf("%d_contracts", client.EcosystemID)
+	table := client.Prefix() + "_contracts"
 	count, err := model.GetRecordsCountTx(nil, table)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")

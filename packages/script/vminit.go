@@ -74,6 +74,7 @@ const (
 	TagAddress   = "address"
 	TagSignature = "signature"
 	TagOptional  = "optional"
+	TagCrypt     = "crypt"
 )
 
 // ExtFuncInfo is the structure for the extrended function

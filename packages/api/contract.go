@@ -27,7 +27,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	"github.com/gorilla/mux"
@@ -408,7 +407,7 @@ func (c *contractHandlers) ContractHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// TODO: разобраться с VDE
+	// TODO: vde support
 	// if data.vde {
 	// 	ret, err := VDEContract(serializedData, data)
 	// 	if err != nil {
@@ -424,22 +423,4 @@ func (c *contractHandlers) ContractHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	jsonResponse(w, &contractResult{Hash: hex.EncodeToString(hash)})
-}
-
-// TODO: добавить как midleware
-func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var reason string
-
-	switch service.NodePauseType() {
-	case service.NoPause:
-		return nil
-	case service.PauseTypeUpdatingBlockchain:
-		reason = "E_UPDATING"
-		break
-	case service.PauseTypeStopingNetwork:
-		reason = "E_STOPPING"
-		break
-	}
-
-	return errorAPI(w, reason, http.StatusServiceUnavailable)
 }

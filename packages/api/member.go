@@ -8,8 +8,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 )
 
 func avatarHandler(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +49,7 @@ func avatarHandler(w http.ResponseWriter, r *http.Request) {
 	found, err = bin.GetByID(*member.ImageID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "image_id": *member.ImageID}).Errorf("on getting binary by id")
-		errorAPI(w, err, http.StatusInternalServerError)
+		errorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -60,7 +60,7 @@ func avatarHandler(w http.ResponseWriter, r *http.Request) {
 
 	if len(bin.Data) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject, "error": err, "image_id": *member.ImageID}).Errorf("on check avatar size")
-		errorAPI(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound, http.StatusNotFound)
 		return
 	}
 

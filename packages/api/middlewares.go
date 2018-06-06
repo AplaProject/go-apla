@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/GenesisKernel/go-genesis/packages/service"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -20,6 +22,26 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 		r = setLogger(r, logger)
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func NodeStateMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var reason errorType
+
+		switch service.NodePauseType() {
+		case service.NoPause:
+			next.ServeHTTP(w, r)
+			return
+		case service.PauseTypeUpdatingBlockchain:
+			reason = errUpdating
+			break
+		case service.PauseTypeStopingNetwork:
+			reason = errStopping
+			break
+		}
+
+		errorResponse(w, reason, http.StatusServiceUnavailable)
 	})
 }
 

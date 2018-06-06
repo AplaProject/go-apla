@@ -17,23 +17,11 @@
 package api
 
 import (
-	"strings"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	"github.com/gorilla/mux"
-	hr "github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
 )
-
-func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(
-		method,
-		consts.ApiPath+pattern,
-		DefaultHandler(method, pattern, processParams(pars), append([]apiHandle{blockchainUpdatingState}, handler...)...),
-	)
-}
 
 // Route sets routing paths
 func Route(router *mux.Router) {
@@ -44,7 +32,7 @@ func Route(router *mux.Router) {
 
 	// api router with prefix path
 	api := router.PathPrefix("/api/v2").Subrouter()
-	api.Use(TokenMiddleware, ClientMiddleware)
+	api.Use(NodeStateMiddleware, TokenMiddleware, ClientMiddleware)
 
 	contractHandlers := &contractHandlers{
 		requests:      tx.NewRequestBuffer(consts.TxRequestExpire),
@@ -71,8 +59,8 @@ func Route(router *mux.Router) {
 	api.HandleFunc("/table/{name}", AuthRequire(tableHandler)).Methods("GET")                         // get(`table/:name`, ``, authWallet, table)
 	api.HandleFunc("/tables", AuthRequire(tablesHandler)).Methods("GET")                              // get(`tables`, `?limit ?offset:int64`, authWallet, tables)
 	api.HandleFunc("/txstatus/{hash}", AuthRequire(txstatusHandler)).Methods("GET")                   // get(`txstatus/:hash`, ``, authWallet, txstatus)
-	// get(`test/:name`, ``, getTest)
-	api.HandleFunc("/history/{table}/{id}", AuthRequire(historyHandler)).Methods("GET") // get(`history/:table/:id`, ``, authWallet, getHistory)
+	api.HandleFunc("/test/{name}", testHandler).Methods("GET")                                        // get(`test/:name`, ``, getTest)
+	api.HandleFunc("/history/{table}/{id}", AuthRequire(historyHandler)).Methods("GET")               // get(`history/:table/:id`, ``, authWallet, getHistory)
 	api.HandleFunc("/block/{id}", blockInfoHandler).Methods("GET")
 	api.HandleFunc("/maxblockid", maxBlockHandler).Methods("GET")
 	api.HandleFunc("/version", versionHandler).Methods("GET")
@@ -82,7 +70,7 @@ func Route(router *mux.Router) {
 	api.HandleFunc("/content/source/{name}", AuthRequire(getSourceHandler)).Methods("POST") // post(`content/source/:name`, ``, authWallet, getSource)
 	api.HandleFunc("/content/page/{name}", AuthRequire(getPageHandler)).Methods("POST")     // post(`content/page/:name`, `?lang:string`, authWallet, getPage)
 	api.HandleFunc("/content/menu/{name}", AuthRequire(getMenuHandler)).Methods("POST")     // post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
-	api.HandleFunc("/content/hash/{name}", AuthRequire(getPageHashHandler)).Methods("POST") // post(`content/hash/:name`, ``, authWallet, getPageHash)
+	api.HandleFunc("/content/hash/{name}", getPageHashHandler).Methods("POST")              // post(`content/hash/:name`, ``, getPageHash)
 	// post(`vde/create`, ``, authWallet, vdeCreate)
 	api.HandleFunc("/login", loginHandler).Methods("POST")                                                               // post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
 	api.HandleFunc("/prepare/{name}", AuthRequire(contractHandlers.PrepareHandler)).Methods("POST")                      // post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
@@ -96,45 +84,4 @@ func Route(router *mux.Router) {
 	api.HandleFunc("/updnotificator", updateNotificatorHandler).Methods("POST") // post(`updnotificator`, `ids:string`, updateNotificator)
 
 	// methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, contractHandlers.nodeContract)
-}
-
-func processParams(input string) (params map[string]int) {
-	if len(input) == 0 {
-		return
-	}
-	params = make(map[string]int)
-	for _, par := range strings.Split(input, `,`) {
-		var vtype int
-		types := strings.Split(par, `:`)
-		if len(types) != 2 {
-			log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Incorrect api route parameters")
-		}
-		switch types[1] {
-		case `hex`:
-			vtype = pHex
-		case `string`:
-			vtype = pString
-		case `int64`:
-			vtype = pInt64
-		default:
-			log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Unknown type of api route parameter")
-		}
-		vars := strings.Split(types[0], ` `)
-		for _, v := range vars {
-			v = strings.TrimSpace(v)
-			if len(v) == 0 {
-				continue
-			}
-			if v[0] == '?' {
-				if len(v) > 1 {
-					params[v[1:]] = vtype | pOptional
-				} else {
-					log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Incorrect name of api route parameter")
-				}
-			} else {
-				params[v] = vtype
-			}
-		}
-	}
-	return
 }

@@ -101,9 +101,6 @@ var (
 		errUpdating:        "Node is updating blockchain",
 		errStopping:        "Network is stopping",
 	}
-
-	//TODO: remove
-	apiErrors = map[string]string{}
 )
 
 type errResult struct {

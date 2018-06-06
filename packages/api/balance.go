@@ -47,6 +47,7 @@ func balanceHandler(w http.ResponseWriter, r *http.Request) {
 	if keyID == 0 {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "value": params[keyWallet]}).Error("converting wallet to address")
 		errorResponse(w, errInvalidWallet, http.StatusBadRequest, params[keyWallet])
+		return
 	}
 
 	key := &model.Key{}

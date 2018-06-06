@@ -19,17 +19,17 @@ package api
 import (
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/gorilla/mux"
 )
 
-type getTestResult struct {
+type testResult struct {
 	Value string `json:"value"`
 }
 
-// TODO: http handler
-func getTest(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	data.result = &getTestResult{Value: smart.GetTestValue(data.params[`name`].(string))}
-	return nil
+func testHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	jsonResponse(w, &testResult{
+		Value: getTestValue(params[keyName]),
+	})
 }

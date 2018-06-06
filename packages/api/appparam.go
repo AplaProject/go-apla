@@ -33,7 +33,6 @@ const (
 )
 
 func appParamHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: _, prefix, err := checkEcosystem(w, data, logger)
 	form := &ecosystemForm{}
 	if ok := ParseForm(w, r, form); !ok {
 		return

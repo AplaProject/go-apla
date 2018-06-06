@@ -39,12 +39,6 @@ func dataHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	logger := getLogger(r)
 
-	// TODO убрать
-	// if strings.Contains(table, model.BinaryTableSuffix) && column == binaryColumn {
-	// 	binaryHandler(w, r)
-	// 	return
-	// }
-
 	data, err := model.GetColumnByID(params["table"], params["column"], params["id"])
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting data from table")

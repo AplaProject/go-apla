@@ -1,7 +1,10 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
@@ -55,4 +58,60 @@ func createTx(contract *smart.Contract, values ...string) error {
 	}
 
 	return nil
+}
+
+func getTestValue(v string) string {
+	return smart.GetTestValue(v)
+}
+
+type getter interface {
+	Get(string) string
+}
+
+func validateParamsContract(contract *smart.Contract, params getter) (err error) {
+	if contract.Block.Info.(*script.ContractInfo).Tx == nil {
+		return
+	}
+
+	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+		if fitem.ContainsTag(script.TagFile) || fitem.ContainsTag(script.TagCrypt) || fitem.ContainsTag(script.TagSignature) {
+			continue
+		}
+
+		val := strings.TrimSpace(params.Get(fitem.Name))
+		if fitem.Type.String() == "[]interface {}" {
+			count := params.Get(fitem.Name + "[]")
+			if converter.StrToInt(count) > 0 || len(val) > 0 {
+				continue
+			}
+			val = ""
+		}
+		if len(val) == 0 && !fitem.ContainsTag(script.TagOptional) {
+			log.WithFields(log.Fields{"type": consts.EmptyObject, "item_name": fitem.Name}).Error("route item is empty")
+			err = fmt.Errorf("%s is empty", fitem.Name)
+			break
+		}
+		if fitem.ContainsTag(script.TagAddress) {
+			addr := converter.StringToAddress(val)
+			if addr == 0 {
+				log.WithFields(log.Fields{"type": consts.ConversionError, "value": val}).Error("converting string to address")
+				err = fmt.Errorf("Address %s is not valid", val)
+				break
+			}
+		}
+		if fitem.Type.String() == script.Decimal {
+			re := regexp.MustCompile(`^\d+$`)
+			if !re.Match([]byte(val)) {
+				log.WithFields(log.Fields{"type": consts.InvalidObject, "value": val}).Error("The value of money is not valid")
+				err = fmt.Errorf("The value of money %s is not valid", val)
+				break
+			}
+		}
+	}
+
+	return
+}
+
+func packParamsContract(contract *smart.Contract, params getter) {
+
 }

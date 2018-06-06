@@ -34,7 +34,7 @@ func multiPrepare(req *multiPrepareRequest) (*multiPrepareResult, error) {
 	}
 
 	prepareRes := &multiPrepareResult{}
-	err = sendPost("/prepareMultiple", &url.Values{"data": {string(b)}}, prepareRes)
+	err = sendPost("prepareMultiple", &url.Values{"data": {string(b)}}, prepareRes)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func multiRequest(res *multiPrepareResult) (string, error) {
 		return "", err
 	}
 
-	hashes, err := sendRawRequest("POST", "/contractMultiple/"+res.ID, &url.Values{"data": {string(b)}})
+	hashes, err := sendRawRequest("POST", "contractMultiple/"+res.ID, &url.Values{"data": {string(b)}})
 	if err != nil {
 		return "", err
 	}
@@ -70,7 +70,7 @@ func multiRequest(res *multiPrepareResult) (string, error) {
 func multiWaitTxStatus(hashes string) error {
 	for i := 0; i < 15; i++ {
 		txRes := multiTxStatusResult{}
-		err := sendPost("/txstatusMultiple", &url.Values{"data": {string(hashes)}}, &txRes)
+		err := sendPost("txstatusMultiple", &url.Values{"data": {string(hashes)}}, &txRes)
 		if err != nil {
 			return err
 		}

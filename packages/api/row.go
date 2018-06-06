@@ -52,9 +52,8 @@ func rowHandler(w http.ResponseWriter, r *http.Request) {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	// TODO: переделать на getPrefix(data)
 	// TODO: перенести в модели
-	table := converter.EscapeName(fmt.Sprintf("%d_%s", client.EcosystemID, params[keyName]))
+	table := converter.EscapeName(fmt.Sprintf("%s_%s", client.Prefix(), params[keyName]))
 	row, err := model.GetOneRow(`SELECT `+columns+` FROM `+table+` WHERE id = ?`, params[keyID]).String()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": params[keyName], "id": params[keyID]}).Error("getting one row")

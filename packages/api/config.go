@@ -6,9 +6,9 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
+
 	log "github.com/sirupsen/logrus"
 )
 

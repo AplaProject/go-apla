@@ -33,7 +33,7 @@ import (
 func TestNewContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {
-		var ret getTestResult
+		var ret testResult
 		return assert.NoError(t, sendPost(`test/`+name, nil, &ret)) && assert.Equal(t, want, ret.Value)
 	}
 
@@ -44,7 +44,7 @@ func TestNewContracts(t *testing.T) {
 		name := strings.Replace(item.Name, `#rnd#`, rnd, -1)
 		err := sendGet(`contract/`+name, nil, &ret)
 		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(apiErrors[`E_CONTRACT`], name)) {
+			if strings.Contains(err.Error(), fmt.Sprintf(errorDescriptions[errContract], name)) {
 				form := url.Values{"Name": {name}, "Value": {strings.Replace(item.Value,
 					`#rnd#`, rnd, -1)},
 					"ApplicationId": {`1`}, "Conditions": {`true`}}
@@ -344,7 +344,7 @@ var contracts = []smartContract{
 func TestEditContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {
-		var ret getTestResult
+		var ret testResult
 		err := sendPost(`test/`+name, nil, &ret)
 		if err != nil {
 			t.Error(err)
@@ -427,7 +427,7 @@ func TestNewTableWithEmptyName(t *testing.T) {
 func TestActivateContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {
-		var ret getTestResult
+		var ret testResult
 		err := sendPost(`test/`+name, nil, &ret)
 		if err != nil {
 			t.Error(err)
@@ -494,7 +494,7 @@ func TestActivateContracts(t *testing.T) {
 func TestDeactivateContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {
-		var ret getTestResult
+		var ret testResult
 		return assert.NoError(t, sendPost(`test/`+name, nil, &ret)) && assert.Equal(t, want, ret.Value)
 	}
 

@@ -18,43 +18,15 @@ package api
 
 import (
 	"encoding/hex"
-	"encoding/json"
-	"fmt"
 	"net/http"
-	"reflect"
-	"runtime/debug"
-	"strings"
-	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/statsd"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/schema"
-	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
-
-// TODO удалить
-type apiData struct {
-	status        int
-	result        interface{}
-	params        map[string]interface{}
-	ecosystemId   int64
-	ecosystemName string
-	keyId         int64
-	roleId        int64
-	isMobile      string
-	vde           bool
-	vm            *script.VM
-	token         *jwt.Token
-}
 
 type Client struct {
 	KeyID         int64
@@ -65,6 +37,7 @@ type Client struct {
 	IsVDE         bool
 }
 
+// Prefix returns prefix of ecosystem
 func (c *Client) Prefix() (prefix string) {
 	prefix = converter.Int64ToStr(c.EcosystemID)
 	if c.IsVDE {
@@ -73,228 +46,65 @@ func (c *Client) Prefix() (prefix string) {
 	return
 }
 
-// ParamString reaturs string value of the api params
-func (a *apiData) ParamString(key string) string {
-	v, ok := a.params[key]
-	if !ok {
-		return ""
-	}
-	return v.(string)
-}
+// type forSign struct {
+// 	Time    string `json:"time"`
+// 	ForSign string `json:"forsign"`
+// }
 
-// ParamInt64 reaturs int64 value of the api params
-func (a *apiData) ParamInt64(key string) int64 {
-	v, ok := a.params[key]
-	if !ok {
-		return 0
-	}
-	return v.(int64)
-}
+// // DefaultHandler is a common handle function for api requests
+// func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
+// 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
+// 		counterName := statsd.APIRouteCounterName(method, pattern)
+// 		statsd.Client.Inc(counterName+statsd.Count, 1, 1.0)
+// 		startTime := time.Now()
+// 		var (
+// 			err  error
+// 			data = &apiData{ecosystemId: 1}
+// 		)
 
-type forSign struct {
-	Time    string `json:"time"`
-	ForSign string `json:"forsign"`
-}
+// 		// TODO: перенесено в LoggerMiddleware
+// 		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
+// 		requestLogger.Info("received http request")
 
-type hashTx struct {
-	Hash string `json:"hash"`
-}
+// 		defer func() {
+// 			endTime := time.Now()
+// 			statsd.Client.TimingDuration(counterName+statsd.Time, endTime.Sub(startTime), 1.0)
+// 			if r := recover(); r != nil {
+// 				requestLogger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r, "stack": string(debug.Stack())}).Error("panic recovered error")
+// 				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
+// 				errorAPI(w, `E_RECOVERED`, http.StatusInternalServerError)
+// 			}
+// 		}()
 
-const (
-	pInt64 = iota
-	pHex
-	pString
+// 		w.Header().Set("Access-Control-Allow-Origin", "*")
+// 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	pOptional = 0x100
-)
+// 		data.params = make(map[string]interface{})
+// 		for _, par := range ps {
+// 			data.params[par.Key] = par.Value
+// 		}
 
-// TODO: убрать
-type apiHandle func(http.ResponseWriter, *http.Request, *apiData, *log.Entry) error
+// 		ihandlers := append([]apiHandle{
+// 			fillToken,
+// 			fillParams(params),
+// 		}, handlers...)
 
-// TODO: убрать
-func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
-	var (
-		msg, errCode, errParams string
-	)
+// 		for _, handler := range ihandlers {
+// 			if handler(w, r, data, requestLogger) != nil {
+// 				return
+// 			}
+// 		}
 
-	switch v := err.(type) {
-	case string:
-		errCode = v
-		if val, ok := apiErrors[v]; ok {
-			if len(params) > 0 {
-				list := make([]string, 0)
-				msg = fmt.Sprintf(val, params...)
-				for _, item := range params {
-					list = append(list, fmt.Sprintf(`"%v"`, item))
-				}
-				errParams = fmt.Sprintf(`, "params": [%s]`, strings.Join(list, `,`))
-			} else {
-				msg = val
-			}
-		} else {
-			msg = v
-		}
-	case interface{}:
-		errCode = `E_SERVER`
-		if reflect.TypeOf(v).Implements(reflect.TypeOf((*error)(nil)).Elem()) {
-			msg = v.(error).Error()
-		}
-	}
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(code)
-	fmt.Fprintln(w, fmt.Sprintf(`{"error": %q, "msg": %q %s}`, errCode, msg, errParams))
-	return fmt.Errorf(msg)
-}
+// 		jsonResult, err := json.Marshal(data.result)
+// 		if err != nil {
+// 			requestLogger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marhsalling http response to json")
+// 			errorAPI(w, err, http.StatusInternalServerError)
+// 			return
+// 		}
 
-func getPrefix(data *apiData) (prefix string) {
-	prefix = converter.Int64ToStr(data.ecosystemId)
-	if data.vde {
-		prefix += `_vde`
-	}
-	return
-}
-
-func getSignHeader(txName string, data *apiData) tx.Header {
-	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
-		EcosystemID: data.ecosystemId, KeyID: data.keyId, NetworkID: consts.NETWORK_ID}
-}
-
-func getHeader(txName string, data *apiData) (tx.Header, error) {
-	publicKey := []byte("null")
-	if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
-		publicKey = data.params[`pubkey`].([]byte)
-		lenpub := len(publicKey)
-		if lenpub > 64 {
-			publicKey = publicKey[lenpub-64:]
-		}
-	}
-	signature := data.params[`signature`].([]byte)
-	if len(signature) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject, "params": data.params}).Error("signature is empty")
-		return tx.Header{}, fmt.Errorf("signature is empty")
-	}
-	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
-		EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
-		BinSignatures: converter.EncodeLengthPlusData(signature), NetworkID: consts.NETWORK_ID}, nil
-}
-
-// DefaultHandler is a common handle function for api requests
-func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
-	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
-		counterName := statsd.APIRouteCounterName(method, pattern)
-		statsd.Client.Inc(counterName+statsd.Count, 1, 1.0)
-		startTime := time.Now()
-		var (
-			err  error
-			data = &apiData{ecosystemId: 1}
-		)
-
-		// TODO: перенесено в LoggerMiddleware
-		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
-		requestLogger.Info("received http request")
-
-		defer func() {
-			endTime := time.Now()
-			statsd.Client.TimingDuration(counterName+statsd.Time, endTime.Sub(startTime), 1.0)
-			if r := recover(); r != nil {
-				requestLogger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r, "stack": string(debug.Stack())}).Error("panic recovered error")
-				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
-				errorAPI(w, `E_RECOVERED`, http.StatusInternalServerError)
-			}
-		}()
-
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-
-		data.params = make(map[string]interface{})
-		for _, par := range ps {
-			data.params[par.Key] = par.Value
-		}
-
-		ihandlers := append([]apiHandle{
-			fillToken,
-			fillParams(params),
-		}, handlers...)
-
-		for _, handler := range ihandlers {
-			if handler(w, r, data, requestLogger) != nil {
-				return
-			}
-		}
-
-		jsonResult, err := json.Marshal(data.result)
-		if err != nil {
-			requestLogger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marhsalling http response to json")
-			errorAPI(w, err, http.StatusInternalServerError)
-			return
-		}
-
-		w.Write(jsonResult)
-	})
-}
-
-// TODO: удалить, перенесено в TokenMiddleware
-func fillToken(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	// token, err := jwtToken(r)
-	// if err != nil {
-	// 	logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("starting session")
-	// 	errmsg := err.Error()
-	// 	expired := `token is expired by`
-	// 	if strings.HasPrefix(errmsg, expired) {
-	// 		return errorAPI(w, `E_TOKENEXPIRED`, http.StatusUnauthorized, errmsg[len(expired):])
-	// 	}
-	// 	return errorAPI(w, err, http.StatusBadRequest)
-	// }
-
-	// data.token = token
-	// if token != nil && token.Valid {
-	// 	if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
-	// 		if err := fillTokenData(data, claims, logger); err != nil {
-	// 			return errorAPI(w, "E_SERVER", http.StatusNotFound, err)
-	// 		}
-	// 	}
-	// }
-
-	return nil
-}
-
-func fillParams(params map[string]int) apiHandle {
-	return func(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-		// Getting and validating request parameters
-		vde := r.FormValue(`vde`)
-		if vde == `1` || vde == `true` {
-			data.vm = smart.GetVM(true, data.ecosystemId)
-			if data.vm == nil {
-				return errorAPI(w, `E_VDE`, http.StatusBadRequest, data.ecosystemId)
-			}
-			data.vde = true
-		} else {
-			data.vm = smart.GetVM(false, 0)
-		}
-		for key, par := range params {
-			val := r.FormValue(key)
-			if par&pOptional == 0 && len(val) == 0 {
-				logger.WithFields(log.Fields{"type": consts.RouteError, "error": fmt.Sprintf("undefined val %s", key)}).Error("undefined val")
-				return errorAPI(w, `E_UNDEFINEVAL`, http.StatusBadRequest, key)
-			}
-			switch par & 0xff {
-			case pInt64:
-				data.params[key] = converter.StrToInt64(val)
-			case pHex:
-				bin, err := hex.DecodeString(val)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.ConversionError, "value": val, "error": err}).Error("decoding http parameter from hex")
-					return errorAPI(w, err, http.StatusBadRequest)
-				}
-				data.params[key] = bin
-			case pString:
-				data.params[key] = val
-			}
-		}
-
-		return nil
-	}
-}
+// 		w.Write(jsonResult)
+// 	})
+// }
 
 func checkEcosystem(w http.ResponseWriter, r *http.Request) (ecosystemID int64, prefix string, ok bool) {
 	client := getClient(r)
@@ -322,27 +132,6 @@ func checkEcosystem(w http.ResponseWriter, r *http.Request) (ecosystemID int64, 
 	return ecosystemID, prefix, true
 }
 
-func fillTokenData(data *apiData, claims *JWTClaims, logger *log.Entry) error {
-	data.ecosystemId = converter.StrToInt64(claims.EcosystemID)
-	data.keyId = converter.StrToInt64(claims.KeyID)
-	data.isMobile = claims.IsMobile
-	data.roleId = converter.StrToInt64(claims.RoleID)
-	ecosystem := &model.Ecosystem{}
-	found, err := ecosystem.Get(data.ecosystemId)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
-		return err
-	}
-
-	if !found {
-		err := fmt.Errorf("ecosystem not found")
-		logger.WithFields(log.Fields{"type": consts.NotFound, "id": data.ecosystemId, "error": err}).Error("ecosystem not found")
-	}
-
-	data.ecosystemName = ecosystem.Name
-	return nil
-}
-
 type Form struct{}
 
 func (f *Form) Validate(w http.ResponseWriter, r *http.Request) bool {
@@ -364,8 +153,23 @@ func ParseForm(w http.ResponseWriter, r *http.Request, f FormValidater) bool {
 	return f.Validate(w, r)
 }
 
+type hexValue struct {
+	value []byte
+}
+
+func (hv hexValue) Value() []byte {
+	return hv.value
+}
+
+func (hv *hexValue) UnmarshalText(v []byte) (err error) {
+	hv.value, err = hex.DecodeString(string(v))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "value": string(v), "error": err}).Error("decoding from hex")
+	}
+	return
+}
+
 type ecosystemForm struct {
-	Form
 	EcosystemID     int64  `schema:"ecosystem"`
 	EcosystemPrefix string `schema:"-"`
 }

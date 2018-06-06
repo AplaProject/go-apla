@@ -23,7 +23,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/gorilla/mux"
 
 	log "github.com/sirupsen/logrus"
@@ -51,13 +50,9 @@ type getContractResult struct {
 
 func contractInfoHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	client := getClient(r)
 	logger := getLogger(r)
 
-	// TODO: перенести в trash
-	vm := smart.GetVM(true, client.EcosystemID)
-
-	contract := smart.VMGetContract(vm, params[keyContractName], uint32(client.EcosystemID))
+	contract := getContract(r, params[keyContractName])
 	if contract == nil {
 		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": params[keyContractName]}).Error("contract name")
 		errorResponse(w, errContract, http.StatusBadRequest, params[keyContractName])

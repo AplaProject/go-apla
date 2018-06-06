@@ -92,7 +92,8 @@ func ClientMiddleware(next http.Handler) http.Handler {
 			}
 		}
 		if client == nil {
-			client = &Client{}
+			// create client with default ecosystem
+			client = &Client{EcosystemID: 1}
 		}
 		r = setClient(r, client)
 
@@ -166,22 +167,4 @@ func getClientFromToken(token *jwt.Token) (*Client, error) {
 func generateJWTToken(claims JWTClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret)
-}
-
-// TODO: удалить перенесено в AuthRequire
-func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if data.keyId == 0 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
-		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
-	}
-	return nil
-}
-
-// TODO: удалить
-func authState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if data.keyId == 0 || data.ecosystemId <= 1 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("state is empty")
-		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
-	}
-	return nil
 }
