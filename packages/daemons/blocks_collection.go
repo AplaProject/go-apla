@@ -161,6 +161,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			}
 
 			if !hashMatched {
+				parser.CleanCache()
 				//it should be fork, replace our previous blocks to ones from the host
 				err := parser.GetBlocks(block.Header.BlockID-1, host)
 				if err != nil {

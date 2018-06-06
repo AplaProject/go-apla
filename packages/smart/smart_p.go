@@ -65,10 +65,6 @@ var (
 		"Join":              "extend_cost_join",
 		"Size":              "extend_cost_size",
 		"Substr":            "extend_cost_substr",
-		"ContractsList":     "extend_cost_contracts_list",
-		"IsObject":          "extend_cost_is_object",
-		"CompileContract":   "extend_cost_compile_contract",
-		"FlushContract":     "extend_cost_flush_contract",
 		"Eval":              "extend_cost_eval",
 		"Len":               "extend_cost_len",
 		"Activate":          "extend_cost_activate",
@@ -342,7 +338,7 @@ func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
 
 // NewLang creates new language
 func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int64, err error) {
-	if sc.TxContract.Name != `@1NewLang` {
+	if !accessContracts(sc, "NewLang", "Import") {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("NewLang can be only called from @1NewLang")
 		return 0, fmt.Errorf(`NewLang can be only called from @1NewLang`)
 	}
@@ -355,9 +351,9 @@ func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int6
 	return id, nil
 }
 
-// EditLang edits language
+// EditLanguage edits language
 func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) error {
-	if sc.TxContract.Name != `@1EditLang` {
+	if !accessContracts(sc, "EditLang", "Import") {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditLang can be only called from @1EditLang")
 		return fmt.Errorf(`EditLang can be only called from @1EditLang`)
 	}
@@ -867,6 +863,15 @@ func JSONDecode(input string) (interface{}, error) {
 
 // JSONEncode converts object to json string
 func JSONEncode(input interface{}) (string, error) {
+	rv := reflect.ValueOf(input).Elem()
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+
+	if rv.Kind() == reflect.Struct {
+		return "", fmt.Errorf("Type %T doesn't support json marshalling", input)
+	}
+
 	b, err := json.Marshal(input)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling json")

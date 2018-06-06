@@ -129,6 +129,12 @@ var forTest = tplList{
 		Page:members_list,).Alert(Text: $want_save_changesx$, 
 		ConfirmButton: $yesx$, CancelButton: $nox$, Icon: question)`,
 		`[{"tag":"button","attr":{"alert":{"cancelbutton":"$nox$","confirmbutton":"$yesx$","icon":"question","text":"$want_save_changesx$"},"class":"btn btn-primary","contract":"EditProfile","page":"members_list"},"children":[{"tag":"text","text":"savex"}]}]`},
+	{`Button(Body: button).Popup(Width: 100)`,
+		`[{"tag":"button","attr":{"popup":{"width":"100"}},"children":[{"tag":"text","text":"button"}]}]`},
+	{`Button(Body: button).Popup(Width: 100, Header: header)`,
+		`[{"tag":"button","attr":{"popup":{"header":"header","width":"100"}},"children":[{"tag":"text","text":"button"}]}]`},
+	{`Button(Body: button).Popup(Header: header)`,
+		`[{"tag":"button","children":[{"tag":"text","text":"button"}]}]`},
 	{`Simple Strong(bold text)`,
 		`[{"tag":"text","text":"Simple "},{"tag":"strong","children":[{"tag":"text","text":"bold text"}]}]`},
 	{`EcosysParam(gender, Source: mygender)`,
@@ -141,8 +147,6 @@ var forTest = tplList{
 		SetVar(varNotZero, 1) If(#varNotZero#>0) { the varNotZero should be visible }
 		If(#varUndefined#>0) { the varUndefined should be hidden }`,
 		`[{"tag":"text","text":"the varNotZero should be visible"}]`},
-	{`Address(EcosysParam(founder_account))+EcosysParam(founder_account)`,
-		`[{"tag":"text","text":"1651-3553-1389-2023-2108"},{"tag":"text","text":"+-1933190934789319508"}]`},
 }
 
 func TestMobile(t *testing.T) {
