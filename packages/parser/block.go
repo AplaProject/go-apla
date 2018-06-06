@@ -161,7 +161,7 @@ func (b *Block) PlayBlock(dbTransaction *model.DbTransaction) error {
 			}
 			// skip this transaction
 			model.MarkTransactionUsed(p.DbTransaction, p.TxHash)
-			p.processBadTransaction(p.TxHash, err.Error())
+			MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
 			if p.SysUpdate {
 				if err = syspar.SysUpdate(p.DbTransaction); err != nil {
 					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")

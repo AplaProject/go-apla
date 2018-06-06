@@ -157,7 +157,7 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 	p := new(parser.Parser)
 
 	// verify transactions
-	err := p.AllTxParser()
+	err := parser.ProcessTransactionsQueue(p.DbTransaction)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 		p, err := parser.ParseTransaction(bufTransaction)
 		if err != nil {
 			if p != nil {
-				p.ProcessBadTransaction(err)
+				parser.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
 			}
 			continue
 		}
@@ -189,7 +189,7 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 				if err == parser.ErrLimitSkip {
 					model.IncrementTxAttemptCount(nil, p.TxHash)
 				} else {
-					p.ProcessBadTransaction(err)
+					parser.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
 				}
 				continue
 			}

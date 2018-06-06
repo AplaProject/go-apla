@@ -50,7 +50,7 @@ func QueueParserTx(ctx context.Context, d *daemon) error {
 	}
 
 	p := new(parser.Parser)
-	err = p.AllTxParser()
+	err = parser.ProcessTransactionsQueue(p.DbTransaction)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"error": err}).Error("parsing transactions")
 		return err

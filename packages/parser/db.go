@@ -3,6 +3,7 @@ package parser
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -216,4 +217,135 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	BlockData = &header
 	BlockData.Hash = block.Hash
 	return BlockData, nil
+}
+
+// DeleteQueueTx deletes a transaction from the queue
+func DeleteQueueTx(dbTransaction *model.DbTransaction, hash []byte) error {
+	delQueueTx := &model.QueueTx{Hash: hash}
+	err := delQueueTx.DeleteTx(dbTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")
+		return utils.ErrInfo(err)
+	}
+	// Because we process transactions with verified=0 in queue_parser_tx, after processing we need to delete them
+	_, err = model.DeleteTransactionIfUnused(dbTransaction, hash)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction if unused")
+		return utils.ErrInfo(err)
+	}
+	return nil
+}
+
+func MarkTransactionBad(dbTransaction *model.DbTransaction, hash []byte, errText string) error {
+	if hash == nil {
+		return nil
+	}
+	model.MarkTransactionUsed(dbTransaction, hash)
+	if len(errText) > 255 {
+		errText = errText[:255]
+	}
+	// looks like there is not hash in queue_tx in this moment
+	qtx := &model.QueueTx{}
+	_, err := qtx.GetByHash(dbTransaction, hash)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting tx by hash from queue")
+	}
+
+	if qtx.FromGate == 0 {
+		m := &model.TransactionStatus{}
+		err = m.SetError(dbTransaction, errText, hash)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("setting transaction status error")
+			return utils.ErrInfo(err)
+		}
+	}
+	err = DeleteQueueTx(dbTransaction, hash)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")
+		return utils.ErrInfo(err)
+	}
+
+	return nil
+}
+
+// TxParser writes transactions into the queue
+func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx []byte, myTx bool) error {
+	// get parameters for "struct" transactions
+	txType, keyID := GetTxTypeAndUserID(binaryTx)
+
+	header, err := CheckTransaction(binaryTx)
+	if err != nil {
+		MarkTransactionBad(dbTransaction, hash, err.Error())
+		return err
+	}
+
+	if !( /*txType > 127 ||*/ consts.IsStruct(int(txType))) {
+		if header == nil {
+			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("tx header is nil")
+			return utils.ErrInfo(errors.New("header is nil"))
+		}
+		keyID = header.KeyID
+	}
+
+	if keyID == 0 {
+		errStr := "undefined keyID"
+		MarkTransactionBad(dbTransaction, hash, errStr)
+		return errors.New(errStr)
+	}
+
+	tx := &model.Transaction{}
+	_, err = tx.Get(hash)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting transaction by hash")
+		return utils.ErrInfo(err)
+	}
+	counter := tx.Counter
+	counter++
+	_, err = model.DeleteTransactionByHash(hash)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction by hash")
+		return utils.ErrInfo(err)
+	}
+
+	// put with verified=1
+	newTx := &model.Transaction{
+		Hash:     hash,
+		Data:     binaryTx,
+		Type:     int8(txType),
+		KeyID:    keyID,
+		Counter:  counter,
+		Verified: 1,
+		HighRate: tx.HighRate,
+	}
+	err = newTx.Create()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating new transaction")
+		return utils.ErrInfo(err)
+	}
+
+	// remove transaction from the queue (with verified=0)
+	err = DeleteQueueTx(dbTransaction, hash)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction from queue")
+		return utils.ErrInfo(err)
+	}
+
+	return nil
+}
+
+// AllTxParser parses new transactions
+func ProcessTransactionsQueue(dbTransaction *model.DbTransaction) error {
+	all, err := model.GetAllUnverifiedAndUnusedTransactions()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unverified and unused transactions")
+		return err
+	}
+	for _, data := range all {
+		err := ProcessQueueTransaction(dbTransaction, data.Hash, data.Data, false)
+		if err != nil {
+			return utils.ErrInfo(err)
+		}
+		log.Debug("transaction parsed successfully")
+	}
+	return nil
 }

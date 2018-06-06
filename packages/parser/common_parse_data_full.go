@@ -143,7 +143,7 @@ func ParseBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error) {
 		p, err := ParseTransaction(bufTransaction)
 		if err != nil {
 			if p != nil && p.TxHash != nil {
-				p.processBadTransaction(p.TxHash, err.Error())
+				MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
 			}
 			return nil, fmt.Errorf("parse transaction error(%s)", err)
 		}
