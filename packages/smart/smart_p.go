@@ -863,7 +863,7 @@ func JSONDecode(input string) (interface{}, error) {
 
 // JSONEncode converts object to json string
 func JSONEncode(input interface{}) (string, error) {
-	rv := reflect.ValueOf(input).Elem()
+	rv := reflect.ValueOf(input)
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
 	}
