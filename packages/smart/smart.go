@@ -550,17 +550,6 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 	return &extend
 }
 
-// StackCont adds an element to the stack of contract call or removes the top element when name is empty
-func StackCont(sc interface{}, name string) {
-	cont := sc.(*SmartContract).TxContract
-	if len(name) > 0 {
-		cont.StackCont = append(cont.StackCont, name)
-	} else {
-		cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
-	}
-	return
-}
-
 func PrefixName(table string) (prefix, name string) {
 	name = table
 	if off := strings.IndexByte(table, '_'); off > 0 && table[0] >= '0' && table[0] <= '9' {
@@ -830,8 +819,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	}
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
-	sc.TxContract.StackCont = []string{sc.TxContract.Name}
-	(*sc.TxContract.Extend)[`stack_cont`] = StackCont
+	sc.AppendStack(sc.TxContract.Name)
 	sc.VM = GetVM(sc.VDE, sc.TxSmart.EcosystemID)
 	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 {
 		if !sc.VDE {

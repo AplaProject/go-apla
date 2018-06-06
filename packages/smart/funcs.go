@@ -85,6 +85,17 @@ type SmartContract struct {
 	DbTransaction *model.DbTransaction
 }
 
+// AppendStack adds an element to the stack of contract call or removes the top element when name is empty
+func (sc *SmartContract) AppendStack(contract string) {
+	cont := sc.TxContract
+	if len(contract) > 0 {
+		cont.StackCont = append(cont.StackCont, contract)
+	} else {
+		cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
+	}
+	(*sc.TxContract.Extend)["stack"] = cont.StackCont
+}
+
 var (
 	funcCallsDB = map[string]struct{}{
 		"DBInsert":    {},

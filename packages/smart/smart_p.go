@@ -863,6 +863,15 @@ func JSONDecode(input string) (interface{}, error) {
 
 // JSONEncode converts object to json string
 func JSONEncode(input interface{}) (string, error) {
+	rv := reflect.ValueOf(input).Elem()
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+
+	if rv.Kind() == reflect.Struct {
+		return "", fmt.Errorf("Type %T doesn't support json marshalling", input)
+	}
+
 	b, err := json.Marshal(input)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling json")

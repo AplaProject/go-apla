@@ -63,7 +63,7 @@ var sysVars = map[string]struct{}{
 	`parent`:            {},
 	`original_contract`: {},
 	`sc`:                {},
-	`stack_cont`:        {},
+	`stack`:             {},
 	`this_contract`:     {},
 	`time`:              {},
 	`type`:              {},
