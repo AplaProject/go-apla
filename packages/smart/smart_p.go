@@ -338,9 +338,9 @@ func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
 
 // NewLang creates new language
 func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int64, err error) {
-	if !accessContracts(sc, "NewLang", "Import") {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("NewLang can be only called from @1NewLang")
-		return 0, fmt.Errorf(`NewLang can be only called from @1NewLang`)
+	if !accessContracts(sc, "NewLang", "NewLangJoint", "Import") {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateLanguage can be only called from @1NewLang, @1NewLangJoint, @1Import")
+		return 0, fmt.Errorf(`CreateLanguage can be only called from @1NewLang, @1NewLangJoint, @1Import`)
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	if _, id, err = DBInsert(sc, `@`+idStr+"_languages", "name,res,app_id", name, trans, appID); err != nil {
@@ -353,9 +353,9 @@ func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int6
 
 // EditLanguage edits language
 func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) error {
-	if !accessContracts(sc, "EditLang", "Import") {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditLang can be only called from @1EditLang")
-		return fmt.Errorf(`EditLang can be only called from @1EditLang`)
+	if !accessContracts(sc, "EditLang", "EditLangJoint", "Import") {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditLanguage can be only called from @1EditLang, @1EditLangJoint and @1Import")
+		return fmt.Errorf(`EditLanguage can be only called from @1EditLang, @1EditLangJoint and @1Import`)
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	if _, err := DBUpdate(sc, `@`+idStr+"_languages", id, "name,res,app_id", name, trans, appID); err != nil {
