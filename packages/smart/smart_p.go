@@ -653,7 +653,7 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`RollbackColumn can be only called from @1NewColumn`)
 	}
-	name = strings.ToLower(name)
+	name = converter.EscapeSQL(strings.ToLower(name))
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.EcosystemID))
 	if err != nil {

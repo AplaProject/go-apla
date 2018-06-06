@@ -280,7 +280,7 @@ func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
 }
 
 func getDefTableName(sc *SmartContract, tblname string) string {
-	return GetTableName(sc, tblname, sc.TxSmart.EcosystemID)
+	return converter.EscapeSQL(GetTableName(sc, tblname, sc.TxSmart.EcosystemID))
 }
 
 func accessContracts(sc *SmartContract, names ...string) bool {
@@ -517,7 +517,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		default:
 			data = v.(map[string]interface{})
 		}
-		colname := strings.ToLower(data[`name`].(string))
+		colname := converter.EscapeSQL(strings.ToLower(data[`name`].(string)))
 		if colList[colname] {
 			return fmt.Errorf(`There are the same columns`)
 		}
@@ -1081,8 +1081,8 @@ func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 
 // ColumnCondition is contract func
 func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions string) error {
-	name = strings.ToLower(name)
-	tableName = strings.ToLower(tableName)
+	name = converter.EscapeSQL(strings.ToLower(name))
+	tableName = converter.EscapeSQL(strings.ToLower(tableName))
 	if !accessContracts(sc, `NewColumn`, `EditColumn`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ColumnConditions can be only called from @1NewColumn")
 		return fmt.Errorf(`ColumnCondition can be only called from NewColumn or EditColumn`)
@@ -1184,7 +1184,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("CreateColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
 	}
-	name = strings.ToLower(name)
+	name = converter.EscapeSQL(strings.ToLower(name))
 	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
 
@@ -1274,7 +1274,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditColumn can be only called from @1EditColumn")
 		return fmt.Errorf(`EditColumn can be only called from EditColumn`)
 	}
-	name = strings.ToLower(name)
+	name = converter.EscapeSQL(strings.ToLower(name))
 	tableName = strings.ToLower(tableName)
 	tables := getDefTableName(sc, `tables`)
 	type cols struct {
