@@ -477,8 +477,8 @@ func RollbackNewContract(sc *SmartContract, value string) error {
 // CreateTable is creating smart contract table
 func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) error {
 	var err error
-	if !ContractAccess(sc, `NewTable`, `Import`) {
-		return fmt.Errorf(`CreateTable can be only called from NewTable`)
+	if !accessContracts(sc, `NewTable`, `NewTableJoint`, `Import`) {
+		return fmt.Errorf(`CreateTable can be only called from NewTable, NewTableJoint or Import`)
 	}
 
 	if len(name) == 0 {
@@ -936,9 +936,9 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 			log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1EditTable")
 			return fmt.Errorf(`TableConditions can be only called from EditTable`)
 		}
-	} else if !ContractAccess(sc, `NewTable`, `Import`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1NewTable")
-		return fmt.Errorf(`TableConditions can be only called from NewTable or Import`)
+	} else if !accessContracts(sc, `NewTable`, `Import`, `NewTableJoint`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1NewTable, @1Import, @1NewTableJoint")
+		return fmt.Errorf(`TableConditions can be only called from NewTable or Import or NewTableJoint`)
 	}
 
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
