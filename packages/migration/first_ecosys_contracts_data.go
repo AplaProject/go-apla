@@ -253,7 +253,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
                     var col_cond string
                     var col_type string
 
-                    col_name = Replace(Str(clm[0]), ` + `"` + `, "")
+                    col_name = Replace(Str(clm[0]), ` + "`" + `"` + "`" + `, "")
                     col_cond = Str(clm[1])
                     col_type = GetColumnType(table_name, col_name)
 
@@ -545,7 +545,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         $result = DBInsert("applications", "name,conditions", $Name, $Conditions)
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
-('15', 'NewBlock', 'ontract NewBlock {
+('15', 'NewBlock', 'contract NewBlock {
     data {
         ApplicationId int
         Name string
@@ -774,6 +774,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
         $ApplicationId = 0
         var app_map map
+        var ii string
         ii = "import_info"
         app_map = DBFind("buffer_data").Columns("value->app_name").Where("key= and member_id=$", ii, $key_id).Row()
         if app_map{
