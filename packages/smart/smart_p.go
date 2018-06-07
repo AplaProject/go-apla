@@ -323,9 +323,9 @@ func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
 
 // NewLang creates new language
 func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int64, err error) {
-	if sc.TxContract.Name != `@1NewLang` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("NewLang can be only called from @1NewLang")
-		return 0, fmt.Errorf(`NewLang can be only called from @1NewLang`)
+	if !accessContracts(sc, "NewLang", "NewLangJoint", "Import") {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateLanguage can be only called from @1NewLang, @1NewLangJoint, @1Import")
+		return 0, fmt.Errorf(`CreateLanguage can be only called from @1NewLang, @1NewLangJoint, @1Import`)
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	if _, id, err = DBInsert(sc, `@`+idStr+"_languages", "name,res,app_id", name, trans, appID); err != nil {
@@ -336,11 +336,11 @@ func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int6
 	return id, nil
 }
 
-// EditLang edits language
+// EditLanguage edits language
 func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) error {
-	if sc.TxContract.Name != `@1EditLang` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditLang can be only called from @1EditLang")
-		return fmt.Errorf(`EditLang can be only called from @1EditLang`)
+	if !accessContracts(sc, "EditLang", "EditLangJoint", "Import") {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditLanguage can be only called from @1EditLang, @1EditLangJoint and @1Import")
+		return fmt.Errorf(`EditLanguage can be only called from @1EditLang, @1EditLangJoint and @1Import`)
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	if _, err := DBUpdate(sc, `@`+idStr+"_languages", id, "name,res,app_id", name, trans, appID); err != nil {
@@ -471,6 +471,7 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 	if err := validateAccess(`EditEcosysName`, sc, nEditEcosystemName); err != nil {
 		return err
 	}
+
 	_, err := DBUpdate(sc, "@1_ecosystems", sysID, "name", newName)
 	return err
 }
@@ -590,7 +591,7 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 	if err := validateAccess(`RollbackColumn`, sc, nNewColumn); err != nil {
 		return err
 	}
-	name = strings.ToLower(name)
+	name = converter.EscapeSQL(strings.ToLower(name))
 	rollbackTx := &model.RollbackTx{}
 	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.EcosystemID))
 	if err != nil {
@@ -687,6 +688,7 @@ func RollbackContract(sc *SmartContract, name string) error {
 	if err := validateAccess(`RollbackContract`, sc, nNewContract, nImport); err != nil {
 		return err
 	}
+
 	if c := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID)); c != nil {
 		id := c.Block.Info.(*script.ContractInfo).ID
 		if int(id) < len(sc.VM.Children) {
@@ -784,9 +786,23 @@ func JSONDecode(input string) (interface{}, error) {
 
 // JSONEncode converts object to json string
 func JSONEncode(input interface{}) (string, error) {
+	rv := reflect.ValueOf(input)
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+
+	if rv.Kind() == reflect.Struct {
+		return "", fmt.Errorf("Type %T doesn't support json marshalling", input)
+	}
+
 	b, err := json.Marshal(input)
 	if err != nil {
 		return "", logError(err, consts.JSONMarshallError, "marshalling json")
 	}
 	return string(b), nil
+}
+
+// Append syn for golang 'append' function
+func Append(slice []interface{}, val interface{}) []interface{} {
+	return append(slice, val)
 }

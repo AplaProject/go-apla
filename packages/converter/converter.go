@@ -426,6 +426,11 @@ func SanitizeNumber(input string) string {
 	return Sanitize(input, `+.- `)
 }
 
+func EscapeSQL(name string) string {
+	return strings.Replace(strings.Replace(strings.Replace(name, `"`, `""`, -1),
+		`;`, ``, -1), `'`, `''`, -1)
+}
+
 // EscapeName deletes unaccessable characters for input name(s)
 func EscapeName(name string) string {
 	out := make([]byte, 1, len(name)+2)

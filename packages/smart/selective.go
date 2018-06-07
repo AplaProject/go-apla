@@ -92,7 +92,7 @@ func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 	for i := 0; i < len(fields); i++ {
 		if fields[i] == `id` {
 			isID = true
-			tableID = fmt.Sprint(values[i])
+			tableID = escapeSingleQuotes(fmt.Sprint(values[i]))
 		}
 
 		if strings.Contains(fields[i], `->`) {
@@ -101,7 +101,7 @@ func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 				if jsonFields[colfield[0]] == nil {
 					jsonFields[colfield[0]] = make(map[string]string)
 				}
-				jsonFields[colfield[0]][colfield[1]] = values[i]
+				jsonFields[colfield[0]][colfield[1]] = escapeSingleQuotes(values[i])
 				continue
 			}
 		}
@@ -119,11 +119,11 @@ func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 		} else if values[i] == `NULL` {
 			insVal = `NULL`
 		} else if strings.HasPrefix(fields[i], `timestamp`) {
-			insVal = `to_timestamp('` + values[i] + `')`
+			insVal = `to_timestamp('` + escapeSingleQuotes(values[i]) + `')`
 		} else if strings.HasPrefix(values[i], `timestamp`) {
-			insVal = `timestamp '` + values[i][len(`timestamp `):] + `'`
+			insVal = `timestamp '` + escapeSingleQuotes(values[i][len(`timestamp `):]) + `'`
 		} else {
-			insVal = `'` + strings.Replace(values[i], `'`, `''`, -1) + `'`
+			insVal = `'` + escapeSingleQuotes(values[i]) + `'`
 		}
 		addSQLIns1 = append(addSQLIns1, insVal)
 	}
@@ -199,9 +199,9 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 	}
 	for i := 0; i < len(whereFields); i++ {
 		if val := converter.StrToInt64(whereValues[i]); val != 0 {
-			addSQLWhere += whereFields[i] + "= " + whereValues[i] + " AND "
+			addSQLWhere += whereFields[i] + "= " + escapeSingleQuotes(whereValues[i]) + " AND "
 		} else {
-			addSQLWhere += whereFields[i] + "= '" + whereValues[i] + "' AND "
+			addSQLWhere += whereFields[i] + "= '" + escapeSingleQuotes(whereValues[i]) + "' AND "
 		}
 	}
 	if len(addSQLWhere) > 0 {
@@ -253,15 +253,15 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 		if converter.IsByteColumn(table, fields[i]) && len(values[i]) != 0 {
 			addSQLUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 		} else if fields[i][:1] == "+" {
-			addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + values[i] + `,`
+			addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + escapeSingleQuotes(values[i]) + `,`
 		} else if fields[i][:1] == "-" {
-			addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `-` + values[i] + `,`
+			addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `-` + escapeSingleQuotes(values[i]) + `,`
 		} else if values[i] == `NULL` {
 			addSQLUpdate += fields[i] + `= NULL,`
 		} else if strings.HasPrefix(fields[i], `timestamp `) {
 			addSQLUpdate += fields[i][len(`timestamp `):] + `= to_timestamp('` + values[i] + `'),`
 		} else if strings.HasPrefix(values[i], `timestamp `) {
-			addSQLUpdate += fields[i] + `= timestamp '` + values[i][len(`timestamp `):] + `',`
+			addSQLUpdate += fields[i] + `= timestamp '` + escapeSingleQuotes(values[i][len(`timestamp `):]) + `',`
 		} else if strings.Contains(fields[i], `->`) {
 			colfield := strings.Split(fields[i], `->`)
 			if len(colfield) == 2 {
@@ -271,7 +271,7 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 				jsonFields[colfield[0]][colfield[1]] = values[i]
 			}
 		} else {
-			addSQLUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
+			addSQLUpdate += fields[i] + `='` + escapeSingleQuotes(values[i]) + `',`
 		}
 	}
 	for colname, colvals := range jsonFields {
@@ -305,4 +305,8 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 	tableID = logData[`id`]
 
 	return cost, tableID, addRollback(sc, table, tableID, rollbackInfoStr)
+}
+
+func escapeSingleQuotes(val string) string {
+	return strings.Replace(val, `'`, `''`, -1)
 }

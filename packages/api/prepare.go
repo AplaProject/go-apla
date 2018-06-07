@@ -33,11 +33,12 @@ import (
 )
 
 type prepareResult struct {
-	ID      string            `json:"request_id"`
-	ForSign string            `json:"forsign"`
-	Signs   []TxSignJSON      `json:"signs"`
-	Values  map[string]string `json:"values"`
-	Time    string            `json:"time"`
+	ID         string            `json:"request_id"`
+	ForSign    string            `json:"forsign"`
+	Signs      []TxSignJSON      `json:"signs"`
+	Values     map[string]string `json:"values"`
+	Time       string            `json:"time"`
+	Expiration string            `json:"expiration"`
 }
 
 type multiPrepareResult struct {
@@ -46,12 +47,18 @@ type multiPrepareResult struct {
 	Time     string   `json:"time"`
 }
 
+type multiPrepareRequest struct {
+	TokenEcosystem string `json:"token_ecosystem"`
+	MaxSum         string `json:"max_sum"`
+	Payover        string `json:"payover"`
+	SignedBy       string `json:"signed_by"`
+
+	Contracts []multiPrepareRequestItem `json:"contracts"`
+}
+
 type multiPrepareRequestItem struct {
-	TokenEcosystem string              `json:"token_ecosystem"`
-	MaxSum         string              `json:"max_sum"`
-	Payover        string              `json:"payover"`
-	SignedBy       string              `json:"signed_by"`
-	Params         []map[string]string `json:"params"`
+	Contract string            `json:"contract"`
+	Params   map[string]string `json:"params"`
 }
 
 type contractHandlers struct {
@@ -60,11 +67,11 @@ type contractHandlers struct {
 }
 
 func (h *contractHandlers) prepareMultipleContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	requests := multiPrepareRequestItem{}
+	requests := multiPrepareRequest{}
 	if err := json.Unmarshal([]byte(r.FormValue("data")), &requests); err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
 	}
-	contractName := data.params["name"].(string)
+
 	tokenEcosystem := converter.StrToInt64(requests.TokenEcosystem)
 	maxSum := requests.MaxSum
 	payOver := requests.Payover
@@ -72,12 +79,13 @@ func (h *contractHandlers) prepareMultipleContract(w http.ResponseWriter, r *htt
 	if requests.SignedBy != "" {
 		signedBy = converter.StrToInt64(requests.SignedBy)
 	}
-	req := h.multiRequests.NewMultiRequest(contractName)
+
+	req := h.multiRequests.NewMultiRequest()
 	forSigns := []string{}
-	requestsParams := []map[string]string{}
-	for _, params := range requests.Params {
+
+	for _, c := range requests.Contracts {
 		var smartTx tx.SmartContract
-		contract, parerr, err := validateSmartContractJSON(r, data, contractName, params)
+		contract, parerr, err := validateSmartContractJSON(r, data, c.Contract, c.Params)
 		if err != nil {
 			if strings.HasPrefix(err.Error(), `E_`) {
 				return errorAPI(w, err.Error(), http.StatusBadRequest, parerr)
@@ -103,18 +111,17 @@ func (h *contractHandlers) prepareMultipleContract(w http.ResponseWriter, r *htt
 		}
 		forsign := []string{smartTx.ForSign()}
 		if info.Tx != nil {
-			f, requestParams, err := forsignJSONData(w, params, logger, *info.Tx)
+			f, requestParams, err := forsignJSONData(w, c.Params, logger, *info.Tx)
 			if err != nil {
 				return err
 			}
 			forsign = append(forsign, f...)
-			requestsParams = append(requestsParams, requestParams)
+			req.AddContract(c.Contract, requestParams)
 		} else {
-			requestsParams = append(requestsParams, params)
+			req.AddContract(c.Contract, c.Params)
 		}
 		forSigns = append(forSigns, strings.Join(forsign, ","))
 	}
-	req.Values = requestsParams
 	h.multiRequests.AddRequest(req)
 
 	result := multiPrepareResult{
@@ -171,7 +178,7 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 	result.ID = req.ID
 	result.ForSign = strings.Join(forsign, ",")
 	result.Time = converter.Int64ToStr(req.Time.Unix())
-
+	result.Expiration = converter.Int64ToStr(req.Time.Add(h.requests.ExpireDuration()).Unix())
 	data.result = result
 	return nil
 }

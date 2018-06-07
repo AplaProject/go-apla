@@ -219,31 +219,6 @@ func TestPage(t *testing.T) {
 		return
 	}
 
-	err = sendGet(`list/pages`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	id = ret.Count
-
-	form = url.Values{"Id": {id}, "Value": {value}, "ValidateCount": {"1"},
-		"ValidateMode": {"1"}}
-	err = postTx(`EditPage`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	err = sendGet(`row/pages/`+id, nil, &row)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if row.Value["validate_mode"] != `1` {
-		t.Errorf(`wrong validate value %s`, row.Value["validate_mode"])
-		return
-	}
-
 	form = url.Values{"Id": {id}, "Value": {value}, "ValidateCount": {"1"},
 		"ValidateMode": {"0"}}
 	err = postTx(`EditPage`, &form)
@@ -320,7 +295,7 @@ func TestNewTable(t *testing.T) {
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	assert.NoError(t, postTx(`NewTable`, &form))
 
-	assert.EqualError(t, postTx(`NewTable`, &form), fmt.Sprintf(`{"type":"panic","error":"Table %s exists"}`, name))
+	assert.EqualError(t, postTx(`NewTable`, &form), fmt.Sprintf(`{"type":"panic","error":"table %s exists"}`, name))
 
 	form = url.Values{"Name": {name},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")",
@@ -336,7 +311,7 @@ func TestNewTable(t *testing.T) {
 	assert.NoError(t, postTx(`NewColumn`, &form))
 
 	err = postTx(`NewColumn`, &form)
-	if err.Error() != `{"type":"panic","error":"Column newcol exists"}` {
+	if err.Error() != `{"type":"panic","error":"column newcol exists"}` {
 		t.Error(err)
 		return
 	}
@@ -801,4 +776,38 @@ func TestMemoryLimit(t *testing.T) {
 	}))
 
 	assert.EqualError(t, postTx(contract, &url.Values{}), `{"type":"panic","error":"Memory limit exceeded"}`)
+}
+
+func TestStack(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	parent := randName("Parent")
+	child := randName("Child")
+
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + child + ` {
+			action {
+				$result = $stack
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}))
+
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + parent + ` {
+			action {
+				var arr array
+				arr[0] = $stack
+				arr[1] = ` + child + `()
+				$result = arr
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}))
+
+	_, res, err := postTxResult(parent, &url.Values{})
+	assert.NoError(t, err)
+	assert.Equal(t, fmt.Sprintf("[[@1%s] [@1%[1]s @1%s]]", parent, child), res)
 }

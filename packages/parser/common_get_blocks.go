@@ -68,7 +68,6 @@ func GetBlocks(blockID int64, host string) error {
 			return utils.ErrInfo(err)
 		}
 	}
-
 	return processBlocks(blocks)
 }
 

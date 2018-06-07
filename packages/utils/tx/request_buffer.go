@@ -102,6 +102,10 @@ type RequestBuffer struct {
 	requests map[string]*Request
 }
 
+func (rb *RequestBuffer) ExpireDuration() time.Duration {
+	return rb.requestExpire
+}
+
 func (rb *RequestBuffer) NewRequest(contract string) *Request {
 	r := &Request{
 		ID:       utils.UUID(),

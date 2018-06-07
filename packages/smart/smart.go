@@ -1010,8 +1010,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	}
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
-	sc.TxContract.StackCont = []string{sc.TxContract.Name}
-	(*sc.TxContract.Extend)[`stack_cont`] = StackCont
+	sc.AppendStack(sc.TxContract.Name)
 	sc.VM = GetVM(sc.VDE, sc.TxSmart.EcosystemID)
 	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 {
 		if !sc.VDE {

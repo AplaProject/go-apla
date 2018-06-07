@@ -8,10 +8,21 @@ import (
 )
 
 type MultiRequest struct {
-	ID       string
-	Time     time.Time
+	ID        string
+	Time      time.Time
+	Contracts []MultiRequestContract
+}
+
+func (mr *MultiRequest) AddContract(contract string, params map[string]string) {
+	mr.Contracts = append(mr.Contracts, MultiRequestContract{
+		Contract: contract,
+		Params:   params,
+	})
+}
+
+type MultiRequestContract struct {
 	Contract string
-	Values   []map[string]string
+	Params   map[string]string
 }
 
 type MultiRequestBuffer struct {
@@ -23,11 +34,11 @@ type MultiRequestBuffer struct {
 	requests map[string]*MultiRequest
 }
 
-func (mrb *MultiRequestBuffer) NewMultiRequest(contract string) *MultiRequest {
+func (mrb *MultiRequestBuffer) NewMultiRequest() *MultiRequest {
 	r := &MultiRequest{
-		ID:       utils.UUID(),
-		Time:     time.Now(),
-		Contract: contract,
+		ID:        utils.UUID(),
+		Time:      time.Now(),
+		Contracts: make([]MultiRequestContract, 0),
 	}
 
 	return r
