@@ -257,7 +257,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
                     col_cond = Str(clm[1])
                     col_type = GetColumnType(table_name, col_name)
 
-                    s = Sprintf(` + "`" + `{"name":"%%v","type":"%%v","conditions":%%v}` + "`" + `, col_name, col_type, col_cond)
+                    s = Sprintf(` + "`" + `{"name":"%%v","type":"%%v","conditions":"%%v"}` + "`" + `, col_name, col_type, col_cond)
                 }
 
                 if Size(result) > 0 {
@@ -875,7 +875,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             var page_map map
             page_map = pages_ret[i]
 
-            pages_array = Append(pages_array, Sprintf("%%v", Str(page_map["menu"])))
+            pages_array = Append(pages_array, Sprintf("''%%v''", Str(page_map["menu"])))
             i = i + 1
         }
 
