@@ -3,187 +3,142 @@ package migration
 var firstEcosystemContractsSQL = `
 INSERT INTO "1_contracts" (id, name, value, wallet_id, conditions, app_id)
 VALUES ('2', 'DelApplication', 'contract DelApplication {
+        data {
+            ApplicationId int
+            Value int "optional"
+        }
+    
+        conditions {
+            if $Value < 0 || $Value > 1 {
+                error "Incorrect value"
+            }
+            RowConditions("applications", $ApplicationId, false)
+        }
+    
+        action {
+            DBUpdate("applications", $ApplicationId, "deleted", $Value)
+        }
+    }', %[1]d, 'ContractConditions("MainCondition")', 1),
+('3', 'EditAppParam', 'contract EditAppParam {
     data {
-        ApplicationId int
-        Value int "optional"
+        Id int
+        Value string "optional"
+        Conditions string "optional"
+    }
+    func onlyConditions() bool {
+        return $Conditions && !$Value
     }
 
     conditions {
-        RowConditions("applications", $ApplicationId, false)
+        RowConditions("app_params", $Id, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
     }
 
     action {
-        if $Value == 1 {
-            DBUpdate("applications", $ApplicationId, "deleted", 1)
+        var pars, vals array
+        if $Value {
+            pars[0] = "value"
+            vals[0] = $Value
         }
-        else {
-            DBUpdate("applications", $ApplicationId, "deleted", 0)
-        } 
+        if $Conditions {
+            pars = Append(pars, "conditions")
+            vals = Append(vals, $Conditions)
+        }
+        if Len(vals) > 0 {
+            DBUpdate("app_params", $Id, Join(pars, ","), vals...)
+        }
     }
-}', %[1]d, 'ContractConditions("MainCondition")', 1),
-('3', 'EditAppParam', 'contract EditAppParam {
-	data {
-		Id int
-		Value string "optional"
-		Conditions string "optional"
-	}
-	func onlyConditions() bool {
-		return $Conditions && !$Value
-	}
-	
-	conditions {
-		RowConditions("app_params", $Id, onlyConditions())
-		if $Conditions {
-			ValidateCondition($Conditions, $ecosystem_id)
-		}
-	}
-	
-	action {
-		var pars, vals array
-		if $Value {
-			pars[0] = "value"
-			vals[0] = $Value
-		}
-		if $Conditions {
-			pars[Len(pars)] = "conditions"
-			vals[Len(vals)] = $Conditions
-		}
-		if Len(vals) > 0 {
-			DBUpdate("app_params", $Id, Join(pars, ","), vals...)
-		}
-	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('4', 'EditApplication', 'contract EditApplication {
     data {
         ApplicationId int
         Conditions string "optional"
     }
-	func onlyConditions() bool {
-		return $Conditions && false
-	}
+    func onlyConditions() bool {
+        return $Conditions && false
+    }
 
     conditions {
-		RowConditions("applications", $ApplicationId, onlyConditions())
-		if $Conditions {
-			ValidateCondition($Conditions, $ecosystem_id)
-		}
+        RowConditions("applications", $ApplicationId, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
     }
 
     action {
-		var pars, vals array
-		if $Conditions {
-			pars[0] = "conditions"
-			vals[0] = $Conditions
-		}
-		if Len(vals) > 0 {	
-			DBUpdate("applications", $ApplicationId, Join(pars, ","), vals...)
-		}
+        var pars, vals array
+        if $Conditions {
+            pars[0] = "conditions"
+            vals[0] = $Conditions
+        }
+        if Len(vals) > 0 {
+            DBUpdate("applications", $ApplicationId, Join(pars, ","), vals...)
+        }
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('5', 'EditColumn', 'contract EditColumn {
-	data {
-		TableName string
-		Name string
-		Permissions string
-	}
-	
-	conditions {
-		ColumnCondition($TableName, $Name, "", $Permissions)
-	}
-	
-	action {
-		PermColumn($TableName, $Name, $Permissions)
-	}
+    data {
+        TableName string
+        Name string
+        Permissions string
+    }
+
+    conditions {
+        ColumnCondition($TableName, $Name, "", $Permissions)
+    }
+
+    action {
+        PermColumn($TableName, $Name, $Permissions)
+    }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('6', 'EditLang', 'contract EditLang {
-	data {
-		Id int
-		Name string "optional"
-		ApplicationId int "optional"
-		Trans string "optional"
-		Value array "optional"
-		IdLanguage array "optional"
-	}
-	
-	conditions {
-		var j int
-		while j < Len($IdLanguage) {
-			if ($IdLanguage[j] == ""){
-				info("Locale empty")
-			}
-			if ($Value[j] == ""){
-				info("Value empty")
-			}
-			j = j + 1
-		}
-		EvalCondition("parameters", "changing_language", "value")
-	}
-	
-	action {
-		var i,len int
-		var res,langarr string
-		len = Len($IdLanguage)
-		while i < len {
-			if (i + 1 == len){
-				res = res + Sprintf("%%q: %%q", $IdLanguage[i],$Value[i])
-			}
-			else {
-				res = res + Sprintf("%%q: %%q, ", $IdLanguage[i],$Value[i])
-			}
-			i = i + 1
-		}
+    data {
+        Id int
+        Trans string
+    }
 
-		$row = DBFind("languages").Columns("name,app_id").WhereId($Id).Row()
-		if !$row{
-			warning "Language not found"
-		}
+    conditions {
+        EvalCondition("parameters", "changing_language", "value")
+        $lang = DBFind("languages").Where("id=?", $Id).Row()
+    }
 
-		if $ApplicationId == 0 {
-			$ApplicationId = Int($row["app_id"])
-		}
-		if $Name == "" {
-			$Name = $row["name"]
-		}
-
-		if (len > 0){
-			langarr = Sprintf("{"+"%%v"+"}", res)
-			$Trans = langarr
-			
-		}
-		EditLanguage($Id, $Name, $Trans, $ApplicationId)
-	}
+    action {
+        EditLanguage($Id, $lang["name"], $Trans, Int($lang["app_id"]))
+    }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('7', 'EditParameter', 'contract EditParameter {
-	data {
-		Id int
-		Value string "optional"
-		Conditions string "optional"
-	}
-	func onlyConditions() bool {
-		return $Conditions && !$Value
-	}
+    data {
+        Id int
+        Value string "optional"
+        Conditions string "optional"
+    }
+    func onlyConditions() bool {
+        return $Conditions && !$Value
+    }
 
-	conditions {
-		RowConditions("parameters", $Id, onlyConditions())
-		if $Conditions {
-			ValidateCondition($Conditions, $ecosystem_id)
-		}
-	}
-	
-	action {
-		var pars, vals array
-		if $Value {
-			pars[0] = "value"
-			vals[0] = $Value
-		}
-		if $Conditions {
-			pars[Len(pars)] = "conditions"
-			vals[Len(vals)] = $Conditions
-		}
-		if Len(vals) > 0 {
-			DBUpdate("parameters", $Id, Join(pars, ","), vals...)
-		}
-	}
+    conditions {
+        RowConditions("parameters", $Id, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
+    }
+
+    action {
+        var pars, vals array
+        if $Value {
+            pars[0] = "value"
+            vals[0] = $Value
+        }
+        if $Conditions {
+            pars = Append(pars, "conditions")
+            vals = Append(vals, $Conditions)
+        }
+        if Len(vals) > 0 {
+            DBUpdate("parameters", $Id, Join(pars, ","), vals...)
+        }
+    }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('8', 'NewTable', 'contract NewTable {
     data {
@@ -283,8 +238,8 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('10', 'Export', 'contract Export {
 
-    func ReplaceValue(s string) string {
-		s = Replace(s, ` + "`" + `\` + "`" + `, ` + "`" + `\\` + "`" + `)
+    func EscapeSpecialSymbols(s string) string {
+        s = Replace(s, ` + "`" + `\` + "`" + `, ` + "`" + `\\` + "`" + `)
         s = Replace(s, ` + "`" + `	` + "`" + `, ` + "`" + `\t` + "`" + `)
         s = Replace(s, "\n", ` + "`" + `\n` + "`" + `)
         s = Replace(s, "\r", ` + "`" + `\r` + "`" + `)
@@ -292,179 +247,92 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         return s
     }
 
-    func AssignAll(app_name string, all_blocks string, all_contracts string, all_data string, all_languages string, all_menus string, all_pages string, all_parameters string, all_tables string) string {
-
-        var res_str string
-        res_str = res_str + all_blocks
-
-        if  Size(res_str)>0 && Size(all_contracts)>0  {
-            res_str = res_str + ","
-        }
-        res_str = res_str + all_contracts
-
-        if  Size(res_str)>0 && Size(all_data)>0  {
-            res_str = res_str + ","
-        }
-        res_str = res_str + all_data
-
-        if  Size(res_str)>0 && Size(all_languages)>0  {
-            res_str = res_str + ","
-        }
-        res_str = res_str + all_languages
-
-        if  Size(res_str)>0 && Size(all_menus)>0  {
-            res_str = res_str + ","
-        }
-        res_str = res_str + all_menus
-
-        if  Size(res_str)>0 && Size(all_pages)>0  {
-            res_str = res_str + ","
-        }
-        res_str = res_str + all_pages
-
-        if  Size(res_str)>0 && Size(all_parameters)>0  {
-            res_str = res_str + ","
-        }
-        res_str = res_str + all_parameters
-
-        if  Size(res_str)>0 && Size(all_tables)>0  {
-            res_str = res_str + ","
-        }
-        res_str = res_str + all_tables
-
-        res_str = Sprintf(` + "`" + `{
-    "name": "%%v",
-    "data": [%%v
-    ]
-}` + "`" + `, app_name, res_str)
-
-        return res_str
+    func AssignAll(app_name string, resources string) string {
+        return Sprintf(`{"name": "%%v", "data": [%%v]}`, app_name, resources)
     }
 
-    func AddPage(page_name string, page_value string, page_conditions string, page_menu string) string {
+    func SerializeResource(resource map, resource_type string) string {
         var s string
-        s = Sprintf(` + "`" + `        {
-            "Type": "pages",
+        s = Sprintf(`        {
+            "Type": "%%v",
             "Name": "%%v",
             "Value": "%%v",
             "Conditions": "%%v",
-            "Menu": "%%v"
-        }` + "`" + `, page_name, page_value, page_conditions, page_menu)
-        return s
-    }
-
-    func AddMenu(menu_name string, menu_value string, menu_title string, menu_conditions string) string {
-        var s string
-        s = Sprintf(` + "`" + `        {
-            "Type": "menu",
-            "Name": "%%v",
-            "Value": "%%v",
+            "Menu": "%%v",
             "Title": "%%v",
-            "Conditions": "%%v"
-        }` + "`" + `, menu_name, menu_value, menu_title, menu_conditions)
-        return s
-    }
-
-    func AddContract(contract_name string, contract_value string, contract_conditions string) string {
-        var s string
-        s = Sprintf(` + "`" + `        {
-            "Type": "contracts",
-            "Name": "%%v",
-            "Value": "%%v",
-            "Conditions": "%%v"
-        }` + "`" + `, contract_name, contract_value, contract_conditions)
-        return s
-    }
-
-    func AddBlock(block_name string, block_value string, block_conditions string) string {
-        var s string
-        s = Sprintf(` + "`" + `        {
-            "Type": "blocks",
-            "Name": "%%v",
-            "Value": "%%v",
-            "Conditions": "%%v"
-        }` + "`" + `, block_name, block_value, block_conditions)
-        return s
-    }
-
-    func AddLanguage(language_name string, language_conditions string, language_trans string) string {
-        var s string
-        s = Sprintf(` + "`" + `        {
-            "Type": "languages",
-            "Name": "%%v",
-            "Conditions": "%%v",
-            "Trans": "%%v"
-        }` + "`" + `, language_name, language_conditions, language_trans)
-        return s
-    }
-
-    func AddParameter(parameter_name string, parameter_value string, parameter_conditions string) string {
-        var s string
-        s = Sprintf(` + "`" + `        {
-            "Type": "app_params",
-            "Name": "%%v",
-            "Value": "%%v",
-            "Conditions": "%%v"
-        }` + "`" + `, parameter_name, parameter_value, parameter_conditions)
-        return s
-    }
-
-    func AddTable(table_name string, table_columns string, table_permissions string) string {
-        var s string
-        s = Sprintf(` + "`" + `        {
-            "Type": "tables",
-            "Name": "%%v",
-            "Columns": "%%v",
-            "Permissions": "%%v"
-        }` + "`" + `, table_name, table_columns, table_permissions)
+            "Trans": "%%v",
+            "Columns": "%%v"
+        }`, 
+            resource_type, EscapeSpecialSymbols(Str(resource["name"])), EscapeSpecialSymbols(Str(resource["value"])), EscapeSpecialSymbols(Str(resource["conditions"])),
+            EscapeSpecialSymbols(Str(resource["menu"])), EscapeSpecialSymbols(Str(resource["title"])),
+            EscapeSpecialSymbols(Str(resource["res"])), EscapeSpecialSymbols(Str(resource["columns"])))
         return s
     }
 
     func AddTypeForColumns(table_name string, table_columns string) string {
-		var result string
+        var result string
 
-		table_columns = Replace(table_columns, "{", "")
-		table_columns = Replace(table_columns, "}", "")
-		table_columns = Replace(table_columns, " ", "")
+        table_columns = Replace(table_columns, "{", "")
+        table_columns = Replace(table_columns, "}", "")
+        table_columns = Replace(table_columns, " ", "")
 
-		var columns_arr array
-		columns_arr = Split(table_columns, ",")
+        var columns_arr array
+        columns_arr = Split(table_columns, ",")
 
-		var i int
-		while (i < Len(columns_arr)){
-			var s_split string
-			s_split = Str(columns_arr[i])
+        var i int
+        while (i < Len(columns_arr)){
+            var s_split string
+            s_split = Str(columns_arr[i])
 
-			if Size(s_split) > 0 {
-				var clm array
-				clm = Split(s_split, ":")
+            if Size(s_split) > 0 {
+                var clm array
+                clm = Split(s_split, ":")
 
-				var s string
+                var s string
 
-				if Len(clm) == 2 {
-					var col_name string
-					var col_cond string
-					var col_type string
+                if Len(clm) == 2 {
+                    var col_name string
+                    var col_cond string
+                    var col_type string
 
-					col_name = Replace(Str(clm[0]), ` + "`" + `"` + "`" + `, "")
-					col_cond = Str(clm[1])
-					col_type = GetColumnType(table_name, col_name)
+                    col_name = Replace(Str(clm[0]), `"`, "")
+                    col_cond = Str(clm[1])
+                    col_type = GetColumnType(table_name, col_name)
 
-					s = Sprintf(` + "`" + `{"name":"%%v","type":"%%v","conditions":%%v}` + "`" + `, col_name, col_type, col_cond)
-				}
+                    s = Sprintf(`{"name":"%%v","type":"%%v","conditions":%%v}`, col_name, col_type, col_cond)
+                }
 
                 if Size(result) > 0 {
                     result = result + ","
-				}
-				result = result + s
-			}
-			i = i + 1
-		}
+                }
+                result = result + s
+            }
+            i = i + 1
+        }
 
-		result = Sprintf("[%%v]", result)
-		return result
+        result = Sprintf("[%%v]", result)
+        return result
     }
 
+    func ExportTableRecords(records array, type string, entities_array array) array {
+        var i int, cur_resource map
+        i = 0
+        while i < Len(records) {
+            cur_resource = records[i]
+            if type == "tables" {
+                var table_name, table_columns string, table_map map
+                table_map["name"] = Str(cur_resource["name"])
+                table_map["columns"] = Str(cur_resource["columns"])
+                table_map["columns"] = AddTypeForColumns(table_map["name"], table_map["columns"])
+            }
+            entities_array = Append(entities_array, SerializeResource(cur_resource, type))
+            if type == "pages" {
+                $menus_names = Append($menus_names, Sprintf("'%%v'", cur_resource["menu"]))
+            }
+            i = i + 1
+        }
+        return entities_array
+    }
 
     data {}
 
@@ -479,266 +347,61 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        //warning $ApplicationID
+        var menus_names_arr array 
+        $menus_names = menus_names_arr
 
         var full_result string
-        var i int
+        var entities_array array
+        var cur_resource map
 
-        var all_blocks string
-        var all_contracts string
-        var all_data string
-        var all_languages string
-        var all_menus string
-        var all_pages string
-        var all_parameters string
-        var all_tables string
-
-        //=====================================================================================================
-        //------------------------------------Export pages-----------------------------------------------------
-        var string_for_menu string
-
-        i = 0
-        var pages_array array
-        pages_array = DBFind("pages").Limit(250).Where("app_id=?", $ApplicationID)
-        while i < Len(pages_array) {
-            var page_map map
-            page_map = pages_array[i]
-
-            var page_name string
-            var page_value string
-            var page_conditions string
-            var page_menu string
-
-            page_name = ReplaceValue(Str(page_map["name"]))
-            page_value = ReplaceValue(Str(page_map["value"]))
-            page_conditions = ReplaceValue(Str(page_map["conditions"]))
-            page_menu = ReplaceValue(Str(page_map["menu"]))
-
-            if Size(all_pages) > 0 {
-                all_pages = all_pages + ",\r\n"
-            } else {
-                all_pages = all_pages + "\r\n"
-            }
-
-            if Size(string_for_menu) > 0 {
-                string_for_menu = string_for_menu + ","
-            }
-            string_for_menu = string_for_menu + Sprintf("''%%v''", page_menu)           
-
-            all_pages = all_pages + AddPage(page_name, page_value, page_conditions, page_menu)
-            i = i + 1
-        }
-
-        //=====================================================================================================
-        //------------------------------------Export menus-----------------------------------------------------
-        if Size(string_for_menu) > 0 {
-
+        entities_array = ExportTableRecords(DBFind("pages").Limit(250).Where("app_id=?", $ApplicationID), "pages", entities_array)
+        entities_array = ExportTableRecords(DBFind("contracts").Limit(250).Where("app_id=?", $ApplicationID), "contracts", entities_array)
+        entities_array = ExportTableRecords(DBFind("blocks").Limit(250).Where("app_id=?", $ApplicationID), "blocks", entities_array)
+        entities_array = ExportTableRecords(DBFind("languages").Limit(250).Where("app_id=?", $ApplicationID), "languages", entities_array)
+        entities_array = ExportTableRecords(DBFind("app_params").Limit(250).Where("app_id=?", $ApplicationID), "params", entities_array)
+        entities_array = ExportTableRecords(DBFind("tables").Limit(250).Where("app_id=?", $ApplicationID), "tables", entities_array)
+        if Len($menus_names) > 0 {
             var where_for_menu string
-            where_for_menu = Sprintf("name in (%%v)", string_for_menu)
-            //warning where_for_menu 
-
-            i = 0
-            var menus_array array
-            menus_array = DBFind("menu").Limit(250).Where(where_for_menu)
-            while i < Len(menus_array) {
-                var menu_map map
-                menu_map = menus_array[i]
-
-                var menu_name string
-                var menu_value string
-                var menu_title string
-                var menu_conditions string
-
-                menu_name = ReplaceValue(Str(menu_map["name"]))
-                menu_value = ReplaceValue(Str(menu_map["value"]))
-                menu_title = ReplaceValue(Str(menu_map["title"]))
-                menu_conditions = ReplaceValue(Str(menu_map["conditions"]))
-
-                if Size(all_menus) > 0 {
-                    all_menus = all_menus + ",\r\n"
-                } else {
-                    all_menus = all_menus + "\r\n"
-                }
-
-                all_menus = all_menus + AddMenu(menu_name, menu_value, menu_title, menu_conditions)
-                i = i + 1
-            }
-
-        }
-
-        //=====================================================================================================
-        //------------------------------------Export contracts-------------------------------------------------
-
-        i = 0
-        var contracts_array array
-        contracts_array = DBFind("contracts").Limit(250).Where("app_id=?", $ApplicationID)
-        while i < Len(contracts_array) {
-            var contract_map map
-            contract_map = contracts_array[i]
-
-            var contract_name string
-            var contract_value string
-            var contract_conditions string
-
-            contract_name = ReplaceValue(Str(contract_map["name"]))
-            contract_value = ReplaceValue(Str(contract_map["value"]))
-            contract_conditions = ReplaceValue(Str(contract_map["conditions"]))
-
-            if Size(all_contracts) > 0 {
-                all_contracts = all_contracts + ",\r\n"
-            } else {
-                all_contracts = all_contracts + "\r\n"
-            }
-
-            all_contracts = all_contracts + AddContract(contract_name, contract_value, contract_conditions)
-            i = i + 1
-        }
-
-        //=====================================================================================================
-        //------------------------------------Export blocks----------------------------------------------------
-
-        i = 0
-        var blocks_array array
-        blocks_array = DBFind("blocks").Limit(250).Where("app_id=?", $ApplicationID)
-        while i < Len(blocks_array) {
-            var block_map map
-            block_map = blocks_array[i]
-
-            var block_name string
-            var block_value string
-            var block_conditions string
-
-            block_name = ReplaceValue(Str(block_map["name"]))
-            block_value = ReplaceValue(Str(block_map["value"]))
-            block_conditions = ReplaceValue(Str(block_map["conditions"]))
-
-            if Size(all_blocks) > 0 {
-                all_blocks = all_blocks + ",\r\n"
-            } else {
-                all_blocks = all_blocks + "\r\n"
-            }
-
-            all_blocks = all_blocks + AddBlock(block_name, block_value, block_conditions)
-            i = i + 1
-        }
-
-        //=====================================================================================================
-        //------------------------------------Export languages-------------------------------------------------
-
-        i = 0
-        var languages_array array
-        languages_array = DBFind("languages").Limit(250).Where("app_id=?", $ApplicationID)
-        while i < Len(languages_array) {
-            var language_map map
-            language_map = languages_array[i]
-
-            var language_name string
-            var language_conditions string
-            var language_trans string
-
-            language_name = ReplaceValue(Str(language_map["name"]))
-            language_conditions = ReplaceValue(Str(language_map["conditions"]))
-            language_trans = ReplaceValue(Str(language_map["res"]))
-
-            if Size(all_languages) > 0 {
-                all_languages = all_languages + ",\r\n"
-            } else {
-                all_languages = all_languages + "\r\n"
-            }
-
-            all_languages = all_languages + AddLanguage(language_name, language_conditions, language_trans)
-            i = i + 1
-        }
-
-        //=====================================================================================================
-        //------------------------------------Export params----------------------------------------------------
-
-        i = 0
-        var parameters_array array
-        parameters_array = DBFind("app_params").Limit(250).Where("app_id=?", $ApplicationID)
-        while i < Len(parameters_array) {
-            var parameter_map map
-            parameter_map = parameters_array[i]
-
-            var parameter_name string
-            var parameter_value string
-            var parameter_conditions string
-
-            parameter_name = ReplaceValue(Str(parameter_map["name"]))
-            parameter_value = ReplaceValue(Str(parameter_map["value"]))
-            parameter_conditions = ReplaceValue(Str(parameter_map["conditions"]))
-
-            if Size(all_parameters) > 0 {
-                all_parameters = all_parameters + ",\r\n"
-            } else {
-                all_parameters = all_parameters + "\r\n"
-            }
-
-            all_parameters = all_parameters + AddParameter(parameter_name, parameter_value, parameter_conditions)
-            i = i + 1
-        }
-
-        //=====================================================================================================
-        //------------------------------------Export tables----------------------------------------------------
-
-        i = 0
-        var tables_array array
-        tables_array = DBFind("tables").Limit(250).Where("app_id=?", $ApplicationID)
-        while i < Len(tables_array) {
-            var table_map map
-            table_map = tables_array[i]
-
-            var table_name string
-            var table_columns string
-            var table_permissions string
-
-            table_name = Str(table_map["name"])
-            table_columns = Str(table_map["columns"])
-			table_permissions = Str(table_map["permissions"])
-
-			table_columns = AddTypeForColumns(table_name, table_columns)
-            
-			table_name = ReplaceValue(table_name)
-			table_columns = ReplaceValue(table_columns)
-			table_permissions = ReplaceValue(table_permissions)
-
-            if Size(all_tables) > 0 {
-                all_tables = all_tables + ",\r\n"
-            } else {
-                all_tables = all_tables + "\r\n"
-            }
-
-            all_tables = all_tables + AddTable(table_name, table_columns, table_permissions)
-            i = i + 1
+            where_for_menu = Sprintf("name in (%%v)", Join($menus_names, ","))
+            entities_array = ExportTableRecords(DBFind("menu").Limit(250).Where(where_for_menu), "menu", entities_array)
         }
 
         //=====================================================================================================
 
-        full_result = AssignAll($ApplicationName, all_blocks, all_contracts, all_data, all_languages, all_menus, all_pages, all_parameters, all_tables)
+        full_result = AssignAll($ApplicationName, Join(entities_array, ",\r\n"))
         UploadBinary("Name,Data,ApplicationId,DataMimeType", "export", full_result, 1, "application/json")
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('11', 'EditTable', 'contract EditTable {
-	data {
-		Name string
-		Permissions string "optional"
-        Insert_con string "optional"
-    	Update_con string "optional"
-    	New_column_con string "optional"
-	}
-	
-	conditions {
-        if !$Permissions {
-            var permissions string
-            permissions = Sprintf("{\"insert\":%%q,\"update\":%%q,\"new_column\":%%q}",$Insert_con,$Update_con,$New_column_con)
-            $Permissions = permissions
+    data {
+        Name string
+        InsertPerm string
+        UpdatePerm string
+        NewColumnPerm string
+    }
+
+    conditions {
+        if !$InsertPerm {
+            info("Insert condition is empty")
         }
-		TableConditions($Name, "", $Permissions)
-	}
-	
-	action {
-		PermTable($Name, $Permissions )
-	}
+        if !$UpdatePerm {
+            info("Update condition is empty")
+        }
+        if !$NewColumnPerm {
+            info("New column condition is empty")
+        }
+
+        var permissions map
+        permissions["insert"] = $InsertPerm
+        permissions["update"] = $UpdatePerm
+        permissions["new_column"] = $NewColumnPerm
+        $Permissions = permissions
+        TableConditions($Name, "", JSONEncode($Permissions))
+    }
+
+    action {
+        PermTable($Name, JSONEncode($Permissions))
+    }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('12', 'Import_Upload', 'contract Import_Upload {
     data {
@@ -1268,180 +931,180 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('24', 'EditBlock', 'contract EditBlock {
-	data {
-		Id int
-		Value string "optional"
-		Conditions string "optional"
-	}
-	func onlyConditions() bool {
-		return $Conditions && !$Value
-	}
+    data {
+        Id int
+        Value string "optional"
+        Conditions string "optional"
+    }
+    func onlyConditions() bool {
+        return $Conditions && !$Value
+    }
 
-	conditions {
-		RowConditions("blocks", $Id, onlyConditions())
-		if $Conditions {
-			ValidateCondition($Conditions, $ecosystem_id)
-		}
-	}
-	
-	action {
-		var pars, vals array
-		if $Value {
-			pars[0] = "value"
-			vals[0] = $Value
-		}
-		if $Conditions {
-			pars[Len(pars)] = "conditions"
-			vals[Len(vals)] = $Conditions
-		}
-		if Len(vals) > 0 {
-			DBUpdate("blocks", $Id, Join(pars, ","), vals...)
-		}
-	}
+    conditions {
+        RowConditions("blocks", $Id, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
+    }
+
+    action {
+        var pars, vals array
+        if $Value {
+            pars[0] = "value"
+            vals[0] = $Value
+        }
+        if $Conditions {
+            pars = Append(pars, "conditions")
+            vals = Append(vals, $Conditions)
+        }
+        if Len(vals) > 0 {
+            DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+        }
+    }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('25', 'EditMenu', 'contract EditMenu {
-	data {
-		Id int
-		Value string "optional"
-		Title string "optional"
-		Conditions string "optional"
-	}
-	func onlyConditions() bool {
-		return $Conditions && !$Value && !$Title
-	}
+    data {
+        Id int
+        Value string "optional"
+        Title string "optional"
+        Conditions string "optional"
+    }
+    func onlyConditions() bool {
+        return $Conditions && !$Value && !$Title
+    }
 
-	conditions {
-		RowConditions("menu", $Id, onlyConditions())
-		if $Conditions {
-			ValidateCondition($Conditions, $ecosystem_id)
-		}
-	}
-	
-	action {
-		var pars, vals array
-		if $Value {
-			pars[0] = "value"
-			vals[0] = $Value
-		}
-		if $Title {
-			pars[Len(pars)] = "title"
-			vals[Len(vals)] = $Title
-		}
-		if $Conditions {
-			pars[Len(pars)] = "conditions"
-			vals[Len(vals)] = $Conditions
-		}
-		if Len(vals) > 0 {
-			DBUpdate("menu", $Id, Join(pars, ","), vals...)
-		}			
-	}
+    conditions {
+        RowConditions("menu", $Id, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
+    }
+
+    action {
+        var pars, vals array
+        if $Value {
+            pars[0] = "value"
+            vals[0] = $Value
+        }
+        if $Title {
+            pars = Append(pars, "title")
+            vals = Append(vals, $Title)
+        }
+        if $Conditions {
+            pars = Append(pars, "conditions")
+            vals = Append(vals, $Conditions)
+        }
+        if Len(vals) > 0 {
+            DBUpdate("menu", $Id, Join(pars, ","), vals...)
+        }            
+    }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('26', 'EditPage', 'contract EditPage {
-	data {
-		Id int
-		Value string "optional"
-		Menu string "optional"
-		Conditions string "optional"
-		ValidateCount int "optional"
-		ValidateMode  string "optional"
-	}
-	func onlyConditions() bool {
-		return $Conditions && !$Value && !$Menu && !$ValidateCount 
-	}
-	func preparePageValidateCount(count int) int {
-		var min, max int
-		min = Int(EcosysParam("min_page_validate_count"))
-		max = Int(EcosysParam("max_page_validate_count"))
-		if count < min {
-			count = min
-		} else {
-			if count > max {
-				count = max
-			}
-		}
-		return count
-	}
-	
-	conditions {
-		RowConditions("pages", $Id, onlyConditions())
-		if $Conditions {
-			ValidateCondition($Conditions, $ecosystem_id)
-		}
-		$ValidateCount = preparePageValidateCount($ValidateCount)
-	}
-	
-	action {
-		var pars, vals array
-		if $Value {
-			pars[0] = "value"
-			vals[0] = $Value
-		}
-		if $Menu {
-			pars[Len(pars)] = "menu"
-			vals[Len(vals)] = $Menu
-		}
-		if $Conditions {
-			pars[Len(pars)] = "conditions"
-			vals[Len(vals)] = $Conditions
-		}
-		if $ValidateCount {
-			pars[Len(pars)] = "validate_count"
-			vals[Len(vals)] = $ValidateCount
-		}
-		if $ValidateMode {
-			if $ValidateMode != "1" {
-				$ValidateMode = "0"
-			}
-			pars[Len(pars)] = "validate_mode"
-			vals[Len(vals)] = $ValidateMode
-		}
-		if Len(vals) > 0 {
-			DBUpdate("pages", $Id, Join(pars, ","), vals...)
-		}
-	}
+    data {
+        Id int
+        Value string "optional"
+        Menu string "optional"
+        Conditions string "optional"
+        ValidateCount int "optional"
+        ValidateMode string "optional"
+    }
+    func onlyConditions() bool {
+        return $Conditions && !$Value && !$Menu && !$ValidateCount 
+    }
+    func preparePageValidateCount(count int) int {
+        var min, max int
+        min = Int(EcosysParam("min_page_validate_count"))
+        max = Int(EcosysParam("max_page_validate_count"))
+        if count < min {
+            count = min
+        } else {
+            if count > max {
+                count = max
+            }
+        }
+        return count
+    }
+
+    conditions {
+        RowConditions("pages", $Id, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
+        $ValidateCount = preparePageValidateCount($ValidateCount)
+    }
+
+    action {
+        var pars, vals array
+        if $Value {
+            pars[0] = "value"
+            vals[0] = $Value
+        }
+        if $Menu {
+            pars = Append(pars, "menu")
+            vals = Append(vals, $Menu)
+        }
+        if $Conditions {
+            pars = Append(pars, "conditions")
+            vals = Append(vals, $Conditions)
+        }
+        if $ValidateCount {
+            pars = Append(pars, "validate_count")
+            vals = Append(vals, $ValidateCount)
+        }
+        if $ValidateMode {
+            if $ValidateMode != "1" {
+                $ValidateMode = "0"
+            }
+            pars = Append(pars, "validate_mode")
+            vals = Append(vals, $ValidateMode)
+        }
+        if Len(vals) > 0 {
+            DBUpdate("pages", $Id, Join(pars, ","), vals...)
+        }
+    }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('27', 'EditContract', 'contract EditContract {
-	data {
-		Id int
-		Value string "optional"
-		Conditions string "optional"
-		WalletId string "optional"
-	}
-	func onlyConditions() bool {
-		return $Conditions && !$Value && !$WalletId
-	}
+    data {
+        Id int
+        Value string "optional"
+        Conditions string "optional"
+        WalletId string "optional"
+    }
+    func onlyConditions() bool {
+        return $Conditions && !$Value && !$WalletId
+    }
 
-	conditions {
-		RowConditions("contracts", $Id, onlyConditions())
-		if $Conditions {
-			ValidateCondition($Conditions, $ecosystem_id)
-		}
-		$cur = DBFind("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id).Row()
-		if !$cur {
-			error Sprintf("Contract %%d does not exist", $Id)
-		}
-		if $Value {
-			ValidateEditContractNewValue($Value, $cur["value"])
-		}
-		if $WalletId != "" {
-			$recipient = AddressToId($WalletId)
-			if $recipient == 0 {
-				error Sprintf("New contract owner %%s is invalid", $WalletId)
-			}
-			if Int($cur["active"]) == 1 {
-				error "Contract must be deactivated before wallet changing"
-			}
-		} else {
-			$recipient = Int($cur["wallet_id"])
-		}
-	}
+    conditions {
+        RowConditions("contracts", $Id, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
+        $cur = DBFind("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id).Row()
+        if !$cur {
+            error Sprintf("Contract %d does not exist", $Id)
+        }
+        if $Value {
+            ValidateEditContractNewValue($Value, $cur["value"])
+        }
+        if $WalletId != "" {
+            $recipient = AddressToId($WalletId)
+            if $recipient == 0 {
+                error Sprintf("New contract owner %s is invalid", $WalletId)
+            }
+            if Int($cur["active"]) == 1 {
+                error "Contract must be deactivated before wallet changing"
+            }
+        } else {
+            $recipient = Int($cur["wallet_id"])
+        }
+    }
 
-	action {
-		UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
-	}
-	func rollback() {
-		RollbackEditContract()
-	}
+    action {
+        UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
+    }
+    func rollback() {
+        RollbackEditContract()
+    }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('28','MoneyTransfer','contract MoneyTransfer {
 	data {
@@ -1577,35 +1240,35 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('34','EditSign','contract EditSign {
-	data {
-		Id         int
-		Value      string "optional"
-		Conditions string "optional"
-	}
+    data {
+        Id int
+        Value string "optional"
+        Conditions string "optional"
+    }
+    func onlyConditions() bool {
+        return $Conditions && false
+    }
 
-	func onlyConditions() bool {
-		return $Conditions && !$Value
-	}
-	conditions {
-		RowConditions("signatures", $Id, onlyConditions())
-		if $Conditions {
-			ValidateCondition($Conditions, $ecosystem_id)
-		}
-	}
-	action {
-		var pars, vals array
-		if $Value {
-			pars[0] = "value"
-			vals[0] = $Value
-		}
-		if $Conditions {
-			pars[Len(pars)] = "conditions"
-			vals[Len(vals)] = $Conditions
-		}
-		if Len(vals) > 0 {
-			DBUpdate("signatures", $Id, Join(pars, ","), vals...)
-		}
-	}
+    conditions {
+        RowConditions("signatures", $Id, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
+    }
+    action {
+        var pars, vals array
+        if $Value {
+            pars[0] = "value"
+            vals[0] = $Value
+        }
+        if $Conditions {
+            pars = Append(pars, "conditions")
+            vals = Append(vals, $Conditions)
+        }
+        if Len(vals) > 0 {
+            DBUpdate("signatures", $Id, Join(pars, ","), vals...)
+        }
+    }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('35','DeactivateContract','contract DeactivateContract {
 	data {
@@ -1836,5 +1499,67 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	action {
 		UpdateNodesBan($block_time)
 	}
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
+('46', 'EditLangJoint', 'contract EditLangJoint {
+    data {
+        Id int
+        ValueArr array
+        LocaleArr array
+    }
+
+    conditions {
+        var i int
+        while i < Len($LocaleArr) {
+            if Size($LocaleArr[i]) == 0 {
+                info("Locale is empty")
+            }
+            if Size($ValueArr[i]) == 0 {
+                info("Value is empty")
+            }
+            i = i + 1
+        }
+    }
+
+    action {
+        var i int
+        var Trans map
+        while i < Len($LocaleArr) {
+            Trans[$LocaleArr[i]] = $ValueArr[i]
+            i = i + 1
+        }
+        var params map
+        params["Id"] = $Id 
+        params["Trans"] = JSONEncode(Trans)
+        CallContract("EditLang", params)
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
+('47', 'EditSignJoint', 'contract EditSignJoint {
+    data {
+        Id int
+        Title string
+        Parameter string
+        Conditions string
+    }
+
+    conditions {
+        if !$Title {
+            info("Title is empty")
+        }
+        if !$Parameter {
+            info("Parameter is empty")
+        }
+    }
+
+    action {
+        var Value map
+        Value["title"] = $Title 
+        Value["params"] = $Parameter
+
+        var params map
+        params["Id"] = $Id 
+        params["Value"] = JSONEncode(Value)
+        params["Conditions"] = $Conditions
+        CallContract("EditSign", params)
+    }
 }', %[1]d, 'ContractConditions("MainCondition")', 1);
 `
