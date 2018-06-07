@@ -32,7 +32,7 @@ func TestLimit(t *testing.T) {
 
 	rnd := randName(``)
 	form := url.Values{"Name": {"tbl" + rnd}, "Columns": {`[{"name":"name","type":"number",   "conditions":"true"},
-	{"name":"block", "type":"varchar","conditions":"true"}]`},
+	{"name":"block", "type":"varchar","conditions":"true"}]`}, "ApplicationId": {`1`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	assert.NoError(t, postTx(`NewTable`, &form))
 
@@ -45,7 +45,7 @@ func TestLimit(t *testing.T) {
 		action {
 		   DBInsert("tbl` + rnd + `", "name, block", $Num, $block) 
 		}
-	}`}, `Conditions`: {`true`}}
+	}`}, `Conditions`: {`true`}, "ApplicationId": {`1`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	form = url.Values{`Value`: {`contract Upd` + rnd + ` {
@@ -58,7 +58,7 @@ func TestLimit(t *testing.T) {
 		action {
 		   DBUpdateSysParam($Name, $Value, "") 
 		}
-	}`}, `Conditions`: {`true`}}
+	}`}, `Conditions`: {`true`}, "ApplicationId": {`1`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	all := 10

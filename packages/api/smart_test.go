@@ -48,7 +48,7 @@ func TestUpperName(t *testing.T) {
 	}
 	rnd := crypto.RandSeq(4)
 	form := url.Values{"Name": {"testTable" + rnd}, "Columns": {`[{"name":"num","type":"text",   "conditions":"true"},
-	{"name":"text", "type":"text","conditions":"true"}]`},
+	{"name":"text", "type":"text","conditions":"true"}]`}, "ApplicationId": {`1`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
 	if err != nil {
@@ -63,7 +63,7 @@ func TestUpperName(t *testing.T) {
 		action {
 		   DBInsert("testTable` + rnd + `", "num, text", "fgdgf", "124234") 
 		}
-	}`}, `Conditions`: {`true`}}
+	}`}, `Conditions`: {`true`}, "ApplicationId": {`1`}}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
@@ -295,7 +295,7 @@ func TestNewTable(t *testing.T) {
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	assert.NoError(t, postTx(`NewTable`, &form))
 
-	assert.EqualError(t, postTx(`NewTable`, &form), fmt.Sprintf(`{"type":"panic","error":"table %s exists"}`, name))
+	assert.EqualError(t, postTx(`NewTable`, &form), fmt.Sprintf(`{"type":"panic","error":"Table %s exists"}`, name))
 
 	form = url.Values{"Name": {name},
 		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")",
@@ -311,7 +311,7 @@ func TestNewTable(t *testing.T) {
 	assert.NoError(t, postTx(`NewColumn`, &form))
 
 	err = postTx(`NewColumn`, &form)
-	if err.Error() != `{"type":"panic","error":"column newcol exists"}` {
+	if err.Error() != `{"type":"panic","error":"Column newcol exists"}` {
 		t.Error(err)
 		return
 	}
@@ -366,7 +366,7 @@ func TestUpdateSysParam(t *testing.T) {
 			DBUpdateSysParam("max_indexes", "4", "false" )
 		}
 		}`},
-		"Conditions": {`ContractConditions("MainCondition")`}}
+		"ApplicationId": {`1`}, "Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
 
 	err := postTx(name, &form)
@@ -567,7 +567,7 @@ func TestContractEdit(t *testing.T) {
 		    action {
 				$result = "before"
 			}
-		}`},
+		}`}, "ApplicationId": {`1`},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
 	err := postTx(`NewContract`, &form)
 	if err != nil {

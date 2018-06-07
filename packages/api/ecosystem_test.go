@@ -70,7 +70,7 @@ func TestEditEcosystem(t *testing.T) {
 	value := `P(test,test paragraph)`
 
 	name := randName(`page`)
-	form := url.Values{"Name": {name}, "Value": {value},
+	form := url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	err = postTx(`@1NewPage`, &form)
 	if err != nil {
@@ -91,7 +91,7 @@ func TestEditEcosystem(t *testing.T) {
 	}
 	name = randName(`test`)
 	form = url.Values{"Value": {`contract ` + name + ` {
-		action { Test("empty",  "empty value")}}`},
+		action { Test("empty",  "empty value")}}`}, "ApplicationId": {`1`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	_, id, err := postTxResult(`@1NewContract`, &form)
 	if err != nil {
@@ -147,7 +147,7 @@ func TestSystemParams(t *testing.T) {
 		return
 	}
 
-	assert.Equal(t, 62, len(ret.List), `wrong count of parameters %d`, len(ret.List))
+	assert.Equal(t, 65, len(ret.List), `wrong count of parameters %d`, len(ret.List))
 }
 
 func TestSomeSystemParam(t *testing.T) {
