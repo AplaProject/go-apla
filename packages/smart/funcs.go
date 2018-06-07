@@ -431,8 +431,9 @@ func RollbackNewContract(sc *SmartContract, value string) error {
 func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) error {
 	var err error
 
-	if err := validateAccess(`CreateTable`, sc, nNewTable, nImport); err != nil {
-		return err
+	if !ContractAccess(sc, nNewTable, nImport) {
+		err := fmt.Errorf(eAccessContract, `CreateTable`, nNewTable+` or `+nImport)
+		return logError(err, consts.IncorrectCallingContract, err.Error())
 	}
 
 	if len(name) == 0 {
@@ -848,8 +849,9 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		if err := validateAccess(`TableConditions`, sc, nEditTable); err != nil {
 			return err
 		}
-	} else if err := validateAccess(`TableConditions`, sc, nNewTable, nImport); err != nil {
-		return err
+	} else if !ContractAccess(sc, nNewTable, nImport) {
+		err := fmt.Errorf(eAccessContract, `TableConditions`, nNewTable+` or `+nImport)
+		return logError(err, consts.IncorrectCallingContract, err.Error())
 	}
 
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
