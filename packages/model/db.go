@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 
@@ -139,18 +140,20 @@ func GetRecordsCountTx(db *DbTransaction, tableName string) (int64, error) {
 
 // ExecSchemaEcosystem is executing ecosystem schema
 func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder int64) error {
-	err := GetDB(db).Exec(fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder)).Error
-	if err != nil {
+	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder)
+	ioutil.WriteFile("/home/losaped/1.sql", []byte(q), 0777)
+	if err := GetDB(db).Exec(q).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err
 	}
 	if id == 1 {
-		err = GetDB(db).Exec(fmt.Sprintf(migration.GetFirstEcosystemScript(), wallet)).Error
-		if err != nil {
+		q = fmt.Sprintf(migration.GetFirstEcosystemScript(), wallet)
+		ioutil.WriteFile("/home/losaped/2.sql", []byte(q), 0777)
+		if err := GetDB(db).Exec(q).Error; err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first ecosystem schema")
 		}
 	}
-	return err
+	return nil
 }
 
 // ExecSchemaLocalData is executing schema with local data

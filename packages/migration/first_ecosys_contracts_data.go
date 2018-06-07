@@ -285,7 +285,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             }
             entities_array = Append(entities_array, SerializeResource(cur_resource, type))
             if type == "pages" {
-                $menus_names = Append($menus_names, Sprintf("'%%v'", cur_resource["menu"]))
+                $menus_names = Append($menus_names, Sprintf("%%v", cur_resource["menu"]))
             }
             i = i + 1
         }
@@ -774,7 +774,8 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
         $ApplicationId = 0
         var app_map map
-        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key='import_info' and member_id=$", $key_id).Row()
+        ii = "import_info"
+        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key= and member_id=$", ii, $key_id).Row()
         if app_map{
             var app_id int
             app_id = DBFind("applications").Columns("id").Where("name=$", Str(app_map["value.app_name"])).One("id")
@@ -874,7 +875,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             var page_map map
             page_map = pages_ret[i]
 
-            pages_array = Append(pages_array, Sprintf("'%%v'", Str(page_map["menu"])))
+            pages_array = Append(pages_array, Sprintf("%%v", Str(page_map["menu"])))
             i = i + 1
         }
 
