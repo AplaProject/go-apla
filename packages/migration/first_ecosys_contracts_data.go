@@ -294,7 +294,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             }
             entities_array = Append(entities_array, SerializeResource(cur_resource, type))
             if type == "pages" {
-                $menus_names = Append($menus_names, Sprintf("%%v", cur_resource["menu"]))
+                $menus_names = Append($menus_names, Sprintf("''%%v''", cur_resource["menu"]))
             }
             i = i + 1
         }
