@@ -737,7 +737,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
 
         if DBFind("pages").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf( "Block %%s already exists", $Name)
+            warning Sprintf( "Page %%s already exists", $Name)
         }
 
         $ValidateCount = preparePageValidateCount($ValidateCount)
