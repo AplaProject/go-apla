@@ -794,9 +794,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
         $ApplicationId = 0
         var app_map map
-        var ii string
-        ii = "import_info"
-        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key= and member_id=$", ii, $key_id).Row()
+        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key=''import_info'' and member_id=$", $key_id).Row()
         if app_map{
             var app_id int
             app_id = DBFind("applications").Columns("id").Where("name=$", Str(app_map["value.app_name"])).One("id")
