@@ -211,16 +211,17 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
     func AssignAll(app_name string, resources string) string {
         return Sprintf(` + "`" + `{
-    "name":"%%v", 
+    "name": "%%v", 
     "data": [
 %%v
-]}` + "`" + `, app_name, resources)
+    ]
+    }` + "`" + `, app_name, resources)
     }
 
     func SerializeResource(resource map, resource_type string) string {
         var s string
-        s = Sprintf(` + "`" + `{
-            "Type":"%%v", 
+        s = Sprintf(` + "`" + ` {
+            "Type": "%%v", 
             "Name": "%%v", 
             "Value": "%%v", 
             "Conditions": "%%v", 
@@ -229,14 +230,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             "Trans": "%%v", 
             "Columns": "%%v"
         }` + "`" + `, 
-            resource_type, 
-            EscapeSpecialSymbols(Str(resource["name"])), 
-            EscapeSpecialSymbols(Str(resource["value"])), 
-            EscapeSpecialSymbols(Str(resource["conditions"])),
-            EscapeSpecialSymbols(Str(resource["menu"])), 
-            EscapeSpecialSymbols(Str(resource["title"])),
-            EscapeSpecialSymbols(Str(resource["res"])), 
-            EscapeSpecialSymbols(Str(resource["columns"])))
+            resource_type, EscapeSpecialSymbols(Str(resource["name"])), EscapeSpecialSymbols(Str(resource["value"])), EscapeSpecialSymbols(Str(resource["conditions"])),
+            EscapeSpecialSymbols(Str(resource["menu"])), EscapeSpecialSymbols(Str(resource["title"])),
+            EscapeSpecialSymbols(Str(resource["res"])), EscapeSpecialSymbols(Str(resource["columns"])))
         return s
     }
 
@@ -270,7 +266,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
                     col_cond = Str(clm[1])
                     col_type = GetColumnType(table_name, col_name)
 
-                    s = Sprintf(` + "`" + `{"name":"%%v","type":"%%v","conditions":"%%v"}` + "`" + `, col_name, col_type, col_cond)
+                    s = Sprintf(` + "`" + `{"name":"%%v","type":"%%v","conditions":%%v}` + "`" + `, col_name, col_type, col_cond)
                 }
 
                 if Size(result) > 0 {
@@ -298,12 +294,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             }
             entities_array = Append(entities_array, SerializeResource(cur_resource, type))
             if type == "pages" {
-                var menu_name string
-                menu_name = cur_resource["menu"] 
-                if !$menu_used[menu_name] {
-                    $menus_names = Append($menus_names, Sprintf("%%v", menu_name))
-                    $menu_used[menu_name] = 1
-                }
+                $menus_names = Append($menus_names, Sprintf("%%v", cur_resource["menu"]))
             }
             i = i + 1
         }
@@ -340,7 +331,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         entities_array = ExportTableRecords(DBFind("tables").Limit(250).Where("app_id=?", $ApplicationID), "tables", entities_array)
         if Len($menus_names) > 0 {
             var where_for_menu string
-            where_for_menu = Sprintf("name in (''%%v'')", Join($menus_names, "'',''"))
+            where_for_menu = Sprintf("name in (%%v)", Join($menus_names, ","))
             entities_array = ExportTableRecords(DBFind("menu").Limit(250).Where(where_for_menu), "menu", entities_array)
         }
 
