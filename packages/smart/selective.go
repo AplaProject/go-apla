@@ -34,7 +34,7 @@ func prepareValues(sc *SmartContract, table string, fields []string,
 	ivalues []interface{}) ([]string, error) {
 
 	if !sc.VDE && sc.Rollback && sc.BlockData == nil {
-		return nil, logError(errUndefBlock, consts.EmptyObject, "Block is undefined")
+		return nil, logErrorShort(errUndefBlock, consts.EmptyObject)
 	}
 
 	for i, v := range ivalues {
@@ -195,7 +195,7 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 
 	addSQLWhere := ""
 	if whereFields == nil || whereValues == nil {
-		return 0, ``, logError(errUpdNotExistRecord, consts.NotFound, "updating undefined record")
+		return 0, ``, logErrorShort(errUpdNotExistRecord, consts.NotFound)
 	}
 	for i := 0; i < len(whereFields); i++ {
 		if val := converter.StrToInt64(whereValues[i]); val != 0 {

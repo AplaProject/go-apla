@@ -27,7 +27,9 @@ const (
 	eColumnNotExist     = `Column %s doesn't exist`
 	eColumnType         = `Type '%s' of columns is not supported`
 	eContractCondition  = `There is not conditions in contract %s`
+	eNotCustomTable     = `%s is not a custom table`
 	eEmptyCond          = `%v condition is empty`
+	eIncorrectEcosys    = `Incorrect ecosystem id %s != %d`
 	eIncorrectSignature = `incorrect signature %s`
 	eItemNotFound       = `Item %d has not been found`
 	eManyColumns        = `Too many columns. Limit is %d`
@@ -36,6 +38,7 @@ const (
 	eRecordNotFound     = `Record %s has not been found`
 	eTableExists        = `Table %s exists`
 	eTableNotFound      = `Table %s has not been found`
+	eTypeJSON           = `Type %T doesn't support json marshalling`
 	eUnknownContract    = `Unknown contract %s`
 	eUnsupportedType    = "Unsupported type %T"
 	eWrongRandom        = `Wrong random parameters %d %d`
@@ -45,6 +48,7 @@ var (
 	errAccessDenied      = errors.New(`Access denied`)
 	errConditionEmpty    = errors.New(`Condition is empty`)
 	errContractNotFound  = errors.New(`Contract has not been found`)
+	errContractChange    = errors.New(`Contract cannot be removed or inserted`)
 	errCurrentBalance    = errors.New(`Current balance is not enough`)
 	errDeletedKey        = errors.New(`The key is deleted`)
 	errDiffKeys          = errors.New(`Contract and user public keys are different`)
@@ -57,15 +61,15 @@ var (
 	errIncorrectSign     = errors.New(`Incorrect sign`)
 	errIncorrectType     = errors.New(`Incorrect type`)
 	errInvalidValue      = errors.New(`Invalid value`)
+	errNameChange        = errors.New(`Contracts or functions names cannot be changed`)
 	errNegPrice          = errors.New(`Price value is negative`)
 	errOneContract       = errors.New(`Оnly one contract must be in the record`)
 	errPermEmpty         = errors.New(`Permissions are empty`)
 	errSameColumns       = errors.New(`There are the same columns`)
-	errSetPubKey         = errors.New(`SetPubKey can be only called from NewUser contract`)
 	errTableName         = errors.New(`The name of the table cannot begin with @`)
+	errTableEmptyName    = errors.New(`The table name cannot be empty`)
 	errUndefBlock        = errors.New(`It is impossible to write to DB when Block is undefined`)
 	errUndefColumns      = errors.New(`Columns are undefined`)
-	errUnknownNodeID     = errors.New(`Unknown node id`)
 	errUpdNotExistRecord = errors.New(`Update for not existing record`)
 	errValues            = errors.New(`Values are undefined`)
 	errWrongColumn       = errors.New(`Parameters of column are wrong`)

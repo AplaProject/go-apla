@@ -92,11 +92,15 @@ const (
 	nEditColumn         = "EditColumn"
 	nEditContract       = "EditContract"
 	nEditEcosystemName  = "EditEcosystemName"
+	nEditLang           = "EditLang"
+	nEditLangJoint      = "EditLangJoint"
 	nEditTable          = "EditTable"
 	nImport             = "Import"
 	nNewColumn          = "NewColumn"
 	nNewContract        = "NewContract"
 	nNewEcosystem       = "NewEcosystem"
+	nNewLang            = "NewLang"
+	nNewLangJoint       = "NewLangJoint"
 	nNewTable           = "NewTable"
 	nNewUser            = "NewUser"
 )
@@ -138,7 +142,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		return 0, logErrorDB(err, "system parameter get")
 	}
 	if !found {
-		return 0, logError(fmt.Errorf(eParamNotFound, name), consts.NotFound, "system parameter get")
+		return 0, logErrorf(eParamNotFound, name, consts.NotFound, "system parameter get")
 	}
 	cond := par.Conditions
 	if len(cond) > 0 {
@@ -147,7 +151,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			return 0, logError(err, consts.EvalError, "evaluating conditions")
 		}
 		if !ret {
-			return 0, logError(errAccessDenied, consts.AccessDenied, "Access denied")
+			return 0, logErrorShort(errAccessDenied, consts.AccessDenied)
 		}
 	}
 	if len(value) > 0 {
@@ -213,7 +217,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		values = append(values, conditions)
 	}
 	if len(fields) == 0 {
-		return 0, logError(errEmpty, consts.EmptyObject, `empty value and condition`)
+		return 0, logErrorShort(errEmpty, consts.EmptyObject)
 	}
 	_, _, err = sc.update(fields, values, "1_system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)})
 	if err != nil {
@@ -323,14 +327,12 @@ func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
 
 // NewLang creates new language
 func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int64, err error) {
-	if !accessContracts(sc, "NewLang", "NewLangJoint", "Import") {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateLanguage can be only called from @1NewLang, @1NewLangJoint, @1Import")
-		return 0, fmt.Errorf(`CreateLanguage can be only called from @1NewLang, @1NewLangJoint, @1Import`)
+	if err := validateAccess(`CreateLanguage`, sc, nNewLang, nNewLangJoint, nImport); err != nil {
+		return 0, err
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	if _, id, err = DBInsert(sc, `@`+idStr+"_languages", "name,res,app_id", name, trans, appID); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
-		return 0, err
+		return 0, logErrorDB(err, "inserting new language")
 	}
 	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
 	return id, nil
@@ -338,14 +340,13 @@ func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int6
 
 // EditLanguage edits language
 func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) error {
-	if !accessContracts(sc, "EditLang", "EditLangJoint", "Import") {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditLanguage can be only called from @1EditLang, @1EditLangJoint and @1Import")
-		return fmt.Errorf(`EditLanguage can be only called from @1EditLang, @1EditLangJoint and @1Import`)
+	if err := validateAccess(`EditLanguage`, sc, nEditLang, nEditLangJoint, nImport); err != nil {
+		return err
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if _, err := DBUpdate(sc, `@`+idStr+"_languages", id, "name,res,app_id", name, trans, appID); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
-		return err
+	_, err := DBUpdate(sc, `@`+idStr+"_languages", id, "name,res,app_id", name, trans, appID)
+	if err != nil {
+		return logErrorDB(err, "inserting new language")
 	}
 	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
 	return nil
@@ -389,7 +390,7 @@ func EvalCondition(sc *SmartContract, table, name, condfield string) error {
 		return logErrorDB(err, "executing single query")
 	}
 	if len(conditions) == 0 {
-		return logError(fmt.Errorf(eRecordNotFound, name), consts.NotFound, "Record not found")
+		return logErrorfShort(eRecordNotFound, name, consts.NotFound)
 	}
 	return Eval(sc, conditions)
 }
@@ -413,7 +414,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	if !found || len(sp.Value) == 0 {
-		return 0, logError(errFounderAccount, consts.NotFound, "founder not found")
+		return 0, logErrorShort(errFounderAccount, consts.NotFound)
 	}
 
 	id, err := model.GetNextID(sc.DbTransaction, "1_ecosystems")
@@ -498,8 +499,8 @@ func RollbackEcosystem(sc *SmartContract) error {
 	}
 	lastID--
 	if converter.StrToInt64(rollbackTx.TableID) != lastID {
-		log.WithFields(log.Fields{"table_id": rollbackTx.TableID, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
-		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
+		err = fmt.Errorf(eIncorrectEcosys, rollbackTx.TableID, lastID)
+		return logErrorShort(err, consts.InvalidObject)
 	}
 
 	rbTables := []string{
@@ -678,7 +679,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 		return err
 	}
 	if !CheckSignResult {
-		return logError(fmt.Errorf(eIncorrectSignature, forsign), consts.InvalidObject, "incorrect signature")
+		return logErrorfShort(eIncorrectSignature, forsign, consts.InvalidObject)
 	}
 	return nil
 }
@@ -792,7 +793,7 @@ func JSONEncode(input interface{}) (string, error) {
 	}
 
 	if rv.Kind() == reflect.Struct {
-		return "", fmt.Errorf("Type %T doesn't support json marshalling", input)
+		return "", logErrorfShort(eTypeJSON, input, consts.TypeError)
 	}
 
 	b, err := json.Marshal(input)

@@ -584,7 +584,7 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
 		return tablePermission, err
 	} else if !isCustom {
-		return tablePermission, fmt.Errorf(table + ` is not a custom table`)
+		return tablePermission, fmt.Errorf(eNotCustomTable, table)
 	}
 
 	prefix, name := PrefixName(table)

@@ -30,6 +30,20 @@ func logError(err error, errType string, comment string) error {
 	return err
 }
 
+func logErrorf(pattern string, param interface{}, errType string, comment string) error {
+	err := fmt.Errorf(pattern, param)
+	log.WithFields(log.Fields{"type": errType, "error": err}).Error(comment)
+	return err
+}
+
+func logErrorShort(err error, errType string) error {
+	return logError(err, errType, err.Error())
+}
+
+func logErrorfShort(pattern string, param interface{}, errType string) error {
+	return logErrorShort(fmt.Errorf(pattern, param), errType)
+}
+
 func logErrorValue(err error, errType string, comment, value string) error {
 	log.WithFields(log.Fields{"type": errType, "error": err, "value": value}).Error(comment)
 	return err

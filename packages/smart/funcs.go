@@ -290,14 +290,12 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			if contract == nil {
 				contract = VMGetContract(sc.VM, name, 0)
 				if contract == nil {
-					return false, logErrorValue(fmt.Errorf(eUnknownContract, name), consts.NotFound,
-						"Unknown contract", name)
+					return false, logErrorfShort(eUnknownContract, name, consts.NotFound)
 				}
 			}
 			block := contract.GetFunc(`conditions`)
 			if block == nil {
-				return false, logErrorValue(fmt.Errorf(eContractCondition, name), consts.EmptyObject,
-					"There is not conditions in contract", name)
+				return false, logErrorfShort(eContractCondition, name, consts.EmptyObject)
 			}
 			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
 				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID})
@@ -333,7 +331,7 @@ func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) 
 		return err
 	}
 	if len(list) != len(curlist) {
-		return fmt.Errorf("Contract cannot be removed or inserted")
+		return errContractChange
 	}
 	for i := 0; i < len(list); i++ {
 		var ok bool
@@ -344,7 +342,7 @@ func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) 
 			}
 		}
 		if !ok {
-			return fmt.Errorf("Contracts or functions names cannot be changed")
+			return errNameChange
 		}
 	}
 	return nil
@@ -433,11 +431,11 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 
 	if !ContractAccess(sc, nNewTable, nImport) {
 		err := fmt.Errorf(eAccessContract, `CreateTable`, nNewTable+` or `+nImport)
-		return logError(err, consts.IncorrectCallingContract, err.Error())
+		return logErrorShort(err, consts.IncorrectCallingContract)
 	}
 
 	if len(name) == 0 {
-		return fmt.Errorf("The table name cannot be empty")
+		return errTableEmptyName
 	}
 
 	if len(name) > 0 && name[0] == '@' {
@@ -446,7 +444,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 
 	tableName := getDefTableName(sc, name)
 	if model.IsTable(tableName) {
-		return fmt.Errorf("table %s exists", name)
+		return fmt.Errorf(eTableExists, name)
 	}
 
 	var cols []interface{}
@@ -554,7 +552,7 @@ func columnType(colType string) (string, error) {
 // DBInsert inserts a record into the specified database table
 func DBInsert(sc *SmartContract, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
 	if tblname == "system_parameters" {
-		return 0, 0, fmt.Errorf("system parameters access denied")
+		return 0, 0, errAccessDenied
 	}
 
 	tblname = getDefTableName(sc, tblname)
@@ -775,14 +773,14 @@ func AppParam(sc *SmartContract, app int64, name string) (string, error) {
 // Eval evaluates the condition
 func Eval(sc *SmartContract, condition string) error {
 	if len(condition) == 0 {
-		return logError(errEmptyCond, consts.EmptyObject, "The condition is empty")
+		return logErrorShort(errEmptyCond, consts.EmptyObject)
 	}
 	ret, err := sc.EvalIf(condition)
 	if err != nil {
 		return logError(err, consts.EvalError, "eval condition")
 	}
 	if !ret {
-		return logError(errAccessDenied, consts.AccessDenied, "Access denied")
+		return logErrorShort(errAccessDenied, consts.AccessDenied)
 	}
 	return nil
 }
@@ -851,7 +849,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		}
 	} else if !ContractAccess(sc, nNewTable, nImport) {
 		err := fmt.Errorf(eAccessContract, `TableConditions`, nNewTable+` or `+nImport)
-		return logError(err, consts.IncorrectCallingContract, err.Error())
+		return logErrorShort(err, consts.IncorrectCallingContract)
 	}
 
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
@@ -864,11 +862,10 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	}
 	if isEdit {
 		if !exists {
-			return logErrorValue(fmt.Errorf(eTableNotFound, name), consts.NotFound,
-				"table does not exists", name)
+			return logErrorfShort(eTableNotFound, name, consts.NotFound)
 		}
 	} else if exists {
-		return logErrorValue(fmt.Errorf(eTableExists, name), consts.Found, "table exists", name)
+		return logErrorfShort(eTableExists, name, consts.Found)
 	}
 
 	var perm permTable
@@ -882,7 +879,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		cond := v.Field(i).Interface().(string)
 		name := v.Type().Field(i).Name
 		if len(cond) == 0 && name != `Read` && name != `Filter` {
-			return logError(fmt.Errorf(eEmptyCond, name), consts.EmptyObject, "condition is empty")
+			return logErrorfShort(eEmptyCond, name, consts.EmptyObject)
 		}
 		if err = VMCompileEval(sc.VM, cond, uint32(sc.TxSmart.EcosystemID)); err != nil {
 			return logError(err, consts.EvalError, "compile evaluating permissions")
@@ -905,11 +902,10 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 			"unmarshalling columns permissions from json", columns)
 	}
 	if len(cols) == 0 {
-		return logError(errUndefColumns, consts.EmptyObject, "Columns are empty")
+		return logErrorShort(errUndefColumns, consts.EmptyObject)
 	}
 	if len(cols) > syspar.GetMaxColumns() {
-		return logError(fmt.Errorf(eManyColumns, syspar.GetMaxColumns()), consts.ParameterExceeded,
-			"Too many columns")
+		return logErrorfShort(eManyColumns, syspar.GetMaxColumns(), consts.ParameterExceeded)
 	}
 	for _, icol := range cols {
 		var data map[string]interface{}
@@ -925,10 +921,10 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 			data = v.(map[string]interface{})
 		}
 		if data[`name`] == nil || data[`type`] == nil {
-			return logError(errWrongColumn, consts.InvalidObject, `wrong column`)
+			return logErrorShort(errWrongColumn, consts.InvalidObject)
 		}
 		if len(typeToPSQL[data[`type`].(string)]) == 0 {
-			return logError(errIncorrectType, consts.InvalidObject, `incorrect type`)
+			return logErrorShort(errIncorrectType, consts.InvalidObject)
 		}
 		condition := ``
 		switch v := data[`conditions`].(type) {
@@ -946,7 +942,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 			return logError(err, consts.EmptyObject, "Conditions is empty")
 		}
 		if len(perm.Update) == 0 {
-			return logError(errConditionEmpty, consts.EmptyObject, "Update condition is empty")
+			return logErrorShort(errConditionEmpty, consts.EmptyObject)
 		}
 		if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
 			return logError(err, consts.EvalError, "compile update conditions")
@@ -968,7 +964,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 // ValidateCondition checks if the condition can be compiled
 func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 	if len(condition) == 0 {
-		return logError(errConditionEmpty, consts.EmptyObject, "conditions cannot be empty")
+		return logErrorShort(errConditionEmpty, consts.EmptyObject)
 	}
 	return VMCompileEval(sc.VM, condition, uint32(state))
 }
@@ -992,13 +988,13 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 	}
 	if isExist {
 		if !exists {
-			return logError(fmt.Errorf(eColumnNotExist, name), consts.NotFound, "column does not exists")
+			return logErrorfShort(eColumnNotExist, name, consts.NotFound)
 		}
 	} else if exists {
-		return logError(fmt.Errorf(eColumnExist, name), consts.Found, "column exists")
+		return logErrorfShort(eColumnExist, name, consts.Found)
 	}
 	if len(permissions) == 0 {
-		return logError(errPermEmpty, consts.EmptyObject, "Permissions are empty")
+		return logErrorShort(errPermEmpty, consts.EmptyObject)
 	}
 	perm, err := getPermColumns(permissions)
 	if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
@@ -1018,8 +1014,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		return logErrorDB(err, "counting table columns")
 	}
 	if count >= int64(syspar.GetMaxColumns()) {
-		return logError(fmt.Errorf(eManyColumns, syspar.GetMaxColumns()), consts.ParameterExceeded,
-			"Too many columns")
+		return logErrorfShort(eManyColumns, syspar.GetMaxColumns(), consts.ParameterExceeded)
 	}
 	if len(typeToPSQL[coltype]) == 0 {
 		return logErrorValue(errIncorrectType, consts.InvalidObject, "Unknown column type", coltype)
@@ -1045,8 +1040,8 @@ func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bo
 	}
 
 	if len(condition) == 0 {
-		return logErrorValue(fmt.Errorf(eItemNotFound, id), consts.NotFound, "record not found",
-			tblname)
+		return logErrorValue(fmt.Errorf(eItemNotFound, id), consts.NotFound,
+			"record not found", tblname)
 	}
 
 	if err := Eval(sc, condition); err != nil {
@@ -1406,11 +1401,8 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				)
 
 				if err != nil {
-					logErrorValue(err, consts.DBError, "inserting log to node_ban_log",
+					return logErrorValue(err, consts.DBError, "inserting log to node_ban_log",
 						converter.Int64ToStr(banReq.ProducerNodeId))
-					return logErrorValue(err, consts.DBError, "sending notification to node owner",
-						converter.Int64ToStr(banReq.ProducerNodeId))
-
 				}
 
 				updFullNodes = true
@@ -1482,8 +1474,7 @@ func MD5(data interface{}) (string, error) {
 	case string:
 		b = []byte(v)
 	default:
-		return "", logError(fmt.Errorf(eUnsupportedType, v), consts.ConversionError,
-			"converting to bytes")
+		return "", logErrorf(eUnsupportedType, v, consts.ConversionError, "converting to bytes")
 	}
 
 	hash := md5.Sum(b)
