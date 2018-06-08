@@ -210,12 +210,25 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     func AssignAll(app_name string, resources string) string {
-        return Sprintf(` + "`" + `{"name":"%%v", "data": [%%v]}` + "`" + `, app_name, resources)
+        return Sprintf(` + "`" + `{
+    "name":"%%v", 
+    "data": [
+%%v
+]}` + "`" + `, app_name, resources)
     }
 
     func SerializeResource(resource map, resource_type string) string {
         var s string
-        s = Sprintf(` + "`" + `{"Type":"%%v", "Name": "%%v", "Value": "%%v", "Conditions": "%%v", "Menu": "%%v", "Title": "%%v", "Trans": "%%v", "Columns": "%%v"}` + "`" + `, 
+        s = Sprintf(` + "`" + `{
+            "Type":"%%v", 
+            "Name": "%%v", 
+            "Value": "%%v", 
+            "Conditions": "%%v", 
+            "Menu": "%%v", 
+            "Title": "%%v", 
+            "Trans": "%%v", 
+            "Columns": "%%v"
+        }` + "`" + `, 
             resource_type, 
             EscapeSpecialSymbols(Str(resource["name"])), 
             EscapeSpecialSymbols(Str(resource["value"])), 
@@ -285,7 +298,12 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             }
             entities_array = Append(entities_array, SerializeResource(cur_resource, type))
             if type == "pages" {
-                $menus_names = Append($menus_names, Sprintf("%%v", cur_resource["menu"]))
+                var menu_name string
+                menu_name = cur_resource["menu"] 
+                if !$menu_used[menu_name] {
+                    $menus_names = Append($menus_names, Sprintf("%%v", menu_name))
+                    $menu_used[menu_name] = 1
+                }
             }
             i = i + 1
         }
@@ -305,7 +323,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
+        var menu_used map
         var menus_names_arr array 
+        $menu_used = menu_used
         $menus_names = menus_names_arr
 
         var full_result string
@@ -320,7 +340,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         entities_array = ExportTableRecords(DBFind("tables").Limit(250).Where("app_id=?", $ApplicationID), "tables", entities_array)
         if Len($menus_names) > 0 {
             var where_for_menu string
-            where_for_menu = Sprintf("name in (%%v)", Join($menus_names, ","))
+            where_for_menu = Sprintf("name in (''%%v'')", Join($menus_names, "'',''"))
             entities_array = ExportTableRecords(DBFind("menu").Limit(250).Where(where_for_menu), "menu", entities_array)
         }
 
@@ -717,7 +737,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
 
         if DBFind("pages").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf( "Block %%s already exists", $Name)
+            warning Sprintf( "Page %%s already exists", $Name)
         }
 
         $ValidateCount = preparePageValidateCount($ValidateCount)
@@ -774,9 +794,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
         $ApplicationId = 0
         var app_map map
-        var ii string
-        ii = "import_info"
-        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key= and member_id=$", ii, $key_id).Row()
+        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key=''import_info'' and member_id=$", $key_id).Row()
         if app_map{
             var app_id int
             app_id = DBFind("applications").Columns("id").Where("name=$", Str(app_map["value.app_name"])).One("id")
