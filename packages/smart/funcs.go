@@ -551,9 +551,6 @@ func columnType(colType string) (string, error) {
 
 // DBInsert inserts a record into the specified database table
 func DBInsert(sc *SmartContract, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
-	if tblname == "system_parameters" {
-		return 0, 0, errAccessDenied
-	}
 
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "insert"); err != nil {
@@ -634,25 +631,23 @@ func PrepareWhere(where string) string {
 	return where
 }
 
-// DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
-func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
-	where string, params []interface{}) (int64, []interface{}, error) {
-
+func prepareSelect(sc *SmartContract, pTblname, pColumns, pWhere, pOrder *string,
+	id, limit, ecosystem int64) (int64, map[string]string, error) {
 	var (
 		err  error
-		rows *sql.Rows
 		perm map[string]string
 	)
+	columns := *pColumns
 	if len(columns) == 0 {
 		columns = `*`
 	}
 	columns = strings.ToLower(columns)
-	if len(order) == 0 {
-		order = `id`
+	if len(*pOrder) == 0 {
+		*pOrder = `id`
 	}
-	where = PrepareWhere(strings.Replace(converter.Escape(where), `$`, `?`, -1))
+	*pWhere = PrepareWhere(strings.Replace(converter.Escape(*pWhere), `$`, `?`, -1))
 	if id != 0 {
-		where = fmt.Sprintf(`id='%d'`, id)
+		*pWhere = fmt.Sprintf(`id='%d'`, id)
 		limit = 1
 	}
 	if limit == 0 {
@@ -664,19 +659,35 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	if ecosystem == 0 {
 		ecosystem = sc.TxSmart.EcosystemID
 	}
-	tblname = GetTableName(sc, tblname, ecosystem)
+	*pTblname = GetTableName(sc, *pTblname, ecosystem)
 	if sc.VDE {
-		perm, err = sc.AccessTablePerm(tblname, `read`)
+		perm, err = sc.AccessTablePerm(*pTblname, `read`)
 		if err != nil {
-			return 0, nil, err
+			return 0, perm, err
 		}
 		cols := strings.Split(columns, `,`)
-		if err = sc.AccessColumns(tblname, &cols, false); err != nil {
-			return 0, nil, err
+		if err = sc.AccessColumns(*pTblname, &cols, false); err != nil {
+			return 0, perm, err
 		}
 		columns = strings.Join(cols, `,`)
 	}
-	columns = PrepareColumns(columns)
+	*pColumns = PrepareColumns(columns)
+	return limit, perm, nil
+}
+
+// DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
+func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order string, offset,
+	limit, ecosystem int64, where string, params []interface{}) (int64, []interface{}, error) {
+
+	var (
+		err  error
+		perm map[string]string
+		rows *sql.Rows
+	)
+	if limit, perm, err = prepareSelect(sc, &tblname, &columns, &where, &order, id,
+		limit, ecosystem); err != nil {
+		return 0, nil, err
+	}
 
 	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
