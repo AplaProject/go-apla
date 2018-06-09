@@ -202,6 +202,7 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 			"date_created" timestamp,
 			"date_deleted" timestamp,
 			"company_id" bigint NOT NULL DEFAULT '0',
+			"roles_access" jsonb, 
 			"image_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles" ADD CONSTRAINT "%[1]d_roles_pkey" PRIMARY KEY ("id");
