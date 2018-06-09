@@ -18,7 +18,6 @@ package smart
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -128,9 +127,9 @@ func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 		addSQLIns1 = append(addSQLIns1, insVal)
 	}
 	for colname, colvals := range jsonFields {
-		out, err := json.Marshal(colvals)
+		out, err := marshalJSON(colvals, `update columns for jsonb`)
 		if err != nil {
-			return 0, ``, logError(err, consts.JSONMarshallError, "marshalling update columns for jsonb")
+			return 0, ``, err
 		}
 		addSQLIns0 = append(addSQLIns0, colname)
 		addSQLIns1 = append(addSQLIns1, fmt.Sprintf(`'%s'::jsonb`, string(out)))
@@ -243,9 +242,9 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 			addSQLFields += k + ","
 		}
 	}
-	jsonRollbackInfo, err := json.Marshal(rollbackInfo)
+	jsonRollbackInfo, err := marshalJSON(rollbackInfo, `rollback info to json`)
 	if err != nil {
-		return 0, tableID, logError(err, consts.JSONMarshallError, "marshalling rollback info to json")
+		return 0, tableID, err
 	}
 	rollbackInfoStr = string(jsonRollbackInfo)
 	addSQLUpdate := ""
@@ -276,9 +275,9 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 	}
 	for colname, colvals := range jsonFields {
 		var initial string
-		out, err := json.Marshal(colvals)
+		out, err := marshalJSON(colvals, `update columns for jsonb`)
 		if err != nil {
-			return 0, ``, logError(err, consts.JSONMarshallError, "marshalling update columns for jsonb")
+			return 0, ``, err
 		}
 		if len(logData[colname]) > 0 && logData[colname] != `NULL` {
 			initial = colname

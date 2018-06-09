@@ -22,7 +22,6 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -309,16 +308,14 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 	return true, nil
 }
 
-func contractName(value string) (string, error) {
-	list, err := script.ContractsList(value)
-	if err != nil {
-		return "", err
+func contractName(value string) (name string, err error) {
+	var list []string
+
+	list, err = script.ContractsList(value)
+	if err == nil && len(list) > 0 {
+		name = list[0]
 	}
-	if len(list) > 0 {
-		return list[0], nil
-	} else {
-		return "", nil
-	}
+	return
 }
 
 func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) error {
@@ -348,7 +345,8 @@ func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) 
 	return nil
 }
 
-func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID string, recipient int64, active, tokenID string) error {
+func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID string,
+	recipient int64, active, tokenID string) error {
 	if err := validateAccess(`UpdateContract`, sc, nEditContract, nImport); err != nil {
 		return err
 	}
@@ -356,7 +354,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 	var vals []interface{}
 	ecosystemID := sc.TxSmart.EcosystemID
 	var root interface{}
-	if value != "" {
+	if len(value) > 0 {
 		var err error
 		root, err = CompileContract(sc, value, ecosystemID, recipient, converter.StrToInt64(tokenID))
 		if err != nil {
@@ -365,11 +363,11 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		pars = append(pars, "value")
 		vals = append(vals, value)
 	}
-	if conditions != "" {
+	if len(conditions) > 0 {
 		pars = append(pars, "conditions")
 		vals = append(vals, conditions)
 	}
-	if walletID != "" {
+	if len(walletID) > 0 {
 		pars = append(pars, "wallet_id")
 		vals = append(vals, recipient)
 	}
@@ -378,21 +376,20 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 			return err
 		}
 	}
-	if value != "" {
+	if len(value) > 0 {
 		if err := FlushContract(sc, root, id, converter.StrToInt64(active) == 1); err != nil {
 			return err
 		}
-	} else {
-		if walletID != "" {
-			if err := SetContractWallet(sc, id, ecosystemID, recipient); err != nil {
-				return err
-			}
+	} else if len(walletID) > 0 {
+		if err := SetContractWallet(sc, id, ecosystemID, recipient); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func CreateContract(sc *SmartContract, name, value, conditions string, walletID, tokenEcosystem, appID int64) (int64, error) {
+func CreateContract(sc *SmartContract, name, value, conditions string, walletID, tokenEcosystem,
+	appID int64) (int64, error) {
 	if err := validateAccess(`CreateContract`, sc, nNewContract, nImport); err != nil {
 		return 0, err
 	}
@@ -402,11 +399,12 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	if err != nil {
 		return 0, err
 	}
-	_, id, err = DBInsert(sc, "contracts", "name,value,conditions,wallet_id,token_id,app_id", name, value, conditions, walletID, tokenEcosystem, appID)
+	_, id, err = DBInsert(sc, "contracts", "name,value,conditions,wallet_id,token_id,app_id",
+		name, value, conditions, walletID, tokenEcosystem, appID)
 	if err != nil {
 		return 0, err
 	}
-	if err := FlushContract(sc, root, id, false); err != nil {
+	if err = FlushContract(sc, root, id, false); err != nil {
 		return 0, err
 	}
 	return id, nil
@@ -430,26 +428,24 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	var err error
 
 	if !ContractAccess(sc, nNewTable, nImport) {
-		err := fmt.Errorf(eAccessContract, `CreateTable`, nNewTable+` or `+nImport)
+		err = fmt.Errorf(eAccessContract, `CreateTable`, nNewTable+` or `+nImport)
 		return logErrorShort(err, consts.IncorrectCallingContract)
 	}
 
 	if len(name) == 0 {
 		return errTableEmptyName
 	}
-
-	if len(name) > 0 && name[0] == '@' {
+	if name[0] == '@' {
 		return errTableName
 	}
-
 	tableName := getDefTableName(sc, name)
 	if model.IsTable(tableName) {
 		return fmt.Errorf(eTableExists, name)
 	}
 
 	var cols []interface{}
-	if err = json.Unmarshal([]byte(columns), &cols); err != nil {
-		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling columns to JSON", columns)
+	if err = unmarshalJSON([]byte(columns), &cols, "columns from json"); err != nil {
+		return err
 	}
 
 	colsSQL := ""
@@ -459,10 +455,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		var data map[string]interface{}
 		switch v := icol.(type) {
 		case string:
-			err = json.Unmarshal([]byte(v), &data)
-			if err != nil {
-				logErrorValue(err, consts.JSONUnmarshallError,
-					"unmarshalling columns permissions from json", v)
+			if err = unmarshalJSON([]byte(v), &data, `columns permissions from json`); err != nil {
 				return err
 			}
 		default:
@@ -485,17 +478,17 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		case string:
 			condition = v
 		case map[string]interface{}:
-			out, err := json.Marshal(v)
+			out, err := marshalJSON(v, `conditions to json`)
 			if err != nil {
-				return logError(err, consts.JSONMarshallError, "marshalling conditions to json")
+				return err
 			}
 			condition = string(out)
 		}
 		colperm[colname] = condition
 	}
-	colout, err := json.Marshal(colperm)
+	colout, err := marshalJSON(colperm, `columns to json`)
 	if err != nil {
-		return logError(err, consts.JSONMarshallError, "marshalling columns to json")
+		return err
 	}
 	err = model.CreateTable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
 	if err != nil {
@@ -503,13 +496,12 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	}
 
 	var perm permTable
-	if err = json.Unmarshal([]byte(permissions), &perm); err != nil {
-		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling permissions to JSON",
-			permissions)
+	if err = unmarshalJSON([]byte(permissions), &perm, `permissions to json`); err != nil {
+		return err
 	}
-	permout, err := json.Marshal(perm)
+	permout, err := marshalJSON(perm, `permissions to JSON`)
 	if err != nil {
-		return logError(err, consts.JSONMarshallError, "marshalling permissions to JSON")
+		return err
 	}
 	prefix, name := PrefixName(tableName)
 	id, err := model.GetNextID(sc.DbTransaction, getDefTableName(sc, `tables`))
@@ -836,14 +828,12 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 		return err
 	}
 	var perm permTable
-	err := json.Unmarshal([]byte(permissions), &perm)
-	if err != nil {
-		return logErrorValue(err, consts.JSONUnmarshallError,
-			"unmarshalling table permissions to json", permissions)
+	if err := unmarshalJSON([]byte(permissions), &perm, `table permissions to json`); err != nil {
+		return err
 	}
-	permout, err := json.Marshal(perm)
+	permout, err := marshalJSON(perm, `permission list to json`)
 	if err != nil {
-		return logError(err, consts.JSONMarshallError, "marshalling permission list to json")
+		return err
 	}
 	_, _, err = sc.update([]string{`permissions`}, []interface{}{string(permout)},
 		getDefTableName(sc, `tables`), []string{`name`}, []string{strings.ToLower(name)})
@@ -880,10 +870,8 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	}
 
 	var perm permTable
-	err = json.Unmarshal([]byte(permissions), &perm)
-	if err != nil {
-		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling permissions from json",
-			permissions)
+	if err = unmarshalJSON([]byte(permissions), &perm, "permissions from json"); err != nil {
+		return err
 	}
 	v := reflect.ValueOf(perm)
 	for i := 0; i < v.NumField(); i++ {
@@ -907,10 +895,8 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	}
 
 	var cols []interface{}
-	err = json.Unmarshal([]byte(columns), &cols)
-	if err != nil {
-		return logErrorValue(err, consts.JSONUnmarshallError,
-			"unmarshalling columns permissions from json", columns)
+	if err = unmarshalJSON([]byte(columns), &cols, "columns permissions from json"); err != nil {
+		return err
 	}
 	if len(cols) == 0 {
 		return logErrorShort(errUndefColumns, consts.EmptyObject)
@@ -922,11 +908,8 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		var data map[string]interface{}
 		switch v := icol.(type) {
 		case string:
-			err = json.Unmarshal([]byte(v), &data)
-			if err != nil {
-				logErrorValue(err, consts.JSONUnmarshallError,
-					"unmarshalling columns permissions from json", v)
-				return
+			if err = unmarshalJSON([]byte(v), &data, `columns permissions from json`); err != nil {
+				return err
 			}
 		default:
 			data = v.(map[string]interface{})
@@ -942,9 +925,9 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		case string:
 			condition = v
 		case map[string]interface{}:
-			out, err := json.Marshal(v)
+			out, err := marshalJSON(v, `conditions to json`)
 			if err != nil {
-				return logError(err, consts.JSONMarshallError, "marshalling conditions to json")
+				return err
 			}
 			condition = string(out)
 		}
@@ -1055,15 +1038,10 @@ func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bo
 			"record not found", tblname)
 	}
 
-	if err := Eval(sc, condition); err != nil {
-		if err == errAccessDenied && conditionOnly {
-			return AllowChangeCondition(sc, tblname)
-		}
-
-		return err
+	if err = Eval(sc, condition); err != nil && err == errAccessDenied && conditionOnly {
+		return AllowChangeCondition(sc, tblname)
 	}
-
-	return nil
+	return err
 }
 
 // CreateColumn is creating column
@@ -1095,14 +1073,13 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		return err
 	}
 	var perm map[string]string
-	err = json.Unmarshal([]byte(temp.Columns), &perm)
-	if err != nil {
-		return logErrorDB(err, "selecting columns from the table")
+	if err = unmarshalJSON([]byte(temp.Columns), &perm, `columns from the table`); err != nil {
+		return err
 	}
 	perm[name] = permissions
-	permout, err := json.Marshal(perm)
+	permout, err := marshalJSON(perm, `permissions to json`)
 	if err != nil {
-		return logError(err, consts.JSONMarshallError, "marshalling permissions to json")
+		return err
 	}
 	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
 		tables, []string{`name`}, []string{tableName})
@@ -1164,15 +1141,13 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		return logErrorDB(err, "querying columns by table name")
 	}
 	var perm map[string]string
-	err = json.Unmarshal([]byte(temp.Columns), &perm)
-	if err != nil {
-		return logErrorValue(err, consts.JSONUnmarshallError,
-			"unmarshalling columns permissions from json", temp.Columns)
+	if err = unmarshalJSON([]byte(temp.Columns), &perm, `columns from json`); err != nil {
+		return err
 	}
 	perm[name] = permissions
-	permout, err := json.Marshal(perm)
+	permout, err := marshalJSON(perm, `column permissions to json`)
 	if err != nil {
-		return logError(err, consts.JSONMarshallError, "marshalling column permissions to json")
+		return err
 	}
 	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
 		tables, []string{`name`}, []string{tableName})
@@ -1216,9 +1191,8 @@ func HMac(key, data string, raw_output bool) (ret string, err error) {
 	}
 	if raw_output {
 		return string(hash), nil
-	} else {
-		return hex.EncodeToString(hash), nil
 	}
+	return hex.EncodeToString(hash), nil
 }
 
 // GetMapKeys returns the array of keys of the map
@@ -1247,9 +1221,9 @@ func SortedKeys(m map[string]interface{}) []interface{} {
 }
 
 // Date formats timestamp to specified date format
-func Date(time_format string, timestamp int64) string {
+func Date(timeFormat string, timestamp int64) string {
 	t := time.Unix(timestamp, 0)
-	return t.Format(time_format)
+	return t.Format(timeFormat)
 }
 
 func httpRequest(req *http.Request, headers map[string]interface{}) (string, error) {
@@ -1335,11 +1309,7 @@ func UpdateCron(sc *SmartContract, id int64) error {
 			Contract: cronTask.Contract,
 		},
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
@@ -1424,9 +1394,9 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 	}
 
 	if updFullNodes {
-		data, err := json.Marshal(fullNodes)
+		data, err := marshalJSON(fullNodes, `full nodes`)
 		if err != nil {
-			return logError(err, consts.JSONMarshallError, "marshalling full nodes")
+			return err
 		}
 
 		_, err = UpdateSysParam(smartContract, syspar.FullNodes, string(data), "")

@@ -18,7 +18,6 @@ package smart
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -616,9 +615,7 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 
 func getPermColumns(input string) (perm permColumn, err error) {
 	if strings.HasPrefix(input, `{`) {
-		if err = json.Unmarshal([]byte(input), &perm); err != nil {
-			logErrorValue(err, consts.JSONUnmarshallError, "on perm columns", input)
-		}
+		err = unmarshalJSON([]byte(input), &perm, `on perm columns`)
 	} else {
 		perm.Update = input
 	}
@@ -657,9 +654,7 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 	// Every item of checkColumns has 'ok' boolean value. If it equals false then the key-column
 	// doesn't have read/update access rights.
 	checkColumns := make(map[string]colAccess)
-	err = json.Unmarshal([]byte(tables.Columns), &cols)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("getting table columns")
+	if err = unmarshalJSON([]byte(tables.Columns), &cols, `getting table columns`); err != nil {
 		return err
 	}
 	for _, col := range *columns {

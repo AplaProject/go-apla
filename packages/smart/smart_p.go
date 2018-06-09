@@ -162,28 +162,25 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		ival := converter.StrToInt64(value)
 	check:
 		switch name {
-		case `gap_between_blocks`:
+		case syspar.GapsBetweenBlocks:
 			ok = ival > 0 && ival < 86400
-		case `rb_blocks_1`, `number_of_nodes`:
+		case syspar.RbBlocks1, syspar.NumberNodes:
 			ok = ival > 0 && ival < 1000
-		case `ecosystem_price`, `contract_price`, `column_price`, `table_price`, `menu_price`,
-			`page_price`, `commission_size`:
+		case syspar.CommissionSize:
 			ok = ival >= 0
-		case `max_block_size`, `max_tx_size`, `max_tx_count`, `max_columns`, `max_indexes`,
-			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`:
+		case syspar.MaxBlockSize, syspar.MaxTxSize, syspar.MaxTxCount, syspar.MaxColumns,
+			syspar.MaxIndexes, syspar.MaxBlockUserTx, syspar.MaxTxFuel, syspar.MaxBlockFuel:
 			ok = ival > 0
-		case `fuel_rate`, `commission_wallet`:
-			err := json.Unmarshal([]byte(value), &list)
-			if err != nil {
-				return 0, logErrorValue(err, consts.JSONUnmarshallError,
-					"unmarshalling system param", value)
+		case syspar.FuelRate, syspar.CommissionWallet:
+			if err := unmarshalJSON([]byte(value), &list, `system param`); err != nil {
+				return 0, err
 			}
 			for _, item := range list {
 				switch name {
-				case `fuel_rate`, `commission_wallet`:
+				case syspar.FuelRate, syspar.CommissionWallet:
 					if len(item) != 2 || converter.StrToInt64(item[0]) <= 0 ||
-						(name == `fuel_rate` && converter.StrToInt64(item[1]) <= 0) ||
-						(name == `commission_wallet` && converter.StrToInt64(item[1]) == 0) {
+						(name == syspar.FuelRate && converter.StrToInt64(item[1]) <= 0) ||
+						(name == syspar.CommissionWallet && converter.StrToInt64(item[1]) == 0) {
 						break check
 					}
 				}
@@ -196,7 +193,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			}
 			checked = len(fnodes) > 0
 		default:
-			if strings.HasPrefix(name, `extend_cost_`) {
+			if strings.HasPrefix(name, `extend_cost_`) || strings.HasSuffix(name, `_price`) {
 				ok = ival >= 0
 				break
 			}
@@ -660,9 +657,8 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	}
 
 	var sign TxSignJSON
-	err = json.Unmarshal([]byte(sn.Value), &sign)
-	if err != nil {
-		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling sign", sn.Value)
+	if err = unmarshalJSON([]byte(sn.Value), &sign, `unmarshalling sign`); err != nil {
+		return err
 	}
 	wallet := (*i)[`key_id`].(int64)
 	forsign := fmt.Sprintf(`%d,%d`, uint64((*i)[`time`].(int64)), uint64(wallet))
@@ -736,10 +732,8 @@ func RollbackEditContract(sc *SmartContract) error {
 		return nil
 	}
 	var fields map[string]string
-	err = json.Unmarshal([]byte(rollbackTx.Data), &fields)
-	if err != nil {
-		return logErrorValue(err, consts.JSONUnmarshallError, "unmarshalling contract values",
-			rollbackTx.Data)
+	if err = unmarshalJSON([]byte(rollbackTx.Data), &fields, `contract values`); err != nil {
+		return err
 	}
 	if len(fields["value"]) > 0 {
 		var owner *script.OwnerInfo
@@ -776,13 +770,9 @@ func RollbackEditContract(sc *SmartContract) error {
 }
 
 // JSONDecode converts json string to object
-func JSONDecode(input string) (interface{}, error) {
-	var ret interface{}
-	err := json.Unmarshal([]byte(input), &ret)
-	if err != nil {
-		return nil, logError(err, consts.JSONUnmarshallError, "unmarshalling json")
-	}
-	return ret, nil
+func JSONDecode(input string) (ret interface{}, err error) {
+	err = unmarshalJSON([]byte(input), &ret, "unmarshalling json")
+	return
 }
 
 // JSONEncode converts object to json string
@@ -796,9 +786,9 @@ func JSONEncode(input interface{}) (string, error) {
 		return "", logErrorfShort(eTypeJSON, input, consts.TypeError)
 	}
 
-	b, err := json.Marshal(input)
+	b, err := marshalJSON(input, `marshalling json`)
 	if err != nil {
-		return "", logError(err, consts.JSONMarshallError, "marshalling json")
+		return "", err
 	}
 	return string(b), nil
 }

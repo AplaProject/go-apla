@@ -17,6 +17,7 @@
 package smart
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -51,6 +52,21 @@ func logErrorValue(err error, errType string, comment, value string) error {
 
 func logErrorDB(err error, comment string) error {
 	return logError(err, consts.DBError, comment)
+}
+
+func unmarshalJSON(input []byte, v interface{}, comment string) (err error) {
+	if err = json.Unmarshal(input, v); err != nil {
+		return logErrorValue(err, consts.JSONUnmarshallError, comment, string(input))
+	}
+	return nil
+}
+
+func marshalJSON(v interface{}, comment string) (out []byte, err error) {
+	out, err = json.Marshal(v)
+	if err != nil {
+		logError(err, consts.JSONMarshallError, comment)
+	}
+	return
 }
 
 func validateAccess(funcName string, sc *SmartContract, contracts ...string) error {

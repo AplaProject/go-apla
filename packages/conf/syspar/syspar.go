@@ -66,6 +66,8 @@ const (
 	SizeFuel = `size_fuel`
 	// CommissionWallet is the address for commissions
 	CommissionWallet = `commission_wallet`
+	// CommissionSize is the value of the commission
+	CommissionSize = `commission_size`
 	// RbBlocks1 rollback from queue_bocks
 	RbBlocks1 = `rb_blocks_1`
 	// BlockReward value of reward, which is chrged on block generation
