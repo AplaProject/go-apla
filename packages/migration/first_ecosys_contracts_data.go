@@ -199,100 +199,110 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('10', 'Export', 'contract Export {
+    data {}
 
-    func EscapeSpecialSymbols(s string) string {
+    func escapeSpecials(s string) string {
         s = Replace(s, ` + "`" + `\` + "`" + `, ` + "`" + `\\` + "`" + `)
         s = Replace(s, ` + "`" + `	` + "`" + `, ` + "`" + `\t` + "`" + `)
         s = Replace(s, "\n", ` + "`" + `\n` + "`" + `)
         s = Replace(s, "\r", ` + "`" + `\r` + "`" + `)
         s = Replace(s, ` + "`" + `"` + "`" + `, ` + "`" + `\"` + "`" + `)
+        if s == "0"{
+            s = ""
+        }
         return s
     }
 
     func AssignAll(app_name string, resources string) string {
-        return Sprintf(` + "`" + `{"name":"%%v", "data": [%%v]}` + "`" + `, app_name, resources)
+        return Sprintf(` + "`" + `{
+            "name": "%%v",
+            "data": [
+                %%v
+            ]
+        }` + "`" + `, app_name, resources)
     }
 
-    func SerializeResource(resource map, resource_type string) string {
+    func serializeItem(item map, type string) string {
         var s string
-        s = Sprintf(` + "`" + `{"Type":"%%v", "Name": "%%v", "Value": "%%v", "Conditions": "%%v", "Menu": "%%v", "Title": "%%v", "Trans": "%%v", "Columns": "%%v"}` + "`" + `, 
-            resource_type, 
-            EscapeSpecialSymbols(Str(resource["name"])), 
-            EscapeSpecialSymbols(Str(resource["value"])), 
-            EscapeSpecialSymbols(Str(resource["conditions"])),
-            EscapeSpecialSymbols(Str(resource["menu"])), 
-            EscapeSpecialSymbols(Str(resource["title"])),
-            EscapeSpecialSymbols(Str(resource["res"])), 
-            EscapeSpecialSymbols(Str(resource["columns"])))
+        s = Sprintf(
+            ` + "`" + `{
+                "Type": "%%v",
+                "Name": "%%v",
+                "Value": "%%v",
+                "Conditions": "%%v",
+                "Menu": "%%v",
+                "Title": "%%v",
+                "Trans": "%%v",
+                "Columns": "%%v",
+                "Permissions": "%%v"
+            }` + "`" + `, type, escapeSpecials(Str(item["name"])), escapeSpecials(Str(item["value"])), escapeSpecials(Str(item["conditions"])), escapeSpecials(Str(item["menu"])), escapeSpecials(Str(item["title"])), escapeSpecials(Str(item["res"])), escapeSpecials(Str(item["columns"])), escapeSpecials(Str(item["permissions"]))
+        )
         return s
     }
 
-    func AddTypeForColumns(table_name string, table_columns string) string {
-        var result string
-
-        table_columns = Replace(table_columns, "{", "")
-        table_columns = Replace(table_columns, "}", "")
-        table_columns = Replace(table_columns, " ", "")
-
-        var columns_arr array
-        columns_arr = Split(table_columns, ",")
-
+    func getTypeForColumns(table_name string, columnsJSON string) string {
+        var colsMap map, result columns array
+        colsMap = JSONDecode(columnsJSON)
+        columns = GetMapKeys(colsMap)
         var i int
-        while (i < Len(columns_arr)){
-            var s_split string
-            s_split = Str(columns_arr[i])
-
-            if Size(s_split) > 0 {
-                var clm array
-                clm = Split(s_split, ":")
-
-                var s string
-
-                if Len(clm) == 2 {
-                    var col_name string
-                    var col_cond string
-                    var col_type string
-
-                    col_name = Replace(Str(clm[0]), ` + "`" + `"` + "`" + `, "")
-                    col_cond = Str(clm[1])
-                    col_type = GetColumnType(table_name, col_name)
-
-                    s = Sprintf(` + "`" + `{"name":"%%v","type":"%%v","conditions":"%%v"}` + "`" + `, col_name, col_type, col_cond)
-                }
-
-                if Size(result) > 0 {
-                    result = result + ","
-                }
-                result = result + s
+        while i < Len(columns){
+            if Size(columns[i]) > 0 {
+                var col map
+                col["name"] = columns[i]
+                col["conditions"] = colsMap[col["name"]]
+                col["type"] = GetColumnType(table_name, col["name"])
+                result = Append(result, col)
             }
             i = i + 1
         }
+        return JSONEncode(result)
+    }
 
-        result = Sprintf("[%%v]", result)
+    func exportTable(type string, result array) array {
+        var items array, limit offset int
+        limit = 250
+        while true{
+            var rows array, where string
+            if type == "menu" {
+                if Len($menus_names) > 0 {
+                    where = Sprintf("name in (%%v)", Join($menus_names, ","))
+                }
+            }else{
+                where = Sprintf("app_id=%%v", $ApplicationID)
+            }
+            if where {
+                rows = DBFind(type).Limit(limit).Offset(offset).Where(where)
+            }
+            if Len(rows) > 0{
+                var i int
+                while i<Len(rows){
+                    items = Append(items, rows[i])
+                    i=i+1
+                }
+            }else{
+                break
+            }
+            offset = offset+limit
+        }
+        var i int, item map
+        while i < Len(items) {
+            item = items[i]
+            if type == "tables" {
+                var table map
+                table["name"] = item["name"]
+                table["permissions"] = item["permissions"]
+                table["conditions"] = item["conditions"]
+                table["columns"] = getTypeForColumns(item["name"], item["columns"])
+                item = table
+            }
+            result = Append(result, serializeItem(item, type))
+            if type == "pages" {
+                $menus_names = Append($menus_names, Sprintf("''%%v''", item["menu"]))
+            }
+            i = i + 1
+        }
         return result
     }
-
-    func ExportTableRecords(records array, type string, entities_array array) array {
-        var i int, cur_resource map
-        i = 0
-        while i < Len(records) {
-            cur_resource = records[i]
-            if type == "tables" {
-                var table_name, table_columns string, table_map map
-                table_map["name"] = Str(cur_resource["name"])
-                table_map["columns"] = Str(cur_resource["columns"])
-                table_map["columns"] = AddTypeForColumns(table_map["name"], table_map["columns"])
-            }
-            entities_array = Append(entities_array, SerializeResource(cur_resource, type))
-            if type == "pages" {
-                $menus_names = Append($menus_names, Sprintf("%%v", cur_resource["menu"]))
-            }
-            i = i + 1
-        }
-        return entities_array
-    }
-
-    data {}
 
     conditions {
         var buffer_map map
@@ -302,32 +312,23 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
         $ApplicationID = Int(buffer_map["value.app_id"])
         $ApplicationName = Str(buffer_map["value.app_name"])
+
+        var menus_names array
+        $menus_names = menus_names
     }
 
     action {
-        var menus_names_arr array 
-        $menus_names = menus_names_arr
+        var exportJSON string, items array
+        items = exportTable("pages", items)
+        items = exportTable("contracts", items)
+        items = exportTable("blocks", items)
+        items = exportTable("languages", items)
+        items = exportTable("app_params", items)
+        items = exportTable("tables", items)
+        items = exportTable("menu", items)
 
-        var full_result string
-        var entities_array array
-        var cur_resource map
-
-        entities_array = ExportTableRecords(DBFind("pages").Limit(250).Where("app_id=?", $ApplicationID), "pages", entities_array)
-        entities_array = ExportTableRecords(DBFind("contracts").Limit(250).Where("app_id=?", $ApplicationID), "contracts", entities_array)
-        entities_array = ExportTableRecords(DBFind("blocks").Limit(250).Where("app_id=?", $ApplicationID), "blocks", entities_array)
-        entities_array = ExportTableRecords(DBFind("languages").Limit(250).Where("app_id=?", $ApplicationID), "languages", entities_array)
-        entities_array = ExportTableRecords(DBFind("app_params").Limit(250).Where("app_id=?", $ApplicationID), "params", entities_array)
-        entities_array = ExportTableRecords(DBFind("tables").Limit(250).Where("app_id=?", $ApplicationID), "tables", entities_array)
-        if Len($menus_names) > 0 {
-            var where_for_menu string
-            where_for_menu = Sprintf("name in (%%v)", Join($menus_names, ","))
-            entities_array = ExportTableRecords(DBFind("menu").Limit(250).Where(where_for_menu), "menu", entities_array)
-        }
-
-        //=====================================================================================================
-
-        full_result = AssignAll($ApplicationName, Join(entities_array, ",\r\n"))
-        UploadBinary("Name,Data,ApplicationId,DataMimeType", "export", full_result, 1, "application/json")
+        exportJSON = AssignAll($ApplicationName, Join(items, ",\r\n"))
+        UploadBinary("Name,Data,ApplicationId,DataMimeType", "export", exportJSON, 1, "application/json")
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('11', 'EditTable', 'contract EditTable {
@@ -471,7 +472,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
                 if tmp["Type"] == "contracts" {
                     contracts = Append(contracts, tmp)
                 }else{
-                    part[l] = tmp
+                    part = Append(part, tmp)
                 }
                 l=l+1
             }
@@ -717,7 +718,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
 
         if DBFind("pages").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf( "Block %%s already exists", $Name)
+            warning Sprintf( "Page %%s already exists", $Name)
         }
 
         $ValidateCount = preparePageValidateCount($ValidateCount)
@@ -774,9 +775,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
         $ApplicationId = 0
         var app_map map
-        var ii string
-        ii = "import_info"
-        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key= and member_id=$", ii, $key_id).Row()
+        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key=''import_info'' and member_id=$", $key_id).Row()
         if app_map{
             var app_id int
             app_id = DBFind("applications").Columns("id").Where("name=$", Str(app_map["value.app_name"])).One("id")
@@ -810,42 +809,44 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         while i<Len(dataImport){
             var item, cdata map
             cdata = dataImport[i]
-            cdata["ApplicationId"] = $ApplicationId
-            $Type = cdata["Type"]
-            $Name = cdata["Name"]
+            if cdata {
+                cdata["ApplicationId"] = $ApplicationId
+                $Type = cdata["Type"]
+                $Name = cdata["Name"]
 
-            Println(Sprintf("import %%v: %%v", $Type, cdata["Name"]))
+                // Println(Sprintf("import %%v: %%v", $Type, cdata["Name"]))
 
-            item = DBFind($Type).Where("name=?", $Name).Row()
-            var contractName string
-            if item {
-                contractName = editors[$Type]
-                cdata["Id"] = Int(item["id"])
-                if $Type == "menu"{
-                    var menu menuItem string
-                    menu = Replace(item["value"], " ", "")
-                    menu = Replace(menu, "\n", "")
-                    menu = Replace(menu, "\r", "")
-                    menuItem = Replace(cdata["Value"], " ", "")
-                    menuItem = Replace(menuItem, "\n", "")
-                    menuItem = Replace(menuItem, "\r", "")
-                    if Contains(menu, menuItem) {
-                        // ignore repeated
-                        contractName = ""
-                    }else{
-                        cdata["Value"] = item["value"] + "\n" + cdata["Value"]
+                item = DBFind($Type).Where("name=?", $Name).Row()
+                var contractName string
+                if item {
+                    contractName = editors[$Type]
+                    cdata["Id"] = Int(item["id"])
+                    if $Type == "menu"{
+                        var menu menuItem string
+                        menu = Replace(item["value"], " ", "")
+                        menu = Replace(menu, "\n", "")
+                        menu = Replace(menu, "\r", "")
+                        menuItem = Replace(cdata["Value"], " ", "")
+                        menuItem = Replace(menuItem, "\n", "")
+                        menuItem = Replace(menuItem, "\r", "")
+                        if Contains(menu, menuItem) {
+                            // ignore repeated
+                            contractName = ""
+                        }else{
+                            cdata["Value"] = item["value"] + "\n" + cdata["Value"]
+                        }
                     }
+                } else {
+                    contractName = creators[$Type]
                 }
-            } else {
-                contractName = creators[$Type]
-            }
 
-            if contractName != ""{
-                CallContract(contractName, cdata)
+                if contractName != ""{
+                    CallContract(contractName, cdata)
+                }
             }
             i=i+1
         }
-        Println(Sprintf("> time: %%v", $time))
+        // Println(Sprintf("> time: %%v", $time))
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('23', 'ExportNewApp', 'contract ExportNewApp {
@@ -1284,15 +1285,26 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('36','UpdateSysParam','contract UpdateSysParam {
-	data {
-		Name  string
-		Value string
-		Conditions string "optional"
-	}
-	action {
-		DBUpdateSysParam($Name, $Value, $Conditions )
-	}
-}', %[1]d, 'ContractConditions("MainCondition")', 1),
+    data {
+        Name string
+        Value string
+        Conditions string "optional"
+    }
+
+    conditions {
+        if GetContractByName($Name){
+            var params map
+            params["Value"] = $Value
+            CallContract($Name, params)
+        } else {
+            warning "System parameter not found"
+        }
+    }
+
+    action {
+        DBUpdateSysParam($Name, $Value, $Conditions)
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
 ('37', 'NewDelayedContract','contract NewDelayedContract {
 	data {
 		Contract string
@@ -1674,5 +1686,913 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         params["Permissions"] = JSONEncode(Permissions)
         CallContract("NewTable", params)
     }
-}', %[1]d, 'ContractConditions("MainCondition")', 1);
+}', %[1]d, 'ContractConditions("MainCondition")', 1),
+('51', 'blockchain_url', 'contract blockchain_url {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if !(HasPrefix($Value, "http://") || HasPrefix($Value, "https://")) {
+        warning "URL ivalid (not found protocol)"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('52', 'block_reward', 'contract block_reward {
+      data {
+          Value string
+      }
+  
+      conditions {
+          if Size($Value) == 0 {
+              warning "Value was not received"
+          }
+          if Int($Value) < 3 || Int($Value) > 9999 {
+              warning "Value must be between 3 and 9999"
+          }
+      }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('53', 'column_price', 'contract column_price {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('54', 'commission_size', 'contract commission_size {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('55', 'commission_wallet', 'contract commission_wallet {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('56', 'contract_price', 'contract contract_price {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('57', 'default_ecosystem_contract', 'contract default_ecosystem_contract {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('58', 'default_ecosystem_menu', 'contract default_ecosystem_menu {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+    }
+  }', %[1]d, 'ContractConditions("MainCondition")', 2),
+('59', 'default_ecosystem_page', 'contract default_ecosystem_page {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('60', 'ecosystem_price', 'contract ecosystem_price {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('61', 'extend_cost_activate', 'contract extend_cost_activate {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('62', 'extend_cost_address_to_id', 'contract extend_cost_address_to_id {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('63', 'extend_cost_column_condition', 'contract extend_cost_column_condition {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('64', 'extend_cost_compile_contract', 'contract extend_cost_compile_contract {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('65', 'extend_cost_contains', 'contract extend_cost_contains {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('66', 'extend_cost_contracts_list', 'contract extend_cost_contracts_list {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('67', 'extend_cost_create_column', 'contract extend_cost_create_column {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('68', 'extend_cost_create_ecosystem', 'contract extend_cost_create_ecosystem {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('69', 'extend_cost_create_table', 'contract extend_cost_create_table {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('70', 'extend_cost_deactivate', 'contract extend_cost_deactivate {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('71', 'extend_cost_ecosys_param', 'contract extend_cost_ecosys_param {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('72', 'extend_cost_eval_condition', 'contract extend_cost_eval_condition {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('73', 'extend_cost_eval', 'contract extend_cost_eval {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('74', 'extend_cost_flush_contract', 'contract extend_cost_flush_contract {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('75', 'extend_cost_has_prefix', 'contract extend_cost_has_prefix {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('76', 'extend_cost_id_to_address', 'contract extend_cost_id_to_address {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('77', 'extend_cost_is_object', 'contract extend_cost_is_object {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('78', 'extend_cost_join', 'contract extend_cost_join {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('79', 'extend_cost_json_to_map', 'contract extend_cost_json_to_map {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('80', 'extend_cost_len', 'contract extend_cost_len {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('81', 'extend_cost_new_state', 'contract extend_cost_new_state {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('82', 'extend_cost_perm_column', 'contract extend_cost_perm_column {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('83', 'extend_cost_perm_table', 'contract extend_cost_perm_table {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('84', 'extend_cost_pub_to_id', 'contract extend_cost_pub_to_id {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('85', 'extend_cost_replace', 'contract extend_cost_replace {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('86', 'extend_cost_sha256', 'contract extend_cost_sha256 {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('87', 'extend_cost_size', 'contract extend_cost_size {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('88', 'extend_cost_substr', 'contract extend_cost_substr {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('89', 'extend_cost_sys_fuel', 'contract extend_cost_sys_fuel {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('90', 'extend_cost_sys_param_int', 'contract extend_cost_sys_param_int {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('91', 'extend_cost_sys_param_string', 'contract extend_cost_sys_param_string {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('92', 'extend_cost_table_conditions', 'contract extend_cost_table_conditions {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('93', 'extend_cost_update_lang', 'contract extend_cost_update_lang {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('94', 'extend_cost_validate_condition', 'contract extend_cost_validate_condition {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('95', 'fuel_rate', 'contract fuel_rate {
+    data {
+      Value string
+    }
+  
+    conditions {
+      $Value = TrimSpace($Value)
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      // [["x1","number"]]
+      if !(HasPrefix($Value, "[") && "]" == Substr($Value, Size($Value)-1, 1)){
+        warning "Invalid value"
+      }
+      var rates newRate array
+      rates = JSONDecode($Value)
+      if Len(rates) > 1{
+        warning "Invalid size array"
+      }
+      newRate = rates[0]
+      if Len(newRate) != 2{
+        warning "Invalid size new rate array"
+      }
+      if newRate[0] != 1 {
+        warning "Invalid ecosystem number"
+      }
+      if Int(newRate[1]) <= 0 {
+        warning "Invalid fuel value"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('96', 'full_nodes', 'contract full_nodes {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+  
+      var full_nodes_arr array
+      full_nodes_arr = JSONDecode($Value)
+  
+      var len_arr int
+      len_arr = Len(full_nodes_arr)
+  
+      if len_arr == 0 {
+          warning "Wrong array structure"
+      }
+  
+      var i int
+      while(i < len_arr){
+          var node_map map 
+          node_map = full_nodes_arr[i]
+  
+          var public_key string
+          var tcp_address string
+          var api_address string
+          var key_id string
+  
+          public_key = node_map["public_key"]
+          tcp_address = node_map["tcp_address"]
+          api_address = node_map["api_address"]
+          key_id = node_map["key_id"]
+  
+          if Size(public_key) == 0 {
+              warning "Public key was not received"
+          }
+          if Size(tcp_address) == 0 {
+              warning "TCP address was not received"
+          }
+          if Size(api_address) == 0 {
+              warning "API address was not received"
+          }
+          if Size(key_id) == 0 {
+              warning "Key ID was not received"
+          }
+  
+          i = i + 1
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('97', 'gap_between_blocks', 'contract gap_between_blocks {
+      data {
+          Value string
+      }
+  
+      conditions {
+          if Size($Value) == 0 {
+              warning "Value was not received"
+          }
+          if Int($Value) <= 0 || Int($Value) >= 86400 {
+              warning "Value must be between 1 and 86399"
+          }
+      }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('98', 'max_block_generation_time', 'contract max_block_generation_time {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('99', 'max_block_size', 'contract max_block_size {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('100', 'max_block_user_tx', 'contract max_block_user_tx {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('101', 'max_columns', 'contract max_columns {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('102', 'max_fuel_block', 'contract max_fuel_block {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('103', 'max_fuel_tx', 'contract max_fuel_tx {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('104', 'max_indexes', 'contract max_indexes {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('105', 'max_tx_count', 'contract max_tx_count {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('106', 'max_tx_size', 'contract max_tx_size {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('107', 'menu_price', 'contract menu_price {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('108', 'new_version_url', 'contract new_version_url {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('109', 'number_of_nodes', 'contract number_of_nodes {
+      data {
+          Value string
+      }
+  
+      conditions {
+          if Size($Value) == 0 {
+              warning "Value was not received"
+          }
+          if Int($Value) < 1 || Int($Value) > 999 {
+              warning "Value must be between 1 and 999"
+          }
+      }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('110', 'page_price', 'contract page_price {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('111', 'rb_blocks_1', 'contract rb_blocks_1 {
+      data {
+          Value string
+      }
+  
+      conditions {
+          if Size($Value) == 0 {
+              warning "Value was not received"
+          }
+          if Int($Value) < 1 || Int($Value) > 999 {
+              warning "Value must be between 1 and 999"
+          }
+      }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('112', 'table_price', 'contract table_price {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2);
 `
