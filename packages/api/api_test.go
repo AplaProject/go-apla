@@ -17,14 +17,12 @@
 package api
 
 import (
-	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -65,17 +63,13 @@ func PrivateToPublicHex(hexkey string) (string, error) {
 	return hex.EncodeToString(pubKey), nil
 }
 
-func sendRawRequest(rtype, url string, form *url.Values) ([]byte, error) {
+func sendRawRequest(reqType, url, contentType string, body io.Reader) ([]byte, error) {
 	client := &http.Client{}
-	var ioform io.Reader
-	if form != nil {
-		ioform = strings.NewReader(form.Encode())
-	}
-	req, err := http.NewRequest(rtype, apiAddress+consts.ApiPath+url, ioform)
+	req, err := http.NewRequest(reqType, apiAddress+consts.ApiPath+url, body)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Type", contentType)
 
 	if len(gAuth) > 0 {
 		req.Header.Set("Authorization", jwtPrefix+gAuth)
@@ -98,8 +92,21 @@ func sendRawRequest(rtype, url string, form *url.Values) ([]byte, error) {
 	return data, nil
 }
 
-func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
-	data, err := sendRawRequest(rtype, url, form)
+func sendRawForm(reqType, url string, form *url.Values) ([]byte, error) {
+	var body io.Reader
+	if form != nil {
+		body = strings.NewReader(form.Encode())
+	}
+	return sendRawRequest(reqType, url, "application/x-www-form-urlencoded", body)
+}
+
+func sendRequest(reqType, url string, form *url.Values, v interface{}) error {
+	var body io.Reader
+	if form != nil {
+		body = strings.NewReader(form.Encode())
+	}
+
+	data, err := sendRawRequest(reqType, url, "application/x-www-form-urlencoded", body)
 	if err != nil {
 		return err
 	}
@@ -224,38 +231,39 @@ func randName(prefix string) string {
 }
 
 func postTxResult(txname string, form *url.Values) (id int64, msg string, err error) {
-	ret := make(map[string]interface{})
-	err = sendPost(`prepare/`+txname, form, &ret)
+	tx := newTxForm()
+
+	params := make(map[string]string)
+	for k, v := range *form {
+		params[k] = v[0]
+	}
+	tx.Add(txname, params, nil)
+
+	if len(form.Get("nowait")) > 0 {
+		tx.NoWait()
+	}
+
+	var txRes []txResult
+	txRes, err = tx.Send()
 	if err != nil {
 		return
 	}
 
-	form = &url.Values{}
-	if err = appendSign(ret, form); err != nil {
-		return
-	}
-	requestID := ret["request_id"].(string)
+	// TODO: support vde
+	// if len((*form)[`vde`]) > 0 {
+	// 	if ret[`result`] != nil {
+	// 		msg = fmt.Sprint(ret[`result`])
+	// 		id = converter.StrToInt64(msg)
+	// 	}
+	// 	return
+	// }
 
-	ret = map[string]interface{}{}
-	err = sendPost(`contract/`+requestID, form, &ret)
-	if err != nil {
+	for _, v := range txRes {
+		id = converter.StrToInt64(v.BlockID)
+		msg = v.Result
 		return
 	}
-	if len((*form)[`vde`]) > 0 {
-		if ret[`result`] != nil {
-			msg = fmt.Sprint(ret[`result`])
-			id = converter.StrToInt64(msg)
-		}
-		return
-	}
-	if len((*form)[`nowait`]) > 0 {
-		return
-	}
-	id, err = waitTx(ret[`hash`].(string))
-	if id != 0 && err != nil {
-		msg = err.Error()
-		err = nil
-	}
+
 	return
 }
 
@@ -301,82 +309,17 @@ func TestGetAvatar(t *testing.T) {
 }
 
 func postTxMultipart(txname string, params map[string]string, files map[string][]byte) (id int64, msg string, err error) {
-	ret := make(map[string]interface{})
-	if err = sendMultipart("prepare/"+txname, params, files, &ret); err != nil {
+	tx := newTxForm()
+	tx.Add(txname, params, files)
+
+	var txRes []txResult
+	if txRes, err = tx.Send(); err != nil {
 		return
 	}
 
-	form := url.Values{}
-	if err = appendSign(ret, &form); err != nil {
-		return
+	if len(txRes) > 0 {
+		id = converter.StrToInt64(txRes[0].BlockID)
+		msg = txRes[0].Result
 	}
-	requestID := ret["request_id"].(string)
-
-	ret = make(map[string]interface{})
-	err = sendPost(`contract/`+requestID, &form, &ret)
-	if err != nil {
-		return
-	}
-
-	id, err = waitTx(ret[`hash`].(string))
-	if id != 0 && err != nil {
-		msg = err.Error()
-		err = nil
-	}
-
 	return
-}
-
-func sendMultipart(url string, params map[string]string, files map[string][]byte, v interface{}) error {
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-
-	for key, data := range files {
-		part, err := writer.CreateFormFile(key, key)
-		if err != nil {
-			return err
-		}
-		if _, err := part.Write(data); err != nil {
-			return err
-		}
-	}
-
-	for key, value := range params {
-		if err := writer.WriteField(key, value); err != nil {
-			return err
-		}
-	}
-
-	if err := writer.Close(); err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest("POST", apiAddress+consts.ApiPath+url, body)
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	if len(gAuth) > 0 {
-		req.Header.Set("Authorization", jwtPrefix+gAuth)
-	}
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
-	}
-
-	return json.Unmarshal(data, &v)
 }

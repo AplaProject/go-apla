@@ -112,7 +112,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if account == nil {
 		contract := getContract(r, "NewUser")
-		createTx(contract, hex.EncodeToString(publicKey))
+		contract.CreateTx(hex.EncodeToString(publicKey))
 	} else {
 		publicKey = account.PublicKey
 	}

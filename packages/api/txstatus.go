@@ -25,7 +25,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -98,15 +97,15 @@ func (f *multiTxStatusForm) Hashes() ([]string, error) {
 	return result.Hashes, nil
 }
 
-func txstatusHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
+// func txstatusHandler(w http.ResponseWriter, r *http.Request) {
+// 	params := mux.Vars(r)
 
-	status, ok := getTxStatus(w, r, params[keyHash])
-	if !ok {
-		return
-	}
-	jsonResponse(w, status)
-}
+// 	status, ok := getTxStatus(w, r, params[keyHash])
+// 	if !ok {
+// 		return
+// 	}
+// 	jsonResponse(w, status)
+// }
 
 func txstatusMultiHandler(w http.ResponseWriter, r *http.Request) {
 	form := &multiTxStatusForm{}

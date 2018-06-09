@@ -246,7 +246,7 @@ func TestCutoff(t *testing.T) {
 		t.Errorf("Wrong image tree %s != %s", RawToString(ret.Tree), want)
 	}
 
-	data, err := sendRawRequest("GET", linkLongText, nil)
+	data, err := sendRawForm("GET", linkLongText, nil)
 	if err != nil {
 		t.Error(err)
 		return
@@ -352,7 +352,7 @@ func TestStringToBinary(t *testing.T) {
 	}
 	assert.NoError(t, sendPost(`content`, &form, &ret))
 
-	data, err := sendRawRequest("GET", strings.TrimSpace(ret.Tree[0].Link), nil)
+	data, err := sendRawForm("GET", strings.TrimSpace(ret.Tree[0].Link), nil)
 	assert.NoError(t, err)
 	assert.Equal(t, content, string(data))
 }

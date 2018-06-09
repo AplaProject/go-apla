@@ -14,26 +14,48 @@ import (
 )
 
 type Request struct {
-	ID       string
-	Time     time.Time
-	Contract string
+	ID        string
+	Time      time.Time
+	Contracts []*RequestContract
+}
+
+func (r *Request) NewContract(contract string) *RequestContract {
+	return &RequestContract{
+		contract: contract,
+		values:   make(map[string]string),
+		files:    make(map[string]*FileField),
+	}
+}
+
+func (r *Request) AddContract(contract *RequestContract) {
+	r.Contracts = append(r.Contracts, contract)
+}
+
+func (r *Request) clean() {
+	for _, c := range r.Contracts {
+		c.clean()
+	}
+}
+
+type RequestContract struct {
+	contract string
 	values   map[string]string
 	files    map[string]*FileField
 }
 
-func (r *Request) SetValue(key, value string) {
-	r.values[key] = value
+func (rc *RequestContract) Contract() string {
+	return rc.contract
 }
 
-func (r *Request) GetValue(key string) string {
-	return r.values[key]
+func (rc *RequestContract) SetParam(key, value string) {
+	rc.values[key] = value
 }
 
-func (r *Request) AllValues() map[string]string {
-	return r.values
+func (rc *RequestContract) GetParam(key string) string {
+	return rc.values[key]
 }
 
-func (r *Request) WriteFile(key, mimeType string, reader io.ReadCloser) (*FileHeader, error) {
+func (rc *RequestContract) WriteFile(key, mimeType string, reader io.ReadCloser) (*FileHeader, error) {
 	file, err := ioutil.TempFile(conf.Config.TempDir, "")
 	if err != nil {
 		return nil, err
@@ -50,7 +72,7 @@ func (r *Request) WriteFile(key, mimeType string, reader io.ReadCloser) (*FileHe
 		MimeType: mimeType,
 	}
 
-	r.files[key] = &FileField{
+	rc.files[key] = &FileField{
 		FileHeader: fileHeader,
 		Path:       file.Name(),
 	}
@@ -58,8 +80,8 @@ func (r *Request) WriteFile(key, mimeType string, reader io.ReadCloser) (*FileHe
 	return &fileHeader, nil
 }
 
-func (r *Request) ReadFile(key string) (*File, error) {
-	fileField, ok := r.files[key]
+func (rc *RequestContract) ReadFile(key string) (*File, error) {
+	fileField, ok := rc.files[key]
 	if !ok {
 		return nil, nil
 	}
@@ -76,6 +98,12 @@ func (r *Request) ReadFile(key string) (*File, error) {
 		},
 		Data: data,
 	}, nil
+}
+
+func (rc *RequestContract) clean() {
+	for _, f := range rc.files {
+		os.Remove(f.Path)
+	}
 }
 
 type FileHeader struct {
@@ -106,16 +134,12 @@ func (rb *RequestBuffer) ExpireDuration() time.Duration {
 	return rb.requestExpire
 }
 
-func (rb *RequestBuffer) NewRequest(contract string) *Request {
+func (rb *RequestBuffer) NewRequest() *Request {
 	r := &Request{
-		ID:       utils.UUID(),
-		Time:     time.Now(),
-		Contract: contract,
-		values:   make(map[string]string),
-		files:    make(map[string]*FileField),
+		ID:        utils.UUID(),
+		Time:      time.Now(),
+		Contracts: make([]*RequestContract, 0),
 	}
-
-	rb.AddRequest(r)
 
 	return r
 }
@@ -152,9 +176,7 @@ func (rb *RequestBuffer) clean(t time.Time) {
 
 	for id, r := range rb.requests {
 		if t.Sub(r.Time) > rb.requestExpire {
-			for _, fileField := range r.files {
-				os.Remove(fileField.Path)
-			}
+			r.clean()
 			delete(rb.requests, id)
 		}
 	}

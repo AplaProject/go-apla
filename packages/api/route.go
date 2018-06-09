@@ -35,8 +35,7 @@ func Route(router *mux.Router) {
 	api.Use(NodeStateMiddleware, TokenMiddleware, ClientMiddleware)
 
 	contractHandlers := &contractHandlers{
-		requests:      tx.NewRequestBuffer(consts.TxRequestExpire),
-		multiRequests: tx.NewMultiRequestBuffer(consts.TxRequestExpire),
+		requests: tx.NewRequestBuffer(consts.TxRequestExpire),
 	}
 
 	api.HandleFunc("/data/{table}/{id}/{column}/{hash}", dataHandler).Methods("GET")
@@ -58,9 +57,9 @@ func Route(router *mux.Router) {
 	api.HandleFunc("/systemparams", AuthRequire(systemParamsHandler)).Methods("GET")                  // get(`systemparams`, `?names:string`, authWallet, systemParams)
 	api.HandleFunc("/table/{name}", AuthRequire(tableHandler)).Methods("GET")                         // get(`table/:name`, ``, authWallet, table)
 	api.HandleFunc("/tables", AuthRequire(tablesHandler)).Methods("GET")                              // get(`tables`, `?limit ?offset:int64`, authWallet, tables)
-	api.HandleFunc("/txstatus/{hash}", AuthRequire(txstatusHandler)).Methods("GET")                   // get(`txstatus/:hash`, ``, authWallet, txstatus)
-	api.HandleFunc("/test/{name}", testHandler).Methods("GET")                                        // get(`test/:name`, ``, getTest)
-	api.HandleFunc("/history/{table}/{id}", AuthRequire(historyHandler)).Methods("GET")               // get(`history/:table/:id`, ``, authWallet, getHistory)
+	// api.HandleFunc("/txstatus/{hash}", AuthRequire(txstatusHandler)).Methods("GET")                   // get(`txstatus/:hash`, ``, authWallet, txstatus)
+	api.HandleFunc("/test/{name}", testHandler).Methods("GET")                          // get(`test/:name`, ``, getTest)
+	api.HandleFunc("/history/{table}/{id}", AuthRequire(historyHandler)).Methods("GET") // get(`history/:table/:id`, ``, authWallet, getHistory)
 	api.HandleFunc("/block/{id}", blockInfoHandler).Methods("GET")
 	api.HandleFunc("/maxblockid", maxBlockHandler).Methods("GET")
 	api.HandleFunc("/version", versionHandler).Methods("GET")
@@ -72,11 +71,11 @@ func Route(router *mux.Router) {
 	api.HandleFunc("/content/menu/{name}", AuthRequire(getMenuHandler)).Methods("POST")     // post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
 	api.HandleFunc("/content/hash/{name}", getPageHashHandler).Methods("POST")              // post(`content/hash/:name`, ``, getPageHash)
 	// post(`vde/create`, ``, authWallet, vdeCreate)
-	api.HandleFunc("/login", loginHandler).Methods("POST")                                                               // post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
-	api.HandleFunc("/prepare/{name}", AuthRequire(contractHandlers.PrepareHandler)).Methods("POST")                      // post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
-	api.HandleFunc("/prepareMultiple", AuthRequire(contractHandlers.PrepareMultiHandler)).Methods("POST")                //post(`prepareMultiple`, `data:string`, authWallet, contractHandlers.prepareMultipleContract)
-	api.HandleFunc("/txstatusMultiple", AuthRequire(txstatusMultiHandler)).Methods("POST")                               // post(`txstatusMultiple`, `data:string`, authWallet, txstatusMulti)
-	api.HandleFunc("/contract/{request_id}", AuthRequire(contractHandlers.ContractHandler)).Methods("POST")              // post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
+	api.HandleFunc("/login", loginHandler).Methods("POST") // post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
+	// api.HandleFunc("/prepare/{name}", AuthRequire(contractHandlers.PrepareHandler)).Methods("POST")                      // post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
+	api.HandleFunc("/prepareMultiple", AuthRequire(contractHandlers.PrepareHandler)).Methods("POST") //post(`prepareMultiple`, `data:string`, authWallet, contractHandlers.prepareMultipleContract)
+	api.HandleFunc("/txstatusMultiple", AuthRequire(txstatusMultiHandler)).Methods("POST")           // post(`txstatusMultiple`, `data:string`, authWallet, txstatusMulti)
+	// api.HandleFunc("/contract/{request_id}", AuthRequire(contractHandlers.ContractHandler)).Methods("POST")              // post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
 	api.HandleFunc("/contractMultiple/{request_id}", AuthRequire(contractHandlers.ContractMultiHandler)).Methods("POST") // post(`contractMultiple/:request_id`, `data:string`, authWallet, blockchainUpdatingState, contractHandlers.contractMulti)
 	api.HandleFunc("/refresh", refreshHandler).Methods("POST")                                                           // post(`refresh`, `token:string,?expire:int64`, refresh)
 	// post(`test/:name`, ``, getTest)
