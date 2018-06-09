@@ -215,7 +215,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
     func AssignAll(app_name string, resources string) string {
         return Sprintf(` + "`" + `{
-            "name": "%%v", 
+            "name": "%%v",
             "data": [
                 %%v
             ]
@@ -257,18 +257,22 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
         return JSONEncode(result)
     }
-	
+
     func exportTable(type string, result array) array {
         var items array, limit offset int
         limit = 250
         while true{
             var rows array, where string
-            if type == "menu" && Len($menus_names) > 0 {
-                where = Sprintf("name in (%%v)", Join($menus_names, ","))
+            if type == "menu" {
+                if Len($menus_names) > 0 {
+                    where = Sprintf("name in (%%v)", Join($menus_names, ","))
+                }
             }else{
                 where = Sprintf("app_id=%%v", $ApplicationID)
             }
-            rows = DBFind(type).Limit(limit).Offset(offset).Where(where)
+            if where {
+                rows = DBFind(type).Limit(limit).Offset(offset).Where(where)
+            }
             if Len(rows) > 0{
                 var i int
                 while i<Len(rows){
@@ -468,7 +472,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
                 if tmp["Type"] == "contracts" {
                     contracts = Append(contracts, tmp)
                 }else{
-                    part[l] = tmp
+                    part = Append(part, tmp)
                 }
                 l=l+1
             }
@@ -805,42 +809,44 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         while i<Len(dataImport){
             var item, cdata map
             cdata = dataImport[i]
-            cdata["ApplicationId"] = $ApplicationId
-            $Type = cdata["Type"]
-            $Name = cdata["Name"]
+            if cdata {
+                cdata["ApplicationId"] = $ApplicationId
+                $Type = cdata["Type"]
+                $Name = cdata["Name"]
 
-            Println(Sprintf("import %%v: %%v", $Type, cdata["Name"]))
+                // Println(Sprintf("import %%v: %%v", $Type, cdata["Name"]))
 
-            item = DBFind($Type).Where("name=?", $Name).Row()
-            var contractName string
-            if item {
-                contractName = editors[$Type]
-                cdata["Id"] = Int(item["id"])
-                if $Type == "menu"{
-                    var menu menuItem string
-                    menu = Replace(item["value"], " ", "")
-                    menu = Replace(menu, "\n", "")
-                    menu = Replace(menu, "\r", "")
-                    menuItem = Replace(cdata["Value"], " ", "")
-                    menuItem = Replace(menuItem, "\n", "")
-                    menuItem = Replace(menuItem, "\r", "")
-                    if Contains(menu, menuItem) {
-                        // ignore repeated
-                        contractName = ""
-                    }else{
-                        cdata["Value"] = item["value"] + "\n" + cdata["Value"]
+                item = DBFind($Type).Where("name=?", $Name).Row()
+                var contractName string
+                if item {
+                    contractName = editors[$Type]
+                    cdata["Id"] = Int(item["id"])
+                    if $Type == "menu"{
+                        var menu menuItem string
+                        menu = Replace(item["value"], " ", "")
+                        menu = Replace(menu, "\n", "")
+                        menu = Replace(menu, "\r", "")
+                        menuItem = Replace(cdata["Value"], " ", "")
+                        menuItem = Replace(menuItem, "\n", "")
+                        menuItem = Replace(menuItem, "\r", "")
+                        if Contains(menu, menuItem) {
+                            // ignore repeated
+                            contractName = ""
+                        }else{
+                            cdata["Value"] = item["value"] + "\n" + cdata["Value"]
+                        }
                     }
+                } else {
+                    contractName = creators[$Type]
                 }
-            } else {
-                contractName = creators[$Type]
-            }
 
-            if contractName != ""{
-                CallContract(contractName, cdata)
+                if contractName != ""{
+                    CallContract(contractName, cdata)
+                }
             }
             i=i+1
         }
-        Println(Sprintf("> time: %%v", $time))
+        // Println(Sprintf("> time: %%v", $time))
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('23', 'ExportNewApp', 'contract ExportNewApp {
