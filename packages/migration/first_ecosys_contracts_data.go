@@ -199,109 +199,106 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('10', 'Export', 'contract Export {
+    data {}
 
-    func EscapeSpecialSymbols(s string) string {
+    func escapeSpecials(s string) string {
         s = Replace(s, ` + "`" + `\` + "`" + `, ` + "`" + `\\` + "`" + `)
         s = Replace(s, ` + "`" + `	` + "`" + `, ` + "`" + `\t` + "`" + `)
         s = Replace(s, "\n", ` + "`" + `\n` + "`" + `)
         s = Replace(s, "\r", ` + "`" + `\r` + "`" + `)
         s = Replace(s, ` + "`" + `"` + "`" + `, ` + "`" + `\"` + "`" + `)
+        if s == "0"{
+            s = ""
+        }
         return s
     }
 
     func AssignAll(app_name string, resources string) string {
         return Sprintf(` + "`" + `{
-    "name": "%%v", 
-    "data": [
-%%v
-    ]
-    }` + "`" + `, app_name, resources)
+            "name": "%%v", 
+            "data": [
+                %%v
+            ]
+        }` + "`" + `, app_name, resources)
     }
 
-    func SerializeResource(resource map, resource_type string) string {
+    func serializeItem(item map, type string) string {
         var s string
-        s = Sprintf(` + "`" + ` {
-            "Type": "%%v", 
-            "Name": "%%v", 
-            "Value": "%%v", 
-            "Conditions": "%%v", 
-            "Menu": "%%v", 
-            "Title": "%%v", 
-            "Trans": "%%v", 
-            "Columns": "%%v"
-        }` + "`" + `, 
-            resource_type, EscapeSpecialSymbols(Str(resource["name"])), EscapeSpecialSymbols(Str(resource["value"])), EscapeSpecialSymbols(Str(resource["conditions"])),
-            EscapeSpecialSymbols(Str(resource["menu"])), EscapeSpecialSymbols(Str(resource["title"])),
-            EscapeSpecialSymbols(Str(resource["res"])), EscapeSpecialSymbols(Str(resource["columns"])))
+        s = Sprintf(
+            ` + "`" + `{
+                "Type": "%%v",
+                "Name": "%%v",
+                "Value": "%%v",
+                "Conditions": "%%v",
+                "Menu": "%%v",
+                "Title": "%%v",
+                "Trans": "%%v",
+                "Columns": "%%v",
+                "Permissions": "%%v"
+            }` + "`" + `, type, escapeSpecials(Str(item["name"])), escapeSpecials(Str(item["value"])), escapeSpecials(Str(item["conditions"])), escapeSpecials(Str(item["menu"])), escapeSpecials(Str(item["title"])), escapeSpecials(Str(item["res"])), escapeSpecials(Str(item["columns"])), escapeSpecials(Str(item["permissions"]))
+        )
         return s
     }
 
-    func AddTypeForColumns(table_name string, table_columns string) string {
-        var result string
-
-        table_columns = Replace(table_columns, "{", "")
-        table_columns = Replace(table_columns, "}", "")
-        table_columns = Replace(table_columns, " ", "")
-
-        var columns_arr array
-        columns_arr = Split(table_columns, ",")
-
+    func getTypeForColumns(table_name string, columnsJSON string) string {
+        var colsMap map, result columns array
+        colsMap = JSONDecode(columnsJSON)
+        columns = GetMapKeys(colsMap)
         var i int
-        while (i < Len(columns_arr)){
-            var s_split string
-            s_split = Str(columns_arr[i])
-
-            if Size(s_split) > 0 {
-                var clm array
-                clm = Split(s_split, ":")
-
-                var s string
-
-                if Len(clm) == 2 {
-                    var col_name string
-                    var col_cond string
-                    var col_type string
-
-                    col_name = Replace(Str(clm[0]), ` + "`" + `"` + "`" + `, "")
-                    col_cond = Str(clm[1])
-                    col_type = GetColumnType(table_name, col_name)
-
-                    s = Sprintf(` + "`" + `{"name":"%%v","type":"%%v","conditions":%%v}` + "`" + `, col_name, col_type, col_cond)
-                }
-
-                if Size(result) > 0 {
-                    result = result + ","
-                }
-                result = result + s
+        while i < Len(columns){
+            if Size(columns[i]) > 0 {
+                var col map
+                col["name"] = columns[i]
+                col["conditions"] = colsMap[col["name"]]
+                col["type"] = GetColumnType(table_name, col["name"])
+                result = Append(result, col)
             }
             i = i + 1
         }
-
-        result = Sprintf("[%%v]", result)
+        return JSONEncode(result)
+    }
+	
+    func exportTable(type string, result array) array {
+        var items array, limit offset int
+        limit = 250
+        while true{
+            var rows array, where string
+            if type == "menu" && Len($menus_names) > 0 {
+                where = Sprintf("name in (%%v)", Join($menus_names, ","))
+            }else{
+                where = Sprintf("app_id=%%v", $ApplicationID)
+            }
+            rows = DBFind(type).Limit(limit).Offset(offset).Where(where)
+            if Len(rows) > 0{
+                var i int
+                while i<Len(rows){
+                    items = Append(items, rows[i])
+                    i=i+1
+                }
+            }else{
+                break
+            }
+            offset = offset+limit
+        }
+        var i int, item map
+        while i < Len(items) {
+            item = items[i]
+            if type == "tables" {
+                var table map
+                table["name"] = item["name"]
+                table["permissions"] = item["permissions"]
+                table["conditions"] = item["conditions"]
+                table["columns"] = getTypeForColumns(item["name"], item["columns"])
+                item = table
+            }
+            result = Append(result, serializeItem(item, type))
+            if type == "pages" {
+                $menus_names = Append($menus_names, Sprintf("''%%v''", item["menu"]))
+            }
+            i = i + 1
+        }
         return result
     }
-
-    func ExportTableRecords(records array, type string, entities_array array) array {
-        var i int, cur_resource map
-        i = 0
-        while i < Len(records) {
-            cur_resource = records[i]
-            if type == "tables" {
-                var table_name, table_columns string, table_map map
-                table_map["name"] = Str(cur_resource["name"])
-                table_map["columns"] = Str(cur_resource["columns"])
-                table_map["columns"] = AddTypeForColumns(table_map["name"], table_map["columns"])
-            }
-            entities_array = Append(entities_array, SerializeResource(cur_resource, type))
-            if type == "pages" {
-                $menus_names = Append($menus_names, Sprintf("''%%v''", cur_resource["menu"]))
-            }
-            i = i + 1
-        }
-        return entities_array
-    }
-
-    data {}
 
     conditions {
         var buffer_map map
@@ -311,34 +308,23 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
         $ApplicationID = Int(buffer_map["value.app_id"])
         $ApplicationName = Str(buffer_map["value.app_name"])
+
+        var menus_names array
+        $menus_names = menus_names
     }
 
     action {
-        var menu_used map
-        var menus_names_arr array 
-        $menu_used = menu_used
-        $menus_names = menus_names_arr
+        var exportJSON string, items array
+        items = exportTable("pages", items)
+        items = exportTable("contracts", items)
+        items = exportTable("blocks", items)
+        items = exportTable("languages", items)
+        items = exportTable("app_params", items)
+        items = exportTable("tables", items)
+        items = exportTable("menu", items)
 
-        var full_result string
-        var entities_array array
-        var cur_resource map
-
-        entities_array = ExportTableRecords(DBFind("pages").Limit(250).Where("app_id=?", $ApplicationID), "pages", entities_array)
-        entities_array = ExportTableRecords(DBFind("contracts").Limit(250).Where("app_id=?", $ApplicationID), "contracts", entities_array)
-        entities_array = ExportTableRecords(DBFind("blocks").Limit(250).Where("app_id=?", $ApplicationID), "blocks", entities_array)
-        entities_array = ExportTableRecords(DBFind("languages").Limit(250).Where("app_id=?", $ApplicationID), "languages", entities_array)
-        entities_array = ExportTableRecords(DBFind("app_params").Limit(250).Where("app_id=?", $ApplicationID), "params", entities_array)
-        entities_array = ExportTableRecords(DBFind("tables").Limit(250).Where("app_id=?", $ApplicationID), "tables", entities_array)
-        if Len($menus_names) > 0 {
-            var where_for_menu string
-            where_for_menu = Sprintf("name in (%%v)", Join($menus_names, ","))
-            entities_array = ExportTableRecords(DBFind("menu").Limit(250).Where(where_for_menu), "menu", entities_array)
-        }
-
-        //=====================================================================================================
-
-        full_result = AssignAll($ApplicationName, Join(entities_array, ",\r\n"))
-        UploadBinary("Name,Data,ApplicationId,DataMimeType", "export", full_result, 1, "application/json")
+        exportJSON = AssignAll($ApplicationName, Join(items, ",\r\n"))
+        UploadBinary("Name,Data,ApplicationId,DataMimeType", "export", exportJSON, 1, "application/json")
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('11', 'EditTable', 'contract EditTable {
