@@ -574,8 +574,7 @@ func RollbackTable(sc *SmartContract, name string) error {
 		return logErrorDB(err, "getting table info")
 	}
 	if found {
-		err = t.Delete(sc.DbTransaction)
-		if err != nil {
+		if err = t.Delete(sc.DbTransaction); err != nil {
 			return logErrorDB(err, "deleting table")
 		}
 	} else {
