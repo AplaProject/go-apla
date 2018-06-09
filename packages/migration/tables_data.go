@@ -82,6 +82,7 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 			"image_id":"ContractAccess(\"Roles_Create\")",
 			"role_name":"false",
 			"date_created":"false",
+			"roles_access":"ContractAccess(\"Roles_AccessManager\")",
 			"role_type":"false"}',
 		'ContractConditions("MainCondition")'),
 	('11', 'roles_participants',
