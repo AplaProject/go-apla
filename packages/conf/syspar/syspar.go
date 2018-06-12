@@ -207,7 +207,7 @@ func GetNumberOfNodesFromDB() int64 {
 	sp.Get(FullNodes)
 	var fullNodes []map[string]interface{}
 	if len(sp.Value) > 0 {
-		if err := json.Unmarshal([]byte(sp.Value), fullNodes); err != nil {
+		if err := json.Unmarshal([]byte(sp.Value), &fullNodes); err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "value": sp.Value}).Error("unmarshalling fullnodes from JSON")
 		}
 	}
