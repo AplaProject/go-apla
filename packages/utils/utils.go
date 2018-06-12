@@ -554,7 +554,7 @@ func BuildBlockTimeCalculator() (BlockTimeCalculator, error) {
 	btc = NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
 		blockGenerationDuration,
 		blocksGapDuration,
-		syspar.GetNumberOfNodes(),
+		syspar.GetNumberOfNodesFromDB(),
 	)
 	return btc, nil
 }
