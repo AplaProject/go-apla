@@ -840,6 +840,63 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 	return err
 }
 
+func columnConditions(sc *SmartContract, columns string) (err error) {
+	var cols []interface{}
+	if err = unmarshalJSON([]byte(columns), &cols, "columns permissions from json"); err != nil {
+		return err
+	}
+	if len(cols) == 0 {
+		return logErrorShort(errUndefColumns, consts.EmptyObject)
+	}
+	if len(cols) > syspar.GetMaxColumns() {
+		return logErrorfShort(eManyColumns, syspar.GetMaxColumns(), consts.ParameterExceeded)
+	}
+	for _, icol := range cols {
+		var data map[string]interface{}
+		switch v := icol.(type) {
+		case string:
+			if err = unmarshalJSON([]byte(v), &data, `columns permissions from json`); err != nil {
+				return err
+			}
+		default:
+			data = v.(map[string]interface{})
+		}
+		if data[`name`] == nil || data[`type`] == nil {
+			return logErrorShort(errWrongColumn, consts.InvalidObject)
+		}
+		if len(typeToPSQL[data[`type`].(string)]) == 0 {
+			return logErrorShort(errIncorrectType, consts.InvalidObject)
+		}
+		condition := ``
+		switch v := data[`conditions`].(type) {
+		case string:
+			condition = v
+		case map[string]interface{}:
+			out, err := marshalJSON(v, `conditions to json`)
+			if err != nil {
+				return err
+			}
+			condition = string(out)
+		}
+		perm, err := getPermColumns(condition)
+		if err != nil {
+			return logError(err, consts.EmptyObject, "Conditions is empty")
+		}
+		if len(perm.Update) == 0 {
+			return logErrorShort(errConditionEmpty, consts.EmptyObject)
+		}
+		if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
+			return logError(err, consts.EvalError, "compile update conditions")
+		}
+		if len(perm.Read) > 0 {
+			if err = VMCompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.EcosystemID)); err != nil {
+				return logError(err, consts.EvalError, "compile read conditions")
+			}
+		}
+	}
+	return nil
+}
+
 // TableConditions is contract func
 func TableConditions(sc *SmartContract, name, columns, permissions string) (err error) {
 	isEdit := len(columns) == 0
@@ -893,60 +950,8 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		}
 		return nil
 	}
-
-	var cols []interface{}
-	if err = unmarshalJSON([]byte(columns), &cols, "columns permissions from json"); err != nil {
+	if err := columnConditions(sc, columns); err != nil {
 		return err
-	}
-	if len(cols) == 0 {
-		return logErrorShort(errUndefColumns, consts.EmptyObject)
-	}
-	if len(cols) > syspar.GetMaxColumns() {
-		return logErrorfShort(eManyColumns, syspar.GetMaxColumns(), consts.ParameterExceeded)
-	}
-	for _, icol := range cols {
-		var data map[string]interface{}
-		switch v := icol.(type) {
-		case string:
-			if err = unmarshalJSON([]byte(v), &data, `columns permissions from json`); err != nil {
-				return err
-			}
-		default:
-			data = v.(map[string]interface{})
-		}
-		if data[`name`] == nil || data[`type`] == nil {
-			return logErrorShort(errWrongColumn, consts.InvalidObject)
-		}
-		if len(typeToPSQL[data[`type`].(string)]) == 0 {
-			return logErrorShort(errIncorrectType, consts.InvalidObject)
-		}
-		condition := ``
-		switch v := data[`conditions`].(type) {
-		case string:
-			condition = v
-		case map[string]interface{}:
-			out, err := marshalJSON(v, `conditions to json`)
-			if err != nil {
-				return err
-			}
-			condition = string(out)
-		}
-		perm, err := getPermColumns(condition)
-		if err != nil {
-			return logError(err, consts.EmptyObject, "Conditions is empty")
-		}
-		if len(perm.Update) == 0 {
-			return logErrorShort(errConditionEmpty, consts.EmptyObject)
-		}
-		if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
-			return logError(err, consts.EvalError, "compile update conditions")
-		}
-		if len(perm.Read) > 0 {
-			if err = VMCompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.EcosystemID)); err != nil {
-				return logError(err, consts.EvalError, "compile read conditions")
-			}
-		}
-
 	}
 	if err := sc.AccessRights("new_table", false); err != nil {
 		return err
