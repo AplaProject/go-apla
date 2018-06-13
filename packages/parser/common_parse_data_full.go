@@ -577,7 +577,7 @@ func parseRegularTransaction(p *Parser, buf *bytes.Buffer, txType int64) error {
 func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 	err := CheckLogTx(p.TxFullData, checkForDupTr, false)
 	if err != nil {
-		return utils.ErrInfo(err)
+		return err
 	}
 	logger := log.WithFields(log.Fields{"tx_type": p.dataType, "tx_time": p.TxTime, "tx_state_id": p.TxEcosystemID})
 	// time in the transaction cannot be more than MAX_TX_FORW seconds of block time
@@ -737,7 +737,6 @@ func (b *Block) playBlock(dbTransaction *model.DbTransaction) error {
 
 // CheckBlock is checking block
 func (b *Block) CheckBlock() error {
-
 	logger := b.GetLogger()
 	// exclude blocks from future
 	if b.Header.Time > time.Now().Unix() {
@@ -802,9 +801,8 @@ func (b *Block) CheckBlock() error {
 		}
 
 		if err := checkTransaction(p, b.Header.Time, false); err != nil {
-			return utils.ErrInfo(err)
+			return err
 		}
-
 	}
 
 	result, err := b.CheckHash()
