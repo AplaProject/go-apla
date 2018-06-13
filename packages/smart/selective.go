@@ -71,23 +71,13 @@ func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) erro
 	return nil
 }
 
-func (sc *SmartContract) insert(fields []string, ivalues []interface{},
-	table string) (int64, string, error) {
-	var (
-		tableID string
-		err     error
-		cost    int64
-	)
-	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
-	values, err := prepareValues(sc, table, fields, ivalues)
-	if err != nil {
-		return 0, ``, err
-	}
-	jsonFields := make(map[string]map[string]string)
+func (sc *SmartContract) getSQLIns(table string, fields []string, values []string) (tableID string,
+	addSQLIns0, addSQLIns1 []string, err error) {
 
+	jsonFields := make(map[string]map[string]string)
 	isID := false
-	addSQLIns0 := []string{}
-	addSQLIns1 := []string{}
+	addSQLIns0 = []string{}
+	addSQLIns1 = []string{}
 	for i := 0; i < len(fields); i++ {
 		if fields[i] == `id` {
 			isID = true
@@ -127,21 +117,42 @@ func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 		addSQLIns1 = append(addSQLIns1, insVal)
 	}
 	for colname, colvals := range jsonFields {
-		out, err := marshalJSON(colvals, `update columns for jsonb`)
+		var out []byte
+		out, err = marshalJSON(colvals, `update columns for jsonb`)
 		if err != nil {
-			return 0, ``, err
+			return
 		}
 		addSQLIns0 = append(addSQLIns0, colname)
 		addSQLIns1 = append(addSQLIns1, fmt.Sprintf(`'%s'::jsonb`, string(out)))
 	}
 	if !isID {
-		id, err := model.GetNextID(sc.DbTransaction, table)
+		var id int64
+		id, err = model.GetNextID(sc.DbTransaction, table)
 		if err != nil {
-			return 0, ``, logErrorDB(err, "getting next id for table")
+			logErrorDB(err, "getting next id for table")
+			return
 		}
 		tableID = converter.Int64ToStr(id)
 		addSQLIns0 = append(addSQLIns0, `id`)
 		addSQLIns1 = append(addSQLIns1, `'`+tableID+`'`)
+	}
+	return
+}
+
+func (sc *SmartContract) insert(fields []string, ivalues []interface{},
+	table string) (int64, string, error) {
+	var (
+		err  error
+		cost int64
+	)
+	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
+	values, err := prepareValues(sc, table, fields, ivalues)
+	if err != nil {
+		return 0, ``, err
+	}
+	tableID, addSQLIns0, addSQLIns1, err := sc.getSQLIns(table, fields, values)
+	if err != nil {
+		return 0, ``, err
 	}
 	insertQuery := `INSERT INTO "` + table + `" (` + strings.Join(addSQLIns0, ",") +
 		`) VALUES (` + strings.Join(addSQLIns1, ",") + `)`
