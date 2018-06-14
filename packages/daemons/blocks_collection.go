@@ -262,6 +262,9 @@ func banNode(host string, block *parser.Block, err error) {
 		blockId, blockTime int64
 	)
 	if err != nil {
+		if err == parser.ErrDuplicatedTx {
+			return
+		}
 		reason = err.Error()
 	}
 
