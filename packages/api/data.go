@@ -42,13 +42,13 @@ func dataHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := model.GetColumnByID(params["table"], params["column"], params["id"])
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting data from table")
-		errorResponse(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound)
 		return
 	}
 
 	if fmt.Sprintf(`%x`, md5.Sum([]byte(data))) != strings.ToLower(params["hash"]) {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
-		errorResponse(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound)
 		return
 	}
 
@@ -67,16 +67,16 @@ func binaryHandler(w http.ResponseWriter, r *http.Request) {
 
 	if found, err := bin.GetByID(converter.StrToInt64(params["id"])); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Errorf("getting binary by id")
-		errorResponse(w, errServer, http.StatusInternalServerError)
+		errorResponse(w, errServer)
 		return
 	} else if !found {
-		errorResponse(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound)
 		return
 	}
 
 	if bin.Hash != strings.ToLower(params["hash"]) {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
-		errorResponse(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound)
 		return
 	}
 

@@ -1,10 +1,15 @@
 package api
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
+	"runtime/debug"
+	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/service"
+	"github.com/GenesisKernel/go-genesis/packages/statsd"
+	"github.com/gorilla/mux"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -20,6 +25,26 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 		logger.Info("received http request")
 
 		r = setLogger(r, logger)
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func RecoverMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				logger := getLogger(r)
+				logger.WithFields(log.Fields{
+					"type":  consts.PanicRecoveredError,
+					"error": err,
+					"stack": string(debug.Stack()),
+				}).Error("panic recovered error")
+
+				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
+				errorResponse(w, errRecovered)
+			}
+		}()
 
 		next.ServeHTTP(w, r)
 	})
@@ -41,11 +66,24 @@ func NodeStateMiddleware(next http.Handler) http.Handler {
 			break
 		}
 
-		errorResponse(w, reason, http.StatusServiceUnavailable)
+		errorResponse(w, reason)
 	})
 }
 
-func jsonResponse(w http.ResponseWriter, v interface{}) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(v)
+func StatsdMiddleware(next http.Handler) http.Handler {
+	const v = 1.0
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		route := mux.CurrentRoute(r)
+
+		counterName := statsd.APIRouteCounterName(r.Method, route.GetName())
+		statsd.Client.Inc(counterName+statsd.Count, 1, v)
+		startTime := time.Now()
+
+		defer func() {
+			statsd.Client.TimingDuration(counterName+statsd.Time, time.Since(startTime), v)
+		}()
+
+		next.ServeHTTP(w, r)
+	})
 }

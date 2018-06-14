@@ -40,7 +40,7 @@ import (
 const nonceSalt = "LOGIN"
 
 type loginForm struct {
-	Form
+	form
 	EcosystemID int64    `schema:"ecosystem"`
 	Expire      int64    `schema:"expire"`
 	PublicKey   hexValue `schema:"pubkey"`
@@ -71,7 +71,6 @@ type roleResult struct {
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	var (
-		ok        bool
 		uid       string
 		publicKey []byte
 		wallet    int64
@@ -79,11 +78,13 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		form      = &loginForm{}
 	)
 
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
-	if uid, ok = getUID(w, r); !ok {
+	if uid, err = getUID(r); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -100,13 +101,14 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	publicKey = form.PublicKey.Value()
 	if len(publicKey) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
-		errorResponse(w, errEmptyPublic, http.StatusBadRequest)
+		errorResponse(w, errEmptyPublic)
 		return
 	}
 	wallet = crypto.Address(publicKey)
 
-	account, ok := getAccount(w, r, client.EcosystemID, wallet)
-	if !ok {
+	account, err := getAccount(r, client.EcosystemID, wallet)
+	if err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -120,12 +122,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if client.RoleID == 0 && form.RoleID != 0 {
 		checkedRole, err := checkRoleFromParam(form.RoleID, client.EcosystemID, wallet)
 		if err != nil {
-			errorResponse(w, errCheckRole, http.StatusInternalServerError)
+			errorResponse(w, err)
 			return
 		}
 
 		if checkedRole != form.RoleID {
-			errorResponse(w, errCheckRole, http.StatusNotFound)
+			errorResponse(w, errCheckRole)
 			return
 		}
 
@@ -135,17 +137,18 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	verify, err := crypto.CheckSign(publicKey, nonceSalt+uid, form.Signature.Value())
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "pubkey": publicKey, "uid": uid, "signature": form.Signature}).Error("checking signature")
-		errorResponse(w, err, http.StatusBadRequest)
+		errorResponse(w, newError(err, http.StatusBadRequest))
 		return
 	}
 	if !verify {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject, "pubkey": publicKey, "uid": uid, "signature": form.Signature}).Error("incorrect signature")
-		errorResponse(w, errSignature, http.StatusBadRequest)
+		errorResponse(w, errSignature)
 		return
 	}
 
 	var founder int64
-	if founder, ok = getFounder(w, r, client.EcosystemID); !ok {
+	if founder, err = getFounder(r, client.EcosystemID); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -177,35 +180,35 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	result.Token, err = generateJWTToken(claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	result.Refresh, err = generateJWTToken(claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 	result.NotifyKey, result.Timestamp, err = publisher.GetHMACSign(wallet)
 	if err != nil {
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 
 	ra := &model.RolesParticipants{}
 	roles, err := ra.SetTablePrefix(client.EcosystemID).GetActiveMemberRoles(wallet)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting roles")
-		errorResponse(w, errServer, http.StatusBadRequest)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting roles")
+		errorResponse(w, errServer)
 		return
 	}
 
 	for _, r := range roles {
 		var res map[string]string
 		if err := json.Unmarshal([]byte(r.Role), &res); err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling role")
-			errorResponse(w, errServer, http.StatusInternalServerError)
+			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling role")
+			errorResponse(w, errServer)
 			return
 		} else {
 			result.Roles = append(result.Roles, roleResult{
@@ -220,7 +223,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, result)
 }
 
-func getUID(w http.ResponseWriter, r *http.Request) (string, bool) {
+func getUID(r *http.Request) (string, error) {
 	var uid string
 
 	token := getToken(r)
@@ -230,29 +233,26 @@ func getUID(w http.ResponseWriter, r *http.Request) (string, bool) {
 		}
 	} else if len(uid) == 0 {
 		getLogger(r).WithFields(log.Fields{"type": consts.EmptyObject}).Error("UID is empty")
-		errorResponse(w, errUnknownUID, http.StatusBadRequest)
-		return "", false
+		return "", errUnknownUID
 	}
 
-	return uid, true
+	return uid, nil
 }
 
-func getAccount(w http.ResponseWriter, r *http.Request, ecosystemID, keyID int64) (*model.Key, bool) {
+func getAccount(r *http.Request, ecosystemID, keyID int64) (*model.Key, error) {
 	account := &model.Key{}
 	account.SetTablePrefix(ecosystemID)
 	found, err := account.Get(keyID)
 	if err != nil {
 		logger := getLogger(r)
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting record from keys")
-		errorResponse(w, err, http.StatusBadRequest)
-		return nil, false
+		return nil, err
 	} else if found {
 		if account.Deleted == 1 {
-			errorResponse(w, errDeletedKey, http.StatusBadRequest)
-			return nil, false
+			return nil, errDeletedKey
 		}
 	}
-	return account, true
+	return account, nil
 }
 
 func checkRoleFromParam(role, ecosystemID, wallet int64) (int64, error) {
@@ -282,7 +282,7 @@ func checkRoleFromParam(role, ecosystemID, wallet int64) (int64, error) {
 	return role, nil
 }
 
-func getFounder(w http.ResponseWriter, r *http.Request, ecosystemID int64) (int64, bool) {
+func getFounder(r *http.Request, ecosystemID int64) (int64, error) {
 	var (
 		sp      model.StateParameter
 		founder int64
@@ -291,11 +291,10 @@ func getFounder(w http.ResponseWriter, r *http.Request, ecosystemID int64) (int6
 	sp.SetTablePrefix(converter.Int64ToStr(ecosystemID))
 	if ok, err := sp.Get(nil, "founder_account"); err != nil {
 		getLogger(r).WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder_account parameter")
-		errorResponse(w, errServer, http.StatusBadRequest)
-		return founder, false
+		return founder, errServer
 	} else if ok {
 		founder = converter.StrToInt64(sp.Value)
 	}
 
-	return founder, true
+	return founder, nil
 }

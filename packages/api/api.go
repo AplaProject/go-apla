@@ -18,13 +18,14 @@ package api
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"net/http"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-
 	"github.com/gorilla/schema"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -106,51 +107,14 @@ func (c *Client) Prefix() (prefix string) {
 // 	})
 // }
 
-func checkEcosystem(w http.ResponseWriter, r *http.Request) (ecosystemID int64, prefix string, ok bool) {
-	client := getClient(r)
-	ecosystemID = client.EcosystemID
-	paramEcosystemID := converter.StrToInt64(r.FormValue("ecosystem"))
-	if paramEcosystemID > 0 {
-		logger := getLogger(r)
-		count, err := model.GetNextID(nil, "1_ecosystems")
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id ecosystems")
-			errorResponse(w, err, http.StatusInternalServerError)
-			return
-		}
-		if paramEcosystemID >= count {
-			logger.WithFields(log.Fields{"state_id": ecosystemID, "count": count, "type": consts.ParameterExceeded}).Error("state_id is larger then max count")
-			errorResponse(w, errEcosystem, http.StatusBadRequest, ecosystemID)
-			return
-		}
-		ecosystemID = paramEcosystemID
-	}
-	prefix = converter.Int64ToStr(ecosystemID)
-	if client.IsVDE {
-		prefix += `_vde`
-	}
-	return ecosystemID, prefix, true
+type form struct{}
+
+func (f *form) Validate(r *http.Request) error {
+	return nil
 }
 
-type Form struct{}
-
-func (f *Form) Validate(w http.ResponseWriter, r *http.Request) bool {
-	return true
-}
-
-type FormValidater interface {
-	Validate(w http.ResponseWriter, r *http.Request) bool
-}
-
-func ParseForm(w http.ResponseWriter, r *http.Request, f FormValidater) bool {
-	r.ParseForm()
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	if err := decoder.Decode(f, r.Form); err != nil {
-		errorResponse(w, err, http.StatusBadRequest)
-		return false
-	}
-	return f.Validate(w, r)
+type formValidater interface {
+	Validate(r *http.Request) error
 }
 
 type hexValue struct {
@@ -174,11 +138,11 @@ type ecosystemForm struct {
 	EcosystemPrefix string `schema:"-"`
 }
 
-func (f *ecosystemForm) Validate(w http.ResponseWriter, r *http.Request) bool {
-	return f.ValidateEcosystem(w, r)
+func (f *ecosystemForm) Validate(r *http.Request) error {
+	return f.ValidateEcosystem(r)
 }
 
-func (f *ecosystemForm) ValidateEcosystem(w http.ResponseWriter, r *http.Request) bool {
+func (f *ecosystemForm) ValidateEcosystem(r *http.Request) error {
 	client := getClient(r)
 	logger := getLogger(r)
 
@@ -186,13 +150,11 @@ func (f *ecosystemForm) ValidateEcosystem(w http.ResponseWriter, r *http.Request
 		count, err := model.GetNextID(nil, "1_ecosystems")
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id of ecosystems")
-			errorResponse(w, err, http.StatusInternalServerError)
-			return false
+			return newError(err, http.StatusInternalServerError)
 		}
 		if f.EcosystemID >= count {
 			logger.WithFields(log.Fields{"state_id": f.EcosystemID, "count": count, "type": consts.ParameterExceeded}).Error("ecosystem is larger then max count")
-			errorResponse(w, errEcosystem, http.StatusBadRequest, f.EcosystemID)
-			return false
+			return errEcosystem.Errorf(f.EcosystemID)
 		}
 	} else {
 		f.EcosystemID = client.EcosystemID
@@ -203,5 +165,20 @@ func (f *ecosystemForm) ValidateEcosystem(w http.ResponseWriter, r *http.Request
 		f.EcosystemPrefix += `_vde`
 	}
 
-	return true
+	return nil
+}
+
+func parseForm(r *http.Request, f formValidater) error {
+	r.ParseForm()
+	decoder := schema.NewDecoder()
+	decoder.IgnoreUnknownKeys(true)
+	if err := decoder.Decode(f, r.Form); err != nil {
+		return newError(err, http.StatusBadRequest)
+	}
+	return f.Validate(r)
+}
+
+func jsonResponse(w http.ResponseWriter, v interface{}) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(v)
 }

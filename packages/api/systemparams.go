@@ -27,7 +27,8 @@ import (
 
 func systemParamsHandler(w http.ResponseWriter, r *http.Request) {
 	form := &paramsForm{}
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 

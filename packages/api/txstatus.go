@@ -41,25 +41,22 @@ type txstatusResult struct {
 	Result  string         `json:"result"`
 }
 
-func getTxStatus(w http.ResponseWriter, r *http.Request, hash string) (*txstatusResult, bool) {
+func getTxStatus(w http.ResponseWriter, r *http.Request, hash string) (*txstatusResult, error) {
 	var status txstatusResult
 	logger := getLogger(r)
 	if _, err := hex.DecodeString(hash); err != nil {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding tx hash from hex")
-		errorResponse(w, errWrongHash, http.StatusBadRequest)
-		return nil, false
+		return nil, errWrongHash
 	}
 	ts := &model.TransactionStatus{}
 	found, err := ts.Get([]byte(converter.HexToBin(hash)))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("getting transaction status by hash")
-		errorResponse(w, err, http.StatusInternalServerError)
-		return nil, false
+		return nil, err
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "key": []byte(converter.HexToBin(hash))}).Error("getting transaction status by hash")
-		errorResponse(w, errHashNotFound, http.StatusBadRequest)
-		return nil, false
+		return nil, errHashNotFound
 	}
 	if ts.BlockID > 0 {
 		status.BlockID = converter.Int64ToStr(ts.BlockID)
@@ -73,7 +70,7 @@ func getTxStatus(w http.ResponseWriter, r *http.Request, hash string) (*txstatus
 			}
 		}
 	}
-	return &status, true
+	return &status, nil
 }
 
 type multiTxStatusResult struct {
@@ -81,7 +78,7 @@ type multiTxStatusResult struct {
 }
 
 type multiTxStatusForm struct {
-	Form
+	form
 	Data string `schema:"data"`
 }
 
@@ -97,19 +94,10 @@ func (f *multiTxStatusForm) Hashes() ([]string, error) {
 	return result.Hashes, nil
 }
 
-// func txstatusHandler(w http.ResponseWriter, r *http.Request) {
-// 	params := mux.Vars(r)
-
-// 	status, ok := getTxStatus(w, r, params[keyHash])
-// 	if !ok {
-// 		return
-// 	}
-// 	jsonResponse(w, status)
-// }
-
 func txstatusMultiHandler(w http.ResponseWriter, r *http.Request) {
 	form := &multiTxStatusForm{}
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -118,13 +106,14 @@ func txstatusMultiHandler(w http.ResponseWriter, r *http.Request) {
 
 	hashes, err := form.Hashes()
 	if err != nil {
-		errorResponse(w, errHashWrong, http.StatusBadRequest)
+		errorResponse(w, errHashWrong)
 		return
 	}
 
 	for _, hash := range hashes {
-		status, ok := getTxStatus(w, r, hash)
-		if !ok {
+		status, err := getTxStatus(w, r, hash)
+		if err != nil {
+			errorResponse(w, err)
 			return
 		}
 		result.Results[hash] = status

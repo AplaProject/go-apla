@@ -35,7 +35,7 @@ func ecosystemsHandler(w http.ResponseWriter, r *http.Request) {
 	number, err := model.GetNextID(nil, "1_ecosystems")
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error getting next ecosystem id")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 

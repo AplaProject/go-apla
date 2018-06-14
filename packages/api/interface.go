@@ -42,10 +42,10 @@ func interfaceRowHandler(fn func() component) func(w http.ResponseWriter, r *htt
 		c.SetTablePrefix(client.Prefix())
 		if ok, err := c.Get(params[keyName]); err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
-			errorResponse(w, errQuery, http.StatusInternalServerError)
+			errorResponse(w, errQuery)
 			return
 		} else if !ok {
-			errorResponse(w, errNotFound, http.StatusInternalServerError)
+			errorResponse(w, errNotFound)
 			return
 		}
 

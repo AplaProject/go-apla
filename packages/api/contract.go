@@ -51,13 +51,13 @@ func (c *contractHandlers) ContractMultiHandler(w http.ResponseWriter, r *http.R
 	requestID := params["request_id"]
 	bufReq, ok := c.requests.GetRequest(requestID)
 	if !ok {
-		errorResponse(w, errRequestNotFound, http.StatusNotFound, requestID)
+		errorResponse(w, errRequestNotFound.Errorf(requestID))
 		return
 	}
 
 	req := contractRequest{}
 	if err := json.Unmarshal([]byte(r.FormValue("data")), &req); err != nil {
-		errorResponse(w, err, http.StatusBadRequest)
+		errorResponse(w, newError(err, http.StatusBadRequest))
 		return
 	}
 
@@ -68,26 +68,25 @@ func (c *contractHandlers) ContractMultiHandler(w http.ResponseWriter, r *http.R
 		signID = signedBy
 	}
 
-	var publicKey []byte
+	var publicKey, reqPublicKey []byte
 	var err error
-	pubkey := []byte{}
 	if req.Pubkey != "" {
-		pubkey, err = hex.DecodeString(req.Pubkey)
+		reqPublicKey, err = hex.DecodeString(req.Pubkey)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting signature from hex")
-			errorResponse(w, err, http.StatusBadRequest)
+			errorResponse(w, newError(err, http.StatusBadRequest))
 			return
 		}
 	}
-	publicKey, ok = getPublicKey(w, r, signID, client.EcosystemID, pubkey)
-	if !ok {
+	if publicKey, err = getPublicKey(r, signID, client.EcosystemID, reqPublicKey); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
 	signatures := req.Signatures
 	if len(signatures) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signatures is empty")
-		errorResponse(w, errEmptySign, http.StatusBadRequest)
+		errorResponse(w, errEmptySign)
 		return
 	}
 
@@ -102,14 +101,14 @@ func (c *contractHandlers) ContractMultiHandler(w http.ResponseWriter, r *http.R
 	for i, contReq := range bufReq.Contracts {
 		contract := getContract(r, contReq.Contract())
 		if contract == nil {
-			errorResponse(w, errContract, http.StatusBadRequest, contReq.Contract())
+			errorResponse(w, errContract.Errorf(contReq.Contract()))
 			return
 		}
 
 		signatureBytes, err := hex.DecodeString(signatures[i])
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting signature from hex")
-			errorResponse(w, err, http.StatusInternalServerError)
+			errorResponse(w, err)
 			return
 		}
 
@@ -124,7 +123,7 @@ func (c *contractHandlers) ContractMultiHandler(w http.ResponseWriter, r *http.R
 
 		hash, err := contract.CreateTxFromRequest(contReq, smartTx)
 		if err != nil {
-			errorResponse(w, err, http.StatusBadRequest)
+			errorResponse(w, err)
 			return
 		}
 
@@ -136,7 +135,7 @@ func (c *contractHandlers) ContractMultiHandler(w http.ResponseWriter, r *http.R
 	})
 }
 
-func getPublicKey(w http.ResponseWriter, r *http.Request, signID int64, ecosystemID int64, pubkey []byte) ([]byte, bool) {
+func getPublicKey(r *http.Request, signID int64, ecosystemID int64, pubkey []byte) ([]byte, error) {
 	logger := getLogger(r)
 
 	var publicKey []byte
@@ -145,12 +144,10 @@ func getPublicKey(w http.ResponseWriter, r *http.Request, signID int64, ecosyste
 	_, err := key.Get(signID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
-		errorResponse(w, err, http.StatusInternalServerError)
-		return nil, false
+		return nil, err
 	}
 	if key.Deleted == 1 {
-		errorResponse(w, errDeletedKey, http.StatusForbidden)
-		return nil, false
+		return nil, errDeletedKey
 	}
 	if len(key.PublicKey) == 0 {
 		if len(pubkey) > 0 {
@@ -162,12 +159,11 @@ func getPublicKey(w http.ResponseWriter, r *http.Request, signID int64, ecosyste
 		}
 		if len(publicKey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
-			errorResponse(w, errEmptyPublic, http.StatusBadRequest)
-			return nil, false
+			return nil, errEmptyPublic
 		}
 	} else {
 		logger.Warning("public key for wallet not found")
 		publicKey = []byte("null")
 	}
-	return publicKey, true
+	return publicKey, nil
 }

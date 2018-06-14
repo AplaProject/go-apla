@@ -39,7 +39,8 @@ type tablesResult struct {
 
 func tablesHandler(w http.ResponseWriter, r *http.Request) {
 	form := &paginatorForm{}
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -50,7 +51,7 @@ func tablesHandler(w http.ResponseWriter, r *http.Request) {
 	count, err := model.GetRecordsCountTx(nil, table)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting records count from tables")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 
@@ -59,7 +60,7 @@ func tablesHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf(` offset %d `, form.Offset), form.Limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting names from tables")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 
@@ -85,7 +86,7 @@ func tablesHandler(w http.ResponseWriter, r *http.Request) {
 			maxid--
 		}
 		if err != nil {
-			errorResponse(w, err, http.StatusInternalServerError)
+			errorResponse(w, err)
 			return
 		}
 		result.List[i].Count = converter.Int64ToStr(maxid)

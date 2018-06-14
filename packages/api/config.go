@@ -18,7 +18,7 @@ func configOptionHandler(w http.ResponseWriter, r *http.Request) {
 
 	if len(params["option"]) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject, "error": "option not specified"}).Error("on getting option in config handler")
-		errorResponse(w, errServer, http.StatusBadRequest)
+		errorResponse(w, newError(errServer, http.StatusBadRequest))
 		return
 	}
 
@@ -28,7 +28,7 @@ func configOptionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	errorResponse(w, errServer, http.StatusBadRequest)
+	errorResponse(w, newError(errServer, http.StatusBadRequest))
 }
 
 func centrifugoAddressHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +36,7 @@ func centrifugoAddressHandler(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := publisher.GetStats(); err != nil {
 		logger.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Warn("on getting centrifugo stats")
-		errorResponse(w, err, http.StatusNotFound)
+		errorResponse(w, err)
 		return
 	}
 

@@ -34,23 +34,26 @@ type refreshResult struct {
 }
 
 type refreshForm struct {
-	Form
+	form
 	Token  string `schema:"token"`
 	Expire int64  `schema:"expire"`
 }
 
 func refreshHandler(w http.ResponseWriter, r *http.Request) {
 	form := &refreshForm{}
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
-	claims, ok := getRefreshTokenClaims(w, r, form.Token)
-	if !ok {
+	claims, err := getRefreshTokenClaims(r, form.Token)
+	if err != nil {
+		errorResponse(w, err)
 		return
 	}
 
-	if _, ok := getAccount(w, r, converter.StrToInt64(claims.EcosystemID), converter.StrToInt64(claims.KeyID)); !ok {
+	if _, err := getAccount(r, converter.StrToInt64(claims.EcosystemID), converter.StrToInt64(claims.KeyID)); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -63,39 +66,36 @@ func refreshHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Second * time.Duration(form.Expire)).Unix()
 
-	var err error
 	result.Token, err = generateJWTToken(*claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	result.Refresh, err = generateJWTToken(*claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 
 	jsonResponse(w, result)
 }
 
-func getRefreshTokenClaims(w http.ResponseWriter, r *http.Request, val string) (*JWTClaims, bool) {
+func getRefreshTokenClaims(r *http.Request, val string) (*JWTClaims, error) {
 	logger := getLogger(r)
 
 	token := getToken(r)
 	if token == nil {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("token is nil")
-		errorResponse(w, errToken, http.StatusBadRequest)
-		return nil, false
+		return nil, errToken
 	}
 
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok || len(claims.KeyID) == 0 {
 		logger.WithFields(log.Fields{"type": consts.JWTError}).Error("getting jwt claims")
-		errorResponse(w, errToken, http.StatusBadRequest)
-		return nil, false
+		return nil, errToken
 	}
 
 	// TODO: вынести в общую функцию
@@ -108,21 +108,18 @@ func getRefreshTokenClaims(w http.ResponseWriter, r *http.Request, val string) (
 	})
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "signing_method": token.Header["alg"]}).Error("unexpected signing method")
-		errorResponse(w, err, http.StatusInternalServerError)
-		return nil, false
+		return nil, err
 	}
 
 	if refToken == nil || !refToken.Valid {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("token is invalid")
-		errorResponse(w, errRefreshToken, http.StatusBadRequest)
-		return nil, false
+		return nil, errRefreshToken
 	}
 	refClaims, ok := refToken.Claims.(*JWTClaims)
 	if !ok || refClaims.KeyID != claims.KeyID || refClaims.EcosystemID != claims.EcosystemID {
 		logger.WithFields(log.Fields{"type": consts.JWTError}).Error("token wallet or state is invalid")
-		errorResponse(w, errRefreshToken, http.StatusBadRequest)
-		return nil, false
+		return nil, errRefreshToken
 	}
 
-	return refClaims, true
+	return refClaims, nil
 }

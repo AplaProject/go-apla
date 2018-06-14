@@ -30,17 +30,17 @@ func avatarHandler(w http.ResponseWriter, r *http.Request) {
 			"ecosystem": ecosystemID,
 			"member_id": memberID,
 		}).Error("getting member")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 
 	if !found {
-		errorResponse(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound)
 		return
 	}
 
 	if member.ImageID == nil {
-		errorResponse(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound)
 		return
 	}
 
@@ -49,18 +49,18 @@ func avatarHandler(w http.ResponseWriter, r *http.Request) {
 	found, err = bin.GetByID(*member.ImageID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "image_id": *member.ImageID}).Errorf("on getting binary by id")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 
 	if !found {
-		errorResponse(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound)
 		return
 	}
 
 	if len(bin.Data) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject, "error": err, "image_id": *member.ImageID}).Errorf("on check avatar size")
-		errorResponse(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound)
 		return
 	}
 

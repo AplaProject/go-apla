@@ -36,7 +36,8 @@ type balanceResult struct {
 
 func balanceHandler(w http.ResponseWriter, r *http.Request) {
 	form := &ecosystemForm{}
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -46,7 +47,7 @@ func balanceHandler(w http.ResponseWriter, r *http.Request) {
 	keyID := converter.StringToAddress(params[keyWallet])
 	if keyID == 0 {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "value": params[keyWallet]}).Error("converting wallet to address")
-		errorResponse(w, errInvalidWallet, http.StatusBadRequest, params[keyWallet])
+		errorResponse(w, errInvalidWallet.Errorf(params[keyWallet]))
 		return
 	}
 
@@ -55,7 +56,7 @@ func balanceHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := key.Get(keyID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting Key for wallet")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 

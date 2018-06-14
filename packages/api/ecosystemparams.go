@@ -39,7 +39,8 @@ type ecosystemParamsResult struct {
 
 func ecosystemParamsHandler(w http.ResponseWriter, r *http.Request) {
 	form := &appParamsForm{}
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 

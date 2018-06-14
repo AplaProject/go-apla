@@ -28,7 +28,7 @@ func Route(router *mux.Router) {
 	// TODO: cors
 
 	router.StrictSlash(true)
-	router.Use(LoggerMiddleware)
+	router.Use(LoggerMiddleware, RecoverMiddleware, StatsdMiddleware)
 
 	// api router with prefix path
 	api := router.PathPrefix("/api/v2").Subrouter()

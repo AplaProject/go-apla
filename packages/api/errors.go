@@ -21,109 +21,80 @@ import (
 	"net/http"
 )
 
-type errorType string
+var (
+	errContract        = errorType{"E_CONTRACT", "There is not %s contract", http.StatusBadRequest}
+	errDBNil           = errorType{"E_DBNIL", "DB is nil", http.StatusBadRequest}
+	errDeletedKey      = errorType{"E_DELETEDKEY", "The key is deleted", http.StatusForbidden}
+	errEcosystem       = errorType{"E_ECOSYSTEM", "Ecosystem %d doesn't exist", http.StatusBadRequest}
+	errEmptyPublic     = errorType{"E_EMPTYPUBLIC", "Public key is undefined", http.StatusBadRequest}
+	errEmptySign       = errorType{"E_EMPTYSIGN", "Signature is undefined", http.StatusBadRequest}
+	errHashWrong       = errorType{"E_HASHWRONG", "Hash is incorrect", http.StatusBadRequest}
+	errHashNotFound    = errorType{"E_HASHNOTFOUND", "Hash has not been found", http.StatusBadRequest}
+	errHeavyPage       = errorType{"E_HEAVYPAGE", "This page is heavy", http.StatusInternalServerError}
+	errInstalled       = errorType{"E_INSTALLED", "Apla is already installed", http.StatusBadRequest}
+	errInvalidWallet   = errorType{"E_INVALIDWALLET", "Wallet %s is not valid", http.StatusBadRequest}
+	errNotFound        = errorType{"E_NOTFOUND", "Page not found", http.StatusNotFound}
+	errNotInstalled    = errorType{"E_NOTINSTALLED", "Apla is not installed", http.StatusBadRequest}
+	errParamNotFound   = errorType{"E_PARAMNOTFOUND", "Parameter %s has not been found", http.StatusNotFound}
+	errPermission      = errorType{"E_PERMISSION", "Permission denied", http.StatusBadRequest}
+	errQuery           = errorType{"E_QUERY", "DB query is wrong", http.StatusInternalServerError}
+	errRecovered       = errorType{"E_RECOVERED", "API recovered", http.StatusInternalServerError}
+	errRefreshToken    = errorType{"E_REFRESHTOKEN", "Refresh token is not valid", http.StatusBadRequest}
+	errServer          = errorType{"E_SERVER", "Server error", http.StatusInternalServerError}
+	errSignature       = errorType{"E_SIGNATURE", "Signature is incorrect", http.StatusBadRequest}
+	errUnknownSign     = errorType{"E_UNKNOWNSIGN", "Unknown signature", http.StatusBadRequest}
+	errStateLogin      = errorType{"E_STATELOGIN", "%s is not a membership of ecosystem %s", http.StatusBadRequest}
+	errTableNotFound   = errorType{"E_TABLENOTFOUND", "Table %s has not been found", http.StatusBadRequest}
+	errToken           = errorType{"E_TOKEN", "Token is not valid", http.StatusBadRequest}
+	errTokenExpired    = errorType{"E_TOKENEXPIRED", "Token is expired by %s", http.StatusUnauthorized}
+	errUnauthorized    = errorType{"E_UNAUTHORIZED", "Unauthorized", http.StatusUnauthorized}
+	errUndefineVal     = errorType{"E_UNDEFINEVAL", "Value %s is undefined", http.StatusBadRequest}
+	errUnknownUID      = errorType{"E_UNKNOWNUID", "Unknown uid", http.StatusBadRequest}
+	errVDE             = errorType{"E_VDE", "Virtual Dedicated Ecosystem %d doesn't exist", http.StatusBadRequest}
+	errVDECreated      = errorType{"E_VDECREATED", "Virtual Dedicated Ecosystem is already created", http.StatusBadRequest}
+	errRequestNotFound = errorType{"E_REQUESTNOTFOUND", "Request %s doesn't exist", http.StatusNotFound}
+	errCheckRole       = errorType{"E_CHECKROLE", "Check role", http.StatusBadRequest}
+	errUpdating        = errorType{"E_UPDATING", "Node is updating blockchain", http.StatusServiceUnavailable}
+	errStopping        = errorType{"E_STOPPING", "Network is stopping", http.StatusServiceUnavailable}
+)
+
+type errorType struct {
+	Err     string `json:"error"`
+	Message string `json:"msg"`
+	Status  int    `json:"-"`
+}
 
 func (et errorType) Error() string {
-	return string(et)
+	return string(et.Err)
 }
 
-const (
-	errContract        errorType = "E_CONTRACT"
-	errDBNil           errorType = "E_DBNIL"
-	errDeletedKey      errorType = "E_DELETEDKEY"
-	errEcosystem       errorType = "E_ECOSYSTEM"
-	errEmptyPublic     errorType = "E_EMPTYPUBLIC"
-	errEmptySign       errorType = "E_EMPTYSIGN"
-	errHashWrong       errorType = "E_HASHWRONG"
-	errHashNotFound    errorType = "E_HASHNOTFOUND"
-	errHeavyPage       errorType = "E_HEAVYPAGE"
-	errInstalled       errorType = "E_INSTALLED"
-	errInvalidWallet   errorType = "E_INVALIDWALLET"
-	errNotFound        errorType = "E_NOTFOUND"
-	errNotInstalled    errorType = "E_NOTINSTALLED"
-	errParamNotFound   errorType = "E_PARAMNOTFOUND"
-	errPermission      errorType = "E_PERMISSION"
-	errQuery           errorType = "E_QUERY"
-	errRecovered       errorType = "E_RECOVERED"
-	errRefreshToken    errorType = "E_REFRESHTOKEN"
-	errServer          errorType = "E_SERVER"
-	errSignature       errorType = "E_SIGNATURE"
-	errUnknownSign     errorType = "E_UNKNOWNSIGN"
-	errStateLogin      errorType = "E_STATELOGIN"
-	errTableNotFound   errorType = "E_TABLENOTFOUND"
-	errToken           errorType = "E_TOKEN"
-	errTokenExpired    errorType = "E_TOKENEXPIRED"
-	errUnauthorized    errorType = "E_UNAUTHORIZED"
-	errUndefineVal     errorType = "E_UNDEFINEVAL"
-	errUnknownUID      errorType = "E_UNKNOWNUID"
-	errVDE             errorType = "E_VDE"
-	errVDECreated      errorType = "E_VDECREATED"
-	errRequestNotFound errorType = "E_REQUESTNOTFOUND"
-	errCheckRole       errorType = "E_CHECKROLE"
-	errUpdating        errorType = "E_UPDATING"
-	errStopping        errorType = "E_STOPPING"
-)
+// Errof returns formating error
+func (et errorType) Errorf(v ...interface{}) errorType {
+	et.Message = fmt.Sprintf(et.Message, v...)
+	return et
+}
 
-var (
-	errorDescriptions = map[errorType]string{
-		errContract:        "There is not %s contract",
-		errDBNil:           "DB is nil",
-		errDeletedKey:      "The key is deleted",
-		errEcosystem:       "Ecosystem %d doesn't exist",
-		errEmptyPublic:     "Public key is undefined",
-		errEmptySign:       "Signature is undefined",
-		errHashWrong:       "Hash is incorrect",
-		errHashNotFound:    "Hash has not been found",
-		errHeavyPage:       "This page is heavy",
-		errInstalled:       "Apla is already installed",
-		errInvalidWallet:   "Wallet %s is not valid",
-		errNotFound:        "Page not found",
-		errNotInstalled:    "Apla is not installed",
-		errParamNotFound:   "Parameter %s has not been found",
-		errPermission:      "Permission denied",
-		errQuery:           "DB query is wrong",
-		errRecovered:       "API recovered",
-		errRefreshToken:    "Refresh token is not valid",
-		errServer:          "Server error",
-		errSignature:       "Signature is incorrect",
-		errUnknownSign:     "Unknown signature",
-		errStateLogin:      "%s is not a membership of ecosystem %s",
-		errTableNotFound:   "Table %s has not been found",
-		errToken:           "Token is not valid",
-		errTokenExpired:    "Token is expired by %s",
-		errUnauthorized:    "Unauthorized",
-		errUndefineVal:     "Value %s is undefined",
-		errUnknownUID:      "Unknown uid",
-		errVDE:             "Virtual Dedicated Ecosystem %d doesn't exist",
-		errVDECreated:      "Virtual Dedicated Ecosystem is already created",
-		errRequestNotFound: "Request %s doesn't exist",
-		errCheckRole:       "Check role",
-		errUpdating:        "Node is updating blockchain",
-		errStopping:        "Network is stopping",
+func newError(err error, status int, v ...interface{}) errorType {
+	et, ok := err.(errorType)
+	if ok {
+		et = et.Errorf(v...)
+	} else {
+		et = errServer
+		et.Message = err.Error()
 	}
-)
-
-type errResult struct {
-	Error   errorType `json:"error"`
-	Message string    `json:"msg"`
+	et.Status = status
+	return et
 }
 
-func errorResponse(w http.ResponseWriter, err interface{}, code int, params ...interface{}) {
+func errorResponse(w http.ResponseWriter, err error) {
+	et, ok := err.(errorType)
+	if !ok {
+		et = errServer
+		et.Message = err.Error()
+	}
+
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(code)
+	w.WriteHeader(et.Status)
 
-	result := &errResult{}
-
-	switch v := err.(type) {
-	case errorType:
-		result.Error = v
-		result.Message = fmt.Sprintf(errorDescriptions[v], params...)
-	case interface{}:
-		result.Error = errServer
-		if err, ok := v.(error); ok {
-			result.Message = err.Error()
-		}
-	}
-
-	jsonResponse(w, result)
+	jsonResponse(w, et)
 }

@@ -34,7 +34,7 @@ type appParamsResult struct {
 }
 
 type paramsForm struct {
-	Form
+	form
 	Names string `schema:"names"`
 }
 
@@ -56,7 +56,8 @@ type appParamsForm struct {
 
 func appParamsHandler(w http.ResponseWriter, r *http.Request) {
 	form := &appParamsForm{}
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 

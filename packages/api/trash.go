@@ -194,8 +194,7 @@ func (c *Contract) CreateTxFromRequest(contReq *tx.RequestContract, smartTx *tx.
 		var err error
 		smartTx.Data, err = packParamsContract(*info.Tx, contReq, logger)
 		if err != nil {
-			// errorResponse(w, err, http.StatusBadRequest)
-			return "", err
+			return "", newError(err, http.StatusBadRequest)
 		}
 	}
 
@@ -204,7 +203,6 @@ func (c *Contract) CreateTxFromRequest(contReq *tx.RequestContract, smartTx *tx.
 	serializedData, err := msgpack.Marshal(smartTx)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-		// errorResponse(w, err, http.StatusInternalServerError)
 		return "", err
 	}
 
@@ -240,15 +238,13 @@ func prepareFormFile(r *http.Request, key, reqKey string, req *tx.RequestContrac
 	file, header, err := r.FormFile(key)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("getting multipart file")
-		// errorResponse(w, err, http.StatusBadRequest)
-		return nil, err
+		return nil, newError(err, http.StatusBadRequest)
 	}
 	defer file.Close()
 
 	fileHeader, err := req.WriteFile(reqKey, header.Header.Get(`Content-Type`), file)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing file")
-		// errorResponse(w, err, http.StatusInternalServerError)
 		return nil, err
 	}
 

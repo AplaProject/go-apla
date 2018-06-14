@@ -33,12 +33,12 @@ func maxBlockHandler(w http.ResponseWriter, r *http.Request) {
 	found, err := block.GetMaxBlock()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max block")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("last block not found")
-		errorResponse(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound)
 		return
 	}
 
@@ -54,12 +54,12 @@ func blockInfoHandler(w http.ResponseWriter, r *http.Request) {
 	found, err := block.Get(blockID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "id": blockID}).Error("block with id not found")
-		errorResponse(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound)
 		return
 	}
 

@@ -74,7 +74,7 @@ func initVars(r *http.Request) *map[string]string {
 	return &vars
 }
 
-func pageValue(w http.ResponseWriter, r *http.Request) (*model.Page, bool) {
+func pageValue(r *http.Request) (*model.Page, error) {
 	params := mux.Vars(r)
 	logger := getLogger(r)
 	client := getClient(r)
@@ -83,20 +83,18 @@ func pageValue(w http.ResponseWriter, r *http.Request) (*model.Page, bool) {
 	page.SetTablePrefix(client.Prefix())
 	if found, err := page.Get(params[keyName]); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
-		errorResponse(w, errServer, http.StatusInternalServerError)
-		return nil, false
+		return nil, errServer
 	} else if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("page not found")
-		errorResponse(w, errNotFound, http.StatusNotFound)
-		return nil, false
+		return nil, errNotFound
 	}
-	return page, true
+	return page, nil
 }
 
-func getPage(w http.ResponseWriter, r *http.Request) (result *contentResult, ok bool) {
-	page, ok := pageValue(w, r)
-	if !ok {
-		return
+func getPage(r *http.Request) (result *contentResult, err error) {
+	page, err := pageValue(r)
+	if err != nil {
+		return nil, err
 	}
 
 	client := getClient(r)
@@ -107,8 +105,7 @@ func getPage(w http.ResponseWriter, r *http.Request) (result *contentResult, ok 
 		page.Menu).String()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting single from DB")
-		errorResponse(w, errServer, http.StatusInternalServerError)
-		return
+		return nil, errServer
 	}
 
 	var (
@@ -156,16 +153,16 @@ func getPage(w http.ResponseWriter, r *http.Request) (result *contentResult, ok 
 
 	if timeout {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error(page.Name + " is a heavy page")
-		errorResponse(w, errHeavyPage, http.StatusInternalServerError)
-		return
+		return nil, errHeavyPage
 	}
 
-	return result, true
+	return result, nil
 }
 
 func getPageHandler(w http.ResponseWriter, r *http.Request) {
-	result, ok := getPage(w, r)
-	if !ok {
+	result, err := getPage(r)
+	if err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -173,8 +170,9 @@ func getPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getPageHashHandler(w http.ResponseWriter, r *http.Request) {
-	result, ok := getPage(w, r)
-	if !ok {
+	result, err := getPage(r)
+	if err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -183,13 +181,13 @@ func getPageHashHandler(w http.ResponseWriter, r *http.Request) {
 	out, err := json.Marshal(result)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("getting string for hash")
-		errorResponse(w, errServer, http.StatusInternalServerError)
+		errorResponse(w, errServer)
 		return
 	}
 	ret, err := crypto.Hash(out)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating hash of the page")
-		errorResponse(w, errServer, http.StatusInternalServerError)
+		errorResponse(w, errServer)
 		return
 	}
 
@@ -205,10 +203,12 @@ func getMenuHandler(w http.ResponseWriter, r *http.Request) {
 	menu.SetTablePrefix(client.Prefix())
 	if found, err := menu.Get(params[keyName]); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
-		errorResponse(w, err, http.StatusBadRequest)
+		errorResponse(w, newError(err, http.StatusBadRequest))
+		return
 	} else if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("menu not found")
-		errorResponse(w, errNotFound, http.StatusNotFound)
+		errorResponse(w, errNotFound)
+		return
 	}
 
 	var timeout bool
@@ -221,22 +221,22 @@ func getMenuHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type jsonContentForm struct {
-	Form
+	form
 	Template string `schema:"template"`
 	Source   string `schema:"source"`
 }
 
-func (f *jsonContentForm) Validate(w http.ResponseWriter, r *http.Request) bool {
+func (f *jsonContentForm) Validate(r *http.Request) error {
 	if len(f.Template) == 0 {
-		errorResponse(w, fmt.Errorf("Empty template"), http.StatusBadRequest)
-		return false
+		return newError(fmt.Errorf("Empty template"), http.StatusBadRequest)
 	}
-	return true
+	return nil
 }
 
 func jsonContentHandler(w http.ResponseWriter, r *http.Request) {
 	form := &jsonContentForm{}
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -253,8 +253,9 @@ func jsonContentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getSourceHandler(w http.ResponseWriter, r *http.Request) {
-	page, ok := pageValue(w, r)
-	if !ok {
+	page, err := pageValue(r)
+	if err != nil {
+		errorResponse(w, err)
 		return
 	}
 

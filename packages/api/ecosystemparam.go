@@ -29,7 +29,8 @@ import (
 
 func ecosystemParamHandler(w http.ResponseWriter, r *http.Request) {
 	form := &ecosystemForm{}
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -41,11 +42,11 @@ func ecosystemParamHandler(w http.ResponseWriter, r *http.Request) {
 
 	if found, err := sp.Get(nil, params[keyName]); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting state parameter by name")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	} else if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "key": params[keyName]}).Error("state parameter not found")
-		errorResponse(w, errParamNotFound, http.StatusBadRequest, params[keyName])
+		errorResponse(w, errParamNotFound.Errorf(params[keyName]))
 		return
 	}
 
@@ -65,12 +66,12 @@ func ecosystemNameHandler(w http.ResponseWriter, r *http.Request) {
 	found, err := ecosystems.Get(ecosystemID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem name")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "ecosystem_id": ecosystemID}).Error("ecosystem by id not found")
-		errorResponse(w, errParamNotFound, http.StatusNotFound, "name")
+		errorResponse(w, errParamNotFound.Errorf("name"))
 		return
 	}
 

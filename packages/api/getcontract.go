@@ -55,7 +55,7 @@ func contractInfoHandler(w http.ResponseWriter, r *http.Request) {
 	contract := getContract(r, params[keyContractName])
 	if contract == nil {
 		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": params[keyContractName]}).Error("contract name")
-		errorResponse(w, errContract, http.StatusBadRequest, params[keyContractName])
+		errorResponse(w, errContract.Errorf(params[keyContractName]))
 		return
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)

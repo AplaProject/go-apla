@@ -39,21 +39,22 @@ type contractsResult struct {
 }
 
 type paginatorForm struct {
-	Form
+	form
 	Limit  int   `schema:"limit"`
 	Offset int64 `schema:"offset"`
 }
 
-func (f *paginatorForm) Validate(w http.ResponseWriter, r *http.Request) bool {
+func (f *paginatorForm) Validate(r *http.Request) error {
 	if f.Limit <= 0 {
 		f.Limit = defaultPaginatorLimit
 	}
-	return true
+	return nil
 }
 
 func contractsHandler(w http.ResponseWriter, r *http.Request) {
 	form := &paginatorForm{}
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -64,7 +65,7 @@ func contractsHandler(w http.ResponseWriter, r *http.Request) {
 	count, err := model.GetRecordsCountTx(nil, table)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 
@@ -73,7 +74,7 @@ func contractsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf(` offset %d `, form.Offset), form.Limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 	for ind, val := range list {
@@ -81,7 +82,7 @@ func contractsHandler(w http.ResponseWriter, r *http.Request) {
 		cntlist, err := script.ContractsList(val["value"])
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Error("getting contract list")
-			errorResponse(w, err, http.StatusInternalServerError)
+			errorResponse(w, err)
 			return
 		}
 		list[ind]["name"] = strings.Join(cntlist, `,`)

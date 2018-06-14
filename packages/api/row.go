@@ -57,7 +57,7 @@ func rowHandler(w http.ResponseWriter, r *http.Request) {
 	row, err := model.GetOneRow(`SELECT `+columns+` FROM `+table+` WHERE id = ?`, params[keyID]).String()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": params[keyName], "id": params[keyID]}).Error("getting one row")
-		errorResponse(w, errQuery, http.StatusInternalServerError)
+		errorResponse(w, errQuery)
 		return
 	}
 

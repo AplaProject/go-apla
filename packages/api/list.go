@@ -41,7 +41,8 @@ type listForm struct {
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
 	form := &listForm{}
-	if ok := ParseForm(w, r, form); !ok {
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err)
 		return
 	}
 
@@ -59,7 +60,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	count, err := model.GetRecordsCountTx(nil, strings.Trim(table, `"`))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
-		errorResponse(w, errTableNotFound, http.StatusBadRequest, params[keyName])
+		errorResponse(w, errTableNotFound.Errorf(params[keyName]))
 		return
 	}
 
@@ -67,7 +68,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf(` offset %d `, form.Offset), form.Limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 

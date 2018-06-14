@@ -44,7 +44,7 @@ func updateNotificatorHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.Unmarshal([]byte(r.FormValue("ids")), &list)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling ids")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 

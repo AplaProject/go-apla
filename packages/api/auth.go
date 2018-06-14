@@ -56,18 +56,17 @@ type JWTClaims struct {
 
 func TokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := getLogger(r)
-
 		token, err := parseJWTToken(r.Header.Get(authHeader))
 		if err != nil {
+			logger := getLogger(r)
 			logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("starting session")
 			if err, ok := err.(jwt.ValidationError); ok {
 				if (err.Errors & jwt.ValidationErrorExpired) != 0 {
-					errorResponse(w, errTokenExpired, http.StatusUnauthorized, err.Error())
+					errorResponse(w, errTokenExpired.Errorf(err.Error()))
 					return
 				}
 			}
-			errorResponse(w, err, http.StatusBadRequest)
+			errorResponse(w, newError(err, http.StatusBadRequest))
 			return
 		}
 
@@ -87,7 +86,7 @@ func ClientMiddleware(next http.Handler) http.Handler {
 		if token != nil { // get client from token
 			var err error
 			if client, err = getClientFromToken(token); err != nil {
-				errorResponse(w, errServer, http.StatusInternalServerError)
+				errorResponse(w, errServer)
 				return
 			}
 		}
@@ -111,7 +110,7 @@ func AuthRequire(next func(w http.ResponseWriter, r *http.Request)) func(w http.
 
 		logger := getLogger(r)
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
-		errorResponse(w, errUnauthorized, http.StatusUnauthorized)
+		errorResponse(w, errUnauthorized)
 	}
 }
 

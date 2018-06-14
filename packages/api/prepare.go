@@ -60,7 +60,7 @@ func (h *contractHandlers) PrepareHandler(w http.ResponseWriter, r *http.Request
 
 	req := prepareRequest{}
 	if err := json.Unmarshal([]byte(r.FormValue("data")), &req); err != nil {
-		errorResponse(w, err, http.StatusBadRequest)
+		errorResponse(w, newError(err, http.StatusBadRequest))
 		return
 	}
 
@@ -83,12 +83,12 @@ func (h *contractHandlers) PrepareHandler(w http.ResponseWriter, r *http.Request
 	for _, rc := range req.Contracts {
 		contract := getContract(r, rc.Contract)
 		if contract == nil {
-			errorResponse(w, errContract, http.StatusBadRequest, rc.Contract)
+			errorResponse(w, errContract.Errorf(rc.Contract))
 			return
 		}
 
 		if err := contract.ValidateParams(rc); err != nil {
-			errorResponse(w, err, http.StatusBadRequest)
+			errorResponse(w, newError(err, http.StatusBadRequest))
 			return
 		}
 
@@ -101,7 +101,7 @@ func (h *contractHandlers) PrepareHandler(w http.ResponseWriter, r *http.Request
 
 		forSign, err := contract.ForSign(bufReq, smartTx, rc)
 		if err != nil {
-			errorResponse(w, err, http.StatusBadRequest)
+			errorResponse(w, newError(err, http.StatusBadRequest))
 			return
 		}
 

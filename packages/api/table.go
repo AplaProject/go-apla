@@ -59,12 +59,12 @@ func tableHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := table.Get(nil, params[keyName])
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 
 	if len(table.Name) == 0 {
-		errorResponse(w, errTableNotFound, http.StatusBadRequest, params[keyName])
+		errorResponse(w, errTableNotFound.Errorf(params[keyName]))
 		return
 	}
 
@@ -73,7 +73,7 @@ func tableHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: перенести в модель как отдельную структуру
 	if err = json.Unmarshal([]byte(table.Permissions), &perm); err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table permissions to json")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 
@@ -81,7 +81,7 @@ func tableHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal([]byte(table.Columns), &cols)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table columns to json")
-		errorResponse(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
 		return
 	}
 	columns := make([]columnInfo, 0)
@@ -89,7 +89,7 @@ func tableHandler(w http.ResponseWriter, r *http.Request) {
 		colType, err := model.GetColumnType(prefix+`_`+params[keyName], key)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column type from db")
-			errorResponse(w, err.Error(), http.StatusInternalServerError)
+			errorResponse(w, err)
 			return
 		}
 		columns = append(columns, columnInfo{
