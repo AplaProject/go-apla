@@ -257,6 +257,9 @@ func needLoad(logger *log.Entry) (bool, error) {
 }
 
 func banNode(host string, block *parser.Block, err error) {
+	// Ban is temporarily disabled
+	return
+
 	var (
 		reason             string
 		blockId, blockTime int64
