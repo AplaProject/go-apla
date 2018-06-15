@@ -285,6 +285,21 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["GetVDEList"] = GetVDEList
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
+	case script.VMTypeVDEMaster:
+		f["HTTPRequest"] = HTTPRequest
+		f["GetMapKeys"] = GetMapKeys
+		f["SortedKeys"] = SortedKeys
+		f["Date"] = Date
+		f["HTTPPostJSON"] = HTTPPostJSON
+		f["ValidateCron"] = ValidateCron
+		f["UpdateCron"] = UpdateCron
+		f["CreateVDE"] = CreateVDE
+		f["DeleteVDE"] = DeleteVDE
+		f["StartVDE"] = StartVDE
+		f["StopVDEProcess"] = StopVDEProcess
+		f["GetVDEList"] = GetVDEList
+		vmExtendCost(vm, getCost)
+		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
 		f["GetBlock"] = GetBlock
 		f["UpdateNodesBan"] = UpdateNodesBan

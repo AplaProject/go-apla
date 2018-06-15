@@ -829,7 +829,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		conditions {}
 	
 		action {
-			GetVDEList()
+			return GetVDEList()
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('27', 'RunVDE', 'contract RunVDE {
