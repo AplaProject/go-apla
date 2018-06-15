@@ -171,23 +171,9 @@ func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 	return cost, tableID, addRollback(sc, table, tableID, ``)
 }
 
-func (sc *SmartContract) update(fields []string, ivalues []interface{},
-	table string, whereFields, whereValues []string) (int64, string, error) {
-	var (
-		tableID         string
-		err             error
-		cost            int64
-		rollbackInfoStr string
-	)
-	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
-	logger := sc.GetLogger()
-
-	values, err := prepareValues(sc, table, fields, ivalues)
-	if err != nil {
-		return 0, ``, err
-	}
-
-	addSQLFields := `id,`
+func (sc *SmartContract) getFieldsAndWhere(fields, whereFields, whereValues []string) (addSQLFields,
+	addSQLWhere string) {
+	addSQLFields = `id,`
 	for i, field := range fields {
 		field = strings.TrimSpace(strings.ToLower(field))
 		fields[i] = field
@@ -203,10 +189,6 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 	}
 	addSQLFields = strings.TrimRight(addSQLFields, ",")
 
-	addSQLWhere := ""
-	if whereFields == nil || whereValues == nil {
-		return 0, ``, logErrorShort(errUpdNotExistRecord, consts.NotFound)
-	}
 	for i := 0; i < len(whereFields); i++ {
 		if val := converter.StrToInt64(whereValues[i]); val != 0 {
 			addSQLWhere += whereFields[i] + "= " + escapeSingleQuotes(whereValues[i]) + " AND "
@@ -217,48 +199,13 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 	if len(addSQLWhere) > 0 {
 		addSQLWhere = " WHERE " + addSQLWhere[0:len(addSQLWhere)-5]
 	}
-	selectQuery := `SELECT ` + addSQLFields + ` FROM "` + table + `" ` + addSQLWhere
-	selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting query total cost")
-		return 0, tableID, err
-	}
-	logData, err := model.GetOneRowTransaction(sc.DbTransaction, selectQuery).String()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting one row transaction")
-		return 0, tableID, err
-	}
-	cost += selectCost
-	if len(logData) == 0 {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "query": selectQuery}).Error("updating for not existing record")
-		return 0, tableID, errUpdNotExistRecord
-	}
+	return
+}
+
+func getSQLUpdate(table string, fields, values []string, logData map[string]string) (
+	addSQLUpdate string, err error) {
 	jsonFields := make(map[string]map[string]string)
 
-	rollbackInfo := make(map[string]string)
-	for k, v := range logData {
-		if k == `id` {
-			continue
-		}
-		if converter.IsByteColumn(table, k) && v != "" {
-			rollbackInfo[k] = string(converter.BinToHex([]byte(v)))
-		} else {
-			rollbackInfo[k] = v
-		}
-		if k[:1] == "+" || k[:1] == "-" {
-			addSQLFields += k[1:] + ","
-		} else if strings.HasPrefix(k, `timestamp `) {
-			addSQLFields += k[len(`timestamp `):] + `,`
-		} else {
-			addSQLFields += k + ","
-		}
-	}
-	jsonRollbackInfo, err := marshalJSON(rollbackInfo, `rollback info to json`)
-	if err != nil {
-		return 0, tableID, err
-	}
-	rollbackInfoStr = string(jsonRollbackInfo)
-	addSQLUpdate := ""
 	for i := 0; i < len(fields); i++ {
 		if converter.IsByteColumn(table, fields[i]) && len(values[i]) != 0 {
 			addSQLUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
@@ -285,10 +232,13 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 		}
 	}
 	for colname, colvals := range jsonFields {
-		var initial string
-		out, err := marshalJSON(colvals, `update columns for jsonb`)
+		var (
+			initial string
+			out     []byte
+		)
+		out, err = marshalJSON(colvals, `update columns for jsonb`)
 		if err != nil {
-			return 0, ``, err
+			return
 		}
 		if len(logData[colname]) > 0 && logData[colname] != `NULL` {
 			initial = colname
@@ -298,6 +248,72 @@ func (sc *SmartContract) update(fields []string, ivalues []interface{},
 		addSQLUpdate += fmt.Sprintf(`%s=%s::jsonb || '%s'::jsonb,`, colname, initial, string(out))
 	}
 	addSQLUpdate = strings.TrimRight(addSQLUpdate, `,`)
+	return
+}
+
+func (sc *SmartContract) update(fields []string, ivalues []interface{},
+	table string, whereFields, whereValues []string) (int64, string, error) {
+	var (
+		tableID         string
+		err             error
+		cost            int64
+		rollbackInfoStr string
+	)
+	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
+	logger := sc.GetLogger()
+
+	values, err := prepareValues(sc, table, fields, ivalues)
+	if err != nil {
+		return 0, ``, err
+	}
+	if whereFields == nil || whereValues == nil {
+		return 0, ``, logErrorShort(errUpdNotExistRecord, consts.NotFound)
+	}
+	addSQLFields, addSQLWhere := sc.getFieldsAndWhere(fields, whereFields, whereValues)
+	selectQuery := `SELECT ` + addSQLFields + ` FROM "` + table + `" ` + addSQLWhere
+	selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting query total cost")
+		return 0, tableID, err
+	}
+	logData, err := model.GetOneRowTransaction(sc.DbTransaction, selectQuery).String()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting one row transaction")
+		return 0, tableID, err
+	}
+	cost += selectCost
+	if len(logData) == 0 {
+		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "query": selectQuery}).Error("updating for not existing record")
+		return 0, tableID, errUpdNotExistRecord
+	}
+	rollbackInfo := make(map[string]string)
+	for k, v := range logData {
+		if k == `id` {
+			continue
+		}
+		if converter.IsByteColumn(table, k) && v != "" {
+			rollbackInfo[k] = string(converter.BinToHex([]byte(v)))
+		} else {
+			rollbackInfo[k] = v
+		}
+		if k[:1] == "+" || k[:1] == "-" {
+			addSQLFields += k[1:] + ","
+		} else if strings.HasPrefix(k, `timestamp `) {
+			addSQLFields += k[len(`timestamp `):] + `,`
+		} else {
+			addSQLFields += k + ","
+		}
+	}
+	jsonRollbackInfo, err := marshalJSON(rollbackInfo, `rollback info to json`)
+	if err != nil {
+		return 0, tableID, err
+	}
+	rollbackInfoStr = string(jsonRollbackInfo)
+	addSQLUpdate, err := getSQLUpdate(table, fields, values, logData)
+	if err != nil {
+		return 0, ``, err
+	}
+
 	if !sc.VDE {
 		updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + addSQLWhere
 		updateCost, err := queryCoster.QueryCost(sc.DbTransaction, updateQuery)
