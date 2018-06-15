@@ -423,6 +423,57 @@ func RollbackNewContract(sc *SmartContract, value string) error {
 	return nil
 }
 
+func getColumns(columns string) (colsSQL string, colout []byte, err error) {
+	var (
+		sqlColType string
+		cols       []interface{}
+		out        []byte
+	)
+	if err = unmarshalJSON([]byte(columns), &cols, "columns from json"); err != nil {
+		return
+	}
+	colperm := make(map[string]string)
+	colList := make(map[string]bool)
+	for _, icol := range cols {
+		var data map[string]interface{}
+		switch v := icol.(type) {
+		case string:
+			if err = unmarshalJSON([]byte(v), &data, `columns permissions from json`); err != nil {
+				return
+			}
+		default:
+			data = v.(map[string]interface{})
+		}
+		colname := converter.EscapeSQL(strings.ToLower(data[`name`].(string)))
+		if colList[colname] {
+			err = errSameColumns
+			return
+		}
+
+		sqlColType, err = columnType(data["type"].(string))
+		if err != nil {
+			return
+		}
+
+		colList[colname] = true
+		colsSQL += `"` + colname + `" ` + sqlColType + " ,\n"
+		condition := ``
+		switch v := data[`conditions`].(type) {
+		case string:
+			condition = v
+		case map[string]interface{}:
+			out, err = marshalJSON(v, `conditions to json`)
+			if err != nil {
+				return
+			}
+			condition = string(out)
+		}
+		colperm[colname] = condition
+	}
+	colout, err = marshalJSON(colperm, `columns to json`)
+	return
+}
+
 // CreateTable is creating smart contract table
 func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) error {
 	var err error
@@ -443,53 +494,11 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return fmt.Errorf(eTableExists, name)
 	}
 
-	var cols []interface{}
-	if err = unmarshalJSON([]byte(columns), &cols, "columns from json"); err != nil {
-		return err
-	}
-
-	colsSQL := ""
-	colperm := make(map[string]string)
-	colList := make(map[string]bool)
-	for _, icol := range cols {
-		var data map[string]interface{}
-		switch v := icol.(type) {
-		case string:
-			if err = unmarshalJSON([]byte(v), &data, `columns permissions from json`); err != nil {
-				return err
-			}
-		default:
-			data = v.(map[string]interface{})
-		}
-		colname := converter.EscapeSQL(strings.ToLower(data[`name`].(string)))
-		if colList[colname] {
-			return errSameColumns
-		}
-
-		sqlColType, err := columnType(data["type"].(string))
-		if err != nil {
-			return err
-		}
-
-		colList[colname] = true
-		colsSQL += `"` + colname + `" ` + sqlColType + " ,\n"
-		condition := ``
-		switch v := data[`conditions`].(type) {
-		case string:
-			condition = v
-		case map[string]interface{}:
-			out, err := marshalJSON(v, `conditions to json`)
-			if err != nil {
-				return err
-			}
-			condition = string(out)
-		}
-		colperm[colname] = condition
-	}
-	colout, err := marshalJSON(colperm, `columns to json`)
+	colsSQL, colout, err := getColumns(columns)
 	if err != nil {
 		return err
 	}
+
 	err = model.CreateTable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
 	if err != nil {
 		return logErrorDB(err, "creating tables")
