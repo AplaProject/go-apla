@@ -168,10 +168,6 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 				logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
 				return errorAPI(w, err, http.StatusInternalServerError)
 			}
-<<<<<<< HEAD
-
-=======
->>>>>>> 6c85191376afc8462fb926256c57cb60f0bbda2a
 			ret, err := VDEContract(serializedContract, data)
 			if err != nil {
 				return errorAPI(w, err, http.StatusInternalServerError)
