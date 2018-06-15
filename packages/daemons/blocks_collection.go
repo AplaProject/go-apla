@@ -24,6 +24,8 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/block"
+	"github.com/GenesisKernel/go-genesis/packages/tcpclient"
+
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -72,39 +74,10 @@ func InitialLoad(logger *log.Entry) error {
 }
 
 func blocksCollection(ctx context.Context, d *daemon) (err error) {
-	hosts, err := filterBannedHosts(syspar.GetRemoteHosts())
+	host, maxBlockID, err := getHostWithMaxID(d.logger)
 	if err != nil {
+		d.logger.WithFields(log.Fields{"error": err}).Error("on checking best host")
 		return err
-	}
-	var (
-		chooseFromConfig bool
-		host             string
-		maxBlockID       int64
-	)
-	if len(hosts) > 0 {
-		// get a host with the biggest block id from system parameters
-		host, maxBlockID, err = utils.ChooseBestHost(ctx, hosts, d.logger)
-		if err != nil {
-			if err == utils.ErrNodesUnavailable {
-				chooseFromConfig = true
-			} else {
-				return err
-			}
-		}
-	} else {
-		chooseFromConfig = true
-	}
-
-	if chooseFromConfig {
-		// get a host with the biggest block id from config
-		log.Debug("Getting a host with biggest block from config")
-		hosts = conf.GetNodesAddr()
-		if len(hosts) > 0 {
-			host, maxBlockID, err = utils.ChooseBestHost(ctx, hosts, d.logger)
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	infoBlock := &model.InfoBlock{}
@@ -199,7 +172,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	var err error
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(tcpserver.BlocksPerRequest) {
 		var rawBlocksChan chan []byte
-		rawBlocksChan, err = utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, false)
+		rawBlocksChan, err = getBlocksFromHost(host, blockID, false)
 		if err != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
 			break
@@ -292,20 +265,34 @@ func banNode(host string, block *block.Block, err error) {
 	}
 }
 
-func filterBannedHosts(hosts []string) ([]string, error) {
-	var goodHosts []string
-	for _, h := range hosts {
-		n, err := syspar.GetNodeByHost(h)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err}).Error("getting node by host")
-			return nil, err
-		}
+// GetHostWithMaxID returns host with maxBlockID
+func getHostWithMaxID(logger *log.Entry) (host string, maxBlockID int64, err error) {
 
-		if !service.GetNodesBanService().IsBanned(n) {
-			goodHosts = append(goodHosts, n.TCPAddress)
-		}
+	nbs := service.GetNodesBanService()
+	config := tcpclient.Config{
+		DefaultPort:  consts.DEFAULT_TCP_PORT,
+		ReadTimeout:  consts.READ_TIMEOUT,
+		WriteTimeout: consts.WRITE_TIMEOUT,
 	}
-	return goodHosts, nil
+
+	cli := tcpclient.NewClient(config, logger)
+
+	hosts, err := nbs.FilterBannedHosts(syspar.GetRemoteHosts())
+	if err != nil {
+		logger.WithFields(log.Fields{"error": err}).Error("on filtering banned hosts")
+	}
+
+	host, maxBlockID, err = cli.HostWithMaxBlock(hosts)
+	if err != nil && err == tcpclient.ErrNodesUnavailable {
+		hosts, err := nbs.FilterBannedHosts(conf.GetNodesAddr())
+		if err != nil {
+			logger.WithFields(log.Fields{"error": err}).Error("on filtering banned hosts")
+			return "", -1, err
+		}
+		return cli.HostWithMaxBlock(hosts)
+	}
+
+	return
 }
 
 // GetBlocks is returning blocks

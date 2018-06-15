@@ -22,11 +22,14 @@ import (
 	"io"
 	"sync"
 
+	"github.com/GenesisKernel/go-genesis/packages/tcpclient"
+
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -43,6 +46,7 @@ const (
 // if we are full node(miner): sends blocks and transactions hashes
 // else send the full transactions
 func Disseminator(ctx context.Context, d *daemon) error {
+
 	isFullNode := true
 	myNodePosition, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
 	if err != nil {
@@ -68,22 +72,22 @@ func sendTransactions(logger *log.Entry) error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unsent transactions")
 		return err
 	}
+
 	if trs == nil {
 		logger.Info("transactions not found")
 		return nil
 	}
 
-	// form packet to send
-	var buf bytes.Buffer
-	for _, tr := range *trs {
-		buf.Write(MarshallTr(tr))
+	hosts, err := service.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
+		return err
 	}
 
-	if buf.Len() > 0 {
-		err := sendPacketToAll(I_AM_NOT_FULL_NODE, buf.Bytes(), nil, logger)
-		if err != nil {
-			return err
-		}
+	cli := tcpclient.NewClient(defaultTCPClientConfig(), logger)
+	if err := cli.SendTransacitionsToAll(hosts, *trs); err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending transactions")
+		return err
 	}
 
 	// set all transactions as sent
@@ -187,52 +191,8 @@ func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
 	return nil
 }
 
-func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int64) []byte {
-	var noBlockFlag byte
-	if block == nil {
-		noBlockFlag = 1
-	}
-
-	var buf bytes.Buffer
-	buf.Write(converter.DecToBin(nodeID, 8))
-	buf.WriteByte(noBlockFlag)
-	if noBlockFlag == 0 {
-		buf.Write(MarshallBlock(block))
-	}
-	if trs != nil {
-		for _, tr := range *trs {
-			buf.Write(MarshallTrHash(tr))
-		}
-	}
-
-	return buf.Bytes()
-}
-
-// MarshallTr returns transaction data
-func MarshallTr(tr model.Transaction) []byte {
-	return tr.Data
-}
-
-// MarshallBlock returns block as []byte
-func MarshallBlock(block *model.InfoBlock) []byte {
-	if block != nil {
-		toBeSent := converter.DecToBin(block.BlockID, 3)
-		return append(toBeSent, block.Hash...)
-	}
-	return []byte{}
-}
-
-// MarshallTrHash returns transaction hash
-func MarshallTrHash(tr model.Transaction) []byte {
-	return tr.Hash
-}
-
 func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer, logger *log.Entry) error, logger *log.Entry) error {
 
-	hosts, err := filterBannedHosts(syspar.GetRemoteHosts())
-	if err != nil {
-		return err
-	}
 	var wg sync.WaitGroup
 
 	for _, host := range hosts {
@@ -286,32 +246,8 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 
 	// if response handler exist, read the answer and call handler
 	if respHandler != nil {
-		buf := make([]byte, 4)
 
-		// read data size
-		_, err = io.ReadFull(conn, buf)
-		if err != nil {
-			if err == io.EOF {
-				logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Warn("connection closed unexpectedly")
-			} else {
-				logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data size")
-			}
-		}
-
-		respSize := converter.BinToDec(buf)
-		if respSize > syspar.GetMaxTxSize() {
-			logger.WithFields(log.Fields{"size": respSize, "max_size": syspar.GetMaxTxSize(), "type": consts.ParameterExceeded}).Warning("response size is larger than max tx size")
-			return nil
-		}
-		// read the data
-		resp := make([]byte, respSize)
-		_, err = io.ReadFull(conn, resp)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data")
-			return err
-		}
-		err = respHandler(resp, conn, logger)
-		if err != nil {
+		if err = respHandler(resp, conn, logger); err != nil {
 			logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("reading data")
 			return err
 		}
