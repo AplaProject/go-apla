@@ -225,7 +225,6 @@ func saveNewTransactions(r *DisRequest) error {
 		}
 
 		queue = append(queue, &model.QueueTx{Hash: hash, Data: txBinData, FromGate: 1})
-		// err = queueTx.Create()
 	}
 
 	if err := model.BatchInsert(queue, []string{"hash", "data", "from_gate"}); err != nil {
