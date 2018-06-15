@@ -162,3 +162,13 @@ func getTxRateByTxType(txType int8) transactionRate {
 		return 0
 	}
 }
+
+func GetManyTransactions(hashes [][]byte) ([]Transaction, error) {
+	txes := []Transaction{}
+	query := GetDB(nil).Where("hash in ?", hashes).Find(&txes)
+	if err := query.Error; err != nil {
+		return nil, err
+	}
+
+	return txes, nil
+}

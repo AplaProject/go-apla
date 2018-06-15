@@ -172,3 +172,19 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 
 	return nil
 }
+
+func (nbs *NodesBanService) FilterBannedHosts(hosts []string) ([]string, error) {
+	var goodHosts []string
+	for _, h := range hosts {
+		n, err := syspar.GetNodeByHost(h)
+		if err != nil {
+			log.WithFields(log.Fields{"error": err, "host": h}).Error("getting node by host")
+			return nil, err
+		}
+
+		if !nbs.IsBanned(n) {
+			goodHosts = append(goodHosts, n.TCPAddress)
+		}
+	}
+	return goodHosts, nil
+}

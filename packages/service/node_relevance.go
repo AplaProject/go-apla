@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"time"
 
 	"github.com/pkg/errors"
@@ -10,7 +9,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/tcpclient"
 )
 
 var updatingEndWhilePaused = make(chan struct{})
@@ -78,10 +77,9 @@ func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
 		return true, nil
 	}
 
-	ctx, _ := context.WithCancel(context.Background())
-	_, maxBlockID, err := utils.ChooseBestHost(ctx, remoteHosts, &log.Entry{Logger: &log.Logger{}})
+	maxBlockID, err := getMaxRemotesBlock(remoteHosts)
 	if err != nil {
-		if err == utils.ErrNodesUnavailable {
+		if err == tcpclient.ErrNodesUnavailable {
 			return false, nil
 		}
 		return false, errors.Wrapf(err, "choosing best host")

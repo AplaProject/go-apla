@@ -18,15 +18,15 @@ package daemons
 
 import (
 	"context"
-	"fmt"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/service"
+	"github.com/GenesisKernel/go-genesis/packages/tcpclient"
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 
 	log "github.com/sirupsen/logrus"
@@ -101,14 +101,14 @@ func confirmationsBlocks(ctx context.Context, d *daemon, lastBlockID, startBlock
 			continue
 		}
 
-		hosts, err := filterBannedHosts(syspar.GetRemoteHosts())
+		hosts, err := service.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
 		if err != nil {
 			return err
 		}
 
 		ch := make(chan string)
 		for i := 0; i < len(hosts); i++ {
-			host, err := NormalizeHostAddress(hosts[i], consts.DEFAULT_TCP_PORT)
+			host, err := tcpclient.NormalizeHostAddress(hosts[i], consts.DEFAULT_TCP_PORT)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"host": host[i], "type": consts.ParseError, "error": err}).Error("wrong host address")
 				continue
@@ -193,19 +193,4 @@ func IsReachable(host string, blockID int64, ch0 chan string, logger *log.Entry)
 	case <-time.After(consts.WAIT_CONFIRMED_NODES * time.Second):
 		ch0 <- "0"
 	}
-}
-
-// NormalizeHostAddress get address. if port not defined returns combined string with ip and defaultPort
-func NormalizeHostAddress(address string, defaultPort int) (string, error) {
-
-	_, _, err := net.SplitHostPort(address)
-	if err != nil {
-		if strings.HasSuffix(err.Error(), "missing port in address") {
-			return fmt.Sprintf("%s:%d", address, defaultPort), nil
-		}
-
-		return "", err
-	}
-
-	return address, nil
 }

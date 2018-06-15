@@ -1,5 +1,9 @@
 package model
 
+import (
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+)
+
 // InfoBlock is model
 type InfoBlock struct {
 	Hash           []byte `gorm:"not null"`
@@ -50,4 +54,13 @@ func BlockGetUnsent() (*InfoBlock, error) {
 		return nil, err
 	}
 	return ib, err
+}
+
+// Marshall returns block as []byte
+func (ib *InfoBlock) Marshall() []byte {
+	if ib != nil {
+		toBeSent := converter.DecToBin(ib.BlockID, 3)
+		return append(toBeSent, ib.Hash...)
+	}
+	return []byte{}
 }
