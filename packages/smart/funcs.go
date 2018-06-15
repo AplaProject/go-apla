@@ -447,6 +447,10 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	}
 	var id int64
 	var err error
+
+	if GetContractByName(sc, name) != 0 {
+		return 0, fmt.Errorf(eContractExist, name)
+	}
 	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, walletID, tokenEcosystem)
 	if err != nil {
 		return 0, err

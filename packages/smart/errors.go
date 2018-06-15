@@ -20,6 +20,7 @@ import "errors"
 
 const (
 	eTableNotFound = `Table %s has not been found`
+	eContractExist = `Contract %s already exists`
 )
 
 var (
