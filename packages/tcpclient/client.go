@@ -302,7 +302,13 @@ func (c *client) SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes
 
 	for _, host := range hosts {
 		go func(h string) {
-			response, err := c.sendFullBlockRequest(h, req)
+			con, err := c.newConnection(h)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": h}).Error("on creating ctp connection")
+				return
+			}
+
+			response, err := c.sendFullBlockRequest(con, req)
 			if err != nil {
 				c.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": h}).Error("on sending full block request")
 				return
@@ -320,23 +326,20 @@ func (c *client) SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes
 				}
 			}
 
-			io.Write()
+			if _, err := io.Copy(con, bytes.NewReader(buf.Bytes())); err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": h}).Error("on writing requested transactions")
+			}
 		}(host)
-
 	}
+
+	return nil
 }
 
-func (c *client) sendFullBlockRequest(host string, data []byte) (response []byte, err error) {
-	con, err := c.newConnection(host)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": host}).Error("on creating ctp connection")
-		return nil, err
-	}
-
+func (c *client) sendFullBlockRequest(con net.Conn, data []byte) (response []byte, err error) {
 	// type
 	_, err = con.Write(converter.DecToBin(I_AM_FULL_NODE, 2))
 	if err != nil {
-		c.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("writing request type to host")
+		c.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing request type to host")
 		return nil, err
 	}
 
@@ -344,18 +347,18 @@ func (c *client) sendFullBlockRequest(host string, data []byte) (response []byte
 	size := converter.DecToBin(len(data), 4)
 	_, err = con.Write(size)
 	if err != nil {
-		c.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("writing data size to host")
+		c.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data size to host")
 		return nil, err
 	}
 
 	_, err = con.Write(data)
 	if err != nil {
-		c.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("writing data to host")
+		c.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data to host")
 		return nil, err
 	}
 
 	//response
-	return c.readResponse(con)
+	return c.sendRequiredTransactions(con)
 }
 
 func (c client) newConnection(addr string) (net.Conn, error) {
@@ -407,7 +410,7 @@ func prepareFullBlockRequest(block *model.InfoBlock, trs []model.Transaction, no
 	return buf.Bytes()
 }
 
-func (c client) readResponse(con net.Conn) (response []byte, err error) {
+func (c client) sendRequiredTransactions(con net.Conn) (response []byte, err error) {
 	buf := make([]byte, 4)
 
 	// read data size
