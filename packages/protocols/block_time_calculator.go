@@ -1,12 +1,11 @@
-//go:generate sh -c "mockery -inpkg -name Clock -print > file.tmp && mv file.tmp clock_mock.go"
-
-package utils
+package protocols
 
 import (
+	"errors"
 	"time"
-
-	"github.com/pkg/errors"
 )
+
+type blockGenerationStateAlgorithm func(blockTime time.Time, btc BlockTimeCalculator) (blockGenerationState, error)
 
 // BlockTimeCalculator calculating block generation time
 type BlockTimeCalculator struct {
@@ -16,8 +15,8 @@ type BlockTimeCalculator struct {
 	firstBlockTime      time.Time
 	blockGenerationTime time.Duration
 	blocksGap           time.Duration
-
-	nodesCount int64
+	algorithm           blockGenerationStateAlgorithm
+	nodesCount          int64
 }
 
 type blockGenerationState struct {
@@ -92,6 +91,39 @@ func (btc *BlockTimeCalculator) setBlockCounter(counter intervalBlocksCounter) *
 }
 
 func (btc *BlockTimeCalculator) countBlockTime(blockTime time.Time) (blockGenerationState, error) {
+	return btc.algorithm(blockTime, *btc)
+}
+
+// DHGenerationStateAlg Dmitry Halitskiy algorithm
+func generationStateAlgDH(blockTime time.Time, btc *BlockTimeCalculator) (blockGenerationState, error) {
+	bgs := blockGenerationState{}
+	nextBlockStart := btc.firstBlockTime
+	var curNodeIndex int64
+
+	if blockTime.Before(nextBlockStart) {
+		return blockGenerationState{}, TimeError
+	}
+
+	for {
+		curBlockStart := nextBlockStart
+		curBlockEnd := curBlockStart.Add(btc.blocksGap + btc.blockGenerationTime)
+		nextBlockStart = curBlockEnd.Add(time.Second)
+
+		if blockTime.Equal(curBlockStart) || blockTime.After(curBlockStart) && blockTime.Before(nextBlockStart) {
+			bgs.start = curBlockStart
+			bgs.duration = btc.blocksGap + btc.blockGenerationTime
+			bgs.nodePosition = curNodeIndex
+			return bgs, nil
+		}
+
+		if btc.nodesCount > 0 {
+			curNodeIndex = (curNodeIndex + 1) % btc.nodesCount
+		}
+	}
+}
+
+// generationStateAlgDC Dmitry Chertkov algorithm
+func generationStateAlgDC(blockTime time.Time, btc *BlockTimeCalculator) (blockGenerationState, error) {
 	bgs := blockGenerationState{}
 	nextBlockStart := btc.firstBlockTime
 	var curNodeIndex int64

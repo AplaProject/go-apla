@@ -1,6 +1,6 @@
 //go:generate sh -c "mockery -inpkg -name intervalBlocksCounter -print > file.tmp && mv file.tmp block_counter_mock.go"
 
-package utils
+package protocols
 
 import "github.com/GenesisKernel/go-genesis/packages/model"
 
