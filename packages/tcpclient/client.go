@@ -300,16 +300,30 @@ func (c *client) SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes
 		txDataMap[string(tx.Hash)] = tx.Data
 	}
 
+	var errCount int32
+	increaseErrCount := func() {
+		atomic.AddInt32(&errCount, 1)
+	}
+
+	var wg sync.WaitGroup
 	for _, host := range hosts {
+		wg.Add(1)
+
 		go func(h string) {
+			defer wg.Done()
+
 			con, err := c.newConnection(h)
 			if err != nil {
+				increaseErrCount()
 				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": h}).Error("on creating ctp connection")
 				return
 			}
 
+			defer con.Close()
+
 			response, err := c.sendFullBlockRequest(con, req)
 			if err != nil {
+				increaseErrCount()
 				c.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": h}).Error("on sending full block request")
 				return
 			}
@@ -320,22 +334,32 @@ func (c *client) SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes
 
 			var buf bytes.Buffer
 			requestedHashes := parseTxHashesFromResponse(response)
-			for _, rh := range requestedHashes {
-				if data, ok := txDataMap[string(rh)]; ok && len(data) > 0 {
-					buf.Write(converter.EncodeLengthPlusData(data))
+			for _, txhash := range requestedHashes {
+				if data, ok := txDataMap[string(txhash)]; ok && len(data) > 0 {
+					if _, err := buf.Write(converter.EncodeLengthPlusData(data)); err != nil {
+						log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warn("on write tx hash to response buffer")
+					}
 				}
 			}
 
 			if _, err := io.Copy(con, bytes.NewReader(buf.Bytes())); err != nil {
+				increaseErrCount()
 				log.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": h}).Error("on writing requested transactions")
 			}
 		}(host)
+	}
+
+	wg.Wait()
+
+	if int(errCount) == len(hosts) {
+		return ErrNodesUnavailable
 	}
 
 	return nil
 }
 
 func (c *client) sendFullBlockRequest(con net.Conn, data []byte) (response []byte, err error) {
+
 	// type
 	_, err = con.Write(converter.DecToBin(I_AM_FULL_NODE, 2))
 	if err != nil {

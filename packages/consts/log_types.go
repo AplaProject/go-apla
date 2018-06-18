@@ -54,4 +54,5 @@ const (
 	BCActualizationError     = "BCActualizationError"
 	SchedulerError           = "SchedulerError"
 	SyncProcess              = "SyncProcess"
+	TCPClientError           = "TCPClientError"
 )
