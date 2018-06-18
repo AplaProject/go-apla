@@ -243,6 +243,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetMapKeys":                   GetMapKeys,
 		"SortedKeys":                   SortedKeys,
 		"Append":                       Append,
+		"GetPageHistory":               GetPageHistory,
 	}
 
 	switch vt {
@@ -1669,4 +1670,72 @@ func StringToBytes(src string) []byte {
 // BytesToString converts bytes to string
 func BytesToString(src []byte) string {
 	return string(src)
+}
+
+func getHistory(sc *SmartContract, tableName string, id int64) ([]map[string]string, error) {
+	table := fmt.Sprintf(`%d_%s`, sc.TxSmart.EcosystemID, tableName)
+	rows, err := model.GetDB(sc.DbTransaction).Table(table).Where("id=?", id).Rows()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get current values")
+		return nil, err
+	}
+	if !rows.Next() {
+		return nil, errNotFound
+	}
+	defer rows.Close()
+	// Get column names
+	columns, err := rows.Columns()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get columns")
+		return nil, err
+	}
+	values := make([][]byte, len(columns))
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+	err = rows.Scan(scanArgs...)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("scan values")
+		return nil, err
+	}
+	var value string
+	curVal := make(map[string]string)
+	for i, col := range values {
+		if col == nil {
+			value = "NULL"
+		} else {
+			value = string(col)
+		}
+		curVal[columns[i]] = value
+	}
+	rollbackList := []map[string]string{}
+	rollbackTx := &model.RollbackTx{}
+	historyLimit := 250
+	txs, err := rollbackTx.GetRollbackTxsByTableIDAndTableName(converter.Int64ToStr(id),
+		table, historyLimit)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("rollback history")
+		return nil, err
+	}
+	for _, tx := range *txs {
+		if tx.Data == "" {
+			continue
+		}
+		rollback := make(map[string]string)
+		for k, v := range curVal {
+			rollback[k] = v
+		}
+		if err := json.Unmarshal([]byte(tx.Data), &rollback); err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollbackTx.Data from JSON")
+			return nil, err
+		}
+		rollbackList = append(rollbackList, rollback)
+		curVal = rollback
+	}
+	return rollbackList, nil
+}
+
+func GetPageHistory(sc *SmartContract, id int64) ([]map[string]string, error) {
+	return getHistory(sc, `pages`, id)
 }

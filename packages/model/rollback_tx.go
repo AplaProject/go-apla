@@ -30,7 +30,8 @@ func (rt *RollbackTx) GetBlockRollbackTransactions(dbTransaction *DbTransaction,
 // GetRollbackTxsByTableIDAndTableName returns records of rollback by table name and id
 func (rt *RollbackTx) GetRollbackTxsByTableIDAndTableName(tableID, tableName string, limit int) (*[]RollbackTx, error) {
 	rollbackTx := new([]RollbackTx)
-	if err := DBConn.Where("table_id = ? AND table_name = ?", tableID, tableName).Limit(limit).Find(rollbackTx).Error; err != nil {
+	if err := DBConn.Where("table_id = ? AND table_name = ?", tableID, tableName).
+		Order("id desc").Limit(limit).Find(rollbackTx).Error; err != nil {
 		return nil, err
 	}
 	return rollbackTx, nil
