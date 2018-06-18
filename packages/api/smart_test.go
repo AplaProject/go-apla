@@ -843,28 +843,45 @@ func TestPageHistory(t *testing.T) {
 	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {id}, "Value": {"Div(style){ok}"}}))
 	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {id}, "Conditions": {"true"}}))
 
+	form = url.Values{"Name": {randName(`menu`)}, "Value": {`MenuItem(First)MenuItem(Second)`},
+		"ApplicationId": {`1`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewMenu`, &form))
+
+	assert.NoError(t, sendGet(`list/menu`, nil, &ret))
+	idmenu := ret.Count
+	assert.NoError(t, postTx(`EditMenu`, &url.Values{"Id": {idmenu}, "Conditions": {"true"}}))
+	assert.NoError(t, postTx(`EditMenu`, &url.Values{"Id": {idmenu}, "Value": {"MenuItem(Third)"}}))
+	assert.NoError(t, postTx(`EditMenu`, &url.Values{"Id": {idmenu},
+		"Value": {"MenuItem(Third)"}, "Conditions": {"false"}}))
+
 	form = url.Values{`Value`: {`contract Get` + name + ` {
 		data {
 			IdPage int
+			IdMenu int
 		}
 		action {
-			var ret map
+			var ret array
 			ret = GetPageHistory($IdPage)
+			$result = Str(Len(ret))
+			ret = GetMenuHistory($IdMenu)
+			$result = $result + Str(Len(ret))
 			Println("RET", ret)
 		}
 	}`}, "ApplicationId": {`1`}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
-	assert.NoError(t, postTx(`Get`+name, &url.Values{"IdPage": {id}}))
+	_, msg, err := postTxResult(`Get`+name, &url.Values{"IdPage": {id}, "IdMenu": {idmenu}})
+	assert.NoError(t, err)
+	assert.Equal(t, `23`, msg)
 
 	form = url.Values{"Name": {name + `1`}, "Value": {value}, "ApplicationId": {`1`},
 		"Menu": {"default_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
 	assert.NoError(t, postTx(`Get`+name, &url.Values{"IdPage": {converter.Int64ToStr(
-		converter.StrToInt64(id) + 1)}}))
+		converter.StrToInt64(id) + 1)}, "IdMenu": {idmenu}}))
 
-	assert.EqualError(t, postTx(`Get`+name, &url.Values{"IdPage": {`1000000`}}),
+	assert.EqualError(t, postTx(`Get`+name, &url.Values{"IdPage": {`1000000`}, "IdMenu": {idmenu}}),
 		`{"type":"panic","error":"Record has not been found"}`)
 
 }
