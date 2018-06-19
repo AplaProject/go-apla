@@ -65,6 +65,7 @@ func init() {
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
 	funcs[`GetContractHistory`] = tplFunc{getContractHistoryTag, defaultTag, `getcontracthistory`, `Id`}
 	funcs[`GetMenuHistory`] = tplFunc{getMenuHistoryTag, defaultTag, `getmenuhistory`, `Id`}
+	funcs[`GetBlockHistory`] = tplFunc{getBlockHistoryTag, defaultTag, `getblockhistory`, `Id`}
 	funcs[`GetPageHistory`] = tplFunc{getPageHistoryTag, defaultTag, `getpagehistory`, `Id`}
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
@@ -1264,6 +1265,10 @@ func getHistoryTag(par parFunc, table string) string {
 
 func getContractHistoryTag(par parFunc) string {
 	return getHistoryTag(par, `contracts`)
+}
+
+func getBlockHistoryTag(par parFunc) string {
+	return getHistoryTag(par, `blocks`)
 }
 
 func getMenuHistoryTag(par parFunc) string {
