@@ -895,7 +895,7 @@ func TestPageHistory(t *testing.T) {
 		"IdCont": {idCont}}), `{"type":"panic","error":"Record has not been found"}`)
 
 	var retTemp contentResult
-	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {fmt.Sprintf(`GetPageHistory(%s)`,
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {fmt.Sprintf(`GetPageHistory(MySrc,%s)`,
 		id)}}, &retTemp))
 
 	if len(RawToString(retTemp.Tree)) < 400 {
