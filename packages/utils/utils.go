@@ -35,11 +35,9 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/pkg/errors"
@@ -532,31 +530,6 @@ func GetHostPort(h string) string {
 		return h
 	}
 	return fmt.Sprintf("%s:%d", h, consts.DEFAULT_TCP_PORT)
-}
-
-func BuildBlockTimeCalculator() (BlockTimeCalculator, error) {
-	var btc BlockTimeCalculator
-	firstBlock := model.Block{}
-	found, err := firstBlock.Get(1)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
-		return btc, err
-	}
-
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("first block not found")
-		return btc, err
-	}
-
-	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
-	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
-
-	btc = NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
-		blockGenerationDuration,
-		blocksGapDuration,
-		syspar.GetNumberOfNodesFromDB(),
-	)
-	return btc, nil
 }
 
 func CreateDirIfNotExists(dir string, mode os.FileMode) error {
