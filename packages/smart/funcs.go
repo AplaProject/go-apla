@@ -1677,9 +1677,9 @@ func BytesToString(src []byte) string {
 	return string(src)
 }
 
-func getHistory(sc *SmartContract, tableName string, id int64) ([]interface{}, error) {
-	table := fmt.Sprintf(`%d_%s`, sc.TxSmart.EcosystemID, tableName)
-	rows, err := model.GetDB(sc.DbTransaction).Table(table).Where("id=?", id).Rows()
+func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName string, id int64) ([]interface{}, error) {
+	table := fmt.Sprintf(`%d_%s`, ecosystem, tableName)
+	rows, err := model.GetDB(transaction).Table(table).Where("id=?", id).Rows()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get current values")
 		return nil, err
@@ -1744,13 +1744,13 @@ func getHistory(sc *SmartContract, tableName string, id int64) ([]interface{}, e
 }
 
 func GetPageHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return getHistory(sc, `pages`, id)
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `pages`, id)
 }
 
 func GetMenuHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return getHistory(sc, `menu`, id)
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `menu`, id)
 }
 
 func GetContractHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return getHistory(sc, `contracts`, id)
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `contracts`, id)
 }
