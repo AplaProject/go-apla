@@ -247,6 +247,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"SortedKeys":                   SortedKeys,
 		"Append":                       Append,
 		"GetPageHistory":               GetPageHistory,
+		"GetBlockHistory":              GetBlockHistory,
 		"GetMenuHistory":               GetMenuHistory,
 		"GetContractHistory":           GetContractHistory,
 	}
@@ -1741,6 +1742,10 @@ func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName str
 		curVal = rollback
 	}
 	return rollbackList, nil
+}
+
+func GetBlockHistory(sc *SmartContract, id int64) ([]interface{}, error) {
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `blocks`, id)
 }
 
 func GetPageHistory(sc *SmartContract, id int64) ([]interface{}, error) {
