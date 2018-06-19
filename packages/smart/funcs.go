@@ -52,7 +52,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const nodeBanNotificationHeader = "Your node was banned"
+const (
+	nodeBanNotificationHeader = "Your node was banned"
+	historyLimit              = 250
+)
 
 type permTable struct {
 	Insert    string `json:"insert"`
@@ -245,6 +248,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Append":                       Append,
 		"GetPageHistory":               GetPageHistory,
 		"GetMenuHistory":               GetMenuHistory,
+		"GetContractHistory":           GetContractHistory,
 	}
 
 	switch vt {
@@ -1712,7 +1716,6 @@ func getHistory(sc *SmartContract, tableName string, id int64) ([]interface{}, e
 	}
 	rollbackList := []interface{}{}
 	rollbackTx := &model.RollbackTx{}
-	historyLimit := 250
 	txs, err := rollbackTx.GetRollbackTxsByTableIDAndTableName(converter.Int64ToStr(id),
 		table, historyLimit)
 	if err != nil {
@@ -1720,6 +1723,9 @@ func getHistory(sc *SmartContract, tableName string, id int64) ([]interface{}, e
 		return nil, err
 	}
 	for _, tx := range *txs {
+		if len(rollbackList) > 0 {
+			rollbackList[len(rollbackList)-1].(map[string]string)[`block_id`] = converter.Int64ToStr(tx.BlockID)
+		}
 		if tx.Data == "" {
 			continue
 		}
@@ -1743,4 +1749,8 @@ func GetPageHistory(sc *SmartContract, id int64) ([]interface{}, error) {
 
 func GetMenuHistory(sc *SmartContract, id int64) ([]interface{}, error) {
 	return getHistory(sc, `menu`, id)
+}
+
+func GetContractHistory(sc *SmartContract, id int64) ([]interface{}, error) {
+	return getHistory(sc, `contracts`, id)
 }
