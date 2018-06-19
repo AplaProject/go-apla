@@ -517,7 +517,10 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		default:
 			data = v.(map[string]interface{})
 		}
-		colname := converter.EscapeSQL(strings.ToLower(data[`name`].(string)))
+		colname, err := checkColumnName(data[`name`].(string))
+		if err != nil {
+			return err
+		}
 		if colList[colname] {
 			return fmt.Errorf(`There are the same columns`)
 		}
@@ -1178,25 +1181,42 @@ func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bo
 	return nil
 }
 
+func checkColumnName(nameIn string) (nameOut string, err error) {
+	nameOut = converter.EscapeSQL(strings.ToLower(nameIn))
+	if len(nameOut) == 0 {
+		err = errEmptyColumn
+	} else if nameOut[0] >= '0' && nameOut[0] <= '9' {
+		err = errWrongColumn
+	}
+	return
+}
+
 // CreateColumn is creating column
-func CreateColumn(sc *SmartContract, tableName, name, colType, permissions string) error {
+func CreateColumn(sc *SmartContract, tableName, name, colType, permissions string) (err error) {
+	var (
+		sqlColType string
+		permout    []byte
+	)
 	if !accessContracts(sc, `NewColumn`) {
 		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("CreateColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
 	}
-	name = converter.EscapeSQL(strings.ToLower(name))
+	if name, err = checkColumnName(name); err != nil {
+		return
+	}
+
 	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
 
-	sqlColType, err := columnType(colType)
+	sqlColType, err = columnType(colType)
 	if err != nil {
-		return err
+		return
 	}
 
 	err = model.AlterTableAddColumn(sc.DbTransaction, tblname, name, sqlColType)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("adding column to the table")
-		return err
+		return
 	}
 
 	tables := getDefTableName(sc, `tables`)
@@ -1206,16 +1226,16 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	temp := &cols{}
 	err = model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
 	if err != nil {
-		return err
+		return
 	}
 	var perm map[string]string
 	err = json.Unmarshal([]byte(temp.Columns), &perm)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting columns from the table")
-		return err
+		return
 	}
 	perm[name] = permissions
-	permout, err := json.Marshal(perm)
+	permout, err = json.Marshal(perm)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns to json")
 		return err
@@ -1223,7 +1243,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
 		tables, []string{`name`}, []string{tableName}, !sc.VDE && sc.Rollback, false)
 	if err != nil {
-		return err
+		return
 	}
 
 	return nil
