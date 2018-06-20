@@ -2,29 +2,29 @@ package parser
 
 import "sync"
 
-type parserCache struct {
+type transactionCache struct {
 	mutex sync.RWMutex
-	cache map[string]*Parser
+	cache map[string]*Transaction
 }
 
-func (pc *parserCache) Get(hash string) (p *Parser, ok bool) {
-	pc.mutex.RLock()
-	defer pc.mutex.RUnlock()
+func (tc *transactionCache) Get(hash string) (t *Transaction, ok bool) {
+	tc.mutex.RLock()
+	defer tc.mutex.RUnlock()
 
-	p, ok = pc.cache[hash]
+	t, ok = tc.cache[hash]
 	return
 }
 
-func (pc *parserCache) Set(p *Parser) {
-	pc.mutex.Lock()
-	defer pc.mutex.Unlock()
+func (tc *transactionCache) Set(t *Transaction) {
+	tc.mutex.Lock()
+	defer tc.mutex.Unlock()
 
-	pc.cache[string(p.TxHash)] = p
+	tc.cache[string(t.TxHash)] = t
 }
 
-func (pc *parserCache) Clean() {
-	pc.mutex.Lock()
-	defer pc.mutex.Unlock()
+func (tc *transactionCache) Clean() {
+	tc.mutex.Lock()
+	defer tc.mutex.Unlock()
 
-	pc.cache = make(map[string]*Parser)
+	tc.cache = make(map[string]*Transaction)
 }

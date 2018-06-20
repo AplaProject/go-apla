@@ -154,7 +154,7 @@ func generateNextBlock(blockHeader *utils.BlockData, trs []*model.Transaction, k
 }
 
 func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
-	p := new(parser.Parser)
+	p := new(parser.Transaction)
 
 	// verify transactions
 	err := parser.ProcessTransactionsQueue(p.DbTransaction)

@@ -105,7 +105,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		NodePosition:  block.Header.NodePosition,
 		Time:          block.Header.Time,
 		RollbacksHash: rollbackTxsHash,
-		Tx:            int32(len(block.Parsers)),
+		Tx:            int32(len(block.Transactions)),
 	}
 	blockTimeCalculator, err := utils.BuildBlockTimeCalculator()
 	if err != nil {

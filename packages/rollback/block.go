@@ -24,6 +24,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -71,54 +72,54 @@ func RollbackBlock(data []byte, deleteBlock bool) error {
 func rollbackBlock(transaction *model.DbTransaction, block *parser.Block) error {
 	// rollback transactions in reverse order
 	logger := block.GetLogger()
-	for i := len(block.Parsers) - 1; i >= 0; i-- {
-		p := block.Parsers[i]
-		p.DbTransaction = transaction
+	for i := len(block.Transactions) - 1; i >= 0; i-- {
+		t := block.Transactions[i]
+		t.DbTransaction = transaction
 
-		_, err := model.MarkTransactionUnusedAndUnverified(transaction, p.TxHash)
+		_, err := model.MarkTransactionUnusedAndUnverified(transaction, t.TxHash)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting transaction")
 			return err
 		}
-		_, err = model.DeleteLogTransactionsByHash(transaction, p.TxHash)
+		_, err = model.DeleteLogTransactionsByHash(transaction, t.TxHash)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting log transactions by hash")
 			return err
 		}
 
 		ts := &model.TransactionStatus{}
-		err = ts.UpdateBlockID(transaction, 0, p.TxHash)
+		err = ts.UpdateBlockID(transaction, 0, t.TxHash)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating block id in transaction status")
 			return err
 		}
 
-		_, err = model.DeleteQueueTxByHash(transaction, p.TxHash)
+		_, err = model.DeleteQueueTxByHash(transaction, t.TxHash)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transacion from queue by hash")
 			return err
 		}
 
-		if p.TxContract != nil {
-			if _, err := p.CallContract(smart.CallInit | smart.CallRollback); err != nil {
+		if t.TxContract != nil {
+			if _, err := t.CallContract(smart.CallInit | smart.CallRollback); err != nil {
 				return err
 			}
-			if err = rollbackTransaction(p.TxHash, p.DbTransaction, logger); err != nil {
+			if err = rollbackTransaction(t.TxHash, t.DbTransaction, logger); err != nil {
 				return err
 			}
 		} else {
-			MethodName := consts.TxTypes[int(p.TxType)]
-			txParser, err := parser.GetParser(p, MethodName)
+			MethodName := consts.TxTypes[int(t.TxType)]
+			txParser, err := parser.GetTransaction(t, MethodName)
 			if err != nil {
-				return p.ErrInfo(err)
+				return utils.ErrInfo(err)
 			}
 			result := txParser.Init()
 			if _, ok := result.(error); ok {
-				return p.ErrInfo(result.(error))
+				return utils.ErrInfo(result.(error))
 			}
 			result = txParser.Rollback()
 			if _, ok := result.(error); ok {
-				return p.ErrInfo(result.(error))
+				return utils.ErrInfo(result.(error))
 			}
 		}
 	}
