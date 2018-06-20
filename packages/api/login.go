@@ -152,7 +152,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := loginResult{
+	result := &loginResult{
 		EcosystemID: converter.Int64ToStr(client.EcosystemID),
 		KeyID:       converter.Int64ToStr(wallet),
 		Address:     crypto.KeyToAddress(publicKey),

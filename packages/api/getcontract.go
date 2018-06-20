@@ -58,7 +58,7 @@ func contractInfoHandler(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, errContract.Errorf(params[keyContractName]))
 		return
 	}
-	info := (*contract).Block.Info.(*script.ContractInfo)
+	info := contract.Info()
 
 	fields := make([]contractField, 0)
 	if info.Tx != nil {

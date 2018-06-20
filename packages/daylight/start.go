@@ -40,7 +40,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
-	"github.com/gorilla/mux"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -154,13 +153,11 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 }
 
 func initRoutes(listenHost string) {
-	router := mux.NewRouter()
-	api.Route(router)
+	router := api.NewRouter()
+	router.HandleFunc("/monitoring", daemons.Monitoring).Methods("GET")
 
-	// TODO: добавить
-	/*route := httprouter.New()
-	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
-	api.Route(route)
+	handler := api.UseCORS(router)
+
 	if conf.Config.TLS {
 		if len(conf.Config.TLSCert) == 0 || len(conf.Config.TLSKey) == 0 {
 			log.Fatal("-tls-cert/TLSCert and -tls-key/TLSKey must be specified with -tls/TLS")
@@ -172,7 +169,7 @@ func initRoutes(listenHost string) {
 			log.WithError(err).Fatalf(`Filepath -tls-key/TLSKey = %s is invalid`, conf.Config.TLSKey)
 		}
 		go func() {
-			err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, route)
+			err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, handler)
 			if err != nil {
 				log.WithFields(log.Fields{"host": listenHost, "error": err, "type": consts.NetworkError}).Fatal("Listening TLS server")
 			}
@@ -181,9 +178,9 @@ func initRoutes(listenHost string) {
 		return
 	} else if len(conf.Config.TLSCert) != 0 || len(conf.Config.TLSKey) != 0 {
 		log.Fatal("-tls/TLS must be specified with -tls-cert/TLSCert and -tls-key/TLSKey")
-	}*/
+	}
 
-	httpListener(listenHost, router)
+	httpListener(listenHost, handler)
 }
 
 func logBlockchainMode() {

@@ -48,8 +48,7 @@ type hashResult struct {
 }
 
 const (
-	strTrue = `true`
-	strOne  = `1`
+	strOne = `1`
 )
 
 func initVars(r *http.Request) *map[string]string {
@@ -100,10 +99,9 @@ func getPage(r *http.Request) (result *contentResult, err error) {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	// TODO: перенести в модели
-	menu, err := model.Single(`SELECT value FROM "`+client.Prefix()+`_menu" WHERE name = ?`,
-		page.Menu).String()
-	if err != nil {
+	menu := model.Menu{}
+	menu.SetTablePrefix(client.Prefix())
+	if _, err = menu.Get(page.Menu); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting single from DB")
 		return nil, errServer
 	}
@@ -125,7 +123,7 @@ func getPage(r *http.Request) (result *contentResult, err error) {
 		if timeout {
 			return
 		}
-		retmenu := template.Template2JSON(menu, &timeout, vars)
+		retmenu := template.Template2JSON(menu.Value, &timeout, vars)
 		if timeout {
 			return
 		}
@@ -223,7 +221,7 @@ func getMenuHandler(w http.ResponseWriter, r *http.Request) {
 type jsonContentForm struct {
 	form
 	Template string `schema:"template"`
-	Source   string `schema:"source"`
+	Source   bool   `schema:"source"`
 }
 
 func (f *jsonContentForm) Validate(r *http.Request) error {
@@ -243,8 +241,9 @@ func jsonContentHandler(w http.ResponseWriter, r *http.Request) {
 	var timeout bool
 	vars := initVars(r)
 
-	// TODO: bool
-	if form.Source == strOne || form.Source == strTrue {
+	fmt.Println(form.Source, r.FormValue("source"))
+
+	if form.Source {
 		(*vars)["_full"] = strOne
 	}
 

@@ -17,9 +17,7 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -50,24 +48,18 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	// TODO: перенести в модели
-	table := converter.EscapeName(fmt.Sprintf("%s_%s", client.Prefix(), params[keyName]))
-	cols := `*`
-	if len(form.Columns) > 0 {
-		cols = `id,` + converter.EscapeName(form.Columns)
-	}
+	tableName := client.Prefix() + "_" + params[keyName]
 
-	count, err := model.GetRecordsCountTx(nil, strings.Trim(table, `"`))
+	count, err := model.GetRecordsCountTx(nil, tableName)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": tableName}).Error("Getting table records count")
 		errorResponse(w, errTableNotFound.Errorf(params[keyName]))
 		return
 	}
 
-	list, err := model.GetAll(`select `+cols+` from `+table+` order by id desc`+
-		fmt.Sprintf(` offset %d `, form.Offset), form.Limit)
+	list, err := model.GetRows(tableName, form.Columns, form.Offset, form.Limit)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": tableName}).Error("Getting rows from table")
 		errorResponse(w, err)
 		return
 	}

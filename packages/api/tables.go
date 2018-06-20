@@ -17,7 +17,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -46,18 +45,19 @@ func tablesHandler(w http.ResponseWriter, r *http.Request) {
 
 	client := getClient(r)
 	logger := getLogger(r)
+	prefix := client.Prefix()
 
-	table := client.Prefix() + `_tables`
-	count, err := model.GetRecordsCountTx(nil, table)
+	table := &model.Table{}
+	table.SetTablePrefix(prefix)
+
+	count, err := model.GetRecordsCountTx(nil, table.TableName())
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting records count from tables")
 		errorResponse(w, err)
 		return
 	}
 
-	// TODO: перенести в модели
-	list, err := model.GetAll(`select name from "`+table+`" order by name`+
-		fmt.Sprintf(` offset %d `, form.Offset), form.Limit)
+	tables, err := table.GetList(form.Offset, form.Limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting names from tables")
 		errorResponse(w, err)
@@ -66,30 +66,20 @@ func tablesHandler(w http.ResponseWriter, r *http.Request) {
 
 	result := &tablesResult{
 		Count: count,
-		List:  make([]tableInfo, len(list)),
+		List:  make([]tableInfo, len(tables)),
 	}
 
-	for i, item := range list {
-		var maxid int64
-		result.List[i].Name = item[`name`]
-		fullname := client.Prefix() + `_` + item[`name`]
-		if item[`name`] == `keys` || item[`name`] == `members` {
-			err = model.DBConn.Table(fullname).Count(&maxid).Error
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table")
-			}
-		} else {
-			maxid, err = model.GetNextID(nil, fullname)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id from table")
-			}
-			maxid--
-		}
+	for i, table := range tables {
+		table.SetTablePrefix(prefix)
+		count, err := table.GetRecordsCount()
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table")
 			errorResponse(w, err)
 			return
 		}
-		result.List[i].Count = converter.Int64ToStr(maxid)
+
+		result.List[i].Name = table.Name
+		result.List[i].Count = converter.Int64ToStr(count)
 	}
 
 	jsonResponse(w, result)

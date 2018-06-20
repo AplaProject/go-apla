@@ -36,10 +36,13 @@ type uidResult struct {
 	EcosystemID string `json:"ecosystem_id,omitempty"`
 	KeyID       string `json:"key_id,omitempty"`
 	Address     string `json:"address,omitempty"`
+	IsVDE       bool   `json:"is_vde,omitempty"`
 }
 
 func uidHandler(w http.ResponseWriter, r *http.Request) {
-	result := &uidResult{}
+	result := &uidResult{
+		IsVDE: isVDEMode(),
+	}
 
 	token := getToken(r)
 	if token != nil {

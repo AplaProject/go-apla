@@ -17,15 +17,13 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
-
-	"github.com/gorilla/mux"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -41,20 +39,12 @@ type rowForm struct {
 }
 
 func rowHandler(w http.ResponseWriter, r *http.Request) {
-	columns := r.FormValue(keyColumns)
-	if len(columns) > 0 {
-		columns = converter.EscapeName(columns)
-	} else {
-		columns = "*"
-	}
-
 	params := mux.Vars(r)
 	client := getClient(r)
 	logger := getLogger(r)
 
-	// TODO: перенести в модели
-	table := converter.EscapeName(fmt.Sprintf("%s_%s", client.Prefix(), params[keyName]))
-	row, err := model.GetOneRow(`SELECT `+columns+` FROM `+table+` WHERE id = ?`, params[keyID]).String()
+	tableName := client.Prefix() + "_" + params[keyName]
+	row, err := model.GetRowByID(tableName, r.FormValue(keyColumns), converter.StrToInt64(params[keyID]))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": params[keyName], "id": params[keyID]}).Error("getting one row")
 		errorResponse(w, errQuery)

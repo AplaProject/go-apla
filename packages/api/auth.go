@@ -160,6 +160,7 @@ func getClientFromToken(token *jwt.Token) (*Client, error) {
 		KeyID:         converter.StrToInt64(claims.KeyID),
 		IsMobile:      claims.IsMobile,
 		RoleID:        converter.StrToInt64(claims.RoleID),
+		IsVDE:         isVDEMode(),
 	}, nil
 }
 

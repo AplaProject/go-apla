@@ -47,66 +47,6 @@ func (c *Client) Prefix() (prefix string) {
 	return
 }
 
-// type forSign struct {
-// 	Time    string `json:"time"`
-// 	ForSign string `json:"forsign"`
-// }
-
-// // DefaultHandler is a common handle function for api requests
-// func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
-// 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
-// 		counterName := statsd.APIRouteCounterName(method, pattern)
-// 		statsd.Client.Inc(counterName+statsd.Count, 1, 1.0)
-// 		startTime := time.Now()
-// 		var (
-// 			err  error
-// 			data = &apiData{ecosystemId: 1}
-// 		)
-
-// 		// TODO: перенесено в LoggerMiddleware
-// 		requestLogger := log.WithFields(log.Fields{"headers": r.Header, "path": r.URL.Path, "protocol": r.Proto, "remote": r.RemoteAddr})
-// 		requestLogger.Info("received http request")
-
-// 		defer func() {
-// 			endTime := time.Now()
-// 			statsd.Client.TimingDuration(counterName+statsd.Time, endTime.Sub(startTime), 1.0)
-// 			if r := recover(); r != nil {
-// 				requestLogger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r, "stack": string(debug.Stack())}).Error("panic recovered error")
-// 				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
-// 				errorAPI(w, `E_RECOVERED`, http.StatusInternalServerError)
-// 			}
-// 		}()
-
-// 		w.Header().Set("Access-Control-Allow-Origin", "*")
-// 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-
-// 		data.params = make(map[string]interface{})
-// 		for _, par := range ps {
-// 			data.params[par.Key] = par.Value
-// 		}
-
-// 		ihandlers := append([]apiHandle{
-// 			fillToken,
-// 			fillParams(params),
-// 		}, handlers...)
-
-// 		for _, handler := range ihandlers {
-// 			if handler(w, r, data, requestLogger) != nil {
-// 				return
-// 			}
-// 		}
-
-// 		jsonResult, err := json.Marshal(data.result)
-// 		if err != nil {
-// 			requestLogger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marhsalling http response to json")
-// 			errorAPI(w, err, http.StatusInternalServerError)
-// 			return
-// 		}
-
-// 		w.Write(jsonResult)
-// 	})
-// }
-
 type form struct{}
 
 func (f *form) Validate(r *http.Request) error {

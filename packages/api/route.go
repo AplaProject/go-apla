@@ -17,16 +17,17 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
-// Route sets routing paths
-func Route(router *mux.Router) {
-	// TODO: cors
-
+// setRoutes sets routing paths
+func setRoutes(router *mux.Router) {
 	router.StrictSlash(true)
 	router.Use(LoggerMiddleware, RecoverMiddleware, StatsdMiddleware)
 
@@ -73,14 +74,27 @@ func Route(router *mux.Router) {
 	// post(`vde/create`, ``, authWallet, vdeCreate)
 	api.HandleFunc("/login", loginHandler).Methods("POST") // post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
 	// api.HandleFunc("/prepare/{name}", AuthRequire(contractHandlers.PrepareHandler)).Methods("POST")                      // post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
-	api.HandleFunc("/prepareMultiple", AuthRequire(contractHandlers.PrepareHandler)).Methods("POST") //post(`prepareMultiple`, `data:string`, authWallet, contractHandlers.prepareMultipleContract)
-	api.HandleFunc("/txstatusMultiple", AuthRequire(txstatusMultiHandler)).Methods("POST")           // post(`txstatusMultiple`, `data:string`, authWallet, txstatusMulti)
+	api.HandleFunc("/prepare", AuthRequire(contractHandlers.PrepareHandler)).Methods("POST") //post(`prepareMultiple`, `data:string`, authWallet, contractHandlers.prepareMultipleContract)
+	api.HandleFunc("/txstatus", AuthRequire(txstatusMultiHandler)).Methods("POST")           // post(`txstatusMultiple`, `data:string`, authWallet, txstatusMulti)
 	// api.HandleFunc("/contract/{request_id}", AuthRequire(contractHandlers.ContractHandler)).Methods("POST")              // post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
-	api.HandleFunc("/contractMultiple/{request_id}", AuthRequire(contractHandlers.ContractMultiHandler)).Methods("POST") // post(`contractMultiple/:request_id`, `data:string`, authWallet, blockchainUpdatingState, contractHandlers.contractMulti)
-	api.HandleFunc("/refresh", refreshHandler).Methods("POST")                                                           // post(`refresh`, `token:string,?expire:int64`, refresh)
+	api.HandleFunc("/contract/{request_id}", AuthRequire(contractHandlers.ContractMultiHandler)).Methods("POST") // post(`contractMultiple/:request_id`, `data:string`, authWallet, blockchainUpdatingState, contractHandlers.contractMulti)
+	api.HandleFunc("/refresh", refreshHandler).Methods("POST")                                                   // post(`refresh`, `token:string,?expire:int64`, refresh)
 	// post(`test/:name`, ``, getTest)
 	api.HandleFunc("/content", jsonContentHandler).Methods("POST")              // post(`content`, `template ?source:string`, jsonContent)
 	api.HandleFunc("/updnotificator", updateNotificatorHandler).Methods("POST") // post(`updnotificator`, `ids:string`, updateNotificator)
 
 	// methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, contractHandlers.nodeContract)
+}
+
+func NewRouter() *mux.Router {
+	router := mux.NewRouter()
+	setRoutes(router)
+	return router
+}
+
+func UseCORS(router *mux.Router) http.Handler {
+	if isVDEMode() {
+		return router
+	}
+	return handlers.CORS()(router)
 }

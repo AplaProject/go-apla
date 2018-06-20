@@ -1,14 +1,21 @@
 package model
 
+import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
+)
+
 // Table is model
 type Table struct {
+	tablePrefix string
 	tableName   string
-	ID          int64  `gorm:"primary_key;not null"`
-	Name        string `gorm:"not null;size:100"`
-	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
-	Columns     string `gorm:"not null"`
-	Conditions  string `gorm:"not null"`
-	AppID       int64  `gorm:"not null"`
+	ID          int64       `gorm:"primary_key;not null"`
+	Name        string      `gorm:"not null;size:100"`
+	Permissions Permissions `gorm:"not null;type:jsonb(PostgreSQL)"`
+	Columns     string      `gorm:"not null"`
+	Conditions  string      `gorm:"not null"`
+	AppID       int64       `gorm:"not null"`
 }
 
 // TableVDE is model
@@ -22,8 +29,34 @@ type TableVDE struct {
 	AppID       int64  `gorm:"not null"`
 }
 
+type Permissions struct {
+	Insert    string `json:"insert"`
+	NewColumn string `json:"new_column"`
+	Update    string `json:"update"`
+	Read      string `json:"read"`
+	Filter    string `json:"filter"`
+}
+
+func (p Permissions) Value() (driver.Value, error) {
+	data, err := json.Marshal(p)
+	if err != nil {
+		return nil, err
+	}
+	return string(data), err
+}
+
+func (p *Permissions) Scan(v interface{}) error {
+	data, ok := v.([]byte)
+	if !ok {
+		return errors.New("Bad permissions")
+	}
+
+	return json.Unmarshal(data, p)
+}
+
 // SetTablePrefix is setting table prefix
 func (t *Table) SetTablePrefix(prefix string) {
+	t.tablePrefix = prefix
 	t.tableName = prefix + "_tables"
 }
 
@@ -143,6 +176,28 @@ func (t *Table) GetAll(prefix string) ([]Table, error) {
 	result := make([]Table, 0)
 	err := DBConn.Table(prefix + "_tables").Find(&result).Error
 	return result, err
+}
+
+func (t *Table) GetList(offset, limit int64) ([]Table, error) {
+	var list []Table
+	err := DBConn.Table(t.tableName).Offset(offset).Limit(limit).Select("name").Order("name").Find(&list).Error
+	return list, err
+}
+
+func (t *Table) GetRecordsCount() (count int64, err error) {
+	tableName := t.tablePrefix + "_" + t.Name
+
+	if t.Name == "keys" || t.Name == "members" {
+		err = DBConn.Table(tableName).Count(&count).Error
+		return
+	}
+
+	count, err = GetNextID(nil, tableName)
+	if err != nil {
+		return
+	}
+	count--
+	return
 }
 
 // GetRowConditionsByTableNameAndID returns value of `conditions` field for table row by id

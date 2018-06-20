@@ -17,14 +17,11 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/script"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -40,7 +37,7 @@ type contractsResult struct {
 
 type paginatorForm struct {
 	form
-	Limit  int   `schema:"limit"`
+	Limit  int64 `schema:"limit"`
 	Offset int64 `schema:"offset"`
 }
 
@@ -61,31 +58,31 @@ func contractsHandler(w http.ResponseWriter, r *http.Request) {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	table := client.Prefix() + "_contracts"
-	count, err := model.GetRecordsCountTx(nil, table)
+	contract := model.Contract{}
+	contract.SetTablePrefix(client.Prefix())
+
+	count, err := model.GetRecordsCountTx(nil, contract.TableName())
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
 		errorResponse(w, err)
 		return
 	}
 
-	// TODO: перенести запрос в модели
-	list, err := model.GetAll(`select * from "`+table+`" order by id desc`+
-		fmt.Sprintf(` offset %d `, form.Offset), form.Limit)
+	contracts, err := contract.GetList(form.Offset, form.Limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
 		errorResponse(w, err)
 		return
 	}
-	for ind, val := range list {
-		list[ind]["address"] = converter.AddressToString(converter.StrToInt64(val["wallet_id"]))
-		cntlist, err := script.ContractsList(val["value"])
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Error("getting contract list")
-			errorResponse(w, err)
-			return
+
+	var list []map[string]string
+	if len(contracts) > 0 {
+		list = make([]map[string]string, 0, len(contracts))
+		for _, c := range contracts {
+			v := c.ToMap()
+			v["address"] = converter.AddressToString(c.WalletID)
+			list = append(list, v)
 		}
-		list[ind]["name"] = strings.Join(cntlist, `,`)
 	}
 
 	jsonResponse(w, &listResult{

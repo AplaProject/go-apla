@@ -68,15 +68,6 @@ func tableHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var perm map[string]string
-
-	// TODO: перенести в модель как отдельную структуру
-	if err = json.Unmarshal([]byte(table.Permissions), &perm); err != nil {
-		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table permissions to json")
-		errorResponse(w, err)
-		return
-	}
-
 	var cols map[string]string
 	err = json.Unmarshal([]byte(table.Columns), &cols)
 	if err != nil {
@@ -101,11 +92,11 @@ func tableHandler(w http.ResponseWriter, r *http.Request) {
 
 	jsonResponse(w, &tableResult{
 		Name:       table.Name,
-		Insert:     perm[`insert`],
-		NewColumn:  perm[`new_column`],
-		Update:     perm[`update`],
-		Read:       perm[`read`],
-		Filter:     perm[`filter`],
+		Insert:     table.Permissions.Insert,
+		NewColumn:  table.Permissions.NewColumn,
+		Update:     table.Permissions.Update,
+		Read:       table.Permissions.Read,
+		Filter:     table.Permissions.Filter,
 		Conditions: table.Conditions,
 		AppID:      converter.Int64ToStr(table.AppID),
 		Columns:    columns,

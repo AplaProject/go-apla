@@ -18,6 +18,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -60,6 +61,7 @@ func (h *contractHandlers) PrepareHandler(w http.ResponseWriter, r *http.Request
 
 	req := prepareRequest{}
 	if err := json.Unmarshal([]byte(r.FormValue("data")), &req); err != nil {
+		fmt.Println(r.FormValue("data"))
 		errorResponse(w, newError(err, http.StatusBadRequest))
 		return
 	}

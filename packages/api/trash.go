@@ -376,3 +376,8 @@ func packParamsContract(fields []*script.FieldInfo, req *tx.RequestContract, log
 	}
 	return idata, nil
 }
+
+func isVDEMode() bool {
+	// TODO: implements detect vde mode
+	return false
+}
