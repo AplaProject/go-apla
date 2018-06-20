@@ -731,7 +731,8 @@ func TestBytesToString(t *testing.T) {
 				$result = BytesToString($File)
 			}
 		}`},
-		"Conditions": {"true"},
+		"Conditions":    {"true"},
+		"ApplicationId": {"1"},
 	}))
 
 	content := crypto.RandSeq(100)
