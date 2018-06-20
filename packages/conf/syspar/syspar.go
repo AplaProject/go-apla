@@ -202,9 +202,9 @@ func GetNumberOfNodes() int64 {
 	return int64(len(nodesByPosition))
 }
 
-func GetNumberOfNodesFromDB() int64 {
+func GetNumberOfNodesFromDB(transaction *model.DbTransaction) int64 {
 	sp := &model.SystemParameter{}
-	sp.Get(FullNodes)
+	sp.GetTransaction(transaction, FullNodes)
 	var fullNodes []map[string]interface{}
 	if len(sp.Value) > 0 {
 		if err := json.Unmarshal([]byte(sp.Value), &fullNodes); err != nil {
