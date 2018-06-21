@@ -35,6 +35,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -54,6 +55,8 @@ import (
 )
 
 const nodeBanNotificationHeader = "Your node was banned"
+
+var BOM = []byte{0xEF, 0xBB, 0xBF}
 
 type permTable struct {
 	Insert    string `json:"insert"`
@@ -1681,6 +1684,9 @@ func StringToBytes(src string) []byte {
 
 // BytesToString converts bytes to string
 func BytesToString(src []byte) string {
+	if bytes.HasPrefix(src, BOM) && utf8.Valid(src[len(BOM):]) {
+		return string(src[len(BOM):])
+	}
 	return string(src)
 }
 
