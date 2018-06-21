@@ -506,7 +506,7 @@ func (p *Parser) CallContract(flags int) (resultContract string, err error) {
 		VDE:           false,
 		Rollback:      true,
 		SysUpdate:     false,
-		VM:            smart.GetVM(false, 0),
+		VM:            smart.GetVM(),
 		TxSmart:       *p.TxSmart,
 		TxData:        p.TxData,
 		TxContract:    p.TxContract,
