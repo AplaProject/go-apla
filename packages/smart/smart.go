@@ -625,6 +625,9 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 }
 
 func (sc *SmartContract) AccessTable(table, action string) error {
+	if sc.FullAccess {
+		return nil
+	}
 	_, err := sc.AccessTablePerm(table, action)
 	return err
 }
@@ -648,6 +651,9 @@ type colAccess struct {
 // AccessColumns checks access rights to the columns
 func (sc *SmartContract) AccessColumns(table string, columns *[]string, update bool) error {
 	logger := sc.GetLogger()
+	if sc.FullAccess {
+		return nil
+	}
 	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
 		if update {
 			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {

@@ -71,6 +71,7 @@ type permColumn struct {
 type SmartContract struct {
 	VDE           bool
 	Rollback      bool
+	FullAccess    bool
 	SysUpdate     bool
 	VM            *script.VM
 	TxSmart       tx.SmartContract
