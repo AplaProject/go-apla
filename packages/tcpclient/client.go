@@ -237,34 +237,10 @@ func (c *client) sendRawTransacitionsToHost(host string, packet []byte) error {
 
 	defer con.Close()
 
-	/*
-		Packet format:
-		type  2 bytes
-		len   4 bytes
-		data  len bytes
-	*/
-	// type
-	_, err = con.Write(converter.DecToBin(I_AM_NOT_FULL_NODE, 2))
-	if err != nil {
-		c.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("writing request type to host")
+	if err := c.sendDisseminatorRequest(con, I_AM_NOT_FULL_NODE, packet); err != nil {
+		log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err, "host": host}).Error("on sending disseminator request")
 		return err
 	}
-
-	// data size
-	size := converter.DecToBin(len(packet), 4)
-	_, err = con.Write(size)
-	if err != nil {
-		c.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("writing data size to host")
-		return err
-	}
-
-	// data
-	_, err = con.Write(packet)
-	if err != nil {
-		c.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host}).Error("writing data to host")
-		return err
-	}
-
 	return nil
 }
 
@@ -360,24 +336,8 @@ func (c *client) SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes
 
 func (c *client) sendFullBlockRequest(con net.Conn, data []byte) (response []byte, err error) {
 
-	// type
-	_, err = con.Write(converter.DecToBin(I_AM_FULL_NODE, 2))
-	if err != nil {
-		c.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing request type to host")
-		return nil, err
-	}
-
-	// data size
-	size := converter.DecToBin(len(data), 4)
-	_, err = con.Write(size)
-	if err != nil {
-		c.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data size to host")
-		return nil, err
-	}
-
-	_, err = con.Write(data)
-	if err != nil {
-		c.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data to host")
+	if err := c.sendDisseminatorRequest(con, I_AM_FULL_NODE, data); err != nil {
+		c.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Error("on sending disseminator request")
 		return nil, err
 	}
 
