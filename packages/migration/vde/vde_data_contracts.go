@@ -11,133 +11,95 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 	  }', 'ContractConditions("MainCondition")'),
 	  ('2','NewContract','contract NewContract {
 		data {
-			Value      string
+			ApplicationId int
+			Value string
 			Conditions string
-			Wallet         string "optional"
+			Wallet string "optional"
 			TokenEcosystem int "optional"
-			ApplicationId int "optional"
 		}
+	
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
+	
+			if $ApplicationId == 0 {
+				warning "Application id cannot equal 0"
+			}
+	
 			$walletContract = $key_id
-			   if $Wallet {
+			if $Wallet {
 				$walletContract = AddressToId($Wallet)
 				if $walletContract == 0 {
-				   error Sprintf("wrong wallet %%s", $Wallet)
+					error Sprintf("wrong wallet %%s", $Wallet)
 				}
 			}
-			var list array
-			list = ContractsList($Value)
-
-			if Len(list) == 0 {
+	
+			$contract_name = ContractName($Value)
+	
+			if !$contract_name {
 				error "must be the name"
 			}
-
-			var i int
-			while i < Len(list) {
-				if IsObject(list[i], $ecosystem_id) {
-					warning Sprintf("Contract or function %%s exists", list[i] )
-				}
-				i = i + 1
-			}
-
-			$contract_name = list[0]
+	
 			if !$TokenEcosystem {
 				$TokenEcosystem = 1
 			} else {
 				if !SysFuel($TokenEcosystem) {
-					warning Sprintf("Ecosystem %%d is not system", $TokenEcosystem )
+					warning Sprintf("Ecosystem %%d is not system", $TokenEcosystem)
 				}
 			}
 		}
+	
 		action {
-			var root, id int
-			root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
-			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id,app_id",
-				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
-			FlushContract(root, id, false)
-			$result = id
+			$result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
 		}
 		func rollback() {
-			var list array
-    		list = ContractsList($Value)
-			var i int
-			while i < Len(list) {
-				RollbackContract(list[i])
-				i = i + 1
-			}
+			RollbackNewContract($Value)
 		}
 		func price() int {
-			return  SysParamInt("contract_price")
+			return SysParamInt("contract_price")
 		}
 	}', 'ContractConditions("MainCondition")'),
 	  ('3','EditContract','contract EditContract {
-		  data {
-			  Id         int
-			  Value      string "optional"
-			  Conditions string "optional"
-		  }
-
-		  func onlyConditions() bool {
-        	return $Conditions && !$Value
-		  }
-		  conditions {
+		data {
+			Id int
+			Value string "optional"
+			Conditions string "optional"
+			WalletId string "optional"
+		}
+		func onlyConditions() bool {
+			return $Conditions && !$Value && !$WalletId
+		}
+	
+		conditions {
 			RowConditions("contracts", $Id, onlyConditions())
 			if $Conditions {
-	    		ValidateCondition($Conditions, $ecosystem_id)
+				ValidateCondition($Conditions, $ecosystem_id)
 			}
-
-			var row array
-			row = DBFind("contracts").Columns("id,value,conditions").WhereId($Id)
-			if !Len(row) {
+			$cur = DBFind("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id).Row()
+			if !$cur {
 				error Sprintf("Contract %%d does not exist", $Id)
 			}
-			$cur = row[0]
 			if $Value {
-				var list, curlist array
-				list = ContractsList($Value)
-				curlist = ContractsList($cur["value"])
-				if Len(list) != Len(curlist) {
-					error "Contracts cannot be removed or inserted"
+				ValidateEditContractNewValue($Value, $cur["value"])
+			}
+			if $WalletId != "" {
+				$recipient = AddressToId($WalletId)
+				if $recipient == 0 {
+					error Sprintf("New contract owner %%s is invalid", $WalletId)
 				}
-				var i int
-				while i < Len(list) {
-					var j int
-					var ok bool
-					while j < Len(curlist) {
-						if curlist[j] == list[i] {
-							ok = true
-							break
-						}
-						j = j + 1 
-					}
-					if !ok {
-						error "Contracts or functions names cannot be changed"
-					}
-					i = i + 1
+				if Int($cur["active"]) == 1 {
+					error "Contract must be deactivated before wallet changing"
 				}
+			} else {
+				$recipient = Int($cur["wallet_id"])
 			}
-		  }
-		  action {
-			var root int
-			var pars, vals array
-
-			if $Value {
-				root = CompileContract($Value, $ecosystem_id, 0, 0)
-				pars[0] = "value"
-				vals[0] = $Value
-			}
-			if $Conditions {
-				pars[Len(pars)] = "conditions"
-				vals[Len(vals)] = $Conditions
-			}
-			if Len(vals) > 0 {
-				DBUpdate("contracts", $Id, Join(pars, ","), vals...)
-			}
-			if $Value {
-			   FlushContract(root, $Id, false)
-			}
-		  }
+		}
+	
+		action {
+			UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
+		}
+		func rollback() {
+			RollbackEditContract()
+		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('4','NewParameter','contract NewParameter {
 		  data {
@@ -596,120 +558,93 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		data {
 			Data string
 		}
+		func ReplaceValue(s string) string {
+			s = Replace(s, "#IMPORT_ECOSYSTEM_ID#", "#ecosystem_id#")
+			s = Replace(s, "#IMPORT_KEY_ID#", "#key_id#")
+			s = Replace(s, "#IMPORT_ISMOBILE#", "#isMobile#")
+			s = Replace(s, "#IMPORT_ROLE_ID#", "#role_id#")
+			s = Replace(s, "#IMPORT_ECOSYSTEM_NAME#", "#ecosystem_name#")
+			s = Replace(s, "#IMPORT_APP_ID#", "#app_id#")
+			return s
+		}
+	
 		conditions {
-			$list = JSONDecode($Data)
-		}
-		func ImportList(row array, cnt string) {
-			if !row {
-				return
-			}
-			var i int
-			while i < Len(row) {
-				var idata map
-				idata = row[i]
-				if(cnt == "pages"){
-					$ret_page = DBFind("pages").Columns("id").Where("name=$", idata["Name"])
-					$page_id = One($ret_page, "id") 
-					if ($page_id != nil){
-						idata["Id"] = Int($page_id) 
-						CallContract("EditPage", idata)
-					} else {
-						CallContract("NewPage", idata)
-					}
-				}
-				if(cnt == "blocks"){
-					$ret_block = DBFind("blocks").Columns("id").Where("name=$", idata["Name"])
-					$block_id = One($ret_block, "id") 
-					if ($block_id != nil){
-						idata["Id"] = Int($block_id)
-						CallContract("EditBlock", idata)
-					} else {
-						CallContract("NewBlock", idata)
-					}
-				}
-				if(cnt == "menus"){
-					$ret_menu = DBFind("menu").Columns("id,value").Where("name=$", idata["Name"])
-					$menu_id = One($ret_menu, "id") 
-					$menu_value = One($ret_menu, "value") 
-					if ($menu_id != nil){
-						idata["Id"] = Int($menu_id)
-						idata["Value"] = Str($menu_value) + "\n" + Str(idata["Value"])
-						CallContract("EditMenu", idata)
-					} else {
-						CallContract("NewMenu", idata)
-					}
-				}
-				if(cnt == "parameters"){
-					$ret_param = DBFind("parameters").Columns("id").Where("name=$", idata["Name"])
-					$param_id = One($ret_param, "id")
-					if ($param_id != nil){ 
-						idata["Id"] = Int($param_id) 
-						CallContract("EditParameter", idata)
-					} else {
-						CallContract("NewParameter", idata)
-					}
-				}
-				if(cnt == "languages"){
-					$ret_lang = DBFind("languages").Columns("id").Where("name=$", idata["Name"])
-					$lang_id = One($ret_lang, "id")
-					if ($lang_id != nil){
-						CallContract("EditLang", idata)
-					} else {
-						CallContract("NewLang", idata)
-					}
-				}
-				if(cnt == "contracts"){
-					if IsObject(idata["Name"], $ecosystem_id){
-					} else {
-						CallContract("NewContract", idata)
-					} 
-				}
-				if(cnt == "tables"){
-					$ret_table = DBFind("tables").Columns("id").Where("name=$", idata["Name"])
-					$table_id = One($ret_table, "id")
-					if ($table_id != nil){	
-					} else {
-						CallContract("NewTable", idata)
-					}
-				}
-				i = i + 1
-			}
-		}
-		func ImportData(row array) {
-			if !row {
-				return
-			}
-			var i int
-			while i < Len(row) {
-				var idata map
-				var list array
-				var tblname, columns string
-				idata = row[i]
-				i = i + 1
-				tblname = idata["Table"]
-				columns = Join(idata["Columns"], ",")
-				list = idata["Data"] 
-				if !list {
-					continue
-				}
-				var j int
-				while j < Len(list) {
-					var ilist array
-					ilist = list[j]
-					DBInsert(tblname, columns, ilist)
-					j=j+1
+			$Data = ReplaceValue($Data)
+	
+			$ApplicationId = 0
+			var app_map map
+			app_map = DBFind("buffer_data").Columns("value->app_name").Where("key=''import_info'' and member_id=$", $key_id).Row()
+			if app_map{
+				var app_id int
+				app_id = DBFind("applications").Columns("id").Where("name=$", Str(app_map["value.app_name"])).One("id")
+				if app_id {
+					$ApplicationId = Int(app_id)
 				}
 			}
 		}
+	
 		action {
-			ImportList($list["pages"], "pages")
-			ImportList($list["blocks"], "blocks")
-			ImportList($list["menus"], "menus")
-			ImportList($list["parameters"], "parameters")
-			ImportList($list["languages"], "languages")
-			ImportList($list["contracts"], "contracts")
-			ImportList($list["tables"], "tables")
-			ImportData($list["data"])
+			var editors, creators map
+			editors["pages"] = "EditPage"
+			editors["blocks"] = "EditBlock"
+			editors["menu"] = "EditMenu"
+			editors["app_params"] = "EditAppParam"
+			editors["languages"] = "EditLang"
+			editors["contracts"] = "EditContract"
+			editors["tables"] = "" // nothing
+	
+			creators["pages"] = "NewPage"
+			creators["blocks"] = "NewBlock"
+			creators["menu"] = "NewMenu"
+			creators["app_params"] = "NewAppParam"
+			creators["languages"] = "NewLang"
+			creators["contracts"] = "NewContract"
+			creators["tables"] = "NewTable"
+	
+			var dataImport array
+			dataImport = JSONDecode($Data)
+			var i int
+			while i<Len(dataImport){
+				var item, cdata map
+				cdata = dataImport[i]
+				if cdata {
+					cdata["ApplicationId"] = $ApplicationId
+					$Type = cdata["Type"]
+					$Name = cdata["Name"]
+	
+					// Println(Sprintf("import %%v: %%v", $Type, cdata["Name"]))
+	
+					item = DBFind($Type).Where("name=?", $Name).Row()
+					var contractName string
+					if item {
+						contractName = editors[$Type]
+						cdata["Id"] = Int(item["id"])
+						if $Type == "menu"{
+							var menu menuItem string
+							menu = Replace(item["value"], " ", "")
+							menu = Replace(menu, "\n", "")
+							menu = Replace(menu, "\r", "")
+							menuItem = Replace(cdata["Value"], " ", "")
+							menuItem = Replace(menuItem, "\n", "")
+							menuItem = Replace(menuItem, "\r", "")
+							if Contains(menu, menuItem) {
+								// ignore repeated
+								contractName = ""
+							}else{
+								cdata["Value"] = item["value"] + "\n" + cdata["Value"]
+							}
+						}
+					} else {
+						contractName = creators[$Type]
+					}
+	
+					if contractName != ""{
+						CallContract(contractName, cdata)
+					}
+				}
+				i=i+1
+			}
+			// Println(Sprintf("> time: %%v", $time))
 		}
 	}', 'ContractConditions("MainCondition")'),
 	('21', 'NewCron','contract NewCron {
