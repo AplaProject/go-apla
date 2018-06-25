@@ -249,6 +249,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"SortedKeys":                   SortedKeys,
 		"Append":                       Append,
 		"GetPageHistory":               GetPageHistory,
+		"GetMenuHistory":               GetMenuHistory,
 	}
 
 	switch vt {
@@ -1720,6 +1721,7 @@ func StopVDEProcess(sc *SmartContract, name string) error {
 func GetVDEList(sc *SmartContract) (map[string]string, error) {
 	return vdemanager.Manager.ListProcess()
 func getHistory(sc *SmartContract, tableName string, id int64) ([]map[string]string, error) {
+func getHistory(sc *SmartContract, tableName string, id int64) ([]interface{}, error) {
 	table := fmt.Sprintf(`%d_%s`, sc.TxSmart.EcosystemID, tableName)
 	rows, err := model.GetDB(sc.DbTransaction).Table(table).Where("id=?", id).Rows()
 	if err != nil {
@@ -1756,7 +1758,7 @@ func getHistory(sc *SmartContract, tableName string, id int64) ([]map[string]str
 		}
 		curVal[columns[i]] = value
 	}
-	rollbackList := []map[string]string{}
+	rollbackList := []interface{}{}
 	rollbackTx := &model.RollbackTx{}
 	historyLimit := 250
 	txs, err := rollbackTx.GetRollbackTxsByTableIDAndTableName(converter.Int64ToStr(id),
@@ -1783,6 +1785,10 @@ func getHistory(sc *SmartContract, tableName string, id int64) ([]map[string]str
 	return rollbackList, nil
 }
 
-func GetPageHistory(sc *SmartContract, id int64) ([]map[string]string, error) {
+func GetPageHistory(sc *SmartContract, id int64) ([]interface{}, error) {
 	return getHistory(sc, `pages`, id)
+}
+
+func GetMenuHistory(sc *SmartContract, id int64) ([]interface{}, error) {
+	return getHistory(sc, `menu`, id)
 }
