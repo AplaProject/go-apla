@@ -1385,7 +1385,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			error "Access denied"
 		}
 
-		if $block != Int($cur["block_id"]) {
+		if $block < Int($cur["block_id"]) {
 			error Sprintf("Delayed contract %%d must run on block %%s, current block %%d", $Id, $cur["block_id"], $block)
 		}
 	}
