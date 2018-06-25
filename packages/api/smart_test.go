@@ -826,3 +826,45 @@ func TestStack(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("[[@1%s] [@1%[1]s @1%s]]", parent, child), res)
 }
+
+func TestPageHistory(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`page`)
+	value := `P(test,test paragraph)`
+
+	form := url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
+		"Menu": {"default_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	var ret listResult
+	assert.NoError(t, sendGet(`list/pages`, nil, &ret))
+	id := ret.Count
+	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {id}, "Value": {"Div(style){ok}"}}))
+	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {id}, "Conditions": {"true"}}))
+
+	form = url.Values{`Value`: {`contract Get` + name + ` {
+		data {
+			IdPage int
+		}
+		action {
+			var ret map
+			ret = GetPageHistory($IdPage)
+			Println("RET", ret)
+		}
+	}`}, "ApplicationId": {`1`}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	assert.NoError(t, postTx(`Get`+name, &url.Values{"IdPage": {id}}))
+
+	form = url.Values{"Name": {name + `1`}, "Value": {value}, "ApplicationId": {`1`},
+		"Menu": {"default_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	assert.NoError(t, postTx(`Get`+name, &url.Values{"IdPage": {converter.Int64ToStr(
+		converter.StrToInt64(id) + 1)}}))
+
+	assert.EqualError(t, postTx(`Get`+name, &url.Values{"IdPage": {`1000000`}}),
+		`{"type":"panic","error":"Record has not been found"}`)
+
+}
