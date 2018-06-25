@@ -816,9 +816,14 @@ func tailTag(par parFunc) string {
 
 func includeTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Workspace.Vars)[`_include`]) < 5 {
+<<<<<<< 12f0824fca3138b221418ec0468e2785acd22ff3
 		bi := &model.BlockInterface{}
 		bi.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
 		found, err := bi.Get(macro((*par.Pars)[`Name`], par.Workspace.Vars))
+=======
+		pattern, err := model.Single(`select value from "`+(*par.Workspace.Vars)[`ecosystem_id`]+
+			`_blocks" where name=?`, macro((*par.Pars)[`Name`], par.Workspace.Vars)).String()
+>>>>>>> Added macro to include
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by name")
 			return err.Error()
