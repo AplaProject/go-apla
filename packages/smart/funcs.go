@@ -1720,7 +1720,8 @@ func StopVDEProcess(sc *SmartContract, name string) error {
 // GetVDEList returns list VDE process with statuses
 func GetVDEList(sc *SmartContract) (map[string]string, error) {
 	return vdemanager.Manager.ListProcess()
-func getHistory(sc *SmartContract, tableName string, id int64) ([]map[string]string, error) {
+}
+
 func getHistory(sc *SmartContract, tableName string, id int64) ([]interface{}, error) {
 	table := fmt.Sprintf(`%d_%s`, sc.TxSmart.EcosystemID, tableName)
 	rows, err := model.GetDB(sc.DbTransaction).Table(table).Where("id=?", id).Rows()
