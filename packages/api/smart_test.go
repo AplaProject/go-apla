@@ -894,4 +894,11 @@ func TestPageHistory(t *testing.T) {
 	assert.EqualError(t, postTx(`Get`+name, &url.Values{"IdPage": {`1000000`}, "IdMenu": {idmenu},
 		"IdCont": {idCont}}), `{"type":"panic","error":"Record has not been found"}`)
 
+	var retTemp contentResult
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {fmt.Sprintf(`GetPageHistory(%s)`,
+		id)}}, &retTemp))
+
+	if len(RawToString(retTemp.Tree)) < 400 {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(retTemp.Tree)))
+	}
 }
