@@ -69,6 +69,8 @@ const (
 	VMTypeSmart VMType = 1
 	// VMTypeVDE is vde vm type
 	VMTypeVDE VMType = 2
+	// VMTypeVDEMaster is VDEMaster type
+	VMTypeVDEMaster VMType = 3
 
 	TagFile      = "file"
 	TagAddress   = "address"
@@ -189,6 +191,11 @@ type ExtendData struct {
 	AutoPars map[string]string
 }
 
+// Stacker represents interface for working with call stack
+type Stacker interface {
+	AppendStack(contract string)
+}
+
 // ParseContract gets a state identifier and the name of the contract from the full name like @[id]name
 func ParseContract(in string) (id uint64, name string) {
 	var err error
@@ -281,10 +288,10 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		}
 	}
 	rt.cost -= CostContract
-	var stackCont func(interface{}, string)
-	if stack, ok := (*rt.extend)[`stack_cont`]; ok && (*rt.extend)[`sc`] != nil {
-		stackCont = stack.(func(interface{}, string))
-		stackCont((*rt.extend)[`sc`], name)
+
+	var stack Stacker
+	if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
+		stack.AppendStack(name)
 	}
 	if (*rt.extend)[`sc`] != nil && isSignature {
 		obj := rt.vm.Objects[`check_signature`]
@@ -306,8 +313,8 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 			}
 		}
 	}
-	if stackCont != nil {
-		stackCont((*rt.extend)[`sc`], ``)
+	if stack != nil {
+		stack.AppendStack("")
 	}
 	(*rt.extend)[`parent`] = prevparent
 	(*rt.extend)[`this_contract`] = prevthis

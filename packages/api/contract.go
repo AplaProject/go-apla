@@ -39,8 +39,42 @@ type contractRequest struct {
 	Time           string   `json:"time"`
 }
 
-type contractResult struct {
+type contractsResult interface {
+	AppendResult(*contractResult)
+}
+
+type hashesResult struct {
 	Hashes []string `json:"hashes"`
+}
+
+func (hr *hashesResult) AppendResult(cr *contractResult) {
+	hr.Hashes = append(hr.Hashes, cr.Hash)
+}
+
+type vdeContractsResult struct {
+	Results []*contractResult `json:"results"`
+}
+
+func (vcr *vdeContractsResult) AppendResult(cr *contractResult) {
+	vcr.Results = append(vcr.Results, cr)
+}
+
+type contractResult struct {
+	Hash    string
+	Message *txstatusError
+	Result  string
+}
+
+func newContractsResult(n int) contractsResult {
+	if isVDEMode() {
+		return &vdeContractsResult{
+			Results: make([]*contractResult, 0, n),
+		}
+	}
+
+	return &hashesResult{
+		Hashes: make([]string, 0, n),
+	}
 }
 
 func (c *contractHandlers) ContractMultiHandler(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +131,7 @@ func (c *contractHandlers) ContractMultiHandler(w http.ResponseWriter, r *http.R
 	smartTx.PayOver = req.Payover
 	smartTx.SignedBy = signedBy
 
-	hashes := []string{}
+	results := newContractsResult(len(bufReq.Contracts))
 	for i, contReq := range bufReq.Contracts {
 		contract := getContract(r, contReq.Contract())
 		if contract == nil {
@@ -121,18 +155,16 @@ func (c *contractHandlers) ContractMultiHandler(w http.ResponseWriter, r *http.R
 		smartTx.Header.PublicKey = publicKey
 		smartTx.Header.BinSignatures = converter.EncodeLengthPlusData(signatureBytes)
 
-		hash, err := contract.CreateTxFromRequest(contReq, smartTx)
+		result, err := contract.CreateTxFromRequest(contReq, smartTx)
 		if err != nil {
 			errorResponse(w, err)
 			return
 		}
 
-		hashes = append(hashes, hash)
+		results.AppendResult(result)
 	}
 
-	jsonResponse(w, &contractResult{
-		Hashes: hashes,
-	})
+	jsonResponse(w, results)
 }
 
 func getPublicKey(r *http.Request, signID int64, ecosystemID int64, pubkey []byte) ([]byte, error) {

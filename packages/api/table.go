@@ -19,14 +19,14 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-
-	"github.com/gorilla/mux"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/gorilla/mux"
 )
 
 type columnInfo struct {
@@ -56,7 +56,7 @@ func tableHandler(w http.ResponseWriter, r *http.Request) {
 
 	table := &model.Table{}
 	table.SetTablePrefix(prefix)
-	_, err := table.Get(nil, params[keyName])
+	_, err := table.Get(nil, strings.ToLower(params[keyName]))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table")
 		errorResponse(w, err)

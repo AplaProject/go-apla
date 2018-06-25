@@ -18,7 +18,9 @@ package parser
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -37,6 +39,9 @@ import (
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
+
+// ErrDuplicatedTx returns if duplicate transaction is detected
+var ErrDuplicatedTx = errors.New("Duplicated transaction")
 
 // GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
 func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, keyID int64) {
@@ -218,8 +223,8 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		return utils.ErrInfo(err)
 	}
 	if found {
-		log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in log transactions")
-		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %x", searchedHash))
+		log.WithFields(log.Fields{"tx_hash": hex.EncodeToString(searchedHash), "type": consts.DuplicateObject}).Error("double tx in log transactions")
+		return ErrDuplicatedTx
 	}
 
 	if transactions {
@@ -231,8 +236,8 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 			return utils.ErrInfo(err)
 		}
 		if len(tx.Hash) > 0 {
-			log.WithFields(log.Fields{"tx_hash": tx.Hash, "type": consts.DuplicateObject}).Error("double tx in transactions")
-			return utils.ErrInfo(fmt.Errorf("double tx in transactions %x", searchedHash))
+			log.WithFields(log.Fields{"tx_hash": hex.EncodeToString(tx.Hash), "type": consts.DuplicateObject}).Error("double tx in transactions")
+			return ErrDuplicatedTx
 		}
 	}
 
@@ -241,8 +246,8 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		qtx := &model.QueueTx{}
 		found, err := qtx.GetByHash(nil, searchedHash)
 		if found {
-			log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in queue")
-			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %x", searchedHash))
+			log.WithFields(log.Fields{"tx_hash": hex.EncodeToString(searchedHash), "type": consts.DuplicateObject}).Error("double tx in queue")
+			return ErrDuplicatedTx
 		}
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting transaction from queue")
@@ -298,7 +303,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		RollbacksHash: rollbackTxsHash,
 		Tx:            int32(len(block.Parsers)),
 	}
-	blockTimeCalculator, err := utils.BuildBlockTimeCalculator()
+	blockTimeCalculator, err := utils.BuildBlockTimeCalculator(transaction)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
 		return err
@@ -501,7 +506,7 @@ func (p *Parser) CallContract(flags int) (resultContract string, err error) {
 		VDE:           false,
 		Rollback:      true,
 		SysUpdate:     false,
-		VM:            smart.GetVM(false, 0),
+		VM:            smart.GetVM(),
 		TxSmart:       *p.TxSmart,
 		TxData:        p.TxData,
 		TxContract:    p.TxContract,

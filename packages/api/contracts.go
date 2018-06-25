@@ -30,11 +30,6 @@ const (
 	defaultPaginatorLimit = 25
 )
 
-type contractsResult struct {
-	Count string              `json:"count"`
-	List  []map[string]string `json:"list"`
-}
-
 type paginatorForm struct {
 	form
 	Limit  int64 `schema:"limit"`

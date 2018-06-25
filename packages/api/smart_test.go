@@ -260,6 +260,21 @@ func TestPage(t *testing.T) {
 	assert.NoError(t, postTx(`AppendPage`, &form))
 }
 
+func TestNewTableOnly(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := "MMy_s_test_table"
+	form := url.Values{"Name": {name}, "ApplicationId": {"1"}, "Columns": {`[{"name":"MyName","type":"varchar", 
+		"conditions":"true"},
+	  {"name":"Name", "type":"varchar","index": "0", "conditions":"{\"read\":\"true\",\"update\":\"true\"}"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	require.NoError(t, postTx(`NewTable`, &form))
+
+	var ret tableResult
+	require.NoError(t, sendGet(`table/`+name, nil, &ret))
+	fmt.Printf("%+v\n", ret)
+}
+
 func TestNewTable(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
@@ -777,4 +792,38 @@ func TestMemoryLimit(t *testing.T) {
 	}))
 
 	assert.EqualError(t, postTx(contract, &url.Values{}), `{"type":"panic","error":"Memory limit exceeded"}`)
+}
+
+func TestStack(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	parent := randName("Parent")
+	child := randName("Child")
+
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + child + ` {
+			action {
+				$result = $stack
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}))
+
+	assert.NoError(t, postTx("NewContract", &url.Values{
+		"Value": {`contract ` + parent + ` {
+			action {
+				var arr array
+				arr[0] = $stack
+				arr[1] = ` + child + `()
+				$result = arr
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}))
+
+	_, res, err := postTxResult(parent, &url.Values{})
+	assert.NoError(t, err)
+	assert.Equal(t, fmt.Sprintf("[[@1%s] [@1%[1]s @1%s]]", parent, child), res)
 }

@@ -35,6 +35,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -46,6 +47,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 	"github.com/satori/go.uuid"
 
 	"github.com/shopspring/decimal"
@@ -53,6 +55,8 @@ import (
 )
 
 const nodeBanNotificationHeader = "Your node was banned"
+
+var BOM = []byte{0xEF, 0xBB, 0xBF}
 
 type permTable struct {
 	Insert    string `json:"insert"`
@@ -71,6 +75,7 @@ type permColumn struct {
 type SmartContract struct {
 	VDE           bool
 	Rollback      bool
+	FullAccess    bool
 	SysUpdate     bool
 	VM            *script.VM
 	TxSmart       tx.SmartContract
@@ -85,6 +90,17 @@ type SmartContract struct {
 	DbTransaction *model.DbTransaction
 }
 
+// AppendStack adds an element to the stack of contract call or removes the top element when name is empty
+func (sc *SmartContract) AppendStack(contract string) {
+	cont := sc.TxContract
+	if len(contract) > 0 {
+		cont.StackCont = append(cont.StackCont, contract)
+	} else {
+		cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
+	}
+	(*sc.TxContract.Extend)["stack"] = cont.StackCont
+}
+
 var (
 	funcCallsDB = map[string]struct{}{
 		"DBInsert":    {},
@@ -94,41 +110,41 @@ var (
 		"SetPubKey":   {},
 	}
 	extendCost = map[string]int64{
-		"AddressToId":        10,
-		"ColumnCondition":    50,
-		"CompileContract":    100,
-		"Contains":           10,
-		"ContractAccess":     50,
-		"ContractConditions": 50,
-		"ContractsList":      10,
-		"CreateColumn":       50,
-		"CreateTable":        100,
-		"CreateLanguage":     50,
-		"EditLanguage":       50,
-		"EcosysParam":        10,
-		"AppParam":           10,
-		"Eval":               10,
-		"EvalCondition":      20,
-		"FlushContract":      50,
-		"GetContractByName":  20,
-		"GetContractById":    20,
-		"HMac":               50,
-		"Join":               10,
-		"JSONToMap":          50,
-		"Sha256":             50,
-		"IdToAddress":        10,
-		"IsObject":           10,
-		"Len":                5,
-		"Replace":            10,
-		"PermColumn":         50,
-		"Split":              50,
-		"PermTable":          100,
-		"Substr":             10,
-		"Size":               10,
-		"ToLower":            10,
-		"TrimSpace":          10,
-		"TableConditions":    100,
-		"ValidateCondition":  30,
+		"AddressToId":                  10,
+		"ColumnCondition":              50,
+		"Contains":                     10,
+		"ContractAccess":               50,
+		"ContractConditions":           50,
+		"ContractName":                 10,
+		"CreateColumn":                 50,
+		"CreateTable":                  100,
+		"CreateLanguage":               50,
+		"EditLanguage":                 50,
+		"CreateContract":               60,
+		"UpdateContract":               60,
+		"EcosysParam":                  10,
+		"AppParam":                     10,
+		"Eval":                         10,
+		"EvalCondition":                20,
+		"GetContractByName":            20,
+		"GetContractById":              20,
+		"HMac":                         50,
+		"Join":                         10,
+		"JSONToMap":                    50,
+		"Sha256":                       50,
+		"IdToAddress":                  10,
+		"Len":                          5,
+		"Replace":                      10,
+		"PermColumn":                   50,
+		"Split":                        50,
+		"PermTable":                    100,
+		"Substr":                       10,
+		"Size":                         10,
+		"ToLower":                      10,
+		"TrimSpace":                    10,
+		"TableConditions":              100,
+		"ValidateCondition":            30,
+		"ValidateEditContractNewValue": 10,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -152,87 +168,98 @@ func getCost(name string) int64 {
 // EmbedFuncs is extending vm with embedded functions
 func EmbedFuncs(vm *script.VM, vt script.VMType) {
 	f := map[string]interface{}{
-		"AddressToId":          AddressToID,
-		"ColumnCondition":      ColumnCondition,
-		"CompileContract":      CompileContract,
-		"Contains":             strings.Contains,
-		"ContractAccess":       ContractAccess,
-		"ContractConditions":   ContractConditions,
-		"ContractsList":        contractsList,
-		"CreateColumn":         CreateColumn,
-		"CreateTable":          CreateTable,
-		"DBInsert":             DBInsert,
-		"DBSelect":             DBSelect,
-		"DBUpdate":             DBUpdate,
-		"DBUpdateSysParam":     UpdateSysParam,
-		"DBUpdateExt":          DBUpdateExt,
-		"EcosysParam":          EcosysParam,
-		"AppParam":             AppParam,
-		"SysParamString":       SysParamString,
-		"SysParamInt":          SysParamInt,
-		"SysFuel":              SysFuel,
-		"Eval":                 Eval,
-		"EvalCondition":        EvalCondition,
-		"Float":                Float,
-		"FlushContract":        FlushContract,
-		"GetContractByName":    GetContractByName,
-		"GetContractById":      GetContractById,
-		"HMac":                 HMac,
-		"Join":                 Join,
-		"JSONToMap":            JSONDecode, // Deprecated
-		"JSONDecode":           JSONDecode,
-		"JSONEncode":           JSONEncode,
-		"IdToAddress":          IDToAddress,
-		"Int":                  Int,
-		"IsObject":             IsObject,
-		"Len":                  Len,
-		"Money":                Money,
-		"PermColumn":           PermColumn,
-		"PermTable":            PermTable,
-		"Random":               Random,
-		"Split":                Split,
-		"Str":                  Str,
-		"Substr":               Substr,
-		"Replace":              Replace,
-		"Size":                 Size,
-		"Sha256":               Sha256,
-		"PubToID":              PubToID,
-		"HexToBytes":           HexToBytes,
-		"LangRes":              LangRes,
-		"HasPrefix":            strings.HasPrefix,
-		"ValidateCondition":    ValidateCondition,
-		"TrimSpace":            strings.TrimSpace,
-		"ToLower":              strings.ToLower,
-		"CreateEcosystem":      CreateEcosystem,
-		"RollbackEcosystem":    RollbackEcosystem,
-		"RollbackTable":        RollbackTable,
-		"TableConditions":      TableConditions,
-		"RollbackColumn":       RollbackColumn,
-		"CreateLanguage":       CreateLanguage,
-		"EditLanguage":         EditLanguage,
-		"Activate":             Activate,
-		"Deactivate":           Deactivate,
-		"SetContractWallet":    SetContractWallet,
-		"RollbackContract":     RollbackContract,
-		"RollbackEditContract": RollbackEditContract,
-		"check_signature":      CheckSignature,
-		"RowConditions":        RowConditions,
-		"UUID":                 UUID,
-		"DecodeBase64":         DecodeBase64,
-		"EncodeBase64":         EncodeBase64,
-		"MD5":                  MD5,
-		"EditEcosysName":       EditEcosysName,
-		"GetColumnType":        GetColumnType,
-		"GetType":              GetType,
-		"AllowChangeCondition": AllowChangeCondition,
-		"StringToBytes":        StringToBytes,
-		"BytesToString":        BytesToString,
-		"SetPubKey":            SetPubKey,
-		"NewMoney":             NewMoney,
+		"AddressToId":                  AddressToID,
+		"ColumnCondition":              ColumnCondition,
+		"Contains":                     strings.Contains,
+		"ContractAccess":               ContractAccess,
+		"ContractConditions":           ContractConditions,
+		"ContractName":                 contractName,
+		"ValidateEditContractNewValue": ValidateEditContractNewValue,
+		"CreateColumn":                 CreateColumn,
+		"CreateTable":                  CreateTable,
+		"DBInsert":                     DBInsert,
+		"DBSelect":                     DBSelect,
+		"DBUpdate":                     DBUpdate,
+		"DBUpdateSysParam":             UpdateSysParam,
+		"DBUpdateExt":                  DBUpdateExt,
+		"EcosysParam":                  EcosysParam,
+		"AppParam":                     AppParam,
+		"SysParamString":               SysParamString,
+		"SysParamInt":                  SysParamInt,
+		"SysFuel":                      SysFuel,
+		"Eval":                         Eval,
+		"EvalCondition":                EvalCondition,
+		"Float":                        Float,
+		"GetContractByName":            GetContractByName,
+		"GetContractById":              GetContractById,
+		"HMac":                         HMac,
+		"Join":                         Join,
+		"JSONToMap":                    JSONDecode, // Deprecated
+		"JSONDecode":                   JSONDecode,
+		"JSONEncode":                   JSONEncode,
+		"IdToAddress":                  IDToAddress,
+		"Int":                          Int,
+		"Len":                          Len,
+		"Money":                        Money,
+		"PermColumn":                   PermColumn,
+		"PermTable":                    PermTable,
+		"Random":                       Random,
+		"Split":                        Split,
+		"Str":                          Str,
+		"Substr":                       Substr,
+		"Replace":                      Replace,
+		"Size":                         Size,
+		"Sha256":                       Sha256,
+		"PubToID":                      PubToID,
+		"HexToBytes":                   HexToBytes,
+		"LangRes":                      LangRes,
+		"HasPrefix":                    strings.HasPrefix,
+		"ValidateCondition":            ValidateCondition,
+		"TrimSpace":                    strings.TrimSpace,
+		"ToLower":                      strings.ToLower,
+		"CreateEcosystem":              CreateEcosystem,
+		"RollbackEcosystem":            RollbackEcosystem,
+		"CreateContract":               CreateContract,
+		"UpdateContract":               UpdateContract,
+		"RollbackTable":                RollbackTable,
+		"TableConditions":              TableConditions,
+		"RollbackColumn":               RollbackColumn,
+		"CreateLanguage":               CreateLanguage,
+		"EditLanguage":                 EditLanguage,
+		"Activate":                     Activate,
+		"Deactivate":                   Deactivate,
+		"RollbackContract":             RollbackContract,
+		"RollbackEditContract":         RollbackEditContract,
+		"RollbackNewContract":          RollbackNewContract,
+		"check_signature":              CheckSignature,
+		"RowConditions":                RowConditions,
+		"UUID":                         UUID,
+		"DecodeBase64":                 DecodeBase64,
+		"EncodeBase64":                 EncodeBase64,
+		"MD5":                          MD5,
+		"EditEcosysName":               EditEcosysName,
+		"GetColumnType":                GetColumnType,
+		"GetType":                      GetType,
+		"AllowChangeCondition":         AllowChangeCondition,
+		"StringToBytes":                StringToBytes,
+		"BytesToString":                BytesToString,
+		"SetPubKey":                    SetPubKey,
+		"NewMoney":                     NewMoney,
+		"GetMapKeys":                   GetMapKeys,
+		"SortedKeys":                   SortedKeys,
+		"Append":                       Append,
 	}
 
 	switch vt {
 	case script.VMTypeVDE:
+		f["HTTPRequest"] = HTTPRequest
+		f["Date"] = Date
+		f["HTTPPostJSON"] = HTTPPostJSON
+		f["ValidateCron"] = ValidateCron
+		f["UpdateCron"] = UpdateCron
+		vmExtendCost(vm, getCost)
+		vmFuncCallsDB(vm, funcCallsDB)
+	case script.VMTypeVDEMaster:
 		f["HTTPRequest"] = HTTPRequest
 		f["GetMapKeys"] = GetMapKeys
 		f["SortedKeys"] = SortedKeys
@@ -240,6 +267,11 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["HTTPPostJSON"] = HTTPPostJSON
 		f["ValidateCron"] = ValidateCron
 		f["UpdateCron"] = UpdateCron
+		f["CreateVDE"] = CreateVDE
+		f["DeleteVDE"] = DeleteVDE
+		f["StartVDE"] = StartVDE
+		f["StopVDEProcess"] = StopVDEProcess
+		f["GetVDEList"] = GetVDEList
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
@@ -261,14 +293,11 @@ func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
 		return strings.ToLower(tblname[1:])
 	}
 	prefix := converter.Int64ToStr(ecosystem)
-	if sc.VDE {
-		prefix += `_vde`
-	}
 	return strings.ToLower(fmt.Sprintf(`%s_%s`, prefix, tblname))
 }
 
 func getDefTableName(sc *SmartContract, tblname string) string {
-	return GetTableName(sc, tblname, sc.TxSmart.EcosystemID)
+	return converter.EscapeSQL(GetTableName(sc, tblname, sc.TxSmart.EcosystemID))
 }
 
 func accessContracts(sc *SmartContract, names ...string) bool {
@@ -344,20 +373,133 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 	return true, nil
 }
 
-func contractsList(value string) ([]interface{}, error) {
+func contractName(value string) (string, error) {
 	list, err := script.ContractsList(value)
-	result := make([]interface{}, len(list))
-	for i := 0; i < len(list); i++ {
-		result[i] = reflect.ValueOf(list[i]).Interface()
+	if err != nil {
+		return "", err
 	}
-	return result, err
+	if len(list) > 0 {
+		return list[0], nil
+	} else {
+		return "", nil
+	}
+}
+
+func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) error {
+	list, err := script.ContractsList(newValue)
+	if err != nil {
+		return err
+	}
+	curlist, err := script.ContractsList(oldValue)
+	if err != nil {
+		return err
+	}
+	if len(list) != len(curlist) {
+		return fmt.Errorf("Contract cannot be removed or inserted")
+	}
+	for i := 0; i < len(list); i++ {
+		var ok bool
+		for j := 0; j < len(curlist); j++ {
+			if curlist[j] == list[i] {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return fmt.Errorf("Contracts or functions names cannot be changed")
+		}
+	}
+	return nil
+}
+
+func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID string, recipient int64, active, tokenID string) error {
+	if !accessContracts(sc, `EditContract`, `Import`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("UpdateContract can be only called from EditContract")
+		return fmt.Errorf(`UpdateContract can be only called from EditContract`)
+	}
+	var pars []string
+	var vals []interface{}
+	ecosystemID := sc.TxSmart.EcosystemID
+	var root interface{}
+	if value != "" {
+		var err error
+		root, err = CompileContract(sc, value, ecosystemID, recipient, converter.StrToInt64(tokenID))
+		if err != nil {
+			return err
+		}
+		pars = append(pars, "value")
+		vals = append(vals, value)
+	}
+	if conditions != "" {
+		pars = append(pars, "conditions")
+		vals = append(vals, conditions)
+	}
+	if walletID != "" {
+		pars = append(pars, "wallet_id")
+		vals = append(vals, recipient)
+	}
+	if len(vals) > 0 {
+		if _, err := DBUpdate(sc, "contracts", id, strings.Join(pars, ","), vals...); err != nil {
+			return err
+		}
+	}
+	if value != "" {
+		if err := FlushContract(sc, root, id, converter.StrToInt64(active) == 1); err != nil {
+			return err
+		}
+	} else {
+		if walletID != "" {
+			if err := SetContractWallet(sc, id, ecosystemID, recipient); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func CreateContract(sc *SmartContract, name, value, conditions string, walletID, tokenEcosystem, appID int64) (int64, error) {
+	if !accessContracts(sc, `NewContract`, `Import`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateContract can be only called from NewContract")
+		return 0, fmt.Errorf(`CreateContract can be only called from NewContract`)
+	}
+	var id int64
+	var err error
+
+	if GetContractByName(sc, name) != 0 {
+		return 0, fmt.Errorf(eContractExist, name)
+	}
+	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, walletID, tokenEcosystem)
+	if err != nil {
+		return 0, err
+	}
+	_, id, err = DBInsert(sc, "contracts", "name,value,conditions,wallet_id,token_id,app_id", name, value, conditions, walletID, tokenEcosystem, appID)
+	if err != nil {
+		return 0, err
+	}
+	if err := FlushContract(sc, root, id, false); err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func RollbackNewContract(sc *SmartContract, value string) error {
+	contractList, err := script.ContractsList(value)
+	if err != nil {
+		return err
+	}
+	for _, contract := range contractList {
+		if err := RollbackContract(sc, contract); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // CreateTable is creating smart contract table
 func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) error {
 	var err error
-	if !ContractAccess(sc, `NewTable`, `Import`) {
-		return fmt.Errorf(`CreateTable can be only called from NewTable`)
+	if !accessContracts(sc, `NewTable`, `NewTableJoint`, `Import`) {
+		return fmt.Errorf(`CreateTable can be only called from NewTable, NewTableJoint or Import`)
 	}
 
 	if len(name) == 0 {
@@ -396,7 +538,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		default:
 			data = v.(map[string]interface{})
 		}
-		colname := strings.ToLower(data[`name`].(string))
+		colname := converter.EscapeSQL(strings.ToLower(data[`name`].(string)))
 		if colList[colname] {
 			return fmt.Errorf(`There are the same columns`)
 		}
@@ -776,11 +918,6 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 	return nil
 }
 
-// IsObject returns true if there is the specified contract
-func IsObject(sc *SmartContract, name string, state int64) bool {
-	return VMObjectExists(sc.VM, name, uint32(state))
-}
-
 // Len returns the length of the slice
 func Len(in []interface{}) int64 {
 	if in == nil {
@@ -820,9 +957,9 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 			log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1EditTable")
 			return fmt.Errorf(`TableConditions can be only called from EditTable`)
 		}
-	} else if !ContractAccess(sc, `NewTable`, `Import`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1NewTable")
-		return fmt.Errorf(`TableConditions can be only called from NewTable or Import`)
+	} else if !accessContracts(sc, `NewTable`, `Import`, `NewTableJoint`) {
+		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1NewTable, @1Import, @1NewTableJoint")
+		return fmt.Errorf(`TableConditions can be only called from NewTable or Import or NewTableJoint`)
 	}
 
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
@@ -965,8 +1102,8 @@ func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 
 // ColumnCondition is contract func
 func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions string) error {
-	name = strings.ToLower(name)
-	tableName = strings.ToLower(tableName)
+	name = converter.EscapeSQL(strings.ToLower(name))
+	tableName = converter.EscapeSQL(strings.ToLower(tableName))
 	if !accessContracts(sc, `NewColumn`, `EditColumn`) {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ColumnConditions can be only called from @1NewColumn")
 		return fmt.Errorf(`ColumnCondition can be only called from NewColumn or EditColumn`)
@@ -1068,7 +1205,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("CreateColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
 	}
-	name = strings.ToLower(name)
+	name = converter.EscapeSQL(strings.ToLower(name))
 	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
 
@@ -1158,7 +1295,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditColumn can be only called from @1EditColumn")
 		return fmt.Errorf(`EditColumn can be only called from EditColumn`)
 	}
-	name = strings.ToLower(name)
+	name = converter.EscapeSQL(strings.ToLower(name))
 	tableName = strings.ToLower(tableName)
 	tables := getDefTableName(sc, `tables`)
 	type cols struct {
@@ -1552,5 +1689,33 @@ func StringToBytes(src string) []byte {
 
 // BytesToString converts bytes to string
 func BytesToString(src []byte) string {
+	if bytes.HasPrefix(src, BOM) && utf8.Valid(src[len(BOM):]) {
+		return string(src[len(BOM):])
+	}
 	return string(src)
+}
+
+// CreateVDE allow create new VDE throw vdemanager
+func CreateVDE(sc *SmartContract, name, dbUser, dbPassword string, port int64) error {
+	return vdemanager.Manager.CreateVDE(name, dbUser, dbPassword, int(port))
+}
+
+// DeleteVDE delete vde
+func DeleteVDE(sc *SmartContract, name string) error {
+	return vdemanager.Manager.DeleteVDE(name)
+}
+
+// StartVDE run VDE process
+func StartVDE(sc *SmartContract, name string) error {
+	return vdemanager.Manager.StartVDE(name)
+}
+
+// StopVDEProcess stops VDE process
+func StopVDEProcess(sc *SmartContract, name string) error {
+	return vdemanager.Manager.StopVDE(name)
+}
+
+// GetVDEList returns list VDE process with statuses
+func GetVDEList(sc *SmartContract) (map[string]string, error) {
+	return vdemanager.Manager.ListProcess()
 }

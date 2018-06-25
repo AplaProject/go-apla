@@ -19,7 +19,6 @@ package api
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -158,7 +157,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		Address:     crypto.KeyToAddress(publicKey),
 		IsOwner:     founder == wallet,
 		IsNode:      conf.Config.KeyID == wallet,
-		IsVDE:       model.IsTable(fmt.Sprintf(`%d_vde_tables`, client.EcosystemID)),
+		IsVDE:       conf.Config.IsSupportingVDE(),
 	}
 
 	expire := form.Expire

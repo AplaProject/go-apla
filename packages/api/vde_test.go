@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -33,123 +34,46 @@ import (
 )
 
 func TestVDECreate(t *testing.T) {
-	var (
-		err   error
-		retid int64
-		ret   vdeCreateResult
-	)
+	require.NoError(t, keyLogin(1))
 
-	assert.NoError(t, keyLogin(1))
-
-	if err = sendPost(`vde/create`, nil, &ret); err != nil &&
-		err.Error() != `400 {"error": "E_VDECREATED", "msg": "Virtual Dedicated Ecosystem is already created" }` {
-		t.Error(err)
-		return
+	form := url.Values{
+		"VDEName":    {"myvde3"},
+		"DBUser":     {"myvdeuser3"},
+		"DBPassword": {"vdepassword"},
+		"VDEAPIPort": {"8004"},
 	}
-
-	rnd := `rnd` + crypto.RandSeq(6)
-	form := url.Values{`Value`: {`contract ` + rnd + ` {
-		    data {
-				Par string
-			}
-			action { Test("active",  $Par)}}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
-
-	retid, _, err = postTxResult(`NewContract`, &form)
-	assert.NoError(t, err)
-
-	form = url.Values{`Id`: {converter.Int64ToStr(retid)}, `Value`: {`contract ` + rnd + ` {
-		data {
-			Par string
-		}
-		action { Test("active 5",  $Par)}}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
-	assert.NoError(t, postTx(`EditContract`, &form))
-
-	form = url.Values{`Name`: {rnd}, `Value`: {`Test value`}, `Conditions`: {`ContractConditions("MainCondition")`},
-		`vde`: {`1`}}
-
-	retid, _, err = postTxResult(`NewParameter`, &form)
-	assert.NoError(t, err)
-
-	form = url.Values{`Name`: {`new_table`}, `Value`: {`Test value`}, `Conditions`: {`ContractConditions("MainCondition")`},
-		`vde`: {`1`}}
-	if err = postTx(`NewParameter`, &form); err != nil && err.Error() !=
-		`500 {"error": "E_SERVER", "msg": "{\"type\":\"warning\",\"error\":\"Parameter new_table already exists\"}" }` {
-		t.Error(err)
-		return
-	}
-	form = url.Values{`Id`: {converter.Int64ToStr(retid)}, `Value`: {`Test edit value`}, `Conditions`: {`true`},
-		`vde`: {`1`}}
-
-	assert.NoError(t, postTx(`EditParameter`, &form))
-
-	form = url.Values{"Name": {`menu` + rnd}, "Value": {`first
-		second
-		third`}, "Title": {`My Menu`},
-		"Conditions": {`true`}, `vde`: {`1`}}
-	retid, _, err = postTxResult(`NewMenu`, &form)
-	assert.NoError(t, err)
-
-	form = url.Values{`Id`: {converter.Int64ToStr(retid)}, `Value`: {`Test edit value`},
-		`Conditions`: {`true`},
-		`vde`:        {`1`}}
-	assert.NoError(t, postTx(`EditMenu`, &form))
-
-	form = url.Values{"Id": {converter.Int64ToStr(retid)}, "Value": {`Span(Append)`},
-		`vde`: {`1`}}
-	assert.NoError(t, postTx(`AppendMenu`, &form))
-
-	form = url.Values{"Name": {`page` + rnd}, "Value": {`Page`}, "Menu": {`government`},
-		"Conditions": {`true`}, `vde`: {`1`}}
-	retid, _, err = postTxResult(`NewPage`, &form)
-	assert.NoError(t, err)
-
-	form = url.Values{`Id`: {converter.Int64ToStr(retid)}, `Value`: {`Test edit page value`},
-		`Conditions`: {`true`}, "Menu": {`government`},
-		`vde`: {`1`}}
-	assert.NoError(t, postTx(`EditPage`, &form))
-
-	form = url.Values{"Id": {converter.Int64ToStr(retid)}, "Value": {`Span(Test Page)`},
-		`vde`: {`1`}}
-	assert.NoError(t, postTx(`AppendPage`, &form))
-
-	form = url.Values{"Name": {`block` + rnd}, "Value": {`Page block`}, "Conditions": {`true`}, `vde`: {`1`}}
-	retid, _, err = postTxResult(`NewBlock`, &form)
-	assert.NoError(t, err)
-
-	form = url.Values{`Id`: {converter.Int64ToStr(retid)}, `Value`: {`Test edit block value`},
-		`Conditions`: {`true`}, `vde`: {`1`}}
-	assert.NoError(t, postTx(`EditBlock`, &form))
-
-	name := randName(`tbl`)
-	form = url.Values{"Name": {name}, `vde`: {`true`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1",
-			  "conditions":"true"},
-			{"name":"Amount", "type":"number","index": "0", "conditions":"true"},
-			{"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
-		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	assert.NoError(t, postTx(`NewTable`, &form))
-
-	form = url.Values{"Name": {name}, `vde`: {`true`},
-		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")",
-						"update" : "true", "new_column": "ContractConditions(\"MainCondition\")"}`}}
-	assert.NoError(t, postTx(`EditTable`, &form))
-
-	form = url.Values{"TableName": {name}, "Name": {`newCol`}, `vde`: {`1`},
-		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
-	assert.NoError(t, postTx(`NewColumn`, &form))
-
-	form = url.Values{"TableName": {name}, "Name": {`newColRead`}, `vde`: {`1`},
-		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {`{"update":"true", "read":"false"}`}}
-	assert.NoError(t, postTx(`NewColumn`, &form))
-
-	form = url.Values{"TableName": {name}, "Name": {`newCol`}, `vde`: {`1`},
-		"Permissions": {"ContractConditions(\"MainCondition\")"}}
-	assert.NoError(t, postTx(`EditColumn`, &form))
-
-	form = url.Values{"TableName": {name}, "Name": {`newCol`}, `vde`: {`1`},
-		"Permissions": {`{"update":"true", "read":"false"}`}}
-	assert.NoError(t, postTx(`EditColumn`, &form))
+	assert.NoError(t, postTx("NewVDE", &form))
 }
 
+func TestVDEList(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+
+	fmt.Println(postTx("ListVDE", nil))
+}
+
+func TestStopVDE(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{
+		"VDEName": {"myvde3"},
+	}
+	require.NoError(t, postTx("StopVDE", &form))
+}
+
+func TestRunVDE(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{
+		"VDEName": {"myvde3"},
+	}
+	require.NoError(t, postTx("RunVDE", &form))
+}
+
+func TestRemoveVDE(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{
+		"VDEName": {"myvde3"},
+	}
+	require.NoError(t, postTx("RemoveVDE", &form))
+}
 func TestVDEParams(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 

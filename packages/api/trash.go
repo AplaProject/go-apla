@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -11,6 +12,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
@@ -149,7 +151,6 @@ func (c *Contract) ForSingParams(req *tx.RequestContract, params map[string]stri
 			d, err := decimal.NewFromString(params[fitem.Name])
 			if err != nil {
 				getLogger(c.req).WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting to decimal")
-				// errorResponse(w, err, http.StatusBadRequest)
 				return nil, err
 			}
 
@@ -158,7 +159,6 @@ func (c *Contract) ForSingParams(req *tx.RequestContract, params map[string]stri
 			sp.SetTablePrefix(client.Prefix())
 			if _, err = sp.Get(nil, model.ParamMoneyDigit); err != nil {
 				getLogger(c.req).WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting value from db")
-				// errorResponse(w, err, http.StatusBadRequest)
 				return nil, err
 			}
 			exp := int32(converter.StrToInt(sp.Value))
@@ -183,7 +183,7 @@ func (c *Contract) ForSingParams(req *tx.RequestContract, params map[string]stri
 	return forSign, nil
 }
 
-func (c *Contract) CreateTxFromRequest(contReq *tx.RequestContract, smartTx *tx.SmartContract) (string, error) {
+func (c *Contract) CreateTxFromRequest(contReq *tx.RequestContract, smartTx *tx.SmartContract) (*contractResult, error) {
 	smartTx.Data = make([]byte, 0)
 
 	logger := getLogger(c.req)
@@ -194,7 +194,7 @@ func (c *Contract) CreateTxFromRequest(contReq *tx.RequestContract, smartTx *tx.
 		var err error
 		smartTx.Data, err = packParamsContract(*info.Tx, contReq, logger)
 		if err != nil {
-			return "", newError(err, http.StatusBadRequest)
+			return nil, newError(err, http.StatusBadRequest)
 		}
 	}
 
@@ -203,25 +203,21 @@ func (c *Contract) CreateTxFromRequest(contReq *tx.RequestContract, smartTx *tx.
 	serializedData, err := msgpack.Marshal(smartTx)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-		return "", err
+		return nil, err
 	}
 
-	// TODO: vde support
-	// if data.vde {
-	// 	ret, err := VDEContract(serializedData, data)
-	// 	if err != nil {
-	// 		return errorAPI(w, err, http.StatusInternalServerError)
-	// 	}
-	// 	data.result = ret
-	// 	return nil
-	// }
+	if client.IsVDE {
+		return callVDEContract(c.req, serializedData)
+	}
 
 	hash, err := model.SendTx(int64(info.ID), client.KeyID, append([]byte{128}, serializedData...))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return hex.EncodeToString(hash), nil
+	return &contractResult{
+		Hash: hex.EncodeToString(hash),
+	}, nil
 }
 
 func (c *Contract) Info() *script.ContractInfo {
@@ -252,12 +248,12 @@ func prepareFormFile(r *http.Request, key, reqKey string, req *tx.RequestContrac
 }
 
 func getContract(r *http.Request, name string) *Contract {
-	client := getClient(r)
-	vm := smart.GetVM(client.IsVDE, client.EcosystemID)
+	vm := smart.GetVM()
 	if vm == nil {
 		return nil
 	}
 
+	client := getClient(r)
 	contract := smart.VMGetContract(vm, name, uint32(client.EcosystemID))
 	return &Contract{Contract: contract, req: r}
 }
@@ -313,8 +309,6 @@ func newTxHeader() tx.Header {
 }
 
 func packParamsContract(fields []*script.FieldInfo, req *tx.RequestContract, logger *log.Entry) ([]byte, error) {
-	// TODO: vde
-
 	idata := []byte{}
 	var err error
 	for _, fitem := range fields {
@@ -378,6 +372,162 @@ func packParamsContract(fields []*script.FieldInfo, req *tx.RequestContract, log
 }
 
 func isVDEMode() bool {
-	// TODO: implements detect vde mode
-	return false
+	return conf.Config.IsSupportingVDE()
+}
+
+func callVDEContract(r *http.Request, contractData []byte) (result *contractResult, err error) {
+	logger := getLogger(r)
+
+	var ret string
+	hash, err := crypto.Hash(contractData)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting hash of contract data")
+		return nil, err
+	}
+	result = &contractResult{Hash: hex.EncodeToString(hash)}
+
+	sc := smart.SmartContract{VDE: true, TxHash: hash}
+	err = initVDEContract(&sc, contractData)
+	if err != nil {
+		result.Message = &txstatusError{Type: "panic", Error: err.Error()}
+		return
+	}
+
+	if token := getToken(r); token != nil && token.Valid {
+		if auth, err := token.SignedString([]byte(jwtSecret)); err == nil {
+			sc.TxData["auth_token"] = auth
+		}
+	}
+
+	if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
+		result.Result = ret
+	} else {
+		if errResult := json.Unmarshal([]byte(err.Error()), &result.Message); errResult != nil {
+			logger.WithFields(log.Fields{
+				"type":  consts.JSONUnmarshallError,
+				"text":  err.Error(),
+				"error": errResult,
+			}).Error("unmarshalling contract error")
+
+			result.Message = &txstatusError{Type: "panic", Error: errResult.Error()}
+		}
+	}
+	return
+}
+
+// initVDEContract is initializes smart contract
+func initVDEContract(sc *smart.SmartContract, data []byte) error {
+	if err := msgpack.Unmarshal(data, &sc.TxSmart); err != nil {
+		return err
+	}
+
+	sc.TxContract = smart.VMGetContractByID(smart.GetVM(), int32(sc.TxSmart.Type))
+	if sc.TxContract == nil {
+		return fmt.Errorf(`unknown contract %d`, sc.TxSmart.Type)
+	}
+	forsign := []string{sc.TxSmart.ForSign()}
+
+	input := sc.TxSmart.Data
+	sc.TxData = make(map[string]interface{})
+
+	if sc.TxContract.Block.Info.(*script.ContractInfo).Tx != nil {
+		for _, fitem := range *sc.TxContract.Block.Info.(*script.ContractInfo).Tx {
+			var err error
+			var v interface{}
+			var forv string
+			var isforv bool
+
+			if fitem.ContainsTag(script.TagFile) {
+				var (
+					data []byte
+					file *tx.File
+				)
+				if err := converter.BinUnmarshal(&input, &data); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling file")
+					return err
+				}
+				if err := msgpack.Unmarshal(data, &file); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("unmarshalling file msgpack")
+					return err
+				}
+
+				sc.TxData[fitem.Name] = file.Data
+				sc.TxData[fitem.Name+"MimeType"] = file.MimeType
+
+				forsign = append(forsign, file.MimeType, file.Hash)
+				continue
+			}
+
+			switch fitem.Type.String() {
+			case `uint64`:
+				var val uint64
+				converter.BinUnmarshal(&input, &val)
+				v = val
+			case `float64`:
+				var val float64
+				converter.BinUnmarshal(&input, &val)
+				v = val
+			case `int64`:
+				v, err = converter.DecodeLenInt64(&input)
+			case script.Decimal:
+				var s string
+				if err := converter.BinUnmarshal(&input, &s); err != nil {
+					return err
+				}
+				v, err = decimal.NewFromString(s)
+			case `string`:
+				var s string
+				if err := converter.BinUnmarshal(&input, &s); err != nil {
+					return err
+				}
+				v = s
+			case `[]uint8`:
+				var b []byte
+				if err := converter.BinUnmarshal(&input, &b); err != nil {
+					return err
+				}
+				v = hex.EncodeToString(b)
+			case `[]interface {}`:
+				count, err := converter.DecodeLength(&input)
+				if err != nil {
+					return err
+				}
+				isforv = true
+				list := make([]interface{}, 0)
+				for count > 0 {
+					length, err := converter.DecodeLength(&input)
+					if err != nil {
+						return err
+					}
+					if len(input) < int(length) {
+						return fmt.Errorf(`input slice is short`)
+					}
+					list = append(list, string(input[:length]))
+					input = input[length:]
+					count--
+				}
+				if len(list) > 0 {
+					slist := make([]string, len(list))
+					for j, lval := range list {
+						slist[j] = lval.(string)
+					}
+					forv = strings.Join(slist, `,`)
+				}
+				v = list
+			}
+			sc.TxData[fitem.Name] = v
+			if err != nil {
+				return err
+			}
+			if strings.Index(fitem.Tags, `image`) >= 0 {
+				continue
+			}
+			if isforv {
+				v = forv
+			}
+			forsign = append(forsign, fmt.Sprintf("%v", v))
+		}
+	}
+	sc.TxData["forsign"] = strings.Join(forsign, ",")
+	return nil
 }

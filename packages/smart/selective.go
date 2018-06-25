@@ -86,9 +86,9 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	if whereFields != nil && whereValues != nil {
 		for i := 0; i < len(whereFields); i++ {
 			if val := converter.StrToInt64(whereValues[i]); val != 0 {
-				addSQLWhere += whereFields[i] + "= " + whereValues[i] + " AND "
+				addSQLWhere += whereFields[i] + "= " + escapeSingleQuotes(whereValues[i]) + " AND "
 			} else {
-				addSQLWhere += whereFields[i] + "= '" + whereValues[i] + "' AND "
+				addSQLWhere += whereFields[i] + "= '" + escapeSingleQuotes(whereValues[i]) + "' AND "
 			}
 		}
 	}
@@ -143,15 +143,15 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			if converter.IsByteColumn(table, fields[i]) && len(values[i]) != 0 {
 				addSQLUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if fields[i][:1] == "+" {
-				addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + values[i] + `,`
+				addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + escapeSingleQuotes(values[i]) + `,`
 			} else if fields[i][:1] == "-" {
-				addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `-` + values[i] + `,`
+				addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `-` + escapeSingleQuotes(values[i]) + `,`
 			} else if values[i] == `NULL` {
 				addSQLUpdate += fields[i] + `= NULL,`
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
 				addSQLUpdate += fields[i][len(`timestamp `):] + `= to_timestamp('` + values[i] + `'),`
 			} else if strings.HasPrefix(values[i], `timestamp `) {
-				addSQLUpdate += fields[i] + `= timestamp '` + values[i][len(`timestamp `):] + `',`
+				addSQLUpdate += fields[i] + `= timestamp '` + escapeSingleQuotes(values[i][len(`timestamp `):]) + `',`
 			} else if strings.Contains(fields[i], `->`) {
 				colfield := strings.Split(fields[i], `->`)
 				if len(colfield) == 2 {
@@ -161,7 +161,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 					jsonFields[colfield[0]][colfield[1]] = values[i]
 				}
 			} else {
-				addSQLUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
+				addSQLUpdate += fields[i] + `='` + escapeSingleQuotes(values[i]) + `',`
 			}
 		}
 		for colname, colvals := range jsonFields {
@@ -201,7 +201,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		for i := 0; i < len(fields); i++ {
 			if fields[i] == `id` {
 				isID = true
-				tableID = fmt.Sprint(values[i])
+				tableID = escapeSingleQuotes(values[i])
 			}
 
 			if strings.Contains(fields[i], `->`) {
@@ -210,7 +210,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 					if jsonFields[colfield[0]] == nil {
 						jsonFields[colfield[0]] = make(map[string]string)
 					}
-					jsonFields[colfield[0]][colfield[1]] = values[i]
+					jsonFields[colfield[0]][colfield[1]] = escapeSingleQuotes(values[i])
 					continue
 				}
 			}
@@ -227,11 +227,11 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			} else if values[i] == `NULL` {
 				addSQLIns1 = append(addSQLIns1, `NULL`)
 			} else if strings.HasPrefix(fields[i], `timestamp`) {
-				addSQLIns1 = append(addSQLIns1, `to_timestamp('`+values[i]+`')`)
+				addSQLIns1 = append(addSQLIns1, `to_timestamp('`+escapeSingleQuotes(values[i])+`')`)
 			} else if strings.HasPrefix(values[i], `timestamp`) {
-				addSQLIns1 = append(addSQLIns1, `timestamp '`+values[i][len(`timestamp `):]+`'`)
+				addSQLIns1 = append(addSQLIns1, `timestamp '`+escapeSingleQuotes(values[i][len(`timestamp `):])+`'`)
 			} else {
-				addSQLIns1 = append(addSQLIns1, `'`+strings.Replace(values[i], `'`, `''`, -1)+`'`)
+				addSQLIns1 = append(addSQLIns1, `'`+escapeSingleQuotes(values[i])+`'`)
 			}
 		}
 		for colname, colvals := range jsonFields {
@@ -247,10 +247,10 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			for i := 0; i < len(whereFields); i++ {
 				if whereFields[i] == `id` {
 					isID = true
-					tableID = fmt.Sprint(whereValues[i])
+					tableID = whereValues[i]
 				}
 				addSQLIns0 = append(addSQLIns0, whereFields[i])
-				addSQLIns1 = append(addSQLIns1, whereValues[i])
+				addSQLIns1 = append(addSQLIns1, escapeSingleQuotes(whereValues[i]))
 			}
 		}
 		if !isID {
@@ -296,4 +296,8 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		}
 	}
 	return cost, tableID, nil
+}
+
+func escapeSingleQuotes(val string) string {
+	return strings.Replace(val, `'`, `''`, -1)
 }

@@ -37,6 +37,7 @@ func GetBlocks(blockID int64, host string) error {
 	if err != nil {
 		return err
 	}
+	CleanCache()
 
 	// mark all transaction as unverified
 	_, err = model.MarkVerifiedAndNotUsedTransactionsUnverified()
@@ -67,7 +68,6 @@ func GetBlocks(blockID int64, host string) error {
 			return utils.ErrInfo(err)
 		}
 	}
-
 	return processBlocks(blocks)
 }
 
@@ -171,7 +171,7 @@ func processBlocks(blocks []*Block) error {
 
 		if err := block.CheckBlock(); err != nil {
 			dbTransaction.Rollback()
-			return utils.ErrInfo(err)
+			return err
 		}
 
 		if err := block.playBlock(dbTransaction); err != nil {

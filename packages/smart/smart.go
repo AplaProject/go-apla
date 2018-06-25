@@ -66,7 +66,6 @@ const (
 
 var (
 	smartVM   *script.VM
-	smartVDE  map[int64]*script.VM
 	smartTest = make(map[string]string)
 
 	ErrCurrentBalance = errors.New(`current balance is not enough`)
@@ -118,17 +117,10 @@ func newVM() *script.VM {
 
 func init() {
 	smartVM = newVM()
-	smartVDE = make(map[int64]*script.VM)
 }
 
 // GetVM is returning smart vm
-func GetVM(vde bool, ecosystemID int64) *script.VM {
-	if vde {
-		if v, ok := smartVDE[ecosystemID]; ok {
-			return v
-		}
-		return nil
-	}
+func GetVM() *script.VM {
 	return smartVM
 }
 
@@ -182,6 +174,7 @@ func VMRun(vm *script.VM, block *script.Block, params []interface{}, extend *map
 func VMGetContract(vm *script.VM, name string, state uint32) *Contract {
 	name = script.StateName(state, name)
 	obj, ok := vm.Objects[name]
+
 	if ok && obj.Type == script.ObjContract {
 		return &Contract{Name: name, Block: obj.Value.(*script.Block)}
 	}
@@ -477,17 +470,24 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
 
-	if !model.IsTable(prefix + `_vde_contracts`) {
+	if !model.IsTable(prefix + `_contracts`) {
 		return
 	}
-	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_vde_contracts" order by id`, -1)
+	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
 	if err != nil {
 		return err
 	}
 	state := converter.StrToInt64(prefix)
-	vm := newVM()
-	EmbedFuncs(vm, script.VMTypeVDE)
-	smartVDE[state] = vm
+	vm := GetVM()
+
+	var vmt script.VMType
+	if conf.Config.IsVDE() {
+		vmt = script.VMTypeVDE
+	} else if conf.Config.IsVDEMaster() {
+		vmt = script.VMTypeVDEMaster
+	}
+
+	EmbedFuncs(vm, vmt)
 	LoadSysFuncs(vm, int(state))
 	for _, item := range contracts {
 		list, err := script.ContractsList(item[`value`])
@@ -503,6 +503,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 			WalletID: 0,
 			TokenID:  0,
 		}
+
 		if err = vmCompile(vm, item[`value`], &owner); err != nil {
 			log.WithFields(log.Fields{"names": names, "error": err}).Error("Load VDE Contract")
 		} else {
@@ -548,17 +549,6 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 	}
 
 	return &extend
-}
-
-// StackCont adds an element to the stack of contract call or removes the top element when name is empty
-func StackCont(sc interface{}, name string) {
-	cont := sc.(*SmartContract).TxContract
-	if len(name) > 0 {
-		cont.StackCont = append(cont.StackCont, name)
-	} else {
-		cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
-	}
-	return
 }
 
 func PrefixName(table string) (prefix, name string) {
@@ -636,6 +626,9 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 }
 
 func (sc *SmartContract) AccessTable(table, action string) error {
+	if sc.FullAccess {
+		return nil
+	}
 	_, err := sc.AccessTablePerm(table, action)
 	return err
 }
@@ -659,6 +652,9 @@ type colAccess struct {
 // AccessColumns checks access rights to the columns
 func (sc *SmartContract) AccessColumns(table string, columns *[]string, update bool) error {
 	logger := sc.GetLogger()
+	if sc.FullAccess {
+		return nil
+	}
 	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
 		if update {
 			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
@@ -830,9 +826,8 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	}
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
-	sc.TxContract.StackCont = []string{sc.TxContract.Name}
-	(*sc.TxContract.Extend)[`stack_cont`] = StackCont
-	sc.VM = GetVM(sc.VDE, sc.TxSmart.EcosystemID)
+	sc.AppendStack(sc.TxContract.Name)
+	sc.VM = GetVM()
 	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 {
 		if !sc.VDE {
 			toID = sc.BlockData.KeyID
@@ -871,6 +866,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			return retError(ErrEmptyPublicKey)
 		}
 		sc.PublicKeys = append(sc.PublicKeys, public)
+
 		var CheckSignResult bool
 		CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.BinSignatures, false)
 		if err != nil {
@@ -881,7 +877,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 			return retError(ErrIncorrectSign)
 		}
-		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.PrivateBlockchain {
+		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
 			if sc.TxSmart.TokenEcosystem == 0 {
 				sc.TxSmart.TokenEcosystem = 1
 			}
@@ -1003,8 +999,8 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			result = result[:255]
 		}
 	}
-	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 &&
-		!sc.VDE && !conf.Config.PrivateBlockchain && sc.TxContract.Name != `@1NewUser` {
+
+	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
 		apl := sc.TxUsedCost.Mul(fuelRate)
 
 		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)

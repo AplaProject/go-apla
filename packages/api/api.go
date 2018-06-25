@@ -41,9 +41,6 @@ type Client struct {
 // Prefix returns prefix of ecosystem
 func (c *Client) Prefix() (prefix string) {
 	prefix = converter.Int64ToStr(c.EcosystemID)
-	if c.IsVDE {
-		prefix += `_vde`
-	}
 	return
 }
 
@@ -86,7 +83,9 @@ func (f *ecosystemForm) ValidateEcosystem(r *http.Request) error {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	if f.EcosystemID > 0 {
+	if isVDEMode() {
+		f.EcosystemID = consts.DefaultVDE
+	} else if f.EcosystemID > 0 {
 		count, err := model.GetNextID(nil, "1_ecosystems")
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id of ecosystems")
@@ -101,9 +100,6 @@ func (f *ecosystemForm) ValidateEcosystem(r *http.Request) error {
 	}
 
 	f.EcosystemPrefix = converter.Int64ToStr(f.EcosystemID)
-	if client.IsVDE {
-		f.EcosystemPrefix += `_vde`
-	}
 
 	return nil
 }

@@ -202,6 +202,21 @@ func GetNumberOfNodes() int64 {
 	return int64(len(nodesByPosition))
 }
 
+func GetNumberOfNodesFromDB(transaction *model.DbTransaction) int64 {
+	sp := &model.SystemParameter{}
+	sp.GetTransaction(transaction, FullNodes)
+	var fullNodes []map[string]interface{}
+	if len(sp.Value) > 0 {
+		if err := json.Unmarshal([]byte(sp.Value), &fullNodes); err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "value": sp.Value}).Error("unmarshalling fullnodes from JSON")
+		}
+	}
+	if len(fullNodes) == 0 {
+		return 1
+	}
+	return int64(len(fullNodes))
+}
+
 // GetNodeByPosition is retrieving node by position
 func GetNodeByPosition(position int64) (*FullNode, error) {
 	mutex.RLock()
