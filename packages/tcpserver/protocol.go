@@ -29,6 +29,22 @@ type RequestType struct {
 	Type uint16
 }
 
+// Read read first 2 bytes to uint16
+func (rt *RequestType) Read(r io.Reader) error {
+	t, err := readUint(r, 2)
+	if err != nil {
+		return err
+	}
+
+	rt.Type = uint16(t)
+	return nil
+}
+
+func (rt *RequestType) Write(w io.Writer) error {
+	_, err := w.Write(converter.DecToBin(int64(rt.Type), 2))
+	return err
+}
+
 // MaxBlockRequest is max block request
 type MaxBlockRequest struct{}
 
@@ -37,10 +53,57 @@ type MaxBlockResponse struct {
 	BlockID uint32
 }
 
+func (resp *MaxBlockResponse) Read(r io.Reader) error {
+	t, err := readUint(r, 4)
+	if err != nil {
+		return err
+	}
+
+	resp.BlockID = uint32(t)
+	return nil
+}
+
+func (resp *MaxBlockResponse) Write(w io.Writer) error {
+	_, err := w.Write(converter.DecToBin(int64(resp.BlockID), 4))
+	return err
+}
+
 // GetBodiesRequest contains BlockID
 type GetBodiesRequest struct {
 	BlockID      uint32
 	ReverseOrder bool
+}
+
+func (req *GetBodiesRequest) Read(r io.Reader) error {
+	t, err := readUint(r, 4)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading getBodiesRequest blockID")
+		return err
+	}
+
+	req.BlockID = uint32(t)
+
+	req.ReverseOrder, err = readBool(r)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading GetBodiesRequest reverse order")
+	}
+	return nil
+}
+
+func (req *GetBodiesRequest) Write(w io.Writer) error {
+	_, err := w.Write(converter.DecToBin(int64(req.BlockID), 4))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending GetBodiesRequest blockID")
+		return err
+	}
+
+	err = writeBool(w, req.ReverseOrder)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending GetBodiesRequest reverse order")
+		return err
+	}
+
+	return err
 }
 
 // GetBodyResponse is Data []bytes
@@ -48,9 +111,44 @@ type GetBodyResponse struct {
 	Data []byte
 }
 
+func (resp *GetBodyResponse) Read(r io.Reader) error {
+	slice, err := readSlice(r, -1)
+	if err != nil {
+		return err
+	}
+
+	resp.Data = slice
+	return nil
+}
+
+func (resp *GetBodyResponse) Write(w io.Writer) error {
+	return writeSlice(w, resp.Data, -1)
+}
+
 // ConfirmRequest contains request data
 type ConfirmRequest struct {
 	BlockID uint32
+}
+
+func (req *ConfirmRequest) Read(r io.Reader) error {
+	t, err := readUint(r, 4)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading getBodiesRequest blockID")
+		return err
+	}
+
+	req.BlockID = uint32(t)
+	return nil
+}
+
+func (req *ConfirmRequest) Write(w io.Writer) error {
+	_, err := w.Write(converter.DecToBin(int64(req.BlockID), 4))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending GetBodiesRequest blockID")
+		return err
+	}
+
+	return nil
 }
 
 // ConfirmResponse contains response data
@@ -59,9 +157,56 @@ type ConfirmResponse struct {
 	Hash     []byte `size:"32"`
 }
 
+func (resp *ConfirmResponse) Read(r io.Reader) error {
+	t, err := readUint(r, 1)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading getBodiesRequest blockID")
+		return err
+	}
+
+	resp.ConfType = uint8(t)
+
+	resp.Hash, err = readSlice(r, 32)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading GetBodiesRequest reverse order")
+		return err
+	}
+	return nil
+}
+
+func (resp *ConfirmResponse) Write(w io.Writer) error {
+	_, err := w.Write(converter.DecToBin(int64(resp.ConfType), 1))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending ConfiremResponse confType")
+		return err
+	}
+
+	err = writeSlice(w, resp.Hash, 32)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending ConfiremResponse hash")
+		return err
+	}
+
+	return err
+}
+
 // DisRequest contains request data
 type DisRequest struct {
 	Data []byte
+}
+
+func (req *DisRequest) Read(r io.Reader) error {
+	slice, err := readSlice(r, -1)
+	if err != nil {
+		return err
+	}
+
+	req.Data = slice
+	return nil
+}
+
+func (req *DisRequest) Write(w io.Writer) error {
+	return writeSlice(w, req.Data, -1)
 }
 
 // DisTrResponse contains response data
@@ -72,12 +217,54 @@ type DisHashResponse struct {
 	Data []byte
 }
 
+func (resp *DisHashResponse) Read(r io.Reader) error {
+	slice, err := readSlice(r, -1)
+	if err != nil {
+		return err
+	}
+
+	resp.Data = slice
+	return nil
+}
+
+func (resp *DisHashResponse) Write(w io.Writer) error {
+	return writeSlice(w, resp.Data, -1)
+}
+
 type StopNetworkRequest struct {
 	Data []byte
 }
 
+func (req *StopNetworkRequest) Read(r io.Reader) error {
+	slice, err := readSlice(r, -1)
+	if err != nil {
+		return err
+	}
+
+	req.Data = slice
+	return nil
+}
+
+func (req *StopNetworkRequest) Write(w io.Writer) error {
+	return writeSlice(w, req.Data, -1)
+}
+
 type StopNetworkResponse struct {
 	Hash []byte
+}
+
+func (resp *StopNetworkResponse) Read(r io.Reader) error {
+	slice, err := readSlice(r, -1)
+	if err != nil {
+		return err
+	}
+
+	resp.Hash = slice
+	return nil
+}
+
+func (resp *StopNetworkResponse) Write(w io.Writer) error {
+	return writeSlice(w, resp.Hash, -1)
 }
 
 // ReadRequest is reading request
@@ -217,6 +404,15 @@ func readBytes(r io.Reader, size uint64) ([]byte, error) {
 	return value, err
 }
 
+func readBool(r io.Reader) (bool, error) {
+	boolByte, err := readBytes(r, 1)
+	if err != nil {
+		return false, err
+	}
+
+	return string(boolByte[0]) == "1", nil
+}
+
 func readSliceSize(r io.Reader, tagSize string) (size uint64, err error) {
 	if len(tagSize) > 0 {
 		size, err = strconv.ParseUint(tagSize, 10, 0)
@@ -228,6 +424,58 @@ func readSliceSize(r io.Reader, tagSize string) (size uint64, err error) {
 	return readUint(r, 4)
 }
 
+func writeBool(w io.Writer, val bool) error {
+	var bs []byte
+	if val {
+		bs = []byte("1")
+	} else {
+		bs = []byte("0")
+	}
+	_, err := w.Write(bs)
+	return err
+}
+
+func readSlice(r io.Reader, bytesLen int) ([]byte, error) {
+	if bytesLen < 0 {
+		size, err := readUint(r, 4)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading slice size")
+			return nil, err
+		}
+		bytesLen = int(size)
+	}
+
+	slice, err := readBytes(r, uint64(bytesLen))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading slice")
+		return nil, err
+	}
+
+	return slice, nil
+}
+
+func writeSlice(w io.Writer, value []byte, bytesLen int) error {
+	if bytesLen < 0 {
+		_, err := w.Write(converter.DecToBin(len(value), 4))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on writing slice size")
+			return err
+		}
+	} else {
+		if bytesLen != len(value) {
+			log.WithFields(log.Fields{"size": bytesLen, "len": len(value), "type": consts.ProtocolError}).Error("bad slice len")
+			return fmt.Errorf("bug, bad slice len, want: %d, got %d", bytesLen, len(value))
+		}
+	}
+
+	_, err := w.Write(value)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on writing slice data")
+		return err
+	}
+
+	return nil
+}
 func SendRequestType(reqType int64, w io.Writer) error {
 	_, err := w.Write(converter.DecToBin(reqType, 2))
 	return err
