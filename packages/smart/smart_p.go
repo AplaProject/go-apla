@@ -159,7 +159,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			`page_price`, `commission_size`:
 			ok = ival >= 0
 		case `max_block_size`, `max_tx_size`, `max_tx_count`, `max_columns`, `max_indexes`,
-			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`:
+			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`, `max_forsign_size`:
 			ok = ival > 0
 		case `fuel_rate`, `commission_wallet`:
 			err := json.Unmarshal([]byte(value), &list)
