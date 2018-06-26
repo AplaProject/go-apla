@@ -117,15 +117,7 @@ func ParseTransaction(buffer *bytes.Buffer) (*Transaction, error) {
 		}
 
 		// all other transactions
-	} else {
-		// skip byte with transaction type
-		buffer.Next(1)
-		t.TxBinaryData = buffer.Bytes()
-		if err := t.parseFromRegular(buffer, txType); err != nil {
-			return t, err
-		}
 	}
-
 	txParserCache.Set(t)
 
 	return t, nil
@@ -137,23 +129,22 @@ func IsContractTransaction(txType int) bool {
 }
 
 func (t *Transaction) parseFromStruct(buf *bytes.Buffer, txType int64) error {
-	trParser, err := GetTransaction(t, consts.TxTypes[int(txType)])
-	if err != nil {
-		return err
-	}
-	t.tx = trParser
-
 	t.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
 	input := buf.Bytes()
 	if err := converter.BinUnmarshal(&input, t.TxPtr); err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError, "tx_type": int(txType)}).Error("getting parser for tx type")
 		return err
 	}
-
 	head := consts.Header(t.TxPtr)
 	t.TxKeyID = head.KeyID
 	t.TxTime = int64(head.Time)
 	t.TxType = txType
+
+	trParser, err := GetTransaction(t, consts.TxTypes[int(txType)])
+	if err != nil {
+		return err
+	}
+	t.tx = trParser
 
 	err = trParser.Validate()
 	if err != nil {
@@ -295,70 +286,6 @@ func (t *Transaction) parseFromContract(buf *bytes.Buffer) error {
 		}
 	}
 	t.TxData[`forsign`] = strings.Join(forsign, ",")
-
-	return nil
-}
-
-func parseRegularTransaction(t *Transaction, buf *bytes.Buffer, txType int64) error {
-	trParser, err := GetTransaction(t, consts.TxTypes[int(txType)])
-	if err != nil {
-		return err
-	}
-	t.tx = trParser
-
-	err = trParser.Init()
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "tx_type": int(txType)}).Error("parser init")
-		return err
-	}
-	header := trParser.Header()
-	if header == nil {
-		log.WithFields(log.Fields{"error": err, "tx_type": int(txType)}).Error("parser get header")
-		return fmt.Errorf("tx header is nil")
-	}
-
-	t.TxHeader = header
-	t.TxTime = header.Time
-	t.TxType = txType
-	t.TxEcosystemID = (header.EcosystemID)
-	t.TxKeyID = header.KeyID
-
-	err = trParser.Validate()
-	if _, ok := err.(error); ok {
-		return utils.ErrInfo(err.(error))
-	}
-
-	return nil
-}
-
-func (t *Transaction) parseFromRegular(buf *bytes.Buffer, txType int64) error {
-	trParser, err := GetTransaction(t, consts.TxTypes[int(txType)])
-	if err != nil {
-		return err
-	}
-	t.tx = trParser
-
-	err = trParser.Init()
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "tx_type": int(txType)}).Error("parser init")
-		return err
-	}
-	header := trParser.Header()
-	if header == nil {
-		log.WithFields(log.Fields{"error": err, "tx_type": int(txType)}).Error("parser get header")
-		return fmt.Errorf("tx header is nil")
-	}
-
-	t.TxHeader = header
-	t.TxTime = header.Time
-	t.TxType = txType
-	t.TxEcosystemID = (header.EcosystemID)
-	t.TxKeyID = header.KeyID
-
-	err = trParser.Validate()
-	if _, ok := err.(error); ok {
-		return utils.ErrInfo(err.(error))
-	}
 
 	return nil
 }
