@@ -37,7 +37,7 @@ import (
 // download the transactions here, because they are small and definitely will be downloaded in 60 sec
 func Type1(rw io.ReadWriter) error {
 	r := &DisRequest{}
-	if err := ReadRequest(r, rw); err != nil {
+	if err := r.Read(rw); err != nil {
 		return err
 	}
 
