@@ -35,6 +35,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -46,13 +47,19 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 	"github.com/satori/go.uuid"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
 
-const nodeBanNotificationHeader = "Your node was banned"
+const (
+	nodeBanNotificationHeader = "Your node was banned"
+	historyLimit              = 250
+)
+
+var BOM = []byte{0xEF, 0xBB, 0xBF}
 
 type permTable struct {
 	Insert    string `json:"insert"`
@@ -71,6 +78,7 @@ type permColumn struct {
 type SmartContract struct {
 	VDE           bool
 	Rollback      bool
+	FullAccess    bool
 	SysUpdate     bool
 	VM            *script.VM
 	TxSmart       tx.SmartContract
@@ -243,6 +251,10 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetMapKeys":                   GetMapKeys,
 		"SortedKeys":                   SortedKeys,
 		"Append":                       Append,
+		"GetPageHistory":               GetPageHistory,
+		"GetBlockHistory":              GetBlockHistory,
+		"GetMenuHistory":               GetMenuHistory,
+		"GetContractHistory":           GetContractHistory,
 	}
 
 	switch vt {
@@ -252,6 +264,21 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["HTTPPostJSON"] = HTTPPostJSON
 		f["ValidateCron"] = ValidateCron
 		f["UpdateCron"] = UpdateCron
+		vmExtendCost(vm, getCost)
+		vmFuncCallsDB(vm, funcCallsDB)
+	case script.VMTypeVDEMaster:
+		f["HTTPRequest"] = HTTPRequest
+		f["GetMapKeys"] = GetMapKeys
+		f["SortedKeys"] = SortedKeys
+		f["Date"] = Date
+		f["HTTPPostJSON"] = HTTPPostJSON
+		f["ValidateCron"] = ValidateCron
+		f["UpdateCron"] = UpdateCron
+		f["CreateVDE"] = CreateVDE
+		f["DeleteVDE"] = DeleteVDE
+		f["StartVDE"] = StartVDE
+		f["StopVDEProcess"] = StopVDEProcess
+		f["GetVDEList"] = GetVDEList
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
@@ -273,9 +300,6 @@ func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
 		return strings.ToLower(tblname[1:])
 	}
 	prefix := converter.Int64ToStr(ecosystem)
-	if sc.VDE {
-		prefix += `_vde`
-	}
 	return strings.ToLower(fmt.Sprintf(`%s_%s`, prefix, tblname))
 }
 
@@ -447,6 +471,10 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	}
 	var id int64
 	var err error
+
+	if GetContractByName(sc, name) != 0 {
+		return 0, fmt.Errorf(eContractExist, name)
+	}
 	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, walletID, tokenEcosystem)
 	if err != nil {
 		return 0, err
@@ -1688,5 +1716,115 @@ func StringToBytes(src string) []byte {
 
 // BytesToString converts bytes to string
 func BytesToString(src []byte) string {
+	if bytes.HasPrefix(src, BOM) && utf8.Valid(src[len(BOM):]) {
+		return string(src[len(BOM):])
+	}
 	return string(src)
+}
+
+// CreateVDE allow create new VDE throw vdemanager
+func CreateVDE(sc *SmartContract, name, dbUser, dbPassword string, port int64) error {
+	return vdemanager.Manager.CreateVDE(name, dbUser, dbPassword, int(port))
+}
+
+// DeleteVDE delete vde
+func DeleteVDE(sc *SmartContract, name string) error {
+	return vdemanager.Manager.DeleteVDE(name)
+}
+
+// StartVDE run VDE process
+func StartVDE(sc *SmartContract, name string) error {
+	return vdemanager.Manager.StartVDE(name)
+}
+
+// StopVDEProcess stops VDE process
+func StopVDEProcess(sc *SmartContract, name string) error {
+	return vdemanager.Manager.StopVDE(name)
+}
+
+// GetVDEList returns list VDE process with statuses
+func GetVDEList(sc *SmartContract) (map[string]string, error) {
+	return vdemanager.Manager.ListProcess()
+}
+
+func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName string, id int64) ([]interface{}, error) {
+	table := fmt.Sprintf(`%d_%s`, ecosystem, tableName)
+	rows, err := model.GetDB(transaction).Table(table).Where("id=?", id).Rows()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get current values")
+		return nil, err
+	}
+	if !rows.Next() {
+		return nil, errNotFound
+	}
+	defer rows.Close()
+	// Get column names
+	columns, err := rows.Columns()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get columns")
+		return nil, err
+	}
+	values := make([][]byte, len(columns))
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+	err = rows.Scan(scanArgs...)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("scan values")
+		return nil, err
+	}
+	var value string
+	curVal := make(map[string]string)
+	for i, col := range values {
+		if col == nil {
+			value = "NULL"
+		} else {
+			value = string(col)
+		}
+		curVal[columns[i]] = value
+	}
+	rollbackList := []interface{}{}
+	rollbackTx := &model.RollbackTx{}
+	txs, err := rollbackTx.GetRollbackTxsByTableIDAndTableName(converter.Int64ToStr(id),
+		table, historyLimit)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("rollback history")
+		return nil, err
+	}
+	for _, tx := range *txs {
+		if len(rollbackList) > 0 {
+			rollbackList[len(rollbackList)-1].(map[string]string)[`block_id`] = converter.Int64ToStr(tx.BlockID)
+		}
+		if tx.Data == "" {
+			continue
+		}
+		rollback := make(map[string]string)
+		for k, v := range curVal {
+			rollback[k] = v
+		}
+		if err := json.Unmarshal([]byte(tx.Data), &rollback); err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollbackTx.Data from JSON")
+			return nil, err
+		}
+		rollbackList = append(rollbackList, rollback)
+		curVal = rollback
+	}
+	return rollbackList, nil
+}
+
+func GetBlockHistory(sc *SmartContract, id int64) ([]interface{}, error) {
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `blocks`, id)
+}
+
+func GetPageHistory(sc *SmartContract, id int64) ([]interface{}, error) {
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `pages`, id)
+}
+
+func GetMenuHistory(sc *SmartContract, id int64) ([]interface{}, error) {
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `menu`, id)
+}
+
+func GetContractHistory(sc *SmartContract, id int64) ([]interface{}, error) {
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `contracts`, id)
 }

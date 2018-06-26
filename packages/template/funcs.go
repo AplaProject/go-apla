@@ -63,6 +63,10 @@ func init() {
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
+	funcs[`GetContractHistory`] = tplFunc{getContractHistoryTag, defaultTag, `getcontracthistory`, `Source,Id`}
+	funcs[`GetMenuHistory`] = tplFunc{getMenuHistoryTag, defaultTag, `getmenuhistory`, `Source,Id`}
+	funcs[`GetBlockHistory`] = tplFunc{getBlockHistoryTag, defaultTag, `getblockhistory`, `Source,Id`}
+	funcs[`GetPageHistory`] = tplFunc{getPageHistoryTag, defaultTag, `getpagehistory`, `Source,Id`}
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
 	funcs[`JsonToSource`] = tplFunc{jsontosourceTag, defaultTag, `jsontosource`, `Source,Data`}
@@ -1218,4 +1222,59 @@ func columntypeTag(par parFunc) string {
 		return err.Error()
 	}
 	return ``
+}
+
+func getHistoryTag(par parFunc, table string) string {
+	setAllAttr(par)
+
+	list, err := smart.GetHistory(nil, converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]),
+		table, converter.StrToInt64(macro((*par.Pars)[`Id`], par.Workspace.Vars)))
+	if err != nil {
+		return err.Error()
+	}
+	data := make([][]string, 0)
+	cols := make([]string, 0, 8)
+	types := make([]string, 0, 8)
+	if len(list) > 0 {
+		for i := range list {
+			item := list[i].(map[string]string)
+			if i == 0 {
+				for key := range item {
+					cols = append(cols, key)
+					types = append(types, `text`)
+				}
+			}
+			items := make([]string, len(cols))
+			for ind, key := range cols {
+				val := item[key]
+				if val == `NULL` {
+					val = ``
+				}
+				items[ind] = val
+			}
+			data = append(data, items)
+		}
+	}
+	par.Node.Attr[`columns`] = &cols
+	par.Node.Attr[`types`] = &types
+	par.Node.Attr[`data`] = &data
+	newSource(par)
+	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return ``
+}
+
+func getContractHistoryTag(par parFunc) string {
+	return getHistoryTag(par, `contracts`)
+}
+
+func getBlockHistoryTag(par parFunc) string {
+	return getHistoryTag(par, `blocks`)
+}
+
+func getMenuHistoryTag(par parFunc) string {
+	return getHistoryTag(par, `menu`)
+}
+
+func getPageHistoryTag(par parFunc) string {
+	return getHistoryTag(par, `pages`)
 }

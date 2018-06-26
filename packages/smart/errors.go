@@ -20,6 +20,7 @@ import "errors"
 
 const (
 	eTableNotFound = `Table %s has not been found`
+	eContractExist = `Contract %s already exists`
 )
 
 var (
@@ -30,4 +31,5 @@ var (
 	errCommission             = errors.New("There is not enough money to pay the commission fee")
 	errEmptyColumn            = errors.New(`Column name is empty`)
 	errWrongColumn            = errors.New(`Column name cannot begin with digit`)
+	errNotFound               = errors.New(`Record has not been found`)
 )
