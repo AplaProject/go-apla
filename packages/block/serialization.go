@@ -91,7 +91,7 @@ func UnmarshallBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error)
 		}
 
 		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
-		t, err := transaction.ParseTransaction(bufTransaction)
+		t, err := transaction.UnmarshallTransaction(bufTransaction)
 		if err != nil {
 			if t != nil && t.TxHash != nil {
 				transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())

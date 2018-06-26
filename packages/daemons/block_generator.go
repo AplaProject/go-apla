@@ -174,7 +174,7 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 	txList := make([]*model.Transaction, 0, len(trs))
 	for i, txItem := range trs {
 		bufTransaction := bytes.NewBuffer(txItem.Data)
-		p, err := transaction.ParseTransaction(bufTransaction)
+		p, err := transaction.UnmarshallTransaction(bufTransaction)
 		if err != nil {
 			if p != nil {
 				transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
