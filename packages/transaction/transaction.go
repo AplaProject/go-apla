@@ -51,19 +51,13 @@ type Transaction struct {
 
 // GetLogger returns logger
 func (t Transaction) GetLogger() *log.Entry {
-	if t.BlockData != nil && t.PrevBlock != nil {
-		logger := log.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_hash": t.BlockData.Hash, "block_version": t.BlockData.Version, "prev_block_id": t.PrevBlock.BlockID, "prev_block_time": t.PrevBlock.Time, "prev_block_wallet_id": t.PrevBlock.KeyID, "prev_block_state_id": t.PrevBlock.EcosystemID, "prev_block_hash": t.PrevBlock.Hash, "prev_block_version": t.PrevBlock.Version, "tx_type": t.TxType, "tx_time": t.TxTime, "tx_wallet_id": t.TxKeyID})
-		return logger
-	}
+	logger := log.WithFields(log.Fields{"tx_type": t.TxType, "tx_time": t.TxTime, "tx_wallet_id": t.TxKeyID})
 	if t.BlockData != nil {
-		logger := log.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_hash": t.BlockData.Hash, "block_version": t.BlockData.Version, "tx_type": t.TxType, "tx_time": t.TxTime, "tx_wallet_id": t.TxKeyID})
-		return logger
+		logger = logger.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_hash": t.BlockData.Hash, "block_version": t.BlockData.Version})
 	}
 	if t.PrevBlock != nil {
-		logger := log.WithFields(log.Fields{"prev_block_id": t.PrevBlock.BlockID, "prev_block_time": t.PrevBlock.Time, "prev_block_wallet_id": t.PrevBlock.KeyID, "prev_block_state_id": t.PrevBlock.EcosystemID, "prev_block_hash": t.PrevBlock.Hash, "prev_block_version": t.PrevBlock.Version, "tx_type": t.TxType, "tx_time": t.TxTime, "tx_wallet_id": t.TxKeyID})
-		return logger
+		logger = logger.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_hash": t.BlockData.Hash, "block_version": t.BlockData.Version})
 	}
-	logger := log.WithFields(log.Fields{"tx_type": t.TxType, "tx_time": t.TxTime, "tx_wallet_id": t.TxKeyID})
 	return logger
 }
 
