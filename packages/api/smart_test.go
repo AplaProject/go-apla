@@ -123,20 +123,17 @@ func TestMoneyTransfer(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	size := 1000000 //0
+	size := 1000000
 	big := make([]byte, size)
 	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < size; i++ {
 		big[i] = '0' + byte(rand.Intn(10))
 	}
-	//	fmt.Println(`BIG`, big)
 	form = url.Values{`Amount`: {string(big)}, `Recipient`: {`0005-2070-2000-0006-0200`}}
-	if err := postTx(`MoneyTransfer`, &form); cutErr(err) != `{"type":"error","error":"Recipient 0005207000 is invalid"}` {
+	if err := postTx(`MoneyTransfer`, &form); err.Error() != `400 {"error": "E_LIMITFORSIGN", "msg": "Length of forsign is too big (1000106)" , "params": ["1000106"]}` {
 		t.Error(err)
 		return
 	}
-
-	t.Error(`OK`)
 }
 
 func TestPage(t *testing.T) {

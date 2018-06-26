@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -82,7 +83,7 @@ func (h *contractHandlers) prepareMultipleContract(w http.ResponseWriter, r *htt
 
 	req := h.multiRequests.NewMultiRequest()
 	forSigns := []string{}
-
+	limitForsign := syspar.GetMaxForsignSize()
 	for _, c := range requests.Contracts {
 		var smartTx tx.SmartContract
 		contract, parerr, err := validateSmartContractJSON(r, data, c.Contract, c.Params)
@@ -120,7 +121,11 @@ func (h *contractHandlers) prepareMultipleContract(w http.ResponseWriter, r *htt
 		} else {
 			req.AddContract(c.Contract, c.Params)
 		}
-		forSigns = append(forSigns, strings.Join(forsign, ","))
+		forSign := strings.Join(forsign, ",")
+		if len(forSign) > int(limitForsign) {
+			return errorAPI(w, `E_LIMITFORSIGN`, http.StatusBadRequest, len(forSign))
+		}
+		forSigns = append(forSigns, forSign)
 	}
 	h.multiRequests.AddRequest(req)
 
@@ -177,6 +182,9 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 
 	result.ID = req.ID
 	result.ForSign = strings.Join(forsign, ",")
+	if len(result.ForSign) > int(syspar.GetMaxForsignSize()) {
+		return errorAPI(w, `E_LIMITFORSIGN`, http.StatusBadRequest, len(result.ForSign))
+	}
 	result.Time = converter.Int64ToStr(req.Time.Unix())
 	result.Expiration = converter.Int64ToStr(req.Time.Add(h.requests.ExpireDuration()).Unix())
 	data.result = result
@@ -184,8 +192,11 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 }
 
 func forsignJSONData(w http.ResponseWriter, params map[string]string, logger *log.Entry, fields []*script.FieldInfo) ([]string, map[string]string, error) {
+	var curSize int64
 	forsign := []string{}
 	requestParams := map[string]string{}
+	limitSize := syspar.GetMaxTxSize()
+
 	for _, fitem := range fields {
 		if fitem.ContainsTag(`signature`) || fitem.ContainsTag(script.TagFile) {
 			continue
@@ -221,14 +232,22 @@ func forsignJSONData(w http.ResponseWriter, params map[string]string, logger *lo
 				val = `0`
 			}
 		}
+		curSize += int64(len(val))
 		forsign = append(forsign, val)
+	}
+	if curSize > limitSize {
+		return nil, nil, errorAPI(w, `E_LIMITTXSIZE`, http.StatusBadRequest, curSize)
 	}
 
 	return forsign, requestParams, nil
 }
 
 func forsignFormData(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, req *tx.Request, fields []*script.FieldInfo) ([]string, error) {
+	var curSize int64
+
 	forsign := []string{}
+	limitSize := syspar.GetMaxTxSize()
+
 	for _, fitem := range fields {
 		if strings.Contains(fitem.Tags, `signature`) {
 			continue
@@ -242,6 +261,7 @@ func forsignFormData(w http.ResponseWriter, r *http.Request, data *apiData, logg
 			}
 			fileHeader, err := req.WriteFile(fitem.Name, header.Header.Get(`Content-Type`), file)
 			file.Close()
+			curSize += header.Size
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing file")
 				return nil, errorAPI(w, err.Error(), http.StatusInternalServerError)
@@ -300,9 +320,11 @@ func forsignFormData(w http.ResponseWriter, r *http.Request, data *apiData, logg
 				val = `0`
 			}
 		}
-
+		curSize += int64(len(val))
 		forsign = append(forsign, val)
 	}
-
+	if curSize > limitSize {
+		return nil, errorAPI(w, `E_LIMITTXSIZE`, http.StatusBadRequest, curSize)
+	}
 	return forsign, nil
 }
