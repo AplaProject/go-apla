@@ -14,16 +14,11 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package parser
+package custom
 
 import (
-	"bytes"
-	"encoding/hex"
 	"errors"
-	"io/ioutil"
-	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -41,7 +36,9 @@ const firstEcosystemID = 1
 
 // FirstBlockParser is parser wrapper
 type FirstBlockTransaction struct {
-	*Transaction
+	Logger        *log.Entry
+	DbTransaction *model.DbTransaction
+	Data          interface{}
 }
 
 // ErrFirstBlockHostIsEmpty host for first block is not specified
@@ -59,8 +56,8 @@ func (t *FirstBlockTransaction) Validate() error {
 
 // Action is fires first block
 func (t *FirstBlockTransaction) Action() error {
-	logger := t.GetLogger()
-	data := t.TxPtr.(*consts.FirstBlock)
+	logger := t.Logger
+	data := t.Data.(*consts.FirstBlock)
 	keyID := crypto.Address(data.PublicKey)
 	err := model.ExecSchemaEcosystem(nil, firstEcosystemID, keyID, ``, keyID)
 	if err != nil {
@@ -120,60 +117,4 @@ func (t *FirstBlockTransaction) Rollback() error {
 // Header is returns first block header
 func (t FirstBlockTransaction) Header() *tx.Header {
 	return nil
-}
-
-// GetKeyIDFromPrivateKey load KeyID fron PrivateKey file
-func GetKeyIDFromPrivateKey() (int64, error) {
-
-	key, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.PrivateKeyFilename))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading private key file")
-		return 0, err
-	}
-	key, err = hex.DecodeString(string(key))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
-		return 0, err
-	}
-	key, err = crypto.PrivateToPublic(key)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting private key to public")
-		return 0, err
-	}
-
-	return crypto.Address(key), nil
-}
-
-// GetDataFromFirstBlock returns data of first block
-func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
-	block := &model.Block{}
-	isFound, err := block.Get(1)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting record of first block")
-		return
-	}
-
-	if !isFound {
-		return
-	}
-
-	pb, err := ParseBlock(bytes.NewBuffer(block.Data), true)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("parsing data of first block")
-		return
-	}
-
-	if len(pb.Transactions) == 0 {
-		log.WithFields(log.Fields{"type": consts.ParserError}).Error("list of parsers is empty")
-		return
-	}
-
-	t := pb.Transactions[0]
-	data, ok = t.TxPtr.(*consts.FirstBlock)
-	if !ok {
-		log.WithFields(log.Fields{"type": consts.ParserError}).Error("getting data of first block")
-		return
-	}
-
-	return
 }

@@ -21,7 +21,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
+	"github.com/GenesisKernel/go-genesis/packages/transaction"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -49,8 +49,8 @@ func QueueParserTx(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	p := new(parser.Transaction)
-	err = parser.ProcessTransactionsQueue(p.DbTransaction)
+	p := new(transaction.Transaction)
+	err = transaction.ProcessTransactionsQueue(p.DbTransaction)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"error": err}).Error("parsing transactions")
 		return err

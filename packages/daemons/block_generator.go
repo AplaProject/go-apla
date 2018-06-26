@@ -21,13 +21,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/service"
+	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -134,7 +135,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	err = parser.InsertBlockWOForks(blockBin, true, false)
+	err = block.InsertBlockWOForks(blockBin, true, false)
 	if err != nil {
 		return err
 	}
@@ -150,14 +151,14 @@ func generateNextBlock(blockHeader *utils.BlockData, trs []*model.Transaction, k
 		trData = append(trData, tr.Data)
 	}
 
-	return parser.MarshallBlock(blockHeader, trData, prevBlockHash, key)
+	return block.MarshallBlock(blockHeader, trData, prevBlockHash, key)
 }
 
 func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
-	p := new(parser.Transaction)
+	p := new(transaction.Transaction)
 
 	// verify transactions
-	err := parser.ProcessTransactionsQueue(p.DbTransaction)
+	err := transaction.ProcessTransactionsQueue(p.DbTransaction)
 	if err != nil {
 		return nil, err
 	}
@@ -168,28 +169,28 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 		return nil, err
 	}
 
-	limits := parser.NewLimits(nil)
+	limits := block.NewLimits(nil)
 	// Checks preprocessing count limits
 	txList := make([]*model.Transaction, 0, len(trs))
 	for i, txItem := range trs {
 		bufTransaction := bytes.NewBuffer(txItem.Data)
-		p, err := parser.ParseTransaction(bufTransaction)
+		p, err := transaction.ParseTransaction(bufTransaction)
 		if err != nil {
 			if p != nil {
-				parser.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
+				transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
 			}
 			continue
 		}
 		if p.TxSmart != nil {
 			err = limits.CheckLimit(p)
-			if err == parser.ErrLimitStop && i > 0 {
+			if err == block.ErrLimitStop && i > 0 {
 				model.IncrementTxAttemptCount(nil, p.TxHash)
 				break
 			} else if err != nil {
-				if err == parser.ErrLimitSkip {
+				if err == block.ErrLimitSkip {
 					model.IncrementTxAttemptCount(nil, p.TxHash)
 				} else {
-					parser.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
+					transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
 				}
 				continue
 			}

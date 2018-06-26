@@ -1,4 +1,4 @@
-package parser
+package block
 
 import (
 	"bytes"
@@ -8,8 +8,9 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/transaction"
+	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -21,7 +22,7 @@ type Block struct {
 	PrevHeader   *utils.BlockData
 	MrklRoot     []byte
 	BinData      []byte
-	Transactions []*Transaction
+	Transactions []*transaction.Transaction
 	SysUpdate    bool
 	GenBlock     bool // it equals true when we are generating a new block
 	StopCount    int  // The count of good tx in the block
@@ -38,7 +39,7 @@ func (b Block) GetLogger() *log.Entry {
 }
 
 // PlayBlockSafe is inserting block safely
-func (b *Block) PlayBlockSafe() error {
+func (b *Block) PlaySafe() error {
 	logger := b.GetLogger()
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
@@ -46,7 +47,7 @@ func (b *Block) PlayBlockSafe() error {
 		return err
 	}
 
-	err = b.PlayBlock(dbTransaction)
+	err = b.Play(dbTransaction)
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
 		trData := make([][]byte, 0, b.StopCount)
@@ -66,7 +67,7 @@ func (b *Block) PlayBlockSafe() error {
 		}
 
 		isFirstBlock := b.Header.BlockID == 1
-		nb, err := ParseBlock(bytes.NewBuffer(newBlockData), isFirstBlock)
+		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), isFirstBlock)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
 			return err
@@ -102,10 +103,6 @@ func (b *Block) PlayBlockSafe() error {
 	return nil
 }
 
-func (b *Block) readPreviousBlockFromMemory() error {
-	return nil
-}
-
 func (b *Block) readPreviousBlockFromBlockchainTable() error {
 	if b.Header.BlockID == 1 {
 		b.PrevHeader = &utils.BlockData{}
@@ -120,7 +117,7 @@ func (b *Block) readPreviousBlockFromBlockchainTable() error {
 	return nil
 }
 
-func (b *Block) PlayBlock(dbTransaction *model.DbTransaction) error {
+func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	logger := b.GetLogger()
 	if _, err := model.DeleteUsedTransactions(dbTransaction); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
@@ -139,12 +136,12 @@ func (b *Block) PlayBlock(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
 		}
-		msg, err = t.play()
+		msg, err = t.Play()
 		if err == nil && t.TxSmart != nil {
 			err = limits.CheckLimit(t)
 		}
 		if err != nil {
-			if err == errNetworkStopping {
+			if err == custom.ErrNetworkStopping {
 				return err
 			}
 
@@ -162,7 +159,7 @@ func (b *Block) PlayBlock(dbTransaction *model.DbTransaction) error {
 			}
 			// skip this transaction
 			model.MarkTransactionUsed(t.DbTransaction, t.TxHash)
-			MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
+			transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
 			if t.SysUpdate {
 				if err = syspar.SysUpdate(t.DbTransaction); err != nil {
 					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
@@ -191,7 +188,7 @@ func (b *Block) PlayBlock(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("updating transaction status block id")
 			return err
 		}
-		if err := InsertInLogTx(t.DbTransaction, t.TxFullData, t.TxTime); err != nil {
+		if err := transaction.InsertInLogTx(t.DbTransaction, t.TxFullData, t.TxTime); err != nil {
 			return utils.ErrInfo(err)
 		}
 	}
@@ -199,8 +196,7 @@ func (b *Block) PlayBlock(dbTransaction *model.DbTransaction) error {
 }
 
 // CheckBlock is checking block
-func (b *Block) CheckBlock() error {
-
+func (b *Block) Check() error {
 	logger := b.GetLogger()
 	// exclude blocks from future
 	if b.Header.Time > time.Now().Unix() {
@@ -264,7 +260,7 @@ func (b *Block) CheckBlock() error {
 			return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
 		}
 
-		if err := t.check(b.Header.Time, false); err != nil {
+		if err := t.Check(b.Header.Time, false); err != nil {
 			return utils.ErrInfo(err)
 		}
 
@@ -320,42 +316,17 @@ func InsertBlockWOForks(data []byte, genBlock, firstBlock bool) error {
 		return err
 	}
 	block.GenBlock = genBlock
-	if err := block.CheckBlock(); err != nil {
+	if err := block.Check(); err != nil {
 		return err
 	}
 
-	err = block.PlayBlockSafe()
+	err = block.PlaySafe()
 	if err != nil {
 		return err
 	}
 
 	log.WithFields(log.Fields{"block_id": block.Header.BlockID}).Debug("block was inserted successfully")
 	return nil
-}
-
-// ProcessBlockWherePrevFromMemory is processing block with in memory previous block
-func ProcessBlockWherePrevFromMemory(data []byte) (*Block, error) {
-	if int64(len(data)) > syspar.GetMaxBlockSize() {
-		log.WithFields(log.Fields{"size": len(data), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
-		return nil, utils.ErrInfo(fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]`))
-	}
-
-	buf := bytes.NewBuffer(data)
-	if buf.Len() == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("block data is empty")
-		return nil, fmt.Errorf("empty buffer")
-	}
-
-	block, err := ParseBlock(buf, false)
-	if err != nil {
-		return nil, err
-	}
-	block.BinData = data
-
-	if err := block.readPreviousBlockFromMemory(); err != nil {
-		return nil, err
-	}
-	return block, nil
 }
 
 // ProcessBlockWherePrevFromBlockchainTable is processing block with in table previous block
@@ -371,7 +342,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Blo
 		return nil, fmt.Errorf("empty buffer")
 	}
 
-	block, err := ParseBlock(buf, !checkSize)
+	block, err := UnmarshallBlock(buf, !checkSize)
 	if err != nil {
 		return nil, err
 	}
@@ -382,117 +353,4 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Blo
 	}
 
 	return block, nil
-}
-
-func ParseBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error) {
-	header, err := utils.ParseBlockHeader(blockBuffer, !firstBlock)
-	if err != nil {
-		return nil, err
-	}
-
-	logger := log.WithFields(log.Fields{"block_id": header.BlockID, "block_time": header.Time, "block_wallet_id": header.KeyID,
-		"block_state_id": header.EcosystemID, "block_hash": header.Hash, "block_version": header.Version})
-	transactions := make([]*Transaction, 0)
-
-	var mrklSlice [][]byte
-
-	// parse transactions
-	for blockBuffer.Len() > 0 {
-		transactionSize, err := converter.DecodeLengthBuf(blockBuffer)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("transaction size is 0")
-			return nil, fmt.Errorf("bad block format (%s)", err)
-		}
-		if blockBuffer.Len() < int(transactionSize) {
-			logger.WithFields(log.Fields{"size": blockBuffer.Len(), "match_size": int(transactionSize), "type": consts.SizeDoesNotMatch}).Error("transaction size does not matches encoded length")
-			return nil, fmt.Errorf("bad block format (transaction len is too big: %d)", transactionSize)
-		}
-
-		if transactionSize == 0 {
-			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("transaction size is 0")
-			return nil, fmt.Errorf("transaction size is 0")
-		}
-
-		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
-		t, err := ParseTransaction(bufTransaction)
-		if err != nil {
-			if t != nil && t.TxHash != nil {
-				MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
-			}
-			return nil, fmt.Errorf("parse transaction error(%s)", err)
-		}
-		t.BlockData = &header
-
-		transactions = append(transactions, t)
-
-		// build merkle tree
-		if len(t.TxFullData) > 0 {
-			dSha256Hash, err := crypto.DoubleHash(t.TxFullData)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("double hashing tx full data")
-				return nil, err
-			}
-			dSha256Hash = converter.BinToHex(dSha256Hash)
-			mrklSlice = append(mrklSlice, dSha256Hash)
-		}
-	}
-
-	if len(mrklSlice) == 0 {
-		mrklSlice = append(mrklSlice, []byte("0"))
-	}
-
-	return &Block{
-		Header:       header,
-		Transactions: transactions,
-		MrklRoot:     utils.MerkleTreeRoot(mrklSlice),
-	}, nil
-}
-
-// MarshallBlock is marshalling block
-func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, key string) ([]byte, error) {
-	var mrklArray [][]byte
-	var blockDataTx []byte
-	var signed []byte
-	logger := log.WithFields(log.Fields{"block_id": header.BlockID, "block_hash": header.Hash, "block_time": header.Time, "block_version": header.Version, "block_wallet_id": header.KeyID, "block_state_id": header.EcosystemID})
-
-	for _, tr := range trData {
-		doubleHash, err := crypto.DoubleHash(tr)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("double hashing transaction")
-			return nil, err
-		}
-		mrklArray = append(mrklArray, converter.BinToHex(doubleHash))
-		blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData(tr)...)
-	}
-
-	if key != "" {
-		if len(mrklArray) == 0 {
-			mrklArray = append(mrklArray, []byte("0"))
-		}
-		mrklRoot := utils.MerkleTreeRoot(mrklArray)
-
-		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s",
-			header.BlockID, prevHash, header.Time, header.EcosystemID, header.KeyID, header.NodePosition, mrklRoot)
-
-		var err error
-		signed, err = crypto.Sign(key, forSign)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing blocko")
-			return nil, err
-		}
-	}
-
-	var buf bytes.Buffer
-	// fill header
-	buf.Write(converter.DecToBin(header.Version, 2))
-	buf.Write(converter.DecToBin(header.BlockID, 4))
-	buf.Write(converter.DecToBin(header.Time, 4))
-	buf.Write(converter.DecToBin(header.EcosystemID, 4))
-	buf.Write(converter.EncodeLenInt64InPlace(header.KeyID))
-	buf.Write(converter.DecToBin(header.NodePosition, 1))
-	buf.Write(converter.EncodeLengthPlusData(signed))
-	// data
-	buf.Write(blockDataTx)
-
-	return buf.Bytes(), nil
 }

@@ -20,10 +20,11 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -37,7 +38,7 @@ func RollbackBlock(data []byte, deleteBlock bool) error {
 		return fmt.Errorf("empty buffer")
 	}
 
-	block, err := parser.ParseBlock(buf, false)
+	block, err := block.UnmarshallBlock(buf, false)
 	if err != nil {
 		return err
 	}
@@ -69,32 +70,32 @@ func RollbackBlock(data []byte, deleteBlock bool) error {
 	return err
 }
 
-func rollbackBlock(transaction *model.DbTransaction, block *parser.Block) error {
+func rollbackBlock(dbTransaction *model.DbTransaction, block *block.Block) error {
 	// rollback transactions in reverse order
 	logger := block.GetLogger()
 	for i := len(block.Transactions) - 1; i >= 0; i-- {
 		t := block.Transactions[i]
-		t.DbTransaction = transaction
+		t.DbTransaction = dbTransaction
 
-		_, err := model.MarkTransactionUnusedAndUnverified(transaction, t.TxHash)
+		_, err := model.MarkTransactionUnusedAndUnverified(dbTransaction, t.TxHash)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting transaction")
 			return err
 		}
-		_, err = model.DeleteLogTransactionsByHash(transaction, t.TxHash)
+		_, err = model.DeleteLogTransactionsByHash(dbTransaction, t.TxHash)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting log transactions by hash")
 			return err
 		}
 
 		ts := &model.TransactionStatus{}
-		err = ts.UpdateBlockID(transaction, 0, t.TxHash)
+		err = ts.UpdateBlockID(dbTransaction, 0, t.TxHash)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating block id in transaction status")
 			return err
 		}
 
-		_, err = model.DeleteQueueTxByHash(transaction, t.TxHash)
+		_, err = model.DeleteQueueTxByHash(dbTransaction, t.TxHash)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transacion from queue by hash")
 			return err
@@ -109,7 +110,7 @@ func rollbackBlock(transaction *model.DbTransaction, block *parser.Block) error 
 			}
 		} else {
 			MethodName := consts.TxTypes[int(t.TxType)]
-			txParser, err := parser.GetTransaction(t, MethodName)
+			txParser, err := transaction.GetTransaction(t, MethodName)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}

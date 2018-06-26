@@ -23,13 +23,13 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/rollback"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
@@ -149,41 +149,41 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 	playRawBlock := func(rawBlocksQueueCh chan []byte) error {
 		for rb := range rawBlocksQueueCh {
-			block, err := parser.ProcessBlockWherePrevFromBlockchainTable(rb, true)
+			b, err := block.ProcessBlockWherePrevFromBlockchainTable(rb, true)
 			if err != nil {
 				// we got bad block and should ban this host
-				banNode(host, block, err)
+				banNode(host, b, err)
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
 				return err
 			}
 
 			// hash compare could be failed in the case of fork
-			hashMatched, thisErrIsOk := block.CheckHash()
+			hashMatched, thisErrIsOk := b.CheckHash()
 			if thisErrIsOk != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
 			}
 
 			if !hashMatched {
 				//it should be fork, replace our previous blocks to ones from the host
-				err := GetBlocks(block.Header.BlockID-1, host)
+				err := GetBlocks(b.Header.BlockID-1, host)
 				if err != nil {
 					d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
-					banNode(host, block, err)
+					banNode(host, b, err)
 					return err
 				}
 			}
 
-			block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
+			b.PrevHeader, err = block.GetBlockDataFromBlockChain(b.Header.BlockID - 1)
 			if err != nil {
-				banNode(host, block, err)
-				return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
+				banNode(host, b, err)
+				return utils.ErrInfo(fmt.Errorf("can't get block %d", b.Header.BlockID-1))
 			}
-			if err = block.CheckBlock(); err != nil {
-				banNode(host, block, err)
+			if err = b.Check(); err != nil {
+				banNode(host, b, err)
 				return err
 			}
-			if err = block.PlayBlockSafe(); err != nil {
-				banNode(host, block, err)
+			if err = b.PlaySafe(); err != nil {
+				banNode(host, b, err)
 				return err
 			}
 		}
@@ -228,7 +228,7 @@ func loadFirstBlock(logger *log.Entry) error {
 		}).Error("reading first block from file")
 	}
 
-	if err = parser.InsertBlockWOForks(newBlock, false, true); err != nil {
+	if err = block.InsertBlockWOForks(newBlock, false, true); err != nil {
 		logger.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("inserting new block")
 		return err
 	}
@@ -258,7 +258,7 @@ func needLoad(logger *log.Entry) (bool, error) {
 	return false, nil
 }
 
-func banNode(host string, block *parser.Block, err error) {
+func banNode(host string, block *block.Block, err error) {
 	var (
 		reason             string
 		blockId, blockTime int64
@@ -343,12 +343,12 @@ func GetBlocks(blockID int64, host string) error {
 	return processBlocks(blocks)
 }
 
-func getBlocks(blockID int64, host string) ([]*parser.Block, error) {
+func getBlocks(blockID int64, host string) ([]*block.Block, error) {
 	rollback := syspar.GetRbBlocks1()
 
 	badBlocks := make(map[int64]string)
 
-	blocks := make([]*parser.Block, 0)
+	blocks := make([]*block.Block, 0)
 	var count int64
 
 	// load the block bodies from the host
@@ -367,7 +367,7 @@ func getBlocks(blockID int64, host string) ([]*parser.Block, error) {
 			break
 		}
 
-		block, err := parser.ProcessBlockWherePrevFromBlockchainTable(binaryBlock, true)
+		block, err := block.ProcessBlockWherePrevFromBlockchainTable(binaryBlock, true)
 		if err != nil {
 			return nil, utils.ErrInfo(err)
 		}
@@ -412,7 +412,7 @@ func getBlocks(blockID int64, host string) ([]*parser.Block, error) {
 	return blocks, nil
 }
 
-func processBlocks(blocks []*parser.Block) error {
+func processBlocks(blocks []*block.Block) error {
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
@@ -420,47 +420,47 @@ func processBlocks(blocks []*parser.Block) error {
 	}
 
 	// go through new blocks from the smallest block_id to the largest block_id
-	prevBlocks := make(map[int64]*parser.Block, 0)
+	prevBlocks := make(map[int64]*block.Block, 0)
 
 	for i := len(blocks) - 1; i >= 0; i-- {
-		block := blocks[i]
+		b := blocks[i]
 
-		if prevBlocks[block.Header.BlockID-1] != nil {
-			block.PrevHeader.Hash = prevBlocks[block.Header.BlockID-1].Header.Hash
-			block.PrevHeader.Time = prevBlocks[block.Header.BlockID-1].Header.Time
-			block.PrevHeader.BlockID = prevBlocks[block.Header.BlockID-1].Header.BlockID
-			block.PrevHeader.EcosystemID = prevBlocks[block.Header.BlockID-1].Header.EcosystemID
-			block.PrevHeader.KeyID = prevBlocks[block.Header.BlockID-1].Header.KeyID
-			block.PrevHeader.NodePosition = prevBlocks[block.Header.BlockID-1].Header.NodePosition
+		if prevBlocks[b.Header.BlockID-1] != nil {
+			b.PrevHeader.Hash = prevBlocks[b.Header.BlockID-1].Header.Hash
+			b.PrevHeader.Time = prevBlocks[b.Header.BlockID-1].Header.Time
+			b.PrevHeader.BlockID = prevBlocks[b.Header.BlockID-1].Header.BlockID
+			b.PrevHeader.EcosystemID = prevBlocks[b.Header.BlockID-1].Header.EcosystemID
+			b.PrevHeader.KeyID = prevBlocks[b.Header.BlockID-1].Header.KeyID
+			b.PrevHeader.NodePosition = prevBlocks[b.Header.BlockID-1].Header.NodePosition
 		}
 
-		forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", block.Header.BlockID, block.PrevHeader.Hash, block.MrklRoot, block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition)
+		forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", b.Header.BlockID, b.PrevHeader.Hash, b.MrklRoot, b.Header.Time, b.Header.EcosystemID, b.Header.KeyID, b.Header.NodePosition)
 		hash, err := crypto.DoubleHash([]byte(forSha))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("double hashing block")
 		}
-		block.Header.Hash = hash
+		b.Header.Hash = hash
 
-		if err := block.CheckBlock(); err != nil {
+		if err := b.Check(); err != nil {
 			dbTransaction.Rollback()
 			return utils.ErrInfo(err)
 		}
 
-		if err := block.PlayBlock(dbTransaction); err != nil {
+		if err := b.Play(dbTransaction); err != nil {
 			dbTransaction.Rollback()
 			return utils.ErrInfo(err)
 		}
-		prevBlocks[block.Header.BlockID] = block
+		prevBlocks[b.Header.BlockID] = b
 
 		// for last block we should update block info
 		if i == 0 {
-			err := parser.UpdBlockInfo(dbTransaction, block)
+			err := block.UpdBlockInfo(dbTransaction, b)
 			if err != nil {
 				dbTransaction.Rollback()
 				return utils.ErrInfo(err)
 			}
 		}
-		if block.SysUpdate {
+		if b.SysUpdate {
 			if err := syspar.SysUpdate(dbTransaction); err != nil {
 				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 				return utils.ErrInfo(err)
@@ -470,16 +470,16 @@ func processBlocks(blocks []*parser.Block) error {
 
 	// If all right we can delete old blockchain and write new
 	for i := len(blocks) - 1; i >= 0; i-- {
-		block := blocks[i]
+		b := blocks[i]
 		// Delete old blocks from blockchain
-		b := &model.Block{}
-		err = b.DeleteById(dbTransaction, block.Header.BlockID)
+		bl := &model.Block{}
+		err = bl.DeleteById(dbTransaction, b.Header.BlockID)
 		if err != nil {
 			dbTransaction.Rollback()
 			return err
 		}
 		// insert new blocks into blockchain
-		if err := parser.InsertIntoBlockchain(dbTransaction, block); err != nil {
+		if err := block.InsertIntoBlockchain(dbTransaction, b); err != nil {
 			dbTransaction.Rollback()
 			return err
 		}

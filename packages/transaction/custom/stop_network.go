@@ -1,4 +1,4 @@
-package parser
+package custom
 
 import (
 	"errors"
@@ -8,18 +8,21 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
 	messageNetworkStopping = "Attention! The network is stopped!"
 
-	errNetworkStopping = errors.New("Network is stopping")
+	ErrNetworkStopping = errors.New("Network is stopping")
 )
 
 type StopNetworkTransaction struct {
-	*Transaction
+	Logger *log.Entry
+	Data   interface{}
 
-	cert *utils.Cert
+	Cert *utils.Cert
 }
 
 func (t *StopNetworkTransaction) Init() error {
@@ -28,7 +31,7 @@ func (t *StopNetworkTransaction) Init() error {
 
 func (t *StopNetworkTransaction) Validate() error {
 	if err := t.validate(); err != nil {
-		t.GetLogger().WithError(err).Error("validating tx")
+		t.Logger.WithError(err).Error("validating tx")
 		return err
 	}
 
@@ -36,8 +39,7 @@ func (t *StopNetworkTransaction) Validate() error {
 }
 
 func (t *StopNetworkTransaction) validate() error {
-	data := t.TxPtr.(*consts.StopNetwork)
-
+	data := t.Data.(*consts.StopNetwork)
 	cert, err := utils.ParseCert(data.StopNetworkCert)
 	if err != nil {
 		return err
@@ -52,21 +54,21 @@ func (t *StopNetworkTransaction) validate() error {
 		return err
 	}
 
-	t.cert = cert
+	t.Cert = cert
 	return nil
 }
 
 func (t *StopNetworkTransaction) Action() error {
 	// Allow execute transaction, if the certificate was used
-	if t.cert.EqualBytes(consts.UsedStopNetworkCerts...) {
+	if t.Cert.EqualBytes(consts.UsedStopNetworkCerts...) {
 		return nil
 	}
 
 	// Set the node in a pause state
 	service.PauseNodeActivity(service.PauseTypeStopingNetwork)
 
-	t.GetLogger().Warn(messageNetworkStopping)
-	return errNetworkStopping
+	t.Logger.Warn(messageNetworkStopping)
+	return ErrNetworkStopping
 }
 
 func (t *StopNetworkTransaction) Rollback() error {

@@ -1,4 +1,4 @@
-package parser
+package transaction
 
 import (
 	"bytes"
@@ -13,6 +13,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
@@ -46,7 +47,7 @@ type Transaction struct {
 	TxSmart        *tx.SmartContract
 	TxContract     *smart.Contract
 	TxHeader       *tx.Header
-	tx             TransactionInterface
+	tx             custom.TransactionInterface
 	DbTransaction  *model.DbTransaction
 	SysUpdate      bool
 
@@ -69,27 +70,6 @@ func (t Transaction) GetLogger() *log.Entry {
 	}
 	logger := log.WithFields(log.Fields{"tx_type": t.TxType, "tx_time": t.TxTime, "tx_state_id": t.TxEcosystemID, "tx_wallet_id": t.TxKeyID})
 	return logger
-}
-
-// TransactionInterface is parsing transactions
-type TransactionInterface interface {
-	Init() error
-	Validate() error
-	Action() error
-	Rollback() error
-	Header() *tx.Header
-}
-
-// GetTransaction returns TransactionInterface
-func GetTransaction(t *Transaction, txType string) (TransactionInterface, error) {
-	switch txType {
-	case consts.TxTypeParserFirstBlock:
-		return &FirstBlockTransaction{t}, nil
-	case consts.TxTypeParserStopNetwork:
-		return &StopNetworkTransaction{t, nil}, nil
-	}
-	log.WithFields(log.Fields{"tx_type": txType, "type": consts.UnknownObject}).Error("unknown txType")
-	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }
 
 var txParserCache = &transactionCache{cache: make(map[string]*Transaction)}
@@ -391,7 +371,7 @@ func CheckTransaction(data []byte) (*tx.Header, error) {
 		return nil, err
 	}
 
-	err = t.check(time.Now().Unix(), true)
+	err = t.Check(time.Now().Unix(), true)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +379,7 @@ func CheckTransaction(data []byte) (*tx.Header, error) {
 	return t.TxHeader, nil
 }
 
-func (t *Transaction) check(checkTime int64, checkForDupTr bool) error {
+func (t *Transaction) Check(checkTime int64, checkForDupTr bool) error {
 	err := CheckLogTx(t.TxFullData, checkForDupTr, false)
 	if err != nil {
 		return utils.ErrInfo(err)
@@ -429,7 +409,7 @@ func (t *Transaction) check(checkTime int64, checkForDupTr bool) error {
 	return nil
 }
 
-func (t *Transaction) play() (string, error) {
+func (t *Transaction) Play() (string, error) {
 	// smart-contract
 	if t.TxContract != nil {
 		// check that there are enough money in CallContract
@@ -516,4 +496,15 @@ func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, keyID int64) {
 		keyID = txHead.KeyID
 	}
 	return
+}
+
+func GetTransaction(t *Transaction, txType string) (custom.TransactionInterface, error) {
+	switch txType {
+	case consts.TxTypeParserFirstBlock:
+		return &custom.FirstBlockTransaction{t.GetLogger(), t.DbTransaction, t.TxPtr}, nil
+	case consts.TxTypeParserStopNetwork:
+		return &custom.StopNetworkTransaction{t.GetLogger(), t.TxPtr, nil}, nil
+	}
+	log.WithFields(log.Fields{"tx_type": txType, "type": consts.UnknownObject}).Error("unknown txType")
+	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }
