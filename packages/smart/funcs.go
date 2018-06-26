@@ -517,8 +517,8 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		default:
 			data = v.(map[string]interface{})
 		}
-		colname, err := checkColumnName(data[`name`].(string))
-		if err != nil {
+		colname := converter.EscapeSQL(strings.ToLower(data[`name`].(string)))
+		if err := checkColumnName(colname); err != nil {
 			return err
 		}
 		if colList[colname] {
@@ -1181,14 +1181,13 @@ func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bo
 	return nil
 }
 
-func checkColumnName(nameIn string) (nameOut string, err error) {
-	nameOut = converter.EscapeSQL(strings.ToLower(nameIn))
-	if len(nameOut) == 0 {
-		err = errEmptyColumn
-	} else if nameOut[0] >= '0' && nameOut[0] <= '9' {
-		err = errWrongColumn
+func checkColumnName(name string) error {
+	if len(name) == 0 {
+		return errEmptyColumn
+	} else if name[0] >= '0' && name[0] <= '9' {
+		return errWrongColumn
 	}
-	return
+	return nil
 }
 
 // CreateColumn is creating column
@@ -1201,7 +1200,8 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("CreateColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
 	}
-	if name, err = checkColumnName(name); err != nil {
+	name = converter.EscapeSQL(strings.ToLower(name))
+	if err = checkColumnName(name); err != nil {
 		return
 	}
 
