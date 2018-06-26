@@ -44,7 +44,7 @@ func HandleTCPRequest(rw net.Conn) {
 	}
 
 	dType := &RequestType{}
-	err := ReadRequest(dType, rw)
+	err := dType.Read(rw)
 	if err != nil {
 		log.Errorf("read request type failed: %s", err)
 		return
