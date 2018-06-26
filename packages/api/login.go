@@ -30,8 +30,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
-	jwt "github.com/dgrijalva/jwt-go"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -113,7 +113,9 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if account == nil {
 		contract := getContract(r, "NewUser")
-		contract.CreateTx(hex.EncodeToString(publicKey))
+		if err := contract.CreateTx(hex.EncodeToString(publicKey)); err != nil {
+			logger.WithFields(log.Fields{"type": consts.ContractError}).Error("creating new user transaction")
+		}
 	} else {
 		publicKey = account.PublicKey
 	}

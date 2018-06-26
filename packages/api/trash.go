@@ -224,8 +224,12 @@ func (c *Contract) Info() *script.ContractInfo {
 	return c.Block.Info.(*script.ContractInfo)
 }
 
-func (c *Contract) CreateTx(values ...string) {
-	createTx(c.Contract, values...)
+func (c *Contract) CreateTx(values ...string) error {
+	if isVDEMode() {
+		return createVDETx(c.req, c.Contract, values...)
+	}
+
+	return createTx(c.Contract, values...)
 }
 
 func prepareFormFile(r *http.Request, key, reqKey string, req *tx.RequestContract) (*tx.FileHeader, error) {
@@ -290,6 +294,64 @@ func createTx(contract *smart.Contract, values ...string) error {
 	}, NodePrivateKey, NodePublicKey, values...)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+		return err
+	}
+
+	return nil
+}
+
+func createVDETx(r *http.Request, contract *smart.Contract, values ...string) error {
+	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
+	if err != nil || len(NodePrivateKey) < 1 {
+		if err == nil {
+			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+		}
+		return err
+	}
+
+	params := make([]byte, 0)
+	for _, v := range values {
+		params = append(append(params, converter.EncodeLength(int64(len(v)))...), v...)
+	}
+
+	info := contract.Block.Info.(*script.ContractInfo)
+	smartTx := tx.SmartContract{
+		Header: tx.Header{
+			Type:        int(info.ID),
+			Time:        time.Now().Unix(),
+			EcosystemID: 1,
+			KeyID:       conf.Config.KeyID,
+			NetworkID:   consts.NETWORK_ID,
+		},
+		SignedBy: smart.PubToID(NodePublicKey),
+		Data:     params,
+	}
+
+	signPrms := []string{smartTx.ForSign()}
+	signPrms = append(signPrms, values...)
+	signature, err := crypto.Sign(
+		NodePrivateKey,
+		strings.Join(signPrms, ","),
+	)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
+		return err
+	}
+	smartTx.BinSignatures = converter.EncodeLengthPlusData(signature)
+
+	if smartTx.PublicKey, err = hex.DecodeString(NodePublicKey); err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
+		return err
+	}
+
+	data, err := msgpack.Marshal(smartTx)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
+		return err
+	}
+	data = append([]byte{128}, data...)
+
+	if _, err := callVDEContract(r, data); err != nil {
 		return err
 	}
 

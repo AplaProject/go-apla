@@ -16,42 +16,45 @@
 
 package api
 
-/* func (h *callContractHandlers) nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var err error
+import (
+	"net/http"
+)
 
-	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
-	if err != nil {
-		return err
-	}
-	if len(NodePrivateKey) == 0 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
-		return errors.New(`empty node private key`)
-	}
-	pubkey, err := hex.DecodeString(NodePublicKey)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
-		return err
-	}
-	data.params[`signed_by`] = smart.PubToID(NodePublicKey)
-	prepareData := *data
-	if err = h.PrepareHandler(w, r); err != nil {
-		return err
-	}
-	result := prepareData.result.(prepareResult)
+func (c *contractHandlers) ContractNodeHandler(w http.ResponseWriter, r *http.Request) {
+	// var err error
 
-	signature, err := crypto.Sign(NodePrivateKey, result.ForSign)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
-		return err
-	}
+	// NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
+	// if err != nil {
+	// 	return err
+	// }
+	// if len(NodePrivateKey) == 0 {
+	// 	logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+	// 	return errors.New(`empty node private key`)
+	// }
+	// pubkey, err := hex.DecodeString(NodePublicKey)
+	// if err != nil {
+	// 	logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+	// 	return err
+	// }
+	// data.params[`signed_by`] = smart.PubToID(NodePublicKey)
+	// prepareData := *data
+	// if err = h.PrepareHandler(w, r); err != nil {
+	// 	return err
+	// }
+	// result := prepareData.result.(prepareResult)
 
-	data.params[`request_id`] = result.ID
-	data.params[`signature`] = signature
-	data.params[`pubkey`] = pubkey
-	data.params[`time`] = result.Time
-	if err = h.contract(w, r, data, logger); err != nil {
-		return err
-	}
-	return nil
+	// signature, err := crypto.Sign(NodePrivateKey, result.ForSign)
+	// if err != nil {
+	// 	logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
+	// 	return err
+	// }
+
+	// data.params[`request_id`] = result.ID
+	// data.params[`signature`] = signature
+	// data.params[`pubkey`] = pubkey
+	// data.params[`time`] = result.Time
+	// if err = h.contract(w, r, data, logger); err != nil {
+	// 	return err
+	// }
+	// return nil
 }
-*/
