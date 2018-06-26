@@ -129,7 +129,7 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 		
 		CREATE TABLE "%[1]d_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
-		"name" text NOT NULL DEFAULT '',
+		"name" text NOT NULL UNIQUE DEFAULT '',
 		"value" text  NOT NULL DEFAULT '',
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',

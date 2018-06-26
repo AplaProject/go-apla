@@ -826,3 +826,79 @@ func TestStack(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("[[@1%s] [@1%[1]s @1%s]]", parent, child), res)
 }
+
+func TestPageHistory(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`page`)
+	value := `P(test,test paragraph)`
+
+	form := url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
+		"Menu": {"default_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	var ret listResult
+	assert.NoError(t, sendGet(`list/pages`, nil, &ret))
+	id := ret.Count
+	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {id}, "Value": {"Div(style){ok}"}}))
+	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {id}, "Conditions": {"true"}}))
+
+	form = url.Values{"Name": {randName(`menu`)}, "Value": {`MenuItem(First)MenuItem(Second)`},
+		"ApplicationId": {`1`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewMenu`, &form))
+
+	assert.NoError(t, sendGet(`list/menu`, nil, &ret))
+	idmenu := ret.Count
+	assert.NoError(t, postTx(`EditMenu`, &url.Values{"Id": {idmenu}, "Conditions": {"true"}}))
+	assert.NoError(t, postTx(`EditMenu`, &url.Values{"Id": {idmenu}, "Value": {"MenuItem(Third)"}}))
+	assert.NoError(t, postTx(`EditMenu`, &url.Values{"Id": {idmenu},
+		"Value": {"MenuItem(Third)"}, "Conditions": {"false"}}))
+
+	form = url.Values{"Value": {`contract C` + name + `{ action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	_, idCont, err := postTxResult(`NewContract`, &form)
+	assert.NoError(t, err)
+	assert.NoError(t, postTx(`EditContract`, &url.Values{"Id": {idCont},
+		"Value": {`contract C` + name + `{ action {Println("OK")}}`}, "Conditions": {"true"}}))
+
+	form = url.Values{`Value`: {`contract Get` + name + ` {
+		data {
+			IdPage int
+			IdMenu int
+			IdCont int
+		}
+		action {
+			var ret array
+			ret = GetPageHistory($IdPage)
+			$result = Str(Len(ret))
+			ret = GetMenuHistory($IdMenu)
+			$result = $result + Str(Len(ret))
+			ret = GetContractHistory($IdCont)
+			$result = $result + Str(Len(ret))
+		}
+	}`}, "ApplicationId": {`1`}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	_, msg, err := postTxResult(`Get`+name, &url.Values{"IdPage": {id}, "IdMenu": {idmenu},
+		"IdCont": {idCont}})
+	assert.NoError(t, err)
+	assert.Equal(t, `231`, msg)
+
+	form = url.Values{"Name": {name + `1`}, "Value": {value}, "ApplicationId": {`1`},
+		"Menu": {"default_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	assert.NoError(t, postTx(`Get`+name, &url.Values{"IdPage": {converter.Int64ToStr(
+		converter.StrToInt64(id) + 1)}, "IdMenu": {idmenu}, "IdCont": {idCont}}))
+
+	assert.EqualError(t, postTx(`Get`+name, &url.Values{"IdPage": {`1000000`}, "IdMenu": {idmenu},
+		"IdCont": {idCont}}), `{"type":"panic","error":"Record has not been found"}`)
+
+	var retTemp contentResult
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {fmt.Sprintf(`GetPageHistory(MySrc,%s)`,
+		id)}}, &retTemp))
+
+	if len(RawToString(retTemp.Tree)) < 400 {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(retTemp.Tree)))
+	}
+}

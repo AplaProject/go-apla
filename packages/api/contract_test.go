@@ -30,6 +30,14 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
+func TestExistContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	form := url.Values{"Name": {`EditPage`}, "Value": {`contract EditPage {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	err := postTx(`NewContract`, &form)
+	assert.EqualError(t, err, `{"type":"panic","error":"Contract EditPage already exists"}`)
+}
+
 func TestNewContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {

@@ -10,6 +10,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration"
+	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
@@ -155,7 +156,7 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 
 // ExecSchemaLocalData is executing schema with local data
 func ExecSchemaLocalData(id int, wallet int64) error {
-	return DBConn.Exec(fmt.Sprintf(migration.SchemaVDE, id, wallet)).Error
+	return DBConn.Exec(fmt.Sprintf(vde.GetVDEScript(), id, wallet)).Error
 }
 
 // ExecSchema is executing schema
@@ -381,6 +382,35 @@ func InitDB(cfg conf.DBConfig) error {
 	install := &Install{Progress: ProgressComplete}
 	if err = install.Create(); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating install")
+		return err
+	}
+
+	if conf.Config.IsSupportingVDE() {
+		if err := ExecSchemaLocalData(consts.DefaultVDE, conf.Config.KeyID); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE schema")
+			return err
+		}
+	}
+
+	return nil
+}
+
+// DropDatabase kill all process and drop database
+func DropDatabase(name string) error {
+	query := `SELECT
+	pg_terminate_backend (pg_stat_activity.pid)
+   FROM
+	pg_stat_activity
+   WHERE
+	pg_stat_activity.datname = ?`
+
+	if err := DBConn.Exec(query, name).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "dbname": name}).Error("on kill db process")
+		return err
+	}
+
+	if err := DBConn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", name)).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "dbname": name}).Error("on drop db")
 		return err
 	}
 
