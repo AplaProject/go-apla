@@ -143,7 +143,7 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 	}
 	params = append(append(params, converter.EncodeLength(int64(len(reason)))...), []byte(reason)...)
 
-	vm := smart.GetVM(false, 0)
+	vm := smart.GetVM()
 	contract := smart.VMGetContract(vm, "NewBadBlock", 1)
 	info := contract.Block.Info.(*script.ContractInfo)
 

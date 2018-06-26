@@ -3,8 +3,6 @@ package query
 import (
 	"fmt"
 	"sync"
-
-	"github.com/GenesisKernel/go-genesis/packages/api"
 )
 
 const maxBlockIDEndpoint = "/api/v2/maxblockid"
@@ -12,6 +10,15 @@ const blockInfoEndpoint = "/api/v2/block/%d"
 
 type MaxBlockID struct {
 	MaxBlockID int64 `json:"max_block_id"`
+}
+
+type blockInfoResult struct {
+	Hash          []byte `json:"hash"`
+	EcosystemID   int64  `json:"ecosystem_id"`
+	KeyID         int64  `json:"key_id"`
+	Time          int64  `json:"time"`
+	Tx            int32  `json:"tx_count"`
+	RollbacksHash []byte `json:"rollbacks_hash"`
 }
 
 func MaxBlockIDs(nodesList []string) ([]int64, error) {
@@ -42,14 +49,14 @@ func MaxBlockIDs(nodesList []string) ([]int64, error) {
 	return maxBlockIds, nil
 }
 
-func BlockInfo(nodesList []string, blockID int64) (map[string]*api.GetBlockInfoResult, error) {
+func BlockInfo(nodesList []string, blockID int64) (map[string]*blockInfoResult, error) {
 	wg := sync.WaitGroup{}
 	workResults := ConcurrentMap{m: map[string]interface{}{}}
 	for _, nodeUrl := range nodesList {
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()
-			blockInfo := &api.GetBlockInfoResult{}
+			blockInfo := &blockInfoResult{}
 			if err := sendGetRequest(url+fmt.Sprintf(blockInfoEndpoint, blockID), blockInfo); err != nil {
 				workResults.Set(url, err)
 				return
@@ -58,12 +65,12 @@ func BlockInfo(nodesList []string, blockID int64) (map[string]*api.GetBlockInfoR
 		}(nodeUrl)
 	}
 	wg.Wait()
-	result := map[string]*api.GetBlockInfoResult{}
+	result := map[string]*blockInfoResult{}
 	for nodeUrl, blockInfoOrError := range workResults.m {
 		switch res := blockInfoOrError.(type) {
 		case error:
 			return nil, res
-		case *api.GetBlockInfoResult:
+		case *blockInfoResult:
 			result[nodeUrl] = res
 		}
 	}
