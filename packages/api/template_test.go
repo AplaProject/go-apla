@@ -20,6 +20,7 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"strings"
 	"testing"
@@ -147,6 +148,28 @@ var forTest = tplList{
 		SetVar(varNotZero, 1) If(#varNotZero#>0) { the varNotZero should be visible }
 		If(#varUndefined#>0) { the varUndefined should be hidden }`,
 		`[{"tag":"text","text":"the varNotZero should be visible"}]`},
+}
+
+func TestMoney(t *testing.T) {
+	var ret contentResult
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	size := 10000000
+	money := make([]byte, size)
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < size; i++ {
+		money[i] = '0' + byte(rand.Intn(10))
+	}
+	err := sendPost(`content`, &url.Values{`template`: {`Money(` + string(money) + `)`}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(ret.Tree) != `[{"tag":"text","text":"invalid money value"}]` {
+		t.Errorf(`wrong value %s`, RawToString(ret.Tree))
+	}
 }
 
 func TestMobile(t *testing.T) {
