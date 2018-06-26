@@ -252,6 +252,8 @@ func getAccount(r *http.Request, ecosystemID, keyID int64) (*model.Key, error) {
 		if account.Deleted == 1 {
 			return nil, errDeletedKey
 		}
+	} else {
+		return nil, nil
 	}
 	return account, nil
 }

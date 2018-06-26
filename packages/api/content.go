@@ -241,8 +241,6 @@ func jsonContentHandler(w http.ResponseWriter, r *http.Request) {
 	var timeout bool
 	vars := initVars(r)
 
-	fmt.Println(form.Source, r.FormValue("source"))
-
 	if form.Source {
 		(*vars)["_full"] = strOne
 	}

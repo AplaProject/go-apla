@@ -259,6 +259,10 @@ func getContract(r *http.Request, name string) *Contract {
 
 	client := getClient(r)
 	contract := smart.VMGetContract(vm, name, uint32(client.EcosystemID))
+	if contract == nil {
+		return nil
+	}
+
 	return &Contract{Contract: contract, req: r}
 }
 
@@ -349,7 +353,6 @@ func createVDETx(r *http.Request, contract *smart.Contract, values ...string) er
 		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
 		return err
 	}
-	data = append([]byte{128}, data...)
 
 	if _, err := callVDEContract(r, data); err != nil {
 		return err

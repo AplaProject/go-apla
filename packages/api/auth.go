@@ -142,26 +142,30 @@ func getClientFromToken(token *jwt.Token) (*Client, error) {
 		return nil, nil
 	}
 
-	ecosystemID := converter.StrToInt64(claims.EcosystemID)
-	ecosystem := &model.Ecosystem{}
-	found, err := ecosystem.Get(ecosystemID)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
-		return nil, err
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "id": ecosystemID, "error": errEcosystemNotFound}).Error("ecosystem not found")
-		return nil, err
+	client := &Client{
+		EcosystemID: converter.StrToInt64(claims.EcosystemID),
+		KeyID:       converter.StrToInt64(claims.KeyID),
+		IsMobile:    claims.IsMobile,
+		RoleID:      converter.StrToInt64(claims.RoleID),
+		IsVDE:       isVDEMode(),
 	}
 
-	return &Client{
-		EcosystemID:   converter.StrToInt64(claims.EcosystemID),
-		EcosystemName: ecosystem.Name,
-		KeyID:         converter.StrToInt64(claims.KeyID),
-		IsMobile:      claims.IsMobile,
-		RoleID:        converter.StrToInt64(claims.RoleID),
-		IsVDE:         isVDEMode(),
-	}, nil
+	if !client.IsVDE {
+		ecosystem := &model.Ecosystem{}
+		found, err := ecosystem.Get(client.EcosystemID)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
+			return nil, err
+		}
+		if !found {
+			log.WithFields(log.Fields{"type": consts.NotFound, "id": client.EcosystemID, "error": errEcosystemNotFound}).Error("ecosystem not found")
+			return nil, err
+		}
+
+		client.EcosystemName = ecosystem.Name
+	}
+
+	return client, nil
 }
 
 func generateJWTToken(claims JWTClaims) (string, error) {

@@ -64,7 +64,7 @@ func NodeContract(Name string) (result contractResult, err error) {
 		}
 		return
 	}
-	sign, err = crypto.Sign(NodePrivateKey, ret.UID)
+	sign, err = crypto.Sign(NodePrivateKey, "LOGIN"+ret.UID)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing node uid")
 		return
@@ -118,6 +118,10 @@ func sendAPIRequest(rtype, url string, form *url.Values, v interface{}, auth str
 	if resp.StatusCode != http.StatusOK {
 		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("api status code")
 		return fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
+	}
+
+	if len(data) == 0 {
+		return nil
 	}
 
 	if err = json.Unmarshal(data, v); err != nil {

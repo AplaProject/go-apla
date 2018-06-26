@@ -52,7 +52,7 @@ func TestNewContracts(t *testing.T) {
 		name := strings.Replace(item.Name, `#rnd#`, rnd, -1)
 		err := sendGet(`contract/`+name, nil, &ret)
 		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(errorDescriptions[errContract], name)) {
+			if strings.Contains(err.Error(), errContract.Errorf(name).Error()) {
 				form := url.Values{"Name": {name}, "Value": {strings.Replace(item.Value,
 					`#rnd#`, rnd, -1)},
 					"ApplicationId": {`1`}, "Conditions": {`true`}}

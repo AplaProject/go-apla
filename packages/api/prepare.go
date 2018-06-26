@@ -18,7 +18,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -59,13 +58,22 @@ type contractHandlers struct {
 func (h *contractHandlers) PrepareHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(multipartFormMaxMemory)
 
-	req := prepareRequest{}
-	if err := json.Unmarshal([]byte(r.FormValue("data")), &req); err != nil {
-		fmt.Println(r.FormValue("data"))
+	req := &prepareRequest{}
+	if err := json.Unmarshal([]byte(r.FormValue("data")), req); err != nil {
 		errorResponse(w, newError(err, http.StatusBadRequest))
 		return
 	}
 
+	result, err := h.prepare(r, req)
+	if err != nil {
+		errorResponse(w, err)
+		return
+	}
+
+	jsonResponse(w, result)
+}
+
+func (h *contractHandlers) prepare(r *http.Request, req *prepareRequest) (*prepareResult, error) {
 	bufReq := h.requests.NewRequest()
 	now := bufReq.Time.Unix()
 
@@ -85,13 +93,11 @@ func (h *contractHandlers) PrepareHandler(w http.ResponseWriter, r *http.Request
 	for _, rc := range req.Contracts {
 		contract := getContract(r, rc.Contract)
 		if contract == nil {
-			errorResponse(w, errContract.Errorf(rc.Contract))
-			return
+			return nil, errContract.Errorf(rc.Contract)
 		}
 
 		if err := contract.ValidateParams(rc); err != nil {
-			errorResponse(w, newError(err, http.StatusBadRequest))
-			return
+			return nil, newError(err, http.StatusBadRequest)
 		}
 
 		smartTx.Header = newTxHeader()
@@ -103,17 +109,16 @@ func (h *contractHandlers) PrepareHandler(w http.ResponseWriter, r *http.Request
 
 		forSign, err := contract.ForSign(bufReq, smartTx, rc)
 		if err != nil {
-			errorResponse(w, newError(err, http.StatusBadRequest))
-			return
+			return nil, newError(err, http.StatusBadRequest)
 		}
 
 		forSigns = append(forSigns, forSign)
 	}
 	h.requests.AddRequest(bufReq)
 
-	jsonResponse(w, &prepareResult{
+	return &prepareResult{
 		ID:       bufReq.ID,
 		ForSigns: forSigns,
 		Time:     converter.Int64ToStr(now),
-	})
+	}, nil
 }

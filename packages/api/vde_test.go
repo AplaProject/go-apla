@@ -388,19 +388,19 @@ func TestCron(t *testing.T) {
 		return
 	}
 
+	contract := randName("cron")
+
 	err := postTx("NewCron", &url.Values{
 		"Cron":       {"60 * * * *"},
-		"Contract":   {"TestCron"},
+		"Contract":   {contract},
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"vde":        {"true"},
 	})
-	if err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"End of range (60) above maximum (59): 60\"}" }` {
-		t.Error(err)
-	}
+	assert.EqualError(t, err, `500 {"error":"E_SERVER","msg":"{\"type\":\"panic\",\"error\":\"End of range (60) above maximum (59): 60\"}"}`)
 
-	postTx("NewContract", &url.Values{
+	err = postTx("NewContract", &url.Values{
 		"Value": {`
-			contract TestCron {
+			contract ` + contract + ` {
 				data {}
 				action {
 					return "Success"
@@ -410,28 +410,25 @@ func TestCron(t *testing.T) {
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"vde":        {"true"},
 	})
+	assert.NoError(t, err)
 
 	till := time.Now().Format(time.RFC3339)
 	err = postTx("NewCron", &url.Values{
 		"Cron":       {"* * * * *"},
-		"Contract":   {"TestCron"},
+		"Contract":   {contract},
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"Till":       {till},
 		"vde":        {"true"},
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
 	err = postTx("EditCron", &url.Values{
 		"Id":         {"1"},
 		"Cron":       {"*/3 * * * *"},
-		"Contract":   {"TestCron"},
+		"Contract":   {contract},
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"Till":       {till},
 		"vde":        {"true"},
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 }

@@ -1495,7 +1495,7 @@ func ValidateCron(cronSpec string) error {
 
 func UpdateCron(sc *SmartContract, id int64) error {
 	cronTask := &model.Cron{}
-	cronTask.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID) + "_vde")
+	cronTask.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
 
 	ok, err := cronTask.Get(id)
 	if err != nil {

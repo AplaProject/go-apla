@@ -41,7 +41,7 @@ func RecoverMiddleware(next http.Handler) http.Handler {
 					"stack": string(debug.Stack()),
 				}).Error("panic recovered error")
 
-				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
+				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", err, debug.Stack()))
 				errorResponse(w, errRecovered)
 			}
 		}()

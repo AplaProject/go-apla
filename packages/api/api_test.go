@@ -243,20 +243,15 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 		tx.NoWait()
 	}
 
+	if len(form.Get("vde")) > 0 {
+		tx.VDEMode()
+	}
+
 	var txRes []txResult
 	txRes, err = tx.Send()
 	if err != nil {
 		return
 	}
-
-	// TODO: support vde
-	// if len((*form)[`vde`]) > 0 {
-	// 	if ret[`result`] != nil {
-	// 		msg = fmt.Sprint(ret[`result`])
-	// 		id = converter.StrToInt64(msg)
-	// 	}
-	// 	return
-	// }
 
 	for _, v := range txRes {
 		id = converter.StrToInt64(v.BlockID)

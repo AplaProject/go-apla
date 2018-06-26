@@ -26,19 +26,10 @@ import (
 )
 
 func TestRead(t *testing.T) {
-	var (
-		err     error
-		ret     vdeCreateResult
-		retCont contentResult
-	)
+	var retCont contentResult
 
 	assert.NoError(t, keyLogin(1))
 
-	if err = sendPost(`vde/create`, nil, &ret); err != nil &&
-		err.Error() != `400 {"error": "E_VDECREATED", "msg": "Virtual Dedicated Ecosystem is already created" }` {
-		t.Error(err)
-		return
-	}
 	name := randName(`tbl`)
 	form := url.Values{"vde": {`true`}, "Name": {name}, "Columns": {`[{"name":"my","type":"varchar", "index": "1", 
 	  "conditions":"true"},

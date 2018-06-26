@@ -69,7 +69,7 @@ func setRoutes(router *mux.Router) {
 	api.HandleFunc("/updnotificator", updateNotificatorHandler).Methods("POST")
 
 	if isVDEMode() {
-		api.HandleFunc("/node/{name}", contractHandlers.ContractNodeHandler).Methods("POST")
+		api.HandleFunc("/node/{name}", AuthRequire(contractHandlers.ContractNodeHandler)).Methods("POST")
 	} else {
 		api.HandleFunc("/txstatus", AuthRequire(txstatusMultiHandler)).Methods("POST")
 		api.HandleFunc("/appparam/{id}/{name}", AuthRequire(appParamHandler)).Methods("GET")

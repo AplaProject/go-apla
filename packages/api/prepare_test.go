@@ -19,6 +19,7 @@ type txForm struct {
 	files     map[string][]byte
 	contracts []prepareRequestItem
 	noWait    bool
+	isVDE     bool
 }
 
 func (txf *txForm) body() (io.Reader, string, error) {
@@ -58,7 +59,7 @@ func (txf *txForm) prepareRequest() (*prepareResult, error) {
 		return nil, err
 	}
 
-	data, err := sendRawRequest("POST", "prepareMultiple", contentType, body)
+	data, err := sendRawRequest("POST", "prepare", contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -82,9 +83,19 @@ func (txf *txForm) Send() ([]txResult, error) {
 		return nil, err
 	}
 
-	hashes, err := sendRawForm("POST", "contractMultiple/"+res.ID, &url.Values{"data": {data}})
+	hashes, err := sendRawForm("POST", "contract/"+res.ID, &url.Values{"data": {data}})
 	if err != nil {
 		return nil, err
+	}
+
+	if txf.isVDE {
+		res := struct {
+			Results []txResult `json:"results"`
+		}{}
+		if err = json.Unmarshal(hashes, &res); err != nil {
+			return nil, err
+		}
+		return res.Results, nil
 	}
 
 	if txf.noWait {
@@ -113,6 +124,10 @@ func (txf *txForm) Add(contract string, params map[string]string, files map[stri
 
 func (txf *txForm) NoWait() {
 	txf.noWait = true
+}
+
+func (txf *txForm) VDEMode() {
+	txf.isVDE = true
 }
 
 func newTxForm() *txForm {
