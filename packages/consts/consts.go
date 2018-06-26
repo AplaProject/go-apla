@@ -160,3 +160,6 @@ const DefaultTempDirName = "genesis-temp"
 
 // DefaultVDE allways is 1
 const DefaultVDE = 1
+
+// MoneyLength is the maximum number of digits in money value
+const MoneyLength = 30
