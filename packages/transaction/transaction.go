@@ -24,32 +24,27 @@ import (
 
 // Transaction is a structure for parsing transactions
 type Transaction struct {
-	BlockData      *utils.BlockData
-	PrevBlock      *utils.BlockData
-	dataType       int
-	blockData      []byte
-	CurrentVersion string
-	PublicKeys     [][]byte
+	BlockData  *utils.BlockData
+	PrevBlock  *utils.BlockData
+	PublicKeys [][]byte
 
-	TxBinaryData   []byte // transaction binary data
-	TxFullData     []byte // full transaction, with type and data
-	TxHash         []byte
-	TxKeyID        int64
-	TxEcosystemID  int64
-	TxNodePosition uint32
-	TxTime         int64
-	TxType         int64
-	TxCost         int64           // Maximum cost of executing contract
-	TxFuel         int64           // The fuel cost of executed contract
-	TxUsedCost     decimal.Decimal // Used cost of CPU resources
-	TxPtr          interface{}     // Pointer to the corresponding struct in consts/struct.go
-	TxData         map[string]interface{}
-	TxSmart        *tx.SmartContract
-	TxContract     *smart.Contract
-	TxHeader       *tx.Header
-	tx             custom.TransactionInterface
-	DbTransaction  *model.DbTransaction
-	SysUpdate      bool
+	TxBinaryData  []byte // transaction binary data
+	TxFullData    []byte // full transaction, with type and data
+	TxHash        []byte
+	TxKeyID       int64
+	TxTime        int64
+	TxType        int64
+	TxCost        int64 // Maximum cost of executing contract
+	TxFuel        int64
+	TxUsedCost    decimal.Decimal // Used cost of CPU resources
+	TxPtr         interface{}     // Pointer to the corresponding struct in consts/struct.go
+	TxData        map[string]interface{}
+	TxSmart       *tx.SmartContract
+	TxContract    *smart.Contract
+	TxHeader      *tx.Header
+	tx            custom.TransactionInterface
+	DbTransaction *model.DbTransaction
+	SysUpdate     bool
 
 	SmartContract smart.SmartContract
 }
@@ -57,18 +52,18 @@ type Transaction struct {
 // GetLogger returns logger
 func (t Transaction) GetLogger() *log.Entry {
 	if t.BlockData != nil && t.PrevBlock != nil {
-		logger := log.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_hash": t.BlockData.Hash, "block_version": t.BlockData.Version, "prev_block_id": t.PrevBlock.BlockID, "prev_block_time": t.PrevBlock.Time, "prev_block_wallet_id": t.PrevBlock.KeyID, "prev_block_state_id": t.PrevBlock.EcosystemID, "prev_block_hash": t.PrevBlock.Hash, "prev_block_version": t.PrevBlock.Version, "tx_type": t.TxType, "tx_time": t.TxTime, "tx_state_id": t.TxEcosystemID, "tx_wallet_id": t.TxKeyID})
+		logger := log.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_hash": t.BlockData.Hash, "block_version": t.BlockData.Version, "prev_block_id": t.PrevBlock.BlockID, "prev_block_time": t.PrevBlock.Time, "prev_block_wallet_id": t.PrevBlock.KeyID, "prev_block_state_id": t.PrevBlock.EcosystemID, "prev_block_hash": t.PrevBlock.Hash, "prev_block_version": t.PrevBlock.Version, "tx_type": t.TxType, "tx_time": t.TxTime, "tx_wallet_id": t.TxKeyID})
 		return logger
 	}
 	if t.BlockData != nil {
-		logger := log.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_hash": t.BlockData.Hash, "block_version": t.BlockData.Version, "tx_type": t.TxType, "tx_time": t.TxTime, "tx_state_id": t.TxEcosystemID, "tx_wallet_id": t.TxKeyID})
+		logger := log.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_hash": t.BlockData.Hash, "block_version": t.BlockData.Version, "tx_type": t.TxType, "tx_time": t.TxTime, "tx_wallet_id": t.TxKeyID})
 		return logger
 	}
 	if t.PrevBlock != nil {
-		logger := log.WithFields(log.Fields{"prev_block_id": t.PrevBlock.BlockID, "prev_block_time": t.PrevBlock.Time, "prev_block_wallet_id": t.PrevBlock.KeyID, "prev_block_state_id": t.PrevBlock.EcosystemID, "prev_block_hash": t.PrevBlock.Hash, "prev_block_version": t.PrevBlock.Version, "tx_type": t.TxType, "tx_time": t.TxTime, "tx_state_id": t.TxEcosystemID, "tx_wallet_id": t.TxKeyID})
+		logger := log.WithFields(log.Fields{"prev_block_id": t.PrevBlock.BlockID, "prev_block_time": t.PrevBlock.Time, "prev_block_wallet_id": t.PrevBlock.KeyID, "prev_block_state_id": t.PrevBlock.EcosystemID, "prev_block_hash": t.PrevBlock.Hash, "prev_block_version": t.PrevBlock.Version, "tx_type": t.TxType, "tx_time": t.TxTime, "tx_wallet_id": t.TxKeyID})
 		return logger
 	}
-	logger := log.WithFields(log.Fields{"tx_type": t.TxType, "tx_time": t.TxTime, "tx_state_id": t.TxEcosystemID, "tx_wallet_id": t.TxKeyID})
+	logger := log.WithFields(log.Fields{"tx_type": t.TxType, "tx_time": t.TxTime, "tx_wallet_id": t.TxKeyID})
 	return logger
 }
 
@@ -98,7 +93,6 @@ func ParseTransaction(buffer *bytes.Buffer) (*Transaction, error) {
 	t.TxFullData = buffer.Bytes()
 
 	txType := int64(buffer.Bytes()[0])
-	t.dataType = int(txType)
 
 	// smart contract transaction
 	if IsContractTransaction(int(txType)) {
@@ -157,13 +151,12 @@ func (t *Transaction) parseFromStruct(buf *bytes.Buffer, txType int64) error {
 func (t *Transaction) parseFromContract(buf *bytes.Buffer) error {
 	smartTx := tx.SmartContract{}
 	if err := msgpack.Unmarshal(buf.Bytes(), &smartTx); err != nil {
-		log.WithFields(log.Fields{"tx_type": t.dataType, "tx_hash": t.TxHash, "error": err, "type": consts.UnmarshallingError}).Error("unmarshalling smart tx msgpack")
+		log.WithFields(log.Fields{"tx_hash": t.TxHash, "error": err, "type": consts.UnmarshallingError}).Error("unmarshalling smart tx msgpack")
 		return err
 	}
 	t.TxPtr = nil
 	t.TxSmart = &smartTx
 	t.TxTime = smartTx.Time
-	t.TxEcosystemID = (smartTx.EcosystemID)
 	t.TxKeyID = smartTx.KeyID
 
 	contract := smart.GetContractByID(int32(smartTx.Type))
@@ -311,7 +304,7 @@ func (t *Transaction) Check(checkTime int64, checkForDupTr bool) error {
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-	logger := log.WithFields(log.Fields{"tx_type": t.dataType, "tx_time": t.TxTime, "tx_state_id": t.TxEcosystemID})
+	logger := log.WithFields(log.Fields{"tx_time": t.TxTime})
 	// time in the transaction cannot be more than MAX_TX_FORW seconds of block time
 	if t.TxTime-consts.MAX_TX_FORW > checkTime {
 		logger.WithFields(log.Fields{"tx_max_forw": consts.MAX_TX_FORW, "type": consts.ParameterExceeded}).Error("time in the tx cannot be more than MAX_TX_FORW seconds of block time ")
