@@ -24,6 +24,12 @@ const (
 	RequestTypeMaxBlock        = 10
 )
 
+// SelfReaderWriter read from Reader to himself and write to io.Writer from himself
+type SelfReaderWriter interface {
+	Read(io.Reader) error
+	Write(io.Writer) error
+}
+
 // RequestType is type of request
 type RequestType struct {
 	Type uint16
@@ -112,7 +118,7 @@ type GetBodyResponse struct {
 }
 
 func (resp *GetBodyResponse) Read(r io.Reader) error {
-	slice, err := readSlice(r, -1)
+	slice, err := readByteSlice(r, -1)
 	if err != nil {
 		return err
 	}
@@ -122,7 +128,7 @@ func (resp *GetBodyResponse) Read(r io.Reader) error {
 }
 
 func (resp *GetBodyResponse) Write(w io.Writer) error {
-	return writeSlice(w, resp.Data, -1)
+	return writeByteSlice(w, resp.Data, -1)
 }
 
 // ConfirmRequest contains request data
@@ -166,7 +172,7 @@ func (resp *ConfirmResponse) Read(r io.Reader) error {
 
 	resp.ConfType = uint8(t)
 
-	resp.Hash, err = readSlice(r, 32)
+	resp.Hash, err = readByteSlice(r, consts.HashSize)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading GetBodiesRequest reverse order")
 		return err
@@ -181,7 +187,7 @@ func (resp *ConfirmResponse) Write(w io.Writer) error {
 		return err
 	}
 
-	err = writeSlice(w, resp.Hash, 32)
+	err = writeByteSlice(w, resp.Hash, consts.HashSize)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending ConfiremResponse hash")
 		return err
@@ -196,7 +202,7 @@ type DisRequest struct {
 }
 
 func (req *DisRequest) Read(r io.Reader) error {
-	slice, err := readSlice(r, -1)
+	slice, err := readByteSlice(r, -1)
 	if err != nil {
 		return err
 	}
@@ -206,7 +212,7 @@ func (req *DisRequest) Read(r io.Reader) error {
 }
 
 func (req *DisRequest) Write(w io.Writer) error {
-	return writeSlice(w, req.Data, -1)
+	return writeByteSlice(w, req.Data, -1)
 }
 
 // DisTrResponse contains response data
@@ -218,7 +224,7 @@ type DisHashResponse struct {
 }
 
 func (resp *DisHashResponse) Read(r io.Reader) error {
-	slice, err := readSlice(r, -1)
+	slice, err := readByteSlice(r, -1)
 	if err != nil {
 		return err
 	}
@@ -228,7 +234,7 @@ func (resp *DisHashResponse) Read(r io.Reader) error {
 }
 
 func (resp *DisHashResponse) Write(w io.Writer) error {
-	return writeSlice(w, resp.Data, -1)
+	return writeByteSlice(w, resp.Data, -1)
 }
 
 type StopNetworkRequest struct {
@@ -236,7 +242,7 @@ type StopNetworkRequest struct {
 }
 
 func (req *StopNetworkRequest) Read(r io.Reader) error {
-	slice, err := readSlice(r, -1)
+	slice, err := readByteSlice(r, -1)
 	if err != nil {
 		return err
 	}
@@ -246,7 +252,7 @@ func (req *StopNetworkRequest) Read(r io.Reader) error {
 }
 
 func (req *StopNetworkRequest) Write(w io.Writer) error {
-	return writeSlice(w, req.Data, -1)
+	return writeByteSlice(w, req.Data, -1)
 }
 
 type StopNetworkResponse struct {
@@ -254,7 +260,7 @@ type StopNetworkResponse struct {
 }
 
 func (resp *StopNetworkResponse) Read(r io.Reader) error {
-	slice, err := readSlice(r, -1)
+	slice, err := readByteSlice(r, -1)
 	if err != nil {
 		return err
 	}
@@ -264,7 +270,7 @@ func (resp *StopNetworkResponse) Read(r io.Reader) error {
 }
 
 func (resp *StopNetworkResponse) Write(w io.Writer) error {
-	return writeSlice(w, resp.Hash, -1)
+	return writeByteSlice(w, resp.Hash, -1)
 }
 
 // ReadRequest is reading request
@@ -277,7 +283,7 @@ func ReadRequest(request interface{}, r io.Reader) error {
 		t := reflect.ValueOf(request).Elem().Field(i)
 		switch t.Kind() {
 		case reflect.Slice:
-			size, err := readSliceSize(r, reflect.TypeOf(request).Elem().Field(i).Tag.Get("size"))
+			size, err := readSliceSizeFromTag(r, reflect.TypeOf(request).Elem().Field(i).Tag.Get("size"))
 			if err != nil {
 				return err
 			}
@@ -413,7 +419,7 @@ func readBool(r io.Reader) (bool, error) {
 	return string(boolByte[0]) == "1", nil
 }
 
-func readSliceSize(r io.Reader, tagSize string) (size uint64, err error) {
+func readSliceSizeFromTag(r io.Reader, tagSize string) (size uint64, err error) {
 	if len(tagSize) > 0 {
 		size, err = strconv.ParseUint(tagSize, 10, 0)
 		if err != nil {
@@ -435,7 +441,8 @@ func writeBool(w io.Writer, val bool) error {
 	return err
 }
 
-func readSlice(r io.Reader, bytesLen int) ([]byte, error) {
+// if bytesLen < 0 then slice length reads before reading slice body
+func readByteSlice(r io.Reader, bytesLen int) ([]byte, error) {
 	if bytesLen < 0 {
 		size, err := readUint(r, 4)
 		if err != nil {
@@ -454,7 +461,7 @@ func readSlice(r io.Reader, bytesLen int) ([]byte, error) {
 	return slice, nil
 }
 
-func writeSlice(w io.Writer, value []byte, bytesLen int) error {
+func writeByteSlice(w io.Writer, value []byte, bytesLen int) error {
 	if bytesLen < 0 {
 		_, err := w.Write(converter.DecToBin(len(value), 4))
 		if err != nil {
