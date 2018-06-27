@@ -85,7 +85,7 @@ func Type1(rw io.ReadWriter) error {
 	}
 
 	// send the list of transactions which we want to get
-	err = SendRequest(&DisHashResponse{Data: needTx}, rw)
+	err = (&DisHashResponse{Data: needTx}).Write(rw)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func Type1(rw io.ReadWriter) error {
 
 	// get this new transactions
 	trs := &DisRequest{}
-	err = ReadRequest(trs, rw)
+	err = trs.Read(rw)
 	if err != nil {
 		return err
 	}
@@ -145,51 +145,66 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 }
 
 func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
+	hashes, err := readHashes(buf)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ProtocolError, "error": err}).Error("on reading hashes")
+		return nil, err
+	}
 
 	var needTx []byte
-	for buf.Len() > 0 {
-		newDataTxHash := buf.Next(consts.HashSize)
-		if len(newDataTxHash) != consts.HashSize {
-			log.WithFields(log.Fields{"len": len(newDataTxHash), "type": consts.ProtocolError}).Error("wrong transactions hash size")
-			return nil, errors.New("wrong transactions hash size")
-		}
-
+	// TODO: remove cycle, select miltiple txes throw in(?)
+	for _, hash := range hashes {
 		// check if we have such a transaction
 		// check log_transaction
-		exists, err := model.GetLogTransactionsCount(newDataTxHash)
+		exists, err := model.GetLogTransactionsCount(hash)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "txHash": newDataTxHash}).Error("Getting log tx count")
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "txHash": hash}).Error("Getting log tx count")
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in log_tx")
+			log.WithFields(log.Fields{"txHash": hash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in log_tx")
 			continue
 		}
 
-		exists, err = model.GetTransactionsCount(newDataTxHash)
+		exists, err = model.GetTransactionsCount(hash)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "txHash": newDataTxHash}).Error("Getting tx count")
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "txHash": hash}).Error("Getting tx count")
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in tx")
+			log.WithFields(log.Fields{"txHash": hash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in tx")
 			continue
 		}
 
 		// check transaction queue
-		exists, err = model.GetQueuedTransactionsCount(newDataTxHash)
+		exists, err = model.GetQueuedTransactionsCount(hash)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting queue_tx count")
 			return nil, utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in queue_tx")
+			log.WithFields(log.Fields{"txHash": hash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in queue_tx")
 			continue
 		}
-		needTx = append(needTx, newDataTxHash...)
+		needTx = append(needTx, hash...)
 	}
 
 	return needTx, nil
+}
+
+func readHashes(buf *bytes.Buffer) ([][]byte, error) {
+	if buf.Len()%consts.HashSize != 0 {
+		log.WithFields(log.Fields{"hashes_slice_size": buf.Len(), "tx_size": consts.HashSize, "type": consts.ProtocolError}).Error("incorrect hashes length")
+		return nil, errors.New("wrong transactions hashes size")
+	}
+
+	hashes := make([][]byte, 0, buf.Len()/consts.HashSize)
+
+	for buf.Len() > 0 {
+		hashes = append(hashes, buf.Next(consts.HashSize))
+	}
+
+	return hashes, nil
 }
 
 func saveNewTransactions(r *DisRequest) error {

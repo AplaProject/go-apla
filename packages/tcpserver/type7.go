@@ -51,7 +51,7 @@ func Type7(request *GetBodiesRequest, w net.Conn) error {
 	}
 
 	for _, b := range blocks {
-		if err := SendRequest(&GetBodyResponse{Data: b.Data}, w); err != nil {
+		if err := (&GetBodyResponse{Data: b.Data}).Write(w); err != nil {
 			return err
 		}
 	}

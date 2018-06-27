@@ -76,16 +76,15 @@ func HandleTCPRequest(rw net.Conn) {
 		if service.IsNodePaused() {
 			return
 		}
+
 		req := &ConfirmRequest{}
-		err = ReadRequest(req, rw)
-		if err == nil {
+		if err = req.Read(rw); err == nil {
 			response, err = Type4(req)
 		}
 
 	case RequestTypeBlockCollection:
 		req := &GetBodiesRequest{}
-		err = ReadRequest(req, rw)
-		if err == nil {
+		if err = req.Read(rw); err == nil {
 			err = Type7(req, rw)
 		}
 
@@ -98,8 +97,8 @@ func HandleTCPRequest(rw net.Conn) {
 	}
 
 	log.WithFields(log.Fields{"response": response, "request_type": dType.Type}).Debug("tcpserver responded")
-	err = SendRequest(response, rw)
-	if err != nil {
+	if err = response.(SelfReaderWriter).Write(rw); err != nil {
+		// err = SendRequest(response, rw)
 		log.Errorf("tcpserver handle error: %s", err)
 	}
 }
