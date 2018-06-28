@@ -1,29 +1,12 @@
 package tcpclient
 
 import (
-	"fmt"
 	"net"
-	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	log "github.com/sirupsen/logrus"
 )
-
-// NormalizeHostAddress get address. if port not defined returns combined string with ip and defaultPort
-func NormalizeHostAddress(address string, defaultPort int64) (string, error) {
-
-	_, _, err := net.SplitHostPort(address)
-	if err != nil {
-		if strings.HasSuffix(err.Error(), "missing port in address") {
-			return fmt.Sprintf("%s:%d", address, defaultPort), nil
-		}
-
-		return "", err
-	}
-
-	return address, nil
-}
 
 func (c *client) sendDisseminatorRequest(con net.Conn, requestType int, packet []byte) (err error) {
 	/*

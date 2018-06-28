@@ -31,7 +31,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/service"
-	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -104,10 +103,14 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 
 // UpdateChain load from host all blocks from our last block to maxBlockID
 func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
+	var (
+		err error
+		count int
+	)
 
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
-	if _, err := curBlock.Get(); err != nil {
+	if _, err = curBlock.Get(); err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting info block")
 		return err
 	}
@@ -117,75 +120,71 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		return ctx.Err()
 	}
 
-	playRawBlock := func(rawBlocksQueueCh chan []byte) error {
-		for rb := range rawBlocksQueueCh {
-			block, err := parser.ProcessBlockWherePrevFromBlockchainTable(rb, true)
+	playRawBlock := func(rb []byte) error {
+
+		block, err := parser.ProcessBlockWherePrevFromBlockchainTable(rb, true)
+		if err != nil {
+			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
+			return err
+		}
+
+		// hash compare could be failed in the case of fork
+		hashMatched, thisErrIsOk := block.CheckHash()
+		if thisErrIsOk != nil {
+			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
+		}
+
+		if !hashMatched {
+			//it should be fork, replace our previous blocks to ones from the host
+			err = parser.GetBlocks(block.Header.BlockID-1, host)
 			if err != nil {
-				// we got bad block and should ban this host
-				banNode(host, block, err)
-				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
-				return err
-			}
-
-			// hash compare could be failed in the case of fork
-			hashMatched, thisErrIsOk := block.CheckHash()
-			if thisErrIsOk != nil {
-				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
-			}
-
-			if !hashMatched {
-				//it should be fork, replace our previous blocks to ones from the host
-				err := parser.GetBlocks(block.Header.BlockID-1, host)
-				if err != nil {
-					d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
-					banNode(host, block, err)
-					return err
-				}
-			}
-
-			block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
-			if err != nil {
-				banNode(host, block, err)
-				return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
-			}
-			if err = block.CheckBlock(); err != nil {
-				banNode(host, block, err)
-				return err
-			}
-			if err = block.PlayBlockSafe(); err != nil {
-				banNode(host, block, err)
+				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 				return err
 			}
 		}
+
+		block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
+		if err != nil {
+			return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
+		}
+
+		if err = block.CheckBlock(); err != nil {
+			return err
+		}
+
+		if err = block.PlayBlockSafe(); err != nil {
+			return err
+		}
+
 		return nil
 	}
 
 	st := time.Now()
 	d.logger.Infof("starting downloading blocks from %d to %d (%d) \n", curBlock.BlockID, maxBlockID, maxBlockID-curBlock.BlockID)
 
-	count := 0
-	var err error
-	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(tcpserver.BlocksPerRequest) {
-		var rawBlocksChan chan []byte
-		rawBlocksChan, err = getBlocksFromHost(host, blockID, false)
+	defer func() {
 		if err != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
-			break
+			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("retrieving blockchain from node")
+			d.logger.Infof("%d blocks was collected (%s) \n", count, time.Since(st).String())
+			banNode(host, block, err)
 		}
+	}
 
-		err = playRawBlock(rawBlocksChan)
-		if err != nil {
+	blockID := curBlock.BlockID + 1
+	rawBlocksChan, err = getBlocksFromHost(host, blockID, false)
+	if err != nil {
+		d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
+		return err
+	}
+
+	for block := range rawBlocksChan {
+		if err = playRawBlock(block); err != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
-			break
+			return err
 		}
 		count++
 	}
 
-	if err != nil {
-		d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("retrieving blockchain from node")
-	} else {
-		d.logger.Infof("%d blocks was collected (%s) \n", count, time.Since(st).String())
-	}
 	return err
 }
 
