@@ -27,7 +27,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/tcpclient"
-	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -170,7 +169,7 @@ func getDaemonsToStart() []string {
 	return serverList
 func getBlocksFromHost(host string, blockID int64, reverseOrder bool) (rawBlocksChan chan []byte, err error) {
 	cli := tcpclient.NewClient(defaultTCPClientConfig(), &log.Entry{Logger: &log.Logger{}})
-	rawBlocksChan, err = cli.GetBlocksBodies(host, blockID, tcpserver.BlocksPerRequest, reverseOrder)
+	rawBlocksChan, err = cli.GetBlocksBodies(host, blockID, reverseOrder)
 	return
 }
 

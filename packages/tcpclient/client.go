@@ -150,81 +150,8 @@ func (c *client) hostWithMaxBlock(ctx context.Context, hosts []string) (bestHost
 	return bestHost, maxBlockID, nil
 }
 
-// GetBlocksBody is retrieving `blocksCount` blocks bodies starting with blockID and puts them in the channel
-func (c *client) GetBlocksBodies(host string, blockID int64, blocksCount int32, reverseOrder bool) (chan []byte, error) {
-	conn, err := c.newConnection(host)
-	if err != nil {
-		return nil, err
-	}
-
-	// send the type of data
-	_, err = conn.Write(converter.DecToBin(consts.DATA_TYPE_BLOCK_BODY, 2))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data type block body to connection")
-		return nil, err
-	}
-
-	// send the number of a block
-	_, err = conn.Write(converter.DecToBin(blockID, 4))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data type block body to connection")
-		return nil, err
-	}
-
-	rvBytes := make([]byte, 1)
-	if reverseOrder {
-		rvBytes[0] = 1
-	} else {
-		rvBytes[0] = 0
-	}
-
-	// send reverse flag
-	_, err = conn.Write(rvBytes)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing reverse flag to connection")
-		return nil, err
-	}
-
-	rawBlocksCh := make(chan []byte, blocksCount)
-	go func() {
-		defer func() {
-			close(rawBlocksCh)
-			conn.Close()
-		}()
-
-		for {
-			// receive the data size as a response that server wants to transfer
-			buf := make([]byte, 4)
-			_, err = conn.Read(buf)
-			if err != nil {
-				if err != io.EOF {
-					log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data size from connection")
-				}
-				return
-			}
-			dataSize := converter.BinToDec(buf)
-			var binaryBlock []byte
-
-			// data size must be less than 10mb
-			if dataSize >= 10485760 || dataSize == 0 {
-				log.Error("null block")
-				return
-			}
-
-			binaryBlock = make([]byte, dataSize)
-
-			_, err = io.ReadFull(conn, binaryBlock)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data from connection")
-				return
-			}
-
-			rawBlocksCh <- binaryBlock
-		}
-	}()
-	return rawBlocksCh, nil
-
-}
+// GetBlocksBody is retrieving blocks bodies starting with blockID and puts them in the channel
+func (c *client)
 
 func (c *client) SendTransactionsToHost(host string, txes []model.Transaction) error {
 	packet := prepareTxPacket(txes)
@@ -348,23 +275,6 @@ func (c *client) sendFullBlockRequest(con net.Conn, data []byte) (response []byt
 	return c.sendRequiredTransactions(con)
 }
 
-func (c client) newConnection(addr string) (net.Conn, error) {
-	host, err := NormalizeHostAddress(addr, c.config.DefaultPort)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.NetworkError, "host": addr, "error": err}).Error("on normalize host address")
-		return nil, err
-	}
-
-	conn, err := net.DialTimeout("tcp", host, consts.TCPConnTimeout)
-	if err != nil {
-		c.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "address": host}).Debug("dialing tcp")
-		return nil, err
-	}
-
-	conn.SetReadDeadline(time.Now().Add(c.config.ReadTimeout))
-	conn.SetWriteDeadline(time.Now().Add(c.config.WriteTimeout))
-	return conn, nil
-}
 
 func prepareTxPacket(txes []model.Transaction) []byte {
 	// form packet to send
