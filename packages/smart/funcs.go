@@ -1168,6 +1168,12 @@ func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bo
 		return fmt.Errorf("Item %d has not been found", id)
 	}
 
+	for _, v := range sc.TxContract.StackCont {
+		if v == condition {
+			return fmt.Errorf("Recursion detected")
+		}
+	}
+
 	if err := Eval(sc, condition); err != nil {
 		if err == errAccessDenied && conditionOnly {
 			return AllowChangeCondition(sc, tblname)
