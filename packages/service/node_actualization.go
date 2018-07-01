@@ -3,8 +3,6 @@ package service
 import (
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/tcpclient"
-
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -12,6 +10,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 )
 
 // DefaultBlockchainGap is default value for the number of lagging blocks
@@ -62,7 +61,7 @@ func (n *NodeActualizer) checkBlockchainActuality() (bool, error) {
 
 	remoteHosts := syspar.GetRemoteHosts()
 
-	maxBlockID, err := getMaxRemotesBlock(remoteHosts)
+	_, maxBlockID, err := tcpserver.HostWithMaxBlock(remoteHosts)
 	if err != nil {
 		return false, errors.Wrapf(err, "choosing best host")
 	}
@@ -93,16 +92,4 @@ func (n *NodeActualizer) pauseNodeActivity() {
 
 func (n *NodeActualizer) resumeNodeActivity() {
 	np.Unset()
-}
-
-func getMaxRemotesBlock(hosts []string) (maxBlockID int64, err error) {
-	config := tcpclient.Config{
-		DefaultPort:  consts.DEFAULT_TCP_PORT,
-		ReadTimeout:  consts.READ_TIMEOUT,
-		WriteTimeout: consts.WRITE_TIMEOUT,
-	}
-
-	cli := tcpclient.NewClient(config, &log.Entry{Logger: &log.Logger{}})
-	_, maxBlockID, err = cli.HostWithMaxBlock(hosts)
-	return
 }
