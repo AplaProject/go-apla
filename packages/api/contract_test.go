@@ -1032,3 +1032,54 @@ func TestContractChain(t *testing.T) {
 		t.Error(fmt.Errorf(`wrong result %s`, msg))
 	}
 }
+
+func TestLoopCond(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract ` + rnd + `1 {
+		conditions {
+	    
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	err := postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract ` + rnd + `2 {
+		conditions {
+			ContractConditions("` + rnd + `1")
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret getContractResult
+	err = sendGet(`contract/`+rnd+`1`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	sid := ret.TableID
+	form = url.Values{`Value`: {`contract ` + rnd + `1 {
+		conditions {
+			ContractConditions("` + rnd + `2")
+		}
+	}`}, `Id`: {sid}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	err = postTx(`EditContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(rnd+`2`, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}

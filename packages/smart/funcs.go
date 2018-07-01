@@ -81,6 +81,7 @@ type SmartContract struct {
 	TxCost        int64           // Maximum cost of executing contract
 	TxUsedCost    decimal.Decimal // Used cost of CPU resources
 	BlockData     *utils.BlockData
+	Loop          map[string]bool
 	TxHash        []byte
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
@@ -344,11 +345,22 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 				log.WithFields(log.Fields{"contract_name": name, "type": consts.EmptyObject}).Error("There is not conditions in contract")
 				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
 			}
-			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
-				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID})
+			vars := map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
+				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID}
+
+			if sc.Loop == nil {
+				sc.Loop = make(map[string]bool)
+			}
+			if _, ok := sc.Loop[`loop_`+name]; ok {
+				log.WithFields(log.Fields{"type": consts.ContractError, "contract_name": name}).Error("there is loop in contract")
+				return false, fmt.Errorf(eContractLoop, name)
+			}
+			sc.Loop[`loop_`+name] = true
+			_, err := VMRun(sc.VM, block, []interface{}{}, &vars)
 			if err != nil {
 				return false, err
 			}
+			delete(sc.Loop, `loop_`+name)
 		} else {
 			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty contract name in ContractConditions")
 			return false, fmt.Errorf(`empty contract name in ContractConditions`)
