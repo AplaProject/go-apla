@@ -807,17 +807,17 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		ecosystem = sc.TxSmart.EcosystemID
 	}
 	tblname = GetTableName(sc, tblname, ecosystem)
-	if sc.VDE {
-		perm, err = sc.AccessTablePerm(tblname, `read`)
-		if err != nil {
-			return 0, nil, err
-		}
-		cols := strings.Split(columns, `,`)
-		if err = sc.AccessColumns(tblname, &cols, false); err != nil {
-			return 0, nil, err
-		}
-		columns = strings.Join(cols, `,`)
+
+	perm, err = sc.AccessTablePerm(tblname, `read`)
+	if err != nil {
+		return 0, nil, err
 	}
+	colsList := strings.Split(columns, `,`)
+	if err = sc.AccessColumns(tblname, &colsList, false); err != nil {
+		return 0, nil, err
+	}
+	columns = strings.Join(colsList, `,`)
+
 	columns = PrepareColumns(columns)
 	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
@@ -854,7 +854,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		}
 		result = append(result, reflect.ValueOf(row).Interface())
 	}
-	if sc.VDE && perm != nil && len(perm[`filter`]) > 0 {
+	if perm != nil && len(perm[`filter`]) > 0 {
 		fltResult, err := VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
 			&map[string]interface{}{
 				`data`: result, `original_contract`: ``, `this_contract`: ``,
