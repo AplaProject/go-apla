@@ -585,6 +585,13 @@ func dbfindTag(par parFunc) string {
 	}
 	columnNames := make([]string, 0)
 
+	perm, err = sc.AccessTablePerm(tblname, `read`)
+	fieldsList := strings.Split(fields, ",")
+	if err != nil || sc.AccessColumns(tblname, &fieldsList, false) != nil {
+		return `Access denied`
+	}
+	fields = strings.Join(fieldsList, `,`)
+
 	if fields != "*" {
 		if !strings.Contains(fields, "id") {
 			fields += ",id"
@@ -596,13 +603,6 @@ func dbfindTag(par parFunc) string {
 		for _, col := range rows {
 			queryColumns = append(queryColumns, col["column_name"])
 			columnNames = append(columnNames, col["column_name"])
-		}
-	}
-
-	if sc.VDE {
-		perm, err = sc.AccessTablePerm(tblname, `read`)
-		if err != nil || sc.AccessColumns(tblname, &queryColumns, false) != nil {
-			return `Access denied`
 		}
 	}
 
@@ -638,6 +638,7 @@ func dbfindTag(par parFunc) string {
 		(*par.Workspace.Vars)[par.Node.Attr[`countvar`].(string)] = countStr
 		delete(par.Node.Attr, `countvar`)
 	}
+	fmt.Println(`ACCESS FIELDS`, fields)
 	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order+offset, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
@@ -720,7 +721,7 @@ func dbfindTag(par parFunc) string {
 		}
 		data = append(data, row)
 	}
-	if sc.VDE && perm != nil && len(perm[`filter`]) > 0 {
+	if perm != nil && len(perm[`filter`]) > 0 {
 		result := make([]interface{}, len(data))
 		for i, item := range data {
 			row := make(map[string]string)
