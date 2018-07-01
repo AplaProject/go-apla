@@ -175,21 +175,21 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		}
 	}
 
-	blockID := curBlock.BlockID + 1
-	rawBlocksChan, err = getBlocksFromHost(host, blockID, false)
-	if err != nil {
-		d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
-		return err
-	}
-
-	for block := range rawBlocksChan {
-		if err = playRawBlock(block); err != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
+	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(tcpserver.BlocksPerRequest) {
+		rawBlocksChan, err = getBlocksFromHost(host, blockID, false)
+		if err != nil {
+			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
 			return err
 		}
-		count++
-	}
 
+		for block := range rawBlocksChan {
+			if err = playRawBlock(block); err != nil {
+				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
+				return err
+			}
+			count++
+		}
+	}
 	return err
 }
 

@@ -2,7 +2,6 @@ package tcpclient
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"io"
 	"net"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -47,111 +45,6 @@ func NewClient(config Config, logger *log.Entry) *client {
 		Entry:  logger,
 	}
 }
-
-func (c *client) HostWithMaxBlock(hosts []string) (bestHost string, maxBlockID int64, err error) {
-	ctx := context.Background()
-	return c.hostWithMaxBlock(ctx, hosts)
-}
-
-func (c *client) GetMaxBlockID(host string) (blockID int64, err error) {
-	ctx := context.Background()
-	return c.getMaxBlock(ctx, host)
-}
-
-func (c *client) getMaxBlock(ctx context.Context, host string) (blockID int64, err error) {
-	con, err := c.newConnection(host)
-
-	if err != nil {
-		c.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Debug("error connecting to host")
-		return -1, err
-	}
-	defer con.Close()
-
-	// send max block request
-	_, err = con.Write(converter.DecToBin(consts.DATA_TYPE_MAX_BLOCK_ID, 2))
-	if err != nil {
-		c.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("writing max block id to host")
-		return -1, err
-	}
-
-	// response
-	blockIDBin := make([]byte, 4)
-	_, err = con.Read(blockIDBin)
-	if err != nil {
-		c.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("reading max block id from host")
-		return -1, err
-	}
-
-	return converter.BinToDec(blockIDBin), nil
-}
-
-func (c *client) hostWithMaxBlock(ctx context.Context, hosts []string) (bestHost string, maxBlockID int64, err error) {
-	maxBlockID = -1
-
-	if len(hosts) == 0 {
-		return bestHost, maxBlockID, nil
-	}
-
-	type blockAndHost struct {
-		host    string
-		blockID int64
-		err     error
-	}
-
-	resultChan := make(chan blockAndHost, len(hosts))
-
-	/* rand.Shuffle(len(hosts), func(i, j int) { hosts[i], hosts[j] = hosts[j], hosts[i] })
-	this implementation available only in Golang 1.10
-	*/
-	utils.ShuffleSlice(hosts)
-
-	var wg sync.WaitGroup
-	for _, h := range hosts {
-		if ctx.Err() != nil {
-			c.WithFields(log.Fields{"error": ctx.Err(), "type": consts.ContextError}).Error("context error")
-			return "", maxBlockID, ctx.Err()
-		}
-
-		wg.Add(1)
-
-		go func(host string) {
-			blockID, err := c.getMaxBlock(context.TODO(), host)
-			defer wg.Done()
-
-			resultChan <- blockAndHost{
-				host:    host,
-				blockID: blockID,
-				err:     err,
-			}
-		}(h)
-	}
-	wg.Wait()
-
-	var errCount int
-	for i := 0; i < len(hosts); i++ {
-		bl := <-resultChan
-
-		if bl.err != nil {
-			errCount++
-			continue
-		}
-
-		// If blockID is maximal then the current host is the best
-		if bl.blockID > maxBlockID {
-			maxBlockID = bl.blockID
-			bestHost = bl.host
-		}
-	}
-
-	if errCount == len(hosts) {
-		return "", 0, ErrNodesUnavailable
-	}
-
-	return bestHost, maxBlockID, nil
-}
-
-// GetBlocksBody is retrieving blocks bodies starting with blockID and puts them in the channel
-func (c *client)
 
 func (c *client) SendTransactionsToHost(host string, txes []model.Transaction) error {
 	packet := prepareTxPacket(txes)
@@ -197,6 +90,10 @@ func (c *client) SendTransacitionsToAll(hosts []string, txes []model.Transaction
 	}
 
 	return nil
+}
+
+func (c *client) newConnection(host string) (net.Conn, error) {
+	return net.Dial("tcp", host)
 }
 
 func (c *client) SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes []model.Transaction, nodeID int64) error {
@@ -274,7 +171,6 @@ func (c *client) sendFullBlockRequest(con net.Conn, data []byte) (response []byt
 	//response
 	return c.sendRequiredTransactions(con)
 }
-
 
 func prepareTxPacket(txes []model.Transaction) []byte {
 	// form packet to send
