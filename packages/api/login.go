@@ -17,14 +17,15 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
+	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -124,28 +125,61 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			return err
 		}
 
+		pubkey = data.params[`pubkey`].([]byte)
 		hexPubKey := hex.EncodeToString(pubkey)
-		params := make([]byte, 0)
-		params = append(append(params, converter.EncodeLength(int64(len(hexPubKey)))...), hexPubKey...)
+		params := converter.EncodeLength(int64(len(hexPubKey)))
+		params = append(params, hexPubKey...)
 
-		vm := smart.GetVM(false, 0)
-		contract := smart.VMGetContract(vm, "NewUser", 1)
-		info := contract.Block.Info.(*script.ContractInfo)
+		contract := smart.GetContract("NewUser", 1)
 
-		err = tx.BuildTransaction(tx.SmartContract{
+		sc := tx.SmartContract{
 			Header: tx.Header{
-				Type:        int(info.ID),
+				Type:        int(contract.Block.Info.(*script.ContractInfo).ID),
 				Time:        time.Now().Unix(),
 				EcosystemID: 1,
 				KeyID:       conf.Config.KeyID,
 				NetworkID:   consts.NETWORK_ID,
+				PublicKey:   pubkey,
 			},
 			SignedBy: smart.PubToID(NodePublicKey),
 			Data:     params,
-		}, NodePrivateKey, NodePublicKey, string(hexPubKey))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 		}
+
+		if conf.Config.IsSupportingVDE() {
+
+			signPrms := []string{sc.ForSign()}
+			signPrms = append(signPrms, hexPubKey)
+			signData := strings.Join(signPrms, ",")
+			signature, err := crypto.Sign(NodePrivateKey, signData)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
+				return err
+			}
+
+			sc.BinSignatures = converter.EncodeLengthPlusData(signature)
+
+			if sc.PublicKey, err = hex.DecodeString(NodePublicKey); err != nil {
+				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
+				return err
+			}
+
+			serializedContract, err := msgpack.Marshal(sc)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
+				return errorAPI(w, err, http.StatusInternalServerError)
+			}
+			ret, err := VDEContract(serializedContract, data)
+			if err != nil {
+				return errorAPI(w, err, http.StatusInternalServerError)
+			}
+			data.result = ret
+		} else {
+			err = tx.BuildTransaction(sc, NodePrivateKey, NodePublicKey, hexPubKey)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+			}
+		}
+
 	}
 
 	if ecosystemID > 1 && len(pubkey) == 0 {
@@ -207,7 +241,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		Address:     address,
 		IsOwner:     founder == wallet,
 		IsNode:      conf.Config.KeyID == wallet,
-		IsVDE:       model.IsTable(fmt.Sprintf(`%d_vde_tables`, ecosystemID)),
+		IsVDE:       conf.Config.IsSupportingVDE(),
 	}
 
 	data.result = &result

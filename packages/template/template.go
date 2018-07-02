@@ -692,7 +692,7 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 	isvde := (*vars)[`vde`] == `true` || (*vars)[`vde`] == `1`
 	sc := smart.SmartContract{
 		VDE: isvde,
-		VM:  smart.GetVM(isvde, converter.StrToInt64((*vars)[`ecosystem_id`])),
+		VM:  smart.GetVM(),
 		TxSmart: tx.SmartContract{
 			Header: tx.Header{
 				EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),

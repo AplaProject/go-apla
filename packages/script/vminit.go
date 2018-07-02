@@ -69,6 +69,8 @@ const (
 	VMTypeSmart VMType = 1
 	// VMTypeVDE is vde vm type
 	VMTypeVDE VMType = 2
+	// VMTypeVDEMaster is VDEMaster type
+	VMTypeVDEMaster VMType = 3
 
 	TagFile      = "file"
 	TagAddress   = "address"

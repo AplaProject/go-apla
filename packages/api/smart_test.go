@@ -434,14 +434,57 @@ func TestUpdateSysParam(t *testing.T) {
 func TestUpdateFullNodesWithEmptyArray(t *testing.T) {
 	require.NoErrorf(t, keyLogin(1), "on login")
 
-	byteNodes := `[]`
-	// byteNodes += `{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"5462687003324713865", "public_key":"4ea2433951ca21e6817426675874b2a6d98e5051c1100eddefa1847b0388e4834facf9abf427c46e2bc6cd5e3277fba533d03db553e499eb368194b3f1e514d4"}]`
+	byteNodes := `[`
+	byteNodes += `{"tcp_address":"127.0.0.1:7078", "api_address":"https://127.0.0.1:7079", "key_id":"-4466900793776865315", "public_key":"ca901a97e84d76f8d46e2053028f709074b3e60d3e2e33495840586567a0c961820d789592666b67b05c6ae120d5bd83d4388b2f1218638d8226d40ced0bb208"},`
+	byteNodes += `{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"542353610328569127", "public_key":"a8ada71764fd2f0c9fa1d2986455288f11f0f3931492d27dc62862fdff9c97c38923ef46679488ad1cd525342d4d974621db58f809be6f8d1c19fdab50abc06b"},`
+	byteNodes += `{"tcp_address":"127.0.0.1:7082", "api_address":"https://127.0.0.1:7083", "key_id":"5972241339967729614", "public_key":"de1b74d36ae39422f2478cba591f4d14eb017306f6ffdc3b577cc52ee50edb8fe7c7b2eb191a24c8ddfc567cef32152bab17de698ed7b3f2ab75f3bcc8b9b372"}`
+	byteNodes += `]`
 	form := &url.Values{
 		"Name":  {"full_nodes"},
 		"Value": {string(byteNodes)},
 	}
 
-	require.EqualError(t, postTx(`UpdateSysParam`, form), `{"type":"panic","error":"Invalid value"}`)
+	require.NoError(t, postTx(`UpdateSysParam`, form))
+}
+
+func TestHelper_InsertNodeKey(t *testing.T) {
+
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	form := url.Values{
+		`Value`: {`contract InsertNodeKey {
+			data {
+				KeyID string
+				PubKey string
+			}
+			conditions {}
+			action {
+				DBInsert("keys", "id,pub,amount", $KeyID, $PubKey, "100000000000000000000")
+			}
+		}`},
+		`ApplicationId`: {`1`},
+		`Conditions`:    {`true`},
+	}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	forms := []url.Values{
+		url.Values{
+			`KeyID`:  {"542353610328569127"},
+			`PubKey`: {"be78f54bcf6bb7b49b7ea00790b18b40dd3f5e231ffc764f1c32d3f5a82ab322aee157931bbfca733bac83255002f5ded418f911b959b77a937f0d5d07de74f8"},
+		},
+		url.Values{
+			`KeyID`:  {"5972241339967729614"},
+			`PubKey`: {"7b11a9ee4f509903118d5b965a819b778c83a21a52a033e5768d697a70a61a1bad270465f25d7f70683e977be93a9252e762488fc53808a90220d363d0a38eb6"},
+		},
+	}
+
+	for _, frm := range forms {
+		require.NoError(t, postTx(`InsertNodeKey`, &frm))
+	}
 }
 
 func TestValidateConditions(t *testing.T) {
@@ -825,4 +868,80 @@ func TestStack(t *testing.T) {
 	_, res, err := postTxResult(parent, &url.Values{})
 	assert.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("[[@1%s] [@1%[1]s @1%s]]", parent, child), res)
+}
+
+func TestPageHistory(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`page`)
+	value := `P(test,test paragraph)`
+
+	form := url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
+		"Menu": {"default_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	var ret listResult
+	assert.NoError(t, sendGet(`list/pages`, nil, &ret))
+	id := ret.Count
+	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {id}, "Value": {"Div(style){ok}"}}))
+	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {id}, "Conditions": {"true"}}))
+
+	form = url.Values{"Name": {randName(`menu`)}, "Value": {`MenuItem(First)MenuItem(Second)`},
+		"ApplicationId": {`1`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewMenu`, &form))
+
+	assert.NoError(t, sendGet(`list/menu`, nil, &ret))
+	idmenu := ret.Count
+	assert.NoError(t, postTx(`EditMenu`, &url.Values{"Id": {idmenu}, "Conditions": {"true"}}))
+	assert.NoError(t, postTx(`EditMenu`, &url.Values{"Id": {idmenu}, "Value": {"MenuItem(Third)"}}))
+	assert.NoError(t, postTx(`EditMenu`, &url.Values{"Id": {idmenu},
+		"Value": {"MenuItem(Third)"}, "Conditions": {"false"}}))
+
+	form = url.Values{"Value": {`contract C` + name + `{ action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	_, idCont, err := postTxResult(`NewContract`, &form)
+	assert.NoError(t, err)
+	assert.NoError(t, postTx(`EditContract`, &url.Values{"Id": {idCont},
+		"Value": {`contract C` + name + `{ action {Println("OK")}}`}, "Conditions": {"true"}}))
+
+	form = url.Values{`Value`: {`contract Get` + name + ` {
+		data {
+			IdPage int
+			IdMenu int
+			IdCont int
+		}
+		action {
+			var ret array
+			ret = GetPageHistory($IdPage)
+			$result = Str(Len(ret))
+			ret = GetMenuHistory($IdMenu)
+			$result = $result + Str(Len(ret))
+			ret = GetContractHistory($IdCont)
+			$result = $result + Str(Len(ret))
+		}
+	}`}, "ApplicationId": {`1`}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	_, msg, err := postTxResult(`Get`+name, &url.Values{"IdPage": {id}, "IdMenu": {idmenu},
+		"IdCont": {idCont}})
+	assert.NoError(t, err)
+	assert.Equal(t, `231`, msg)
+
+	form = url.Values{"Name": {name + `1`}, "Value": {value}, "ApplicationId": {`1`},
+		"Menu": {"default_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	assert.NoError(t, postTx(`Get`+name, &url.Values{"IdPage": {converter.Int64ToStr(
+		converter.StrToInt64(id) + 1)}, "IdMenu": {idmenu}, "IdCont": {idCont}}))
+
+	assert.EqualError(t, postTx(`Get`+name, &url.Values{"IdPage": {`1000000`}, "IdMenu": {idmenu},
+		"IdCont": {idCont}}), `{"type":"panic","error":"Record has not been found"}`)
+
+	var retTemp contentResult
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {fmt.Sprintf(`GetPageHistory(MySrc,%s)`,
+		id)}}, &retTemp))
+
+	if len(RawToString(retTemp.Tree)) < 400 {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(retTemp.Tree)))
+	}
 }

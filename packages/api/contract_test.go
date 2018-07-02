@@ -30,6 +30,14 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
+func TestExistContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	form := url.Values{"Name": {`EditPage`}, "Value": {`contract EditPage {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	err := postTx(`NewContract`, &form)
+	assert.EqualError(t, err, `{"type":"panic","error":"Contract EditPage already exists"}`)
+}
+
 func TestNewContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {
@@ -440,6 +448,15 @@ func TestNewTableWithEmptyName(t *testing.T) {
 		`{"type":"error","error":"Table name cannot be empty"}` {
 		t.Error(`wrong error`, err)
 	}
+
+	form = url.Values{
+		"Name":          {"Digit" + name},
+		"Columns":       {"[{\"name\":\"1\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]"},
+		"ApplicationId": {"1"},
+		"Permissions":   {"{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}"},
+	}
+
+	assert.EqualError(t, postTx("NewTable", &form), `{"type":"panic","error":"Column name cannot begin with digit"}`)
 }
 
 func TestActivateContracts(t *testing.T) {

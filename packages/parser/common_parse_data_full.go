@@ -763,7 +763,7 @@ func (b *Block) CheckBlock() error {
 
 		// skip time validation for first block
 		if b.Header.BlockID > 1 {
-			blockTimeCalculator, err := utils.BuildBlockTimeCalculator()
+			blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
 				return err
