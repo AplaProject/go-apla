@@ -1,4 +1,4 @@
-package tcpserver
+package network
 
 import (
 	"errors"
@@ -22,6 +22,9 @@ const (
 	RequestTypeConfirmation    = 4
 	RequestTypeBlockCollection = 7
 	RequestTypeMaxBlock        = 10
+
+	// BlocksPerRequest contains count of blocks per request
+	BlocksPerRequest int32 = 1000
 )
 
 // SelfReaderWriter read from Reader to himself and write to io.Writer from himself

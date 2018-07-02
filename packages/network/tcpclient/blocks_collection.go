@@ -1,7 +1,8 @@
-package tcpserver
+package tcpclient
 
 import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/network"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -13,23 +14,23 @@ func GetBlocksBodies(host string, blockID int64, reverseOrder bool) (chan []byte
 	}
 
 	// send the type of data
-	rt := &RequestType{Type: RequestTypeBlockCollection}
+	rt := &network.RequestType{Type: network.RequestTypeBlockCollection}
 	if err = rt.Write(conn); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data type block body to connection")
 		return nil, err
 	}
 
-	req := &GetBodiesRequest{
-		BlockID:      blockID,
+	req := &network.GetBodiesRequest{
+		BlockID:      uint32(blockID),
 		ReverseOrder: reverseOrder,
 	}
 
-	if err = req.Write(con); err != nil {
+	if err = req.Write(conn); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending blocks bodies request")
 		return nil, err
 	}
 
-	rawBlocksCh := make(chan []byte, tcpserver.BlocksPerRequest)
+	rawBlocksCh := make(chan []byte, network.BlocksPerRequest)
 	go func() {
 		defer func() {
 			close(rawBlocksCh)
@@ -38,21 +39,22 @@ func GetBlocksBodies(host string, blockID int64, reverseOrder bool) (chan []byte
 
 		for {
 			// receive the data size as a response that server wants to transfer
-			resp := &GetBodyResponse{}
+			resp := &network.GetBodyResponse{}
 			if err := resp.Read(conn); err != nil {
-				log.WithFields(log.Fields{"type": contsts.IOError, "error": err}).Error("on reading Block body response")
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading Block body response")
 				return
 			}
 
-			// TODO: remove fucking hardcode
+			// TODO: remove hardcode
 			// TODO: move size checking to GetBodyResponse.Read with limitReader
 			// data size must be less than 10mb
-			if resp.Data > 10485760 || dataSize == 0 {
+			dataSize := len(resp.Data)
+			if dataSize > 10485760 || dataSize == 0 {
 				log.Error("null block")
 				return
 			}
 
-			rawBlocksCh <- binaryBlock
+			rawBlocksCh <- resp.Data
 		}
 	}()
 	return rawBlocksCh, nil

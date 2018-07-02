@@ -25,6 +25,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/network"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -85,7 +86,7 @@ func Type1(rw io.ReadWriter) error {
 	}
 
 	// send the list of transactions which we want to get
-	err = (&DisHashResponse{Data: needTx}).Write(rw)
+	err = (&network.DisHashResponse{Data: needTx}).Write(rw)
 	if err != nil {
 		return err
 	}
@@ -95,7 +96,7 @@ func Type1(rw io.ReadWriter) error {
 	}
 
 	// get this new transactions
-	trs := &DisRequest{}
+	trs := &network.DisRequest{}
 	err = trs.Read(rw)
 	if err != nil {
 		return err

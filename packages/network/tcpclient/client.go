@@ -1,11 +1,13 @@
-package tcpserver
+package tcpclient
 
 import (
 	"fmt"
 	"net"
 	"strings"
-	log "github.com/sirupsen/logrus"
+	"time"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	log "github.com/sirupsen/logrus"
 )
 
 // NormalizeHostAddress get address. if port not defined returns combined string with ip and defaultPort
@@ -23,7 +25,7 @@ func NormalizeHostAddress(address string, defaultPort int64) (string, error) {
 	return address, nil
 }
 
-newConnection(addr string) (net.Conn, error) {
+func newConnection(addr string) (net.Conn, error) {
 	host, err := NormalizeHostAddress(addr, consts.DEFAULT_TCP_PORT)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.NetworkError, "host": addr, "error": err}).Error("on normalize host address")
@@ -36,7 +38,7 @@ newConnection(addr string) (net.Conn, error) {
 		return nil, err
 	}
 
-	conn.SetReadDeadline(time.Now().Add(c.config.ReadTimeout))
-	conn.SetWriteDeadline(time.Now().Add(c.config.WriteTimeout))
+	conn.SetReadDeadline(time.Now().Add(consts.READ_TIMEOUT))
+	conn.SetWriteDeadline(time.Now().Add(consts.WRITE_TIMEOUT))
 	return conn, nil
 }

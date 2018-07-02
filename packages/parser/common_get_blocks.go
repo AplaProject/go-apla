@@ -27,8 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/tcpclient"
-	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
+	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
 
@@ -81,7 +80,7 @@ func getBlocks(blockID int64, host string) ([]*Block, error) {
 	var count int64
 
 	// load the block bodies from the host
-	blocksCh, err := getBlocksFromHost(host, blockID)
+	blocksCh, err := tcpclient.GetBlocksBodies(host, blockID, true)
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}
@@ -218,13 +217,6 @@ func processBlocks(blocks []*Block) error {
 }
 
 func getBlocksFromHost(host string, blockID int64) (rawBlocksChan chan []byte, err error) {
-	config := tcpclient.Config{
-		DefaultPort:  consts.DEFAULT_TCP_PORT,
-		ReadTimeout:  consts.READ_TIMEOUT,
-		WriteTimeout: consts.WRITE_TIMEOUT,
-	}
-
-	cli := tcpclient.NewClient(config, &log.Entry{Logger: &log.Logger{}})
-	rawBlocksChan, err = cli.GetBlocksBodies(host, blockID, tcpserver.BlocksPerRequest, true)
+	rawBlocksChan, err = tcpclient.GetBlocksBodies(host, blockID, true)
 	return
 }

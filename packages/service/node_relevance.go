@@ -9,7 +9,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/tcpclient"
+	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 )
 
 var updatingEndWhilePaused = make(chan struct{})
@@ -77,7 +77,7 @@ func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
 		return true, nil
 	}
 
-	maxBlockID, err := getMaxRemotesBlock(remoteHosts)
+	_, maxBlockID, err := tcpclient.HostWithMaxBlock(remoteHosts)
 	if err != nil {
 		if err == tcpclient.ErrNodesUnavailable {
 			return false, nil
