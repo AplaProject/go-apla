@@ -69,7 +69,7 @@ func TestRead(t *testing.T) {
 			row = DBFind("%[1]s").Columns("active").Where("id>= ? and id<= ?", 2, 5)
 		}
 	}`,
-		/*		`func ReadFilter%s bool {
+		`func ReadFilter%s bool {
 				var i int
 				var row map
 				while i < Len($data) {
@@ -81,7 +81,7 @@ func TestRead(t *testing.T) {
 					i = i+ 1
 				}
 				return true
-			}`,*/
+			}`,
 	}
 	for _, contract := range contList {
 		form = url.Values{"Value": {fmt.Sprintf(contract, name)}, "ApplicationId": {`1`},
@@ -91,7 +91,6 @@ func TestRead(t *testing.T) {
 	assert.NoError(t, postTx(name, &url.Values{}))
 
 	assert.EqualError(t, postTx(`GetData`+name, &url.Values{}), `{"type":"panic","error":"Access denied"}`)
-	fmt.Println(`START 0`)
 	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {
 		`DBFind(` + name + `, src).Limit(2)`}}, &retCont))
 
@@ -99,7 +98,6 @@ func TestRead(t *testing.T) {
 		t.Errorf(`wrong tree %s`, RawToString(retCont.Tree))
 		return
 	}
-	fmt.Println(`START 1`)
 
 	assert.NoError(t, postTx(`GetOK`+name, &url.Values{}))
 
@@ -117,7 +115,6 @@ func TestRead(t *testing.T) {
 		"UpdatePerm": {"true"}, "FilterPerm": {`ReadFilter` + name + `()`},
 		"NewColumnPerm": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`EditTable`, &form))
-	fmt.Println(`START 2`)
 
 	var tableInfo tableResult
 	assert.NoError(t, sendGet(`table/`+name, nil, &tableInfo))
