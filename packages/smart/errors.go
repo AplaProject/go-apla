@@ -20,6 +20,7 @@ import "errors"
 
 const (
 	eTableNotFound = `Table %s has not been found`
+	eContractLoop  = `There is loop in %s contract`
 	eContractExist = `Contract %s already exists`
 )
 
