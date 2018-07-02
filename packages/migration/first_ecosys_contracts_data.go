@@ -337,6 +337,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         InsertPerm string
         UpdatePerm string
         NewColumnPerm string
+        ReadPerm string "optional"
     }
 
     conditions {
@@ -354,6 +355,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         permissions["insert"] = $InsertPerm
         permissions["update"] = $UpdatePerm
         permissions["new_column"] = $NewColumnPerm
+        if $ReadPerm {
+            permissions["read"] = $ReadPerm
+        }
         $Permissions = permissions
         TableConditions($Name, "", JSONEncode($Permissions))
     }

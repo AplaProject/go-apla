@@ -592,8 +592,8 @@ func dbfindTag(par parFunc) string {
 	}
 	columnNames := make([]string, 0)
 
-	perm, err = sc.AccessTablePerm(tblname, `read`)
 	fieldsList := strings.Split(fields, ",")
+	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil || sc.AccessColumns(tblname, &fieldsList, false) != nil {
 		return `Access denied`
 	}
