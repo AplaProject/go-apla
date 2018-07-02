@@ -1,4 +1,4 @@
-package tcpserver
+package tcpclient
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/network"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	log "github.com/sirupsen/logrus"
 )
@@ -30,8 +31,8 @@ func getMaxBlock(ctx context.Context, host string) (blockID int64, err error) {
 	defer con.Close()
 
 	// send max block request
-	rt := &RequestType{
-		Type: RequestTypeMaxBlock,
+	rt := &network.RequestType{
+		Type: network.RequestTypeMaxBlock,
 	}
 
 	if err := rt.Write(con); err != nil {
@@ -80,7 +81,7 @@ func hostWithMaxBlock(ctx context.Context, hosts []string) (bestHost string, max
 		wg.Add(1)
 
 		go func(host string) {
-			blockID, err := c.getMaxBlock(context.TODO(), host)
+			blockID, err := getMaxBlock(context.TODO(), host)
 			defer wg.Done()
 
 			resultChan <- blockAndHost{

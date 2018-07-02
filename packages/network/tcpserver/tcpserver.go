@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/network"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 
 	log "github.com/sirupsen/logrus"
@@ -43,7 +44,7 @@ func HandleTCPRequest(rw net.Conn) {
 		return
 	}
 
-	dType := &RequestType{}
+	dType := &network.RequestType{}
 	err := dType.Read(rw)
 	if err != nil {
 		log.Errorf("read request type failed: %s", err)
@@ -54,41 +55,41 @@ func HandleTCPRequest(rw net.Conn) {
 	var response interface{}
 
 	switch dType.Type {
-	case RequestTypeFullNode:
+	case network.RequestTypeFullNode:
 		if service.IsNodePaused() {
 			return
 		}
 		err = Type1(rw)
 
-	case RequestTypeNotFullNode:
+	case network.RequestTypeNotFullNode:
 		if service.IsNodePaused() {
 			return
 		}
 		response, err = Type2(rw)
 
-	case RequestTypeStopNetwork:
-		req := &StopNetworkRequest{}
+	case network.RequestTypeStopNetwork:
+		req := &network.StopNetworkRequest{}
 		if err = ReadRequest(req, rw); err == nil {
 			err = Type3(req, rw)
 		}
 
-	case RequestTypeConfirmation:
+	case network.RequestTypeConfirmation:
 		if service.IsNodePaused() {
 			return
 		}
 
-		req := &ConfirmRequest{}
+		req := &network.ConfirmRequest{}
 		if err = req.Read(rw); err == nil {
 			response, err = Type4(req)
 		}
 
-	case RequestTypeBlockCollection:
-		req := &GetBodiesRequest{}
+	case network.RequestTypeBlockCollection:
+		req := &network.GetBodiesRequest{}
 		if err = req.Read(rw); err == nil {
 			err = Type7(req, rw)
 		}
 
-	case RequestTypeMaxBlock:
+	case network.RequestTypeMaxBlock:
 		response, err = Type10()
 	}
 
@@ -97,7 +98,7 @@ func HandleTCPRequest(rw net.Conn) {
 	}
 
 	log.WithFields(log.Fields{"response": response, "request_type": dType.Type}).Debug("tcpserver responded")
-	if err = response.(SelfReaderWriter).Write(rw); err != nil {
+	if err = response.(network.SelfReaderWriter).Write(rw); err != nil {
 		// err = SendRequest(response, rw)
 		log.Errorf("tcpserver handle error: %s", err)
 	}

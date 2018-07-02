@@ -21,12 +21,9 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-
+	"github.com/GenesisKernel/go-genesis/packages/network"
 	log "github.com/sirupsen/logrus"
 )
-
-// BlocksPerRequest contains count of blocks per request
-const BlocksPerRequest int32 = 1000
 
 // Type7 writes the body of the specified block
 // blocksCollection and queue_parser_blocks daemons send the request through p.GetBlocks()
@@ -36,9 +33,9 @@ func Type7(request *GetBodiesRequest, w net.Conn) error {
 	var blocks []model.Block
 	var err error
 	if request.ReverseOrder {
-		blocks, err = block.GetReverseBlockchain(int64(request.BlockID), BlocksPerRequest)
+		blocks, err = block.GetReverseBlockchain(int64(request.BlockID), network.BlocksPerRequest)
 	} else {
-		blocks, err = block.GetBlocksFrom(int64(request.BlockID-1), "ASC", BlocksPerRequest)
+		blocks, err = block.GetBlocksFrom(int64(request.BlockID-1), "ASC", nentwork.BlocksPerRequest)
 	}
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_id": request.BlockID}).Error("Error getting 1000 blocks from block_id")
@@ -51,7 +48,7 @@ func Type7(request *GetBodiesRequest, w net.Conn) error {
 	}
 
 	for _, b := range blocks {
-		if err := (&GetBodyResponse{Data: b.Data}).Write(w); err != nil {
+		if err := (&network.GetBodyResponse{Data: b.Data}).Write(w); err != nil {
 			return err
 		}
 	}

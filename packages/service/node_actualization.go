@@ -10,7 +10,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
+	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 )
 
 // DefaultBlockchainGap is default value for the number of lagging blocks
@@ -61,7 +61,7 @@ func (n *NodeActualizer) checkBlockchainActuality() (bool, error) {
 
 	remoteHosts := syspar.GetRemoteHosts()
 
-	_, maxBlockID, err := tcpserver.HostWithMaxBlock(remoteHosts)
+	_, maxBlockID, err := tcpclient.HostWithMaxBlock(remoteHosts)
 	if err != nil {
 		return false, errors.Wrapf(err, "choosing best host")
 	}
