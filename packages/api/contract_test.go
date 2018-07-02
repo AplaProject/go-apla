@@ -1068,10 +1068,10 @@ func TestLoopCond(t *testing.T) {
 		return
 	}
 	form = url.Values{`Value`: {`contract ` + rnd + `2 {
-		conditions {
-			ContractConditions("` + rnd + `1")
-		}
-	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+			conditions {
+				ContractConditions("` + rnd + `1")
+			}
+		}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
 	err = postTx(`NewContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -1085,18 +1085,30 @@ func TestLoopCond(t *testing.T) {
 	}
 	sid := ret.TableID
 	form = url.Values{`Value`: {`contract ` + rnd + `1 {
-		conditions {
-			ContractConditions("` + rnd + `2")
-		}
-	}`}, `Id`: {sid}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+			conditions {
+				ContractConditions("` + rnd + `2")
+			}
+		}`}, `Id`: {sid}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
 	err = postTx(`EditContract`, &form)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = postTx(rnd+`2`, &url.Values{})
-	if err != nil {
-		t.Error(err)
-		return
+	assert.EqualError(t, postTx(rnd+`2`, &url.Values{}), `{"type":"panic","error":"There is loop in `+rnd+`1 contract"}`)
+
+	form = url.Values{`Value`: {`contract ` + rnd + `shutdown {
+		action
+		{ DBInsert("` + rnd + `table", "test", "SHUTDOWN") }
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	form = url.Values{
+		"Name":          {rnd + `table`},
+		"Columns":       {`[{"name":"test","type":"varchar", "index": "0", "conditions":"true"}]`},
+		"ApplicationId": {"1"},
+		"Permissions":   {`{"insert": "` + rnd + `shutdown()", "update" : "true", "new_column": "true"}`},
 	}
+	require.NoError(t, postTx("NewTable", &form))
+
+	assert.EqualError(t, postTx(rnd+`shutdown`, &url.Values{}), `{"type":"panic","error":"There is loop in @1`+rnd+`shutdown contract"}`)
 }
