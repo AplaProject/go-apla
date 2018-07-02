@@ -76,6 +76,16 @@ func (p *FirstBlockParser) Action() error {
 	}
 	amount := decimal.New(consts.FounderAmount, int32(converter.StrToInt64(sp.Value))).String()
 
+	commission := &model.SystemParameter{Name: `commission_wallet`}
+	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
+		return p.ErrInfo(err)
+	}
+	if err = syspar.SysUpdate(nil); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
+		return p.ErrInfo(err)
+	}
+
 	err = model.GetDB(p.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
 		keyID, data.PublicKey, amount).Error
 	if err != nil {
@@ -98,15 +108,7 @@ func (p *FirstBlockParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	commission := &model.SystemParameter{Name: `commission_wallet`}
-	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
-		return p.ErrInfo(err)
-	}
-	if err = syspar.SysUpdate(nil); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
-		return p.ErrInfo(err)
-	}
+
 	syspar.SetFirstBlockData(data)
 	return nil
 }
