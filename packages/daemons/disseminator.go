@@ -19,7 +19,7 @@ package daemons
 import (
 	"context"
 
-	"github.com/GenesisKernel/go-genesis/packages/tcpclient"
+	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -28,13 +28,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/service"
 
 	log "github.com/sirupsen/logrus"
-)
-
-const (
-	// I_AM_FULL_NODE is full node flag
-	I_AM_FULL_NODE = 1
-	// I_AM_NOT_FULL_NODE is not full node flag
-	I_AM_NOT_FULL_NODE = 2
 )
 
 // Disseminator is send to all nodes from nodes_connections the following data
@@ -79,8 +72,7 @@ func sendTransactions(logger *log.Entry) error {
 		return err
 	}
 
-	cli := tcpclient.NewClient(defaultTCPClientConfig(), logger)
-	if err := cli.SendTransacitionsToAll(hosts, *trs); err != nil {
+	if err := tcpclient.SendTransacitionsToAll(hosts, *trs); err != nil {
 		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending transactions")
 		return err
 	}
@@ -122,8 +114,7 @@ func sendBlockWithTxHashes(fullNodeID int64, logger *log.Entry) error {
 		return err
 	}
 
-	cli := tcpclient.NewClient(defaultTCPClientConfig(), logger)
-	if err := cli.SendFullBlockToAll(hosts, block, *trs, fullNodeID); err != nil {
+	if err := tcpclient.SendFullBlockToAll(hosts, block, *trs, fullNodeID); err != nil {
 		log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Error("on sending block with hashes to all")
 		return err
 	}

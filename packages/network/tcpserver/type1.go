@@ -37,7 +37,7 @@ import (
 // do not load the blocks here because here could be the chain of blocks that are loaded for a long time
 // download the transactions here, because they are small and definitely will be downloaded in 60 sec
 func Type1(rw io.ReadWriter) error {
-	r := &DisRequest{}
+	r := &network.DisRequest{}
 	if err := r.Read(rw); err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func readHashes(buf *bytes.Buffer) ([][]byte, error) {
 	return hashes, nil
 }
 
-func saveNewTransactions(r *DisRequest) error {
+func saveNewTransactions(r *network.DisRequest) error {
 	binaryTxs := r.Data
 	queue := []model.BatchModel{}
 	log.WithFields(log.Fields{"binaryTxs": binaryTxs}).Debug("trying to save binary txs")

@@ -11,6 +11,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/network"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -19,14 +20,14 @@ import (
 var errStopCertAlreadyUsed = errors.New("Stop certificate is already used")
 
 // Type3
-func Type3(req *StopNetworkRequest, w net.Conn) error {
+func Type3(req *network.StopNetworkRequest, w net.Conn) error {
 	hash, err := processStopNetwork(req.Data)
 	if err != nil {
 		return err
 	}
 
-	res := &StopNetworkResponse{hash}
-	if err = SendRequest(res, w); err != nil {
+	res := &network.StopNetworkResponse{hash}
+	if err = res.Write(w); err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.NetworkError}).Error("sending response")
 		return err
 	}
