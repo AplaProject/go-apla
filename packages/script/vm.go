@@ -187,6 +187,17 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		var result []reflect.Value
 		pars := make([]reflect.Value, in)
 		limit := 0
+		var (
+			stack Stacker
+			ok    bool
+		)
+		if finfo.Name != `ContractConditions` && finfo.Name != `ExecContract` {
+			if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
+				if err := stack.AppendStack(finfo.Name); err != nil {
+					return err
+				}
+			}
+		}
 		(*rt.extend)[`rt`] = rt
 		auto := 0
 		for k := 0; k < in; k++ {
@@ -224,6 +235,9 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			result = foo.Call(pars)
 		}
 		rt.stack = rt.stack[:shift]
+		if stack != nil {
+			stack.AppendStack("")
+		}
 
 		for i, iret := range result {
 			// first return value of every extend function that makes queries to DB is cost
