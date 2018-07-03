@@ -513,8 +513,8 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return fmt.Errorf("The table name cannot be empty")
 	}
 
-	if len(name) > 0 && name[0] == '@' {
-		return fmt.Errorf(`The name of the table cannot begin with @`)
+	if !converter.IsLatin(name) {
+		return fmt.Errorf(eLatin, name)
 	}
 
 	tableName := getDefTableName(sc, name)
@@ -1220,6 +1220,9 @@ func checkColumnName(name string) error {
 		return errEmptyColumn
 	} else if name[0] >= '0' && name[0] <= '9' {
 		return errWrongColumn
+	}
+	if !converter.IsLatin(name) {
+		return fmt.Errorf(eLatin, name)
 	}
 	return nil
 }

@@ -21,6 +21,7 @@ import "errors"
 const (
 	eTableNotFound = `Table %s has not been found`
 	eContractExist = `Contract %s already exists`
+	eLatin         = `Name %s must only contain latin, digit and '_', '-' characters`
 )
 
 var (
