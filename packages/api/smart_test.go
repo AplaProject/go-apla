@@ -47,7 +47,7 @@ func TestUpperName(t *testing.T) {
 		return
 	}
 	rnd := crypto.RandSeq(4)
-	form := url.Values{"Name": {"testTable" + rnd}, "Columns": {`[{"name":"num","type":"text",   "conditions":"true"},
+	form := url.Values{"Name": {"testTable" + rnd}, "ApplicationId": {"1"}, "Columns": {`[{"name":"num","type":"text",   "conditions":"true"},
 	{"name":"text", "type":"text","conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
@@ -63,7 +63,7 @@ func TestUpperName(t *testing.T) {
 		action {
 		   DBInsert("testTable` + rnd + `", "num, text", "fgdgf", "124234") 
 		}
-	}`}, `Conditions`: {`true`}}
+	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
@@ -380,7 +380,7 @@ func TestUpdateSysParam(t *testing.T) {
 			}
 			DBUpdateSysParam("max_indexes", "4", "false" )
 		}
-		}`},
+		}`}, "ApplicationId": {"1"},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
 
@@ -560,7 +560,7 @@ func TestPartitialEdit(t *testing.T) {
 
 	name := randName(`part`)
 	form := url.Values{"Name": {name}, "Value": {"Span(Original text)"},
-		"Menu": {"original_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Menu": {"original_menu"}, "ApplicationId": {"1"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
 	var retList listResult
@@ -591,7 +591,7 @@ func TestPartitialEdit(t *testing.T) {
 	assert.Equal(t, menu, ret.Value["menu"])
 
 	form = url.Values{"Name": {name}, "Value": {`MenuItem(One)`}, "Title": {`My Menu`},
-		"Conditions": {"ContractConditions(`MainCondition`)"}}
+		"ApplicationId": {"1"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	assert.NoError(t, postTx(`NewMenu`, &form))
 	assert.NoError(t, sendGet(`list/menu`, nil, &retList))
 	idItem = retList.Count
@@ -603,7 +603,7 @@ func TestPartitialEdit(t *testing.T) {
 	assert.Equal(t, conditions, ret.Value["conditions"])
 
 	form = url.Values{"Name": {name}, "Value": {`Span(Block)`},
-		"Conditions": {"ContractConditions(`MainCondition`)"}}
+		"ApplicationId": {"1"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	assert.NoError(t, postTx(`NewBlock`, &form))
 	assert.NoError(t, sendGet(`list/blocks`, nil, &retList))
 	idItem = retList.Count
@@ -625,7 +625,7 @@ func TestContractEdit(t *testing.T) {
 		    action {
 				$result = "before"
 			}
-		}`},
+		}`}, "ApplicationId": {"1"},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
 	err := postTx(`NewContract`, &form)
 	if err != nil {
@@ -727,7 +727,7 @@ func TestJSON(t *testing.T) {
 
 				info JSONEncode(a)
 			}
-		}`},
+		}`}, "ApplicationId": {"1"},
 		"Conditions": {"true"},
 	}))
 	assert.EqualError(t, postTx(contract, &url.Values{}), `{"type":"info","error":"[{\"k1\":1,\"k2\":2},{\"k1\":1,\"k2\":2}]"}`)
@@ -741,7 +741,7 @@ func TestJSON(t *testing.T) {
 			action {
 				info Sprintf("%#v", JSONDecode($Input))
 			}
-		}`},
+		}`}, "ApplicationId": {"1"},
 		"Conditions": {"true"},
 	}))
 
@@ -773,7 +773,7 @@ func TestBytesToString(t *testing.T) {
 			action {
 				$result = BytesToString($File)
 			}
-		}`},
+		}`}, "ApplicationId": {"1"},
 		"Conditions": {"true"},
 	}))
 
