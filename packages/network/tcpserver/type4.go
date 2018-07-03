@@ -19,14 +19,15 @@ package tcpserver
 import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/network"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // Type4 writes the hash of the specified block
 // The request is sent by 'confirmations' daemon
-func Type4(r *ConfirmRequest) (*ConfirmResponse, error) {
-	resp := &ConfirmResponse{}
+func Type4(r *network.ConfirmRequest) (*network.ConfirmResponse, error) {
+	resp := &network.ConfirmResponse{}
 	block := &model.Block{}
 	found, err := block.Get(int64(r.BlockID))
 	if err != nil || !found {

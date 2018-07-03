@@ -7,7 +7,8 @@ import (
 	"net"
 	"sync"
 	"sync/atomic"
-	"time"
+
+	"github.com/GenesisKernel/go-genesis/packages/network"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -17,42 +18,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	// I_AM_FULL_NODE is full node flag
-	I_AM_FULL_NODE = 1
-	// I_AM_NOT_FULL_NODE is not full node flag
-	I_AM_NOT_FULL_NODE = 2
-)
-
 var (
 	ErrNodesUnavailable = errors.New("All nodes unvailabale")
 )
 
-type Config struct {
-	DefaultPort  int64
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-}
-
-type client struct {
-	*log.Entry
-	config Config
-}
-
-func NewClient(config Config, logger *log.Entry) *client {
-	return &client{
-		config: config,
-		Entry:  logger,
-	}
-}
-
-func (c *client) SendTransactionsToHost(host string, txes []model.Transaction) error {
+func SendTransactionsToHost(host string, txes []model.Transaction) error {
 	packet := prepareTxPacket(txes)
-	return c.sendRawTransacitionsToHost(host, packet)
+	return sendRawTransacitionsToHost(host, packet)
 }
 
-func (c *client) sendRawTransacitionsToHost(host string, packet []byte) error {
-	con, err := c.newConnection(host)
+func sendRawTransacitionsToHost(host string, packet []byte) error {
+	con, err := newConnection(host)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": host}).Error("on creating ctp connection")
 		return err
@@ -60,14 +36,14 @@ func (c *client) sendRawTransacitionsToHost(host string, packet []byte) error {
 
 	defer con.Close()
 
-	if err := c.sendDisseminatorRequest(con, I_AM_NOT_FULL_NODE, packet); err != nil {
+	if err := sendDisseminatorRequest(con, network.RequestTypeNotFullNode, packet); err != nil {
 		log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err, "host": host}).Error("on sending disseminator request")
 		return err
 	}
 	return nil
 }
 
-func (c *client) SendTransacitionsToAll(hosts []string, txes []model.Transaction) error {
+func SendTransacitionsToAll(hosts []string, txes []model.Transaction) error {
 	packet := prepareTxPacket(txes)
 
 	var wg sync.WaitGroup
@@ -77,7 +53,7 @@ func (c *client) SendTransacitionsToAll(hosts []string, txes []model.Transaction
 		go func(host string, pak []byte) {
 			defer wg.Done()
 
-			if err := c.sendRawTransacitionsToHost(host, pak); err != nil {
+			if err := sendRawTransacitionsToHost(host, pak); err != nil {
 				atomic.AddInt32(&errCount, 1)
 			}
 		}(h, packet)
@@ -92,11 +68,11 @@ func (c *client) SendTransacitionsToAll(hosts []string, txes []model.Transaction
 	return nil
 }
 
-func (c *client) newConnection(host string) (net.Conn, error) {
-	return net.Dial("tcp", host)
-}
+func SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes []model.Transaction, nodeID int64) error {
+	if len(hosts) == 0 {
+		return nil
+	}
 
-func (c *client) SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes []model.Transaction, nodeID int64) error {
 	req := prepareFullBlockRequest(block, txes, nodeID)
 	txDataMap := make(map[string][]byte, len(txes))
 	for _, tx := range txes {
@@ -115,7 +91,7 @@ func (c *client) SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes
 		go func(h string) {
 			defer wg.Done()
 
-			con, err := c.newConnection(h)
+			con, err := newConnection(h)
 			if err != nil {
 				increaseErrCount()
 				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": h}).Error("on creating ctp connection")
@@ -124,10 +100,10 @@ func (c *client) SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes
 
 			defer con.Close()
 
-			response, err := c.sendFullBlockRequest(con, req)
+			response, err := sendFullBlockRequest(con, req)
 			if err != nil {
 				increaseErrCount()
-				c.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": h}).Error("on sending full block request")
+				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": h}).Error("on sending full block request")
 				return
 			}
 
@@ -161,15 +137,15 @@ func (c *client) SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes
 	return nil
 }
 
-func (c *client) sendFullBlockRequest(con net.Conn, data []byte) (response []byte, err error) {
+func sendFullBlockRequest(con net.Conn, data []byte) (response []byte, err error) {
 
-	if err := c.sendDisseminatorRequest(con, I_AM_FULL_NODE, data); err != nil {
-		c.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Error("on sending disseminator request")
+	if err := sendDisseminatorRequest(con, network.RequestTypeFullNode, data); err != nil {
+		log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Error("on sending disseminator request")
 		return nil, err
 	}
 
 	//response
-	return c.sendRequiredTransactions(con)
+	return sendRequiredTransactions(con)
 }
 
 func prepareTxPacket(txes []model.Transaction) []byte {
@@ -203,16 +179,16 @@ func prepareFullBlockRequest(block *model.InfoBlock, trs []model.Transaction, no
 	return buf.Bytes()
 }
 
-func (c client) sendRequiredTransactions(con net.Conn) (response []byte, err error) {
+func sendRequiredTransactions(con net.Conn) (response []byte, err error) {
 	buf := make([]byte, 4)
 
 	// read data size
 	_, err = io.ReadFull(con, buf)
 	if err != nil {
 		if err == io.EOF {
-			c.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warn("connection closed unexpectedly")
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warn("connection closed unexpectedly")
 		} else {
-			c.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading data size")
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading data size")
 		}
 
 		return nil, err
@@ -220,14 +196,14 @@ func (c client) sendRequiredTransactions(con net.Conn) (response []byte, err err
 
 	respSize := converter.BinToDec(buf)
 	if respSize > syspar.GetMaxTxSize() {
-		c.WithFields(log.Fields{"size": respSize, "max_size": syspar.GetMaxTxSize(), "type": consts.ParameterExceeded}).Warning("response size is larger than max tx size")
+		log.WithFields(log.Fields{"size": respSize, "max_size": syspar.GetMaxTxSize(), "type": consts.ParameterExceeded}).Warning("response size is larger than max tx size")
 		return nil, nil
 	}
 	// read the data
 	response = make([]byte, respSize)
 	_, err = io.ReadFull(con, response)
 	if err != nil {
-		c.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading data")
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading data")
 		return nil, err
 	}
 
@@ -241,4 +217,36 @@ func parseTxHashesFromResponse(resp []byte) (hashes [][]byte) {
 	}
 
 	return
+}
+
+func sendDisseminatorRequest(con net.Conn, requestType int, packet []byte) (err error) {
+	/*
+		Packet format:
+		type  2 bytes
+		len   4 bytes
+		data  len bytes
+	*/
+	// type
+	_, err = con.Write(converter.DecToBin(requestType, 2))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing request type to host")
+		return err
+	}
+
+	// data size
+	size := converter.DecToBin(len(packet), 4)
+	_, err = con.Write(size)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data size to host")
+		return err
+	}
+
+	// data
+	_, err = con.Write(packet)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data to host")
+		return err
+	}
+
+	return nil
 }

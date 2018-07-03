@@ -23,7 +23,8 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/tcpclient"
+	"github.com/GenesisKernel/go-genesis/packages/network"
+	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -104,7 +105,7 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 // UpdateChain load from host all blocks from our last block to maxBlockID
 func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
 	var (
-		err error
+		err   error
 		count int
 	)
 
@@ -123,6 +124,13 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	playRawBlock := func(rb []byte) error {
 
 		block, err := parser.ProcessBlockWherePrevFromBlockchainTable(rb, true)
+		defer func() {
+			if err != nil {
+				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("retrieving blockchain from node")
+				banNode(host, block, err)
+			}
+		}()
+
 		if err != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
 			return err
@@ -162,30 +170,24 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	st := time.Now()
 	d.logger.Infof("starting downloading blocks from %d to %d (%d) \n", curBlock.BlockID, maxBlockID, maxBlockID-curBlock.BlockID)
 
-	defer func() {
-		if err != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("retrieving blockchain from node")
-			d.logger.Infof("%d blocks was collected (%s) \n", count, time.Since(st).String())
-			banNode(host, block, err)
-		}
-	}
-
-	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(tcpserver.BlocksPerRequest) {
-		rawBlocksChan, err = getBlocksFromHost(host, blockID, false)
+	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(network.BlocksPerRequest) {
+		rawBlocksChan, err := tcpclient.GetBlocksBodies(host, blockID, false)
 		if err != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
 			return err
 		}
 
-		for block := range rawBlocksChan {
-			if err = playRawBlock(block); err != nil {
+		for rawBlock := range rawBlocksChan {
+			if err = playRawBlock(rawBlock); err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
 				return err
 			}
 			count++
 		}
+
+		d.logger.Infof("%d blocks was collected (%s) \n", count, time.Since(st).String())
 	}
-	return err
+	return nil
 }
 
 // init first block from file or from embedded value
@@ -260,27 +262,19 @@ func banNode(host string, block *parser.Block, err error) {
 func getHostWithMaxID(logger *log.Entry) (host string, maxBlockID int64, err error) {
 
 	nbs := service.GetNodesBanService()
-	config := tcpclient.Config{
-		DefaultPort:  consts.DEFAULT_TCP_PORT,
-		ReadTimeout:  consts.READ_TIMEOUT,
-		WriteTimeout: consts.WRITE_TIMEOUT,
-	}
-
-	cli := tcpclient.NewClient(config, logger)
-
 	hosts, err := nbs.FilterBannedHosts(syspar.GetRemoteHosts())
 	if err != nil {
 		logger.WithFields(log.Fields{"error": err}).Error("on filtering banned hosts")
 	}
 
-	host, maxBlockID, err = cli.HostWithMaxBlock(hosts)
+	host, maxBlockID, err = tcpclient.HostWithMaxBlock(hosts)
 	if err != nil && err == tcpclient.ErrNodesUnavailable {
 		hosts, err := nbs.FilterBannedHosts(conf.GetNodesAddr())
 		if err != nil {
 			logger.WithFields(log.Fields{"error": err}).Error("on filtering banned hosts")
 			return "", -1, err
 		}
-		return cli.HostWithMaxBlock(hosts)
+		return tcpclient.HostWithMaxBlock(hosts)
 	}
 
 	return

@@ -69,7 +69,7 @@ func HandleTCPRequest(rw net.Conn) {
 
 	case network.RequestTypeStopNetwork:
 		req := &network.StopNetworkRequest{}
-		if err = ReadRequest(req, rw); err == nil {
+		if err = req.Read(rw); err == nil {
 			err = Type3(req, rw)
 		}
 

@@ -419,14 +419,47 @@ func TestUpdateSysParam(t *testing.T) {
 func TestUpdateFullNodesWithEmptyArray(t *testing.T) {
 	require.NoErrorf(t, keyLogin(1), "on login")
 
-	byteNodes := `[]`
-	// byteNodes += `{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"5462687003324713865", "public_key":"4ea2433951ca21e6817426675874b2a6d98e5051c1100eddefa1847b0388e4834facf9abf427c46e2bc6cd5e3277fba533d03db553e499eb368194b3f1e514d4"}]`
+	byteNodes := `[{"tcp_address":"127.0.0.1:7078", "api_address":"https://127.0.0.1:7079", "key_id":"-4466900793776865315", "public_key":"4f2ea97ff330da01be716a6af2344c0046343f8032db0d6c9ed051cc22202804317ea6c774e480358847c98764739ef45817d23e9bad01167cd2e16843da9764"},
+	{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"542353610328569127", "public_key":"be78f54bcf6bb7b49b7ea00790b18b40dd3f5e231ffc764f1c32d3f5a82ab322aee157931bbfca733bac83255002f5ded418f911b959b77a937f0d5d07de74f8"}]`
 	form := &url.Values{
 		"Name":  {"full_nodes"},
 		"Value": {string(byteNodes)},
 	}
 
 	require.EqualError(t, postTx(`UpdateSysParam`, form), `{"type":"panic","error":"Invalid value"}`)
+}
+
+func TestHelper_InsertNodeKey(t *testing.T) {
+	require.NoErrorf(t, keyLogin(1), "on login")
+
+	form := url.Values{
+		`Value`: {`contract InsertNodeKey {
+			data {
+				KeyID string
+				PubKey string
+			}
+			conditions {}
+			action {
+				DBInsert("keys", "id,pub,amount", $KeyID, $PubKey, "100000000000000000000")
+			}
+		}`},
+		`ApplicationId`: {`1`},
+		`Conditions`:    {`true`},
+	}
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+
+	form = url.Values{
+		`KeyID`:  {"542353610328569127"},
+		`PubKey`: {"be78f54bcf6bb7b49b7ea00790b18b40dd3f5e231ffc764f1c32d3f5a82ab322aee157931bbfca733bac83255002f5ded418f911b959b77a937f0d5d07de74f8"},
+	}
+
+	if err := postTx(`InsertNodeKey`, &form); err != nil {
+		t.Error(err)
+		return
+	}
 }
 
 func TestValidateConditions(t *testing.T) {

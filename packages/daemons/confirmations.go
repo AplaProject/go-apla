@@ -18,16 +18,14 @@ package daemons
 
 import (
 	"context"
-	"net"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 	"github.com/GenesisKernel/go-genesis/packages/service"
-	"github.com/GenesisKernel/go-genesis/packages/tcpclient"
-	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -73,6 +71,7 @@ func Confirmations(ctx context.Context, d *daemon) error {
 		d.sleepTime = 10 * time.Second
 		tick = 0 // reset the tick
 	}
+
 	if startBlockID == 0 {
 		startBlockID = lastBlockID
 	}
@@ -94,6 +93,7 @@ func confirmationsBlocks(ctx context.Context, d *daemon, lastBlockID, startBlock
 			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by ID")
 			return err
 		}
+
 		hashStr := string(converter.BinToHex(block.Hash))
 		d.logger.WithFields(log.Fields{"hash": hashStr}).Debug("checking hash")
 		if len(hashStr) == 0 {
@@ -148,44 +148,11 @@ func confirmationsBlocks(ctx context.Context, d *daemon, lastBlockID, startBlock
 	return nil
 }
 
-func checkConf(host string, blockID int64, logger *log.Entry) string {
-	conn, err := net.DialTimeout("tcp", host, 5*time.Second)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "host": host, "block_id": blockID}).Debug("dialing to host")
-		return "0"
-	}
-	defer conn.Close()
-
-	conn.SetReadDeadline(time.Now().Add(consts.READ_TIMEOUT * time.Second))
-	conn.SetWriteDeadline(time.Now().Add(consts.WRITE_TIMEOUT * time.Second))
-
-	if err = tcpserver.SendRequestType(tcpserver.RequestTypeConfirmation, conn); err != nil {
-		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host, "block_id": blockID}).Error("sending request type")
-		return "0"
-	}
-
-	req := &tcpserver.ConfirmRequest{
-		BlockID: uint32(blockID),
-	}
-	if err = tcpserver.SendRequest(req, conn); err != nil {
-		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host, "block_id": blockID}).Error("sending confirmation request")
-		return "0"
-	}
-
-	resp := &tcpserver.ConfirmResponse{}
-	err = tcpserver.ReadRequest(resp, conn)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": host, "block_id": blockID}).Error("receiving confirmation response")
-		return "0"
-	}
-	return string(converter.BinToHex(resp.Hash))
-}
-
 // IsReachable checks if there is blockID on the host
 func IsReachable(host string, blockID int64, ch0 chan string, logger *log.Entry) {
 	ch := make(chan string, 1)
 	go func() {
-		ch <- checkConf(host, blockID, logger)
+		ch <- tcpclient.CheckConfirmation(host, blockID, logger)
 	}()
 	select {
 	case reachable := <-ch:

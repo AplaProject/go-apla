@@ -27,6 +27,8 @@ const (
 	BlocksPerRequest int32 = 1000
 )
 
+var ErrNotAccepted = errors.New("Not accepted")
+
 // SelfReaderWriter read from Reader to himself and write to io.Writer from himself
 type SelfReaderWriter interface {
 	Read(io.Reader) error

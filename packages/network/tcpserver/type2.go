@@ -27,6 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/network"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -34,9 +35,9 @@ import (
 )
 
 // Type2 serves requests from disseminator
-func Type2(rw io.ReadWriter) (*DisTrResponse, error) {
-	r := &DisRequest{}
-	if err := ReadRequest(r, rw); err != nil {
+func Type2(rw io.ReadWriter) (*network.DisTrResponse, error) {
+	r := &network.DisRequest{}
+	if err := network.ReadRequest(r, rw); err != nil {
 		return nil, err
 	}
 
@@ -77,7 +78,7 @@ func Type2(rw io.ReadWriter) (*DisTrResponse, error) {
 		return nil, utils.ErrInfo(err)
 	}
 
-	return &DisTrResponse{}, nil
+	return &network.DisTrResponse{}, nil
 }
 
 // DecryptData is decrypting data
