@@ -587,9 +587,9 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 		tablePermission map[string]string
 	)
 	logger := sc.GetLogger()
-
+	isRead := action == `read`
 	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
-		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
+		if isRead || sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return tablePermission, nil
 		}
 		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
@@ -600,6 +600,9 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
 		return tablePermission, err
 	} else if !isCustom {
+		if isRead {
+			return tablePermission, nil
+		}
 		return tablePermission, fmt.Errorf(table + ` is not a custom table`)
 	}
 
@@ -668,6 +671,9 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 		return err
 	}
 	if !found {
+		if !update {
+			return nil
+		}
 		return fmt.Errorf(eTableNotFound, table)
 	}
 	var cols map[string]string
