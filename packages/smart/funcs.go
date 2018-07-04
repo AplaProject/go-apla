@@ -1761,8 +1761,9 @@ func StopVDEProcess(sc *SmartContract, name string) error {
 }
 
 // GetVDEList returns list VDE process with statuses
-func GetVDEList(sc *SmartContract) (map[string]string, error) {
-	return vdemanager.Manager.ListProcess()
+func GetVDEList(sc *SmartContract) map[string]string {
+	list, _ := vdemanager.Manager.ListProcess()
+	return list
 }
 
 func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName string, id int64) ([]interface{}, error) {

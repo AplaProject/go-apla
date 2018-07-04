@@ -2598,9 +2598,7 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
       if Size($Value) == 0 {
         warning "Value was not received"
       }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
+      ic
     }
 }', %[2]d, 'ContractConditions("MainCondition")', 2),
 ('113', 'NewVDE', 'contract NewVDE {
@@ -2612,10 +2610,27 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
 		}
 	
 		conditions {
+            if Size(VDEName) == 0 {
+                warning "VDEName was not received"
+            }
+
+            if Size(DBUser) == 0 {
+                warning "DBName was not received"
+            }
+
+            if Size(DBPassword) == 0 {
+                warning "DBPassword was not received"
+            }
+
+            if VDEAPIPort <=0  {
+                warning VDE API PORT not recived
+            }
+            
 		}
 	
 		action {
-			CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
+            CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
+            $result = "VDE " + $VDEName + " created"
 		}
 }', %[2]d, 'ContractConditions("MainCondition")', 1),
 	('114', 'ListVDE', 'contract ListVDE {
@@ -2624,7 +2639,7 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
 		conditions {}
 	
 		action {
-			return GetVDEList()
+			$result = GetVDEList()
 		}
 }', %[2]d, 'ContractConditions("MainCondition")', 1),
 	('115', 'RunVDE', 'contract RunVDE {
@@ -2636,7 +2651,8 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
 		}
 	
 		action {
-			StartVDE($VDEName)
+            StartVDE($VDEName)
+            $result = "VDE " + $VDEName + " running"
 		}
 }', %[2]d, 'ContractConditions("MainCondition")', 1),
 	('116', 'StopVDE', 'contract StopVDE {
@@ -2648,7 +2664,8 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
 		}
 	
 		action {
-			StopVDEProcess($VDEName)
+            StopVDEProcess($VDEName)
+            $result = "VDE " + $VDEName + " stopped"
 		}
 }', %[2]d, 'ContractConditions("MainCondition")', 1),
 	('117', 'RemoveVDE', 'contract RemoveVDE {
@@ -2657,7 +2674,8 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
 		}
 		conditions {}
 		action{
-			DeleteVDE($VDEName)
+            DeleteVDE($VDEName)
+            $result = "VDE " + $VDEName + " removed"
 		}
 }', %[2]d, 'ContractConditions("MainCondition")', 1);
 `
