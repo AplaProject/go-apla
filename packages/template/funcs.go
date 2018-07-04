@@ -1234,7 +1234,7 @@ func getHistoryTag(par parFunc, table string) string {
 	setAllAttr(par)
 
 	list, err := smart.GetHistory(nil, converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]),
-		table, converter.StrToInt64(macro((*par.Pars)[`Id`], par.Workspace.Vars)))
+		table, converter.StrToInt64(macro((*par.Pars)[`Id`], par.Workspace.Vars)), 0)
 	if err != nil {
 		return err.Error()
 	}
