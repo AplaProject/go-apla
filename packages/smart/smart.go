@@ -644,11 +644,6 @@ func getPermColumns(input string) (perm permColumn, err error) {
 	return
 }
 
-type colAccess struct {
-	ok       bool
-	original string
-}
-
 // AccessColumns checks access rights to the columns
 func (sc *SmartContract) AccessColumns(table string, columns *[]string, update bool) error {
 	logger := sc.GetLogger()
@@ -676,62 +671,74 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 		return fmt.Errorf(eTableNotFound, table)
 	}
 	var cols map[string]string
-	// Every item of checkColumns has 'ok' boolean value. If it equals false then the key-column
-	// doesn't have read/update access rights.
-	checkColumns := make(map[string]colAccess)
 	err = json.Unmarshal([]byte(tables.Columns), &cols)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("getting table columns")
 		return err
 	}
+	colNames := make([]string, 0, len(*columns))
 	for _, col := range *columns {
-		colname := converter.Sanitize(col, `*->`)
+		if col == `*` {
+			for column := range cols {
+				colNames = append(colNames, column)
+			}
+			continue
+		}
+		colNames = append(colNames, col)
+	}
+
+	colList := make([]string, len(colNames))
+	for i, col := range colNames {
+		colname := converter.Sanitize(col, `->`)
 		if strings.Contains(colname, `->`) {
 			colname = colname[:strings.Index(colname, `->`)]
 		}
-		if !update && colname == `*` {
-			for column := range cols {
-				checkColumns[column] = colAccess{true, column}
-			}
-			break
-		}
-		checkColumns[colname] = colAccess{true, colname}
+		colList[i] = colname
 	}
-	_, isall := checkColumns[`*`]
-	for column, cond := range cols {
-		if ca, ok := checkColumns[column]; (!ok || !ca.ok) && !isall {
+	checked := make(map[string]bool)
+	var notaccess bool
+	for i, name := range colList {
+		if status, ok := checked[name]; ok {
+			if !status {
+				colList[i] = ``
+			}
 			continue
 		}
-		perm, err := getPermColumns(cond)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting access columns")
-			return err
-		}
-		if update {
-			cond = perm.Update
-		} else {
-			cond = perm.Read
-		}
+		cond := cols[name]
 		if len(cond) > 0 {
-			ret, err := sc.EvalIf(cond)
+			perm, err := getPermColumns(cond)
 			if err != nil {
-				logger.WithFields(log.Fields{"condition": cond, "column": column,
-					"type": consts.EvalError}).Error("evaluating condition")
+				logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting access columns")
 				return err
 			}
-			if !ret {
-				if update {
-					return errAccessDenied
+			if update {
+				cond = perm.Update
+			} else {
+				cond = perm.Read
+			}
+			if len(cond) > 0 {
+				ret, err := sc.EvalIf(cond)
+				if err != nil {
+					logger.WithFields(log.Fields{"condition": cond, "column": name,
+						"type": consts.EvalError}).Error("evaluating condition")
+					return err
 				}
-				checkColumns[column] = colAccess{false, ``}
+				checked[name] = ret
+				if !ret {
+					if update {
+						return errAccessDenied
+					}
+					colList[i] = ``
+					notaccess = true
+				}
 			}
 		}
 	}
-	if !update {
+	if !update && notaccess {
 		retColumn := make([]string, 0)
-		for key, val := range checkColumns {
-			if val.ok && key != `*` {
-				retColumn = append(retColumn, val.original)
+		for i, val := range colList {
+			if val != `` {
+				retColumn = append(retColumn, colNames[i])
 			}
 		}
 		if len(retColumn) == 0 {
