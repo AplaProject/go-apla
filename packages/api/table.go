@@ -19,6 +19,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -51,7 +52,7 @@ func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	prefix := getPrefix(data)
 	table := &model.Table{}
 	table.SetTablePrefix(prefix)
-	_, err = table.Get(nil, data.params[`name`].(string))
+	_, err = table.Get(nil, strings.ToLower(data.params[`name`].(string)))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)

@@ -33,6 +33,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/rollback"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
+	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -164,6 +165,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			}
 
 			if !hashMatched {
+				transaction.CleanCache()
 				//it should be fork, replace our previous blocks to ones from the host
 				err := GetBlocks(b.Header.BlockID-1, host)
 				if err != nil {
@@ -264,6 +266,9 @@ func banNode(host string, block *block.Block, err error) {
 		blockId, blockTime int64
 	)
 	if err != nil {
+		if err == transaction.ErrDuplicatedTx {
+			return
+		}
 		reason = err.Error()
 	}
 

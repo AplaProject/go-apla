@@ -16,6 +16,7 @@ func GetEcosystemScript() string {
 		rolesDataSQL,
 		sectionsDataSQL,
 		tablesDataSQL,
+		applicationsDataSQL,
 	}
 
 	return strings.Join(scripts, "\r\n")
@@ -30,7 +31,6 @@ func GetFirstEcosystemScript() string {
 		firstEcosystemDataSQL,
 		firstSystemParametersDataSQL,
 		firstTablesDataSQL,
-		applicationsDataSQL,
 	}
 
 	return strings.Join(scripts, "\r\n")
@@ -129,7 +129,7 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 		
 		CREATE TABLE "%[1]d_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
-		"name" text NOT NULL DEFAULT '',
+		"name" text NOT NULL UNIQUE DEFAULT '',
 		"value" text  NOT NULL DEFAULT '',
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',
@@ -202,6 +202,7 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 			"date_created" timestamp,
 			"date_deleted" timestamp,
 			"company_id" bigint NOT NULL DEFAULT '0',
+			"roles_access" jsonb, 
 			"image_id" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles" ADD CONSTRAINT "%[1]d_roles_pkey" PRIMARY KEY ("id");

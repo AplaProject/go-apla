@@ -317,8 +317,8 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 	}
 
 	pubkey := []byte{}
-	if _, ok := data.params["public_key"]; ok {
-		pubkey = data.params["public_key"].([]byte)
+	if _, ok := data.params["pubkey"]; ok {
+		pubkey = data.params["pubkey"].([]byte)
 	}
 	var err error
 	publicKey, err = getPublicKey(signID, data.ecosystemId, pubkey, w, logger)

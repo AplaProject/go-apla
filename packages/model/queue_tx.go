@@ -1,5 +1,9 @@
 package model
 
+import (
+	"fmt"
+)
+
 // QueueTx is model
 type QueueTx struct {
 	Hash     []byte `gorm:"primary_key;not null"`
@@ -75,4 +79,18 @@ func GetAllUnverifiedAndUnusedTransactions() ([]*QueueTx, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+// FieldValue implementing BatchModel interface
+func (qt QueueTx) FieldValue(fieldName string) (interface{}, error) {
+	switch fieldName {
+	case "hash":
+		return qt.Hash, nil
+	case "data":
+		return qt.Data, nil
+	case "from_gate":
+		return qt.FromGate, nil
+	default:
+		return nil, fmt.Errorf("Unknown field '%s' for QueueTx", fieldName)
+	}
 }

@@ -89,6 +89,7 @@ type GlobalConfig struct {
 	TLS               bool   // TLS is on/off. It is required for https
 	TLSCert           string // TLSCert is a filepath of the fullchain of certificate.
 	TLSKey            string // TLSKey is a filepath of the private key.
+	RunningMode       string
 
 	MaxPageGenerationTime int64 // in milliseconds
 
@@ -132,8 +133,31 @@ func LoadConfig(path string) error {
 	if err != nil {
 		return errors.Wrapf(err, "marshalling config to global struct variable")
 	}
-
 	return nil
+}
+
+// GetConfigFromPath read config from path and returns GlobalConfig struct
+func GetConfigFromPath(path string) (*GlobalConfig, error) {
+	log.WithFields(log.Fields{"path": path}).Info("Loading config")
+
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return nil, errors.Errorf("Unable to load config file %s", path)
+	}
+
+	viper.SetConfigFile(path)
+	err = viper.ReadInConfig()
+	if err != nil {
+		return nil, errors.Wrapf(err, "reading config")
+	}
+
+	c := &GlobalConfig{}
+	err = viper.Unmarshal(c)
+	if err != nil {
+		return c, errors.Wrapf(err, "marshalling config to global struct variable")
+	}
+
+	return c, nil
 }
 
 // SaveConfig save global parameters to configFile
@@ -215,4 +239,29 @@ func FillRuntimeKey() error {
 // GetNodesAddr returns addreses of nodes
 func GetNodesAddr() []string {
 	return Config.NodesAddr[:]
+}
+
+// IsPrivateBlockchain check running mode
+func (c GlobalConfig) IsPrivateBlockchain() bool {
+	return RunMode(c.RunningMode).IsPrivateBlockchain()
+}
+
+// IsPublicBlockchain check running mode
+func (c GlobalConfig) IsPublicBlockchain() bool {
+	return RunMode(c.RunningMode).IsPublicBlockchain()
+}
+
+// IsVDE check running mode
+func (c GlobalConfig) IsVDE() bool {
+	return RunMode(c.RunningMode).IsVDE()
+}
+
+// IsVDEMaster check running mode
+func (c GlobalConfig) IsVDEMaster() bool {
+	return RunMode(c.RunningMode).IsVDEMaster()
+}
+
+// IsSupportingVDE check running mode
+func (c GlobalConfig) IsSupportingVDE() bool {
+	return RunMode(c.RunningMode).IsSupportingVDE()
 }

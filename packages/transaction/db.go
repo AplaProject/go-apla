@@ -2,7 +2,6 @@ package transaction
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -11,6 +10,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
+
+var ErrDuplicatedTx = errors.New("Duplicated transaction")
 
 // InsertInLogTx is inserting tx in log
 func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64) error {
@@ -42,7 +43,7 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	}
 	if found {
 		log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in log transactions")
-		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %x", searchedHash))
+		return ErrDuplicatedTx
 	}
 
 	if transactions {
@@ -55,7 +56,7 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		}
 		if len(tx.Hash) > 0 {
 			log.WithFields(log.Fields{"tx_hash": tx.Hash, "type": consts.DuplicateObject}).Error("double tx in transactions")
-			return utils.ErrInfo(fmt.Errorf("double tx in transactions %x", searchedHash))
+			return ErrDuplicatedTx
 		}
 	}
 
@@ -65,7 +66,7 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		found, err := qtx.GetByHash(nil, searchedHash)
 		if found {
 			log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in queue")
-			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %x", searchedHash))
+			return ErrDuplicatedTx
 		}
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting transaction from queue")

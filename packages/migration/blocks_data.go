@@ -1,63 +1,69 @@
 package migration
 
-var blocksDataSQL = `INSERT INTO "%[1]d_blocks" (id, name, value, conditions)
-VALUES 
-('1', 'admin_link', 
-	'If(#sort#==1){
-		SetVar(sort_name, "id asc")
-	}.ElseIf(#sort#==2){
-		SetVar(sort_name, "id desc")
-	}.ElseIf(#sort#==3){
-		SetVar(sort_name, "name asc")
-	}.ElseIf(#sort#==4){
-		SetVar(sort_name, "name desc")
-	}.Else{
-		SetVar(sort, "1")
-		SetVar(sort_name, "id asc") 
-	}
-	
-	If(Or(#width#==12,#width#==6,#width#==4)){
-	}.Else{
-		SetVar(width, "12")
-	}
-	
+var blocksDataSQL = `INSERT INTO "%[1]d_blocks" (id, name, value, conditions) VALUES
+		(1, 'admin_link', 'If(#sort#==1){
+	SetVar(sort_name, "id asc")
+}.ElseIf(#sort#==2){
+	SetVar(sort_name, "id desc")
+}.ElseIf(#sort#==3){
+	SetVar(sort_name, "name asc")
+}.ElseIf(#sort#==4){
+	SetVar(sort_name, "name desc")
+}.Else{
+	SetVar(sort, "1")
+	SetVar(sort_name, "id asc") 
+}
+
+If(Or(#width#==12,#width#==6,#width#==4)){
+}.Else{
+	SetVar(width, "12")
+}
+
+Form(){
 	Div(clearfix){
 		Div(pull-left){
-			If(#width#==12){
-				Span(Button(Body: Em(Class: fa fa-bars), Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=#sort#,width=12,current_page=#current_page#")).Style(margin-left:10px;)
-			}.Else{
-				Span(Button(Body: Em(Class: fa fa-bars), Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=#sort#,width=12,current_page=#current_page#")).Style(margin-left:10px;)
-			}
-			If(#width#==6){
-				Span(Button(Body: Em(Class: fa fa-th-large), Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=#sort#,width=6,current_page=#current_page#")).Style(margin-left:5px;)
-			}.Else{
-				Span(Button(Body: Em(Class: fa fa-th-large), Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=#sort#,width=6,current_page=#current_page#")).Style(margin-left:5px;)
-			}
-			If(#width#==4){
-				Span(Button(Body: Em(Class: fa fa-th), Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=#sort#,width=4,current_page=#current_page#")).Style(margin-left:5px;)
-			}.Else{
-				Span(Button(Body: Em(Class: fa fa-th), Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=#sort#,width=4,current_page=#current_page#")).Style(margin-left:5px;)
-			}
+			DBFind(applications,apps)
+			Select(Name:AppId, Source:apps, NameColumn: name, ValueColumn: id, Value: #buffer_value_app_id#, Class: bg-gray)
+		}
+		Div(pull-left){
+			Span(Button(Body: Em(Class: fa fa-play), Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=#sort#,width=#width#,current_page=#current_page#", Contract: @1ExportNewApp, Params: "ApplicationId=Val(AppId)")).Style(margin-left:3px;)
 		}
 		Div(pull-right){
 			If(#sort#==1){
-				Span(Button(Body: Em(Class: fa fa-long-arrow-down) Sort by ID, Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=2,width=#width#,current_page=#current_page#")).Style(margin-right:5px;)
+				Span(Button(Body: Em(Class: fa fa-long-arrow-down) Sort by ID, Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=2,width=#width#,current_page=#current_page#")).Style(margin-left:5px;)
 			}.ElseIf(#sort#==2){
-				Span(Button(Body: Em(Class: fa fa-long-arrow-up) Sort by ID, Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=1,width=#width#,current_page=#current_page#")).Style(margin-right:5px;)
+				Span(Button(Body: Em(Class: fa fa-long-arrow-up) Sort by ID, Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=1,width=#width#,current_page=#current_page#")).Style(margin-left:5px;)
 			}.Else{
-				Span(Button(Body: Sort by ID, Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=1,width=#width#,current_page=#current_page#")).Style(margin-right:5px;)
+				Span(Button(Body: Sort by ID, Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=1,width=#width#,current_page=#current_page#")).Style(margin-left:5px;)
 			}
-	
 			If(#sort#==3){
-				Span(Button(Body: Em(Class: fa fa-long-arrow-down) Sort by NAME, Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=4,width=#width#,current_page=#current_page#")).Style(margin-right:10px;)
+				Span(Button(Body: Em(Class: fa fa-long-arrow-down) Sort by NAME, Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=4,width=#width#,current_page=#current_page#")).Style(margin-left:5px;)
 			}.ElseIf(#sort#==4){
-				Span(Button(Body: Em(Class: fa fa-long-arrow-up) Sort by NAME, Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=3,width=#width#,current_page=#current_page#")).Style(margin-right:10px;)
+				Span(Button(Body: Em(Class: fa fa-long-arrow-up) Sort by NAME, Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=3,width=#width#,current_page=#current_page#")).Style(margin-left:5px;)
 			}.Else{
-				Span(Button(Body: Sort by NAME, Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=3,width=#width#,current_page=#current_page#")).Style(margin-right:10px;)
+				Span(Button(Body: Sort by NAME, Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=3,width=#width#,current_page=#current_page#")).Style(margin-left:5px;)
 			}
 		}
-	}', 'ContractConditions("MainCondition")'),
-('2', 'export_info', 'DBFind(Name: buffer_data, Source: src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
+		Div(pull-right){
+			If(#width#==12){
+				Span(Button(Body: Em(Class: fa fa-bars), Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=#sort#,width=12,current_page=#current_page#")).Style(margin-right:5px;)
+			}.Else{
+				Span(Button(Body: Em(Class: fa fa-bars), Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=#sort#,width=12,current_page=#current_page#")).Style(margin-right:5px;)
+			}
+			If(#width#==6){
+				Span(Button(Body: Em(Class: fa fa-th-large), Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=#sort#,width=6,current_page=#current_page#")).Style(margin-right:5px;)
+			}.Else{
+				Span(Button(Body: Em(Class: fa fa-th-large), Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=#sort#,width=6,current_page=#current_page#")).Style(margin-right:5px;)
+			}
+			If(#width#==4){
+				Span(Button(Body: Em(Class: fa fa-th), Class: btn bg-gray-lighter, Page: #admin_page#, PageParams: "sort=#sort#,width=4,current_page=#current_page#")).Style(margin-right:5px;)
+			}.Else{
+				Span(Button(Body: Em(Class: fa fa-th), Class: btn bg-gray, Page: #admin_page#, PageParams: "sort=#sort#,width=4,current_page=#current_page#")).Style(margin-right:5px;)
+			}
+		}
+	}
+}', 'ContractConditions("MainCondition")'),
+		(2, 'export_info', 'DBFind(Name: buffer_data, Source: src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 
 If(#buffer_value_app_id# > 0){
 	DBFind(pages, src_pages).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_pages)
@@ -251,16 +257,16 @@ Div(panel panel-primary){
 		If(#buffer_value_app_id# > 0){
 			Div(panel-footer clearfix){
 				Div(pull-left){
-					Button(Body: Em(Class: fa fa-refresh), Class: btn btn-default, Contract: Export_NewApp, Params: "app_id=#buffer_value_app_id#", Page: export_resources)
+					Button(Body: Em(Class: fa fa-refresh), Class: btn btn-default, Contract: @1ExportNewApp, Params: "ApplicationId=#buffer_value_app_id#", Page: export_resources)
 				}
 				Div(pull-right){
-					Button(Body: Export, Class: btn btn-primary, Page: export_download, Contract: Export)
+					Button(Body: Export, Class: btn btn-primary, Page: export_download, Contract: @1Export)
 				}
 			}
 		}
 	}
 }', 'ContractConditions("MainCondition")'),
-('3', 'export_link', 'If(And(#res_type#!="pages",#res_type#!="blocks",#res_type#!="menu",#res_type#!="parameters",#res_type#!="languages",#res_type#!="contracts",#res_type#!="tables")){
+		(3, 'export_link', 'If(And(#res_type#!="pages",#res_type#!="blocks",#res_type#!="menu",#res_type#!="parameters",#res_type#!="languages",#res_type#!="contracts",#res_type#!="tables")){
 	SetVar(res_type, "pages")
 }
 
@@ -307,8 +313,8 @@ Div(breadcrumb){
 	   LinkPage(Body: "Tables", Page: export_resources,, "res_type=tables")
 	}
 }', 'ContractConditions("MainCondition")'),
-('4', 'pager', 'DBFind(#pager_table#, src_records).Where(#pager_where#).Count(records_count)
-
+		(4, 'pager', 'DBFind(#pager_table#, src_records).Where(#pager_where#).Count(records_count)
+	
 SetVar(previous_page, Calculate(Exp: #current_page# - 1, Type: int))
 SetVar(next_page, Calculate(Exp: #current_page# + 1, Type: int))
 SetVar(count_div_limit_int, Calculate(Exp: (#records_count# / #pager_limit#), Type: int))
@@ -361,9 +367,9 @@ Div(){
 	ForList(src_pages){
 		Span(){
 			If(#id# == #current_page#){
-				Button(Class: btn btn-primary float-left, Page: #pager_page#, PageParams: "current_page=#id#,sort=#sort#,width=#width#", Body: #id#)
+				Button(Body: #id#, Class: btn btn-primary float-left, Page: #pager_page#, PageParams: "current_page=#id#,sort=#sort#,width=#width#")
 			}.Else{
-				Button(Class: btn btn-default float-left, Page: #pager_page#, PageParams: "current_page=#id#,sort=#sort#,width=#width#", Body: #id#)
+				Button(Body: #id#, Class: btn btn-default float-left, Page: #pager_page#, PageParams: "current_page=#id#,sort=#sort#,width=#width#")
 			}
 		}
 	}
@@ -382,7 +388,7 @@ Div(){
 		}
 	}
 }.Style("div {display:inline-block;}")', 'ContractConditions("MainCondition")'),
-('5', 'pager_header', 'If(#current_page# > 0){}.Else{
+		(5, 'pager_header', 'If(#current_page# > 0){}.Else{
 	SetVar(current_page, 1)
 }
 SetVar(pager_offset, Calculate(Exp: (#current_page# - 1) * #pager_limit#, Type: int))

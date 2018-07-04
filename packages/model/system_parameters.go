@@ -22,6 +22,11 @@ func (sp *SystemParameter) Get(name string) (bool, error) {
 	return isFound(DBConn.Where("name = ?", name).First(sp))
 }
 
+// GetTransaction is retrieving model from database using transaction
+func (sp *SystemParameter) GetTransaction(transaction *DbTransaction, name string) (bool, error) {
+	return isFound(GetDB(transaction).Where("name = ?", name).First(sp))
+}
+
 // GetJSONField returns fields as json
 func (sp *SystemParameter) GetJSONField(jsonField string, name string) (string, error) {
 	var result string

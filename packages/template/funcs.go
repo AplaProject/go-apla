@@ -17,6 +17,7 @@
 package template
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -62,9 +63,14 @@ func init() {
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
+	funcs[`GetContractHistory`] = tplFunc{getContractHistoryTag, defaultTag, `getcontracthistory`, `Source,Id`}
+	funcs[`GetMenuHistory`] = tplFunc{getMenuHistoryTag, defaultTag, `getmenuhistory`, `Source,Id`}
+	funcs[`GetBlockHistory`] = tplFunc{getBlockHistoryTag, defaultTag, `getblockhistory`, `Source,Id`}
+	funcs[`GetPageHistory`] = tplFunc{getPageHistoryTag, defaultTag, `getpagehistory`, `Source,Id`}
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
 	funcs[`JsonToSource`] = tplFunc{jsontosourceTag, defaultTag, `jsontosource`, `Source,Data`}
+	funcs[`ArrayToSource`] = tplFunc{arraytosourceTag, defaultTag, `arraytosource`, `Source,Data`}
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
@@ -103,6 +109,7 @@ func init() {
 
 	tails[`button`] = forTails{map[string]tailInfo{
 		`Alert`:             {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
+		`Popup`:             {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
 		`Style`:             {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		`CompositeContract`: {tplFunc{compositeTag, defaultTailFull, `composite`, `Name,Data`}, false},
 	}}
@@ -765,6 +772,18 @@ func compositeTag(par parFunc) string {
 	return ``
 }
 
+func popupTag(par parFunc) string {
+	setAllAttr(par)
+
+	width := converter.StrToInt((*par.Pars)[`Width`])
+	if width < 1 || width > 100 {
+		return ``
+	}
+
+	par.Owner.Attr[`popup`] = par.Node.Attr
+	return ``
+}
+
 func customTag(par parFunc) string {
 	setAllAttr(par)
 	if len((*par.Pars)[`Column`]) == 0 || len((*par.Pars)[`Body`]) == 0 {
@@ -801,15 +820,21 @@ func tailTag(par parFunc) string {
 
 func includeTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Workspace.Vars)[`_include`]) < 5 {
-		pattern, err := model.Single(`select value from "`+(*par.Workspace.Vars)[`ecosystem_id`]+`_blocks" where name=?`, (*par.Pars)[`Name`]).String()
+		bi := &model.BlockInterface{}
+		bi.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
+		found, err := bi.Get(macro((*par.Pars)[`Name`], par.Workspace.Vars))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by name")
 			return err.Error()
 		}
-		if len(pattern) > 0 {
+		if !found {
+			log.WithFields(log.Fields{"type": consts.NotFound, "name": (*par.Pars)[`Name`]}).Error("include block not found")
+			return fmt.Sprintf("Inlcude %s has not been found", (*par.Pars)[`Name`])
+		}
+		if len(bi.Value) > 0 {
 			root := node{}
 			(*par.Workspace.Vars)[`_include`] += `1`
-			process(pattern, &root, par.Workspace)
+			process(bi.Value, &root, par.Workspace)
 			(*par.Workspace.Vars)[`_include`] = (*par.Workspace.Vars)[`_include`][:len((*par.Workspace.Vars)[`_include`])-1]
 			for _, item := range root.Children {
 				par.Owner.Children = append(par.Owner.Children, item)
@@ -1071,6 +1096,34 @@ func jsontosourceTag(par parFunc) string {
 	return ``
 }
 
+func arraytosourceTag(par parFunc) string {
+	setAllAttr(par)
+
+	data := make([][]string, 0, 16)
+	cols := []string{`key`, `value`}
+	types := []string{`text`, `text`}
+	var out []json.RawMessage
+	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON Array to source")
+	}
+	for key, item := range out {
+		if item == nil {
+			item = []byte("")
+		}
+
+		item = bytes.Trim(item, `"`)
+
+		data = append(data, []string{fmt.Sprint(key), string(item)})
+	}
+	setAllAttr(par)
+	par.Node.Attr[`columns`] = &cols
+	par.Node.Attr[`types`] = &types
+	par.Node.Attr[`data`] = &data
+	newSource(par)
+	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return ``
+}
+
 func chartTag(par parFunc) string {
 	defaultTag(par)
 	defaultTail(par, "chart")
@@ -1175,4 +1228,59 @@ func columntypeTag(par parFunc) string {
 		return err.Error()
 	}
 	return ``
+}
+
+func getHistoryTag(par parFunc, table string) string {
+	setAllAttr(par)
+
+	list, err := smart.GetHistory(nil, converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]),
+		table, converter.StrToInt64(macro((*par.Pars)[`Id`], par.Workspace.Vars)))
+	if err != nil {
+		return err.Error()
+	}
+	data := make([][]string, 0)
+	cols := make([]string, 0, 8)
+	types := make([]string, 0, 8)
+	if len(list) > 0 {
+		for i := range list {
+			item := list[i].(map[string]string)
+			if i == 0 {
+				for key := range item {
+					cols = append(cols, key)
+					types = append(types, `text`)
+				}
+			}
+			items := make([]string, len(cols))
+			for ind, key := range cols {
+				val := item[key]
+				if val == `NULL` {
+					val = ``
+				}
+				items[ind] = val
+			}
+			data = append(data, items)
+		}
+	}
+	par.Node.Attr[`columns`] = &cols
+	par.Node.Attr[`types`] = &types
+	par.Node.Attr[`data`] = &data
+	newSource(par)
+	par.Owner.Children = append(par.Owner.Children, par.Node)
+	return ``
+}
+
+func getContractHistoryTag(par parFunc) string {
+	return getHistoryTag(par, `contracts`)
+}
+
+func getBlockHistoryTag(par parFunc) string {
+	return getHistoryTag(par, `blocks`)
+}
+
+func getMenuHistoryTag(par parFunc) string {
+	return getHistoryTag(par, `menu`)
+}
+
+func getPageHistoryTag(par parFunc) string {
+	return getHistoryTag(par, `pages`)
 }

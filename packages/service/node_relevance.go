@@ -82,6 +82,7 @@ func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
 	_, maxBlockID, err := utils.ChooseBestHost(ctx, remoteHosts, &log.Entry{Logger: &log.Logger{}})
 	if err != nil {
 		if err == utils.ErrNodesUnavailable {
+			log.WithFields(log.Fields{"hosts": remoteHosts}).Info("can't connect to others, stopping node relevance")
 			return false, nil
 		}
 		return false, errors.Wrapf(err, "choosing best host")
@@ -89,11 +90,13 @@ func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
 
 	// Node can't connect to others
 	if maxBlockID == -1 {
+		log.WithFields(log.Fields{"hosts": remoteHosts}).Info("can't connect to others, stopping node relevance")
 		return false, nil
 	}
 
 	// Node blockchain is stale
 	if curBlock.BlockID+n.availableBlockchainGap < maxBlockID {
+		log.WithFields(log.Fields{"maxBlockID": maxBlockID, "curBlockID": curBlock.BlockID, "Gap": n.availableBlockchainGap}).Info("blockchain is stale, stopping node relevance")
 		return false, nil
 	}
 

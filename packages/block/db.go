@@ -106,7 +106,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		RollbacksHash: rollbackTxsHash,
 		Tx:            int32(len(block.Transactions)),
 	}
-	blockTimeCalculator, err := utils.BuildBlockTimeCalculator()
+	blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
 		return err

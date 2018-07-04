@@ -382,7 +382,7 @@ func (t *Transaction) CallContract(flags int) (resultContract string, err error)
 		VDE:           false,
 		Rollback:      true,
 		SysUpdate:     false,
-		VM:            smart.GetVM(false, 0),
+		VM:            smart.GetVM(),
 		TxSmart:       *t.TxSmart,
 		TxData:        t.TxData,
 		TxContract:    t.TxContract,
