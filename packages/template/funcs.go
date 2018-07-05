@@ -620,7 +620,12 @@ func dbfindTag(par parFunc) string {
 			break
 		}
 	}
-	fields = strings.Join(queryColumns, ", ")
+	for i, field := range queryColumns {
+		if !strings.ContainsAny(field, `:.>"`) {
+			queryColumns[i] = `"` + field + `"`
+		}
+	}
+	fields = strings.Join(queryColumns, `, `)
 	for i, key := range columnNames {
 		if strings.Contains(key, `->`) {
 			columnNames[i] = strings.Replace(key, `->`, `.`, -1)
