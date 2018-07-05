@@ -2594,5 +2594,19 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         warning "Value must be greater than zero"
       }
     }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('113', 'max_forsign_size', 'contract max_forsign_size {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
 }', %[1]d, 'ContractConditions("MainCondition")', 2);
 `
