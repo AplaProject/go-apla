@@ -12,6 +12,9 @@ import (
 )
 
 func HostWithMaxBlock(hosts []string) (bestHost string, maxBlockID int64, err error) {
+	if len(hosts) == 0 {
+		return "", -1, nil
+	}
 	ctx := context.Background()
 	return hostWithMaxBlock(ctx, hosts)
 }
@@ -23,7 +26,6 @@ func GetMaxBlockID(host string) (blockID int64, err error) {
 
 func getMaxBlock(ctx context.Context, host string) (blockID int64, err error) {
 	con, err := newConnection(host)
-
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Debug("error connecting to host")
 		return -1, err
@@ -53,10 +55,6 @@ func getMaxBlock(ctx context.Context, host string) (blockID int64, err error) {
 
 func hostWithMaxBlock(ctx context.Context, hosts []string) (bestHost string, maxBlockID int64, err error) {
 	maxBlockID = -1
-
-	if len(hosts) == 0 {
-		return bestHost, maxBlockID, nil
-	}
 
 	type blockAndHost struct {
 		host    string

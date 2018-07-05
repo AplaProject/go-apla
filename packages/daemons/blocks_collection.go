@@ -268,12 +268,8 @@ func getHostWithMaxID(logger *log.Entry) (host string, maxBlockID int64, err err
 	}
 
 	host, maxBlockID, err = tcpclient.HostWithMaxBlock(hosts)
-	if err != nil && err == tcpclient.ErrNodesUnavailable {
-		hosts, err := nbs.FilterBannedHosts(conf.GetNodesAddr())
-		if err != nil {
-			logger.WithFields(log.Fields{"error": err}).Error("on filtering banned hosts")
-			return "", -1, err
-		}
+	if len(hosts) == 0 || err == tcpclient.ErrNodesUnavailable {
+		hosts = conf.GetNodesAddr()
 		return tcpclient.HostWithMaxBlock(hosts)
 	}
 
