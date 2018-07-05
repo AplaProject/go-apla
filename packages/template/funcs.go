@@ -63,10 +63,14 @@ func init() {
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
-	funcs[`GetContractHistory`] = tplFunc{getContractHistoryTag, defaultTag, `getcontracthistory`, `Source,Id`}
-	funcs[`GetMenuHistory`] = tplFunc{getMenuHistoryTag, defaultTag, `getmenuhistory`, `Source,Id`}
-	funcs[`GetBlockHistory`] = tplFunc{getBlockHistoryTag, defaultTag, `getblockhistory`, `Source,Id`}
-	funcs[`GetPageHistory`] = tplFunc{getPageHistoryTag, defaultTag, `getpagehistory`, `Source,Id`}
+	funcs[`GetContractHistory`] = tplFunc{getContractHistoryTag, defaultTag, `getcontracthistory`,
+		`Source,Id,RollbackId`}
+	funcs[`GetMenuHistory`] = tplFunc{getMenuHistoryTag, defaultTag, `getmenuhistory`,
+		`Source,Id,RollbackId`}
+	funcs[`GetBlockHistory`] = tplFunc{getBlockHistoryTag, defaultTag, `getblockhistory`,
+		`Source,Id,RollbackId`}
+	funcs[`GetPageHistory`] = tplFunc{getPageHistoryTag, defaultTag, `getpagehistory`,
+		`Source,Id,RollbackId`}
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
 	funcs[`JsonToSource`] = tplFunc{jsontosourceTag, defaultTag, `jsontosource`, `Source,Data`}
@@ -1232,9 +1236,12 @@ func columntypeTag(par parFunc) string {
 
 func getHistoryTag(par parFunc, table string) string {
 	setAllAttr(par)
-
+	var rollID int64
+	if len((*par.Pars)["RollbackId"]) > 0 {
+		rollID = converter.StrToInt64(macro((*par.Pars)[`RollbackId`], par.Workspace.Vars))
+	}
 	list, err := smart.GetHistory(nil, converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]),
-		table, converter.StrToInt64(macro((*par.Pars)[`Id`], par.Workspace.Vars)), 0)
+		table, converter.StrToInt64(macro((*par.Pars)[`Id`], par.Workspace.Vars)), rollID)
 	if err != nil {
 		return err.Error()
 	}
