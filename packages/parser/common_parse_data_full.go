@@ -604,6 +604,10 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 	return nil
 }
 
+func (p *Parser) CheckTransaction(checkTime int64) error {
+	return checkTransaction(p, checkTime, true)
+}
+
 // CheckTransaction is checking transaction
 func CheckTransaction(data []byte) (*tx.Header, error) {
 	trBuff := bytes.NewBuffer(data)
@@ -614,6 +618,7 @@ func CheckTransaction(data []byte) (*tx.Header, error) {
 
 	err = checkTransaction(p, time.Now().Unix(), true)
 	if err != nil {
+		p.ProcessBadTransaction(err)
 		return nil, err
 	}
 
