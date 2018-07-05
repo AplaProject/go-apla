@@ -44,6 +44,10 @@ func sendRawTransacitionsToHost(host string, packet []byte) error {
 }
 
 func SendTransacitionsToAll(hosts []string, txes []model.Transaction) error {
+	if len(hosts) == 0 || len(txes) == 0 {
+		return nil
+	}
+
 	packet := prepareTxPacket(txes)
 
 	var wg sync.WaitGroup

@@ -144,7 +144,7 @@ type ConfirmRequest struct {
 func (req *ConfirmRequest) Read(r io.Reader) error {
 	t, err := readUint(r, 4)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading getBodiesRequest blockID")
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading ConfirmRequest blockID")
 		return err
 	}
 
@@ -155,7 +155,7 @@ func (req *ConfirmRequest) Read(r io.Reader) error {
 func (req *ConfirmRequest) Write(w io.Writer) error {
 	_, err := w.Write(converter.DecToBin(int64(req.BlockID), 4))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending GetBodiesRequest blockID")
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending ConfirmRequest blockID")
 		return err
 	}
 
@@ -164,41 +164,41 @@ func (req *ConfirmRequest) Write(w io.Writer) error {
 
 // ConfirmResponse contains response data
 type ConfirmResponse struct {
-	ConfType uint8
-	Hash     []byte `size:"32"`
+	// ConfType uint8
+	Hash []byte `size:"32"`
 }
 
 func (resp *ConfirmResponse) Read(r io.Reader) error {
-	t, err := readUint(r, 1)
+	// t, err := readUint(r, 1)
+	// if err != nil {
+	// 	log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading confirm type of ConfirmResponse")
+	// 	return err
+	// }
+
+	// resp.ConfType = uint8(t)
+
+	h, err := readByteSlice(r, consts.HashSize)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading getBodiesRequest blockID")
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading ConfirmResponse reverse order")
 		return err
 	}
-
-	resp.ConfType = uint8(t)
-
-	resp.Hash, err = readByteSlice(r, consts.HashSize)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading GetBodiesRequest reverse order")
-		return err
-	}
+	resp.Hash = h
 	return nil
 }
 
 func (resp *ConfirmResponse) Write(w io.Writer) error {
-	_, err := w.Write(converter.DecToBin(int64(resp.ConfType), 1))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending ConfiremResponse confType")
-		return err
-	}
+	// _, err := w.Write(converter.DecToBin(int64(resp.ConfType), 1))
+	// if err != nil {
+	// 	log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending ConfiremResponse confType")
+	// 	return err
+	// }
 
-	err = writeByteSlice(w, resp.Hash, consts.HashSize)
-	if err != nil {
+	if err := writeByteSlice(w, resp.Hash, consts.HashSize); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending ConfiremResponse hash")
 		return err
 	}
 
-	return err
+	return nil
 }
 
 // DisRequest contains request data
