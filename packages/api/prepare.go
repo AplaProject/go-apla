@@ -292,7 +292,7 @@ func forsignFormData(w http.ResponseWriter, r *http.Request, data *apiData, logg
 			}
 
 		case script.Decimal:
-			d, err := decimal.NewFromString(r.FormValue(fitem.Name))
+			d, err := decimal.NewFromString(strings.Replace(r.FormValue(fitem.Name), `,`, `.`, 1))
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting to decimal")
 				return nil, errorAPI(w, err, http.StatusBadRequest)
