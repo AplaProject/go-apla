@@ -68,8 +68,20 @@ func TestTableName(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	form := url.Values{"Name": {`кириллица`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
+		"conditions":{"update":"true", "read":"true"}}]`}, "ApplicationId": {"1"},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	assert.EqualError(t, postTx(`NewTable`, &form),
+		`{"type":"panic","error":"Name кириллица must only contain latin, digit and '_', '-' characters"}`)
+
+	form = url.Values{"Name": {`latin`}, "Columns": {`[{"name":"колонка","type":"varchar", "index": "0", 
+		"conditions":{"update":"true", "read":"true"}}]`}, "ApplicationId": {"1"},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	assert.EqualError(t, postTx(`NewTable`, &form),
+		`{"type":"panic","error":"Name колонка must only contain latin, digit and '_', '-' characters"}`)
+
 	name := randName(`tbl`)
-	form := url.Values{"Name": {`tbl-` + name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
+	form = url.Values{"Name": {`tbl-` + name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
 	  "conditions":{"update":"true", "read":"true"}}]`}, "ApplicationId": {"100"},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
@@ -81,8 +93,7 @@ func TestTableName(t *testing.T) {
 		action { 
 			DBInsert("tbl-` + name + `", "MyName", "test")
 			DBUpdate("tbl-` + name + `", 1, "MyName", "New test")
-		}}`},
-		"Conditions": {`ContractConditions("MainCondition")`}}
+		}}`}, "ApplicationId": {`100`}, "Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx("NewContract", &form)
 	if err != nil {
 		t.Error(err)

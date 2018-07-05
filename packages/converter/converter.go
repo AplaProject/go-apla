@@ -867,6 +867,17 @@ func StripTags(value string) string {
 	return strings.Replace(strings.Replace(value, `<`, `&lt;`, -1), `>`, `&gt;`, -1)
 }
 
+// IsLatin checks if the specified string contains only latin character, digits and '-', '_'.
+func IsLatin(name string) bool {
+	for _, ch := range []byte(name) {
+		if !((ch >= '0' && ch <= '9') || ch == '_' || ch == '-' || (ch >= 'a' && ch <= 'z') ||
+			(ch >= 'A' && ch <= 'Z')) {
+			return false
+		}
+	}
+	return true
+}
+
 // IsValidAddress checks if the specified address is apla address.
 func IsValidAddress(address string) bool {
 	val := []byte(strings.Replace(address, `-`, ``, -1))
