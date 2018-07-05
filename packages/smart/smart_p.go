@@ -159,7 +159,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			`page_price`, `commission_size`:
 			ok = ival >= 0
 		case `max_block_size`, `max_tx_size`, `max_tx_count`, `max_columns`, `max_indexes`,
-			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`:
+			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`, `max_forsign_size`:
 			ok = ival > 0
 		case `fuel_rate`, `commission_wallet`:
 			err := json.Unmarshal([]byte(value), &list)
@@ -453,6 +453,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	sc.Rollback = false
+	sc.FullAccess = true
 	if _, _, err = DBInsert(sc, `@`+idStr+"_pages", "id,name,value,menu,conditions", "1", "default_page",
 		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
@@ -482,6 +483,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, err
 	}
 
+	sc.FullAccess = false
 	// because of we need to know which ecosystem to rollback.
 	// All tables will be deleted so it's no need to rollback data from tables
 	sc.Rollback = true

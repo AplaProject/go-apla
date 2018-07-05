@@ -48,6 +48,8 @@ const (
 	MaxBlockSize = `max_block_size`
 	// MaxTxSize is the maximum size of the transaction
 	MaxTxSize = `max_tx_size`
+	// MaxForsignSize is the maximum size of the forsign of transaction
+	MaxForsignSize = `max_forsign_size`
 	// MaxBlockFuel is the maximum fuel of the block
 	MaxBlockFuel = `max_fuel_block`
 	// MaxTxFuel is the maximum fuel of the transaction
@@ -202,9 +204,9 @@ func GetNumberOfNodes() int64 {
 	return int64(len(nodesByPosition))
 }
 
-func GetNumberOfNodesFromDB() int64 {
+func GetNumberOfNodesFromDB(transaction *model.DbTransaction) int64 {
 	sp := &model.SystemParameter{}
-	sp.Get(FullNodes)
+	sp.GetTransaction(transaction, FullNodes)
 	var fullNodes []map[string]interface{}
 	if len(sp.Value) > 0 {
 		if err := json.Unmarshal([]byte(sp.Value), &fullNodes); err != nil {
@@ -369,6 +371,11 @@ func GetMaxBlockGenerationTime() int64 {
 // GetMaxTxSize is returns max tx size
 func GetMaxTxSize() int64 {
 	return converter.StrToInt64(SysString(MaxTxSize))
+}
+
+// GetMaxTxTextSize is returns max tx text size
+func GetMaxForsignSize() int64 {
+	return converter.StrToInt64(SysString(MaxForsignSize))
 }
 
 // GetGapsBetweenBlocks is returns gaps between blocks

@@ -534,7 +534,7 @@ func GetHostPort(h string) string {
 	return fmt.Sprintf("%s:%d", h, consts.DEFAULT_TCP_PORT)
 }
 
-func BuildBlockTimeCalculator() (BlockTimeCalculator, error) {
+func BuildBlockTimeCalculator(transaction *model.DbTransaction) (BlockTimeCalculator, error) {
 	var btc BlockTimeCalculator
 	firstBlock := model.Block{}
 	found, err := firstBlock.Get(1)
@@ -554,7 +554,7 @@ func BuildBlockTimeCalculator() (BlockTimeCalculator, error) {
 	btc = NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
 		blockGenerationDuration,
 		blocksGapDuration,
-		syspar.GetNumberOfNodesFromDB(),
+		syspar.GetNumberOfNodesFromDB(transaction),
 	)
 	return btc, nil
 }

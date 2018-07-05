@@ -18,7 +18,7 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
 		(
 			'21',
 			'ecosystems',
-			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
+			'{"insert": "true", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
 			'{"name": "ContractConditions(\"MainCondition\")"}',
 			'ContractConditions("MainCondition")'
 		),
