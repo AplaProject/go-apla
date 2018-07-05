@@ -181,6 +181,12 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 			}
 			continue
 		}
+
+		if err := p.CheckTransaction(time.Now().Unix()); err != nil {
+			p.ProcessBadTransaction(err)
+			continue
+		}
+
 		if p.TxSmart != nil {
 			err = limits.CheckLimit(p)
 			if err == block.ErrLimitStop && i > 0 {
