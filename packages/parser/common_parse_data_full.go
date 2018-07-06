@@ -605,7 +605,7 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 }
 
 func (p *Parser) CheckTransaction(checkTime int64) error {
-	return checkTransaction(p, checkTime, true)
+	return checkTransaction(p, checkTime, false)
 }
 
 // CheckTransaction is checking transaction
