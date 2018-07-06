@@ -182,8 +182,8 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 			continue
 		}
 
-		if err := p.CheckTransaction(time.Now().Unix()); err != nil {
-			p.ProcessBadTransaction(err)
+		if err := p.Check(time.Now().Unix(), false); err != nil {
+			transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
 			continue
 		}
 
