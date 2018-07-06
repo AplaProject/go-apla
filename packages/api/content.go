@@ -62,10 +62,15 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 		vars[`isMobile`] = data.isMobile
 		vars[`role_id`] = converter.Int64ToStr(data.roleId)
 		vars[`ecosystem_name`] = data.ecosystemName
-	} else if len(vars[`ecosystem_id`]) != 0 {
-		ecosystems := model.Ecosystem{}
-		if found, _ := ecosystems.Get(converter.StrToInt64(vars[`ecosystem_id`])); found {
-			vars[`ecosystem_name`] = ecosystems.Name
+	} else {
+		vars[`ecosystem_id`] = vars[`ecosystem`]
+		vars[`key_id`] = vars[`keyID`]
+		vars[`role_id`] = vars[`roleID`]
+		if len(vars[`ecosystem_id`]) != 0 {
+			ecosystems := model.Ecosystem{}
+			if found, _ := ecosystems.Get(converter.StrToInt64(vars[`ecosystem_id`])); found {
+				vars[`ecosystem_name`] = ecosystems.Name
+			}
 		}
 	}
 	if _, ok := vars[`lang`]; !ok {
