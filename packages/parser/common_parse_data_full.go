@@ -579,7 +579,7 @@ func checkTransaction(p *Parser, checkTime int64, checkForDupTr bool) error {
 	if err != nil {
 		return err
 	}
-	logger := log.WithFields(log.Fields{"tx_type": p.dataType, "tx_time": p.TxTime, "tx_state_id": p.TxEcosystemID})
+	logger := log.WithFields(log.Fields{"tx_hash": p.TxHash, "tx_type": p.dataType, "tx_time": p.TxTime, "tx_state_id": p.TxEcosystemID})
 	// time in the transaction cannot be more than MAX_TX_FORW seconds of block time
 	if p.TxTime-consts.MAX_TX_FORW > checkTime {
 		logger.WithFields(log.Fields{"tx_max_forw": consts.MAX_TX_FORW, "type": consts.ParameterExceeded}).Error("time in the tx cannot be more than MAX_TX_FORW seconds of block time ")
