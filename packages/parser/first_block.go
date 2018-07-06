@@ -32,6 +32,10 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
+	"encoding/json"
+
+	"time"
+
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -98,6 +102,27 @@ func (p *FirstBlockParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
+	jsonNodes, err := json.Marshal([]syspar.FullNode{{
+		TCPAddress: data.Host,
+		APIAddress: data.APIHost,
+		KeyID:      keyID,
+		PublicKey:  data.NodePublicKey,
+		UnbanTime:  time.Time{},
+	}})
+
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling fullnodes array")
+		return p.ErrInfo(err)
+	}
+
+	node := &model.SystemParameter{Name: `full_nodes`}
+	err = node.Update(string(jsonNodes))
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving fullnodes to first block")
+		return p.ErrInfo(err)
+	}
+
 	commission := &model.SystemParameter{Name: `commission_wallet`}
 	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
@@ -107,7 +132,7 @@ func (p *FirstBlockParser) Action() error {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 		return p.ErrInfo(err)
 	}
-	syspar.SetFirstBlockData(data)
+
 	return nil
 }
 

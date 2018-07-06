@@ -551,12 +551,11 @@ func BuildBlockTimeCalculator(transaction *model.DbTransaction) (BlockTimeCalcul
 	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
 	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
 
-	btc = NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
+	return NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
 		blockGenerationDuration,
 		blocksGapDuration,
 		syspar.GetNumberOfNodesFromDB(transaction),
 	)
-	return btc, nil
 }
 
 func CreateDirIfNotExists(dir string, mode os.FileMode) error {

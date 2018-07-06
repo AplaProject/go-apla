@@ -43,6 +43,8 @@ type FirstBlock struct {
 	PublicKey             []byte
 	NodePublicKey         []byte
 	StopNetworkCertBundle []byte
+	Host                  string
+	APIHost               string
 }
 
 type StopNetwork struct {

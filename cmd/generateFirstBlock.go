@@ -18,6 +18,7 @@ import (
 )
 
 var stopNetworkBundleFilepath string
+var apiHost string
 
 // generateFirstBlockCmd represents the generateFirstBlock command
 var generateFirstBlockCmd = &cobra.Command{
@@ -75,6 +76,8 @@ var generateFirstBlockCmd = &cobra.Command{
 				PublicKey:             decodeKeyFile(consts.PublicKeyFilename),
 				NodePublicKey:         decodeKeyFile(consts.NodePublicKeyFilename),
 				StopNetworkCertBundle: stopNetworkCert,
+				Host:    conf.Config.TCPServer.Str(),
+				APIHost: apiHost,
 			},
 		)
 
@@ -96,4 +99,5 @@ var generateFirstBlockCmd = &cobra.Command{
 
 func init() {
 	generateFirstBlockCmd.Flags().StringVar(&stopNetworkBundleFilepath, "stopNetworkCert", "", "Filepath to the fullchain of certificates for network stopping")
+	generateFirstBlockCmd.Flags().StringVar(&apiHost, "apiHost", "http://127.0.0.1:7079", "First full_node APIHost")
 }

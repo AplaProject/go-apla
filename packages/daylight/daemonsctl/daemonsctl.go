@@ -1,10 +1,9 @@
 package daemonsctl
 
 import (
-	conf "github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -22,10 +21,6 @@ func RunAllDaemons() error {
 		if err != nil {
 			log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
 			return err
-		}
-
-		if data, ok := parser.GetDataFromFirstBlock(); ok {
-			syspar.SetFirstBlockData(data)
 		}
 	}
 

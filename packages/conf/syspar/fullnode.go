@@ -64,12 +64,16 @@ func (fn *FullNode) UnmarshalJSON(b []byte) (err error) {
 }
 
 func (fn *FullNode) MarshalJSON() ([]byte, error) {
+	unbanTime := strconv.FormatInt(fn.UnbanTime.Unix(), 10)
+	if fn.UnbanTime.Equal(time.Time{}) {
+		unbanTime = strconv.FormatInt(0, 10)
+	}
 	jfn := fullNodeJSON{
 		TCPAddress: fn.TCPAddress,
 		APIAddress: fn.APIAddress,
 		KeyID:      json.Number(strconv.FormatInt(fn.KeyID, 10)),
 		PublicKey:  hex.EncodeToString(fn.PublicKey),
-		UnbanTime:  json.Number(strconv.FormatInt(fn.UnbanTime.Unix(), 10)),
+		UnbanTime:  json.Number(unbanTime),
 	}
 
 	data, err := json.Marshal(jfn)
