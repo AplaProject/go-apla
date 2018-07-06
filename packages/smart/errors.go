@@ -22,6 +22,7 @@ const (
 	eTableNotFound = `Table %s has not been found`
 	eContractLoop  = `There is loop in %s contract`
 	eContractExist = `Contract %s already exists`
+	eLatin         = `Name %s must only contain latin, digit and '_', '-' characters`
 )
 
 var (

@@ -18,9 +18,11 @@ package api
 
 import (
 	"fmt"
+	"math/rand"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -118,6 +120,17 @@ func TestMoneyTransfer(t *testing.T) {
 	}
 	form = url.Values{`Amount`: {`53330000`}, `Recipient`: {`0005207000`}}
 	if err := postTx(`MoneyTransfer`, &form); cutErr(err) != `{"type":"error","error":"Recipient 0005207000 is invalid"}` {
+		t.Error(err)
+		return
+	}
+	size := 1000000
+	big := make([]byte, size)
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < size; i++ {
+		big[i] = '0' + byte(rand.Intn(10))
+	}
+	form = url.Values{`Amount`: {string(big)}, `Recipient`: {`0005-2070-2000-0006-0200`}}
+	if err := postTx(`MoneyTransfer`, &form); err.Error() != `400 {"error": "E_LIMITFORSIGN", "msg": "Length of forsign is too big (1000106)" , "params": ["1000106"]}` {
 		t.Error(err)
 		return
 	}

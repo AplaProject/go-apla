@@ -210,6 +210,9 @@ func moneyTag(par parFunc) string {
 		}
 		cents = converter.StrToInt(sp.Value)
 	}
+	if len(ret) > consts.MoneyLength {
+		return `invalid money value`
+	}
 	if cents != 0 {
 		retDec, err := decimal.NewFromString(ret)
 		if err != nil {
