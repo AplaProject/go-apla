@@ -1,4 +1,4 @@
-package parser
+package custom
 
 import (
 	"errors"
@@ -8,36 +8,38 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
 	messageNetworkStopping = "Attention! The network is stopped!"
 
-	errNetworkStopping = errors.New("Network is stopping")
+	ErrNetworkStopping = errors.New("Network is stopping")
 )
 
-type StopNetworkParser struct {
-	*Parser
+type StopNetworkTransaction struct {
+	Logger *log.Entry
+	Data   interface{}
 
-	cert *utils.Cert
+	Cert *utils.Cert
 }
 
-func (p *StopNetworkParser) Init() error {
+func (t *StopNetworkTransaction) Init() error {
 	return nil
 }
 
-func (p *StopNetworkParser) Validate() error {
-	if err := p.validate(); err != nil {
-		p.GetLogger().WithError(err).Error("validating tx")
+func (t *StopNetworkTransaction) Validate() error {
+	if err := t.validate(); err != nil {
+		t.Logger.WithError(err).Error("validating tx")
 		return err
 	}
 
 	return nil
 }
 
-func (p *StopNetworkParser) validate() error {
-	data := p.TxPtr.(*consts.StopNetwork)
-
+func (t *StopNetworkTransaction) validate() error {
+	data := t.Data.(*consts.StopNetwork)
 	cert, err := utils.ParseCert(data.StopNetworkCert)
 	if err != nil {
 		return err
@@ -52,27 +54,27 @@ func (p *StopNetworkParser) validate() error {
 		return err
 	}
 
-	p.cert = cert
+	t.Cert = cert
 	return nil
 }
 
-func (p *StopNetworkParser) Action() error {
+func (t *StopNetworkTransaction) Action() error {
 	// Allow execute transaction, if the certificate was used
-	if p.cert.EqualBytes(consts.UsedStopNetworkCerts...) {
+	if t.Cert.EqualBytes(consts.UsedStopNetworkCerts...) {
 		return nil
 	}
 
 	// Set the node in a pause state
 	service.PauseNodeActivity(service.PauseTypeStopingNetwork)
 
-	p.GetLogger().Warn(messageNetworkStopping)
-	return errNetworkStopping
+	t.Logger.Warn(messageNetworkStopping)
+	return ErrNetworkStopping
 }
 
-func (p *StopNetworkParser) Rollback() error {
+func (t *StopNetworkTransaction) Rollback() error {
 	return nil
 }
 
-func (p StopNetworkParser) Header() *tx.Header {
+func (t StopNetworkTransaction) Header() *tx.Header {
 	return nil
 }

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package parser
+package block
 
 import (
 	"errors"
@@ -26,6 +26,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/transaction"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -46,7 +47,7 @@ type Limits struct {
 // Limiter describes interface functions for limits
 type Limiter interface {
 	init(*Block)
-	check(*Parser, int) error
+	check(*transaction.Transaction, int) error
 }
 
 type limiterModes struct {
@@ -90,9 +91,9 @@ func NewLimits(b *Block) (limits *Limits) {
 }
 
 // CheckLimit calls each limiter
-func (limits *Limits) CheckLimit(p *Parser) error {
+func (limits *Limits) CheckLimit(t *transaction.Transaction) error {
 	for _, limiter := range limits.Limiters {
-		if err := limiter.check(p, limits.Mode); err != nil {
+		if err := limiter.check(t, limits.Mode); err != nil {
 			return err
 		}
 	}
@@ -115,7 +116,7 @@ func (bl *txMaxLimit) init(b *Block) {
 	bl.Limit = syspar.GetMaxTxCount()
 }
 
-func (bl *txMaxLimit) check(p *Parser, mode int) error {
+func (bl *txMaxLimit) check(t *transaction.Transaction, mode int) error {
 	bl.Count++
 	if bl.Count > bl.Limit {
 		if mode == letPreprocess {
@@ -137,7 +138,7 @@ func (bl *timeBlockLimit) init(b *Block) {
 	bl.Limit = time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
 }
 
-func (bl *timeBlockLimit) check(p *Parser, mode int) error {
+func (bl *timeBlockLimit) check(t *transaction.Transaction, mode int) error {
 	if time.Since(bl.Start) < bl.Limit {
 		return nil
 	}
@@ -160,12 +161,12 @@ func (bl *txUserLimit) init(b *Block) {
 	bl.Limit = syspar.GetMaxBlockUserTx()
 }
 
-func (bl *txUserLimit) check(p *Parser, mode int) error {
+func (bl *txUserLimit) check(t *transaction.Transaction, mode int) error {
 	var (
 		count int
 		ok    bool
 	)
-	keyID := p.TxSmart.KeyID
+	keyID := t.TxSmart.KeyID
 	if count, ok = bl.TxUsers[keyID]; ok {
 		if count+1 > bl.Limit {
 			if mode == letPreprocess {
@@ -192,9 +193,9 @@ func (bl *txUserEcosysLimit) init(b *Block) {
 	bl.TxEcosys = make(map[int64]ecosysLimit)
 }
 
-func (bl *txUserEcosysLimit) check(p *Parser, mode int) error {
-	keyID := p.TxSmart.KeyID
-	ecosystemID := p.TxSmart.EcosystemID
+func (bl *txUserEcosysLimit) check(t *transaction.Transaction, mode int) error {
+	keyID := t.TxSmart.KeyID
+	ecosystemID := t.TxSmart.EcosystemID
 	if val, ok := bl.TxEcosys[ecosystemID]; ok {
 		if user, ok := val.TxUsers[keyID]; ok {
 			if user+1 > val.Limit {
@@ -212,7 +213,7 @@ func (bl *txUserEcosysLimit) check(p *Parser, mode int) error {
 		limit := syspar.GetMaxBlockUserTx()
 		sp := &model.StateParameter{}
 		sp.SetTablePrefix(converter.Int64ToStr(ecosystemID))
-		found, err := sp.Get(p.DbTransaction, `max_block_user_tx`)
+		found, err := sp.Get(t.DbTransaction, `max_block_user_tx`)
 		if err != nil {
 			return limitError(`txUserEcosysLimit`, err.Error())
 		}
@@ -237,8 +238,8 @@ func (bl *txMaxSize) init(b *Block) {
 	bl.LimitTx = syspar.GetMaxTxSize()
 }
 
-func (bl *txMaxSize) check(p *Parser, mode int) error {
-	size := int64(len(p.TxFullData))
+func (bl *txMaxSize) check(t *transaction.Transaction, mode int) error {
+	size := int64(len(t.TxFullData))
 	if size > bl.LimitTx {
 		return limitError(`txMaxSize`, `Max size of tx`)
 	}
@@ -264,8 +265,8 @@ func (bl *txMaxFuel) init(b *Block) {
 	bl.LimitTx = syspar.GetMaxTxFuel()
 }
 
-func (bl *txMaxFuel) check(p *Parser, mode int) error {
-	fuel := p.TxFuel
+func (bl *txMaxFuel) check(t *transaction.Transaction, mode int) error {
+	fuel := t.TxFuel
 	if fuel > bl.LimitTx {
 		return limitError(`txMaxFuel`, `Max fuel of tx %d > %d`, fuel, bl.LimitTx)
 	}

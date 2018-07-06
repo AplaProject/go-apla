@@ -14,27 +14,26 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package parser
+package rollback
 
 import (
 	"bytes"
-	"database/sql"
 	"strconv"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// RollbackToBlockID rollbacks blocks till blockID
-func (p *Parser) RollbackToBlockID(blockID int64) error {
-	logger := p.GetLogger()
+// ToBlockID rollbacks blocks till blockID
+func ToBlockID(blockID int64, dbTransaction *model.DbTransaction, logger *log.Entry) error {
 	_, err := model.MarkVerifiedAndNotUsedTransactionsUnverified()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marking verified and not used transactions unverified")
-		return p.ErrInfo(err)
+		return err
 	}
 
 	limit := 1000
@@ -44,31 +43,31 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		blocks, err := block.GetBlocks(blockID, int32(limit))
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting blocks")
-			return p.ErrInfo(err)
+			return err
 		}
 		if len(blocks) == 0 {
 			break
 		}
 		for _, block := range blocks {
 			// roll back our blocks to the block blockID
-			err = BlockRollback(block.Data)
+			err = RollbackBlock(block.Data, true)
 			if err != nil {
-				return p.ErrInfo(err)
+				return err
 			}
 		}
 		blocks = blocks[:0]
 	}
 	block := &model.Block{}
 	_, err = block.Get(blockID)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
-		return p.ErrInfo(err)
+		return err
 	}
 
 	isFirstBlock := blockID == 1
-	header, err := ParseBlockHeader(bytes.NewBuffer(block.Data), !isFirstBlock)
+	header, err := utils.ParseBlockHeader(bytes.NewBuffer(block.Data), !isFirstBlock)
 	if err != nil {
-		return p.ErrInfo(err)
+		return err
 	}
 
 	ib := &model.InfoBlock{
@@ -81,10 +80,10 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		CurrentVersion: strconv.Itoa(header.Version),
 	}
 
-	err = ib.Update(p.DbTransaction)
+	err = ib.Update(dbTransaction)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating info block")
-		return p.ErrInfo(err)
+		return err
 	}
 
 	return nil
