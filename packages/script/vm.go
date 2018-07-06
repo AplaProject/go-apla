@@ -191,7 +191,8 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			stack Stacker
 			ok    bool
 		)
-		if finfo.Name != `ContractConditions` && finfo.Name != `ExecContract` {
+		if finfo.Name != `ContractConditions` && finfo.Name != `ExecContract` &&
+			finfo.Name != `ContractAccess` {
 			if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
 				if err := stack.AppendStack(finfo.Name); err != nil {
 					return err

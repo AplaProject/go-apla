@@ -346,8 +346,14 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 				if name[0] != '@' {
 					name = fmt.Sprintf(`@%d`, sc.TxSmart.EcosystemID) + name
 				}
-				if sc.TxContract.StackCont[len(sc.TxContract.StackCont)-1] == name {
-					return true
+				for i := len(sc.TxContract.StackCont) - 1; i >= 0; i-- {
+					contName := sc.TxContract.StackCont[i]
+					if strings.HasPrefix(contName, `@`) {
+						if contName == name {
+							return true
+						}
+						break
+					}
 				}
 			}
 		}
