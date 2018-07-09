@@ -42,7 +42,6 @@ type Contract struct {
 	Name          string
 	Called        uint32
 	FreeRequest   bool
-	TxPrice       int64   // custom price for citizens
 	TxGovAccount  int64   // state wallet
 	EGSRate       float64 // money/EGS rate
 	TableAccounts string
@@ -922,12 +921,21 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
 				return retError(ErrDiffKeys)
 			}
-			var amount decimal.Decimal
+			var amount, maxpay decimal.Decimal
 			amount, err = decimal.NewFromString(payWallet.Amount)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
 				return retError(err)
 			}
+			maxpay, err = decimal.NewFromString(payWallet.Maxpay)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Maxpay}).Error("converting pay wallet maxpay from string to decimal")
+				return retError(err)
+			}
+			if maxpay.GreaterThan(decimal.New(0, 0)) && maxpay.LessThan(amount) {
+				amount = maxpay
+			}
+
 			if cprice := sc.TxContract.GetFunc(`price`); cprice != nil {
 				var ret []interface{}
 				if ret, err = VMRun(sc.VM, cprice, nil, sc.TxContract.Extend); err != nil {
@@ -960,16 +968,26 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				}
 			}
 			sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024
-			if amount.Cmp(decimal.New(sizeFuel+price, 0).Mul(fuelRate)) <= 0 {
+			priceCost := decimal.New(price, 0)
+			if amount.LessThanOrEqual(priceCost.Mul(fuelRate)) {
 				logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")
 				return retError(ErrCurrentBalance)
 			}
+			maxCost := amount.Div(fuelRate).Floor()
+			fullCost := decimal.New((*sc.TxContract.Extend)[`txcost`].(int64), 0).Add(priceCost)
+			if maxCost.LessThan(fullCost) {
+				(*sc.TxContract.Extend)[`txcost`] = converter.StrToInt64(maxCost.String()) - price
+			}
 		}
 	}
-	before := (*sc.TxContract.Extend)[`txcost`].(int64) + price
+	before := (*sc.TxContract.Extend)[`txcost`].(int64)
 
 	// Payment for the size
 	(*sc.TxContract.Extend)[`txcost`] = (*sc.TxContract.Extend)[`txcost`].(int64) - sizeFuel
+	if (*sc.TxContract.Extend)[`txcost`].(int64) <= 0 {
+		logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough for payment")
+		return retError(ErrCurrentBalance)
+	}
 
 	_, nameContract := script.ParseContract(sc.TxContract.Name)
 	(*sc.TxContract.Extend)[`original_contract`] = nameContract
@@ -985,14 +1003,13 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			sc.TxContract.Called = 1 << i
 			_, err = VMRun(sc.VM, cfunc, nil, sc.TxContract.Extend)
 			if err != nil {
-				before -= price
+				price = 0
 				break
 			}
 		}
 	}
-	sc.TxFuel = before - (*sc.TxContract.Extend)[`txcost`].(int64) - price
-	sc.TxUsedCost = decimal.New(before-(*sc.TxContract.Extend)[`txcost`].(int64), 0)
-	sc.TxContract.TxPrice = price
+	sc.TxFuel = before - (*sc.TxContract.Extend)[`txcost`].(int64)
+	sc.TxUsedCost = decimal.New(sc.TxFuel+price, 0)
 	if (*sc.TxContract.Extend)[`result`] != nil {
 		result = fmt.Sprint((*sc.TxContract.Extend)[`result`])
 		if len(result) > 255 {
