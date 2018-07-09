@@ -136,6 +136,9 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
 		}
+
+		model.IncrementTxAttemptCount(nil, t.TxHash)
+
 		msg, err = t.Play()
 		if err == nil && t.TxSmart != nil {
 			err = limits.CheckLimit(t)
@@ -147,8 +150,8 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
-				model.IncrementTxAttemptCount(t.DbTransaction, t.TxHash)
 			}
+
 			errRoll := dbTransaction.RollbackSavepoint(curTx)
 			if errRoll != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("rolling back to previous savepoint")

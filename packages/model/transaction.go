@@ -1,6 +1,11 @@
 package model
 
-import "github.com/GenesisKernel/go-genesis/packages/consts"
+import (
+	"fmt"
+
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	log "github.com/sirupsen/logrus"
+)
 
 // This constants contains values of transactions priority
 const (
@@ -149,6 +154,10 @@ func (t *Transaction) Create() error {
 
 // IncrementTxAttemptCount increases attempt column
 func IncrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte) (int64, error) {
+	defer func() {
+		go logTrBigAttemptCount(transaction, transactionHash)
+	}()
+
 	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt>10 then 1 else 0 end where hash = ?",
 		transactionHash)
 	return query.RowsAffected, query.Error
@@ -160,5 +169,18 @@ func getTxRateByTxType(txType int8) transactionRate {
 		return TransactionRateStopNetwork
 	default:
 		return 0
+	}
+}
+
+func logTrBigAttemptCount(tbtx *DbTransaction, txHash []byte) {
+	t := Transaction{}
+	if err := tbtx.conn.Where("hash = ?", txHash).First(&t).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting tx by hash")
+		return
+	}
+
+	if t.Attempt >= 10 {
+		txString := fmt.Sprintf("tx_hash: %s, tx_data: %s, tx_attempt: %d", t.Hash, t.Data, t.Attempt)
+		log.WithFields(log.Fields{"type": consts.BadTxError, "tx_info": txString}).Error("logging tx attempt count")
 	}
 }
