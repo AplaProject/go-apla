@@ -35,7 +35,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/rollback"
 	"github.com/GenesisKernel/go-genesis/packages/service"
-	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -128,11 +127,11 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 	playRawBlock := func(rb []byte) error {
 
-		block, err := parser.ProcessBlockWherePrevFromBlockchainTable(rb, true)
+		bl, err := block.ProcessBlockWherePrevFromBlockchainTable(rb, true)
 		defer func() {
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("retrieving blockchain from node")
-				banNode(host, block, err)
+				banNode(host, bl, err)
 			}
 		}()
 
@@ -142,30 +141,30 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		}
 
 		// hash compare could be failed in the case of fork
-		hashMatched, thisErrIsOk := block.CheckHash()
+		hashMatched, thisErrIsOk := bl.CheckHash()
 		if thisErrIsOk != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
 		}
 
 		if !hashMatched {
 			//it should be fork, replace our previous blocks to ones from the host
-			err = parser.GetBlocks(block.Header.BlockID-1, host)
+			err = GetBlocks(bl.Header.BlockID-1, host)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 				return err
 			}
 		}
 
-		block.PrevHeader, err = parser.GetBlockDataFromBlockChain(block.Header.BlockID - 1)
+		bl.PrevHeader, err = block.GetBlockDataFromBlockChain(bl.Header.BlockID - 1)
 		if err != nil {
-			return utils.ErrInfo(fmt.Errorf("can't get block %d", block.Header.BlockID-1))
+			return utils.ErrInfo(fmt.Errorf("can't get block %d", bl.Header.BlockID-1))
 		}
 
-		if err = block.CheckBlock(); err != nil {
+		if err = bl.Check(); err != nil {
 			return err
 		}
 
-		if err = block.PlayBlockSafe(); err != nil {
+		if err = bl.PlaySafe(); err != nil {
 			return err
 		}
 
@@ -333,7 +332,7 @@ func getBlocks(blockID int64, host string) ([]*block.Block, error) {
 	var count int64
 
 	// load the block bodies from the host
-	blocksCh, err := utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, true)
+	blocksCh, err := tcpclient.GetBlocksBodies(host, blockID, true)
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}

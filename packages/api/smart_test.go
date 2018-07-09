@@ -530,6 +530,39 @@ func TestHelper_InsertNodeKey(t *testing.T) {
 	}
 }
 
+func TestHelper_InsertNodeKey(t *testing.T) {
+	require.NoErrorf(t, keyLogin(1), "on login")
+
+	form := url.Values{
+		`Value`: {`contract InsertNodeKey {
+			data {
+				KeyID string
+				PubKey string
+			}
+			conditions {}
+			action {
+				DBInsert("keys", "id,pub,amount", $KeyID, $PubKey, "100000000000000000000")
+			}
+		}`},
+		`ApplicationId`: {`1`},
+		`Conditions`:    {`true`},
+	}
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+
+	form = url.Values{
+		`KeyID`:  {"542353610328569127"},
+		`PubKey`: {"be78f54bcf6bb7b49b7ea00790b18b40dd3f5e231ffc764f1c32d3f5a82ab322aee157931bbfca733bac83255002f5ded418f911b959b77a937f0d5d07de74f8"},
+	}
+
+	if err := postTx(`InsertNodeKey`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
 func TestValidateConditions(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
