@@ -38,7 +38,7 @@ func (b Block) GetLogger() *log.Entry {
 		"block_state_id": b.Header.EcosystemID, "block_hash": b.Header.Hash, "block_version": b.Header.Version})
 }
 
-// PlayBlockSafe is inserting block safely
+// PlaySafe is inserting block safely
 func (b *Block) PlaySafe() error {
 	logger := b.GetLogger()
 	dbTransaction, err := model.StartTransaction()
