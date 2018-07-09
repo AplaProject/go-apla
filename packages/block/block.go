@@ -131,7 +131,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		txHashes = append(txHashes, btx.TxHash)
 	}
 
-	storedTxes, err := model.GetTxesByHashlist()
+	storedTxes, err := model.GetTxesByHashlist(dbTransaction, txHashes)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting txes by hashlist")
 		return err
@@ -152,8 +152,8 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 
 		model.IncrementTxAttemptCount(nil, t.TxHash)
 		if stx, ok := storedTxes[string(t.TxHash)]; ok {
-			stx.Attempt >= consts.MaxtTXAttempt - 1 {
-				txString := fmt.Sprintf("tx_hash: %s, tx_data: %s, tx_attempt: %d", t.Hash, t.Data, t.Attempt)
+			if stx.Attempt >= consts.MaxTXAttempt-1 {
+				txString := fmt.Sprintf("tx_hash: %s, tx_data: %s, tx_attempt: %d", stx.Hash, stx.Data, stx.Attempt)
 				log.WithFields(log.Fields{"type": consts.BadTxError, "tx_info": txString}).Error("tx attempts exceeded, transaction marked as bad")
 			}
 		}
