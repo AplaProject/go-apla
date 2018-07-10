@@ -717,6 +717,7 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 func PrepareColumns(columns string) string {
 	colList := make([]string, 0)
 	for _, icol := range strings.Split(columns, `,`) {
+		icol = strings.TrimSpace(icol)
 		if strings.Contains(icol, `->`) {
 			colfield := strings.Split(icol, `->`)
 			if len(colfield) == 2 {

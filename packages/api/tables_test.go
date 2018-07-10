@@ -290,13 +290,16 @@ func TestTableDesc(t *testing.T) {
 			DBInsert("` + name + `", "desc", "test")
 			DBUpdate("` + name + `", 1, "desc", "new test")
 			$result = DBFind("` + name + `").Columns("desc").WhereId(1).One("desc")
+		   var vals map
+		   vals = DBRow("pages").Columns("NAME, menu").Where("id = ?", 1)
+		   $result = $result + vals["name"]
 		}}`}, "ApplicationId": {"1"},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
 
 	_, msg, err := postTxResult(name, &url.Values{})
 	assert.NoError(t, err)
-	if msg != `new test` {
+	if msg != `new testdefault_page` {
 		t.Errorf(`wrong msg %s`, msg)
 	}
 
