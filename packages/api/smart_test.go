@@ -935,6 +935,23 @@ func TestPageHistory(t *testing.T) {
 	}`}, "ApplicationId": {`1`}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
+	form = url.Values{`Value`: {`contract GetRow` + name + ` {
+		data {
+			IdPage int
+		}
+		action {
+			var ret array
+			var row got map
+			ret = GetPageHistory($IdPage)
+			row = ret[1]
+			got = GetPageHistoryRow($IdPage, Int(row["id"]))
+			if got["block_id"] != row["block_id"] {
+				error "GetPageHistory"
+			}
+		}
+	}`}, "ApplicationId": {`1`}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
 	_, msg, err := postTxResult(`Get`+name, &url.Values{"IdPage": {id}, "IdMenu": {idmenu},
 		"IdCont": {idCont}})
 	assert.NoError(t, err)
@@ -949,6 +966,8 @@ func TestPageHistory(t *testing.T) {
 
 	assert.EqualError(t, postTx(`Get`+name, &url.Values{"IdPage": {`1000000`}, "IdMenu": {idmenu},
 		"IdCont": {idCont}}), `{"type":"panic","error":"Record has not been found"}`)
+
+	assert.NoError(t, postTx(`GetRow`+name, &url.Values{"IdPage": {id}}))
 
 	var retTemp contentResult
 	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {fmt.Sprintf(`GetPageHistory(MySrc,%s)`,

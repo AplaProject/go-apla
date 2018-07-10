@@ -256,6 +256,10 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetBlockHistory":              GetBlockHistory,
 		"GetMenuHistory":               GetMenuHistory,
 		"GetContractHistory":           GetContractHistory,
+		"GetPageHistoryRow":            GetPageHistoryRow,
+		"GetBlockHistoryRow":           GetBlockHistoryRow,
+		"GetMenuHistoryRow":            GetMenuHistoryRow,
+		"GetContractHistoryRow":        GetContractHistoryRow,
 	}
 
 	switch vt {
@@ -1768,7 +1772,8 @@ func GetVDEList(sc *SmartContract) (map[string]string, error) {
 	return vdemanager.Manager.ListProcess()
 }
 
-func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName string, id int64) ([]interface{}, error) {
+func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName string,
+	id, idRollback int64) ([]interface{}, error) {
 	table := fmt.Sprintf(`%d_%s`, ecosystem, tableName)
 	rows, err := model.GetDB(transaction).Table(table).Where("id=?", id).Rows()
 	if err != nil {
@@ -1815,7 +1820,19 @@ func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName str
 	}
 	for _, tx := range *txs {
 		if len(rollbackList) > 0 {
-			rollbackList[len(rollbackList)-1].(map[string]string)[`block_id`] = converter.Int64ToStr(tx.BlockID)
+			prev := rollbackList[len(rollbackList)-1].(map[string]string)
+			prev[`block_id`] = converter.Int64ToStr(tx.BlockID)
+			prev[`id`] = converter.Int64ToStr(tx.ID)
+			block := model.Block{}
+			if ok, err := block.Get(tx.BlockID); ok {
+				prev[`block_time`] = time.Unix(block.Time, 0).Format(`2006-01-02 15:04:05`)
+			} else if err != nil {
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block time")
+				return nil, err
+			}
+			if idRollback == tx.ID {
+				return rollbackList[len(rollbackList)-1 : len(rollbackList)], nil
+			}
 		}
 		if tx.Data == "" {
 			continue
@@ -1831,21 +1848,55 @@ func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName str
 		rollbackList = append(rollbackList, rollback)
 		curVal = rollback
 	}
+	if idRollback > 0 {
+		return []interface{}{}, nil
+	}
 	return rollbackList, nil
 }
 
 func GetBlockHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `blocks`, id)
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `blocks`, id, 0)
 }
 
 func GetPageHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `pages`, id)
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `pages`, id, 0)
 }
 
 func GetMenuHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `menu`, id)
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `menu`, id, 0)
 }
 
 func GetContractHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `contracts`, id)
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `contracts`, id, 0)
+}
+
+func GetHistoryRow(sc *SmartContract, tableName string, id, idRollback int64) (map[string]interface{},
+	error) {
+	list, err := GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, tableName, id, idRollback)
+	if err != nil {
+		return nil, err
+	}
+	result := map[string]interface{}{}
+	if len(list) > 0 {
+		for key, val := range list[0].(map[string]string) {
+			result[key] = val
+		}
+	}
+	return result, nil
+}
+
+func GetBlockHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
+	return GetHistoryRow(sc, `blocks`, id, idRollback)
+}
+
+func GetPageHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
+	return GetHistoryRow(sc, `pages`, id, idRollback)
+}
+
+func GetMenuHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
+	return GetHistoryRow(sc, `menu`, id, idRollback)
+}
+
+func GetContractHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
+	return GetHistoryRow(sc, `contracts`, id, idRollback)
 }
