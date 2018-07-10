@@ -41,7 +41,6 @@ func GetBlocksBodies(host string, blockID int64, reverseOrder bool) (chan []byte
 			// receive the data size as a response that server wants to transfer
 			resp := &network.GetBodyResponse{}
 			if err := resp.Read(conn); err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading Block body response")
 				return
 			}
 

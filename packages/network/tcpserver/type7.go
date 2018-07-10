@@ -48,7 +48,8 @@ func Type7(request *network.GetBodiesRequest, w net.Conn) error {
 	}
 
 	for _, b := range blocks {
-		if err := (&network.GetBodyResponse{Data: b.Data}).Write(w); err != nil {
+		br := &network.GetBodyResponse{Data: b.Data}
+		if err := br.Write(w); err != nil {
 			return err
 		}
 	}

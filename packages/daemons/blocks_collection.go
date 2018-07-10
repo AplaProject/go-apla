@@ -76,7 +76,7 @@ func InitialLoad(logger *log.Entry) error {
 func blocksCollection(ctx context.Context, d *daemon) (err error) {
 	host, maxBlockID, err := getHostWithMaxID(d.logger)
 	if err != nil {
-		d.logger.WithFields(log.Fields{"error": err}).Error("on checking best host")
+		d.logger.WithFields(log.Fields{"error": err}).Warn("on checking best host")
 		return err
 	}
 
@@ -370,20 +370,13 @@ func getBlocks(blockID int64, host string) ([]*block.Block, error) {
 			return nil, utils.ErrInfo(err)
 		}
 
-		// SIGN from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
-			block.Header.BlockID, block.PrevHeader.Hash, block.Header.Time,
-			block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition,
-			block.MrklRoot,
-		)
-
 		// save the block
 		blocks = append(blocks, block)
 		blockID--
 		count++
 
 		// check the signature
-		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey}, forSign, block.Header.Sign, true)
+		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey}, block.ForSign(), block.Header.Sign, true)
 		if okSignErr == nil {
 			break
 		}
@@ -414,8 +407,7 @@ func processBlocks(blocks []*block.Block) error {
 			b.PrevHeader.NodePosition = prevBlocks[b.Header.BlockID-1].Header.NodePosition
 		}
 
-		forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", b.Header.BlockID, b.PrevHeader.Hash, b.MrklRoot, b.Header.Time, b.Header.EcosystemID, b.Header.KeyID, b.Header.NodePosition)
-		hash, err := crypto.DoubleHash([]byte(forSha))
+		hash, err := crypto.DoubleHash([]byte(b.ForSha()))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("double hashing block")
 		}
