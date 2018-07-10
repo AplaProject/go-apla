@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
-	"strings"
 	"testing"
 	"time"
 
@@ -358,28 +357,25 @@ func TestStringToBinary(t *testing.T) {
 				}
 				conditions {}
 				action {
-					UploadBinary("Name,AppID,Data,DataMimeType", "test", 1, StringToBytes($Content), "text/plain")
+					UploadBinary("Name,ApplicationId,Data,DataMimeType", "test", 1, StringToBytes($Content), "text/plain")
+					$result = $key_id
 				}
 			}
-		`},
-		"Conditions": {"true"},
+		`}, "ApplicationId": {`1`}, "Conditions": {"true"},
 	}
 	assert.NoError(t, postTx("NewContract", &form))
 
 	form = url.Values{"Content": {content}}
-	assert.NoError(t, postTx(contract, &form))
+	_, msg, err := postTxResult(contract, &form)
+	assert.NoError(t, err)
 
 	form = url.Values{
-		"template": {`SetVar(link, Binary(Name: test, AppID: 1)) #link#`},
+		"template": {`SetVar(link, Binary(Name: test, AppID: 1, MemberID: ` + msg + `))#link#`},
 	}
-	var ret struct {
-		Tree []struct {
-			Link string `json:"text"`
-		} `json:"tree"`
-	}
+	var ret contentResult
 	assert.NoError(t, sendPost(`content`, &form, &ret))
-
-	data, err := sendRawRequest("GET", strings.TrimSpace(ret.Tree[0].Link), nil)
+	link := RawToString(ret.Tree)
+	data, err := sendRawRequest("GET", link[23:len(link)-3], nil)
 	assert.NoError(t, err)
 	assert.Equal(t, content, string(data))
 }
