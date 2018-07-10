@@ -163,6 +163,7 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 // DefaultHandler is a common handle function for api requests
 func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
+		r.ParseMultipartForm(0)
 		counterName := statsd.APIRouteCounterName(method, pattern)
 		statsd.Client.Inc(counterName+statsd.Count, 1, 1.0)
 		startTime := time.Now()

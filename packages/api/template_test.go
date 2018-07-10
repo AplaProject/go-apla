@@ -38,19 +38,50 @@ type tplItem struct {
 type tplList []tplItem
 
 func TestAPI(t *testing.T) {
-	var ret contentResult
-	var retHash hashResult
-	err := sendPost(`content/hash/default_page`, &url.Values{}, &retHash)
-	if err != nil {
+	var (
+		ret               contentResult
+		retHash, retHash2 hashResult
+		err               error
+		msg               string
+	)
+
+	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
+	name := randName(`page`)
+	value := `Div(,#ecosystem_id#)
+	Div(,#key_id#)
+	Div(,#role_id#)
+	Div(,#isMobile#)`
+	form := url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
+		"Menu": {`default_menu`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	assert.NoError(t, sendPost(`content/hash/`+name, &url.Values{}, &retHash))
 	if len(retHash.Hash) != 64 {
 		t.Error(`wrong hash ` + retHash.Hash)
 		return
 	}
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action {
+		//	$result = $key_id
+		}}`}, "ApplicationId": {`1`}, "Conditions": {`ContractConditions("MainCondition")`}}
+	assert.NoError(t, postTx("NewContract", &form))
+	_, msg, err = postTxResult(name+`1`, &url.Values{})
+	assert.NoError(t, err)
+	fmt.Println(`MSG`, err, msg)
 
-	if err = keyLogin(1); err != nil {
+	gAddress = ``
+	gPrivate = ``
+	gPublic = ``
+	gAuth = ``
+	assert.NoError(t, sendPost(`content/hash/`+name, &url.Values{`ecosystem`: {`1`}, `keyID`: {msg}, `roleID`: {`0`}},
+		&retHash2))
+	fmt.Println(`HASH`, retHash.Hash, retHash2.Hash)
+	t.Error(`ok`)
+	return
+	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
