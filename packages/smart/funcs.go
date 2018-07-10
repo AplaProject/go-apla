@@ -726,6 +726,7 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 func PrepareColumns(columns string) string {
 	colList := make([]string, 0)
 	for _, icol := range strings.Split(columns, `,`) {
+		icol = strings.TrimSpace(icol)
 		if strings.Contains(icol, `->`) {
 			colfield := strings.Split(icol, `->`)
 			if len(colfield) == 2 {
@@ -734,6 +735,8 @@ func PrepareColumns(columns string) string {
 				icol = fmt.Sprintf(`%s::jsonb#>>'{%s}' as "%[1]s.%[3]s"`, colfield[0],
 					strings.Join(colfield[1:], `,`), strings.Join(colfield[1:], `.`))
 			}
+		} else if !strings.ContainsAny(icol, `:*>"`) {
+			icol = `"` + icol + `"`
 		}
 		colList = append(colList, icol)
 	}
@@ -816,7 +819,6 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		columns = strings.Join(cols, `,`)
 	}
 	columns = PrepareColumns(columns)
-
 	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {

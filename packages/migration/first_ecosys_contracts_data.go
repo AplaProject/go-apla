@@ -1333,7 +1333,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 	}
 	action {
-		DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,\"limit\",conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
+		DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,limit,conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('38', 'EditDelayedContract','contract EditDelayedContract {
@@ -1366,7 +1366,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 	}
 	action {
-		DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,\"limit\",deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
+		DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,limit,deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('39', 'CallDelayedContract','contract CallDelayedContract {
