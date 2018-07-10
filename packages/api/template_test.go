@@ -65,12 +65,11 @@ func TestAPI(t *testing.T) {
 	}
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action {
-		//	$result = $key_id
+			$result = $key_id
 		}}`}, "ApplicationId": {`1`}, "Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
-	_, msg, err = postTxResult(name+`1`, &url.Values{})
+	_, msg, err = postTxResult(name, &url.Values{})
 	assert.NoError(t, err)
-	fmt.Println(`MSG`, err, msg)
 
 	gAddress = ``
 	gPrivate = ``
@@ -78,9 +77,10 @@ func TestAPI(t *testing.T) {
 	gAuth = ``
 	assert.NoError(t, sendPost(`content/hash/`+name, &url.Values{`ecosystem`: {`1`}, `keyID`: {msg}, `roleID`: {`0`}},
 		&retHash2))
-	fmt.Println(`HASH`, retHash.Hash, retHash2.Hash)
-	t.Error(`ok`)
-	return
+	if retHash.Hash != retHash2.Hash {
+		t.Error(`Wrong hash`)
+		return
+	}
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
