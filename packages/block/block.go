@@ -293,11 +293,8 @@ func (b *Block) CheckHash() (bool, error) {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node public key is empty")
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
-		// check the signature
-		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s", b.Header.BlockID, b.PrevHeader.Hash,
-			b.Header.Time, b.Header.EcosystemID, b.Header.KeyID, b.Header.NodePosition, b.MrklRoot)
 
-		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, b.Header.Sign, true)
+		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, b.ForSign(), b.Header.Sign, true)
 		if err != nil {
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
 			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHeader.Hash))
@@ -307,6 +304,19 @@ func (b *Block) CheckHash() (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (b Block) ForSha() string {
+	return fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d",
+		b.Header.BlockID, b.PrevHeader.Hash, b.MrklRoot, b.Header.Time,
+		b.Header.EcosystemID, b.Header.KeyID, b.Header.NodePosition)
+}
+
+// ForSign from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+func (b Block) ForSign() string {
+	return fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
+		b.Header.BlockID, b.PrevHeader.Hash, b.Header.Time, b.Header.EcosystemID,
+		b.Header.KeyID, b.Header.NodePosition, b.MrklRoot)
 }
 
 // InsertBlockWOForks is inserting blocks
