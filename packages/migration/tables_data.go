@@ -13,6 +13,7 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 	  "new_column": "ContractConditions(\"MainCondition\")"}',
 	'{"pub": "ContractConditions(\"MainCondition\")",
 	  "amount": "ContractConditions(\"MainCondition\")",
+	  "maxpay": "ContractConditions(\"MainCondition\")",
 	  "deleted": "ContractConditions(\"MainCondition\")",
 	  "blocked": "ContractConditions(\"MainCondition\")",
 	  "multi": "ContractConditions(\"MainCondition\")"}', 
