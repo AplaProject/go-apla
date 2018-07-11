@@ -280,6 +280,8 @@ func (t *Transaction) parseFromContract(buf *bytes.Buffer) error {
 		if err := t.fillTxData(*txInfo, input, forsign); err != nil {
 			return err
 		}
+	} else {
+		t.TxData[`forsign`] = strings.Join(forsign, ",")
 	}
 
 	return nil
