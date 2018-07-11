@@ -650,6 +650,7 @@ func dbfindTag(par parFunc) string {
 		(*par.Workspace.Vars)[par.Node.Attr[`countvar`].(string)] = countStr
 		delete(par.Node.Attr, `countvar`)
 	}
+	fmt.Println(`ACCESS FIELDS`, fields)
 	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order+offset, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
