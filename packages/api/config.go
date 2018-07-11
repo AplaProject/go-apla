@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 
@@ -31,12 +32,21 @@ func getConfigOption(w http.ResponseWriter, r *http.Request, data *apiData, logg
 	return err
 }
 
+func replaceHttpSchemeToWs(centrifugoURL string) string {
+	if strings.HasPrefix(centrifugoURL, "http:") {
+		return strings.Replace(centrifugoURL, "http:", "ws:", -1)
+	} else if strings.HasPrefix(centrifugoURL, "https:") {
+		return strings.Replace(centrifugoURL, "https:", "wss:", -1)
+	}
+	return centrifugoURL
+}
+
 func centrifugoAddressHandler(w http.ResponseWriter, data *apiData) error {
 	if _, err := publisher.GetStats(); err != nil {
 		log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Warn("on getting centrifugo stats")
 		return errorAPI(w, err, http.StatusNotFound)
 	}
 
-	data.result = conf.Config.Centrifugo.URL
+	data.result = replaceHttpSchemeToWs(conf.Config.Centrifugo.URL)
 	return nil
 }
