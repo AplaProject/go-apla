@@ -56,12 +56,34 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 		vars[name] = r.FormValue(name)
 	}
 	vars[`_full`] = `0`
-	vars[`ecosystem_id`] = converter.Int64ToStr(data.ecosystemId)
-	vars[`key_id`] = converter.Int64ToStr(data.keyId)
-	vars[`isMobile`] = data.isMobile
-	vars[`role_id`] = converter.Int64ToStr(data.roleId)
-	vars[`ecosystem_name`] = data.ecosystemName
-
+	if data.keyId != 0 {
+		vars[`ecosystem_id`] = converter.Int64ToStr(data.ecosystemId)
+		vars[`key_id`] = converter.Int64ToStr(data.keyId)
+		vars[`isMobile`] = data.isMobile
+		vars[`role_id`] = converter.Int64ToStr(data.roleId)
+		vars[`ecosystem_name`] = data.ecosystemName
+	} else {
+		vars[`ecosystem_id`] = vars[`ecosystem`]
+		if len(vars[`keyID`]) > 0 {
+			vars[`key_id`] = vars[`keyID`]
+		} else {
+			vars[`key_id`] = `0`
+		}
+		if len(vars[`roleID`]) > 0 {
+			vars[`role_id`] = vars[`roleID`]
+		} else {
+			vars[`role_id`] = `0`
+		}
+		if len(vars[`isMobile`]) == 0 {
+			vars[`isMobile`] = `0`
+		}
+		if len(vars[`ecosystem_id`]) != 0 {
+			ecosystems := model.Ecosystem{}
+			if found, _ := ecosystems.Get(converter.StrToInt64(vars[`ecosystem_id`])); found {
+				vars[`ecosystem_name`] = ecosystems.Name
+			}
+		}
+	}
 	if _, ok := vars[`lang`]; !ok {
 		vars[`lang`] = r.Header.Get(`Accept-Language`)
 	}
