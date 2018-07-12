@@ -596,6 +596,13 @@ func dbfindTag(par parFunc) string {
 	}
 	columnNames := make([]string, 0)
 
+	fieldsList := strings.Split(fields, ",")
+	perm, err = sc.AccessTablePerm(tblname, `read`)
+	if err != nil || sc.AccessColumns(tblname, &fieldsList, false) != nil {
+		return `Access denied`
+	}
+	fields = strings.Join(fieldsList, `,`)
+
 	if fields != "*" {
 		if !strings.Contains(fields, "id") {
 			fields += ",id"
@@ -607,13 +614,6 @@ func dbfindTag(par parFunc) string {
 		for _, col := range rows {
 			queryColumns = append(queryColumns, col["column_name"])
 			columnNames = append(columnNames, col["column_name"])
-		}
-	}
-
-	if sc.VDE {
-		perm, err = sc.AccessTablePerm(tblname, `read`)
-		if err != nil || sc.AccessColumns(tblname, &queryColumns, false) != nil {
-			return `Access denied`
 		}
 	}
 
@@ -736,7 +736,7 @@ func dbfindTag(par parFunc) string {
 		}
 		data = append(data, row)
 	}
-	if sc.VDE && perm != nil && len(perm[`filter`]) > 0 {
+	if perm != nil && len(perm[`filter`]) > 0 {
 		result := make([]interface{}, len(data))
 		for i, item := range data {
 			row := make(map[string]string)
