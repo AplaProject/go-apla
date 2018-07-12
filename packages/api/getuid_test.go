@@ -25,6 +25,11 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
 
+type PubSign struct {
+	Pub  string
+	Sign string
+}
+
 func TestGetUID(t *testing.T) {
 	var ret getUIDResult
 	err := sendGet(`getuid`, nil, &ret)
@@ -40,7 +45,7 @@ func TestGetUID(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	sign, err := crypto.Sign(priv, ret.UID)
+	sign, err := crypto.Sign(priv, nonceSalt+ret.UID)
 	if err != nil {
 		t.Error(err)
 		return
@@ -52,6 +57,20 @@ func TestGetUID(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	list := []PubSign{
+		{`b0a7bfd6a5bbc9e30a116721e232a7718510178bb22e35a40e09d7933b1a343fa7137f916d1f7198360a6c5c47c29ad38bfe3f097a793002e99847040be00a8`,
+			`3045022100c19d0e133b60de85eaa4bd1373cc940e1bab978baca06c3bc83da3b51fd5877f0220664f16d71a0e3bed39ee28dcbbc6df8efedebc2e743ad39d896987cbef3d7b2f`},
+		{`3df7dcede40579ae7f818a5a4402cc3ea90fbc9b286514c76b28c5c02c6f36d23bdc3c7a282f07274a0a1a61da2921fa2f6961f846f959b5cf8e7cee570699`,
+			`30450221009a6084dac666a2630775adf288279937a64caaddf6c000c1fbf4e2f50ac02f9b02206fd7bf1b9f04f3bbf02cab9f1de4e9066b3f653548175b0ff9a3ae42218b11ea`},
+	}
+	for _, item := range list {
+		form = url.Values{"pubkey": {item.Pub}, "signature": {item.Sign}}
+		err = sendPost(`login`, &form, &lret)
+		if err != nil {
+			t.Error(err)
+		}
+	}
+
 	gAuth = lret.Token
 	var ref refreshResult
 	err = sendPost(`refresh`, &url.Values{"token": {lret.Refresh}}, &ref)

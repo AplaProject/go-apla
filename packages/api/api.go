@@ -255,6 +255,9 @@ func fillParams(params map[string]int) apiHandle {
 			case pInt64:
 				data.params[key] = converter.StrToInt64(val)
 			case pHex:
+				if key == `pubkey` && len(val) < 128 {
+					val = val[:64] + strings.Repeat(`0`, 128-len(val)) + val[64:]
+				}
 				bin, err := hex.DecodeString(val)
 				if err != nil {
 					logger.WithFields(log.Fields{"type": consts.ConversionError, "value": val, "error": err}).Error("decoding http parameter from hex")
