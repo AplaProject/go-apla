@@ -256,7 +256,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetBlockHistory":              GetBlockHistory,
 		"GetMenuHistory":               GetMenuHistory,
 		"GetContractHistory":           GetContractHistory,
-		"MemoryLeak":                   MemoryLeak,
 	}
 
 	switch vt {
@@ -1843,10 +1842,6 @@ func GetPageHistory(sc *SmartContract, id int64) ([]interface{}, error) {
 	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `pages`, id)
 }
 
-func MemoryLeak(sc *SmartContract) error {
-	MemoryLeak(sc)
-	return nil
-}
 func GetMenuHistory(sc *SmartContract, id int64) ([]interface{}, error) {
 	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `menu`, id)
 }
