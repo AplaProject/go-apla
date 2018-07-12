@@ -10,8 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// GetDataFromExcel returns json by parameters range
-func GetDataFromExcel(sc *SmartContract, binaryID, startLine, linesCount, sheetNum int64) (data []interface{}, err error) {
+// GetDataFromXLSX returns json by parameters range
+func GetDataFromXLSX(sc *SmartContract, binaryID, startLine, linesCount, sheetNum int64) (data []interface{}, err error) {
 	book, err := excelBookFromStoredBinary(sc, binaryID)
 	if err != nil || book == nil {
 		return nil, err
@@ -31,8 +31,8 @@ func GetDataFromExcel(sc *SmartContract, binaryID, startLine, linesCount, sheetN
 	return processedRows, nil
 }
 
-// GetRowsCount returns count of rows from excel file
-func GetRowsCount(sc *SmartContract, binaryID, sheetNum int64) (int, error) {
+// GetRowsCountXLSX returns count of rows from excel file
+func GetRowsCountXLSX(sc *SmartContract, binaryID, sheetNum int64) (int, error) {
 	book, err := excelBookFromStoredBinary(sc, binaryID)
 	if err != nil {
 		return -1, err
