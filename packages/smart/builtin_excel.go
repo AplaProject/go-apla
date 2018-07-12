@@ -20,6 +20,9 @@ func GetDataFromXLSX(sc *SmartContract, binaryID, startLine, linesCount, sheetNu
 	sheetName := book.GetSheetName(int(sheetNum))
 	rows := book.GetRows(sheetName)
 	endLine := startLine + linesCount
+	if endLine > int64(len(rows)) {
+		endLine = int64(len(rows))
+	}
 	processedRows := []interface{}{}
 	for ; startLine < endLine; startLine++ {
 		var row []interface{}
