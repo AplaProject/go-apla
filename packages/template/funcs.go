@@ -180,7 +180,8 @@ func init() {
 		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
 	}}
 	tails[`binary`] = forTails{map[string]tailInfo{
-		`ById`: {tplFunc{tailTag, defaultTailFull, `id`, `id`}, false},
+		`ById`:      {tplFunc{tailTag, defaultTailFull, `id`, `id`}, false},
+		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `ecosystem`}, false},
 	}}
 }
 
@@ -1191,14 +1192,13 @@ func imageTag(par parFunc) string {
 
 func binaryTag(par parFunc) string {
 	var ecosystemID string
+
+	defaultTail(par, `binary`)
 	if par.Node.Attr[`ecosystem`] != nil {
 		ecosystemID = par.Node.Attr[`ecosystem`].(string)
 	} else {
 		ecosystemID = (*par.Workspace.Vars)[`ecosystem_id`]
 	}
-
-	defaultTail(par, `binary`)
-
 	binary := &model.Binary{}
 	binary.SetTablePrefix(ecosystemID)
 

@@ -288,9 +288,10 @@ func TestBinary(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	params := map[string]string{
-		"AppID":    "1",
-		"MemberID": "1",
-		"Name":     "file",
+		"ApplicationId": "1",
+		"AppID":         "1",
+		"MemberID":      "1",
+		"Name":          "file",
 	}
 
 	data, err := base64.StdEncoding.DecodeString(imageData)
@@ -310,7 +311,7 @@ func TestBinary(t *testing.T) {
 		result string
 	}{
 		{
-			`Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`,
+			`Image(Src: Binary(Name: file, AppID: 1, MemberID: #key_id#))`,
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
@@ -318,7 +319,11 @@ func TestBinary(t *testing.T) {
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
-			`SetVar(name, file)SetVar(app_id, 1)SetVar(member_id, 1)Image(Src: Binary(Name: #name#, AppID: #app_id#, MemberID: #member_id#))`,
+			`SetVar(eco, 1)Image(Src: Binary().ById(` + id + `).Ecosystem(#eco#)`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`SetVar(name, file)SetVar(app_id, 1)SetVar(member_id, #key_id#)Image(Src: Binary(Name: #name#, AppID: #app_id#, MemberID: #member_id#))`,
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
@@ -326,12 +331,12 @@ func TestBinary(t *testing.T) {
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
-			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = 1 AND name = 'file'").Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
-			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type","img"\],"data":\[\["\d+","1","1","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","application/octet-stream","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text","tags"\],"where":"app_id=1 AND member_id = 1 AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
+			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = #key_id# AND name = 'file'").Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type","img"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","application/octet-stream","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text","tags"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
 		},
 		{
-			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = 1 AND name = 'file'").Vars(prefix)Image(Src: "#prefix_data#")`,
-			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type"\],"data":\[\["\d+","1","1","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","application/octet-stream"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text"\],"where":"app_id=1 AND member_id = 1 AND name = 'file'"}},{"tag":"image","attr":{"src":"{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}"}}\]`,
+			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = #key_id# AND name = 'file'").Vars(prefix)Image(Src: "#prefix_data#")`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","application/octet-stream"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"image","attr":{"src":"{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}"}}\]`,
 		},
 	}
 
