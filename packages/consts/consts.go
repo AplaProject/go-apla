@@ -93,6 +93,8 @@ const AvailableBCGap = 4
 
 const DefaultNodesConnectDelay = 6
 
+const MaxTXAttempt = 10
+
 const (
 	TxTypeFirstBlock  = 1
 	TxTypeStopNetwork = 2

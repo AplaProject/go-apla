@@ -123,7 +123,20 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
 		return err
 	}
+
 	limits := NewLimits(b)
+
+	txHashes := make([][]byte, 0, len(b.Transactions))
+	for _, btx := range b.Transactions {
+		txHashes = append(txHashes, btx.TxHash)
+	}
+
+	storedTxes, err := model.GetTxesByHashlist(dbTransaction, txHashes)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting txes by hashlist")
+		return err
+	}
+
 	for curTx, t := range b.Transactions {
 		var (
 			msg string
@@ -136,6 +149,15 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
 		}
+
+		model.IncrementTxAttemptCount(nil, t.TxHash)
+		if stx, ok := storedTxes[string(t.TxHash)]; ok {
+			if stx.Attempt >= consts.MaxTXAttempt-1 {
+				txString := fmt.Sprintf("tx_hash: %s, tx_data: %s, tx_attempt: %d", stx.Hash, stx.Data, stx.Attempt)
+				log.WithFields(log.Fields{"type": consts.BadTxError, "tx_info": txString}).Error("tx attempts exceeded, transaction marked as bad")
+			}
+		}
+
 		msg, err = t.Play()
 		if err == nil && t.TxSmart != nil {
 			err = limits.CheckLimit(t)
@@ -147,8 +169,8 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
-				model.IncrementTxAttemptCount(t.DbTransaction, t.TxHash)
 			}
+
 			errRoll := dbTransaction.RollbackSavepoint(curTx)
 			if errRoll != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("rolling back to previous savepoint")
@@ -158,7 +180,6 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 				break
 			}
 			// skip this transaction
-			model.MarkTransactionUsed(t.DbTransaction, t.TxHash)
 			transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
 			if t.SysUpdate {
 				if err = syspar.SysUpdate(t.DbTransaction); err != nil {
