@@ -265,7 +265,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetBlockHistoryRow":           GetBlockHistoryRow,
 		"GetMenuHistoryRow":            GetMenuHistoryRow,
 		"GetContractHistoryRow":        GetContractHistoryRow,
-		"GetJSONFromExcel":             GetJSONFromExcel,
+		"GetDataFromExcel":             GetDataFromExcel,
 		"GetRowsCountExcel":            GetRowsCount,
 	}
 

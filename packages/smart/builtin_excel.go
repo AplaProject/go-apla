@@ -2,9 +2,7 @@ package smart
 
 import (
 	"bytes"
-	"encoding/json"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 
 	xl "github.com/360EntSecGroup-Skylar/excelize"
@@ -12,11 +10,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// GetJSONFromExcel returns json by parameters range
-func GetJSONFromExcel(sc *SmartContract, binaryID, startLine, linesCount, sheetNum int64) (data string, err error) {
+// GetDataFromExcel returns json by parameters range
+func GetDataFromExcel(sc *SmartContract, binaryID, startLine, linesCount, sheetNum int64) (data []interface{}, err error) {
 	book, err := excelBookFromStoredBinary(sc, binaryID)
 	if err != nil || book == nil {
-		return ``, err
+		return nil, err
 	}
 
 	sheetName := book.GetSheetName(int(sheetNum))
@@ -24,14 +22,13 @@ func GetJSONFromExcel(sc *SmartContract, binaryID, startLine, linesCount, sheetN
 	endLine := startLine + linesCount
 	processedRows := []interface{}{}
 	for ; startLine < endLine; startLine++ {
-		processedRows = append(processedRows, rows[startLine])
+		var row []interface{}
+		for _, item := range rows[startLine] {
+			row = append(row, item)
+		}
+		processedRows = append(processedRows, row)
 	}
-	jsonData, err := json.Marshal(processedRows)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling excel data")
-		return ``, err
-	}
-	return string(jsonData), nil
+	return processedRows, nil
 }
 
 // GetRowsCount returns count of rows from excel file
