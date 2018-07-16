@@ -2598,7 +2598,9 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
       if Size($Value) == 0 {
         warning "Value was not received"
       }
-      ic
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
     }
 }', %[2]d, 'ContractConditions("MainCondition")', 2),
 ('113', 'NewVDE', 'contract NewVDE {
@@ -2610,27 +2612,27 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
 		}
 	
 		conditions {
-            if Size(VDEName) == 0 {
+            if Size($VDEName) == 0 {
                 warning "VDEName was not received"
             }
 
-            if Size(DBUser) == 0 {
+            if Size($DBUser) == 0 {
                 warning "DBName was not received"
             }
 
-            if Size(DBPassword) == 0 {
+            if Size($DBPassword) == 0 {
                 warning "DBPassword was not received"
             }
 
-            if VDEAPIPort <=0  {
-                warning VDE API PORT not recived
+            if $VDEAPIPort <= 0  {
+                warning "VDE API PORT not received"
             }
             
 		}
 	
 		action {
             CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
-            $result = "VDE " + $VDEName + " created"
+            $result = "VDE" + $VDEName + "created"
 		}
 }', %[2]d, 'ContractConditions("MainCondition")', 1),
 	('114', 'ListVDE', 'contract ListVDE {
