@@ -1,5 +1,7 @@
 package types
 
+import "database/sql/driver"
+
 type RegistryType int8
 type RegistryAction int8
 
@@ -21,12 +23,27 @@ type Registry struct {
 	Type      RegistryType
 }
 
-type MetadataStorage interface {
-	Insert(registry *Registry, pkValue string, value interface{}) error
+type MetadataRegistryReader interface {
 	Get(registry *Registry, pkValue string, out interface{}) error
+	Walk(registry *Registry, fn func(jsonRow string) bool) error
+}
 
-	Find(registry *Registry, findFunc func(value interface{}) bool) (interface{}, error)
-	FindMany(registry *Registry, findFunc func(value interface{}) error) ([]interface{}, error)
+type MetadataRegistryWriter interface {
+	Insert(registry *Registry, pkValue string, value interface{}) error
+}
+
+type MetadataRegistry interface {
+	MetadataRegistryReader
+	MetadataRegistryWriter
+	driver.Tx
+}
+
+type MetadataRegistryStorage interface {
+	Begin(writable bool) (MetadataRegistry, error)
+
+	// Storage implements StorageTx's methods by wrapping each method in his own transaction
+	//MetadataRegistryReader
+	//MetadataRegistryWriter
 }
 
 type RegistryAccessor interface {
