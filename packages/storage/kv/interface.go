@@ -1,17 +1,25 @@
-//go:generate sh -c "mockery -inpkg -name DB -print > file.tmp && mv file.tmp kv_storage_mock.go"
+//go:generate sh -c "mockery -inpkg -name Database -print > file.tmp && mv file.tmp database_mock.go"
+//go:generate sh -c "mockery -inpkg -name Transaction -print > file.tmp && mv file.tmp transaction_mock.go"
+
 package kv
 
-import "database/sql/driver"
+import (
+	"database/sql/driver"
 
-// TODO Delete, Update, Find, Transactions
+	"github.com/tidwall/buntdb"
+)
+
+// Database and Transaction interfaces currently fits only buntDB realisation
 type Database interface {
-	Begin(writeable bool) (Transaction, error)
+	Begin(writeable bool) (*buntdb.Tx, error)
 }
 
 type Transaction interface {
 	driver.Tx
 
-	Insert(key, value string) error
-	Get(key string) (string, error)
-	Walk(keyPattern string, fn func(value string) bool) error
+	Get(key string, ignoreExpired ...bool) (val string, err error)
+	Set(key, value string, opts *buntdb.SetOptions) (previousValue string, replaced bool, err error)
+	Delete(key string) (val string, err error)
+
+	AscendKeys(pattern string, iterator func(key, value string) bool) error
 }

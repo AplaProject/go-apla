@@ -30,6 +30,8 @@ type MetadataRegistryReader interface {
 
 type MetadataRegistryWriter interface {
 	Insert(registry *Registry, pkValue string, value interface{}) error
+	Update(registry *Registry, pkValue string, newValue interface{}) error
+	Delete(registry *Registry, pkValue string) error
 }
 
 type MetadataRegistry interface {
@@ -38,12 +40,9 @@ type MetadataRegistry interface {
 	driver.Tx
 }
 
-type MetadataRegistryStorage interface {
+type MetadataRegistryProvider interface {
+	// Transaction must be closed by calling Commit() (writable) or Rollback() (writable/readable) when done
 	Begin(writable bool) (MetadataRegistry, error)
-
-	// Storage implements StorageTx's methods by wrapping each method in his own transaction
-	//MetadataRegistryReader
-	//MetadataRegistryWriter
 }
 
 type RegistryAccessor interface {
