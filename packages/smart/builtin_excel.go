@@ -35,7 +35,7 @@ func GetDataFromXLSX(sc *SmartContract, binaryID, startLine, linesCount, sheetNu
 }
 
 // GetRowsCountXLSX returns count of rows from excel file
-func GetRowsCountXLSX(sc *SmartContract, binaryID, sheetNum int64) (int, error) {
+func GetRowsCountXLSX(sc *SmartContract, binaryID, sheetNum int64) (int64, error) {
 	book, err := excelBookFromStoredBinary(sc, binaryID)
 	if err != nil {
 		return -1, err
@@ -43,7 +43,7 @@ func GetRowsCountXLSX(sc *SmartContract, binaryID, sheetNum int64) (int, error) 
 
 	sheetName := book.GetSheetName(int(sheetNum))
 	rows := book.GetRows(sheetName)
-	return len(rows), nil
+	return int64(len(rows)), nil
 }
 
 func excelBookFromStoredBinary(sc *SmartContract, binaryID int64) (*xl.File, error) {
