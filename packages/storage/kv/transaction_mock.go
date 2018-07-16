@@ -37,6 +37,27 @@ func (_m *MockTransaction) Commit() error {
 	return r0
 }
 
+// Delete provides a mock function with given fields: key
+func (_m *MockTransaction) Delete(key string) (string, error) {
+	ret := _m.Called(key)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(key)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(key)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Get provides a mock function with given fields: key, ignoreExpired
 func (_m *MockTransaction) Get(key string, ignoreExpired ...bool) (string, error) {
 	_va := make([]interface{}, len(ignoreExpired))

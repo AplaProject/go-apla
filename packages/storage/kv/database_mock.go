@@ -10,14 +10,16 @@ type MockDatabase struct {
 }
 
 // Begin provides a mock function with given fields: writeable
-func (_m *MockDatabase) Begin(writeable bool) (buntdb.Tx, error) {
+func (_m *MockDatabase) Begin(writeable bool) (*buntdb.Tx, error) {
 	ret := _m.Called(writeable)
 
-	var r0 buntdb.Tx
-	if rf, ok := ret.Get(0).(func(bool) buntdb.Tx); ok {
+	var r0 *buntdb.Tx
+	if rf, ok := ret.Get(0).(func(bool) *buntdb.Tx); ok {
 		r0 = rf(writeable)
 	} else {
-		r0 = ret.Get(0).(buntdb.Tx)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*buntdb.Tx)
+		}
 	}
 
 	var r1 error

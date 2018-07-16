@@ -3,7 +3,7 @@ package registry_test
 import (
 	"testing"
 
-	registry2 "github.com/GenesisKernel/go-genesis/packages/registry"
+	"github.com/GenesisKernel/go-genesis/packages/registry"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,10 +25,10 @@ func TestMetadataTx_Insert(t *testing.T) {
 		value    interface{}
 
 		expJson string
-		err     error
+		err     bool
 	}{
 		{
-			testname: "insert",
+			testname: "insert-good",
 			registry: types.Registry{
 				Name:      "key",
 				Ecosystem: &types.Ecosystem{ID: 1},
@@ -41,23 +41,43 @@ func TestMetadataTx_Insert(t *testing.T) {
 				Field2: make([]byte, 10),
 			},
 
-			err: nil,
+			err: false,
+		},
+
+		{
+			testname: "insert-bad-1",
+			registry: types.Registry{
+				Name:      "key",
+				Ecosystem: &types.Ecosystem{ID: 1},
+				Type:      types.RegistryTypeMetadata,
+			},
+			pkValue: "1",
+			value:   make(chan int),
+
+			err: true,
 		},
 	}
 
 	for _, c := range cases {
 		bunt, err := buntdb.Open(":memory:")
-		require.Nil(t, err)
+		require.Nil(t, err, c.testname)
 
-		registry := registry2.NewMetadataProvider(bunt)
-		metadataTx, err := registry.Begin(true)
-		require.Nil(t, err)
+		reg := registry.NewMetadataProvider(bunt)
+		metadataTx, err := reg.Begin(true)
+		require.Nil(t, err, c.testname)
 
-		require.Nil(t, metadataTx.Insert(&c.registry, c.pkValue, c.value))
+		err = metadataTx.Insert(&c.registry, c.pkValue, c.value)
+		if c.err {
+			assert.Error(t, err)
+			continue
+		}
+
+		assert.Nil(t, err)
 
 		saved := testModel{}
-		require.Nil(t, metadataTx.Get(&c.registry, c.pkValue, &saved))
+		err = metadataTx.Get(&c.registry, c.pkValue, &saved)
+		require.Nil(t, err)
 
-		assert.Equal(t, c.value, saved)
+		assert.Equal(t, c.value, saved, c.testname)
 	}
 }
