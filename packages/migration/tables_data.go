@@ -119,7 +119,7 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 			"urlname": "ContractConditions(\"MainCondition\")",
 			"page": "ContractConditions(\"MainCondition\")",
 			"roles_access": "ContractConditions(\"MainCondition\")",
-			"delete": "ContractConditions(\"MainCondition\")"}', 
+			"status": "ContractConditions(\"MainCondition\")"}', 
 			'ContractConditions("MainCondition")'),
 	('14', 'applications',
 		'{"insert": "ContractConditions(\"MainCondition\")",
