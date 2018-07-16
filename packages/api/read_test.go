@@ -27,27 +27,21 @@ import (
 
 func TestRead(t *testing.T) {
 	var (
-		err     error
-		ret     vdeCreateResult
 		retCont contentResult
 	)
 
 	assert.NoError(t, keyLogin(1))
 
-	if err = sendPost(`vde/create`, nil, &ret); err != nil &&
-		err.Error() != `400 {"error": "E_VDECREATED", "msg": "Virtual Dedicated Ecosystem is already created" }` {
-		t.Error(err)
-		return
-	}
 	name := randName(`tbl`)
-	form := url.Values{"vde": {`true`}, "Name": {name}, "Columns": {`[{"name":"my","type":"varchar", "index": "1", 
+	form := url.Values{"Name": {name}, "ApplicationId": {`1`},
+		"Columns": {`[{"name":"my","type":"varchar", "index": "1", 
 	  "conditions":"true"},
 	{"name":"amount", "type":"number","index": "0", "conditions":"{\"update\":\"true\", \"read\":\"true\"}"},
 	{"name":"active", "type":"character","index": "0", "conditions":"{\"update\":\"true\", \"read\":\"false\"}"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "read": "true", "new_column": "true"}`}}
 	assert.NoError(t, postTx(`NewTable`, &form))
 
-	contFill := fmt.Sprintf(`contract %s {
+	contList := []string{`contract %s {
 		action {
 			DBInsert("%[1]s", "my,amount", "Alex", 100 )
 			DBInsert("%[1]s", "my,amount", "Alex 2", 13300 )
@@ -56,51 +50,48 @@ func TestRead(t *testing.T) {
 			DBInsert("%[1]s", "my,amount", "John Mike", 0 )
 			DBInsert("%[1]s", "my,amount", "Serena Martin", 777 )
 		}
-	}
-
-	contract Get%[1]s {
+	}`,
+		`contract Get%s {
 		action {
 			var row array
 			row = DBFind("%[1]s").Where("id>= ? and id<= ?", 2, 5)
 		}
-	}
-
-	contract GetOK%[1]s {
+	}`,
+		`contract GetOK%s {
 		action {
 			var row array
 			row = DBFind("%[1]s").Columns("my,amount").Where("id>= ? and id<= ?", 2, 5)
 		}
-	}
-
-	contract GetData%[1]s {
+	}`,
+		`contract GetData%s {
 		action {
 			var row array
 			row = DBFind("%[1]s").Columns("active").Where("id>= ? and id<= ?", 2, 5)
 		}
+	}`,
+		`func ReadFilter%s bool {
+				var i int
+				var row map
+				while i < Len($data) {
+					row = $data[i]
+					if i == 1 || i == 3 {
+						row["my"] = "No name"
+						$data[i] = row
+					}
+					i = i+ 1
+				}
+				return true
+			}`,
 	}
-
-	func ReadFilter%[1]s bool {
-		var i int
-		var row map
-		while i < Len($data) {
-			row = $data[i]
-			if i == 1 || i == 3 {
-				row["my"] = "No name"
-				$data[i] = row
-			}
-			i = i+ 1
-		}
-		return true
+	for _, contract := range contList {
+		form = url.Values{"Value": {fmt.Sprintf(contract, name)}, "ApplicationId": {`1`},
+			"Conditions": {`true`}}
+		assert.NoError(t, postTx(`NewContract`, &form))
 	}
-	`, name)
-	form = url.Values{"Value": {contFill},
-		"Conditions": {`true`}, "vde": {`true`}}
-	assert.NoError(t, postTx(`NewContract`, &form))
-	assert.NoError(t, postTx(name, &url.Values{"vde": {`true`}}))
+	assert.NoError(t, postTx(name, &url.Values{}))
 
-	assert.EqualError(t, postTx(`GetData`+name, &url.Values{"vde": {`true`}}), `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"Access denied\"}" }`)
-
-	assert.NoError(t, sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
+	assert.EqualError(t, postTx(`GetData`+name, &url.Values{}), `{"type":"panic","error":"Access denied"}`)
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {
 		`DBFind(` + name + `, src).Limit(2)`}}, &retCont))
 
 	if strings.Contains(RawToString(retCont.Tree), `active`) {
@@ -108,23 +99,28 @@ func TestRead(t *testing.T) {
 		return
 	}
 
-	assert.NoError(t, postTx(`GetOK`+name, &url.Values{"vde": {`true`}}))
+	assert.NoError(t, postTx(`GetOK`+name, &url.Values{}))
 
-	assert.NoError(t, postTx(`EditColumn`, &url.Values{"vde": {`true`}, `TableName`: {name}, `Name`: {`active`},
+	assert.NoError(t, postTx(`EditColumn`, &url.Values{`TableName`: {name}, `Name`: {`active`},
 		`Permissions`: {`{"update":"true", "read":"ContractConditions(\"MainCondition\")"}`}}))
 
-	assert.NoError(t, postTx(`Get`+name, &url.Values{"vde": {`true`}}))
+	assert.NoError(t, postTx(`Get`+name, &url.Values{}))
 
-	form = url.Values{"Name": {name}, "vde": {`true`},
-		"Permissions": {`{"insert": "ContractConditions(\"MainCondition\")", 
-		"update" : "true", "filter": "ReadFilter` + name + `()", "new_column": "ContractConditions(\"MainCondition\")"}`}}
+	form = url.Values{"Name": {name}, "InsertPerm": {`ContractConditions("MainCondition")`},
+		"UpdatePerm": {"true"}, "ReadPerm": {`false`}, "NewColumnPerm": {`true`}}
+	assert.NoError(t, postTx(`EditTable`, &form))
+	assert.EqualError(t, postTx(`GetOK`+name, &url.Values{}), `{"type":"panic","error":"Access denied"}`)
+
+	form = url.Values{"Name": {name}, "InsertPerm": {`ContractConditions("MainCondition")`},
+		"UpdatePerm": {"true"}, "FilterPerm": {`ReadFilter` + name + `()`},
+		"NewColumnPerm": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`EditTable`, &form))
 
 	var tableInfo tableResult
-	assert.NoError(t, sendGet(`table/`+name+`?vde=true`, nil, &tableInfo))
+	assert.NoError(t, sendGet(`table/`+name, nil, &tableInfo))
 	assert.Equal(t, `ReadFilter`+name+`()`, tableInfo.Filter)
 
-	assert.NoError(t, sendPost(`content`, &url.Values{`vde`: {`true`}, `template`: {
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {
 		`DBFind(` + name + `, src).Limit(2)`}}, &retCont))
 	if !strings.Contains(RawToString(retCont.Tree), `No name`) {
 		t.Errorf(`wrong tree %s`, RawToString(retCont.Tree))

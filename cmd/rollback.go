@@ -4,7 +4,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
+	"github.com/GenesisKernel/go-genesis/packages/rollback"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	log "github.com/sirupsen/logrus"
@@ -39,8 +39,7 @@ var rollbackCmd = &cobra.Command{
 			log.WithError(err).Fatal("loading contracts")
 			return
 		}
-		parser := new(parser.Parser)
-		err := parser.RollbackToBlockID(blockID)
+		err := rollback.ToBlockID(blockID, nil, log.WithFields(log.Fields{}))
 		if err != nil {
 			log.WithError(err).Fatal("rollback to block id")
 			return

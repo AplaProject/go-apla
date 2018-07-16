@@ -148,7 +148,7 @@ func TestJSONTable(t *testing.T) {
 	name := randName(`json`)
 	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
 		"conditions":"true"}, {"name":"Doc", "type":"json","index": "0", "conditions":"true"}]`},
-		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+		"ApplicationId": {`1`}, "Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	assert.NoError(t, postTx(`NewTable`, &form))
 
 	checkGet := func(want string) {
@@ -170,7 +170,7 @@ func TestJSONTable(t *testing.T) {
 			DBInsert("` + name + `", "MyName,Doc", "test3", "{\"title\": {\"name\":\"Test att\",\"text\":\"low\"}}")
 			DBInsert("` + name + `", "MyName,doc", "test4", "{\"languages\": {\"arr_id\":{\"1\":\"0\",\"2\":\"0\",\"3\":\"0\"}}}")
 			DBInsert("` + name + `", "MyName,doc", "test5", "{\"app_id\": \"33\"}")
-		}}`},
+		}}`}, "ApplicationId": {`1`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
 
@@ -193,7 +193,7 @@ func TestJSONTable(t *testing.T) {
 				empty = DBFind("` + name + `").WhereId(4).One("doc->languages->arr_id->2")
 				$result = out + Str(DBFind("` + name + `").WhereId($Id).One("doc->check")) + tmp + where +one + empty
 			}
-		}`},
+		}`}, "ApplicationId": {`1`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
 
@@ -204,7 +204,7 @@ func TestJSONTable(t *testing.T) {
 			mydoc["type"] = "doc"
 			mydoc["doc"] = "Some test text."
 			DBUpdate("` + name + `", 2, "myname,Doc", "test3", mydoc)
-		}}`},
+		}}`}, "ApplicationId": {`1`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
 
@@ -220,7 +220,7 @@ func TestJSONTable(t *testing.T) {
 				DBUpdate("` + name + `", 3, "doc->flag,doc->sub", "Flag", 100)
 				DBUpdate("` + name + `", 3, "doc->temp", "Temp")
 		  }}
-		`},
+		`}, "ApplicationId": {`1`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
 	assert.NoError(t, postTx(name, &url.Values{}))
@@ -239,7 +239,7 @@ func TestJSONTable(t *testing.T) {
 		}
 		action { 
 			$result = DBFind("contracts").WhereId($Id).Row()
-		}}`},
+		}}`}, "ApplicationId": {`1`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
 
@@ -247,7 +247,7 @@ func TestJSONTable(t *testing.T) {
 		action { 
 			$temp = res` + name + `("Id",10)
 			$result = $temp["id"]
-		}}`},
+		}}`}, "ApplicationId": {`1`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
 
@@ -282,5 +282,46 @@ func TestJSONTable(t *testing.T) {
 	for _, item := range forTest {
 		assert.NoError(t, sendPost(`content`, &url.Values{`template`: {item.input}}, &ret))
 		assert.Equal(t, item.want, RawToString(ret.Tree))
+	}
+}
+
+func TestTableDesc(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	name := randName(`tbl`)
+	form := url.Values{"Name": {name}, "Columns": {`[{"name":"desc","type":"varchar", "index": "0", 
+	  "conditions":{"update":"true", "read":"true"}}]`}, "ApplicationId": {"1"},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	assert.NoError(t, postTx(`NewTable`, &form))
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action { 
+			DBInsert("` + name + `", "desc", "test")
+			DBUpdate("` + name + `", 1, "desc", "new test")
+			$result = DBFind("` + name + `").Columns("desc").WhereId(1).One("desc")
+		   var vals map
+		   vals = DBRow("pages").Columns("NAME, menu").Where("id = ?", 1)
+		   $result = $result + vals["name"]
+		}}`}, "ApplicationId": {"1"},
+		"Conditions": {`ContractConditions("MainCondition")`}}
+	assert.NoError(t, postTx("NewContract", &form))
+
+	_, msg, err := postTxResult(name, &url.Values{})
+	assert.NoError(t, err)
+	if msg != `new testdefault_page` {
+		t.Errorf(`wrong msg %s`, msg)
+	}
+
+	form = url.Values{
+		"template": {`DBFind("` + name + `", src1)`},
+	}
+	var ret contentResult
+	assert.NoError(t, sendPost(`content`, &form, &ret))
+
+	if RawToString(ret.Tree) != `[{"tag":"dbfind","attr":{"columns":["id","desc"],"data":[["1","new test"]],"name":"`+name+`","source":"src1","types":["text","text"]}}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(ret.Tree)))
+		return
 	}
 }
