@@ -17,6 +17,7 @@
 package utils
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -61,6 +62,55 @@ type BlockData struct {
 
 func (b BlockData) String() string {
 	return fmt.Sprintf("BlockID:%d, Time:%d, NodePosition %d", b.BlockID, b.Time, b.NodePosition)
+}
+
+// ParseBlockHeader is parses block header
+func ParseBlockHeader(binaryBlock *bytes.Buffer, checkMaxSize bool) (BlockData, error) {
+	var block BlockData
+	var err error
+
+	if binaryBlock.Len() < 9 {
+		log.WithFields(log.Fields{"size": binaryBlock.Len(), "type": consts.SizeDoesNotMatch}).Error("binary block size is too small")
+		return BlockData{}, fmt.Errorf("bad binary block length")
+	}
+
+	blockVersion := int(converter.BinToDec(binaryBlock.Next(2)))
+
+	if checkMaxSize && int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
+		log.WithFields(log.Fields{"size": binaryBlock.Len(), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
+		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
+			binaryBlock.Len(), syspar.GetMaxBlockSize())
+
+		return BlockData{}, err
+	}
+
+	block.BlockID = converter.BinToDec(binaryBlock.Next(4))
+	block.Time = converter.BinToDec(binaryBlock.Next(4))
+	block.Version = blockVersion
+	block.EcosystemID = converter.BinToDec(binaryBlock.Next(4))
+	block.KeyID, err = converter.DecodeLenInt64Buf(binaryBlock)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "block_time": block.Time, "block_version": block.Version, "error": err}).Error("decoding binary block walletID")
+		return BlockData{}, err
+	}
+	block.NodePosition = converter.BinToDec(binaryBlock.Next(1))
+
+	if block.BlockID > 1 {
+		signSize, err := converter.DecodeLengthBuf(binaryBlock)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign size")
+			return BlockData{}, err
+		}
+		if binaryBlock.Len() < signSize {
+			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign")
+			return BlockData{}, fmt.Errorf("bad block format (no sign)")
+		}
+		block.Sign = binaryBlock.Next(int(signSize))
+	} else {
+		binaryBlock.Next(1)
+	}
+
+	return block, nil
 }
 
 var (

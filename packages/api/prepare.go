@@ -20,12 +20,13 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 )
 
-const multipartFormMaxMemory = 32 << 20 // 32 MB
+const multipartFormMaxMemory = 100000
 
 type prepareResult struct {
 	ID       string   `json:"request_id"`
@@ -90,6 +91,7 @@ func (h *contractHandlers) prepare(r *http.Request, req *prepareRequest) (*prepa
 	client := getClient(r)
 
 	forSigns := []string{}
+	limitForsign := int(syspar.GetMaxForsignSize())
 	for _, rc := range req.Contracts {
 		contract := getContract(r, rc.Contract)
 		if contract == nil {
@@ -110,6 +112,10 @@ func (h *contractHandlers) prepare(r *http.Request, req *prepareRequest) (*prepa
 		forSign, err := contract.ForSign(bufReq, smartTx, rc)
 		if err != nil {
 			return nil, newError(err, http.StatusBadRequest)
+		}
+
+		if len(forSign) > limitForsign {
+			return nil, errLimitForsign.Errorf(len(forSign))
 		}
 
 		forSigns = append(forSigns, forSign)

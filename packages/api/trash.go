@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -67,7 +68,7 @@ func (c *Contract) ValidateParams(params getter) (err error) {
 			}
 		}
 		if fitem.Type.String() == script.Decimal {
-			re := regexp.MustCompile(`^\d+$`)
+			re := regexp.MustCompile(`^\d+([\.\,]\d+)?$`)
 			if !re.Match([]byte(val)) {
 				logger.WithFields(log.Fields{"type": consts.InvalidObject, "value": val}).Error("The value of money is not valid")
 				err = fmt.Errorf("The value of money %s is not valid", val)
@@ -108,7 +109,10 @@ func (c *Contract) ForSignTx(req *tx.Request, smartTx *tx.SmartContract) []strin
 }
 
 func (c *Contract) ForSingParams(req *tx.RequestContract, params map[string]string) ([]string, error) {
+	var curSize int64
+
 	forSign := []string{}
+	limitSize := syspar.GetMaxTxSize()
 
 	info := c.Info()
 	for _, fitem := range *info.Tx {
@@ -177,6 +181,12 @@ func (c *Contract) ForSingParams(req *tx.RequestContract, params map[string]stri
 				val = `0`
 			}
 		}
+
+		curSize += int64(len(val))
+		if curSize > limitSize {
+			return nil, errLimitTxSize.Errorf(curSize)
+		}
+
 		forSign = append(forSign, val)
 	}
 

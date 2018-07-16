@@ -2,13 +2,13 @@ package api
 
 import (
 	"net/http"
-
-	"github.com/gorilla/mux"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -31,6 +31,15 @@ func configOptionHandler(w http.ResponseWriter, r *http.Request) {
 	errorResponse(w, newError(errServer, http.StatusBadRequest))
 }
 
+func replaceHttpSchemeToWs(centrifugoURL string) string {
+	if strings.HasPrefix(centrifugoURL, "http:") {
+		return strings.Replace(centrifugoURL, "http:", "ws:", -1)
+	} else if strings.HasPrefix(centrifugoURL, "https:") {
+		return strings.Replace(centrifugoURL, "https:", "wss:", -1)
+	}
+	return centrifugoURL
+}
+
 func centrifugoAddressHandler(w http.ResponseWriter, r *http.Request) {
 	logger := getLogger(r)
 
@@ -40,5 +49,5 @@ func centrifugoAddressHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonResponse(w, conf.Config.Centrifugo.URL)
+	jsonResponse(w, replaceHttpSchemeToWs(conf.Config.Centrifugo.URL))
 }

@@ -20,8 +20,8 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"net/url"
-	"strings"
 	"testing"
 	"time"
 
@@ -37,19 +37,50 @@ type tplItem struct {
 type tplList []tplItem
 
 func TestAPI(t *testing.T) {
-	var ret contentResult
-	var retHash hashResult
-	err := sendPost(`content/hash/default_page`, &url.Values{}, &retHash)
-	if err != nil {
+	var (
+		ret               contentResult
+		retHash, retHash2 hashResult
+		err               error
+		msg               string
+	)
+
+	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
+	name := randName(`page`)
+	value := `Div(,#ecosystem_id#)
+	Div(,#key_id#)
+	Div(,#role_id#)
+	Div(,#isMobile#)`
+	form := url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
+		"Menu": {`default_menu`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	assert.NoError(t, sendPost(`content/hash/`+name, &url.Values{}, &retHash))
 	if len(retHash.Hash) != 64 {
 		t.Error(`wrong hash ` + retHash.Hash)
 		return
 	}
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action {
+			$result = $key_id
+		}}`}, "ApplicationId": {`1`}, "Conditions": {`ContractConditions("MainCondition")`}}
+	assert.NoError(t, postTx("NewContract", &form))
+	_, msg, err = postTxResult(name, &url.Values{})
+	assert.NoError(t, err)
 
-	if err = keyLogin(1); err != nil {
+	gAddress = ``
+	gPrivate = ``
+	gPublic = ``
+	gAuth = ``
+	assert.NoError(t, sendPost(`content/hash/`+name, &url.Values{`ecosystem`: {`1`}, `keyID`: {msg}, `roleID`: {`0`}},
+		&retHash2))
+	if retHash.Hash != retHash2.Hash {
+		t.Error(`Wrong hash`)
+		return
+	}
+	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
@@ -147,6 +178,28 @@ var forTest = tplList{
 		SetVar(varNotZero, 1) If(#varNotZero#>0) { the varNotZero should be visible }
 		If(#varUndefined#>0) { the varUndefined should be hidden }`,
 		`[{"tag":"text","text":"the varNotZero should be visible"}]`},
+}
+
+func TestMoney(t *testing.T) {
+	var ret contentResult
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	size := 10000000
+	money := make([]byte, size)
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < size; i++ {
+		money[i] = '0' + byte(rand.Intn(10))
+	}
+	err := sendPost(`content`, &url.Values{`template`: {`Money(` + string(money) + `)`}}, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(ret.Tree) != `[{"tag":"text","text":"invalid money value"}]` {
+		t.Errorf(`wrong value %s`, RawToString(ret.Tree))
+	}
 }
 
 func TestMobile(t *testing.T) {
@@ -266,9 +319,10 @@ func TestBinary(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	params := map[string]string{
-		"AppID":    "1",
-		"MemberID": "1",
-		"Name":     "file",
+		"ApplicationId": "1",
+		"AppID":         "1",
+		"MemberID":      "1",
+		"Name":          "file",
 	}
 
 	data, err := base64.StdEncoding.DecodeString(imageData)
@@ -288,15 +342,19 @@ func TestBinary(t *testing.T) {
 		result string
 	}{
 		{
-			`Image(Src: Binary(Name: file, AppID: 1, MemberID: 1))`,
-			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/d` + hashImage + `"}}\]`,
+			`Image(Src: Binary(Name: file, AppID: 1, MemberID: #key_id#))`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
 			`Image(Src: Binary().ById(` + id + `)`,
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
-			`SetVar(name, file)SetVar(app_id, 1)SetVar(member_id, 1)Image(Src: Binary(Name: #name#, AppID: #app_id#, MemberID: #member_id#))`,
+			`SetVar(eco, 1)Image(Src: Binary().ById(` + id + `).Ecosystem(#eco#)`,
+			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
+		},
+		{
+			`SetVar(name, file)SetVar(app_id, 1)SetVar(member_id, #key_id#)Image(Src: Binary(Name: #name#, AppID: #app_id#, MemberID: #member_id#))`,
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
@@ -304,12 +362,12 @@ func TestBinary(t *testing.T) {
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
-			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = 1 AND name = 'file'").Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
-			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type","img"\],"data":\[\["\d+","1","1","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","application/octet-stream","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text","tags"\],"where":"app_id=1 AND member_id = 1 AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
+			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = #key_id# AND name = 'file'").Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type","img"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","application/octet-stream","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text","tags"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
 		},
 		{
-			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = 1 AND name = 'file'").Vars(prefix)Image(Src: "#prefix_data#")`,
-			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type"\],"data":\[\["\d+","1","1","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","application/octet-stream"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text"\],"where":"app_id=1 AND member_id = 1 AND name = 'file'"}},{"tag":"image","attr":{"src":"{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}"}}\]`,
+			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = #key_id# AND name = 'file'").Vars(prefix)Image(Src: "#prefix_data#")`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","application/octet-stream"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"image","attr":{"src":"{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}"}}\]`,
 		},
 	}
 
@@ -335,28 +393,25 @@ func TestStringToBinary(t *testing.T) {
 				}
 				conditions {}
 				action {
-					UploadBinary("Name,AppID,Data,DataMimeType", "test", 1, StringToBytes($Content), "text/plain")
+					UploadBinary("Name,ApplicationId,Data,DataMimeType", "test", 1, StringToBytes($Content), "text/plain")
+					$result = $key_id
 				}
 			}
-		`},
-		"Conditions": {"true"},
+		`}, "ApplicationId": {`1`}, "Conditions": {"true"},
 	}
 	assert.NoError(t, postTx("NewContract", &form))
 
 	form = url.Values{"Content": {content}}
-	assert.NoError(t, postTx(contract, &form))
+	_, msg, err := postTxResult(contract, &form)
+	assert.NoError(t, err)
 
 	form = url.Values{
-		"template": {`SetVar(link, Binary(Name: test, AppID: 1)) #link#`},
+		"template": {`SetVar(link, Binary(Name: test, AppID: 1, MemberID: ` + msg + `))#link#`},
 	}
-	var ret struct {
-		Tree []struct {
-			Link string `json:"text"`
-		} `json:"tree"`
-	}
+	var ret contentResult
 	assert.NoError(t, sendPost(`content`, &form, &ret))
-
-	data, err := sendRawForm("GET", strings.TrimSpace(ret.Tree[0].Link), nil)
+	link := RawToString(ret.Tree)
+	data, err := sendRawRequest("GET", link[23:len(link)-3], nil)
 	assert.NoError(t, err)
 	assert.Equal(t, content, string(data))
 }

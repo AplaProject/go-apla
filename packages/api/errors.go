@@ -56,6 +56,8 @@ var (
 	errCheckRole       = errorType{"E_CHECKROLE", "Check role", http.StatusBadRequest}
 	errUpdating        = errorType{"E_UPDATING", "Node is updating blockchain", http.StatusServiceUnavailable}
 	errStopping        = errorType{"E_STOPPING", "Network is stopping", http.StatusServiceUnavailable}
+	errLimitForsign    = errorType{"E_LIMITFORSIGN", "Length of forsign is too big (%d)", http.StatusBadRequest}
+	errLimitTxSize     = errorType{"E_LIMITTXSIZE", "The size of tx is too big (%d)", http.StatusBadRequest}
 )
 
 type errorType struct {

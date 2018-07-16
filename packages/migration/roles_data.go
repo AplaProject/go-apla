@@ -3,7 +3,7 @@ package migration
 var rolesDataSQL = `
 INSERT INTO "%[1]d_roles" ("id", "default_page", "role_name", "deleted", "role_type",
 	"date_created","creator","roles_access") VALUES
-	('1','default_ecosystem_page', 'Admin', '0', '3', NOW(), '{}', '{}'),
+	('1','', 'Admin', '0', '3', NOW(), '{}', '{}'),
 	('2','', 'Developer', '0', '3', NOW(), '{}', '{}');
 
 	INSERT INTO "%[1]d_roles_participants" ("id","role" ,"member", "date_created")

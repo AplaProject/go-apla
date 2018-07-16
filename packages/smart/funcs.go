@@ -94,14 +94,20 @@ type SmartContract struct {
 }
 
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
-func (sc *SmartContract) AppendStack(contract string) {
+func (sc *SmartContract) AppendStack(contract string) error {
 	cont := sc.TxContract
 	if len(contract) > 0 {
+		for _, item := range cont.StackCont {
+			if item == contract {
+				return fmt.Errorf(eContractLoop, contract)
+			}
+		}
 		cont.StackCont = append(cont.StackCont, contract)
 	} else {
 		cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
 	}
 	(*sc.TxContract.Extend)["stack"] = cont.StackCont
+	return nil
 }
 
 var (
@@ -255,6 +261,12 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetBlockHistory":              GetBlockHistory,
 		"GetMenuHistory":               GetMenuHistory,
 		"GetContractHistory":           GetContractHistory,
+		"GetPageHistoryRow":            GetPageHistoryRow,
+		"GetBlockHistoryRow":           GetBlockHistoryRow,
+		"GetMenuHistoryRow":            GetMenuHistoryRow,
+		"GetContractHistoryRow":        GetContractHistoryRow,
+		"GetDataFromXLSX":              GetDataFromXLSX,
+		"GetRowsCountXLSX":             GetRowsCountXLSX,
 	}
 
 	switch vt {
@@ -340,8 +352,14 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 				if name[0] != '@' {
 					name = fmt.Sprintf(`@%d`, sc.TxSmart.EcosystemID) + name
 				}
-				if sc.TxContract.StackCont[len(sc.TxContract.StackCont)-1] == name {
-					return true
+				for i := len(sc.TxContract.StackCont) - 1; i >= 0; i-- {
+					contName := sc.TxContract.StackCont[i]
+					if strings.HasPrefix(contName, `@`) {
+						if contName == name {
+							return true
+						}
+						break
+					}
 				}
 			}
 		}
@@ -367,11 +385,16 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 				log.WithFields(log.Fields{"contract_name": name, "type": consts.EmptyObject}).Error("There is not conditions in contract")
 				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
 			}
-			_, err := VMRun(sc.VM, block, []interface{}{}, &map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
-				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID})
+			vars := map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
+				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID}
+			if err := sc.AppendStack(name); err != nil {
+				return false, err
+			}
+			_, err := VMRun(sc.VM, block, []interface{}{}, &vars)
 			if err != nil {
 				return false, err
 			}
+			sc.AppendStack(``)
 		} else {
 			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty contract name in ContractConditions")
 			return false, fmt.Errorf(`empty contract name in ContractConditions`)
@@ -513,8 +536,8 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return fmt.Errorf("The table name cannot be empty")
 	}
 
-	if len(name) > 0 && name[0] == '@' {
-		return fmt.Errorf(`The name of the table cannot begin with @`)
+	if !converter.IsLatin(name) {
+		return fmt.Errorf(eLatin, name)
 	}
 
 	tableName := getDefTableName(sc, name)
@@ -546,6 +569,9 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 			data = v.(map[string]interface{})
 		}
 		colname := converter.EscapeSQL(strings.ToLower(data[`name`].(string)))
+		if err := checkColumnName(colname); err != nil {
+			return err
+		}
 		if colList[colname] {
 			return fmt.Errorf(`There are the same columns`)
 		}
@@ -702,6 +728,7 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 func PrepareColumns(columns string) string {
 	colList := make([]string, 0)
 	for _, icol := range strings.Split(columns, `,`) {
+		icol = strings.TrimSpace(icol)
 		if strings.Contains(icol, `->`) {
 			colfield := strings.Split(icol, `->`)
 			if len(colfield) == 2 {
@@ -710,6 +737,8 @@ func PrepareColumns(columns string) string {
 				icol = fmt.Sprintf(`%s::jsonb#>>'{%s}' as "%[1]s.%[3]s"`, colfield[0],
 					strings.Join(colfield[1:], `,`), strings.Join(colfield[1:], `.`))
 			}
+		} else if !strings.ContainsAny(icol, `:*>"`) {
+			icol = `"` + icol + `"`
 		}
 		colList = append(colList, icol)
 	}
@@ -780,19 +809,18 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		ecosystem = sc.TxSmart.EcosystemID
 	}
 	tblname = GetTableName(sc, tblname, ecosystem)
-	if sc.VDE {
-		perm, err = sc.AccessTablePerm(tblname, `read`)
-		if err != nil {
-			return 0, nil, err
-		}
-		cols := strings.Split(columns, `,`)
-		if err = sc.AccessColumns(tblname, &cols, false); err != nil {
-			return 0, nil, err
-		}
-		columns = strings.Join(cols, `,`)
-	}
-	columns = PrepareColumns(columns)
 
+	perm, err = sc.AccessTablePerm(tblname, `read`)
+	if err != nil {
+		return 0, nil, err
+	}
+	colsList := strings.Split(columns, `,`)
+	if err = sc.AccessColumns(tblname, &colsList, false); err != nil {
+		return 0, nil, err
+	}
+	columns = strings.Join(colsList, `,`)
+
+	columns = PrepareColumns(columns)
 	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {
@@ -828,7 +856,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		}
 		result = append(result, reflect.ValueOf(row).Interface())
 	}
-	if sc.VDE && perm != nil && len(perm[`filter`]) > 0 {
+	if perm != nil && len(perm[`filter`]) > 0 {
 		fltResult, err := VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
 			&map[string]interface{}{
 				`data`: result, `original_contract`: ``, `this_contract`: ``,
@@ -1195,6 +1223,12 @@ func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bo
 		return fmt.Errorf("Item %d has not been found", id)
 	}
 
+	for _, v := range sc.TxContract.StackCont {
+		if v == condition {
+			return fmt.Errorf("Recursion detected")
+		}
+	}
+
 	if err := Eval(sc, condition); err != nil {
 		if err == errAccessDenied && conditionOnly {
 			return AllowChangeCondition(sc, tblname)
@@ -1206,25 +1240,45 @@ func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bo
 	return nil
 }
 
+func checkColumnName(name string) error {
+	if len(name) == 0 {
+		return errEmptyColumn
+	} else if name[0] >= '0' && name[0] <= '9' {
+		return errWrongColumn
+	}
+	if !converter.IsLatin(name) {
+		return fmt.Errorf(eLatin, name)
+	}
+	return nil
+}
+
 // CreateColumn is creating column
-func CreateColumn(sc *SmartContract, tableName, name, colType, permissions string) error {
+func CreateColumn(sc *SmartContract, tableName, name, colType, permissions string) (err error) {
+	var (
+		sqlColType string
+		permout    []byte
+	)
 	if !accessContracts(sc, `NewColumn`) {
 		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("CreateColumn can be only called from @1NewColumn")
 		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
 	}
 	name = converter.EscapeSQL(strings.ToLower(name))
+	if err = checkColumnName(name); err != nil {
+		return
+	}
+
 	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
 
-	sqlColType, err := columnType(colType)
+	sqlColType, err = columnType(colType)
 	if err != nil {
-		return err
+		return
 	}
 
 	err = model.AlterTableAddColumn(sc.DbTransaction, tblname, name, sqlColType)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("adding column to the table")
-		return err
+		return
 	}
 
 	tables := getDefTableName(sc, `tables`)
@@ -1234,16 +1288,16 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	temp := &cols{}
 	err = model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
 	if err != nil {
-		return err
+		return
 	}
 	var perm map[string]string
 	err = json.Unmarshal([]byte(temp.Columns), &perm)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting columns from the table")
-		return err
+		return
 	}
 	perm[name] = permissions
-	permout, err := json.Marshal(perm)
+	permout, err = json.Marshal(perm)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns to json")
 		return err
@@ -1251,7 +1305,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
 		tables, []string{`name`}, []string{tableName}, !sc.VDE && sc.Rollback, false)
 	if err != nil {
-		return err
+		return
 	}
 
 	return nil
@@ -1727,7 +1781,8 @@ func GetVDEList(sc *SmartContract) (map[string]string, error) {
 	return vdemanager.Manager.ListProcess()
 }
 
-func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName string, id int64) ([]interface{}, error) {
+func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName string,
+	id, idRollback int64) ([]interface{}, error) {
 	table := fmt.Sprintf(`%d_%s`, ecosystem, tableName)
 	rows, err := model.GetDB(transaction).Table(table).Where("id=?", id).Rows()
 	if err != nil {
@@ -1774,7 +1829,19 @@ func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName str
 	}
 	for _, tx := range *txs {
 		if len(rollbackList) > 0 {
-			rollbackList[len(rollbackList)-1].(map[string]string)[`block_id`] = converter.Int64ToStr(tx.BlockID)
+			prev := rollbackList[len(rollbackList)-1].(map[string]string)
+			prev[`block_id`] = converter.Int64ToStr(tx.BlockID)
+			prev[`id`] = converter.Int64ToStr(tx.ID)
+			block := model.Block{}
+			if ok, err := block.Get(tx.BlockID); ok {
+				prev[`block_time`] = time.Unix(block.Time, 0).Format(`2006-01-02 15:04:05`)
+			} else if err != nil {
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block time")
+				return nil, err
+			}
+			if idRollback == tx.ID {
+				return rollbackList[len(rollbackList)-1 : len(rollbackList)], nil
+			}
 		}
 		if tx.Data == "" {
 			continue
@@ -1790,21 +1857,55 @@ func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName str
 		rollbackList = append(rollbackList, rollback)
 		curVal = rollback
 	}
+	if idRollback > 0 {
+		return []interface{}{}, nil
+	}
 	return rollbackList, nil
 }
 
 func GetBlockHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `blocks`, id)
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `blocks`, id, 0)
 }
 
 func GetPageHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `pages`, id)
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `pages`, id, 0)
 }
 
 func GetMenuHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `menu`, id)
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `menu`, id, 0)
 }
 
 func GetContractHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `contracts`, id)
+	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `contracts`, id, 0)
+}
+
+func GetHistoryRow(sc *SmartContract, tableName string, id, idRollback int64) (map[string]interface{},
+	error) {
+	list, err := GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, tableName, id, idRollback)
+	if err != nil {
+		return nil, err
+	}
+	result := map[string]interface{}{}
+	if len(list) > 0 {
+		for key, val := range list[0].(map[string]string) {
+			result[key] = val
+		}
+	}
+	return result, nil
+}
+
+func GetBlockHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
+	return GetHistoryRow(sc, `blocks`, id, idRollback)
+}
+
+func GetPageHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
+	return GetHistoryRow(sc, `pages`, id, idRollback)
+}
+
+func GetMenuHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
+	return GetHistoryRow(sc, `menu`, id, idRollback)
+}
+
+func GetContractHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
+	return GetHistoryRow(sc, `contracts`, id, idRollback)
 }

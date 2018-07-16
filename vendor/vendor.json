@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "xy6SD08Gw0mk4ILtNfaLNowczYM=",
+			"path": "github.com/360EntSecGroup-Skylar/excelize",
+			"revision": "58a7b23d11ef36156af6f694a1753715df8ae2fc",
+			"revisionTime": "2018-07-10T02:10:38Z"
+		},
+		{
 			"checksumSHA1": "zgHK1vxUJDZTXAPCw+Bls7St0Ks=",
 			"path": "github.com/astaxie/beego/config",
 			"revision": "c5118e9535f237996bae7c7baebe4ed4247cb2c6",
@@ -209,6 +215,12 @@
 			"revisionTime": "2017-10-27T13:37:09Z"
 		},
 		{
+			"checksumSHA1": "gEjGS03N1eysvpQ+FCHTxPcbxXc=",
+			"path": "github.com/kardianos/osext",
+			"revision": "ae77be60afb1dcacde03767a8c37337fad28ac14",
+			"revisionTime": "2017-05-10T13:15:34Z"
+		},
+		{
 			"checksumSHA1": "IfZcD4U1dtllJKlPNeD2aU4Jn98=",
 			"path": "github.com/lib/pq",
 			"revision": "8c6ee72f3e6bcb1542298dd5f76cb74af9742cec",
@@ -237,6 +249,12 @@
 			"path": "github.com/mitchellh/mapstructure",
 			"revision": "00c29f56e2386353d58c599509e8dc3801b0d716",
 			"revisionTime": "2018-02-20T23:01:11Z"
+		},
+		{
+			"checksumSHA1": "2jsbDTvwxafPp7FJjJ8IIFlTLjs=",
+			"path": "github.com/mohae/deepcopy",
+			"revision": "c48cc78d482608239f6c4c92a4abd87eb8761c90",
+			"revisionTime": "2017-09-29T03:49:55Z"
 		},
 		{
 			"checksumSHA1": "CxNwJP++vjUAyy3bbJnNss1Il9Q=",
@@ -354,8 +372,20 @@
 			"revisionTime": "2018-02-25T19:24:45Z"
 		},
 		{
+			"checksumSHA1": "UTe/n6TbTfNlXilqmDaAi1+L3cs=",
+			"path": "github.com/rpoletaev/supervisord/types",
+			"revision": "4e265b19bfbdc40722a3d33d9e65dc2721f7ff6a",
+			"revisionTime": "2018-02-25T19:24:45Z"
+		},
+		{
 			"checksumSHA1": "F4x0/vDYzuOYgOMp3NlFbbTX1Vg=",
 			"path": "github.com/rpoletaev/supervisord/util",
+			"revision": "4e265b19bfbdc40722a3d33d9e65dc2721f7ff6a",
+			"revisionTime": "2018-02-25T19:24:45Z"
+		},
+		{
+			"checksumSHA1": "egwN2yJsAyH3BLqAldbGtri6LJQ=",
+			"path": "github.com/rpoletaev/supervisord/xmlrpcclient",
 			"revision": "4e265b19bfbdc40722a3d33d9e65dc2721f7ff6a",
 			"revisionTime": "2018-02-25T19:24:45Z"
 		},
@@ -364,6 +394,12 @@
 			"path": "github.com/satori/go.uuid",
 			"revision": "36e9d2ebbde5e3f13ab2e25625fd453271d6522e",
 			"revisionTime": "2018-01-03T17:44:51Z"
+		},
+		{
+			"checksumSHA1": "CrwV2Az3LIl8uFhA1/wCdXQsCi0=",
+			"path": "github.com/sevlyar/go-daemon",
+			"revision": "45a2ba1b7c6710a044163fa109bf08d060bc3afa",
+			"revisionTime": "2018-05-02T15:13:47Z"
 		},
 		{
 			"checksumSHA1": "4nhXt+svWtwsjFzQMbBywcykuEo=",
