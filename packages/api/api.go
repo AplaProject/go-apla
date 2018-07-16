@@ -50,7 +50,7 @@ func (f *form) Validate(r *http.Request) error {
 	return nil
 }
 
-type formValidater interface {
+type formValidator interface {
 	Validate(r *http.Request) error
 }
 
@@ -76,10 +76,6 @@ type ecosystemForm struct {
 }
 
 func (f *ecosystemForm) Validate(r *http.Request) error {
-	return f.ValidateEcosystem(r)
-}
-
-func (f *ecosystemForm) ValidateEcosystem(r *http.Request) error {
 	client := getClient(r)
 	logger := getLogger(r)
 
@@ -104,7 +100,7 @@ func (f *ecosystemForm) ValidateEcosystem(r *http.Request) error {
 	return nil
 }
 
-func parseForm(r *http.Request, f formValidater) error {
+func parseForm(r *http.Request, f formValidator) error {
 	r.ParseForm()
 	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true)
