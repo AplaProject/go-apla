@@ -29,6 +29,8 @@ var (
 		`E_HEAVYPAGE`:       `This page is heavy`,
 		`E_INSTALLED`:       `Apla is already installed`,
 		`E_INVALIDWALLET`:   `Wallet %s is not valid`,
+		`E_LIMITFORSIGN`:    `Length of forsign is too big (%d)`,
+		`E_LIMITTXSIZE`:     `The size of tx is too big (%d)`,
 		`E_NOTFOUND`:        `Page not found`,
 		`E_NOTINSTALLED`:    `Apla is not installed`,
 		`E_PARAMNOTFOUND`:   `Parameter %s has not been found`,

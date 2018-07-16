@@ -18,9 +18,11 @@ package api
 
 import (
 	"fmt"
+	"math/rand"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -47,7 +49,7 @@ func TestUpperName(t *testing.T) {
 		return
 	}
 	rnd := crypto.RandSeq(4)
-	form := url.Values{"Name": {"testTable" + rnd}, "Columns": {`[{"name":"num","type":"text",   "conditions":"true"},
+	form := url.Values{"Name": {"testTable" + rnd}, "ApplicationId": {"1"}, "Columns": {`[{"name":"num","type":"text",   "conditions":"true"},
 	{"name":"text", "type":"text","conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
@@ -63,7 +65,7 @@ func TestUpperName(t *testing.T) {
 		action {
 		   DBInsert("testTable` + rnd + `", "num, text", "fgdgf", "124234") 
 		}
-	}`}, `Conditions`: {`true`}}
+	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
@@ -118,6 +120,17 @@ func TestMoneyTransfer(t *testing.T) {
 	}
 	form = url.Values{`Amount`: {`53330000`}, `Recipient`: {`0005207000`}}
 	if err := postTx(`MoneyTransfer`, &form); cutErr(err) != `{"type":"error","error":"Recipient 0005207000 is invalid"}` {
+		t.Error(err)
+		return
+	}
+	size := 1000000
+	big := make([]byte, size)
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < size; i++ {
+		big[i] = '0' + byte(rand.Intn(10))
+	}
+	form = url.Values{`Amount`: {string(big)}, `Recipient`: {`0005-2070-2000-0006-0200`}}
+	if err := postTx(`MoneyTransfer`, &form); err.Error() != `400 {"error": "E_LIMITFORSIGN", "msg": "Length of forsign is too big (1000106)" , "params": ["1000106"]}` {
 		t.Error(err)
 		return
 	}
@@ -380,7 +393,7 @@ func TestUpdateSysParam(t *testing.T) {
 			}
 			DBUpdateSysParam("max_indexes", "4", "false" )
 		}
-		}`},
+		}`}, "ApplicationId": {"1"},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
 
@@ -560,7 +573,7 @@ func TestPartitialEdit(t *testing.T) {
 
 	name := randName(`part`)
 	form := url.Values{"Name": {name}, "Value": {"Span(Original text)"},
-		"Menu": {"original_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Menu": {"original_menu"}, "ApplicationId": {"1"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
 	var retList listResult
@@ -591,7 +604,7 @@ func TestPartitialEdit(t *testing.T) {
 	assert.Equal(t, menu, ret.Value["menu"])
 
 	form = url.Values{"Name": {name}, "Value": {`MenuItem(One)`}, "Title": {`My Menu`},
-		"Conditions": {"ContractConditions(`MainCondition`)"}}
+		"ApplicationId": {"1"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	assert.NoError(t, postTx(`NewMenu`, &form))
 	assert.NoError(t, sendGet(`list/menu`, nil, &retList))
 	idItem = retList.Count
@@ -603,7 +616,7 @@ func TestPartitialEdit(t *testing.T) {
 	assert.Equal(t, conditions, ret.Value["conditions"])
 
 	form = url.Values{"Name": {name}, "Value": {`Span(Block)`},
-		"Conditions": {"ContractConditions(`MainCondition`)"}}
+		"ApplicationId": {"1"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	assert.NoError(t, postTx(`NewBlock`, &form))
 	assert.NoError(t, sendGet(`list/blocks`, nil, &retList))
 	idItem = retList.Count
@@ -625,7 +638,7 @@ func TestContractEdit(t *testing.T) {
 		    action {
 				$result = "before"
 			}
-		}`},
+		}`}, "ApplicationId": {"1"},
 		"Conditions": {"ContractConditions(`MainCondition`)"}}
 	err := postTx(`NewContract`, &form)
 	if err != nil {
@@ -727,7 +740,7 @@ func TestJSON(t *testing.T) {
 
 				info JSONEncode(a)
 			}
-		}`},
+		}`}, "ApplicationId": {"1"},
 		"Conditions": {"true"},
 	}))
 	assert.EqualError(t, postTx(contract, &url.Values{}), `{"type":"info","error":"[{\"k1\":1,\"k2\":2},{\"k1\":1,\"k2\":2}]"}`)
@@ -741,7 +754,7 @@ func TestJSON(t *testing.T) {
 			action {
 				info Sprintf("%#v", JSONDecode($Input))
 			}
-		}`},
+		}`}, "ApplicationId": {"1"},
 		"Conditions": {"true"},
 	}))
 
@@ -923,6 +936,23 @@ func TestPageHistory(t *testing.T) {
 	}`}, "ApplicationId": {`1`}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
+	form = url.Values{`Value`: {`contract GetRow` + name + ` {
+		data {
+			IdPage int
+		}
+		action {
+			var ret array
+			var row got map
+			ret = GetPageHistory($IdPage)
+			row = ret[1]
+			got = GetPageHistoryRow($IdPage, Int(row["id"]))
+			if got["block_id"] != row["block_id"] {
+				error "GetPageHistory"
+			}
+		}
+	}`}, "ApplicationId": {`1`}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
 	_, msg, err := postTxResult(`Get`+name, &url.Values{"IdPage": {id}, "IdMenu": {idmenu},
 		"IdCont": {idCont}})
 	assert.NoError(t, err)
@@ -937,6 +967,8 @@ func TestPageHistory(t *testing.T) {
 
 	assert.EqualError(t, postTx(`Get`+name, &url.Values{"IdPage": {`1000000`}, "IdMenu": {idmenu},
 		"IdCont": {idCont}}), `{"type":"panic","error":"Record has not been found"}`)
+
+	assert.NoError(t, postTx(`GetRow`+name, &url.Values{"IdPage": {id}}))
 
 	var retTemp contentResult
 	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {fmt.Sprintf(`GetPageHistory(MySrc,%s)`,

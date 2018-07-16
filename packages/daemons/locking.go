@@ -7,7 +7,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
+	"github.com/GenesisKernel/go-genesis/packages/transaction"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -60,6 +60,6 @@ func DBLock() {
 
 // DBUnlock unlocks database
 func DBUnlock() {
-	parser.CleanCache()
+	transaction.CleanCache()
 	mutex.Unlock()
 }

@@ -93,6 +93,8 @@ const AvailableBCGap = 4
 
 const DefaultNodesConnectDelay = 6
 
+const MaxTXAttempt = 10
+
 const (
 	TxTypeFirstBlock  = 1
 	TxTypeStopNetwork = 2
@@ -160,3 +162,6 @@ const DefaultTempDirName = "genesis-temp"
 
 // DefaultVDE allways is 1
 const DefaultVDE = 1
+
+// MoneyLength is the maximum number of digits in money value
+const MoneyLength = 30
