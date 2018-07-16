@@ -28,10 +28,8 @@ type MultiRequestContract struct {
 type MultiRequestBuffer struct {
 	mutex sync.Mutex
 
-	timer         *time.Timer
 	requestExpire time.Duration
-
-	requests map[string]*MultiRequest
+	requests      map[string]*MultiRequest
 }
 
 func (mrb *MultiRequestBuffer) NewMultiRequest() *MultiRequest {
@@ -49,7 +47,6 @@ func (mrb *MultiRequestBuffer) AddRequest(mr *MultiRequest) {
 	defer mrb.mutex.Unlock()
 
 	mrb.requests[mr.ID] = mr
-	mrb.timer.Reset(mrb.requestExpire)
 }
 
 func (mrb *MultiRequestBuffer) GetRequest(id string) (*MultiRequest, bool) {
@@ -65,7 +62,9 @@ func (mrb *MultiRequestBuffer) GetRequest(id string) (*MultiRequest, bool) {
 }
 
 func (mrb *MultiRequestBuffer) waitForCleaning() {
-	for t := range mrb.timer.C {
+	ticker := time.NewTicker(mrb.requestExpire)
+
+	for t := range ticker.C {
 		mrb.clean(t)
 	}
 }
@@ -84,7 +83,6 @@ func (mrb *MultiRequestBuffer) clean(t time.Time) {
 func NewMultiRequestBuffer(requestExpire time.Duration) *MultiRequestBuffer {
 	mrb := &MultiRequestBuffer{
 		requests:      make(map[string]*MultiRequest),
-		timer:         time.NewTimer(-1),
 		requestExpire: requestExpire,
 	}
 
