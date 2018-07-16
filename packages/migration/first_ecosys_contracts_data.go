@@ -1170,6 +1170,11 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	data {
 		Name  string
 	}
+	conditions {
+		if ($role_id != 1 && $role_id != 2){
+			warning "Create an ecosystem can only be the role of Administrator or Extended user"
+		}
+	}
 	action {
 		$result = CreateEcosystem($key_id, $Name)
 	}
