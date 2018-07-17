@@ -353,7 +353,7 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 					name = fmt.Sprintf(`@%d`, sc.TxSmart.EcosystemID) + name
 				}
 				for i := len(sc.TxContract.StackCont) - 1; i >= 0; i-- {
-					contName := sc.TxContract.StackCont[i]
+					contName := sc.TxContract.StackCont[i].(string)
 					if strings.HasPrefix(contName, `@`) {
 						if contName == name {
 							return true
@@ -846,7 +846,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("scanning next row")
 			return 0, nil, err
 		}
-		row := make(map[string]string)
+		row := make(map[string]interface{})
 		for i, col := range values {
 			var value string
 			if col != nil {
