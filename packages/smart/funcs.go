@@ -267,6 +267,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetContractHistoryRow":        GetContractHistoryRow,
 		"GetDataFromXLSX":              GetDataFromXLSX,
 		"GetRowsCountXLSX":             GetRowsCountXLSX,
+		"StackOverflow":                StackOverflow,
 	}
 
 	switch vt {
@@ -1908,4 +1909,8 @@ func GetMenuHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]inte
 
 func GetContractHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
 	return GetHistoryRow(sc, `contracts`, id, idRollback)
+}
+
+func StackOverflow(sc *SmartContract) {
+	StackOverflow(sc)
 }
