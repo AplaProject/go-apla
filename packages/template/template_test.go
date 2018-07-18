@@ -42,6 +42,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Hint(Title: some text, Icon: default, Text: This is hint text)`,
+		`[{"tag":"hint","attr":{"icon":"default","text":"This is hint text","title":"some text"}}]`},
 	{`AddToolButton(Title: Open, Page: default).Popup(Width: 50, Header: Test)`,
 		`[{"tag":"addtoolbutton","attr":{"page":"default","popup":{"header":"Test","width":"50"},"title":"Open"}}]`},
 	{`SetVar(ok, OK)Input(Type: text, Value: #ok# Now(YY))Input(Type:text, Value: #ok# Some text)`,
