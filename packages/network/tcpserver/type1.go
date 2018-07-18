@@ -75,6 +75,7 @@ func Type1(rw io.ReadWriter) error {
 	if newDataType == 0 {
 		err := processBlock(buf, fullNodeID)
 		if err != nil {
+			log.WithFields(log.Fields{"error": err}).Error("on process block")
 			return err
 		}
 	}
@@ -82,12 +83,14 @@ func Type1(rw io.ReadWriter) error {
 	// get unknown transactions from received packet
 	needTx, err := getUnknownTransactions(buf)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("on getting unknown txes")
 		return err
 	}
 
 	// send the list of transactions which we want to get
 	err = (&network.DisHashResponse{Data: needTx}).Write(rw)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("on sending neeeded tx list")
 		return err
 	}
 
@@ -99,6 +102,7 @@ func Type1(rw io.ReadWriter) error {
 	trs := &network.DisRequest{}
 	err = trs.Read(rw)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("on reading needed txes from disseminator")
 		return err
 	}
 

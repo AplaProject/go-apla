@@ -447,8 +447,8 @@ func TestUpdateSysParam(t *testing.T) {
 func TestUpdateFullNodesWithEmptyArray(t *testing.T) {
 	require.NoErrorf(t, keyLogin(1), "on login")
 
-	byteNodes := `[{"tcp_address":"127.0.0.1:7078", "api_address":"https://127.0.0.1:7079", "key_id":"-4466900793776865315", "public_key":"ca901a97e84d76f8d46e2053028f709074b3e60d3e2e33495840586567a0c961820d789592666b67b05c6ae120d5bd83d4388b2f1218638d8226d40ced0bb208"},
-	{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"542353610328569127", "public_key":"a8ada71764fd2f0c9fa1d2986455288f11f0f3931492d27dc62862fdff9c97c38923ef46679488ad1cd525342d4d974621db58f809be6f8d1c19fdab50abc06b"}]`
+	byteNodes := `[{"tcp_address":"127.0.0.1:7078", "api_address":"https://127.0.0.1:7079", "key_id":"-3122230976936134914", "public_key":"d512e7bbaaa8889e2e471d730bbae663bd291a345153ff34d1d9896e36832408eb9f238deca8d410aeb282ff8547ba3f056c5b2a64e2d0b03928e6dd1336e918"},
+	{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"-3928816940965469512", "public_key":"9fdf51cd74e3a03fbe776a7122e2f28e3d560467d96a624296656a3a2120653e6347572a50693077cc8b8309ea1ea4a33cb84b9e62874a2d762aca85fad84bf7"}]`
 	form := &url.Values{
 		"Name":  {"full_nodes"},
 		"Value": {string(byteNodes)},
@@ -480,8 +480,8 @@ func TestHelper_InsertNodeKey(t *testing.T) {
 	}
 
 	form = url.Values{
-		`KeyID`:  {"542353610328569127"},
-		`PubKey`: {"be78f54bcf6bb7b49b7ea00790b18b40dd3f5e231ffc764f1c32d3f5a82ab322aee157931bbfca733bac83255002f5ded418f911b959b77a937f0d5d07de74f8"},
+		`KeyID`:  {"-3928816940965469512"},
+		`PubKey`: {"704dfabedb65099a8f05f9e20a2e2f04da2e2b4fc9fd8a5a487278bd1212a020a3b469c4756e6f3fc4f7162373e8da576085fb840a8c666d58085e631be501d6"},
 	}
 
 	if err := postTx(`InsertNodeKey`, &form); err != nil {

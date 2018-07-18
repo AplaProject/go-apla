@@ -119,15 +119,23 @@ func SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes []model.Tra
 			requestedHashes := parseTxHashesFromResponse(response)
 			for _, txhash := range requestedHashes {
 				if data, ok := txDataMap[string(txhash)]; ok && len(data) > 0 {
+					log.WithFields(log.Fields{"len_of_tx": len(data)}).Debug("on prepare full tx package")
 					if _, err := buf.Write(converter.EncodeLengthPlusData(data)); err != nil {
 						log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warn("on write tx hash to response buffer")
 					}
 				}
 			}
 
-			if _, err := io.Copy(con, bytes.NewReader(buf.Bytes())); err != nil {
+			if _, err = con.Write(converter.DecToBin(buf.Len(), 4)); err != nil {
+				increaseErrCount()
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": h}).Error("on writing requested transactions buf length")
+				return
+			}
+
+			if _, err = con.Write(buf.Bytes()); err != nil {
 				increaseErrCount()
 				log.WithFields(log.Fields{"type": consts.IOError, "error": err, "host": h}).Error("on writing requested transactions")
+				return
 			}
 		}(host)
 	}

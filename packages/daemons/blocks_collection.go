@@ -172,7 +172,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	}
 
 	st := time.Now()
-	d.logger.Infof("starting downloading blocks from %d to %d (%d) \n", curBlock.BlockID, maxBlockID, maxBlockID-curBlock.BlockID)
+	d.logger.WithFields(log.Fields{"min_block": curBlock.BlockID, "max_block": maxBlockID, "count": maxBlockID - curBlock.BlockID}).Info("starting downloading blocks")
 
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(network.BlocksPerRequest) {
 		rawBlocksChan, err := tcpclient.GetBlocksBodies(host, blockID, false)
@@ -189,7 +189,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			count++
 		}
 
-		d.logger.Infof("%d blocks was collected (%s) \n", count, time.Since(st).String())
+		d.logger.WithFields(log.Fields{"count": count, "time": time.Since(st).String()}).Info("blocks downloaded")
 	}
 	return nil
 }

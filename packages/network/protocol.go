@@ -25,6 +25,8 @@ const (
 
 	// BlocksPerRequest contains count of blocks per request
 	BlocksPerRequest int32 = 1000
+
+	MaxBlockSize = 10485760
 )
 
 var ErrNotAccepted = errors.New("Not accepted")
@@ -125,6 +127,7 @@ type GetBodyResponse struct {
 func (resp *GetBodyResponse) Read(r io.Reader) error {
 	slice, err := readByteSlice(r, -1)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("on reading GetBodyResponse")
 		return err
 	}
 
@@ -209,6 +212,7 @@ type DisRequest struct {
 func (req *DisRequest) Read(r io.Reader) error {
 	slice, err := readByteSlice(r, -1)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("on reading disseminator request")
 		return err
 	}
 
@@ -217,7 +221,12 @@ func (req *DisRequest) Read(r io.Reader) error {
 }
 
 func (req *DisRequest) Write(w io.Writer) error {
-	return writeByteSlice(w, req.Data, -1)
+	err := writeByteSlice(w, req.Data, -1)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("on sending disseminator request")
+	}
+
+	return err
 }
 
 // DisTrResponse contains response data
