@@ -90,6 +90,22 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`DBFindColNow`, `contract DBFindColNow {
+		action {
+			var list array
+			list = DBFind("mytable").Columns("now()")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use Now() function"}`}},
+	}},
+	{`DBFindNow`, `contract DBFindNow {
+		action {
+			var list array
+			list = DBFind("mytable").Where("date < now ( )")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use Now() function"}`}},
+	}},
 	{`RecCall`, `contract RecCall {
 		data {    }
 		conditions {    }
@@ -992,7 +1008,8 @@ func TestContractChain(t *testing.T) {
 
 	form := url.Values{"Name": {rnd}, "ApplicationId": {"1"}, "Columns": {`[{"name":"value","type":"varchar", "index": "0", 
 	  "conditions":"true"},
-	{"name":"amount", "type":"number","index": "0", "conditions":"true"}]`},
+	{"name":"amount", "type":"number","index": "0", "conditions":"true"},
+	{"name":"dt","type":"datetime", "index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
 	if err != nil {
@@ -1048,6 +1065,16 @@ func TestContractChain(t *testing.T) {
 	if msg != rnd+`=`+rnd {
 		t.Error(fmt.Errorf(`wrong result %s`, msg))
 	}
+
+	form = url.Values{`Value`: {`contract ` + rnd + `1 {
+		action {
+			DBInsert("` + rnd + `", "amount,dt", 0, "timestamp NOW()")
+		}
+	}
+		`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(rnd+`1`, &url.Values{}),
+		`{"type":"panic","error":"It is prohibited to use Now() function"}`)
 }
 
 func TestLoopCond(t *testing.T) {

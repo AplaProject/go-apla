@@ -780,6 +780,16 @@ func PrepareWhere(where string) string {
 	return where
 }
 
+func checkNow(inputs ...string) error {
+	re := regexp.MustCompile(`now\s*\(\s*\)`)
+	for _, item := range inputs {
+		if re.Match([]byte(strings.ToLower(item))) {
+			return errNow
+		}
+	}
+	return nil
+}
+
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
 	where string, params []interface{}) (int64, []interface{}, error) {
@@ -793,6 +803,9 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		columns = `*`
 	}
 	columns = strings.ToLower(columns)
+	if err = checkNow(columns, where); err != nil {
+		return 0, nil, err
+	}
 	if len(order) == 0 {
 		order = `id`
 	}
