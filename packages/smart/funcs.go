@@ -267,6 +267,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetContractHistoryRow":        GetContractHistoryRow,
 		"GetDataFromXLSX":              GetDataFromXLSX,
 		"GetRowsCountXLSX":             GetRowsCountXLSX,
+		"BlockTime":                    BlockTime,
 	}
 
 	switch vt {
@@ -1908,4 +1909,12 @@ func GetMenuHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]inte
 
 func GetContractHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
 	return GetHistoryRow(sc, `contracts`, id, idRollback)
+}
+
+func BlockTime(sc *SmartContract) string {
+	var blockTime int64
+	if sc.BlockData != nil {
+		blockTime = sc.BlockData.Time
+	}
+	return Date(`2006-01-02 15:04:05`, blockTime)
 }
