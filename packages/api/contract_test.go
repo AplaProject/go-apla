@@ -90,6 +90,30 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`RowType`, `contract RowType {
+	action {
+		var app map
+		var result string
+		result = GetType(app)
+		app = DBFind("applications").Where("id=1").Row()
+		result = result + GetType(app)
+		app["app_id"] = 2
+		Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
+	}
+}`, []smartParams{
+		{nil, map[string]string{`result`: `map[string]interface {}map[string]interface {} System 2`}},
+	}},
+	{`StackType`, `contract StackType {
+		action {
+			var lenStack int
+			lenStack = Len($stack)
+			var par string
+			par = $stack[0]
+			Test("result", Sprintf("len=%d %v %s", lenStack, $stack, par))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `len=1 [@1StackType] @1StackType`}},
+	}},
 	{`DBFindCURRENT`, `contract DBFindCURRENT {
 		action {
 			var list array
