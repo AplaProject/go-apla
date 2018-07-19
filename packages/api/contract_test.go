@@ -113,6 +113,16 @@ var contracts = []smartContract{
 		}
 	}`, []smartParams{
 		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	{`BlockTimeCheck`, `contract BlockTimeCheck {
+		action {
+			if Size(BlockTime()) == Size("2006-01-02 15:04:05") {
+				Test("ok", "1")
+			} else {
+				Test("ok", "0")
+			}
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`ok`: `1`}},
 	}},
 	{`RecCall`, `contract RecCall {
 		data {    }
