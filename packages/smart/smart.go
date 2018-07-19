@@ -42,11 +42,10 @@ type Contract struct {
 	Name          string
 	Called        uint32
 	FreeRequest   bool
-	TxPrice       int64   // custom price for citizens
 	TxGovAccount  int64   // state wallet
 	EGSRate       float64 // money/EGS rate
 	TableAccounts string
-	StackCont     []string // Stack of called contracts
+	StackCont     []interface{} // Stack of called contracts
 	Extend        *map[string]interface{}
 	Block         *script.Block
 }
@@ -587,9 +586,9 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 		tablePermission map[string]string
 	)
 	logger := sc.GetLogger()
-
+	isRead := action == `read`
 	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
-		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
+		if isRead || sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return tablePermission, nil
 		}
 		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
@@ -600,6 +599,9 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
 		return tablePermission, err
 	} else if !isCustom {
+		if isRead {
+			return tablePermission, nil
+		}
 		return tablePermission, fmt.Errorf(table + ` is not a custom table`)
 	}
 
@@ -644,11 +646,6 @@ func getPermColumns(input string) (perm permColumn, err error) {
 	return
 }
 
-type colAccess struct {
-	ok       bool
-	original string
-}
-
 // AccessColumns checks access rights to the columns
 func (sc *SmartContract) AccessColumns(table string, columns *[]string, update bool) error {
 	logger := sc.GetLogger()
@@ -673,65 +670,80 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 		return err
 	}
 	if !found {
+		if !update {
+			return nil
+		}
 		return fmt.Errorf(eTableNotFound, table)
 	}
 	var cols map[string]string
-	// Every item of checkColumns has 'ok' boolean value. If it equals false then the key-column
-	// doesn't have read/update access rights.
-	checkColumns := make(map[string]colAccess)
 	err = json.Unmarshal([]byte(tables.Columns), &cols)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("getting table columns")
 		return err
 	}
+	colNames := make([]string, 0, len(*columns))
 	for _, col := range *columns {
-		colname := converter.Sanitize(col, `*->`)
+		if col == `*` {
+			for column := range cols {
+				colNames = append(colNames, column)
+			}
+			continue
+		}
+		colNames = append(colNames, col)
+	}
+
+	colList := make([]string, len(colNames))
+	for i, col := range colNames {
+		colname := converter.Sanitize(col, `->`)
 		if strings.Contains(colname, `->`) {
 			colname = colname[:strings.Index(colname, `->`)]
 		}
-		if !update && colname == `*` {
-			for column := range cols {
-				checkColumns[column] = colAccess{true, column}
-			}
-			break
-		}
-		checkColumns[colname] = colAccess{true, colname}
+		colList[i] = colname
 	}
-	_, isall := checkColumns[`*`]
-	for column, cond := range cols {
-		if ca, ok := checkColumns[column]; (!ok || !ca.ok) && !isall {
+	checked := make(map[string]bool)
+	var notaccess bool
+	for i, name := range colList {
+		if status, ok := checked[name]; ok {
+			if !status {
+				colList[i] = ``
+			}
 			continue
 		}
-		perm, err := getPermColumns(cond)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting access columns")
-			return err
-		}
-		if update {
-			cond = perm.Update
-		} else {
-			cond = perm.Read
-		}
+		cond := cols[name]
 		if len(cond) > 0 {
-			ret, err := sc.EvalIf(cond)
+			perm, err := getPermColumns(cond)
 			if err != nil {
-				logger.WithFields(log.Fields{"condition": cond, "column": column,
-					"type": consts.EvalError}).Error("evaluating condition")
+				logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting access columns")
 				return err
 			}
-			if !ret {
-				if update {
-					return errAccessDenied
+			if update {
+				cond = perm.Update
+			} else {
+				cond = perm.Read
+			}
+			if len(cond) > 0 {
+				ret, err := sc.EvalIf(cond)
+				if err != nil {
+					logger.WithFields(log.Fields{"condition": cond, "column": name,
+						"type": consts.EvalError}).Error("evaluating condition")
+					return err
 				}
-				checkColumns[column] = colAccess{false, ``}
+				checked[name] = ret
+				if !ret {
+					if update {
+						return errAccessDenied
+					}
+					colList[i] = ``
+					notaccess = true
+				}
 			}
 		}
 	}
-	if !update {
+	if !update && notaccess {
 		retColumn := make([]string, 0)
-		for key, val := range checkColumns {
-			if val.ok && key != `*` {
-				retColumn = append(retColumn, val.original)
+		for i, val := range colList {
+			if val != `` {
+				retColumn = append(retColumn, colNames[i])
 			}
 		}
 		if len(retColumn) == 0 {
@@ -922,12 +934,21 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
 				return retError(ErrDiffKeys)
 			}
-			var amount decimal.Decimal
+			var amount, maxpay decimal.Decimal
 			amount, err = decimal.NewFromString(payWallet.Amount)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
 				return retError(err)
 			}
+			maxpay, err = decimal.NewFromString(payWallet.Maxpay)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Maxpay}).Error("converting pay wallet maxpay from string to decimal")
+				return retError(err)
+			}
+			if maxpay.GreaterThan(decimal.New(0, 0)) && maxpay.LessThan(amount) {
+				amount = maxpay
+			}
+
 			if cprice := sc.TxContract.GetFunc(`price`); cprice != nil {
 				var ret []interface{}
 				if ret, err = VMRun(sc.VM, cprice, nil, sc.TxContract.Extend); err != nil {
@@ -960,16 +981,26 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				}
 			}
 			sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024
-			if amount.Cmp(decimal.New(sizeFuel+price, 0).Mul(fuelRate)) <= 0 {
+			priceCost := decimal.New(price, 0)
+			if amount.LessThanOrEqual(priceCost.Mul(fuelRate)) {
 				logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")
 				return retError(ErrCurrentBalance)
 			}
+			maxCost := amount.Div(fuelRate).Floor()
+			fullCost := decimal.New((*sc.TxContract.Extend)[`txcost`].(int64), 0).Add(priceCost)
+			if maxCost.LessThan(fullCost) {
+				(*sc.TxContract.Extend)[`txcost`] = converter.StrToInt64(maxCost.String()) - price
+			}
 		}
 	}
-	before := (*sc.TxContract.Extend)[`txcost`].(int64) + price
+	before := (*sc.TxContract.Extend)[`txcost`].(int64)
 
 	// Payment for the size
 	(*sc.TxContract.Extend)[`txcost`] = (*sc.TxContract.Extend)[`txcost`].(int64) - sizeFuel
+	if (*sc.TxContract.Extend)[`txcost`].(int64) <= 0 {
+		logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough for payment")
+		return retError(ErrCurrentBalance)
+	}
 
 	_, nameContract := script.ParseContract(sc.TxContract.Name)
 	(*sc.TxContract.Extend)[`original_contract`] = nameContract
@@ -985,14 +1016,13 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			sc.TxContract.Called = 1 << i
 			_, err = VMRun(sc.VM, cfunc, nil, sc.TxContract.Extend)
 			if err != nil {
-				before -= price
+				price = 0
 				break
 			}
 		}
 	}
-	sc.TxFuel = before - (*sc.TxContract.Extend)[`txcost`].(int64) - price
-	sc.TxUsedCost = decimal.New(before-(*sc.TxContract.Extend)[`txcost`].(int64), 0)
-	sc.TxContract.TxPrice = price
+	sc.TxFuel = before - (*sc.TxContract.Extend)[`txcost`].(int64)
+	sc.TxUsedCost = decimal.New(sc.TxFuel+price, 0)
 	if (*sc.TxContract.Extend)[`result`] != nil {
 		result = fmt.Sprint((*sc.TxContract.Extend)[`result`])
 		if len(result) > 255 {

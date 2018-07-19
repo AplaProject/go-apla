@@ -52,9 +52,14 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	for i, v := range ivalues {
-		if len(fields) > i && converter.IsByteColumn(table, fields[i]) {
-			switch v.(type) {
-			case string:
+		switch v.(type) {
+		case string:
+			if strings.HasPrefix(strings.TrimSpace(v.(string)), `timestamp`) {
+				if err = checkNow(v.(string)); err != nil {
+					return 0, ``, err
+				}
+			}
+			if len(fields) > i && converter.IsByteColumn(table, fields[i]) {
 				if vbyte, err := hex.DecodeString(v.(string)); err == nil {
 					ivalues[i] = vbyte
 				}
@@ -78,7 +83,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		} else if strings.Contains(field, `->`) {
 			addSQLFields += field[:strings.Index(field, `->`)] + `,`
 		} else {
-			addSQLFields += field + ","
+			addSQLFields += `"` + field + `",`
 		}
 	}
 
@@ -161,7 +166,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 					jsonFields[colfield[0]][colfield[1]] = values[i]
 				}
 			} else {
-				addSQLUpdate += fields[i] + `='` + escapeSingleQuotes(values[i]) + `',`
+				addSQLUpdate += `"` + fields[i] + `"='` + escapeSingleQuotes(values[i]) + `',`
 			}
 		}
 		for colname, colvals := range jsonFields {
@@ -220,7 +225,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
 				addSQLIns0 = append(addSQLIns0, fields[i][len(`timestamp `):])
 			} else {
-				addSQLIns0 = append(addSQLIns0, fields[i])
+				addSQLIns0 = append(addSQLIns0, `"`+fields[i]+`"`)
 			}
 			if converter.IsByteColumn(table, fields[i]) && len(values[i]) != 0 {
 				addSQLIns1 = append(addSQLIns1, `decode('`+hex.EncodeToString([]byte(values[i]))+`','HEX')`)

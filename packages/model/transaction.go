@@ -1,6 +1,8 @@
 package model
 
-import "github.com/GenesisKernel/go-genesis/packages/consts"
+import (
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+)
 
 // This constants contains values of transactions priority
 const (
@@ -149,8 +151,7 @@ func (t *Transaction) Create() error {
 
 // IncrementTxAttemptCount increases attempt column
 func IncrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte) (int64, error) {
-	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt>10 then 1 else 0 end where hash = ?",
-		transactionHash)
+	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt >= ? then 1 else 0 end where hash = ?", consts.MaxTXAttempt-1, transactionHash)
 	return query.RowsAffected, query.Error
 }
 
@@ -163,12 +164,28 @@ func getTxRateByTxType(txType int8) transactionRate {
 	}
 }
 
-func GetManyTransactions(hashes [][]byte) ([]Transaction, error) {
+func GetManyTransactions(dbtx *DbTransaction, hashes [][]byte) ([]Transaction, error) {
 	txes := []Transaction{}
-	query := GetDB(nil).Where("hash in ?", hashes).Find(&txes)
+	query := GetDB(dbtx).Where("hash in ?", hashes).Find(&txes)
 	if err := query.Error; err != nil {
 		return nil, err
 	}
 
 	return txes, nil
+}
+
+// GetTxesByHashlist returns map of hash-*Transaction
+func GetTxesByHashlist(dbtx *DbTransaction, hashes [][]byte) (map[string]*Transaction, error) {
+	txes, err := GetManyTransactions(dbtx, hashes)
+	if err != nil {
+		return nil, err
+	}
+
+	txMap := make(map[string]*Transaction, len(txes))
+
+	for _, tx := range txes {
+		txMap[string(tx.Hash)] = &tx
+	}
+
+	return txMap, nil
 }

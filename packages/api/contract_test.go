@@ -90,6 +90,65 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`RowType`, `contract RowType {
+	action {
+		var app map
+		var result string
+		result = GetType(app)
+		app = DBFind("applications").Where("id=1").Row()
+		result = result + GetType(app)
+		app["app_id"] = 2
+		Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
+	}
+}`, []smartParams{
+		{nil, map[string]string{`result`: `map[string]interface {}map[string]interface {} System 2`}},
+	}},
+	{`StackType`, `contract StackType {
+		action {
+			var lenStack int
+			lenStack = Len($stack)
+			var par string
+			par = $stack[0]
+			Test("result", Sprintf("len=%d %v %s", lenStack, $stack, par))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `len=1 [@1StackType] @1StackType`}},
+	}},
+	{`DBFindCURRENT`, `contract DBFindCURRENT {
+		action {
+			var list array
+			list = DBFind("mytable").Where("date < CURRENT_DATE")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
+	{`DBFindColNow`, `contract DBFindColNow {
+		action {
+			var list array
+			list = DBFind("mytable").Columns("now()")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
+	{`DBFindNow`, `contract DBFindNow {
+		action {
+			var list array
+			list = DBFind("mytable").Where("date < now ( )")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
+	{`BlockTimeCheck`, `contract BlockTimeCheck {
+		action {
+			if Size(BlockTime()) == Size("2006-01-02 15:04:05") {
+				Test("ok", "1")
+			} else {
+				Test("ok", "0")
+			}
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`ok`: `1`}},
+	}},
 	{`RecCall`, `contract RecCall {
 		data {    }
 		conditions {    }
@@ -98,7 +157,7 @@ var contracts = []smartContract{
 			CallContract("RecCall", par)
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`error`: `{"type":"panic","error":"there is loop in @1RecCall contract"}`}},
+		{nil, map[string]string{`error`: `{"type":"panic","error":"There is loop in @1RecCall contract"}`}},
 	}},
 	{`Recursion`, `contract Recursion {
 		data {    }
@@ -445,7 +504,7 @@ func TestNewTableWithEmptyName(t *testing.T) {
 	}
 
 	if err := postTx("NewTable", &form); err == nil || err.Error() !=
-		`{"type":"error","error":"Table name cannot be empty"}` {
+		`400 {"error": "E_SERVER", "msg": "Name is empty" }` {
 		t.Error(`wrong error`, err)
 	}
 
@@ -484,7 +543,7 @@ func TestActivateContracts(t *testing.T) {
 		    data {
 				Par string
 			}
-			action { Test("active",  $Par)}}`}, `Conditions`: {`true`}}
+			action { Test("active",  $Par)}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
@@ -540,7 +599,7 @@ func TestDeactivateContracts(t *testing.T) {
 		    data {
 				Par string
 			}
-			action { Test("active",  $Par)}}`}, `Conditions`: {`true`}}
+			action { Test("active",  $Par)}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	var ret getContractResult
@@ -599,7 +658,7 @@ func TestSignature(t *testing.T) {
 			}
 			action { 
 				$result = "OK " + Str($Amount)
-			}}`}, `Conditions`: {`true`}}
+			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
@@ -615,7 +674,7 @@ func TestSignature(t *testing.T) {
 				$result = "OOOPS " + Str($Amount)
 			}
 		  }
-		`}, `Conditions`: {`true`}}
+		`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
@@ -808,7 +867,7 @@ func TestUpdateFunc(t *testing.T) {
 		}
 		func action {
 			$result = Sprintf("X=%s %s %s", $par, $original_contract, $this_contract)
-		}}`}, `Conditions`: {`true`}}
+		}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	_, id, err := postTxResult(`NewContract`, &form)
 	assert.NoError(t, err)
 
@@ -818,7 +877,7 @@ func TestUpdateFunc(t *testing.T) {
 				var ret map
 				ret = DBFind("contracts").Columns("id,value").WhereId(10).Row()
 				$result = ret["id"]
-		}}`}, `Conditions`: {`true`}}
+		}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	form = url.Values{`Value`: {`contract row` + rnd + ` {
@@ -828,7 +887,7 @@ func TestUpdateFunc(t *testing.T) {
 					$result = ret
 				}}
 		
-			`}, `Conditions`: {`true`}}
+			`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	_, msg, err := postTxResult(`one`+rnd, &url.Values{})
@@ -847,7 +906,7 @@ func TestUpdateFunc(t *testing.T) {
 			action {
 				$result = f` + rnd + `("par",$Par) + " " + $this_contract
 			}}
-		`}, `Conditions`: {`true`}}
+		`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	_, idcnt, err := postTxResult(`NewContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -862,7 +921,7 @@ func TestUpdateFunc(t *testing.T) {
 			return "Y="+input
 		}`}, `Conditions`: {`true`}}
 	err = postTx(`EditContract`, &form)
-	assert.EqualError(t, postTx(`EditContract`, &form), `{"type":"error","error":"Contracts or functions names cannot be changed"}`)
+	assert.EqualError(t, postTx(`EditContract`, &form), `{"type":"panic","error":"Contracts or functions names cannot be changed"}`)
 
 	form = url.Values{`Id`: {id}, `Value`: {`contract f` + rnd + `{
 		data {
@@ -911,7 +970,7 @@ func TestGlobalVars(t *testing.T) {
 				$key_id = 1234
 				$result = Str($key_id) + $Par
 			}}
-		`}, `Conditions`: {`true`}}
+		`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	err := postTx(`NewContract`, &form)
 	if err == nil {
 		t.Errorf(`must be error`)
@@ -925,7 +984,7 @@ func TestGlobalVars(t *testing.T) {
 		action {
 			$result = $Test + Str($ecosystem_id)
 		}
-	}`}, `Conditions`: {`true`}}
+	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	err = postTx(`NewContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -946,7 +1005,7 @@ func TestGlobalVars(t *testing.T) {
 				    $result = CallContract("c_` + rnd + `", params) + c_` + rnd + `("Test","OK")
 				}
 			}
-		}`}, `Conditions`: {`true`}}
+		}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	err = postTx(`NewContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -957,7 +1016,7 @@ func TestGlobalVars(t *testing.T) {
 			action {
 				$result = $Test + $aaa
 			}
-		}`}, `Conditions`: {`true`}}
+		}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	err = postTx(`NewContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -990,9 +1049,10 @@ func TestContractChain(t *testing.T) {
 	}
 	rnd := `rnd` + crypto.RandSeq(4)
 
-	form := url.Values{"Name": {rnd}, "Columns": {`[{"name":"value","type":"varchar", "index": "0", 
+	form := url.Values{"Name": {rnd}, "ApplicationId": {"1"}, "Columns": {`[{"name":"value","type":"varchar", "index": "0", 
 	  "conditions":"true"},
-	{"name":"amount", "type":"number","index": "0", "conditions":"true"}]`},
+	{"name":"amount", "type":"number","index": "0", "conditions":"true"},
+	{"name":"dt","type":"datetime", "index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
 	if err != nil {
@@ -1012,7 +1072,7 @@ func TestContractChain(t *testing.T) {
 			$new = $record["value"]
 			DBUpdate("` + rnd + `", $Id, "value", $new+"="+$new )
 		}
-	}`}, `Conditions`: {`true`}}
+	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	err = postTx(`NewContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -1034,7 +1094,7 @@ func TestContractChain(t *testing.T) {
 			$result = $record["value"]
 		}
 	}
-		`}, `Conditions`: {`true`}}
+		`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	err = postTx(`NewContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -1048,6 +1108,16 @@ func TestContractChain(t *testing.T) {
 	if msg != rnd+`=`+rnd {
 		t.Error(fmt.Errorf(`wrong result %s`, msg))
 	}
+
+	form = url.Values{`Value`: {`contract ` + rnd + `1 {
+		action {
+			DBInsert("` + rnd + `", "amount,dt", 0, "timestamp NOW()")
+		}
+	}
+		`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(rnd+`1`, &url.Values{}),
+		`{"type":"panic","error":"It is prohibited to use Now() function"}`)
 }
 
 func TestLoopCond(t *testing.T) {
@@ -1068,10 +1138,10 @@ func TestLoopCond(t *testing.T) {
 		return
 	}
 	form = url.Values{`Value`: {`contract ` + rnd + `2 {
-		conditions {
-			ContractConditions("` + rnd + `1")
-		}
-	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+				conditions {
+					ContractConditions("` + rnd + `1")
+				}
+			}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
 	err = postTx(`NewContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -1085,18 +1155,37 @@ func TestLoopCond(t *testing.T) {
 	}
 	sid := ret.TableID
 	form = url.Values{`Value`: {`contract ` + rnd + `1 {
-		conditions {
-			ContractConditions("` + rnd + `2")
-		}
-	}`}, `Id`: {sid}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+				conditions {
+					ContractConditions("` + rnd + `2")
+				}
+			}`}, `Id`: {sid}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
 	err = postTx(`EditContract`, &form)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = postTx(rnd+`2`, &url.Values{})
-	if err != nil {
-		t.Error(err)
-		return
+	assert.EqualError(t, postTx(rnd+`2`, &url.Values{}), `{"type":"panic","error":"There is loop in `+rnd+`1 contract"}`)
+
+	form = url.Values{"Name": {`ecosystems`}, "InsertPerm": {`ContractConditions("MainCondition")`},
+		"UpdatePerm":    {`EditEcosysName(1, "HANG")`},
+		"NewColumnPerm": {`ContractConditions("MainCondition")`}}
+	assert.NoError(t, postTx(`EditTable`, &form))
+	assert.EqualError(t, postTx(`EditEcosystemName`, &url.Values{"EcosystemID": {`1`},
+		"NewName": {`Hang`}}), `{"type":"panic","error":"There is loop in EditEcosysName contract"}`)
+
+	form = url.Values{`Value`: {`contract ` + rnd + `shutdown {
+		action
+		{ DBInsert("` + rnd + `table", "test", "SHUTDOWN") }
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	form = url.Values{
+		"Name":          {rnd + `table`},
+		"Columns":       {`[{"name":"test","type":"varchar", "index": "0", "conditions":"true"}]`},
+		"ApplicationId": {"1"},
+		"Permissions":   {`{"insert": "` + rnd + `shutdown()", "update" : "true", "new_column": "true"}`},
 	}
+	require.NoError(t, postTx("NewTable", &form))
+
+	assert.EqualError(t, postTx(rnd+`shutdown`, &url.Values{}), `{"type":"panic","error":"There is loop in @1`+rnd+`shutdown contract"}`)
 }

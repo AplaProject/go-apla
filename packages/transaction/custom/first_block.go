@@ -74,6 +74,16 @@ func (t *FirstBlockTransaction) Action() error {
 	}
 	amount := decimal.New(consts.FounderAmount, int32(converter.StrToInt64(sp.Value))).String()
 
+	commission := &model.SystemParameter{Name: `commission_wallet`}
+	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
+		return utils.ErrInfo(err)
+	}
+	if err = syspar.SysUpdate(nil); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
+		return utils.ErrInfo(err)
+	}
+
 	err = model.GetDB(t.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
 		keyID, data.PublicKey, amount).Error
 	if err != nil {
@@ -94,15 +104,6 @@ func (t *FirstBlockTransaction) Action() error {
 	}
 	err = smart.LoadContract(t.DbTransaction, `1`)
 	if err != nil {
-		return utils.ErrInfo(err)
-	}
-	commission := &model.SystemParameter{Name: `commission_wallet`}
-	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
-		return utils.ErrInfo(err)
-	}
-	if err = syspar.SysUpdate(nil); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 		return utils.ErrInfo(err)
 	}
 	syspar.SetFirstBlockData(data)

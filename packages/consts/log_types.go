@@ -57,4 +57,5 @@ const (
 	WrongModeError           = "WrongModeError"
 	VDEManagerError          = "VDEManagerError"
 	TCPClientError           = "TCPClientError"
+	BadTxError               = "BadTxError"
 )

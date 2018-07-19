@@ -102,6 +102,10 @@ func MarkTransactionBad(dbTransaction *model.DbTransaction, hash []byte, errText
 	if len(errText) > 255 {
 		errText = errText[:255]
 	}
+
+	// set loglevel as error because default level setups to "error"
+	log.WithFields(log.Fields{"type": consts.BadTxError, "tx_hash": string(hash), "error": errText}).Error("tx marked as bad")
+
 	// looks like there is not hash in queue_tx in this moment
 	qtx := &model.QueueTx{}
 	_, err := qtx.GetByHash(dbTransaction, hash)
