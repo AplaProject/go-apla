@@ -90,13 +90,21 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`DBFindCURRENT`, `contract DBFindCURRENT {
+		action {
+			var list array
+			list = DBFind("mytable").Where("date < CURRENT_DATE")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
 	{`DBFindColNow`, `contract DBFindColNow {
 		action {
 			var list array
 			list = DBFind("mytable").Columns("now()")
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use Now() function"}`}},
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
 	}},
 	{`DBFindNow`, `contract DBFindNow {
 		action {
@@ -104,7 +112,7 @@ var contracts = []smartContract{
 			list = DBFind("mytable").Where("date < now ( )")
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use Now() function"}`}},
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
 	}},
 	{`RecCall`, `contract RecCall {
 		data {    }

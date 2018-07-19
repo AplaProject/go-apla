@@ -781,7 +781,7 @@ func PrepareWhere(where string) string {
 }
 
 func checkNow(inputs ...string) error {
-	re := regexp.MustCompile(`now\s*\(\s*\)`)
+	re := regexp.MustCompile(`(now\s*\(\s*\)|localtime|current_date|current_time)`)
 	for _, item := range inputs {
 		if re.Match([]byte(strings.ToLower(item))) {
 			return errNow
