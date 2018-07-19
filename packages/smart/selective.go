@@ -52,9 +52,14 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	for i, v := range ivalues {
-		if len(fields) > i && converter.IsByteColumn(table, fields[i]) {
-			switch v.(type) {
-			case string:
+		switch v.(type) {
+		case string:
+			if strings.HasPrefix(strings.TrimSpace(v.(string)), `timestamp`) {
+				if err = checkNow(v.(string)); err != nil {
+					return 0, ``, err
+				}
+			}
+			if len(fields) > i && converter.IsByteColumn(table, fields[i]) {
 				if vbyte, err := hex.DecodeString(v.(string)); err == nil {
 					ivalues[i] = vbyte
 				}
