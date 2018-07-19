@@ -45,7 +45,8 @@ func dataHandler() hr.Handle {
 			return
 		}
 
-		data, err := model.GetColumnByID(tblname, column, ps.ByName(`id`))
+		id := ps.ByName(`id`)
+		data, err := model.GetColumnByID(tblname, column, id)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting data from table")
 			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
@@ -59,6 +60,7 @@ func dataHandler() hr.Handle {
 		}
 
 		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", "attachment")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Write([]byte(data))
 		return
@@ -88,6 +90,7 @@ func binary(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 	}
 
 	w.Header().Set("Content-Type", bin.MimeType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, bin.Name))
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write(bin.Data)
 	return

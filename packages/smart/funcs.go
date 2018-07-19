@@ -150,6 +150,7 @@ var (
 		"Substr":                       10,
 		"Size":                         10,
 		"ToLower":                      10,
+		"ToUpper":                      10,
 		"TrimSpace":                    10,
 		"TableConditions":              100,
 		"ValidateCondition":            30,
@@ -226,6 +227,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"ValidateCondition":            ValidateCondition,
 		"TrimSpace":                    strings.TrimSpace,
 		"ToLower":                      strings.ToLower,
+		"ToUpper":                      strings.ToUpper,
 		"CreateEcosystem":              CreateEcosystem,
 		"RollbackEcosystem":            RollbackEcosystem,
 		"CreateContract":               CreateContract,
@@ -267,6 +269,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetContractHistoryRow":        GetContractHistoryRow,
 		"GetDataFromXLSX":              GetDataFromXLSX,
 		"GetRowsCountXLSX":             GetRowsCountXLSX,
+		"BlockTime":                    BlockTime,
 	}
 
 	switch vt {
@@ -778,6 +781,16 @@ func PrepareWhere(where string) string {
 	return where
 }
 
+func checkNow(inputs ...string) error {
+	re := regexp.MustCompile(`(now\s*\(\s*\)|localtime|current_date|current_time)`)
+	for _, item := range inputs {
+		if re.Match([]byte(strings.ToLower(item))) {
+			return errNow
+		}
+	}
+	return nil
+}
+
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
 	where string, params []interface{}) (int64, []interface{}, error) {
@@ -791,6 +804,9 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 		columns = `*`
 	}
 	columns = strings.ToLower(columns)
+	if err = checkNow(columns, where); err != nil {
+		return 0, nil, err
+	}
 	if len(order) == 0 {
 		order = `id`
 	}
@@ -1908,4 +1924,12 @@ func GetMenuHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]inte
 
 func GetContractHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
 	return GetHistoryRow(sc, `contracts`, id, idRollback)
+}
+
+func BlockTime(sc *SmartContract) string {
+	var blockTime int64
+	if sc.BlockData != nil {
+		blockTime = sc.BlockData.Time
+	}
+	return Date(`2006-01-02 15:04:05`, blockTime)
 }
