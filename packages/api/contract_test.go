@@ -90,6 +90,17 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`BlockTimeCheck`, `contract BlockTimeCheck {
+		action {
+			if Size(BlockTime()) == Size("2006-01-02 15:04:05") {
+				Test("ok", "1")
+			} else {
+				Test("ok", "0")
+			}
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`ok`: `1`}},
+	}},
 	{`RecCall`, `contract RecCall {
 		data {    }
 		conditions {    }
