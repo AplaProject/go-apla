@@ -166,7 +166,7 @@ func getTxRateByTxType(txType int8) transactionRate {
 
 func GetManyTransactions(dbtx *DbTransaction, hashes [][]byte) ([]Transaction, error) {
 	txes := []Transaction{}
-	query := GetDB(dbtx).Where("hash in ?", hashes).Find(&txes)
+	query := GetDB(dbtx).Where("hash in (?)", hashes).Find(&txes)
 	if err := query.Error; err != nil {
 		return nil, err
 	}
