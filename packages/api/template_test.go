@@ -20,11 +20,15 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/stretchr/testify/assert"
 )
@@ -221,10 +225,8 @@ func TestMobile(t *testing.T) {
 }
 
 func TestCutoff(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, keyLogin(1))
+
 	name := randName(`tbl`)
 	form := url.Values{
 		"Name": {name},
@@ -233,13 +235,10 @@ func TestCutoff(t *testing.T) {
 			{"name":"long_text", "type":"text", "index":"0", "conditions":"true"},
 			{"name":"short_text", "type":"varchar", "index":"0", "conditions":"true"}
 			]`},
-		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`},
+		"Permissions":   {`{"insert": "true", "update" : "true", "new_column": "true"}`},
+		"ApplicationId": {"1"},
 	}
-	err := postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewTable`, &form))
 	form = url.Values{
 		"Name": {name},
 		"Value": {`
@@ -253,48 +252,35 @@ func TestCutoff(t *testing.T) {
 				}
 			}
 		`},
-		"Conditions": {`true`},
+		"Conditions":    {`true`},
+		"ApplicationId": {"1"},
 	}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, postTx(`NewContract`, &form))
 
 	shortText := crypto.RandSeq(30)
 	longText := crypto.RandSeq(100)
 
-	err = postTx(name, &url.Values{
+	assert.NoError(t, postTx(name, &url.Values{
 		"ShortText": {shortText},
 		"LongText":  {longText},
-	})
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	}))
+
 	var ret contentResult
 	template := `DBFind(Name: ` + name + `, Source: mysrc).Cutoff("short_text,long_text")`
 	start := time.Now()
-	err = sendPost(`content`, &url.Values{`template`: {template}}, &ret)
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {template}}, &ret))
 	duration := time.Since(start)
-	if err != nil {
-		t.Error(err)
-		return
-	}
 	if int(duration.Seconds()) > 0 {
 		t.Errorf(`Too much time for template parsing`)
 		return
 	}
-	err = postTx(name, &url.Values{
+	assert.NoError(t, postTx(name, &url.Values{
 		"ShortText": {shortText},
 		"LongText":  {longText},
-	})
+	}))
 
 	template = `DBFind("` + name + `", mysrc).Columns("id,name,short_text,long_text").Cutoff("short_text,long_text").WhereId(2).Vars(prefix)`
-	err = sendPost(`content`, &url.Values{`template`: {template}}, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {template}}, &ret))
 
 	linkLongText := fmt.Sprintf("/data/1_%s/2/long_text/%x", name, md5.Sum([]byte(longText)))
 
@@ -303,14 +289,18 @@ func TestCutoff(t *testing.T) {
 		t.Errorf("Wrong image tree %s != %s", RawToString(ret.Tree), want)
 	}
 
-	data, err := sendRawRequest("GET", linkLongText, nil)
+	resp, err := http.Get(apiAddress + consts.ApiPath + linkLongText)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if string(data) != longText {
-		t.Errorf("Wrong text %s", data)
-	}
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "attachment", resp.Header.Get("Content-Disposition"))
+	assert.Equal(t, longText, string(data))
 }
 
 var imageData = `iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARklEQVRYw+3OMQ0AIBAEwQOzaCLBBQZfAd0XFLMCNjOyb1o7q2Ey82VYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYrwqjmwKzLUjCbwAAAABJRU5ErkJggg==`
@@ -384,6 +374,8 @@ func TestStringToBinary(t *testing.T) {
 
 	contract := randName("binary")
 	content := randName("content")
+	filename := randName("file")
+	mimeType := "text/plain"
 
 	form := url.Values{
 		"Value": {`
@@ -393,7 +385,7 @@ func TestStringToBinary(t *testing.T) {
 				}
 				conditions {}
 				action {
-					UploadBinary("Name,ApplicationId,Data,DataMimeType", "test", 1, StringToBytes($Content), "text/plain")
+					UploadBinary("Name,ApplicationId,Data,DataMimeType", "` + filename + `", 1, StringToBytes($Content), "text/plain")
 					$result = $key_id
 				}
 			}
@@ -406,12 +398,26 @@ func TestStringToBinary(t *testing.T) {
 	assert.NoError(t, err)
 
 	form = url.Values{
-		"template": {`SetVar(link, Binary(Name: test, AppID: 1, MemberID: ` + msg + `))#link#`},
+		"template": {`SetVar(link, Binary(Name: ` + filename + `, AppID: 1, MemberID: ` + msg + `))#link#`},
 	}
-	var ret contentResult
+
+	var ret struct {
+		Tree []struct {
+			Link string `json:"text"`
+		} `json:"tree"`
+	}
 	assert.NoError(t, sendPost(`content`, &form, &ret))
-	link := RawToString(ret.Tree)
-	data, err := sendRawRequest("GET", link[23:len(link)-3], nil)
+
+	resp, err := http.Get(apiAddress + consts.ApiPath + strings.TrimSpace(ret.Tree[0].Link))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+
 	assert.NoError(t, err)
 	assert.Equal(t, content, string(data))
+	assert.Equal(t, mimeType, resp.Header.Get("Content-Type"))
+	assert.Equal(t, `attachment; filename="`+filename+`"`, resp.Header.Get("Content-Disposition"))
 }

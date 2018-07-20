@@ -427,6 +427,75 @@ func TestVMCompile(t *testing.T) {
 				func result() string {
 					return Sprintf("ok=%d", long())
 					}`, `result`, `strconv.ParseInt: parsing "99999999999999999999": value out of range 99999999999999999999 [Ln:2 Col:34]`},
+		{`func result() string {
+			var i, result int
+			
+			if true {
+				if false {
+					result = 99
+				} else {
+					result = 5
+				}
+			}
+			if i == 1 {
+				result = 20
+			} elif i> 0 {
+				result = 30
+			} 
+			elif i == 0 
+			{
+				result = result + 50
+				if true {
+					i=10
+				}
+			} elif i==10 {
+				Println("3")
+				result = 0
+				i=33
+			} elif false {
+				Println("4")
+				result = 1
+			} 
+			else 
+			{
+				Println("5")
+				result = 2
+			}
+			if i == 4 {
+				result = result
+			} elif i == 20 {
+				result = 22
+			} else {
+				result = result + 23
+				i = 11
+			}
+			if i == 11 {
+				result = result + 7
+			} else {
+				result = 0
+			}
+			if result == 85 {
+				if false {
+					result = 1
+				} elif 0 {
+					result = 5
+				} elif 1 {
+					result = result + 10
+				}
+			}
+			if result == 10 {
+				result = 11
+			} elif result == 95 {
+				result = result + 1
+				if false {
+					result = 0
+				} elif true {
+					result = result + 4
+				}
+			}
+			return Sprintf("%d", result)
+		}
+					`, `result`, `100`},
 	}
 	vm := NewVM()
 	vm.Extern = true

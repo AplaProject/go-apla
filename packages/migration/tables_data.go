@@ -77,7 +77,7 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 			"new_column":"ContractConditions(\"MainCondition\")"}', 
 		'{"default_page":"false",
 			"creator":"false",
-			"deleted":"ContractAccess(\"Roles_Del\")",
+			"deleted":"ContractAccess(\"Roles_Del\",\"Roles_Restore\")",
 			"company_id":"false",
 			"date_deleted":"ContractAccess(\"Roles_Del\")",
 			"image_id":"ContractAccess(\"Roles_Create\")",

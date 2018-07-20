@@ -71,6 +71,7 @@ func init() {
 		`Source,Id,RollbackId`}
 	funcs[`GetPageHistory`] = tplFunc{getPageHistoryTag, defaultTag, `getpagehistory`,
 		`Source,Id,RollbackId`}
+	funcs[`Hint`] = tplFunc{defaultTag, defaultTag, `hint`, `Icon,Title,Text`}
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
 	funcs[`JsonToSource`] = tplFunc{jsontosourceTag, defaultTag, `jsontosource`, `Source,Data`}
