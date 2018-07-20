@@ -1932,5 +1932,8 @@ func BlockTime(sc *SmartContract) string {
 	if sc.BlockData != nil {
 		blockTime = sc.BlockData.Time
 	}
+	if sc.VDE {
+		blockTime = time.Now().Unix()
+	}
 	return Date(`2006-01-02 15:04:05`, blockTime)
 }
