@@ -1189,3 +1189,34 @@ func TestLoopCond(t *testing.T) {
 
 	assert.EqualError(t, postTx(rnd+`shutdown`, &url.Values{}), `{"type":"panic","error":"There is loop in @1`+rnd+`shutdown contract"}`)
 }
+
+func TestRand(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		action {
+			var result i int
+			i = 3
+			while i < 15 {
+				var rnd int
+				rnd = Random(0, 3*i)
+				result = result + rnd
+				i=i+1
+			}
+			$result = result
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, val1, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	_, val2, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	// val1 == val2 for seed = blockId % 1
+	if val1 != val2 {
+		t.Errorf(`%s!=%s`, val1, val2)
+	}
+}
