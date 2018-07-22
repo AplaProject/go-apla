@@ -261,6 +261,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 	switch vt {
 	case script.VMTypeVDE:
 		f["HTTPRequest"] = HTTPRequest
+		f["GetMapKeys"] = GetMapKeys
+		f["SortedKeys"] = SortedKeys
 		f["Date"] = Date
 		f["HTTPPostJSON"] = HTTPPostJSON
 		f["ValidateCron"] = ValidateCron
