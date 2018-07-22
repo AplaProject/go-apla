@@ -7,7 +7,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 
@@ -59,6 +61,23 @@ func prepareWorkDir() (string, error) {
 
 // CreateVDE creates one instance of VDE
 func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) error {
+	if err := checkVDEName(name); err != nil {
+		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Error("on check VDE name")
+		return err
+	}
+
+	var err error
+	var cancelChain []func()
+
+	defer func() {
+		if err == nil {
+			return
+		}
+
+		for _, cancelFunc := range cancelChain {
+			cancelFunc()
+		}
+	}()
 
 	config := ChildVDEConfig{
 		Executable:     mgr.execPath,
@@ -75,28 +94,43 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 		return errWrongMode
 	}
 
-	if err := mgr.createVDEDB(name, dbUser, dbPassword); err != nil {
+	if err = mgr.createVDEDB(name, dbUser, dbPassword); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on creating VDE DB")
 		return err
 	}
 
-	if err := mgr.initVDEDir(name); err != nil {
+	cancelChain = append(cancelChain, func() {
+		dropDb(name, dbUser)
+	})
+
+	dirPath := path.Join(mgr.childConfigsPath, name)
+	if directoryExists(dirPath) {
+		err = errors.New("vde already exists")
+		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err, "dirPath": dirPath}).Error("on check directory")
+		return err
+	}
+
+	if err = mgr.initVDEDir(name); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "DirName": name, "error": err}).Error("on init VDE dir")
 		return err
 	}
 
+	cancelChain = append(cancelChain, func() {
+		dropVDEDir(mgr.childConfigsPath, name)
+	})
+
 	cmd := config.configCommand()
-	if err := cmd.Run(); err != nil {
+	if err = cmd.Run(); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "args": cmd.Args}).Error("on run config command")
 		return err
 	}
 
-	if err := config.generateKeysCommand().Run(); err != nil {
+	if err = config.generateKeysCommand().Run(); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "args": cmd.Args}).Error("on run generateKeys command")
 		return err
 	}
 
-	if err := config.initDBCommand().Run(); err != nil {
+	if err = config.initDBCommand().Run(); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "args": cmd.Args}).Error("on run initDB command")
 		return err
 	}
@@ -138,7 +172,7 @@ func (mgr *VDEManager) DeleteVDE(name string) error {
 	}
 
 	mgr.StopVDE(name)
-
+	mgr.processes.Remove(name)
 	vdeDir := path.Join(mgr.childConfigsPath, name)
 	vdeConfigPath := filepath.Join(vdeDir, consts.DefaultConfigFile)
 	vdeConfig, err := conf.GetConfigFromPath(vdeConfigPath)
@@ -148,14 +182,7 @@ func (mgr *VDEManager) DeleteVDE(name string) error {
 	}
 
 	time.Sleep(1 * time.Second)
-	if err := model.DropDatabase(vdeConfig.DB.Name); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Deleting vde db")
-		return err
-	}
-
-	dropVDERoleQuery := fmt.Sprintf(dropDBRoleTemplate, vdeConfig.DB.User)
-	if err := model.DBConn.Exec(dropVDERoleQuery).Error; err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Deleting vde db user")
+	if err := dropDb(vdeConfig.DB.Name, vdeConfig.DB.User); err != nil {
 		return err
 	}
 
@@ -287,4 +314,47 @@ func InitVDEManager() {
 			proc.Start(true)
 		}
 	}
+}
+
+func dropDb(name, role string) error {
+	if err := model.DropDatabase(name); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "db_name": name}).Error("Deleting vde db")
+		return err
+	}
+
+	if err := model.GetDB(nil).Exec(fmt.Sprintf(dropDBRoleTemplate, role)).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "role": role}).Error("on deleting vde role")
+	}
+	return nil
+}
+
+func dropVDEDir(configsPath, vdeName string) error {
+	path := path.Join(configsPath, vdeName)
+	if directoryExists(path) {
+		os.RemoveAll(path)
+	}
+
+	log.WithFields(log.Fields{"path": path}).Error("droping dir is not exists")
+	return nil
+}
+
+func directoryExists(path string) bool {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func checkVDEName(name string) error {
+	name = strings.ToLower(name)
+	for _, c := range name {
+		if !unicode.IsDigit(c) && !unicode.Is(unicode.Latin, c) {
+			return fmt.Errorf("Incorrect symbol")
+		}
+	}
+
+	return nil
 }

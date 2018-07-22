@@ -2616,8 +2616,12 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
                 warning "VDEName was not received"
             }
 
+            if Contains($VDEName, " ") {
+                error "VDEName can not contain spaces"
+            }
+
             if Size($DBUser) == 0 {
-                warning "DBName was not received"
+                warning "DBUser was not received"
             }
 
             if Size($DBPassword) == 0 {
@@ -2631,6 +2635,8 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
 		}
 	
 		action {
+            $VDEName = ToLower($VDEName)
+            $DBUser = ToLower($DBUser)
             CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
             $result = "VDE" + $VDEName + "created"
 		}
@@ -2653,6 +2659,7 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
 		}
 	
 		action {
+            $VDEName = ToLower($VDEName)
             StartVDE($VDEName)
             $result = "VDE " + $VDEName + " running"
 		}
@@ -2666,6 +2673,7 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
 		}
 	
 		action {
+            $VDEName = ToLower($VDEName)
             StopVDEProcess($VDEName)
             $result = "VDE " + $VDEName + " stopped"
 		}
@@ -2676,6 +2684,7 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
 		}
 		conditions {}
 		action{
+            $VDEName = ToLower($VDEName)
             DeleteVDE($VDEName)
             $result = "VDE " + $VDEName + " removed"
 		}
