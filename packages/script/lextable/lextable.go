@@ -49,7 +49,7 @@ var (
 	flags    = map[string]uint32{`next`: 1, `push`: 2, `pop`: 4, `skip`: 8}
 	alphabet = []byte{0x01, 0x0a, ' ', '`', '"', ';', '(', ')', '[', ']', '{', '}', '&',
 		//           default  n    s    q    Q
-		'|', '#', '.', ',', '<', '>', '=', '!', '*', '$', '@',
+		'|', '#', '.', ',', '<', '>', '=', '!', '*', '$', '@', ':',
 		'+', '-', '/', '\\', '0', '1', 'a', '_', 128}
 	//													r
 
@@ -70,7 +70,7 @@ var (
 	states = `{
 	"main": {
 			"n;": ["main", "newline", "next"],
-			"()#[],{}": ["main", "sys", "next"],
+			"()#[],{}:": ["main", "sys", "next"],
 			"s": ["main", "", "next"],
 			"q": ["string", "", "push next"],
 			"Q": ["dstring", "", "push next"],
