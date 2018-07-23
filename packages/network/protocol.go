@@ -412,13 +412,16 @@ func readUint(r io.Reader, byteCount int) (uint64, error) {
 
 func readBytes(r io.Reader, size uint64) ([]byte, error) {
 	var maxSize uint64 = 10485760
-	if size > maxSize { // TODO
+	if size > maxSize {
 		log.WithFields(log.Fields{"size": size, "max_size": maxSize, "type": consts.ParameterExceeded}).Error("bytes size to read exceeds max allowed size")
 		return nil, errors.New("bad size")
 	}
 	value := make([]byte, int(size))
 	_, err := io.ReadFull(r, value)
 	if err != nil {
+		if err == io.EOF {
+			log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Warn("cannot read bytes")
+		}
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("cannot read bytes")
 	}
 	return value, err
@@ -459,8 +462,8 @@ func writeBool(w io.Writer, val bool) error {
 func readByteSlice(r io.Reader, bytesLen int) ([]byte, error) {
 	if bytesLen < 0 {
 		size, err := readUint(r, 4)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading slice size")
+		if err != nil && err == io.EOF {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warn("on reading slice size")
 			return nil, err
 		}
 		bytesLen = int(size)
