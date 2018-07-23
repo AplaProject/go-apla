@@ -4,22 +4,26 @@
 package kv
 
 import (
-	"database/sql/driver"
+	"io"
 
-	"github.com/tidwall/buntdb"
+	"github.com/dgraph-io/badger"
 )
 
-// Database and Transaction interfaces currently fits only buntDB realisation
+// Database and Transaction interfaces currently fits only badger implementation
 type Database interface {
-	Begin(writeable bool) (*buntdb.Tx, error)
+	io.Closer
+
+	// Starting read/read-write transaction
+	NewTransaction(update bool) *badger.Txn
 }
 
 type Transaction interface {
-	driver.Tx
+	Set(key, val []byte) error
+	Delete(key []byte) error
+	Get(key []byte) (item *badger.Item, rerr error)
 
-	Get(key string, ignoreExpired ...bool) (val string, err error)
-	Set(key, value string, opts *buntdb.SetOptions) (previousValue string, replaced bool, err error)
-	Delete(key string) (val string, err error)
+	NewIterator(opt badger.IteratorOptions) *badger.Iterator
 
-	AscendKeys(pattern string, iterator func(key, value string) bool) error
+	Commit(callback func(error)) error
+	Discard()
 }

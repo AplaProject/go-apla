@@ -6,14 +6,18 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/dgraph-io/badger"
 	"github.com/pkg/errors"
+	"github.com/tidwall/buntdb"
 )
 
 const keyConvention = "%d.%s.%s"
 
 // metadataTx must be closed by calling Commit() or Rollback() when done
 type metadataTx struct {
-	tx kv.Transaction
+	db      kv.Database
+	tx      kv.Transaction
+	durable bool
 }
 
 func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value interface{}) error {
@@ -24,7 +28,7 @@ func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value inte
 
 	key := fmt.Sprintf(keyConvention, registry.Ecosystem.ID, registry.Name, pkValue)
 
-	_, _, err = m.tx.Set(key, string(jsonValue), nil)
+	err = m.tx.Set([]byte(key), jsonValue)
 	if err != nil {
 		return errors.Wrapf(err, "inserting value %s to %s registry", value, registry.Name)
 	}
@@ -39,7 +43,7 @@ func (m *metadataTx) Update(registry *types.Registry, pkValue string, newValue i
 func (m *metadataTx) Delete(registry *types.Registry, pkValue string) error {
 	key := fmt.Sprintf(keyConvention, registry.Ecosystem.ID, registry.Name, pkValue)
 
-	_, err := m.tx.Delete(key)
+	err := m.tx.Delete([]byte(key))
 	if err != nil {
 		return errors.Wrapf(err, "deleting %s", key)
 	}
@@ -48,14 +52,25 @@ func (m *metadataTx) Delete(registry *types.Registry, pkValue string) error {
 }
 
 func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface{}) error {
+	err := m.refreshTx()
+	if err != nil {
+		return err
+	}
+	defer m.endRead()
+
 	key := fmt.Sprintf(keyConvention, registry.Ecosystem.ID, registry.Name, pkValue)
 
-	value, err := m.tx.Get(key)
+	value, err := m.tx.Get([]byte(key))
 	if err != nil {
-		return errors.Wrapf(err, "retrieving %s from service registry", key)
+		return errors.Wrapf(err, "retrieving %s from databse", key)
 	}
 
-	err = json.Unmarshal([]byte(value), out)
+	rawValue, err := value.Value()
+	if err != nil {
+		return errors.Wrapf(err, "retrieving %s value from item", key)
+	}
+
+	err = json.Unmarshal(rawValue, out)
 	if err != nil {
 		return errors.Wrapf(err, "unmarshalling value %s to struct", value)
 	}
@@ -63,40 +78,84 @@ func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface
 	return nil
 }
 
-func (m *metadataTx) Walk(registry *types.Registry, fn func(value string) bool) error {
-	pattern := fmt.Sprintf(keyConvention, registry.Ecosystem.ID, registry.Name, "*")
-
-	err := m.tx.AscendKeys(pattern, func(key, value string) bool {
-		return fn(value)
-	})
-
+func (m *metadataTx) Walk(registry *types.Registry, index string, fn func(value string) bool) error {
+	err := m.refreshTx()
 	if err != nil {
-		return errors.Wrapf(err, "walking through %s", pattern)
+		return err
+	}
+	defer m.endRead()
+
+	prefix := fmt.Sprintf("%d.%s", registry.Ecosystem.ID, registry.Name)
+
+	iterator := m.tx.NewIterator(badger.IteratorOptions{PrefetchValues: true, PrefetchSize: 1000})
+	for iterator.Seek([]byte(prefix)); iterator.ValidForPrefix([]byte(prefix)); iterator.Next() {
+		v, err := iterator.Item().Value()
+		if err != nil {
+			return errors.Wrapf(err, "iterating over %s", prefix)
+		}
+
+		if !fn(string(v)) {
+			break
+		}
 	}
 
 	return nil
 }
 
-func (m *metadataTx) Rollback() error { return m.tx.Rollback() }
+func (m *metadataTx) Rollback() error {
+	m.tx = nil
+	m.tx.Discard()
+	return nil
+}
 
-func (m *metadataTx) Commit() error { return m.tx.Commit() }
+func (m *metadataTx) Commit() error {
+	err := m.tx.Commit(nil)
+	m.tx = nil
+	return err
+}
 
-type metadataProvider struct {
+func (m *metadataTx) refreshTx() error {
+	if m.durable {
+		if m.tx == nil {
+			return buntdb.ErrTxClosed
+		}
+
+		return nil
+	}
+
+	// Non-durable transaction can only be readable. All writable transaction called directly from Begin()
+	// and must be committed/rollback manually. So here we create readonly tx without providing any choice
+	m.tx = m.db.NewTransaction(false)
+
+	return nil
+}
+
+func (m *metadataTx) endRead() error {
+	if !m.durable {
+		if err := m.tx.Commit(nil); err != nil {
+			return errors.Wrapf(err, "ending read transaction")
+		}
+
+		m.tx = nil
+	}
+
+	return nil
+}
+
+type metadataStorage struct {
 	db kv.Database
 }
 
-func NewMetadataProvider(db kv.Database) types.MetadataRegistryProvider {
-	return &metadataProvider{
+func NewMetadataStorage(db kv.Database) types.MetadataRegistryStorage {
+	return &metadataStorage{
 		db: db,
 	}
 }
 
-// Multiple read-only transactions can be opened at the same time but there can only be one read/write transaction at a time
-func (m *metadataProvider) Begin(writable bool) (types.MetadataRegistry, error) {
-	dbTx, err := m.db.Begin(writable)
-	if err != nil {
-		return nil, errors.Wrapf(err, "starting transaction")
-	}
+func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
+	return &metadataTx{tx: m.db.NewTransaction(true), durable: true}
+}
 
-	return &metadataTx{tx: dbTx}, nil
+func (m *metadataStorage) Reader() types.MetadataRegistryReader {
+	return &metadataTx{}
 }

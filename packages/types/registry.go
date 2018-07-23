@@ -25,24 +25,27 @@ type Registry struct {
 
 type MetadataRegistryReader interface {
 	Get(registry *Registry, pkValue string, out interface{}) error
-	Walk(registry *Registry, fn func(jsonRow string) bool) error
+	Walk(registry *Registry, index string, fn func(jsonRow string) bool) error
 }
 
 type MetadataRegistryWriter interface {
+	driver.Tx
 	Insert(registry *Registry, pkValue string, value interface{}) error
 	Update(registry *Registry, pkValue string, newValue interface{}) error
 	Delete(registry *Registry, pkValue string) error
 }
 
-type MetadataRegistry interface {
+type MetadataRegistryReaderWriter interface {
 	MetadataRegistryReader
 	MetadataRegistryWriter
-	driver.Tx
 }
 
-type MetadataRegistryProvider interface {
-	// Transaction must be closed by calling Commit() (writable) or Rollback() (writable/readable) when done
-	Begin(writable bool) (MetadataRegistry, error)
+// MetadataRegistryStorage provides a read or read-write transactions for metadata registry
+type MetadataRegistryStorage interface {
+	// Write/Read transaction. Must be closed by calling Commit() or Rollback() when done.
+	Begin() MetadataRegistryReaderWriter
+	// Multiple read-only transactions can be opened even while write transaction is running
+	Reader() MetadataRegistryReader
 }
 
 type RegistryAccessor interface {
