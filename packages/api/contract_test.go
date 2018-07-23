@@ -1119,3 +1119,11 @@ func TestLoopCond(t *testing.T) {
 
 	assert.EqualError(t, postTx(rnd+`shutdown`, &url.Values{}), `{"type":"panic","error":"There is loop in @1`+rnd+`shutdown contract"}`)
 }
+
+func TestKillNode(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{"Name": {`MyTestContract1`}, "Value": {`contract MyTestContract1 {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}, "nowait": {`true`}}
+	require.NoError(t, postTx(`NewContract`, &form))
+	require.NoError(t, postTx("Kill", &url.Values{"nowait": {`true`}}))
+}
