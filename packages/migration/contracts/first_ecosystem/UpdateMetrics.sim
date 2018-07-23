@@ -1,0 +1,24 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract UpdateMetrics {
+	conditions {
+		ContractConditions("MainCondition")
+	}
+	action {
+		var values array
+		values = DBCollectMetrics()
+
+		var i, id int
+		var v map
+		while (i < Len(values)) {
+			v = values[i]
+			id = Int(DBFind("metrics").Columns("id").Where("time = ? AND key = ? AND metric = ?", v["time"], v["key"], v["metric"]).One("id"))
+			if id != 0 {
+				DBUpdate("metrics", id, "value", Int(v["value"]))
+			} else {
+				DBInsert("metrics", "time,key,metric,value", v["time"], v["key"], v["metric"], Int(v["value"]))
+			}
+			i = i + 1
+		}
+	}
+}

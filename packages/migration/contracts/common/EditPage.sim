@@ -1,0 +1,66 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract EditPage {
+    data {
+        Id int
+        Value string "optional"
+        Menu string "optional"
+        Conditions string "optional"
+        ValidateCount int "optional"
+        ValidateMode string "optional"
+    }
+    func onlyConditions() bool {
+        return $Conditions && !$Value && !$Menu && !$ValidateCount 
+    }
+    func preparePageValidateCount(count int) int {
+        var min, max int
+        min = Int(EcosysParam("min_page_validate_count"))
+        max = Int(EcosysParam("max_page_validate_count"))
+        if count < min {
+            count = min
+        } else {
+            if count > max {
+                count = max
+            }
+        }
+        return count
+    }
+
+    conditions {
+        RowConditions("pages", $Id, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
+        $ValidateCount = preparePageValidateCount($ValidateCount)
+    }
+
+    action {
+        var pars, vals array
+        if $Value {
+            pars[0] = "value"
+            vals[0] = $Value
+        }
+        if $Menu {
+            pars = Append(pars, "menu")
+            vals = Append(vals, $Menu)
+        }
+        if $Conditions {
+            pars = Append(pars, "conditions")
+            vals = Append(vals, $Conditions)
+        }
+        if $ValidateCount {
+            pars = Append(pars, "validate_count")
+            vals = Append(vals, $ValidateCount)
+        }
+        if $ValidateMode {
+            if $ValidateMode != "1" {
+                $ValidateMode = "0"
+            }
+            pars = Append(pars, "validate_mode")
+            vals = Append(vals, $ValidateMode)
+        }
+        if Len(vals) > 0 {
+            DBUpdate("pages", $Id, Join(pars, ","), vals...)
+        }
+    }
+}
