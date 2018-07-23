@@ -47,7 +47,7 @@ type Composite struct {
 var (
 	funcs = make(map[string]tplFunc)
 	tails = make(map[string]forTails)
-	modes = [][]rune{{'(', ')'}, {'{', '}'}}
+	modes = [][]rune{{'(', ')'}, {'{', '}'}, {'[', ']'}}
 )
 
 func init() {

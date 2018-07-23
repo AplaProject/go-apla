@@ -17,6 +17,9 @@
 package template
 
 import (
+	"fmt"
+	"sort"
+	"strings"
 	"testing"
 )
 
@@ -26,6 +29,47 @@ type tplItem struct {
 }
 
 type tplList []tplItem
+
+func outMap(v map[string]interface{}) string {
+	keys := make([]string, 0)
+	for key := range v {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	values := make([]string, 0, len(keys))
+	for _, key := range keys {
+		switch val := v[key].(type) {
+		case map[string]interface{}:
+			values = append(values, fmt.Sprintf(`%q:%q`, key, outMap(val)))
+		default:
+			values = append(values, fmt.Sprintf(`%q:%q`, key, val))
+		}
+	}
+	return `{` + strings.Join(values, ` `) + `}`
+}
+
+func TestObj(t *testing.T) {
+	list := []tplItem{
+		{`{"val": "value, [] 1", test: Test текст}`,
+			`{"test":"Test текст" "val":"value, [] 1"}`},
+		{`[ col1 , col2, {"val": "value 1", test: Test value} ]`,
+			``},
+	}
+	for _, item := range list {
+		var result string
+		val, _ := parseObject([]rune(item.input))
+		switch v := val.(type) {
+		case []interface{}:
+			result = fmt.Sprintf("%v", v)
+		default:
+			result = outMap(val.(map[string]interface{}))
+		}
+		if result != item.want {
+			t.Errorf("%s != %s", result, item.want)
+			break
+		}
+	}
+}
 
 func TestJSON(t *testing.T) {
 	var timeout bool
@@ -42,6 +86,9 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`Hint( [col1,col2] , {"test": Test val}, 
+	   {"mypar1":"myval1, 2", mypar2: [1, 20], "qqq": {name: John, "lastName": "Smith"}} )`,
+		`[{"tag":"hint","attr":{"icon":"[col1,col2]","text":"{\"mypar1\":\"myval1, 2\", mypar2: [1, 20], \"qqq\": {name: John, \"lastName\": \"Smith\"}}","title":"{\"test\": Test val}"}}]`},
 	{`Hint(Title: some text, Icon: default, Text: This is hint text)`,
 		`[{"tag":"hint","attr":{"icon":"default","text":"This is hint text","title":"some text"}}]`},
 	{`AddToolButton(Title: Open, Page: default).Popup(Width: 50, Header: Test)`,
