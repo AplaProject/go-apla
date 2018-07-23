@@ -487,6 +487,8 @@ func getFunc(input string, curFunc tplFunc) (*[][]rune, int, *[]*[][]rune) {
 	} else {
 		lenParams = len(strings.Split(curFunc.Params, `,`))
 	}
+	objLevel := 0
+	objMode := 0
 	level := 1
 	if input[0] == '{' {
 		mode = 1
@@ -496,6 +498,16 @@ main:
 	for off, ch = range input {
 		if skip > 0 {
 			skip--
+			continue
+		}
+		if objLevel > 0 {
+			params[curp] = append(params[curp], ch)
+			switch ch {
+			case modes[objMode][0]:
+				objLevel++
+			case modes[objMode][1]:
+				objLevel--
+			}
 			continue
 		}
 		if pair > 0 {
@@ -519,6 +531,13 @@ main:
 			if ch >= '!' {
 				if ch == '"' || ch == '`' {
 					pair = ch
+				} else if ch == '[' || ch == '{' {
+					objMode = 2
+					if ch == '{' {
+						objMode = 1
+					}
+					objLevel = 1
+					params[curp] = append(params[curp], ch)
 				} else {
 					if ch == modes[mode][0] {
 						level++
