@@ -282,7 +282,7 @@ func (b *Block) Check() error {
 		}
 
 		if err := t.Check(b.Header.Time, false); err != nil {
-			return utils.ErrInfo(err)
+			return err
 		}
 
 	}
