@@ -169,10 +169,20 @@ func getTxRateByTxType(txType int8) transactionRate {
 	}
 }
 
+func GetManyTransactions(dbtx *DbTransaction, hashes [][]byte) ([]Transaction, error) {
+	txes := []Transaction{}
+	query := GetDB(dbtx).Where("hash in (?)", hashes).Find(&txes)
+	if err := query.Error; err != nil {
+		return nil, err
+	}
+
+	return txes, nil
+}
+
 // GetTxesByHashlist returns map of hash-*Transaction
 func GetTxesByHashlist(dbtx *DbTransaction, hashes [][]byte) (map[string]*Transaction, error) {
-	txes := []Transaction{}
-	if err := GetDB(dbtx).Where("hash in (?)", hashes).Find(&txes).Error; err != nil {
+	txes, err := GetManyTransactions(dbtx, hashes)
+	if err != nil {
 		return nil, err
 	}
 

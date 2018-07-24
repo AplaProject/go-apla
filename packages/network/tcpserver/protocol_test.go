@@ -2,12 +2,14 @@ package tcpserver
 
 import (
 	"bytes"
+	"fmt"
 
 	"testing"
 
 	"reflect"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/stretchr/testify/require"
 )
 
 func TestReadRequest(t *testing.T) {
@@ -87,4 +89,32 @@ func TestSendRequest(t *testing.T) {
 	if !reflect.DeepEqual(test, test2) {
 		t.Errorf("different values: %+v and %+v", test, test2)
 	}
+}
+
+func TestRequestType(t *testing.T) {
+	source := RequestType{
+		Type: uint16(RequestTypeNotFullNode),
+	}
+
+	buf := bytes.Buffer{}
+	require.NoError(t, source.Write(&buf))
+
+	target := RequestType{}
+	require.NoError(t, target.Read(&buf))
+	require.Equal(t, source.Type, target.Type)
+}
+
+func TestGetBodiesRequest(t *testing.T) {
+	source := GetBodiesRequest{
+		BlockID:      33,
+		ReverseOrder: true,
+	}
+
+	buf := bytes.Buffer{}
+	require.NoError(t, source.Write(&buf))
+
+	target := GetBodiesRequest{}
+	require.NoError(t, target.Read(&buf))
+	fmt.Printf("%+v %+v\n", source, target)
+	require.Equal(t, source, target)
 }
