@@ -564,7 +564,17 @@ func dbfindTag(par parFunc) string {
 		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
 	}
 	if par.Node.Attr[`order`] != nil {
-		order = ` order by ` + converter.EscapeName(macro(par.Node.Attr[`order`].(string), par.Workspace.Vars))
+		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
+		if strings.HasPrefix(order, `[`) {
+			inColumns, _ = parseObject([]rune(order))
+		} else {
+			inColumns = order
+		}
+		order, err = smart.GetOrder(inColumns)
+		if err != nil {
+			return err.Error()
+		}
+		order = ` order by ` + order
 	}
 	if par.Node.Attr[`limit`] != nil {
 		limit = converter.StrToInt(par.Node.Attr[`limit`].(string))
