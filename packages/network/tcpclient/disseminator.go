@@ -2,6 +2,7 @@ package tcpclient
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"net"
@@ -30,7 +31,7 @@ func SendTransactionsToHost(host string, txes []model.Transaction) error {
 func sendRawTransacitionsToHost(host string, packet []byte) error {
 	con, err := newConnection(host)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": host}).Error("on creating ctp connection")
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": host}).Error("on creating tcp connection")
 		return err
 	}
 
@@ -43,7 +44,7 @@ func sendRawTransacitionsToHost(host string, packet []byte) error {
 	return nil
 }
 
-func SendTransacitionsToAll(hosts []string, txes []model.Transaction) error {
+func SendTransacitionsToAll(ctx context.Context, hosts []string, txes []model.Transaction) error {
 	if len(hosts) == 0 || len(txes) == 0 {
 		return nil
 	}
@@ -53,6 +54,11 @@ func SendTransacitionsToAll(hosts []string, txes []model.Transaction) error {
 	var wg sync.WaitGroup
 	var errCount int32
 	for _, h := range hosts {
+		if err := ctx.Err(); err != nil {
+			log.Debug("exit by context error")
+			return err
+		}
+
 		wg.Add(1)
 		go func(host string, pak []byte) {
 			defer wg.Done()
@@ -72,7 +78,7 @@ func SendTransacitionsToAll(hosts []string, txes []model.Transaction) error {
 	return nil
 }
 
-func SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes []model.Transaction, nodeID int64) error {
+func SendFullBlockToAll(ctx context.Context, hosts []string, block *model.InfoBlock, txes []model.Transaction, nodeID int64) error {
 	if len(hosts) == 0 {
 		return nil
 	}
@@ -98,7 +104,7 @@ func SendFullBlockToAll(hosts []string, block *model.InfoBlock, txes []model.Tra
 			con, err := newConnection(h)
 			if err != nil {
 				increaseErrCount()
-				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": h}).Error("on creating ctp connection")
+				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": h}).Error("on creating tcp connection")
 				return
 			}
 

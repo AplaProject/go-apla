@@ -419,10 +419,7 @@ func readBytes(r io.Reader, size uint64) ([]byte, error) {
 	value := make([]byte, int(size))
 	_, err := io.ReadFull(r, value)
 	if err != nil {
-		if err == io.EOF {
-			log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Warn("cannot read bytes")
-		}
-		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("cannot read bytes")
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Warn("cannot read bytes")
 	}
 	return value, err
 }

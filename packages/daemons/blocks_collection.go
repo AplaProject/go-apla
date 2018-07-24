@@ -74,7 +74,7 @@ func InitialLoad(logger *log.Entry) error {
 }
 
 func blocksCollection(ctx context.Context, d *daemon) (err error) {
-	host, maxBlockID, err := getHostWithMaxID(d.logger)
+	host, maxBlockID, err := getHostWithMaxID(ctx, d.logger)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"error": err}).Warn("on checking best host")
 		return err
@@ -148,7 +148,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 		if !hashMatched {
 			//it should be fork, replace our previous blocks to ones from the host
-			err = GetBlocks(bl.Header.BlockID-1, host)
+			err = GetBlocks(ctx, bl.Header.BlockID-1, host)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 				return err
@@ -175,7 +175,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	d.logger.WithFields(log.Fields{"min_block": curBlock.BlockID, "max_block": maxBlockID, "count": maxBlockID - curBlock.BlockID}).Info("starting downloading blocks")
 
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(network.BlocksPerRequest) {
-		rawBlocksChan, err := tcpclient.GetBlocksBodies(host, blockID, false)
+		rawBlocksChan, err := tcpclient.GetBlocksBodies(ctx, host, blockID, false)
 		if err != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
 			return err
@@ -266,7 +266,7 @@ func banNode(host string, block *block.Block, err error) {
 }
 
 // GetHostWithMaxID returns host with maxBlockID
-func getHostWithMaxID(logger *log.Entry) (host string, maxBlockID int64, err error) {
+func getHostWithMaxID(ctx context.Context, logger *log.Entry) (host string, maxBlockID int64, err error) {
 
 	nbs := service.GetNodesBanService()
 	hosts, err := nbs.FilterBannedHosts(syspar.GetRemoteHosts())
@@ -274,18 +274,18 @@ func getHostWithMaxID(logger *log.Entry) (host string, maxBlockID int64, err err
 		logger.WithFields(log.Fields{"error": err}).Error("on filtering banned hosts")
 	}
 
-	host, maxBlockID, err = tcpclient.HostWithMaxBlock(hosts)
+	host, maxBlockID, err = tcpclient.HostWithMaxBlock(ctx, hosts)
 	if len(hosts) == 0 || err == tcpclient.ErrNodesUnavailable {
 		hosts = conf.GetNodesAddr()
-		return tcpclient.HostWithMaxBlock(hosts)
+		return tcpclient.HostWithMaxBlock(ctx, hosts)
 	}
 
 	return
 }
 
 // GetBlocks is returning blocks
-func GetBlocks(blockID int64, host string) error {
-	blocks, err := getBlocks(blockID, host)
+func GetBlocks(ctx context.Context, blockID int64, host string) error {
+	blocks, err := getBlocks(ctx, blockID, host)
 	if err != nil {
 		return err
 	}
@@ -323,7 +323,7 @@ func GetBlocks(blockID int64, host string) error {
 	return processBlocks(blocks)
 }
 
-func getBlocks(blockID int64, host string) ([]*block.Block, error) {
+func getBlocks(ctx context.Context, blockID int64, host string) ([]*block.Block, error) {
 	rollback := syspar.GetRbBlocks1()
 
 	badBlocks := make(map[int64]string)
@@ -332,7 +332,7 @@ func getBlocks(blockID int64, host string) ([]*block.Block, error) {
 	var count int64
 
 	// load the block bodies from the host
-	blocksCh, err := tcpclient.GetBlocksBodies(host, blockID, true)
+	blocksCh, err := tcpclient.GetBlocksBodies(ctx, host, blockID, true)
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}

@@ -1,13 +1,15 @@
 package tcpclient
 
 import (
+	"context"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/network"
 	log "github.com/sirupsen/logrus"
 )
 
 // GetBlocksBodies send GetBodiesRequest returns channel of binary blocks data
-func GetBlocksBodies(host string, blockID int64, reverseOrder bool) (chan []byte, error) {
+func GetBlocksBodies(ctx context.Context, host string, blockID int64, reverseOrder bool) (chan []byte, error) {
 	conn, err := newConnection(host)
 	if err != nil {
 		return nil, err
@@ -38,6 +40,11 @@ func GetBlocksBodies(host string, blockID int64, reverseOrder bool) (chan []byte
 		}()
 
 		for {
+			if err := ctx.Err(); err != nil {
+				log.Debug(err)
+				return
+			}
+
 			// receive the data size as a response that server wants to transfer
 			resp := &network.GetBodyResponse{}
 			if err := resp.Read(conn); err != nil {

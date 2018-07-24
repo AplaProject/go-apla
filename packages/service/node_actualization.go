@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"time"
 
 	"github.com/pkg/errors"
@@ -27,11 +28,16 @@ func NewNodeActualizer(availableBlockchainGap int64) NodeActualizer {
 }
 
 // Run is starting node monitoring
-func (n *NodeActualizer) Run() {
+func (n *NodeActualizer) Run(ctx context.Context) {
 	go func() {
 		log.Info("Node Actualizer monitoring starting")
 		for {
-			actual, err := n.checkBlockchainActuality()
+			if ctx.Err() != nil {
+				log.WithFields(log.Fields{"error": ctx.Err(), "type": consts.ContextError}).Error("context error")
+				return
+			}
+
+			actual, err := n.checkBlockchainActuality(ctx)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.BCActualizationError, "err": err}).Error("checking blockchain actuality")
 				return
@@ -52,7 +58,7 @@ func (n *NodeActualizer) Run() {
 	}()
 }
 
-func (n *NodeActualizer) checkBlockchainActuality() (bool, error) {
+func (n *NodeActualizer) checkBlockchainActuality(ctx context.Context) (bool, error) {
 	curBlock := &model.InfoBlock{}
 	_, err := curBlock.Get()
 	if err != nil {
@@ -61,7 +67,7 @@ func (n *NodeActualizer) checkBlockchainActuality() (bool, error) {
 
 	remoteHosts := syspar.GetRemoteHosts()
 
-	_, maxBlockID, err := tcpclient.HostWithMaxBlock(remoteHosts)
+	_, maxBlockID, err := tcpclient.HostWithMaxBlock(ctx, remoteHosts)
 	if err != nil {
 		return false, errors.Wrapf(err, "choosing best host")
 	}

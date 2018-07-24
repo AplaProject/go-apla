@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"time"
 
 	"github.com/pkg/errors"
@@ -27,11 +28,11 @@ func NewNodeRelevanceService(availableBlockchainGap int64, checkingInterval time
 }
 
 // Run is starting node monitoring
-func (n *NodeRelevanceService) Run() {
+func (n *NodeRelevanceService) Run(ctx context.Context) {
 	go func() {
 		log.Info("Node relevance monitoring started")
 		for {
-			relevance, err := n.checkNodeRelevance()
+			relevance, err := n.checkNodeRelevance(ctx)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.BCRelevanceError, "err": err}).Error("checking blockchain relevance")
 				return
@@ -63,7 +64,7 @@ func NodeDoneUpdatingBlockchain() {
 	}()
 }
 
-func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
+func (n *NodeRelevanceService) checkNodeRelevance(ctx context.Context) (relevant bool, err error) {
 	curBlock := &model.InfoBlock{}
 	_, err = curBlock.Get()
 	if err != nil {
@@ -77,7 +78,7 @@ func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
 		return true, nil
 	}
 
-	_, maxBlockID, err := tcpclient.HostWithMaxBlock(remoteHosts)
+	_, maxBlockID, err := tcpclient.HostWithMaxBlock(ctx, remoteHosts)
 	if err != nil {
 		if err == tcpclient.ErrNodesUnavailable {
 			return false, nil

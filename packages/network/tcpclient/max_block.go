@@ -11,20 +11,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func HostWithMaxBlock(hosts []string) (bestHost string, maxBlockID int64, err error) {
+func HostWithMaxBlock(ctx context.Context, hosts []string) (bestHost string, maxBlockID int64, err error) {
 	if len(hosts) == 0 {
 		return "", -1, nil
 	}
-	ctx := context.Background()
+
 	return hostWithMaxBlock(ctx, hosts)
 }
 
 func GetMaxBlockID(host string) (blockID int64, err error) {
-	ctx := context.Background()
-	return getMaxBlock(ctx, host)
+	return getMaxBlock(host)
 }
 
-func getMaxBlock(ctx context.Context, host string) (blockID int64, err error) {
+func getMaxBlock(host string) (blockID int64, err error) {
 	con, err := newConnection(host)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Debug("error connecting to host")
@@ -79,7 +78,7 @@ func hostWithMaxBlock(ctx context.Context, hosts []string) (bestHost string, max
 		wg.Add(1)
 
 		go func(host string) {
-			blockID, err := getMaxBlock(context.TODO(), host)
+			blockID, err := getMaxBlock(host)
 			defer wg.Done()
 
 			resultChan <- blockAndHost{

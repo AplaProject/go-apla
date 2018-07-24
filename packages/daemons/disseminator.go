@@ -45,15 +45,15 @@ func Disseminator(ctx context.Context, d *daemon) error {
 	if isFullNode {
 		// send blocks and transactions hashes
 		d.logger.Debug("we are full_node, sending hashes")
-		return sendBlockWithTxHashes(myNodePosition, d.logger)
+		return sendBlockWithTxHashes(ctx, myNodePosition, d.logger)
 	}
 
 	// we are not full node for this StateID and WalletID, so just send transactions
 	d.logger.Debug("we are full_node, sending transactions")
-	return sendTransactions(d.logger)
+	return sendTransactions(ctx, d.logger)
 }
 
-func sendTransactions(logger *log.Entry) error {
+func sendTransactions(ctx context.Context, logger *log.Entry) error {
 	// get unsent transactions
 	trs, err := model.GetAllUnsentTransactions()
 	if err != nil {
@@ -72,7 +72,7 @@ func sendTransactions(logger *log.Entry) error {
 		return err
 	}
 
-	if err := tcpclient.SendTransacitionsToAll(hosts, *trs); err != nil {
+	if err := tcpclient.SendTransacitionsToAll(ctx, hosts, *trs); err != nil {
 		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending transactions")
 		return err
 	}
@@ -89,7 +89,7 @@ func sendTransactions(logger *log.Entry) error {
 }
 
 // send block and transactions hashes
-func sendBlockWithTxHashes(fullNodeID int64, logger *log.Entry) error {
+func sendBlockWithTxHashes(ctx context.Context, fullNodeID int64, logger *log.Entry) error {
 	block, err := model.BlockGetUnsent()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting unsent blocks")
@@ -114,8 +114,8 @@ func sendBlockWithTxHashes(fullNodeID int64, logger *log.Entry) error {
 		return err
 	}
 
-	if err := tcpclient.SendFullBlockToAll(hosts, block, *trs, fullNodeID); err != nil {
-		log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Error("on sending block with hashes to all")
+	if err := tcpclient.SendFullBlockToAll(ctx, hosts, block, *trs, fullNodeID); err != nil {
+		log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Warn("on sending block with hashes to all")
 		return err
 	}
 

@@ -1,6 +1,8 @@
 package daemonsctl
 
 import (
+	"context"
+
 	"github.com/GenesisKernel/go-genesis/packages/block"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -13,7 +15,7 @@ import (
 )
 
 // RunAllDaemons start daemons, load contracts and tcpserver
-func RunAllDaemons() error {
+func RunAllDaemons(ctx context.Context) error {
 	if !conf.Config.IsSupportingVDE() {
 		logEntry := log.WithFields(log.Fields{"daemon_name": "block_collection"})
 
@@ -36,7 +38,7 @@ func RunAllDaemons() error {
 	}
 
 	log.Info("start daemons")
-	daemons.StartDaemons()
+	daemons.StartDaemons(ctx)
 
 	if err := tcpserver.TcpListener(conf.Config.TCPServer.Str()); err != nil {
 		log.Errorf("can't start tcp servers, stop")
