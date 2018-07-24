@@ -729,10 +729,9 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 
 // PrepareColumns replaces jsonb fields -> in the list of columns for db selecting
 // For example, name,doc->title => name,doc::jsonb->>'title' as "doc.title"
-func PrepareColumns(columns string) string {
+func PrepareColumns(columns []string) string {
 	colList := make([]string, 0)
-	for _, icol := range strings.Split(columns, `,`) {
-		icol = strings.TrimSpace(icol)
+	for _, icol := range columns {
 		if strings.Contains(icol, `->`) {
 			colfield := strings.Split(icol, `->`)
 			if len(colfield) == 2 {
@@ -792,24 +791,53 @@ func checkNow(inputs ...string) error {
 	return nil
 }
 
+func GetColumns(inColumns interface{}) ([]string, error) {
+	var columns []string
+
+	switch v := inColumns.(type) {
+	case string:
+		if len(v) > 0 {
+			columns = strings.Split(v, `,`)
+		}
+	case []interface{}:
+		for _, name := range v {
+			switch col := name.(type) {
+			case string:
+				columns = append(columns, col)
+			}
+		}
+	}
+	if len(columns) == 0 {
+		columns = []string{`*`}
+	}
+	for i, v := range columns {
+		columns[i] = converter.Sanitize(strings.ToLower(v), `*->`)
+	}
+	if err := checkNow(columns...); err != nil {
+		return nil, err
+	}
+	return columns, nil
+}
+
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
-func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
+func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64, order string, offset, limit, ecosystem int64,
 	where string, params []interface{}) (int64, []interface{}, error) {
 
 	var (
-		err  error
-		rows *sql.Rows
-		perm map[string]string
+		err     error
+		rows    *sql.Rows
+		perm    map[string]string
+		columns []string
 	)
-	if len(columns) == 0 {
-		columns = `*`
-	}
-	columns = strings.ToLower(columns)
-	if err = checkNow(columns, where); err != nil {
+	columns, err = GetColumns(inColumns)
+	if err != nil {
 		return 0, nil, err
 	}
 	if len(order) == 0 {
 		order = `id`
+	}
+	if err = checkNow(where); err != nil {
+		return 0, nil, err
 	}
 	where = PrepareWhere(strings.Replace(converter.Escape(where), `$`, `?`, -1))
 	if id != 0 {
@@ -831,14 +859,10 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	if err != nil {
 		return 0, nil, err
 	}
-	colsList := strings.Split(columns, `,`)
-	if err = sc.AccessColumns(tblname, &colsList, false); err != nil {
+	if err = sc.AccessColumns(tblname, &columns, false); err != nil {
 		return 0, nil, err
 	}
-	columns = strings.Join(colsList, `,`)
-
-	columns = PrepareColumns(columns)
-	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
+	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(PrepareColumns(columns)).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting rows from table")

@@ -90,6 +90,31 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`DBFindCol`, `contract DBFindCol {
+		action {
+			var ret string
+			ret = DBFind("keys").Columns(["amount", "id"]).One("amount")
+			Test("size", Size(ret)>0)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`size`: `true`}},
+	}},
+	{`DBFindColumnNow`, `contract DBFindColumnNow {
+		action {
+			var list array
+			list = DBFind("keys").Columns("now()")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"pq: current transaction is aborted, commands ignored until end of transaction block"}`}},
+	}},
+	{`DBFindCURRENT`, `contract DBFindCURRENT {
+		action {
+			var list array
+			list = DBFind("mytable").Where("date < CURRENT_DATE")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
 	{`RowType`, `contract RowType {
 	action {
 		var app map
@@ -113,22 +138,6 @@ var contracts = []smartContract{
 		}
 	}`, []smartParams{
 		{nil, map[string]string{`result`: `len=1 [@1StackType] @1StackType`}},
-	}},
-	{`DBFindCURRENT`, `contract DBFindCURRENT {
-		action {
-			var list array
-			list = DBFind("mytable").Where("date < CURRENT_DATE")
-		}
-	}`, []smartParams{
-		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
-	}},
-	{`DBFindColNow`, `contract DBFindColNow {
-		action {
-			var list array
-			list = DBFind("mytable").Columns("now()")
-		}
-	}`, []smartParams{
-		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
 	}},
 	{`DBFindNow`, `contract DBFindNow {
 		action {
