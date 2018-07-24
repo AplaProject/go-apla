@@ -33,6 +33,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/language"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -523,11 +524,12 @@ func dataTag(par parFunc) string {
 
 func dbfindTag(par parFunc) string {
 	var (
-		fields string
-		state  int64
-		err    error
-		perm   map[string]string
-		offset string
+		inColumns interface{}
+		columns   []string
+		state     int64
+		err       error
+		perm      map[string]string
+		offset    string
 
 		cutoffColumns   = make(map[string]bool)
 		extendedColumns = make(map[string]string)
@@ -543,12 +545,17 @@ func dbfindTag(par parFunc) string {
 	limit := 25
 
 	if par.Node.Attr[`columns`] != nil {
-		fields = converter.Escape(par.Node.Attr[`columns`].(string))
+		fields := par.Node.Attr[`columns`].(string)
+		if strings.HasPrefix(fields, `[`) {
+			inColumns, _ = parseObject([]rune(fields))
+		} else {
+			inColumns = fields
+		}
 	}
-	if len(fields) == 0 {
-		fields = `*`
+	columns, err = smart.GetColumns(inColumns)
+	if err != nil {
+		return err.Error()
 	}
-	fields = strings.ToLower(fields)
 	if par.Node.Attr[`where`] != nil {
 		where = smart.PrepareWhere(` where ` +
 			converter.Escape(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
@@ -597,25 +604,23 @@ func dbfindTag(par parFunc) string {
 	}
 	columnNames := make([]string, 0)
 
-	fieldsList := strings.Split(fields, ",")
 	perm, err = sc.AccessTablePerm(tblname, `read`)
-	if err != nil || sc.AccessColumns(tblname, &fieldsList, false) != nil {
+	if err != nil || sc.AccessColumns(tblname, &columns, false) != nil {
 		return `Access denied`
 	}
-	fields = strings.Join(fieldsList, `,`)
 
-	if fields != "*" {
-		if !strings.Contains(fields, "id") {
-			fields += ",id"
-		}
-		columnNames = strings.Split(fields, ",")
-		fields = smart.PrepareColumns(fields)
-		queryColumns = strings.Split(fields, ",")
-	} else {
+	if utils.StringInSlice(columns, `*`) {
 		for _, col := range rows {
 			queryColumns = append(queryColumns, col["column_name"])
 			columnNames = append(columnNames, col["column_name"])
 		}
+	} else {
+		if !utils.StringInSlice(columns, `id`) {
+			columns = append(columns, `id`)
+		}
+		columnNames = make([]string, len(columns))
+		copy(columnNames, columns)
+		queryColumns = strings.Split(smart.PrepareColumns(columns), ",")
 	}
 
 	for i, col := range queryColumns {
@@ -637,7 +642,6 @@ func dbfindTag(par parFunc) string {
 			queryColumns[i] = `"` + field + `"`
 		}
 	}
-	fields = strings.Join(queryColumns, `, `)
 	for i, key := range columnNames {
 		if strings.Contains(key, `->`) {
 			columnNames[i] = strings.Replace(key, `->`, `.`, -1)
@@ -655,7 +659,8 @@ func dbfindTag(par parFunc) string {
 		(*par.Workspace.Vars)[par.Node.Attr[`countvar`].(string)] = countStr
 		delete(par.Node.Attr, `countvar`)
 	}
-	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order+offset, limit)
+	list, err := model.GetAll(`select `+strings.Join(queryColumns, `, `)+` from "`+tblname+`"`+
+		where+order+offset, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
