@@ -53,7 +53,9 @@ func TestObj(t *testing.T) {
 		{`{"val": "value, [] 1", test: Test текст}`,
 			`{"test":"Test текст" "val":"value, [] 1"}`},
 		{`[ col1 , col2, {"val": "value 1", test: Test value} ]`,
-			``},
+			`[col1 col2 map[val:value 1 test:Test value]]`},
+		{`{sub: {"test1": 23, test2:[34, 45]},"test2": "text"}`,
+			`{"sub":"{\"test1\":\"23\" \"test2\":[\"34\" \"45\"]}" "test2":"text"}`},
 	}
 	for _, item := range list {
 		var result string
@@ -86,9 +88,9 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
-	{`Hint( [col1,col2] , {"test": Test val}, 
-	   {"mypar1":"myval1, 2", mypar2: [1, 20], "qqq": {name: John, "lastName": "Smith"}} )`,
-		`[{"tag":"hint","attr":{"icon":"[col1,col2]","text":"{\"mypar1\":\"myval1, 2\", mypar2: [1, 20], \"qqq\": {name: John, \"lastName\": \"Smith\"}}","title":"{\"test\": Test val}"}}]`},
+	{`SetVar(ok,"My:string,value")Hint( [col1,col2] , {"test": Test val, ok: #ok#}, 
+	   {"mypar1":"myval1, 2", mypar2: [1, #ok#], "qqq": {name: John, "lastName": "Smith"}} )`,
+		`[{"tag":"hint","attr":{"icon":"[col1,col2]","text":"{\"mypar1\":\"myval1, 2\", mypar2: [1, My:string,value], \"qqq\": {name: John, \"lastName\": \"Smith\"}}","title":"{\"test\": Test val, ok: My:string,value}"}}]`},
 	{`Hint(Title: some text, Icon: default, Text: This is hint text)`,
 		`[{"tag":"hint","attr":{"icon":"default","text":"This is hint text","title":"some text"}}]`},
 	{`AddToolButton(Title: Open, Page: default).Popup(Width: 50, Header: Test)`,

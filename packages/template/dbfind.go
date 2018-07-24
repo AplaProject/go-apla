@@ -96,7 +96,7 @@ main:
 			if mapMode {
 				break main
 			}
-		case '{':
+		case '{', '[':
 			par, off := parseObject(in[i:])
 			if mapMode {
 				ret.(map[string]interface{})[key] = par
@@ -115,11 +115,13 @@ main:
 			}
 		case ',':
 			val := trimString(in[start:i])
-			if mapMode {
-				ret.(map[string]interface{})[key] = val
-				key = ``
-			} else {
-				ret = append(ret.([]interface{}), val)
+			if len(val) > 0 {
+				if mapMode {
+					ret.(map[string]interface{})[key] = val
+					key = ``
+				} else {
+					ret = append(ret.([]interface{}), val)
+				}
 			}
 			start = i + 1
 		}
