@@ -90,6 +90,79 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+
+	{`TestDBFindOK`, `
+			contract TestDBFindOK {
+			action {
+				var ret array
+				var vals map
+				ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
+				if Len(ret) {
+					Test("0",  "1")
+				} else {
+					Test("0",  "0")
+				}
+				ret = DBFind("contracts").Limit(3)
+				if Len(ret) == 3 {
+					Test("1",  "1")
+				} else {
+					Test("1",  "0")
+				}
+				ret = DBFind("contracts").Order("id").Offset(1).Limit(1)
+				if Len(ret) != 1 {
+					Test("2",  "0")
+				} else {
+					vals = ret[0]
+					Test("2",  vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id").Order(["id"]).Offset(1).Limit(1)
+				if Len(ret) != 1 {
+					Test("3",  "0")
+				} else {
+					vals = ret[0]
+					Test("3", vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id").Where("id='1'")
+				if Len(ret) != 1 {
+					Test("4",  "0")
+				} else {
+					vals = ret[0]
+					Test("4", vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id").Where("id='1'")
+				if Len(ret) != 1 {
+					Test("4",  "0")
+				} else {
+					vals = ret[0]
+					Test("4", vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id,value").Where("id> ? and id < ?", 3, 8).Order([{"id": 1}, {"name": "-1"}])
+				if Len(ret) != 4 {
+					Test("5",  "0")
+				} else {
+					vals = ret[0]
+					Test("5", vals["id"])
+				}
+				ret = DBFind("contracts").WhereId(7)
+				if Len(ret) != 1 {
+					Test("6",  "0")
+				} else {
+					vals = ret[0]
+					Test("6", vals["id"])
+				}
+				var one string
+				one = DBFind("contracts").WhereId(5).One("id")
+				Test("7",  one)
+				var row map
+				row = DBFind("contracts").WhereId(3).Row()
+				Test("8",  row["id"])
+				Test("255",  "255")
+			}
+		}`,
+		[]smartParams{
+			{nil, map[string]string{`0`: `1`, `1`: `1`, `2`: `2`, `3`: `2`, `4`: `1`, `5`: `4`,
+				`6`: `7`, `7`: `5`, `8`: `3`, `255`: `255`}},
+		}},
 	{`DBFindCol`, `contract DBFindCol {
 		action {
 			var ret string
@@ -295,79 +368,6 @@ var contracts = []smartContract{
 		}`,
 		[]smartParams{
 			{nil, map[string]string{`edit`: `edit value 0`, `split`: `point 2`}},
-		}},
-
-	{`TestDBFindOK`, `
-			contract TestDBFindOK {
-			action {
-				var ret array
-				var vals map
-				ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
-				if Len(ret) {
-					Test("0",  "1")
-				} else {
-					Test("0",  "0")
-				}
-				ret = DBFind("contracts").Limit(3)
-				if Len(ret) == 3 {
-					Test("1",  "1")
-				} else {
-					Test("1",  "0")
-				}
-				ret = DBFind("contracts").Order("id").Offset(1).Limit(1)
-				if Len(ret) != 1 {
-					Test("2",  "0")
-				} else {
-					vals = ret[0]
-					Test("2",  vals["id"])
-				}
-				ret = DBFind("contracts").Columns("id").Order("id").Offset(1).Limit(1)
-				if Len(ret) != 1 {
-					Test("3",  "0")
-				} else {
-					vals = ret[0]
-					Test("3", vals["id"])
-				}
-				ret = DBFind("contracts").Columns("id").Where("id='1'")
-				if Len(ret) != 1 {
-					Test("4",  "0")
-				} else {
-					vals = ret[0]
-					Test("4", vals["id"])
-				}
-				ret = DBFind("contracts").Columns("id").Where("id='1'")
-				if Len(ret) != 1 {
-					Test("4",  "0")
-				} else {
-					vals = ret[0]
-					Test("4", vals["id"])
-				}
-				ret = DBFind("contracts").Columns("id,value").Where("id> ? and id < ?", 3, 8).Order("id")
-				if Len(ret) != 4 {
-					Test("5",  "0")
-				} else {
-					vals = ret[0]
-					Test("5", vals["id"])
-				}
-				ret = DBFind("contracts").WhereId(7)
-				if Len(ret) != 1 {
-					Test("6",  "0")
-				} else {
-					vals = ret[0]
-					Test("6", vals["id"])
-				}
-				var one string
-				one = DBFind("contracts").WhereId(5).One("id")
-				Test("7",  one)
-				var row map
-				row = DBFind("contracts").WhereId(3).Row()
-				Test("8",  row["id"])
-				Test("255",  "255")
-			}
-		}`,
-		[]smartParams{
-			{nil, map[string]string{`0`: `1`, `1`: `1`, `2`: `2`, `3`: `2`, `4`: `1`, `5`: `4`,
-				`6`: `7`, `7`: `5`, `8`: `3`, `255`: `255`}},
 		}},
 	{`testEmpty`, `contract testEmpty {
 					action { Test("empty",  "empty value")}}`,
