@@ -1,6 +1,8 @@
 package model
 
-import "github.com/GenesisKernel/go-genesis/packages/consts"
+import (
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+)
 
 // This constants contains values of transactions priority
 const (
@@ -149,8 +151,7 @@ func (t *Transaction) Create() error {
 
 // IncrementTxAttemptCount increases attempt column
 func IncrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte) (int64, error) {
-	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt>10 then 1 else 0 end where hash = ?",
-		transactionHash)
+	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt >= ? then 1 else 0 end where hash = ?", consts.MaxTXAttempt-1, transactionHash)
 	return query.RowsAffected, query.Error
 }
 
@@ -161,4 +162,20 @@ func getTxRateByTxType(txType int8) transactionRate {
 	default:
 		return 0
 	}
+}
+
+// GetTxesByHashlist returns map of hash-*Transaction
+func GetTxesByHashlist(dbtx *DbTransaction, hashes [][]byte) (map[string]*Transaction, error) {
+	txes := []Transaction{}
+	if err := GetDB(dbtx).Where("hash in (?)", hashes).Find(&txes).Error; err != nil {
+		return nil, err
+	}
+
+	txMap := make(map[string]*Transaction, len(txes))
+
+	for _, tx := range txes {
+		txMap[string(tx.Hash)] = &tx
+	}
+
+	return txMap, nil
 }

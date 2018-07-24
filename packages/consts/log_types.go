@@ -54,4 +54,7 @@ const (
 	BCActualizationError     = "BCActualizationError"
 	SchedulerError           = "SchedulerError"
 	SyncProcess              = "SyncProcess"
+	WrongModeError           = "WrongModeError"
+	VDEManagerError          = "VDEManagerError"
+	BadTxError               = "BadTxError"
 )

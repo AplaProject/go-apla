@@ -41,6 +41,7 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 		"id" bigint  NOT NULL DEFAULT '0',
 		"pub" bytea  NOT NULL DEFAULT '',
 		"amount" decimal(30) NOT NULL DEFAULT '0' CHECK (amount >= 0),
+		"maxpay" decimal(30) NOT NULL DEFAULT '0' CHECK (maxpay >= 0),
 		"multi" bigint NOT NULL DEFAULT '0',
 		"deleted" bigint NOT NULL DEFAULT '0',
 		"blocked" bigint NOT NULL DEFAULT '0'
@@ -78,8 +79,8 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 		"title" varchar(255)  NOT NULL DEFAULT '',
 		"urlname" varchar(255) NOT NULL DEFAULT '',
 		"page" varchar(255) NOT NULL DEFAULT '',
-		"roles_access" text NOT NULL DEFAULT '',
-		"delete" bigint NOT NULL DEFAULT '0'
+		"roles_access" jsonb,
+		"status" bigint NOT NULL DEFAULT '0'
 		);
 	  ALTER TABLE ONLY "%[1]d_sections" ADD CONSTRAINT "%[1]d_sections_pkey" PRIMARY KEY (id);
 
@@ -129,7 +130,7 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 		
 		CREATE TABLE "%[1]d_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
-		"name" text NOT NULL DEFAULT '',
+		"name" text NOT NULL UNIQUE DEFAULT '',
 		"value" text  NOT NULL DEFAULT '',
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',

@@ -69,6 +69,8 @@ const (
 	VMTypeSmart VMType = 1
 	// VMTypeVDE is vde vm type
 	VMTypeVDE VMType = 2
+	// VMTypeVDEMaster is VDEMaster type
+	VMTypeVDEMaster VMType = 3
 
 	TagFile      = "file"
 	TagAddress   = "address"
@@ -190,7 +192,7 @@ type ExtendData struct {
 
 // Stacker represents interface for working with call stack
 type Stacker interface {
-	AppendStack(contract string)
+	AppendStack(contract string) error
 }
 
 // ParseContract gets a state identifier and the name of the contract from the full name like @[id]name
@@ -288,7 +290,9 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 
 	var stack Stacker
 	if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
-		stack.AppendStack(name)
+		if err := stack.AppendStack(name); err != nil {
+			return nil, err
+		}
 	}
 	if (*rt.extend)[`sc`] != nil && isSignature {
 		obj := rt.vm.Objects[`check_signature`]

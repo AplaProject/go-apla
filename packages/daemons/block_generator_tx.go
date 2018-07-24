@@ -45,7 +45,7 @@ func (dtx *DelayedTx) RunForBlockID(blockID int64) {
 }
 
 func (dtx *DelayedTx) createTx(delayedContactID, keyID int64) error {
-	vm := smart.GetVM(false, 0)
+	vm := smart.GetVM()
 	contract := smart.VMGetContract(vm, callDelayedContract, uint32(firstEcosystemID))
 	info := contract.Block.Info.(*script.ContractInfo)
 

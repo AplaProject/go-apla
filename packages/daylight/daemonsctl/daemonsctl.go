@@ -1,10 +1,10 @@
 package daemonsctl
 
 import (
+	"github.com/GenesisKernel/go-genesis/packages/block"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -14,17 +14,19 @@ import (
 
 // RunAllDaemons start daemons, load contracts and tcpserver
 func RunAllDaemons() error {
-	logEntry := log.WithFields(log.Fields{"daemon_name": "block_collection"})
+	if !conf.Config.IsSupportingVDE() {
+		logEntry := log.WithFields(log.Fields{"daemon_name": "block_collection"})
 
-	daemons.InitialLoad(logEntry)
-	err := syspar.SysUpdate(nil)
-	if err != nil {
-		log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
-		return err
-	}
+		daemons.InitialLoad(logEntry)
+		err := syspar.SysUpdate(nil)
+		if err != nil {
+			log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
+			return err
+		}
 
-	if data, ok := parser.GetDataFromFirstBlock(); ok {
-		syspar.SetFirstBlockData(data)
+		if data, ok := block.GetDataFromFirstBlock(); ok {
+			syspar.SetFirstBlockData(data)
+		}
 	}
 
 	log.Info("load contracts")
@@ -36,8 +38,7 @@ func RunAllDaemons() error {
 	log.Info("start daemons")
 	daemons.StartDaemons()
 
-	err = tcpserver.TcpListener(conf.Config.TCPServer.Str())
-	if err != nil {
+	if err := tcpserver.TcpListener(conf.Config.TCPServer.Str()); err != nil {
 		log.Errorf("can't start tcp servers, stop")
 		return err
 	}

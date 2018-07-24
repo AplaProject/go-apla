@@ -121,7 +121,9 @@ var (
 		);
 		ALTER SEQUENCE rollback_tx_id_seq owned by rollback_tx.id;
 		ALTER TABLE ONLY "rollback_tx" ADD CONSTRAINT rollback_tx_pkey PRIMARY KEY (id);
-		
+		CREATE INDEX "rollback_tx_table" ON "rollback_tx" (table_name, table_id);
+
+
 		DROP TABLE IF EXISTS "install"; CREATE TABLE "install" (
 		"progress" varchar(10) NOT NULL DEFAULT ''
 		);

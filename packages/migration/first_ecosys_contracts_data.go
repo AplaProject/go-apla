@@ -337,6 +337,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         InsertPerm string
         UpdatePerm string
         NewColumnPerm string
+        ReadPerm string "optional"
     }
 
     conditions {
@@ -354,6 +355,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         permissions["insert"] = $InsertPerm
         permissions["update"] = $UpdatePerm
         permissions["new_column"] = $NewColumnPerm
+        if $ReadPerm {
+            permissions["read"] = $ReadPerm
+        }
         $Permissions = permissions
         TableConditions($Name, "", JSONEncode($Permissions))
     }
@@ -1333,7 +1337,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 	}
 	action {
-		DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,\"limit\",conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
+		DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,limit,conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('38', 'EditDelayedContract','contract EditDelayedContract {
@@ -1366,7 +1370,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 	}
 	action {
-		DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,\"limit\",deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
+		DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,limit,deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('39', 'CallDelayedContract','contract CallDelayedContract {
@@ -1385,7 +1389,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			error "Access denied"
 		}
 
-		if $block != Int($cur["block_id"]) {
+		if $block < Int($cur["block_id"]) {
 			error Sprintf("Delayed contract %%d must run on block %%s, current block %%d", $Id, $cur["block_id"], $block)
 		}
 	}
@@ -2582,6 +2586,20 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
       }
 }', %[1]d, 'ContractConditions("MainCondition")', 2),
 ('112', 'table_price', 'contract table_price {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if Int($Value) <= 0 {
+        warning "Value must be greater than zero"
+      }
+    }
+}', %[1]d, 'ContractConditions("MainCondition")', 2),
+('113', 'max_forsign_size', 'contract max_forsign_size {
     data {
       Value string
     }
