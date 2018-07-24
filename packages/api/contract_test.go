@@ -90,6 +90,65 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`RowType`, `contract RowType {
+	action {
+		var app map
+		var result string
+		result = GetType(app)
+		app = DBFind("applications").Where("id=1").Row()
+		result = result + GetType(app)
+		app["app_id"] = 2
+		Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
+	}
+}`, []smartParams{
+		{nil, map[string]string{`result`: `map[string]interface {}map[string]interface {} System 2`}},
+	}},
+	{`StackType`, `contract StackType {
+		action {
+			var lenStack int
+			lenStack = Len($stack)
+			var par string
+			par = $stack[0]
+			Test("result", Sprintf("len=%d %v %s", lenStack, $stack, par))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `len=1 [@1StackType] @1StackType`}},
+	}},
+	{`DBFindCURRENT`, `contract DBFindCURRENT {
+		action {
+			var list array
+			list = DBFind("mytable").Where("date < CURRENT_DATE")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
+	{`DBFindColNow`, `contract DBFindColNow {
+		action {
+			var list array
+			list = DBFind("mytable").Columns("now()")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
+	{`DBFindNow`, `contract DBFindNow {
+		action {
+			var list array
+			list = DBFind("mytable").Where("date < now ( )")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
+	{`BlockTimeCheck`, `contract BlockTimeCheck {
+		action {
+			if Size(BlockTime()) == Size("2006-01-02 15:04:05") {
+				Test("ok", "1")
+			} else {
+				Test("ok", "0")
+			}
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`ok`: `1`}},
+	}},
 	{`RecCall`, `contract RecCall {
 		data {    }
 		conditions {    }
@@ -992,7 +1051,8 @@ func TestContractChain(t *testing.T) {
 
 	form := url.Values{"Name": {rnd}, "ApplicationId": {"1"}, "Columns": {`[{"name":"value","type":"varchar", "index": "0", 
 	  "conditions":"true"},
-	{"name":"amount", "type":"number","index": "0", "conditions":"true"}]`},
+	{"name":"amount", "type":"number","index": "0", "conditions":"true"},
+	{"name":"dt","type":"datetime", "index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
 	if err != nil {
@@ -1048,6 +1108,16 @@ func TestContractChain(t *testing.T) {
 	if msg != rnd+`=`+rnd {
 		t.Error(fmt.Errorf(`wrong result %s`, msg))
 	}
+
+	form = url.Values{`Value`: {`contract ` + rnd + `1 {
+		action {
+			DBInsert("` + rnd + `", "amount,dt", 0, "timestamp NOW()")
+		}
+	}
+		`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(rnd+`1`, &url.Values{}),
+		`{"type":"panic","error":"It is prohibited to use Now() function"}`)
 }
 
 func TestLoopCond(t *testing.T) {
