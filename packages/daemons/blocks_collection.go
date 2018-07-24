@@ -448,7 +448,7 @@ func processBlocks(blocks []*block.Block) error {
 
 		if err := b.Check(); err != nil {
 			dbTransaction.Rollback()
-			return utils.ErrInfo(err)
+			return err
 		}
 
 		if err := b.Play(dbTransaction); err != nil {
