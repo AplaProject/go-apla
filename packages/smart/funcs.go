@@ -819,8 +819,49 @@ func GetColumns(inColumns interface{}) ([]string, error) {
 	return columns, nil
 }
 
+func GetOrder(inOrder interface{}) (string, error) {
+	var orders []string
+
+	sanitize := func(in string, value interface{}) {
+		in = converter.Sanitize(strings.ToLower(in), ``)
+		if len(in) > 0 {
+			in = `"` + in + `"`
+			if fmt.Sprint(value) == `-1` {
+				in += ` desc`
+			} else if fmt.Sprint(value) == `1` {
+				in += ` asc`
+			}
+			orders = append(orders, in)
+		}
+	}
+
+	switch v := inOrder.(type) {
+	case string:
+		sanitize(v, nil)
+	case []interface{}:
+		for _, item := range v {
+			switch param := item.(type) {
+			case string:
+				sanitize(param, nil)
+			case map[string]interface{}:
+				for key, value := range param {
+					sanitize(key, value)
+				}
+			}
+		}
+	}
+	if len(orders) == 0 {
+		orders = []string{`id`}
+	}
+	if err := checkNow(orders...); err != nil {
+		return ``, err
+	}
+	return strings.Join(orders, `,`), nil
+}
+
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
-func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64, order string, offset, limit, ecosystem int64,
+func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64, inOrder interface{},
+	offset, limit, ecosystem int64,
 	where string, params []interface{}) (int64, []interface{}, error) {
 
 	var (
@@ -828,13 +869,15 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 		rows    *sql.Rows
 		perm    map[string]string
 		columns []string
+		order   string
 	)
 	columns, err = GetColumns(inColumns)
 	if err != nil {
 		return 0, nil, err
 	}
-	if len(order) == 0 {
-		order = `id`
+	order, err = GetOrder(inOrder)
+	if err != nil {
+		return 0, nil, err
 	}
 	if err = checkNow(where); err != nil {
 		return 0, nil, err

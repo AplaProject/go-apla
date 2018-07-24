@@ -120,12 +120,12 @@ func TestAPI(t *testing.T) {
 var forTest = tplList{
 	{`SetVar(val, 123456789)Money(#val#)`, `[{"tag":"text","text":"0.000000000123456789"}]`},
 	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
-	{`DBFind(parameters, src_par).Columns("id").Order(id).Where("id >= 1 and id <= 3").Count(count)Span(#count#)`,
-		`[{"tag":"dbfind","attr":{"columns":["id"],"count":"3","data":[["1"],["2"],["3"]],"name":"parameters","order":"id","source":"src_par","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"span","children":[{"tag":"text","text":"3"}]}]`},
+	{`DBFind(parameters, src_par).Columns("id").Order([id]).Where("id >= 1 and id <= 3").Count(count)Span(#count#)`,
+		`[{"tag":"dbfind","attr":{"columns":["id"],"count":"3","data":[["1"],["2"],["3"]],"name":"parameters","order":"[id]","source":"src_par","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"span","children":[{"tag":"text","text":"3"}]}]`},
 	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
-	{`SetVar(where).(lim,3)DBFind(contracts, src).Columns(id).Order(id).Limit(#lim#).Custom(a){SetVar(where, #where# #id#)}
+	{`SetVar(where).(lim,3)DBFind(contracts, src).Columns(id).Order([{id:1}, {name:-1}]).Limit(#lim#).Custom(a){SetVar(where, #where# #id#)}
 	Div(){Table(src, "=x")}Div(){Table(src)}Div(){#where#}`,
-		`[{"tag":"dbfind","attr":{"columns":["id","a"],"data":[["1","null"],["2","null"],["3","null"]],"limit":"3","name":"contracts","order":"id","source":"src","types":["text","tags"]}},{"tag":"div","children":[{"tag":"table","attr":{"columns":[{"Name":"x","Title":""}],"source":"src"}}]},{"tag":"div","children":[{"tag":"table","attr":{"source":"src"}}]},{"tag":"div","children":[{"tag":"text","text":" 1 2 3"}]}]`},
+		`[{"tag":"dbfind","attr":{"columns":["id","a"],"data":[["1","null"],["2","null"],["3","null"]],"limit":"3","name":"contracts","order":"[{id:1}, {name:-1}]","source":"src","types":["text","tags"]}},{"tag":"div","children":[{"tag":"table","attr":{"columns":[{"Name":"x","Title":""}],"source":"src"}}]},{"tag":"div","children":[{"tag":"table","attr":{"source":"src"}}]},{"tag":"div","children":[{"tag":"text","text":" 1 2 3"}]}]`},
 	{`If(#isMobile#){Span(Mobile)}.Else{Span(Desktop)}`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Desktop"}]}]`},
 	{`SetVar(off, 10)DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(#off#).Custom(){}`,
