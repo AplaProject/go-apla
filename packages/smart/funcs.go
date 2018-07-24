@@ -1926,6 +1926,10 @@ func GetContractHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]
 	return GetHistoryRow(sc, `contracts`, id, idRollback)
 }
 
+func StackOverflow(sc *SmartContract) {
+	StackOverflow(sc)
+}
+
 func BlockTime(sc *SmartContract) string {
 	var blockTime int64
 	if sc.BlockData != nil {

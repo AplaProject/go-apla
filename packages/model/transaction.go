@@ -155,6 +155,11 @@ func IncrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte)
 	return query.RowsAffected, query.Error
 }
 
+func DecrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte) (int64, error) {
+	query := GetDB(transaction).Exec("update transactions set attempt=attempt-1, used = case when attempt <= ? then 1 else 0 end where hash = ?", consts.MaxTXAttempt-1, transactionHash)
+	return query.RowsAffected, query.Error
+}
+
 func getTxRateByTxType(txType int8) transactionRate {
 	switch txType {
 	case consts.TxTypeStopNetwork:
