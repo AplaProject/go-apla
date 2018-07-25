@@ -15,7 +15,7 @@ type QueueChecker interface {
 	TimeToGenerate(position int64) (bool, error)
 	NextTime(position int64, t time.Time) (time.Time, error)
 	BlockForTimeExists(t time.Time, nodePosition int) (bool, error)
-	RangesByTime(t time.Time) (start, end time.Time)
+	RangeByTime(t time.Time) (start, end time.Time)
 }
 
 var (
@@ -31,7 +31,7 @@ type BlockTimeCounter struct {
 }
 
 // Queue returns serial queue number for time
-func (btc *BlockTimeCounter) Queue(t time.Time) (int, error) {
+func (btc *BlockTimeCounter) queue(t time.Time) (int, error) {
 	if t.Before(btc.start) {
 		return -1, TimeError
 	}
@@ -41,7 +41,7 @@ func (btc *BlockTimeCounter) Queue(t time.Time) (int, error) {
 
 // NodePosition returns generating node position for time
 func (btc *BlockTimeCounter) NodePosition(t time.Time) (int, error) {
-	queue, err := btc.Queue(t)
+	queue, err := btc.queue(t)
 	if err != nil {
 		return -1, err
 	}
@@ -77,7 +77,7 @@ func (btc *BlockTimeCounter) NextTime(t time.Time, nodePosition int) (time.Time,
 		return time.Unix(0, 0), WrongNodePositionError
 	}
 
-	queue, err := btc.Queue(t)
+	queue, err := btc.queue(t)
 	if err != nil {
 		return time.Unix(0, 0), err
 	}
@@ -93,7 +93,7 @@ func (btc *BlockTimeCounter) NextTime(t time.Time, nodePosition int) (time.Time,
 
 // RangesByTime returns start and end of interval by time
 func (btc *BlockTimeCounter) RangesByTime(t time.Time) (start, end time.Time, err error) {
-	queue, err := btc.Queue(t)
+	queue, err := btc.queue(t)
 	if err != nil {
 		st := time.Unix(0, 0)
 		return st, st, err
