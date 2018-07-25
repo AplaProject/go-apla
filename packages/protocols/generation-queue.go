@@ -13,9 +13,7 @@ import (
 // QueueChecker allow check queue to generate current block
 type QueueChecker interface {
 	TimeToGenerate(position int64) (bool, error)
-	NextTime(position int64, t time.Time) (time.Time, error)
 	BlockForTimeExists(t time.Time, nodePosition int) (bool, error)
-	RangeByTime(t time.Time) (start, end time.Time)
 }
 
 var (
@@ -40,7 +38,7 @@ func (btc *BlockTimeCounter) queue(t time.Time) (int, error) {
 }
 
 // NodePosition returns generating node position for time
-func (btc *BlockTimeCounter) NodePosition(t time.Time) (int, error) {
+func (btc *BlockTimeCounter) nodePosition(t time.Time) (int, error) {
 	queue, err := btc.queue(t)
 	if err != nil {
 		return -1, err
@@ -52,7 +50,7 @@ func (btc *BlockTimeCounter) NodePosition(t time.Time) (int, error) {
 // BlockForTimeExists checks conformity between time and nodePosition
 // changes functionality of ValidateBlock prevent blockTimeCalculator
 func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (bool, error) {
-	startInterval, endInterval, err := btc.RangeByTime(t)
+	startInterval, endInterval, err := btc.rangeByTime(t)
 	if err != nil {
 		return false, err
 	}
@@ -72,7 +70,7 @@ func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (
 }
 
 // NextTime returns next generation time for node position at time
-func (btc *BlockTimeCounter) NextTime(t time.Time, nodePosition int) (time.Time, error) {
+func (btc *BlockTimeCounter) nextTime(t time.Time, nodePosition int) (time.Time, error) {
 	if nodePosition >= btc.numberNodes {
 		return time.Unix(0, 0), WrongNodePositionError
 	}
@@ -92,7 +90,7 @@ func (btc *BlockTimeCounter) NextTime(t time.Time, nodePosition int) (time.Time,
 }
 
 // RangesByTime returns start and end of interval by time
-func (btc *BlockTimeCounter) RangeByTime(t time.Time) (start, end time.Time, err error) {
+func (btc *BlockTimeCounter) rangeByTime(t time.Time) (start, end time.Time, err error) {
 	queue, err := btc.queue(t)
 	if err != nil {
 		st := time.Unix(0, 0)
@@ -109,7 +107,7 @@ func (btc *BlockTimeCounter) TimeToGenerate(at time.Time, nodePosition int) (boo
 		return false, WrongNodePositionError
 	}
 
-	position, err := btc.NodePosition(at)
+	position, err := btc.nodePosition(at)
 	return position == nodePosition, err
 }
 
