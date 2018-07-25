@@ -557,11 +557,17 @@ func dbfindTag(par parFunc) string {
 		return err.Error()
 	}
 	if par.Node.Attr[`where`] != nil {
-		where = smart.PrepareWhere(` where ` +
-			converter.Escape(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
+		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
+		if strings.HasPrefix(where, `{`) {
+			inWhere, _ := parseObject([]rune(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
+			where, err = smart.GetWhere(inWhere.(map[string]interface{}))
+			if err != nil {
+				return err.Error()
+			}
+		}
 	}
 	if par.Node.Attr[`whereid`] != nil {
-		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
+		where = fmt.Sprintf(` id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
 	}
 	if par.Node.Attr[`order`] != nil {
 		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
@@ -660,7 +666,7 @@ func dbfindTag(par parFunc) string {
 	}
 	if par.Node.Attr[`countvar`] != nil {
 		var count int64
-		err = model.GetDB(nil).Table(tblname).Where(strings.Replace(where, `where`, ``, 1)).Count(&count).Error
+		err = model.GetDB(nil).Table(tblname).Where(where).Count(&count).Error
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table in DBFind")
 		}
@@ -668,6 +674,9 @@ func dbfindTag(par parFunc) string {
 		par.Node.Attr[`count`] = countStr
 		(*par.Workspace.Vars)[par.Node.Attr[`countvar`].(string)] = countStr
 		delete(par.Node.Attr, `countvar`)
+	}
+	if len(where) > 0 {
+		where = ` where ` + where
 	}
 	list, err := model.GetAll(`select `+strings.Join(queryColumns, `, `)+` from "`+tblname+`"`+
 		where+order+offset, limit)
