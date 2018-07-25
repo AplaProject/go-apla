@@ -923,11 +923,21 @@ main:
 			}
 			state = mustValue
 		case mustKey:
-			switch lexem.Type {
+			switch lexem.Type & 0xff {
 			case lexIdent:
 				key = lexem.Value.(string)
 			case lexString:
 				key = lexem.Value.(string)
+			case lexKeyword:
+				for ikey, v := range keywords {
+					if fmt.Sprint(v) == fmt.Sprint(lexem.Value) {
+						key = ikey
+						if v == keyFunc && i < len(*lexems)-1 && (*lexems)[i+1].Type&0xff == lexIdent {
+							continue main
+						}
+						break
+					}
+				}
 			default:
 				return nil, errUnexpKey
 			}

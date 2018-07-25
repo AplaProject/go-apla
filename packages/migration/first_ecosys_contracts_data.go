@@ -3,7 +3,7 @@
 package migration
 
 var firstEcosystemContractsSQL = `
-INSERT INTO "1_contracts" (id, name, value, conditions, wallet_id)
+INSERT INTO "1_contracts" (id, name, value, conditions, app_id, wallet_id)
 VALUES
 	(next_id('1_contracts'), 'ActivateContract', 'contract ActivateContract {
 	data {
@@ -23,7 +23,7 @@ VALUES
 		}
 	}
 	action {
-		DBUpdate("contracts", $Id, "active", 1)
+		DBUpdate("contracts", $Id, {"active": 1})
 		Activate($Id, $ecosystem_id)
 	}
 	func rollback() {
@@ -31,7 +31,7 @@ VALUES
 	}
 
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'AppendMenu', 'contract AppendMenu {
 	data {
 		Id     int
@@ -43,10 +43,13 @@ VALUES
 	action {
 		var row map
 		row = DBRow("menu").Columns("value").WhereId($Id)
-		DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
+        var val string
+        val = row["value"] + "\r\n" + $Value
+		DBUpdate("menu", $Id, {"value": val})
+
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'AppendPage', 'contract AppendPage {
 	data {
 		Id         int
@@ -65,17 +68,18 @@ VALUES
 		} else {
 			value = value + "\r\n" + $Value
 		}
-		DBUpdate("pages", $Id, "value",  value )
+		DBUpdate("pages", $Id, {"value":  value })
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'CallDelayedContract', 'contract CallDelayedContract {
 	data {
 		Id int
 	}
 	conditions {
 		var rows array
-		rows = DBFind("delayed_contracts").Where("id = ? and deleted = false", $Id)
+		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: "false"} )
+
 		if !Len(rows) {
 			error Sprintf("Delayed contract %%d does not exist", $Id)
 		}
@@ -99,20 +103,19 @@ VALUES
 		if limit == 0 || limit > counter {
 			block_id = block_id + Int($cur["every_block"])
 		}
-
-		DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
+		DBUpdate("delayed_contracts", $Id, {"counter": counter, "block_id": block_id})
 
 		var params map
 		CallContract($cur["contract"], params)
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'CheckNodesBan', 'contract CheckNodesBan {
 	action {
 		UpdateNodesBan($block_time)
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'DeactivateContract', 'contract DeactivateContract {
 	data {
 		Id         int
@@ -131,14 +134,14 @@ VALUES
 		}
 	}
 	action {
-		DBUpdate("contracts", $Id, "active", 0)
+		DBUpdate("contracts", $Id, {"active": 0})
 		Deactivate($Id, $ecosystem_id)
 	}
 	func rollback() {
 		Activate($Id, $ecosystem_id)
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'DelApplication', 'contract DelApplication {
         data {
             ApplicationId int
@@ -153,10 +156,10 @@ VALUES
         }
     
         action {
-            DBUpdate("applications", $ApplicationId, "deleted", $Value)
+            DBUpdate("applications", $ApplicationId, {"deleted": $Value})
         }
     }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditAppParam', 'contract EditAppParam {
     data {
         Id int
@@ -175,21 +178,19 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("app_params", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("app_params", $Id, pars)
         }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditApplication', 'contract EditApplication {
     data {
         ApplicationId int
@@ -207,17 +208,16 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Conditions {
-            pars[0] = "conditions"
-            vals[0] = $Conditions
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("applications", $ApplicationId, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("applications", $ApplicationId, pars)
         }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditBlock', 'contract EditBlock {
     data {
         Id int
@@ -236,21 +236,19 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("blocks", $Id, pars)
         }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditColumn', 'contract EditColumn {
     data {
         TableName string
@@ -266,7 +264,7 @@ VALUES
         PermColumn($TableName, $Name, $Permissions)
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditContract', 'contract EditContract {
     data {
         Id int
@@ -310,7 +308,7 @@ VALUES
         RollbackEditContract()
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditDelayedContract', 'contract EditDelayedContract {
 	data {
 		Id int
@@ -341,10 +339,12 @@ VALUES
 		}
 	}
 	action {
-		DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,limit,deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
+        DBUpdate("delayed_contracts", $Id, {"contract": $Contract,"key_id": $key_id,
+          "block_id": $BlockID,"every_block": $EveryBlock,
+          "counter": 0,"limit": $Limit, "deleted": $Deleted,"conditions": $Conditions})
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditEcosystemName', 'contract EditEcosystemName {
 	data {
 		EcosystemID int
@@ -352,7 +352,7 @@ VALUES
 	}
 	conditions {
 		var rows array
-		rows = DBFind("@1_ecosystems").Where("id = ?", $EcosystemID)
+		rows = DBFind("@1_ecosystems").Where({id: $EcosystemID})
 		if !Len(rows) {
 			error Sprintf("Ecosystem %%d does not exist", $EcosystemID)
 		}
@@ -361,7 +361,7 @@ VALUES
 		EditEcosysName($EcosystemID, $NewName)
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditLang', 'contract EditLang {
     data {
         Id int
@@ -370,14 +370,14 @@ VALUES
 
     conditions {
         EvalCondition("parameters", "changing_language", "value")
-        $lang = DBFind("languages").Where("id=?", $Id).Row()
+        $lang = DBFind("languages").Where({id: $Id}).Row()
     }
 
     action {
         EditLanguage($Id, $lang["name"], $Trans, Int($lang["app_id"]))
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditLangJoint', 'contract EditLangJoint {
     data {
         Id int
@@ -411,7 +411,7 @@ VALUES
         CallContract("EditLang", params)
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditMenu', 'contract EditMenu {
     data {
         Id int
@@ -431,25 +431,22 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Title {
-            pars = Append(pars, "title")
-            vals = Append(vals, $Title)
+            pars["title"] = $Title
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("menu", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("menu", $Id, pars)
         }            
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditPage', 'contract EditPage {
     data {
         Id int
@@ -485,36 +482,31 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Menu {
-            pars = Append(pars, "menu")
-            vals = Append(vals, $Menu)
+            pars["menu"] = $Menu
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
         if $ValidateCount {
-            pars = Append(pars, "validate_count")
-            vals = Append(vals, $ValidateCount)
+            pars["validate_count"] = $ValidateCount
         }
         if $ValidateMode {
             if $ValidateMode != "1" {
                 $ValidateMode = "0"
             }
-            pars = Append(pars, "validate_mode")
-            vals = Append(vals, $ValidateMode)
+            pars["validate_mode"] = $ValidateMode
         }
-        if Len(vals) > 0 {
-            DBUpdate("pages", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("pages", $Id, pars)
         }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditParameter', 'contract EditParameter {
     data {
         Id int
@@ -533,21 +525,19 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("parameters", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("parameters", $Id, pars)
         }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditSign', 'contract EditSign {
     data {
         Id int
@@ -565,21 +555,19 @@ VALUES
         }
     }
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("signatures", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("signatures", $Id, pars)
         }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditSignJoint', 'contract EditSignJoint {
     data {
         Id int
@@ -609,7 +597,7 @@ VALUES
         CallContract("EditSign", params)
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditTable', 'contract EditTable {
     data {
         Name string
@@ -645,7 +633,7 @@ VALUES
         PermTable($Name, JSONEncode($Permissions))
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'Export', 'contract Export {
     data {}
 
@@ -710,13 +698,14 @@ VALUES
         var items array, limit offset int
         limit = 250
         while true{
-            var rows array, where string
+            var rows array
+            var where map
             if type == "menu" {
                 if Len($menus_names) > 0 {
-                    where = Sprintf("name in (%%v)", Join($menus_names, ","))
+                    where["name"] = {"$in": $menus_names}
                 }
             }else{
-                where = Sprintf("app_id=%%v", $ApplicationID)
+                where["app_id"] = $ApplicationID
             }
             if where {
                 rows = DBFind(type).Limit(limit).Offset(offset).Where(where)
@@ -754,7 +743,8 @@ VALUES
 
     conditions {
         var buffer_map map
-        buffer_map = DBFind("buffer_data").Columns("id,value->app_id,value->app_name").Where("member_id=$ and key=$", $key_id, "export").Row()
+        buffer_map = DBFind("buffer_data").Columns("id,value->app_id,value->app_name").Where({member_id:$key_id, key: "export"}).Row()
+
         if !buffer_map{
             warning "Application not found"
         }
@@ -779,14 +769,14 @@ VALUES
         UploadBinary("Name,Data,ApplicationId,DataMimeType", "export", exportJSON, 1, "application/json")
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'ExportNewApp', 'contract ExportNewApp {
     data {
         ApplicationId int
     }
 
     conditions {
-        $app_map = DBFind("applications").Columns("id,name").Where("id=$", $ApplicationId).Row()
+        $app_map = DBFind("applications").Columns("id,name").Where({id: $ApplicationId}).Row()
         if !$app_map{
             warning "Application not found"
         }
@@ -803,7 +793,7 @@ VALUES
 
         i = 0
         var pages_ret array
-        pages_ret = DBFind("pages").Where("app_id=?", $ApplicationId)
+        pages_ret = DBFind("pages").Where({app_id: $ApplicationId})
         while i < Len(pages_ret) {
             var page_map map
             page_map = pages_ret[i]
@@ -813,8 +803,8 @@ VALUES
         }
 
         if Len(pages_array) > 0 {
-            var where_for_menu string
-            where_for_menu = Sprintf("name in (%%v)", Join(pages_array, ","))
+            var where_for_menu map
+            where_for_menu["name"] = {"$in" : pages_array}
 
             i = 0
             var menu_ret array
@@ -846,15 +836,15 @@ VALUES
             value["count_menu"] = "0"
         }
 
-        $buffer_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "export").One("id")
+        $buffer_id = DBFind("buffer_data").Where({member_id:$key_id, key: "export"}).One("id")
         if !$buffer_id {
-            DBInsert("buffer_data", "member_id,key,value", $key_id, "export", value)
+            DBInsert("buffer_data", {"member_id":$key_id,"key": "export", "value": value})
         } else {
-            DBUpdate("buffer_data", Int($buffer_id), "value", value)
+            DBUpdate("buffer_data", Int($buffer_id), {"value": value})
         }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'Import', 'contract Import {
     data {
         Data string
@@ -874,10 +864,14 @@ VALUES
 
         $ApplicationId = 0
         var app_map map
-        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key=''import_info'' and member_id=$", $key_id).Row()
+        app_map = DBFind("buffer_data").Columns("value->app_name").Where({key: "import_info",
+          member_id: $key_id}).Row()
+
         if app_map{
             var app_id int
-            app_id = DBFind("applications").Columns("id").Where("name=$", Str(app_map["value.app_name"])).One("id")
+            var ival string
+            ival = Str(app_map["value.app_name"])
+            app_id = DBFind("applications").Columns("id").Where({name: ival}).One("id")
             if app_id {
                 $ApplicationId = Int(app_id)
             }
@@ -915,7 +909,7 @@ VALUES
 
                 // Println(Sprintf("import %%v: %%v", $Type, cdata["Name"]))
 
-                item = DBFind($Type).Where("name=?", $Name).Row()
+                item = DBFind($Type).Where({name: $Name}).Row()
                 var contractName string
                 if item {
                     contractName = editors[$Type]
@@ -948,7 +942,7 @@ VALUES
         // Println(Sprintf("> time: %%v", $time))
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'ImportUpload', 'contract ImportUpload {
     data {
         input_file string "file"
@@ -970,20 +964,22 @@ VALUES
 
         // init buffer_data, cleaning old buffer
         var initJson map
-        $import_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "import").One("id")
+        $import_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import"}).One("id")
         if $import_id {
             $import_id = Int($import_id)
-            DBUpdate("buffer_data", $import_id, "value", initJson)
+            DBUpdate("buffer_data", $import_id, {"value": initJson})
         } else {
-            $import_id = DBInsert("buffer_data", "member_id,key,value", $key_id, "import", initJson)
+            $import_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import",
+                 "value": initJson})
         }
 
-        $info_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "import_info").One("id")
+        $info_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import_info"}).One("id")
         if $info_id {
             $info_id = Int($info_id)
-            DBUpdate("buffer_data", $info_id, "value", initJson)
+            DBUpdate("buffer_data", $info_id, {"value": initJson})
         } else {
-            $info_id = DBInsert("buffer_data", "member_id,key,value", $key_id, "import_info", initJson)
+            $info_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import_info",
+            "value": initJson})
         }
     }
 
@@ -1076,18 +1072,22 @@ VALUES
         input["data"] = sliced
 
         // storing
-        DBUpdate("buffer_data", $import_id, "value", input)
-        DBUpdate("buffer_data", $info_id, "value", info_map)
+        DBUpdate("buffer_data", $import_id, {"value": input})
+        DBUpdate("buffer_data", $info_id, {"value": info_map})
 
         var app_id int
-        app_id = DBFind("applications").Columns("id").Where("name=$", Str(input["name"])).One("id")
+        var ival string
+        ival =  Str(input["name"])
+        app_id = DBFind("applications").Columns("id").Where({name:ival}).One("id")
 
         if !app_id {
-            DBInsert("applications", "name,conditions", Str(input["name"]), "true")
+            var val string
+            val = Str(input["name"])
+            DBInsert("applications", {"name": val, "conditions": "true"})
         }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'MoneyTransfer', 'contract MoneyTransfer {
 	data {
 		Recipient string
@@ -1115,17 +1115,17 @@ VALUES
 		}
 	}
 	action {
-		DBUpdate("keys", $key_id,"-amount", $amount)
+		DBUpdate("keys", $key_id, {"-amount": $amount})
 		if DBFind("keys").Columns("id").WhereId($recipient).One("id") == nil {
-			DBInsert("keys", "id,amount",  $recipient, $amount)
+			DBInsert("keys", {id: $recipient,amount: $amount})
 		} else {
-			DBUpdate("keys", $recipient,"+amount", $amount)
+			DBUpdate("keys", $recipient, {"+amount": $amount})
 		}
-		DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
-				$key_id, $recipient, $amount, $Comment, $block, $txhash)
+        DBInsert("history", {sender_id: $key_id,recipient_id: $recipient,
+             amount:$amount,comment: $Comment,block_id: $block,txhash: $txhash})
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewAppParam', 'contract NewAppParam {
     data {
         ApplicationId int
@@ -1141,16 +1141,17 @@ VALUES
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("app_params").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("app_params").Columns("id").Where({"name":$Name}).One("id") {
             warning Sprintf( "Application parameter %%s already exists", $Name)
         }
     }
 
     action {
-        DBInsert("app_params", "app_id,name,value,conditions", $ApplicationId, $Name, $Value, $Conditions)
+        DBInsert("app_params", {app_id: $ApplicationId, name: $Name, value: $Value,
+              conditions: $Conditions})
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewApplication', 'contract NewApplication {
     data {
         Name string
@@ -1164,16 +1165,16 @@ VALUES
             warning "Application name missing"
         }
 
-        if DBFind("applications").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("applications").Columns("id").Where({name:$Name}).One("id") {
             warning Sprintf( "Application %%s already exists", $Name)
         }
     }
 
     action {
-        $result = DBInsert("applications", "name,conditions", $Name, $Conditions)
+        $result = DBInsert("applications", {name: $Name,conditions: $Conditions})
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewBadBlock', 'contract NewBadBlock {
 	data {
 		ProducerNodeID int
@@ -1183,10 +1184,11 @@ VALUES
 		Reason string
 	}
 	action {
-		DBInsert("@1_bad_blocks", "producer_node_id,consumer_node_id,block_id,timestamp block_time,reason", $ProducerNodeID, $ConsumerNodeID, $BlockID, $Timestamp, $Reason)
+        DBInsert("@1_bad_blocks", {producer_node_id: $ProducerNodeID,consumer_node_id: $ConsumerNodeID,
+            block_id: $BlockID, "timestamp block_time": $Timestamp, reason: $Reason})
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewBlock', 'contract NewBlock {
     data {
         ApplicationId int
@@ -1202,16 +1204,17 @@ VALUES
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("blocks").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("blocks").Columns("id").Where({name:$Name}).One("id") {
             warning Sprintf( "Block %%s already exists", $Name)
         }
     }
 
     action {
-        DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId)
+        DBInsert("blocks", {name: $Name, value: $Value, conditions: $Conditions,
+              app_id: $ApplicationId})
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewColumn', 'contract NewColumn {
     data {
         TableName string
@@ -1232,7 +1235,7 @@ VALUES
         return SysParamInt("column_price")
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewContract', 'contract NewContract {
     data {
         ApplicationId int
@@ -1282,7 +1285,7 @@ VALUES
         return SysParamInt("contract_price")
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewDelayedContract', 'contract NewDelayedContract {
 	data {
 		Contract string
@@ -1311,10 +1314,11 @@ VALUES
 		}
 	}
 	action {
-		DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,limit,conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
+        DBInsert("delayed_contracts", {contract: $Contract, key_id: $key_id, block_id: $BlockID,
+            every_block: $EveryBlock, limit: $Limit, conditions: $Conditions})
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewEcosystem', 'contract NewEcosystem {
 	data {
 		Name  string
@@ -1329,7 +1333,7 @@ VALUES
 		RollbackEcosystem()
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewLang', 'contract NewLang {
     data {
         ApplicationId int
@@ -1342,7 +1346,7 @@ VALUES
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("languages").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("languages").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf( "Language resource %%s already exists", $Name)
         }
 
@@ -1353,7 +1357,7 @@ VALUES
         CreateLanguage($Name, $Trans, $ApplicationId)
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewLangJoint', 'contract NewLangJoint {
     data {
         ApplicationId int
@@ -1389,7 +1393,7 @@ VALUES
         CallContract("NewLang", params)
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewMenu', 'contract NewMenu {
     data {
         Name string
@@ -1401,19 +1405,19 @@ VALUES
     conditions {
         ValidateCondition($Conditions,$ecosystem_id)
 
-        if DBFind("menu").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("menu").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf( "Menu %%s already exists", $Name)
         }
     }
 
     action {
-        DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions)
+        DBInsert("menu", {name:$Name,value: $Value, title: $Title, conditions: $Conditions})
     }
     func price() int {
         return SysParamInt("menu_price")
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewPage', 'contract NewPage {
     data {
         ApplicationId int
@@ -1460,13 +1464,15 @@ VALUES
     }
 
     action {
-        DBInsert("pages", "name,value,menu,validate_count,validate_mode,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $ValidateMode, $Conditions, $ApplicationId)
+        DBInsert("pages", {name: $Name,value: $Value, menu: $Menu,
+             validate_count:$ValidateCount,validate_mode: $ValidateMode,
+             conditions: $Conditions,app_id: $ApplicationId})
     }
     func price() int {
         return SysParamInt("page_price")
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewParameter', 'contract NewParameter {
     data {
         Name string
@@ -1477,16 +1483,16 @@ VALUES
     conditions {
         ValidateCondition($Conditions, $ecosystem_id)
         
-        if DBFind("parameters").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("parameters").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf("Parameter %%s already exists", $Name)
         }
     }
     
     action {
-        DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions)
+        DBInsert("parameters", {name: $Name, value:$Value, conditions: $Conditions})
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewSign', 'contract NewSign {
     data {
         Name string
@@ -1496,15 +1502,15 @@ VALUES
     conditions {
         ValidateCondition($Conditions, $ecosystem_id)
 
-        if DBFind("signatures").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("signatures").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf("The signature %%s already exists", $Name)
         }
     }
     action {
-        DBInsert("signatures", "name,value,conditions", $Name, $Value, $Conditions)  
+        DBInsert("signatures", {name: $Name,value: $Value,conditions: $Conditions})  
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewSignJoint', 'contract NewSignJoint {
         data {
             Name string
@@ -1546,7 +1552,7 @@ VALUES
             CallContract("NewSign", params)
         }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewTable', 'contract NewTable {
     data {
         ApplicationId int
@@ -1571,7 +1577,7 @@ VALUES
         return SysParamInt("table_price")
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewTableJoint', 'contract NewTableJoint {
     data {
         ApplicationId int
@@ -1621,7 +1627,7 @@ VALUES
         CallContract("NewTable", params)
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewUser', 'contract NewUser {
 	data {
 		NewPubkey string
@@ -1642,7 +1648,7 @@ VALUES
         SetPubKey($newId, StringToBytes($NewPubkey))
 	}
 }
-', 'ContractConditions("NodeOwnerCondition")', %[1]d),
+', 'ContractConditions("NodeOwnerCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NodeOwnerCondition', 'contract NodeOwnerCondition {
 	conditions {
         $raw_full_nodes = SysParamString("full_nodes")
@@ -1662,7 +1668,7 @@ VALUES
         }
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'UpdateMetrics', 'contract UpdateMetrics {
 	conditions {
 		ContractConditions("MainCondition")
@@ -1674,18 +1680,27 @@ VALUES
 		var i, id int
 		var v map
 		while (i < Len(values)) {
-			v = values[i]
-			id = Int(DBFind("metrics").Columns("id").Where("time = ? AND key = ? AND metric = ?", v["time"], v["key"], v["metric"]).One("id"))
+            var inmap map
+
+            v = values[i]
+            inmap["time"] = v["time"]
+            inmap["key"] = v["key"]
+            inmap["metric"] = v["metric"]
+            
+            id = Int(DBFind("metrics").Columns("id").Where(inmap).One("id"))
+            var ival int
 			if id != 0 {
-				DBUpdate("metrics", id, "value", Int(v["value"]))
+                ival = Int(v["value"])
+				DBUpdate("metrics", id, {"value": ival})
 			} else {
-				DBInsert("metrics", "time,key,metric,value", v["time"], v["key"], v["metric"], Int(v["value"]))
+                inmap["value"] = Int(v["value"])
+				DBInsert("metrics", inmap )
 			}
 			i = i + 1
 		}
 	}
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'UpdateSysParam', 'contract UpdateSysParam {
     data {
         Name string
@@ -1707,7 +1722,7 @@ VALUES
         DBUpdateSysParam($Name, $Value, $Conditions)
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'UploadBinary', 'contract UploadBinary {
     data {
         ApplicationId int
@@ -1717,7 +1732,8 @@ VALUES
     }
 
     conditions {
-        $Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $ApplicationId, $key_id, $Name).One("id"))
+        $Id = Int(DBFind("binaries").Columns("id").Where({app_id: $ApplicationId,
+            member_id: $key_id, name: $Name}).One("id"))
 
         if $Id == 0 {
             if $ApplicationId == 0 {
@@ -1734,15 +1750,16 @@ VALUES
         }
 
         if $Id != 0 {
-            DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+            DBUpdate("binaries", $Id, {"data": $Data,"hash": hash,"mime_type": $DataMimeType})
         } else {
-            $Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $ApplicationId, $key_id, $Name, $Data, hash, $DataMimeType)
+            $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
+               "name": $Name,"data": $Data,"hash": hash, "mime_type": $DataMimeType})
         }
 
         $result = $Id
+    }
 }
-}
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'block_reward', 'contract block_reward {
       data {
           Value string
@@ -1757,7 +1774,7 @@ VALUES
           }
       }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'blockchain_url', 'contract blockchain_url {
     data {
       Value string
@@ -1772,7 +1789,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'column_price', 'contract column_price {
     data {
       Value string
@@ -1787,7 +1804,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'commission_size', 'contract commission_size {
     data {
       Value string
@@ -1802,7 +1819,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'commission_wallet', 'contract commission_wallet {
     data {
       Value string
@@ -1814,7 +1831,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'contract_price', 'contract contract_price {
     data {
       Value string
@@ -1829,7 +1846,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'default_ecosystem_contract', 'contract default_ecosystem_contract {
     data {
       Value string
@@ -1841,7 +1858,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'default_ecosystem_menu', 'contract default_ecosystem_menu {
     data {
       Value string
@@ -1853,7 +1870,7 @@ VALUES
       }
     }
   }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'default_ecosystem_page', 'contract default_ecosystem_page {
     data {
       Value string
@@ -1865,7 +1882,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'ecosystem_price', 'contract ecosystem_price {
     data {
       Value string
@@ -1880,7 +1897,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_activate', 'contract extend_cost_activate {
     data {
       Value string
@@ -1895,7 +1912,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_address_to_id', 'contract extend_cost_address_to_id {
     data {
       Value string
@@ -1910,7 +1927,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_column_condition', 'contract extend_cost_column_condition {
     data {
       Value string
@@ -1925,7 +1942,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_compile_contract', 'contract extend_cost_compile_contract {
     data {
       Value string
@@ -1940,7 +1957,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_contains', 'contract extend_cost_contains {
     data {
       Value string
@@ -1955,7 +1972,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_contracts_list', 'contract extend_cost_contracts_list {
     data {
       Value string
@@ -1970,7 +1987,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_create_column', 'contract extend_cost_create_column {
     data {
       Value string
@@ -1985,7 +2002,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_create_ecosystem', 'contract extend_cost_create_ecosystem {
     data {
       Value string
@@ -2000,7 +2017,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_create_table', 'contract extend_cost_create_table {
     data {
       Value string
@@ -2015,7 +2032,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_deactivate', 'contract extend_cost_deactivate {
     data {
       Value string
@@ -2030,7 +2047,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_ecosys_param', 'contract extend_cost_ecosys_param {
     data {
       Value string
@@ -2045,7 +2062,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_eval', 'contract extend_cost_eval {
     data {
       Value string
@@ -2060,7 +2077,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_eval_condition', 'contract extend_cost_eval_condition {
     data {
       Value string
@@ -2075,7 +2092,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_flush_contract', 'contract extend_cost_flush_contract {
     data {
       Value string
@@ -2090,7 +2107,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_has_prefix', 'contract extend_cost_has_prefix {
     data {
       Value string
@@ -2105,7 +2122,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_id_to_address', 'contract extend_cost_id_to_address {
     data {
       Value string
@@ -2120,7 +2137,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_is_object', 'contract extend_cost_is_object {
     data {
       Value string
@@ -2135,7 +2152,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_join', 'contract extend_cost_join {
     data {
       Value string
@@ -2150,7 +2167,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_json_to_map', 'contract extend_cost_json_to_map {
     data {
       Value string
@@ -2165,7 +2182,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_len', 'contract extend_cost_len {
     data {
       Value string
@@ -2180,7 +2197,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_new_state', 'contract extend_cost_new_state {
     data {
       Value string
@@ -2195,7 +2212,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_perm_column', 'contract extend_cost_perm_column {
     data {
       Value string
@@ -2210,7 +2227,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_perm_table', 'contract extend_cost_perm_table {
     data {
       Value string
@@ -2225,7 +2242,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_pub_to_id', 'contract extend_cost_pub_to_id {
     data {
       Value string
@@ -2240,7 +2257,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_replace', 'contract extend_cost_replace {
     data {
       Value string
@@ -2255,7 +2272,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_sha256', 'contract extend_cost_sha256 {
     data {
       Value string
@@ -2270,7 +2287,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_size', 'contract extend_cost_size {
     data {
       Value string
@@ -2285,7 +2302,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_substr', 'contract extend_cost_substr {
     data {
       Value string
@@ -2300,7 +2317,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_sys_fuel', 'contract extend_cost_sys_fuel {
     data {
       Value string
@@ -2315,7 +2332,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_sys_param_int', 'contract extend_cost_sys_param_int {
     data {
       Value string
@@ -2330,7 +2347,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_sys_param_string', 'contract extend_cost_sys_param_string {
     data {
       Value string
@@ -2345,7 +2362,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_table_conditions', 'contract extend_cost_table_conditions {
     data {
       Value string
@@ -2360,7 +2377,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_update_lang', 'contract extend_cost_update_lang {
     data {
       Value string
@@ -2375,7 +2392,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'extend_cost_validate_condition', 'contract extend_cost_validate_condition {
     data {
       Value string
@@ -2390,7 +2407,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'fuel_rate', 'contract fuel_rate {
     data {
       Value string
@@ -2422,7 +2439,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'full_nodes', 'contract full_nodes {
     data {
       Value string
@@ -2475,7 +2492,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'gap_between_blocks', 'contract gap_between_blocks {
       data {
           Value string
@@ -2490,7 +2507,7 @@ VALUES
           }
       }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'max_block_generation_time', 'contract max_block_generation_time {
     data {
       Value string
@@ -2505,7 +2522,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'max_block_size', 'contract max_block_size {
     data {
       Value string
@@ -2520,7 +2537,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'max_block_user_tx', 'contract max_block_user_tx {
     data {
       Value string
@@ -2535,7 +2552,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'max_columns', 'contract max_columns {
     data {
       Value string
@@ -2550,7 +2567,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'max_forsign_size', 'contract max_forsign_size {
     data {
       Value string
@@ -2565,7 +2582,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'max_fuel_block', 'contract max_fuel_block {
     data {
       Value string
@@ -2580,7 +2597,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'max_fuel_tx', 'contract max_fuel_tx {
     data {
       Value string
@@ -2595,7 +2612,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'max_indexes', 'contract max_indexes {
     data {
       Value string
@@ -2610,7 +2627,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'max_tx_count', 'contract max_tx_count {
     data {
       Value string
@@ -2625,7 +2642,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'max_tx_size', 'contract max_tx_size {
     data {
       Value string
@@ -2640,7 +2657,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'menu_price', 'contract menu_price {
     data {
       Value string
@@ -2655,7 +2672,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'new_version_url', 'contract new_version_url {
     data {
       Value string
@@ -2667,7 +2684,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'number_of_nodes', 'contract number_of_nodes {
       data {
           Value string
@@ -2682,7 +2699,7 @@ VALUES
           }
       }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'page_price', 'contract page_price {
     data {
       Value string
@@ -2697,7 +2714,7 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'rb_blocks_1', 'contract rb_blocks_1 {
       data {
           Value string
@@ -2712,7 +2729,7 @@ VALUES
           }
       }
 }
-', 'ContractConditions("MainCondition")', %[1]d),
+', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'table_price', 'contract table_price {
     data {
       Value string
@@ -2727,5 +2744,5 @@ VALUES
       }
     }
 }
-', 'ContractConditions("MainCondition")', %[1]d);
+', 'ContractConditions("MainCondition")', 2, %[1]d);
 `

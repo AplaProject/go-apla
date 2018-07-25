@@ -320,7 +320,7 @@ var contracts = []smartContract{
 	}},
 	{`Crash`, `contract Crash { data {} conditions {} action
 
-			{ $result=DBUpdate("menu", 1, "value", "updated") }
+			{ $result=DBUpdate("menu", 1, {"value": "updated"}) }
 			}`,
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"runtime panic error"}`}},
@@ -1092,7 +1092,9 @@ func TestContractChain(t *testing.T) {
 			}
 			$record = $row[0]
 			$new = $record["value"]
-			DBUpdate("` + rnd + `", $Id, "value", $new+"="+$new )
+			var val string
+			val = $new+"="+$new
+			DBUpdate("` + rnd + `", $Id, {"value": val })
 		}
 	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	err = postTx(`NewContract`, &form)
@@ -1106,7 +1108,7 @@ func TestContractChain(t *testing.T) {
 			Initial string
 		}
 		action {
-			$id = DBInsert("` + rnd + `", "value,amount", $Initial, "0")
+			$id = DBInsert("` + rnd + `", {value: $Initial, amount:"0"})
 			sub` + rnd + `("Id", $id)
 			$row = DBFind("` + rnd + `").Columns("value").WhereId($id)
 			if Len($row) != 1 {
@@ -1133,7 +1135,7 @@ func TestContractChain(t *testing.T) {
 
 	form = url.Values{`Value`: {`contract ` + rnd + `1 {
 		action {
-			DBInsert("` + rnd + `", "amount,dt", 0, "timestamp NOW()")
+			DBInsert("` + rnd + `", {amount: 0,dt: "timestamp NOW()"})
 		}
 	}
 		`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
@@ -1197,7 +1199,7 @@ func TestLoopCond(t *testing.T) {
 
 	form = url.Values{`Value`: {`contract ` + rnd + `shutdown {
 		action
-		{ DBInsert("` + rnd + `table", "test", "SHUTDOWN") }
+		{ DBInsert("` + rnd + `table", {"test": "SHUTDOWN"}) }
 	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 

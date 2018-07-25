@@ -248,7 +248,7 @@ func TestCutoff(t *testing.T) {
 					ShortText string
 				}
 				action {
-					DBInsert("` + name + `", "name,long_text,short_text", "test", $LongText, $ShortText)
+					DBInsert("` + name + `", {name: "test", long_text: $LongText, short_text: $ShortText})
 				}
 			}
 		`},

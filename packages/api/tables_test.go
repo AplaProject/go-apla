@@ -91,8 +91,8 @@ func TestTableName(t *testing.T) {
 	}
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
-			DBInsert("tbl-` + name + `", "MyName", "test")
-			DBUpdate("tbl-` + name + `", 1, "MyName", "New test")
+			DBInsert("tbl-` + name + `", {"MyName": "test"})
+			DBUpdate("tbl-` + name + `", 1, {"MyName": "New test"})
 		}}`}, "ApplicationId": {`100`}, "Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx("NewContract", &form)
 	if err != nil {
@@ -160,16 +160,16 @@ func TestJSONTable(t *testing.T) {
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
 			var ret1, ret2 int
-			ret1 = DBInsert("` + name + `", "MyName,Doc", "test", "{\"type\": \"0\"}")
+			ret1 = DBInsert("` + name + `", {MyName: "test",Doc: "{\"type\": \"0\"}"})
 			var mydoc map
 			mydoc["type"] = "document"
 			mydoc["ind"] = 2
 			mydoc["check"] = "99"
 			mydoc["doc"] = "Some text."
-			ret2 = DBInsert("` + name + `", "MyName,Doc", "test2", mydoc)
-			DBInsert("` + name + `", "MyName,Doc", "test3", "{\"title\": {\"name\":\"Test att\",\"text\":\"low\"}}")
-			DBInsert("` + name + `", "MyName,doc", "test4", "{\"languages\": {\"arr_id\":{\"1\":\"0\",\"2\":\"0\",\"3\":\"0\"}}}")
-			DBInsert("` + name + `", "MyName,doc", "test5", "{\"app_id\": \"33\"}")
+			ret2 = DBInsert("` + name + `", {MyName: "test2",Doc: mydoc})
+			DBInsert("` + name + `", {MyName: "test3",Doc: "{\"title\": {\"name\":\"Test att\",\"text\":\"low\"}}"})
+			DBInsert("` + name + `", {MyName: "test4",doc: "{\"languages\": {\"arr_id\":{\"1\":\"0\",\"2\":\"0\",\"3\":\"0\"}}}"})
+			DBInsert("` + name + `", {MyName: "test5",Doc: "{\"app_id\": \"33\"}"})
 		}}`}, "ApplicationId": {`1`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
@@ -199,11 +199,11 @@ func TestJSONTable(t *testing.T) {
 
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Upd {
 		action {
-			DBUpdate("` + name + `", 1, "Doc", "{\"type\": \"doc\", \"ind\": \"3\", \"check\": \"33\"}")
+			DBUpdate("` + name + `", 1, {"Doc": "{\"type\": \"doc\", \"ind\": \"3\", \"check\": \"33\"}"})
 			var mydoc map
 			mydoc["type"] = "doc"
 			mydoc["doc"] = "Some test text."
-			DBUpdate("` + name + `", 2, "myname,Doc", "test3", mydoc)
+			DBUpdate("` + name + `", 2, {"myname": "test3", "Doc": mydoc})
 		}}`}, "ApplicationId": {`1`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx("NewContract", &form))
@@ -213,12 +213,12 @@ func TestJSONTable(t *testing.T) {
 				Type int
 			}
 			action {
-				DBUpdate("` + name + `", 1, "myname,Doc->Ind,Doc->type", "New name", 
-					      $Type, "new\"doc\" val")
-				DBUpdate("` + name + `", 2, "myname,Doc->Ind,Doc->type", "New name", 
-						$Type, "new\"doc\"")
-				DBUpdate("` + name + `", 3, "doc->flag,doc->sub", "Flag", 100)
-				DBUpdate("` + name + `", 3, "doc->temp", "Temp")
+				DBUpdate("` + name + `", 1, {"myname": "New name", "Doc->Ind": $Type,
+				    "Doc->type": "new\"doc\" val"})
+				DBUpdate("` + name + `", 2, {"myname": "New name","Doc->Ind": $Type,
+				   "Doc->type": "new\"doc\""})
+				DBUpdate("` + name + `", 3, {"doc->flag": "Flag","doc->sub": 100})
+				DBUpdate("` + name + `", 3, {"doc->temp":"Temp"})
 		  }}
 		`}, "ApplicationId": {`1`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
@@ -301,11 +301,11 @@ func TestTableDesc(t *testing.T) {
 
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
-			DBInsert("` + name + `", "desc", "test")
-			DBUpdate("` + name + `", 1, "desc", "new test")
+			DBInsert("` + name + `", {"desc": "test"})
+			DBUpdate("` + name + `", 1, {"desc": "new test"})
 			$result = DBFind("` + name + `").Columns("desc").WhereId(1).One("desc")
 		   var vals map
-		   vals = DBRow("pages").Columns("NAME, menu").Where("id = ?", 1)
+		   vals = DBRow("pages").Columns("NAME, menu").Where({id:1})
 		   $result = $result + vals["name"]
 		}}`}, "ApplicationId": {"1"},
 		"Conditions": {`ContractConditions("MainCondition")`}}

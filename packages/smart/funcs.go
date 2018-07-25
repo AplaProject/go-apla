@@ -451,8 +451,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("UpdateContract can be only called from EditContract")
 		return fmt.Errorf(`UpdateContract can be only called from EditContract`)
 	}
-	var pars []string
-	var vals []interface{}
+	pars := make(map[string]interface{})
 	ecosystemID := sc.TxSmart.EcosystemID
 	var root interface{}
 	if value != "" {
@@ -461,19 +460,16 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		if err != nil {
 			return err
 		}
-		pars = append(pars, "value")
-		vals = append(vals, value)
+		pars["value"] = value
 	}
 	if conditions != "" {
-		pars = append(pars, "conditions")
-		vals = append(vals, conditions)
+		pars["conditions"] = conditions
 	}
 	if walletID != "" {
-		pars = append(pars, "wallet_id")
-		vals = append(vals, recipient)
+		pars["wallet_id"] = recipient
 	}
-	if len(vals) > 0 {
-		if _, err := DBUpdate(sc, "contracts", id, strings.Join(pars, ","), vals...); err != nil {
+	if len(pars) > 0 {
+		if _, err := DBUpdate(sc, "contracts", id, pars); err != nil {
 			return err
 		}
 	}
@@ -506,7 +502,14 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	if err != nil {
 		return 0, err
 	}
-	_, id, err = DBInsert(sc, "contracts", "name,value,conditions,wallet_id,token_id,app_id", name, value, conditions, walletID, tokenEcosystem, appID)
+	_, id, err = DBInsert(sc, "contracts", map[string]interface{}{
+		"name":       name,
+		"value":      value,
+		"conditions": conditions,
+		"wallet_id":  walletID,
+		"token_id":   tokenEcosystem,
+		"app_id":     appID,
+	})
 	if err != nil {
 		return 0, err
 	}
@@ -693,8 +696,19 @@ func columnType(colType string) (sqlColType string, err error) {
 	return
 }
 
+func mapToParams(values map[string]interface{}) (params []string, val []interface{}, err error) {
+	for key, v := range values {
+		params = append(params, converter.Sanitize(key, ` ->+`))
+		val = append(val, v)
+	}
+	if len(params) == 0 {
+		err = fmt.Errorf(`values are undefined`)
+	}
+	return
+}
+
 // DBInsert inserts a record into the specified database table
-func DBInsert(sc *SmartContract, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
+func DBInsert(sc *SmartContract, tblname string, values map[string]interface{}) (qcost int64, ret int64, err error) {
 	if tblname == "system_parameters" {
 		return 0, 0, fmt.Errorf("system parameters access denied")
 	}
@@ -709,14 +723,11 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("num indexes")
 		return
 	}
-	if len(val) == 0 {
-		err = fmt.Errorf(`values are undefined`)
+	params, val, err := mapToParams(values)
+	if err != nil {
 		return
 	}
-	if reflect.TypeOf(val[0]) == reflect.TypeOf([]interface{}{}) {
-		val = val[0].([]interface{})
-	}
-	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil,
+	qcost, lastID, err = sc.selectiveLoggingAndUpd(params, val, tblname, nil,
 		nil, !sc.VDE && sc.Rollback, false)
 	if ind > 0 {
 		qcost *= int64(ind)
@@ -1082,7 +1093,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 }
 
 // DBUpdate updates the item with the specified id in the table
-func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
+func DBUpdate(sc *SmartContract, tblname string, id int64, values map[string]interface{}) (qcost int64, err error) {
 	if tblname == "system_parameters" {
 		return 0, fmt.Errorf("system parameters access denied")
 	}
@@ -1095,7 +1106,10 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ..
 		err = fmt.Errorf(`Access denied to report table`)
 		return
 	}
-	columns := strings.Split(params, `,`)
+	columns, val, err := mapToParams(values)
+	if err != nil {
+		return
+	}
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
@@ -1815,7 +1829,8 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				}
 
 				for _, b := range blocks {
-					if _, err := DBUpdate(smartContract, "@1_bad_blocks", b.ID, "deleted", "1"); err != nil {
+					if _, err := DBUpdate(smartContract, "@1_bad_blocks", b.ID,
+						map[string]interface{}{"deleted": "1"}); err != nil {
 						log.WithFields(log.Fields{"type": consts.DBError, "id": b.ID, "error": err}).Error("deleting bad block")
 						return err
 					}
@@ -1831,12 +1846,12 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				_, _, err = DBInsert(
 					smartContract,
 					"@1_node_ban_logs",
-					"node_id,banned_at,ban_time,reason",
-					fullNode.KeyID,
-					now.Format(time.RFC3339),
-					int64(syspar.GetNodeBanTime()/time.Millisecond), // in ms
-					banMessage,
-				)
+					map[string]interface{}{
+						"node_id":   fullNode.KeyID,
+						"banned_at": now.Format(time.RFC3339),
+						"ban_time":  int64(syspar.GetNodeBanTime() / time.Millisecond), // in ms
+						"reason":    banMessage,
+					})
 
 				if err != nil {
 					log.WithFields(log.Fields{"type": consts.DBError, "id": banReq.ProducerNodeId, "error": err}).Error("inserting log to node_ban_log")
@@ -1846,12 +1861,12 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				_, _, err = DBInsert(
 					smartContract,
 					"notifications",
-					"recipient->member_id,notification->type,notification->header,notification->body",
-					fullNode.KeyID,
-					model.NotificationTypeSingle,
-					nodeBanNotificationHeader,
-					banMessage,
-				)
+					map[string]interface{}{
+						"recipient->member_id": fullNode.KeyID,
+						"notification->type":   model.NotificationTypeSingle,
+						"notification->header": nodeBanNotificationHeader,
+						"notification->body":   banMessage,
+					})
 
 				if err != nil {
 					log.WithFields(log.Fields{"type": consts.DBError, "id": banReq.ProducerNodeId, "error": err}).Error("sending notification to node owner")
