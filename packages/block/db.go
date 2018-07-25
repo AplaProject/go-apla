@@ -110,11 +110,13 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	}
 	validBlockTime := true
 	if blockID > 1 {
-		validBlockTime, err = protocols.BlockForTimeExists(time.Unix(b.Time, 0), int(b.NodePosition))
+		exists, err := protocols.NewBlockTimeCounter().BlockForTimeExists(time.Unix(b.Time, 0), int(b.NodePosition))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("block validation")
 			return err
 		}
+
+		validBlockTime = !exists
 	}
 	if validBlockTime {
 		err = b.Create(transaction)

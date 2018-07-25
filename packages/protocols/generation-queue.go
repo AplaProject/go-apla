@@ -7,7 +7,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	log "github.com/sirupsen/logrus"
 )
 
 // QueueChecker allow check queue to generate current block
@@ -61,12 +60,7 @@ func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (
 		return false, err
 	}
 
-	if len(blocks) != 0 {
-		log.WithFields(log.Fields{"type": "block_time_counter", "error": DuplicateBlockError, "start": startInterval, "end": endInterval}).Error("")
-		return true, DuplicateBlockError
-	}
-
-	return false, nil
+	return len(blocks) != 0, nil
 }
 
 // NextTime returns next generation time for node position at time
@@ -102,6 +96,7 @@ func (btc *BlockTimeCounter) rangeByTime(t time.Time) (start, end time.Time, err
 	return
 }
 
+// TimeToGenerate returns true if the generation queue at time belongs to the specified node
 func (btc *BlockTimeCounter) TimeToGenerate(at time.Time, nodePosition int) (bool, error) {
 	if nodePosition >= btc.numberNodes {
 		return false, WrongNodePositionError

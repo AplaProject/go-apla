@@ -249,14 +249,14 @@ func (b *Block) Check() error {
 		// skip time validation for first block
 		if b.Header.BlockID > 1 {
 
-			validBlockTime, err := protocols.BlockForTimeExists(time.Unix(b.Header.Time, 0), int(b.Header.NodePosition))
+			exists, err := protocols.NewBlockTimeCounter().BlockForTimeExists(time.Unix(b.Header.Time, 0), int(b.Header.NodePosition))
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
 				return err
 			}
 
-			if !validBlockTime {
-				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("incorrect block time")
+			if exists {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Warn("incorrect block time")
 				return utils.ErrInfo(fmt.Errorf("incorrect block time %d", b.PrevHeader.Time))
 			}
 		}
