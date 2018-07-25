@@ -185,11 +185,11 @@ func TestJSONTable(t *testing.T) {
 				ret = DBFind("` + name + `").Columns("Myname,doc,Doc->Ind").WhereId($Id).Row()
 				out = ret["doc.ind"]
 				out = out + DBFind("` + name + `").Columns("myname,doc->Type").WhereId($Id).One("Doc->type")
-				list = DBFind("` + name + `").Columns(["Myname", "doc", "Doc->Ind"]).Where("Doc->ind = ?", "101")
+				list = DBFind("` + name + `").Columns(["Myname", "doc", "Doc->Ind"]).Where({"Doc->ind": "101"})
 				out = out + Str(Len(list))
 				tmp = DBFind("` + name + `").Columns("doc->title->name").WhereId(3).One("doc->title->name")
-				where = DBFind("` + name + `").Columns("doc->title->name").Where("doc->title->text = ?", "low").One("doc->title->name")
-				one = DBFind("` + name + `").Where("doc->title->text = ?", "low").One("doc->title->text")
+				where = DBFind("` + name + `").Columns("doc->title->name").Where({"doc->title->text":"low"}).One("doc->title->name")
+				one = DBFind("` + name + `").Where({"doc->title->text":"low"}).One("doc->title->text")
 				empty = DBFind("` + name + `").WhereId(4).One("doc->languages->arr_id->2")
 				$result = out + Str(DBFind("` + name + `").WhereId($Id).One("doc->check")) + tmp + where +one + empty
 			}

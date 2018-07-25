@@ -381,8 +381,7 @@ func GetContractByName(sc *SmartContract, name string) int64 {
 
 // GetContractById returns the name of the contract with this id
 func GetContractById(sc *SmartContract, id int64) string {
-	_, ret, err := DBSelect(sc, "contracts", "value", id, `id`, 0, 1,
-		0, ``, []interface{}{})
+	_, ret, err := DBSelect(sc, "contracts", "value", id, `id`, 0, 1, 0, nil)
 	if err != nil || len(ret) != 1 {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract name")
 		return ``
@@ -469,7 +468,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		ret []interface{}
 		pub string
 	)
-	_, ret, err = DBSelect(sc, "@1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
+	_, ret, err = DBSelect(sc, "@1_keys", "pub", wallet, `id`, 0, 1, 0, nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting pub key")
 		return 0, err
