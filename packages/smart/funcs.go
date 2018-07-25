@@ -858,10 +858,134 @@ func GetOrder(inOrder interface{}) (string, error) {
 	return strings.Join(orders, `,`), nil
 }
 
+func GetWhere(inWhere map[string]interface{}) (string, error) {
+	var (
+		where string
+		cond  []string
+	)
+	escape := func(value interface{}) string {
+		return strings.Replace(fmt.Sprint(value), `'`, `''`, -1)
+	}
+	oper := func(action string, v interface{}) (string, error) {
+		switch value := v.(type) {
+		default:
+			return fmt.Sprintf(`%s '%s'`, action, escape(value)), nil
+		}
+	}
+	like := func(pattern string, v interface{}) (string, error) {
+		switch value := v.(type) {
+		default:
+			return fmt.Sprintf(pattern, escape(value)), nil
+		}
+	}
+	in := func(action string, v interface{}) (ret string, err error) {
+		switch value := v.(type) {
+		case []interface{}:
+			var list []string
+			for _, ival := range value {
+				list = append(list, escape(ival))
+			}
+			if len(list) > 0 {
+				ret = fmt.Sprintf(`%s ['%s']`, action, strings.Join(list, `', '`))
+			}
+		}
+		return
+	}
+	logic := func(action string, v interface{}) (ret string, err error) {
+		switch value := v.(type) {
+		case []interface{}:
+			var list []string
+			for _, ival := range value {
+				switch avalue := ival.(type) {
+				case map[string]interface{}:
+					where, err := GetWhere(avalue)
+					if err != nil {
+						return ``, err
+					}
+					list = append(list, where)
+				}
+			}
+			if len(list) > 0 {
+				ret = fmt.Sprintf(`(%s)`, strings.Join(list, ` `+action+` `))
+			}
+		}
+		return
+	}
+	for key, v := range inWhere {
+		key = PrepareWhere(converter.Sanitize(strings.ToLower(key), `->$`))
+		switch key {
+		case `$like`:
+			return like(`like '%%%s%%'`, v)
+		case `$end`:
+			return like(`like '%%%s'`, v)
+		case `$begin`:
+			return like(`like '%s%%'`, v)
+		case `$and`:
+			return logic(`and`, v)
+		case `$or`:
+			return logic(`or`, v)
+		case `$in`:
+			return in(`in`, v)
+		case `$nin`:
+			return in(`not in`, v)
+		case `$eq`:
+			return oper(`=`, v)
+		case `$neq`:
+			return oper(`!=`, v)
+		case `$gt`:
+			return oper(`>`, v)
+		case `$gte`:
+			return oper(`>=`, v)
+		case `$lt`:
+			return oper(`<`, v)
+		case `$lte`:
+			return oper(`<=`, v)
+		default:
+			if !strings.Contains(key, `>`) {
+				key = `"` + key + `"`
+			}
+			switch value := v.(type) {
+			case []interface{}:
+				var acond []string
+				for _, iarr := range value {
+					switch avalue := iarr.(type) {
+					case map[string]interface{}:
+						ret, err := GetWhere(avalue)
+						if err != nil {
+							return ``, err
+						}
+						acond = append(acond, fmt.Sprintf(`(%s %s)`, key, ret))
+					default:
+						acond = append(acond, fmt.Sprintf(`%s = '%s'`, key, escape(value)))
+					}
+				}
+				if len(acond) > 0 {
+					cond = append(cond, fmt.Sprintf(`(%s)`, strings.Join(acond, ` and `)))
+				}
+			case map[string]interface{}:
+				ret, err := GetWhere(value)
+				if err != nil {
+					return ``, err
+				}
+				cond = append(cond, fmt.Sprintf(`(%s %s)`, key, ret))
+			default:
+				cond = append(cond, fmt.Sprintf(`%s = '%s'`, key, escape(value)))
+			}
+		}
+	}
+	if len(cond) > 0 {
+		where = strings.Join(cond, ` and `)
+		if err := checkNow(where); err != nil {
+			return ``, err
+		}
+	}
+	return where, nil
+}
+
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64, inOrder interface{},
 	offset, limit, ecosystem int64,
-	where string, params []interface{}) (int64, []interface{}, error) {
+	inWhere map[string]interface{}) (int64, []interface{}, error) {
 
 	var (
 		err     error
@@ -878,10 +1002,10 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if err != nil {
 		return 0, nil, err
 	}
-	if err = checkNow(where); err != nil {
+	where, err := GetWhere(inWhere)
+	if err != nil {
 		return 0, nil, err
 	}
-	where = PrepareWhere(strings.Replace(converter.Escape(where), `$`, `?`, -1))
 	if id != 0 {
 		where = fmt.Sprintf(`id='%d'`, id)
 		limit = 1
@@ -904,7 +1028,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if err = sc.AccessColumns(tblname, &columns, false); err != nil {
 		return 0, nil, err
 	}
-	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(PrepareColumns(columns)).Where(where, params...).Order(order).
+	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(PrepareColumns(columns)).Where(where).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting rows from table")

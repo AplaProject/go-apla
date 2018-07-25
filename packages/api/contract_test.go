@@ -47,8 +47,11 @@ func TestNewContracts(t *testing.T) {
 
 	assert.NoError(t, keyLogin(1))
 	rnd := crypto.RandSeq(4)
-	for _, item := range contracts {
+	for i, item := range contracts {
 		var ret getContractResult
+		if i > 100 {
+			break
+		}
 		name := strings.Replace(item.Name, `#rnd#`, rnd, -1)
 		err := sendGet(`contract/`+name, nil, &ret)
 		if err != nil {
@@ -90,13 +93,23 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
-
+	{`DBFindLike`, `contract DBFindLike {
+		action {
+			var list array
+			list = DBFind("pages").Where({"name":{"$like": "_ed"}})
+			Test("size", Len(list))
+			list = DBFind("pages").Where({"name":{"$end": "edit"}})
+			Test("end", Len(list))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`size`: `8`, `end`: `8`}},
+	}},
 	{`TestDBFindOK`, `
 			contract TestDBFindOK {
 			action {
 				var ret array
 				var vals map
-				ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
+				ret = DBFind("contracts").Columns("id,value").Where({"$and":[{"id":{"$gte": 3}}, {"id":{"$lte":5}}]}).Order("id")
 				if Len(ret) {
 					Test("0",  "1")
 				} else {
@@ -122,21 +135,21 @@ var contracts = []smartContract{
 					vals = ret[0]
 					Test("3", vals["id"])
 				}
-				ret = DBFind("contracts").Columns("id").Where("id='1'")
+				ret = DBFind("contracts").Columns("id").Where({"$or":[{"id": "1"}]})
 				if Len(ret) != 1 {
 					Test("4",  "0")
 				} else {
 					vals = ret[0]
 					Test("4", vals["id"])
 				}
-				ret = DBFind("contracts").Columns("id").Where("id='1'")
+				ret = DBFind("contracts").Columns("id").Where({"id": 1})
 				if Len(ret) != 1 {
 					Test("4",  "0")
 				} else {
 					vals = ret[0]
 					Test("4", vals["id"])
 				}
-				ret = DBFind("contracts").Columns("id,value").Where("id> ? and id < ?", 3, 8).Order([{"id": 1}, {"name": "-1"}])
+				ret = DBFind("contracts").Columns("id,value").Where({"id":[{"$gt":3},{"$lt":8}]}).Order([{"id": 1}, {"name": "-1"}])
 				if Len(ret) != 4 {
 					Test("5",  "0")
 				} else {
@@ -183,7 +196,7 @@ var contracts = []smartContract{
 	{`DBFindCURRENT`, `contract DBFindCURRENT {
 		action {
 			var list array
-			list = DBFind("mytable").Where("date < CURRENT_DATE")
+			list = DBFind("mytable").Where({"date": {"$lt": "CURRENT_DATE"}})
 		}
 	}`, []smartParams{
 		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
@@ -193,7 +206,7 @@ var contracts = []smartContract{
 		var app map
 		var result string
 		result = GetType(app)
-		app = DBFind("applications").Where("id=1").Row()
+		app = DBFind("applications").Where({"id":"1"}).Row()
 		result = result + GetType(app)
 		app["app_id"] = 2
 		Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
@@ -215,7 +228,7 @@ var contracts = []smartContract{
 	{`DBFindNow`, `contract DBFindNow {
 		action {
 			var list array
-			list = DBFind("mytable").Where("date < now ( )")
+			list = DBFind("mytable").Where({"date": {"$lt": "now ( )"}})
 		}
 	}`, []smartParams{
 		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
@@ -327,7 +340,7 @@ var contracts = []smartContract{
 		}},
 	{`DBProblem`, `contract DBProblem {
 		action{
-			DBFind("members1").Where("member_name=?", "name")
+			DBFind("members1").Where({"member_name": "name"})
 		}
 	}`,
 		[]smartParams{
@@ -362,7 +375,7 @@ var contracts = []smartContract{
 				var ar array
 				ar = Split("point 1,point 2", ",")
 				Test("split",  Str(ar[1]))
-				$ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
+				$ret = DBFind("contracts").Columns("id,value").Where({"id":[{"$gte": 3}, {"$lte":5}]}).Order("id")
 				Test("edit",  "edit value 0")
 			}
 		}`,

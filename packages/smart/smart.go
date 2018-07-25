@@ -352,9 +352,9 @@ func LoadContracts(transaction *model.DbTransaction) error {
 }
 
 func LoadSysFuncs(vm *script.VM, state int) error {
-	code := `func DBFind(table string).Columns(columns string).Where(where string, params ...)
+	code := `func DBFind(table string).Columns(columns string).Where(where map)
 	.WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
-   return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
+   return DBSelect(table, columns, id, order, offset, limit, ecosystem, where)
 }
 
 func One(list array, name string) string {
@@ -402,11 +402,11 @@ func Row(list array) map {
    return ret
 }
 
-func DBRow(table string).Columns(columns string).Where(where string, params ...)
+func DBRow(table string).Columns(columns string).Where(where map)
    .WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
    
    var result array
-   result = DBFind(table).Columns(columns).Where(where, params...).WhereId(id).Order(order).Ecosystem(ecosystem)
+   result = DBFind(table).Columns(columns).Where(where).WhereId(id).Order(order).Ecosystem(ecosystem)
 
    var row map
    if Len(result) > 0 {
