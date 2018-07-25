@@ -63,10 +63,10 @@ func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (
 
 	if len(blocks) != 0 {
 		log.WithFields(log.Fields{"type": "block_time_counter", "error": DuplicateBlockError, "start": startInterval, "end": endInterval}).Error("")
-		return false, DuplicateBlockError
+		return true, DuplicateBlockError
 	}
 
-	return true, nil
+	return false, nil
 }
 
 // NextTime returns next generation time for node position at time
