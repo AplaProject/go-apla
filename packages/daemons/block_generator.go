@@ -62,12 +62,6 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	// blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
-	// if err != nil {
-	// 	d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
-	// 	return err
-	// }
-
 	timeToGenerate, err := protocols.TimeToGenerate(time.Now(), int(nodePosition))
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err, "position": nodePosition}).Debug("calculating block time")
