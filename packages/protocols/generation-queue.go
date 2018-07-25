@@ -7,6 +7,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
+	log "github.com/sirupsen/logrus"
 )
 
 // QueueChecker allow check queue to generate current block
@@ -48,13 +49,9 @@ func (btc *BlockTimeCounter) NodePosition(t time.Time) (int, error) {
 	return queue % btc.numberNodes, nil
 }
 
-// // ValidateBlock checks conformity between time and nodePosition
-// func (btc *BlockTimeCounter) ValidateBlock(t time.Time, nodePosition int) bool {
-// 	return btc.NodePosition(t) == nodePosition
-// }
-
+// BlockForTimeExists checks conformity between time and nodePosition
+// changes functionality of ValidateBlock prevent blockTimeCalculator
 func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (bool, error) {
-
 	startInterval, endInterval, err := btc.RangesByTime(t)
 	if err != nil {
 		return false, err
@@ -67,6 +64,7 @@ func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (
 	}
 
 	if len(blocks) != 0 {
+		log.WithFields(log.Fields{"type": "block_time_counter", "error": DuplicateBlockError, "start": startInterval, "end": endInterval}).Error("")
 		return false, DuplicateBlockError
 	}
 
@@ -95,13 +93,13 @@ func (btc *BlockTimeCounter) NextTime(t time.Time, nodePosition int) (time.Time,
 
 // RangesByTime returns start and end of interval by time
 func (btc *BlockTimeCounter) RangesByTime(t time.Time) (start, end time.Time, err error) {
-	atTimePosition, err := btc.NodePosition(t)
+	queue, err := btc.Queue(t)
 	if err != nil {
 		st := time.Unix(0, 0)
 		return st, st, err
 	}
 
-	end = btc.start.Add(btc.duration * (time.Duration(atTimePosition) + 1))
+	end = btc.start.Add(btc.duration * (time.Duration(queue) + 1))
 	start = end.Add(-btc.duration).Add(1 * time.Millisecond)
 	return
 }
