@@ -16,7 +16,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
     
         action {
-            DBUpdate("applications", $ApplicationId, "deleted", $Value)
+            DBUpdate("applications", $ApplicationId, {"deleted": $Value})
         }
     }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('3', 'EditAppParam', 'contract EditAppParam {
@@ -37,17 +37,15 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("app_params", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("app_params", $Id, pars)
         }
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
@@ -68,13 +66,12 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Conditions {
-            pars[0] = "conditions"
-            vals[0] = $Conditions
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("applications", $ApplicationId, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("applications", $ApplicationId, pars)
         }
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
@@ -126,17 +123,15 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("parameters", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("parameters", $Id, pars)
         }
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
@@ -190,9 +185,10 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
 
         if $Id != 0 {
-            DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+            DBUpdate("binaries", $Id, {"data": $Data,"hash": hash,"mime_type": $DataMimeType})
         } else {
-            $Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $ApplicationId, $key_id, $Name, $Data, hash, $DataMimeType)
+            $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
+               "name": $Name,"data": $Data,"hash": hash, "mime_type": $DataMimeType})
         }
 
         $result = $Id
@@ -390,17 +386,19 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         $import_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "import").One("id")
         if $import_id {
             $import_id = Int($import_id)
-            DBUpdate("buffer_data", $import_id, "value", initJson)
+            DBUpdate("buffer_data", $import_id, {"value": initJson})
         } else {
-            $import_id = DBInsert("buffer_data", "member_id,key,value", $key_id, "import", initJson)
+            $import_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import",
+                 "value": initJson})
         }
 
         $info_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "import_info").One("id")
         if $info_id {
             $info_id = Int($info_id)
-            DBUpdate("buffer_data", $info_id, "value", initJson)
+            DBUpdate("buffer_data", $info_id, {"value": initJson})
         } else {
-            $info_id = DBInsert("buffer_data", "member_id,key,value", $key_id, "import_info", initJson)
+            $info_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import_info",
+            "value": initJson})
         }
     }
 
@@ -493,14 +491,16 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         input["data"] = sliced
 
         // storing
-        DBUpdate("buffer_data", $import_id, "value", input)
-        DBUpdate("buffer_data", $info_id, "value", info_map)
+        DBUpdate("buffer_data", $import_id, {"value": input})
+        DBUpdate("buffer_data", $info_id, {"value": info_map})
 
         var app_id int
         app_id = DBFind("applications").Columns("id").Where("name=$", Str(input["name"])).One("id")
 
         if !app_id {
-            DBInsert("applications", "name,conditions", Str(input["name"]), "true")
+            var val string
+            val = Str(input["name"])
+            DBInsert("applications", {"name": val, "conditions": "true"})
         }
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
@@ -519,13 +519,14 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("app_params").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("app_params").Columns("id").Where({"name":$Name}).One("id") {
             warning Sprintf( "Application parameter %%s already exists", $Name)
         }
     }
 
     action {
-        DBInsert("app_params", "app_id,name,value,conditions", $ApplicationId, $Name, $Value, $Conditions)
+        DBInsert("app_params", {app_id: $ApplicationId, name: $Name, value: $Value,
+              conditions: $Conditions})
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('14', 'NewApplication', 'contract NewApplication {
@@ -547,7 +548,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        $result = DBInsert("applications", "name,conditions", $Name, $Conditions)
+        $result = DBInsert("applications", {name: $Name,conditions: $Conditions})
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('15', 'NewBlock', 'contract NewBlock {
@@ -571,7 +572,8 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId)
+        DBInsert("blocks", {name: $Name, value: $Value, conditions: $Conditions,
+              app_id: $ApplicationId})
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('16', 'NewColumn', 'contract NewColumn {
@@ -683,7 +685,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions)
+        DBInsert("menu", {name:$Name,value: $Value, title: $Title, conditions: $Conditions})
     }
     func price() int {
         return SysParamInt("menu_price")
@@ -735,7 +737,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        DBInsert("pages", "name,value,menu,validate_count,validate_mode,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $ValidateMode, $Conditions, $ApplicationId)
+        DBInsert("pages", {name: $Name,value: $Value, menu: $Menu,
+             validate_count:$ValidateCount,validate_mode: $ValidateMode,
+             conditions: $Conditions,app_id: $ApplicationId})
     }
     func price() int {
         return SysParamInt("page_price")
@@ -757,7 +761,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
     
     action {
-        DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions)
+        DBInsert("parameters", {name: $Name, value:$Value, conditions: $Conditions})
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('22', 'Import', 'contract Import {
@@ -921,9 +925,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
         $buffer_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "export").One("id")
         if !$buffer_id {
-            DBInsert("buffer_data", "member_id,key,value", $key_id, "export", value)
+            DBInsert("buffer_data", {"member_id":$key_id,"key": "export", "value": value})
         } else {
-            DBUpdate("buffer_data", Int($buffer_id), "value", value)
+            DBUpdate("buffer_data", Int($buffer_id), {"value": value})
         }
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
@@ -945,17 +949,15 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("blocks", $Id, pars)
         }
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
@@ -978,21 +980,18 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Title {
-            pars = Append(pars, "title")
-            vals = Append(vals, $Title)
+            pars["title"] = $Title
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("menu", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("menu", $Id, pars)
         }            
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
@@ -1031,32 +1030,27 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Menu {
-            pars = Append(pars, "menu")
-            vals = Append(vals, $Menu)
+            pars["menu"] = $Menu
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
         if $ValidateCount {
-            pars = Append(pars, "validate_count")
-            vals = Append(vals, $ValidateCount)
+            pars["validate_count"] = $ValidateCount
         }
         if $ValidateMode {
             if $ValidateMode != "1" {
                 $ValidateMode = "0"
             }
-            pars = Append(pars, "validate_mode")
-            vals = Append(vals, $ValidateMode)
+            pars["validate_mode"] = $ValidateMode
         }
-        if Len(vals) > 0 {
-            DBUpdate("pages", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("pages", $Id, pars)
         }
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
@@ -1130,14 +1124,14 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 	}
 	action {
-		DBUpdate("keys", $key_id,"-amount", $amount)
+		DBUpdate("keys", $key_id, {"-amount": $amount})
 		if DBFind("keys").Columns("id").WhereId($recipient).One("id") == nil {
-			DBInsert("keys", "id,amount",  $recipient, $amount)
+			DBInsert("keys", {id: $recipient,amount: $amount})
 		} else {
-			DBUpdate("keys", $recipient,"+amount", $amount)
+			DBUpdate("keys", $recipient, {"+amount": $amount})
 		}
-		DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
-				$key_id, $recipient, $amount, $Comment, $block, $txhash)
+        DBInsert("history", {sender_id: $key_id,recipient_id: $recipient,
+             amount:$amount,comment: $Comment,block_id: $block,txhash: $txhash})
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('29','ActivateContract','contract ActivateContract {
@@ -1158,7 +1152,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 	}
 	action {
-		DBUpdate("contracts", $Id, "active", 1)
+		DBUpdate("contracts", $Id, {"active": 1})
 		Activate($Id, $ecosystem_id)
 	}
 	func rollback() {
@@ -1190,8 +1184,10 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	}
 	action {
 		var row map
-		row = DBRow("menu").Columns("value").WhereId($Id)
-		DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
+        row = DBRow("menu").Columns("value").WhereId($Id)
+        var val string
+        val = row["value"] + "\r\n" + $Value
+		DBUpdate("menu", $Id, {"value": val})
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('32','AppendPage','contract AppendPage {
@@ -1212,7 +1208,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		} else {
 			value = value + "\r\n" + $Value
 		}
-		DBUpdate("pages", $Id, "value",  value )
+		DBUpdate("pages", $Id, {"value":  value })
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('33','NewSign','contract NewSign {
@@ -1229,7 +1225,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
     }
     action {
-        DBInsert("signatures", "name,value,conditions", $Name, $Value, $Conditions)  
+        DBInsert("signatures", {name: $Name,value: $Value,conditions: $Conditions})  
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('34','EditSign','contract EditSign {
@@ -1249,17 +1245,15 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
     }
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("signatures", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("signatures", $Id, pars)
         }
     }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
@@ -1281,7 +1275,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 	}
 	action {
-		DBUpdate("contracts", $Id, "active", 0)
+		DBUpdate("contracts", $Id, {"active": 0})
 		Deactivate($Id, $ecosystem_id)
 	}
 	func rollback() {
@@ -1337,7 +1331,8 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 	}
 	action {
-		DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,limit,conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
+        DBInsert("delayed_contracts", {contract: $Contract, key_id: $key_id, block_id: $BlockID,
+            every_block: $EveryBlock, limit: $Limit, conditions: $Conditions})
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('38', 'EditDelayedContract','contract EditDelayedContract {
@@ -1370,7 +1365,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		}
 	}
 	action {
-		DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,limit,deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
+        DBUpdate("delayed_contracts", $Id, {"contract": $Contract,"key_id": $key_id,
+          "block_id": $BlockID,"every_block": $EveryBlock,
+          "counter": 0,"limit": $Limit, "deleted": $Deleted,"conditions": $Conditions})
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('39', 'CallDelayedContract','contract CallDelayedContract {
@@ -1404,7 +1401,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			block_id = block_id + Int($cur["every_block"])
 		}
 
-		DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
+		DBUpdate("delayed_contracts", $Id, {"counter": counter, "block_id": block_id})
 
 		var params map
 		CallContract($cur["contract"], params)
@@ -1458,11 +1455,18 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		var v map
 		while (i < Len(values)) {
 			v = values[i]
-			id = Int(DBFind("metrics").Columns("id").Where("time = ? AND key = ? AND metric = ?", v["time"], v["key"], v["metric"]).One("id"))
+            id = Int(DBFind("metrics").Columns("id").Where("time = ? AND key = ? AND metric = ?", v["time"], v["key"], v["metric"]).One("id"))
+            var ival int
 			if id != 0 {
-				DBUpdate("metrics", id, "value", Int(v["value"]))
+                ival = Int(v["value"])
+				DBUpdate("metrics", id, {"value": ival})
 			} else {
-				DBInsert("metrics", "time,key,metric,value", v["time"], v["key"], v["metric"], Int(v["value"]))
+                var inmap map
+                inmap["value"] = Int(v["value"])
+                inmap["time"] = v["time"]
+                inmap["key"] = v["key"]
+                inmap["metric"] = v["metric"]
+				DBInsert("metrics", inmap )
 			}
 			i = i + 1
 		}
@@ -1496,7 +1500,8 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		Reason string
 	}
 	action {
-		DBInsert("@1_bad_blocks", "producer_node_id,consumer_node_id,block_id,timestamp block_time,reason", $ProducerNodeID, $ConsumerNodeID, $BlockID, $Timestamp, $Reason)
+        DBInsert("@1_bad_blocks", {producer_node_id: $ProducerNodeID,consumer_node_id: $ConsumerNodeID,
+            block_id: $BlockID, "timestamp block_time": $Timestamp, reason: $Reason})
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('45', 'CheckNodesBan', 'contract CheckNodesBan {

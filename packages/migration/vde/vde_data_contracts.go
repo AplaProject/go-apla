@@ -53,8 +53,9 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		action {
 			var root, id int
 			root = CompileContract($Value, $ecosystem_id, $walletContract, $TokenEcosystem)
-			id = DBInsert("contracts", "name,value,conditions, wallet_id, token_id,app_id",
-				   $contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
+			id = DBInsert("contracts", {name: $contract_name, value: $Value,
+				conditions: $Conditions, wallet_id: $walletContract, token_id: $TokenEcosystem,
+				 app_id: $ApplicationId})
 			FlushContract(root, id, false)
 			$result = id
 		}
@@ -120,19 +121,17 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		  }
 		  action {
 			var root int
-			var pars, vals array
+			var pars map
 
 			if $Value {
 				root = CompileContract($Value, $ecosystem_id, 0, 0)
-				pars[0] = "value"
-				vals[0] = $Value
+				pars["value"] = $Value
 			}
 			if $Conditions {
-				pars[Len(pars)] = "conditions"
-				vals[Len(vals)] = $Conditions
+				pars["conditions"] = $Conditions
 			}
-			if Len(vals) > 0 {
-				DBUpdate("contracts", $Id, Join(pars, ","), vals...)
+			if pars {
+				DBUpdate("contracts", $Id, pars)
 			}
 			if $Value {
 			   FlushContract(root, $Id, false)
@@ -154,7 +153,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			  }
 		  }
 		  action {
-			  $result = DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions )
+			  $result = DBInsert("parameters", {name: $Name, value: $Value, conditions: $Conditions})
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('5','EditParameter','contract EditParameter {
@@ -171,7 +170,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			  ValidateCondition($Conditions, $ecosystem_id)
 		  }
 		  action {
-			  DBUpdate("parameters", $Id, "value,conditions", $Value, $Conditions )
+			  DBUpdate("parameters", $Id, {"value": $Value,"conditions": $Conditions})
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('6', 'NewMenu','contract NewMenu {
@@ -192,7 +191,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			}
 		}
 		action {
-			DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions )
+			DBInsert("menu", {name: $Name,value: $Value,title: $Title, conditions: $Conditions})
 		}
 		func price() int {
 			return  SysParamInt("menu_price")
@@ -216,21 +215,18 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		  }
 	  	}
 	  	action {
-		  var pars, vals array
+		  var pars map
 		  if $Value {
-			  pars[0] = "value"
-			  vals[0] = $Value
+			  pars["value"] = $Value
 		  }
 		  if $Title {
-			  pars[Len(pars)] = "title"
-			  vals[Len(vals)] = $Title
+			  pars["title"] = $Title
 		  }
 		  if $Conditions {
-			  pars[Len(pars)] = "conditions"
-			  vals[Len(vals)] = $Conditions
+			  pars["conditions"] = $Conditions
 		  }
-		  if Len(vals) > 0 {
-			  DBUpdate("menu", $Id, Join(pars, ","), vals...)
+		  if pars {
+			  DBUpdate("menu", $Id, pars)
 		  }			
 		}
 	  }', 'ContractConditions("MainCondition")'),
@@ -245,7 +241,9 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		action {
 			var row map
 			row = DBRow("menu").Columns("value").WhereId($Id)
-			DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
+			var val string
+			val = row["value"] + "\r\n" + $Value
+			DBUpdate("menu", $Id, {"value": val})
 		}
 	  }', 'ContractConditions("MainCondition")'),
 	  ('9','NewPage','contract NewPage {
@@ -286,8 +284,8 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			$ValidateCount = preparePageValidateCount($ValidateCount)
 		}
 		action {
-			DBInsert("pages", "name,value,menu,validate_count,conditions,app_id,validate_mode", 
-				$Name, $Value, $Menu, $ValidateCount, $Conditions, $ApplicationId, $ValidateMode)
+			DBInsert("pages", {name:$Name,value:$Value,menu:$Menu,validate_count:$ValidateCount,
+				conditions:$Conditions,app_id:$ApplicationId,validate_mode:$ValidateMode})
 		}
 		func price() int {
 			return  SysParamInt("page_price")
@@ -328,32 +326,27 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		  $ValidateCount = preparePageValidateCount($ValidateCount)
 	  	}
 	  	action {
-			var pars, vals array
+			var pars map
 			if $Value {
-				pars[0] = "value"
-				vals[0] = $Value
+				pars["value"] = $Value
 			}
 			if $Menu {
-				pars[Len(pars)] = "menu"
-				vals[Len(vals)] = $Menu
+				pars["menu"] = $Menu
 			}
 			if $Conditions {
-				pars[Len(pars)] = "conditions"
-				vals[Len(vals)] = $Conditions
+				pars["conditions"] = $Conditions
 			}
 			if $ValidateCount {
-				pars[Len(pars)] = "validate_count"
-				vals[Len(vals)] = $ValidateCount
+				pars["validate_count"] = $ValidateCount
 			}
 			if $ValidateMode {
 				if $ValidateMode != "1" {
 					$ValidateMode = "0"
 				}
-				pars[Len(pars)] = "validate_mode"
-				vals[Len(vals)] = $ValidateMode
+				pars["validate_mode"] = $ValidateMode
 			}
-			if Len(vals) > 0 {
-				DBUpdate("pages", $Id, Join(pars, ","), vals...)
+			if pars {
+				DBUpdate("pages", $Id, pars)
 			}
 	  	}		  
 	  }', 'ContractConditions("MainCondition")'),
@@ -368,7 +361,9 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		  action {
 			  var row map
 			  row = DBRow("pages").Columns("value").WhereId($Id)
-			  DBUpdate("pages", $Id, "value", row["value"] + "\r\n" + $Value)
+			  var val string
+			  val = row["value"] + "\r\n" + $Value
+			  DBUpdate("pages", $Id, {"value": val})
 		  }
 	  }', 'ContractConditions("MainCondition")'),
 	  ('12','NewBlock','contract NewBlock {
@@ -389,7 +384,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			}
 		}
 		action {
-			DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId )
+			DBInsert("blocks", {name:$Name,value:$Value,conditions:$Conditions,app_id: $ApplicationId })
 		}
 	 }', 'ContractConditions("MainCondition")'),
 	  ('13','EditBlock','contract EditBlock {
@@ -410,17 +405,15 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			}
 	  	}
 	  	action {
-		  var pars, vals array
+		  var pars map
 		  if $Value {
-			  pars[0] = "value"
-			  vals[0] = $Value
+			  pars["value"] = $Value
 		  }
 		  if $Conditions {
-			  pars[Len(pars)] = "conditions"
-			  vals[Len(vals)] = $Conditions
+			  pars["conditions"] = $Conditions
 		  }
-		  if Len(vals) > 0 {
-			  DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+		  if pars {
+			  DBUpdate("blocks", $Id, pars)
 		  }
 		}
 	  }', 'ContractConditions("MainCondition")'),
@@ -682,21 +675,27 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			var i int
 			while i < Len(row) {
 				var idata map
-				var list array
-				var tblname, columns string
+				var list acol array
+				var tblname string
 				idata = row[i]
 				i = i + 1
 				tblname = idata["Table"]
-				columns = Join(idata["Columns"], ",")
 				list = idata["Data"] 
 				if !list {
 					continue
 				}
 				var j int
+				acol = idata["Columns"]
 				while j < Len(list) {
+					var pars map
 					var ilist array
 					ilist = list[j]
-					DBInsert(tblname, columns, ilist)
+					var k int
+					while k < Len(acol) {
+						pars[acol[k]] = ilist[k]
+						k = k + 1
+					}
+					DBInsert(tblname, pars)
 					j=j+1
 				}
 			}
@@ -731,8 +730,8 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			if !HasPrefix($Contract, "@") {
 				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
-			$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions",
-				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
+			$result = DBInsert("cron", {owner: $key_id,cron:$Cron,contract: $Contract,
+				counter:$Limit, till: $Till,conditions: $Conditions})
 			UpdateCron($result)
 		}
 	}', 'ContractConditions("MainCondition")'),
@@ -756,8 +755,8 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			if !HasPrefix($Contract, "@") {
 				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
-			DBUpdate("cron", $Id, "cron,contract,counter,till,conditions",
-				$Cron, $Contract, $Limit, $Till, $Conditions)
+			DBUpdate("cron", $Id, {"cron": $Cron,"contract": $Contract,
+			    "counter":$Limit, "till": $Till, "conditions":$Conditions})
 			UpdateCron($Id)
 		}
 	}', 'ContractConditions("MainCondition")'),
@@ -781,9 +780,10 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			}
 
 			if $Id != 0 {
-				DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+				DBUpdate("binaries", $Id, {data: $Data,hash: hash,mime_type: $DataMimeType"})
 			} else {
-				$Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $AppID, $MemberID, $Name, $Data, hash, $DataMimeType)
+				$Id = DBInsert("binaries", {app_id: $AppID, member_id: $MemberID, name: $Name,
+					data: $Data,hash: hash, mime_type: $DataMimeType })
 			}
 
 			$result = $Id
@@ -804,7 +804,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			}
 		}
 		action {
-			DBInsert("keys", "id", $newId)
+			DBInsert("keys", {"id": $newId})
 			SetPubKey($newId, StringToBytes($NewPubkey))
 		}
 	}', 'ContractConditions("MainCondition")'),
