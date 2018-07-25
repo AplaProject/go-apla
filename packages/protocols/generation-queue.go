@@ -9,8 +9,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 )
 
-// QueueChecker allow check queue to generate current block
-type QueueChecker interface {
+// BlockTimeChecker allow check queue to generate current block
+type BlockTimeChecker interface {
 	TimeToGenerate(position int64) (bool, error)
 	BlockForTimeExists(t time.Time, nodePosition int) (bool, error)
 }
