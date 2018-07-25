@@ -1446,7 +1446,7 @@ VALUES
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("pages").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("pages").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf( "Page %%s already exists", $Name)
         }
 
