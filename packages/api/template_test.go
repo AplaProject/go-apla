@@ -135,7 +135,7 @@ var forTest = tplList{
 			Div(list-group-item) {
 				DBFind(parameters, src_hol).Columns(id).Where("id=#id#").Vars("ret")
 				SetVar(qq, #ret_id#)
-				Div(Body: #index# ForList=#id# DBFind=#ret_id# SetVar=#qq#)  
+				Div(Body: #index# ForList=#id# DBFind=#ret_id# SetVar=#qq#)
 			}
 		}`, `[{"tag":"dbfind","attr":{"columns":["id"],"data":[["1"],["2"],["3"]],"name":"contracts","source":"src_pos","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"forlist","attr":{"index":"index","source":"src_pos"},"children":[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["1"]],"name":"parameters","source":"src_hol","types":["text"],"where":"id=1"}},{"tag":"div","children":[{"tag":"text","text":"1 ForList=1 DBFind=1 SetVar=1"}]}]},{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["2"]],"name":"parameters","source":"src_hol","types":["text"],"where":"id=2"}},{"tag":"div","children":[{"tag":"text","text":"2 ForList=2 DBFind=2 SetVar=2"}]}]},{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["3"]],"name":"parameters","source":"src_hol","types":["text"],"where":"id=3"}},{"tag":"div","children":[{"tag":"text","text":"3 ForList=3 DBFind=3 SetVar=3"}]}]}]}]`},
 	{`Data(Source: mysrc, Columns: "startdate,enddate", Data:
@@ -144,7 +144,7 @@ var forTest = tplList{
 	).Custom(custom_id){
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #startdate#, Format: "YYYY-MM-DD HH:MI"))
 		SetVar(Name: vEndDate, Value: DateTime(DateTime: #enddate#, Format: "YYYY-MM-DD HH:MI"))
-		SetVar(Name: vCmpDate, Value: CmpTime(#vStartDate#,#vEndDate#)) 
+		SetVar(Name: vCmpDate, Value: CmpTime(#vStartDate#,#vEndDate#))
 		P(Body: #vStartDate# #vEndDate# #vCmpDate#)
 	}.Custom(custom_name){
 		P(Body: #vStartDate# #vEndDate# #vCmpDate#)
@@ -152,16 +152,16 @@ var forTest = tplList{
 		`[{"tag":"data","attr":{"columns":["startdate","enddate","custom_id","custom_name"],"data":[["2017-12-10 10:11","2017-12-12 12:13","[{"tag":"p","children":[{"tag":"text","text":"2017-12-10 10:11 2017-12-12 12:13 -1"}]}]","[{"tag":"p","children":[{"tag":"text","text":"2017-12-10 10:11 2017-12-12 12:13 -1"}]}]"],["2017-12-17 16:17","2017-12-15 14:15","[{"tag":"p","children":[{"tag":"text","text":"2017-12-17 16:17 2017-12-15 14:15 1"}]}]","[{"tag":"p","children":[{"tag":"text","text":"2017-12-17 16:17 2017-12-15 14:15 1"}]}]"]],"source":"mysrc","types":["text","text","tags","tags"]}}]`},
 	{`Strong(SysParam(commission_size))`,
 		`[{"tag":"strong","children":[{"tag":"text","text":"3"}]}]`},
-	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
-		SetVar(Name: simple, Value: TestFunc(my value)) 
+	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI"))
+		SetVar(Name: simple, Value: TestFunc(my value))
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))
 		SetVar(Name: vCmpStartDate, Value: CmpTime(#vStartDate#,#vDateNow#))
 		Span(#vCmpStartDate# #simple#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"0 TestFunc(my value)"}]}]`},
 	{`Input(Type: text, Value: Now(MMYY))`,
 		`[{"tag":"input","attr":{"type":"text","value":"Now(MMYY)"}}]`},
-	{`Button(Body: LangRes(savex), Class: btn btn-primary, Contract: EditProfile, 
-		Page:members_list,).Alert(Text: $want_save_changesx$, 
+	{`Button(Body: LangRes(savex), Class: btn btn-primary, Contract: EditProfile,
+		Page:members_list,).Alert(Text: $want_save_changesx$,
 		ConfirmButton: $yesx$, CancelButton: $nox$, Icon: question)`,
 		`[{"tag":"button","attr":{"alert":{"cancelbutton":"$nox$","confirmbutton":"$yesx$","icon":"question","text":"$want_save_changesx$"},"class":"btn btn-primary","contract":"EditProfile","page":"members_list"},"children":[{"tag":"text","text":"savex"}]}]`},
 	{`Button(Body: button).Popup(Width: 100)`,
@@ -182,6 +182,10 @@ var forTest = tplList{
 		SetVar(varNotZero, 1) If(#varNotZero#>0) { the varNotZero should be visible }
 		If(#varUndefined#>0) { the varUndefined should be hidden }`,
 		`[{"tag":"text","text":"the varNotZero should be visible"}]`},
+	{`DateTime(1257894000)`,
+		`[{"tag":"text","text":"` + time.Unix(1257894000, 0).Format("2006-01-02 15:04:05") + `"}]`},
+	{`CmpTime(1257894000, 1257895000)CmpTime(1257895000, 1257894000)CmpTime(1257894000, 1257894000)`,
+		`[{"tag":"text","text":"-110"}]`},
 }
 
 func TestMoney(t *testing.T) {

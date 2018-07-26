@@ -57,6 +57,7 @@ import (
 const (
 	nodeBanNotificationHeader = "Your node was banned"
 	historyLimit              = 250
+	dateTimeFormat            = "2006-01-02 15:04:05"
 )
 
 var BOM = []byte{0xEF, 0xBB, 0xBF}
@@ -266,6 +267,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetDataFromXLSX":              GetDataFromXLSX,
 		"GetRowsCountXLSX":             GetRowsCountXLSX,
 		"BlockTime":                    BlockTime,
+		"DateTime":                     DateTime,
+		"UnixDateTime":                 UnixDateTime,
 	}
 
 	switch vt {
@@ -1928,5 +1931,17 @@ func BlockTime(sc *SmartContract) string {
 	if sc.BlockData != nil {
 		blockTime = sc.BlockData.Time
 	}
-	return Date(`2006-01-02 15:04:05`, blockTime)
+	return Date(dateTimeFormat, blockTime)
+}
+
+func DateTime(unix int64) string {
+	return Date(dateTimeFormat, unix)
+}
+
+func UnixDateTime(value string) int64 {
+	t, err := time.Parse(dateTimeFormat, value)
+	if err != nil {
+		return 0
+	}
+	return t.Unix()
 }
