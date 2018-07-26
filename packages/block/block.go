@@ -3,11 +3,13 @@ package block
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
@@ -130,6 +132,12 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	for _, btx := range b.Transactions {
 		txHashes = append(txHashes, btx.TxHash)
 	}
+	seed, err := crypto.CalcChecksum(bytes.Join(txHashes, []byte{}))
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating seed")
+		return err
+	}
+	randBlock := rand.New(rand.NewSource(int64(seed)))
 
 	storedTxes, err := model.GetTxesByHashlist(dbTransaction, txHashes)
 	if err != nil {
@@ -143,6 +151,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			err error
 		)
 		t.DbTransaction = dbTransaction
+		t.Rand = randBlock
 
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
