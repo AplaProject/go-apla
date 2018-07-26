@@ -18,7 +18,6 @@ package smart
 
 import (
 	"bytes"
-	"crypto/md5"
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
@@ -248,7 +247,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UUID":                         UUID,
 		"DecodeBase64":                 DecodeBase64,
 		"EncodeBase64":                 EncodeBase64,
-		"MD5":                          MD5,
+		"Hash":                         Hash,
 		"EditEcosysName":               EditEcosysName,
 		"GetColumnType":                GetColumnType,
 		"GetType":                      GetType,
@@ -1729,8 +1728,8 @@ func EncodeBase64(input string) (out string) {
 	return base64.StdEncoding.EncodeToString([]byte(input))
 }
 
-// MD5 returns md5 hash sum of data
-func MD5(data interface{}) (string, error) {
+// Hash returns sha256 hash sum of data
+func Hash(data interface{}) (string, error) {
 	var b []byte
 
 	switch v := data.(type) {
@@ -1744,7 +1743,10 @@ func MD5(data interface{}) (string, error) {
 		return "", err
 	}
 
-	hash := md5.Sum(b)
+	hash, err := crypto.Hash(b)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("on creating")
+	}
 	return hex.EncodeToString(hash[:]), nil
 }
 
