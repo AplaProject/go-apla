@@ -54,19 +54,19 @@ func TestRead(t *testing.T) {
 		`contract Get%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Where("id>= ? and id<= ?", 2, 5)
+			row = DBFind("%[1]s").Where({id:[{&gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`contract GetOK%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Columns("my,amount").Where("id>= ? and id<= ?", 2, 5)
+			row = DBFind("%[1]s").Columns("my,amount").Where({id:[{&gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`contract GetData%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Columns("active").Where("id>= ? and id<= ?", 2, 5)
+			row = DBFind("%[1]s").Columns("active").Where({id:[{&gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`func ReadFilter%s bool {
