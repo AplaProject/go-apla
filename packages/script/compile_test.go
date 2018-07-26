@@ -535,6 +535,11 @@ func TestVMCompile(t *testing.T) {
 				Arr: [s, 20, "finish"]}}
 			return outMap(my) + Sprintf("%v", list)
 		}`, `initmap`, `{"22":MY STRING "Company":{"Arr":[Spain 20 finish] "Country":Spain "Name":Ltd} "ext":Ooops "float":1.2 "in":true "qqq":10 "sub":{"lastname":Smith "myarr":[] "name":John} "var":256}[0 256 map[item:256] [Ooops]]`},
+		{`func test() string {
+			var where map
+			where["name"] = {"$in": "menus_names"}
+			return Sprintf("%v", where)
+		 }`, `test`, `map[name:map[$in:menus_names]]`},
 	}
 	vm := NewVM()
 	vm.Extern = true

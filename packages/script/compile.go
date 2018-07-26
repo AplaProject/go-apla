@@ -1173,6 +1173,7 @@ main:
 						i++
 						setIndex = true
 						indexInfo = prev.Value.(*IndexInfo)
+						noMap = false
 						continue
 					}
 					bytecode = append(bytecode, prev)

@@ -730,7 +730,7 @@ var (
 		"contracts": [
 			{
 				"Name": "testContract%[1]s",
-				"Value": "contract testContract%[1]s {\n    data {}\n    conditions {}\n    action {\n        var res array\n        res = DBFind(\"pages\").Columns(\"name\").Where(\"id=?\", 1).Order(\"id\")\n        $result = res\n    }\n    }",
+				"Value": "contract testContract%[1]s {\n    data {}\n    conditions {}\n    action {\n        var res array\n        res = DBFind(\"pages\").Columns(\"name\").Where({id: 1}).Order(\"id\")\n        $result = res\n    }\n    }",
 				"Conditions": "ContractConditions(` + "`MainCondition`" + `)"
 			}
 		],
