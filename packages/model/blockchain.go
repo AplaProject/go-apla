@@ -41,13 +41,13 @@ func (b *Block) GetMaxForeignBlock(keyId int64) (bool, error) {
 }
 
 // GetBlockchain is retrieving chain of blocks from database
-func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
+func GetBlockchain(startBlockID int64, endblockID int64, order ordering) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
 	if endblockID > 0 {
-		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(&blockchain).Error
+		err = DBConn.Model(&Block{}).Order("id "+order).Where("id > ? AND id <= ?", startBlockID, endblockID).Find(&blockchain).Error
 	} else {
-		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ?", startBlockID).Find(&blockchain).Error
+		err = DBConn.Model(&Block{}).Order("id "+order).Where("id > ?", startBlockID).Find(&blockchain).Error
 	}
 	if err != nil {
 		return nil, err

@@ -17,6 +17,7 @@
 package daylight
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -245,8 +246,12 @@ func Start() {
 	defer delPidFile()
 
 	if model.DBConn != nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		utils.CancelFunc = cancel
+		utils.ReturnCh = make(chan string)
+
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err := daemonsctl.RunAllDaemons()
+		err := daemonsctl.RunAllDaemons(ctx)
 		log.Info("Daemons started")
 		if err != nil {
 			os.Exit(1)
@@ -264,7 +269,7 @@ func Start() {
 
 			checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
 			na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
-			na.Run()
+			na.Run(ctx)
 
 			err = service.InitNodesBanService()
 			if err != nil {

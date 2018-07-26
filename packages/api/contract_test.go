@@ -1220,3 +1220,10 @@ func TestRand(t *testing.T) {
 		t.Errorf(`%s!=%s`, val1, val2)
 	}
 }
+func TestKillNode(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{"Name": {`MyTestContract1`}, "Value": {`contract MyTestContract1 {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}, "nowait": {`true`}}
+	require.NoError(t, postTx(`NewContract`, &form))
+	require.NoError(t, postTx("Kill", &url.Values{"nowait": {`true`}}))
+}

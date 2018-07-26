@@ -19,6 +19,7 @@ package tcpserver
 import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/network"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -26,7 +27,7 @@ import (
 
 // Type10 sends the last block ID
 // blocksCollection daemon sends this request
-func Type10() (*MaxBlockResponse, error) {
+func Type10() (*network.MaxBlockResponse, error) {
 	infoBlock := &model.InfoBlock{}
 	found, err := infoBlock.Get()
 	if err != nil {
@@ -37,7 +38,7 @@ func Type10() (*MaxBlockResponse, error) {
 		log.WithFields(log.Fields{"type": consts.NotFound}).Debug("Can't found info block")
 	}
 
-	return &MaxBlockResponse{
+	return &network.MaxBlockResponse{
 		BlockID: uint32(infoBlock.BlockID),
 	}, nil
 }
