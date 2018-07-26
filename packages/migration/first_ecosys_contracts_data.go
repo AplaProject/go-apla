@@ -98,7 +98,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
     conditions {
         EvalCondition("parameters", "changing_language", "value")
-        $lang = DBFind("languages").Where("id=?", $Id).Row()
+        $lang = DBFind("languages").Where({id: $Id}).Row()
     }
 
     action {
@@ -168,7 +168,8 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     conditions {
-        $Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $ApplicationId, $key_id, $Name).One("id"))
+        $Id = Int(DBFind("binaries").Columns("id").Where({app_id: $ApplicationId,
+            member_id: $key_id, name: $Name}).One("id"))
 
         if $Id == 0 {
             if $ApplicationId == 0 {
@@ -258,13 +259,14 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         var items array, limit offset int
         limit = 250
         while true{
-            var rows array, where string
+            var rows array
+            var where map
             if type == "menu" {
                 if Len($menus_names) > 0 {
-                    where = Sprintf("name in (%%v)", Join($menus_names, ","))
+                    where["name"] = {"$in": $menus_names}
                 }
             }else{
-                where = Sprintf("app_id=%%v", $ApplicationID)
+                where["app_id"] = $ApplicationID
             }
             if where {
                 rows = DBFind(type).Limit(limit).Offset(offset).Where(where)
@@ -302,7 +304,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
     conditions {
         var buffer_map map
-        buffer_map = DBFind("buffer_data").Columns("id,value->app_id,value->app_name").Where("member_id=$ and key=$", $key_id, "export").Row()
+        buffer_map = DBFind("buffer_data").Columns("id,value->app_id,value->app_name").Where({member_id:$key_id, key: "export"}).Row()
         if !buffer_map{
             warning "Application not found"
         }
@@ -383,7 +385,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
         // init buffer_data, cleaning old buffer
         var initJson map
-        $import_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "import").One("id")
+        $import_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import"}).One("id")
         if $import_id {
             $import_id = Int($import_id)
             DBUpdate("buffer_data", $import_id, {"value": initJson})
@@ -392,7 +394,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
                  "value": initJson})
         }
 
-        $info_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "import_info").One("id")
+        $info_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import_info"}).One("id")
         if $info_id {
             $info_id = Int($info_id)
             DBUpdate("buffer_data", $info_id, {"value": initJson})
@@ -495,7 +497,9 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         DBUpdate("buffer_data", $info_id, {"value": info_map})
 
         var app_id int
-        app_id = DBFind("applications").Columns("id").Where("name=$", Str(input["name"])).One("id")
+        var ival string
+        ival =  Str(input["name"])
+        app_id = DBFind("applications").Columns("id").Where({name:ival}).One("id")
 
         if !app_id {
             var val string
@@ -542,7 +546,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             warning "Application name missing"
         }
 
-        if DBFind("applications").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("applications").Columns("id").Where({name:$Name}).One("id") {
             warning Sprintf( "Application %%s already exists", $Name)
         }
     }
@@ -566,7 +570,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("blocks").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("blocks").Columns("id").Where({name:$Name}).One("id") {
             warning Sprintf( "Block %%s already exists", $Name)
         }
     }
@@ -657,7 +661,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("languages").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("languages").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf( "Language resource %%s already exists", $Name)
         }
 
@@ -679,7 +683,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     conditions {
         ValidateCondition($Conditions,$ecosystem_id)
 
-        if DBFind("menu").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("menu").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf( "Menu %%s already exists", $Name)
         }
     }
@@ -755,7 +759,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     conditions {
         ValidateCondition($Conditions, $ecosystem_id)
         
-        if DBFind("parameters").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("parameters").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf("Parameter %%s already exists", $Name)
         }
     }
@@ -783,10 +787,13 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
         $ApplicationId = 0
         var app_map map
-        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key=''import_info'' and member_id=$", $key_id).Row()
+        app_map = DBFind("buffer_data").Columns("value->app_name").Where({key: "import_info",
+          member_id: $key_id}).Row()
         if app_map{
             var app_id int
-            app_id = DBFind("applications").Columns("id").Where("name=$", Str(app_map["value.app_name"])).One("id")
+            var ival string
+            ival = Str(app_map["value.app_name"])
+            app_id = DBFind("applications").Columns("id").Where({name: ival}).One("id")
             if app_id {
                 $ApplicationId = Int(app_id)
             }
@@ -824,7 +831,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
                 // Println(Sprintf("import %%v: %%v", $Type, cdata["Name"]))
 
-                item = DBFind($Type).Where("name=?", $Name).Row()
+                item = DBFind($Type).Where({name: $Name}).Row()
                 var contractName string
                 if item {
                     contractName = editors[$Type]
@@ -863,7 +870,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     }
 
     conditions {
-        $app_map = DBFind("applications").Columns("id,name").Where("id=$", $ApplicationId).Row()
+        $app_map = DBFind("applications").Columns("id,name").Where({id: $ApplicationId}).Row()
         if !$app_map{
             warning "Application not found"
         }
@@ -880,7 +887,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
         i = 0
         var pages_ret array
-        pages_ret = DBFind("pages").Where("app_id=?", $ApplicationId)
+        pages_ret = DBFind("pages").Where({app_id: $ApplicationId})
         while i < Len(pages_ret) {
             var page_map map
             page_map = pages_ret[i]
@@ -890,8 +897,8 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
         }
 
         if Len(pages_array) > 0 {
-            var where_for_menu string
-            where_for_menu = Sprintf("name in (%%v)", Join(pages_array, ","))
+            var where_for_menu map
+            where_for_menu["name"] = pages_array
 
             i = 0
             var menu_ret array
@@ -923,7 +930,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
             value["count_menu"] = "0"
         }
 
-        $buffer_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "export").One("id")
+        $buffer_id = DBFind("buffer_data").Where({member_id:$key_id, key: "export"}).One("id")
         if !$buffer_id {
             DBInsert("buffer_data", {"member_id":$key_id,"key": "export", "value": value})
         } else {
@@ -1220,7 +1227,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     conditions {
         ValidateCondition($Conditions, $ecosystem_id)
 
-        if DBFind("signatures").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("signatures").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf("The signature %%s already exists", $Name)
         }
     }
@@ -1376,7 +1383,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	}
 	conditions {
 		var rows array
-		rows = DBFind("delayed_contracts").Where("id = ? and deleted = false", $Id)
+		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: "false"} )
 		if !Len(rows) {
 			error Sprintf("Delayed contract %%d does not exist", $Id)
 		}
@@ -1434,7 +1441,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	}
 	conditions {
 		var rows array
-		rows = DBFind("@1_ecosystems").Where("id = ?", $EcosystemID)
+		rows = DBFind("@1_ecosystems").Where({id: $EcosystemID})
 		if !Len(rows) {
 			error Sprintf("Ecosystem %%d does not exist", $EcosystemID)
 		}
@@ -1454,18 +1461,20 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		var i, id int
 		var v map
 		while (i < Len(values)) {
-			v = values[i]
-            id = Int(DBFind("metrics").Columns("id").Where("time = ? AND key = ? AND metric = ?", v["time"], v["key"], v["metric"]).One("id"))
+            var inmap map
+
+            v = values[i]
+            inmap["time"] = v["time"]
+            inmap["key"] = v["key"]
+            inmap["metric"] = v["metric"]
+            
+            id = Int(DBFind("metrics").Columns("id").Where(inmap).One("id"))
             var ival int
 			if id != 0 {
                 ival = Int(v["value"])
 				DBUpdate("metrics", id, {"value": ival})
 			} else {
-                var inmap map
                 inmap["value"] = Int(v["value"])
-                inmap["time"] = v["time"]
-                inmap["key"] = v["key"]
-                inmap["metric"] = v["metric"]
 				DBInsert("metrics", inmap )
 			}
 			i = i + 1

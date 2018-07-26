@@ -980,7 +980,13 @@ func GetWhere(inWhere map[string]interface{}) (string, error) {
 				}
 				cond = append(cond, fmt.Sprintf(`(%s %s)`, key, ret))
 			default:
-				cond = append(cond, fmt.Sprintf(`%s = '%s'`, key, escape(value)))
+				ival := escape(value)
+				if ival == `$isnull` {
+					ival = fmt.Sprintf(`%s is null`, key)
+				} else {
+					ival = fmt.Sprintf(`%s = '%s'`, key, ival)
+				}
+				cond = append(cond, ival)
 			}
 		}
 	}

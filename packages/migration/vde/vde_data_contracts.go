@@ -147,7 +147,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		  conditions {
 			  var ret array
 			  ValidateCondition($Conditions, $ecosystem_id)
-			  ret = DBFind("parameters").Columns("id").Where("name=?", $Name).Limit(1)
+			  ret = DBFind("parameters").Columns("id").Where({name: $Name}).Limit(1)
 			  if Len(ret) > 0 {
 				  warning Sprintf( "Parameter %%s already exists", $Name)
 			  }
@@ -184,7 +184,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			ValidateCondition($Conditions,$ecosystem_id)
 
 			var row map
-			row = DBRow("menu").Columns("id").Where("name = ?", $Name)
+			row = DBRow("menu").Columns("id").Where({name: $Name})
 
 			if row {
 				warning Sprintf( "Menu %%s already exists", $Name)
@@ -275,7 +275,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			ValidateCondition($Conditions,$ecosystem_id)
 
 			var row map
-			row = DBRow("pages").Columns("id").Where("name = ?", $Name)
+			row = DBRow("pages").Columns("id").Where({name: $Name})
 
 			if row {
 				warning Sprintf( "Page %%s already exists", $Name)
@@ -377,7 +377,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			ValidateCondition($Conditions,$ecosystem_id)
 
 			var row map
-			row = DBRow("blocks").Columns("id").Where("name = ?", $Name)
+			row = DBRow("blocks").Columns("id").Where({name: $Name})
 
 			if row {
 				warning Sprintf( "Block %%s already exists", $Name)
@@ -490,7 +490,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 				warning "Application id cannot equal 0"
 			}
 	
-			if DBFind("languages").Columns("id").Where("name = ?", $Name).One("id") {
+			if DBFind("languages").Columns("id").Where({name: $Name}).One("id") {
 				warning Sprintf( "Language resource %%s already exists", $Name)
 			}
 		
@@ -600,8 +600,10 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			while i < Len(row) {
 				var idata map
 				idata = row[i]
+				var ival string
+				ival = idata["Name"]
 				if(cnt == "pages"){
-					$ret_page = DBFind("pages").Columns("id").Where("name=$", idata["Name"])
+					$ret_page = DBFind("pages").Columns("id").Where({name: ival})
 					$page_id = One($ret_page, "id") 
 					if ($page_id != nil){
 						idata["Id"] = Int($page_id) 
@@ -611,7 +613,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 					}
 				}
 				if(cnt == "blocks"){
-					$ret_block = DBFind("blocks").Columns("id").Where("name=$", idata["Name"])
+					$ret_block = DBFind("blocks").Columns("id").Where({name: ival})
 					$block_id = One($ret_block, "id") 
 					if ($block_id != nil){
 						idata["Id"] = Int($block_id)
@@ -621,7 +623,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 					}
 				}
 				if(cnt == "menus"){
-					$ret_menu = DBFind("menu").Columns("id,value").Where("name=$", idata["Name"])
+					$ret_menu = DBFind("menu").Columns("id,value").Where({name: ival})
 					$menu_id = One($ret_menu, "id") 
 					$menu_value = One($ret_menu, "value") 
 					if ($menu_id != nil){
@@ -633,7 +635,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 					}
 				}
 				if(cnt == "parameters"){
-					$ret_param = DBFind("parameters").Columns("id").Where("name=$", idata["Name"])
+					$ret_param = DBFind("parameters").Columns("id").Where({name: ival})
 					$param_id = One($ret_param, "id")
 					if ($param_id != nil){ 
 						idata["Id"] = Int($param_id) 
@@ -643,7 +645,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 					}
 				}
 				if(cnt == "languages"){
-					$ret_lang = DBFind("languages").Columns("id").Where("name=$", idata["Name"])
+					$ret_lang = DBFind("languages").Columns("id").Where({name: ival})
 					$lang_id = One($ret_lang, "id")
 					if ($lang_id != nil){
 						CallContract("EditLang", idata)
@@ -658,7 +660,7 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 					} 
 				}
 				if(cnt == "tables"){
-					$ret_table = DBFind("tables").Columns("id").Where("name=$", idata["Name"])
+					$ret_table = DBFind("tables").Columns("id").Where({name: ival})
 					$table_id = One($ret_table, "id")
 					if ($table_id != nil){	
 					} else {
@@ -769,7 +771,8 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 			MemberID int "optional"
 		}
 		conditions {
-			$Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $AppID, $MemberID, $Name).One("id"))
+			$Id = Int(DBFind("binaries").Columns("id").Where({app_id: $AppID, member_id: $MemberID,
+				name: $Name}).One("id"))
 		}
 		action {
 			var hash string
