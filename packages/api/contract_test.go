@@ -23,11 +23,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/stretchr/testify/require"
 )
 
 func TestExistContract(t *testing.T) {
@@ -91,16 +91,16 @@ func TestNewContracts(t *testing.T) {
 
 var contracts = []smartContract{
 	{`RowType`, `contract RowType {
-	action {
-		var app map
-		var result string
-		result = GetType(app)
-		app = DBFind("applications").Where("id=1").Row()
-		result = result + GetType(app)
-		app["app_id"] = 2
-		Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
-	}
-}`, []smartParams{
+		action {
+			var app map
+			var result string
+			result = GetType(app)
+			app = DBFind("applications").Where("id=1").Row()
+			result = result + GetType(app)
+			app["app_id"] = 2
+			Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
+		}
+	}`, []smartParams{
 		{nil, map[string]string{`result`: `map[string]interface {}map[string]interface {} System 2`}},
 	}},
 	{`StackType`, `contract StackType {
@@ -170,16 +170,16 @@ var contracts = []smartContract{
 	}},
 	{`MyTable#rnd#`, `contract MyTable#rnd# {
 		action {
-			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1", 
+			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1",
 				"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]", 100,
 				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
 			var cols array
 			cols[0] = "{\"conditions\":\"true\",\"name\":\"column1\",\"type\":\"text\"}"
 			cols[1] = "{\"conditions\":\"true\",\"name\":\"column2\",\"type\":\"text\"}"
-			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#2", 
+			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#2",
 				JSONEncode(cols), 100,
 				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
-			
+
 			Test("ok", "1")
 		}
 	}`, []smartParams{
@@ -406,6 +406,32 @@ var contracts = []smartContract{
 			{nil, map[string]string{`ByName`: `0 29`,
 				`ById`: `NewColumn`}},
 		}},
+	{
+		`testDateTime`, `contract testDateTime {
+				data {
+					Date string
+					Unix int
+				}
+				action {
+					Test("DateTime", DateTime($Unix))
+					Test("UnixDateTime", UnixDateTime($Date))
+				}
+			}`,
+		[]smartParams{
+			{map[string]string{
+				"Unix": "1257894000",
+				"Date": "2009-11-11 04:00:00",
+			}, map[string]string{
+				"DateTime":     "2009-11-11 04:00:00",
+				"UnixDateTime": timeMustParse("2009-11-11 04:00:00"),
+			}},
+		},
+	},
+}
+
+func timeMustParse(value string) string {
+	t, _ := time.Parse("2006-01-02 15:04:05", value)
+	return converter.Int64ToStr(t.Unix())
 }
 
 func TestEditContracts(t *testing.T) {
