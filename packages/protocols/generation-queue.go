@@ -13,6 +13,7 @@ import (
 type BlockTimeChecker interface {
 	TimeToGenerate(position int64) (bool, error)
 	BlockForTimeExists(t time.Time, nodePosition int) (bool, error)
+	RangeByTime(at time.Time) (start, end time.Time, err error)
 }
 
 var (
@@ -49,7 +50,7 @@ func (btc *BlockTimeCounter) nodePosition(t time.Time) (int, error) {
 // BlockForTimeExists checks conformity between time and nodePosition
 // changes functionality of ValidateBlock prevent blockTimeCalculator
 func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (bool, error) {
-	startInterval, endInterval, err := btc.rangeByTime(t)
+	startInterval, endInterval, err := btc.RangeByTime(t)
 	if err != nil {
 		return false, err
 	}
@@ -83,8 +84,8 @@ func (btc *BlockTimeCounter) nextTime(t time.Time, nodePosition int) (time.Time,
 	return btc.start.Add(btc.duration*time.Duration(queue+d) + time.Millisecond), nil
 }
 
-// RangesByTime returns start and end of interval by time
-func (btc *BlockTimeCounter) rangeByTime(t time.Time) (start, end time.Time, err error) {
+// RangeByTime returns start and end of interval by time
+func (btc *BlockTimeCounter) RangeByTime(t time.Time) (start, end time.Time, err error) {
 	queue, err := btc.queue(t)
 	if err != nil {
 		st := time.Unix(0, 0)
