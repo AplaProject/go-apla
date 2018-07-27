@@ -301,3 +301,14 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 func escapeSingleQuotes(val string) string {
 	return strings.Replace(val, `'`, `''`, -1)
 }
+
+func (sc *SmartContract) insert(fields []string, ivalues []interface{},
+	table string) (int64, string, error) {
+	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, nil, !sc.VDE && sc.Rollback, false)
+}
+
+func (sc *SmartContract) update(fields []string, values []interface{},
+	table string, whereField string, whereValue interface{}) (int64, string, error) {
+	return sc.selectiveLoggingAndUpd(fields, values, table, []string{whereField},
+		[]string{fmt.Sprint(whereValue)}, !sc.VDE && sc.Rollback, true)
+}

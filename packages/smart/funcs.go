@@ -682,8 +682,7 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 	if reflect.TypeOf(val[0]) == reflect.TypeOf([]interface{}{}) {
 		val = val[0].([]interface{})
 	}
-	qcost, lastID, err = sc.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil,
-		nil, !sc.VDE && sc.Rollback, false)
+	qcost, lastID, err = sc.insert(strings.Split(params, `,`), val, tblname)
 	if ind > 0 {
 		qcost *= int64(ind)
 	}
@@ -867,7 +866,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && sc.Rollback, true)
+	qcost, _, err = sc.update(columns, val, tblname, column, fmt.Sprint(value))
 	return
 }
 
@@ -960,8 +959,8 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 	if err != nil {
 		return err
 	}
-	_, _, err = sc.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
-		getDefTableName(sc, `tables`), []string{`name`}, []string{strings.ToLower(name)}, !sc.VDE && sc.Rollback, false)
+	_, _, err = sc.update([]string{`permissions`}, []interface{}{string(permout)},
+		getDefTableName(sc, `tables`), `name`, strings.ToLower(name))
 	return err
 }
 
@@ -1253,8 +1252,8 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	if err != nil {
 		return
 	}
-	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
-		tables, []string{`name`}, []string{tableName}, !sc.VDE && sc.Rollback, false)
+	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
+		tables, `name`, tableName)
 	return
 }
 
@@ -1269,27 +1268,25 @@ func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err err
 			return 0, logError(err, consts.ConversionError, "decoding public key from hex")
 		}
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd([]string{`pub`}, []interface{}{pubKey},
-		getDefTableName(sc, `keys`), []string{`id`}, []string{converter.Int64ToStr(id)},
-		!sc.VDE && sc.Rollback, true)
-	return qcost, err
+	qcost, _, err = sc.update([]string{`pub`}, []interface{}{pubKey},
+		getDefTableName(sc, `keys`), `id`, id)
+	return
 }
 
 func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
 	if err = validateAccess(`NewMoney`, sc, nNewUser); err != nil {
 		return err
 	}
-	_, _, err = sc.selectiveLoggingAndUpd([]string{`id`, `amount`}, []interface{}{id, amount},
-		getDefTableName(sc, `keys`), nil, nil, !sc.VDE && sc.Rollback, false)
+	_, _, err = sc.insert([]string{`id`, `amount`}, []interface{}{id, amount},
+		getDefTableName(sc, `keys`))
 	if err == nil {
 		var block int64
 		if sc.BlockData != nil {
 			block = sc.BlockData.BlockID
 		}
-		_, _, err = sc.selectiveLoggingAndUpd([]string{`sender_id`, `recipient_id`, `amount`,
+		_, _, err = sc.insert([]string{`sender_id`, `recipient_id`, `amount`,
 			`comment`, `block_id`, `txhash`},
-			[]interface{}{0, id, amount, comment, block, sc.TxHash},
-			getDefTableName(sc, `history`), nil, nil, !sc.VDE && sc.Rollback, false)
+			[]interface{}{0, id, amount, comment, block, sc.TxHash}, getDefTableName(sc, `history`))
 	}
 	return err
 }
@@ -1319,8 +1316,8 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 	if err != nil {
 		return err
 	}
-	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
-		tables, []string{`name`}, []string{tableName}, !sc.VDE && sc.Rollback, false)
+	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
+		tables, `name`, tableName)
 	return err
 }
 
