@@ -19,7 +19,6 @@ package smart
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -29,10 +28,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model/querycost"
 
 	log "github.com/sirupsen/logrus"
-)
-
-var (
-	errUpdNotExistRecord = errors.New(`Update for not existing record`)
 )
 
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
