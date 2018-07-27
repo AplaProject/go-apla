@@ -168,6 +168,16 @@ var (
 		"languages":  "changing_language",
 		"tables":     "changing_tables",
 	}
+	typeToPSQL = map[string]string{
+		`json`:      `jsonb`,
+		`varchar`:   `varchar(102400)`,
+		`character`: `character(1) NOT NULL DEFAULT '0'`,
+		`number`:    `bigint NOT NULL DEFAULT '0'`,
+		`datetime`:  `timestamp`,
+		`double`:    `double precision`,
+		`money`:     `decimal (30, 0) NOT NULL DEFAULT '0'`,
+		`text`:      `text`,
+	}
 )
 
 func getCost(name string) int64 {
@@ -266,6 +276,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetDataFromXLSX":              GetDataFromXLSX,
 		"GetRowsCountXLSX":             GetRowsCountXLSX,
 		"BlockTime":                    BlockTime,
+		"IsObject":                     IsObject,
 	}
 
 	switch vt {
@@ -310,8 +321,7 @@ func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
 	if len(tblname) > 0 && tblname[0] == '@' {
 		return strings.ToLower(tblname[1:])
 	}
-	prefix := converter.Int64ToStr(ecosystem)
-	return strings.ToLower(fmt.Sprintf(`%s_%s`, prefix, tblname))
+	return strings.ToLower(fmt.Sprintf(`%s_%s`, converter.Int64ToStr(ecosystem), tblname))
 }
 
 func getDefTableName(sc *SmartContract, tblname string) string {
@@ -319,14 +329,8 @@ func getDefTableName(sc *SmartContract, tblname string) string {
 }
 
 func accessContracts(sc *SmartContract, names ...string) bool {
-	var prefix string
-	if !sc.VDE {
-		prefix = `@1`
-	} else {
-		prefix = fmt.Sprintf(`@%d`, sc.TxSmart.EcosystemID)
-	}
 	for _, item := range names {
-		if sc.TxContract.Name == prefix+item {
+		if sc.TxContract.Name == `@1`+item {
 			return true
 		}
 	}
@@ -335,9 +339,8 @@ func accessContracts(sc *SmartContract, names ...string) bool {
 
 // CompileContract is compiling contract
 func CompileContract(sc *SmartContract, code string, state, id, token int64) (interface{}, error) {
-	if !accessContracts(sc, `NewContract`, `EditContract`, `Import`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CompileContract can be only called from NewContract or EditContract")
-		return 0, fmt.Errorf(`CompileContract can be only called from NewContract or EditContract`)
+	if err := validateAccess(`CompileContract`, sc, nNewContract, nEditContract, nImport); err != nil {
+		return nil, err
 	}
 	return VMCompileBlock(sc.VM, code, &script.OwnerInfo{StateID: uint32(state), WalletID: id, TokenID: token})
 }
@@ -375,14 +378,12 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			if contract == nil {
 				contract = VMGetContract(sc.VM, name, 0)
 				if contract == nil {
-					log.WithFields(log.Fields{"contract_name": name, "type": consts.NotFound}).Error("Unknown contract")
-					return false, fmt.Errorf(`Unknown contract %s`, name)
+					return false, logErrorfShort(eUnknownContract, name, consts.NotFound)
 				}
 			}
 			block := contract.GetFunc(`conditions`)
 			if block == nil {
-				log.WithFields(log.Fields{"contract_name": name, "type": consts.EmptyObject}).Error("There is not conditions in contract")
-				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
+				return false, logErrorfShort(eContractCondition, name, consts.EmptyObject)
 			}
 			vars := map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
 				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID}
@@ -395,23 +396,20 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			}
 			sc.AppendStack(``)
 		} else {
-			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty contract name in ContractConditions")
-			return false, fmt.Errorf(`empty contract name in ContractConditions`)
+			return false, logError(errEmptyContract, consts.EmptyObject, "ContractConditions")
 		}
 	}
 	return true, nil
 }
 
-func contractName(value string) (string, error) {
-	list, err := script.ContractsList(value)
-	if err != nil {
-		return "", err
+func contractName(value string) (name string, err error) {
+	var list []string
+
+	list, err = script.ContractsList(value)
+	if err == nil && len(list) > 0 {
+		name = list[0]
 	}
-	if len(list) > 0 {
-		return list[0], nil
-	} else {
-		return "", nil
-	}
+	return
 }
 
 func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) error {
@@ -424,7 +422,7 @@ func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) 
 		return err
 	}
 	if len(list) != len(curlist) {
-		return fmt.Errorf("Contract cannot be removed or inserted")
+		return errContractChange
 	}
 	for i := 0; i < len(list); i++ {
 		var ok bool
@@ -435,22 +433,22 @@ func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) 
 			}
 		}
 		if !ok {
-			return fmt.Errorf("Contracts or functions names cannot be changed")
+			return errNameChange
 		}
 	}
 	return nil
 }
 
-func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID string, recipient int64, active, tokenID string) error {
-	if !accessContracts(sc, `EditContract`, `Import`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("UpdateContract can be only called from EditContract")
-		return fmt.Errorf(`UpdateContract can be only called from EditContract`)
+func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID string,
+	recipient int64, active, tokenID string) error {
+	if err := validateAccess(`UpdateContract`, sc, nEditContract, nImport); err != nil {
+		return err
 	}
 	var pars []string
 	var vals []interface{}
 	ecosystemID := sc.TxSmart.EcosystemID
 	var root interface{}
-	if value != "" {
+	if len(value) > 0 {
 		var err error
 		root, err = CompileContract(sc, value, ecosystemID, recipient, converter.StrToInt64(tokenID))
 		if err != nil {
@@ -459,11 +457,11 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		pars = append(pars, "value")
 		vals = append(vals, value)
 	}
-	if conditions != "" {
+	if len(conditions) > 0 {
 		pars = append(pars, "conditions")
 		vals = append(vals, conditions)
 	}
-	if walletID != "" {
+	if len(walletID) > 0 {
 		pars = append(pars, "wallet_id")
 		vals = append(vals, recipient)
 	}
@@ -472,24 +470,22 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 			return err
 		}
 	}
-	if value != "" {
+	if len(value) > 0 {
 		if err := FlushContract(sc, root, id, converter.StrToInt64(active) == 1); err != nil {
 			return err
 		}
-	} else {
-		if walletID != "" {
-			if err := SetContractWallet(sc, id, ecosystemID, recipient); err != nil {
-				return err
-			}
+	} else if len(walletID) > 0 {
+		if err := SetContractWallet(sc, id, ecosystemID, recipient); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func CreateContract(sc *SmartContract, name, value, conditions string, walletID, tokenEcosystem, appID int64) (int64, error) {
-	if !accessContracts(sc, `NewContract`, `Import`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateContract can be only called from NewContract")
-		return 0, fmt.Errorf(`CreateContract can be only called from NewContract`)
+func CreateContract(sc *SmartContract, name, value, conditions string, walletID, tokenEcosystem,
+	appID int64) (int64, error) {
+	if err := validateAccess(`CreateContract`, sc, nNewContract, nImport); err != nil {
+		return 0, err
 	}
 	var id int64
 	var err error
@@ -501,11 +497,12 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	if err != nil {
 		return 0, err
 	}
-	_, id, err = DBInsert(sc, "contracts", "name,value,conditions,wallet_id,token_id,app_id", name, value, conditions, walletID, tokenEcosystem, appID)
+	_, id, err = DBInsert(sc, "contracts", "name,value,conditions,wallet_id,token_id,app_id",
+		name, value, conditions, walletID, tokenEcosystem, appID)
 	if err != nil {
 		return 0, err
 	}
-	if err := FlushContract(sc, root, id, false); err != nil {
+	if err = FlushContract(sc, root, id, false); err != nil {
 		return 0, err
 	}
 	return id, nil
@@ -525,8 +522,7 @@ func RollbackNewContract(sc *SmartContract, value string) error {
 }
 
 // CreateTable is creating smart contract table
-func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) error {
-	var err error
+func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) (err error) {
 	if !accessContracts(sc, `NewTable`, `NewTableJoint`, `Import`) {
 		return fmt.Errorf(`CreateTable can be only called from NewTable, NewTableJoint or Import`)
 	}
@@ -558,11 +554,8 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		var data map[string]interface{}
 		switch v := icol.(type) {
 		case string:
-			err = json.Unmarshal([]byte(v), &data)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err,
-					"source": v}).Error("unmarshalling columns permissions from json")
-				return err
+			if err = unmarshalJSON([]byte(v), &data, `columns permissions from json`); err != nil {
+				return
 			}
 		default:
 			data = v.(map[string]interface{})
@@ -572,7 +565,8 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 			return err
 		}
 		if colList[colname] {
-			return fmt.Errorf(`There are the same columns`)
+			err = errSameColumns
+			return
 		}
 
 		sqlColType, err := columnType(data["type"].(string))
@@ -587,9 +581,8 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		case string:
 			condition = v
 		case map[string]interface{}:
-			out, err := json.Marshal(v)
+			out, err := marshalJSON(v, `conditions to json`)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling conditions to json")
 				return err
 			}
 			condition = string(out)
@@ -617,20 +610,14 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling permissions to JSON")
 		return err
 	}
-	permout, err := json.Marshal(perm)
+	permout, err := marshalJSON(perm, `permissions to JSON`)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling permissions to JSON")
 		return err
 	}
 	prefix, name := PrefixName(tableName)
-	var state string
-	if !sc.VDE {
-		state = `@1`
-	}
 	id, err := model.GetNextID(sc.DbTransaction, getDefTableName(sc, `tables`))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next ID")
-		return err
+		return logErrorDB(err, "getting next ID")
 	}
 
 	t := &model.TableVDE{
@@ -638,14 +625,13 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		Name:        name,
 		Columns:     string(colout),
 		Permissions: string(permout),
-		Conditions:  fmt.Sprintf(`ContractAccess("%sEditTable")`, state),
+		Conditions:  `ContractAccess("@1EditTable")`,
 		AppID:       applicationID,
 	}
 	t.SetTablePrefix(prefix)
 	err = t.Create(sc.DbTransaction)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert vde table info")
-		return err
+		return logErrorDB(err, "insert vde table info")
 	}
 	if !sc.VDE {
 		rollbackTx := &model.RollbackTx{
@@ -654,38 +640,18 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 			NameTable: tableName,
 			TableID:   converter.Int64ToStr(id),
 		}
-		err = rollbackTx.Create(sc.DbTransaction)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating CreateTable rollback")
-			return err
+		if err = rollbackTx.Create(sc.DbTransaction); err != nil {
+			return logErrorDB(err, "creating CreateTable rollback")
 		}
 	}
 	return nil
 }
 
-func columnType(colType string) (sqlColType string, err error) {
-	switch colType {
-	case "json":
-		sqlColType = `jsonb`
-	case "varchar":
-		sqlColType = `varchar(102400)`
-	case "character":
-		sqlColType = `character(1) NOT NULL DEFAULT '0'`
-	case "number":
-		sqlColType = `bigint NOT NULL DEFAULT '0'`
-	case "datetime":
-		sqlColType = `timestamp`
-	case "double":
-		sqlColType = `double precision`
-	case "money":
-		sqlColType = `decimal (30, 0) NOT NULL DEFAULT '0'`
-	case "text":
-		sqlColType = "text"
-	default:
-		err = fmt.Errorf("Type '%s' of columns is not supported", colType)
+func columnType(colType string) (string, error) {
+	if sqlColType, ok := typeToPSQL[colType]; ok {
+		return sqlColType, nil
 	}
-
-	return
+	return ``, fmt.Errorf(eColumnType, colType)
 }
 
 // DBInsert inserts a record into the specified database table
@@ -701,11 +667,11 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 	var ind int
 	var lastID string
 	if ind, err = model.NumIndexes(tblname); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("num indexes")
+		err = logErrorDB(err, "num indexes")
 		return
 	}
 	if len(val) == 0 {
-		err = fmt.Errorf(`values are undefined`)
+		err = errValues
 		return
 	}
 	if reflect.TypeOf(val[0]) == reflect.TypeOf([]interface{}{}) {
@@ -836,14 +802,12 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
 		Offset(offset).Limit(limit).Rows()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting rows from table")
-		return 0, nil, err
+		return 0, nil, logErrorDB(err, "selecting rows from table")
 	}
 	defer rows.Close()
 	cols, err := rows.Columns()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rows columns")
-		return 0, nil, err
+		return 0, nil, logErrorDB(err, "getting rows columns")
 	}
 	values := make([][]byte, len(cols))
 	scanArgs := make([]interface{}, len(values))
@@ -855,8 +819,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("scanning next row")
-			return 0, nil, err
+			return 0, nil, logErrorDB(err, "scanning next row")
 		}
 		row := make(map[string]interface{})
 		for i, col := range values {
@@ -885,32 +848,38 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 	return 0, result, nil
 }
 
-// DBUpdate updates the item with the specified id in the table
-func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
+// DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
+func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
+	params string, val ...interface{}) (qcost int64, err error) {
 	if tblname == "system_parameters" {
 		return 0, fmt.Errorf("system parameters access denied")
 	}
-
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
-		return
-	}
-	if strings.Contains(tblname, `_reports_`) {
-		err = fmt.Errorf(`Access denied to report table`)
 		return
 	}
 	columns := strings.Split(params, `,`)
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, !sc.VDE && sc.Rollback, true)
+	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && sc.Rollback, true)
 	return
+}
+
+// DBUpdate updates the item with the specified id in the table
+func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
+	return DBUpdateExt(sc, tblname, `id`, id, params, val...)
 }
 
 // EcosysParam returns the value of the specified parameter for the ecosystem
 func EcosysParam(sc *SmartContract, name string) string {
-	val, _ := model.Single(`SELECT value FROM "`+getDefTableName(sc, `parameters`)+`" WHERE name = ?`, name).String()
-	return val
+	sp := &model.StateParameter{}
+	sp.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	_, err := sp.Get(nil, name)
+	if err != nil {
+		return logErrorDB(err, "getting ecosystem param").Error()
+	}
+	return sp.Value
 }
 
 // AppParam returns the value of the specified app parameter for the ecosystem
@@ -919,8 +888,7 @@ func AppParam(sc *SmartContract, app int64, name string) (string, error) {
 	ap.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
 	_, err := ap.Get(sc.DbTransaction, app, name)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting app param")
-		return ``, err
+		return ``, logErrorDB(err, "getting app param")
 	}
 	return ap.Value, nil
 }
@@ -928,31 +896,27 @@ func AppParam(sc *SmartContract, app int64, name string) (string, error) {
 // Eval evaluates the condition
 func Eval(sc *SmartContract, condition string) error {
 	if len(condition) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("The condition is empty")
-		return fmt.Errorf(`The condition is empty`)
+		return logErrorShort(errEmptyCond, consts.EmptyObject)
 	}
 	ret, err := sc.EvalIf(condition)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("eval condition")
-		return err
+		return logError(err, consts.EvalError, "eval condition")
 	}
 	if !ret {
-		log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-		return errAccessDenied
+		return logErrorShort(errAccessDenied, consts.AccessDenied)
 	}
 	return nil
 }
 
 // FlushContract is flushing contract
 func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) error {
-	if !accessContracts(sc, `NewContract`, `EditContract`, `Import`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("FlushContract can be only called from NewContract or EditContract")
-		return fmt.Errorf(`FlushContract can be only called from NewContract or EditContract`)
+	if err := validateAccess(`FlushContract`, sc, nNewContract, nEditContract, nImport); err != nil {
+		return err
 	}
 	root := iroot.(*script.Block)
 	if id != 0 {
 		if len(root.Children) != 1 || root.Children[0].Type != script.ObjContract {
-			return fmt.Errorf(`Оnly one contract must be in the record`)
+			return errOneContract
 		}
 	}
 	for i, item := range root.Children {
@@ -965,6 +929,11 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 	return nil
 }
 
+// IsObject returns true if there is the specified contract
+func IsObject(sc *SmartContract, name string, state int64) bool {
+	return VMObjectExists(sc.VM, name, uint32(state))
+}
+
 // Len returns the length of the slice
 func Len(in []interface{}) int64 {
 	if in == nil {
@@ -975,19 +944,15 @@ func Len(in []interface{}) int64 {
 
 // PermTable is changing permission of table
 func PermTable(sc *SmartContract, name, permissions string) error {
-	if !accessContracts(sc, `EditTable`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditTable can be only called from @1EditTable")
-		return fmt.Errorf(`PermTable can be only called from EditTable`)
-	}
-	var perm permTable
-	err := json.Unmarshal([]byte(permissions), &perm)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling table permissions to json")
+	if err := validateAccess(`PermTable`, sc, nEditTable); err != nil {
 		return err
 	}
-	permout, err := json.Marshal(perm)
+	var perm permTable
+	if err := unmarshalJSON([]byte(permissions), &perm, `table permissions to json`); err != nil {
+		return err
+	}
+	permout, err := marshalJSON(perm, `permission list to json`)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling permission list to json")
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`permissions`}, []interface{}{string(permout)},
@@ -1000,54 +965,42 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 	isEdit := len(columns) == 0
 	name = strings.ToLower(name)
 	if isEdit {
-		if !accessContracts(sc, `EditTable`) {
-			log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1EditTable")
-			return fmt.Errorf(`TableConditions can be only called from EditTable`)
+		if err := validateAccess(`TableConditions`, sc, nEditTable); err != nil {
+			return err
 		}
-	} else if !accessContracts(sc, `NewTable`, `Import`, `NewTableJoint`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("TableConditions can be only called from @1NewTable, @1Import, @1NewTableJoint")
-		return fmt.Errorf(`TableConditions can be only called from NewTable or Import or NewTableJoint`)
+	} else if err := validateAccess(`TableConditions`, sc, nNewTable, nImport, nNewTableJoint); err != nil {
+		return err
 	}
 
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if sc.VDE {
-		prefix += `_vde`
-	}
 
 	t := &model.Table{}
 	t.SetTablePrefix(prefix)
 	exists, err := t.ExistsByName(sc.DbTransaction, name)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("table is exists")
-		return err
+		return logErrorDB(err, "table exists")
 	}
 	if isEdit {
 		if !exists {
-			log.WithFields(log.Fields{"table_name": name, "type": consts.NotFound}).Error("table does not exists")
-			return fmt.Errorf(eTableNotFound, name)
+			return logErrorfShort(eTableNotFound, name, consts.NotFound)
 		}
 	} else if exists {
-		log.WithFields(log.Fields{"table_name": name, "type": consts.Found}).Error("table exists")
-		return fmt.Errorf(`table %s exists`, name)
+		return logErrorfShort(eTableExists, name, consts.Found)
 	}
 
 	var perm permTable
-	err = json.Unmarshal([]byte(permissions), &perm)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": permissions}).Error("unmarshalling permissions from json")
-		return
+	if err = unmarshalJSON([]byte(permissions), &perm, "permissions from json"); err != nil {
+		return err
 	}
 	v := reflect.ValueOf(perm)
 	for i := 0; i < v.NumField(); i++ {
 		cond := v.Field(i).Interface().(string)
 		name := v.Type().Field(i).Name
 		if len(cond) == 0 && name != `Read` && name != `Filter` {
-			log.WithFields(log.Fields{"condition_type": name, "type": consts.EmptyObject}).Error("condition is empty")
-			return fmt.Errorf(`%v condition is empty`, name)
+			return logErrorfShort(eEmptyCond, name, consts.EmptyObject)
 		}
 		if err = VMCompileEval(sc.VM, cond, uint32(sc.TxSmart.EcosystemID)); err != nil {
-			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("compile evaluating permissions")
-			return err
+			return logError(err, consts.EvalError, "compile evaluating permissions")
 		}
 	}
 
@@ -1141,8 +1094,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 // ValidateCondition checks if the condition can be compiled
 func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 	if len(condition) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("conditions cannot be empty")
-		return fmt.Errorf("Conditions cannot be empty")
+		return logErrorShort(errConditionEmpty, consts.EmptyObject)
 	}
 	return VMCompileEval(sc.VM, condition, uint32(state))
 }
@@ -1151,35 +1103,28 @@ func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions string) error {
 	name = converter.EscapeSQL(strings.ToLower(name))
 	tableName = converter.EscapeSQL(strings.ToLower(tableName))
-	if !accessContracts(sc, `NewColumn`, `EditColumn`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ColumnConditions can be only called from @1NewColumn")
-		return fmt.Errorf(`ColumnCondition can be only called from NewColumn or EditColumn`)
+	if err := validateAccess(`ColumnCondition`, sc, nNewColumn, nEditColumn); err != nil {
+		return err
 	}
-	isExist := strings.HasSuffix(sc.TxContract.Name, `EditColumn`)
+
+	isExist := strings.HasSuffix(sc.TxContract.Name, nEditColumn)
 	tEx := &model.Table{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if sc.VDE {
-		prefix += `_vde`
-	}
 	tEx.SetTablePrefix(prefix)
 
 	exists, err := tEx.IsExistsByPermissionsAndTableName(sc.DbTransaction, name, tableName)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("querying that table is exists by permissions and table name")
-		return err
+		return logErrorDB(err, "querying that table is exists by permissions and table name")
 	}
 	if isExist {
 		if !exists {
-			log.WithFields(log.Fields{"column_name": name, "type": consts.NotFound}).Error("column does not exists")
-			return fmt.Errorf(`column %s doesn't exists`, name)
+			return logErrorfShort(eColumnNotExist, name, consts.NotFound)
 		}
 	} else if exists {
-		log.WithFields(log.Fields{"column_name": name, "type": consts.Found}).Error("column exists")
-		return fmt.Errorf(`column %s exists`, name)
+		return logErrorfShort(eColumnExist, name, consts.Found)
 	}
 	if len(permissions) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Permissions are empty")
-		return fmt.Errorf(`Permissions is empty`)
+		return logErrorShort(errPermEmpty, consts.EmptyObject)
 	}
 	perm, err := getPermColumns(permissions)
 	if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
@@ -1196,18 +1141,13 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 	}
 	count, err := model.GetColumnCount(tblName)
 	if err != nil {
-		log.WithFields(log.Fields{"table": tblName, "type": consts.DBError}).Error("counting table columns")
-		return err
+		return logErrorDB(err, "counting table columns")
 	}
 	if count >= int64(syspar.GetMaxColumns()) {
-		log.WithFields(log.Fields{"size": count, "max_size": syspar.GetMaxColumns(), "type": consts.ParameterExceeded}).Error("Too many columns")
-		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
+		return logErrorfShort(eManyColumns, syspar.GetMaxColumns(), consts.ParameterExceeded)
 	}
-	if coltype != `varchar` && coltype != `number` && coltype != `datetime` &&
-		coltype != `character` && coltype != `json` &&
-		coltype != `text` && coltype != `bytea` && coltype != `double` && coltype != `money` {
-		log.WithFields(log.Fields{"column_type": coltype, "type": consts.InvalidObject}).Error("Unknown column type")
-		return fmt.Errorf(`incorrect type`)
+	if len(typeToPSQL[coltype]) == 0 {
+		return logErrorValue(errIncorrectType, consts.InvalidObject, "Unknown column type", coltype)
 	}
 	return sc.AccessTable(tblName, "new_column")
 }
@@ -1226,18 +1166,17 @@ func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bo
 	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
 	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing row condition query")
-		return err
+		return logErrorDB(err, "executing row condition query")
 	}
 
 	if len(condition) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound, "name": tblname, "id": id}).Error("record not found")
-		return fmt.Errorf("Item %d has not been found", id)
+		return logErrorValue(fmt.Errorf(eItemNotFound, id), consts.NotFound,
+			"record not found", tblname)
 	}
 
 	for _, v := range sc.TxContract.StackCont {
 		if v == condition {
-			return fmt.Errorf("Recursion detected")
+			return errRecursion
 		}
 	}
 
@@ -1270,9 +1209,8 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		sqlColType string
 		permout    []byte
 	)
-	if !accessContracts(sc, `NewColumn`) {
-		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("CreateColumn can be only called from @1NewColumn")
-		return fmt.Errorf(`CreateColumn can be only called from NewColumn`)
+	if err = validateAccess(`CreateColumn`, sc, nNewColumn); err != nil {
+		return
 	}
 	name = converter.EscapeSQL(strings.ToLower(name))
 	if err = checkColumnName(name); err != nil {
@@ -1289,8 +1227,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 
 	err = model.AlterTableAddColumn(sc.DbTransaction, tblname, name, sqlColType)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("adding column to the table")
-		return
+		return logErrorDB(err, "adding column to the table")
 	}
 
 	tables := getDefTableName(sc, `tables`)
@@ -1303,37 +1240,28 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		return
 	}
 	var perm map[string]string
-	err = json.Unmarshal([]byte(temp.Columns), &perm)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting columns from the table")
-		return
+	if err = unmarshalJSON([]byte(temp.Columns), &perm, `columns from the table`); err != nil {
+		return err
 	}
 	perm[name] = permissions
-	permout, err = json.Marshal(perm)
+	permout, err = marshalJSON(perm, `permissions to json`)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns to json")
-		return err
+		return
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
 		tables, []string{`name`}, []string{tableName}, !sc.VDE && sc.Rollback, false)
-	if err != nil {
-		return
-	}
-
-	return nil
+	return
 }
 
 // SetPubKey updates the publis key
 func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err error) {
-	if !accessContracts(sc, `NewUser`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SetPubKey can be only called from NewUser")
-		return 0, fmt.Errorf(`SetPubKey can be only called from NewUser contract`)
+	if err = validateAccess(`SetPubKey`, sc, nNewUser); err != nil {
+		return
 	}
 	if len(pubKey) == consts.PubkeySizeLength*2 {
 		pubKey, err = hex.DecodeString(string(pubKey))
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
-			return
+			return 0, logError(err, consts.ConversionError, "decoding public key from hex")
 		}
 	}
 	qcost, _, err = sc.selectiveLoggingAndUpd([]string{`pub`}, []interface{}{pubKey},
@@ -1343,9 +1271,8 @@ func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err err
 }
 
 func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
-	if !accessContracts(sc, `NewUser`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("NewMoney can be only called from NewUser")
-		return fmt.Errorf(`NewMoney can be only called from NewUser contract`)
+	if err = validateAccess(`NewMoney`, sc, nNewUser); err != nil {
+		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`id`, `amount`}, []interface{}{id, amount},
 		getDefTableName(sc, `keys`), nil, nil, !sc.VDE && sc.Rollback, false)
@@ -1364,9 +1291,8 @@ func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
 
 // PermColumn is contract func
 func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
-	if !accessContracts(sc, `EditColumn`) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditColumn can be only called from @1EditColumn")
-		return fmt.Errorf(`EditColumn can be only called from EditColumn`)
+	if err := validateAccess(`PermColumn`, sc, nEditColumn); err != nil {
+		return err
 	}
 	name = converter.EscapeSQL(strings.ToLower(name))
 	tableName = strings.ToLower(tableName)
@@ -1377,19 +1303,15 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 	temp := &cols{}
 	err := model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("querying columns by table name")
-		return err
+		return logErrorDB(err, "querying columns by table name")
 	}
 	var perm map[string]string
-	err = json.Unmarshal([]byte(temp.Columns), &perm)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling columns permissions from json")
+	if err = unmarshalJSON([]byte(temp.Columns), &perm, `columns from json`); err != nil {
 		return err
 	}
 	perm[name] = permissions
-	permout, err := json.Marshal(perm)
+	permout, err := marshalJSON(perm, `column permissions to json`)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling column permissions to json")
 		return err
 	}
 	_, _, err = sc.selectiveLoggingAndUpd([]string{`columns`}, []interface{}{string(permout)},
@@ -1426,20 +1348,19 @@ func IDToAddress(id int64) (out string) {
 	return
 }
 
+// HMac returns HMAC hash as raw or hex string
 func HMac(key, data string, raw_output bool) (ret string, err error) {
 	hash, err := crypto.GetHMAC(key, data)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("getting HMAC")
-		return ``, err
+		return ``, logError(err, consts.CryptoError, "getting HMAC")
 	}
 	if raw_output {
 		return string(hash), nil
-	} else {
-		return hex.EncodeToString(hash), nil
 	}
+	return hex.EncodeToString(hash), nil
 }
 
-//Returns the array of keys of the map
+// GetMapKeys returns the array of keys of the map
 func GetMapKeys(in map[string]interface{}) []interface{} {
 	keys := make([]interface{}, 0, len(in))
 	for k := range in {
@@ -1448,7 +1369,7 @@ func GetMapKeys(in map[string]interface{}) []interface{} {
 	return keys
 }
 
-//Returns the sorted array of keys of the map
+// SortedKeys returns the sorted array of keys of the map
 func SortedKeys(m map[string]interface{}) []interface{} {
 	i, sorted := 0, make([]string, len(m))
 	for k := range m {
@@ -1464,10 +1385,31 @@ func SortedKeys(m map[string]interface{}) []interface{} {
 	return ret
 }
 
-//Formats timestamp to specified date format
-func Date(time_format string, timestamp int64) string {
+// Date formats timestamp to specified date format
+func Date(timeFormat string, timestamp int64) string {
 	t := time.Unix(timestamp, 0)
-	return t.Format(time_format)
+	return t.Format(timeFormat)
+}
+
+func httpRequest(req *http.Request, headers map[string]interface{}) (string, error) {
+	for key, v := range headers {
+		req.Header.Set(key, fmt.Sprint(v))
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return ``, logError(err, consts.NetworkError, "http request")
+	}
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return ``, logError(err, consts.IOError, "reading http answer")
+	}
+	if resp.StatusCode != http.StatusOK {
+		return ``, logError(fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data))),
+			consts.NetworkError, "http status code")
+	}
+	return string(data), nil
 }
 
 // HTTPRequest sends http request
@@ -1477,7 +1419,6 @@ func HTTPRequest(requrl, method string, headers map[string]interface{},
 	var ioform io.Reader
 
 	form := &url.Values{}
-	client := &http.Client{}
 	for key, v := range params {
 		form.Set(key, fmt.Sprint(v))
 	}
@@ -1486,77 +1427,32 @@ func HTTPRequest(requrl, method string, headers map[string]interface{},
 	}
 	req, err := http.NewRequest(method, requrl, ioform)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("new http request")
-		return ``, err
+		return ``, logError(err, consts.NetworkError, "new http request")
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	for key, v := range headers {
-		req.Header.Set(key, fmt.Sprint(v))
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http request")
-		return ``, err
-	}
-	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading http answer")
-		return ``, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http status code")
-		return ``, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
-	}
-	return string(data), nil
+	return httpRequest(req, headers)
 }
 
 // HTTPPostJSON sends post http request with json
 func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string) (string, error) {
-
-	client := &http.Client{}
-
 	req, err := http.NewRequest("POST", requrl, bytes.NewBuffer([]byte(json_str)))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("new http request")
-		return ``, err
+		return ``, logError(err, consts.NetworkError, "new http request")
 	}
-
-	for key, v := range headers {
-		req.Header.Set(key, fmt.Sprint(v))
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http request")
-		return ``, err
-	}
-	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading http answer")
-		return ``, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("http status code")
-		return ``, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
-	}
-	return string(data), nil
+	return httpRequest(req, headers)
 }
 
+// Random returns a random value between min and max
 func Random(sc *SmartContract, min int64, max int64) (int64, error) {
 	if min < 0 || max < 0 || min >= max {
-		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("getting random")
-		return 0, fmt.Errorf(`wrong random parameters %d %d`, min, max)
+		return 0, logError(fmt.Errorf(eWrongRandom, min, max), consts.InvalidObject, "getting random")
 	}
 	return min + sc.Rand.Int63n(max-min), nil
 }
 
-func ValidateCron(cronSpec string) error {
-	_, err := scheduler.Parse(cronSpec)
-	if err != nil {
-		return err
-	}
-	return nil
+func ValidateCron(cronSpec string) (err error) {
+	_, err = scheduler.Parse(cronSpec)
+	return
 }
 
 func UpdateCron(sc *SmartContract, id int64) error {
@@ -1565,8 +1461,7 @@ func UpdateCron(sc *SmartContract, id int64) error {
 
 	ok, err := cronTask.Get(id)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get cron record")
-		return err
+		return logErrorDB(err, "get cron record")
 	}
 
 	if !ok {
@@ -1580,11 +1475,7 @@ func UpdateCron(sc *SmartContract, id int64) error {
 			Contract: cronTask.Contract,
 		},
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
@@ -1593,7 +1484,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 	badBlocks := &model.BadBlocks{}
 	banRequests, err := badBlocks.GetNeedToBanNodes(now, syspar.GetIncorrectBlocksPerDay())
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get nodes need to be banned")
+		logError(err, consts.DBError, "get nodes need to be banned")
 		return err
 	}
 
@@ -1614,14 +1505,13 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 
 				blocks, err := badBlocks.GetNodeBlocks(fullNode.KeyID, now)
 				if err != nil {
-					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node bad blocks for removing")
-					return err
+					return logErrorDB(err, "getting node bad blocks for removing")
 				}
 
 				for _, b := range blocks {
 					if _, err := DBUpdate(smartContract, "@1_bad_blocks", b.ID, "deleted", "1"); err != nil {
-						log.WithFields(log.Fields{"type": consts.DBError, "id": b.ID, "error": err}).Error("deleting bad block")
-						return err
+						return logErrorValue(err, consts.DBError, "deleting bad block",
+							converter.Int64ToStr(b.ID))
 					}
 				}
 
@@ -1643,8 +1533,8 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				)
 
 				if err != nil {
-					log.WithFields(log.Fields{"type": consts.DBError, "id": banReq.ProducerNodeId, "error": err}).Error("inserting log to node_ban_log")
-					return err
+					return logErrorValue(err, consts.DBError, "inserting log to node_ban_log",
+						converter.Int64ToStr(banReq.ProducerNodeId))
 				}
 
 				_, _, err = DBInsert(
@@ -1658,8 +1548,8 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				)
 
 				if err != nil {
-					log.WithFields(log.Fields{"type": consts.DBError, "id": banReq.ProducerNodeId, "error": err}).Error("sending notification to node owner")
-					return err
+					return logErrorValue(err, consts.DBError, "inserting log to node_ban_log",
+						converter.Int64ToStr(banReq.ProducerNodeId))
 				}
 
 				updFullNodes = true
@@ -1670,16 +1560,14 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 	}
 
 	if updFullNodes {
-		data, err := json.Marshal(fullNodes)
+		data, err := marshalJSON(fullNodes, `full nodes`)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling full nodes")
 			return err
 		}
 
 		_, err = UpdateSysParam(smartContract, syspar.FullNodes, string(data), "")
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating full nodes")
-			return err
+			return logErrorDB(err, "updating full nodes")
 		}
 	}
 
@@ -1690,8 +1578,7 @@ func GetBlock(blockID int64) (map[string]int64, error) {
 	block := model.Block{}
 	ok, err := block.Get(blockID)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
-		return nil, err
+		return nil, logErrorDB(err, "getting block")
 	}
 	if !ok {
 		return nil, nil
@@ -1734,9 +1621,7 @@ func MD5(data interface{}) (string, error) {
 	case string:
 		b = []byte(v)
 	default:
-		err := fmt.Errorf("Unsupported type %T", v)
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting to bytes")
-		return "", err
+		return "", logErrorf(eUnsupportedType, v, consts.ConversionError, "converting to bytes")
 	}
 
 	hash := md5.Sum(b)
@@ -1748,6 +1633,7 @@ func GetColumnType(sc *SmartContract, tableName, columnName string) (string, err
 	return model.GetColumnType(getDefTableName(sc, tableName), columnName)
 }
 
+// GetType returns the name of the type of the value
 func GetType(val interface{}) string {
 	if val == nil {
 		return `nil`

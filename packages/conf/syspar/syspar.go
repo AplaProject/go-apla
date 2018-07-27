@@ -78,6 +78,8 @@ const (
 	NodeBanTime = `node_ban_time`
 	// LocalNodeBanTime is value of local ban time for bad nodes (in ms)
 	LocalNodeBanTime = `local_node_ban_time`
+	// CommissionSize is the value of the commission
+	CommissionSize = `commission_size`
 )
 
 var (
