@@ -1033,20 +1033,16 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		fromIDString := converter.Int64ToStr(fromID)
 
 		payCommission := func(toID string, sum decimal.Decimal) error {
-			_, _, err := sc.selectiveLoggingAndUpd(
-				[]string{"+amount"}, []interface{}{sum}, walletTable,
-				[]string{"id"}, []string{toID},
-				true, true,
-			)
+			_, _, err := sc.update(
+				[]string{"+amount"}, []interface{}{sum}, walletTable, "id", toID)
 			if err != nil {
 				return err
 			}
 
-			_, _, err = sc.selectiveLoggingAndUpd(
+			_, _, err = sc.insert(
 				[]string{"sender_id", "recipient_id", "amount", "comment", "block_id", "txhash"},
 				[]interface{}{fromIDString, toID, sum, comment, sc.BlockData.BlockID, sc.TxHash},
-				historyTable, nil, nil, true, false,
-			)
+				historyTable)
 			if err != nil {
 				return err
 			}
@@ -1068,8 +1064,8 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			apl = apl.Sub(commission)
 		}
 
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
-			[]string{fromIDString}, true, true); ierr != nil {
+		if _, _, ierr := sc.update([]string{`-amount`}, []interface{}{apl}, walletTable, `id`,
+			fromIDString); ierr != nil {
 			return retError(errCommission)
 		}
 		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")
