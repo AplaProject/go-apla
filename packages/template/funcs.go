@@ -571,7 +571,7 @@ func dbfindTag(par parFunc) string {
 	}
 	if par.Node.Attr[`order`] != nil {
 		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
-		if strings.HasPrefix(order, `[`) {
+		if strings.HasPrefix(order, `[`) || strings.HasPrefix(order, `{`) {
 			inColumns, _ = parseObject([]rune(order))
 		} else {
 			inColumns = order
