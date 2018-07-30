@@ -848,6 +848,10 @@ func GetOrder(inOrder interface{}) (string, error) {
 	switch v := inOrder.(type) {
 	case string:
 		sanitize(v, nil)
+	case map[string]interface{}:
+		for ikey, item := range v {
+			sanitize(ikey, item)
+		}
 	case []interface{}:
 		for _, item := range v {
 			switch param := item.(type) {
@@ -952,7 +956,7 @@ func GetWhere(inWhere map[string]interface{}) (string, error) {
 		case `$lte`:
 			return oper(`<=`, v)
 		default:
-			if !strings.Contains(key, `>`) {
+			if !strings.Contains(key, `>`) && len(key) > 0 {
 				key = `"` + key + `"`
 			}
 			switch value := v.(type) {
