@@ -30,6 +30,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) error {
+	rollbackTx := &model.RollbackTx{
+		BlockID:   sc.BlockData.BlockID,
+		TxHash:    sc.TxHash,
+		NameTable: table,
+		TableID:   tableID,
+		Data:      rollbackInfoStr,
+	}
+
+	err := rollbackTx.Create(sc.DbTransaction)
+	if err != nil {
+		return logErrorDB(err, "creating rollback tx")
+	}
+	return nil
+}
+
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
 	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
 	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
@@ -281,17 +297,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	if generalRollback {
-		rollbackTx := &model.RollbackTx{
-			BlockID:   sc.BlockData.BlockID,
-			TxHash:    sc.TxHash,
-			NameTable: table,
-			TableID:   tableID,
-			Data:      rollbackInfoStr,
-		}
-
-		err = rollbackTx.Create(sc.DbTransaction)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating rollback tx")
+		if err = addRollback(sc, table, tableID, rollbackInfoStr); err != nil {
 			return 0, tableID, err
 		}
 	}
