@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -45,6 +46,7 @@ type Transaction struct {
 	tx            custom.TransactionInterface
 	DbTransaction *model.DbTransaction
 	SysUpdate     bool
+	Rand          *rand.Rand
 
 	SmartContract smart.SmartContract
 }
@@ -394,6 +396,7 @@ func (t *Transaction) CallContract(flags int) (resultContract string, err error)
 		TxHash:        t.TxHash,
 		PublicKeys:    t.PublicKeys,
 		DbTransaction: t.DbTransaction,
+		Rand:          t.Rand,
 	}
 	resultContract, err = sc.CallContract(flags)
 	t.SysUpdate = sc.SysUpdate

@@ -146,7 +146,15 @@ func LangText(in string, state, appID int, accept string, vde bool) (string, boo
 	}
 	langs := strings.Split(accept, `,`)
 	if _, ok := (*lang[istate]).res[appID]; !ok {
-		return in, false
+		var found bool
+		for appID, _ = range (*lang[istate]).res {
+			if _, found = (*lang[istate]).res[appID][in]; ok {
+				break
+			}
+		}
+		if !found {
+			return in, false
+		}
 	}
 	if lres, ok := (*lang[istate]).res[appID][in]; ok {
 		lng := DefLang()
