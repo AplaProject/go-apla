@@ -2,16 +2,16 @@ package migration
 
 var blocksDataSQL = `INSERT INTO "%[1]d_blocks" (id, name, value, conditions) VALUES
 		(1, 'admin_link', 'If(#sort#==1){
-	SetVar(sort_name, "id asc")
+	SetVar(sort_name, "{id:1}")
 }.ElseIf(#sort#==2){
-	SetVar(sort_name, "id desc")
+	SetVar(sort_name, "{id:-1}")
 }.ElseIf(#sort#==3){
-	SetVar(sort_name, "name asc")
+	SetVar(sort_name, "{name: 1}")
 }.ElseIf(#sort#==4){
-	SetVar(sort_name, "name desc")
+	SetVar(sort_name, "{name: -1}")
 }.Else{
 	SetVar(sort, "1")
-	SetVar(sort_name, "id asc") 
+	SetVar(sort_name, "{id:1}") 
 }
 
 If(Or(#width#==12,#width#==6,#width#==4)){
