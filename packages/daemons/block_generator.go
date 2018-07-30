@@ -170,6 +170,43 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 	}
 
 	limits := block.NewLimits(nil)
+
+	type badTxStruct struct {
+		hash []byte
+		msg  string
+	}
+
+	processBadTx := func(dbTx *model.DbTransaction) chan badTxStruct {
+		ch := make(chan badTxStruct)
+
+		go func() {
+			for badTxItem := range ch {
+				transaction.MarkTransactionBad(p.DbTransaction, badTxItem.hash, badTxItem.msg)
+			}
+		}()
+
+		return ch
+	}
+
+	processIncAttemptCnt := func() chan []byte {
+		ch := make(chan []byte)
+		go func() {
+			for tx := range ch {
+				model.IncrementTxAttemptCount(nil, tx)
+			}
+		}()
+
+		return ch
+	}
+
+	txBadChan := processBadTx(p.DbTransaction)
+	attemptCountChan := processIncAttemptCnt()
+
+	defer func() {
+		close(txBadChan)
+		close(attemptCountChan)
+	}()
+
 	// Checks preprocessing count limits
 	txList := make([]*model.Transaction, 0, len(trs))
 	for i, txItem := range trs {
@@ -177,26 +214,35 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 		p, err := transaction.UnmarshallTransaction(bufTransaction)
 		if err != nil {
 			if p != nil {
-				transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
+				txBadChan <- badTxStruct{
+					hash: p.TxHash,
+					msg:  err.Error(),
+				}
 			}
 			continue
 		}
 
 		if err := p.Check(time.Now().Unix(), false); err != nil {
-			transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
+			txBadChan <- badTxStruct{
+				hash: p.TxHash,
+				msg:  err.Error(),
+			}
 			continue
 		}
 
 		if p.TxSmart != nil {
 			err = limits.CheckLimit(p)
 			if err == block.ErrLimitStop && i > 0 {
-				model.IncrementTxAttemptCount(nil, p.TxHash)
+				attemptCountChan <- p.TxHash
 				break
 			} else if err != nil {
 				if err == block.ErrLimitSkip {
-					model.IncrementTxAttemptCount(nil, p.TxHash)
+					attemptCountChan <- p.TxHash
 				} else {
-					transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
+					txBadChan <- badTxStruct{
+						hash: p.TxHash,
+						msg:  err.Error(),
+					}
 				}
 				continue
 			}
