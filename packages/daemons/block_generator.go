@@ -62,7 +62,8 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	timeToGenerate, err := protocols.NewBlockTimeCounter().TimeToGenerate(time.Now(), int(nodePosition))
+	btc := protocols.NewBlockTimeCounter()
+	timeToGenerate, err := btc.TimeToGenerate(time.Now(), int(nodePosition))
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err, "position": nodePosition}).Debug("calculating block time")
 		return err
@@ -114,7 +115,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		Version:      consts.BLOCK_VERSION,
 	}
 
-	timeToGenerate, err = protocols.NewBlockTimeCounter().TimeToGenerate(time.Now(), int(nodePosition))
+	timeToGenerate, err = btc.TimeToGenerate(time.Now(), int(nodePosition))
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
 		return err

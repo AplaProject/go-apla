@@ -1404,6 +1404,7 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 			block_id = block_id + Int($cur["every_block"])
 		}
 
+        Println($Id, block_id, counter, limit)
 		DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
 
 		var params map
