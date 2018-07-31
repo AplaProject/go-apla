@@ -1,5 +1,7 @@
 package migration
 
+//go:generate go run ./gen/contracts.go
+
 var (
 	migrationInitial = `
 		DROP SEQUENCE IF EXISTS migration_history_id_seq CASCADE;
@@ -148,5 +150,15 @@ var (
 		
 		DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 		"stop_time" int NOT NULL DEFAULT '0'
-		);`
+		);
+		
+		CREATE OR REPLACE FUNCTION next_id(table_name TEXT, OUT result INT) AS
+		$$
+		BEGIN
+			EXECUTE FORMAT('SELECT COUNT(*) + 1 FROM "%s"', table_name)
+			INTO result;
+			RETURN;
+		END
+		$$
+		LANGUAGE plpgsql;`
 )
