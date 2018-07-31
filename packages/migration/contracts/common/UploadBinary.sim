@@ -27,11 +27,12 @@ contract UploadBinary {
         }
 
         if $Id != 0 {
-            DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+            DBUpdate("binaries", $Id, {"data": $Data,"hash": hash,"mime_type": $DataMimeType})
         } else {
-            $Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $ApplicationId, $key_id, $Name, $Data, hash, $DataMimeType)
+            $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
+               "name": $Name,"data": $Data,"hash": hash, "mime_type": $DataMimeType})
         }
 
         $result = $Id
-}
+    }
 }

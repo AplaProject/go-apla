@@ -11,6 +11,9 @@ contract AppendMenu {
 	action {
 		var row map
 		row = DBRow("menu").Columns("value").WhereId($Id)
-		DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
+        var val string
+        val = row["value"] + "\r\n" + $Value
+		DBUpdate("menu", $Id, {"value": val})
+
 	}
 }
