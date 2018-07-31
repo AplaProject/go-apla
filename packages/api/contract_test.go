@@ -1190,7 +1190,7 @@ func TestLoopCond(t *testing.T) {
 	assert.EqualError(t, postTx(rnd+`shutdown`, &url.Values{}), `{"type":"panic","error":"There is loop in @1`+rnd+`shutdown contract"}`)
 }
 
-func TestLoopCond(t *testing.T) {
+func TestLoopCondExt(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
