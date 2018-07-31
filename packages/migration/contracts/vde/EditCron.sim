@@ -20,8 +20,8 @@ contract EditCron {
 			if !HasPrefix($Contract, "@") {
 				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
-			DBUpdate("cron", $Id, "cron,contract,counter,till,conditions",
-				$Cron, $Contract, $Limit, $Till, $Conditions)
+			DBUpdate("cron", $Id, {"cron": $Cron,"contract": $Contract,
+			    "counter":$Limit, "till": $Till, "conditions":$Conditions})
 			UpdateCron($Id)
 		}
 	}

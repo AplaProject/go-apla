@@ -138,7 +138,9 @@ contract ImportUpload {
         app_id = DBFind("applications").Columns("id").Where({name:ival}).One("id")
 
         if !app_id {
-            DBInsert("applications", "name,conditions", Str(input["name"]), "true")
+            var val string
+            val = Str(input["name"])
+            DBInsert("applications", {"name": val, "conditions": "true"})
         }
     }
 }

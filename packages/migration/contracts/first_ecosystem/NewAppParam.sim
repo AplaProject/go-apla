@@ -21,6 +21,7 @@ contract NewAppParam {
     }
 
     action {
-        DBInsert("app_params", "app_id,name,value,conditions", $ApplicationId, $Name, $Value, $Conditions)
+        DBInsert("app_params", {app_id: $ApplicationId, name: $Name, value: $Value,
+              conditions: $Conditions})
     }
 }

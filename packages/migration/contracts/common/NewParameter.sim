@@ -16,6 +16,6 @@ contract NewParameter {
     }
     
     action {
-        DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions)
+        DBInsert("parameters", {name: $Name, value:$Value, conditions: $Conditions})
     }
 }
