@@ -1396,15 +1396,17 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	action {
 		var limit, counter, block_id int
 
+        Println("delayed contract: " + $cur)
 		limit = Int($cur["limit"])
 		counter = Int($cur["counter"])+1
 		block_id = $block
 
 		if limit == 0 || limit > counter {
-			block_id = block_id + Int($cur["every_block"])
+            block_id = block_id + Int($cur["every_block"])
+            Println("contract:", $Id, "counter:", counter, "limit:", limit, "increase block to:", block_id)
 		}
 
-        Println($Id, block_id, counter, limit)
+        Println("contract:", $Id, "counter:", counter, "limit:", limit, "block:", block_id)
 		DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
 
 		var params map

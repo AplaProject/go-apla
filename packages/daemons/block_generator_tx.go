@@ -38,7 +38,7 @@ func (dtx *DelayedTx) RunForBlockID(blockID int64) {
 	}
 
 	if len(contracts) > 0 {
-		fmt.Println("len of dellayed contracts:", len(contracts))
+		fmt.Printf("delayedContract found: %+v\n", contracts[0])
 	}
 
 	for _, c := range contracts {
