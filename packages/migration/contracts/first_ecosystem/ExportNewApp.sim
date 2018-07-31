@@ -1,0 +1,76 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract ExportNewApp {
+    data {
+        ApplicationId int
+    }
+
+    conditions {
+        $app_map = DBFind("applications").Columns("id,name").Where({id: $ApplicationId}).Row()
+        if !$app_map{
+            warning "Application not found"
+        }
+    }
+
+    action {
+
+        //=====================================================================================================
+        //------------------------------------Menu search------------------------------------------------------
+        var i int
+        var pages_array array
+        var menu_name_array array
+        var menu_id_array array
+
+        i = 0
+        var pages_ret array
+        pages_ret = DBFind("pages").Where({app_id: $ApplicationId})
+        while i < Len(pages_ret) {
+            var page_map map
+            page_map = pages_ret[i]
+
+            pages_array = Append(pages_array, Sprintf("'%v'", Str(page_map["menu"])))
+            i = i + 1
+        }
+
+        if Len(pages_array) > 0 {
+            var where_for_menu map
+            where_for_menu["name"] = {"$in" : pages_array}
+
+            i = 0
+            var menu_ret array
+            menu_ret = DBFind("menu").Where(where_for_menu)
+            while i < Len(menu_ret) {
+                var menu_map map
+                menu_map = menu_ret[i]
+
+                menu_name_array = Append(menu_name_array, Str(menu_map["name"]))
+                menu_id_array = Append(menu_id_array, Str(menu_map["id"]))
+                i = i + 1
+            }
+        }
+
+        //=====================================================================================================
+        //------------------------------------Creating settings------------------------------------------------
+
+        var value map
+        value["app_id"] = Str($ApplicationId)
+        value["app_name"] = Str($app_map["name"])
+
+        if Len(menu_name_array) > 0 {
+            value["menu_id"] = Str(Join(menu_id_array, ", "))
+            value["menu_name"] = Str(Join(menu_name_array, ", "))
+            value["count_menu"] = Str(Len(menu_name_array))
+        } else {
+            value["menu_id"] = "0"
+            value["menu_name"] = ""
+            value["count_menu"] = "0"
+        }
+
+        $buffer_id = DBFind("buffer_data").Where({member_id:$key_id, key: "export"}).One("id")
+        if !$buffer_id {
+            DBInsert("buffer_data", "member_id,key,value", $key_id, "export", value)
+        } else {
+            DBUpdate("buffer_data", Int($buffer_id), "value", value)
+        }
+    }
+}

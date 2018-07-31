@@ -1,0 +1,13 @@
+// +prop AppID = 2
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract new_version_url {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+    }
+}

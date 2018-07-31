@@ -1,0 +1,37 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract UploadBinary {
+    data {
+        ApplicationId int
+        Name string
+        Data bytes "file"
+        DataMimeType string "optional"
+    }
+
+    conditions {
+        $Id = Int(DBFind("binaries").Columns("id").Where({app_id: $ApplicationId,
+            member_id: $key_id, name: $Name}).One("id"))
+
+        if $Id == 0 {
+            if $ApplicationId == 0 {
+                warning "Application id cannot equal 0"
+            }
+        }
+    }
+    action {
+        var hash string
+        hash = MD5($Data)
+
+        if $DataMimeType == "" {
+            $DataMimeType = "application/octet-stream"
+        }
+
+        if $Id != 0 {
+            DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+        } else {
+            $Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $ApplicationId, $key_id, $Name, $Data, hash, $DataMimeType)
+        }
+
+        $result = $Id
+}
+}

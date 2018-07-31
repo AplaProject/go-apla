@@ -1,0 +1,34 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract EditBlock {
+    data {
+        Id int
+        Value string "optional"
+        Conditions string "optional"
+    }
+    func onlyConditions() bool {
+        return $Conditions && !$Value
+    }
+
+    conditions {
+        RowConditions("blocks", $Id, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
+    }
+
+    action {
+        var pars, vals array
+        if $Value {
+            pars[0] = "value"
+            vals[0] = $Value
+        }
+        if $Conditions {
+            pars = Append(pars, "conditions")
+            vals = Append(vals, $Conditions)
+        }
+        if Len(vals) > 0 {
+            DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+        }
+    }
+}

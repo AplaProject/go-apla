@@ -1,0 +1,28 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract ActivateContract {
+	data {
+		Id  int
+	}
+	conditions {
+		$cur = DBRow("contracts").Columns("id,conditions,active,wallet_id").WhereId($Id)
+		if !$cur {
+			error Sprintf("Contract %d does not exist", $Id)
+		}
+		if Int($cur["active"]) == 1 {
+			error Sprintf("The contract %d has been already activated", $Id)
+		}
+		Eval($cur["conditions"])
+		if $key_id != Int($cur["wallet_id"]) {
+			error Sprintf("Wallet %d cannot activate the contract", $key_id)
+		}
+	}
+	action {
+		DBUpdate("contracts", $Id, "active", 1)
+		Activate($Id, $ecosystem_id)
+	}
+	func rollback() {
+		Deactivate($Id, $ecosystem_id)
+	}
+
+}

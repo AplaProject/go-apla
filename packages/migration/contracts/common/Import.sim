@@ -1,0 +1,99 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract Import {
+    data {
+        Data string
+    }
+    func ReplaceValue(s string) string {
+        s = Replace(s, "#IMPORT_ECOSYSTEM_ID#", "#ecosystem_id#")
+        s = Replace(s, "#IMPORT_KEY_ID#", "#key_id#")
+        s = Replace(s, "#IMPORT_ISMOBILE#", "#isMobile#")
+        s = Replace(s, "#IMPORT_ROLE_ID#", "#role_id#")
+        s = Replace(s, "#IMPORT_ECOSYSTEM_NAME#", "#ecosystem_name#")
+        s = Replace(s, "#IMPORT_APP_ID#", "#app_id#")
+        return s
+    }
+
+    conditions {
+        $Data = ReplaceValue($Data)
+
+        $ApplicationId = 0
+        var app_map map
+        app_map = DBFind("buffer_data").Columns("value->app_name").Where({key: "import_info",
+          member_id: $key_id}).Row()
+
+        if app_map{
+            var app_id int
+            var ival string
+            ival = Str(app_map["value.app_name"])
+            app_id = DBFind("applications").Columns("id").Where({name: ival}).One("id")
+            if app_id {
+                $ApplicationId = Int(app_id)
+            }
+        }
+    }
+
+    action {
+        var editors, creators map
+        editors["pages"] = "EditPage"
+        editors["blocks"] = "EditBlock"
+        editors["menu"] = "EditMenu"
+        editors["app_params"] = "EditAppParam"
+        editors["languages"] = "EditLang"
+        editors["contracts"] = "EditContract"
+        editors["tables"] = "" // nothing
+
+        creators["pages"] = "NewPage"
+        creators["blocks"] = "NewBlock"
+        creators["menu"] = "NewMenu"
+        creators["app_params"] = "NewAppParam"
+        creators["languages"] = "NewLang"
+        creators["contracts"] = "NewContract"
+        creators["tables"] = "NewTable"
+
+        var dataImport array
+        dataImport = JSONDecode($Data)
+        var i int
+        while i<Len(dataImport){
+            var item, cdata map
+            cdata = dataImport[i]
+            if cdata {
+                cdata["ApplicationId"] = $ApplicationId
+                $Type = cdata["Type"]
+                $Name = cdata["Name"]
+
+                // Println(Sprintf("import %v: %v", $Type, cdata["Name"]))
+
+                item = DBFind($Type).Where({name: $Name}).Row()
+                var contractName string
+                if item {
+                    contractName = editors[$Type]
+                    cdata["Id"] = Int(item["id"])
+                    if $Type == "menu"{
+                        var menu menuItem string
+                        menu = Replace(item["value"], " ", "")
+                        menu = Replace(menu, "\n", "")
+                        menu = Replace(menu, "\r", "")
+                        menuItem = Replace(cdata["Value"], " ", "")
+                        menuItem = Replace(menuItem, "\n", "")
+                        menuItem = Replace(menuItem, "\r", "")
+                        if Contains(menu, menuItem) {
+                            // ignore repeated
+                            contractName = ""
+                        }else{
+                            cdata["Value"] = item["value"] + "\n" + cdata["Value"]
+                        }
+                    }
+                } else {
+                    contractName = creators[$Type]
+                }
+
+                if contractName != ""{
+                    CallContract(contractName, cdata)
+                }
+            }
+            i=i+1
+        }
+        // Println(Sprintf("> time: %v", $time))
+    }
+}

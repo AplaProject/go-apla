@@ -1,0 +1,18 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract EditEcosystemName {
+	data {
+		EcosystemID int
+		NewName string
+	}
+	conditions {
+		var rows array
+		rows = DBFind("@1_ecosystems").Where({id: $EcosystemID})
+		if !Len(rows) {
+			error Sprintf("Ecosystem %d does not exist", $EcosystemID)
+		}
+	}
+	action {
+		EditEcosysName($EcosystemID, $NewName)
+	}
+}
