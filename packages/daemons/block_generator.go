@@ -19,7 +19,6 @@ package daemons
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/block"
@@ -64,39 +63,22 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 
 	btc := protocols.NewBlockTimeCounter()
-	// blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
-	// if err != nil {
-	// 	d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
-	// 	return err
-	// }
-
-	fmt.Println("===CheckBlockForTimeBeforeGenerating")
 	at := time.Now()
 
 	if exists, err := btc.BlockForTimeExists(at, int(nodePosition)); exists || err != nil {
-		fmt.Println("======block exists")
 		return nil
 	}
 
-	fmt.Println("======block does'nt exist")
-	fmt.Println("===END")
-
-	fmt.Println("===CheckGenerationTime")
 	timeToGenerate, err := btc.TimeToGenerate(at, int(nodePosition)) //blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err, "position": nodePosition}).Debug("calculating block time")
-		fmt.Println("======error on check generation time")
 		return err
 	}
 
 	if !timeToGenerate {
 		d.logger.WithFields(log.Fields{"type": consts.JustWaiting}).Debug("not my generation time")
-		fmt.Println("======is not generation time")
 		return nil
 	}
-
-	fmt.Println("======is generation time")
-	fmt.Println("===END")
 
 	prevBlock := &model.InfoBlock{}
 	_, err = prevBlock.Get()
@@ -119,7 +101,6 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		logger:     d.logger,
 	}
 
-	fmt.Println("PREV BLOCK:", prevBlock.BlockID)
 	dtx.RunForBlockID(prevBlock.BlockID + 1)
 
 	trs, err := processTransactions(d.logger)
