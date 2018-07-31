@@ -901,7 +901,7 @@ func GetWhere(inWhere map[string]interface{}) (string, error) {
 				list = append(list, escape(ival))
 			}
 			if len(list) > 0 {
-				ret = fmt.Sprintf(`%s ['%s']`, action, strings.Join(list, `', '`))
+				ret = fmt.Sprintf(`%s ('%s')`, action, strings.Join(list, `', '`))
 			}
 		}
 		return

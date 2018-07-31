@@ -1052,7 +1052,7 @@ If(#buffer_value_app_id# > 0){
 		If(#res_type#=="menu"){
 			DBFind(menu, src).Custom(cbox){
 				Input(Name: cbox, Type: checkbox, Value: true, Disabled: 1)
-			}.Where({id: {$in: [#buffer_value_menu_id#]}).Order("id")
+			}.Where({id: {$in: [#buffer_value_menu_id#]}}).Order("id")
 		}
 		If(#res_type#=="parameters"){
 			DBFind(app_params, src).Custom(cbox){
