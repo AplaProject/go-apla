@@ -30,6 +30,8 @@ contract EditDelayedContract {
 		}
 	}
 	action {
-		DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,limit,deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
+        DBUpdate("delayed_contracts", $Id, {"contract": $Contract,"key_id": $key_id,
+          "block_id": $BlockID,"every_block": $EveryBlock,
+          "counter": 0,"limit": $Limit, "deleted": $Deleted,"conditions": $Conditions})
 	}
 }

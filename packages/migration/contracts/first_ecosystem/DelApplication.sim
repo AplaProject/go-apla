@@ -14,6 +14,6 @@ contract DelApplication {
         }
     
         action {
-            DBUpdate("applications", $ApplicationId, "deleted", $Value)
+            DBUpdate("applications", $ApplicationId, {"deleted": $Value})
         }
     }

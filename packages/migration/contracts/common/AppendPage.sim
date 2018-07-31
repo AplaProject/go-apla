@@ -18,6 +18,6 @@ contract AppendPage {
 		} else {
 			value = value + "\r\n" + $Value
 		}
-		DBUpdate("pages", $Id, "value",  value )
+		DBUpdate("pages", $Id, {"value":  value })
 	}
 }

@@ -24,17 +24,19 @@ contract ImportUpload {
         $import_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import"}).One("id")
         if $import_id {
             $import_id = Int($import_id)
-            DBUpdate("buffer_data", $import_id, "value", initJson)
+            DBUpdate("buffer_data", $import_id, {"value": initJson})
         } else {
-            $import_id = DBInsert("buffer_data", "member_id,key,value", $key_id, "import", initJson)
+            $import_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import",
+                 "value": initJson})
         }
 
         $info_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import_info"}).One("id")
         if $info_id {
             $info_id = Int($info_id)
-            DBUpdate("buffer_data", $info_id, "value", initJson)
+            DBUpdate("buffer_data", $info_id, {"value": initJson})
         } else {
-            $info_id = DBInsert("buffer_data", "member_id,key,value", $key_id, "import_info", initJson)
+            $info_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import_info",
+            "value": initJson})
         }
     }
 
@@ -127,8 +129,8 @@ contract ImportUpload {
         input["data"] = sliced
 
         // storing
-        DBUpdate("buffer_data", $import_id, "value", input)
-        DBUpdate("buffer_data", $info_id, "value", info_map)
+        DBUpdate("buffer_data", $import_id, {"value": input})
+        DBUpdate("buffer_data", $info_id, {"value": info_map})
 
         var app_id int
         var ival string
