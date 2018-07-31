@@ -3,7 +3,7 @@
 package vde
 
 var contractsDataSQL = `
-INSERT INTO "%[1]d_contracts" (id, name, value, conditions)
+INSERT INTO "%[1]d_contracts" (id, name, value, conditions, app_id)
 VALUES
 	(next_id('%[1]d_contracts'), 'AppendMenu', 'contract AppendMenu {
 	data {
@@ -16,10 +16,13 @@ VALUES
 	action {
 		var row map
 		row = DBRow("menu").Columns("value").WhereId($Id)
-		DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
+        var val string
+        val = row["value"] + "\r\n" + $Value
+		DBUpdate("menu", $Id, {"value": val})
+
 	}
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'AppendPage', 'contract AppendPage {
 	data {
 		Id         int
@@ -38,10 +41,10 @@ VALUES
 		} else {
 			value = value + "\r\n" + $Value
 		}
-		DBUpdate("pages", $Id, "value",  value )
+		DBUpdate("pages", $Id, {"value":  value })
 	}
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditBlock', 'contract EditBlock {
     data {
         Id int
@@ -60,21 +63,19 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("blocks", $Id, pars)
         }
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditColumn', 'contract EditColumn {
     data {
         TableName string
@@ -90,7 +91,7 @@ VALUES
         PermColumn($TableName, $Name, $Permissions)
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditContract', 'contract EditContract {
     data {
         Id int
@@ -134,7 +135,7 @@ VALUES
         RollbackEditContract()
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditCron', 'contract EditCron {
 		data {
 			Id         int
@@ -155,12 +156,12 @@ VALUES
 			if !HasPrefix($Contract, "@") {
 				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
-			DBUpdate("cron", $Id, "cron,contract,counter,till,conditions",
-				$Cron, $Contract, $Limit, $Till, $Conditions)
+			DBUpdate("cron", $Id, {"cron": $Cron,"contract": $Contract,
+			    "counter":$Limit, "till": $Till, "conditions":$Conditions})
 			UpdateCron($Id)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditLang', 'contract EditLang {
     data {
         Id int
@@ -169,14 +170,14 @@ VALUES
 
     conditions {
         EvalCondition("parameters", "changing_language", "value")
-        $lang = DBFind("languages").Where("id=?", $Id).Row()
+        $lang = DBFind("languages").Where({id: $Id}).Row()
     }
 
     action {
         EditLanguage($Id, $lang["name"], $Trans, Int($lang["app_id"]))
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditMenu', 'contract EditMenu {
     data {
         Id int
@@ -196,25 +197,22 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Title {
-            pars = Append(pars, "title")
-            vals = Append(vals, $Title)
+            pars["title"] = $Title
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("menu", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("menu", $Id, pars)
         }            
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditPage', 'contract EditPage {
     data {
         Id int
@@ -250,36 +248,31 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Menu {
-            pars = Append(pars, "menu")
-            vals = Append(vals, $Menu)
+            pars["menu"] = $Menu
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
         if $ValidateCount {
-            pars = Append(pars, "validate_count")
-            vals = Append(vals, $ValidateCount)
+            pars["validate_count"] = $ValidateCount
         }
         if $ValidateMode {
             if $ValidateMode != "1" {
                 $ValidateMode = "0"
             }
-            pars = Append(pars, "validate_mode")
-            vals = Append(vals, $ValidateMode)
+            pars["validate_mode"] = $ValidateMode
         }
-        if Len(vals) > 0 {
-            DBUpdate("pages", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("pages", $Id, pars)
         }
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditParameter', 'contract EditParameter {
     data {
         Id int
@@ -298,21 +291,19 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("parameters", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("parameters", $Id, pars)
         }
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditTable', 'contract EditTable {
     data {
         Name string
@@ -348,7 +339,7 @@ VALUES
         PermTable($Name, JSONEncode($Permissions))
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'Import', 'contract Import {
     data {
         Data string
@@ -368,10 +359,14 @@ VALUES
 
         $ApplicationId = 0
         var app_map map
-        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key=''import_info'' and member_id=$", $key_id).Row()
+        app_map = DBFind("buffer_data").Columns("value->app_name").Where({key: "import_info",
+          member_id: $key_id}).Row()
+
         if app_map{
             var app_id int
-            app_id = DBFind("applications").Columns("id").Where("name=$", Str(app_map["value.app_name"])).One("id")
+            var ival string
+            ival = Str(app_map["value.app_name"])
+            app_id = DBFind("applications").Columns("id").Where({name: ival}).One("id")
             if app_id {
                 $ApplicationId = Int(app_id)
             }
@@ -409,7 +404,7 @@ VALUES
 
                 // Println(Sprintf("import %%v: %%v", $Type, cdata["Name"]))
 
-                item = DBFind($Type).Where("name=?", $Name).Row()
+                item = DBFind($Type).Where({name: $Name}).Row()
                 var contractName string
                 if item {
                     contractName = editors[$Type]
@@ -442,7 +437,7 @@ VALUES
         // Println(Sprintf("> time: %%v", $time))
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'ListVDE', 'contract ListVDE {
 		data {}
 	
@@ -452,7 +447,7 @@ VALUES
 			return GetVDEList()
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'MainCondition', 'contract MainCondition {
 		conditions {
 		  if EcosysParam("founder_account")!=$key_id
@@ -461,7 +456,7 @@ VALUES
 		  }
 		}
 	  }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewBlock', 'contract NewBlock {
     data {
         ApplicationId int
@@ -477,16 +472,17 @@ VALUES
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("blocks").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("blocks").Columns("id").Where({name:$Name}).One("id") {
             warning Sprintf( "Block %%s already exists", $Name)
         }
     }
 
     action {
-        DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId)
+        DBInsert("blocks", {name: $Name, value: $Value, conditions: $Conditions,
+              app_id: $ApplicationId})
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewColumn', 'contract NewColumn {
     data {
         TableName string
@@ -507,7 +503,7 @@ VALUES
         return SysParamInt("column_price")
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewContract', 'contract NewContract {
     data {
         ApplicationId int
@@ -557,7 +553,7 @@ VALUES
         return SysParamInt("contract_price")
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewCron', 'contract NewCron {
 		data {
 			Cron       string
@@ -577,12 +573,12 @@ VALUES
 			if !HasPrefix($Contract, "@") {
 				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
-			$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions",
-				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
+			$result = DBInsert("cron", {owner: $key_id,cron:$Cron,contract: $Contract,
+				counter:$Limit, till: $Till,conditions: $Conditions})
 			UpdateCron($result)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewLang', 'contract NewLang {
     data {
         ApplicationId int
@@ -595,7 +591,7 @@ VALUES
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("languages").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("languages").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf( "Language resource %%s already exists", $Name)
         }
 
@@ -606,7 +602,7 @@ VALUES
         CreateLanguage($Name, $Trans, $ApplicationId)
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewMenu', 'contract NewMenu {
     data {
         Name string
@@ -618,19 +614,19 @@ VALUES
     conditions {
         ValidateCondition($Conditions,$ecosystem_id)
 
-        if DBFind("menu").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("menu").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf( "Menu %%s already exists", $Name)
         }
     }
 
     action {
-        DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions)
+        DBInsert("menu", {name:$Name,value: $Value, title: $Title, conditions: $Conditions})
     }
     func price() int {
         return SysParamInt("menu_price")
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewPage', 'contract NewPage {
     data {
         ApplicationId int
@@ -663,7 +659,7 @@ VALUES
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("pages").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("pages").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf( "Page %%s already exists", $Name)
         }
 
@@ -677,13 +673,15 @@ VALUES
     }
 
     action {
-        DBInsert("pages", "name,value,menu,validate_count,validate_mode,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $ValidateMode, $Conditions, $ApplicationId)
+        DBInsert("pages", {name: $Name,value: $Value, menu: $Menu,
+             validate_count:$ValidateCount,validate_mode: $ValidateMode,
+             conditions: $Conditions,app_id: $ApplicationId})
     }
     func price() int {
         return SysParamInt("page_price")
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewParameter', 'contract NewParameter {
     data {
         Name string
@@ -694,16 +692,16 @@ VALUES
     conditions {
         ValidateCondition($Conditions, $ecosystem_id)
         
-        if DBFind("parameters").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("parameters").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf("Parameter %%s already exists", $Name)
         }
     }
     
     action {
-        DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions)
+        DBInsert("parameters", {name: $Name, value:$Value, conditions: $Conditions})
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewTable', 'contract NewTable {
     data {
         ApplicationId int
@@ -728,7 +726,7 @@ VALUES
         return SysParamInt("table_price")
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewUser', 'contract NewUser {
 	data {
 		NewPubkey string
@@ -749,7 +747,7 @@ VALUES
         SetPubKey($newId, StringToBytes($NewPubkey))
 	}
 }
-', 'ContractConditions("NodeOwnerCondition")'),
+', 'ContractConditions("NodeOwnerCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewVDE', 'contract NewVDE {
 		data {
 			VDEName string
@@ -765,7 +763,7 @@ VALUES
 			CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'RemoveVDE', 'contract RemoveVDE {
 		data {
 			VDEName string
@@ -775,7 +773,7 @@ VALUES
 			DeleteVDE($VDEName)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'RunVDE', 'contract RunVDE {
 		data {
 			VDEName string
@@ -788,7 +786,7 @@ VALUES
 			StartVDE($VDEName)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'StopVDE', 'contract StopVDE {
 		data {
 			VDEName string
@@ -801,7 +799,7 @@ VALUES
 			StopVDEProcess($VDEName)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'UploadBinary', 'contract UploadBinary {
     data {
         ApplicationId int
@@ -811,7 +809,8 @@ VALUES
     }
 
     conditions {
-        $Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $ApplicationId, $key_id, $Name).One("id"))
+        $Id = Int(DBFind("binaries").Columns("id").Where({app_id: $ApplicationId,
+            member_id: $key_id, name: $Name}).One("id"))
 
         if $Id == 0 {
             if $ApplicationId == 0 {
@@ -828,13 +827,14 @@ VALUES
         }
 
         if $Id != 0 {
-            DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+            DBUpdate("binaries", $Id, {"data": $Data,"hash": hash,"mime_type": $DataMimeType})
         } else {
-            $Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $ApplicationId, $key_id, $Name, $Data, hash, $DataMimeType)
+            $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
+               "name": $Name,"data": $Data,"hash": hash, "mime_type": $DataMimeType})
         }
 
         $result = $Id
+    }
 }
-}
-', 'ContractConditions("MainCondition")');
+', 'ContractConditions("MainCondition")', 1);
 `

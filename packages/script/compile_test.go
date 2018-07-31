@@ -527,6 +527,7 @@ func TestVMCompile(t *testing.T) {
 			var s string
 			$ext = "Ooops"
 			s = "Spain"
+			my = {conditions: "$Conditions"}
 			list = [0, i, {"item": i}, [$ext]]
 			sub = {"name": "John", "lastname": "Smith", myarr: []}
 			my = {qqq: 10, "22": "MY STRING", /* comment*/ "float": 1.2, "ext": $ext,

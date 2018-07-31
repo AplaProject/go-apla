@@ -225,16 +225,15 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
 func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
-	params string, val ...interface{}) (qcost int64, err error) {
+	values map[string]interface{}) (qcost int64, err error) {
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
 	}
-	if strings.Contains(tblname, `_reports_`) {
-		err = fmt.Errorf(`Access denied to report table`)
+	columns, val, err := mapToParams(values)
+	if err != nil {
 		return
 	}
-	columns := strings.Split(params, `,`)
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
@@ -343,7 +342,8 @@ func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int6
 		return 0, fmt.Errorf(`CreateLanguage can be only called from @1NewLang, @1NewLangJoint, @1Import`)
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if _, id, err = DBInsert(sc, `@`+idStr+"_languages", "name,res,app_id", name, trans, appID); err != nil {
+	if _, id, err = DBInsert(sc, `@`+idStr+"_languages",
+		map[string]interface{}{"name": name, "res": trans, "app_id": appID}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return 0, err
 	}
@@ -358,7 +358,8 @@ func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) 
 		return fmt.Errorf(`EditLanguage can be only called from @1EditLang, @1EditLangJoint and @1Import`)
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if _, err := DBUpdate(sc, `@`+idStr+"_languages", id, "name,res,app_id", name, trans, appID); err != nil {
+	if _, err := DBUpdate(sc, `@`+idStr+"_languages", id,
+		map[string]interface{}{"name": name, "res": trans, "app_id": appID}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return err
 	}
@@ -453,13 +454,14 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 
 	sc.Rollback = false
 	sc.FullAccess = true
-	if _, _, err = DBInsert(sc, `@`+idStr+"_pages", "id,name,value,menu,conditions", "1", "default_page",
-		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`); err != nil {
+	if _, _, err = DBInsert(sc, `@`+idStr+"_pages", map[string]interface{}{"id": "1",
+		"name": "default_page", "value": SysParamString("default_ecosystem_page"),
+		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
-	if _, _, err = DBInsert(sc, `@`+idStr+"_menu", "id,name,value,title,conditions", "1", "default_menu",
-		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`); err != nil {
+	if _, _, err = DBInsert(sc, `@`+idStr+"_menu", map[string]interface{}{"id": "1",
+		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("MainCondition")`}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
@@ -477,7 +479,8 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if Len(ret) > 0 {
 		pub = ret[0].(map[string]interface{})[`pub`].(string)
 	}
-	if _, _, err := DBInsert(sc, `@`+idStr+"_keys", "id,pub", wallet, pub); err != nil {
+	if _, _, err := DBInsert(sc, `@`+idStr+"_keys",
+		map[string]interface{}{"id": wallet, "pub": pub}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return 0, err
 	}
@@ -486,7 +489,10 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	// because of we need to know which ecosystem to rollback.
 	// All tables will be deleted so it's no need to rollback data from tables
 	sc.Rollback = true
-	if _, _, err := DBInsert(sc, "@1_ecosystems", "id,name", id, name); err != nil {
+	if _, _, err := DBInsert(sc, "@1_ecosystems", map[string]interface{}{
+		"id":   id,
+		"name": name,
+	}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert new ecosystem to stat table")
 		return 0, err
 	}
@@ -501,7 +507,7 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 		return fmt.Errorf(`EditEcosystemName can be only called from @1EditEcosystemName`)
 	}
 
-	_, err := DBUpdate(sc, "@1_ecosystems", sysID, "name", newName)
+	_, err := DBUpdate(sc, "@1_ecosystems", sysID, map[string]interface{}{"name": newName})
 	return err
 }
 
