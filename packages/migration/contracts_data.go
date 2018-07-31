@@ -3,7 +3,7 @@
 package migration
 
 var contractsDataSQL = `
-INSERT INTO "%[1]d_contracts" (id, name, value, conditions, wallet_id)
+INSERT INTO "%[1]d_contracts" (id, name, value, conditions, app_id, wallet_id)
 VALUES
 	(next_id('%[1]d_contracts'), 'MainCondition', 'contract MainCondition {
 	conditions {
@@ -13,5 +13,5 @@ VALUES
 		}
 	}
 }
-', 'ContractConditions("MainCondition")', %[2]d);
+', 'ContractConditions("MainCondition")', 1, %[2]d);
 `

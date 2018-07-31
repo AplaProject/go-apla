@@ -28,6 +28,7 @@ contract NewDelayedContract {
 		}
 	}
 	action {
-		DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,limit,conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
+        DBInsert("delayed_contracts", {contract: $Contract, key_id: $key_id, block_id: $BlockID,
+            every_block: $EveryBlock, limit: $Limit, conditions: $Conditions})
 	}
 }

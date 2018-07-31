@@ -425,7 +425,7 @@ var contracts = []smartContract{
 			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
 				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
 		[]smartParams{
-			{nil, map[string]string{`ByName`: `0 29`,
+			{nil, map[string]string{`ByName`: `0 2`,
 				`ById`: `NewColumn`}},
 		}},
 }
