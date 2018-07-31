@@ -9,7 +9,7 @@ contract NewSign {
     conditions {
         ValidateCondition($Conditions, $ecosystem_id)
 
-        if DBFind("signatures").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("signatures").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf("The signature %s already exists", $Name)
         }
     }
