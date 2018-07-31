@@ -46,7 +46,9 @@ contract NewPage {
     }
 
     action {
-        DBInsert("pages", "name,value,menu,validate_count,validate_mode,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $ValidateMode, $Conditions, $ApplicationId)
+        DBInsert("pages", {name: $Name,value: $Value, menu: $Menu,
+             validate_count:$ValidateCount,validate_mode: $ValidateMode,
+             conditions: $Conditions,app_id: $ApplicationId})
     }
     func price() int {
         return SysParamInt("page_price")

@@ -17,7 +17,7 @@ contract NewMenu {
     }
 
     action {
-        DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions)
+        DBInsert("menu", {name:$Name,value: $Value, title: $Title, conditions: $Conditions})
     }
     func price() int {
         return SysParamInt("menu_price")

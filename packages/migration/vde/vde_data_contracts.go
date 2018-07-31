@@ -16,7 +16,10 @@ VALUES
 	action {
 		var row map
 		row = DBRow("menu").Columns("value").WhereId($Id)
-		DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
+        var val string
+        val = row["value"] + "\r\n" + $Value
+		DBUpdate("menu", $Id, {"value": val})
+
 	}
 }
 ', 'ContractConditions("MainCondition")', 1),
@@ -38,7 +41,7 @@ VALUES
 		} else {
 			value = value + "\r\n" + $Value
 		}
-		DBUpdate("pages", $Id, "value",  value )
+		DBUpdate("pages", $Id, {"value":  value })
 	}
 }
 ', 'ContractConditions("MainCondition")', 1),
@@ -60,17 +63,15 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("blocks", $Id, pars)
         }
     }
 }
@@ -155,8 +156,8 @@ VALUES
 			if !HasPrefix($Contract, "@") {
 				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
-			DBUpdate("cron", $Id, "cron,contract,counter,till,conditions",
-				$Cron, $Contract, $Limit, $Till, $Conditions)
+			DBUpdate("cron", $Id, {"cron": $Cron,"contract": $Contract,
+			    "counter":$Limit, "till": $Till, "conditions":$Conditions})
 			UpdateCron($Id)
 		}
 	}
@@ -196,21 +197,18 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Title {
-            pars = Append(pars, "title")
-            vals = Append(vals, $Title)
+            pars["title"] = $Title
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("menu", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("menu", $Id, pars)
         }            
     }
 }
@@ -250,32 +248,27 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Menu {
-            pars = Append(pars, "menu")
-            vals = Append(vals, $Menu)
+            pars["menu"] = $Menu
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
         if $ValidateCount {
-            pars = Append(pars, "validate_count")
-            vals = Append(vals, $ValidateCount)
+            pars["validate_count"] = $ValidateCount
         }
         if $ValidateMode {
             if $ValidateMode != "1" {
                 $ValidateMode = "0"
             }
-            pars = Append(pars, "validate_mode")
-            vals = Append(vals, $ValidateMode)
+            pars["validate_mode"] = $ValidateMode
         }
-        if Len(vals) > 0 {
-            DBUpdate("pages", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("pages", $Id, pars)
         }
     }
 }
@@ -298,17 +291,15 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("parameters", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("parameters", $Id, pars)
         }
     }
 }
@@ -487,7 +478,8 @@ VALUES
     }
 
     action {
-        DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId)
+        DBInsert("blocks", {name: $Name, value: $Value, conditions: $Conditions,
+              app_id: $ApplicationId})
     }
 }
 ', 'ContractConditions("MainCondition")', 1),
@@ -581,8 +573,8 @@ VALUES
 			if !HasPrefix($Contract, "@") {
 				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
-			$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions",
-				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
+			$result = DBInsert("cron", {owner: $key_id,cron:$Cron,contract: $Contract,
+				counter:$Limit, till: $Till,conditions: $Conditions})
 			UpdateCron($result)
 		}
 	}
@@ -628,7 +620,7 @@ VALUES
     }
 
     action {
-        DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions)
+        DBInsert("menu", {name:$Name,value: $Value, title: $Title, conditions: $Conditions})
     }
     func price() int {
         return SysParamInt("menu_price")
@@ -681,7 +673,9 @@ VALUES
     }
 
     action {
-        DBInsert("pages", "name,value,menu,validate_count,validate_mode,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $ValidateMode, $Conditions, $ApplicationId)
+        DBInsert("pages", {name: $Name,value: $Value, menu: $Menu,
+             validate_count:$ValidateCount,validate_mode: $ValidateMode,
+             conditions: $Conditions,app_id: $ApplicationId})
     }
     func price() int {
         return SysParamInt("page_price")
@@ -704,7 +698,7 @@ VALUES
     }
     
     action {
-        DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions)
+        DBInsert("parameters", {name: $Name, value:$Value, conditions: $Conditions})
     }
 }
 ', 'ContractConditions("MainCondition")', 1),
@@ -833,13 +827,14 @@ VALUES
         }
 
         if $Id != 0 {
-            DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+            DBUpdate("binaries", $Id, {"data": $Data,"hash": hash,"mime_type": $DataMimeType})
         } else {
-            $Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $ApplicationId, $key_id, $Name, $Data, hash, $DataMimeType)
+            $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
+               "name": $Name,"data": $Data,"hash": hash, "mime_type": $DataMimeType})
         }
 
         $result = $Id
-}
+    }
 }
 ', 'ContractConditions("MainCondition")', 1);
 `
