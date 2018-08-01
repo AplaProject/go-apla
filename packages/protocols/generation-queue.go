@@ -13,6 +13,7 @@ import (
 type BlockTimeChecker interface {
 	TimeToGenerate(position int64) (bool, error)
 	BlockForTimeExists(t time.Time, nodePosition int) (bool, error)
+	RangeByTime(at time.Time) (start, end time.Time, err error)
 }
 
 var (
