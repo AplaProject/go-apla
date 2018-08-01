@@ -10,7 +10,7 @@ contract NewParameter {
     conditions {
         ValidateCondition($Conditions, $ecosystem_id)
         
-        if DBFind("parameters").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("parameters").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf("Parameter %s already exists", $Name)
         }
     }

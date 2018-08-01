@@ -6,7 +6,8 @@ contract CallDelayedContract {
 	}
 	conditions {
 		var rows array
-		rows = DBFind("delayed_contracts").Where("id = ? and deleted = false", $Id)
+		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: "false"} )
+
 		if !Len(rows) {
 			error Sprintf("Delayed contract %d does not exist", $Id)
 		}
