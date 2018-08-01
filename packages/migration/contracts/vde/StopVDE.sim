@@ -9,6 +9,8 @@ contract StopVDE {
 		}
 	
 		action {
-			StopVDEProcess($VDEName)
+            $VDEName = ToLower($VDEName)
+            StopVDEProcess($VDEName)
+            $result = "VDE " + $VDEName + " stopped"
 		}
 	}

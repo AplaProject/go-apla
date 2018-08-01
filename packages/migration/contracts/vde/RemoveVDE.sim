@@ -6,6 +6,8 @@ contract RemoveVDE {
 		}
 		conditions {}
 		action{
-			DeleteVDE($VDEName)
+            $VDEName = ToLower($VDEName)
+            DeleteVDE($VDEName)
+            $result = "VDE " + $VDEName + " removed"
 		}
 	}
