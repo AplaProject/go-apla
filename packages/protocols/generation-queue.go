@@ -30,6 +30,8 @@ type BlockTimeCounter struct {
 
 // Queue returns serial queue number for time
 func (btc *BlockTimeCounter) queue(t time.Time) (int, error) {
+	ut := t.Unix()
+	t = time.Unix(ut, 0)
 	if t.Before(btc.start) {
 		return -1, TimeError
 	}
@@ -61,7 +63,7 @@ func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (
 		return false, err
 	}
 
-	return len(blocks) != 0, nil
+	return len(blocks) > 0, nil
 }
 
 // NextTime returns next generation time for node position at time
@@ -92,8 +94,8 @@ func (btc *BlockTimeCounter) RangeByTime(t time.Time) (start, end time.Time, err
 		return st, st, err
 	}
 
-	end = btc.start.Add(btc.duration * (time.Duration(queue) + 1))
-	start = end.Add(-btc.duration).Add(1 * time.Millisecond)
+	start = btc.start.Add(btc.duration*time.Duration(queue) + time.Second)
+	end = start.Add(btc.duration - time.Second)
 	return
 }
 
@@ -112,10 +114,11 @@ func NewBlockTimeCounter() *BlockTimeCounter {
 	firstBlock, _ := syspar.GetFirstBlockData()
 	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
 	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
-
-	return &BlockTimeCounter{
+	btc := BlockTimeCounter{
 		start:       time.Unix(int64(firstBlock.Time), 0),
 		duration:    blockGenerationDuration + blocksGapDuration,
 		numberNodes: int(syspar.GetNumberOfNodes()),
 	}
+
+	return &btc
 }

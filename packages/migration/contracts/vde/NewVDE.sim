@@ -1,0 +1,17 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract NewVDE {
+		data {
+			VDEName string
+			DBUser string
+			DBPassword string
+			VDEAPIPort int
+		}
+	
+		conditions {
+		}
+	
+		action {
+			CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
+		}
+	}

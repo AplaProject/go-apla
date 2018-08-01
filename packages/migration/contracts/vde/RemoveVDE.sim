@@ -1,0 +1,11 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract RemoveVDE {
+		data {
+			VDEName string
+		}
+		conditions {}
+		action{
+			DeleteVDE($VDEName)
+		}
+	}

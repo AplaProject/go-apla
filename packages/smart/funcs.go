@@ -91,6 +91,7 @@ type SmartContract struct {
 	TxHash        []byte
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
+	Rand          *rand.Rand
 }
 
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
@@ -1547,12 +1548,12 @@ func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string
 	return string(data), nil
 }
 
-func Random(min int64, max int64) (int64, error) {
+func Random(sc *SmartContract, min int64, max int64) (int64, error) {
 	if min < 0 || max < 0 || min >= max {
 		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("getting random")
 		return 0, fmt.Errorf(`wrong random parameters %d %d`, min, max)
 	}
-	return min + rand.New(rand.NewSource(time.Now().Unix())).Int63n(max-min), nil
+	return min + sc.Rand.Int63n(max-min), nil
 }
 
 func ValidateCron(cronSpec string) error {
@@ -1934,6 +1935,9 @@ func BlockTime(sc *SmartContract) string {
 	var blockTime int64
 	if sc.BlockData != nil {
 		blockTime = sc.BlockData.Time
+	}
+	if sc.VDE {
+		blockTime = time.Now().Unix()
 	}
 	return Date(`2006-01-02 15:04:05`, blockTime)
 }

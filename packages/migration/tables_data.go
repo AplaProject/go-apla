@@ -16,7 +16,7 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 	  "maxpay": "ContractConditions(\"MainCondition\")",
 	  "deleted": "ContractConditions(\"MainCondition\")",
 	  "blocked": "ContractConditions(\"MainCondition\")",
-	  "multi": "ContractConditions(\"MainCondition\")"}', 
+	  "multi": "ContractAccess(\"MultiwalletCreate\")"}', 
 	'ContractAccess("@1EditTable")'),
 	('3', 'history', 
 	'{"insert": "ContractConditions(\"NodeOwnerCondition\")", "update": "ContractConditions(\"MainCondition\")", 

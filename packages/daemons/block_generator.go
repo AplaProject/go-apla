@@ -63,7 +63,13 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 
 	btc := protocols.NewBlockTimeCounter()
-	timeToGenerate, err := btc.TimeToGenerate(time.Now(), int(nodePosition))
+	at := time.Now()
+
+	if exists, err := btc.BlockForTimeExists(at, int(nodePosition)); exists || err != nil {
+		return nil
+	}
+
+	timeToGenerate, err := btc.TimeToGenerate(at, int(nodePosition))
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err, "position": nodePosition}).Debug("calculating block time")
 		return err
@@ -100,6 +106,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		publicKey:  NodePublicKey,
 		logger:     d.logger,
 	}
+
 	dtx.RunForBlockID(prevBlock.BlockID + 1)
 
 	trs, err := processTransactions(d.logger, done)
