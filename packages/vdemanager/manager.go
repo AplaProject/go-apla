@@ -255,6 +255,11 @@ func (mgr *VDEManager) createVDEDB(vdeName, login, pass string) error {
 
 	if err := model.DBConn.Exec(fmt.Sprintf(createDBTemplate, vdeName, login)).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE DB")
+
+		if err := model.GetDB(nil).Exec(fmt.Sprintf(dropDBRoleTemplate, login)).Error; err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "role": login}).Error("on deleting vde role")
+			return err
+		}
 		return err
 	}
 
