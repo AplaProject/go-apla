@@ -96,10 +96,8 @@ type File struct {
 type RequestBuffer struct {
 	mutex sync.Mutex
 
-	timer         *time.Timer
 	requestExpire time.Duration
-
-	requests map[string]*Request
+	requests      map[string]*Request
 }
 
 func (rb *RequestBuffer) ExpireDuration() time.Duration {
@@ -125,7 +123,6 @@ func (rb *RequestBuffer) AddRequest(r *Request) {
 	defer rb.mutex.Unlock()
 
 	rb.requests[r.ID] = r
-	rb.timer.Reset(rb.requestExpire)
 }
 
 func (rb *RequestBuffer) GetRequest(id string) (*Request, bool) {
@@ -141,7 +138,8 @@ func (rb *RequestBuffer) GetRequest(id string) (*Request, bool) {
 }
 
 func (rb *RequestBuffer) waitForCleaning() {
-	for t := range rb.timer.C {
+	ticker := time.NewTicker(rb.requestExpire)
+	for t := range ticker.C {
 		rb.clean(t)
 	}
 }
@@ -163,7 +161,6 @@ func (rb *RequestBuffer) clean(t time.Time) {
 func NewRequestBuffer(requestExpire time.Duration) *RequestBuffer {
 	rb := &RequestBuffer{
 		requests:      make(map[string]*Request),
-		timer:         time.NewTimer(-1),
 		requestExpire: requestExpire,
 	}
 

@@ -21,13 +21,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/service"
+	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -68,7 +69,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 
 	timeToGenerate, err := blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition)
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
+		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err, "position": nodePosition}).Debug("calculating block time")
 		return err
 	}
 
@@ -134,11 +135,11 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	err = parser.InsertBlockWOForks(blockBin, true, false)
+	err = block.InsertBlockWOForks(blockBin, true, false)
 	if err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Error("Generated block ID")
+	log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Debug("Generated block ID")
 
 	go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockID)
 	return nil
@@ -150,14 +151,14 @@ func generateNextBlock(blockHeader *utils.BlockData, trs []*model.Transaction, k
 		trData = append(trData, tr.Data)
 	}
 
-	return parser.MarshallBlock(blockHeader, trData, prevBlockHash, key)
+	return block.MarshallBlock(blockHeader, trData, prevBlockHash, key)
 }
 
 func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
-	p := new(parser.Parser)
+	p := new(transaction.Transaction)
 
 	// verify transactions
-	err := p.AllTxParser()
+	err := transaction.ProcessTransactionsQueue(p.DbTransaction)
 	if err != nil {
 		return nil, err
 	}
@@ -168,28 +169,80 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 		return nil, err
 	}
 
-	limits := parser.NewLimits(nil)
+	limits := block.NewLimits(nil)
+
+	type badTxStruct struct {
+		hash []byte
+		msg  string
+	}
+
+	processBadTx := func(dbTx *model.DbTransaction) chan badTxStruct {
+		ch := make(chan badTxStruct)
+
+		go func() {
+			for badTxItem := range ch {
+				transaction.MarkTransactionBad(p.DbTransaction, badTxItem.hash, badTxItem.msg)
+			}
+		}()
+
+		return ch
+	}
+
+	processIncAttemptCnt := func() chan []byte {
+		ch := make(chan []byte)
+		go func() {
+			for tx := range ch {
+				model.IncrementTxAttemptCount(nil, tx)
+			}
+		}()
+
+		return ch
+	}
+
+	txBadChan := processBadTx(p.DbTransaction)
+	attemptCountChan := processIncAttemptCnt()
+
+	defer func() {
+		close(txBadChan)
+		close(attemptCountChan)
+	}()
+
 	// Checks preprocessing count limits
 	txList := make([]*model.Transaction, 0, len(trs))
 	for i, txItem := range trs {
 		bufTransaction := bytes.NewBuffer(txItem.Data)
-		p, err := parser.ParseTransaction(bufTransaction)
+		p, err := transaction.UnmarshallTransaction(bufTransaction)
 		if err != nil {
 			if p != nil {
-				p.ProcessBadTransaction(err)
+				txBadChan <- badTxStruct{
+					hash: p.TxHash,
+					msg:  err.Error(),
+				}
 			}
 			continue
 		}
+
+		if err := p.Check(time.Now().Unix(), false); err != nil {
+			txBadChan <- badTxStruct{
+				hash: p.TxHash,
+				msg:  err.Error(),
+			}
+			continue
+		}
+
 		if p.TxSmart != nil {
 			err = limits.CheckLimit(p)
-			if err == parser.ErrLimitStop && i > 0 {
-				model.IncrementTxAttemptCount(nil, p.TxHash)
+			if err == block.ErrLimitStop && i > 0 {
+				attemptCountChan <- p.TxHash
 				break
 			} else if err != nil {
-				if err == parser.ErrLimitSkip {
-					model.IncrementTxAttemptCount(nil, p.TxHash)
+				if err == block.ErrLimitSkip {
+					attemptCountChan <- p.TxHash
 				} else {
-					p.ProcessBadTransaction(err)
+					txBadChan <- badTxStruct{
+						hash: p.TxHash,
+						msg:  err.Error(),
+					}
 				}
 				continue
 			}

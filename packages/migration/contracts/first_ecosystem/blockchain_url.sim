@@ -1,0 +1,16 @@
+// +prop AppID = 2
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract blockchain_url {
+    data {
+      Value string
+    }
+  
+    conditions {
+      if Size($Value) == 0 {
+        warning "Value was not received"
+      }
+      if !(HasPrefix($Value, "http://") || HasPrefix($Value, "https://")) {
+        warning "URL ivalid (not found protocol)"
+      }
+    }
+}

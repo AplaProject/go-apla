@@ -27,7 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
+	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
 
@@ -37,7 +37,6 @@ func GetBlocks(blockID int64, host string) error {
 	if err != nil {
 		return err
 	}
-	CleanCache()
 
 	// mark all transaction as unverified
 	_, err = model.MarkVerifiedAndNotUsedTransactionsUnverified()
@@ -68,6 +67,7 @@ func GetBlocks(blockID int64, host string) error {
 			return utils.ErrInfo(err)
 		}
 	}
+
 	return processBlocks(blocks)
 }
 
@@ -80,7 +80,7 @@ func getBlocks(blockID int64, host string) ([]*Block, error) {
 	var count int64
 
 	// load the block bodies from the host
-	blocksCh, err := utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, true)
+	blocksCh, err := tcpclient.GetBlocksBodies(host, blockID, true)
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}
@@ -171,7 +171,7 @@ func processBlocks(blocks []*Block) error {
 
 		if err := block.CheckBlock(); err != nil {
 			dbTransaction.Rollback()
-			return err
+			return utils.ErrInfo(err)
 		}
 
 		if err := block.playBlock(dbTransaction); err != nil {
@@ -214,4 +214,9 @@ func processBlocks(blocks []*Block) error {
 	}
 
 	return dbTransaction.Commit()
+}
+
+func getBlocksFromHost(host string, blockID int64) (rawBlocksChan chan []byte, err error) {
+	rawBlocksChan, err = tcpclient.GetBlocksBodies(host, blockID, true)
+	return
 }

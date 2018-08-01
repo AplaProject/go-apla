@@ -1,0 +1,14 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract RunVDE {
+		data {
+			VDEName string
+		}
+	
+		conditions {
+		}
+	
+		action {
+			StartVDE($VDEName)
+		}
+	}

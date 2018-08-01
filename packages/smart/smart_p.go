@@ -159,7 +159,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			`page_price`, `commission_size`:
 			ok = ival >= 0
 		case `max_block_size`, `max_tx_size`, `max_tx_count`, `max_columns`, `max_indexes`,
-			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`:
+			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`, `max_forsign_size`:
 			ok = ival > 0
 		case `fuel_rate`, `commission_wallet`:
 			err := json.Unmarshal([]byte(value), &list)
@@ -389,7 +389,7 @@ func GetContractById(sc *SmartContract, id int64) string {
 	}
 
 	re := regexp.MustCompile(`(?is)^\s*contract\s+([\d\w_]+)\s*{`)
-	names := re.FindStringSubmatch(ret[0].(map[string]string)["value"])
+	names := re.FindStringSubmatch(ret[0].(map[string]interface{})["value"].(string))
 	if len(names) != 2 {
 		return ``
 	}
@@ -476,7 +476,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	if Len(ret) > 0 {
-		pub = ret[0].(map[string]string)[`pub`]
+		pub = ret[0].(map[string]interface{})[`pub`].(string)
 	}
 	if _, _, err := DBInsert(sc, `@`+idStr+"_keys", "id,pub", wallet, pub); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")

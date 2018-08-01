@@ -9,10 +9,10 @@ import (
 
 	"path/filepath"
 
+	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	log "github.com/sirupsen/logrus"
 )
@@ -83,7 +83,7 @@ var generateFirstBlockCmd = &cobra.Command{
 			return
 		}
 
-		block, err := parser.MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
+		block, err := block.MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block marshalling")
 			return

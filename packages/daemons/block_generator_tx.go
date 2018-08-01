@@ -37,6 +37,7 @@ func (dtx *DelayedTx) RunForBlockID(blockID int64) {
 		return
 	}
 
+	// TODO: batch insert
 	for _, c := range contracts {
 		if err := dtx.createTx(c.ID, c.KeyID); err != nil {
 			dtx.logger.WithFields(log.Fields{"error": err}).Debug("can't create transaction for delayed contract")

@@ -22,6 +22,7 @@ const (
 	eTableNotFound = `Table %s has not been found`
 	eContractLoop  = `There is loop in %s contract`
 	eContractExist = `Contract %s already exists`
+	eLatin         = `Name %s must only contain latin, digit and '_', '-' characters`
 )
 
 var (
@@ -33,4 +34,5 @@ var (
 	errEmptyColumn            = errors.New(`Column name is empty`)
 	errWrongColumn            = errors.New(`Column name cannot begin with digit`)
 	errNotFound               = errors.New(`Record has not been found`)
+	errNow                    = errors.New(`It is prohibited to use NOW() or current time functions`)
 )

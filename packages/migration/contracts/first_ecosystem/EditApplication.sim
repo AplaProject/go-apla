@@ -1,0 +1,29 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract EditApplication {
+    data {
+        ApplicationId int
+        Conditions string "optional"
+    }
+    func onlyConditions() bool {
+        return $Conditions && false
+    }
+
+    conditions {
+        RowConditions("applications", $ApplicationId, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
+    }
+
+    action {
+        var pars, vals array
+        if $Conditions {
+            pars[0] = "conditions"
+            vals[0] = $Conditions
+        }
+        if Len(vals) > 0 {
+            DBUpdate("applications", $ApplicationId, Join(pars, ","), vals...)
+        }
+    }
+}

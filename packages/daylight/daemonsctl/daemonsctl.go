@@ -1,19 +1,21 @@
 package daemonsctl
 
 import (
+	"context"
+
+	"github.com/GenesisKernel/go-genesis/packages/block"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
-	"github.com/GenesisKernel/go-genesis/packages/parser"
+	"github.com/GenesisKernel/go-genesis/packages/network/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // RunAllDaemons start daemons, load contracts and tcpserver
-func RunAllDaemons() error {
+func RunAllDaemons(ctx context.Context) error {
 	if !conf.Config.IsSupportingVDE() {
 		logEntry := log.WithFields(log.Fields{"daemon_name": "block_collection"})
 
@@ -24,7 +26,7 @@ func RunAllDaemons() error {
 			return err
 		}
 
-		if data, ok := parser.GetDataFromFirstBlock(); ok {
+		if data, ok := block.GetDataFromFirstBlock(); ok {
 			syspar.SetFirstBlockData(data)
 		}
 	}
@@ -36,7 +38,7 @@ func RunAllDaemons() error {
 	}
 
 	log.Info("start daemons")
-	daemons.StartDaemons()
+	daemons.StartDaemons(ctx)
 
 	if err := tcpserver.TcpListener(conf.Config.TCPServer.Str()); err != nil {
 		log.Errorf("can't start tcp servers, stop")
