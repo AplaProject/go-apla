@@ -37,10 +37,10 @@ func TestVDECreate(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 
 	form := url.Values{
-		"VDEName":    {"tama"},
-		"DBUser":     {"tama"},
+		"VDEName":    {"myvde3"},
+		"DBUser":     {"myvde3user"},
 		"DBPassword": {"vdepassword"},
-		"VDEAPIPort": {"8094"},
+		"VDEAPIPort": {"8098"},
 	}
 	assert.NoError(t, postTx("NewVDE", &form))
 }
@@ -70,7 +70,7 @@ func TestRunVDE(t *testing.T) {
 func TestRemoveVDE(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 	form := url.Values{
-		"VDEName": {"вде"},
+		"VDEName": {"myvde3"},
 	}
 	require.NoError(t, postTx("RemoveVDE", &form))
 }
