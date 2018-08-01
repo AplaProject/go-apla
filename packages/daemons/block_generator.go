@@ -27,6 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
+	"github.com/GenesisKernel/go-genesis/packages/protocols"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -61,13 +62,14 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
-		return err
+	btc := protocols.NewBlockTimeCounter()
+	at := time.Now()
+
+	if exists, err := btc.BlockForTimeExists(at, int(nodePosition)); exists || err != nil {
+		return nil
 	}
 
-	timeToGenerate, err := blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition)
+	timeToGenerate, err := btc.TimeToGenerate(at, int(nodePosition)) //blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err, "position": nodePosition}).Debug("calculating block time")
 		return err
@@ -98,6 +100,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		publicKey:  NodePublicKey,
 		logger:     d.logger,
 	}
+
 	dtx.RunForBlockID(prevBlock.BlockID + 1)
 
 	trs, err := processTransactions(d.logger)
@@ -119,7 +122,8 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		Version:      consts.BLOCK_VERSION,
 	}
 
-	timeToGenerate, err = blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition)
+	//timeToGenerate, err = blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition) //
+	timeToGenerate, err = btc.TimeToGenerate(time.Now(), int(nodePosition))
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
 		return err
