@@ -1,0 +1,35 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract EditDelayedContract {
+	data {
+		Id int
+		Contract string
+		EveryBlock int
+		Conditions string
+		BlockID int "optional"
+		Limit int "optional"
+		Deleted int "optional"
+	}
+	conditions {
+		ConditionById("delayed_contracts", true)
+
+		if !HasPrefix($Contract, "@") {
+			$Contract = "@" + Str($ecosystem_id) + $Contract
+		}
+
+		if GetContractByName($Contract) == 0 {
+			error Sprintf("Unknown contract %s", $Contract)
+		}
+
+		if $BlockID == 0 {
+			$BlockID = $block + $EveryBlock
+		}
+
+		if $BlockID <= $block {
+			error "The blockID must be greater than the current blockID"
+		}
+	}
+	action {
+		DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,limit,deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
+	}
+}
