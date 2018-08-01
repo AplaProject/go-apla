@@ -37,10 +37,10 @@ func TestVDECreate(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 
 	form := url.Values{
-		"VDEName":    {"po666"},
-		"DBUser":     {"potier"},
+		"VDEName":    {"tama"},
+		"DBUser":     {"tama"},
 		"DBPassword": {"vdepassword"},
-		"VDEAPIPort": {"8024"},
+		"VDEAPIPort": {"8094"},
 	}
 	assert.NoError(t, postTx("NewVDE", &form))
 }
