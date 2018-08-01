@@ -2638,7 +2638,7 @@ INSERT INTO "%[1]d_contracts" ("id", "name", "value", "wallet_id", "conditions",
             $VDEName = ToLower($VDEName)
             $DBUser = ToLower($DBUser)
             CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
-            $result = "VDE" + $VDEName + "created"
+            $result = "VDE " + $VDEName + " created"
 		}
 }', %[2]d, 'ContractConditions("MainCondition")', 1),
 	('114', 'ListVDE', 'contract ListVDE {
