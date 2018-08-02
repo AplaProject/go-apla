@@ -88,6 +88,7 @@ type SmartContract struct {
 	TxCost        int64           // Maximum cost of executing contract
 	TxUsedCost    decimal.Decimal // Used cost of CPU resources
 	BlockData     *utils.BlockData
+	Loop          map[string]bool
 	TxHash        []byte
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
