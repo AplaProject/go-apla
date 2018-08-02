@@ -3,7 +3,7 @@
 package vde
 
 var contractsDataSQL = `
-INSERT INTO "%[1]d_contracts" (id, name, value, conditions)
+INSERT INTO "%[1]d_contracts" (id, name, value, conditions, app_id)
 VALUES
 	(next_id('%[1]d_contracts'), 'AppendMenu', 'contract AppendMenu {
 	data {
@@ -19,7 +19,7 @@ VALUES
 		DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
 	}
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'AppendPage', 'contract AppendPage {
 	data {
 		Id         int
@@ -41,7 +41,7 @@ VALUES
 		DBUpdate("pages", $Id, "value",  value )
 	}
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditBlock', 'contract EditBlock {
     data {
         Id int
@@ -74,7 +74,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditColumn', 'contract EditColumn {
     data {
         TableName string
@@ -90,7 +90,7 @@ VALUES
         PermColumn($TableName, $Name, $Permissions)
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditContract', 'contract EditContract {
     data {
         Id int
@@ -134,7 +134,7 @@ VALUES
         RollbackEditContract()
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditCron', 'contract EditCron {
 		data {
 			Id         int
@@ -160,7 +160,7 @@ VALUES
 			UpdateCron($Id)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditLang', 'contract EditLang {
     data {
         Id int
@@ -176,7 +176,7 @@ VALUES
         EditLanguage($Id, $lang["name"], $Trans, Int($lang["app_id"]))
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditMenu', 'contract EditMenu {
     data {
         Id int
@@ -214,7 +214,7 @@ VALUES
         }            
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditPage', 'contract EditPage {
     data {
         Id int
@@ -279,7 +279,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditParameter', 'contract EditParameter {
     data {
         Id int
@@ -312,7 +312,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditTable', 'contract EditTable {
     data {
         Name string
@@ -348,7 +348,7 @@ VALUES
         PermTable($Name, JSONEncode($Permissions))
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'Import', 'contract Import {
     data {
         Data string
@@ -442,7 +442,7 @@ VALUES
         // Println(Sprintf("> time: %%v", $time))
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'ListVDE', 'contract ListVDE {
 		data {}
 	
@@ -452,7 +452,7 @@ VALUES
 			return GetVDEList()
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'MainCondition', 'contract MainCondition {
 		conditions {
 		  if EcosysParam("founder_account")!=$key_id
@@ -461,7 +461,7 @@ VALUES
 		  }
 		}
 	  }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewBlock', 'contract NewBlock {
     data {
         ApplicationId int
@@ -486,7 +486,7 @@ VALUES
         DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId)
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewColumn', 'contract NewColumn {
     data {
         TableName string
@@ -507,7 +507,7 @@ VALUES
         return SysParamInt("column_price")
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewContract', 'contract NewContract {
     data {
         ApplicationId int
@@ -557,7 +557,7 @@ VALUES
         return SysParamInt("contract_price")
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewCron', 'contract NewCron {
 		data {
 			Cron       string
@@ -582,7 +582,7 @@ VALUES
 			UpdateCron($result)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewLang', 'contract NewLang {
     data {
         ApplicationId int
@@ -606,7 +606,7 @@ VALUES
         CreateLanguage($Name, $Trans, $ApplicationId)
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewMenu', 'contract NewMenu {
     data {
         Name string
@@ -630,7 +630,7 @@ VALUES
         return SysParamInt("menu_price")
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewPage', 'contract NewPage {
     data {
         ApplicationId int
@@ -683,7 +683,7 @@ VALUES
         return SysParamInt("page_price")
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewParameter', 'contract NewParameter {
     data {
         Name string
@@ -703,7 +703,7 @@ VALUES
         DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions)
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewTable', 'contract NewTable {
     data {
         ApplicationId int
@@ -728,7 +728,7 @@ VALUES
         return SysParamInt("table_price")
     }
 }
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewUser', 'contract NewUser {
 	data {
 		NewPubkey string
@@ -749,7 +749,7 @@ VALUES
         SetPubKey($newId, StringToBytes($NewPubkey))
 	}
 }
-', 'ContractConditions("NodeOwnerCondition")'),
+', 'ContractConditions("NodeOwnerCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewVDE', 'contract NewVDE {
 		data {
 			VDEName string
@@ -765,7 +765,7 @@ VALUES
 			CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'RemoveVDE', 'contract RemoveVDE {
 		data {
 			VDEName string
@@ -775,7 +775,7 @@ VALUES
 			DeleteVDE($VDEName)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'RunVDE', 'contract RunVDE {
 		data {
 			VDEName string
@@ -788,7 +788,7 @@ VALUES
 			StartVDE($VDEName)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'StopVDE', 'contract StopVDE {
 		data {
 			VDEName string
@@ -801,7 +801,7 @@ VALUES
 			StopVDEProcess($VDEName)
 		}
 	}
-', 'ContractConditions("MainCondition")'),
+', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'UploadBinary', 'contract UploadBinary {
     data {
         ApplicationId int
@@ -836,5 +836,5 @@ VALUES
         $result = $Id
 }
 }
-', 'ContractConditions("MainCondition")');
+', 'ContractConditions("MainCondition")', 1);
 `
