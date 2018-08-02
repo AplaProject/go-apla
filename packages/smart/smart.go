@@ -462,7 +462,7 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 			log.WithFields(log.Fields{"contract_name": names, "contract_id": item["id"], "contract_active": item["active"]}).Info("OK Loading Contract")
 		}
 	}
-	LoadVDEContracts(transaction, prefix)
+
 	return
 }
 

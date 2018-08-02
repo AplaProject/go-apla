@@ -11,6 +11,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/protocols"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -256,20 +257,15 @@ func (b *Block) Check() error {
 
 		// skip time validation for first block
 		if b.Header.BlockID > 1 {
-			blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
-				return err
-			}
 
-			validBlockTime, err := blockTimeCalculator.ValidateBlock(b.Header.NodePosition, time.Unix(b.Header.Time, 0))
+			exists, err := protocols.NewBlockTimeCounter().BlockForTimeExists(time.Unix(b.Header.Time, 0), int(b.Header.NodePosition))
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
 				return err
 			}
 
-			if !validBlockTime {
-				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("incorrect block time")
+			if exists {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Warn("incorrect block time")
 				return utils.ErrInfo(fmt.Errorf("incorrect block time %d", b.PrevHeader.Time))
 			}
 		}
