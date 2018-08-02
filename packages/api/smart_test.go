@@ -916,11 +916,11 @@ func TestPageHistory(t *testing.T) {
 		}
 		action {
 			var ret array
-			ret = GetPageHistory($IdPage)
+			ret = GetHistory("pages", $IdPage)
 			$result = Str(Len(ret))
-			ret = GetMenuHistory($IdMenu)
+			ret = GetHistory("menu", $IdMenu)
 			$result = $result + Str(Len(ret))
-			ret = GetContractHistory($IdCont)
+			ret = GetHistory("contracts", $IdCont)
 			$result = $result + Str(Len(ret))
 		}
 	}`}, "ApplicationId": {`1`}, `Conditions`: {`true`}}
@@ -933,9 +933,9 @@ func TestPageHistory(t *testing.T) {
 		action {
 			var ret array
 			var row got map
-			ret = GetPageHistory($IdPage)
+			ret = GetHistory("pages", $IdPage)
 			row = ret[1]
-			got = GetPageHistoryRow($IdPage, Int(row["id"]))
+			got = GetHistoryRow("pages", $IdPage, Int(row["id"]))
 			if got["block_id"] != row["block_id"] {
 				error "GetPageHistory"
 			}
@@ -961,7 +961,7 @@ func TestPageHistory(t *testing.T) {
 	assert.NoError(t, postTx(`GetRow`+name, &url.Values{"IdPage": {id}}))
 
 	var retTemp contentResult
-	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {fmt.Sprintf(`GetPageHistory(MySrc,%s)`,
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {fmt.Sprintf(`GetHistory(MySrc, "pages", %s)`,
 		id)}}, &retTemp))
 
 	if len(RawToString(retTemp.Tree)) < 400 {
