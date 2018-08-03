@@ -131,7 +131,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		txHashes = append(txHashes, btx.TxHash)
 	}
 
-	storedTxes, err := model.GetTxesByHashlist(nil /*dbTransaction*/, txHashes)
+	storedTxes, err := model.GetTxesByHashlist(dbTransaction, txHashes)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting txes by hashlist")
 		return err
@@ -144,7 +144,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		)
 		t.DbTransaction = dbTransaction
 
-		model.IncrementTxAttemptCount( /*dbTransaction */ nil, t.TxHash)
+		model.IncrementTxAttemptCount(dbTransaction, t.TxHash)
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
