@@ -460,6 +460,7 @@ func TestUpdateFullNodesWithEmptyArray(t *testing.T) {
 	require.NoError(t, postTx(`UpdateSysParam`, form))
 }
 
+/*
 func TestHelper_InsertNodeKey(t *testing.T) {
 
 	if err := keyLogin(1); err != nil {
@@ -499,7 +500,7 @@ func TestHelper_InsertNodeKey(t *testing.T) {
 		require.NoError(t, postTx(`InsertNodeKey`, &frm))
 	}
 }
-
+*/
 func TestValidateConditions(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
