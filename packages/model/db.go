@@ -171,8 +171,7 @@ func Update(transaction *DbTransaction, tblname, set, where string) error {
 
 // Delete is deleting table rows
 func Delete(transaction *DbTransaction, tblname, where string) error {
-	//GetDB(transaction)
-	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
+	return GetDB(transaction).Exec(`DELETE FROM "` + tblname + `" ` + where).Error
 }
 
 // GetColumnCount is counting rows in table

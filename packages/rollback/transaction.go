@@ -52,7 +52,7 @@ func rollbackUpdatedRow(tx map[string]string, where string, dbTransaction *model
 }
 
 func rollbackInsertedRow(tx map[string]string, where string, dbTransaction *model.DbTransaction, logger *log.Entry) error {
-	if err := model.Delete(nil /*dbTransaction*/, tx["table_name"], where); err != nil {
+	if err := model.Delete(dbTransaction, tx["table_name"], where); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting from table")
 		return err
 	}

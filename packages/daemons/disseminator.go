@@ -43,8 +43,8 @@ const (
 // if we are full node(miner): sends blocks and transactions hashes
 // else send the full transactions
 func Disseminator(ctx context.Context, d *daemon) error {
-	//	DBLock()
-	//	defer DBUnlock()
+	DBLock()
+	defer DBUnlock()
 
 	isFullNode := true
 	myNodePosition, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
