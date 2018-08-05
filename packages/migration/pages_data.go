@@ -3,173 +3,185 @@ package migration
 var pagesDataSQL = `INSERT INTO "%[1]d_pages" (id, name, value, menu, conditions) VALUES
 	(2, 'admin_dashboard', 'SetVar(this_page,admin_dashboard)
 If(GetVar(block)){
-	Div(breadcrumb){
-		LinkPage(Body:Dashboard,Page:#this_page#)
-		Span(/).Style(margin-right: 10px; margin-left: 10px;)
-		Span(Class: text-muted, Body: Block: #block#)
-	}
-	Include(Name:#block#)
+    Div(breadcrumb){
+        LinkPage(Body:Dashboard,Page:#this_page#)
+        Span(/).Style(margin-right: 10px; margin-left: 10px;)
+        Span(Class: text-muted, Body: Block: #block#)
+    }
+    Include(Name:#block#)
 }.Else{
-	SetTitle(Dashboard)
-	DBFind(buffer_data).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
+    SetTitle(Dashboard)
+    DBFind(buffer_data).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 
-	Data(tables, "Table,Cols,Page"){
-		contracts,"id,app_id,name,active",editor
-		pages,"id,app_id,name",editor
-		blocks,"id,app_id,name",editor
-		tables,"id,app_id,name",table_create
-		app_params,"id,app_id,name,value",app_params_edit
-		binaries,"id,app_id,name",app_upload_binary
-		languages,"id,app_id,name",langres_add
-	}
-	DBFind(applications,src_apps).Order(id).Count(apps_count)
-	SetVar(active_btn,"btn btn-info").(create_icon,fa fa-plus-square).(cols,3)
-	If(GetVar(appid)){
-		SetVar(where,"app_id=#appid#")
-	}.Else{
-		If(#buffer_value_app_id#>0){
-			SetVar(appid,#buffer_value_app_id#).(where,"app_id=#appid#")
-		}.Else{
-			SetVar(where,"id>0").(appid,)
-		}
-	}
-	Div(container){
-		If(#apps_count#>8){
-			Div(row){
-				Form(col-sm-4 input-group form-group){
-					Div(input-group-addon){
-						App ID: #appid#
-					}
-					Select(Name:appid, Source:src_apps, NameColumn:name, ValueColumn:id, Value:#appid#)
-					Div(input-group-btn){
-						Button(Page: #this_page#, Class: #active_btn# fa fa-check, PageParams: "appid=Val(appid)")
-						Button(Page: #this_page#, Class: btn btn-default fa fa-refresh, PageParams: "appid=#buffer_value_app_id#")
-					}
-				}
-			}
-		}.Else{
-			Div(row){
-				Div(col-sm-12 btn-group){
-					ForList(src_apps){
-						If(#id#==1){
-							If(#appid#==#buffer_value_app_id#){
-								Button(Class: btn btn-default disabled fa fa-refresh)
-							}.Else{
-								Button(Page: #this_page#, Class: btn btn-default fa fa-refresh, PageParams: "appid=#buffer_value_app_id#")
+    Data(tables, "Table,Cols,Page"){
+        contracts,"id,app_id,name,active",editor
+        pages,"id,app_id,name",editor
+        blocks,"id,app_id,name",editor
+        tables,"id,app_id,name",table_create
+        app_params,"id,app_id,name,value",app_params_edit
+        binaries,"id,app_id,name",app_upload_binary
+        languages,"id,app_id,name",langres_add
+    }
+    DBFind(applications,src_apps).Order(id).Count(apps_count)
+    SetVar(active_btn,"btn btn-info").(create_icon,fa fa-plus-square).(cols,3)
+    If(GetVar(appid)){
+        SetVar(where,"app_id=#appid#")
+    }.Else{
+        If(#buffer_value_app_id#>0){
+            SetVar(appid,#buffer_value_app_id#).(where,"app_id=#appid#")
+        }.Else{
+            SetVar(where,"id>0").(appid,)
+        }
+    }
+    Div(content-wrapper){
+        If(#apps_count#>8){
+            Div(row){
+                Form(col-sm-4 input-group form-group){
+                    Div(input-group-addon){
+                        App ID: #appid#
+                    }
+                    Select(Name:appid, Source:src_apps, NameColumn:name, ValueColumn:id, Value:#appid#)
+                    Div(input-group-btn){
+                        LinkPage(Page: #this_page#, Class: #active_btn# fa fa-check, PageParams: "appid=Val(appid)")
+                        LinkPage(Page: #this_page#, Class: btn btn-default fa fa-refresh, PageParams: "appid=#buffer_value_app_id#")
+                    }
+                }
+            }
+        }.Else{
+            Div(row){
+                Div(col-sm-12 btn-group){
+                    ForList(src_apps){
+                        If(#appid#==#id#){
+                            LinkPage(Class: #active_btn# disabled, Body:"#id#:#name#")
+                        }.Else{
+                            LinkPage(Page: #this_page#, Class: btn btn-default, PageParams: "appid=#id#", Body:"#id#:#name#")
+                        }
+                    }
+                }
+            }
+        }
+		Div(content-wrapper){
+			Div(form-group){
+				ForList(tables){
+					DBFind(#Table#, src_table).Limit(250).Columns(#Cols#).Order("name").Where(#where#)
+					Div(row){
+						Div(h3){
+							If(#Table#==contracts){
+								Span(Contracts)
+							}
+							If(#Table#==pages){
+								Span(Pages)
+							}
+							If(#Table#==blocks){
+								Span(Blocks)
+							}
+							If(#Table#==tables){
+								Span(Tables)
+							}
+							If(#Table#==app_params){
+								Span(Application parameters)
+							}
+							If(#Table#==binaries){
+								Span(Binaries)
+							}
+							If(#Table#==languages){
+								Span(Languages)
 							}
 						}
-						If(#appid#==#id#){
-							Button(Class: #active_btn# disabled, Body:"#id#:#name#")
-						}.Else{
-							Button(Page: #this_page#, Class: btn btn-default, PageParams: "appid=#id#", Body:"#id#:#name#")
-						}
 					}
-				}
-			}
-		}
-		Div(form-group){
-			ForList(tables){
-				DBFind(#Table#, src_table).Limit(250).Columns(#Cols#).Order("name").Where(#where#)
-				Div(row){
-					Div(h3){
-						LangRes(#Table#)
-					}
-				}
-				Div(row list-group-item){
-					Div(cols){
-						SetVar(value,)
-						ForList(src_table){
-							Div(clearfix){
-								If(#Table#==contracts){
-									LinkPage(Page: #Page#, PageParams: "open=contract,name=#name#"){#name#}
-								}
-								If(#Table#==pages){
-									LinkPage(Page: #Page#, PageParams: "open=page,name=#name#"){#name#}
-								}
-								If(#Table#==blocks){
-									LinkPage(Page: #Page#, PageParams: "open=block,name=#name#"){#name#}
-								}
-								If(#Table#==tables){
-									LinkPage(Page: table_edit, PageParams: "tabl_id=#id#"){#name#}
-								}
-								If(#Table#==app_params){
-									LinkPage(Page: #Page#, PageParams: "id=#id#"){#name#}
-								}
-								If(#Table#==binaries){
-									LinkPage(Page: #Page#, PageParams: "id=#id#,application_id=#appid#"){#name#}
-								}
-								If(#Table#==languages){
-									LinkPage(Class: text-primary h4, Page: langres_edit, PageParams: "lang_id=#id#"){#name#}
-								}
-								If(` + "`" + `#value#` + "`" + `!=""){
-									:Div(text-muted){` + "`" + `#value#` + "`" + `}.Style(max-height:1.5em;overflow:hidden;)
-								}
-								Div(pull-right){
+					Div(row list-group-item){
+						Div(cols){
+							SetVar(value,)
+							ForList(src_table){
+								Div(clearfix){
 									If(#Table#==contracts){
-										If(#active#==1){
-											Span(actived,text-success mr-lg)
-										}
-										LinkPage(Class: text-muted fa fa-cogs, Page: properties_edit, PageParams: "edit_property_id=#id#,type=contract")
+										LinkPage(Page: #Page#, PageParams: "open=contract,name=#name#"){#name#}
 									}
 									If(#Table#==pages){
-										LinkPage(Class: text-muted fa fa-eye, Page: #name#)
-										LinkPage(Class: text-muted fa fa-cogs, Page: properties_edit, PageParams: "edit_property_id=#id#,type=page")
+										LinkPage(Page: #Page#, PageParams: "open=page,name=#name#"){#name#}
 									}
 									If(#Table#==blocks){
-										LinkPage(Class: text-muted fa fa-eye, Page: #this_page#, PageParams:"block=#name#")
-										LinkPage(Class: text-muted fa fa-cogs, Page: properties_edit, PageParams: "edit_property_id=#id#,type=block")
+										LinkPage(Page: #Page#, PageParams: "open=block,name=#name#"){#name#}
 									}
 									If(#Table#==tables){
-										LinkPage(Class: text-muted fa fa-eye, Page: table_view, PageParams: "tabl_id=#id#,table_name=#name#")
+										LinkPage(Page: table_edit, PageParams: "tabl_id=#id#"){#name#}
+									}
+									If(#Table#==app_params){
+										LinkPage(Page: #Page#, PageParams: "id=#id#"){#name#}
+									}
+									If(#Table#==binaries){
+										LinkPage(Page: #Page#, PageParams: "id=#id#,application_id=#appid#"){#name#}
+									}
+									If(#Table#==languages){
+										LinkPage(Class: text-primary h4, Page: langres_edit, PageParams: "lang_id=#id#"){#name#}
+									}
+									Div(pull-right){
+										If(#Table#==contracts){
+											If(#active#==1){
+												Span(actived,text-success mr-lg)
+											}
+											LinkPage(Class: text-muted fa fa-cogs, Page: properties_edit, PageParams: "edit_property_id=#id#,type=contract")
+										}
+										If(#Table#==pages){
+											LinkPage(Class: text-muted fa fa-eye, Page: #name#)
+											LinkPage(Class: text-muted fa fa-cogs, Page: properties_edit, PageParams: "edit_property_id=#id#,type=page")
+										}
+										If(#Table#==blocks){
+											LinkPage(Class: text-muted fa fa-eye, Page: #this_page#, PageParams:"block=#name#")
+											LinkPage(Class: text-muted fa fa-cogs, Page: properties_edit, PageParams: "edit_property_id=#id#,type=block")
+										}
+										If(#Table#==tables){
+											LinkPage(Class: text-muted fa fa-eye, Page: table_view, PageParams: "tabl_id=#id#,table_name=#name#")
+										}
 									}
 								}
 							}
 						}
-					}
-					Div(row col-sm-12 mt-lg text-right){
-						If(#Table#==contracts){
-							LinkPage(Page: #Page#, PageParams: "create=contract,appId=#appid#"){
-								Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
-							}
-						}.ElseIf(#Table#==pages){
-							LinkPage(Page: #Page#, PageParams: "create=page,appId=#appid#"){
-								Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
-							}
-						}.ElseIf(#Table#==blocks){
-							LinkPage(Page: #Page#, PageParams: "create=block,appId=#appid#"){
-								Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
-							}
-						}.ElseIf(#Table#==tables){
-							LinkPage(Page: #Page#, PageParams: "application_id=#appid#"){
-								Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
-							}
-						}.ElseIf(#Table#==app_params){
-							LinkPage(Page: #Page#, PageParams: "application_id=#appid#,create=create"){
-								Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
-							}
-						}.ElseIf(#Table#==binaries){
-							LinkPage(Page: #Page#, PageParams: "application_id=#appid#"){
-								Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
-							}
-						}.ElseIf(#Table#==languages){
-							LinkPage(Page: #Page#, PageParams: "application_id=#appid#"){
-								Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
+						Div(row col-sm-12 mt-lg text-right){
+							If(#Table#==contracts){
+								LinkPage(Page: #Page#, PageParams: "create=contract,appId=#appid#"){
+									Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
+								}
+							}.ElseIf(#Table#==pages){
+								LinkPage(Page: #Page#, PageParams: "create=page,appId=#appid#"){
+									Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
+								}
+							}.ElseIf(#Table#==blocks){
+								LinkPage(Page: #Page#, PageParams: "create=block,appId=#appid#"){
+									Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
+								}
+							}.ElseIf(#Table#==tables){
+								LinkPage(Page: #Page#, PageParams: "application_id=#appid#"){
+									Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
+								}
+							}.ElseIf(#Table#==app_params){
+								LinkPage(Page: #Page#, PageParams: "application_id=#appid#,create=create"){
+									Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
+								}
+							}.ElseIf(#Table#==binaries){
+								LinkPage(Page: #Page#, PageParams: "application_id=#appid#"){
+									Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
+								}
+							}.ElseIf(#Table#==languages){
+								LinkPage(Page: #Page#, PageParams: "application_id=#appid#"){
+									Em(Class: #create_icon#) CREATE Em(Class: #create_icon#)
+								}
 							}
 						}
 					}
 				}
 			}
 		}
-	}.Style(
-		.pull-right a {
-			margin-right:10px;
-		}
-		.cols {
-			-moz-column-count: #cols#;
-			-webkit-column-count: #cols#;
-			column-count: #cols#;
-		}
-	)
+    }.Style(
+        .pull-right a {
+            margin-right:10px;
+        }
+        .cols {
+            -moz-column-count: #cols#;
+            -webkit-column-count: #cols#;
+            column-count: #cols#;
+        }
+    )
 }', 'admin_menu', 'ContractAccess("@1EditPage")'),
 	(3, 'app_binary', 'DBFind(buffer_data, src_buffer).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 If(#buffer_value_app_id# > 0){
