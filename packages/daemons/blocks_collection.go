@@ -147,6 +147,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		}
 
 		if !hashMatched {
+			transaction.CleanCache()
 			//it should be fork, replace our previous blocks to ones from the host
 			err = GetBlocks(ctx, bl.Header.BlockID-1, host)
 			if err != nil {
