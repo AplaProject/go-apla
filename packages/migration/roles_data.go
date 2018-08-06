@@ -4,7 +4,8 @@ var rolesDataSQL = `
 INSERT INTO "%[1]d_roles" ("id", "default_page", "role_name", "deleted", "role_type",
 	"date_created","creator","roles_access") VALUES
 	('1','', 'Administrator', '0', '3', NOW(), '{}', '{"rids":"1"}'),
-	('2','', 'Extended user', '0', '1', NOW(), '{}', '{"rids":"1"}');
+	('2','', 'Extended user', '0', '1', NOW(), '{}', '{"rids":"1"}'),
+	('3','', 'Apla Consensus', '0', '3', NOW(), '{}', '{"rids":"1"}');
 
 	INSERT INTO "%[1]d_roles_participants" ("id","role" ,"member", "date_created")
 	VALUES ('1', '{"id": "1", "type": "3", "name": "Administrator", "image_id":"0"}', '{"member_id": "%[2]d", "member_name": "founder", "image_id": "0"}', NOW());
