@@ -82,6 +82,10 @@ func TestEditEcosystem(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	form = url.Values{"Name": {name}, "Value": {`MenuItem(default_page)`}, "ApplicationId": {`1`},
+		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`@1NewMenu`, &form))
+
 	form = url.Values{"Id": {`1`}, "Value": {value},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	err = postTx(`@1EditPage`, &form)
@@ -114,6 +118,10 @@ func TestEditEcosystem(t *testing.T) {
 	assert.NoError(t, sendPost(`content/page/@2`+name, &url.Values{}, &ret))
 	if RawToString(ret.Tree) != `[{"tag":"p","attr":{"class":"test paragraph"},"children":[{"tag":"text","text":"test"}]}]` {
 		t.Errorf(`%s != %s`, RawToString(ret.Tree), `[{"tag":"p","attr":{"class":"test paragraph"},"children":[{"tag":"text","text":"test"}]}]`)
+	}
+	assert.NoError(t, sendPost(`content/menu/@2`+name, &url.Values{}, &ret))
+	if RawToString(ret.Tree) != `[{"tag":"menuitem","attr":{"title":"default_page"}}]` {
+		t.Errorf(`%s != %s`, RawToString(ret.Tree), `[{"tag":"menuitem","attr":{"title":"default_page"}}]`)
 	}
 }
 

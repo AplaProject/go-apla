@@ -131,12 +131,12 @@ func pageValue(w http.ResponseWriter, data *apiData, logger *log.Entry) (*model.
 }
 
 func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	page, prefix, err := pageValue(w, data, logger)
+	page, _, err := pageValue(w, data, logger)
 	if err != nil {
 		return err
 	}
 	menu := &model.Menu{}
-	menu.SetTablePrefix(prefix)
+	menu.SetTablePrefix(getPrefix(data))
 	_, err = menu.Get(page.Menu)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page menu")
@@ -203,9 +203,22 @@ func getPageHash(w http.ResponseWriter, r *http.Request, data *apiData, logger *
 }
 
 func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	var ecosystem string
 	menu := &model.Menu{}
-	menu.SetTablePrefix(getPrefix(data))
-	found, err := menu.Get(data.params[`name`].(string))
+	name := data.params[`name`].(string)
+	if strings.HasPrefix(name, `@`) {
+		ecosystem, name = parseEcosystem(name)
+		if len(name) == 0 {
+			logger.WithFields(log.Fields{"type": consts.NotFound,
+				"value": data.params[`name`].(string)}).Error("page not found")
+			return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		}
+	} else {
+		ecosystem = getPrefix(data)
+	}
+
+	menu.SetTablePrefix(ecosystem)
+	found, err := menu.Get(name)
 
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
