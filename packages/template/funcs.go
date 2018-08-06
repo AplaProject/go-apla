@@ -277,8 +277,18 @@ func forlistTag(par parFunc) (ret string) {
 				}
 			}
 		}
-		body := macroReplace((*par.Pars)[`Data`], &vals)
-		process(body, &root, par.Workspace)
+		for key, item := range vals {
+			(*par.Workspace.Vars)[key] = item
+		}
+		process((*par.Pars)[`Data`], &root, par.Workspace)
+		for _, item := range root.Children {
+			if item.Tag == `text` {
+				item.Text = macroReplace(item.Text, par.Workspace.Vars)
+			}
+		}
+		for key := range vals {
+			delete(*par.Workspace.Vars, key)
+		}
 	}
 	par.Node.Children = root.Children
 	par.Owner.Children = append(par.Owner.Children, par.Node)
