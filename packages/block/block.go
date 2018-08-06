@@ -204,7 +204,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
 		}
 
-		model.DecrementTxAttemptCount(nil, t.TxHash)
+		model.DecrementTxAttemptCount(dbTransaction, t.TxHash)
 
 		if t.SysUpdate {
 			b.SysUpdate = true
