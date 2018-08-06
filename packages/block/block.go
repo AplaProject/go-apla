@@ -154,13 +154,13 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		t.DbTransaction = dbTransaction
 		t.Rand = randBlock
 
+		model.IncrementTxAttemptCount(dbTransaction, t.TxHash)
+
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
 		}
-
-		model.IncrementTxAttemptCount(nil, t.TxHash)
 		if stx, ok := storedTxes[string(t.TxHash)]; ok {
 			if stx.Attempt >= consts.MaxTXAttempt-1 {
 				txString := fmt.Sprintf("tx_hash: %s, tx_data: %s, tx_attempt: %d", stx.Hash, stx.Data, stx.Attempt)
@@ -204,7 +204,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
 		}
 
-		model.DecrementTxAttemptCount(nil, t.TxHash)
+		model.DecrementTxAttemptCount(dbTransaction, t.TxHash)
 
 		if t.SysUpdate {
 			b.SysUpdate = true
