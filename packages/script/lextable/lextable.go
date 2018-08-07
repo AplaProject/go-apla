@@ -33,7 +33,7 @@ type States map[string]Action
 
 const (
 	// AlphaSize is the length of alphabet
-	AlphaSize = 33
+	AlphaSize = 34
 )
 
 /* Здесь мы определяем алфавит, с которым будет работать наш язык и описываем конечный автомат, который

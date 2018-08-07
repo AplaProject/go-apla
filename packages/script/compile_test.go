@@ -540,6 +540,20 @@ func TestVMCompile(t *testing.T) {
 			where["name"] = {"$in": "menus_names"}
 			return Sprintf("%v", where)
 		 }`, `test`, `map[name:map[$in:menus_names]]`},
+		{`contract TestCyr {
+			data {}
+			conditions { }
+			action {
+			   //тест
+			   var a map
+			   a["тест"] = "тест"
+			   $result = a["тест"]
+			}
+		}
+		func result() string {
+			var par map
+			return CallContract("TestCyr", par) 
+		}`, `result`, `тест`},
 	}
 	vm := NewVM()
 	vm.Extern = true

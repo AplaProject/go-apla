@@ -93,6 +93,18 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`TestCyr`, `contract TestCyr {
+		data {}
+		conditions { }
+		action {
+		   //тест
+		   var a map
+		   a["тест"] = "тест"
+		   Test("ok", a["тест"])
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`ok`: `тест`}},
+	}},
 	{`DBFindLike`, `contract DBFindLike {
 		action {
 			var list array
@@ -426,7 +438,7 @@ var contracts = []smartContract{
 				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
 		[]smartParams{
 			{nil, map[string]string{`ByName`: `0 2`,
-				`ById`: `NewColumn`}},
+				`ById`: `EditLang`}},
 		}},
 }
 
