@@ -75,6 +75,7 @@ func Route(route *hr.Router) {
 	post(`prepare/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, contractHandlers.prepareContract)
 	post(`prepareMultiple`, `data:string`, authWallet, contractHandlers.prepareMultipleContract)
 	post(`txstatusMultiple`, `data:string`, authWallet, txstatusMulti)
+	post(`sendTx`, ``, authWallet, sendTx)
 	post(`contract/:request_id`, `?pubkey signature:hex, time:string, ?token_ecosystem:int64,?max_sum ?payover:string`, authWallet, blockchainUpdatingState, contractHandlers.contract)
 	post(`contractMultiple/:request_id`, `data:string`, authWallet, blockchainUpdatingState, contractHandlers.contractMulti)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
