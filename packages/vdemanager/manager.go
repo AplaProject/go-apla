@@ -354,8 +354,13 @@ func directoryExists(path string) bool {
 }
 
 func checkVDEName(name string) error {
+
 	name = strings.ToLower(name)
-	for _, c := range name {
+
+	for i, c := range name {
+		if unicode.IsDigit(c) && i == 0 {
+			return fmt.Errorf("the name can not begin with a number")
+		}
 		if !unicode.IsDigit(c) && !unicode.Is(unicode.Latin, c) {
 			return fmt.Errorf("Incorrect symbol")
 		}
