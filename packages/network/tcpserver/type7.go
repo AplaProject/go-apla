@@ -37,13 +37,17 @@ func Type7(request *network.GetBodiesRequest, w net.Conn) error {
 	} else {
 		blocks, err = block.GetBlocksFrom(int64(request.BlockID-1), "ASC", network.BlocksPerRequest)
 	}
+
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_id": request.BlockID}).Error("Error getting 1000 blocks from block_id")
+		if err := network.WriteInt(0, w); err != nil {
+			log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending 0 requested blocks")
+		}
 		return err
 	}
 
-	if len(blocks) == 0 {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_id": request.BlockID}).Warn("Requesting nonexistent blocks from block_id")
+	if err := network.WriteInt(int64(len(blocks)), w); err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending requested blocks count")
 		return err
 	}
 
