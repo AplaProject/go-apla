@@ -58,4 +58,5 @@ const (
 	VDEManagerError          = "VDEManagerError"
 	TCPClientError           = "TCPClientError"
 	BadTxError               = "BadTxError"
+	TimeCalcError            = "BlockTimeCounterError"
 )

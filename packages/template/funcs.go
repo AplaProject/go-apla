@@ -63,14 +63,8 @@ func init() {
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
-	funcs[`GetContractHistory`] = tplFunc{getContractHistoryTag, defaultTag, `getcontracthistory`,
-		`Source,Id,RollbackId`}
-	funcs[`GetMenuHistory`] = tplFunc{getMenuHistoryTag, defaultTag, `getmenuhistory`,
-		`Source,Id,RollbackId`}
-	funcs[`GetBlockHistory`] = tplFunc{getBlockHistoryTag, defaultTag, `getblockhistory`,
-		`Source,Id,RollbackId`}
-	funcs[`GetPageHistory`] = tplFunc{getPageHistoryTag, defaultTag, `getpagehistory`,
-		`Source,Id,RollbackId`}
+	funcs[`GetHistory`] = tplFunc{getHistoryTag, defaultTag, `gethistory`,
+		`Source,Name,Id,RollbackId`}
 	funcs[`Hint`] = tplFunc{defaultTag, defaultTag, `hint`, `Icon,Title,Text`}
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
@@ -1246,13 +1240,17 @@ func columntypeTag(par parFunc) string {
 	return ``
 }
 
-func getHistoryTag(par parFunc, table string) string {
+func getHistoryTag(par parFunc) string {
 	setAllAttr(par)
 	var rollID int64
 	if len((*par.Pars)["RollbackId"]) > 0 {
 		rollID = converter.StrToInt64(macro((*par.Pars)[`RollbackId`], par.Workspace.Vars))
 	}
-	list, err := smart.GetHistory(nil, converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]),
+	if len((*par.Pars)["Name"]) == 0 {
+		return ``
+	}
+	table := macro((*par.Pars)["Name"], par.Workspace.Vars)
+	list, err := smart.GetHistoryRaw(nil, converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]),
 		table, converter.StrToInt64(macro((*par.Pars)[`Id`], par.Workspace.Vars)), rollID)
 	if err != nil {
 		return err.Error()
@@ -1286,20 +1284,4 @@ func getHistoryTag(par parFunc, table string) string {
 	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
-}
-
-func getContractHistoryTag(par parFunc) string {
-	return getHistoryTag(par, `contracts`)
-}
-
-func getBlockHistoryTag(par parFunc) string {
-	return getHistoryTag(par, `blocks`)
-}
-
-func getMenuHistoryTag(par parFunc) string {
-	return getHistoryTag(par, `menu`)
-}
-
-func getPageHistoryTag(par parFunc) string {
-	return getHistoryTag(par, `pages`)
 }

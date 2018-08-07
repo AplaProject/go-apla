@@ -88,6 +88,7 @@ type SmartContract struct {
 	TxCost        int64           // Maximum cost of executing contract
 	TxUsedCost    decimal.Decimal // Used cost of CPU resources
 	BlockData     *utils.BlockData
+	Loop          map[string]bool
 	TxHash        []byte
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
@@ -260,14 +261,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"GetMapKeys":                   GetMapKeys,
 		"SortedKeys":                   SortedKeys,
 		"Append":                       Append,
-		"GetPageHistory":               GetPageHistory,
-		"GetBlockHistory":              GetBlockHistory,
-		"GetMenuHistory":               GetMenuHistory,
-		"GetContractHistory":           GetContractHistory,
-		"GetPageHistoryRow":            GetPageHistoryRow,
-		"GetBlockHistoryRow":           GetBlockHistoryRow,
-		"GetMenuHistoryRow":            GetMenuHistoryRow,
-		"GetContractHistoryRow":        GetContractHistoryRow,
+		"GetHistory":                   GetHistory,
+		"GetHistoryRow":                GetHistoryRow,
 		"GetDataFromXLSX":              GetDataFromXLSX,
 		"GetRowsCountXLSX":             GetRowsCountXLSX,
 		"BlockTime":                    BlockTime,
@@ -1801,7 +1796,7 @@ func GetVDEList(sc *SmartContract) map[string]string {
 	return list
 }
 
-func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName string,
+func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName string,
 	id, idRollback int64) ([]interface{}, error) {
 	table := fmt.Sprintf(`%d_%s`, ecosystem, tableName)
 	rows, err := model.GetDB(transaction).Table(table).Where("id=?", id).Rows()
@@ -1883,25 +1878,13 @@ func GetHistory(transaction *model.DbTransaction, ecosystem int64, tableName str
 	return rollbackList, nil
 }
 
-func GetBlockHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `blocks`, id, 0)
-}
-
-func GetPageHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `pages`, id, 0)
-}
-
-func GetMenuHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `menu`, id, 0)
-}
-
-func GetContractHistory(sc *SmartContract, id int64) ([]interface{}, error) {
-	return GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, `contracts`, id, 0)
+func GetHistory(sc *SmartContract, tableName string, id int64) ([]interface{}, error) {
+	return GetHistoryRaw(sc.DbTransaction, sc.TxSmart.EcosystemID, tableName, id, 0)
 }
 
 func GetHistoryRow(sc *SmartContract, tableName string, id, idRollback int64) (map[string]interface{},
 	error) {
-	list, err := GetHistory(sc.DbTransaction, sc.TxSmart.EcosystemID, tableName, id, idRollback)
+	list, err := GetHistoryRaw(sc.DbTransaction, sc.TxSmart.EcosystemID, tableName, id, idRollback)
 	if err != nil {
 		return nil, err
 	}
@@ -1912,22 +1895,6 @@ func GetHistoryRow(sc *SmartContract, tableName string, id, idRollback int64) (m
 		}
 	}
 	return result, nil
-}
-
-func GetBlockHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
-	return GetHistoryRow(sc, `blocks`, id, idRollback)
-}
-
-func GetPageHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
-	return GetHistoryRow(sc, `pages`, id, idRollback)
-}
-
-func GetMenuHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
-	return GetHistoryRow(sc, `menu`, id, idRollback)
-}
-
-func GetContractHistoryRow(sc *SmartContract, id, idRollback int64) (map[string]interface{}, error) {
-	return GetHistoryRow(sc, `contracts`, id, idRollback)
 }
 
 func StackOverflow(sc *SmartContract) {
