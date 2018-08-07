@@ -564,6 +564,8 @@ func dbfindTag(par parFunc) string {
 			if err != nil {
 				return err.Error()
 			}
+		} else if len(where) > 0 {
+			return errWhere.Error()
 		}
 	}
 	if par.Node.Attr[`whereid`] != nil {
