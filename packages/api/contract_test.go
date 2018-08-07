@@ -1216,10 +1216,91 @@ func TestLoopCond(t *testing.T) {
 	assert.EqualError(t, postTx(rnd+`shutdown`, &url.Values{}), `{"type":"panic","error":"There is loop in @1`+rnd+`shutdown contract"}`)
 }
 
+func TestRand(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		action {
+			var result i int
+			i = 3
+			while i < 15 {
+				var rnd int
+				rnd = Random(0, 3*i)
+				result = result + rnd
+				i=i+1
+			}
+			$result = result
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, val1, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	_, val2, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	// val1 == val2 for seed = blockId % 1
+	if val1 != val2 {
+		t.Errorf(`%s!=%s`, val1, val2)
+	}
+}
 func TestKillNode(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 	form := url.Values{"Name": {`MyTestContract1`}, "Value": {`contract MyTestContract1 {action {}}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}, "nowait": {`true`}}
 	require.NoError(t, postTx(`NewContract`, &form))
 	require.NoError(t, postTx("Kill", &url.Values{"nowait": {`true`}}))
+}
+
+func TestLoopCondExt(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract ` + rnd + `1 {
+		conditions {
+
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	err := postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract ` + rnd + `2 {
+		conditions {
+			ContractConditions("` + rnd + `1")
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret getContractResult
+	err = sendGet(`contract/`+rnd+`1`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	sid := ret.TableID
+	form = url.Values{`Value`: {`contract ` + rnd + `1 {
+		conditions {
+			ContractConditions("` + rnd + `2")
+		}
+	}`}, `Id`: {sid}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	err = postTx(`EditContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(rnd+`2`, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }

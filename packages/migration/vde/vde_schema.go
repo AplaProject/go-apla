@@ -91,7 +91,8 @@ var schemaVDE = `
 	  "id" bigint NOT NULL  DEFAULT '0',
 	  "name" text NOT NULL DEFAULT '',
 	  "value" text  NOT NULL DEFAULT '',
-	  "conditions" text  NOT NULL DEFAULT ''
+	  "conditions" text  NOT NULL DEFAULT '',
+	  "app_id" bigint NOT NULL DEFAULT '1'
 	  );
 	  ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 	  

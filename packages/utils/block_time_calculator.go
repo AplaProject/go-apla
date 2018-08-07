@@ -30,16 +30,13 @@ type blockGenerationState struct {
 var TimeError = errors.New("current time before first block")
 var DuplicateBlockError = errors.New("block with that time interval already exists in db")
 
-func NewBlockTimeCalculator(firstBlockTime time.Time,
-	blockGenerationTime, blocksGap time.Duration,
-	nodesCount int64,
-) BlockTimeCalculator {
+func NewBlockTimeCalculator(firstBlockTime time.Time, generationTime, blocksGap time.Duration, nodesCount int64) BlockTimeCalculator {
 	return BlockTimeCalculator{
 		clock:         &ClockWrapper{},
 		blocksCounter: &blocksCounter{},
 
 		firstBlockTime:      firstBlockTime,
-		blockGenerationTime: blockGenerationTime,
+		blockGenerationTime: generationTime,
 		blocksGap:           blocksGap,
 		nodesCount:          nodesCount,
 	}

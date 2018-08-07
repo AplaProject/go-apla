@@ -3,12 +3,15 @@ package block
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/protocols"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -130,6 +133,12 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	for _, btx := range b.Transactions {
 		txHashes = append(txHashes, btx.TxHash)
 	}
+	seed, err := crypto.CalcChecksum(bytes.Join(txHashes, []byte{}))
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating seed")
+		return err
+	}
+	randBlock := rand.New(rand.NewSource(int64(seed)))
 
 	storedTxes, err := model.GetTxesByHashlist(dbTransaction, txHashes)
 	if err != nil {
@@ -143,14 +152,15 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			err error
 		)
 		t.DbTransaction = dbTransaction
+		t.Rand = randBlock
+
+		model.IncrementTxAttemptCount(dbTransaction, t.TxHash)
 
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
 		}
-
-		model.IncrementTxAttemptCount(nil, t.TxHash)
 		if stx, ok := storedTxes[string(t.TxHash)]; ok {
 			if stx.Attempt >= consts.MaxTXAttempt-1 {
 				txString := fmt.Sprintf("tx_hash: %s, tx_data: %s, tx_attempt: %d", stx.Hash, stx.Data, stx.Attempt)
@@ -194,7 +204,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
 		}
 
-		model.DecrementTxAttemptCount(nil, t.TxHash)
+		model.DecrementTxAttemptCount(dbTransaction, t.TxHash)
 
 		if t.SysUpdate {
 			b.SysUpdate = true
@@ -247,20 +257,15 @@ func (b *Block) Check() error {
 
 		// skip time validation for first block
 		if b.Header.BlockID > 1 {
-			blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
-				return err
-			}
 
-			validBlockTime, err := blockTimeCalculator.ValidateBlock(b.Header.NodePosition, time.Unix(b.Header.Time, 0))
+			exists, err := protocols.NewBlockTimeCounter().BlockForTimeExists(time.Unix(b.Header.Time, 0), int(b.Header.NodePosition))
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
 				return err
 			}
 
-			if !validBlockTime {
-				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("incorrect block time")
+			if exists {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Warn("incorrect block time")
 				return utils.ErrInfo(fmt.Errorf("incorrect block time %d", b.PrevHeader.Time))
 			}
 		}

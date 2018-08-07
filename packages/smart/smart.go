@@ -462,7 +462,7 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 			log.WithFields(log.Fields{"contract_name": names, "contract_id": item["id"], "contract_active": item["active"]}).Info("OK Loading Contract")
 		}
 	}
-	LoadVDEContracts(transaction, prefix)
+
 	return
 }
 
@@ -935,15 +935,23 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				return retError(ErrDiffKeys)
 			}
 			var amount, maxpay decimal.Decimal
-			amount, err = decimal.NewFromString(payWallet.Amount)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
-				return retError(err)
+			if len(payWallet.Amount) > 0 {
+				amount, err = decimal.NewFromString(payWallet.Amount)
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
+					return retError(err)
+				}
+			} else {
+				amount = decimal.New(0, 0)
 			}
-			maxpay, err = decimal.NewFromString(payWallet.Maxpay)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Maxpay}).Error("converting pay wallet maxpay from string to decimal")
-				return retError(err)
+			if len(payWallet.Maxpay) > 0 {
+				maxpay, err = decimal.NewFromString(payWallet.Maxpay)
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Maxpay}).Error("converting pay wallet maxpay from string to decimal")
+					return retError(err)
+				}
+			} else {
+				maxpay = decimal.New(0, 0)
 			}
 			if maxpay.GreaterThan(decimal.New(0, 0)) && maxpay.LessThan(amount) {
 				amount = maxpay
