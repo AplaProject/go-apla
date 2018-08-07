@@ -37,7 +37,7 @@ func WaitStopTime() {
 			continue
 		}
 		if !first {
-			err := model.Delete("stop_daemons", "")
+			err := model.Delete(nil, "stop_daemons", "")
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting from stop daemons")
 			}

@@ -49,6 +49,10 @@ func (rt *RollbackTx) DeleteByHashAndTableName(transaction *DbTransaction) error
 
 // Create is creating record of model
 func (rt *RollbackTx) Create(transaction *DbTransaction) error {
+	var err error
+	if rt.ID, err = GetNextID(transaction, (*rt).TableName()); err != nil {
+		return err
+	}
 	return GetDB(transaction).Create(rt).Error
 }
 
