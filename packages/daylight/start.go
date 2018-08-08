@@ -275,17 +275,15 @@ func Start() {
 			if err != nil {
 				log.WithError(err).Fatal("Can't init ban service")
 			}
-		}
-
-		if conf.Config.IsSupportingVDE() {
+		} else {
 			if err := smart.LoadVDEContracts(nil, converter.Int64ToStr(consts.DefaultVDE)); err != nil {
 				log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Fatal("on loading vde virtual mashine")
 				Exit(1)
 			}
-		}
 
-		if conf.Config.IsVDEMaster() {
-			vdemanager.InitVDEManager()
+			if conf.Config.IsVDEMaster() {
+				vdemanager.InitVDEManager()
+			}
 		}
 	}
 
