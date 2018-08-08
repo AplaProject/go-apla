@@ -113,7 +113,7 @@ var TxTypes = map[int]string{
 var ApiPath = `/api/v2/`
 
 // BuildInfo should be defined through -ldflags
-var BuildInfo = ``
+var BuildInfo string
 
 // DefaultConfigFile name of config file (toml format)
 const DefaultConfigFile = "config.toml"
