@@ -26,8 +26,8 @@ const (
 	eContractExist      = `Contract %s already exists`
 	eLatin              = `Name %s must only contain latin, digit and '_', '-' characters`
 	eAccessContract     = `%s can be only called from %s`
-	eColumnExist        = `Column %s exists`
-	eColumnNotExist     = `Column %s doesn't exist`
+	eColumnExist        = `column %s exists`
+	eColumnNotExist     = `column %s doesn't exist`
 	eColumnType         = `Type '%s' of columns is not supported`
 	eContractCondition  = `There is not conditions in contract %s`
 	eNotCustomTable     = `%s is not a custom table`
@@ -39,7 +39,7 @@ const (
 	eNotCondition       = `There is not %s in parameters`
 	eParamNotFound      = `Parameter %s has not been found`
 	eRecordNotFound     = `Record %s has not been found`
-	eTableExists        = `Table %s exists`
+	eTableExists        = `table %s exists`
 	eTableNotFound      = `Table %s has not been found`
 	eTypeJSON           = `Type %T doesn't support json marshalling`
 	eUnknownContract    = `Unknown contract %s`
@@ -62,12 +62,12 @@ var (
 	errDiffKeys          = errors.New(`Contract and user public keys are different`)
 	errEmpty             = errors.New(`empty value and condition`)
 	errEmptyCond         = errors.New(`The condition is empty`)
-	errEmptyContract     = errors.New(`Empty contract name in ContractConditions`)
+	errEmptyContract     = errors.New(`empty contract name in ContractConditions`)
 	errEmptyPublicKey    = errors.New(`Empty public key`)
 	errFounderAccount    = errors.New(`Unknown founder account`)
 	errFuelRate          = errors.New(`Fuel rate must be greater than 0`)
 	errIncorrectSign     = errors.New(`Incorrect sign`)
-	errIncorrectType     = errors.New(`Incorrect type`)
+	errIncorrectType     = errors.New(`incorrect type`)
 	errInvalidValue      = errors.New(`Invalid value`)
 	errNameChange        = errors.New(`Contracts or functions names cannot be changed`)
 	errNegPrice          = errors.New(`Price value is negative`)
