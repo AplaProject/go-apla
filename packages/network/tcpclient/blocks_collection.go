@@ -32,14 +32,26 @@ func GetBlocksBodies(ctx context.Context, host string, blockID int64, reverseOrd
 		return nil, err
 	}
 
-	rawBlocksCh := make(chan []byte, network.BlocksPerRequest)
+	blocksCount, err := network.ReadInt(conn)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on getting blocks count")
+		return nil, err
+	}
+
+	if blocksCount == 0 {
+		log.Warnf("host: %s does'nt contains block", host)
+		return nil, nil
+	}
+
+	rawBlocksCh := make(chan []byte, blocksCount)
+
 	go func() {
 		defer func() {
 			close(rawBlocksCh)
 			conn.Close()
 		}()
 
-		for {
+		for i := 0; i < int(blocksCount); i++ {
 			if err := ctx.Err(); err != nil {
 				log.Debug(err)
 				return
@@ -48,14 +60,12 @@ func GetBlocksBodies(ctx context.Context, host string, blockID int64, reverseOrd
 			// receive the data size as a response that server wants to transfer
 			resp := &network.GetBodyResponse{}
 			if err := resp.Read(conn); err != nil {
+				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": host}).Error("on reading block bodies")
 				return
 			}
 
-			// TODO: remove hardcode
-			// TODO: move size checking to GetBodyResponse.Read with limitReader
-			// data size must be less than 10mb
 			dataSize := len(resp.Data)
-			if dataSize > 10485760 || dataSize == 0 {
+			if dataSize == 0 {
 				log.Error("null block")
 				return
 			}

@@ -277,8 +277,18 @@ func forlistTag(par parFunc) (ret string) {
 				}
 			}
 		}
-		body := macroReplace((*par.Pars)[`Data`], &vals)
-		process(body, &root, par.Workspace)
+		for key, item := range vals {
+			(*par.Workspace.Vars)[key] = item
+		}
+		process((*par.Pars)[`Data`], &root, par.Workspace)
+		for _, item := range root.Children {
+			if item.Tag == `text` {
+				item.Text = macroReplace(item.Text, par.Workspace.Vars)
+			}
+		}
+		for key := range vals {
+			delete(*par.Workspace.Vars, key)
+		}
 	}
 	par.Node.Children = root.Children
 	par.Owner.Children = append(par.Owner.Children, par.Node)
@@ -1018,6 +1028,7 @@ func dateTimeTag(par parFunc) string {
 	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
+	value := datetime
 	defTime := `1970-01-01T00:00:00`
 	lenTime := len(datetime)
 	if lenTime < len(defTime) {
@@ -1025,7 +1036,12 @@ func dateTimeTag(par parFunc) string {
 	}
 	itime, err := time.Parse(`2006-01-02T15:04:05`, strings.Replace(datetime[:19], ` `, `T`, -1))
 	if err != nil {
-		return err.Error()
+		unix := converter.StrToInt64(value)
+		if unix > 0 {
+			itime = time.Unix(unix, 0)
+		} else {
+			return err.Error()
+		}
 	}
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
