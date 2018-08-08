@@ -37,7 +37,7 @@ import (
 // Type2 serves requests from disseminator
 func Type2(rw io.ReadWriter) (*network.DisTrResponse, error) {
 	r := &network.DisRequest{}
-	if err := network.ReadRequest(r, rw); err != nil {
+	if err := r.Read(rw); err != nil {
 		return nil, err
 	}
 
