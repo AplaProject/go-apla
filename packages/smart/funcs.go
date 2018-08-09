@@ -604,12 +604,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return err
 	}
 
-	if sc.VDE {
-		err = model.CreateVDETable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
-	} else {
-		err = model.CreateTable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n"))
-	}
-	if err != nil {
+	if err = model.CreateTable(sc.DbTransaction, tableName, strings.TrimRight(colsSQL, ",\n")); err != nil {
 		return logErrorDB(err, "creating tables")
 	}
 
@@ -1462,7 +1457,7 @@ func ValidateCron(cronSpec string) (err error) {
 
 func UpdateCron(sc *SmartContract, id int64) error {
 	cronTask := &model.Cron{}
-	cronTask.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID) + "_vde")
+	cronTask.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
 
 	ok, err := cronTask.Get(id)
 	if err != nil {

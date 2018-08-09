@@ -74,6 +74,22 @@ func TestRemoveVDE(t *testing.T) {
 	}
 	require.NoError(t, postTx("RemoveVDE", &form))
 }
+
+func TestCreateTable(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+
+	sql1 := `new_column`
+
+	form := url.Values{
+		"Name":          {"my_test_table"},
+		"Columns":       {"[{\"name\":\"" + sql1 + "\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]"},
+		"ApplicationId": {"1"},
+		"Permissions":   {"{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}"},
+	}
+
+	require.NoError(t, postTx("NewTable", &form))
+}
+
 func TestVDEParams(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 

@@ -129,15 +129,6 @@ func CreateTable(transaction *DbTransaction, tableName, colsSQL string) error {
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`).Error
 }
 
-// CreateVDETable is creating VDE table
-func CreateVDETable(transaction *DbTransaction, tableName, colsSQL string) error {
-	return GetDB(transaction).Exec(`CREATE TABLE "` + tableName + `" (
-				"id" bigint NOT NULL DEFAULT '0',
-				` + colsSQL + `
-				);
-				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`).Error
-}
-
 // GetAll returns all tables
 func (t *Table) GetAll(prefix string) ([]Table, error) {
 	result := make([]Table, 0)

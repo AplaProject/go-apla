@@ -352,9 +352,7 @@ func ecosysparTag(par parFunc) string {
 		return ``
 	}
 	prefix := (*par.Workspace.Vars)[`ecosystem_id`]
-	if par.Workspace.SmartContract.VDE {
-		prefix += `_vde`
-	}
+
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(prefix)
 	parameterName := macro((*par.Pars)[`Name`], par.Workspace.Vars)

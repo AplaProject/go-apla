@@ -532,10 +532,6 @@ func PrefixName(table string) (prefix, name string) {
 	name = table
 	if off := strings.IndexByte(table, '_'); off > 0 && table[0] >= '0' && table[0] <= '9' {
 		prefix = table[:off]
-		if strings.HasPrefix(table[off+1:], `vde_`) {
-			prefix += `_vde`
-			off += 4
-		}
 		name = table[off+1:]
 	}
 	return
@@ -734,9 +730,6 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 func (sc *SmartContract) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameter{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if sc.VDE {
-		prefix += `_vde`
-	}
 
 	sp.SetTablePrefix(prefix)
 	_, err := sp.Get(sc.DbTransaction, condition)
