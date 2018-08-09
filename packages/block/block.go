@@ -79,6 +79,12 @@ func (b *Block) PlaySafe() error {
 		err = nil
 	} else if err != nil {
 		dbTransaction.Rollback()
+		if b.GenBlock && b.StopCount == 0 {
+			if err == ErrLimitStop {
+				err = ErrLimitTime
+			}
+			transaction.MarkTransactionBad(nil, b.Transactions[0].TxHash, err.Error())
+		}
 		return err
 	}
 
@@ -178,6 +184,9 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 				return errRoll
 			}
 			if b.GenBlock && err == ErrLimitStop {
+				if curTx == 0 {
+					return err
+				}
 				break
 			}
 			// skip this transaction
