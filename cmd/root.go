@@ -25,6 +25,7 @@ func init() {
 		startCmd,
 		configCmd,
 		stopNetworkCmd,
+		versionCmd,
 	)
 
 	// This flags are visible for all child commands
