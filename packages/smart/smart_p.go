@@ -502,10 +502,10 @@ func RollbackEcosystem(sc *SmartContract) error {
 		return logErrorShort(err, consts.InvalidObject)
 	}
 
-	if model.IsTable(fmt.Sprintf(`%s_vde_tables`, rollbackTx.TableID)) {
+	if model.IsTable(fmt.Sprintf(`%s_tables`, rollbackTx.TableID)) {
 		// Drop all _local_ tables
 		table := &model.Table{}
-		prefix := fmt.Sprintf(`%s_vde`, rollbackTx.TableID)
+		prefix := fmt.Sprintf(`%s`, rollbackTx.TableID)
 		table.SetTablePrefix(prefix)
 		list, err := table.GetAll(prefix)
 		if err != nil {
