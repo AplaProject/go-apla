@@ -117,7 +117,10 @@ func (c *GlobalConfig) GetPidPath() string {
 // the function has side effect updating global var Config
 func LoadConfig(path string) error {
 	log.WithFields(log.Fields{"path": path}).Info("Loading config")
+	return LoadConfigToVar(path, &Config)
+}
 
+func LoadConfigToVar(path string, v *GlobalConfig) error {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return errors.Errorf("Unable to load config file %s", path)
@@ -129,7 +132,7 @@ func LoadConfig(path string) error {
 		return errors.Wrapf(err, "reading config")
 	}
 
-	err = viper.Unmarshal(&Config)
+	err = viper.Unmarshal(v)
 	if err != nil {
 		return errors.Wrapf(err, "marshalling config to global struct variable")
 	}

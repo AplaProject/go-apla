@@ -163,6 +163,26 @@ func (mgr *VDEManager) ListProcess() (map[string]string, error) {
 	return list, nil
 }
 
+func (mgr *VDEManager) ListProcessWithPorts() (map[string]string, error) {
+	list, err := mgr.ListProcess()
+	if err != nil {
+		return list, err
+	}
+
+	for name, status := range list {
+		path := path.Join(mgr.childConfigsPath, name)
+		c := &conf.GlobalConfig{}
+		if err := conf.LoadConfigToVar(path, c); err != nil {
+			log.WithFields(log.Fields{"type": "dbError", "error": err}).Warn("on loading child VDE config")
+			continue
+		}
+
+		list[name] = fmt.Sprintf("%s %d", status, c.HTTP.Port)
+	}
+
+	return list, err
+}
+
 // DeleteVDE stop VDE process and remove VDE folder
 func (mgr *VDEManager) DeleteVDE(name string) error {
 
@@ -367,4 +387,11 @@ func checkVDEName(name string) error {
 	}
 
 	return nil
+}
+
+func (mgr *VDEManager) configByName(name string) (*conf.GlobalConfig, error) {
+	path := path.Join(mgr.childConfigsPath)
+	c := &conf.GlobalConfig{}
+	err := conf.LoadConfigToVar(path, c)
+	return c, err
 }

@@ -1676,7 +1676,7 @@ func StopVDEProcess(sc *SmartContract, name string) error {
 
 // GetVDEList returns list VDE process with statuses
 func GetVDEList(sc *SmartContract) map[string]string {
-	list, _ := vdemanager.Manager.ListProcess()
+	list, _ := vdemanager.Manager.ListProcessWithPorts()
 	return list
 }
 
