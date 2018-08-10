@@ -136,6 +136,26 @@ func TestMoneyTransfer(t *testing.T) {
 	}
 }
 
+func TestRoleAccess(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`page`)
+	menu := `government`
+	value := `P(test,test paragraph)`
+
+	form := url.Values{"Name": {name}, "Value": {value}, "Menu": {menu}, "ApplicationId": {`1`},
+		"Conditions": {`RoleAccess("Test","Admin")`}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	var ret listResult
+	assert.NoError(t, sendGet(`list/pages`, nil, &ret))
+	id := ret.Count
+	form = url.Values{"Id": {id}, "Value": {"Div(){Ooops}"}, "Conditions": {`RoleAccess("Developer")`}}
+	assert.NoError(t, postTx(`EditPage`, &form))
+	form = url.Values{"Id": {id}, "Value": {"Div(){Ooops}"}, "Conditions": {`RoleAccess("Developer")`}}
+	assert.EqualError(t, postTx(`EditPage`, &form), `{"type":"panic","error":"Access denied"}`)
+}
+
 func TestPage(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
