@@ -377,27 +377,15 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 }
 
 // RoleAccess checks whether the name of the role matches one of the names listed in the parameters.
-func RoleAccess(sc *SmartContract, names ...interface{}) (bool, error) {
+func RoleAccess(sc *SmartContract, ids ...interface{}) (bool, error) {
 
-	role := model.Role{}
-	role.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
-
-	found, err := role.Get(sc.DbTransaction, sc.TxSmart.RoleID)
-	if err != nil {
-		return false, err
-	}
-	if !found {
-		return false, nil
-	}
-	for _, iname := range names {
-		switch name := iname.(type) {
-		case string:
-			if len(name) > 0 {
-				if role.RoleName == name {
-					return true, nil
-				}
-				break
+	for _, id := range ids {
+		switch v := id.(type) {
+		case int64:
+			if sc.TxSmart.RoleID == v {
+				return true, nil
 			}
+			break
 		}
 	}
 	return false, nil

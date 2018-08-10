@@ -144,15 +144,15 @@ func TestRoleAccess(t *testing.T) {
 	value := `P(test,test paragraph)`
 
 	form := url.Values{"Name": {name}, "Value": {value}, "Menu": {menu}, "ApplicationId": {`1`},
-		"Conditions": {`RoleAccess("Test","Admin")`}}
+		"Conditions": {`RoleAccess(10,1)`}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
 	var ret listResult
 	assert.NoError(t, sendGet(`list/pages`, nil, &ret))
 	id := ret.Count
-	form = url.Values{"Id": {id}, "Value": {"Div(){Ooops}"}, "Conditions": {`RoleAccess("Developer")`}}
+	form = url.Values{"Id": {id}, "Value": {"Div(){Ooops}"}, "Conditions": {`RoleAccess(2)`}}
 	assert.NoError(t, postTx(`EditPage`, &form))
-	form = url.Values{"Id": {id}, "Value": {"Div(){Ooops}"}, "Conditions": {`RoleAccess("Developer")`}}
+	form = url.Values{"Id": {id}, "Value": {"Div(){Update}"}}
 	assert.EqualError(t, postTx(`EditPage`, &form), `{"type":"panic","error":"Access denied"}`)
 }
 
