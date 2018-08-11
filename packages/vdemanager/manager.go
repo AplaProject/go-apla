@@ -29,10 +29,13 @@ const (
 	dropOwnedTemplate  = `DROP OWNED BY %s CASCADE`
 	dropDBRoleTemplate = `DROP ROLE IF EXISTS %s`
 	commandTemplate    = `%s start --config=%s`
+
+	alreadyExistsErrorTemplate = `vde '%s' already exists`
 )
 
 var (
-	errWrongMode = errors.New("node must be running as VDEMaster")
+	errWrongMode        = errors.New("node must be running as VDEMaster")
+	errIncorrectVDEName = errors.New("the name can not begit with a number and must contain alphabetical symbols and numbers")
 )
 
 // VDEManager struct
@@ -63,7 +66,7 @@ func prepareWorkDir() (string, error) {
 func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) error {
 	if err := checkVDEName(name); err != nil {
 		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Error("on check VDE name")
-		return err
+		return errIncorrectVDEName
 	}
 
 	var err error
@@ -96,7 +99,7 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 
 	if err = mgr.createVDEDB(name, dbUser, dbPassword); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on creating VDE DB")
-		return err
+		return fmt.Errorf(alreadyExistsErrorTemplate, name)
 	}
 
 	cancelChain = append(cancelChain, func() {
@@ -105,7 +108,7 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 
 	dirPath := path.Join(mgr.childConfigsPath, name)
 	if directoryExists(dirPath) {
-		err = errors.New("vde already exists")
+		err = fmt.Errorf(alreadyExistsErrorTemplate, name)
 		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err, "dirPath": dirPath}).Error("on check directory")
 		return err
 	}
@@ -178,7 +181,7 @@ func (mgr *VDEManager) DeleteVDE(name string) error {
 	vdeConfig, err := conf.GetConfigFromPath(vdeConfigPath)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Errorf("Getting config from path %s", vdeConfigPath)
-		return err
+		return fmt.Errorf(`VDE '%s' is not exists`, name)
 	}
 
 	time.Sleep(1 * time.Second)
