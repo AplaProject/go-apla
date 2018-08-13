@@ -115,6 +115,13 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`GuestKey`, `contract GuestKey {
+		action {
+			Test("result", $guest_key)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `4544233900443112470`}},
+	}},
 	{`TestCyr`, `contract TestCyr {
 		data {}
 		conditions { }
