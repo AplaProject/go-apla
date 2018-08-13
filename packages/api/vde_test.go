@@ -51,6 +51,18 @@ func TestVDEList(t *testing.T) {
 	fmt.Println(postTx("ListVDE", nil))
 }
 
+func TestVDECron(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+
+	data := &url.Values{
+		"Cron":       {"1 * * * *"},
+		"Contract":   {"MainCondition"},
+		"Conditions": {"true"},
+	}
+
+	require.NoError(t, postTx("NewCron", data))
+}
+
 func TestStopVDE(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 	form := url.Values{
