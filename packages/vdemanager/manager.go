@@ -178,7 +178,6 @@ func (mgr *VDEManager) ListProcessWithPorts() (map[string]string, error) {
 		}
 
 		list[name] = fmt.Sprintf("%s %d", status, c.HTTP.Port)
-		fmt.Println(name, list[name])
 	}
 
 	return list, err
