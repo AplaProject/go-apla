@@ -142,7 +142,7 @@ func (t *Transaction) parseFromStruct(buf *bytes.Buffer, txType int64) error {
 	return nil
 }
 
-func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, input []byte, forsign []string) error {
+func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[string]string, forsign []string) error {
 	for _, fitem := range fieldInfos {
 		var err error
 		var v interface{}
@@ -154,10 +154,6 @@ func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, input []byte, f
 				data []byte
 				file *tx.File
 			)
-			if err := converter.BinUnmarshal(&input, &data); err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling file")
-				return err
-			}
 			if err := msgpack.Unmarshal(data, &file); err != nil {
 				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("unmarshalling file msgpack")
 				return err
@@ -173,63 +169,32 @@ func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, input []byte, f
 		switch fitem.Type.String() {
 		case `uint64`:
 			var val uint64
-			converter.BinUnmarshal(&input, &val)
+			val = converter.StrToUint64(params[fitem.Name])
 			v = val
 		case `float64`:
 			var val float64
-			converter.BinUnmarshal(&input, &val)
+			val = converter.StrToFloat64(params[fitem.Name])
 			v = val
 		case `int64`:
-			v, err = converter.DecodeLenInt64(&input)
+			v = converter.StrToInt64(params[fitem.Name])
 		case script.Decimal:
-			var s string
-			if err := converter.BinUnmarshal(&input, &s); err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling script.Decimal")
-				return err
-			}
-			v, err = decimal.NewFromString(s)
+			v, err = decimal.NewFromString(params[fitem.Name])
 		case `string`:
-			var s string
-			if err := converter.BinUnmarshal(&input, &s); err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
-				return err
-			}
-			v = s
+			v = params[fitem.Name]
 		case `[]uint8`:
-			var b []byte
-			if err := converter.BinUnmarshal(&input, &b); err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
-				return err
-			}
-			v = hex.EncodeToString(b)
+			v, err = hex.DecodeString(params[fitem.Name])
 		case `[]interface {}`:
-			count, err := converter.DecodeLength(&input)
-			if err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling []interface{}")
-				return err
-			}
-			isforv = true
-			list := make([]interface{}, 0)
-			for count > 0 {
-				length, err := converter.DecodeLength(&input)
-				if err != nil {
-					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling tx length")
-					return err
+			var list []string
+			for key, value := range params {
+				if key == fitem.Name+`[]` && len(value) > 0 {
+					count := converter.StrToInt(value)
+					for i := 0; i < count; i++ {
+						list = append(list, params[fmt.Sprintf(`%s[%d]`, fitem.Name, i)])
+					}
 				}
-				if len(input) < int(length) {
-					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError, "length": int(length), "slice length": len(input)}).Error("incorrect tx size")
-					return fmt.Errorf(`input slice is short`)
-				}
-				list = append(list, string(input[:length]))
-				input = input[length:]
-				count--
 			}
 			if len(list) > 0 {
-				slist := make([]string, len(list))
-				for j, lval := range list {
-					slist[j] = lval.(string)
-				}
-				forv = strings.Join(slist, `,`)
+				forv = strings.Join(list, `,`)
 			}
 			v = list
 		}
@@ -272,12 +237,11 @@ func (t *Transaction) parseFromContract(buf *bytes.Buffer) error {
 	t.TxContract = contract
 	t.TxHeader = &smartTx.Header
 
-	input := smartTx.Data
 	t.TxData = make(map[string]interface{})
 	txInfo := contract.Block.Info.(*script.ContractInfo).Tx
 
 	if txInfo != nil {
-		if err := t.fillTxData(*txInfo, input, forsign); err != nil {
+		if err := t.fillTxData(*txInfo, smartTx.Params, forsign); err != nil {
 			return err
 		}
 	}
@@ -293,7 +257,7 @@ func CheckTransaction(data []byte) (*tx.Header, error) {
 		return nil, err
 	}
 
-	err = t.Check(time.Now().Unix(), true)
+	err = t.Check(time.Now().Unix())
 	if err != nil {
 		return nil, err
 	}
@@ -301,11 +265,7 @@ func CheckTransaction(data []byte) (*tx.Header, error) {
 	return t.TxHeader, nil
 }
 
-func (t *Transaction) Check(checkTime int64, checkForDupTr bool) error {
-	err := CheckLogTx(t.TxFullData, checkForDupTr, false)
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
+func (t *Transaction) Check(checkTime int64) error {
 	logger := log.WithFields(log.Fields{"tx_time": t.TxTime})
 	// time in the transaction cannot be more than MAX_TX_FORW seconds of block time
 	if t.TxTime-consts.MAX_TX_FORW > checkTime {

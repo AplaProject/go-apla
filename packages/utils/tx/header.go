@@ -9,6 +9,9 @@ type Header struct {
 	RoleID        int64
 	NetworkID     int64
 	NodePosition  int64
+	BlockID       int64
+	Attempts      int64
+	Error         string
 	PublicKey     []byte
 	BinSignatures []byte
 }

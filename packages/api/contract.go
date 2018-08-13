@@ -245,13 +245,6 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 		}
 		info := (*contract).Block.Info.(*script.ContractInfo)
 
-		idata := make([]byte, 0)
-		if info.Tx != nil {
-			idata, err = getDataMultiRequestParams(*info.Tx, c.Params, w, logger)
-			if err != nil {
-				return err
-			}
-		}
 		signatureBytes, err := hex.DecodeString(signatures[i])
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting signature from hex")
@@ -267,13 +260,16 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 				PublicKey:     publicKey,
 				NetworkID:     consts.NETWORK_ID,
 				BinSignatures: converter.EncodeLengthPlusData(signatureBytes),
+				BlockID:       0,
+				Attempts:      0,
+				Error:         "",
 			},
 			RequestID:      req.ID,
 			TokenEcosystem: tokenEcosystem,
 			MaxSum:         maxSum,
 			PayOver:        payover,
 			SignedBy:       signedBy,
-			Data:           idata,
+			Params:         c.Params,
 		}
 		serializedData, err := msgpack.Marshal(toSerialize)
 		if err != nil {
@@ -331,13 +327,6 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signature is empty")
 		return errorAPI(w, `E_EMPTYSIGN`, http.StatusBadRequest)
 	}
-	idata := make([]byte, 0)
-	if info.Tx != nil {
-		idata, err = getData(*info.Tx, req, w, logger)
-		if err != nil {
-			return err
-		}
-	}
 	toSerialize = tx.SmartContract{
 		Header: tx.Header{
 			Type:          int(info.ID),
@@ -354,7 +343,7 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		MaxSum:         data.params[`max_sum`].(string),
 		PayOver:        data.params[`payover`].(string),
 		SignedBy:       signedBy,
-		Data:           idata,
+		Params:         req.AllValues(),
 	}
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {

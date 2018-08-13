@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/api"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -36,6 +37,7 @@ import (
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
@@ -221,6 +223,11 @@ func Start() {
 		Exit(1)
 	}
 
+	if err := utils.MakeDirectory("queues"); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "dir": "queues"}).Error("can't create directory for queues")
+		Exit(1)
+	}
+
 	initGorm(conf.Config.DB)
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 
@@ -232,6 +239,15 @@ func Start() {
 	err = initLogs()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "logs init failed: %v\n", utils.ErrInfo(err))
+		Exit(1)
+	}
+	if err := queue.Init(); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("can't init queues")
+		Exit(1)
+	}
+
+	if err := blockchain.Init("blockchain"); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("can't create blockchain db")
 		Exit(1)
 	}
 

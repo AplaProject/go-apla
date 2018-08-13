@@ -129,8 +129,11 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		d.logger.WithFields(log.Fields{"type": consts.JustWaiting}).Debug("not my generation time")
 		return nil
 	}
-
-	blockBin, err := generateNextBlock(header, trs, NodePrivateKey, prevBlock.Hash)
+	newBlock := block.NewBlock{
+		Header:       header,
+		Transactions: trs,
+	}
+	blockBin, err := newBlock.Marshal(NodePrivateKey)
 	if err != nil {
 		return err
 	}
@@ -145,16 +148,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	return nil
 }
 
-func generateNextBlock(blockHeader *utils.BlockData, trs []*model.Transaction, key string, prevBlockHash []byte) ([]byte, error) {
-	trData := make([][]byte, 0, len(trs))
-	for _, tr := range trs {
-		trData = append(trData, tr.Data)
-	}
-
-	return block.MarshallBlock(blockHeader, trData, prevBlockHash, key)
-}
-
-func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
+func processTransactions(logger *log.Entry) ([][]byte, error) {
 	p := new(transaction.Transaction)
 
 	// verify transactions
@@ -171,7 +165,7 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 
 	limits := block.NewLimits(nil)
 	// Checks preprocessing count limits
-	txList := make([]*model.Transaction, 0, len(trs))
+	txList := make([][]byte, 0, len(trs))
 	for i, txItem := range trs {
 		bufTransaction := bytes.NewBuffer(txItem.Data)
 		p, err := transaction.UnmarshallTransaction(bufTransaction)
@@ -182,7 +176,7 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 			continue
 		}
 
-		if err := p.Check(time.Now().Unix(), false); err != nil {
+		if err := p.Check(time.Now().Unix()); err != nil {
 			transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
 			continue
 		}
@@ -201,7 +195,7 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 				continue
 			}
 		}
-		txList = append(txList, trs[i])
+		txList = append(txList, txItem.Data)
 	}
 
 	return txList, nil

@@ -9,7 +9,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -137,12 +136,13 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 		return errors.New("cant find current node in full nodes list")
 	}
 
-	params := make([]byte, 0)
-	for _, p := range []int64{producer.KeyID, currentNode.KeyID, blockId, blockTime} {
-		converter.EncodeLenInt64(&params, p)
+	params := map[string]string{
+		"ProducerNodeID": strconv.FormatInt(producer.KeyID, 10),
+		"ConsumerNodeID": strconv.FormatInt(currentNode.KeyID, 10),
+		"BlockID":        strconv.FormatInt(blockId, 10),
+		"Timestamp":      strconv.FormatInt(blockTime, 10),
+		"Reason":         reason,
 	}
-	params = append(append(params, converter.EncodeLength(int64(len(reason)))...), []byte(reason)...)
-
 	vm := smart.GetVM()
 	contract := smart.VMGetContract(vm, "NewBadBlock", 1)
 	info := contract.Block.Info.(*script.ContractInfo)
@@ -155,7 +155,7 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 			KeyID:       conf.Config.KeyID,
 		},
 		SignedBy: smart.PubToID(NodePublicKey),
-		Data:     params,
+		Params:   params,
 	},
 		NodePrivateKey,
 		NodePublicKey,

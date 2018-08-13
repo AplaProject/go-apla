@@ -10,7 +10,7 @@ type SmartContract struct {
 	MaxSum         string
 	PayOver        string
 	SignedBy       int64
-	Data           []byte
+	Params         map[string]string
 }
 
 // ForSign is converting SmartContract to string

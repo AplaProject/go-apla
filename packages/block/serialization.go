@@ -1,15 +1,10 @@
 package block
 
+/*
 import (
-	"bytes"
-	"fmt"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/transaction"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // MarshallBlock is marshalling block
@@ -124,3 +119,4 @@ func UnmarshallBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error)
 		MrklRoot:     utils.MerkleTreeRoot(mrklSlice),
 	}, nil
 }
+*/

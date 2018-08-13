@@ -27,6 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -63,37 +64,22 @@ func Disseminator(ctx context.Context, d *daemon) error {
 
 func sendTransactions(logger *log.Entry) error {
 	// get unsent transactions
-	trs, err := model.GetAllUnsentTransactions()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unsent transactions")
-		return err
-	}
-	if trs == nil {
-		logger.Info("transactions not found")
-		return nil
-	}
-
 	// form packet to send
 	var buf bytes.Buffer
-	for _, tr := range *trs {
-		buf.Write(MarshallTr(tr))
+	for queue.SendTxQueue.Length() > 0 {
+		item, err := queue.SendTxQueue.Dequeue()
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("peeking item from sendTx queue")
+			return err
+		}
+		buf.Write(item.Value)
 	}
-
 	if buf.Len() > 0 {
 		err := sendPacketToAll(I_AM_NOT_FULL_NODE, buf.Bytes(), nil, logger)
 		if err != nil {
 			return err
 		}
 	}
-
-	// set all transactions as sent
-	for _, tr := range *trs {
-		_, err := model.MarkTransactionSent(tr.Hash)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marking transaction sent")
-		}
-	}
-
 	return nil
 }
 

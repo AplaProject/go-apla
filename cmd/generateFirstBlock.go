@@ -12,9 +12,10 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
+
 	log "github.com/sirupsen/logrus"
+	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 var stopNetworkBundleFilepath string
@@ -64,8 +65,7 @@ var generateFirstBlockCmd = &cobra.Command{
 			log.Warn("the fullchain of certificates for a network stopping is not specified")
 		}
 
-		var tx []byte
-		_, err := converter.BinMarshal(&tx,
+		tx, err := msgpack.Marshal(
 			&consts.FirstBlock{
 				TxHeader: consts.TxHeader{
 					Type:  consts.TxTypeFirstBlock,
@@ -82,14 +82,18 @@ var generateFirstBlockCmd = &cobra.Command{
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block body bin marshalling")
 			return
 		}
+		block := block.NewBlock{
+			Header:       header,
+			Transactions: [][]byte{tx},
+		}
 
-		block, err := block.MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
+		blockBytes, err := block.Marshal("")
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block marshalling")
 			return
 		}
 
-		ioutil.WriteFile(conf.Config.FirstBlockPath, block, 0644)
+		ioutil.WriteFile(conf.Config.FirstBlockPath, blockBytes, 0644)
 		log.Info("first block generated")
 	},
 }

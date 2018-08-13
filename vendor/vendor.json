@@ -9,6 +9,12 @@
 			"revisionTime": "2017-10-14T08:28:56Z"
 		},
 		{
+			"checksumSHA1": "l8CHAH/SE2Qi80XWvU4dwlFbJ64=",
+			"path": "github.com/beeker1121/goque",
+			"revision": "4044bc29b28064db4f08e947c4972d5ca3e0f3c8",
+			"revisionTime": "2017-03-21T14:18:13Z"
+		},
+		{
 			"checksumSHA1": "zDn6rjeNQNGXBdDfMa4pJ1vw8gs=",
 			"path": "github.com/blackjack/syslog",
 			"revision": "4ea3f32c1eb1115ad9e010eeff314fffc5fc8638",
@@ -74,6 +80,12 @@
 			"path": "github.com/golang/protobuf/proto",
 			"revision": "1e59b77b52bf8e4b449a57e6f79f21226d571845",
 			"revisionTime": "2017-11-13T18:07:20Z"
+		},
+		{
+			"checksumSHA1": "h1d2lPZf6j2dW/mIqVnd1RdykDo=",
+			"path": "github.com/golang/snappy",
+			"revision": "2e65f85255dbc3072edf28d6b5b8efc472979f5a",
+			"revisionTime": "2018-05-18T05:39:59Z"
 		},
 		{
 			"checksumSHA1": "UcxIsr0IzcSKDqGVnK1HsxnSSVU=",
@@ -427,6 +439,24 @@
 			"revisionTime": "2017-08-14T20:04:35Z"
 		},
 		{
+			"checksumSHA1": "aOqDItq+9/uj/oZz/UlvpwswIf4=",
+			"path": "github.com/syndtr/goleveldb",
+			"revision": "c4c61651e9e37fa117f53c5a906d3b63090d8445",
+			"revisionTime": "2018-07-08T03:05:51Z"
+		},
+		{
+			"path": "github.com/syndtr/goleveldb/leveldb",
+			"revision": ""
+		},
+		{
+			"path": "github.com/syndtr/goleveldb/leveldb/errors",
+			"revision": ""
+		},
+		{
+			"path": "github.com/syndtr/goleveldb/leveldb/util",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "G1tnrjQ9YZH7qfHAQI9vZmpNuYg=",
 			"path": "github.com/tevino/abool",
 			"revision": "9b9efcf221b50905aab9bbabd3daed56dc10f339",
@@ -563,6 +593,10 @@
 			"path": "gopkg.in/yaml.v2",
 			"revision": "7f97868eec74b32b0982dd158a51a446d1da7eb5",
 			"revisionTime": "2018-02-23T19:12:37Z"
+		},
+		{
+			"path": "https://github.com/beeker1121/goque",
+			"revision": ""
 		}
 	],
 	"rootPath": "github.com/GenesisKernel/go-genesis"

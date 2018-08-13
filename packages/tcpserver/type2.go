@@ -27,6 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -70,10 +71,8 @@ func Type2(rw io.ReadWriter) (*DisTrResponse, error) {
 	}
 
 	//hexBinData := converter.BinToHex(decryptedBinDataFull)
-	queueTx := &model.QueueTx{Hash: hash, Data: decryptedBinData, FromGate: 0}
-	err = queueTx.Create()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Creating queue_tx")
+	if _, err := queue.ValidateTxQueue.Enqueue(decryptedBinData); err != nil {
+		log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("enqueueing in validation queue")
 		return nil, utils.ErrInfo(err)
 	}
 

@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration"
 	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
@@ -190,28 +190,11 @@ func GetColumnCount(tableName string) (int64, error) {
 
 // SendTx is creates transaction
 func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
-	hash, err := crypto.Hash(data)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing data")
+	if _, err := queue.ValidateTxQueue.Enqueue(data); err != nil {
+		log.WithFields(log.Fields{"type": consts.QueueError, "err": err}).Error("enqueueing transaction in validation queue")
 		return nil, err
 	}
-	ts := &TransactionStatus{
-		Hash:     hash,
-		Time:     time.Now().Unix(),
-		Type:     txType,
-		WalletID: adminWallet,
-	}
-	err = ts.Create()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("transaction status create")
-		return nil, err
-	}
-	qtx := &QueueTx{
-		Hash: hash,
-		Data: data,
-	}
-	err = qtx.Create()
-	return hash, err
+	return crypto.Hash(data)
 }
 
 // AlterTableAddColumn is adding column to table

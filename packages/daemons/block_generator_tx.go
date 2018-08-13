@@ -44,13 +44,12 @@ func (dtx *DelayedTx) RunForBlockID(blockID int64) {
 	}
 }
 
-func (dtx *DelayedTx) createTx(delayedContactID, keyID int64) error {
+func (dtx *DelayedTx) createTx(delayedContractID, keyID int64) error {
 	vm := smart.GetVM()
 	contract := smart.VMGetContract(vm, callDelayedContract, uint32(firstEcosystemID))
 	info := contract.Block.Info.(*script.ContractInfo)
 
-	params := make([]byte, 0)
-	converter.EncodeLenInt64(&params, delayedContactID)
+	params := map[string]string{"Id": converter.Int64ToStr(delayedContractID)}
 
 	smartTx := tx.SmartContract{
 		Header: tx.Header{
@@ -61,12 +60,12 @@ func (dtx *DelayedTx) createTx(delayedContactID, keyID int64) error {
 			NetworkID:   consts.NETWORK_ID,
 		},
 		SignedBy: smart.PubToID(dtx.publicKey),
-		Data:     params,
+		Params:   params,
 	}
 
 	signature, err := crypto.Sign(
 		dtx.privateKey,
-		fmt.Sprintf("%s,%d", smartTx.ForSign(), delayedContactID),
+		fmt.Sprintf("%s,%d", smartTx.ForSign(), delayedContractID),
 	)
 	if err != nil {
 		dtx.logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")

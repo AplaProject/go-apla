@@ -127,11 +127,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 
 		pubkey = data.params[`pubkey`].([]byte)
 		hexPubKey := hex.EncodeToString(pubkey)
-		params := converter.EncodeLength(int64(len(hexPubKey)))
-		params = append(params, hexPubKey...)
-
+		params := map[string]string{"NewPubkey": hexPubKey}
 		contract := smart.GetContract("NewUser", 1)
-
 		sc := tx.SmartContract{
 			Header: tx.Header{
 				Type:        int(contract.Block.Info.(*script.ContractInfo).ID),
@@ -142,7 +139,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 				PublicKey:   pubkey,
 			},
 			SignedBy: smart.PubToID(NodePublicKey),
-			Data:     params,
+			Params:   params,
 		}
 
 		if conf.Config.IsSupportingVDE() {

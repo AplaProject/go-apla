@@ -74,73 +74,51 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 	}
 	forsign := sc.TxSmart.ForSign()
 
-	input := sc.TxSmart.Data
+	params := sc.TxSmart.Params
 	sc.TxData = make(map[string]interface{})
 
 	if sc.TxContract.Block.Info.(*script.ContractInfo).Tx != nil {
 		for _, fitem := range *sc.TxContract.Block.Info.(*script.ContractInfo).Tx {
-			var err error
 			var v interface{}
+			var err error
 			var forv string
 			var isforv bool
 			switch fitem.Type.String() {
 			case `uint64`:
 				var val uint64
-				converter.BinUnmarshal(&input, &val)
+				val = converter.StrToUint64(params[fitem.Name])
 				v = val
 			case `float64`:
 				var val float64
-				converter.BinUnmarshal(&input, &val)
+				val = converter.StrToFloat64(params[fitem.Name])
 				v = val
 			case `int64`:
-				v, err = converter.DecodeLenInt64(&input)
+				v = converter.StrToInt64(params[fitem.Name])
 			case script.Decimal:
-				var s string
-				if err := converter.BinUnmarshal(&input, &s); err != nil {
-					return err
-				}
-				v, err = decimal.NewFromString(s)
+				v, err = decimal.NewFromString(params[fitem.Name])
 			case `string`:
-				var s string
-				if err := converter.BinUnmarshal(&input, &s); err != nil {
-					return err
-				}
-				v = s
+				v = params[fitem.Name]
 			case `[]uint8`:
-				var b []byte
-				if err := converter.BinUnmarshal(&input, &b); err != nil {
-					return err
-				}
-				v = hex.EncodeToString(b)
+				v, _ = hex.DecodeString(params[fitem.Name])
 			case `[]interface {}`:
-				count, err := converter.DecodeLength(&input)
-				if err != nil {
-					return err
-				}
 				isforv = true
-				list := make([]interface{}, 0)
-				for count > 0 {
-					length, err := converter.DecodeLength(&input)
-					if err != nil {
-						return err
+				var list []string
+				for key, value := range params {
+					if key == fitem.Name+`[]` && len(value) > 0 {
+						count := converter.StrToInt(value)
+						for i := 0; i < count; i++ {
+							list = append(list, params[fmt.Sprintf(`%s[%d]`, fitem.Name, i)])
+						}
 					}
-					if len(input) < int(length) {
-						return fmt.Errorf(`input slice is short`)
-					}
-					list = append(list, string(input[:length]))
-					input = input[length:]
-					count--
 				}
 				if len(list) > 0 {
-					slist := make([]string, len(list))
-					for j, lval := range list {
-						slist[j] = lval.(string)
-					}
-					forv = strings.Join(slist, `,`)
+					forv = strings.Join(list, `,`)
 				}
 				v = list
 			}
-			sc.TxData[fitem.Name] = v
+			if sc.TxData[fitem.Name] == nil {
+				sc.TxData[fitem.Name] = v
+			}
 			if err != nil {
 				return err
 			}

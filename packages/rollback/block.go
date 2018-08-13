@@ -17,9 +17,6 @@
 package rollback
 
 import (
-	"bytes"
-	"fmt"
-
 	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -32,13 +29,12 @@ import (
 
 // BlockRollback is blocking rollback
 func RollbackBlock(data []byte, deleteBlock bool) error {
-	buf := bytes.NewBuffer(data)
-	if buf.Len() == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty buffer")
-		return fmt.Errorf("empty buffer")
+	blockModel := block.NewBlock{}
+	err := blockModel.Unmarshal(data)
+	if err != nil {
+		return err
 	}
-
-	block, err := block.UnmarshallBlock(buf, false)
+	b, err := blockModel.ToBlock()
 	if err != nil {
 		return err
 	}
@@ -49,7 +45,7 @@ func RollbackBlock(data []byte, deleteBlock bool) error {
 		return err
 	}
 
-	err = rollbackBlock(dbTransaction, block)
+	err = rollbackBlock(dbTransaction, b)
 
 	if err != nil {
 		dbTransaction.Rollback()
@@ -57,8 +53,8 @@ func RollbackBlock(data []byte, deleteBlock bool) error {
 	}
 
 	if deleteBlock {
-		b := &model.Block{}
-		err = b.DeleteById(dbTransaction, block.Header.BlockID)
+		bl := &model.Block{}
+		err = bl.DeleteById(dbTransaction, b.Header.BlockID)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
 			dbTransaction.Rollback()

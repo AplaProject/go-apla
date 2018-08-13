@@ -56,4 +56,6 @@ const (
 	SyncProcess              = "SyncProcess"
 	WrongModeError           = "WrongModeError"
 	VDEManagerError          = "VDEManagerError"
+	QueueError               = "QueueError"
+	LevelDBError             = "LevelDBError"
 )
