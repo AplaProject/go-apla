@@ -17,13 +17,12 @@ contract EditApplication {
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Conditions {
-            pars[0] = "conditions"
-            vals[0] = $Conditions
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("applications", $ApplicationId, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("applications", $ApplicationId, pars)
         }
     }
 }

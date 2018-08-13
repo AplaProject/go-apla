@@ -5,136 +5,6 @@ package vde
 var contractsDataSQL = `
 INSERT INTO "%[1]d_contracts" (id, name, value, conditions, app_id)
 VALUES
-	(next_id('%[1]d_contracts'), 'AppendMenu', 'contract AppendMenu {
-	data {
-		Id     int
-		Value      string
-	}
-	conditions {
-		ConditionById("menu", false)
-	}
-	action {
-		var row map
-		row = DBRow("menu").Columns("value").WhereId($Id)
-		DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
-	}
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'AppendPage', 'contract AppendPage {
-	data {
-		Id         int
-		Value      string
-	}
-	conditions {
-		RowConditions("pages", $Id, false)
-	}
-	action {
-		var value string
-		var row map
-		row = DBRow("pages").Columns("value").WhereId($Id)
-		value = row["value"]
-		if Contains(value, "PageEnd:") {
-			value = Replace(value, "PageEnd:", $Value) + "\r\nPageEnd:"
-		} else {
-			value = value + "\r\n" + $Value
-		}
-		DBUpdate("pages", $Id, "value",  value )
-	}
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'EditBlock', 'contract EditBlock {
-    data {
-        Id int
-        Value string "optional"
-        Conditions string "optional"
-    }
-    func onlyConditions() bool {
-        return $Conditions && !$Value
-    }
-
-    conditions {
-        RowConditions("blocks", $Id, onlyConditions())
-        if $Conditions {
-            ValidateCondition($Conditions, $ecosystem_id)
-        }
-    }
-
-    action {
-        var pars, vals array
-        if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
-        }
-        if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
-        }
-        if Len(vals) > 0 {
-            DBUpdate("blocks", $Id, Join(pars, ","), vals...)
-        }
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'EditColumn', 'contract EditColumn {
-    data {
-        TableName string
-        Name string
-        Permissions string
-    }
-
-    conditions {
-        ColumnCondition($TableName, $Name, "", $Permissions)
-    }
-
-    action {
-        PermColumn($TableName, $Name, $Permissions)
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'EditContract', 'contract EditContract {
-    data {
-        Id int
-        Value string "optional"
-        Conditions string "optional"
-        WalletId string "optional"
-    }
-    func onlyConditions() bool {
-        return $Conditions && !$Value && !$WalletId
-    }
-
-    conditions {
-        RowConditions("contracts", $Id, onlyConditions())
-        if $Conditions {
-            ValidateCondition($Conditions, $ecosystem_id)
-        }
-        $cur = DBFind("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id).Row()
-        if !$cur {
-            error Sprintf("Contract %%d does not exist", $Id)
-        }
-        if $Value {
-            ValidateEditContractNewValue($Value, $cur["value"])
-        }
-        if $WalletId != "" {
-            $recipient = AddressToId($WalletId)
-            if $recipient == 0 {
-                error Sprintf("New contract owner %%s is invalid", $WalletId)
-            }
-            if Int($cur["active"]) == 1 {
-                error "Contract must be deactivated before wallet changing"
-            }
-        } else {
-            $recipient = Int($cur["wallet_id"])
-        }
-    }
-
-    action {
-        UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
-    }
-    func rollback() {
-        RollbackEditContract()
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'EditCron', 'contract EditCron {
 		data {
 			Id         int
@@ -155,293 +25,11 @@ VALUES
 			if !HasPrefix($Contract, "@") {
 				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
-			DBUpdate("cron", $Id, "cron,contract,counter,till,conditions",
-				$Cron, $Contract, $Limit, $Till, $Conditions)
+			DBUpdate("cron", $Id, {"cron": $Cron,"contract": $Contract,
+			    "counter":$Limit, "till": $Till, "conditions":$Conditions})
 			UpdateCron($Id)
 		}
 	}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'EditLang', 'contract EditLang {
-    data {
-        Id int
-        Trans string
-    }
-
-    conditions {
-        EvalCondition("parameters", "changing_language", "value")
-        $lang = DBFind("languages").Where("id=?", $Id).Row()
-    }
-
-    action {
-        EditLanguage($Id, $lang["name"], $Trans, Int($lang["app_id"]))
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'EditMenu', 'contract EditMenu {
-    data {
-        Id int
-        Value string "optional"
-        Title string "optional"
-        Conditions string "optional"
-    }
-    func onlyConditions() bool {
-        return $Conditions && !$Value && !$Title
-    }
-
-    conditions {
-        RowConditions("menu", $Id, onlyConditions())
-        if $Conditions {
-            ValidateCondition($Conditions, $ecosystem_id)
-        }
-    }
-
-    action {
-        var pars, vals array
-        if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
-        }
-        if $Title {
-            pars = Append(pars, "title")
-            vals = Append(vals, $Title)
-        }
-        if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
-        }
-        if Len(vals) > 0 {
-            DBUpdate("menu", $Id, Join(pars, ","), vals...)
-        }            
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'EditPage', 'contract EditPage {
-    data {
-        Id int
-        Value string "optional"
-        Menu string "optional"
-        Conditions string "optional"
-        ValidateCount int "optional"
-        ValidateMode string "optional"
-    }
-    func onlyConditions() bool {
-        return $Conditions && !$Value && !$Menu && !$ValidateCount 
-    }
-    func preparePageValidateCount(count int) int {
-        var min, max int
-        min = Int(EcosysParam("min_page_validate_count"))
-        max = Int(EcosysParam("max_page_validate_count"))
-        if count < min {
-            count = min
-        } else {
-            if count > max {
-                count = max
-            }
-        }
-        return count
-    }
-
-    conditions {
-        RowConditions("pages", $Id, onlyConditions())
-        if $Conditions {
-            ValidateCondition($Conditions, $ecosystem_id)
-        }
-        $ValidateCount = preparePageValidateCount($ValidateCount)
-    }
-
-    action {
-        var pars, vals array
-        if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
-        }
-        if $Menu {
-            pars = Append(pars, "menu")
-            vals = Append(vals, $Menu)
-        }
-        if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
-        }
-        if $ValidateCount {
-            pars = Append(pars, "validate_count")
-            vals = Append(vals, $ValidateCount)
-        }
-        if $ValidateMode {
-            if $ValidateMode != "1" {
-                $ValidateMode = "0"
-            }
-            pars = Append(pars, "validate_mode")
-            vals = Append(vals, $ValidateMode)
-        }
-        if Len(vals) > 0 {
-            DBUpdate("pages", $Id, Join(pars, ","), vals...)
-        }
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'EditParameter', 'contract EditParameter {
-    data {
-        Id int
-        Value string "optional"
-        Conditions string "optional"
-    }
-    func onlyConditions() bool {
-        return $Conditions && !$Value
-    }
-
-    conditions {
-        RowConditions("parameters", $Id, onlyConditions())
-        if $Conditions {
-            ValidateCondition($Conditions, $ecosystem_id)
-        }
-    }
-
-    action {
-        var pars, vals array
-        if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
-        }
-        if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
-        }
-        if Len(vals) > 0 {
-            DBUpdate("parameters", $Id, Join(pars, ","), vals...)
-        }
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'EditTable', 'contract EditTable {
-    data {
-        Name string
-        InsertPerm string
-        UpdatePerm string
-        NewColumnPerm string
-        ReadPerm string "optional"
-    }
-
-    conditions {
-        if !$InsertPerm {
-            info("Insert condition is empty")
-        }
-        if !$UpdatePerm {
-            info("Update condition is empty")
-        }
-        if !$NewColumnPerm {
-            info("New column condition is empty")
-        }
-
-        var permissions map
-        permissions["insert"] = $InsertPerm
-        permissions["update"] = $UpdatePerm
-        permissions["new_column"] = $NewColumnPerm
-        if $ReadPerm {
-            permissions["read"] = $ReadPerm
-        }
-        $Permissions = permissions
-        TableConditions($Name, "", JSONEncode($Permissions))
-    }
-
-    action {
-        PermTable($Name, JSONEncode($Permissions))
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'Import', 'contract Import {
-    data {
-        Data string
-    }
-    func ReplaceValue(s string) string {
-        s = Replace(s, "#IMPORT_ECOSYSTEM_ID#", "#ecosystem_id#")
-        s = Replace(s, "#IMPORT_KEY_ID#", "#key_id#")
-        s = Replace(s, "#IMPORT_ISMOBILE#", "#isMobile#")
-        s = Replace(s, "#IMPORT_ROLE_ID#", "#role_id#")
-        s = Replace(s, "#IMPORT_ECOSYSTEM_NAME#", "#ecosystem_name#")
-        s = Replace(s, "#IMPORT_APP_ID#", "#app_id#")
-        return s
-    }
-
-    conditions {
-        $Data = ReplaceValue($Data)
-
-        $ApplicationId = 0
-        var app_map map
-        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key=''import_info'' and member_id=$", $key_id).Row()
-        if app_map{
-            var app_id int
-            app_id = DBFind("applications").Columns("id").Where("name=$", Str(app_map["value.app_name"])).One("id")
-            if app_id {
-                $ApplicationId = Int(app_id)
-            }
-        }
-    }
-
-    action {
-        var editors, creators map
-        editors["pages"] = "EditPage"
-        editors["blocks"] = "EditBlock"
-        editors["menu"] = "EditMenu"
-        editors["app_params"] = "EditAppParam"
-        editors["languages"] = "EditLang"
-        editors["contracts"] = "EditContract"
-        editors["tables"] = "" // nothing
-
-        creators["pages"] = "NewPage"
-        creators["blocks"] = "NewBlock"
-        creators["menu"] = "NewMenu"
-        creators["app_params"] = "NewAppParam"
-        creators["languages"] = "NewLang"
-        creators["contracts"] = "NewContract"
-        creators["tables"] = "NewTable"
-
-        var dataImport array
-        dataImport = JSONDecode($Data)
-        var i int
-        while i<Len(dataImport){
-            var item, cdata map
-            cdata = dataImport[i]
-            if cdata {
-                cdata["ApplicationId"] = $ApplicationId
-                $Type = cdata["Type"]
-                $Name = cdata["Name"]
-
-                // Println(Sprintf("import %%v: %%v", $Type, cdata["Name"]))
-
-                item = DBFind($Type).Where("name=?", $Name).Row()
-                var contractName string
-                if item {
-                    contractName = editors[$Type]
-                    cdata["Id"] = Int(item["id"])
-                    if $Type == "menu"{
-                        var menu menuItem string
-                        menu = Replace(item["value"], " ", "")
-                        menu = Replace(menu, "\n", "")
-                        menu = Replace(menu, "\r", "")
-                        menuItem = Replace(cdata["Value"], " ", "")
-                        menuItem = Replace(menuItem, "\n", "")
-                        menuItem = Replace(menuItem, "\r", "")
-                        if Contains(menu, menuItem) {
-                            // ignore repeated
-                            contractName = ""
-                        }else{
-                            cdata["Value"] = item["value"] + "\n" + cdata["Value"]
-                        }
-                    }
-                } else {
-                    contractName = creators[$Type]
-                }
-
-                if contractName != ""{
-                    CallContract(contractName, cdata)
-                }
-            }
-            i=i+1
-        }
-        // Println(Sprintf("> time: %%v", $time))
-    }
-}
 ', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'ListVDE', 'contract ListVDE {
 		data {}
@@ -449,7 +37,7 @@ VALUES
 		conditions {}
 	
 		action {
-			$result = GetVDEList()
+			return GetVDEList()
 		}
 	}
 ', 'ContractConditions("MainCondition")', 1),
@@ -461,102 +49,6 @@ VALUES
 		  }
 		}
 	  }
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'NewBlock', 'contract NewBlock {
-    data {
-        ApplicationId int
-        Name string
-        Value string
-        Conditions string
-    }
-
-    conditions {
-        ValidateCondition($Conditions, $ecosystem_id)
-
-        if $ApplicationId == 0 {
-            warning "Application id cannot equal 0"
-        }
-
-        if DBFind("blocks").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf( "Block %%s already exists", $Name)
-        }
-    }
-
-    action {
-        DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId)
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'NewColumn', 'contract NewColumn {
-    data {
-        TableName string
-        Name string
-        Type string
-        Permissions string
-    }
-    conditions {
-        ColumnCondition($TableName, $Name, $Type, $Permissions)
-    }
-    action {
-        CreateColumn($TableName, $Name, $Type, $Permissions)
-    }
-    func rollback() {
-        RollbackColumn($TableName, $Name)
-    }
-    func price() int {
-        return SysParamInt("column_price")
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'NewContract', 'contract NewContract {
-    data {
-        ApplicationId int
-        Value string
-        Conditions string
-        Wallet string "optional"
-        TokenEcosystem int "optional"
-    }
-
-    conditions {
-        ValidateCondition($Conditions,$ecosystem_id)
-
-        if $ApplicationId == 0 {
-            warning "Application id cannot equal 0"
-        }
-
-        $walletContract = $key_id
-        if $Wallet {
-            $walletContract = AddressToId($Wallet)
-            if $walletContract == 0 {
-                error Sprintf("wrong wallet %%s", $Wallet)
-            }
-        }
-
-        $contract_name = ContractName($Value)
-
-        if !$contract_name {
-            error "must be the name"
-        }
-
-        if !$TokenEcosystem {
-            $TokenEcosystem = 1
-        } else {
-            if !SysFuel($TokenEcosystem) {
-                warning Sprintf("Ecosystem %%d is not system", $TokenEcosystem)
-            }
-        }
-    }
-
-    action {
-        $result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
-    }
-    func rollback() {
-        RollbackNewContract($Value)
-    }
-    func price() int {
-        return SysParamInt("contract_price")
-    }
-}
 ', 'ContractConditions("MainCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewCron', 'contract NewCron {
 		data {
@@ -577,179 +69,12 @@ VALUES
 			if !HasPrefix($Contract, "@") {
 				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
-			$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions",
-				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
+			$result = DBInsert("cron", {owner: $key_id,cron:$Cron,contract: $Contract,
+				counter:$Limit, till: $Till,conditions: $Conditions})
 			UpdateCron($result)
 		}
 	}
 ', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'NewLang', 'contract NewLang {
-    data {
-        ApplicationId int
-        Name string
-        Trans string
-    }
-
-    conditions {
-        if $ApplicationId == 0 {
-            warning "Application id cannot equal 0"
-        }
-
-        if DBFind("languages").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf( "Language resource %%s already exists", $Name)
-        }
-
-        EvalCondition("parameters", "changing_language", "value")
-    }
-
-    action {
-        CreateLanguage($Name, $Trans, $ApplicationId)
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'NewMenu', 'contract NewMenu {
-    data {
-        Name string
-        Value string
-        Title string "optional"
-        Conditions string
-    }
-
-    conditions {
-        ValidateCondition($Conditions,$ecosystem_id)
-
-        if DBFind("menu").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf( "Menu %%s already exists", $Name)
-        }
-    }
-
-    action {
-        DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions)
-    }
-    func price() int {
-        return SysParamInt("menu_price")
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'NewPage', 'contract NewPage {
-    data {
-        ApplicationId int
-        Name string
-        Value string
-        Menu string
-        Conditions string
-        ValidateCount int "optional"
-        ValidateMode string "optional"
-    }
-    func preparePageValidateCount(count int) int {
-        var min, max int
-        min = Int(EcosysParam("min_page_validate_count"))
-        max = Int(EcosysParam("max_page_validate_count"))
-
-        if count < min {
-            count = min
-        } else {
-            if count > max {
-                count = max
-            }
-        }
-        return count
-    }
-
-    conditions {
-        ValidateCondition($Conditions,$ecosystem_id)
-
-        if $ApplicationId == 0 {
-            warning "Application id cannot equal 0"
-        }
-
-        if DBFind("pages").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf( "Page %%s already exists", $Name)
-        }
-
-        $ValidateCount = preparePageValidateCount($ValidateCount)
-
-        if $ValidateMode {
-            if $ValidateMode != "1" {
-                $ValidateMode = "0"
-            }
-        }
-    }
-
-    action {
-        DBInsert("pages", "name,value,menu,validate_count,validate_mode,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $ValidateMode, $Conditions, $ApplicationId)
-    }
-    func price() int {
-        return SysParamInt("page_price")
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'NewParameter', 'contract NewParameter {
-    data {
-        Name string
-        Value string
-        Conditions string
-    }
-    
-    conditions {
-        ValidateCondition($Conditions, $ecosystem_id)
-        
-        if DBFind("parameters").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf("Parameter %%s already exists", $Name)
-        }
-    }
-    
-    action {
-        DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions)
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'NewTable', 'contract NewTable {
-    data {
-        ApplicationId int
-        Name string
-        Columns string
-        Permissions string
-    }
-    conditions {
-        if $ApplicationId == 0 {
-            warning "Application id cannot equal 0"
-        }
-        TableConditions($Name, $Columns, $Permissions)
-    }
-    
-    action {
-        CreateTable($Name, $Columns, $Permissions, $ApplicationId)
-    }
-    func rollback() {
-        RollbackTable($Name)
-    }
-    func price() int {
-        return SysParamInt("table_price")
-    }
-}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'NewUser', 'contract NewUser {
-	data {
-		NewPubkey string
-	}
-	conditions {
-		$newId = PubToID($NewPubkey)
-		if $newId == 0 {
-			error "Wrong pubkey"
-		}
-		if DBFind("keys").Columns("id").WhereId($newId).One("id") != nil {
-			error "User already exists"
-		}
-
-        $amount = Money(1000) * Money(1000000000000000000)
-	}
-	action {
-        NewMoney($newId, Str($amount), "New user deposit")
-        SetPubKey($newId, StringToBytes($NewPubkey))
-	}
-}
-', 'ContractConditions("NodeOwnerCondition")', 1),
 	(next_id('%[1]d_contracts'), 'NewVDE', 'contract NewVDE {
 		data {
 			VDEName string
@@ -759,29 +84,10 @@ VALUES
 		}
 	
 		conditions {
-            if Size($VDEName) == 0 {
-                warning "VDEName was not received"
-            }
-            if Contains($VDEName, " ") {
-                error "VDEName can not contain spaces"
-            }
-            if Size($DBUser) == 0 {
-                warning "DBUser was not received"
-            }
-            if Size($DBPassword) == 0 {
-                warning "DBPassword was not received"
-            }
-            if $VDEAPIPort <= 0  {
-                warning "VDE API PORT not received"
-            }
-            
 		}
 	
 		action {
-            $VDEName = ToLower($VDEName)
-            $DBUser = ToLower($DBUser)
-            CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
-            $result = "VDE " + $VDEName + " created"
+			CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
 		}
 	}
 ', 'ContractConditions("MainCondition")', 1),
@@ -791,9 +97,7 @@ VALUES
 		}
 		conditions {}
 		action{
-            $VDEName = ToLower($VDEName)
-            DeleteVDE($VDEName)
-            $result = "VDE " + $VDEName + " removed"
+			DeleteVDE($VDEName)
 		}
 	}
 ', 'ContractConditions("MainCondition")', 1),
@@ -806,9 +110,7 @@ VALUES
 		}
 	
 		action {
-            $VDEName = ToLower($VDEName)
-            StartVDE($VDEName)
-            $result = "VDE " + $VDEName + " running"
+			StartVDE($VDEName)
 		}
 	}
 ', 'ContractConditions("MainCondition")', 1),
@@ -821,45 +123,8 @@ VALUES
 		}
 	
 		action {
-            $VDEName = ToLower($VDEName)
-            StopVDEProcess($VDEName)
-            $result = "VDE " + $VDEName + " stopped"
+			StopVDEProcess($VDEName)
 		}
 	}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'UploadBinary', 'contract UploadBinary {
-    data {
-        ApplicationId int
-        Name string
-        Data bytes "file"
-        DataMimeType string "optional"
-    }
-
-    conditions {
-        $Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $ApplicationId, $key_id, $Name).One("id"))
-
-        if $Id == 0 {
-            if $ApplicationId == 0 {
-                warning "Application id cannot equal 0"
-            }
-        }
-    }
-    action {
-        var hash string
-        hash = MD5($Data)
-
-        if $DataMimeType == "" {
-            $DataMimeType = "application/octet-stream"
-        }
-
-        if $Id != 0 {
-            DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
-        } else {
-            $Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $ApplicationId, $key_id, $Name, $Data, hash, $DataMimeType)
-        }
-
-        $result = $Id
-}
-}
 ', 'ContractConditions("MainCondition")', 1);
 `

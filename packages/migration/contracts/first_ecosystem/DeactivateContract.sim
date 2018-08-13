@@ -18,7 +18,7 @@ contract DeactivateContract {
 		}
 	}
 	action {
-		DBUpdate("contracts", $Id, "active", 0)
+		DBUpdate("contracts", $Id, {"active": 0})
 		Deactivate($Id, $ecosystem_id)
 	}
 	func rollback() {
