@@ -114,9 +114,9 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 			} else if strings.Contains(fitem.Tags, `signature`) && result != nil {
 				if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					pref := getPrefix(data)
-					signature := &model.Signature{}
-					signature.SetTablePrefix(pref)
-					found, err := signature.Get(ret[1])
+					c := &model.Contract{}
+					c.SetTablePrefix(pref)
+					found, err := c.Get(ret[1])
 					if err != nil {
 						log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting signature by name")
 						break
@@ -126,7 +126,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 						return contract, ret[1], fmt.Errorf(apiErrors["E_UNKNOWNSIGN"])
 					}
 					var sign TxSignJSON
-					err = json.Unmarshal([]byte(signature.Value), &sign)
+					err = json.Unmarshal([]byte(c.Confirmation), &sign)
 					if err != nil {
 						log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling sign from json")
 						break

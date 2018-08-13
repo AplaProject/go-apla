@@ -120,14 +120,6 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 		ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
 		
-		DROP TABLE IF EXISTS "%[1]d_signatures"; CREATE TABLE "%[1]d_signatures" (
-			"id" bigint  NOT NULL DEFAULT '0',
-			"name" character varying(100) NOT NULL DEFAULT '',
-			"value" jsonb,
-			"conditions" text NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
-		
 		CREATE TABLE "%[1]d_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"name" text NOT NULL UNIQUE DEFAULT '',
@@ -135,6 +127,7 @@ var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_ke
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',
 		"active" character(1) NOT NULL DEFAULT '0',
+		"confirmation" jsonb,
 		"conditions" text  NOT NULL DEFAULT '',
 		"app_id" bigint NOT NULL DEFAULT '1'
 		);

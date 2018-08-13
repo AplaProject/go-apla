@@ -666,13 +666,13 @@ func Deactivate(sc *SmartContract, tblid int64, state int64) error {
 func CheckSignature(i *map[string]interface{}, name string) error {
 	state, name := script.ParseContract(name)
 	sc := (*i)[`sc`].(*SmartContract)
-	sn := model.Signature{}
-	sn.SetTablePrefix(converter.Int64ToStr(int64(state)))
-	_, err := sn.Get(name)
+	c := model.Contract{}
+	c.SetTablePrefix(converter.Int64ToStr(int64(state)))
+	_, err := c.Get(name)
 	if err != nil {
 		return logErrorDB(err, "executing single query")
 	}
-	if len(sn.Value) == 0 {
+	if len(c.Confirmation) == 0 {
 		return nil
 	}
 	hexsign, err := hex.DecodeString((*i)[`Signature`].(string))
@@ -681,7 +681,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	}
 
 	var sign TxSignJSON
-	if err = unmarshalJSON([]byte(sn.Value), &sign, `unmarshalling sign`); err != nil {
+	if err = unmarshalJSON([]byte(c.Value), &sign, `unmarshalling sign`); err != nil {
 		return err
 	}
 	wallet := (*i)[`key_id`].(int64)

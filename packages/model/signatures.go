@@ -1,24 +1,30 @@
 package model
 
 // Signature is model
-type Signature struct {
-	tableName  string
-	Name       string `gorm:"primary_key;not null;size:255"`
-	Value      string `gorm:"not null;type:jsonb(PostgreSQL)"`
-	Conditions string `gorm:"not null"`
+type Contract struct {
+	tableName    string
+	ID           int64  `gorm:"primary_key;not null;default:0"`
+	Name         string `gorm:"unique;not null;default:''"`
+	Value        string `gorm:"unique;not null;default:''"`
+	WalletID     int64  `gorm:"not null;default:0"`
+	TokenID      int64  `gorm:"not null;default:1"`
+	Active       string `gorm:"not null;default 0;size:1"`
+	Confirmation string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	Conditions   string `gorm:"not null;default:''"`
+	AppID        int64  `gorm:"not null;default:1"`
 }
 
 // SetTablePrefix is setting table prefix
-func (s *Signature) SetTablePrefix(prefix string) {
-	s.tableName = prefix + "_signatures"
+func (c *Contract) SetTablePrefix(prefix string) {
+	c.tableName = prefix + "_contracts"
 }
 
 // TableName returns name of table
-func (s *Signature) TableName() string {
-	return s.tableName
+func (c *Contract) TableName() string {
+	return c.tableName
 }
 
 // Get is retrieving model from database
-func (s *Signature) Get(name string) (bool, error) {
-	return isFound(DBConn.Where("name = ?", name).First(s))
+func (c *Contract) Get(name string) (bool, error) {
+	return isFound(DBConn.Where("name = ?", name).First(c))
 }
