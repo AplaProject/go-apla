@@ -11,12 +11,21 @@ contract UpdateMetrics {
 		var i, id int
 		var v map
 		while (i < Len(values)) {
-			v = values[i]
-			id = Int(DBFind("metrics").Columns("id").Where("time = ? AND key = ? AND metric = ?", v["time"], v["key"], v["metric"]).One("id"))
+            var inmap map
+
+            v = values[i]
+            inmap["time"] = v["time"]
+            inmap["key"] = v["key"]
+            inmap["metric"] = v["metric"]
+            
+            id = Int(DBFind("metrics").Columns("id").Where(inmap).One("id"))
+            var ival int
 			if id != 0 {
-				DBUpdate("metrics", id, "value", Int(v["value"]))
+                ival = Int(v["value"])
+				DBUpdate("metrics", id, {"value": ival})
 			} else {
-				DBInsert("metrics", "time,key,metric,value", v["time"], v["key"], v["metric"], Int(v["value"]))
+                inmap["value"] = Int(v["value"])
+				DBInsert("metrics", inmap )
 			}
 			i = i + 1
 		}

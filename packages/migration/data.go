@@ -111,17 +111,20 @@ var (
 		);
 		ALTER TABLE ONLY "transactions" ADD CONSTRAINT transactions_pkey PRIMARY KEY (hash);
 		
+		DROP SEQUENCE IF EXISTS rollback_tx_id_seq CASCADE;
+		CREATE SEQUENCE rollback_tx_id_seq START WITH 1;
 		DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (
-		"id" int NOT NULL DEFAULT '0',
+		"id" bigint NOT NULL  default nextval('rollback_tx_id_seq'),
 		"block_id" bigint NOT NULL DEFAULT '0',
 		"tx_hash" bytea  NOT NULL DEFAULT '',
 		"table_name" varchar(255) NOT NULL DEFAULT '',
 		"table_id" varchar(255) NOT NULL DEFAULT '',
 		"data" TEXT NOT NULL DEFAULT ''
 		);
+		ALTER SEQUENCE rollback_tx_id_seq owned by rollback_tx.id;
 		ALTER TABLE ONLY "rollback_tx" ADD CONSTRAINT rollback_tx_pkey PRIMARY KEY (id);
 		CREATE INDEX "rollback_tx_table" ON "rollback_tx" (table_name, table_id);
-		CREATE INDEX "rollback_tx_hash" ON "rollback_tx" (tx_hash);
+
 
 		DROP TABLE IF EXISTS "install"; CREATE TABLE "install" (
 		"progress" varchar(10) NOT NULL DEFAULT ''

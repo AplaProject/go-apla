@@ -1,6 +1,6 @@
 // +prop AppID = 1
 // +prop Conditions = 'ContractConditions("MainCondition")'
-contract EditAppParam {
+contract EditBlock {
     data {
         Id int
         Value string "optional"
@@ -11,7 +11,7 @@ contract EditAppParam {
     }
 
     conditions {
-        RowConditions("app_params", $Id, onlyConditions())
+        RowConditions("blocks", $Id, onlyConditions())
         if $Conditions {
             ValidateCondition($Conditions, $ecosystem_id)
         }
@@ -26,7 +26,7 @@ contract EditAppParam {
             pars["conditions"] = $Conditions
         }
         if pars {
-            DBUpdate("app_params", $Id, pars)
+            DBUpdate("blocks", $Id, pars)
         }
     }
 }

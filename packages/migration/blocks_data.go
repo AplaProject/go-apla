@@ -2,16 +2,16 @@ package migration
 
 var blocksDataSQL = `INSERT INTO "%[1]d_blocks" (id, name, value, conditions) VALUES
 		(1, 'admin_link', 'If(#sort#==1){
-	SetVar(sort_name, "id asc")
+	SetVar(sort_name, "{id:1}")
 }.ElseIf(#sort#==2){
-	SetVar(sort_name, "id desc")
+	SetVar(sort_name, "{id:-1}")
 }.ElseIf(#sort#==3){
-	SetVar(sort_name, "name asc")
+	SetVar(sort_name, "{name: 1}")
 }.ElseIf(#sort#==4){
-	SetVar(sort_name, "name desc")
+	SetVar(sort_name, "{name: -1}")
 }.Else{
 	SetVar(sort, "1")
-	SetVar(sort_name, "id asc") 
+	SetVar(sort_name, "{id:1}") 
 }
 
 If(Or(#width#==12,#width#==6,#width#==4)){
@@ -63,15 +63,15 @@ Form(){
 		}
 	}
 }', 'ContractConditions("MainCondition")'),
-		(2, 'export_info', 'DBFind(Name: buffer_data, Source: src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
+		(2, 'export_info', 'DBFind(Name: buffer_data, Source: src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where({key:export, member_id: #key_id#}).Vars(buffer)
 
 If(#buffer_value_app_id# > 0){
-	DBFind(pages, src_pages).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_pages)
-	DBFind(blocks, src_blocks).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_blocks)
-	DBFind(app_params, src_parameters).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_parameters)
-	DBFind(languages, src_languages).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_languages)
-	DBFind(contracts, src_contracts).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_contracts)
-	DBFind(tables, src_tables).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_tables)
+	DBFind(pages, src_pages).Where({app_id: #buffer_value_app_id#}).Limit(250).Order("name").Count(count_pages)
+	DBFind(blocks, src_blocks).Where({app_id: #buffer_value_app_id#}).Limit(250).Order("name").Count(count_blocks)
+	DBFind(app_params, src_parameters).Where({app_id:#buffer_value_app_id#}).Limit(250).Order("name").Count(count_parameters)
+	DBFind(languages, src_languages).Where({app_id:#buffer_value_app_id#}).Limit(250).Order("name").Count(count_languages)
+	DBFind(contracts, src_contracts).Where({app_id:#buffer_value_app_id#}).Limit(250).Order("name").Count(count_contracts)
+	DBFind(tables, src_tables).Where({app_id:#buffer_value_app_id#}).Limit(250).Order("name").Count(count_tables)
 }
 
 Div(panel panel-primary){
