@@ -71,7 +71,7 @@ func TestNewContracts(t *testing.T) {
 	rnd := crypto.RandSeq(4)
 	for i, item := range contracts {
 		var ret getContractResult
-		if i > 100 {
+		if i > 20 {
 			break
 		}
 		name := strings.Replace(item.Name, `#rnd#`, rnd, -1)
@@ -130,13 +130,13 @@ var contracts = []smartContract{
 	{`DBFindLike`, `contract DBFindLike {
 		action {
 			var list array
-			list = DBFind("pages").Where({"name":{"$like": "_ed"}})
+			list = DBFind("pages").Where({"name":{"$like": "ort_"}})
 			Test("size", Len(list))
-			list = DBFind("pages").Where({"name":{"$end": "edit"}})
+			list = DBFind("pages").Where({"name":{"$end": "page"}})
 			Test("end", Len(list))
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`size`: `8`, `end`: `8`}},
+		{nil, map[string]string{`size`: `2`, `end`: `1`}},
 	}},
 	{`TestDBFindOK`, `
 			contract TestDBFindOK {
