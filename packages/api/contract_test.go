@@ -71,7 +71,7 @@ func TestNewContracts(t *testing.T) {
 	rnd := crypto.RandSeq(4)
 	for i, item := range contracts {
 		var ret getContractResult
-		if i > 100 {
+		if i > 20 {
 			break
 		}
 		name := strings.Replace(item.Name, `#rnd#`, rnd, -1)
