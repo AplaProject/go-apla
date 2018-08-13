@@ -88,6 +88,7 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 		ConfigFileName: consts.DefaultConfigFile,
 		HTTPPort:       port,
 		LogTo:          fmt.Sprintf("%s_%s", name, conf.Config.Log.LogTo),
+		LogLevel:       conf.Config.Log.LogLevel,
 	}
 
 	if mgr.processes == nil {
