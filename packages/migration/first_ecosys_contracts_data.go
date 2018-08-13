@@ -32,6 +32,44 @@ VALUES
 
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
+	(next_id('1_contracts'), 'CallDelayedContract', 'contract CallDelayedContract {
+	data {
+		Id int
+	}
+	conditions {
+		var rows array
+		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: "false"} )
+
+		if !Len(rows) {
+			error Sprintf("Delayed contract %%d does not exist", $Id)
+		}
+		$cur = rows[0]
+
+		if $key_id != Int($cur["key_id"]) {
+			error "Access denied"
+		}
+
+		if $block < Int($cur["block_id"]) {
+			error Sprintf("Delayed contract %%d must run on block %%s, current block %%d", $Id, $cur["block_id"], $block)
+		}
+	}
+	action {
+		var limit, counter, block_id int
+
+		limit = Int($cur["limit"])
+		counter = Int($cur["counter"])+1
+		block_id = $block
+
+		if limit == 0 || limit > counter {
+			block_id = block_id + Int($cur["every_block"])
+		}
+		DBUpdate("delayed_contracts", $Id, {"counter": counter, "block_id": block_id})
+
+		var params map
+		CallContract($cur["contract"], params)
+	}
+}
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'CheckNodesBan', 'contract CheckNodesBan {
 	action {
 		UpdateNodesBan($block_time)
