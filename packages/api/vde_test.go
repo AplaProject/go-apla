@@ -33,6 +33,14 @@ import (
 	taskContract "github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
 )
 
+func TestVDETables(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	var res tableResult
+
+	require.NoError(t, sendGet("/table/system_parameters", nil, &res))
+	fmt.Println(res)
+}
+
 func TestVDECreate(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 

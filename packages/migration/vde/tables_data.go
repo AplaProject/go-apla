@@ -160,5 +160,11 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 		'{"key": "false",
 			"value": "true",
 			"member_id": "false"}',
-		'ContractConditions("MainCondition")');
+		'ContractConditions("MainCondition")'),
+		(
+			'20',
+			'system_parameters',
+			'{"insert": "false", "update": "ContractAccess(\"1@UpdateSysParam\")","new_column": "ContractConditions(\"MainCondition\")"}',
+			'{"value": "ContractConditions(\"MainCondition\")"}',
+			'ContractConditions("MainCondition")');
 `
