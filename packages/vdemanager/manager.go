@@ -35,7 +35,7 @@ const (
 
 var (
 	errWrongMode        = errors.New("node must be running as VDEMaster")
-	errIncorrectVDEName = errors.New("the name can not begit with a number and must contain alphabetical symbols and numbers")
+	errIncorrectVDEName = errors.New("the name cannot begit with a number and must contain alphabetical symbols and numbers")
 )
 
 // VDEManager struct
@@ -362,7 +362,7 @@ func checkVDEName(name string) error {
 
 	for i, c := range name {
 		if unicode.IsDigit(c) && i == 0 {
-			return fmt.Errorf("the name can not begin with a number")
+			return fmt.Errorf("the name cannot begin with a number")
 		}
 		if !unicode.IsDigit(c) && !unicode.Is(unicode.Latin, c) {
 			return fmt.Errorf("Incorrect symbol")
