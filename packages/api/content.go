@@ -184,6 +184,10 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 }
 
 func getPageHash(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	if ecosystem := r.FormValue(`ecosystem`); len(ecosystem) > 0 &&
+		!strings.HasPrefix(data.params[`name`].(string), `@`) {
+		data.params[`name`] = `@` + ecosystem + data.params[`name`].(string)
+	}
 	err = getPage(w, r, data, logger)
 	if err == nil {
 		var out, ret []byte
