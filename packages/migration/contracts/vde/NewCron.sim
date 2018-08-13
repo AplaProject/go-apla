@@ -19,8 +19,8 @@ contract NewCron {
 			if !HasPrefix($Contract, "@") {
 				$Contract = "@" + Str($ecosystem_id) + $Contract
 			}
-			$result = DBInsert("cron", "owner,cron,contract,counter,till,conditions",
-				$key_id, $Cron, $Contract, $Limit, $Till, $Conditions)
+			$result = DBInsert("cron", {owner: $key_id,cron:$Cron,contract: $Contract,
+				counter:$Limit, till: $Till,conditions: $Conditions})
 			UpdateCron($result)
 		}
 	}
