@@ -170,14 +170,15 @@ func (mgr *VDEManager) ListProcessWithPorts() (map[string]string, error) {
 	}
 
 	for name, status := range list {
-		path := path.Join(mgr.childConfigsPath, name)
+		path := path.Join(mgr.childConfigsPath, name, consts.DefaultConfigFile)
 		c := &conf.GlobalConfig{}
 		if err := conf.LoadConfigToVar(path, c); err != nil {
-			log.WithFields(log.Fields{"type": "dbError", "error": err}).Warn("on loading child VDE config")
+			log.WithFields(log.Fields{"type": "dbError", "error": err, "path": path}).Warn("on loading child VDE config")
 			continue
 		}
 
 		list[name] = fmt.Sprintf("%s %d", status, c.HTTP.Port)
+		fmt.Println(name, list[name])
 	}
 
 	return list, err
