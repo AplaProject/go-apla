@@ -27,6 +27,8 @@ const (
 	eWrongParams     = `function %s must have %d parameters`
 	eArrIndex        = `index of array cannot be type %s`
 	eMapIndex        = `index of map cannot be type %s`
+	eUnknownIdent    = `unknown identifier %s`
+	eWrongVar        = `wrong var %v`
 )
 
 var (
@@ -37,4 +39,10 @@ var (
 	errMaxArrayIndex   = errors.New(`The index is out of range`)
 	errMaxMapCount     = errors.New(`The maxumim length of map`)
 	errRecursion       = errors.New(`The contract can't call itself recursively`)
+	errUnclosedArray   = errors.New(`unclosed array initialization`)
+	errUnclosedMap     = errors.New(`unclosed map initialization`)
+	errUnexpKey        = errors.New(`unexpected lexem; expecting string key`)
+	errUnexpColon      = errors.New(`unexpected lexem; expecting colon`)
+	errUnexpComma      = errors.New(`unexpected lexem; expecting comma`)
+	errUnexpValue      = errors.New(`unexpected lexem; expecting string, int value or variable`)
 )

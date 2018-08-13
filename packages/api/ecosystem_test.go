@@ -70,7 +70,7 @@ func TestEditEcosystem(t *testing.T) {
 	value := `P(test,test paragraph)`
 
 	name := randName(`page`)
-	form := url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
+	form := url.Values{"Name": {name}, "Value": {value},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	err = postTx(`@1NewPage`, &form)
 	if err != nil {

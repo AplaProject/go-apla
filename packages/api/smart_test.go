@@ -63,7 +63,7 @@ func TestUpperName(t *testing.T) {
 		conditions {
 		}
 		action {
-		   DBInsert("testTable` + rnd + `", "num, text", "fgdgf", "124234") 
+		   DBInsert("testTable` + rnd + `", {num: "fgdgf", text: "124234"}) 
 		}
 	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
@@ -304,8 +304,8 @@ func TestNewTable(t *testing.T) {
 
 	form = url.Values{`Value`: {`contract sub` + name + ` {
 		action {
-			DBInsert("1_` + name + `", "name", "ok")
-			DBUpdate("1_` + name + `", 1, "name", "test value" )
+			DBInsert("1_` + name + `", {"name": "ok"})
+			DBUpdate("1_` + name + `", 1, {"name": "test value"} )
 			$result = DBFind("1_` + name + `").Columns("name").WhereId(1).One("name")
 		}
 	}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
@@ -469,7 +469,7 @@ func TestHelper_InsertNodeKey(t *testing.T) {
 			}
 			conditions {}
 			action {
-				DBInsert("keys", "id,pub,amount", $KeyID, $PubKey, "100000000000000000000")
+				DBInsert("keys", {id: $KeyID, pub: $PubKey,amount: "100000000000000000000"})
 			}
 		}`},
 		`ApplicationId`: {`1`},
