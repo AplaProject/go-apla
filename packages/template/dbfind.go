@@ -3,6 +3,7 @@ package template
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	log "github.com/sirupsen/logrus"
@@ -52,4 +53,87 @@ func (vl *valueLink) marshal() (string, error) {
 		return "", err
 	}
 	return string(b), nil
+}
+
+func trimString(in []rune) string {
+	out := strings.TrimSpace(string(in))
+	if len(out) > 0 && out[0] == '"' && out[len(out)-1] == '"' {
+		out = out[1 : len(out)-1]
+	}
+	return out
+}
+
+func parseObject(in []rune) (interface{}, int) {
+	var (
+		ret            interface{}
+		key            string
+		mapMode, quote bool
+	)
+
+	length := len(in)
+	if in[0] == '[' {
+		ret = make([]interface{}, 0)
+	} else if in[0] == '{' {
+		ret = make(map[string]interface{})
+		mapMode = true
+	} else {
+		return nil, 0
+	}
+	start := 1
+	i := 1
+main:
+	for ; i < length; i++ {
+		ch := in[i]
+		if quote && ch != '"' {
+			continue
+		}
+		switch ch {
+		case ']':
+			if !mapMode {
+				break main
+			}
+		case '}':
+			if mapMode {
+				break main
+			}
+		case '{', '[':
+			par, off := parseObject(in[i:])
+			if mapMode {
+				ret.(map[string]interface{})[key] = par
+				key = ``
+			} else {
+				ret = append(ret.([]interface{}), par)
+			}
+			i += off
+			start = i + 1
+		case '"':
+			quote = !quote
+		case ':':
+			if mapMode {
+				key = trimString(in[start:i])
+				start = i + 1
+			}
+		case ',':
+			val := trimString(in[start:i])
+			if len(val) > 0 {
+				if mapMode {
+					ret.(map[string]interface{})[key] = val
+					key = ``
+				} else {
+					ret = append(ret.([]interface{}), val)
+				}
+			}
+			start = i + 1
+		}
+	}
+	if start < i {
+		if last := trimString(in[start:i]); len(last) > 0 {
+			if mapMode {
+				ret.(map[string]interface{})[key] = last
+			} else {
+				ret = append(ret.([]interface{}), last)
+			}
+		}
+	}
+	return ret, i
 }
