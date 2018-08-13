@@ -70,6 +70,7 @@ var sysVars = map[string]struct{}{
 	`txcost`:            {},
 	`txhash`:            {},
 	`role_id`:           {},
+	`guest_key`:         {},
 }
 
 var ErrMemoryLimit = errors.New("Memory limit exceeded")

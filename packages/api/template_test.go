@@ -118,6 +118,7 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`P(Guest = #guest_key#)`, `[{"tag":"p","children":[{"tag":"text","text":"Guest = 4544233900443112470"}]}]`},
 	{`SetVar(val, 123456789)Money(#val#)`, `[{"tag":"text","text":"0.000000000123456789"}]`},
 	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
 	{`DBFind(parameters, src_par).Columns("id").Order(id).Where("id >= 1 and id <= 3").Count(count)Span(#count#)`,

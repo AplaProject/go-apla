@@ -90,6 +90,13 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`GuestKey`, `contract GuestKey {
+		action {
+			Test("result", $guest_key)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `4544233900443112470`}},
+	}},
 	{`RowType`, `contract RowType {
 		action {
 			var app map
@@ -403,8 +410,8 @@ var contracts = []smartContract{
 			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
 				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
 		[]smartParams{
-			{nil, map[string]string{`ByName`: `0 29`,
-				`ById`: `NewColumn`}},
+			{nil, map[string]string{`ByName`: `0 2`,
+				`ById`: `EditLang`}},
 		}},
 	{
 		`testDateTime`, `contract testDateTime {

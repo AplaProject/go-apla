@@ -28,6 +28,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -519,6 +520,7 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`original_contract`: ``,
 		`this_contract`:     ``,
 		`role_id`:           head.RoleID,
+		`guest_key`:         vde.GuestKey,
 	}
 
 	for key, val := range sc.TxData {
