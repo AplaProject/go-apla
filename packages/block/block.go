@@ -173,7 +173,6 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			if err == custom.ErrNetworkStopping {
 				return err
 			}
-
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
 			}
