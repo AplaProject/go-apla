@@ -447,11 +447,8 @@ func TestUpdateSysParam(t *testing.T) {
 func TestUpdateFullNodesWithEmptyArray(t *testing.T) {
 	require.NoErrorf(t, keyLogin(1), "on login")
 
-	byteNodes := `[`
-	byteNodes += `{"tcp_address":"127.0.0.1:7078", "api_address":"https://127.0.0.1:7079", "key_id":"-4466900793776865315", "public_key":"ca901a97e84d76f8d46e2053028f709074b3e60d3e2e33495840586567a0c961820d789592666b67b05c6ae120d5bd83d4388b2f1218638d8226d40ced0bb208"},`
-	byteNodes += `{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"542353610328569127", "public_key":"a8ada71764fd2f0c9fa1d2986455288f11f0f3931492d27dc62862fdff9c97c38923ef46679488ad1cd525342d4d974621db58f809be6f8d1c19fdab50abc06b"},`
-	byteNodes += `{"tcp_address":"127.0.0.1:7082", "api_address":"https://127.0.0.1:7083", "key_id":"5972241339967729614", "public_key":"de1b74d36ae39422f2478cba591f4d14eb017306f6ffdc3b577cc52ee50edb8fe7c7b2eb191a24c8ddfc567cef32152bab17de698ed7b3f2ab75f3bcc8b9b372"}`
-	byteNodes += `]`
+	byteNodes := `[{"tcp_address":"127.0.0.1:7078", "api_address":"https://127.0.0.1:7079", "key_id":"-3122230976936134914", "public_key":"d512e7bbaaa8889e2e471d730bbae663bd291a345153ff34d1d9896e36832408eb9f238deca8d410aeb282ff8547ba3f056c5b2a64e2d0b03928e6dd1336e918"},
+	{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"-3928816940965469512", "public_key":"9fdf51cd74e3a03fbe776a7122e2f28e3d560467d96a624296656a3a2120653e6347572a50693077cc8b8309ea1ea4a33cb84b9e62874a2d762aca85fad84bf7"}]`
 	form := &url.Values{
 		"Name":  {"full_nodes"},
 		"Value": {string(byteNodes)},
@@ -462,11 +459,7 @@ func TestUpdateFullNodesWithEmptyArray(t *testing.T) {
 
 /*
 func TestHelper_InsertNodeKey(t *testing.T) {
-
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoErrorf(t, keyLogin(1), "on login")
 
 	form := url.Values{
 		`Value`: {`contract InsertNodeKey {
@@ -482,22 +475,19 @@ func TestHelper_InsertNodeKey(t *testing.T) {
 		`ApplicationId`: {`1`},
 		`Conditions`:    {`true`},
 	}
-
-	require.NoError(t, postTx(`NewContract`, &form))
-
-	forms := []url.Values{
-		url.Values{
-			`KeyID`:  {"542353610328569127"},
-			`PubKey`: {"be78f54bcf6bb7b49b7ea00790b18b40dd3f5e231ffc764f1c32d3f5a82ab322aee157931bbfca733bac83255002f5ded418f911b959b77a937f0d5d07de74f8"},
-		},
-		url.Values{
-			`KeyID`:  {"5972241339967729614"},
-			`PubKey`: {"7b11a9ee4f509903118d5b965a819b778c83a21a52a033e5768d697a70a61a1bad270465f25d7f70683e977be93a9252e762488fc53808a90220d363d0a38eb6"},
-		},
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
 	}
 
-	for _, frm := range forms {
-		require.NoError(t, postTx(`InsertNodeKey`, &frm))
+	form = url.Values{
+		`KeyID`:  {"-3928816940965469512"},
+		`PubKey`: {"704dfabedb65099a8f05f9e20a2e2f04da2e2b4fc9fd8a5a487278bd1212a020a3b469c4756e6f3fc4f7162373e8da576085fb840a8c666d58085e631be501d6"},
+	}
+
+	if err := postTx(`InsertNodeKey`, &form); err != nil {
+		t.Error(err)
+		return
 	}
 }
 */
@@ -927,11 +917,11 @@ func TestPageHistory(t *testing.T) {
 		}
 		action {
 			var ret array
-			ret = GetPageHistory($IdPage)
+			ret = GetHistory("pages", $IdPage)
 			$result = Str(Len(ret))
-			ret = GetMenuHistory($IdMenu)
+			ret = GetHistory("menu", $IdMenu)
 			$result = $result + Str(Len(ret))
-			ret = GetContractHistory($IdCont)
+			ret = GetHistory("contracts", $IdCont)
 			$result = $result + Str(Len(ret))
 		}
 	}`}, "ApplicationId": {`1`}, `Conditions`: {`true`}}
@@ -944,9 +934,9 @@ func TestPageHistory(t *testing.T) {
 		action {
 			var ret array
 			var row got map
-			ret = GetPageHistory($IdPage)
+			ret = GetHistory("pages", $IdPage)
 			row = ret[1]
-			got = GetPageHistoryRow($IdPage, Int(row["id"]))
+			got = GetHistoryRow("pages", $IdPage, Int(row["id"]))
 			if got["block_id"] != row["block_id"] {
 				error "GetPageHistory"
 			}
@@ -972,7 +962,7 @@ func TestPageHistory(t *testing.T) {
 	assert.NoError(t, postTx(`GetRow`+name, &url.Values{"IdPage": {id}}))
 
 	var retTemp contentResult
-	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {fmt.Sprintf(`GetPageHistory(MySrc,%s)`,
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {fmt.Sprintf(`GetHistory(MySrc, "pages", %s)`,
 		id)}}, &retTemp))
 
 	if len(RawToString(retTemp.Tree)) < 400 {

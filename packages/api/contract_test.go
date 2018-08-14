@@ -23,11 +23,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHardContract(t *testing.T) {
@@ -113,16 +113,16 @@ func TestNewContracts(t *testing.T) {
 
 var contracts = []smartContract{
 	{`RowType`, `contract RowType {
-	action {
-		var app map
-		var result string
-		result = GetType(app)
-		app = DBFind("applications").Where("id=1").Row()
-		result = result + GetType(app)
-		app["app_id"] = 2
-		Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
-	}
-}`, []smartParams{
+		action {
+			var app map
+			var result string
+			result = GetType(app)
+			app = DBFind("applications").Where("id=1").Row()
+			result = result + GetType(app)
+			app["app_id"] = 2
+			Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
+		}
+	}`, []smartParams{
 		{nil, map[string]string{`result`: `map[string]interface {}map[string]interface {} System 2`}},
 	}},
 	{`StackType`, `contract StackType {
@@ -192,16 +192,16 @@ var contracts = []smartContract{
 	}},
 	{`MyTable#rnd#`, `contract MyTable#rnd# {
 		action {
-			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1", 
+			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1",
 				"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]", 100,
 				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
 			var cols array
 			cols[0] = "{\"conditions\":\"true\",\"name\":\"column1\",\"type\":\"text\"}"
 			cols[1] = "{\"conditions\":\"true\",\"name\":\"column2\",\"type\":\"text\"}"
-			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#2", 
+			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#2",
 				JSONEncode(cols), 100,
 				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
-			
+
 			Test("ok", "1")
 		}
 	}`, []smartParams{
@@ -428,6 +428,32 @@ var contracts = []smartContract{
 			{nil, map[string]string{`ByName`: `0 29`,
 				`ById`: `NewColumn`}},
 		}},
+	{
+		`testDateTime`, `contract testDateTime {
+				data {
+					Date string
+					Unix int
+				}
+				action {
+					Test("DateTime", DateTime($Unix))
+					Test("UnixDateTime", UnixDateTime($Date))
+				}
+			}`,
+		[]smartParams{
+			{map[string]string{
+				"Unix": "1257894000",
+				"Date": "2009-11-11 04:00:00",
+			}, map[string]string{
+				"DateTime":     "2009-11-11 04:00:00",
+				"UnixDateTime": timeMustParse("2009-11-11 04:00:00"),
+			}},
+		},
+	},
+}
+
+func timeMustParse(value string) string {
+	t, _ := time.Parse("2006-01-02 15:04:05", value)
+	return converter.Int64ToStr(t.Unix())
 }
 
 func TestEditContracts(t *testing.T) {
@@ -1212,6 +1238,44 @@ func TestLoopCond(t *testing.T) {
 	assert.EqualError(t, postTx(rnd+`shutdown`, &url.Values{}), `{"type":"panic","error":"There is loop in @1`+rnd+`shutdown contract"}`)
 }
 
+func TestRand(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		action {
+			var result i int
+			i = 3
+			while i < 15 {
+				var rnd int
+				rnd = Random(0, 3*i)
+				result = result + rnd
+				i=i+1
+			}
+			$result = result
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, val1, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	_, val2, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	// val1 == val2 for seed = blockId % 1
+	if val1 != val2 {
+		t.Errorf(`%s!=%s`, val1, val2)
+	}
+}
+func TestKillNode(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{"Name": {`MyTestContract1`}, "Value": {`contract MyTestContract1 {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}, "nowait": {`true`}}
+	require.NoError(t, postTx(`NewContract`, &form))
+	require.NoError(t, postTx("Kill", &url.Values{"nowait": {`true`}}))
+}
+
 func TestLoopCondExt(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
@@ -1221,7 +1285,7 @@ func TestLoopCondExt(t *testing.T) {
 
 	form := url.Values{`Value`: {`contract ` + rnd + `1 {
 		conditions {
-	    
+
 		}
 	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
 	err := postTx(`NewContract`, &form)

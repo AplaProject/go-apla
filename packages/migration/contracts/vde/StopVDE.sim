@@ -1,0 +1,16 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract StopVDE {
+		data {
+			VDEName string
+		}
+	
+		conditions {
+		}
+	
+		action {
+            $VDEName = ToLower($VDEName)
+            StopVDEProcess($VDEName)
+            $result = "VDE " + $VDEName + " stopped"
+		}
+	}
