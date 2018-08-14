@@ -18,6 +18,7 @@ package rollback
 
 import (
 	"github.com/GenesisKernel/go-genesis/packages/block"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
@@ -29,12 +30,12 @@ import (
 
 // BlockRollback is blocking rollback
 func RollbackBlock(data []byte, deleteBlock bool) error {
-	blockModel := block.NewBlock{}
+	blockModel := blockchain.Block{}
 	err := blockModel.Unmarshal(data)
 	if err != nil {
 		return err
 	}
-	b, err := blockModel.ToBlock()
+	b, err := block.FromBlockchainBlock(blockModel)
 	if err != nil {
 		return err
 	}
@@ -66,7 +67,7 @@ func RollbackBlock(data []byte, deleteBlock bool) error {
 	return err
 }
 
-func rollbackBlock(dbTransaction *model.DbTransaction, block *block.Block) error {
+func rollbackBlock(dbTransaction *model.DbTransaction, block *block.PlayableBlock) error {
 	// rollback transactions in reverse order
 	logger := block.GetLogger()
 	for i := len(block.Transactions) - 1; i >= 0; i-- {

@@ -260,7 +260,7 @@ func needLoad(logger *log.Entry) (bool, error) {
 	return false, nil
 }
 
-func banNode(host string, block *block.Block, err error) {
+func banNode(host string, block *block.PlayableBlock, err error) {
 	var (
 		reason             string
 		blockId, blockTime int64
@@ -348,12 +348,12 @@ func GetBlocks(blockID int64, host string) error {
 	return processBlocks(blocks)
 }
 
-func getBlocks(blockID int64, host string) ([]*block.Block, error) {
+func getBlocks(blockID int64, host string) ([]*block.PlayableBlock, error) {
 	rollback := syspar.GetRbBlocks1()
 
 	badBlocks := make(map[int64]string)
 
-	blocks := make([]*block.Block, 0)
+	blocks := make([]*block.PlayableBlock, 0)
 	var count int64
 
 	// load the block bodies from the host
@@ -417,7 +417,7 @@ func getBlocks(blockID int64, host string) ([]*block.Block, error) {
 	return blocks, nil
 }
 
-func processBlocks(blocks []*block.Block) error {
+func processBlocks(blocks []*block.PlayableBlock) error {
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
@@ -425,7 +425,7 @@ func processBlocks(blocks []*block.Block) error {
 	}
 
 	// go through new blocks from the smallest block_id to the largest block_id
-	prevBlocks := make(map[int64]*block.Block, 0)
+	prevBlocks := make(map[int64]*block.PlayableBlock, 0)
 
 	for i := len(blocks) - 1; i >= 0; i-- {
 		b := blocks[i]

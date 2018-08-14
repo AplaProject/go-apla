@@ -9,7 +9,7 @@ import (
 
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/block"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -82,7 +82,7 @@ var generateFirstBlockCmd = &cobra.Command{
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block body bin marshalling")
 			return
 		}
-		block := block.NewBlock{
+		block := blockchain.Block{
 			Header:       header,
 			Transactions: [][]byte{tx},
 		}

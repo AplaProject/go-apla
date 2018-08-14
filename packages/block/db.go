@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -17,7 +18,7 @@ import (
 )
 
 // UpdBlockInfo updates info_block table
-func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
+func UpdBlockInfo(dbTransaction *model.DbTransaction, block *PlayableBlock) error {
 	blockID := block.Header.BlockID
 	// for the local tests
 	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
@@ -64,7 +65,7 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 }
 
 // InsertIntoBlockchain inserts a block into the blockchain
-func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error {
+func InsertIntoBlockchain(transaction *model.DbTransaction, block *PlayableBlock) error {
 	// for local tests
 	blockID := block.Header.BlockID
 
@@ -168,19 +169,19 @@ func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 		return
 	}
 
-	newBlock := &NewBlock{}
-	err = newBlock.Unmarshal(blockModel.Data)
+	bBlock := &blockchain.Block{}
+	err = bBlock.Unmarshal(blockModel.Data)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("parsing data of first block")
 		return
 	}
 
-	if len(newBlock.Transactions) == 0 {
+	if len(bBlock.Transactions) == 0 {
 		log.WithFields(log.Fields{"type": consts.ParserError}).Error("list of parsers is empty")
 		return
 	}
 
-	t := newBlock.Transactions[0]
+	t := bBlock.Transactions[0]
 	fb := &consts.FirstBlock{}
 	if err := msgpack.Unmarshal(t, fb); err != nil {
 		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("getting data of first block")

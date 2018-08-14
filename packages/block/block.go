@@ -1,9 +1,11 @@
 package block
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -16,7 +18,7 @@ import (
 )
 
 // Block is storing block data
-type Block struct {
+type PlayableBlock struct {
 	Header       utils.BlockData
 	PrevHeader   *utils.BlockData
 	MrklRoot     []byte
@@ -27,18 +29,18 @@ type Block struct {
 	StopCount    int  // The count of good tx in the block
 }
 
-func (b Block) String() string {
+func (b PlayableBlock) String() string {
 	return fmt.Sprintf("header: %s, prevHeader: %s", b.Header, b.PrevHeader)
 }
 
 // GetLogger is returns logger
-func (b Block) GetLogger() *log.Entry {
+func (b PlayableBlock) GetLogger() *log.Entry {
 	return log.WithFields(log.Fields{"block_id": b.Header.BlockID, "block_time": b.Header.Time, "block_wallet_id": b.Header.KeyID,
 		"block_state_id": b.Header.EcosystemID, "block_hash": b.Header.Hash, "block_version": b.Header.Version})
 }
 
 // PlayBlockSafe is inserting block safely
-func (b *Block) PlaySafe() error {
+func (b *PlayableBlock) PlaySafe() error {
 	logger := b.GetLogger()
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
@@ -58,21 +60,21 @@ func (b *Block) PlaySafe() error {
 			log.WithFields(log.Fields{"type": consts.NodePrivateKeyFilename, "error": err}).Error("reading node private key")
 			return err
 		}
-		newBlock := &NewBlock{
+		bBlock := &blockchain.Block{
 			Header:       &b.Header,
 			Transactions: transactions,
 			PrevHash:     b.PrevHeader.Hash,
 		}
-		mrklRoot, err := newBlock.GetMrklRoot()
+		mrklRoot, err := bBlock.GetMrklRoot()
 		if err != nil {
 			return err
 		}
-		newBlockData, err := newBlock.Marshal(NodePrivateKey)
+		bData, err := bBlock.Marshal(NodePrivateKey)
 		if err != nil {
 			return err
 		}
 
-		b.BinData = newBlockData
+		b.BinData = bData
 		b.Transactions = doneTx
 		b.MrklRoot = mrklRoot
 		b.SysUpdate = false
@@ -103,7 +105,7 @@ func (b *Block) PlaySafe() error {
 	return nil
 }
 
-func (b *Block) readPreviousBlockFromBlockchainTable() error {
+func (b *PlayableBlock) readPreviousBlockFromBlockchainTable() error {
 	if b.Header.BlockID == 1 {
 		b.PrevHeader = &utils.BlockData{}
 		return nil
@@ -117,7 +119,7 @@ func (b *Block) readPreviousBlockFromBlockchainTable() error {
 	return nil
 }
 
-func (b *Block) Play(dbTransaction *model.DbTransaction) error {
+func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction) error {
 	logger := b.GetLogger()
 	if _, err := model.DeleteUsedTransactions(dbTransaction); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
@@ -185,7 +187,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 }
 
 // CheckBlock is checking block
-func (b *Block) Check() error {
+func (b *PlayableBlock) Check() error {
 	logger := b.GetLogger()
 	// exclude blocks from future
 	if b.Header.Time > time.Now().Unix() {
@@ -267,7 +269,7 @@ func (b *Block) Check() error {
 }
 
 // CheckHash is checking hash
-func (b *Block) CheckHash() (bool, error) {
+func (b *PlayableBlock) CheckHash() (bool, error) {
 	logger := b.GetLogger()
 	if b.Header.BlockID == 1 {
 		return true, nil
@@ -319,18 +321,18 @@ func InsertBlockWOForks(data []byte, genBlock, firstBlock bool) error {
 }
 
 // ProcessBlockWherePrevFromBlockchainTable is processing block with in table previous block
-func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Block, error) {
+func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*PlayableBlock, error) {
 	if checkSize && int64(len(data)) > syspar.GetMaxBlockSize() {
 		log.WithFields(log.Fields{"check_size": checkSize, "size": len(data), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
 		return nil, utils.ErrInfo(fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]`))
 	}
 
-	blockModel := NewBlock{}
+	blockModel := blockchain.Block{}
 	if err := blockModel.Unmarshal(data); err != nil {
 		return nil, err
 	}
 
-	block, err := blockModel.ToBlock()
+	block, err := FromBlockchainBlock(blockModel)
 	if err != nil {
 		return nil, err
 	}
@@ -341,4 +343,25 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Blo
 	}
 
 	return block, nil
+}
+
+func FromBlockchainBlock(b blockchain.Block) (*PlayableBlock, error) {
+	transactions := make([]*transaction.Transaction, 0)
+	for _, tx := range b.Transactions {
+		bufTransaction := bytes.NewBuffer(tx)
+		t, err := transaction.UnmarshallTransaction(bufTransaction)
+		if err != nil {
+			if t != nil && t.TxHash != nil {
+				transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
+			}
+			return nil, fmt.Errorf("parse transaction error(%s)", err)
+		}
+		t.BlockData = b.Header
+		transactions = append(transactions, t)
+	}
+	return &PlayableBlock{
+		Header:       *b.Header,
+		Transactions: transactions,
+		MrklRoot:     b.MrklRoot,
+	}, nil
 }

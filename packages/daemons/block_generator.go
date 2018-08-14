@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/block"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -129,11 +130,11 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		d.logger.WithFields(log.Fields{"type": consts.JustWaiting}).Debug("not my generation time")
 		return nil
 	}
-	newBlock := block.NewBlock{
+	bBlock := blockchain.Block{
 		Header:       header,
 		Transactions: trs,
 	}
-	blockBin, err := newBlock.Marshal(NodePrivateKey)
+	blockBin, err := bBlock.Marshal(NodePrivateKey)
 	if err != nil {
 		return err
 	}
