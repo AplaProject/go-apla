@@ -261,5 +261,17 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		);
 		ALTER TABLE ONLY "%[1]d_system_parameters" ADD CONSTRAINT "%[1]d_system_parameters_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_system_parameters_index_name" ON "%[1]d_system_parameters" (name);
+
+		DROP TABLE IF EXISTS "%[1]d_cron";
+	  CREATE TABLE "%[1]d_cron" (
+		  "id"        bigint NOT NULL DEFAULT '0',
+		  "owner"	  bigint NOT NULL DEFAULT '0',
+		  "cron"      varchar(255) NOT NULL DEFAULT '',
+		  "contract"  varchar(255) NOT NULL DEFAULT '',
+		  "counter"   bigint NOT NULL DEFAULT '0',
+		  "till"      timestamp NOT NULL DEFAULT timestamp '1970-01-01 00:00:00',
+		  "conditions" text  NOT NULL DEFAULT ''
+	  );
+	  ALTER TABLE ONLY "%[1]d_cron" ADD CONSTRAINT "%[1]d_cron_pkey" PRIMARY KEY ("id");
 	
 `
