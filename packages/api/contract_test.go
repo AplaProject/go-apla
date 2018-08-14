@@ -30,6 +30,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestHardContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `hard` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+			}
+			action { 
+				var i int
+				while i < 200 {
+				 DBFind("pages").Where("id=5")
+				 DBUpdate("pages", 5, "value", "P(text)")
+				 DBInsert("pages", "name,value,conditions", Sprintf("` + rnd + `%d", i), "P(text)","true")
+				 DBFind("pages").Where("id=6")
+				 DBUpdate("pages", 6, "value", "P(text)")
+				 i = i + 1
+			   }
+			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(rnd, &url.Values{}), `{"type":"txError","error":"Time limit exceeded"}`)
+}
+
 func TestExistContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	form := url.Values{"Name": {`EditPage`}, "Value": {`contract EditPage {action {}}`},
