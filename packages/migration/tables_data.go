@@ -60,13 +60,6 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 "value": "ContractConditions(\"MainCondition\")",
 "conditions": "ContractConditions(\"MainCondition\")"
 	}', 'ContractAccess("@1EditTable")'),
-	('8', 'signatures', 
-	'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
-	  "new_column": "ContractConditions(\"MainCondition\")"}',
-	'{"name": "ContractConditions(\"MainCondition\")",
-"value": "ContractConditions(\"MainCondition\")",
-"conditions": "ContractConditions(\"MainCondition\")"
-	}', 'ContractAccess("@1EditTable")'),
 	('9', 'members', 
 		'{"insert":"ContractAccess(\"Profile_Edit\")","update":"true","new_column":"ContractConditions(\"MainCondition\")"}',
 		'{"image_id":"ContractAccess(\"ProfileEditAvatar\")","member_info":"ContractAccess(\"Profile_Edit\")","member_name":"false"}', 

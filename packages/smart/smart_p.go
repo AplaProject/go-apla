@@ -681,7 +681,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	}
 
 	var sign TxSignJSON
-	if err = unmarshalJSON([]byte(c.Value), &sign, `unmarshalling sign`); err != nil {
+	if err = unmarshalJSON([]byte(c.Confirmation), &sign, `unmarshalling sign`); err != nil {
 		return err
 	}
 	wallet := (*i)[`key_id`].(int64)
