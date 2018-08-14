@@ -161,8 +161,6 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		t.Rand = randBlock
 
 		model.IncrementTxAttemptCount(dbTransaction, t.TxHash)
-
-		model.IncrementTxAttemptCount(dbTransaction, t.TxHash)
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
