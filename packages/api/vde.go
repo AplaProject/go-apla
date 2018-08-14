@@ -20,8 +20,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -167,7 +169,7 @@ func VDEContract(contractData []byte, data *apiData) (result *contractResult, er
 	}
 	result = &contractResult{Hash: hex.EncodeToString(hash)}
 
-	sc := smart.SmartContract{VDE: true, TxHash: hash}
+	sc := smart.SmartContract{VDE: true, TxHash: hash, Rand: rand.New(rand.NewSource(time.Now().Unix()))}
 	err = InitSmartContract(&sc, contractData)
 	if err != nil {
 		result.Message = &txstatusError{Type: "panic", Error: err.Error()}

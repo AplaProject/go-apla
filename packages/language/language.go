@@ -90,9 +90,7 @@ func UpdateLang(state, appID int, name, value string, vde bool) {
 func loadLang(state int, vde bool) error {
 	language := &model.Language{}
 	prefix := strconv.FormatInt(int64(state), 10)
-	if vde {
-		prefix += `_vde`
-	}
+
 	languages, err := language.GetAll(prefix)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error querying all languages")
@@ -146,7 +144,15 @@ func LangText(in string, state, appID int, accept string, vde bool) (string, boo
 	}
 	langs := strings.Split(accept, `,`)
 	if _, ok := (*lang[istate]).res[appID]; !ok {
-		return in, false
+		var found bool
+		for appID, _ = range (*lang[istate]).res {
+			if _, found = (*lang[istate]).res[appID][in]; ok {
+				break
+			}
+		}
+		if !found {
+			return in, false
+		}
 	}
 	if lres, ok := (*lang[istate]).res[appID][in]; ok {
 		lng := DefLang()

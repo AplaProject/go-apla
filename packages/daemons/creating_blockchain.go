@@ -35,7 +35,7 @@ func writeNextBlocks(fileName string, minToSave int64, logger *log.Entry) error 
 
 	// write the newest blocks to reserved blockchain
 	// ??? curBlockID - COUNT_BLOCK_BEFORE_SAVE ???
-	blocks, err := model.GetBlockchain(lastSavedBlockID, lastSavedBlockID+int64(minToSave))
+	blocks, err := model.GetBlockchain(lastSavedBlockID, lastSavedBlockID+int64(minToSave), model.OrderASC)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting blockchain")
 		return err

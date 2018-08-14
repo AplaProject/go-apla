@@ -42,6 +42,16 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(outer, [{"obj1_key1": "obj1_value1"},{"obj2_key2": "obj2_value2"}])
+	ArrayToSource(outer, #outer#)
+	ForList(outer){
+		JsonToSource(inner, #value#)
+		ForList(inner){
+			Div(){
+				#key#:#value#
+			}
+		}
+	}`, `[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","{\"obj1_key1\": \"obj1_value1\"}"],["1","{\"obj2_key2\": \"obj2_value2\"}"]],"source":"outer","types":["text","text"]}},{"tag":"forlist","attr":{"source":"outer"},"children":[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["obj1_key1","obj1_value1"]],"source":"inner","types":["text","text"]}},{"tag":"forlist","attr":{"source":"inner"},"children":[{"tag":"div","children":[{"tag":"text","text":"obj1_key1:obj1_value1"}]}]},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["obj2_key2","obj2_value2"]],"source":"inner","types":["text","text"]}},{"tag":"forlist","attr":{"source":"inner"},"children":[{"tag":"div","children":[{"tag":"text","text":"obj2_key2:obj2_value2"}]}]}]}]`},
 	{`Hint(Title: some text, Icon: default, Text: This is hint text)`,
 		`[{"tag":"hint","attr":{"icon":"default","text":"This is hint text","title":"some text"}}]`},
 	{`AddToolButton(Title: Open, Page: default).Popup(Width: 50, Header: Test)`,

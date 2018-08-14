@@ -17,6 +17,7 @@
 package daylight
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -245,8 +246,12 @@ func Start() {
 	defer delPidFile()
 
 	if model.DBConn != nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		utils.CancelFunc = cancel
+		utils.ReturnCh = make(chan string)
+
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err := daemonsctl.RunAllDaemons()
+		err := daemonsctl.RunAllDaemons(ctx)
 		log.Info("Daemons started")
 		if err != nil {
 			os.Exit(1)
@@ -264,23 +269,21 @@ func Start() {
 
 			checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
 			na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
-			na.Run()
+			na.Run(ctx)
 
 			err = service.InitNodesBanService()
 			if err != nil {
 				log.WithError(err).Fatal("Can't init ban service")
 			}
-		}
-
-		if conf.Config.IsSupportingVDE() {
+		} else {
 			if err := smart.LoadVDEContracts(nil, converter.Int64ToStr(consts.DefaultVDE)); err != nil {
 				log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Fatal("on loading vde virtual mashine")
 				Exit(1)
 			}
-		}
 
-		if conf.Config.IsVDEMaster() {
-			vdemanager.InitVDEManager()
+			if conf.Config.IsVDEMaster() {
+				vdemanager.InitVDEManager()
+			}
 		}
 	}
 
