@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2016 GenesisKernel
+// Copyright (c) 2016 GenesisCommunity
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,21 +32,20 @@ import (
 	"time"
 
 	"github.com/GenesisCommunity/go-genesis/packages/api"
-	"github.com/GenesisCommunity/go-genesis/packages/autoupdate"
 	conf "github.com/GenesisCommunity/go-genesis/packages/conf"
-	"github.com/GenesisCommunity/go-genesis/packages/config/syspar"
+	"github.com/GenesisCommunity/go-genesis/packages/conf/syspar"
 	"github.com/GenesisCommunity/go-genesis/packages/consts"
 	"github.com/GenesisCommunity/go-genesis/packages/converter"
 	"github.com/GenesisCommunity/go-genesis/packages/daemons"
 	"github.com/GenesisCommunity/go-genesis/packages/daylight/daemonsctl"
-	"github.com/GenesisCommunity/go-genesis/packages/install"
 	logtools "github.com/GenesisCommunity/go-genesis/packages/log"
 	"github.com/GenesisCommunity/go-genesis/packages/model"
-	"github.com/GenesisCommunity/go-genesis/packages/parser"
 	"github.com/GenesisCommunity/go-genesis/packages/publisher"
+	"github.com/GenesisCommunity/go-genesis/packages/service"
 	"github.com/GenesisCommunity/go-genesis/packages/smart"
 	"github.com/GenesisCommunity/go-genesis/packages/statsd"
 	"github.com/GenesisCommunity/go-genesis/packages/utils"
+	"github.com/GenesisCommunity/go-genesis/packages/vdemanager"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )

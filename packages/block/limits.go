@@ -21,12 +21,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/transaction"
+	"github.com/GenesisCommunity/go-genesis/packages/conf/syspar"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/model"
+	"github.com/GenesisCommunity/go-genesis/packages/script"
+	"github.com/GenesisCommunity/go-genesis/packages/transaction"
 
 	log "github.com/sirupsen/logrus"
 )

@@ -5,10 +5,10 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisCommunity/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/tcpserver"
+	"github.com/GenesisCommunity/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

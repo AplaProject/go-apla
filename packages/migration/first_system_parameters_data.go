@@ -10,12 +10,12 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 			Div(list-group-item){
 				Span(Class: h3, Body: "You as Founder hold a complete set of rights for controlling the ecosystem – creating and editing applications, modifying ecosystem parameters, etc. ")
 				Span(Class: h3, Body: "To get started, you can download the finished applications from the")
-				Span(Class: h3 text-primary, Body: " https://github.com/GenesisKernel/apps ")
+				Span(Class: h3 text-primary, Body: " https://github.com/GenesisCommunity/apps ")
 				Span(Class: h3, Body: "and install them using the Import service. ")
 				Span(Class: h3, Body: "The Strong(basic.json) contains applications for managing roles, creating notifications and votings. ")
 				Span(Class: h3, Body: "Or you can create your own apps using the tools in the Admin tab. ")
 				Span(Class: h3, Body: "Documentation ")
-				Span(Class: h3 text-primary, Body: "https://genesiskernel.readthedocs.io")
+				Span(Class: h3 text-primary, Body: "https://GenesisCommunity.readthedocs.io")
 			}
 			Div(panel-footer text-right clearfix){
 				Div(pull-left){

@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2016 GenesisKernel
+// Copyright (c) 2016 GenesisCommunity
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -41,9 +41,13 @@ import (
 	"time"
 
 	"github.com/GenesisCommunity/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/conf/syspar"
 	"github.com/GenesisCommunity/go-genesis/packages/consts"
 	"github.com/GenesisCommunity/go-genesis/packages/converter"
 	"github.com/GenesisCommunity/go-genesis/packages/crypto"
+	"github.com/GenesisCommunity/go-genesis/packages/model"
+	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/theckman/go-flock"
 )

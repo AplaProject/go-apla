@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/conf"
 )
 
 // rootCmd represents the base command when called without any subcommands

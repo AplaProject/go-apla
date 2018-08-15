@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2016 GenesisKernel
+// Copyright (c) 2016 GenesisCommunity
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,9 @@ package api
 import (
 	"strings"
 
+	"github.com/GenesisCommunity/go-genesis/packages/conf"
 	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/utils/tx"
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )

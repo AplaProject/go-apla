@@ -2,7 +2,7 @@
 
 package utils
 
-import "github.com/GenesisKernel/go-genesis/packages/model"
+import "github.com/GenesisCommunity/go-genesis/packages/model"
 
 type intervalBlocksCounter interface {
 	count(state blockGenerationState) (int, error)

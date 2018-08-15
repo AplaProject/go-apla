@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisCommunity/go-genesis/packages/utils"
 )
 
 type MultiRequest struct {

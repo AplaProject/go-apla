@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/rollback"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisCommunity/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/conf/syspar"
+	"github.com/GenesisCommunity/go-genesis/packages/model"
+	"github.com/GenesisCommunity/go-genesis/packages/rollback"
+	"github.com/GenesisCommunity/go-genesis/packages/smart"
+	"github.com/GenesisCommunity/go-genesis/packages/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

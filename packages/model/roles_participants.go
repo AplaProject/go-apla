@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
 )
 
 // RolesParticipants represents record of {prefix}roles_participants table

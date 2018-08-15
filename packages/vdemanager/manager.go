@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisCommunity/go-genesis/packages/conf"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/model"
 	pConf "github.com/rpoletaev/supervisord/config"
 	"github.com/rpoletaev/supervisord/process"
 	log "github.com/sirupsen/logrus"

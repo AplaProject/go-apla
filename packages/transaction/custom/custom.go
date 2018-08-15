@@ -1,7 +1,7 @@
 package custom
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/GenesisCommunity/go-genesis/packages/utils/tx"
 )
 
 // TransactionInterface is parsing transactions

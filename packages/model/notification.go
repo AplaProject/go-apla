@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2016 GenesisKernel
+// Copyright (c) 2016 GenesisCommunity
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ package model
 import (
 	"strconv"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisCommunity/go-genesis/packages/converter"
 )
 
 const (

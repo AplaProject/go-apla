@@ -3,18 +3,18 @@
 </p>
 <br>
 
-[![Throughput Graph](https://graphs.waffle.io/GenesisKernel/go-genesis/throughput.svg)](https://waffle.io/GenesisKernel/go-genesis/metrics/throughput)
+[![Throughput Graph](https://graphs.waffle.io/GenesisCommunity/go-genesis/throughput.svg)](https://waffle.io/GenesisCommunity/go-genesis/metrics/throughput)
 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![Go Report Card](https://goreportcard.com/badge/github.com/GenesisKernel/go-genesis)](https://goreportcard.com/report/github.com/GenesisKernel/go-genesis)
-[![Build Status](https://travis-ci.org/GenesisKernel/go-genesis.svg?branch=master)](https://travis-ci.org/GenesisKernel/go-genesis)
-[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://genesiskernel.readthedocs.io/en/latest/)
-[![](https://tokei.rs/b1/github/GenesisKernel/go-genesis)](https://github.com/GenesisKernel/go-genesis)
-![](https://reposs.herokuapp.com/?path=GenesisKernel/go-genesis&style=flat)
+[![Go Report Card](https://goreportcard.com/badge/github.com/GenesisCommunity/go-genesis)](https://goreportcard.com/report/github.com/GenesisCommunity/go-genesis)
+[![Build Status](https://travis-ci.org/GenesisCommunity/go-genesis.svg?branch=master)](https://travis-ci.org/GenesisCommunity/go-genesis)
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://GenesisCommunity.readthedocs.io/en/latest/)
+[![](https://tokei.rs/b1/github/GenesisCommunity/go-genesis)](https://github.com/GenesisCommunity/go-genesis)
+![](https://reposs.herokuapp.com/?path=GenesisCommunity/go-genesis&style=flat)
 [![API Reference](
 https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667
-)](https://godoc.org/github.com/GenesisKernel/go-genesis)
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/GenesisKernel?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+)](https://godoc.org/github.com/GenesisCommunity/go-genesis)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/GenesisCommunity?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 
 <p align="center">
@@ -60,19 +60,19 @@ Genesis 是一个开源的区块链平台，最早的开发由程序员奥列格
 
 ## Genesis是如何运行的
 
-你可以使用一种名为 [Simvolio](http://genesiskernel.readthedocs.io/en/latest/introduction/script.html#simvolio-contracts-language) 类似C语言的智能合约编程语言来进行开发，之后被编译成字节码，它只包含非常少的变成指令和预置方法。
+你可以使用一种名为 [Simvolio](http://GenesisCommunity.readthedocs.io/en/latest/introduction/script.html#simvolio-contracts-language) 类似C语言的智能合约编程语言来进行开发，之后被编译成字节码，它只包含非常少的变成指令和预置方法。
 
 <p align="center">
     <img src="https://i.imgur.com/qHosOsw.jpg">
 </p>
 
-你可以使用 [Protypo](http://genesiskernel.readthedocs.io/en/latest/introduction/templates2.html#protypo-template-language) 来开发前端界面. Protypo 是一种模板引擎，支持一些列方法和树状结构的元素。
+你可以使用 [Protypo](http://GenesisCommunity.readthedocs.io/en/latest/introduction/templates2.html#protypo-template-language) 来开发前端界面. Protypo 是一种模板引擎，支持一些列方法和树状结构的元素。
 
 <p align="center">
     <img src="https://i.imgur.com/CYL1b95.jpg">
 </p>
 
-你可以通过注册表为智能合约\前端界面设置 [规则](https://genesiskernel.readthedocs.io/en/latest/introduction/what-is-Apla.html#access-rights-control-mechanism)。
+你可以通过注册表为智能合约\前端界面设置 [规则](https://GenesisCommunity.readthedocs.io/en/latest/introduction/what-is-Apla.html#access-rights-control-mechanism)。
 
 <p align="center">
     <img src="https://i.imgur.com/DkvR7MZ.jpg">
@@ -80,7 +80,7 @@ Genesis 是一个开源的区块链平台，最早的开发由程序员奥列格
 
 也可以把你自己开发的区块链应用上传至 Google Play 或 Appstore 应用商店。
 
-[https://github.com/GenesisKernel/genesis-reactnative](https://github.com/GenesisKernel/genesis-reactnative)
+[https://github.com/GenesisCommunity/genesis-reactnative](https://github.com/GenesisCommunity/genesis-reactnative)
 
 <p align="center">
     <img src="https://i.imgur.com/m46Kxwc.png" alt="" width=250>
@@ -93,7 +93,7 @@ Genesis 是一个开源的区块链平台，最早的开发由程序员奥列格
     <img src="https://i.imgur.com/6oYykyk.jpg">
 </p>
 
-[https://github.com/GenesisKernel/quick-start](https://github.com/GenesisKernel/quick-start)
+[https://github.com/GenesisCommunity/quick-start](https://github.com/GenesisCommunity/quick-start)
 
 在 macos 部署:
 
@@ -108,7 +108,7 @@ bash manage.sh install 3 (抬升3个局域NOD)
 ```
 
 在 windows 部署:
-[https://github.com/GenesisKernel/quick-start-win/releases](https://github.com/GenesisKernel/quick-start-win/releases)
+[https://github.com/GenesisCommunity/quick-start-win/releases](https://github.com/GenesisCommunity/quick-start-win/releases)
 
 ```bash
 win_install.exe
@@ -146,16 +146,16 @@ Web 版本的 Blockexplorer 马上就会放出。
 
 ## 参与开发
 
-请阅读 [CONTRIBUTING.md](https://github.com/GenesisKernel/go-genesis/blob/master/CONTRIBUTING.md) 以获取有关 Pull Requests 的详细信息。
+请阅读 [CONTRIBUTING.md](https://github.com/GenesisCommunity/go-genesis/blob/master/CONTRIBUTING.md) 以获取有关 Pull Requests 的详细信息。
 
 ## 文档
 
-请阅读并帮我们完善 [文档](https://genesiskernel.readthedocs.io/en/latest/#contents)
+请阅读并帮我们完善 [文档](https://GenesisCommunity.readthedocs.io/en/latest/#contents)
 
 
 ## 版本管理
 
-我们使用 [SemVer](http://semver.org/) 实现版本管理，现有版本请见 [tags on this repository](https://github.com/GenesisKernel/go-genesis/tags)
+我们使用 [SemVer](http://semver.org/) 实现版本管理，现有版本请见 [tags on this repository](https://github.com/GenesisCommunity/go-genesis/tags)
 
 
 ## 开发人员
@@ -179,14 +179,14 @@ Web 版本的 Blockexplorer 马上就会放出。
 - Yuriy Lomakin - MVP frontend, tester - https://github.com/ylomakin
 - Elena Konkina - tester - https://github.com/lfreze
 
-请查看该项目的 [参与者](https://github.com/GenesisKernel/go-genesis/graphs/contributors) 名单。
+请查看该项目的 [参与者](https://github.com/GenesisCommunity/go-genesis/graphs/contributors) 名单。
 
 [加入](mailto:hello@apla.io) Genesis 团队！
 
 
 ## 许可证
 
-该项目获得GPLv3许可-详情请查看文件 [LICENSE](https://github.com/GenesisKernel/go-genesis/blob/master/LICENSE)
+该项目获得GPLv3许可-详情请查看文件 [LICENSE](https://github.com/GenesisCommunity/go-genesis/blob/master/LICENSE)
 
 <p align="center">
 <a href="#"><img src="http://www.kgsbo.com/wp-content/themes/kgsbo/images/top.png" width=100 align="center"></a><br>

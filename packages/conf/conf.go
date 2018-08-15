@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2016 GenesisKernel
+// Copyright (c) 2016 GenesisCommunity
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,12 +28,11 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/GenesisCommunity/go-genesis/packages/consts"
 	toml "github.com/BurntSushi/toml"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-
-	"github.com/GenesisKernel/go-genesis/packages/consts"
 )
 
 // HostPort endpoint in form "str:int"

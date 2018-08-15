@@ -3,11 +3,11 @@ package custom
 import (
 	"errors"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/service"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/GenesisCommunity/go-genesis/packages/conf/syspar"
+	"github.com/GenesisCommunity/go-genesis/packages/consts"
+	"github.com/GenesisCommunity/go-genesis/packages/service"
+	"github.com/GenesisCommunity/go-genesis/packages/utils"
+	"github.com/GenesisCommunity/go-genesis/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
 )

@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2016 GenesisKernel
+// Copyright (c) 2016 GenesisCommunity
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/GenesisCommunity/go-genesis/packages/config/syspar"
+	"github.com/GenesisCommunity/go-genesis/packages/conf/syspar"
 	"github.com/GenesisCommunity/go-genesis/packages/consts"
 	"github.com/GenesisCommunity/go-genesis/packages/converter"
 	"github.com/GenesisCommunity/go-genesis/packages/crypto"
@@ -37,6 +37,7 @@ import (
 	"github.com/GenesisCommunity/go-genesis/packages/model"
 	"github.com/GenesisCommunity/go-genesis/packages/script"
 	"github.com/GenesisCommunity/go-genesis/packages/utils"
+	"github.com/GenesisCommunity/go-genesis/packages/utils/metric"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"

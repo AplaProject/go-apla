@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2016 GenesisKernel
+// Copyright (c) 2016 GenesisCommunity
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@ import (
 	"github.com/GenesisCommunity/go-genesis/packages/consts"
 	"github.com/GenesisCommunity/go-genesis/packages/notificator"
 	"github.com/GenesisCommunity/go-genesis/packages/publisher"
+	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 
 	"github.com/GenesisCommunity/go-genesis/packages/converter"
 	"github.com/GenesisCommunity/go-genesis/packages/crypto"
@@ -38,10 +39,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/GenesisCommunity/go-genesis/packages/script"
+	"github.com/GenesisCommunity/go-genesis/packages/smart"
+	"github.com/GenesisCommunity/go-genesis/packages/utils"
+	"github.com/GenesisCommunity/go-genesis/packages/utils/tx"
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
