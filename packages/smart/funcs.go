@@ -1017,8 +1017,9 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(PrepareColumns(columns)).
 		Where(where).Order(order).Offset(offset).Limit(limit).Rows()
 	if err != nil {
-		return 0, nil, logErrorDB(err, fmt.Sprintf("selecting rows from table %s where %s order %s",
-			PrepareColumns(columns), where, order))
+		logErrorDB(err, fmt.Sprintf("Contract %s %v %v", sc.TxContract.Name, sc.TxContract.StackCont, sc.TxData))
+		return 0, nil, logErrorDB(err, fmt.Sprintf("selecting rows from table %s %s where %s order %s",
+			tblname, PrepareColumns(columns), where, order))
 	}
 	defer rows.Close()
 	cols, err := rows.Columns()
