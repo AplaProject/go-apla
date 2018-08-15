@@ -392,6 +392,36 @@ VALUES
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
+	(next_id('1_contracts'), 'EditSignJoint', 'contract EditSignJoint {
+    data {
+        Id int
+        Title string
+        Parameter string
+        Conditions string
+    }
+
+    conditions {
+        if !$Title {
+            info("Title is empty")
+        }
+        if !$Parameter {
+            info("Parameter is empty")
+        }
+    }
+
+    action {
+        var Value map
+        Value["title"] = $Title 
+        Value["params"] = $Parameter
+
+        var params map
+        params["Id"] = $Id 
+        params["Value"] = JSONEncode(Value)
+        params["Conditions"] = $Conditions
+        CallContract("EditSign", params)
+    }
+}
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditTable', 'contract EditTable {
     data {
         Name string
@@ -967,6 +997,48 @@ VALUES
     action {
         DBInsert("signatures", {name: $Name,value: $Value,conditions: $Conditions})  
     }
+}
+', 'ContractConditions("MainCondition")', 1, %[1]d),
+	(next_id('1_contracts'), 'NewSignJoint', 'contract NewSignJoint {
+        data {
+            Name string
+            Title string
+            ParamArr array
+            ValueArr array
+            Conditions string
+        }
+    
+        conditions {
+            var i int
+            while i < Len($ParamArr) {
+                if Size($ParamArr[i]) == 0 {
+                    info("Parameter is empty")
+                }
+                if Size($ValueArr[i]) == 0 {
+                    info("Value is empty")
+                }
+                i = i + 1
+            }
+        }
+    
+        action {
+            var par_arr array
+    
+            var i int
+            while i < Len($ParamArr) {
+                var par_map map
+                par_map["name"] = $ParamArr[i]
+                par_map["text"] = $ValueArr[i]
+                par_arr = Append(par_arr, JSONEncode(par_map))
+                i = i + 1
+            }
+    
+            var params map
+            params["Name"] = $Name 
+            params["Value"] = Sprintf(` + "`" + `{"title":"%%v","params":[%%v]}` + "`" + `, $Title, Join(par_arr, ","))
+            params["Conditions"] = $Conditions
+            CallContract("NewSign", params)
+        }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewTable', 'contract NewTable {
