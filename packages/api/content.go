@@ -20,6 +20,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -56,12 +58,34 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 		vars[name] = r.FormValue(name)
 	}
 	vars[`_full`] = `0`
-	vars[`ecosystem_id`] = converter.Int64ToStr(data.ecosystemId)
-	vars[`key_id`] = converter.Int64ToStr(data.keyId)
-	vars[`isMobile`] = data.isMobile
-	vars[`role_id`] = converter.Int64ToStr(data.roleId)
-	vars[`ecosystem_name`] = data.ecosystemName
-
+	if data.keyId != 0 {
+		vars[`ecosystem_id`] = converter.Int64ToStr(data.ecosystemId)
+		vars[`key_id`] = converter.Int64ToStr(data.keyId)
+		vars[`isMobile`] = data.isMobile
+		vars[`role_id`] = converter.Int64ToStr(data.roleId)
+		vars[`ecosystem_name`] = data.ecosystemName
+	} else {
+		vars[`ecosystem_id`] = vars[`ecosystem`]
+		if len(vars[`keyID`]) > 0 {
+			vars[`key_id`] = vars[`keyID`]
+		} else {
+			vars[`key_id`] = `0`
+		}
+		if len(vars[`roleID`]) > 0 {
+			vars[`role_id`] = vars[`roleID`]
+		} else {
+			vars[`role_id`] = `0`
+		}
+		if len(vars[`isMobile`]) == 0 {
+			vars[`isMobile`] = `0`
+		}
+		if len(vars[`ecosystem_id`]) != 0 {
+			ecosystems := model.Ecosystem{}
+			if found, _ := ecosystems.Get(converter.StrToInt64(vars[`ecosystem_id`])); found {
+				vars[`ecosystem_name`] = ecosystems.Name
+			}
+		}
+	}
 	if _, ok := vars[`lang`]; !ok {
 		vars[`lang`] = r.Header.Get(`Accept-Language`)
 	}
@@ -69,30 +93,53 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 	return &vars
 }
 
-func pageValue(w http.ResponseWriter, data *apiData, logger *log.Entry) (*model.Page, error) {
+func parseEcosystem(in string) (id, name string) {
+	re := regexp.MustCompile(`(?is)^@(\d+)(\D.*)$`)
+	ret := re.FindStringSubmatch(in)
+	if len(ret) == 3 {
+		id = ret[1]
+		name = ret[2]
+	}
+	return
+}
+
+func pageValue(w http.ResponseWriter, data *apiData, logger *log.Entry) (*model.Page, string, error) {
+	var ecosystem string
 	page := &model.Page{}
-	page.SetTablePrefix(getPrefix(data))
-	found, err := page.Get(data.params[`name`].(string))
+	name := data.params[`name`].(string)
+	if strings.HasPrefix(name, `@`) {
+		ecosystem, name = parseEcosystem(name)
+		if len(name) == 0 {
+			logger.WithFields(log.Fields{"type": consts.NotFound,
+				"value": data.params[`name`].(string)}).Error("page not found")
+			return nil, ``, errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		}
+	} else {
+		ecosystem = getPrefix(data)
+	}
+	page.SetTablePrefix(ecosystem)
+	found, err := page.Get(name)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
-		return nil, errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
+		return nil, ``, errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("page not found")
-		return nil, errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		return nil, ``, errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
-	return page, nil
+	return page, ecosystem, nil
 }
 
 func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	page, err := pageValue(w, data, logger)
+	page, prefix, err := pageValue(w, data, logger)
 	if err != nil {
 		return err
 	}
-	menu, err := model.Single(`SELECT value FROM "`+getPrefix(data)+`_menu" WHERE name = ?`,
-		page.Menu).String()
+	menu := &model.Menu{}
+	menu.SetTablePrefix(prefix)
+	_, err = menu.Get(page.Menu)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting single from DB")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page menu")
 		return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
 	}
 	var wg sync.WaitGroup
@@ -109,7 +156,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		if timeout {
 			return
 		}
-		retmenu := template.Template2JSON(menu, &timeout, vars)
+		retmenu := template.Template2JSON(menu.Value, &timeout, vars)
 		if timeout {
 			return
 		}
@@ -137,6 +184,10 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 }
 
 func getPageHash(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	if ecosystem := r.FormValue(`ecosystem`); len(ecosystem) > 0 &&
+		!strings.HasPrefix(data.params[`name`].(string), `@`) {
+		data.params[`name`] = `@` + ecosystem + data.params[`name`].(string)
+	}
 	err = getPage(w, r, data, logger)
 	if err == nil {
 		var out, ret []byte
@@ -156,9 +207,22 @@ func getPageHash(w http.ResponseWriter, r *http.Request, data *apiData, logger *
 }
 
 func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	var ecosystem string
 	menu := &model.Menu{}
-	menu.SetTablePrefix(getPrefix(data))
-	found, err := menu.Get(data.params[`name`].(string))
+	name := data.params[`name`].(string)
+	if strings.HasPrefix(name, `@`) {
+		ecosystem, name = parseEcosystem(name)
+		if len(name) == 0 {
+			logger.WithFields(log.Fields{"type": consts.NotFound,
+				"value": data.params[`name`].(string)}).Error("page not found")
+			return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		}
+	} else {
+		ecosystem = getPrefix(data)
+	}
+
+	menu.SetTablePrefix(ecosystem)
+	found, err := menu.Get(name)
 
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
@@ -186,7 +250,7 @@ func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *
 }
 
 func getSource(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	page, err := pageValue(w, data, logger)
+	page, _, err := pageValue(w, data, logger)
 	if err != nil {
 		return err
 	}

@@ -9,6 +9,6 @@ import (
 )
 
 func getVersion(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	data.result = consts.VERSION
+	data.result = consts.VERSION + ` ` + consts.BuildInfo
 	return nil
 }

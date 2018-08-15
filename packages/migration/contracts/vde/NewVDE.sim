@@ -1,0 +1,36 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract NewVDE {
+		data {
+			VDEName string
+			DBUser string
+			DBPassword string
+			VDEAPIPort int
+		}
+	
+		conditions {
+            if Size($VDEName) == 0 {
+                warning "VDEName was not received"
+            }
+            if Contains($VDEName, " ") {
+                error "VDEName can not contain spaces"
+            }
+            if Size($DBUser) == 0 {
+                warning "DBUser was not received"
+            }
+            if Size($DBPassword) == 0 {
+                warning "DBPassword was not received"
+            }
+            if $VDEAPIPort <= 0  {
+                warning "VDE API PORT not received"
+            }
+            
+		}
+	
+		action {
+            $VDEName = ToLower($VDEName)
+            $DBUser = ToLower($DBUser)
+            CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
+            $result = "VDE " + $VDEName + " created"
+		}
+	}

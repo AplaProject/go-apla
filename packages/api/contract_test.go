@@ -23,12 +23,34 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/stretchr/testify/require"
 )
+
+func TestHardContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `hard` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+			}
+			action { 
+				var i int
+				while i < 200 {
+				 DBFind("pages").Where("id=5")
+				 DBUpdate("pages", 5, "value", "P(text)")
+				 DBInsert("pages", "name,value,conditions", Sprintf("` + rnd + `%d", i), "P(text)","true")
+				 DBFind("pages").Where("id=6")
+				 DBUpdate("pages", 6, "value", "P(text)")
+				 i = i + 1
+			   }
+			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(rnd, &url.Values{}), `{"type":"txError","error":"Time limit exceeded"}`)
+}
 
 func TestExistContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
@@ -90,6 +112,65 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`RowType`, `contract RowType {
+		action {
+			var app map
+			var result string
+			result = GetType(app)
+			app = DBFind("applications").Where("id=1").Row()
+			result = result + GetType(app)
+			app["app_id"] = 2
+			Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `map[string]interface {}map[string]interface {} System 2`}},
+	}},
+	{`StackType`, `contract StackType {
+		action {
+			var lenStack int
+			lenStack = Len($stack)
+			var par string
+			par = $stack[0]
+			Test("result", Sprintf("len=%d %v %s", lenStack, $stack, par))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `len=1 [@1StackType] @1StackType`}},
+	}},
+	{`DBFindCURRENT`, `contract DBFindCURRENT {
+		action {
+			var list array
+			list = DBFind("mytable").Where("date < CURRENT_DATE")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
+	{`DBFindColNow`, `contract DBFindColNow {
+		action {
+			var list array
+			list = DBFind("mytable").Columns("now()")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
+	{`DBFindNow`, `contract DBFindNow {
+		action {
+			var list array
+			list = DBFind("mytable").Where("date < now ( )")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
+	{`BlockTimeCheck`, `contract BlockTimeCheck {
+		action {
+			if Size(BlockTime()) == Size("2006-01-02 15:04:05") {
+				Test("ok", "1")
+			} else {
+				Test("ok", "0")
+			}
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`ok`: `1`}},
+	}},
 	{`RecCall`, `contract RecCall {
 		data {    }
 		conditions {    }
@@ -111,16 +192,16 @@ var contracts = []smartContract{
 	}},
 	{`MyTable#rnd#`, `contract MyTable#rnd# {
 		action {
-			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1", 
+			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1",
 				"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]", 100,
 				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
 			var cols array
 			cols[0] = "{\"conditions\":\"true\",\"name\":\"column1\",\"type\":\"text\"}"
 			cols[1] = "{\"conditions\":\"true\",\"name\":\"column2\",\"type\":\"text\"}"
-			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#2", 
+			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#2",
 				JSONEncode(cols), 100,
 				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
-			
+
 			Test("ok", "1")
 		}
 	}`, []smartParams{
@@ -347,6 +428,32 @@ var contracts = []smartContract{
 			{nil, map[string]string{`ByName`: `0 29`,
 				`ById`: `NewColumn`}},
 		}},
+	{
+		`testDateTime`, `contract testDateTime {
+				data {
+					Date string
+					Unix int
+				}
+				action {
+					Test("DateTime", DateTime($Unix))
+					Test("UnixDateTime", UnixDateTime($Date))
+				}
+			}`,
+		[]smartParams{
+			{map[string]string{
+				"Unix": "1257894000",
+				"Date": "2009-11-11 04:00:00",
+			}, map[string]string{
+				"DateTime":     "2009-11-11 04:00:00",
+				"UnixDateTime": timeMustParse("2009-11-11 04:00:00"),
+			}},
+		},
+	},
+}
+
+func timeMustParse(value string) string {
+	t, _ := time.Parse("2006-01-02 15:04:05", value)
+	return converter.Int64ToStr(t.Unix())
 }
 
 func TestEditContracts(t *testing.T) {
@@ -992,7 +1099,8 @@ func TestContractChain(t *testing.T) {
 
 	form := url.Values{"Name": {rnd}, "ApplicationId": {"1"}, "Columns": {`[{"name":"value","type":"varchar", "index": "0", 
 	  "conditions":"true"},
-	{"name":"amount", "type":"number","index": "0", "conditions":"true"}]`},
+	{"name":"amount", "type":"number","index": "0", "conditions":"true"},
+	{"name":"dt","type":"datetime", "index": "0", "conditions":"true"}]`},
 		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
 	err := postTx(`NewTable`, &form)
 	if err != nil {
@@ -1048,6 +1156,16 @@ func TestContractChain(t *testing.T) {
 	if msg != rnd+`=`+rnd {
 		t.Error(fmt.Errorf(`wrong result %s`, msg))
 	}
+
+	form = url.Values{`Value`: {`contract ` + rnd + `1 {
+		action {
+			DBInsert("` + rnd + `", "amount,dt", 0, "timestamp NOW()")
+		}
+	}
+		`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(rnd+`1`, &url.Values{}),
+		`{"type":"panic","error":"It is prohibited to use Now() function"}`)
 }
 
 func TestLoopCond(t *testing.T) {
@@ -1118,4 +1236,93 @@ func TestLoopCond(t *testing.T) {
 	require.NoError(t, postTx("NewTable", &form))
 
 	assert.EqualError(t, postTx(rnd+`shutdown`, &url.Values{}), `{"type":"panic","error":"There is loop in @1`+rnd+`shutdown contract"}`)
+}
+
+func TestRand(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		action {
+			var result i int
+			i = 3
+			while i < 15 {
+				var rnd int
+				rnd = Random(0, 3*i)
+				result = result + rnd
+				i=i+1
+			}
+			$result = result
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, val1, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	_, val2, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	// val1 == val2 for seed = blockId % 1
+	if val1 != val2 {
+		t.Errorf(`%s!=%s`, val1, val2)
+	}
+}
+func TestKillNode(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{"Name": {`MyTestContract1`}, "Value": {`contract MyTestContract1 {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}, "nowait": {`true`}}
+	require.NoError(t, postTx(`NewContract`, &form))
+	require.NoError(t, postTx("Kill", &url.Values{"nowait": {`true`}}))
+}
+
+func TestLoopCondExt(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract ` + rnd + `1 {
+		conditions {
+
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	err := postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	form = url.Values{`Value`: {`contract ` + rnd + `2 {
+		conditions {
+			ContractConditions("` + rnd + `1")
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	err = postTx(`NewContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var ret getContractResult
+	err = sendGet(`contract/`+rnd+`1`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	sid := ret.TableID
+	form = url.Values{`Value`: {`contract ` + rnd + `1 {
+		conditions {
+			ContractConditions("` + rnd + `2")
+		}
+	}`}, `Id`: {sid}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	err = postTx(`EditContract`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = postTx(rnd+`2`, &url.Values{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }

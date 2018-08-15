@@ -56,4 +56,7 @@ const (
 	SyncProcess              = "SyncProcess"
 	WrongModeError           = "WrongModeError"
 	VDEManagerError          = "VDEManagerError"
+	TCPClientError           = "TCPClientError"
+	BadTxError               = "BadTxError"
+	TimeCalcError            = "BlockTimeCounterError"
 )

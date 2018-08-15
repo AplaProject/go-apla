@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -45,6 +46,7 @@ type Transaction struct {
 	tx            custom.TransactionInterface
 	DbTransaction *model.DbTransaction
 	SysUpdate     bool
+	Rand          *rand.Rand
 
 	SmartContract smart.SmartContract
 }
@@ -280,6 +282,8 @@ func (t *Transaction) parseFromContract(buf *bytes.Buffer) error {
 		if err := t.fillTxData(*txInfo, input, forsign); err != nil {
 			return err
 		}
+	} else {
+		t.TxData[`forsign`] = strings.Join(forsign, ",")
 	}
 
 	return nil
@@ -304,7 +308,7 @@ func CheckTransaction(data []byte) (*tx.Header, error) {
 func (t *Transaction) Check(checkTime int64, checkForDupTr bool) error {
 	err := CheckLogTx(t.TxFullData, checkForDupTr, false)
 	if err != nil {
-		return utils.ErrInfo(err)
+		return err
 	}
 	logger := log.WithFields(log.Fields{"tx_time": t.TxTime})
 	// time in the transaction cannot be more than MAX_TX_FORW seconds of block time
@@ -392,6 +396,7 @@ func (t *Transaction) CallContract(flags int) (resultContract string, err error)
 		TxHash:        t.TxHash,
 		PublicKeys:    t.PublicKeys,
 		DbTransaction: t.DbTransaction,
+		Rand:          t.Rand,
 	}
 	resultContract, err = sc.CallContract(flags)
 	t.SysUpdate = sc.SysUpdate

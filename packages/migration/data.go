@@ -1,5 +1,7 @@
 package migration
 
+//go:generate go run ./gen/contracts.go
+
 var (
 	migrationInitial = `
 		DROP SEQUENCE IF EXISTS migration_history_id_seq CASCADE;
@@ -109,20 +111,17 @@ var (
 		);
 		ALTER TABLE ONLY "transactions" ADD CONSTRAINT transactions_pkey PRIMARY KEY (hash);
 		
-		DROP SEQUENCE IF EXISTS rollback_tx_id_seq CASCADE;
-		CREATE SEQUENCE rollback_tx_id_seq START WITH 1;
 		DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (
-		"id" bigint NOT NULL  default nextval('rollback_tx_id_seq'),
+		"id" int NOT NULL DEFAULT '0',
 		"block_id" bigint NOT NULL DEFAULT '0',
 		"tx_hash" bytea  NOT NULL DEFAULT '',
 		"table_name" varchar(255) NOT NULL DEFAULT '',
 		"table_id" varchar(255) NOT NULL DEFAULT '',
 		"data" TEXT NOT NULL DEFAULT ''
 		);
-		ALTER SEQUENCE rollback_tx_id_seq owned by rollback_tx.id;
 		ALTER TABLE ONLY "rollback_tx" ADD CONSTRAINT rollback_tx_pkey PRIMARY KEY (id);
 		CREATE INDEX "rollback_tx_table" ON "rollback_tx" (table_name, table_id);
-
+		CREATE INDEX "rollback_tx_hash" ON "rollback_tx" (tx_hash);
 
 		DROP TABLE IF EXISTS "install"; CREATE TABLE "install" (
 		"progress" varchar(10) NOT NULL DEFAULT ''
@@ -148,5 +147,15 @@ var (
 		
 		DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 		"stop_time" int NOT NULL DEFAULT '0'
-		);`
+		);
+		
+		CREATE OR REPLACE FUNCTION next_id(table_name TEXT, OUT result INT) AS
+		$$
+		BEGIN
+			EXECUTE FORMAT('SELECT COUNT(*) + 1 FROM "%s"', table_name)
+			INTO result;
+			RETURN;
+		END
+		$$
+		LANGUAGE plpgsql;`
 )

@@ -21,12 +21,12 @@ func loadContractTasks() error {
 	}
 
 	for _, stateID := range stateIDs {
-		if !model.IsTable(fmt.Sprintf("%d_vde_cron", stateID)) {
+		if !model.IsTable(fmt.Sprintf("%d_cron", stateID)) {
 			return nil
 		}
 
 		c := model.Cron{}
-		c.SetTablePrefix(fmt.Sprintf("%d_vde", stateID))
+		c.SetTablePrefix(fmt.Sprintf("%d", stateID))
 		tasks, err := c.GetAllCronTasks()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get all cron tasks")

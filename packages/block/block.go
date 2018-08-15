@@ -3,12 +3,15 @@ package block
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/protocols"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -38,7 +41,7 @@ func (b Block) GetLogger() *log.Entry {
 		"block_state_id": b.Header.EcosystemID, "block_hash": b.Header.Hash, "block_version": b.Header.Version})
 }
 
-// PlayBlockSafe is inserting block safely
+// PlaySafe is inserting block safely
 func (b *Block) PlaySafe() error {
 	logger := b.GetLogger()
 	dbTransaction, err := model.StartTransaction()
@@ -79,6 +82,12 @@ func (b *Block) PlaySafe() error {
 		err = nil
 	} else if err != nil {
 		dbTransaction.Rollback()
+		if b.GenBlock && b.StopCount == 0 {
+			if err == ErrLimitStop {
+				err = ErrLimitTime
+			}
+			transaction.MarkTransactionBad(nil, b.Transactions[0].TxHash, err.Error())
+		}
 		return err
 	}
 
@@ -123,19 +132,49 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
 		return err
 	}
+
 	limits := NewLimits(b)
+
+	txHashes := make([][]byte, 0, len(b.Transactions))
+	for _, btx := range b.Transactions {
+		txHashes = append(txHashes, btx.TxHash)
+	}
+	seed, err := crypto.CalcChecksum(bytes.Join(txHashes, []byte{}))
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating seed")
+		return err
+	}
+	randBlock := rand.New(rand.NewSource(int64(seed)))
+
+	storedTxes, err := model.GetTxesByHashlist(dbTransaction, txHashes)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting txes by hashlist")
+		return err
+	}
+
 	for curTx, t := range b.Transactions {
 		var (
 			msg string
 			err error
 		)
 		t.DbTransaction = dbTransaction
+		t.Rand = randBlock
 
+		model.IncrementTxAttemptCount(dbTransaction, t.TxHash)
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
 		}
+
+		if stx, ok := storedTxes[string(t.TxHash)]; ok {
+			stx.Attempt++
+			if stx.Attempt >= consts.MaxTXAttempt-1 {
+				txString := fmt.Sprintf("tx_hash: %s, tx_data: %s, tx_attempt: %d", stx.Hash, stx.Data, stx.Attempt)
+				log.WithFields(log.Fields{"type": consts.BadTxError, "tx_info": txString}).Error("tx attempts exceeded, transaction marked as bad")
+			}
+		}
+
 		msg, err = t.Play()
 		if err == nil && t.TxSmart != nil {
 			err = limits.CheckLimit(t)
@@ -144,21 +183,22 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			if err == custom.ErrNetworkStopping {
 				return err
 			}
-
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
-				model.IncrementTxAttemptCount(t.DbTransaction, t.TxHash)
 			}
+
 			errRoll := dbTransaction.RollbackSavepoint(curTx)
 			if errRoll != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("rolling back to previous savepoint")
 				return errRoll
 			}
 			if b.GenBlock && err == ErrLimitStop {
+				if curTx == 0 {
+					return err
+				}
 				break
 			}
 			// skip this transaction
-			model.MarkTransactionUsed(t.DbTransaction, t.TxHash)
 			transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
 			if t.SysUpdate {
 				if err = syspar.SysUpdate(t.DbTransaction); err != nil {
@@ -172,6 +212,9 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
 		}
+
+		model.DecrementTxAttemptCount(dbTransaction, t.TxHash)
+
 		if t.SysUpdate {
 			b.SysUpdate = true
 			t.SysUpdate = false
@@ -223,20 +266,15 @@ func (b *Block) Check() error {
 
 		// skip time validation for first block
 		if b.Header.BlockID > 1 {
-			blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
-				return err
-			}
 
-			validBlockTime, err := blockTimeCalculator.ValidateBlock(b.Header.NodePosition, time.Unix(b.Header.Time, 0))
+			exists, err := protocols.NewBlockTimeCounter().BlockForTimeExists(time.Unix(b.Header.Time, 0), int(b.Header.NodePosition))
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
 				return err
 			}
 
-			if !validBlockTime {
-				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("incorrect block time")
+			if exists {
+				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Warn("incorrect block time")
 				return utils.ErrInfo(fmt.Errorf("incorrect block time %d", b.PrevHeader.Time))
 			}
 		}
@@ -261,7 +299,7 @@ func (b *Block) Check() error {
 		}
 
 		if err := t.Check(b.Header.Time, false); err != nil {
-			return utils.ErrInfo(err)
+			return err
 		}
 
 	}
@@ -293,11 +331,8 @@ func (b *Block) CheckHash() (bool, error) {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node public key is empty")
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
-		// check the signature
-		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s", b.Header.BlockID, b.PrevHeader.Hash,
-			b.Header.Time, b.Header.EcosystemID, b.Header.KeyID, b.Header.NodePosition, b.MrklRoot)
 
-		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, b.Header.Sign, true)
+		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, b.ForSign(), b.Header.Sign, true)
 		if err != nil {
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
 			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHeader.Hash))
@@ -307,6 +342,19 @@ func (b *Block) CheckHash() (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (b Block) ForSha() string {
+	return fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d",
+		b.Header.BlockID, b.PrevHeader.Hash, b.MrklRoot, b.Header.Time,
+		b.Header.EcosystemID, b.Header.KeyID, b.Header.NodePosition)
+}
+
+// ForSign from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+func (b Block) ForSign() string {
+	return fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
+		b.Header.BlockID, b.PrevHeader.Hash, b.Header.Time, b.Header.EcosystemID,
+		b.Header.KeyID, b.Header.NodePosition, b.MrklRoot)
 }
 
 // InsertBlockWOForks is inserting blocks
