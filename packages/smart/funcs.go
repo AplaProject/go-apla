@@ -42,6 +42,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
 	"github.com/GenesisKernel/go-genesis/packages/script"
@@ -280,6 +281,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"IsObject":                     IsObject,
 		"DateTime":                     DateTime,
 		"UnixDateTime":                 UnixDateTime,
+		"UpdateNotifications":          UpdateNotifications,
 	}
 
 	switch vt {
@@ -2013,4 +2015,22 @@ func UnixDateTime(value string) int64 {
 		return 0
 	}
 	return t.Unix()
+}
+
+func UpdateNotifications(ecosystemID int64, users ...interface{}) {
+	userList := make([]int64, 0, len(users))
+	for i, userID := range users {
+		switch v := userID.(type) {
+		case int64:
+			userList = append(userList, v)
+		case string:
+			userList = append(userList, converter.StrToInt64(v))
+		case []interface{}:
+			if i == 0 {
+				UpdateNotifications(ecosystemID, v...)
+				return
+			}
+		}
+	}
+	notificator.UpdateNotifications(ecosystemID, userList)
 }
