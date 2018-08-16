@@ -17,7 +17,6 @@
 package utils
 
 import (
-	"bytes"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -36,82 +35,15 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/theckman/go-flock"
 )
-
-// BlockData is a structure of the block's header
-type BlockData struct {
-	BlockID      int64
-	Time         int64
-	EcosystemID  int64
-	KeyID        int64
-	NodePosition int64
-	Sign         []byte
-	Hash         []byte
-	Version      int
-}
-
-func (b BlockData) String() string {
-	return fmt.Sprintf("BlockID:%d, Time:%d, NodePosition %d", b.BlockID, b.Time, b.NodePosition)
-}
-
-// ParseBlockHeader is parses block header
-func ParseBlockHeader(binaryBlock *bytes.Buffer, checkMaxSize bool) (BlockData, error) {
-	var block BlockData
-	var err error
-
-	if binaryBlock.Len() < 9 {
-		log.WithFields(log.Fields{"size": binaryBlock.Len(), "type": consts.SizeDoesNotMatch}).Error("binary block size is too small")
-		return BlockData{}, fmt.Errorf("bad binary block length")
-	}
-
-	blockVersion := int(converter.BinToDec(binaryBlock.Next(2)))
-
-	if checkMaxSize && int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
-		log.WithFields(log.Fields{"size": binaryBlock.Len(), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
-		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
-			binaryBlock.Len(), syspar.GetMaxBlockSize())
-
-		return BlockData{}, err
-	}
-
-	block.BlockID = converter.BinToDec(binaryBlock.Next(4))
-	block.Time = converter.BinToDec(binaryBlock.Next(4))
-	block.Version = blockVersion
-	block.EcosystemID = converter.BinToDec(binaryBlock.Next(4))
-	block.KeyID, err = converter.DecodeLenInt64Buf(binaryBlock)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "block_time": block.Time, "block_version": block.Version, "error": err}).Error("decoding binary block walletID")
-		return BlockData{}, err
-	}
-	block.NodePosition = converter.BinToDec(binaryBlock.Next(1))
-
-	if block.BlockID > 1 {
-		signSize, err := converter.DecodeLengthBuf(binaryBlock)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign size")
-			return BlockData{}, err
-		}
-		if binaryBlock.Len() < signSize {
-			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign")
-			return BlockData{}, fmt.Errorf("bad block format (no sign)")
-		}
-		block.Sign = binaryBlock.Next(int(signSize))
-	} else {
-		binaryBlock.Next(1)
-	}
-
-	return block, nil
-}
 
 var (
 	// ReturnCh is chan for returns
@@ -285,52 +217,6 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 		}
 	}
 	return crypto.CheckSign(publicKeys[0], forSign, signsSlice[0])
-}
-
-// MerkleTreeRoot rertun Merkle value
-func MerkleTreeRoot(dataArray [][]byte) []byte {
-	log.Debug("dataArray: %s", dataArray)
-	result := make(map[int32][][]byte)
-	for _, v := range dataArray {
-		hash, err := crypto.DoubleHash(v)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("double hasing value, while calculating merkle tree root")
-		}
-		hash = converter.BinToHex(hash)
-		result[0] = append(result[0], hash)
-	}
-	var j int32
-	for len(result[j]) > 1 {
-		for i := 0; i < len(result[j]); i = i + 2 {
-			if len(result[j]) <= (i + 1) {
-				if _, ok := result[j+1]; !ok {
-					result[j+1] = [][]byte{result[j][i]}
-				} else {
-					result[j+1] = append(result[j+1], result[j][i])
-				}
-			} else {
-				if _, ok := result[j+1]; !ok {
-					hash, err := crypto.DoubleHash(append(result[j][i], result[j][i+1]...))
-					if err != nil {
-						log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("double hasing value, while calculating merkle tree root")
-					}
-					hash = converter.BinToHex(hash)
-					result[j+1] = [][]byte{hash}
-				} else {
-					hash, err := crypto.DoubleHash([]byte(append(result[j][i], result[j][i+1]...)))
-					if err != nil {
-						log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("double hasing value, while calculating merkle tree root")
-					}
-					hash = converter.BinToHex(hash)
-					result[j+1] = append(result[j+1], hash)
-				}
-			}
-		}
-		j++
-	}
-
-	ret := result[int32(len(result)-1)]
-	return []byte(ret[0])
 }
 
 // TypeInt returns the identifier of the embedded transaction
@@ -582,31 +468,6 @@ func GetHostPort(h string) string {
 		return h
 	}
 	return fmt.Sprintf("%s:%d", h, consts.DEFAULT_TCP_PORT)
-}
-
-func BuildBlockTimeCalculator(transaction *model.DbTransaction) (BlockTimeCalculator, error) {
-	var btc BlockTimeCalculator
-	firstBlock := model.Block{}
-	found, err := firstBlock.Get(1)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
-		return btc, err
-	}
-
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("first block not found")
-		return btc, err
-	}
-
-	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
-	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
-
-	btc = NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
-		blockGenerationDuration,
-		blocksGapDuration,
-		syspar.GetNumberOfNodesFromDB(transaction),
-	)
-	return btc, nil
 }
 
 func CreateDirIfNotExists(dir string, mode os.FileMode) error {

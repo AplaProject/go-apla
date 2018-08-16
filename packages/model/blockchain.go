@@ -1,5 +1,7 @@
 package model
 
+/*
+
 import "time"
 
 // Block is model
@@ -38,21 +40,6 @@ func (b *Block) GetMaxBlock() (bool, error) {
 // GetMaxForeignBlock returns last block generated not by key_id
 func (b *Block) GetMaxForeignBlock(keyId int64) (bool, error) {
 	return isFound(DBConn.Order("id DESC").Where("key_id != ?", keyId).First(b))
-}
-
-// GetBlockchain is retrieving chain of blocks from database
-func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
-	var err error
-	blockchain := new([]Block)
-	if endblockID > 0 {
-		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(&blockchain).Error
-	} else {
-		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ?", startBlockID).Find(&blockchain).Error
-	}
-	if err != nil {
-		return nil, err
-	}
-	return *blockchain, nil
 }
 
 // GetBlocks is retrieving limited chain of blocks from database
@@ -99,3 +86,4 @@ func (b *Block) GetNodeBlocksAtTime(from, to time.Time, node int64) ([]Block, er
 func (b *Block) DeleteById(transaction *DbTransaction, id int64) error {
 	return GetDB(transaction).Where("id = ?", id).Delete(Block{}).Error
 }
+*/

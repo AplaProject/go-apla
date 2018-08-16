@@ -137,45 +137,28 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *PlayableBlock
 }
 
 // GetBlockDataFromBlockChain is retrieving block data from blockchain
-func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
-	BlockData := new(utils.BlockData)
-	block := &model.Block{}
-	_, err := block.Get(blockID)
+func GetBlockDataFromBlockChain(hash []byte) (*utils.BlockData, error) {
+	block, found, err := blockchain.GetBlock(hash)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting block by ID")
-		return BlockData, utils.ErrInfo(err)
-	}
-
-	header, err := utils.ParseBlockHeader(bytes.NewBuffer(block.Data), false)
-	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting block by hash")
 		return nil, utils.ErrInfo(err)
 	}
-
-	BlockData = &header
-	BlockData.Hash = block.Hash
-	return BlockData, nil
+	if !found {
+		return nil, nil
+	}
+	return block.Header, nil
 }
 
 // GetDataFromFirstBlock returns data of first block
 func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
-	blockModel := &model.Block{}
-	isFound, err := blockModel.Get(1)
+	bBlock, found, err := blockchain.GetFirstBlock()
+	if !found {
+		return
+	}
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting record of first block")
 		return
 	}
-
-	if !isFound {
-		return
-	}
-
-	bBlock := &blockchain.Block{}
-	err = bBlock.Unmarshal(blockModel.Data)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("parsing data of first block")
-		return
-	}
-
 	if len(bBlock.Transactions) == 0 {
 		log.WithFields(log.Fields{"type": consts.ParserError}).Error("list of parsers is empty")
 		return

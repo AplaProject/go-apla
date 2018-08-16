@@ -175,7 +175,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 				}
 			}
 
-			b.PrevHeader, err = block.GetBlockDataFromBlockChain(b.Header.BlockID - 1)
+			b.PrevHeader, err = block.GetBlockDataFromBlockChain(b.PrevHeader.Hash)
 			if err != nil {
 				banNode(host, b, err)
 				return utils.ErrInfo(fmt.Errorf("can't get block %d", b.Header.BlockID-1))

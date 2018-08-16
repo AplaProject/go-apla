@@ -37,6 +37,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -45,7 +46,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/scheduler"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
 	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 	"github.com/satori/go.uuid"
@@ -87,7 +87,7 @@ type SmartContract struct {
 	TxFuel        int64           // The fuel of executing contract
 	TxCost        int64           // Maximum cost of executing contract
 	TxUsedCost    decimal.Decimal // Used cost of CPU resources
-	BlockData     *utils.BlockData
+	BlockData     *blockchain.Header
 	Loop          map[string]bool
 	TxHash        []byte
 	PublicKeys    [][]byte
@@ -1661,21 +1661,20 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 	return nil
 }
 
-func GetBlock(blockID int64) (map[string]int64, error) {
-	block := model.Block{}
-	ok, err := block.Get(blockID)
+func GetBlock(hash []byte) (map[string]int64, error) {
+	block, found, err := blockchain.GetBlock(hash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
 		return nil, err
 	}
-	if !ok {
+	if !found {
 		return nil, nil
 	}
 
 	return map[string]int64{
-		"id":     block.ID,
-		"time":   block.Time,
-		"key_id": block.KeyID,
+		"id":     block.Header.BlockID,
+		"time":   block.Header.Time,
+		"key_id": block.Header.KeyID,
 	}, nil
 }
 

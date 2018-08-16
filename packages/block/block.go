@@ -112,7 +112,7 @@ func (b *PlayableBlock) readPreviousBlockFromBlockchainTable() error {
 	}
 
 	var err error
-	b.PrevHeader, err = GetBlockDataFromBlockChain(b.Header.BlockID - 1)
+	b.PrevHeader, err = GetBlockDataFromBlockChain(b.Hash)
 	if err != nil {
 		return utils.ErrInfo(fmt.Errorf("can't get block %d", b.Header.BlockID-1))
 	}
@@ -214,7 +214,7 @@ func (b *PlayableBlock) Check() error {
 
 		// skip time validation for first block
 		if b.Header.BlockID > 1 {
-			blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
+			blockTimeCalculator, err := BuildBlockTimeCalculator(nil)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
 				return err

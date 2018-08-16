@@ -1,6 +1,6 @@
 //go:generate sh -c "mockery -inpkg -name Clock -print > file.tmp && mv file.tmp clock_mock.go"
 
-package utils
+package block
 
 import (
 	"time"
@@ -116,4 +116,29 @@ func (btc *BlockTimeCalculator) countBlockTime(blockTime time.Time) (blockGenera
 			curNodeIndex = (curNodeIndex + 1) % btc.nodesCount
 		}
 	}
+}
+
+func BuildBlockTimeCalculator(transaction *model.DbTransaction) (BlockTimeCalculator, error) {
+	var btc BlockTimeCalculator
+	firstBlock := model.Block{}
+	found, err := firstBlock.Get(1)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
+		return btc, err
+	}
+
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("first block not found")
+		return btc, err
+	}
+
+	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
+	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
+
+	btc = NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
+		blockGenerationDuration,
+		blocksGapDuration,
+		syspar.GetNumberOfNodesFromDB(transaction),
+	)
+	return btc, nil
 }
