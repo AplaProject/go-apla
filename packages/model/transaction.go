@@ -178,19 +178,3 @@ func GetManyTransactions(dbtx *DbTransaction, hashes [][]byte) ([]Transaction, e
 
 	return txes, nil
 }
-
-// GetTxesByHashlist returns map of hash-*Transaction
-func GetTxesByHashlist(dbtx *DbTransaction, hashes [][]byte) (map[string]*Transaction, error) {
-	txes, err := GetManyTransactions(dbtx, hashes)
-	if err != nil {
-		return nil, err
-	}
-
-	txMap := make(map[string]*Transaction, len(txes))
-
-	for _, tx := range txes {
-		txMap[string(tx.Hash)] = &tx
-	}
-
-	return txMap, nil
-}
