@@ -403,36 +403,6 @@ VALUES
     conditions {
         if !$Title {
             info("Title is empty")
-        RowConditions("signatures", $Id, onlyConditions())
-        if $Conditions {
-            ValidateCondition($Conditions, $ecosystem_id)
-        }
-    }
-    action {
-        var pars map
-        if $Value {
-            pars["value"] = $Value
-        }
-        if $Conditions {
-            pars["conditions"] = $Conditions
-        }
-        if pars {
-            DBUpdate("signatures", $Id, pars)
-        }
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'EditSignJoint', 'contract EditSignJoint {
-    data {
-        Id int
-        Title string
-        Parameter string
-        Conditions string
-    }
-
-    conditions {
-        if !$Title {
-            info("Title is empty")
         }
         if !$Parameter {
             info("Parameter is empty")
