@@ -28,6 +28,7 @@ func GetFirstEcosystemScript() string {
 		firstEcosystemSchema,
 		firstDelayedContractsDataSQL,
 		firstEcosystemContractsSQL,
+		firstEcosystemDataSQL,
 		firstSystemParametersDataSQL,
 		firstTablesDataSQL,
 	}
