@@ -112,6 +112,13 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`StrNil`, `contract StrNil {
+		action {
+			Test("result", Sprintf("empty: %s", Str(nil)))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `empty: `}},
+	}},
 	{`RowType`, `contract RowType {
 		action {
 			var app map
@@ -425,7 +432,7 @@ var contracts = []smartContract{
 			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
 				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
 		[]smartParams{
-			{nil, map[string]string{`ByName`: `0 29`,
+			{nil, map[string]string{`ByName`: `0 2`,
 				`ById`: `NewColumn`}},
 		}},
 	{
