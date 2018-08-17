@@ -807,8 +807,8 @@ func JSONDecode(input string) (ret interface{}, err error) {
 	return
 }
 
-// JSONEncode converts object to json string
-func JSONEncode(input interface{}) (string, error) {
+// JSONEncodeIdent converts object to json string
+func JSONEncodeIndent(input interface{}, indent string) (string, error) {
 	rv := reflect.ValueOf(input)
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
@@ -817,12 +817,29 @@ func JSONEncode(input interface{}) (string, error) {
 	if rv.Kind() == reflect.Struct {
 		return "", logErrorfShort(eTypeJSON, input, consts.TypeError)
 	}
-
-	b, err := marshalJSON(input, `marshalling json`)
-	if err != nil {
-		return "", err
+	var (
+		b   []byte
+		err error
+	)
+	if len(indent) == 0 {
+		b, err = json.Marshal(input)
+	} else {
+		b, err = json.MarshalIndent(input, ``, indent)
 	}
-	return string(b), nil
+	if err != nil {
+		return ``, logError(err, consts.JSONMarshallError, `marshalling json`)
+	}
+	out := string(b)
+	out = strings.Replace(out, `\u003c`, `<`, -1)
+	out = strings.Replace(out, `\u003e`, `>`, -1)
+	out = strings.Replace(out, `\u0026`, `&`, -1)
+
+	return out, nil
+}
+
+// JSONEncode converts object to json string
+func JSONEncode(input interface{}) (string, error) {
+	return JSONEncodeIndent(input, ``)
 }
 
 // Append syn for golang 'append' function
