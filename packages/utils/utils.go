@@ -477,3 +477,12 @@ func MakeDirectory(dir string) error {
 	}
 	return nil
 }
+
+func StringInSlice(slice []string, v string) bool {
+	for _, item := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}

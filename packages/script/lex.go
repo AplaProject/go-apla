@@ -58,6 +58,7 @@ const (
 	isRPar   = 0x2901 // )
 	isComma  = 0x2c01 // ,
 	isDot    = 0x2e01 // .
+	isColon  = 0x3a01 // :
 	isEq     = 0x3d01 // =
 	isLCurly = 0x7b01 // {
 	isRCurly = 0x7d01 // }

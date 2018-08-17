@@ -18,7 +18,7 @@ contract ActivateContract {
 		}
 	}
 	action {
-		DBUpdate("contracts", $Id, "active", 1)
+		DBUpdate("contracts", $Id, {"active": 1})
 		Activate($Id, $ecosystem_id)
 	}
 	func rollback() {
