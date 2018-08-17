@@ -236,7 +236,6 @@ func forsignJSONData(w http.ResponseWriter, params map[string]string, logger *lo
 		forsign = append(forsign, val)
 	}
 	if curSize > limitSize {
-		fmt.Println(curSize, limitSize)
 		return nil, nil, errorAPI(w, `E_LIMITTXSIZE`, http.StatusBadRequest, curSize)
 	}
 
@@ -325,7 +324,6 @@ func forsignFormData(w http.ResponseWriter, r *http.Request, data *apiData, logg
 		forsign = append(forsign, val)
 	}
 	if curSize > limitSize {
-		fmt.Println(curSize, limitSize)
 		return nil, errorAPI(w, `E_LIMITTXSIZE`, http.StatusBadRequest, curSize)
 	}
 	return forsign, nil

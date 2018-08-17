@@ -27,13 +27,13 @@ contract MoneyTransfer {
 		}
 	}
 	action {
-		DBUpdate("keys", $key_id,"-amount", $amount)
+		DBUpdate("keys", $key_id, {"-amount": $amount})
 		if DBFind("keys").Columns("id").WhereId($recipient).One("id") == nil {
-			DBInsert("keys", "id,amount",  $recipient, $amount)
+			DBInsert("keys", {id: $recipient,amount: $amount})
 		} else {
-			DBUpdate("keys", $recipient,"+amount", $amount)
+			DBUpdate("keys", $recipient, {"+amount": $amount})
 		}
-		DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
-				$key_id, $recipient, $amount, $Comment, $block, $txhash)
+        DBInsert("history", {sender_id: $key_id,recipient_id: $recipient,
+             amount:$amount,comment: $Comment,block_id: $block,txhash: $txhash})
 	}
 }

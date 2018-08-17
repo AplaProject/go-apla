@@ -17,6 +17,9 @@
 package template
 
 import (
+	"fmt"
+	"sort"
+	"strings"
 	"testing"
 )
 
@@ -26,6 +29,51 @@ type tplItem struct {
 }
 
 type tplList []tplItem
+
+func outMap(v map[string]interface{}) string {
+	keys := make([]string, 0)
+	for key := range v {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	values := make([]string, 0, len(keys))
+	for _, key := range keys {
+		switch val := v[key].(type) {
+		case map[string]interface{}:
+			values = append(values, fmt.Sprintf(`%q:%q`, key, outMap(val)))
+		default:
+			values = append(values, fmt.Sprintf(`%q:%q`, key, val))
+		}
+	}
+	return `{` + strings.Join(values, ` `) + `}`
+}
+
+func TestObj(t *testing.T) {
+	list := []tplItem{
+		{`{"val": "value, [] 1", test: Test текст}`,
+			`{"test":"Test текст" "val":"value, [] 1"}`},
+		{`[ col1 , col2, {"val": "value 1", test: Test value} ]`,
+			`[col1 col2 map[val:value 1 test:Test value]]`},
+		{`{sub: {"test1": 23, test2:[34, 45]},"test2": "text"}`,
+			`{"sub":"{\"test1\":\"23\" \"test2\":[\"34\" \"45\"]}" "test2":"text"}`},
+		{`{sub: {"test1": 23, test2:[34, 45]},"test2": "text"}`,
+			`{"sub":"{\"test1\":\"23\" \"test2\":[\"34\" \"45\"]}" "test2":"text"}`},
+	}
+	for _, item := range list {
+		var result string
+		val, _ := parseObject([]rune(item.input))
+		switch v := val.(type) {
+		case []interface{}:
+			result = fmt.Sprintf("%v", v)
+		default:
+			result = outMap(val.(map[string]interface{}))
+		}
+		if result != item.want {
+			t.Errorf("%s != %s", result, item.want)
+			break
+		}
+	}
+}
 
 func TestJSON(t *testing.T) {
 	var timeout bool
@@ -52,6 +100,15 @@ var forTest = tplList{
 			}
 		}
 	}`, `[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","{\"obj1_key1\": \"obj1_value1\"}"],["1","{\"obj2_key2\": \"obj2_value2\"}"]],"source":"outer","types":["text","text"]}},{"tag":"forlist","attr":{"source":"outer"},"children":[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["obj1_key1","obj1_value1"]],"source":"inner","types":["text","text"]}},{"tag":"forlist","attr":{"source":"inner"},"children":[{"tag":"div","children":[{"tag":"text","text":"obj1_key1:obj1_value1"}]}]},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["obj2_key2","obj2_value2"]],"source":"inner","types":["text","text"]}},{"tag":"forlist","attr":{"source":"inner"},"children":[{"tag":"div","children":[{"tag":"text","text":"obj2_key2:obj2_value2"}]}]}]}]`},
+	{`SetVar(ok,"My:string,value")Hint( [col1,col2] , {"test": Test val, ok: #ok#}, 
+	   {"mypar1":"myval1, 2", mypar2: [1, #ok#], "qqq": {name: John, "lastName": "Smith"}} )`,
+		`[{"tag":"hint","attr":{"icon":"[col1,col2]","text":"{\"mypar1\":\"myval1, 2\", mypar2: [1, My:string,value], \"qqq\": {name: John, \"lastName\": \"Smith\"}}","title":"{\"test\": Test val, ok: My:string,value}"}}]`},
+	{`Hint( [col1,col2] , {"test": Test val}, 
+	   {"mypar1":"myval1, 2", mypar2: [1, 20], "qqq": {name: John, "lastName": "Smith"}} )`,
+		`[{"tag":"hint","attr":{"icon":"[col1,col2]","text":"{\"mypar1\":\"myval1, 2\", mypar2: [1, 20], \"qqq\": {name: John, \"lastName\": \"Smith\"}}","title":"{\"test\": Test val}"}}]`},
+	{`SetVar(ok,"My:string,value")Hint( [col1,col2] , {"test": Test val, ok: #ok#}, 
+	   {"mypar1":"myval1, 2", mypar2: [1, #ok#], "qqq": {name: John, "lastName": "Smith"}} )`,
+		`[{"tag":"hint","attr":{"icon":"[col1,col2]","text":"{\"mypar1\":\"myval1, 2\", mypar2: [1, My:string,value], \"qqq\": {name: John, \"lastName\": \"Smith\"}}","title":"{\"test\": Test val, ok: My:string,value}"}}]`},
 	{`Hint(Title: some text, Icon: default, Text: This is hint text)`,
 		`[{"tag":"hint","attr":{"icon":"default","text":"This is hint text","title":"some text"}}]`},
 	{`AddToolButton(Title: Open, Page: default).Popup(Width: 50, Header: Test)`,
