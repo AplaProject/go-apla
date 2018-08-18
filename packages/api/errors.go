@@ -48,7 +48,6 @@ var (
 		`E_UNAUTHORIZED`:    `Unauthorized`,
 		`E_UNDEFINEVAL`:     `Value %s is undefined`,
 		`E_UNKNOWNUID`:      `Unknown uid`,
-		`E_VDE`:             `Virtual Dedicated Ecosystem %d doesn't exist`,
 		`E_VDECREATED`:      `Virtual Dedicated Ecosystem is already created`,
 		`E_REQUESTNOTFOUND`: `Request %s doesn't exist`,
 		`E_UPDATING`:        `Node is updating blockchain`,
