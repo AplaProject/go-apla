@@ -23,6 +23,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -67,6 +68,34 @@ func rollbackTransaction(txHash []byte, dbTransaction *model.DbTransaction, logg
 		return err
 	}
 	for _, tx := range txs {
+		if tx["table_name"] == `@system` {
+			var v map[string]string
+
+			err := json.Unmarshal([]byte(tx["data"]), &v)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollback.Data from json")
+				return err
+			}
+			switch v["Type"] {
+			case "NewTable":
+				smart.SysRollbackTable(dbTransaction, txHash, v["Name"], tx["table_id"])
+			case "NewColumn":
+				smart.SysRollbackColumn(dbTransaction, txHash, v["TableName"], v["Name"],
+					tx["table_id"])
+			case "NewContract":
+				smart.SysRollbackNewContract(v["Value"], tx["table_id"])
+			case "EditContract":
+				smart.SysRollbackEditContract(dbTransaction, txHash, tx["table_id"])
+			case "NewEcosystem":
+				smart.SysRollbackEcosystem(dbTransaction, txHash)
+			case "ActivateContract":
+				smart.SysRollbackActivate(v["Id"], v["State"])
+			case "DeactivateContract":
+				smart.SysRollbackDeactivate(v["Id"], v["State"])
+			}
+			continue
+		}
+
 		where := " WHERE id='" + tx["table_id"] + `'`
 		if len(tx["data"]) > 0 {
 			if err := rollbackUpdatedRow(tx, where, dbTransaction, logger); err != nil {

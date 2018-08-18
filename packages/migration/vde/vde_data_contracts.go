@@ -437,9 +437,6 @@ var contractsDataSQL = `INSERT INTO "%[1]d_contracts" ("id", "name", "value", "c
 		action {
 			CreateTable($Name, $Columns, $Permissions, $ApplicationId)
 		}
-		func rollback() {
-			RollbackTable($Name)
-		}
 		func price() int {
 			return  SysParamInt("table_price")
 		}

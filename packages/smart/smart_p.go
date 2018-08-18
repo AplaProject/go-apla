@@ -491,7 +491,11 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert new ecosystem to stat table")
 		return 0, err
 	}
-
+	if !sc.VDE {
+		if err := SysRollback(sc, `{"Type": "NewEcosystem"}`); err != nil {
+			return 0, err
+		}
+	}
 	return id, err
 }
 
@@ -504,170 +508,6 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 
 	_, err := DBUpdate(sc, "@1_ecosystems", sysID, "name", newName)
 	return err
-}
-
-// RollbackEcosystem is rolling back ecosystem
-func RollbackEcosystem(sc *SmartContract) error {
-	if sc.TxContract.Name != `@1NewEcosystem` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackEcosystem can be only called from @1NewEcosystem")
-		return fmt.Errorf(`RollbackEcosystem can be only called from @1NewEcosystem`)
-	}
-	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, "1_ecosystems")
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback tx")
-		return err
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("system states in rollback table")
-		// if there is not such hash then NewEcosystem was faulty. Do nothing.
-		return nil
-	}
-	lastID, err := model.GetNextID(sc.DbTransaction, "1_ecosystems")
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
-		return err
-	}
-	lastID--
-	if converter.StrToInt64(rollbackTx.TableID) != lastID {
-		log.WithFields(log.Fields{"table_id": rollbackTx.TableID, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
-		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
-	}
-
-	if model.IsTable(fmt.Sprintf(`%s_vde_tables`, rollbackTx.TableID)) {
-		// Drop all _local_ tables
-		table := &model.Table{}
-		prefix := fmt.Sprintf(`%s_vde`, rollbackTx.TableID)
-		table.SetTablePrefix(prefix)
-		list, err := table.GetAll(prefix)
-		if err != nil {
-			return err
-		}
-		for _, item := range list {
-			err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", prefix, item.Name))
-			if err != nil {
-				return err
-			}
-		}
-		for _, name := range []string{`tables`, `parameters`} {
-			err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", prefix, name))
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	rbTables := []string{
-		`menu`,
-		`pages`,
-		`languages`,
-		`signatures`,
-		`tables`,
-		`contracts`,
-		`parameters`,
-		`blocks`,
-		`history`,
-		`keys`,
-		`sections`,
-		`members`,
-		`roles`,
-		`roles_participants`,
-		`notifications`,
-		`applications`,
-		`binaries`,
-		`app_params`,
-	}
-
-	if rollbackTx.TableID == "1" {
-		rbTables = append(rbTables, `node_ban_logs`, `bad_blocks`, `system_parameters`, `ecosystems`)
-	}
-
-	for _, name := range rbTables {
-		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
-			return err
-		}
-	}
-	rollbackTxToDel := &model.RollbackTx{TxHash: sc.TxHash, NameTable: "1_ecosystems"}
-	err = rollbackTxToDel.DeleteByHashAndTableName(sc.DbTransaction)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback tx by hash and table name")
-		return err
-	}
-
-	ecosysToDel := &model.Ecosystem{ID: lastID}
-	return ecosysToDel.Delete(sc.DbTransaction)
-}
-
-// RollbackTable is rolling back table
-func RollbackTable(sc *SmartContract, name string) error {
-	if sc.TxContract.Name != `@1NewTable` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackTable can be only called from @1NewTable")
-		return fmt.Errorf(`RollbackTable can be only called from @1NewTable`)
-	}
-	name = strings.ToLower(name)
-	tableName := getDefTableName(sc, name)
-	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, tableName)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback table")
-		return err
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("table record in rollback table")
-		// if there is not such hash then NewTable was faulty. Do nothing.
-		return nil
-	}
-	err = rollbackTx.DeleteByHashAndTableName(sc.DbTransaction)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting record from rollback table")
-		return err
-	}
-
-	err = model.DropTable(sc.DbTransaction, tableName)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
-		return err
-	}
-	t := model.Table{}
-	t.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
-	found, err = t.Get(sc.DbTransaction, name)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
-		return err
-	}
-	if found {
-		err = t.Delete(sc.DbTransaction)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
-			return err
-		}
-	} else {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
-	}
-	return nil
-}
-
-// RollbackColumn is rolling back column
-func RollbackColumn(sc *SmartContract, tableName, name string) error {
-	if sc.TxContract.Name != `@1NewColumn` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackColumn can be only called from @1NewColumn")
-		return fmt.Errorf(`RollbackColumn can be only called from @1NewColumn`)
-	}
-	name = converter.EscapeSQL(strings.ToLower(name))
-	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.EcosystemID))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column from rollback table")
-		return err
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("column record in rollback table")
-		// if there is not such hash then NewColumn was faulty. Do nothing.
-		return nil
-	}
-	return model.AlterTableDropColumn(getDefTableName(sc, tableName), name)
 }
 
 // Size returns the length of the string
@@ -694,6 +534,12 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
 	}
 	ActivateContract(tblid, state, true)
+	if !sc.VDE {
+		if err := SysRollback(sc, fmt.Sprintf(`{"Type": "ActivateContract", "Id": "%d", "State": "%d"}`,
+			tblid, state)); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -704,6 +550,12 @@ func Deactivate(sc *SmartContract, tblid int64, state int64) error {
 		return fmt.Errorf(`DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
 	}
 	ActivateContract(tblid, state, false)
+	if !sc.VDE {
+		if err := SysRollback(sc, fmt.Sprintf(`{"Type": "DeactivateContract", "Id": "%d", "State": "%d"}`,
+			tblid, state)); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -789,67 +641,6 @@ func DBCollectMetrics() []interface{} {
 		metric.CollectMetricDataForEcosystemTx,
 	)
 	return c.Values()
-}
-
-// RollbackEditContract rollbacks the contract
-func RollbackEditContract(sc *SmartContract) error {
-	if !accessContracts(sc, nEditContract) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("RollbackEditContract can be only called from @1EditContract")
-		return fmt.Errorf(`RollbackEditContract can be only called from @1EditContract`)
-	}
-	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_contracts", sc.TxSmart.EcosystemID))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract from rollback table")
-		return err
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("contract record in rollback table")
-		// if there is not such hash then EditContract was faulty. Do nothing.
-		return nil
-	}
-	var fields map[string]string
-	err = json.Unmarshal([]byte(rollbackTx.Data), &fields)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling contract values")
-		return err
-	}
-	if len(fields["value"]) > 0 {
-		var owner *script.OwnerInfo
-		for i, item := range smartVM.Block.Children {
-			if item != nil && item.Type == script.ObjContract {
-				cinfo := item.Info.(*script.ContractInfo)
-				if cinfo.Owner.TableID == converter.StrToInt64(rollbackTx.TableID) &&
-					cinfo.Owner.StateID == uint32(sc.TxSmart.EcosystemID) {
-					owner = smartVM.Children[i].Info.(*script.ContractInfo).Owner
-					break
-				}
-			}
-		}
-		if owner == nil {
-			err = errContractNotFound
-			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("getting existing contract")
-			return err
-		}
-		wallet := owner.WalletID
-		if len(fields["wallet_id"]) > 0 {
-			wallet = converter.StrToInt64(fields["wallet_id"])
-		}
-		root, err := CompileContract(sc, fields["value"], int64(owner.StateID), wallet, owner.TokenID)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("compiling contract")
-			return err
-		}
-		err = FlushContract(sc, root, owner.TableID, owner.Active)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("flushing contract")
-			return err
-		}
-	} else if len(fields["wallet_id"]) > 0 {
-		return SetContractWallet(sc, converter.StrToInt64(rollbackTx.TableID), sc.TxSmart.EcosystemID,
-			converter.StrToInt64(fields["wallet_id"]))
-	}
-	return nil
 }
 
 // JSONDecode converts json string to object
