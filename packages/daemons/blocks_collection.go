@@ -394,6 +394,8 @@ func processBlocks(blocks []*block.Block) error {
 		return utils.ErrInfo(err)
 	}
 
+	metaDbTx := model.MetadataRegistry.Begin()
+
 	// go through new blocks from the smallest block_id to the largest block_id
 	prevBlocks := make(map[int64]*block.Block, 0)
 
@@ -420,7 +422,11 @@ func processBlocks(blocks []*block.Block) error {
 			return err
 		}
 
-		if err := b.Play(dbTransaction); err != nil {
+		if err := b.Play(dbTransaction, metaDbTx); err != nil {
+			rbErr := metaDbTx.Rollback()
+			if rbErr != nil {
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Fatal("rollback metadata transaction")
+			}
 			dbTransaction.Rollback()
 			return utils.ErrInfo(err)
 		}
@@ -458,6 +464,8 @@ func processBlocks(blocks []*block.Block) error {
 			return err
 		}
 	}
+
+	metaDbTx.Commit()
 
 	return dbTransaction.Commit()
 }

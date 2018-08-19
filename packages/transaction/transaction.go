@@ -18,6 +18,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -45,6 +46,7 @@ type Transaction struct {
 	TxHeader      *tx.Header
 	tx            custom.TransactionInterface
 	DbTransaction *model.DbTransaction
+	MetaDb        types.MetadataRegistryReaderWriter
 	SysUpdate     bool
 	Rand          *rand.Rand
 
@@ -397,6 +399,7 @@ func (t *Transaction) CallContract(flags int) (resultContract string, err error)
 		PublicKeys:    t.PublicKeys,
 		DbTransaction: t.DbTransaction,
 		Rand:          t.Rand,
+		MetaDb:        t.MetaDb,
 	}
 	resultContract, err = sc.CallContract(flags)
 	t.SysUpdate = sc.SysUpdate

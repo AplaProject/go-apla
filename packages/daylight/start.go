@@ -43,8 +43,11 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 
+	"github.com/GenesisKernel/go-genesis/packages/registry"
+	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
+	"github.com/yddmat/memdb"
 )
 
 func initStatsd() {
@@ -223,6 +226,13 @@ func Start() {
 	}
 
 	initGorm(conf.Config.DB)
+	memdb, err := memdb.OpenDB("meta.db", true)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("starting memdb")
+		Exit(1)
+	}
+	model.MetadataRegistry = registry.NewMetadataStorage(&kv.DB{Database: *memdb})
+
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 
 	killOld()

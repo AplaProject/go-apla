@@ -16,12 +16,16 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	// Postgresql driver
+
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 var (
 	// DBConn is orm connection
 	DBConn *gorm.DB
+
+	MetadataRegistry types.MetadataRegistryStorage
 
 	// ErrRecordNotFound is Not Found Record wrapper
 	ErrRecordNotFound = gorm.ErrRecordNotFound

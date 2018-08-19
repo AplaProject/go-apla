@@ -16,6 +16,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -49,8 +50,9 @@ func (b *Block) PlaySafe() error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting db transaction")
 		return err
 	}
+	metaDbTx := model.MetadataRegistry.Begin()
 
-	err = b.Play(dbTransaction)
+	err = b.Play(dbTransaction, metaDbTx)
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
 		trData := make([][]byte, 0, b.StopCount)
@@ -82,6 +84,10 @@ func (b *Block) PlaySafe() error {
 		err = nil
 	} else if err != nil {
 		dbTransaction.Rollback()
+		rbErr := metaDbTx.Rollback()
+		if rbErr != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("rollback metadb transaction")
+		}
 		if b.GenBlock && b.StopCount == 0 {
 			if err == ErrLimitStop {
 				err = ErrLimitTime
@@ -102,6 +108,10 @@ func (b *Block) PlaySafe() error {
 	}
 
 	dbTransaction.Commit()
+	if err := metaDbTx.Commit(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("commiting metadb transaction")
+		return err
+	}
 	if b.SysUpdate {
 		b.SysUpdate = false
 		if err = syspar.SysUpdate(nil); err != nil {
@@ -126,7 +136,7 @@ func (b *Block) readPreviousBlockFromBlockchainTable() error {
 	return nil
 }
 
-func (b *Block) Play(dbTransaction *model.DbTransaction) error {
+func (b *Block) Play(dbTransaction *model.DbTransaction, metaDb types.MetadataRegistryReaderWriter) error {
 	logger := b.GetLogger()
 	if _, err := model.DeleteUsedTransactions(dbTransaction); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
@@ -134,6 +144,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	}
 
 	limits := NewLimits(b)
+	metaDb.SetBlockHash(b.Header.Hash)
 
 	txHashes := make([][]byte, 0, len(b.Transactions))
 	for _, btx := range b.Transactions {
@@ -158,6 +169,8 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			err error
 		)
 		t.DbTransaction = dbTransaction
+		metaDb.SetTxHash(t.TxHash)
+		t.MetaDb = metaDb
 		t.Rand = randBlock
 
 		model.IncrementTxAttemptCount(dbTransaction, t.TxHash)

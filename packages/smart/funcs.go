@@ -50,6 +50,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 	"github.com/satori/go.uuid"
 
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -93,6 +94,7 @@ type SmartContract struct {
 	TxHash        []byte
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
+	MetaDb        types.MetadataRegistryReaderWriter
 	Rand          *rand.Rand
 }
 
@@ -1275,6 +1277,15 @@ func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
 	if err = validateAccess(`NewMoney`, sc, nNewUser); err != nil {
 		return err
 	}
+
+	// TODO error handling
+	sc.MetaDb.Insert(&types.Registry{
+		Name:      "key",
+		Ecosystem: &types.Ecosystem{ID: sc.TxSmart.EcosystemID}},
+		strconv.FormatInt(id, 10),
+		model.KeySchema{ID: id, Amount: amount},
+	)
+
 	_, _, err = sc.insert([]string{`id`, `amount`}, []interface{}{id, amount},
 		getDefTableName(sc, `keys`))
 	if err == nil {

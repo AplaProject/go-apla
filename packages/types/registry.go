@@ -1,26 +1,28 @@
 package types
 
-import "database/sql/driver"
+import (
+	"database/sql/driver"
+)
 
 type RegistryType int8
 type RegistryAction int8
 
-const (
-	// Metadata ecosystem registry (e.g. pages, keys)
-	RegistryTypeMetadata RegistryType = iota + 1
-)
+//const (
+// Metadata ecosystem registry (e.g. pages, keys)
+//RegistryTypeMetadata RegistryType = iota + 1
+//)
 
-const (
-	RegistryActionRead RegistryAction = iota + 1
-	RegistryActionInsert
-	RegistryActionUpdate
-	RegistryActionNewField // ex new_column
-)
+//const (
+//	RegistryActionRead RegistryAction = iota + 1
+//	RegistryActionInsert
+//	RegistryActionUpdate
+//	RegistryActionNewField // ex new_column
+//)
 
 type Registry struct {
 	Name      string // ex table name
 	Ecosystem *Ecosystem
-	Type      RegistryType
+	//Type      RegistryType
 }
 
 type MetadataRegistryReader interface {
@@ -29,15 +31,22 @@ type MetadataRegistryReader interface {
 }
 
 type MetadataRegistryWriter interface {
-	driver.Tx
 	Insert(registry *Registry, pkValue string, value interface{}) error
 	Update(registry *Registry, pkValue string, newValue interface{}) error
-	Delete(registry *Registry, pkValue string) error
+
+	driver.Tx
+}
+
+type ContextHandler interface {
+	SetTxHash(txHash []byte)
+	SetBlockHash(blockHash []byte)
 }
 
 type MetadataRegistryReaderWriter interface {
 	MetadataRegistryReader
 	MetadataRegistryWriter
+
+	ContextHandler
 }
 
 // MetadataRegistryStorage provides a read or read-write transactions for metadata registry

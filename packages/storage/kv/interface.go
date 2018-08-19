@@ -4,26 +4,24 @@
 package kv
 
 import (
+	"database/sql/driver"
 	"io"
-
-	"github.com/dgraph-io/badger"
 )
 
-// Database and Transaction interfaces currently fits only badger implementation
 type Database interface {
 	io.Closer
 
 	// Starting read/read-write transaction
-	NewTransaction(update bool) *badger.Txn
+	Begin(writable bool) Transaction
 }
 
 type Transaction interface {
-	Set(key, val []byte) error
-	Delete(key []byte) error
-	Get(key []byte) (item *badger.Item, rerr error)
+	Set(key, val string) error
+	Update(key, val string) error
+	Delete(key string) error
+	Get(key string) (string, error)
 
-	NewIterator(opt badger.IteratorOptions) *badger.Iterator
+	Ascend(index string, iterator func(key, value string) bool) error
 
-	Commit(callback func(error)) error
-	Discard()
+	driver.Tx
 }
