@@ -55,24 +55,15 @@ func MemberHasRole(tx *DbTransaction, ecosys, member, role int64) (bool, error) 
 }
 
 // GetMemberRoles return map[id]name all roles assign to member in ecosystem
-func GetMemberRoles(tx *DbTransaction, ecosys, member int64) (roles map[int64]string, err error) {
-	db := GetDB(tx)
-
-	var ra []struct {
-		RoleID   string
-		RoleName string
-	}
-	err = db.Table(fmt.Sprint(ecosys, "_roles_participants")).
-		Select("role->>'id'", "role->>'name'").
-		Where("member->>'member_id' = ?", converter.Int64ToStr(member)).Find(&ra).Error
-
+func GetMemberRoles(tx *DbTransaction, ecosys, member int64) (roles []int64, err error) {
+	query := fmt.Sprintf(`SELECT role->>'id' as "id" FROM "%d_%s" 
+	WHERE member->>'member_id' = '%d'`, ecosys, `roles_participants`, member)
+	list, err := GetAllTransaction(tx, query, -1)
 	if err != nil {
 		return
 	}
-
-	for _, role := range ra {
-		roles[converter.StrToInt64(role.RoleID)] = role.RoleName
+	for _, role := range list {
+		roles = append(roles, converter.StrToInt64(role[`id`]))
 	}
-
 	return
 }

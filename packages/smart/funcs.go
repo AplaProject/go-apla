@@ -221,6 +221,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"JSONToMap":                    JSONDecode, // Deprecated
 		"JSONDecode":                   JSONDecode,
 		"JSONEncode":                   JSONEncode,
+		"JSONEncodeIndent":             JSONEncodeIndent,
 		"IdToAddress":                  IDToAddress,
 		"Int":                          Int,
 		"Len":                          Len,
