@@ -283,6 +283,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"DateTime":                     DateTime,
 		"UnixDateTime":                 UnixDateTime,
 		"UpdateNotifications":          UpdateNotifications,
+		"UpdateRolesNotifications":     UpdateRolesNotifications,
 	}
 
 	switch vt {
@@ -2034,4 +2035,22 @@ func UpdateNotifications(ecosystemID int64, users ...interface{}) {
 		}
 	}
 	notificator.UpdateNotifications(ecosystemID, userList)
+}
+
+func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
+	rolesList := make([]int64, 0, len(roles))
+	for i, roleID := range roles {
+		switch v := roleID.(type) {
+		case int64:
+			rolesList = append(rolesList, v)
+		case string:
+			rolesList = append(rolesList, converter.StrToInt64(v))
+		case []interface{}:
+			if i == 0 {
+				UpdateRolesNotifications(ecosystemID, v...)
+				return
+			}
+		}
+	}
+	notificator.UpdateRolesNotifications(ecosystemID, rolesList)
 }
