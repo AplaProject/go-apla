@@ -444,7 +444,7 @@ func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) 
 	return nil
 }
 
-func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID string,
+func UpdateContract(sc *SmartContract, id int64, value, conditions, confirmation, walletID string,
 	recipient int64, active, tokenID string) error {
 	if err := validateAccess(`UpdateContract`, sc, nEditContract, nImport); err != nil {
 		return err
@@ -470,6 +470,11 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		pars = append(pars, "wallet_id")
 		vals = append(vals, recipient)
 	}
+
+	if len(confirmation) > 0 {
+		pars = append(pars, "confirmation")
+		vals = append(vals, confirmation)
+	}
 	if len(vals) > 0 {
 		if _, err := DBUpdate(sc, "contracts", id, strings.Join(pars, ","), vals...); err != nil {
 			return err
@@ -487,7 +492,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 	return nil
 }
 
-func CreateContract(sc *SmartContract, name, value, conditions string, walletID, tokenEcosystem,
+func CreateContract(sc *SmartContract, name, value, conditions, confirmation string, walletID, tokenEcosystem,
 	appID int64) (int64, error) {
 	if err := validateAccess(`CreateContract`, sc, nNewContract, nImport); err != nil {
 		return 0, err
@@ -502,8 +507,8 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	if err != nil {
 		return 0, err
 	}
-	_, id, err = DBInsert(sc, "contracts", "name,value,conditions,wallet_id,token_id,app_id",
-		name, value, conditions, walletID, tokenEcosystem, appID)
+	_, id, err = DBInsert(sc, "contracts", "name,value,conditions,confirmation,wallet_id,token_id,app_id",
+		name, value, conditions, confirmation, walletID, tokenEcosystem, appID)
 	if err != nil {
 		return 0, err
 	}

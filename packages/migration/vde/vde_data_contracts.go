@@ -128,7 +128,7 @@ VALUES
     }
 
     action {
-        UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
+        UpdateContract($Id, $Value, $Conditions, $Confirmation, $WalletId, $recipient, $cur["active"], $cur["token_id"])
     }
     func rollback() {
         RollbackEditContract()
@@ -548,7 +548,7 @@ VALUES
     }
 
     action {
-        $result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
+        $result = CreateContract($contract_name, $Value, $Conditions, $Confirmation, $walletContract, $TokenEcosystem, $ApplicationId)
     }
     func rollback() {
         RollbackNewContract($Value)
