@@ -39,7 +39,4 @@ contract EditContract {
     action {
         UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
     }
-    func rollback() {
-        RollbackEditContract()
-    }
 }
