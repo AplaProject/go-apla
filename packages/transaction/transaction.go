@@ -339,7 +339,7 @@ func (t *Transaction) Play() (string, error) {
 	// smart-contract
 	if t.TxContract != nil {
 		// check that there are enough money in CallContract
-		return t.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
+		return t.CallContract()
 	}
 
 	if t.tx == nil {
@@ -381,7 +381,7 @@ func (t *Transaction) AccessRights(condition string, iscondition bool) error {
 }
 
 // CallContract calls the contract functions according to the specified flags
-func (t *Transaction) CallContract(flags int) (resultContract string, err error) {
+func (t *Transaction) CallContract() (resultContract string, err error) {
 	sc := smart.SmartContract{
 		VDE:           false,
 		Rollback:      true,
@@ -398,7 +398,7 @@ func (t *Transaction) CallContract(flags int) (resultContract string, err error)
 		DbTransaction: t.DbTransaction,
 		Rand:          t.Rand,
 	}
-	resultContract, err = sc.CallContract(flags)
+	resultContract, err = sc.CallContract()
 	t.SysUpdate = sc.SysUpdate
 	return
 }
