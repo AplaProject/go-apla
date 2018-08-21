@@ -115,6 +115,20 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`TestJSON`, `contract TestJSON {
+		data {}
+		conditions { }
+		action {
+		   var a map
+		   a["ok"] = 10
+		   a["arr"] = ["first", "<second>"]
+		   Test("json", JSONEncode(a))
+		   Test("ok", JSONEncodeIndent(a, "\t"))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`ok`: "{\n\t\"arr\": [\n\t\t\"first\",\n\t\t\"<second>\"\n\t],\n\t\"ok\": 10\n}",
+			`json`: "{\"arr\":[\"first\",\"<second>\"],\"ok\":10}"}},
+	}},
 	{`GuestKey`, `contract GuestKey {
 		action {
 			Test("result", $guest_key)
