@@ -146,12 +146,6 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	}
 	randBlock := rand.New(rand.NewSource(int64(seed)))
 
-	storedTxes, err := model.GetTxesByHashlist(dbTransaction, txHashes)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting txes by hashlist")
-		return err
-	}
-
 	for curTx, t := range b.Transactions {
 		var (
 			msg string
@@ -165,14 +159,6 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
-		}
-
-		if stx, ok := storedTxes[string(t.TxHash)]; ok {
-			stx.Attempt++
-			if stx.Attempt >= consts.MaxTXAttempt-1 {
-				txString := fmt.Sprintf("tx_hash: %s, tx_data: %s, tx_attempt: %d", stx.Hash, stx.Data, stx.Attempt)
-				log.WithFields(log.Fields{"type": consts.BadTxError, "tx_info": txString}).Error("tx attempts exceeded, transaction marked as bad")
-			}
 		}
 
 		msg, err = t.Play()
