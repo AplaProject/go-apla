@@ -129,6 +129,13 @@ var contracts = []smartContract{
 		{nil, map[string]string{`ok`: "{\n\t\"arr\": [\n\t\t\"first\",\n\t\t\"<second>\"\n\t],\n\t\"ok\": 10\n}",
 			`json`: "{\"arr\":[\"first\",\"<second>\"],\"ok\":10}"}},
 	}},
+	{`GuestKey`, `contract GuestKey {
+		action {
+			Test("result", $guest_key)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `4544233900443112470`}},
+	}},
 	{`TestCyr`, `contract TestCyr {
 		data {}
 		conditions { }
