@@ -21,7 +21,4 @@ contract DeactivateContract {
 		DBUpdate("contracts", $Id, {"active": 0})
 		Deactivate($Id, $ecosystem_id)
 	}
-	func rollback() {
-		Activate($Id, $ecosystem_id)
-	}
 }
