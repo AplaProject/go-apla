@@ -102,9 +102,6 @@ func rollbackBlock(dbTransaction *model.DbTransaction, block *block.Block) error
 		}
 
 		if t.TxContract != nil {
-			if _, err := t.CallContract(smart.CallInit | smart.CallRollback); err != nil {
-				return err
-			}
 			if err = rollbackTransaction(t.TxHash, t.DbTransaction, logger); err != nil {
 				return err
 			}
