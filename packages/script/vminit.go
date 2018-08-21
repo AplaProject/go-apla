@@ -302,7 +302,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 			return nil, err
 		}
 	}
-	for _, method := range []string{`init`, `conditions`, `action`} {
+	for _, method := range []string{`conditions`, `action`} {
 		if block, ok := (*cblock).Objects[method]; ok && block.Type == ObjFunc {
 			rtemp := rt.vm.RunInit(rt.cost)
 			(*rt.extend)[`parent`] = parent
