@@ -41,6 +41,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
@@ -220,6 +221,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"JSONToMap":                    JSONDecode, // Deprecated
 		"JSONDecode":                   JSONDecode,
 		"JSONEncode":                   JSONEncode,
+		"JSONEncodeIndent":             JSONEncodeIndent,
 		"IdToAddress":                  IDToAddress,
 		"Int":                          Int,
 		"Len":                          Len,
@@ -391,7 +393,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 				return false, logErrorfShort(eContractCondition, name, consts.EmptyObject)
 			}
 			vars := map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
-				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID}
+				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID, `guest_key`: vde.GuestKey}
 			if err := sc.AppendStack(name); err != nil {
 				return false, err
 			}
