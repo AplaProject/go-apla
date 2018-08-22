@@ -226,12 +226,12 @@ func Start() {
 	}
 
 	initGorm(conf.Config.DB)
-	memdb, err := memdb.OpenDB("meta.db", true)
+	metaDB, err := memdb.OpenDB("meta.db", true)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("starting memdb")
 		Exit(1)
 	}
-	model.MetadataRegistry = registry.NewMetadataStorage(&kv.DB{Database: *memdb})
+	model.MetadataRegistry = registry.NewMetadataStorage(&kv.DB{Database: *metaDB})
 
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 

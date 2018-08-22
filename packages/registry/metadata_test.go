@@ -3,10 +3,6 @@ package registry_test
 import (
 	"testing"
 
-	"os"
-
-	"path/filepath"
-
 	"math/rand"
 
 	"strconv"
@@ -20,9 +16,9 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/registry"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
-	"github.com/dgraph-io/badger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/yddmat/memdb"
 )
 
 type testModel struct {
@@ -31,18 +27,13 @@ type testModel struct {
 	Field2 []byte
 }
 
-func newBadger() (kv.Database, error) {
-	path := filepath.Join(os.TempDir(), "badger")
-
-	err := os.RemoveAll(path)
-	if err != nil && !os.IsNotExist(err) {
+func newKvDB() (kv.Database, error) {
+	db, err := memdb.OpenDB("", false)
+	if err != nil {
 		return nil, err
 	}
 
-	opts := badger.DefaultOptions
-	opts.Dir, opts.ValueDir = path, path
-
-	return badger.Open(opts)
+	return &kv.DB{Database: *db}, nil
 }
 
 func TestMetadataTx_RW(t *testing.T) {
@@ -61,7 +52,6 @@ func TestMetadataTx_RW(t *testing.T) {
 			registry: types.Registry{
 				Name:      "key",
 				Ecosystem: &types.Ecosystem{ID: 1},
-				Type:      types.RegistryTypeMetadata,
 			},
 			pkValue: "1",
 			value: testModel{
@@ -78,7 +68,6 @@ func TestMetadataTx_RW(t *testing.T) {
 			registry: types.Registry{
 				Name:      "key",
 				Ecosystem: &types.Ecosystem{ID: 1},
-				Type:      types.RegistryTypeMetadata,
 			},
 			pkValue: "1",
 			value:   make(chan int),
@@ -88,7 +77,7 @@ func TestMetadataTx_RW(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		db, err := newBadger()
+		db, err := newKvDB()
 		require.Nil(t, err)
 
 		reg := registry.NewMetadataStorage(db)
@@ -111,8 +100,10 @@ func TestMetadataTx_RW(t *testing.T) {
 	}
 }
 
+// TODO update after adding indexes to storage
 func TestMetadataTx_1millionKeys(t *testing.T) {
-	db, err := newBadger()
+	return
+	db, err := newKvDB()
 	require.Nil(t, err)
 
 	storage := registry.NewMetadataStorage(db)
@@ -129,7 +120,6 @@ func TestMetadataTx_1millionKeys(t *testing.T) {
 	reg := types.Registry{
 		Name:      "key",
 		Ecosystem: &types.Ecosystem{ID: 1},
-		Type:      types.RegistryTypeMetadata,
 	}
 
 	insertStart := time.Now()

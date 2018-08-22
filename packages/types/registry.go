@@ -2,6 +2,8 @@ package types
 
 import (
 	"database/sql/driver"
+
+	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 )
 
 type RegistryType int8
@@ -34,10 +36,10 @@ type MetadataRegistryWriter interface {
 	Insert(registry *Registry, pkValue string, value interface{}) error
 	Update(registry *Registry, pkValue string, newValue interface{}) error
 
-	driver.Tx
-}
+	AddIndex(index *kv.Index)
 
-type ContextHandler interface {
+	driver.Tx
+
 	SetTxHash(txHash []byte)
 	SetBlockHash(blockHash []byte)
 }
@@ -45,8 +47,6 @@ type ContextHandler interface {
 type MetadataRegistryReaderWriter interface {
 	MetadataRegistryReader
 	MetadataRegistryWriter
-
-	ContextHandler
 }
 
 // MetadataRegistryStorage provides a read or read-write transactions for metadata registry
@@ -55,6 +55,8 @@ type MetadataRegistryStorage interface {
 	Begin() MetadataRegistryReaderWriter
 	// Multiple read-only transactions can be opened even while write transaction is running
 	Reader() MetadataRegistryReader
+
+	Rollback(block []byte) error
 }
 
 type RegistryAccessor interface {

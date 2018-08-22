@@ -6,9 +6,11 @@ import (
 
 	"sync"
 
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/match"
 	"github.com/yddmat/memdb"
 )
@@ -21,7 +23,7 @@ type metadataTx struct {
 	tx      kv.Transaction
 	durable bool
 
-	rollback *MetadataRollback
+	rollback *metadataRollback
 
 	currentBlockHash []byte
 	currentTxHash    []byte
@@ -38,7 +40,7 @@ func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value inte
 
 	err = m.tx.Set(key, string(jsonValue))
 	if err != nil {
-		return errors.Wrapf(err, "inserting value %s to %s registry", value, registry.Name)
+		return errors.Wrapf(err, "inserting Value %s to %s registry", value, registry.Name)
 	}
 
 	m.stateMu.RLock()
@@ -46,7 +48,7 @@ func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value inte
 	tx := m.currentTxHash
 	m.stateMu.RUnlock()
 
-	err = m.rollback.saveDocumentState(block, tx, registry, pkValue, "")
+	err = m.rollback.saveState(block, tx, registry, pkValue, "")
 	if err != nil {
 		return errors.Wrapf(err, "saving rollback info")
 	}
@@ -64,7 +66,7 @@ func (m *metadataTx) Update(registry *types.Registry, pkValue string, newValue i
 
 	err = m.tx.Update(key, string(jsonValue))
 	if err != nil {
-		return errors.Wrapf(err, "inserting value %s to %s registry", pkValue, registry.Name)
+		return errors.Wrapf(err, "inserting Value %s to %s registry", pkValue, registry.Name)
 	}
 
 	// TODO save rollback info
@@ -88,7 +90,7 @@ func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface
 
 	err = json.Unmarshal([]byte(value), out)
 	if err != nil {
-		return errors.Wrapf(err, "unmarshalling value %s to struct", value)
+		return errors.Wrapf(err, "unmarshalling Value %s to struct", value)
 	}
 
 	return nil
@@ -136,6 +138,10 @@ func (m *metadataTx) SetBlockHash(blockHash []byte) {
 	m.stateMu.Unlock()
 }
 
+func (m *metadataTx) AddIndex(index *kv.Index) {
+	m.tx.AddIndex(index)
+}
+
 func (m *metadataTx) refreshTx() error {
 	if m.durable {
 		if m.tx == nil {
@@ -176,7 +182,27 @@ func NewMetadataStorage(db kv.Database) types.MetadataRegistryStorage {
 
 func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
 	databaseTx := m.db.Begin(true)
-	return &metadataTx{tx: databaseTx, rollback: &MetadataRollback{tx: databaseTx, txCounter: make(map[string]uint64)}, durable: true}
+	return &metadataTx{tx: databaseTx, rollback: &metadataRollback{tx: databaseTx, txCounter: make(map[string]uint64)}, durable: true}
+}
+
+func (m *metadataStorage) Rollback(block []byte) error {
+	databaseTx := m.db.Begin(true)
+	rollback := &metadataRollback{tx: databaseTx, txCounter: make(map[string]uint64)}
+
+	err := rollback.rollbackState(block)
+	if err != nil {
+		rbErr := databaseTx.Rollback()
+		log.WithFields(log.Fields{"type": consts.DBError, "error": rbErr}).Error("rollback metadata db")
+		return err
+	}
+
+	err = databaseTx.Commit()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("commiting metadata db")
+		return err
+	}
+
+	return nil
 }
 
 func (m *metadataStorage) Reader() types.MetadataRegistryReader {
