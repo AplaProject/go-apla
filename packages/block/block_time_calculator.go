@@ -5,12 +5,19 @@ package block
 import (
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/pkg/errors"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // BlockTimeCalculator calculating block generation time
 type BlockTimeCalculator struct {
-	clock         Clock
+	clock         utils.Clock
 	blocksCounter intervalBlocksCounter
 
 	firstBlockTime      time.Time
@@ -35,7 +42,7 @@ func NewBlockTimeCalculator(firstBlockTime time.Time,
 	nodesCount int64,
 ) BlockTimeCalculator {
 	return BlockTimeCalculator{
-		clock:         &ClockWrapper{},
+		clock:         &utils.ClockWrapper{},
 		blocksCounter: &blocksCounter{},
 
 		firstBlockTime:      firstBlockTime,
@@ -81,7 +88,7 @@ func (btc *BlockTimeCalculator) ValidateBlock(nodePosition int64, at time.Time) 
 	return bgs.nodePosition == nodePosition, nil
 }
 
-func (btc *BlockTimeCalculator) SetClock(clock Clock) *BlockTimeCalculator {
+func (btc *BlockTimeCalculator) SetClock(clock utils.Clock) *BlockTimeCalculator {
 	btc.clock = clock
 	return btc
 }
@@ -120,8 +127,7 @@ func (btc *BlockTimeCalculator) countBlockTime(blockTime time.Time) (blockGenera
 
 func BuildBlockTimeCalculator(transaction *model.DbTransaction) (BlockTimeCalculator, error) {
 	var btc BlockTimeCalculator
-	firstBlock := model.Block{}
-	found, err := firstBlock.Get(1)
+	firstBlock, found, err := blockchain.GetFirstBlock()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
 		return btc, err
@@ -135,7 +141,7 @@ func BuildBlockTimeCalculator(transaction *model.DbTransaction) (BlockTimeCalcul
 	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
 	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
 
-	btc = NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
+	btc = NewBlockTimeCalculator(time.Unix(firstBlock.Header.Time, 0),
 		blockGenerationDuration,
 		blocksGapDuration,
 		syspar.GetNumberOfNodesFromDB(transaction),

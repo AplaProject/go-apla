@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -24,8 +25,8 @@ import (
 
 // Transaction is a structure for parsing transactions
 type Transaction struct {
-	BlockData  *utils.BlockData
-	PrevBlock  *utils.BlockData
+	BlockData  *blockchain.BlockHeader
+	PrevBlock  *blockchain.BlockHeader
 	PublicKeys [][]byte
 
 	TxBinaryData  []byte // transaction binary data

@@ -87,7 +87,7 @@ type SmartContract struct {
 	TxFuel        int64           // The fuel of executing contract
 	TxCost        int64           // Maximum cost of executing contract
 	TxUsedCost    decimal.Decimal // Used cost of CPU resources
-	BlockData     *blockchain.Header
+	BlockData     *blockchain.BlockHeader
 	Loop          map[string]bool
 	TxHash        []byte
 	PublicKeys    [][]byte

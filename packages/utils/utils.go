@@ -252,7 +252,7 @@ func GetCurrentDir() string {
 }
 
 // GetBlocksBody is retrieving `blocksCount` blocks bodies starting with blockID and puts them in the channel
-func GetBlocksBody(host string, blockID int64, blocksCount int32, dataTypeBlockBody int64, reverseOrder bool) (chan []byte, error) {
+func GetBlocksBody(host string, blockHash []byte, blocksCount int32, dataTypeBlockBody int64, reverseOrder bool) (chan []byte, error) {
 	conn, err := TCPConn(host)
 	if err != nil {
 		return nil, ErrInfo(err)
@@ -266,7 +266,7 @@ func GetBlocksBody(host string, blockID int64, blocksCount int32, dataTypeBlockB
 	}
 
 	// send the number of a block
-	_, err = conn.Write(converter.DecToBin(blockID, 4))
+	_, err = conn.Write(converter.DecToBin(blockHash, 4))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data type block body to connection")
 		return nil, ErrInfo(err)

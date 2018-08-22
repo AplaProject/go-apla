@@ -99,7 +99,18 @@ func monitor(conf *config.Config) {
 		sendEmail(&conf.Smtp, &conf.AlertMessage, "problem getting node max block id :"+err.Error())
 		return
 	}
-	blockInfos, err := query.BlockInfo(conf.NodesList, minElement(maxBlockIDs))
+	ids := []int64{}
+	for _, id := range maxBlockIDs {
+		ids = append(ids, id.MaxBlockID)
+	}
+	minID := minElement(ids)
+	var minHash string
+	for _, b := range maxBlockIDs {
+		if b.MaxBlockID == minID {
+			minHash = b.Hash
+		}
+	}
+	blockInfos, err := query.BlockInfo(conf.NodesList, minHash)
 	if err != nil {
 		sendEmail(&conf.Smtp, &conf.AlertMessage, "problem getting node block info :"+err.Error())
 		return

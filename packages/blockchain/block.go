@@ -16,20 +16,22 @@ import (
 const blockPrefix = "block-"
 const firstBlockKey = "first_block"
 const lastBlockKey = "last_block"
+const lastNBlocksCount = 5
 
 // BlockData is a structure of the block's header
-type Header struct {
-	BlockID      int64
-	Time         int64
-	EcosystemID  int64
-	KeyID        int64
-	NodePosition int64
-	Sign         []byte
-	Hash         []byte
-	Version      int
+type BlockHeader struct {
+	BlockID       int64
+	Time          int64
+	EcosystemID   int64
+	KeyID         int64
+	NodePosition  int64
+	Sign          []byte
+	Hash          []byte
+	RollbacksHash []byte
+	Version       int
 }
 
-func (b Header) String() string {
+func (b BlockHeader) String() string {
 	return fmt.Sprintf("BlockID:%d, Time:%d, NodePosition %d", b.BlockID, b.Time, b.NodePosition)
 }
 
@@ -80,12 +82,13 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 }
 
 type Block struct {
-	Header       *Header
-	Transactions [][]byte
-	MrklRoot     []byte
-	PrevHash     []byte
-	NextHash     []byte
-	Sign         []byte
+	Header        *BlockHeader
+	Transactions  [][]byte
+	MrklRoot      []byte
+	PrevHash      []byte
+	NextHash      []byte
+	RollbacksHash []byte
+	Sign          []byte
 }
 
 func (b *Block) GetMrklRoot() ([]byte, error) {
@@ -201,6 +204,10 @@ func InsertBlock(hash []byte, block *Block, key string) error {
 	return nil
 }
 
+func DeleteBlock(blockHash []byte) error {
+	return db.Delete([]byte(blockPrefix+string(blockHash)), nil)
+}
+
 func GetFirstBlock() (*Block, bool, error) {
 	return GetBlock([]byte(firstBlockKey))
 }
@@ -262,4 +269,17 @@ func GetFirstNBlocks(n int) ([]*Block, error) {
 
 func GetLastNBlocks(n int) ([]*Block, error) {
 	return GetNBlocksFrom([]byte(lastBlockKey), n, -1)
+}
+
+func GetMaxForeignBlock(keyID int64) (*Block, bool, error) {
+	blocks, err := GetLastNBlocks(lastNBlocksCount)
+	if err != nil {
+		return nil, false, err
+	}
+	for _, b := range blocks {
+		if b.Header.KeyID != keyID {
+			return b, true, nil
+		}
+	}
+	return nil, false, nil
 }

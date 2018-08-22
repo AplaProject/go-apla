@@ -19,8 +19,8 @@ import (
 
 // Block is storing block data
 type PlayableBlock struct {
-	Header       utils.BlockData
-	PrevHeader   *utils.BlockData
+	Header       blockchain.BlockHeader
+	PrevHeader   *blockchain.BlockHeader
 	MrklRoot     []byte
 	BinData      []byte
 	Transactions []*transaction.Transaction
@@ -49,13 +49,13 @@ func (b *PlayableBlock) PlaySafe() error {
 	}
 
 	err = b.Play(dbTransaction)
+	NodePrivateKey, _, err := utils.GetNodeKeys()
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
 		transactions := [][]byte{}
 		for _, tr := range doneTx {
 			transactions = append(transactions, tr.TxFullData)
 		}
-		NodePrivateKey, _, err := utils.GetNodeKeys()
 		if err != nil || len(NodePrivateKey) < 1 {
 			log.WithFields(log.Fields{"type": consts.NodePrivateKeyFilename, "error": err}).Error("reading node private key")
 			return err
@@ -84,12 +84,7 @@ func (b *PlayableBlock) PlaySafe() error {
 		return err
 	}
 
-	if err := UpdBlockInfo(dbTransaction, b); err != nil {
-		dbTransaction.Rollback()
-		return err
-	}
-
-	if err := InsertIntoBlockchain(dbTransaction, b); err != nil {
+	if err := blockchain.InsertBlock(b.Header.Hash, b.ToBlockchainBlock(), NodePrivateKey); err != nil {
 		dbTransaction.Rollback()
 		return err
 	}
@@ -107,12 +102,12 @@ func (b *PlayableBlock) PlaySafe() error {
 
 func (b *PlayableBlock) readPreviousBlockFromBlockchainTable() error {
 	if b.Header.BlockID == 1 {
-		b.PrevHeader = &utils.BlockData{}
+		b.PrevHeader = &blockchain.BlockHeader{}
 		return nil
 	}
 
 	var err error
-	b.PrevHeader, err = GetBlockDataFromBlockChain(b.Hash)
+	b.PrevHeader, err = GetBlockDataFromBlockChain(b.Header.Hash)
 	if err != nil {
 		return utils.ErrInfo(fmt.Errorf("can't get block %d", b.Header.BlockID-1))
 	}
@@ -327,11 +322,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Pla
 		return nil, utils.ErrInfo(fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]`))
 	}
 
-	blockModel := blockchain.Block{}
-	if err := blockModel.Unmarshal(data); err != nil {
-		return nil, err
-	}
-
+	blockModel := &blockchain.Block{}
 	block, err := FromBlockchainBlock(blockModel)
 	if err != nil {
 		return nil, err
@@ -345,7 +336,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Pla
 	return block, nil
 }
 
-func FromBlockchainBlock(b blockchain.Block) (*PlayableBlock, error) {
+func FromBlockchainBlock(b *blockchain.Block) (*PlayableBlock, error) {
 	transactions := make([]*transaction.Transaction, 0)
 	for _, tx := range b.Transactions {
 		bufTransaction := bytes.NewBuffer(tx)
@@ -364,4 +355,17 @@ func FromBlockchainBlock(b blockchain.Block) (*PlayableBlock, error) {
 		Transactions: transactions,
 		MrklRoot:     b.MrklRoot,
 	}, nil
+}
+
+func (b *PlayableBlock) ToBlockchainBlock() *blockchain.Block {
+	blockchainBlock := &blockchain.Block{
+		Header:   &b.Header,
+		PrevHash: b.PrevHeader.Hash,
+	}
+	txs := [][]byte{}
+	for _, tx := range b.Transactions {
+		txs = append(txs, tx.TxFullData)
+	}
+	blockchainBlock.Transactions = txs
+	return blockchainBlock
 }

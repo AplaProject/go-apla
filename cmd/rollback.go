@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/rollback"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
@@ -11,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var blockID int64
+var blockHash string
 
 // rollbackCmd represents the rollback command
 var rollbackCmd = &cobra.Command{
@@ -39,21 +40,16 @@ var rollbackCmd = &cobra.Command{
 			log.WithError(err).Fatal("loading contracts")
 			return
 		}
-		err := rollback.ToBlockID(blockID, nil, log.WithFields(log.Fields{}))
+		binBlockHash := converter.HexToBin(blockHash)
+		err := rollback.ToBlockID(binBlockHash, nil, log.WithFields(log.Fields{}))
 		if err != nil {
-			log.WithError(err).Fatal("rollback to block id")
-			return
-		}
-
-		// block id = 1, is a special case for full rollback
-		if blockID != 1 {
-			log.Info("Not full rollback, finishing work without checking")
+			log.WithError(err).Fatal("rollback to block hash")
 			return
 		}
 	},
 }
 
 func init() {
-	rollbackCmd.Flags().Int64Var(&blockID, "blockId", 1, "blockID to rollback")
-	rollbackCmd.MarkFlagRequired("blockId")
+	rollbackCmd.Flags().StringVar(&blockHash, "blockHash", "", "blockHash to rollback")
+	rollbackCmd.MarkFlagRequired("blockHash")
 }

@@ -37,9 +37,9 @@ type MaxBlockResponse struct {
 	BlockID uint32
 }
 
-// GetBodiesRequest contains BlockID
+// GetBodiesRequest contains BlockHash
 type GetBodiesRequest struct {
-	BlockID      uint32
+	BlockHash    []byte
 	ReverseOrder bool
 }
 
@@ -50,7 +50,7 @@ type GetBodyResponse struct {
 
 // ConfirmRequest contains request data
 type ConfirmRequest struct {
-	BlockID uint32
+	BlockHash []byte
 }
 
 // ConfirmResponse contains response data

@@ -29,12 +29,7 @@ import (
 )
 
 // BlockRollback is blocking rollback
-func RollbackBlock(data []byte, deleteBlock bool) error {
-	blockModel := blockchain.Block{}
-	err := blockModel.Unmarshal(data)
-	if err != nil {
-		return err
-	}
+func RollbackBlock(blockModel *blockchain.Block, deleteBlock bool) error {
 	b, err := block.FromBlockchainBlock(blockModel)
 	if err != nil {
 		return err
@@ -48,19 +43,15 @@ func RollbackBlock(data []byte, deleteBlock bool) error {
 
 	err = rollbackBlock(dbTransaction, b)
 
+	if deleteBlock {
+		if err := blockchain.DeleteBlock(b.Header.Hash); err != nil {
+			return err
+		}
+	}
+
 	if err != nil {
 		dbTransaction.Rollback()
 		return err
-	}
-
-	if deleteBlock {
-		bl := &model.Block{}
-		err = bl.DeleteById(dbTransaction, b.Header.BlockID)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
-			dbTransaction.Rollback()
-			return err
-		}
 	}
 
 	err = dbTransaction.Commit()
@@ -79,22 +70,11 @@ func rollbackBlock(dbTransaction *model.DbTransaction, block *block.PlayableBloc
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting transaction")
 			return err
 		}
-		_, err = model.DeleteLogTransactionsByHash(dbTransaction, t.TxHash)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting log transactions by hash")
-			return err
-		}
 
 		ts := &model.TransactionStatus{}
 		err = ts.UpdateBlockID(dbTransaction, 0, t.TxHash)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating block id in transaction status")
-			return err
-		}
-
-		_, err = model.DeleteQueueTxByHash(dbTransaction, t.TxHash)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transacion from queue by hash")
 			return err
 		}
 

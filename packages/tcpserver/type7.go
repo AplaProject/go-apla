@@ -19,8 +19,9 @@ package tcpserver
 import (
 	"net"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -31,27 +32,33 @@ const BlocksPerRequest int32 = 1000
 // Type7 writes the body of the specified block
 // blocksCollection and queue_parser_blocks daemons send the request through p.GetBlocks()
 func Type7(request *GetBodiesRequest, w net.Conn) error {
-	block := &model.Block{}
-
-	var blocks []model.Block
+	var blocks []*blockchain.Block
 	var err error
+	order := 1
 	if request.ReverseOrder {
-		blocks, err = block.GetReverseBlockchain(int64(request.BlockID), BlocksPerRequest)
-	} else {
-		blocks, err = block.GetBlocksFrom(int64(request.BlockID-1), "ASC", BlocksPerRequest)
+		order = -1
 	}
+	blocks, err = blockchain.GetNBlocksFrom(request.BlockHash, int(BlocksPerRequest), order)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_id": request.BlockID}).Error("Error getting 1000 blocks from block_id")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_hash": request.BlockHash}).Error("Error getting 1000 blocks from block_hash")
 		return err
 	}
 
 	if len(blocks) == 0 {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_id": request.BlockID}).Warn("Requesting nonexistent blocks from block_id")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_hash": request.BlockHash}).Warn("Requesting nonexistent blocks from block_hash")
 		return err
 	}
 
+	nodePrivateKey, _, err := utils.GetNodeKeys()
+	if err != nil {
+		return err
+	}
 	for _, b := range blocks {
-		if err := SendRequest(&GetBodyResponse{Data: b.Data}, w); err != nil {
+		data, err := b.Marshal(nodePrivateKey)
+		if err != nil {
+			return err
+		}
+		if err := SendRequest(&GetBodyResponse{Data: data}, w); err != nil {
 			return err
 		}
 	}

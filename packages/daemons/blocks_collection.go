@@ -24,10 +24,10 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/block"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/rollback"
@@ -107,19 +107,18 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 		}
 	}
 
-	infoBlock := &model.InfoBlock{}
-	found, err := infoBlock.Get()
+	lastBlock, found, err := blockchain.GetLastBlock()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur blockID")
+		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("Getting last block")
 		return err
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("Info block not found")
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("last block not found")
 		return errors.New("Info block not found")
 	}
 
-	if infoBlock.BlockID >= maxBlockID {
-		log.WithFields(log.Fields{"blockID": infoBlock.BlockID, "maxBlockID": maxBlockID}).Debug("Max block is already in the host")
+	if lastBlock.Header.BlockID >= maxBlockID {
+		log.WithFields(log.Fields{"blockID": lastBlock.Header.BlockID, "maxBlockID": maxBlockID}).Debug("Max block is already in the host")
 		return nil
 	}
 
@@ -137,9 +136,9 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
 
 	// get current block id from our blockchain
-	curBlock := &model.InfoBlock{}
-	if _, err := curBlock.Get(); err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting info block")
+	curBlock, found, err := blockchain.GetLastBlock()
+	if err != nil {
+		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting last block")
 		return err
 	}
 
@@ -167,7 +166,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			if !hashMatched {
 				transaction.CleanCache()
 				//it should be fork, replace our previous blocks to ones from the host
-				err := GetBlocks(b.Header.BlockID-1, host)
+				err := GetBlocks(b.PrevHeader.Hash, host)
 				if err != nil {
 					d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 					banNode(host, b, err)
@@ -193,13 +192,22 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	}
 
 	st := time.Now()
-	d.logger.Infof("starting downloading blocks from %d to %d (%d) \n", curBlock.BlockID, maxBlockID, maxBlockID-curBlock.BlockID)
+	d.logger.Infof("starting downloading blocks from %d to %d (%d) \n", curBlock.Header.BlockID, maxBlockID, maxBlockID-curBlock.Header.BlockID)
 
 	count := 0
-	var err error
-	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(tcpserver.BlocksPerRequest) {
+	blockHash := curBlock.NextHash
+	curBlockID := curBlock.Header.BlockID + 1
+	nextBlock, found, err := blockchain.GetBlock(curBlock.NextHash)
+	if err != nil {
+		return err
+	}
+	if !found {
+		blockHash = curBlock.Header.Hash
+		curBlockID = curBlock.Header.BlockID
+	}
+	for blockID := curBlockID; blockID <= maxBlockID; blockID += int64(tcpserver.BlocksPerRequest) {
 		var rawBlocksChan chan []byte
-		rawBlocksChan, err = utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, false)
+		rawBlocksChan, err = utils.GetBlocksBody(host, blockHash, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, false)
 		if err != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
 			break
@@ -211,6 +219,12 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			break
 		}
 		count++
+		blocks, err := blockchain.GetNBlocksFrom(nextBlock.Header.Hash, int(tcpserver.BlocksPerRequest), 1)
+		if err != nil {
+			return err
+		}
+		blockHash = blocks[len(blocks)-1].Header.Hash
+		curBlockID = blocks[len(blocks)-1].Header.BlockID
 	}
 
 	if err != nil {
@@ -309,37 +323,26 @@ func filterBannedHosts(hosts []string) ([]string, error) {
 }
 
 // GetBlocks is returning blocks
-func GetBlocks(blockID int64, host string) error {
-	blocks, err := getBlocks(blockID, host)
+func GetBlocks(blockHash []byte, host string) error {
+	blocks, err := getBlocks(blockHash, host)
 	if err != nil {
 		return err
 	}
 
-	// mark all transaction as unverified
-	_, err = model.MarkVerifiedAndNotUsedTransactionsUnverified()
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-			"type":  consts.DBError,
-		}).Error("marking verified and not used transactions unverified")
-		return utils.ErrInfo(err)
-	}
-
 	// get starting blockID from slice of blocks
 	if len(blocks) > 0 {
-		blockID = blocks[len(blocks)-1].Header.BlockID
+		blockHash = blocks[len(blocks)-1].Header.Hash
 	}
 
 	// we have the slice of blocks for applying
 	// first of all we should rollback old blocks
-	block := &model.Block{}
-	myRollbackBlocks, err := block.GetBlocksFrom(blockID-1, "desc", 0)
+	myRollbackBlocks, err := blockchain.GetNBlocksFrom(blockHash, -1, 0)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting rollback blocks from blockID")
 		return utils.ErrInfo(err)
 	}
 	for _, block := range myRollbackBlocks {
-		err := rollback.RollbackBlock(block.Data, false)
+		err := rollback.RollbackBlock(block, false)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -348,25 +351,19 @@ func GetBlocks(blockID int64, host string) error {
 	return processBlocks(blocks)
 }
 
-func getBlocks(blockID int64, host string) ([]*block.PlayableBlock, error) {
+func getBlocks(blockHash []byte, host string) ([]*block.PlayableBlock, error) {
 	rollback := syspar.GetRbBlocks1()
-
-	badBlocks := make(map[int64]string)
 
 	blocks := make([]*block.PlayableBlock, 0)
 	var count int64
 
 	// load the block bodies from the host
-	blocksCh, err := utils.GetBlocksBody(host, blockID, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, true)
+	blocksCh, err := utils.GetBlocksBody(host, blockHash, tcpserver.BlocksPerRequest, consts.DATA_TYPE_BLOCK_BODY, true)
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}
 
 	for binaryBlock := range blocksCh {
-		if blockID < 2 {
-			break
-		}
-
 		// if the limit of blocks received from the node was exaggerated
 		if count > int64(rollback) {
 			break
@@ -377,12 +374,8 @@ func getBlocks(blockID int64, host string) ([]*block.PlayableBlock, error) {
 			return nil, utils.ErrInfo(err)
 		}
 
-		if badBlocks[block.Header.BlockID] == string(converter.BinToHex(block.Header.Sign)) {
-			log.WithFields(log.Fields{"block_id": block.Header.BlockID, "type": consts.InvalidObject}).Error("block is bad")
-			return nil, utils.ErrInfo(errors.New("bad block"))
-		}
-		if block.Header.BlockID != blockID {
-			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
+		if string(block.Header.Hash) != string(blockHash) {
+			log.WithFields(log.Fields{"header_block_hash": block.Header.Hash, "block_id": blockHash, "type": consts.InvalidObject}).Error("block hashes does not match")
 			return nil, utils.ErrInfo(errors.New("bad block_data['block_id']"))
 		}
 
@@ -391,7 +384,7 @@ func getBlocks(blockID int64, host string) ([]*block.PlayableBlock, error) {
 		// the public key of the one who has generated this block
 		nodePublicKey, err := syspar.GetNodePublicKeyByPosition(block.Header.NodePosition)
 		if err != nil {
-			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
+			log.WithFields(log.Fields{"header_block_hash": block.Header.Hash, "block_id": blockHash, "type": consts.InvalidObject}).Error("block ids does not match")
 			return nil, utils.ErrInfo(err)
 		}
 
@@ -404,7 +397,6 @@ func getBlocks(blockID int64, host string) ([]*block.PlayableBlock, error) {
 
 		// save the block
 		blocks = append(blocks, block)
-		blockID--
 		count++
 
 		// check the signature
@@ -457,14 +449,6 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 		}
 		prevBlocks[b.Header.BlockID] = b
 
-		// for last block we should update block info
-		if i == 0 {
-			err := block.UpdBlockInfo(dbTransaction, b)
-			if err != nil {
-				dbTransaction.Rollback()
-				return utils.ErrInfo(err)
-			}
-		}
 		if b.SysUpdate {
 			if err := syspar.SysUpdate(dbTransaction); err != nil {
 				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
@@ -477,14 +461,17 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 	for i := len(blocks) - 1; i >= 0; i-- {
 		b := blocks[i]
 		// Delete old blocks from blockchain
-		bl := &model.Block{}
-		err = bl.DeleteById(dbTransaction, b.Header.BlockID)
+		err = blockchain.DeleteBlock(b.Header.Hash)
 		if err != nil {
 			dbTransaction.Rollback()
 			return err
 		}
 		// insert new blocks into blockchain
-		if err := block.InsertIntoBlockchain(dbTransaction, b); err != nil {
+		nodePrivKey, _, err := utils.GetNodeKeys()
+		if err != nil {
+			return err
+		}
+		if err := blockchain.InsertBlock(b.Header.Hash, b.ToBlockchainBlock(), nodePrivKey); err != nil {
 			dbTransaction.Rollback()
 			return err
 		}

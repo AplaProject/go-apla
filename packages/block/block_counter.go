@@ -14,13 +14,13 @@ type blocksCounter struct {
 }
 
 func (bc *blocksCounter) count(state blockGenerationState) (int, error) {
-	blocks, err := blockchain.GetNLastBlocks(lastNBlocks)
+	blocks, err := blockchain.GetLastNBlocks(lastNBlocks)
 	if err != nil {
 		return 0, err
 	}
 	count := 0
 	for _, b := range blocks {
-		if b.NodePosition == statePosition && (b.Time >= state.start.Unix() || b.Time <= state.start.Add(state.duration).Unix()) {
+		if b.Header.NodePosition == state.nodePosition && (b.Header.Time >= state.start.Unix() || b.Header.Time <= state.start.Add(state.duration).Unix()) {
 			count += 1
 		}
 	}

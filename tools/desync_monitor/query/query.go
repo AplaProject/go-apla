@@ -6,10 +6,11 @@ import (
 )
 
 const maxBlockIDEndpoint = "/api/v2/maxblockid"
-const blockInfoEndpoint = "/api/v2/block/%d"
+const blockInfoEndpoint = "/api/v2/block/%s"
 
 type MaxBlockID struct {
-	MaxBlockID int64 `json:"max_block_id"`
+	MaxBlockID int64  `json:"max_block_id"`
+	Hash       string `json:"hash"`
 }
 
 type blockInfoResult struct {
@@ -21,7 +22,7 @@ type blockInfoResult struct {
 	RollbacksHash []byte `json:"rollbacks_hash"`
 }
 
-func MaxBlockIDs(nodesList []string) ([]int64, error) {
+func MaxBlockIDs(nodesList []string) ([]*MaxBlockID, error) {
 	wg := sync.WaitGroup{}
 	workResults := ConcurrentMap{m: map[string]interface{}{}}
 	for _, nodeUrl := range nodesList {
@@ -33,14 +34,14 @@ func MaxBlockIDs(nodesList []string) ([]int64, error) {
 				workResults.Set(url, err)
 				return
 			}
-			workResults.Set(url, maxBlockID.MaxBlockID)
+			workResults.Set(url, maxBlockID)
 		}(nodeUrl)
 	}
 	wg.Wait()
-	maxBlockIds := []int64{}
+	maxBlockIds := []*MaxBlockID{}
 	for _, result := range workResults.m {
 		switch res := result.(type) {
-		case int64:
+		case *MaxBlockID:
 			maxBlockIds = append(maxBlockIds, res)
 		case error:
 			return nil, res
@@ -49,7 +50,7 @@ func MaxBlockIDs(nodesList []string) ([]int64, error) {
 	return maxBlockIds, nil
 }
 
-func BlockInfo(nodesList []string, blockID int64) (map[string]*blockInfoResult, error) {
+func BlockInfo(nodesList []string, blockHash string) (map[string]*blockInfoResult, error) {
 	wg := sync.WaitGroup{}
 	workResults := ConcurrentMap{m: map[string]interface{}{}}
 	for _, nodeUrl := range nodesList {
@@ -57,7 +58,7 @@ func BlockInfo(nodesList []string, blockID int64) (map[string]*blockInfoResult, 
 		go func(url string) {
 			defer wg.Done()
 			blockInfo := &blockInfoResult{}
-			if err := sendGetRequest(url+fmt.Sprintf(blockInfoEndpoint, blockID), blockInfo); err != nil {
+			if err := sendGetRequest(url+fmt.Sprintf(blockInfoEndpoint, blockHash), blockInfo); err != nil {
 				workResults.Set(url, err)
 				return
 			}

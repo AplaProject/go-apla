@@ -12,7 +12,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
@@ -28,7 +27,7 @@ var generateFirstBlockCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		now := time.Now().Unix()
 
-		header := &utils.BlockData{
+		header := &blockchain.BlockHeader{
 			BlockID:      1,
 			Time:         now,
 			EcosystemID:  0,

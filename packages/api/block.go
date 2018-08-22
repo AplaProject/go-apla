@@ -3,20 +3,20 @@ package api
 import (
 	"net/http"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type getMaxBlockIDResult struct {
-	MaxBlockID int64 `json:"max_block_id"`
+	MaxBlockID int64  `json:"max_block_id"`
+	Hash       string `json:"hash"`
 }
 
 func getMaxBlockID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	block := &model.Block{}
-	found, err := block.GetMaxBlock()
+	block, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max block")
 		return errorAPI(w, err, http.StatusInternalServerError)
@@ -25,7 +25,10 @@ func getMaxBlockID(w http.ResponseWriter, r *http.Request, data *apiData, logger
 		log.WithFields(log.Fields{"type": consts.NotFound}).Error("last block not found")
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
-	data.result = &getMaxBlockIDResult{block.ID}
+	data.result = &getMaxBlockIDResult{
+		MaxBlockID: block.Header.BlockID,
+		Hash:       string(converter.BinToHex(block.Header.Hash)),
+	}
 	return nil
 }
 
@@ -39,17 +42,16 @@ type getBlockInfoResult struct {
 }
 
 func getBlockInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	blockID := converter.StrToInt64(data.params["id"].(string))
-	block := model.Block{}
-	found, err := block.Get(blockID)
+	blockHash := converter.HexToBin(data.params["hash"].(string))
+	block, found, err := blockchain.GetBlock(blockHash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "id": blockID}).Error("block with id not found")
+		log.WithFields(log.Fields{"type": consts.NotFound, "hash": blockHash}).Error("block with hash not found")
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
-	data.result = &getBlockInfoResult{Hash: block.Hash, EcosystemID: block.EcosystemID, KeyID: block.KeyID, Time: block.Time, Tx: block.Tx, RollbacksHash: block.RollbacksHash}
+	data.result = &getBlockInfoResult{Hash: block.Header.Hash, EcosystemID: block.Header.EcosystemID, KeyID: block.Header.KeyID, Time: block.Header.Time, RollbacksHash: block.Header.RollbacksHash}
 	return nil
 }

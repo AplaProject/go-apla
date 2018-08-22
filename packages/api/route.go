@@ -91,7 +91,7 @@ func Route(route *hr.Router) {
 		get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
 		get(`history/:table/:id`, ``, authWallet, getHistory)
 		get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
-		get(`block/:id`, ``, getBlockInfo)
+		get(`block/:hash`, ``, getBlockInfo)
 		get(`maxblockid`, ``, getMaxBlockID)
 
 		get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)

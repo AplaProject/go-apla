@@ -62,7 +62,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
+	blockTimeCalculator, err := block.BuildBlockTimeCalculator(nil)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
 		return err
@@ -111,7 +111,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return nil
 	}
 
-	header := &utils.BlockData{
+	header := &blockchain.BlockHeader{
 		BlockID:      prevBlock.BlockID + 1,
 		Time:         time.Now().Unix(),
 		EcosystemID:  0,

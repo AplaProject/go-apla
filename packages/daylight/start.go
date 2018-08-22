@@ -158,7 +158,6 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 
 func initRoutes(listenHost string) {
 	route := httprouter.New()
-	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
 	if conf.Config.TLS {
 		if len(conf.Config.TLSCert) == 0 || len(conf.Config.TLSKey) == 0 {
