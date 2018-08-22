@@ -8,6 +8,11 @@ type MockTransaction struct {
 	mock.Mock
 }
 
+// AddIndex provides a mock function with given fields: index
+func (_m *MockTransaction) AddIndex(index *Index) {
+	_m.Called(index)
+}
+
 // Ascend provides a mock function with given fields: index, iterator
 func (_m *MockTransaction) Ascend(index string, iterator func(string, string) bool) error {
 	ret := _m.Called(index, iterator)
@@ -100,15 +105,22 @@ func (_m *MockTransaction) Set(key string, val string) error {
 }
 
 // Update provides a mock function with given fields: key, val
-func (_m *MockTransaction) Update(key string, val string) error {
+func (_m *MockTransaction) Update(key string, val string) (string, error) {
 	ret := _m.Called(key, val)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string, string) string); ok {
 		r0 = rf(key, val)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(key, val)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }

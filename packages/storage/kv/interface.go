@@ -17,7 +17,7 @@ type Database interface {
 
 type Transaction interface {
 	Set(key, val string) error
-	Update(key, val string) error
+	Update(key, val string) (string, error)
 	Delete(key string) error
 	Get(key string) (string, error)
 

@@ -64,12 +64,20 @@ func (m *metadataTx) Update(registry *types.Registry, pkValue string, newValue i
 
 	key := fmt.Sprintf(keyConvention, registry.Ecosystem.ID, registry.Name, pkValue)
 
-	err = m.tx.Update(key, string(jsonValue))
+	old, err := m.tx.Update(key, string(jsonValue))
 	if err != nil {
 		return errors.Wrapf(err, "inserting Value %s to %s registry", pkValue, registry.Name)
 	}
 
-	// TODO save rollback info
+	m.stateMu.RLock()
+	block := m.currentBlockHash
+	tx := m.currentTxHash
+	m.stateMu.RUnlock()
+
+	err = m.rollback.saveState(block, tx, registry, pkValue, old)
+	if err != nil {
+		return errors.Wrapf(err, "saving rollback info")
+	}
 
 	return nil
 }
