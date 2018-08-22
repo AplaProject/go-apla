@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -978,36 +977,13 @@ func (sc *SmartContract) CallContract() (string, error) {
 		if maxpay.GreaterThan(decimal.New(0, 0)) && maxpay.LessThan(amount) {
 			amount = maxpay
 		}
-
-		if cprice := sc.TxContract.GetFunc(`price`); cprice != nil {
-			var ret []interface{}
-			if ret, err = VMRun(sc.VM, cprice, nil, sc.TxContract.Extend); err != nil {
-				return retError(err)
-			} else if len(ret) == 1 {
-				switch reflect.TypeOf(ret[0]).String() {
-				case `int64`:
-					price = ret[0].(int64)
-					if price > MaxPrice {
-						return retError(errMaxPrice)
-					}
-					if price < 0 {
-						return retError(errNegPrice)
-					}
-				case script.Decimal:
-					if ret[0].(decimal.Decimal).GreaterThan(decimal.New(MaxPrice, 0)) {
-						return retError(errMaxPrice)
-					}
-					if ret[0].(decimal.Decimal).LessThan(decimal.New(0, 0)) {
-						return retError(errNegPrice)
-					}
-					price = converter.StrToInt64(ret[0].(decimal.Decimal).String())
-				default:
-					logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong result type of price function")
-					return retError(errWrongPriceFunc)
-				}
-			} else {
-				logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong type of price function")
-				return retError(errWrongPriceFunc)
+		if priceName, ok := script.ContractPrices[sc.TxContract.Name]; ok {
+			price = SysParamInt(priceName)
+			if price > MaxPrice {
+				return retError(errMaxPrice)
+			}
+			if price < 0 {
+				return retError(errNegPrice)
 			}
 		}
 		sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024

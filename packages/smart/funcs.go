@@ -466,6 +466,11 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		if _, err := DBUpdate(sc, "contracts", id, pars); err != nil {
 			return err
 		}
+		if !sc.VDE {
+			if err := SysRollback(sc, SysRollData{Type: "EditContract", ID: id}); err != nil {
+				return err
+			}
+		}
 	}
 	if len(value) > 0 {
 		if err := FlushContract(sc, root, id, converter.StrToInt64(active) == 1); err != nil {
@@ -508,20 +513,13 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	if err = FlushContract(sc, root, id, false); err != nil {
 		return 0, err
 	}
-	return id, nil
-}
-
-func RollbackNewContract(sc *SmartContract, value string) error {
-	contractList, err := script.ContractsList(value)
-	if err != nil {
-		return err
-	}
-	for _, contract := range contractList {
-		if err := RollbackContract(sc, contract); err != nil {
-			return err
+	if !sc.VDE {
+		err = SysRollback(sc, SysRollData{Type: "NewContract", Data: value})
+		if err != nil {
+			return 0, err
 		}
 	}
-	return nil
+	return id, nil
 }
 
 func getColumns(columns string) (colsSQL string, colout []byte, err error) {
@@ -634,14 +632,8 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return logErrorDB(err, "insert vde table info")
 	}
 	if !sc.VDE {
-		rollbackTx := &model.RollbackTx{
-			BlockID:   sc.BlockData.BlockID,
-			TxHash:    sc.TxHash,
-			NameTable: tableName,
-			TableID:   converter.Int64ToStr(id),
-		}
-		if err = rollbackTx.Create(sc.DbTransaction); err != nil {
-			return logErrorDB(err, "creating CreateTable rollback")
+		if err = SysRollback(sc, SysRollData{Type: "NewTable", TableName: tableName}); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -1454,6 +1446,9 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	}
 	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
 		tables, `name`, tableName)
+	if !sc.VDE {
+		return SysRollback(sc, SysRollData{Type: "NewColumn", TableName: tblname, Data: name})
+	}
 	return
 }
 
