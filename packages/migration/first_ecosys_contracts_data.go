@@ -26,10 +26,6 @@ VALUES
 		DBUpdate("contracts", $Id, {"active": 1})
 		Activate($Id, $ecosystem_id)
 	}
-	func rollback() {
-		Deactivate($Id, $ecosystem_id)
-	}
-
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'CallDelayedContract', 'contract CallDelayedContract {
@@ -96,9 +92,6 @@ VALUES
 	action {
 		DBUpdate("contracts", $Id, {"active": 0})
 		Deactivate($Id, $ecosystem_id)
-	}
-	func rollback() {
-		Activate($Id, $ecosystem_id)
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -245,9 +238,6 @@ VALUES
 
     action {
         UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
-    }
-    func rollback() {
-        RollbackEditContract()
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -810,9 +800,6 @@ VALUES
     action {
         $result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
     }
-    func rollback() {
-        RollbackNewContract($Value)
-    }
     func price() int {
         return SysParamInt("contract_price")
     }
@@ -937,9 +924,6 @@ VALUES
     
     action {
         CreateTable($Name, $Columns, $Permissions, $ApplicationId)
-    }
-    func rollback() {
-        RollbackTable($Name)
     }
     func price() int {
         return SysParamInt("table_price")

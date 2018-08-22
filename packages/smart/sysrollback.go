@@ -33,15 +33,27 @@ const (
 	SysName = `@system`
 )
 
-func SysRollback(sc *SmartContract, data string) error {
+type SysRollData struct {
+	Type        string `json:"type,omitempty"`
+	EcosystemID int64  `json:"ecosystem,omitempty"`
+	ID          int64  `json:"id,omitempty"`
+	Data        string `json:"data,omitempty"`
+	TableName   string `json:"table,omitempty"`
+}
+
+func SysRollback(sc *SmartContract, data SysRollData) error {
+	out, err := marshalJSON(data, `marshaling sys rollback`)
+	if err != nil {
+		return err
+	}
 	rollbackSys := &model.RollbackTx{
 		BlockID:   sc.BlockData.BlockID,
 		TxHash:    sc.TxHash,
 		NameTable: SysName,
 		TableID:   converter.Int64ToStr(sc.TxSmart.EcosystemID),
-		Data:      data,
+		Data:      string(out),
 	}
-	err := rollbackSys.Create(sc.DbTransaction)
+	err = rollbackSys.Create(sc.DbTransaction)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating system  rollback")
 		return err
@@ -51,7 +63,8 @@ func SysRollback(sc *SmartContract, data string) error {
 
 // SysRollbackTable is rolling back table
 func SysRollbackTable(DbTransaction *model.DbTransaction, TxHash []byte,
-	TableName, EcosystemID string) error {
+	sysData SysRollData, EcosystemID string) error {
+	TableName := sysData.TableName
 	err := model.DropTable(DbTransaction, TableName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
@@ -80,21 +93,9 @@ func SysRollbackTable(DbTransaction *model.DbTransaction, TxHash []byte,
 }
 
 // SysRollbackColumn is rolling back column
-func SysRollbackColumn(DbTransaction *model.DbTransaction, TxHash []byte,
-	TableName, Name, EcosystemID string) error {
-	/*	Name = converter.EscapeSQL(strings.ToLower(Name))
-		rollbackTx := &model.RollbackTx{}
-		found, err := rollbackTx.Get(DbTransaction, TxHash, fmt.Sprintf("%s_tables", EcosystemID))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column from rollback table")
-			return err
-		}
-		if !found {
-			log.WithFields(log.Fields{"type": consts.NotFound}).Error("column record in rollback table")
-			// if there is not such hash then NewColumn was faulty. Do nothing.
-			return nil
-		}*/
-	return model.AlterTableDropColumn(DbTransaction, TableName, Name)
+func SysRollbackColumn(DbTransaction *model.DbTransaction, sysData SysRollData,
+	EcosystemID string) error {
+	return model.AlterTableDropColumn(DbTransaction, sysData.TableName, sysData.Data)
 }
 
 // SysRollbackContract performs rollback for the contract
@@ -111,8 +112,8 @@ func SysRollbackContract(name string, EcosystemID int64) error {
 	return nil
 }
 
-func SysRollbackNewContract(value, EcosystemID string) error {
-	contractList, err := script.ContractsList(value)
+func SysRollbackNewContract(sysData SysRollData, EcosystemID string) error {
+	contractList, err := script.ContractsList(sysData.Data)
 	if err != nil {
 		return err
 	}
@@ -155,7 +156,7 @@ func SysSetContractWallet(tblid, state int64, wallet int64) error {
 	return nil
 }
 
-// RollbackEditContract rollbacks the contract
+// SysRollbackEditContract rollbacks the contract
 func SysRollbackEditContract(DbTransaction *model.DbTransaction, TxHash []byte,
 	EcosystemID string) error {
 	rollbackTx := &model.RollbackTx{}
@@ -283,13 +284,13 @@ func SysRollbackEcosystem(DbTransaction *model.DbTransaction, TxHash []byte) err
 }
 
 // SysRollbackActivate sets Deactive status of the contract in smartVM
-func SysRollbackActivate(tblid, state string) error {
-	ActivateContract(converter.StrToInt64(tblid), converter.StrToInt64(state), false)
+func SysRollbackActivate(sysData SysRollData) error {
+	ActivateContract(sysData.ID, sysData.EcosystemID, false)
 	return nil
 }
 
 // SysRollbackDeactivate sets Active status of the contract in smartVM
-func SysRollbackDeactivate(tblid, state string) error {
-	ActivateContract(converter.StrToInt64(tblid), converter.StrToInt64(state), true)
+func SysRollbackDeactivate(sysData SysRollData) error {
+	ActivateContract(sysData.ID, sysData.EcosystemID, true)
 	return nil
 }

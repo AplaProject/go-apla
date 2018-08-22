@@ -69,28 +69,27 @@ func rollbackTransaction(txHash []byte, dbTransaction *model.DbTransaction, logg
 	}
 	for _, tx := range txs {
 		if tx["table_name"] == smart.SysName {
-			var v map[string]string
-			err := json.Unmarshal([]byte(tx["data"]), &v)
+			var sysData smart.SysRollData
+			err := json.Unmarshal([]byte(tx["data"]), &sysData)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollback.Data from json")
 				return err
 			}
-			switch v["Type"] {
+			switch sysData.Type {
 			case "NewTable":
-				smart.SysRollbackTable(dbTransaction, txHash, v["Name"], tx["table_id"])
+				smart.SysRollbackTable(dbTransaction, txHash, sysData, tx["table_id"])
 			case "NewColumn":
-				smart.SysRollbackColumn(dbTransaction, txHash, v["TableName"], v["Name"],
-					tx["table_id"])
+				smart.SysRollbackColumn(dbTransaction, sysData, tx["table_id"])
 			case "NewContract":
-				smart.SysRollbackNewContract(v["Value"], tx["table_id"])
+				smart.SysRollbackNewContract(sysData, tx["table_id"])
 			case "EditContract":
 				smart.SysRollbackEditContract(dbTransaction, txHash, tx["table_id"])
 			case "NewEcosystem":
 				smart.SysRollbackEcosystem(dbTransaction, txHash)
 			case "ActivateContract":
-				smart.SysRollbackActivate(v["Id"], v["State"])
+				smart.SysRollbackActivate(sysData)
 			case "DeactivateContract":
-				smart.SysRollbackDeactivate(v["Id"], v["State"])
+				smart.SysRollbackDeactivate(sysData)
 			}
 			continue
 		}
