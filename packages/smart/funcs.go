@@ -230,19 +230,14 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"ToLower":                      strings.ToLower,
 		"ToUpper":                      strings.ToUpper,
 		"CreateEcosystem":              CreateEcosystem,
-		"RollbackEcosystem":            RollbackEcosystem,
 		"CreateContract":               CreateContract,
 		"UpdateContract":               UpdateContract,
-		"RollbackTable":                RollbackTable,
 		"TableConditions":              TableConditions,
-		"RollbackColumn":               RollbackColumn,
 		"CreateLanguage":               CreateLanguage,
 		"EditLanguage":                 EditLanguage,
 		"Activate":                     Activate,
 		"Deactivate":                   Deactivate,
 		"RollbackContract":             RollbackContract,
-		"RollbackEditContract":         RollbackEditContract,
-		"RollbackNewContract":          RollbackNewContract,
 		"check_signature":              CheckSignature,
 		"RowConditions":                RowConditions,
 		"UUID":                         UUID,
@@ -476,6 +471,11 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		if _, err := DBUpdate(sc, "contracts", id, strings.Join(pars, ","), vals...); err != nil {
 			return err
 		}
+		if !sc.VDE {
+			if err := SysRollback(sc, `{"Type": "EditContract"}`); err != nil {
+				return err
+			}
+		}
 	}
 	if value != "" {
 		if err := FlushContract(sc, root, id, converter.StrToInt64(active) == 1); err != nil {
@@ -513,20 +513,21 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	if err := FlushContract(sc, root, id, false); err != nil {
 		return 0, err
 	}
-	return id, nil
-}
-
-func RollbackNewContract(sc *SmartContract, value string) error {
-	contractList, err := script.ContractsList(value)
-	if err != nil {
-		return err
-	}
-	for _, contract := range contractList {
-		if err := RollbackContract(sc, contract); err != nil {
-			return err
+	if !sc.VDE {
+		out, err := json.Marshal(map[string]string{
+			"Type":  "NewContract",
+			"Value": value,
+		})
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling contract to json")
+			return 0, err
+		}
+		err = SysRollback(sc, string(out))
+		if err != nil {
+			return 0, err
 		}
 	}
-	return nil
+	return id, nil
 }
 
 // CreateTable is creating smart contract table
@@ -653,15 +654,8 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return err
 	}
 	if !sc.VDE {
-		rollbackTx := &model.RollbackTx{
-			BlockID:   sc.BlockData.BlockID,
-			TxHash:    sc.TxHash,
-			NameTable: tableName,
-			TableID:   converter.Int64ToStr(id),
-		}
-		err = rollbackTx.Create(sc.DbTransaction)
+		err = SysRollback(sc, `{"Type": "NewTable", "Name": "`+tableName+`"}`)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating CreateTable rollback")
 			return err
 		}
 	}
@@ -1324,7 +1318,9 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	if err != nil {
 		return
 	}
-
+	if !sc.VDE {
+		return SysRollback(sc, `{"Type":"NewColumn","TableName": "`+tblname+`", "Name": "`+name+`" }`)
+	}
 	return nil
 }
 

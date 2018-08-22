@@ -157,9 +157,6 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     action {
         CreateTable($Name, $Columns, $Permissions, $ApplicationId)
     }
-    func rollback() {
-        RollbackTable($Name)
-    }
     func price() int {
         return SysParamInt("table_price")
     }
@@ -587,9 +584,6 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     action {
         CreateColumn($TableName, $Name, $Type, $Permissions)
     }
-    func rollback() {
-        RollbackColumn($TableName, $Name)
-    }
     func price() int {
         return SysParamInt("column_price")
     }
@@ -635,9 +629,6 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 
     action {
         $result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
-    }
-    func rollback() {
-        RollbackNewContract($Value)
     }
     func price() int {
         return SysParamInt("contract_price")
@@ -1099,9 +1090,6 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
     action {
         UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
     }
-    func rollback() {
-        RollbackEditContract()
-    }
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('28','MoneyTransfer','contract MoneyTransfer {
 	data {
@@ -1161,10 +1149,6 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 		DBUpdate("contracts", $Id, "active", 1)
 		Activate($Id, $ecosystem_id)
 	}
-	func rollback() {
-		Deactivate($Id, $ecosystem_id)
-	}
-
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('30','NewEcosystem','contract NewEcosystem {
 	data {
@@ -1175,9 +1159,6 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	}
 	func price() int {
 		return  SysParamInt("ecosystem_price")
-	}
-	func rollback() {
-		RollbackEcosystem()
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('31','AppendMenu','contract AppendMenu {
@@ -1283,9 +1264,6 @@ VALUES ('2', 'DelApplication', 'contract DelApplication {
 	action {
 		DBUpdate("contracts", $Id, "active", 0)
 		Deactivate($Id, $ecosystem_id)
-	}
-	func rollback() {
-		Activate($Id, $ecosystem_id)
 	}
 }', %[1]d, 'ContractConditions("MainCondition")', 1),
 ('36','UpdateSysParam','contract UpdateSysParam {
