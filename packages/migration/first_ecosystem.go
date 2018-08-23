@@ -68,3 +68,16 @@ DROP TABLE IF EXISTS "1_system_parameters";
 	);
 	ALTER TABLE ONLY "1_node_ban_logs" ADD CONSTRAINT "1_node_ban_logs_pkey" PRIMARY KEY ("id");
 `
+var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
+	"id" bigint  NOT NULL DEFAULT '0',
+	"pub" bytea  NOT NULL DEFAULT '',
+	"amount" decimal(30) NOT NULL DEFAULT '0' CHECK (amount >= 0),
+	"maxpay" decimal(30) NOT NULL DEFAULT '0' CHECK (maxpay >= 0),
+	"multi" bigint NOT NULL DEFAULT '0',
+	"deleted" bigint NOT NULL DEFAULT '0',
+	"blocked" bigint NOT NULL DEFAULT '0',
+	"ecosystem" bigint NOT NULL DEFAULT '1'
+	);
+	ALTER TABLE ONLY "1_keys" ADD CONSTRAINT "1_keys_pkey" PRIMARY KEY (ecosystem,id);
+
+`

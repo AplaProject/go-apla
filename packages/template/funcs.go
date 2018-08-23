@@ -613,6 +613,7 @@ func dbfindTag(par parFunc) string {
 
 	sc := par.Workspace.SmartContract
 	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName(macro((*par.Pars)[`Name`], par.Workspace.Vars)), `"`), state)
+	realTable, ecosysID, unique := model.RealNameEcosystem(tblname)
 	rows, err := model.GetAllColumnTypes(tblname)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column types from db")
@@ -628,7 +629,17 @@ func dbfindTag(par parFunc) string {
 	if err != nil || sc.AccessColumns(tblname, &columns, false) != nil {
 		return `Access denied`
 	}
-
+	if ecosysID != 0 {
+		tblname = realTable
+		if !unique || par.Node.Attr[`whereid`] == nil {
+			ecosysWhere := fmt.Sprintf(`ecosystem='%d'`, ecosysID)
+			if len(where) > 0 {
+				where = ecosysWhere + ` AND ` + where
+			} else {
+				where = ecosysWhere
+			}
+		}
+	}
 	if utils.StringInSlice(columns, `*`) {
 		for _, col := range rows {
 			queryColumns = append(queryColumns, col["column_name"])
