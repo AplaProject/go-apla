@@ -1133,6 +1133,9 @@ main:
 				}
 			}
 			if !call {
+				if objInfo.Type != ObjVar {
+					return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
+				}
 				cmd = &ByteCode{cmdVar, &VarInfo{objInfo, tobj}}
 			}
 		}

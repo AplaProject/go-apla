@@ -496,6 +496,18 @@ func TestVMCompile(t *testing.T) {
 			return Sprintf("%d", result)
 		}
 					`, `result`, `100`},
+		{`contract MainCond {
+			conditions {
+				error $test
+			}
+			action {
+				$result = "OK"
+			}
+		}
+		func result() bool {
+			return MainCond
+		}
+		`, `result`, `unknown variable MainCond`},
 	}
 	vm := NewVM()
 	vm.Extern = true
