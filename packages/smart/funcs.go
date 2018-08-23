@@ -1008,13 +1008,24 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 		ecosystem = sc.TxSmart.EcosystemID
 	}
 	tblname = GetTableName(sc, tblname, ecosystem)
-
+	realTable, ecosysID, unique := model.RealNameEcosystem(tblname)
 	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil {
 		return 0, nil, err
 	}
 	if err = sc.AccessColumns(tblname, &columns, false); err != nil {
 		return 0, nil, err
+	}
+	if ecosysID != 0 {
+		tblname = realTable
+		if !unique || id == 0 {
+			ecosysWhere := fmt.Sprintf(`ecosystem='%d'`, ecosysID)
+			if len(where) > 0 {
+				where = ecosysWhere + ` AND ` + where
+			} else {
+				where = ecosysWhere
+			}
+		}
 	}
 	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(PrepareColumns(columns)).
 		Where(where).Order(order).Offset(offset).Limit(limit).Rows()

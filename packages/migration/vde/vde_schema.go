@@ -21,15 +21,7 @@ func GetVDEScript() string {
 }
 
 var schemaVDE = `
-	DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
-	"id" bigint  NOT NULL DEFAULT '0',
-	"pub" bytea  NOT NULL DEFAULT '',
-	"multi" bigint NOT NULL DEFAULT '0',
-	"deleted" bigint NOT NULL DEFAULT '0',
-	"blocked" bigint NOT NULL DEFAULT '0'
-	);
-	ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
-
+	
 	DROP TABLE IF EXISTS "%[1]d_members";
 		CREATE TABLE "%[1]d_members" (
 			"id" bigint NOT NULL DEFAULT '0',

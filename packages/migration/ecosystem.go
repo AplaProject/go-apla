@@ -36,18 +36,16 @@ func GetFirstEcosystemScript() string {
 	return strings.Join(scripts, "\r\n")
 }
 
+// GetCommonEcosystemScript returns script with common tables
+func GetCommonEcosystemScript() string {
+	scripts := []string{
+		firstEcosystemCommon,
+	}
+	return strings.Join(scripts, "\r\n")
+}
+
 // SchemaEcosystem contains SQL queries for creating ecosystem
-var schemaEcosystem = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
-		"id" bigint  NOT NULL DEFAULT '0',
-		"pub" bytea  NOT NULL DEFAULT '',
-		"amount" decimal(30) NOT NULL DEFAULT '0' CHECK (amount >= 0),
-		"maxpay" decimal(30) NOT NULL DEFAULT '0' CHECK (maxpay >= 0),
-		"multi" bigint NOT NULL DEFAULT '0',
-		"deleted" bigint NOT NULL DEFAULT '0',
-		"blocked" bigint NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
-		
+var schemaEcosystem = `		
 		DROP TABLE IF EXISTS "%[1]d_history"; CREATE TABLE "%[1]d_history" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"sender_id" bigint NOT NULL DEFAULT '0',

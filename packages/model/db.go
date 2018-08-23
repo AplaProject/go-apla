@@ -8,6 +8,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration"
 	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
@@ -28,7 +29,50 @@ var (
 
 	// ErrDBConn database connection error
 	ErrDBConn = errors.New("Database connection error")
+
+	FirstEcosystemTables = map[string]bool{
+		`keys`: false,
+		/*		`menu`:               true,
+				`pages`:              true,
+				`languages`:          true,
+				`tables`:             true,
+				`contracts`:          true,
+				`parameters`:         true,
+				`blocks`:             true,
+				`history`:            true,
+				`sections`:           true,
+				`members`:            false,
+				`roles`:              true,
+				`roles_participants`: true,
+				`notifications`:      true,
+				`applications`:       true,
+				`binaries`:           true,
+				`buffer_data`:        true,
+				`app_params`:         true,*/
+	}
 )
+
+func RealName(tableName string) string {
+	start := strings.IndexByte(tableName, '_')
+	if start > 0 && start < len(tableName)-1 {
+		if _, ok := FirstEcosystemTables[tableName[start+1:]]; ok {
+			return `1_` + tableName[start+1:]
+		}
+	}
+	return tableName
+}
+
+func RealNameEcosystem(tableName string) (string, int64, bool) {
+	start := strings.IndexByte(tableName, '_')
+	if start > 0 && start < len(tableName)-1 {
+		if unique, ok := FirstEcosystemTables[tableName[start+1:]]; ok {
+			if ecosystem := converter.StrToInt64(tableName[:start]); ecosystem > 0 {
+				return `1_` + tableName[start+1:], ecosystem, unique
+			}
+		}
+	}
+	return tableName, 0, false
+}
 
 func isFound(db *gorm.DB) (bool, error) {
 	if db.RecordNotFound() {
@@ -140,6 +184,13 @@ func GetRecordsCountTx(db *DbTransaction, tableName string) (int64, error) {
 
 // ExecSchemaEcosystem is executing ecosystem schema
 func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder int64) error {
+	if id == 1 {
+		q := fmt.Sprintf(migration.GetCommonEcosystemScript())
+		if err := GetDB(db).Exec(q).Error; err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing comma ecosystem schema")
+			return err
+		}
+	}
 	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder)
 	if err := GetDB(db).Exec(q).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
@@ -233,7 +284,7 @@ func CreateIndex(transaction *DbTransaction, indexName, tableName, onColumn stri
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
 	return GetOneRow(`select data_type,character_maximum_length from
 			 information_schema.columns where table_name = ? AND column_name = ?`,
-		tableName, columnName).String()
+		RealName(tableName), columnName).String()
 }
 
 // GetAllColumnTypes returns column types for table
@@ -241,7 +292,7 @@ func GetAllColumnTypes(tblname string) ([]map[string]string, error) {
 	return GetAll(`SELECT column_name, data_type
 		FROM information_schema.columns
 		WHERE table_name = ?
-		ORDER BY ordinal_position ASC`, -1, tblname)
+		ORDER BY ordinal_position ASC`, -1, RealName(tblname))
 }
 
 // GetColumnType is returns type of column
