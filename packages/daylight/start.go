@@ -231,7 +231,7 @@ func Start() {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("starting memdb")
 		Exit(1)
 	}
-	model.MetadataRegistry = registry.NewMetadataStorage(&kv.DB{Database: *metaDB})
+	model.MetadataRegistry = registry.NewMetadataStorage(&kv.DatabaseAdapter{Database: *metaDB})
 
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 
@@ -260,7 +260,7 @@ func Start() {
 		utils.CancelFunc = cancel
 		utils.ReturnCh = make(chan string)
 
-		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
+		// The installation process is already finished (where user has specified DatabaseAdapter and where wallet has been restarted)
 		err := daemonsctl.RunAllDaemons(ctx)
 		log.Info("Daemons started")
 		if err != nil {

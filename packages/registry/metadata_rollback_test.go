@@ -36,7 +36,7 @@ func TestMetadataRollbackSaveState(t *testing.T) {
 
 	block, tx := []byte("123"), []byte("321")
 
-	s := state{Counter: 1, RegistryName: registry.Name, EcosystemID: registry.Ecosystem.ID}
+	s := state{Counter: 1, RegistryName: registry.Name, EcosystemID: registry.Ecosystem.ID, Key: "1"}
 	jstate, err := json.Marshal(s)
 	require.Nil(t, err)
 	txMock.On("Set", fmt.Sprintf(writePrefix, string(block), 1, string(tx)), string(jstate)).Return(nil)
@@ -50,14 +50,14 @@ func TestMetadataRollbackSaveState(t *testing.T) {
 	}
 	jsonValue, err := json.Marshal(structValue)
 	require.Nil(t, err)
-	s = state{Counter: 2, RegistryName: registry.Name, EcosystemID: registry.Ecosystem.ID, Value: string(jsonValue)}
+	s = state{Counter: 2, RegistryName: registry.Name, EcosystemID: registry.Ecosystem.ID, Value: string(jsonValue), Key: "2"}
 	jstate, err = json.Marshal(s)
 	require.Nil(t, err)
 	txMock.On("Set", fmt.Sprintf(writePrefix, string(block), 2, string(tx)), string(jstate)).Return(nil)
 	require.Nil(t, mr.saveState(block, tx, registry, "2", string(jsonValue)))
 	require.Equal(t, mr.txCounter[string(block)], uint64(2))
 
-	s = state{Counter: 3, RegistryName: registry.Name, EcosystemID: registry.Ecosystem.ID, Value: ""}
+	s = state{Counter: 3, RegistryName: registry.Name, EcosystemID: registry.Ecosystem.ID, Value: "", Key: "3"}
 	jstate, err = json.Marshal(s)
 	require.Nil(t, err)
 	txMock.On("Set", fmt.Sprintf(writePrefix, string(block), 3, string(tx)), string(jstate)).Return(errors.New("testerr"))
@@ -66,8 +66,9 @@ func TestMetadataRollbackSaveState(t *testing.T) {
 }
 
 func TestMetadataRollbackSaveRollback(t *testing.T) {
-	db, err := memdb.OpenDB("", false)
+	mDb, err := memdb.OpenDB("", false)
 	require.Nil(t, err)
+	db := kv.DatabaseAdapter{Database: *mDb}
 
 	dbTx := db.Begin(true)
 	mr := metadataRollback{tx: dbTx, txCounter: make(map[string]uint64)}
@@ -116,9 +117,9 @@ func TestMetadataRollbackSaveRollback(t *testing.T) {
 	require.Nil(t, err)
 	mr = metadataRollback{tx: dbTx, txCounter: make(map[string]uint64)}
 
-	assert.Nil(t, dbTx.AddIndex(memdb.NewIndex("rollback", fmt.Sprintf(searchPrefix, "*", "*", "*"), func(a, b string) bool {
+	dbTx.AddIndex(&kv.IndexAdapter{Index: *memdb.NewIndex("rollback", fmt.Sprintf(searchPrefix, "*", "*", "*"), func(a, b string) bool {
 		return true
-	})))
+	})})
 
 	require.Nil(t, mr.rollbackState(block))
 

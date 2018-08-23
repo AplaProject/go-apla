@@ -2,22 +2,22 @@ package kv
 
 import "github.com/yddmat/memdb"
 
-type DB struct {
+type DatabaseAdapter struct {
 	memdb.Database
 }
 
-func (db *DB) Begin(writable bool) Transaction {
-	return &Tx{Transaction: *db.Database.Begin(writable)}
+func (db *DatabaseAdapter) Begin(writable bool) Transaction {
+	return &TransactionAdapter{Transaction: *db.Database.Begin(writable)}
 }
 
-type Index struct {
+type IndexAdapter struct {
 	memdb.Index
 }
 
-type Tx struct {
+type TransactionAdapter struct {
 	memdb.Transaction
 }
 
-func (tx *Tx) AddIndex(index *Index) {
+func (tx *TransactionAdapter) AddIndex(index *IndexAdapter) {
 	tx.Transaction.AddIndex(&index.Index)
 }

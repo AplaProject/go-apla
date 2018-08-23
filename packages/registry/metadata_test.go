@@ -33,7 +33,7 @@ func newKvDB() (kv.Database, error) {
 		return nil, err
 	}
 
-	return &kv.DB{Database: *db}, nil
+	return &kv.DatabaseAdapter{Database: *db}, nil
 }
 
 func TestMetadataTx_RW(t *testing.T) {

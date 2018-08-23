@@ -36,7 +36,7 @@ type MetadataRegistryWriter interface {
 	Insert(registry *Registry, pkValue string, value interface{}) error
 	Update(registry *Registry, pkValue string, newValue interface{}) error
 
-	AddIndex(index *kv.Index)
+	AddIndex(index *kv.IndexAdapter)
 
 	driver.Tx
 

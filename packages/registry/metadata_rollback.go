@@ -58,7 +58,7 @@ func (mr *metadataRollback) saveState(block, tx []byte, registry *types.Registry
 	return nil
 }
 
-// rollbackState is rollback last transaction
+// rollbackState is rollback all block transactions
 func (mr *metadataRollback) rollbackState(block []byte) error {
 	txses := make([]state, 0)
 	var err error

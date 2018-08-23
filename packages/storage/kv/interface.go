@@ -21,7 +21,7 @@ type Transaction interface {
 	Delete(key string) error
 	Get(key string) (string, error)
 
-	AddIndex(index *Index)
+	AddIndex(index *IndexAdapter)
 	Ascend(index string, iterator func(key, value string) bool) error
 
 	driver.Tx

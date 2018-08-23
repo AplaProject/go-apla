@@ -146,7 +146,7 @@ func (m *metadataTx) SetBlockHash(blockHash []byte) {
 	m.stateMu.Unlock()
 }
 
-func (m *metadataTx) AddIndex(index *kv.Index) {
+func (m *metadataTx) AddIndex(index *kv.IndexAdapter) {
 	m.tx.AddIndex(index)
 }
 

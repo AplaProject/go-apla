@@ -9,7 +9,7 @@ type MockTransaction struct {
 }
 
 // AddIndex provides a mock function with given fields: index
-func (_m *MockTransaction) AddIndex(index *Index) {
+func (_m *MockTransaction) AddIndex(index *IndexAdapter) {
 	_m.Called(index)
 }
 
