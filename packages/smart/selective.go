@@ -54,6 +54,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		err             error
 		cost            int64
 		rollbackInfoStr string
+		ecosysWhere     string
 	)
 	logger := sc.GetLogger()
 
@@ -61,7 +62,20 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Block is undefined")
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
-
+	originalTable := table
+	realTable, ecosysID, unique := model.RealNameEcosystem(table)
+	if ecosysID != 0 {
+		table = realTable
+		ecosysWhere = fmt.Sprintf(`ecosystem='%d'`, ecosysID)
+		/*		if !unique  {
+				ecosysWhere := fmt.Sprintf(`ecosystem='%s'`, ecosysID)
+				if len(where) > 0 {
+					where = ecosysWhere + ` AND ` + where
+				} else {
+					where = ecosysWhere
+				}
+			}*/
+	}
 	for i, v := range ivalues {
 		switch v.(type) {
 		case string:
@@ -99,6 +113,10 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	addSQLWhere := ""
+	if ecosysID != 0 && (!unique || len(whereFields) == 0 || whereFields[0] != `id`) {
+		addSQLWhere = ecosysWhere + " AND "
+	}
+
 	if whereFields != nil && whereValues != nil {
 		for i := 0; i < len(whereFields); i++ {
 			if val := converter.StrToInt64(whereValues[i]); val != 0 {
@@ -279,6 +297,10 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			addSQLIns0 = append(addSQLIns0, `id`)
 			addSQLIns1 = append(addSQLIns1, `'`+tableID+`'`)
 		}
+		if ecosysID != 0 {
+			addSQLIns0 = append(addSQLIns0, `ecosystem`)
+			addSQLIns1 = append(addSQLIns1, fmt.Sprintf(`'%d'`, ecosysID))
+		}
 		insertQuery := `INSERT INTO "` + table + `" (` + strings.Join(addSQLIns0, ",") +
 			`) VALUES (` + strings.Join(addSQLIns1, ",") + `)`
 		insertCost, err := queryCoster.QueryCost(sc.DbTransaction, insertQuery)
@@ -297,7 +319,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	if generalRollback {
-		if err = addRollback(sc, table, tableID, rollbackInfoStr); err != nil {
+		if err = addRollback(sc, originalTable, tableID, rollbackInfoStr); err != nil {
 			return 0, tableID, err
 		}
 	}
