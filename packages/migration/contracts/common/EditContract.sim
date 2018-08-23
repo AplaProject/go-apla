@@ -6,6 +6,7 @@ contract EditContract {
         Value string "optional"
         Conditions string "optional"
         WalletId string "optional"
+        Confirmation string "optional"
     }
     func onlyConditions() bool {
         return $Conditions && !$Value && !$WalletId

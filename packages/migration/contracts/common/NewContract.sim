@@ -7,6 +7,7 @@ contract NewContract {
         Conditions string
         Wallet string "optional"
         TokenEcosystem int "optional"
+        Confirmation string "optional"
     }
 
     conditions {
