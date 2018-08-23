@@ -115,6 +115,13 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`StrNil`, `contract StrNil {
+		action {
+			Test("result", Sprintf("empty: %s", Str(nil)))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `empty: `}},
+	}},
 	{`TestJSON`, `contract TestJSON {
 		data {}
 		conditions { }
