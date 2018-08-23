@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -45,11 +46,9 @@ func QueueParserBlocks(ctx context.Context, d *daemon) error {
 	DBLock()
 	defer DBUnlock()
 
-	infoBlock := &model.InfoBlock{}
-	_, err := infoBlock.Get()
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
-		return err
+	infoBlock, found, err := blockchain.GetLastBlock()
+	if !found {
+		return nil
 	}
 	queueBlock := &model.QueueBlock{}
 	_, err = queueBlock.Get()
@@ -63,15 +62,15 @@ func QueueParserBlocks(ctx context.Context, d *daemon) error {
 	}
 
 	// check if the block gets in the rollback_blocks_1 limit
-	if queueBlock.BlockID > infoBlock.BlockID+syspar.GetRbBlocks1() {
+	if queueBlock.BlockID > infoBlock.Header.BlockID+syspar.GetRbBlocks1() {
 		queueBlock.DeleteOldBlocks()
 		return utils.ErrInfo("rollback_blocks_1")
 	}
 
 	// is it old block in queue ?
-	if queueBlock.BlockID <= infoBlock.BlockID {
+	if queueBlock.BlockID <= infoBlock.Header.BlockID {
 		queueBlock.DeleteOldBlocks()
-		return utils.ErrInfo(fmt.Errorf("old block %d <= %d", queueBlock.BlockID, infoBlock.BlockID))
+		return utils.ErrInfo(fmt.Errorf("old block %d <= %d", queueBlock.BlockID, infoBlock.Header.BlockID))
 	}
 
 	if queueBlock.FullNodeID == conf.Config.KeyID {

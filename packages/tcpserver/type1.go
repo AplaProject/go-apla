@@ -21,6 +21,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -106,8 +107,7 @@ func Type1(rw io.ReadWriter) error {
 }
 
 func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
-	infoBlock := &model.InfoBlock{}
-	found, err := infoBlock.Get()
+	lastBlock, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur block ID")
 		return utils.ErrInfo(err)
@@ -125,14 +125,8 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 	blockHash := buf.Next(consts.HashSize)
 	log.Debug("blockHash %x", blockHash)
 
-	qb := &model.QueueBlock{}
-	found, err = qb.GetQueueBlockByHash(blockHash)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting QueueBlock")
-		return utils.ErrInfo(err)
-	}
 	// we accept only new blocks
-	if !found && newBlockID >= infoBlock.BlockID {
+	if newBlockID >= lastBlock.Header.BlockID {
 		if _, err := queue.ValidateBlockQueue.Enqueue(blockHash); err != nil {
 			log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("Creating QueueBlock")
 			return nil

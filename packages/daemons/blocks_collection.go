@@ -260,14 +260,13 @@ func firstLoad(logger *log.Entry) error {
 }
 
 func needLoad(logger *log.Entry) (bool, error) {
-	infoBlock := &model.InfoBlock{}
-	_, err := infoBlock.Get()
+	_, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		logger.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting info block")
 		return false, err
 	}
 	// we have empty blockchain, we need to load blockchain from file or other source
-	if infoBlock.BlockID == 0 {
+	if !found {
 		logger.Debug("blockchain should be loaded")
 		return true, nil
 	}

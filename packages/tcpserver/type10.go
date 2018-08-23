@@ -17,8 +17,8 @@
 package tcpserver
 
 import (
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -27,8 +27,7 @@ import (
 // Type10 sends the last block ID
 // blocksCollection daemon sends this request
 func Type10() (*MaxBlockResponse, error) {
-	infoBlock := &model.InfoBlock{}
-	found, err := infoBlock.Get()
+	lastBlock, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur blockID")
 		return nil, utils.ErrInfo(err)
@@ -38,6 +37,6 @@ func Type10() (*MaxBlockResponse, error) {
 	}
 
 	return &MaxBlockResponse{
-		BlockID: uint32(infoBlock.BlockID),
+		BlockID: uint32(lastBlock.Header.BlockID),
 	}, nil
 }

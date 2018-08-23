@@ -79,11 +79,14 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return nil
 	}
 
-	prevBlock := &model.InfoBlock{}
-	_, err = prevBlock.Get()
+	prevBlock, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting previous block")
 		return err
+	}
+	if !found {
+		d.logger.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("previous block not found")
+		return nil
 	}
 
 	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
@@ -99,7 +102,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		publicKey:  NodePublicKey,
 		logger:     d.logger,
 	}
-	dtx.RunForBlockID(prevBlock.BlockID + 1)
+	dtx.RunForBlockID(prevBlock.Header.BlockID + 1)
 
 	trs, err := processTransactions(d.logger)
 	if err != nil {
@@ -112,7 +115,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 
 	header := &blockchain.BlockHeader{
-		BlockID:      prevBlock.BlockID + 1,
+		BlockID:      prevBlock.Header.BlockID + 1,
 		Time:         time.Now().Unix(),
 		EcosystemID:  0,
 		KeyID:        conf.Config.KeyID,

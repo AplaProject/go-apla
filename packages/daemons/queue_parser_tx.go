@@ -19,8 +19,7 @@ package daemons
 import (
 	"context"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 
 	log "github.com/sirupsen/logrus"
@@ -31,22 +30,13 @@ func QueueParserTx(ctx context.Context, d *daemon) error {
 	DBLock()
 	defer DBUnlock()
 
-	infoBlock := &model.InfoBlock{}
-	_, err := infoBlock.Get()
+	_, found, err := blockchain.GetLastBlock()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
 		return err
 	}
-	if infoBlock.BlockID == 0 {
+	if !found {
 		d.logger.Debug("no blocks for parsing")
 		return nil
-	}
-
-	// delete looped transactions
-	_, err = model.DeleteLoopedTransactions()
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting looped transactions")
-		return err
 	}
 
 	p := new(transaction.Transaction)

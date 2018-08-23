@@ -22,15 +22,19 @@ import (
 	"io"
 	"sync"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
+	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const (
@@ -85,47 +89,45 @@ func sendTransactions(logger *log.Entry) error {
 
 // send block and transactions hashes
 func sendHashes(fullNodeID int64, logger *log.Entry) error {
-	block, err := model.BlockGetUnsent()
+	blockItem, err := queue.SendBlockQueue.Dequeue()
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting unsent blocks")
+		logger.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("getting unsent blocks")
 		return err
 	}
-
-	trs, err := model.GetAllUnsentTransactions()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting unsent transactions")
-		return err
+	block := &blockchain.Block{}
+	if err := block.Unmarshal(blockItem.Value); err != nil {
+		logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling blockchain block")
 	}
 
-	if (trs == nil || len(*trs) == 0) && block == nil {
+	var trs []*tx.SmartContract
+	for queue.SendTxQueue.Length() > 0 {
+		txItem, err := queue.SendTxQueue.Dequeue()
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("getting unsent blocks")
+			return err
+		}
+		tr := &tx.SmartContract{}
+		if err := msgpack.Unmarshal(txItem.Value, tr); err != nil {
+			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling transaction")
+			return err
+		}
+		trs = append(trs, tr)
+
+	}
+	if len(trs) == 0 && block == nil {
 		// it's nothing to send
 		logger.Debug("nothing to send")
 		return nil
 	}
 
-	buf := prepareHashReq(block, trs, fullNodeID)
+	buf, err := prepareHashReq(block, trs, fullNodeID)
+	if err != nil {
+		return err
+	}
 	if buf != nil || len(buf) > 0 {
 		err := sendPacketToAll(I_AM_FULL_NODE, buf, sendHashesResp, logger)
 		if err != nil {
 			return err
-		}
-	}
-
-	// mark all transactions and block as sent
-	if block != nil {
-		err = block.MarkSent()
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marking block sent")
-			return err
-		}
-	}
-
-	if trs != nil {
-		for _, tr := range *trs {
-			_, err := model.MarkTransactionSent(tr.Hash)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marking transaction sent")
-			}
 		}
 	}
 
@@ -173,7 +175,7 @@ func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
 	return nil
 }
 
-func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int64) []byte {
+func prepareHashReq(block *blockchain.Block, trs []*tx.SmartContract, nodeID int64) ([]byte, error) {
 	var noBlockFlag byte
 	if block == nil {
 		noBlockFlag = 1
@@ -186,31 +188,48 @@ func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int
 		buf.Write(MarshallBlock(block))
 	}
 	if trs != nil {
-		for _, tr := range *trs {
-			buf.Write(MarshallTrHash(tr))
+		for _, tr := range trs {
+			trHash, err := MarshallTrHash(tr)
+			if err != nil {
+				return nil, err
+			}
+			buf.Write(trHash)
 		}
 	}
 
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
 
 // MarshallTr returns transaction data
-func MarshallTr(tr model.Transaction) []byte {
-	return tr.Data
+func MarshallTr(tr *tx.SmartContract) (b []byte, err error) {
+	if b, err = msgpack.Marshal(tr); err != nil {
+		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling transaction")
+		return
+	}
+	return
 }
 
 // MarshallBlock returns block as []byte
-func MarshallBlock(block *model.InfoBlock) []byte {
+func MarshallBlock(block *blockchain.Block) []byte {
 	if block != nil {
-		toBeSent := converter.DecToBin(block.BlockID, 3)
-		return append(toBeSent, block.Hash...)
+		toBeSent := converter.DecToBin(block.Header.BlockID, 3)
+		return append(toBeSent, block.Header.Hash...)
 	}
 	return []byte{}
 }
 
 // MarshallTrHash returns transaction hash
-func MarshallTrHash(tr model.Transaction) []byte {
-	return tr.Hash
+func MarshallTrHash(tr *tx.SmartContract) ([]byte, error) {
+	b, err := MarshallTr(tr)
+	if err != nil {
+		return nil, err
+	}
+	hash, err := crypto.DoubleHash(b)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing error")
+		return nil, err
+	}
+	return hash, nil
 }
 
 func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer, logger *log.Entry) error, logger *log.Entry) error {
