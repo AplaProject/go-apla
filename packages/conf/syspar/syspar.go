@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
@@ -80,6 +81,8 @@ const (
 	LocalNodeBanTime = `local_node_ban_time`
 	// CommissionSize is the value of the commission
 	CommissionSize = `commission_size`
+	// PrivateBlockchain is value defining blockchain mode
+	PrivateBlockchain = `private_blockchain`
 )
 
 var (
@@ -477,4 +480,14 @@ func GetFirstBlockData() (*consts.FirstBlock, error) {
 	}
 
 	return firstBlockData, nil
+}
+
+// IsPrivateBlockchain returns the value of private_blockchain system parameter or true
+func IsPrivateBlockchain() bool {
+	res, err := strconv.ParseBool(SysString(PrivateBlockchain))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ParameterExceeded, "error": err}).Error("getting private_blockchain system parameters")
+		return true
+	}
+	return res
 }
