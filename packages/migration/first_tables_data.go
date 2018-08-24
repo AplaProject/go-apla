@@ -2,7 +2,7 @@ package migration
 
 var firstTablesDataSQL = `
 INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
-		('20', 'delayed_contracts',
+		(next_id('1_tables'), 'delayed_contracts',
 		'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
 		"new_column": "ContractConditions(\"MainCondition\")"}',
 		'{"contract": "ContractConditions(\"MainCondition\")",
@@ -15,15 +15,13 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
 			"conditions": "ContractConditions(\"MainCondition\")"}',
 			'ContractConditions("MainCondition")'
 		),
-		(
-			'21',
+		(next_id('1_tables'),
 			'ecosystems',
 			'{"insert": "true", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
 			'{"name": "ContractConditions(\"MainCondition\")"}',
 			'ContractConditions("MainCondition")'
 		),
-		(
-			'22',
+		(next_id('1_tables'),
 			'metrics',
 			'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")","new_column": "ContractConditions(\"MainCondition\")"}',
 			'{"time": "ContractConditions(\"MainCondition\")",
@@ -31,15 +29,13 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
 				"value": "ContractConditions(\"MainCondition\")"}',
 			'ContractConditions("MainCondition")'
 		),
-		(
-			'23',
+		(next_id('1_tables'),
 			'system_parameters',
 			'{"insert": "false", "update": "ContractAccess(\"1@UpdateSysParam\")","new_column": "ContractConditions(\"MainCondition\")"}',
 			'{"value": "ContractConditions(\"MainCondition\")"}',
 			'ContractConditions("MainCondition")'
 		),
-		(
-			'24',
+		(next_id('1_tables'),
 			'bad_blocks',
 			'{
 				"insert": "ContractAccess(\"NewBadBlock\")",
@@ -58,8 +54,7 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
 			}',
 			'ContractConditions(\"MainCondition\")'
 		),
-		(
-			'25',
+		(next_id('1_tables'),
 			'node_ban_logs',
 			'{
 				"insert": "ContractAccess(\"CheckNodesBan\")",
