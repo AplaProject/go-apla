@@ -36,8 +36,8 @@ var (
 		`pages`:     true,
 		`blocks`:    true,
 		`languages`: true,
+		`contracts`: true,
 		/*		`tables`:             true,
-				`contracts`:          true,
 				`parameters`:         true,
 				`history`:            true,
 				`sections`:           true,
@@ -182,7 +182,12 @@ func DropTables() error {
 // GetRecordsCountTx is counting all records of table in transaction
 func GetRecordsCountTx(db *DbTransaction, tableName string) (int64, error) {
 	var count int64
-	err := GetDB(db).Table(tableName).Count(&count).Error
+	realName, ecosysID, _ := RealNameEcosystem(tableName)
+	dbQuery := GetDB(db).Table(realName)
+	if ecosysID != 0 {
+		dbQuery = dbQuery.Where(`ecosystem = ?`, ecosysID)
+	}
+	err := dbQuery.Count(&count).Error
 	return count, err
 }
 

@@ -3,9 +3,9 @@
 package vde
 
 var contractsDataSQL = `
-INSERT INTO "%[1]d_contracts" (id, name, value, conditions, app_id)
+INSERT INTO "1_contracts" (id, name, value, conditions, app_id, ecosystem)
 VALUES
-	(next_id('%[1]d_contracts'), 'EditCron', 'contract EditCron {
+	(next_id('1_contracts'), 'EditCron', 'contract EditCron {
 		data {
 			Id         int
 			Contract   string
@@ -30,8 +30,8 @@ VALUES
 			UpdateCron($Id)
 		}
 	}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'ListVDE', 'contract ListVDE {
+', 'ContractConditions("MainCondition")', 1, '%[1]d'),
+	(next_id('1_contracts'), 'ListVDE', 'contract ListVDE {
 		data {}
 	
 		conditions {}
@@ -40,8 +40,8 @@ VALUES
 			return GetVDEList()
 		}
 	}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'MainCondition', 'contract MainCondition {
+', 'ContractConditions("MainCondition")', 1, '%[1]d'),
+	(next_id('1_contracts'), 'MainCondition', 'contract MainCondition {
 		conditions {
 		  if EcosysParam("founder_account")!=$key_id
 		  {
@@ -49,8 +49,8 @@ VALUES
 		  }
 		}
 	  }
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'NewCron', 'contract NewCron {
+', 'ContractConditions("MainCondition")', 1, '%[1]d'),
+	(next_id('1_contracts'), 'NewCron', 'contract NewCron {
 		data {
 			Cron       string
 			Contract   string
@@ -74,8 +74,8 @@ VALUES
 			UpdateCron($result)
 		}
 	}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'NewVDE', 'contract NewVDE {
+', 'ContractConditions("MainCondition")', 1, '%[1]d'),
+	(next_id('1_contracts'), 'NewVDE', 'contract NewVDE {
 		data {
 			VDEName string
 			DBUser string
@@ -90,8 +90,8 @@ VALUES
 			CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
 		}
 	}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'RemoveVDE', 'contract RemoveVDE {
+', 'ContractConditions("MainCondition")', 1, '%[1]d'),
+	(next_id('1_contracts'), 'RemoveVDE', 'contract RemoveVDE {
 		data {
 			VDEName string
 		}
@@ -100,8 +100,8 @@ VALUES
 			DeleteVDE($VDEName)
 		}
 	}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'RunVDE', 'contract RunVDE {
+', 'ContractConditions("MainCondition")', 1, '%[1]d'),
+	(next_id('1_contracts'), 'RunVDE', 'contract RunVDE {
 		data {
 			VDEName string
 		}
@@ -113,8 +113,8 @@ VALUES
 			StartVDE($VDEName)
 		}
 	}
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'StopVDE', 'contract StopVDE {
+', 'ContractConditions("MainCondition")', 1, '%[1]d'),
+	(next_id('1_contracts'), 'StopVDE', 'contract StopVDE {
 		data {
 			VDEName string
 		}
@@ -126,5 +126,5 @@ VALUES
 			StopVDEProcess($VDEName)
 		}
 	}
-', 'ContractConditions("MainCondition")', 1);
+', 'ContractConditions("MainCondition")', 1, '%[1]d');
 `

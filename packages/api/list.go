@@ -53,8 +53,16 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Ent
 	} else {
 		limit = 25
 	}
-	list, err := model.GetAll(`select `+cols+` from `+table+` order by id desc`+
-		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
+	realName, ecosysID, _ := model.RealNameEcosystem(table)
+	var query string
+	if ecosysID == 0 {
+		query = fmt.Sprintf(`select %s from %s order by id desc offset %d `, cols, realName,
+			data.params[`offset`].(int64))
+	} else {
+		query = fmt.Sprintf(`select %s from %s where ecosystem='%d' order by id desc offset %d `,
+			cols, realName, ecosysID, data.params[`offset`].(int64))
+	}
+	list, err := model.GetAll(query, limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
