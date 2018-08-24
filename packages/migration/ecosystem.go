@@ -62,16 +62,6 @@ var schemaEcosystem = `
 		CREATE INDEX "%[1]d_history_index_block" ON "%[1]d_history" (block_id, txhash);
 		
 		
-		DROP TABLE IF EXISTS "%[1]d_languages"; CREATE TABLE "%[1]d_languages" (
-		  "id" bigint  NOT NULL DEFAULT '0',
-		  "name" character varying(100) NOT NULL DEFAULT '',
-		  "res" text NOT NULL DEFAULT '',
-		  "conditions" text NOT NULL DEFAULT '',
-		  "app_id" bigint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "%[1]d_languages" ADD CONSTRAINT "%[1]d_languages_pkey" PRIMARY KEY (id);
-		CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
-		
 		DROP TABLE IF EXISTS "%[1]d_sections"; CREATE TABLE "%[1]d_sections" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"title" varchar(255)  NOT NULL DEFAULT '',

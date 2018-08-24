@@ -1,7 +1,7 @@
 package vde
 
 var menuDataSQL = `
-INSERT INTO "%[1]d_menu" ("id","name","title","value","conditions") VALUES('2','admin_menu','Admin menu','MenuItem(
+INSERT INTO "1_menu" ("id","name","title","value","conditions","ecosystem") VALUES(next_id('1_menu'),'admin_menu','Admin menu','MenuItem(
     Icon: "icon-screen-desktop",
     Page: "interface",
     Vde: "true",
@@ -42,4 +42,4 @@ MenuItem(
     Page: "export",
     Vde: "true",
     Title: "Export"
-)','true');`
+)','true','%[1]d');`
