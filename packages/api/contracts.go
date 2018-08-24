@@ -50,8 +50,8 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 	} else {
 		limit = 25
 	}
-	list, err := model.GetAll(`select * from "`+table+`" order by id desc`+
-		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
+	realName, ecosysID, _ := model.RealNameEcosystem(table)
+	list, err := model.GetAll(fmt.Sprintf(`select * from "%s" where ecosystem='%d' order by id desc offset %d `, realName, ecosysID, data.params[`offset`].(int64)), limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
