@@ -74,17 +74,6 @@ var schemaVDE = `
 		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
 		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (app_id, member_id, name);
 
-	  CREATE TABLE "%[1]d_tables" (
-	  "id" bigint NOT NULL  DEFAULT '0',
-	  "name" varchar(100) UNIQUE NOT NULL DEFAULT '',
-	  "permissions" jsonb,
-	  "columns" jsonb,
-	  "conditions" text  NOT NULL DEFAULT '',
-	  "app_id" bigint NOT NULL DEFAULT '1'
-	  );
-	  ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
-	  CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name); 
-
 	  DROP TABLE IF EXISTS "%[1]d_notifications";
 		CREATE TABLE "%[1]d_notifications" (
 			"id"    bigint NOT NULL DEFAULT '0',

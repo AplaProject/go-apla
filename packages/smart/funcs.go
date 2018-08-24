@@ -633,12 +633,12 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return err
 	}
 	prefix, name := PrefixName(tableName)
-	id, err := model.GetNextID(sc.DbTransaction, getDefTableName(sc, `tables`))
+	id, err := model.GetNextID(sc.DbTransaction, `1_tables`)
 	if err != nil {
 		return logErrorDB(err, "getting next ID")
 	}
 
-	t := &model.TableVDE{
+	t := &model.Table{
 		ID:          id,
 		Name:        name,
 		Columns:     string(colout),
@@ -1462,7 +1462,8 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		Columns string
 	}
 	temp := &cols{}
-	err = model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
+	_, ecosysID, _ := model.RealNameEcosystem(tables)
+	err = model.DBConn.Table(`1_tables`).Where("ecosystem=? and name = ?", ecosysID, tableName).Select("columns").Find(temp).Error
 	if err != nil {
 		return
 	}
