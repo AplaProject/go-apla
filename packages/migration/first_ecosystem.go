@@ -121,4 +121,16 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 	);
 	ALTER TABLE ONLY "1_blocks" ADD CONSTRAINT "1_blocks_pkey" PRIMARY KEY (id);
 	CREATE INDEX "1_blocks_index_name" ON "1_blocks" (ecosystem,name);
+
+	DROP TABLE IF EXISTS "1_languages"; CREATE TABLE "1_languages" (
+		"id" bigint  NOT NULL DEFAULT '0',
+		"name" character varying(100) NOT NULL DEFAULT '',
+		"res" text NOT NULL DEFAULT '',
+		"conditions" text NOT NULL DEFAULT '',
+		"app_id" bigint NOT NULL DEFAULT '1',
+		"ecosystem" bigint NOT NULL DEFAULT '1'
+	  );
+	  ALTER TABLE ONLY "1_languages" ADD CONSTRAINT "1_languages_pkey" PRIMARY KEY (id);
+	  CREATE INDEX "1_languages_index_name" ON "1_languages" (ecosystem, name);
+
 `

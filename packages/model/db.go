@@ -31,12 +31,12 @@ var (
 	ErrDBConn = errors.New("Database connection error")
 
 	FirstEcosystemTables = map[string]bool{
-		`keys`:   false,
-		`menu`:   true,
-		`pages`:  true,
-		`blocks`: true,
-		/*		`languages`:          true,
-				`tables`:             true,
+		`keys`:      false,
+		`menu`:      true,
+		`pages`:     true,
+		`blocks`:    true,
+		`languages`: true,
+		/*		`tables`:             true,
 				`contracts`:          true,
 				`parameters`:         true,
 				`history`:            true,
