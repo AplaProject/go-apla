@@ -286,7 +286,7 @@ func AlterTableAddColumn(transaction *DbTransaction, tableName, columnName, colu
 
 // AlterTableDropColumn is dropping column from table
 func AlterTableDropColumn(transaction *DbTransaction, tableName, columnName string) error {
-	return GetDB(transaction).Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN "` + columnName + `"`).Error
+	return GetDB(transaction).Exec(`ALTER TABLE "` + RealName(tableName) + `" DROP COLUMN "` + columnName + `"`).Error
 }
 
 // CreateIndex is creating index on table column
