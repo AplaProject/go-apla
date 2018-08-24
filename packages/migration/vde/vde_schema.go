@@ -39,15 +39,6 @@ var schemaVDE = `
 	  );
 	  ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
 	  
-	  CREATE TABLE "%[1]d_contracts" (
-	  "id" bigint NOT NULL  DEFAULT '0',
-	  "name" text NOT NULL DEFAULT '',
-	  "value" text  NOT NULL DEFAULT '',
-	  "conditions" text  NOT NULL DEFAULT '',
-	  "app_id" bigint NOT NULL DEFAULT '1'
-	  );
-	  ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
-	  
 	  DROP TABLE IF EXISTS "%[1]d_parameters";
 	  CREATE TABLE "%[1]d_parameters" (
 	  "id" bigint NOT NULL  DEFAULT '0',

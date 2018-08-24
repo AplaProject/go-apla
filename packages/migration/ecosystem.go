@@ -80,18 +80,6 @@ var schemaEcosystem = `
 		);
 		ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
 		
-		CREATE TABLE "%[1]d_contracts" (
-		"id" bigint NOT NULL  DEFAULT '0',
-		"name" text NOT NULL UNIQUE DEFAULT '',
-		"value" text  NOT NULL DEFAULT '',
-		"wallet_id" bigint NOT NULL DEFAULT '0',
-		"token_id" bigint NOT NULL DEFAULT '1',
-		"active" character(1) NOT NULL DEFAULT '0',
-		"conditions" text  NOT NULL DEFAULT '',
-		"app_id" bigint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
-		
 		
 		DROP TABLE IF EXISTS "%[1]d_parameters";
 		CREATE TABLE "%[1]d_parameters" (

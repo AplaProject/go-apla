@@ -327,9 +327,6 @@ func LoadContracts(transaction *model.DbTransaction) error {
 	}
 
 	defer ExternOff()
-	if err := LoadContract(transaction, "system"); err != nil {
-		return err
-	}
 
 	for _, ecosystemID := range ecosystemsIds {
 		prefix := strconv.FormatInt(ecosystemID, 10)
@@ -426,7 +423,8 @@ func ConditionById(table string, validate bool) {
 // LoadContract reads and compiles contract of new state
 func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
-	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
+	contracts, err = model.GetAllTransaction(transaction,
+		`select * from "1_contracts" where ecosystem = ? order by id`, -1, prefix)
 	if err != nil {
 		return logErrorDB(err, "selecting all transactions from contracts")
 	}
@@ -456,10 +454,8 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
 
-	if !model.IsTable(prefix + `_contracts`) {
-		return
-	}
-	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
+	contracts, err = model.GetAllTransaction(transaction,
+		`select * from "1_contracts" where ecosystem=? order by id`, -1, prefix)
 	if err != nil {
 		return err
 	}
