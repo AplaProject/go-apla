@@ -36,6 +36,7 @@ type contractField struct {
 }
 
 type getContractResult struct {
+	ID       uint32          `json:"id"`
 	StateID  uint32          `json:"state"`
 	Active   bool            `json:"active"`
 	TableID  string          `json:"tableid"`
@@ -57,11 +58,13 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
 	fields := make([]contractField, 0)
-	result = getContractResult{Name: info.Name, StateID: info.Owner.StateID,
+	result = getContractResult{
+		ID: info.ID, Name: info.Name, StateID: info.Owner.StateID,
 		Active: info.Owner.Active, TableID: converter.Int64ToStr(info.Owner.TableID),
 		WalletID: converter.Int64ToStr(info.Owner.WalletID),
 		TokenID:  converter.Int64ToStr(info.Owner.TokenID),
-		Address:  converter.AddressToString(info.Owner.WalletID)}
+		Address:  converter.AddressToString(info.Owner.WalletID),
+	}
 
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {

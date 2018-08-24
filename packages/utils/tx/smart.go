@@ -10,7 +10,8 @@ type SmartContract struct {
 	MaxSum         string
 	PayOver        string
 	SignedBy       int64
-	Data           []byte
+	Data           []byte // TODO: deprecated
+	Params         []interface{}
 }
 
 // ForSign is converting SmartContract to string
