@@ -17,6 +17,8 @@ import (
 
 const keyConvention = "%d.%s.%s"
 
+var ErrUnknownContext = errors.New("unknown writing operation context (block o/or hash empty)")
+
 // metadataTx must be closed by calling Commit() or Rollback() when done
 type metadataTx struct {
 	db      kv.Database
@@ -48,6 +50,10 @@ func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value inte
 	tx := m.currentTxHash
 	m.stateMu.RUnlock()
 
+	if len(block) == 0 || len(tx) == 0 {
+		return ErrUnknownContext
+	}
+
 	err = m.rollback.saveState(block, tx, registry, pkValue, "")
 	if err != nil {
 		return errors.Wrapf(err, "saving rollback info")
@@ -73,6 +79,10 @@ func (m *metadataTx) Update(registry *types.Registry, pkValue string, newValue i
 	block := m.currentBlockHash
 	tx := m.currentTxHash
 	m.stateMu.RUnlock()
+
+	if len(block) == 0 || len(tx) == 0 {
+		return ErrUnknownContext
+	}
 
 	err = m.rollback.saveState(block, tx, registry, pkValue, old)
 	if err != nil {
@@ -214,5 +224,5 @@ func (m *metadataStorage) Rollback(block []byte) error {
 }
 
 func (m *metadataStorage) Reader() types.MetadataRegistryReader {
-	return &metadataTx{}
+	return &metadataTx{db: m.db}
 }

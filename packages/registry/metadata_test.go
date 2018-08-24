@@ -1,6 +1,7 @@
 package registry_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"math/rand"
@@ -11,13 +12,12 @@ import (
 
 	"fmt"
 
-	"encoding/json"
-
 	"github.com/GenesisKernel/go-genesis/packages/registry"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 	"github.com/yddmat/memdb"
 )
 
@@ -82,6 +82,8 @@ func TestMetadataTx_RW(t *testing.T) {
 
 		reg := registry.NewMetadataStorage(db)
 		metadataTx := reg.Begin()
+		metadataTx.SetBlockHash([]byte("123"))
+		metadataTx.SetTxHash([]byte("321"))
 		require.Nil(t, err, c.testname)
 
 		err = metadataTx.Insert(&c.registry, c.pkValue, c.value)
@@ -100,9 +102,7 @@ func TestMetadataTx_RW(t *testing.T) {
 	}
 }
 
-// TODO update after adding indexes to storage
-func TestMetadataTx_1millionKeys(t *testing.T) {
-	return
+func TestMetadataTx_benchmark(t *testing.T) {
 	db, err := newKvDB()
 	require.Nil(t, err)
 
@@ -123,7 +123,7 @@ func TestMetadataTx_1millionKeys(t *testing.T) {
 	}
 
 	insertStart := time.Now()
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < 10000; i++ {
 		id := rand.Int63()
 		err := metadataTx.Insert(
 			&reg,
@@ -144,13 +144,17 @@ func TestMetadataTx_1millionKeys(t *testing.T) {
 		require.Nil(t, err)
 	}
 
-	require.Nil(t, metadataTx.Commit())
-	fmt.Println("Inserted 1 keys mln in", time.Since(insertStart).Seconds())
+	metadataTx.AddIndex(&kv.IndexAdapter{*memdb.NewIndex("test", "*", func(a, b string) bool {
+		return gjson.Get(a, "amount").Less(gjson.Get(b, "amount"), false)
+	})})
 
-	readonlyTx := storage.Begin()
+	require.Nil(t, metadataTx.Commit())
+	fmt.Println("Inserted 10.000 keys in", time.Since(insertStart).Seconds())
+
+	readonlyTx := storage.Reader()
 	walkingStart := time.Now()
 	var topAmount int64
-	require.Nil(t, readonlyTx.Walk(&reg, "", func(jsonRow string) bool {
+	require.Nil(t, readonlyTx.Walk(&reg, "test", func(jsonRow string) bool {
 		k := key{}
 		require.Nil(t, json.Unmarshal([]byte(jsonRow), &k))
 		if topAmount < k.Amount {
@@ -158,10 +162,12 @@ func TestMetadataTx_1millionKeys(t *testing.T) {
 		}
 		return true
 	}))
-	fmt.Println("Finded top amount of 1 mln keys", "in", time.Since(walkingStart))
+	fmt.Println("Finded top amount of 10.000 keys", "in", time.Since(walkingStart))
 
 	secondWriting := time.Now()
 	writeTx := storage.Begin()
+	writeTx.SetBlockHash([]byte("123"))
+	writeTx.SetTxHash([]byte("321"))
 	// Insert 10 more values
 	for i := -10; i < 0; i++ {
 		id := rand.Int63()
@@ -178,6 +184,5 @@ func TestMetadataTx_1millionKeys(t *testing.T) {
 		require.Nil(t, err)
 	}
 	require.Nil(t, writeTx.Commit())
-	fmt.Println("Inserted 10 keys to 1 mln in", time.Since(secondWriting))
-
+	fmt.Println("Inserted 10 keys to 10.000 in", time.Since(secondWriting))
 }
