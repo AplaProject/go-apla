@@ -109,7 +109,7 @@ VALUES
             $result = "VDE " + $VDEName + " created"
 		}
 }
-', 'ContractConditions("MainCondition")', 1),
+', 'ContractConditions("MainCondition")', 1, '%[1]d'),
 	(next_id('%[1]d_contracts'), 'NodeOwnerCondition', 'contract NodeOwnerCondition {
 	conditions {
         $raw_full_nodes = SysParamString("full_nodes")
