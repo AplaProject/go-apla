@@ -31,14 +31,14 @@ var (
 	ErrDBConn = errors.New("Database connection error")
 
 	FirstEcosystemTables = map[string]bool{
-		`keys`: false,
-		/*		`menu`:               true,
-				`pages`:              true,
-				`languages`:          true,
+		`keys`:   false,
+		`menu`:   true,
+		`pages`:  true,
+		`blocks`: true,
+		/*		`languages`:          true,
 				`tables`:             true,
 				`contracts`:          true,
 				`parameters`:         true,
-				`blocks`:             true,
 				`history`:            true,
 				`sections`:           true,
 				`members`:            false,
@@ -52,26 +52,30 @@ var (
 	}
 )
 
-func RealName(tableName string) string {
-	start := strings.IndexByte(tableName, '_')
-	if start > 0 && start < len(tableName)-1 {
-		if _, ok := FirstEcosystemTables[tableName[start+1:]]; ok {
-			return `1_` + tableName[start+1:]
-		}
+func RealNameEcosystem(tableName string) (name string, ecosystem int64, unique bool) {
+	var quote, ok bool
+	name = tableName
+	if name[0] == '"' {
+		name = strings.Trim(name, `"`)
+		quote = true
 	}
-	return tableName
-}
-
-func RealNameEcosystem(tableName string) (string, int64, bool) {
-	start := strings.IndexByte(tableName, '_')
-	if start > 0 && start < len(tableName)-1 {
-		if unique, ok := FirstEcosystemTables[tableName[start+1:]]; ok {
-			if ecosystem := converter.StrToInt64(tableName[:start]); ecosystem > 0 {
-				return `1_` + tableName[start+1:], ecosystem, unique
+	start := strings.IndexByte(name, '_')
+	if start > 0 && start < len(name)-1 {
+		if unique, ok = FirstEcosystemTables[name[start+1:]]; ok {
+			if ecosystem = converter.StrToInt64(name[:start]); ecosystem > 0 {
+				name = `1_` + name[start+1:]
 			}
 		}
 	}
-	return tableName, 0, false
+	if quote {
+		name = `"` + name + `"`
+	}
+	return
+}
+
+func RealName(tableName string) string {
+	tableName, _, _ = RealNameEcosystem(tableName)
+	return tableName
 }
 
 func isFound(db *gorm.DB) (bool, error) {

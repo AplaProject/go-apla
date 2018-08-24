@@ -80,4 +80,45 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 	);
 	ALTER TABLE ONLY "1_keys" ADD CONSTRAINT "1_keys_pkey" PRIMARY KEY (ecosystem,id);
 
+	DROP TABLE IF EXISTS "1_menu";
+	CREATE TABLE "1_menu" (
+		"id" bigint  NOT NULL DEFAULT '0',
+		"name" character varying(255) NOT NULL DEFAULT '',
+		"title" character varying(255) NOT NULL DEFAULT '',
+		"value" text NOT NULL DEFAULT '',
+		"conditions" text NOT NULL DEFAULT '',
+		"ecosystem" bigint NOT NULL DEFAULT '1',
+		UNIQUE (ecosystem, name)
+	);
+	ALTER TABLE ONLY "1_menu" ADD CONSTRAINT "1_menu_pkey" PRIMARY KEY (id);
+	CREATE INDEX "1_menu_index_name" ON "1_menu" (ecosystem,name);
+
+	DROP TABLE IF EXISTS "1_pages"; 
+	CREATE TABLE "1_pages" (
+		"id" bigint  NOT NULL DEFAULT '0',
+		"name" character varying(255) NOT NULL DEFAULT '',
+		"value" text NOT NULL DEFAULT '',
+		"menu" character varying(255) NOT NULL DEFAULT '',
+		"validate_count" bigint NOT NULL DEFAULT '1',
+		"conditions" text NOT NULL DEFAULT '',
+		"app_id" bigint NOT NULL DEFAULT '1',
+		"validate_mode" character(1) NOT NULL DEFAULT '0',
+		"ecosystem" bigint NOT NULL DEFAULT '1',
+		UNIQUE (ecosystem, name)
+	);
+	ALTER TABLE ONLY "1_pages" ADD CONSTRAINT "1_pages_pkey" PRIMARY KEY (id);
+	CREATE INDEX "1_pages_index_name" ON "1_pages" (ecosystem,name);
+
+		
+	DROP TABLE IF EXISTS "1_blocks"; CREATE TABLE "1_blocks" (
+		"id" bigint  NOT NULL DEFAULT '0',
+		"name" character varying(255) NOT NULL DEFAULT '',
+		"value" text NOT NULL DEFAULT '',
+		"conditions" text NOT NULL DEFAULT '',
+		"app_id" bigint NOT NULL DEFAULT '1',
+		"ecosystem" bigint NOT NULL DEFAULT '1',
+		UNIQUE (ecosystem, name)
+	);
+	ALTER TABLE ONLY "1_blocks" ADD CONSTRAINT "1_blocks_pkey" PRIMARY KEY (id);
+	CREATE INDEX "1_blocks_index_name" ON "1_blocks" (ecosystem,name);
 `
