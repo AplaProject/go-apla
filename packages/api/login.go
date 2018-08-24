@@ -77,6 +77,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			msg = claims.UID
 		}
 	}
+
 	if len(msg) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("UID is empty")
 		return errorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
@@ -111,7 +112,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		if account.Deleted == 1 {
 			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 		}
-	} else {
+	}
+	if !isAccount && ecosystemID == 1 {
 		pubkey = data.params[`pubkey`].([]byte)
 		if len(pubkey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")

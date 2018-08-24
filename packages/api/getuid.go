@@ -17,6 +17,8 @@
 package api
 
 import (
+	"bytes"
+	bin "encoding/binary"
 	"math/rand"
 	"net/http"
 	"time"
@@ -25,6 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,7 +53,12 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 			return nil
 		}
 	}
-	result.UID = converter.Int64ToStr(rand.New(rand.NewSource(time.Now().Unix())).Int63())
+	temp, _ := uuid.NewV4()
+	bytes := bytes.NewBuffer(temp.Bytes())
+	var seed int64
+	bin.Read(bytes, bin.LittleEndian, &seed)
+	result.UID = converter.Int64ToStr(rand.New(rand.NewSource(seed)).Int63())
+
 	claims := JWTClaims{
 		UID: result.UID,
 		StandardClaims: jwt.StandardClaims{
