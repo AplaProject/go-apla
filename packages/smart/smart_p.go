@@ -387,8 +387,12 @@ func GetContractById(sc *SmartContract, id int64) string {
 
 // EvalCondition gets the condition and check it
 func EvalCondition(sc *SmartContract, table, name, condfield string) error {
-	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM "`+getDefTableName(sc, table)+
-		`" WHERE name = ?`, name).String()
+	tableName, ecosysID, _ := model.RealNameEcosystem(getDefTableName(sc, table))
+	query := `SELECT ` + converter.EscapeName(condfield) + ` FROM "` + tableName + `" WHERE name = ?`
+	if ecosysID != 0 {
+		query += fmt.Sprintf(` AND ecosystem='%d'`, ecosysID)
+	}
+	conditions, err := model.Single(query, name).String()
 	if err != nil {
 		return logErrorDB(err, "executing single query")
 	}
@@ -436,12 +440,12 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 
 	sc.Rollback = false
 	sc.FullAccess = true
-	if _, _, err = DBInsert(sc, `@`+idStr+"_pages", map[string]interface{}{"id": "1",
+	if _, _, err = DBInsert(sc, `@`+idStr+"_pages", map[string]interface{}{
 		"name": "default_page", "value": SysParamString("default_ecosystem_page"),
 		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`}); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
-	if _, _, err = DBInsert(sc, `@`+idStr+"_menu", map[string]interface{}{"id": "1",
+	if _, _, err = DBInsert(sc, `@`+idStr+"_menu", map[string]interface{}{
 		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("MainCondition")`}); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}

@@ -21,6 +21,9 @@ func (m *Key) SetTablePrefix(prefix int64) *Key {
 
 // TableName returns name of table
 func (m Key) TableName() string {
+	if m.ecosystem == 0 {
+		m.ecosystem = 1
+	}
 	return `1_keys`
 }
 

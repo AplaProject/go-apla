@@ -67,14 +67,6 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	if ecosysID != 0 {
 		table = realTable
 		ecosysWhere = fmt.Sprintf(`ecosystem='%d'`, ecosysID)
-		/*		if !unique  {
-				ecosysWhere := fmt.Sprintf(`ecosystem='%s'`, ecosysID)
-				if len(where) > 0 {
-					where = ecosysWhere + ` AND ` + where
-				} else {
-					where = ecosysWhere
-				}
-			}*/
 	}
 	for i, v := range ivalues {
 		switch v.(type) {

@@ -82,42 +82,6 @@ var schemaEcosystem = `
 		);
 	  ALTER TABLE ONLY "%[1]d_sections" ADD CONSTRAINT "%[1]d_sections_pkey" PRIMARY KEY (id);
 
-		DROP TABLE IF EXISTS "%[1]d_menu";
-		CREATE TABLE "%[1]d_menu" (
-			"id" bigint  NOT NULL DEFAULT '0',
-			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
-			"title" character varying(255) NOT NULL DEFAULT '',
-			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
-		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
-
-		DROP TABLE IF EXISTS "%[1]d_pages"; 
-		CREATE TABLE "%[1]d_pages" (
-			"id" bigint  NOT NULL DEFAULT '0',
-			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
-			"value" text NOT NULL DEFAULT '',
-			"menu" character varying(255) NOT NULL DEFAULT '',
-			"validate_count" bigint NOT NULL DEFAULT '1',
-			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '1',
-			"validate_mode" character(1) NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
-		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
-
-
-		DROP TABLE IF EXISTS "%[1]d_blocks"; CREATE TABLE "%[1]d_blocks" (
-			"id" bigint  NOT NULL DEFAULT '0',
-			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
-			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
-		CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
-		
 		DROP TABLE IF EXISTS "%[1]d_signatures"; CREATE TABLE "%[1]d_signatures" (
 			"id" bigint  NOT NULL DEFAULT '0',
 			"name" character varying(100) NOT NULL DEFAULT '',
