@@ -37,8 +37,8 @@ var (
 		`blocks`:    true,
 		`languages`: true,
 		`contracts`: true,
-		/*		`tables`:             true,
-				`parameters`:         true,
+		`tables`:    true,
+		/*		`parameters`:         true,
 				`history`:            true,
 				`sections`:           true,
 				`members`:            false,
@@ -276,17 +276,17 @@ func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
 
 // AlterTableAddColumn is adding column to table
 func AlterTableAddColumn(transaction *DbTransaction, tableName, columnName, columnType string) error {
-	return GetDB(transaction).Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN "` + columnName + `" ` + columnType).Error
+	return GetDB(transaction).Exec(`ALTER TABLE "` + RealName(tableName) + `" ADD COLUMN "` + columnName + `" ` + columnType).Error
 }
 
 // AlterTableDropColumn is dropping column from table
 func AlterTableDropColumn(tableName, columnName string) error {
-	return DBConn.Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN "` + columnName + `"`).Error
+	return DBConn.Exec(`ALTER TABLE "` + RealName(tableName) + `" DROP COLUMN "` + columnName + `"`).Error
 }
 
 // CreateIndex is creating index on table column
 func CreateIndex(transaction *DbTransaction, indexName, tableName, onColumn string) error {
-	return GetDB(transaction).Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
+	return GetDB(transaction).Exec(`CREATE INDEX "` + indexName + `_index" ON "` + RealName(tableName) + `" (` + onColumn + `)`).Error
 }
 
 // GetColumnDataTypeCharMaxLength is returns max length of table column
@@ -392,7 +392,7 @@ func GetList(query string, args ...interface{}) *ListResult {
 // GetNextID returns next ID of table
 func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	var id int64
-	rows, err := GetDB(transaction).Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
+	rows, err := GetDB(transaction).Raw(`select id from "` + RealName(table) + `" order by id desc limit 1`).Rows()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting next id from table")
 		return 0, err

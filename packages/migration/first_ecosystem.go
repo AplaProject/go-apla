@@ -148,4 +148,18 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		ALTER TABLE ONLY "1_contracts" ADD CONSTRAINT "1_contracts_pkey" PRIMARY KEY (id);
 		CREATE INDEX "1_contracts_index_ecosystem" ON "1_contracts" (ecosystem);
 
+	DROP TABLE IF EXISTS "1_tables";
+	CREATE TABLE "1_tables" (
+	"id" bigint NOT NULL  DEFAULT '0',
+	"name" varchar(100) NOT NULL DEFAULT '',
+	"permissions" jsonb,
+	"columns" jsonb,
+	"conditions" text  NOT NULL DEFAULT '',
+	"app_id" bigint NOT NULL DEFAULT '1',
+	"ecosystem" bigint NOT NULL DEFAULT '1',
+	UNIQUE(ecosystem,name)
+    );
+	ALTER TABLE ONLY "1_tables" ADD CONSTRAINT "1_tables_pkey" PRIMARY KEY ("id");
+	CREATE INDEX "1_tables_index_name" ON "1_tables" (ecosystem, name);
+
 `
