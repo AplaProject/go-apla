@@ -45,9 +45,9 @@ var (
 		`roles`:              true,
 		`roles_participants`: true,
 		`notifications`:      true,
-		/*	`applications`:       true,
-			`binaries`:           true,
-			`buffer_data`:        true,
+		`applications`:       true,
+		`binaries`:           true,
+		/*	`buffer_data`:        true,
 			`app_params`:         true,*/
 	}
 )
