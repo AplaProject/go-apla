@@ -251,6 +251,9 @@ func Int(v interface{}) (int64, error) {
 
 // Str converts the value to a string
 func Str(v interface{}) (ret string) {
+	if v == nil {
+		return
+	}
 	switch val := v.(type) {
 	case float64:
 		ret = fmt.Sprintf(`%f`, val)
@@ -832,6 +835,7 @@ func JSONEncodeIndent(input interface{}, indent string) (string, error) {
 	out = strings.Replace(out, `\u003c`, `<`, -1)
 	out = strings.Replace(out, `\u003e`, `>`, -1)
 	out = strings.Replace(out, `\u0026`, `&`, -1)
+
 	return out, nil
 }
 

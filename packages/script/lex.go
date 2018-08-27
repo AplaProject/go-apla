@@ -255,6 +255,7 @@ func lexParser(input []rune) (Lexems, error) {
 				if lexID == lexString && skip {
 					skip = false
 					value = strings.Replace(value.(string), `\"`, `"`, -1)
+					value = strings.Replace(value.(string), `\t`, "\t", -1)
 					value = strings.Replace(strings.Replace(value.(string), `\r`, "\r", -1), `\n`, "\n", -1)
 				}
 				for i, ch := range value.(string) {

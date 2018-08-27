@@ -70,6 +70,7 @@ var sysVars = map[string]struct{}{
 	`txcost`:            {},
 	`txhash`:            {},
 	`role_id`:           {},
+	`guest_key`:         {},
 }
 
 var ErrMemoryLimit = errors.New("Memory limit exceeded")
@@ -221,7 +222,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 				pars[count-i] = reflect.ValueOf(rt.stack[size-i+auto])
 			}
 			if !pars[count-i].IsValid() {
-				pars[count-i] = reflect.Zero(reflect.TypeOf(int64(0)))
+				pars[count-i] = reflect.Zero(reflect.TypeOf(string(``)))
 			}
 		}
 		if i > 0 {
