@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -141,8 +142,31 @@ func VMCompileBlock(vm *script.VM, src string, owner *script.OwnerInfo) (*script
 	return vm.CompileBlock([]rune(src), owner)
 }
 
+func getContractList(src string) (list []string) {
+	for _, funcCond := range []string{`ContractConditions`, `ContractAccess`} {
+		if strings.Contains(src, funcCond) {
+			if ret := regexp.MustCompile(funcCond +
+				`\(\s*(.*)\s*\)`).FindStringSubmatch(src); len(ret) == 2 {
+				for _, item := range strings.Split(ret[1], `,`) {
+					list = append(list, strings.Trim(item, "\"` "))
+				}
+			}
+		}
+	}
+	return
+}
+
 func VMCompileEval(vm *script.VM, src string, prefix uint32) error {
-	return vm.CompileEval(src, prefix)
+	err := vm.CompileEval(src, prefix)
+	if err != nil {
+		return err
+	}
+	for _, item := range getContractList(src) {
+		if len(item) == 0 || VMGetContract(vm, item, prefix) == nil {
+			return fmt.Errorf(eContractNotFound, item)
+		}
+	}
+	return nil
 }
 
 func VMEvalIf(vm *script.VM, src string, state uint32, extend *map[string]interface{}) (bool, error) {
