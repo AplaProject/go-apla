@@ -27,6 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
@@ -52,6 +53,10 @@ type Contract struct {
 const (
 	// MaxPrice is a maximal value that price function can return
 	MaxPrice = 100000000000000000
+
+	CallDelayedContract = "@1CallDelayedContract"
+	NewUserContract     = "@1NewUser"
+	NewBadBlockContract = "@1NewBadBlock"
 )
 
 var (
@@ -837,6 +842,39 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 	return nil
 }
 
+func (sc *SmartContract) GetSignedBy(public []byte) (int64, error) {
+	signedBy := sc.TxSmart.KeyID
+	if sc.TxSmart.SignedBy != 0 {
+		var isNode bool
+		signedBy = sc.TxSmart.SignedBy
+		fullNodes := syspar.GetNodes()
+		if sc.TxContract.Name != CallDelayedContract && sc.TxContract.Name != NewUserContract &&
+			sc.TxContract.Name != NewBadBlockContract {
+			return 0, errDelayedContract
+		}
+		if len(fullNodes) > 0 {
+			for _, node := range fullNodes {
+				if crypto.Address(node.PublicKey) == signedBy {
+					isNode = true
+					break
+				}
+			}
+		} else {
+			_, NodePublicKey, err := utils.GetNodeKeys()
+			if err != nil {
+				return 0, err
+			}
+			isNode = PubToID(NodePublicKey) == signedBy
+		}
+		if !isNode {
+			return 0, errDelayedContract
+		}
+	} else if len(public) > 0 && sc.TxSmart.KeyID != crypto.Address(public) {
+		return 0, errDiffKeys
+	}
+	return signedBy, nil
+}
+
 // CallContract calls the contract functions according to the specified flags
 func (sc *SmartContract) CallContract() (string, error) {
 	var (
@@ -869,12 +907,12 @@ func (sc *SmartContract) CallContract() (string, error) {
 	if len(sc.TxSmart.PublicKey) > 0 && string(sc.TxSmart.PublicKey) != `null` {
 		public = sc.TxSmart.PublicKey
 	}
-	wallet := &model.Key{}
+  wallet := &model.Key{}
 	wallet.SetTablePrefix(sc.TxSmart.EcosystemID)
-	signedBy := sc.TxSmart.KeyID
-	if sc.TxSmart.SignedBy != 0 {
-		signedBy = sc.TxSmart.SignedBy
-	}
+	signedBy, err := sc.GetSignedBy(public)
+	if err != nil {
+			return retError(err)
+  }
 	_, err = wallet.Get(signedBy)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
