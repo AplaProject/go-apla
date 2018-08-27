@@ -55,21 +55,5 @@ var schemaVDE = `
 		);
 		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
 		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (app_id, member_id, name);
-
-	  DROP TABLE IF EXISTS "%[1]d_notifications";
-		CREATE TABLE "%[1]d_notifications" (
-			"id"    bigint NOT NULL DEFAULT '0',
-			"recipient" jsonb,
-			"sender" jsonb,
-			"notification" jsonb,
-			"page_params"	jsonb,
-			"processing_info" jsonb,
-			"page_name"	varchar(255) NOT NULL DEFAULT '',
-			"date_created"	timestamp,
-			"date_start_processing" timestamp,
-			"date_closed" timestamp,
-			"closed" bigint NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
-
+ 
 	`
