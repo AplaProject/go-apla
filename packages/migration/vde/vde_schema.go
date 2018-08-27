@@ -72,16 +72,4 @@ var schemaVDE = `
 		);
 		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
 
-		DROP TABLE IF EXISTS "%[1]d_roles_participants";
-		CREATE TABLE "%[1]d_roles_participants" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"role" jsonb,
-			"member" jsonb,
-			"appointed" jsonb,
-			"date_created" timestamp,
-			"date_deleted" timestamp,
-			"deleted" bigint NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "%[1]d_roles_participants" ADD CONSTRAINT "%[1]d_roles_participants_pkey" PRIMARY KEY ("id");
-
 	`
