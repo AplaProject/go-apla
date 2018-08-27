@@ -1,7 +1,7 @@
 package model
 
 import (
-	"strconv"
+	"fmt"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
@@ -15,7 +15,7 @@ const (
 
 // Notification structure
 type Notification struct {
-	tableName           string
+	ecosystem           int64
 	ID                  int64  `gorm:"primary_key;not null"`
 	Recipient           string `gorm:"type:jsonb(PostgreSQL)`
 	Sender              string `gorm:"type:jsonb(PostgreSQL)`
@@ -31,28 +31,31 @@ type Notification struct {
 
 // SetTablePrefix set table Prefix
 func (n *Notification) SetTablePrefix(tablePrefix string) {
-	n.tableName = tablePrefix + notificationTableSuffix
+	n.ecosystem = converter.StrToInt64(tablePrefix)
 }
 
 // TableName returns table name
 func (n *Notification) TableName() string {
-	return n.tableName
+	if n.ecosystem == 0 {
+		n.ecosystem = 1
+	}
+	return `1_notifications`
 }
 
 // GetNotificationsCount returns all unclosed notifications by users and ecosystem through role_id
 // if userIDs is nil or empty then filter will be skipped
 func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
-	filter, params := getNotificationCountFilter(userIDs)
+	filter, params := getNotificationCountFilter(userIDs, ecosystemID)
 	query := `SELECT recipient->>'member_id' "recipient_id", recipient->>'role_id' "role_id", count(*) cnt
-	FROM "` + strconv.FormatInt(ecosystemID, 10) + notificationTableSuffix + `" 
+	FROM "1_notifications" 
 	` + filter + ` 
 	GROUP BY 1,2`
 
 	return GetAllTransaction(nil, query, -1, params...)
 }
 
-func getNotificationCountFilter(users []int64) (filter string, params []interface{}) {
-	filter = ` WHERE closed = 0 `
+func getNotificationCountFilter(users []int64, ecosystemID int64) (filter string, params []interface{}) {
+	filter = fmt.Sprintf(` WHERE closed = 0 and ecosystem = '%d' `, ecosystemID)
 
 	if len(users) > 0 {
 		filter += `AND recipient->>'member_id' IN (?) `

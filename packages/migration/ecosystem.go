@@ -68,22 +68,6 @@ var schemaEcosystem = `
 		CREATE INDEX "%[1]d_app_params_index_name" ON "%[1]d_app_params" (name);
 		CREATE INDEX "%[1]d_app_params_index_app" ON "%[1]d_app_params" (app_id);
 		
-		DROP TABLE IF EXISTS "%[1]d_notifications";
-		CREATE TABLE "%[1]d_notifications" (
-			"id"    bigint NOT NULL DEFAULT '0',
-			"recipient" jsonb,
-			"sender" jsonb,
-			"notification" jsonb,
-			"page_params"	jsonb,
-			"processing_info" jsonb,
-			"page_name"	varchar(255) NOT NULL DEFAULT '',
-			"date_created"	timestamp,
-			"date_start_processing" timestamp,
-			"date_closed" timestamp,
-			"closed" bigint NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
-
 		DROP TABLE IF EXISTS "%[1]d_applications";
 		CREATE TABLE "%[1]d_applications" (
 			"id" bigint NOT NULL DEFAULT '0',
