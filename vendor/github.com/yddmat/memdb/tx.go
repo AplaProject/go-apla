@@ -110,7 +110,7 @@ func (tx *Transaction) Update(key, value string) (string, error) {
 	return old.value, nil
 }
 
-func (tx *Transaction) AddIndex(index *Index) error {
+func (tx *Transaction) AddIndex(indexes ...*Index) error {
 	tx.mu.Lock()
 	defer tx.mu.Unlock()
 
@@ -122,19 +122,33 @@ func (tx *Transaction) AddIndex(index *Index) error {
 		return ErrTxNotWritable
 	}
 
-	err := tx.newIndexes.AddIndex(index)
-	if err != nil {
-		return err
+	rollbackInserted := func(inserted []string) {
+		for _, idx := range inserted {
+			if err := tx.newIndexes.RemoveIndex(idx); err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	inserted := make([]string, 0)
+	for _, index := range indexes {
+		err := tx.newIndexes.AddIndex(index)
+		if err != nil {
+			rollbackInserted(inserted)
+			return err
+		}
+
+		inserted = append(inserted, index.name)
 	}
 
 	for _, key := range tx.db.items.keys() {
 		revision, err := tx.getKey(key)
 		if err != nil {
-			tx.newIndexes.RemoveIndex(index.name)
+			rollbackInserted(inserted)
 			return err
 		}
 
-		tx.newIndexes.Insert(&revision, index.name)
+		tx.newIndexes.Insert(&revision, inserted...)
 	}
 
 	return nil
