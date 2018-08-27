@@ -564,7 +564,7 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 	)
 	logger := sc.GetLogger()
 	isRead := action == `read`
-	if model.RealName(table) == `1_parameters` || table == getDefTableName(sc, `app_params`) {
+	if model.RealName(table) == `1_parameters` || model.RealName(table) == `1_app_params` {
 		if isRead || sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return tablePermission, nil
 		}
@@ -627,7 +627,7 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 	if sc.FullAccess {
 		return nil
 	}
-	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
+	if model.RealName(table) == `1_parameters` || model.RealName(table) == `1_app_params` {
 		if update {
 			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 				return nil

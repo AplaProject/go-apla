@@ -47,8 +47,8 @@ var (
 		`notifications`:      true,
 		`applications`:       true,
 		`binaries`:           true,
-		/*	`buffer_data`:        true,
-			`app_params`:         true,*/
+		`buffer_data`:        true,
+		`app_params`:         true,
 	}
 )
 
