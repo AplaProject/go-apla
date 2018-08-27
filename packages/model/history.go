@@ -15,7 +15,7 @@ var errLowBalance = errors.New("not enough APL on the balance")
 
 // History represent record of history table
 type History struct {
-	tableName   string
+	ecosystem   int64
 	ID          int64
 	SenderID    int64
 	RecipientID int64
@@ -28,13 +28,16 @@ type History struct {
 
 // SetTablePrefix is setting table prefix
 func (h *History) SetTablePrefix(prefix int64) *History {
-	h.tableName = HistoryTableName(prefix)
+	h.ecosystem = prefix
 	return h
 }
 
 // TableName returns table name
 func (h *History) TableName() string {
-	return h.tableName
+	if h.ecosystem == 0 {
+		h.ecosystem = 1
+	}
+	return `1_history`
 }
 
 // APLTransfer from to amount

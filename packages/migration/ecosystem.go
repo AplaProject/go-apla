@@ -46,21 +46,6 @@ func GetCommonEcosystemScript() string {
 
 // SchemaEcosystem contains SQL queries for creating ecosystem
 var schemaEcosystem = `		
-		DROP TABLE IF EXISTS "%[1]d_history"; CREATE TABLE "%[1]d_history" (
-		"id" bigint NOT NULL  DEFAULT '0',
-		"sender_id" bigint NOT NULL DEFAULT '0',
-		"recipient_id" bigint NOT NULL DEFAULT '0',
-		"amount" decimal(30) NOT NULL DEFAULT '0',
-		"comment" text NOT NULL DEFAULT '',
-		"block_id" int  NOT NULL DEFAULT '0',
-		"txhash" bytea  NOT NULL DEFAULT '',
-		"created_at" timestamp DEFAULT NOW()
-		);
-		ALTER TABLE ONLY "%[1]d_history" ADD CONSTRAINT "%[1]d_history_pkey" PRIMARY KEY (id);
-		CREATE INDEX "%[1]d_history_index_sender" ON "%[1]d_history" (sender_id);
-		CREATE INDEX "%[1]d_history_index_recipient" ON "%[1]d_history" (recipient_id);
-		CREATE INDEX "%[1]d_history_index_block" ON "%[1]d_history" (block_id, txhash);
-		
 		
 		DROP TABLE IF EXISTS "%[1]d_sections"; CREATE TABLE "%[1]d_sections" (
 		"id" bigint  NOT NULL DEFAULT '0',
@@ -81,16 +66,6 @@ var schemaEcosystem = `
 		ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
 		
 		
-		DROP TABLE IF EXISTS "%[1]d_parameters";
-		CREATE TABLE "%[1]d_parameters" (
-		"id" bigint NOT NULL  DEFAULT '0',
-		"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
-		"value" text NOT NULL DEFAULT '',
-		"conditions" text  NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "%[1]d_parameters" ADD CONSTRAINT "%[1]d_parameters_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "%[1]d_parameters_index_name" ON "%[1]d_parameters" (name);
-
 		DROP TABLE IF EXISTS "%[1]d_app_params";
 		CREATE TABLE "%[1]d_app_params" (
 		"id" bigint NOT NULL  DEFAULT '0',
