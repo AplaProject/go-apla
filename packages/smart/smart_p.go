@@ -816,7 +816,6 @@ func JSONEncodeIndent(input interface{}, indent string) (string, error) {
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
 	}
-
 	if rv.Kind() == reflect.Struct {
 		return "", logErrorfShort(eTypeJSON, input, consts.TypeError)
 	}

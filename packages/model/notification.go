@@ -1,7 +1,8 @@
 package model
 
 import (
-	"strconv"
+	"fmt"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 )
@@ -42,13 +43,29 @@ func (n *Notification) TableName() string {
 // GetNotificationsCount returns all unclosed notifications by users and ecosystem through role_id
 // if userIDs is nil or empty then filter will be skipped
 func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
-	filter, params := getNotificationCountFilter(userIDs)
-	query := `SELECT recipient->>'member_id' "recipient_id", recipient->>'role_id' "role_id", count(*) cnt
-	FROM "` + strconv.FormatInt(ecosystemID, 10) + notificationTableSuffix + `" 
-	` + filter + ` 
-	GROUP BY 1,2`
 
-	return GetAllTransaction(nil, query, -1, params...)
+	result := make([]map[string]string, 0, 16)
+	for _, userID := range userIDs {
+		roles, err := GetMemberRoles(nil, ecosystemID, userID)
+		if err != nil {
+			return nil, err
+		}
+		roleList := make([]string, 0, len(roles))
+		for _, role := range roles {
+			roleList = append(roleList, converter.Int64ToStr(role))
+		}
+		query := fmt.Sprintf(`SELECT '%d' as "recipient_id", recipient->>'role_id' as "role_id", count(*) cnt	FROM "%d%s" 
+		 WHERE closed = 0 AND ((notification->>'type' = '1' and recipient->>'member_id' = '%[1]d' ) or
+		   (notification->>'type' = '2' and (recipient->>'role_id' IN ('%[4]s') and 
+		   ( date_start_processing is null or processing_info->>'member_id' = '%[1]d'))))
+		GROUP BY 1,2`, userID, ecosystemID, notificationTableSuffix, strings.Join(roleList, "','"))
+		list, err := GetAllTransaction(nil, query, -1)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, list...)
+	}
+	return result, nil
 }
 
 func getNotificationCountFilter(users []int64) (filter string, params []interface{}) {
