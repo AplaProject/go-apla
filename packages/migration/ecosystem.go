@@ -84,38 +84,6 @@ var schemaEcosystem = `
 		);
 		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
 
-
-		DROP TABLE IF EXISTS "%[1]d_roles";
-		CREATE TABLE "%[1]d_roles" (
-			"id" 	bigint NOT NULL DEFAULT '0',
-			"default_page"	varchar(255) NOT NULL DEFAULT '',
-			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"deleted"    bigint NOT NULL DEFAULT '0',
-			"role_type" bigint NOT NULL DEFAULT '0',
-			"creator" jsonb NOT NULL DEFAULT '{}',
-			"date_created" timestamp,
-			"date_deleted" timestamp,
-			"company_id" bigint NOT NULL DEFAULT '0',
-			"roles_access" jsonb, 
-			"image_id" bigint NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "%[1]d_roles" ADD CONSTRAINT "%[1]d_roles_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "%[1]d_roles_index_deleted" ON "%[1]d_roles" (deleted);
-		CREATE INDEX "%[1]d_roles_index_type" ON "%[1]d_roles" (role_type);
-
-
-		DROP TABLE IF EXISTS "%[1]d_roles_participants";
-		CREATE TABLE "%[1]d_roles_participants" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"role" jsonb,
-			"member" jsonb,
-			"appointed" jsonb,
-			"date_created" timestamp,
-			"date_deleted" timestamp,
-			"deleted" bigint NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "%[1]d_roles_participants" ADD CONSTRAINT "%[1]d_roles_participants_pkey" PRIMARY KEY ("id");
-
 		DROP TABLE IF EXISTS "%[1]d_applications";
 		CREATE TABLE "%[1]d_applications" (
 			"id" bigint NOT NULL DEFAULT '0',
