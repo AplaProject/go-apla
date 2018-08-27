@@ -294,4 +294,30 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		CREATE UNIQUE INDEX "1_binaries_index_app_id_member_id_name" ON "1_binaries" (app_id, member_id, name);
 		CREATE INDEX "1_binaries_ecosystem" ON "1_binaries" (ecosystem);
 
+				
+		DROP TABLE IF EXISTS "1_app_params";
+		CREATE TABLE "1_app_params" (
+		"id" bigint NOT NULL  DEFAULT '0',
+		"app_id" bigint NOT NULL  DEFAULT '0',
+		"name" varchar(255) NOT NULL DEFAULT '',
+		"value" text NOT NULL DEFAULT '',
+		"conditions" text  NOT NULL DEFAULT '',
+		"ecosystem" bigint NOT NULL DEFAULT '1',
+		UNIQUE(ecosystem,name)
+		);
+		ALTER TABLE ONLY "1_app_params" ADD CONSTRAINT "1_app_params_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "1_app_params_index_name" ON "1_app_params" (ecosystem,name);
+		CREATE INDEX "1_app_params_index_app" ON "1_app_params" (ecosystem,app_id);
+		
+		DROP TABLE IF EXISTS "1_buffer_data";
+		CREATE TABLE "1_buffer_data" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"key" varchar(255) NOT NULL DEFAULT '',
+			"value" jsonb,
+			"member_id" bigint NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
+		);
+		ALTER TABLE ONLY "1_buffer_data" ADD CONSTRAINT "1_buffer_data_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "1_buffer_data_ecosystem" ON "1_buffer_data" (ecosystem);
+
 `
