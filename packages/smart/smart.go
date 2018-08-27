@@ -554,7 +554,7 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 	)
 	logger := sc.GetLogger()
 	isRead := action == `read`
-	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
+	if model.RealName(table) == `1_parameters` || table == getDefTableName(sc, `app_params`) {
 		if isRead || sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return tablePermission, nil
 		}

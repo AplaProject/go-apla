@@ -39,16 +39,7 @@ var schemaVDE = `
 	  );
 	  ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
 	  
-	  DROP TABLE IF EXISTS "%[1]d_parameters";
-	  CREATE TABLE "%[1]d_parameters" (
-	  "id" bigint NOT NULL  DEFAULT '0',
-	  "name" varchar(255) UNIQUE NOT NULL DEFAULT '',
-	  "value" text NOT NULL DEFAULT '',
-	  "conditions" text  NOT NULL DEFAULT ''
-	  );
-	  ALTER TABLE ONLY "%[1]d_parameters" ADD CONSTRAINT "%[1]d_parameters_pkey" PRIMARY KEY ("id");
-	  CREATE INDEX "%[1]d_parameters_index_name" ON "%[1]d_parameters" (name);
-	  
+	    
 	  DROP TABLE IF EXISTS "%[1]d_cron";
 	  CREATE TABLE "%[1]d_cron" (
 		  "id"        bigint NOT NULL DEFAULT '0',
