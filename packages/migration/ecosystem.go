@@ -68,29 +68,6 @@ var schemaEcosystem = `
 		CREATE INDEX "%[1]d_app_params_index_name" ON "%[1]d_app_params" (name);
 		CREATE INDEX "%[1]d_app_params_index_app" ON "%[1]d_app_params" (app_id);
 		
-		DROP TABLE IF EXISTS "%[1]d_applications";
-		CREATE TABLE "%[1]d_applications" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"name" varchar(255) NOT NULL DEFAULT '',
-			"uuid" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
-			"conditions" text NOT NULL DEFAULT '',
-			"deleted" bigint NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "%[1]d_applications" ADD CONSTRAINT "%[1]d_application_pkey" PRIMARY KEY ("id");
-
-		DROP TABLE IF EXISTS "%[1]d_binaries";
-		CREATE TABLE "%[1]d_binaries" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"app_id" bigint NOT NULL DEFAULT '1',
-			"member_id" bigint NOT NULL DEFAULT '0',
-			"name" varchar(255) NOT NULL DEFAULT '',
-			"data" bytea NOT NULL DEFAULT '',
-			"hash" varchar(32) NOT NULL DEFAULT '',
-			"mime_type" varchar(255) NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
-		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (app_id, member_id, name);
-		
 		DROP TABLE IF EXISTS "%[1]d_buffer_data";
 		CREATE TABLE "%[1]d_buffer_data" (
 			"id" bigint NOT NULL DEFAULT '0',
