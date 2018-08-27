@@ -1,7 +1,12 @@
 package blockchain
 
 import (
+	"encoding/hex"
+	"strings"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
@@ -50,6 +55,18 @@ func SetTransaction(hash []byte, tx *tx.SmartContract) error {
 	return nil
 }
 
+func GetTransactionBinary(hash []byte) ([]byte, bool, error) {
+	val, err := db.Get([]byte(txPrefix+string(hash)), nil)
+	if err == leveldb.ErrNotFound {
+		return nil, false, nil
+	}
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("getting transaction")
+		return nil, false, err
+	}
+	return val, true, nil
+}
+
 func SetTransactionBinary(hash, tx []byte) error {
 	err := db.Put([]byte(txPrefix+string(hash)), tx, nil)
 	if err != nil {
@@ -74,4 +91,55 @@ func SetTransactionError(hash []byte, errString string) error {
 	}
 	tx.Header.Error = errString
 	return SetTransaction(hash, tx)
+}
+
+func IncrementTxAttemptCount(hash []byte) error {
+	tx, found, err := GetTransaction(hash)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return nil
+	}
+	tx.Attempts += 1
+	return SetTransaction(hash, tx)
+}
+
+// BuildTransaction creates transaction
+func BuildTransaction(smartTx tx.SmartContract, privKey, pubKey string, params ...string) error {
+	signPrms := []string{smartTx.ForSign()}
+	signPrms = append(signPrms, params...)
+	signature, err := crypto.Sign(
+		privKey,
+		strings.Join(signPrms, ","),
+	)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
+		return err
+	}
+	smartTx.BinSignatures = converter.EncodeLengthPlusData(signature)
+
+	if smartTx.PublicKey, err = hex.DecodeString(pubKey); err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
+		return err
+	}
+
+	data, err := msgpack.Marshal(smartTx)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
+		return err
+	}
+	data = append([]byte{128}, data...)
+
+	hash, err := crypto.Hash(data)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating hash of smart contract")
+		return err
+	}
+
+	if err = SetTransactionBinary(hash, data); err != nil {
+		return err
+	}
+
+	return nil
 }

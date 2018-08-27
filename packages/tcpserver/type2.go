@@ -26,7 +26,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -58,19 +57,6 @@ func Type2(rw io.ReadWriter) (*DisTrResponse, error) {
 		return nil, utils.ErrInfo("len(binaryData) < 5")
 	}
 
-	decryptedBinDataFull := decryptedBinData
-	hash, err := crypto.Hash(decryptedBinDataFull)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "value": decryptedBinDataFull}).Fatal("cannot hash tx bindata")
-	}
-
-	_, err = model.DeleteQueueTxByHash(nil, hash)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "hash": hash}).Error("Deleting queue_tx with hash")
-		return nil, utils.ErrInfo(err)
-	}
-
-	//hexBinData := converter.BinToHex(decryptedBinDataFull)
 	if _, err := queue.ValidateTxQueue.Enqueue(decryptedBinData); err != nil {
 		log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("enqueueing in validation queue")
 		return nil, utils.ErrInfo(err)

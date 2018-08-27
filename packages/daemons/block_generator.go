@@ -26,8 +26,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -161,17 +161,21 @@ func processTransactions(logger *log.Entry) ([][]byte, error) {
 		return nil, err
 	}
 
-	trs, err := model.GetAllUnusedTransactions(syspar.GetMaxTxCount())
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
-		return nil, err
+	var trs [][]byte
+	for queue.ProcessTxQueue.Length() > 0 {
+		if item, err := queue.ProcessTxQueue.Dequeue(); err != nil {
+			logger.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("getting all unused transactions")
+			return nil, err
+		} else {
+			trs = append(trs, item.Value)
+		}
 	}
 
 	limits := block.NewLimits(nil)
 	// Checks preprocessing count limits
 	txList := make([][]byte, 0, len(trs))
 	for i, txItem := range trs {
-		bufTransaction := bytes.NewBuffer(txItem.Data)
+		bufTransaction := bytes.NewBuffer(txItem)
 		p, err := transaction.UnmarshallTransaction(bufTransaction)
 		if err != nil {
 			if p != nil {
@@ -188,18 +192,18 @@ func processTransactions(logger *log.Entry) ([][]byte, error) {
 		if p.TxSmart != nil {
 			err = limits.CheckLimit(p)
 			if err == block.ErrLimitStop && i > 0 {
-				model.IncrementTxAttemptCount(nil, p.TxHash)
+				blockchain.IncrementTxAttemptCount(p.TxHash)
 				break
 			} else if err != nil {
 				if err == block.ErrLimitSkip {
-					model.IncrementTxAttemptCount(nil, p.TxHash)
+					blockchain.IncrementTxAttemptCount(p.TxHash)
 				} else {
 					transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
 				}
 				continue
 			}
 		}
-		txList = append(txList, txItem.Data)
+		txList = append(txList, txItem)
 	}
 
 	return txList, nil

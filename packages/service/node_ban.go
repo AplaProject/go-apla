@@ -6,6 +6,7 @@ import (
 
 	"strconv"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -147,7 +148,7 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 	contract := smart.VMGetContract(vm, "NewBadBlock", 1)
 	info := contract.Block.Info.(*script.ContractInfo)
 
-	err = tx.BuildTransaction(tx.SmartContract{
+	err = blockchain.BuildTransaction(tx.SmartContract{
 		Header: tx.Header{
 			Type:        int(info.ID),
 			Time:        time.Now().Unix(),

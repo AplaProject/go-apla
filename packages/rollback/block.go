@@ -65,24 +65,11 @@ func rollbackBlock(dbTransaction *model.DbTransaction, block *block.PlayableBloc
 		t := block.Transactions[i]
 		t.DbTransaction = dbTransaction
 
-		_, err := model.MarkTransactionUnusedAndUnverified(dbTransaction, t.TxHash)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting transaction")
-			return err
-		}
-
-		ts := &model.TransactionStatus{}
-		err = ts.UpdateBlockID(dbTransaction, 0, t.TxHash)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating block id in transaction status")
-			return err
-		}
-
 		if t.TxContract != nil {
 			if _, err := t.CallContract(smart.CallInit | smart.CallRollback); err != nil {
 				return err
 			}
-			if err = rollbackTransaction(t.TxHash, t.DbTransaction, logger); err != nil {
+			if err := rollbackTransaction(t.TxHash, t.DbTransaction, logger); err != nil {
 				return err
 			}
 		} else {

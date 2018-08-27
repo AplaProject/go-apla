@@ -24,7 +24,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -148,36 +147,16 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 
 		// check if we have such a transaction
 		// check log_transaction
-		exists, err := model.GetLogTransactionsCount(newDataTxHash)
+		_, found, err := blockchain.GetTransaction(newDataTxHash)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "txHash": newDataTxHash}).Error("Getting log tx count")
+			log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err, "txHash": newDataTxHash}).Error("Getting log tx count")
 			return nil, utils.ErrInfo(err)
 		}
-		if exists > 0 {
+		if found {
 			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in log_tx")
 			continue
 		}
 
-		exists, err = model.GetTransactionsCount(newDataTxHash)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "txHash": newDataTxHash}).Error("Getting tx count")
-			return nil, utils.ErrInfo(err)
-		}
-		if exists > 0 {
-			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in tx")
-			continue
-		}
-
-		// check transaction queue
-		exists, err = model.GetQueuedTransactionsCount(newDataTxHash)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting queue_tx count")
-			return nil, utils.ErrInfo(err)
-		}
-		if exists > 0 {
-			log.WithFields(log.Fields{"txHash": newDataTxHash, "type": consts.DuplicateObject}).Warning("tx with this hash already exists in queue_tx")
-			continue
-		}
 		needTx = append(needTx, newDataTxHash...)
 	}
 

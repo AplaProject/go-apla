@@ -116,10 +116,6 @@ func (b *PlayableBlock) readPreviousBlockFromBlockchainTable() error {
 
 func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction) error {
 	logger := b.GetLogger()
-	if _, err := model.DeleteUsedTransactions(dbTransaction); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
-		return err
-	}
 	limits := NewLimits(b)
 	for curTx, t := range b.Transactions {
 		var (
@@ -143,7 +139,7 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction) error {
 
 			if b.GenBlock && err == ErrLimitStop {
 				b.StopCount = curTx
-				model.IncrementTxAttemptCount(t.DbTransaction, t.TxHash)
+				blockchain.IncrementTxAttemptCount(t.TxHash)
 			}
 			errRoll := dbTransaction.RollbackSavepoint(curTx)
 			if errRoll != nil {
@@ -154,7 +150,6 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction) error {
 				break
 			}
 			// skip this transaction
-			model.MarkTransactionUsed(t.DbTransaction, t.TxHash)
 			transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
 			if t.SysUpdate {
 				if err = syspar.SysUpdate(t.DbTransaction); err != nil {
@@ -171,11 +166,6 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction) error {
 		if t.SysUpdate {
 			b.SysUpdate = true
 			t.SysUpdate = false
-		}
-
-		if _, err := model.MarkTransactionUsed(t.DbTransaction, t.TxHash); err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("marking transaction used")
-			return err
 		}
 	}
 	return nil

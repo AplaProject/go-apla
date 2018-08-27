@@ -8,12 +8,12 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
+	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 var errStopCertAlreadyUsed = errors.New("Stop certificate is already used")
@@ -58,7 +58,7 @@ func processStopNetwork(b []byte) ([]byte, error) {
 	}
 
 	var data []byte
-	_, err = converter.BinMarshal(&data,
+	data, err = msgpack.Marshal(
 		&consts.StopNetwork{
 			TxHeader: consts.TxHeader{
 				Type:  consts.TxTypeStopNetwork,
@@ -73,21 +73,14 @@ func processStopNetwork(b []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	hash, err := crypto.Hash(data)
+	hash, err := crypto.DoubleHash(data)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("hashing data")
 		return nil, err
 	}
 
-	tx := &model.Transaction{
-		Hash:     hash,
-		Data:     data,
-		Type:     consts.TxTypeStopNetwork,
-		KeyID:    conf.Config.KeyID,
-		HighRate: model.TransactionRateStopNetwork,
-	}
-	if err = tx.Create(); err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("inserting tx to database")
+	if _, err := queue.ValidateTxQueue.Enqueue(data); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("inserting tx to database")
 		return nil, err
 	}
 

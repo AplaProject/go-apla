@@ -11,6 +11,7 @@ import (
 var SendTxQueue *goque.Queue
 var SendBlockQueue *goque.Queue
 var ValidateTxQueue *goque.Queue
+var ProcessTxQueue *goque.Queue
 var ValidateBlockQueue *goque.Queue
 
 func Init() error {
@@ -21,6 +22,11 @@ func Init() error {
 		return err
 	}
 	ValidateTxQueue, err = goque.OpenQueue("queues/validateTxQueue")
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("opening validateTxQueue")
+		return err
+	}
+	ProcessTxQueue, err = goque.OpenQueue("queues/processTxQueue")
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("opening validateTxQueue")
 		return err

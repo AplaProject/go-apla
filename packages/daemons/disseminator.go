@@ -28,7 +28,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
@@ -146,15 +145,16 @@ func sendHashesResp(resp []byte, w io.Writer, logger *log.Entry) error {
 		for len(resp) >= consts.HashSize {
 			// Parse the list of requested transactions
 			txHash := converter.BytesShift(&resp, consts.HashSize)
-			tr := &model.Transaction{}
-			_, err := tr.Read(txHash)
+			data, found, err := blockchain.GetTransactionBinary(txHash)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("reading transaction by hash")
 				return err
 			}
-
-			if len(tr.Data) > 0 {
-				buf.Write(converter.EncodeLengthPlusData(tr.Data))
+			if !found {
+				continue
+			}
+			if len(data) > 0 {
+				buf.Write(converter.EncodeLengthPlusData(data))
 			}
 		}
 

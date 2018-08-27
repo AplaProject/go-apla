@@ -27,6 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -171,7 +172,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			}
 			data.result = ret
 		} else {
-			err = tx.BuildTransaction(sc, NodePrivateKey, NodePublicKey, hexPubKey)
+			err = blockchain.BuildTransaction(sc, NodePrivateKey, NodePublicKey, hexPubKey)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 			}

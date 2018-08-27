@@ -9,6 +9,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
@@ -85,21 +86,8 @@ func (dtx *DelayedTx) createTx(delayedContractID, keyID int64) error {
 	}
 	data = append([]byte{128}, data...)
 
-	hash, err := crypto.Hash(data)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating hash of smart contract")
-		return err
-	}
-
-	tx := &model.Transaction{
-		Hash:     hash,
-		Data:     data[:],
-		Type:     int8(converter.BinToDecBytesShift(&data, 1)),
-		KeyID:    keyID,
-		HighRate: model.TransactionRateOnBlock,
-	}
-	if err = tx.Create(); err != nil {
-		dtx.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating new transaction")
+	if _, err := queue.ValidateTxQueue.Enqueue(data); err != nil {
+		log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("calculating hash of smart contract")
 		return err
 	}
 
