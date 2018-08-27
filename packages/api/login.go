@@ -23,7 +23,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 
@@ -283,8 +282,6 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	notificator.AddUser(wallet, ecosystemID)
-	notificator.UpdateNotifications(ecosystemID, []int64{wallet})
 
 	ra := &model.RolesParticipants{}
 	roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(wallet)
@@ -302,8 +299,6 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			result.Roles = append(result.Roles, rolesResult{RoleId: converter.StrToInt64(res["id"]), RoleName: res["name"]})
 		}
 	}
-	notificator.AddUser(wallet, ecosystemID)
-	notificator.UpdateNotifications(ecosystemID, []int64{wallet})
 
 	return nil
 }
