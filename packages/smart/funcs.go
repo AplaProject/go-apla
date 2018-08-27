@@ -127,6 +127,7 @@ var (
 		"ColumnCondition":              50,
 		"Contains":                     10,
 		"ContractAccess":               50,
+		"RoleAccess":                   50,
 		"ContractConditions":           50,
 		"ContractName":                 10,
 		"CreateColumn":                 50,
@@ -196,6 +197,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"ColumnCondition":              ColumnCondition,
 		"Contains":                     strings.Contains,
 		"ContractAccess":               ContractAccess,
+		"RoleAccess":                   RoleAccess,
 		"ContractConditions":           ContractConditions,
 		"ContractName":                 contractName,
 		"ValidateEditContractNewValue": ValidateEditContractNewValue,
@@ -374,6 +376,21 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 		}
 	}
 	return false
+}
+
+// RoleAccess checks whether the name of the role matches one of the names listed in the parameters.
+func RoleAccess(sc *SmartContract, ids ...interface{}) (bool, error) {
+
+	for _, id := range ids {
+		switch v := id.(type) {
+		case int64:
+			if sc.TxSmart.RoleID == v {
+				return true, nil
+			}
+			break
+		}
+	}
+	return false, nil
 }
 
 // ContractConditions calls the 'conditions' function for each of the contracts specified in the parameters
