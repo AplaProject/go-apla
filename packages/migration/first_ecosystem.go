@@ -353,6 +353,25 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "1_roles_participants" ADD CONSTRAINT "1_roles_participants_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "1_roles_participants_ecosystem" ON "1_roles_participants" (ecosystem);
+
+		DROP TABLE IF EXISTS "1_notifications";
+		CREATE TABLE "1_notifications" (
+			"id"    bigint NOT NULL DEFAULT '0',
+			"recipient" jsonb,
+			"sender" jsonb,
+			"notification" jsonb,
+			"page_params"	jsonb,
+			"processing_info" jsonb,
+			"page_name"	varchar(255) NOT NULL DEFAULT '',
+			"date_created"	timestamp,
+			"date_start_processing" timestamp,
+			"date_closed" timestamp,
+			"closed" bigint NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
+		);
+		ALTER TABLE ONLY "1_notifications" ADD CONSTRAINT "1_notifications_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "1_notifications_ecosystem" ON "1_notifications" (ecosystem);
 
 
 `
