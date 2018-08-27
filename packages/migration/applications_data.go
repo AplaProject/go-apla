@@ -1,3 +1,3 @@
 package migration
 
-var applicationsDataSQL = `INSERT INTO "%[1]d_applications" (id, name, conditions) VALUES (1, 'System', 'ContractConditions("MainCondition")');`
+var applicationsDataSQL = `INSERT INTO "1_applications" (id, name, conditions, ecosystem) VALUES (next_id('1_applications'), 'System', 'ContractConditions("MainCondition")', '%[1]d');`

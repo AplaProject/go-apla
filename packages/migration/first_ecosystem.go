@@ -267,5 +267,31 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		ALTER TABLE ONLY "1_notifications" ADD CONSTRAINT "1_notifications_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_notifications_ecosystem" ON "1_notifications" (ecosystem);
 
+		DROP TABLE IF EXISTS "1_applications";
+		CREATE TABLE "1_applications" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"name" varchar(255) NOT NULL DEFAULT '',
+			"uuid" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
+			"conditions" text NOT NULL DEFAULT '',
+			"deleted" bigint NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
+		);
+		ALTER TABLE ONLY "1_applications" ADD CONSTRAINT "1_application_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "1_applications_ecosystem" ON "1_applications" (ecosystem);
+
+		DROP TABLE IF EXISTS "1_binaries";
+		CREATE TABLE "1_binaries" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"app_id" bigint NOT NULL DEFAULT '1',
+			"member_id" bigint NOT NULL DEFAULT '0',
+			"name" varchar(255) NOT NULL DEFAULT '',
+			"data" bytea NOT NULL DEFAULT '',
+			"hash" varchar(32) NOT NULL DEFAULT '',
+			"mime_type" varchar(255) NOT NULL DEFAULT '',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
+		);
+		ALTER TABLE ONLY "1_binaries" ADD CONSTRAINT "1_binaries_pkey" PRIMARY KEY (id);
+		CREATE UNIQUE INDEX "1_binaries_index_app_id_member_id_name" ON "1_binaries" (app_id, member_id, name);
+		CREATE INDEX "1_binaries_ecosystem" ON "1_binaries" (ecosystem);
 
 `
