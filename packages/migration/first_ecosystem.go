@@ -162,4 +162,32 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 	ALTER TABLE ONLY "1_tables" ADD CONSTRAINT "1_tables_pkey" PRIMARY KEY ("id");
 	CREATE INDEX "1_tables_index_name" ON "1_tables" (ecosystem, name);
 
+	DROP TABLE IF EXISTS "1_parameters";
+	CREATE TABLE "1_parameters" (
+	"id" bigint NOT NULL  DEFAULT '0',
+	"name" varchar(255) NOT NULL DEFAULT '',
+	"value" text NOT NULL DEFAULT '',
+	"conditions" text  NOT NULL DEFAULT '',
+	"ecosystem" bigint NOT NULL DEFAULT '1',
+	UNIQUE(ecosystem,name)
+	);
+	ALTER TABLE ONLY "1_parameters" ADD CONSTRAINT "1_parameters_pkey" PRIMARY KEY ("id");
+	CREATE INDEX "1_parameters_index_name" ON "1_parameters" (ecosystem,name);
+
+	DROP TABLE IF EXISTS "1_history"; CREATE TABLE "1_history" (
+		"id" bigint NOT NULL  DEFAULT '0',
+		"sender_id" bigint NOT NULL DEFAULT '0',
+		"recipient_id" bigint NOT NULL DEFAULT '0',
+		"amount" decimal(30) NOT NULL DEFAULT '0',
+		"comment" text NOT NULL DEFAULT '',
+		"block_id" int  NOT NULL DEFAULT '0',
+		"txhash" bytea  NOT NULL DEFAULT '',
+		"created_at" timestamp DEFAULT NOW(),
+		"ecosystem" bigint NOT NULL DEFAULT '1'
+		);
+		ALTER TABLE ONLY "1_history" ADD CONSTRAINT "1_history_pkey" PRIMARY KEY (id);
+		CREATE INDEX "1_history_index_sender" ON "1_history" (ecosystem, sender_id);
+		CREATE INDEX "1_history_index_recipient" ON "1_history" (ecosystem, recipient_id);
+		CREATE INDEX "1_history_index_block" ON "1_history" (block_id, txhash);
+
 `
