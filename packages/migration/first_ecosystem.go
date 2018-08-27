@@ -320,4 +320,39 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		ALTER TABLE ONLY "1_buffer_data" ADD CONSTRAINT "1_buffer_data_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_buffer_data_ecosystem" ON "1_buffer_data" (ecosystem);
 
+
+	DROP TABLE IF EXISTS "1_roles";
+		CREATE TABLE "1_roles" (
+			"id" 	bigint NOT NULL DEFAULT '0',
+			"default_page"	varchar(255) NOT NULL DEFAULT '',
+			"role_name"	varchar(255) NOT NULL DEFAULT '',
+			"deleted"    bigint NOT NULL DEFAULT '0',
+			"role_type" bigint NOT NULL DEFAULT '0',
+			"creator" jsonb NOT NULL DEFAULT '{}',
+			"date_created" timestamp,
+			"date_deleted" timestamp,
+			"company_id" bigint NOT NULL DEFAULT '0',
+			"roles_access" jsonb, 
+			"image_id" bigint NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
+		);
+		ALTER TABLE ONLY "1_roles" ADD CONSTRAINT "1_roles_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "1_roles_index_deleted" ON "1_roles" (ecosystem, deleted);
+		CREATE INDEX "1_roles_index_type" ON "1_roles" (ecosystem, role_type);
+
+
+		DROP TABLE IF EXISTS "1_roles_participants";
+		CREATE TABLE "1_roles_participants" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"role" jsonb,
+			"member" jsonb,
+			"appointed" jsonb,
+			"date_created" timestamp,
+			"date_deleted" timestamp,
+			"deleted" bigint NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
+		);
+		ALTER TABLE ONLY "1_roles_participants" ADD CONSTRAINT "1_roles_participants_pkey" PRIMARY KEY ("id");
+
+
 `
