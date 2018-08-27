@@ -15,7 +15,7 @@ import (
 	"github.com/yddmat/memdb"
 )
 
-const keyConvention = "%d.%s.%s"
+const keyConvention = "%s.%s"
 
 var ErrUnknownContext = errors.New("unknown writing operation context (block o/or hash empty)")
 
@@ -38,7 +38,7 @@ func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value inte
 		return errors.Wrapf(err, "marshalling struct to json")
 	}
 
-	key := fmt.Sprintf(keyConvention, registry.Ecosystem.ID, registry.Name, pkValue)
+	key := fmt.Sprintf(keyConvention, registry.Name, pkValue)
 
 	err = m.tx.Set(key, string(jsonValue))
 	if err != nil {
@@ -68,7 +68,7 @@ func (m *metadataTx) Update(registry *types.Registry, pkValue string, newValue i
 		return errors.Wrapf(err, "marshalling struct to json")
 	}
 
-	key := fmt.Sprintf(keyConvention, registry.Ecosystem.ID, registry.Name, pkValue)
+	key := fmt.Sprintf(keyConvention, registry.Name, pkValue)
 
 	old, err := m.tx.Update(key, string(jsonValue))
 	if err != nil {
@@ -99,7 +99,7 @@ func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface
 	}
 	defer m.endRead()
 
-	key := fmt.Sprintf(keyConvention, registry.Ecosystem.ID, registry.Name, pkValue)
+	key := fmt.Sprintf(keyConvention, registry.Name, pkValue)
 
 	value, err := m.tx.Get(key)
 	if err != nil {
@@ -121,7 +121,7 @@ func (m *metadataTx) Walk(registry *types.Registry, index string, fn func(value 
 	}
 	defer m.endRead()
 
-	prefix := fmt.Sprintf("%d.%s", registry.Ecosystem.ID, registry.Name)
+	prefix := fmt.Sprintf("%s.*", registry.Name)
 
 	return m.tx.Ascend(index, func(key, value string) bool {
 		if match.Match(key, prefix) {
@@ -156,7 +156,7 @@ func (m *metadataTx) SetBlockHash(blockHash []byte) {
 	m.stateMu.Unlock()
 }
 
-func (m *metadataTx) AddIndex(index *kv.IndexAdapter) {
+func (m *metadataTx) AddIndex(index types.Index) {
 	m.tx.AddIndex(index)
 }
 
@@ -192,7 +192,8 @@ type metadataStorage struct {
 	db kv.Database
 }
 
-func NewMetadataStorage(db kv.Database) types.MetadataRegistryStorage {
+func NewMetadataStorage(db kv.Database, indexes []types.Index) types.MetadataRegistryStorage {
+	db.Begin(true).AddIndex(indexes...)
 	return &metadataStorage{
 		db: db,
 	}

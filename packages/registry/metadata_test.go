@@ -50,8 +50,7 @@ func TestMetadataTx_RW(t *testing.T) {
 		{
 			testname: "insert-good",
 			registry: types.Registry{
-				Name:      "key",
-				Ecosystem: &types.Ecosystem{ID: 1},
+				Name: "key",
 			},
 			pkValue: "1",
 			value: testModel{
@@ -66,8 +65,7 @@ func TestMetadataTx_RW(t *testing.T) {
 		{
 			testname: "insert-bad-1",
 			registry: types.Registry{
-				Name:      "key",
-				Ecosystem: &types.Ecosystem{ID: 1},
+				Name: "key",
 			},
 			pkValue: "1",
 			value:   make(chan int),
@@ -80,7 +78,7 @@ func TestMetadataTx_RW(t *testing.T) {
 		db, err := newKvDB()
 		require.Nil(t, err)
 
-		reg := registry.NewMetadataStorage(db)
+		reg := registry.NewMetadataStorage(db, nil)
 		metadataTx := reg.Begin()
 		metadataTx.SetBlockHash([]byte("123"))
 		metadataTx.SetTxHash([]byte("321"))
@@ -106,7 +104,7 @@ func TestMetadataTx_benchmark(t *testing.T) {
 	db, err := newKvDB()
 	require.Nil(t, err)
 
-	storage := registry.NewMetadataStorage(db)
+	storage := registry.NewMetadataStorage(db, nil)
 	metadataTx := storage.Begin()
 
 	type key struct {
@@ -118,8 +116,7 @@ func TestMetadataTx_benchmark(t *testing.T) {
 	}
 
 	reg := types.Registry{
-		Name:      "key",
-		Ecosystem: &types.Ecosystem{ID: 1},
+		Name: "key",
 	}
 
 	insertStart := time.Now()
@@ -144,9 +141,9 @@ func TestMetadataTx_benchmark(t *testing.T) {
 		require.Nil(t, err)
 	}
 
-	metadataTx.AddIndex(&kv.IndexAdapter{*memdb.NewIndex("test", "*", func(a, b string) bool {
+	metadataTx.AddIndex(types.Index{Name: "test", Registry: &types.Registry{Name: "keys"}, SortFn: func(a, b string) bool {
 		return gjson.Get(a, "amount").Less(gjson.Get(b, "amount"), false)
-	})})
+	}})
 
 	require.Nil(t, metadataTx.Commit())
 	fmt.Println("Inserted 10.000 keys in", time.Since(insertStart).Seconds())

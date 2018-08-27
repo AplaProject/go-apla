@@ -2,29 +2,10 @@ package types
 
 import (
 	"database/sql/driver"
-
-	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 )
 
-type RegistryType int8
-type RegistryAction int8
-
-//const (
-// Metadata ecosystem registry (e.g. pages, keys)
-//RegistryTypeMetadata RegistryType = iota + 1
-//)
-
-//const (
-//	RegistryActionRead RegistryAction = iota + 1
-//	RegistryActionInsert
-//	RegistryActionUpdate
-//	RegistryActionNewField // ex new_column
-//)
-
 type Registry struct {
-	Name      string // ex table name
-	Ecosystem *Ecosystem
-	//Type      RegistryType
+	Name string // ex table Name
 }
 
 type MetadataRegistryReader interface {
@@ -36,7 +17,7 @@ type MetadataRegistryWriter interface {
 	Insert(registry *Registry, pkValue string, value interface{}) error
 	Update(registry *Registry, pkValue string, newValue interface{}) error
 
-	AddIndex(index *kv.IndexAdapter)
+	AddIndex(index Index)
 
 	driver.Tx
 
@@ -59,7 +40,12 @@ type MetadataRegistryStorage interface {
 	Rollback(block []byte) error
 }
 
-type RegistryAccessor interface {
-	// TODO move SmartContract into types package to prevent circular dependency
-	//CanAccess(contract *smart.SmartContract, registry *Registry, action RegistryAction) (bool, error)
+type Index struct {
+	Name     string
+	Registry *Registry
+	SortFn   func(a, b string) bool
+}
+
+type Indexer interface {
+	GetIndexes() []Index
 }

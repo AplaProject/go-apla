@@ -1278,14 +1278,6 @@ func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
 		return err
 	}
 
-	// TODO error handling
-	sc.MetaDb.Insert(&types.Registry{
-		Name:      "key",
-		Ecosystem: &types.Ecosystem{ID: sc.TxSmart.EcosystemID}},
-		strconv.FormatInt(id, 10),
-		model.KeySchema{ID: id, Amount: amount},
-	)
-
 	_, _, err = sc.insert([]string{`id`, `amount`}, []interface{}{id, amount},
 		getDefTableName(sc, `keys`))
 	if err == nil {
@@ -1297,7 +1289,18 @@ func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
 			`comment`, `block_id`, `txhash`},
 			[]interface{}{0, id, amount, comment, block, sc.TxHash}, getDefTableName(sc, `history`))
 	}
-	return err
+
+	if err != nil {
+		return err
+	}
+
+	// TODO remove old version
+	err = sc.MetaDb.Insert(&types.Registry{Name: "key"},
+		strconv.FormatInt(id, 10),
+		model.KeySchema{ID: id, Amount: amount},
+	)
+
+	return nil
 }
 
 // PermColumn is contract func

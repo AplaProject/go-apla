@@ -6,6 +6,8 @@ package kv
 import (
 	"database/sql/driver"
 	"io"
+
+	"github.com/GenesisKernel/go-genesis/packages/types"
 )
 
 type Database interface {
@@ -21,7 +23,7 @@ type Transaction interface {
 	Delete(key string) error
 	Get(key string) (string, error)
 
-	AddIndex(index *IndexAdapter)
+	AddIndex(indexes ...types.Index) error
 	Ascend(index string, iterator func(key, value string) bool) error
 
 	driver.Tx

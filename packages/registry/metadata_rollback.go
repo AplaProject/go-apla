@@ -22,7 +22,6 @@ const (
 type state struct {
 	Counter      uint64 `json:"c"`
 	RegistryName string `json:"r"`
-	EcosystemID  int64  `json:"e"`
 	Value        string `json:"v"`
 	Key          string `json:"k"`
 }
@@ -42,7 +41,7 @@ func (mr *metadataRollback) saveState(block, tx []byte, registry *types.Registry
 	counter := mr.txCounter[key]
 	counter++
 
-	s := state{Counter: counter, RegistryName: registry.Name, EcosystemID: registry.Ecosystem.ID, Key: pk, Value: value}
+	s := state{Counter: counter, RegistryName: registry.Name, Key: pk, Value: value}
 	jstate, err := json.Marshal(s)
 	if err != nil {
 		return err
@@ -82,7 +81,7 @@ func (mr *metadataRollback) rollbackState(block []byte) error {
 	})
 
 	for _, tx := range txses {
-		key := fmt.Sprintf(keyConvention, tx.EcosystemID, tx.RegistryName, tx.Key)
+		key := fmt.Sprintf(keyConvention, tx.RegistryName, tx.Key)
 
 		// rollback inserted row
 		if tx.Value == "" {
