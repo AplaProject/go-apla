@@ -46,16 +46,6 @@ func GetCommonEcosystemScript() string {
 
 // SchemaEcosystem contains SQL queries for creating ecosystem
 var schemaEcosystem = `		
-		
-		DROP TABLE IF EXISTS "%[1]d_sections"; CREATE TABLE "%[1]d_sections" (
-		"id" bigint  NOT NULL DEFAULT '0',
-		"title" varchar(255)  NOT NULL DEFAULT '',
-		"urlname" varchar(255) NOT NULL DEFAULT '',
-		"page" varchar(255) NOT NULL DEFAULT '',
-		"roles_access" jsonb,
-		"status" bigint NOT NULL DEFAULT '0'
-		);
-	  ALTER TABLE ONLY "%[1]d_sections" ADD CONSTRAINT "%[1]d_sections_pkey" PRIMARY KEY (id);
 
 		DROP TABLE IF EXISTS "%[1]d_signatures"; CREATE TABLE "%[1]d_signatures" (
 			"id" bigint  NOT NULL DEFAULT '0',
@@ -125,16 +115,6 @@ var schemaEcosystem = `
 			"deleted" bigint NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "%[1]d_roles_participants" ADD CONSTRAINT "%[1]d_roles_participants_pkey" PRIMARY KEY ("id");
-
-
-		DROP TABLE IF EXISTS "%[1]d_members";
-		CREATE TABLE "%[1]d_members" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"member_name"	varchar(255) NOT NULL DEFAULT '',
-			"image_id"	bigint NOT NULL DEFAULT '0',
-			"member_info"   jsonb
-		);
-		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
 		DROP TABLE IF EXISTS "%[1]d_applications";
 		CREATE TABLE "%[1]d_applications" (
