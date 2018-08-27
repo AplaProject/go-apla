@@ -189,5 +189,29 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		CREATE INDEX "1_history_index_sender" ON "1_history" (ecosystem, sender_id);
 		CREATE INDEX "1_history_index_recipient" ON "1_history" (ecosystem, recipient_id);
 		CREATE INDEX "1_history_index_block" ON "1_history" (block_id, txhash);
+		
+	DROP TABLE IF EXISTS "1_sections"; CREATE TABLE "1_sections" (
+			"id" bigint  NOT NULL DEFAULT '0',
+			"title" varchar(255)  NOT NULL DEFAULT '',
+			"urlname" varchar(255) NOT NULL DEFAULT '',
+			"page" varchar(255) NOT NULL DEFAULT '',
+			"roles_access" jsonb,
+			"status" bigint NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
+			);
+		  ALTER TABLE ONLY "1_sections" ADD CONSTRAINT "1_sections_pkey" PRIMARY KEY (id);
+		  CREATE INDEX "1_sections_index_ecossytem" ON "1_sections" (ecosystem);
+	
+
+	DROP TABLE IF EXISTS "1_members";
+		CREATE TABLE "1_members" (
+			"id" bigint NOT NULL DEFAULT '0',
+			"member_name"	varchar(255) NOT NULL DEFAULT '',
+			"image_id"	bigint NOT NULL DEFAULT '0',
+			"member_info"   jsonb,
+			"ecosystem" bigint NOT NULL DEFAULT '1'
+		);
+		ALTER TABLE ONLY "1_members" ADD CONSTRAINT "1_members_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "1_members_index_ecossytem" ON "1_members" (ecosystem);
 
 `
