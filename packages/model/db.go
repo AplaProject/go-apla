@@ -40,15 +40,15 @@ var (
 		`tables`:     true,
 		`parameters`: true,
 		`history`:    true,
-		/*		`sections`:           true,
-				`members`:            false,
-				`roles`:              true,
-				`roles_participants`: true,
-				`notifications`:      true,
-				`applications`:       true,
-				`binaries`:           true,
-				`buffer_data`:        true,
-				`app_params`:         true,*/
+		`sections`:   true,
+		`members`:    false,
+		/*	`roles`:              true,
+			`roles_participants`: true,
+			`notifications`:      true,
+			`applications`:       true,
+			`binaries`:           true,
+			`buffer_data`:        true,
+			`app_params`:         true,*/
 	}
 )
 

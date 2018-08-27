@@ -1,7 +1,5 @@
 package vde
 
 var membersDataSQL = `
-INSERT INTO "%[1]d_members" ("id", "member_name") 
-VALUES('%[2]d', 'founder'),
-('4544233900443112470', 'guest');
-`
+INSERT INTO "1_members" ("id", "member_name", "ecosystem") VALUES('%[2]d', 'founder', '%[1]d'),
+('` + GuestKey + `', 'guest', '%[1]d');`
