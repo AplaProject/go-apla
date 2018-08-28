@@ -49,7 +49,6 @@ var daemonsList = map[string]func(context.Context, *daemon) error{
 	"QueueParserTx":     QueueParserTx,
 	"QueueParserBlocks": QueueParserBlocks,
 	"Confirmations":     Confirmations,
-	"Notificator":       Notificate,
 	"Scheduler":         Scheduler,
 }
 
@@ -60,7 +59,6 @@ var serverList = []string{
 	"QueueParserBlocks",
 	"Disseminator",
 	"Confirmations",
-	"Notificator",
 	"Scheduler",
 }
 
@@ -160,7 +158,6 @@ func getHostPort(h string) string {
 func getDaemonsToStart() []string {
 	if conf.Config.IsSupportingVDE() {
 		return []string{
-			"Notificator",
 			"Scheduler",
 		}
 	}

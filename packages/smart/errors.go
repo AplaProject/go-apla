@@ -48,6 +48,7 @@ const (
 )
 
 var (
+	errDelayedContract   = errors.New(`Incorrect delayed contract`)
 	errAccessDenied      = errors.New(`Access denied`)
 	errConditionEmpty    = errors.New(`Conditions is empty`)
 	errContractNotFound  = errors.New(`Contract has not been found`)

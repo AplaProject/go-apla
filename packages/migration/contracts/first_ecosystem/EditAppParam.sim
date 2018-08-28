@@ -18,17 +18,15 @@ contract EditAppParam {
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("app_params", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("app_params", $Id, pars)
         }
     }
 }

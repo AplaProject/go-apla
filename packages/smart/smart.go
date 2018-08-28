@@ -28,6 +28,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -61,6 +63,10 @@ const (
 
 	// MaxPrice is a maximal value that price function can return
 	MaxPrice = 100000000000000000
+
+	CallDelayedContract = "@1CallDelayedContract"
+	NewUserContract     = "@1NewUser"
+	NewBadBlockContract = "@1NewBadBlock"
 )
 
 var (
@@ -337,9 +343,9 @@ func LoadContracts(transaction *model.DbTransaction) error {
 }
 
 func LoadSysFuncs(vm *script.VM, state int) error {
-	code := `func DBFind(table string).Columns(columns string).Where(where string, params ...)
+	code := `func DBFind(table string).Columns(columns string).Where(where map)
 	.WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
-   return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
+   return DBSelect(table, columns, id, order, offset, limit, ecosystem, where)
 }
 
 func One(list array, name string) string {
@@ -387,11 +393,11 @@ func Row(list array) map {
    return ret
 }
 
-func DBRow(table string).Columns(columns string).Where(where string, params ...)
+func DBRow(table string).Columns(columns string).Where(where map)
    .WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
    
    var result array
-   result = DBFind(table).Columns(columns).Where(where, params...).WhereId(id).Order(order).Ecosystem(ecosystem)
+   result = DBFind(table).Columns(columns).Where(where).WhereId(id).Order(order).Ecosystem(ecosystem)
 
    var row map
    if Len(result) > 0 {
@@ -519,6 +525,7 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`original_contract`: ``,
 		`this_contract`:     ``,
 		`role_id`:           head.RoleID,
+		`guest_key`:         vde.GuestKey,
 	}
 
 	for key, val := range sc.TxData {
@@ -845,6 +852,39 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 	return nil
 }
 
+func (sc *SmartContract) GetSignedBy(public []byte) (int64, error) {
+	signedBy := sc.TxSmart.KeyID
+	if sc.TxSmart.SignedBy != 0 {
+		var isNode bool
+		signedBy = sc.TxSmart.SignedBy
+		fullNodes := syspar.GetNodes()
+		if sc.TxContract.Name != CallDelayedContract && sc.TxContract.Name != NewUserContract &&
+			sc.TxContract.Name != NewBadBlockContract {
+			return 0, errDelayedContract
+		}
+		if len(fullNodes) > 0 {
+			for _, node := range fullNodes {
+				if crypto.Address(node.PublicKey) == signedBy {
+					isNode = true
+					break
+				}
+			}
+		} else {
+			_, NodePublicKey, err := utils.GetNodeKeys()
+			if err != nil {
+				return 0, err
+			}
+			isNode = PubToID(NodePublicKey) == signedBy
+		}
+		if !isNode {
+			return 0, errDelayedContract
+		}
+	} else if len(public) > 0 && sc.TxSmart.KeyID != crypto.Address(public) {
+		return 0, errDiffKeys
+	}
+	return signedBy, nil
+}
+
 // CallContract calls the contract functions according to the specified flags
 func (sc *SmartContract) CallContract(flags int) (string, error) {
 	var (
@@ -879,9 +919,9 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		wallet := &model.Key{}
 		wallet.SetTablePrefix(sc.TxSmart.EcosystemID)
-		signedBy := sc.TxSmart.KeyID
-		if sc.TxSmart.SignedBy != 0 {
-			signedBy = sc.TxSmart.SignedBy
+		signedBy, err := sc.GetSignedBy(public)
+		if err != nil {
+			return retError(err)
 		}
 		_, err = wallet.Get(signedBy)
 		if err != nil {

@@ -41,7 +41,9 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
 	"github.com/GenesisKernel/go-genesis/packages/script"
@@ -126,6 +128,7 @@ var (
 		"ColumnCondition":              50,
 		"Contains":                     10,
 		"ContractAccess":               50,
+		"RoleAccess":                   50,
 		"ContractConditions":           50,
 		"ContractName":                 10,
 		"CreateColumn":                 50,
@@ -195,6 +198,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"ColumnCondition":              ColumnCondition,
 		"Contains":                     strings.Contains,
 		"ContractAccess":               ContractAccess,
+		"RoleAccess":                   RoleAccess,
 		"ContractConditions":           ContractConditions,
 		"ContractName":                 contractName,
 		"ValidateEditContractNewValue": ValidateEditContractNewValue,
@@ -220,6 +224,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"JSONToMap":                    JSONDecode, // Deprecated
 		"JSONDecode":                   JSONDecode,
 		"JSONEncode":                   JSONEncode,
+		"JSONEncodeIndent":             JSONEncodeIndent,
 		"IdToAddress":                  IDToAddress,
 		"Int":                          Int,
 		"Len":                          Len,
@@ -280,6 +285,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"IsObject":                     IsObject,
 		"DateTime":                     DateTime,
 		"UnixDateTime":                 UnixDateTime,
+		"UpdateNotifications":          UpdateNotifications,
+		"UpdateRolesNotifications":     UpdateRolesNotifications,
 	}
 
 	switch vt {
@@ -374,6 +381,21 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 	return false
 }
 
+// RoleAccess checks whether the name of the role matches one of the names listed in the parameters.
+func RoleAccess(sc *SmartContract, ids ...interface{}) (bool, error) {
+
+	for _, id := range ids {
+		switch v := id.(type) {
+		case int64:
+			if sc.TxSmart.RoleID == v {
+				return true, nil
+			}
+			break
+		}
+	}
+	return false, nil
+}
+
 // ContractConditions calls the 'conditions' function for each of the contracts specified in the parameters
 func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 	for _, iname := range names {
@@ -391,7 +413,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 				return false, logErrorfShort(eContractCondition, name, consts.EmptyObject)
 			}
 			vars := map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
-				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID}
+				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID, `guest_key`: vde.GuestKey}
 			if err := sc.AppendStack(name); err != nil {
 				return false, err
 			}
@@ -449,8 +471,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 	if err := validateAccess(`UpdateContract`, sc, nEditContract, nImport); err != nil {
 		return err
 	}
-	var pars []string
-	var vals []interface{}
+	pars := make(map[string]interface{})
 	ecosystemID := sc.TxSmart.EcosystemID
 	var root interface{}
 	if len(value) > 0 {
@@ -459,19 +480,16 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		if err != nil {
 			return err
 		}
-		pars = append(pars, "value")
-		vals = append(vals, value)
+		pars["value"] = value
 	}
 	if len(conditions) > 0 {
-		pars = append(pars, "conditions")
-		vals = append(vals, conditions)
+		pars["conditions"] = conditions
 	}
 	if len(walletID) > 0 {
-		pars = append(pars, "wallet_id")
-		vals = append(vals, recipient)
+		pars["wallet_id"] = recipient
 	}
-	if len(vals) > 0 {
-		if _, err := DBUpdate(sc, "contracts", id, strings.Join(pars, ","), vals...); err != nil {
+	if len(pars) > 0 {
+		if _, err := DBUpdate(sc, "contracts", id, pars); err != nil {
 			return err
 		}
 	}
@@ -502,8 +520,14 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	if err != nil {
 		return 0, err
 	}
-	_, id, err = DBInsert(sc, "contracts", "name,value,conditions,wallet_id,token_id,app_id",
-		name, value, conditions, walletID, tokenEcosystem, appID)
+	_, id, err = DBInsert(sc, "contracts", map[string]interface{}{
+		"name":       name,
+		"value":      value,
+		"conditions": conditions,
+		"wallet_id":  walletID,
+		"token_id":   tokenEcosystem,
+		"app_id":     appID,
+	})
 	if err != nil {
 		return 0, err
 	}
@@ -656,8 +680,19 @@ func columnType(colType string) (string, error) {
 	return ``, fmt.Errorf(eColumnType, colType)
 }
 
+func mapToParams(values map[string]interface{}) (params []string, val []interface{}, err error) {
+	for key, v := range values {
+		params = append(params, converter.Sanitize(key, ` ->+`))
+		val = append(val, v)
+	}
+	if len(params) == 0 {
+		err = fmt.Errorf(`values are undefined`)
+	}
+	return
+}
+
 // DBInsert inserts a record into the specified database table
-func DBInsert(sc *SmartContract, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
+func DBInsert(sc *SmartContract, tblname string, values map[string]interface{}) (qcost int64, ret int64, err error) {
 	if tblname == "system_parameters" {
 		return 0, 0, fmt.Errorf("system parameters access denied")
 	}
@@ -672,14 +707,14 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 		err = logErrorDB(err, "num indexes")
 		return
 	}
-	if len(val) == 0 {
-		err = errValues
+	params, val, err := mapToParams(values)
+	if err != nil {
 		return
 	}
 	if reflect.TypeOf(val[0]) == reflect.TypeOf([]interface{}{}) {
 		val = val[0].([]interface{})
 	}
-	qcost, lastID, err = sc.insert(strings.Split(params, `,`), val, tblname)
+	qcost, lastID, err = sc.insert(params, val, tblname)
 	if ind > 0 {
 		qcost *= int64(ind)
 	}
@@ -691,10 +726,9 @@ func DBInsert(sc *SmartContract, tblname string, params string, val ...interface
 
 // PrepareColumns replaces jsonb fields -> in the list of columns for db selecting
 // For example, name,doc->title => name,doc::jsonb->>'title' as "doc.title"
-func PrepareColumns(columns string) string {
+func PrepareColumns(columns []string) string {
 	colList := make([]string, 0)
-	for _, icol := range strings.Split(columns, `,`) {
-		icol = strings.TrimSpace(icol)
+	for _, icol := range columns {
 		if strings.Contains(icol, `->`) {
 			colfield := strings.Split(icol, `->`)
 			if len(colfield) == 2 {
@@ -754,26 +788,234 @@ func checkNow(inputs ...string) error {
 	return nil
 }
 
-func prepareSelect(sc *SmartContract, pTblname, pColumns, pWhere, pOrder *string,
-	id, limit, ecosystem int64) (int64, map[string]string, error) {
-	var (
-		err  error
-		perm map[string]string
-	)
-	columns := *pColumns
-	if len(columns) == 0 {
-		columns = `*`
+func GetColumns(inColumns interface{}) ([]string, error) {
+	var columns []string
+
+	switch v := inColumns.(type) {
+	case string:
+		if len(v) > 0 {
+			columns = strings.Split(v, `,`)
+		}
+	case []interface{}:
+		for _, name := range v {
+			switch col := name.(type) {
+			case string:
+				columns = append(columns, col)
+			}
+		}
 	}
-	columns = strings.ToLower(columns)
-	if err = checkNow(columns, *pWhere); err != nil {
+	if len(columns) == 0 {
+		columns = []string{`*`}
+	}
+	for i, v := range columns {
+		columns[i] = converter.Sanitize(strings.ToLower(v), `*->`)
+	}
+	if err := checkNow(columns...); err != nil {
+		return nil, err
+	}
+	return columns, nil
+}
+
+func GetOrder(inOrder interface{}) (string, error) {
+	var orders []string
+
+	sanitize := func(in string, value interface{}) {
+		in = converter.Sanitize(strings.ToLower(in), ``)
+		if len(in) > 0 {
+			in = `"` + in + `"`
+			if fmt.Sprint(value) == `-1` {
+				in += ` desc`
+			} else if fmt.Sprint(value) == `1` {
+				in += ` asc`
+			}
+			orders = append(orders, in)
+		}
+	}
+
+	switch v := inOrder.(type) {
+	case string:
+		sanitize(v, nil)
+	case map[string]interface{}:
+		for ikey, item := range v {
+			sanitize(ikey, item)
+		}
+	case []interface{}:
+		for _, item := range v {
+			switch param := item.(type) {
+			case string:
+				sanitize(param, nil)
+			case map[string]interface{}:
+				for key, value := range param {
+					sanitize(key, value)
+				}
+			}
+		}
+	}
+	if len(orders) == 0 {
+		orders = []string{`id`}
+	}
+	if err := checkNow(orders...); err != nil {
+		return ``, err
+	}
+	return strings.Join(orders, `,`), nil
+}
+
+func GetWhere(inWhere map[string]interface{}) (string, error) {
+	var (
+		where string
+		cond  []string
+	)
+	escape := func(value interface{}) string {
+		return strings.Replace(fmt.Sprint(value), `'`, `''`, -1)
+	}
+	oper := func(action string, v interface{}) (string, error) {
+		switch value := v.(type) {
+		default:
+			return fmt.Sprintf(`%s '%s'`, action, escape(value)), nil
+		}
+	}
+	like := func(pattern string, v interface{}) (string, error) {
+		switch value := v.(type) {
+		default:
+			return fmt.Sprintf(pattern, escape(value)), nil
+		}
+	}
+	in := func(action string, v interface{}) (ret string, err error) {
+		switch value := v.(type) {
+		case []interface{}:
+			var list []string
+			for _, ival := range value {
+				list = append(list, escape(ival))
+			}
+			if len(list) > 0 {
+				ret = fmt.Sprintf(`%s ('%s')`, action, strings.Join(list, `', '`))
+			}
+		}
+		return
+	}
+	logic := func(action string, v interface{}) (ret string, err error) {
+		switch value := v.(type) {
+		case []interface{}:
+			var list []string
+			for _, ival := range value {
+				switch avalue := ival.(type) {
+				case map[string]interface{}:
+					where, err := GetWhere(avalue)
+					if err != nil {
+						return ``, err
+					}
+					list = append(list, where)
+				}
+			}
+			if len(list) > 0 {
+				ret = fmt.Sprintf(`(%s)`, strings.Join(list, ` `+action+` `))
+			}
+		}
+		return
+	}
+	for key, v := range inWhere {
+		key = PrepareWhere(converter.Sanitize(strings.ToLower(key), `->$`))
+		switch key {
+		case `$like`:
+			return like(`like '%%%s%%'`, v)
+		case `$end`:
+			return like(`like '%%%s'`, v)
+		case `$begin`:
+			return like(`like '%s%%'`, v)
+		case `$and`:
+			return logic(`and`, v)
+		case `$or`:
+			return logic(`or`, v)
+		case `$in`:
+			return in(`in`, v)
+		case `$nin`:
+			return in(`not in`, v)
+		case `$eq`:
+			return oper(`=`, v)
+		case `$neq`:
+			return oper(`!=`, v)
+		case `$gt`:
+			return oper(`>`, v)
+		case `$gte`:
+			return oper(`>=`, v)
+		case `$lt`:
+			return oper(`<`, v)
+		case `$lte`:
+			return oper(`<=`, v)
+		default:
+			if !strings.Contains(key, `>`) && len(key) > 0 {
+				key = `"` + key + `"`
+			}
+			switch value := v.(type) {
+			case []interface{}:
+				var acond []string
+				for _, iarr := range value {
+					switch avalue := iarr.(type) {
+					case map[string]interface{}:
+						ret, err := GetWhere(avalue)
+						if err != nil {
+							return ``, err
+						}
+						acond = append(acond, fmt.Sprintf(`(%s %s)`, key, ret))
+					default:
+						acond = append(acond, fmt.Sprintf(`%s = '%s'`, key, escape(value)))
+					}
+				}
+				if len(acond) > 0 {
+					cond = append(cond, fmt.Sprintf(`(%s)`, strings.Join(acond, ` and `)))
+				}
+			case map[string]interface{}:
+				ret, err := GetWhere(value)
+				if err != nil {
+					return ``, err
+				}
+				cond = append(cond, fmt.Sprintf(`(%s %s)`, key, ret))
+			default:
+				ival := escape(value)
+				if ival == `$isnull` {
+					ival = fmt.Sprintf(`%s is null`, key)
+				} else {
+					ival = fmt.Sprintf(`%s = '%s'`, key, ival)
+				}
+				cond = append(cond, ival)
+			}
+		}
+	}
+	if len(cond) > 0 {
+		where = strings.Join(cond, ` and `)
+		if err := checkNow(where); err != nil {
+			return ``, err
+		}
+	}
+	return where, nil
+}
+
+// DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
+func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64, inOrder interface{},
+	offset, limit, ecosystem int64,
+	inWhere map[string]interface{}) (int64, []interface{}, error) {
+
+	var (
+		err     error
+		rows    *sql.Rows
+		perm    map[string]string
+		columns []string
+		order   string
+	)
+	columns, err = GetColumns(inColumns)
+	if err != nil {
 		return 0, nil, err
 	}
-	if len(*pOrder) == 0 {
-		*pOrder = `id`
+	order, err = GetOrder(inOrder)
+	if err != nil {
+		return 0, nil, err
 	}
-	*pWhere = PrepareWhere(strings.Replace(converter.Escape(*pWhere), `$`, `?`, -1))
+	where, err := GetWhere(inWhere)
+	if err != nil {
+		return 0, nil, err
+	}
 	if id != 0 {
-		*pWhere = fmt.Sprintf(`id='%d'`, id)
+		where = fmt.Sprintf(`id='%d'`, id)
 		limit = 1
 	}
 	if limit == 0 {
@@ -785,38 +1027,21 @@ func prepareSelect(sc *SmartContract, pTblname, pColumns, pWhere, pOrder *string
 	if ecosystem == 0 {
 		ecosystem = sc.TxSmart.EcosystemID
 	}
-	*pTblname = GetTableName(sc, *pTblname, ecosystem)
+	tblname = GetTableName(sc, tblname, ecosystem)
 
-	perm, err = sc.AccessTablePerm(*pTblname, `read`)
+	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil {
 		return 0, nil, err
 	}
-	colsList := strings.Split(columns, `,`)
-	if err = sc.AccessColumns(*pTblname, &colsList, false); err != nil {
+	if err = sc.AccessColumns(tblname, &columns, false); err != nil {
 		return 0, nil, err
 	}
-	*pColumns = PrepareColumns(strings.Join(colsList, `,`))
-	return limit, perm, nil
-}
-
-// DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
-func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order string, offset, limit, ecosystem int64,
-	where string, params []interface{}) (int64, []interface{}, error) {
-
-	var (
-		err  error
-		rows *sql.Rows
-		perm map[string]string
-	)
-	if limit, perm, err = prepareSelect(sc, &tblname, &columns, &where, &order, id,
-		limit, ecosystem); err != nil {
-		return 0, nil, err
-	}
-
-	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(columns).Where(where, params...).Order(order).
-		Offset(offset).Limit(limit).Rows()
+	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(PrepareColumns(columns)).
+		Where(where).Order(order).Offset(offset).Limit(limit).Rows()
 	if err != nil {
-		return 0, nil, logErrorDB(err, "selecting rows from table")
+		logErrorDB(err, fmt.Sprintf("Contract %s %v %v", sc.TxContract.Name, sc.TxContract.StackCont, sc.TxData))
+		return 0, nil, logErrorDB(err, fmt.Sprintf("selecting rows from table %s %s where %s order %s",
+			tblname, PrepareColumns(columns), where, order))
 	}
 	defer rows.Close()
 	cols, err := rows.Columns()
@@ -864,7 +1089,7 @@ func DBSelect(sc *SmartContract, tblname string, columns string, id int64, order
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
 func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
-	params string, val ...interface{}) (qcost int64, err error) {
+	values map[string]interface{}) (qcost int64, err error) {
 	if tblname == "system_parameters" {
 		return 0, fmt.Errorf("system parameters access denied")
 	}
@@ -872,7 +1097,10 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
 	}
-	columns := strings.Split(params, `,`)
+	columns, val, err := mapToParams(values)
+	if err != nil {
+		return
+	}
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
@@ -881,8 +1109,8 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 }
 
 // DBUpdate updates the item with the specified id in the table
-func DBUpdate(sc *SmartContract, tblname string, id int64, params string, val ...interface{}) (qcost int64, err error) {
-	return DBUpdateExt(sc, tblname, `id`, id, params, val...)
+func DBUpdate(sc *SmartContract, tblname string, id int64, values map[string]interface{}) (qcost int64, err error) {
+	return DBUpdateExt(sc, tblname, `id`, id, values)
 }
 
 // EcosysParam returns the value of the specified parameter for the ecosystem
@@ -1509,7 +1737,8 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				}
 
 				for _, b := range blocks {
-					if _, err := DBUpdate(smartContract, "@1_bad_blocks", b.ID, "deleted", "1"); err != nil {
+					if _, err := DBUpdate(smartContract, "@1_bad_blocks", b.ID,
+						map[string]interface{}{"deleted": "1"}); err != nil {
 						return logErrorValue(err, consts.DBError, "deleting bad block",
 							converter.Int64ToStr(b.ID))
 					}
@@ -1525,12 +1754,12 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				_, _, err = DBInsert(
 					smartContract,
 					"@1_node_ban_logs",
-					"node_id,banned_at,ban_time,reason",
-					fullNode.KeyID,
-					now.Format(time.RFC3339),
-					int64(syspar.GetNodeBanTime()/time.Millisecond), // in ms
-					banMessage,
-				)
+					map[string]interface{}{
+						"node_id":   fullNode.KeyID,
+						"banned_at": now.Format(time.RFC3339),
+						"ban_time":  int64(syspar.GetNodeBanTime() / time.Millisecond), // in ms
+						"reason":    banMessage,
+					})
 
 				if err != nil {
 					return logErrorValue(err, consts.DBError, "inserting log to node_ban_log",
@@ -1540,12 +1769,12 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				_, _, err = DBInsert(
 					smartContract,
 					"notifications",
-					"recipient->member_id,notification->type,notification->header,notification->body",
-					fullNode.KeyID,
-					model.NotificationTypeSingle,
-					nodeBanNotificationHeader,
-					banMessage,
-				)
+					map[string]interface{}{
+						"recipient->member_id": fullNode.KeyID,
+						"notification->type":   model.NotificationTypeSingle,
+						"notification->header": nodeBanNotificationHeader,
+						"notification->body":   banMessage,
+					})
 
 				if err != nil {
 					return logErrorValue(err, consts.DBError, "inserting log to node_ban_log",
@@ -1676,7 +1905,7 @@ func StopVDEProcess(sc *SmartContract, name string) error {
 
 // GetVDEList returns list VDE process with statuses
 func GetVDEList(sc *SmartContract) map[string]string {
-	list, _ := vdemanager.Manager.ListProcess()
+	list, _ := vdemanager.Manager.ListProcessWithPorts()
 	return list
 }
 
@@ -1806,4 +2035,40 @@ func UnixDateTime(value string) int64 {
 		return 0
 	}
 	return t.Unix()
+}
+
+func UpdateNotifications(ecosystemID int64, users ...interface{}) {
+	userList := make([]int64, 0, len(users))
+	for i, userID := range users {
+		switch v := userID.(type) {
+		case int64:
+			userList = append(userList, v)
+		case string:
+			userList = append(userList, converter.StrToInt64(v))
+		case []interface{}:
+			if i == 0 {
+				UpdateNotifications(ecosystemID, v...)
+				return
+			}
+		}
+	}
+	notificator.UpdateNotifications(ecosystemID, userList)
+}
+
+func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
+	rolesList := make([]int64, 0, len(roles))
+	for i, roleID := range roles {
+		switch v := roleID.(type) {
+		case int64:
+			rolesList = append(rolesList, v)
+		case string:
+			rolesList = append(rolesList, converter.StrToInt64(v))
+		case []interface{}:
+			if i == 0 {
+				UpdateRolesNotifications(ecosystemID, v...)
+				return
+			}
+		}
+	}
+	notificator.UpdateRolesNotifications(ecosystemID, rolesList)
 }

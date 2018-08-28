@@ -101,7 +101,7 @@ func TestAPI(t *testing.T) {
 			return
 		}
 		if RawToString(ret.Tree) != item.want {
-			t.Error(fmt.Errorf(`wrong tree %s != %s`, RawToString(ret.Tree), item.want))
+			t.Error(fmt.Errorf("wrong tree \r\n%s != \r\n%s", RawToString(ret.Tree), item.want))
 			return
 		}
 	}
@@ -118,33 +118,35 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`DBFind(keys).Where("id='#key_id#'").Columns("amount").Vars(amount)`, `[{"tag":"text","text":"Where has wrong format"}]`},
+	{`P(Guest = #guest_key#)`, `[{"tag":"p","children":[{"tag":"text","text":"Guest = 4544233900443112470"}]}]`},
 	{`SetVar(val, 123456789)Money(#val#)`, `[{"tag":"text","text":"0.000000000123456789"}]`},
 	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
-	{`DBFind(parameters, src_par).Columns("id").Order(id).Where("id >= 1 and id <= 3").Count(count)Span(#count#)`,
-		`[{"tag":"dbfind","attr":{"columns":["id"],"count":"3","data":[["1"],["2"],["3"]],"name":"parameters","order":"id","source":"src_par","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"span","children":[{"tag":"text","text":"3"}]}]`},
+	{`DBFind(parameters, src_par).Columns("id").Order([id]).Where({id:[{$gte:1}, {$lte:3}]}).Count(count)Span(#count#)`,
+		`[{"tag":"dbfind","attr":{"columns":["id"],"count":"3","data":[["1"],["2"],["3"]],"name":"parameters","order":"[id]","source":"src_par","types":["text"],"where":"{id:[{$gte:1}, {$lte:3}]}"}},{"tag":"span","children":[{"tag":"text","text":"3"}]}]`},
 	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
-	{`SetVar(where).(lim,3)DBFind(contracts, src).Columns(id).Order(id).Limit(#lim#).Custom(a){SetVar(where, #where# #id#)}
+	{`SetVar(where).(lim,3)DBFind(contracts, src).Columns(id).Order([{id:1}, {name:-1}]).Limit(#lim#).Custom(a){SetVar(where, #where# #id#)}
 	Div(){Table(src, "=x")}Div(){Table(src)}Div(){#where#}`,
-		`[{"tag":"dbfind","attr":{"columns":["id","a"],"data":[["1","null"],["2","null"],["3","null"]],"limit":"3","name":"contracts","order":"id","source":"src","types":["text","tags"]}},{"tag":"div","children":[{"tag":"table","attr":{"columns":[{"Name":"x","Title":""}],"source":"src"}}]},{"tag":"div","children":[{"tag":"table","attr":{"source":"src"}}]},{"tag":"div","children":[{"tag":"text","text":" 1 2 3"}]}]`},
+		`[{"tag":"dbfind","attr":{"columns":["id","a"],"data":[["1","null"],["2","null"],["3","null"]],"limit":"3","name":"contracts","order":"[{id:1}, {name:-1}]","source":"src","types":["text","tags"]}},{"tag":"div","children":[{"tag":"table","attr":{"columns":[{"Name":"x","Title":""}],"source":"src"}}]},{"tag":"div","children":[{"tag":"table","attr":{"source":"src"}}]},{"tag":"div","children":[{"tag":"text","text":" 1 2 3"}]}]`},
 	{`If(#isMobile#){Span(Mobile)}.Else{Span(Desktop)}`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Desktop"}]}]`},
 	{`SetVar(off, 10)DBFind(contracts, src_contracts).Columns("id").Order(id).Limit(2).Offset(#off#).Custom(){}`,
 		`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["11"],["12"]],"limit":"2","name":"contracts","offset":"10","order":"id","source":"src_contracts","types":["text"]}}]`},
-	{`DBFind(contracts, src_pos).Columns(id).Where("id >= 1 and id <= 3")
+	{`DBFind(contracts, src_pos).Columns(id).Where({id:[{$gte:1}, {$lte:3}]})
 		ForList(src_pos, Index: index){
 			Div(list-group-item) {
-				DBFind(parameters, src_hol).Columns(id).Where("id=#id#").Vars("ret")
+				DBFind(parameters, src_hol).Columns(id).Where({id: #id#}).Vars("ret")
 				SetVar(qq, #ret_id#)
-				Div(Body: #index# ForList=#id# DBFind=#ret_id# SetVar=#qq#)
+				Div(Body: #index# ForList=#id# DBFind=#ret_id# SetVar=#qq#)  
 			}
-		}`, `[{"tag":"dbfind","attr":{"columns":["id"],"data":[["1"],["2"],["3"]],"name":"contracts","source":"src_pos","types":["text"],"where":"id \u003e= 1 and id \u003c= 3"}},{"tag":"forlist","attr":{"index":"index","source":"src_pos"},"children":[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["1"]],"name":"parameters","source":"src_hol","types":["text"],"where":"id=1"}},{"tag":"div","children":[{"tag":"text","text":"1 ForList=1 DBFind=1 SetVar=1"}]}]},{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["2"]],"name":"parameters","source":"src_hol","types":["text"],"where":"id=2"}},{"tag":"div","children":[{"tag":"text","text":"2 ForList=2 DBFind=2 SetVar=2"}]}]},{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["3"]],"name":"parameters","source":"src_hol","types":["text"],"where":"id=3"}},{"tag":"div","children":[{"tag":"text","text":"3 ForList=3 DBFind=3 SetVar=3"}]}]}]}]`},
+		}`, `[{"tag":"dbfind","attr":{"columns":["id"],"data":[["1"],["2"],["3"]],"name":"contracts","source":"src_pos","types":["text"],"where":"{id:[{$gte:1}, {$lte:3}]}"}},{"tag":"forlist","attr":{"index":"index","source":"src_pos"},"children":[{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["1"]],"name":"parameters","source":"src_hol","types":["text"],"where":"{id: 1}"}},{"tag":"div","children":[{"tag":"text","text":"1 ForList=1 DBFind=1 SetVar=1"}]}]},{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["2"]],"name":"parameters","source":"src_hol","types":["text"],"where":"{id: 2}"}},{"tag":"div","children":[{"tag":"text","text":"2 ForList=2 DBFind=2 SetVar=2"}]}]},{"tag":"div","attr":{"class":"list-group-item"},"children":[{"tag":"dbfind","attr":{"columns":["id"],"data":[["3"]],"name":"parameters","source":"src_hol","types":["text"],"where":"{id: 3}"}},{"tag":"div","children":[{"tag":"text","text":"3 ForList=3 DBFind=3 SetVar=3"}]}]}]}]`},
 	{`Data(Source: mysrc, Columns: "startdate,enddate", Data:
 		2017-12-10 10:11,2017-12-12 12:13
 		2017-12-17 16:17,2017-12-15 14:15
 	).Custom(custom_id){
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #startdate#, Format: "YYYY-MM-DD HH:MI"))
 		SetVar(Name: vEndDate, Value: DateTime(DateTime: #enddate#, Format: "YYYY-MM-DD HH:MI"))
-		SetVar(Name: vCmpDate, Value: CmpTime(#vStartDate#,#vEndDate#))
+		SetVar(Name: vCmpDate, Value: CmpTime(#vStartDate#,#vEndDate#)) 
 		P(Body: #vStartDate# #vEndDate# #vCmpDate#)
 	}.Custom(custom_name){
 		P(Body: #vStartDate# #vEndDate# #vCmpDate#)
@@ -152,16 +154,16 @@ var forTest = tplList{
 		`[{"tag":"data","attr":{"columns":["startdate","enddate","custom_id","custom_name"],"data":[["2017-12-10 10:11","2017-12-12 12:13","[{"tag":"p","children":[{"tag":"text","text":"2017-12-10 10:11 2017-12-12 12:13 -1"}]}]","[{"tag":"p","children":[{"tag":"text","text":"2017-12-10 10:11 2017-12-12 12:13 -1"}]}]"],["2017-12-17 16:17","2017-12-15 14:15","[{"tag":"p","children":[{"tag":"text","text":"2017-12-17 16:17 2017-12-15 14:15 1"}]}]","[{"tag":"p","children":[{"tag":"text","text":"2017-12-17 16:17 2017-12-15 14:15 1"}]}]"]],"source":"mysrc","types":["text","text","tags","tags"]}}]`},
 	{`Strong(SysParam(commission_size))`,
 		`[{"tag":"strong","children":[{"tag":"text","text":"3"}]}]`},
-	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI"))
-		SetVar(Name: simple, Value: TestFunc(my value))
+	{`SetVar(Name: vDateNow, Value: Now("YYYY-MM-DD HH:MI")) 
+		SetVar(Name: simple, Value: TestFunc(my value)) 
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))
 		SetVar(Name: vCmpStartDate, Value: CmpTime(#vStartDate#,#vDateNow#))
 		Span(#vCmpStartDate# #simple#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"0 TestFunc(my value)"}]}]`},
 	{`Input(Type: text, Value: Now(MMYY))`,
 		`[{"tag":"input","attr":{"type":"text","value":"Now(MMYY)"}}]`},
-	{`Button(Body: LangRes(savex), Class: btn btn-primary, Contract: EditProfile,
-		Page:members_list,).Alert(Text: $want_save_changesx$,
+	{`Button(Body: LangRes(savex), Class: btn btn-primary, Contract: EditProfile, 
+		Page:members_list,).Alert(Text: $want_save_changesx$, 
 		ConfirmButton: $yesx$, CancelButton: $nox$, Icon: question)`,
 		`[{"tag":"button","attr":{"alert":{"cancelbutton":"$nox$","confirmbutton":"$yesx$","icon":"question","text":"$want_save_changesx$"},"class":"btn btn-primary","contract":"EditProfile","page":"members_list"},"children":[{"tag":"text","text":"savex"}]}]`},
 	{`Button(Body: button).Popup(Width: 100)`,
@@ -176,7 +178,7 @@ var forTest = tplList{
 		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1",""]],"source":"mygender","types":["text","text"]}}]`},
 	{`EcosysParam(new_table)`,
 		`[{"tag":"text","text":"ContractConditions("MainCondition")"}]`},
-	{`DBFind(pages,mypage).Columns("id,name,menu").Order(id).Vars(my)Strong(#my_menu#)`,
+	{`DBFind(pages,mypage).Columns([id, name, menu]).Order(id).Vars(my)Strong(#my_menu#)`,
 		`[{"tag":"dbfind","attr":{"columns":["id","name","menu"],"data":[["1","default_page","default_menu"]],"name":"pages","order":"id","source":"mypage","types":["text","text","text"]}},{"tag":"strong","children":[{"tag":"text","text":"default_menu"}]}]`},
 	{`SetVar(varZero, 0) If(#varZero#>0) { the varZero should be hidden }
 		SetVar(varNotZero, 1) If(#varNotZero#>0) { the varNotZero should be visible }
@@ -252,7 +254,7 @@ func TestCutoff(t *testing.T) {
 					ShortText string
 				}
 				action {
-					DBInsert("` + name + `", "name,long_text,short_text", "test", $LongText, $ShortText)
+					DBInsert("` + name + `", {name: "test", long_text: $LongText, short_text: $ShortText})
 				}
 			}
 		`},
@@ -356,7 +358,7 @@ func TestBinary(t *testing.T) {
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
-			`DBFind(Name: binaries, Src: mysrc).Where("app_id=1 AND member_id = #key_id# AND name = 'file'").Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
+			`DBFind(Name: binaries, Src: mysrc).Where({app_id:1, member_id:#key_id#, name: file}).Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
 			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type","img"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\",\\"title\\":\\"` + hashImage + `\\"}","` + hashImage + `","application/octet-stream","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text","tags"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
 		},
 		{
