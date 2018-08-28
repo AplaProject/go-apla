@@ -554,6 +554,18 @@ func TestVMCompile(t *testing.T) {
 			var par map
 			return CallContract("TestCyr", par) 
 		}`, `result`, `тест`},
+		{`contract MainCond {
+			conditions {
+				error $test
+			}
+			action {
+				$result = "OK"
+			}
+		}
+		func result() bool {
+			return MainCond
+		}
+		`, `result`, `unknown variable MainCond`},
 	}
 	vm := NewVM()
 	vm.Extern = true
