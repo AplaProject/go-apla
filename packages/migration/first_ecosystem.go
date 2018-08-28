@@ -200,7 +200,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"ecosystem" bigint NOT NULL DEFAULT '1'
 			);
 		  ALTER TABLE ONLY "1_sections" ADD CONSTRAINT "1_sections_pkey" PRIMARY KEY (id);
-		  CREATE INDEX "1_sections_index_ecossytem" ON "1_sections" (ecosystem);
+		  CREATE INDEX "1_sections_index_ecosystem" ON "1_sections" (ecosystem);
 	
 
 	DROP TABLE IF EXISTS "1_members";
