@@ -91,6 +91,21 @@ func TestJSON(t *testing.T) {
 
 var forTest = tplList{
 	{`SetVar(outer, [{"obj1_key1": "obj1_value1"},{"obj2_key2": "obj2_value2"}])
+	ArrayToSource(outer, #outer#, p1)`, `[{"tag":"arraytosource","attr":{"columns":["p1_key","p1_value"],"data":[["0","{\"obj1_key1\": \"obj1_value1\"}"],["1","{\"obj2_key2\": \"obj2_value2\"}"]],"prefix":"p1","source":"outer","types":["text","text"]}}]`},
+	{`SetVar(json, {"title": "Are you agree to send money?", "params": {"ggg1": "ggg2"}})
+	JsonToSource(src_json, #json#, a1)
+	
+	ForList(src_json){
+		If(#a1_key# == params){
+			JsonToSource(src_params, #a1_value#, a2)
+			Table(src_params)
+		}
+	}`, `[{"tag":"jsontosource","attr":{"columns":["a1_key","a1_value"],"data":[["params","{\"ggg1\":\"ggg2\"}"],["title","Are you agree to send money?"]],"prefix":"a1","source":"src_json","types":["text","text"]}},{"tag":"forlist","attr":{"source":"src_json"},"children":[{"tag":"jsontosource","attr":{"columns":["a2_key","a2_value"],"data":[["ggg1","ggg2"]],"prefix":"a2","source":"src_params","types":["text","text"]}},{"tag":"table","attr":{"source":"src_params"}}]}]`},
+	{`SetVar(json, {"title": "some text", "params": {"ggg1": "ggg2"}})
+	JsonToSource(src_params, #json#)
+	Table(src_params)
+	`, `[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["params","{\"ggg1\":\"ggg2\"}"],["title","some text"]],"source":"src_params","types":["text","text"]}},{"tag":"table","attr":{"source":"src_params"}}]`},
+	{`SetVar(outer, [{"obj1_key1": "obj1_value1"},{"obj2_key2": "obj2_value2"}])
 	ArrayToSource(outer, #outer#)
 	ForList(outer){
 		JsonToSource(inner, #value#)
@@ -156,7 +171,7 @@ var forTest = tplList{
 		Button(Body: Span(my#t#, class#t#), PageParams: name=Val(#t#val),Contract: con#t#, Params: "T1=v#t#").Alert(Icon: icon#t#, Text: Alert #t#)`, `[{"tag":"button","attr":{"alert":{"icon":"icon7","text":"Alert 7"},"contract":"con7","pageparams":{"name":{"params":["7val"],"type":"Val"}},"params":{"T1":{"text":"v7","type":"text"}}},"children":[{"tag":"span","attr":{"class":"class7"},"children":[{"tag":"text","text":"my7"}]}]}]`},
 	{`SetVar(json,{"p1":"v1", "p2":"v2"})JsonToSource(none, ["q","p"])JsonToSource(pv, #json#)
 	 JsonToSource(dat, {"param":"va lue", "obj": {"sub":"one"}, "arr":["one"], "empty": null})`,
-		`[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[],"source":"none","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["p1","v1"],["p2","v2"]],"source":"pv","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["arr","[one]"],["empty",""],["obj","map[sub:one]"],["param","va lue"]],"source":"dat","types":["text","text"]}}]`},
+		`[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[],"source":"none","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["p1","v1"],["p2","v2"]],"source":"pv","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["arr","[one]"],["empty",""],["obj","{\"sub\":\"one\"}"],["param","va lue"]],"source":"dat","types":["text","text"]}}]`},
 	{`SetVar(arr,[1, 2, 3])ArrayToSource(src2, #arr#)ArrayToSource(src1, ["q","p"])ArrayToSource(src1, {"k":"v"})`,
 		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","1"],["1","2"],["2","3"]],"source":"src2","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","q"],["1","p"]],"source":"src1","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[],"source":"src1","types":["text","text"]}}]`},
 	{`ArrayToSource(arr, [{"k1":"v1"},{"k2":"v2"}])ForList(arr){JsonToSource(json, #value#)}`,
