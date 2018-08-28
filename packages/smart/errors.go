@@ -24,6 +24,7 @@ import (
 const (
 	eContractLoop       = `There is loop in %s contract`
 	eContractExist      = `Contract %s already exists`
+	eContractNotFound   = `Contract %s has not been found`
 	eLatin              = `Name %s must only contain latin, digit and '_', '-' characters`
 	eAccessContract     = `%s can be only called from %s`
 	eColumnExist        = `column %s exists`

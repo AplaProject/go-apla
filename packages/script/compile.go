@@ -645,9 +645,6 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 
 // StateName checks the name of the contract and modifies it to @[state]name if it is necessary.
 func StateName(state uint32, name string) string {
-	if len(name) < 3 {
-		return name
-	}
 	if name[0] != '@' {
 		return fmt.Sprintf(`@%d%s`, state, name)
 	} else if name[1] < '0' || name[1] > '9' {
@@ -1311,6 +1308,9 @@ main:
 				}
 			}
 			if !call {
+				if objInfo.Type != ObjVar {
+					return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
+				}
 				cmd = &ByteCode{cmdVar, &VarInfo{objInfo, tobj}}
 			}
 		}
