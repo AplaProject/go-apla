@@ -476,12 +476,6 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		pars["value"] = value
 	}
 	if len(conditions) > 0 {
-		contract := fmt.Sprintf(`@%d%s`, ecosystemID, GetContractById(sc, id))
-		for _, cond := range getContractList(conditions) {
-			if script.StateName(uint32(ecosystemID), cond) == contract {
-				return fmt.Errorf(eContractLoop, contract)
-			}
-		}
 		pars["conditions"] = conditions
 	}
 	if len(walletID) > 0 {
