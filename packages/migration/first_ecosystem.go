@@ -211,7 +211,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"member_info"   jsonb,
 			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
-		ALTER TABLE ONLY "1_members" ADD CONSTRAINT "1_members_pkey" PRIMARY KEY ("id");
+		ALTER TABLE ONLY "1_members" ADD CONSTRAINT "1_members_pkey" PRIMARY KEY (ecosystem,id);
 		CREATE INDEX "1_members_index_ecosystem" ON "1_members" (ecosystem);
 
 
