@@ -13,7 +13,7 @@ func GetEcosystemScript() string {
 		menuDataSQL,
 		pagesDataSQL,
 		parametersDataSQL,
-		rolesDataSQL,
+		membersDataSQL,
 		sectionsDataSQL,
 		tablesDataSQL,
 		applicationsDataSQL,
