@@ -17,7 +17,10 @@ import (
 
 const keyConvention = "%s.%s"
 
-var ErrUnknownContext = errors.New("unknown writing operation context (block o/or hash empty)")
+var (
+	ErrUnknownContext   = errors.New("unknown writing operation context (block o/or hash empty)")
+	ErrRollbackDisabled = errors.New("rollback is disabled")
+)
 
 // metadataTx must be closed by calling Commit() or Rollback() when done
 type metadataTx struct {
@@ -45,18 +48,20 @@ func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value inte
 		return errors.Wrapf(err, "inserting Value %s to %s registry", value, registry.Name)
 	}
 
-	m.stateMu.RLock()
-	block := m.currentBlockHash
-	tx := m.currentTxHash
-	m.stateMu.RUnlock()
+	if m.rollback != nil {
+		m.stateMu.RLock()
+		block := m.currentBlockHash
+		tx := m.currentTxHash
+		m.stateMu.RUnlock()
 
-	if len(block) == 0 || len(tx) == 0 {
-		return ErrUnknownContext
-	}
+		if len(block) == 0 || len(tx) == 0 {
+			return ErrUnknownContext
+		}
 
-	err = m.rollback.saveState(block, tx, registry, pkValue, "")
-	if err != nil {
-		return errors.Wrapf(err, "saving rollback info")
+		err = m.rollback.saveState(block, tx, registry, pkValue, "")
+		if err != nil {
+			return errors.Wrapf(err, "saving rollback info")
+		}
 	}
 
 	return nil
@@ -189,22 +194,39 @@ func (m *metadataTx) endRead() error {
 }
 
 type metadataStorage struct {
-	db kv.Database
+	db       kv.Database
+	rollback bool
 }
 
-func NewMetadataStorage(db kv.Database, indexes []types.Index) types.MetadataRegistryStorage {
-	db.Begin(true).AddIndex(indexes...)
-	return &metadataStorage{
-		db: db,
+func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool) (types.MetadataRegistryStorage, error) {
+	if indexes != nil {
+		if err := db.Begin(true).AddIndex(indexes...); err != nil {
+			return nil, err
+		}
 	}
+
+	return &metadataStorage{
+		db:       db,
+		rollback: rollback,
+	}, nil
 }
 
 func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
 	databaseTx := m.db.Begin(true)
-	return &metadataTx{tx: databaseTx, rollback: &metadataRollback{tx: databaseTx, txCounter: make(map[string]uint64)}, durable: true}
+	tx := &metadataTx{tx: databaseTx, durable: true}
+
+	if m.rollback {
+		tx.rollback = &metadataRollback{tx: databaseTx, txCounter: make(map[string]uint64)}
+	}
+
+	return tx
 }
 
 func (m *metadataStorage) Rollback(block []byte) error {
+	if !m.rollback {
+		return ErrRollbackDisabled
+	}
+
 	databaseTx := m.db.Begin(true)
 	rollback := &metadataRollback{tx: databaseTx, txCounter: make(map[string]uint64)}
 

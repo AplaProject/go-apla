@@ -231,7 +231,11 @@ func Start() {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("starting memdb")
 		Exit(1)
 	}
-	model.MetadataRegistry = registry.NewMetadataStorage(&kv.DatabaseAdapter{Database: *metaDB}, model.GetIndexes())
+	model.MetadataRegistry, err = registry.NewMetadataStorage(&kv.DatabaseAdapter{Database: *metaDB}, model.GetIndexes(), true)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("adding indexes")
+		Exit(1)
+	}
 
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 

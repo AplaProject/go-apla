@@ -29,6 +29,5 @@ func (tx *TransactionAdapter) AddIndex(indexes ...types.Index) error {
 		)
 		idxes = append(idxes, memdbIndex)
 	}
-
 	return tx.Transaction.AddIndex(idxes...)
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/yddmat/memdb"
 )
@@ -76,7 +75,7 @@ func TestMetadataRollbackSaveRollback(t *testing.T) {
 
 	block := []byte("123")
 
-	for key, _ := range make([]int, 20) {
+	for key := range make([]int, 20) {
 		// Emulating new value in database
 		dbTx.Set(fmt.Sprintf(keyConvention, registry.Name, strconv.Itoa(key)), "{\"result\":\"blah\"")
 
@@ -99,33 +98,34 @@ func TestMetadataRollbackSaveRollback(t *testing.T) {
 	dbTx = db.Begin(false)
 
 	// We need to check that all previous states was saved to db
-	for key, _ := range make([]int, 20) {
+	for key := range make([]int, 20) {
 		tx := []byte(strconv.Itoa(key))
 		tx = append(tx, []byte("blah")...)
 
 		_, err := dbTx.Get(fmt.Sprintf(writePrefix, string(block), key+1, string(tx)))
 		require.Nil(t, err)
 	}
+	require.Nil(t, dbTx.Commit())
 
 	dbTx = db.Begin(true)
 	require.Nil(t, err)
-	mr = metadataRollback{tx: dbTx, txCounter: make(map[string]uint64)}
 
-	dbTx.AddIndex(kv.IndexAdapter{Index: *memdb.NewIndex("rollback", fmt.Sprintf(searchPrefix, "*", "*", "*"), func(a, b string) bool {
+	dbTx.AddIndex(types.Index{Name: "rollback", Registry: &types.Registry{Name: "rollback_tx"}, SortFn: func(a, b string) bool {
 		return true
-	})})
+	}})
 
+	mr = metadataRollback{tx: dbTx, txCounter: make(map[string]uint64)}
 	require.Nil(t, mr.rollbackState(block))
 
 	// We are checking that all values are now at the previous state
-	for key, _ := range make([]int, 20) {
+	for key := range make([]int, 20) {
 		// Emulating new value in database
 		value, err := dbTx.Get(fmt.Sprintf(keyConvention, registry.Name, strconv.Itoa(key)))
 		require.Nil(t, err)
 
 		got := teststruct{}
 		json.Unmarshal([]byte(value), &got)
-		assert.Equal(t, teststruct{
+		require.Equal(t, teststruct{
 			Key:    key,
 			Value1: "stringvalue" + strconv.Itoa(key),
 			Value2: make([]byte, 20),

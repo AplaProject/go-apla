@@ -109,6 +109,7 @@ PublicKey
 KeyID
 apla.pid
 config.toml
+packages/registry/test.db
 
 packages/static/
 public/

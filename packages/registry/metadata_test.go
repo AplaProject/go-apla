@@ -2,15 +2,12 @@ package registry_test
 
 import (
 	"encoding/json"
-	"testing"
-
-	"math/rand"
-
-	"strconv"
-
-	"time"
-
 	"fmt"
+	"math/rand"
+	"os"
+	"strconv"
+	"testing"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/registry"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
@@ -27,8 +24,13 @@ type testModel struct {
 	Field2 []byte
 }
 
-func newKvDB() (kv.Database, error) {
-	db, err := memdb.OpenDB("", false)
+func newKvDB(persist bool) (kv.Database, error) {
+	if persist {
+		if err := os.Remove("test.db"); err != nil {
+			return nil, err
+		}
+	}
+	db, err := memdb.OpenDB("test.db", persist)
 	if err != nil {
 		return nil, err
 	}
@@ -75,10 +77,12 @@ func TestMetadataTx_RW(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		db, err := newKvDB()
+		db, err := newKvDB(false)
 		require.Nil(t, err)
 
-		reg := registry.NewMetadataStorage(db, nil)
+		reg, err := registry.NewMetadataStorage(db, nil, true)
+		require.Nil(t, err)
+
 		metadataTx := reg.Begin()
 		metadataTx.SetBlockHash([]byte("123"))
 		metadataTx.SetTxHash([]byte("321"))
@@ -101,26 +105,34 @@ func TestMetadataTx_RW(t *testing.T) {
 }
 
 func TestMetadataTx_benchmark(t *testing.T) {
-	db, err := newKvDB()
+	rollbacks := false
+	persist := false
+	db, err := newKvDB(persist)
+	require.Nil(t, err)
+	fmt.Println("Database persistence:", persist)
+	fmt.Println("Rollbacks:", persist)
+
+	storage, err := registry.NewMetadataStorage(db, nil, rollbacks)
 	require.Nil(t, err)
 
-	storage := registry.NewMetadataStorage(db, nil)
 	metadataTx := storage.Begin()
-
 	type key struct {
 		ID        int64
 		PublicKey []byte
 		Amount    int64
 		Deleted   bool
 		Blocked   bool
+		Ecosystem int
 	}
 
 	reg := types.Registry{
 		Name: "key",
 	}
 
+	count := 100000
+
 	insertStart := time.Now()
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < count; i++ {
 		id := rand.Int63()
 		err := metadataTx.Insert(
 			&reg,
@@ -129,6 +141,7 @@ func TestMetadataTx_benchmark(t *testing.T) {
 				ID:        id,
 				PublicKey: make([]byte, 64),
 				Amount:    rand.Int63(),
+				Ecosystem: rand.Intn(10000),
 			},
 		)
 
@@ -140,33 +153,41 @@ func TestMetadataTx_benchmark(t *testing.T) {
 
 		require.Nil(t, err)
 	}
+	require.Nil(t, metadataTx.Commit())
+	fmt.Println("Inserted", count, "keys:", time.Since(insertStart))
 
-	metadataTx.AddIndex(types.Index{Name: "test", Registry: &types.Registry{Name: "keys"}, SortFn: func(a, b string) bool {
+	indexStart := time.Now()
+	metadataTx = storage.Begin()
+	metadataTx.AddIndex(types.Index{Name: "test", Registry: &types.Registry{Name: "key"}, SortFn: func(a, b string) bool {
 		return gjson.Get(a, "amount").Less(gjson.Get(b, "amount"), false)
 	}})
-
 	require.Nil(t, metadataTx.Commit())
-	fmt.Println("Inserted 10.000 keys in", time.Since(insertStart).Seconds())
+	fmt.Println("Creating and fill 'amount' index by", count, "keys:", time.Since(indexStart))
 
 	readonlyTx := storage.Reader()
-	walkingStart := time.Now()
 	var topAmount int64
+	ecosystem := 666
+	ecosystems := make(map[int]struct{})
+	walkingStart := time.Now()
 	require.Nil(t, readonlyTx.Walk(&reg, "test", func(jsonRow string) bool {
 		k := key{}
 		require.Nil(t, json.Unmarshal([]byte(jsonRow), &k))
-		if topAmount < k.Amount {
+		if k.Ecosystem == ecosystem && topAmount < k.Amount {
 			topAmount = k.Amount
 		}
+
+		ecosystems[k.Ecosystem] = struct{}{}
 		return true
 	}))
-	fmt.Println("Finded top amount of 10.000 keys", "in", time.Since(walkingStart))
+
+	fmt.Println("Finded top amount of", count, "keys (", len(ecosystems), "ecosystems ):", time.Since(walkingStart))
 
 	secondWriting := time.Now()
 	writeTx := storage.Begin()
 	writeTx.SetBlockHash([]byte("123"))
 	writeTx.SetTxHash([]byte("321"))
-	// Insert 10 more values
-	for i := -10; i < 0; i++ {
+	// Insert more values
+	for i := -count; i < 0; i++ {
 		id := rand.Int63()
 		err := writeTx.Insert(
 			&reg,
@@ -181,5 +202,5 @@ func TestMetadataTx_benchmark(t *testing.T) {
 		require.Nil(t, err)
 	}
 	require.Nil(t, writeTx.Commit())
-	fmt.Println("Inserted 10 keys to 10.000 in", time.Since(secondWriting))
+	fmt.Println("Inserted", count, "more keys ( with indexes ):", time.Since(secondWriting))
 }
