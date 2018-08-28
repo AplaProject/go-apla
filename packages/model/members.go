@@ -32,5 +32,5 @@ func (m *Member) Count() (count int64, err error) {
 
 // Get init m as member with ID
 func (m *Member) Get(id int64) (bool, error) {
-	return isFound(DBConn.Where("ecossytem=? and id = ?", m.ecosystem, id).First(m))
+	return isFound(DBConn.Where("ecosystem=? and id = ?", m.ecosystem, id).First(m))
 }
