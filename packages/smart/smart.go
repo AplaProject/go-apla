@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -52,15 +51,6 @@ type Contract struct {
 }
 
 const (
-	// CallInit is a flag for calling init function of the contract
-	CallInit = 0x01
-	// CallCondition is a flag for calling condition function of the contract
-	CallCondition = 0x02
-	// CallAction is a flag for calling action function of the contract
-	CallAction = 0x04
-	// CallRollback is a flag for calling rollback function of the contract
-	CallRollback = 0x08
-
 	// MaxPrice is a maximal value that price function can return
 	MaxPrice = 100000000000000000
 
@@ -886,7 +876,7 @@ func (sc *SmartContract) GetSignedBy(public []byte) (int64, error) {
 }
 
 // CallContract calls the contract functions according to the specified flags
-func (sc *SmartContract) CallContract(flags int) (string, error) {
+func (sc *SmartContract) CallContract() (string, error) {
 	var (
 		result                        string
 		err                           error
@@ -906,170 +896,147 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		return ``, err
 	}
 
-	methods := []string{`init`, `conditions`, `action`, `rollback`}
+	methods := []string{`conditions`, `action`}
 	sc.AppendStack(sc.TxContract.Name)
 	sc.VM = GetVM()
-	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 {
-		if !sc.VDE {
-			toID = sc.BlockData.KeyID
-			fromID = sc.TxSmart.KeyID
+
+	if !sc.VDE {
+		toID = sc.BlockData.KeyID
+		fromID = sc.TxSmart.KeyID
+	}
+	if len(sc.TxSmart.PublicKey) > 0 && string(sc.TxSmart.PublicKey) != `null` {
+		public = sc.TxSmart.PublicKey
+	}
+	wallet := &model.Key{}
+	wallet.SetTablePrefix(sc.TxSmart.EcosystemID)
+	signedBy, err := sc.GetSignedBy(public)
+	if err != nil {
+		return retError(err)
+	}
+	_, err = wallet.Get(signedBy)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
+		return retError(err)
+	}
+	if wallet.Deleted == 1 {
+		return retError(errDeletedKey)
+	}
+	if len(wallet.PublicKey) > 0 {
+		public = wallet.PublicKey
+	}
+	if sc.TxSmart.Type == 258 { // UpdFullNodes
+		node := syspar.GetNode(sc.TxSmart.KeyID)
+		if node == nil {
+			logger.WithFields(log.Fields{"user_id": sc.TxSmart.KeyID, "type": consts.NotFound}).Error("unknown node id")
+			return retError(errUnknownNodeID)
 		}
-		if len(sc.TxSmart.PublicKey) > 0 && string(sc.TxSmart.PublicKey) != `null` {
-			public = sc.TxSmart.PublicKey
+		public = node.PublicKey
+	}
+	if len(public) == 0 {
+		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty public key")
+		return retError(errEmptyPublicKey)
+	}
+	sc.PublicKeys = append(sc.PublicKeys, public)
+
+	var CheckSignResult bool
+	CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.BinSignatures, false)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("checking tx data sign")
+		return retError(err)
+	}
+	if !CheckSignResult {
+		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
+		return retError(errIncorrectSign)
+	}
+	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+		if sc.TxSmart.TokenEcosystem == 0 {
+			sc.TxSmart.TokenEcosystem = 1
 		}
-		wallet := &model.Key{}
-		wallet.SetTablePrefix(sc.TxSmart.EcosystemID)
-		signedBy, err := sc.GetSignedBy(public)
+		fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(sc.TxSmart.TokenEcosystem))
 		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting ecosystem fuel rate from string to decimal")
 			return retError(err)
 		}
-		_, err = wallet.Get(signedBy)
-		if err != nil {
+		if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
+			logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("Fuel rate must be greater than 0")
+			return retError(errFuelRate)
+		}
+		var payOver decimal.Decimal
+		if len(sc.TxSmart.PayOver) > 0 {
+			payOver, err = decimal.NewFromString(sc.TxSmart.PayOver)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
+				return retError(err)
+			}
+			fuelRate = fuelRate.Add(payOver)
+		}
+		isActive := sc.TxContract.Block.Info.(*script.ContractInfo).Owner.Active
+		if isActive {
+			fromID = sc.TxContract.Block.Info.(*script.ContractInfo).Owner.WalletID
+			sc.TxSmart.TokenEcosystem = sc.TxContract.Block.Info.(*script.ContractInfo).Owner.TokenID
+		} else if len(sc.TxSmart.PayOver) > 0 {
+			payOver, err = decimal.NewFromString(sc.TxSmart.PayOver)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
+				return retError(err)
+			}
+			fuelRate = fuelRate.Add(payOver)
+		}
+		payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
+		if found, err := payWallet.Get(fromID); err != nil || !found {
+			if !found {
+				return retError(errCurrentBalance)
+			}
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 			return retError(err)
 		}
-		if wallet.Deleted == 1 {
-			return retError(errDeletedKey)
+		if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
+			return retError(errDiffKeys)
 		}
-		if len(wallet.PublicKey) > 0 {
-			public = wallet.PublicKey
-		}
-		if sc.TxSmart.Type == 258 { // UpdFullNodes
-			node := syspar.GetNode(sc.TxSmart.KeyID)
-			if node == nil {
-				logger.WithFields(log.Fields{"user_id": sc.TxSmart.KeyID, "type": consts.NotFound}).Error("unknown node id")
-				return retError(errUnknownNodeID)
-			}
-			public = node.PublicKey
-		}
-		if len(public) == 0 {
-			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty public key")
-			return retError(errEmptyPublicKey)
-		}
-		sc.PublicKeys = append(sc.PublicKeys, public)
-
-		var CheckSignResult bool
-		CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.BinSignatures, false)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("checking tx data sign")
-			return retError(err)
-		}
-		if !CheckSignResult {
-			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
-			return retError(errIncorrectSign)
-		}
-		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
-			if sc.TxSmart.TokenEcosystem == 0 {
-				sc.TxSmart.TokenEcosystem = 1
-			}
-			fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(sc.TxSmart.TokenEcosystem))
+		var amount, maxpay decimal.Decimal
+		if len(payWallet.Amount) > 0 {
+			amount, err = decimal.NewFromString(payWallet.Amount)
 			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting ecosystem fuel rate from string to decimal")
+				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
 				return retError(err)
 			}
-			if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
-				logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("Fuel rate must be greater than 0")
-				return retError(errFuelRate)
-			}
-			var payOver decimal.Decimal
-			if len(sc.TxSmart.PayOver) > 0 {
-				payOver, err = decimal.NewFromString(sc.TxSmart.PayOver)
-				if err != nil {
-					log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
-					return retError(err)
-				}
-				fuelRate = fuelRate.Add(payOver)
-			}
-			isActive := sc.TxContract.Block.Info.(*script.ContractInfo).Owner.Active
-			if isActive {
-				fromID = sc.TxContract.Block.Info.(*script.ContractInfo).Owner.WalletID
-				sc.TxSmart.TokenEcosystem = sc.TxContract.Block.Info.(*script.ContractInfo).Owner.TokenID
-			} else if len(sc.TxSmart.PayOver) > 0 {
-				payOver, err = decimal.NewFromString(sc.TxSmart.PayOver)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
-					return retError(err)
-				}
-				fuelRate = fuelRate.Add(payOver)
-			}
-			payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
-			if found, err := payWallet.Get(fromID); err != nil || !found {
-				if !found {
-					return retError(errCurrentBalance)
-				}
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
+		} else {
+			amount = decimal.New(0, 0)
+		}
+		if len(payWallet.Maxpay) > 0 {
+			maxpay, err = decimal.NewFromString(payWallet.Maxpay)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Maxpay}).Error("converting pay wallet maxpay from string to decimal")
 				return retError(err)
 			}
-			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
-				return retError(errDiffKeys)
+		} else {
+			maxpay = decimal.New(0, 0)
+		}
+		if maxpay.GreaterThan(decimal.New(0, 0)) && maxpay.LessThan(amount) {
+			amount = maxpay
+		}
+		if priceName, ok := script.ContractPrices[sc.TxContract.Name]; ok {
+			price = SysParamInt(priceName)
+			if price > MaxPrice {
+				return retError(errMaxPrice)
 			}
-			var amount, maxpay decimal.Decimal
-			if len(payWallet.Amount) > 0 {
-				amount, err = decimal.NewFromString(payWallet.Amount)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
-					return retError(err)
-				}
-			} else {
-				amount = decimal.New(0, 0)
+			if price < 0 {
+				return retError(errNegPrice)
 			}
-			if len(payWallet.Maxpay) > 0 {
-				maxpay, err = decimal.NewFromString(payWallet.Maxpay)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Maxpay}).Error("converting pay wallet maxpay from string to decimal")
-					return retError(err)
-				}
-			} else {
-				maxpay = decimal.New(0, 0)
-			}
-			if maxpay.GreaterThan(decimal.New(0, 0)) && maxpay.LessThan(amount) {
-				amount = maxpay
-			}
-
-			if cprice := sc.TxContract.GetFunc(`price`); cprice != nil {
-				var ret []interface{}
-				if ret, err = VMRun(sc.VM, cprice, nil, sc.TxContract.Extend); err != nil {
-					return retError(err)
-				} else if len(ret) == 1 {
-					switch reflect.TypeOf(ret[0]).String() {
-					case `int64`:
-						price = ret[0].(int64)
-						if price > MaxPrice {
-							return retError(errMaxPrice)
-						}
-						if price < 0 {
-							return retError(errNegPrice)
-						}
-					case script.Decimal:
-						if ret[0].(decimal.Decimal).GreaterThan(decimal.New(MaxPrice, 0)) {
-							return retError(errMaxPrice)
-						}
-						if ret[0].(decimal.Decimal).LessThan(decimal.New(0, 0)) {
-							return retError(errNegPrice)
-						}
-						price = converter.StrToInt64(ret[0].(decimal.Decimal).String())
-					default:
-						logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong result type of price function")
-						return retError(errWrongPriceFunc)
-					}
-				} else {
-					logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong type of price function")
-					return retError(errWrongPriceFunc)
-				}
-			}
-			sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024
-			priceCost := decimal.New(price, 0)
-			if amount.LessThanOrEqual(priceCost.Mul(fuelRate)) {
-				logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")
-				return retError(errCurrentBalance)
-			}
-			maxCost := amount.Div(fuelRate).Floor()
-			fullCost := decimal.New((*sc.TxContract.Extend)[`txcost`].(int64), 0).Add(priceCost)
-			if maxCost.LessThan(fullCost) {
-				(*sc.TxContract.Extend)[`txcost`] = converter.StrToInt64(maxCost.String()) - price
-			}
+		}
+		sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024
+		priceCost := decimal.New(price, 0)
+		if amount.LessThanOrEqual(priceCost.Mul(fuelRate)) {
+			logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")
+			return retError(errCurrentBalance)
+		}
+		maxCost := amount.Div(fuelRate).Floor()
+		fullCost := decimal.New((*sc.TxContract.Extend)[`txcost`].(int64), 0).Add(priceCost)
+		if maxCost.LessThan(fullCost) {
+			(*sc.TxContract.Extend)[`txcost`] = converter.StrToInt64(maxCost.String()) - price
 		}
 	}
+
 	before := (*sc.TxContract.Extend)[`txcost`].(int64)
 
 	// Payment for the size
@@ -1084,18 +1051,16 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	(*sc.TxContract.Extend)[`this_contract`] = nameContract
 
 	sc.TxContract.FreeRequest = false
-	for i := uint32(0); i < 4; i++ {
-		if (flags & (1 << i)) > 0 {
-			cfunc := sc.TxContract.GetFunc(methods[i])
-			if cfunc == nil {
-				continue
-			}
-			sc.TxContract.Called = 1 << i
-			_, err = VMRun(sc.VM, cfunc, nil, sc.TxContract.Extend)
-			if err != nil {
-				price = 0
-				break
-			}
+	for i := uint32(0); i < 2; i++ {
+		cfunc := sc.TxContract.GetFunc(methods[i])
+		if cfunc == nil {
+			continue
+		}
+		sc.TxContract.Called = 1 << i
+		_, err = VMRun(sc.VM, cfunc, nil, sc.TxContract.Extend)
+		if err != nil {
+			price = 0
+			break
 		}
 	}
 	sc.TxFuel = before - (*sc.TxContract.Extend)[`txcost`].(int64)
@@ -1107,7 +1072,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 	}
 
-	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
 		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
 			err = ierr
 		}
