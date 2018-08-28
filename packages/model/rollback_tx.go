@@ -4,6 +4,7 @@ package model
 type RollbackTx struct {
 	ID        int64  `gorm:"primary_key;not null" json:"-"`
 	BlockID   int64  `gorm:"not null" json:"block_id"`
+	BlockHash []byte `gorm:"not null" json:"block_hash"`
 	TxHash    []byte `gorm:"not null" json:"tx_hash"`
 	NameTable string `gorm:"not null;size:255;column:table_name" json:"table_name"`
 	TableID   string `gorm:"not null;size:255" json:"table_id"`
@@ -49,6 +50,10 @@ func (rt *RollbackTx) DeleteByHashAndTableName(transaction *DbTransaction) error
 
 // Create is creating record of model
 func (rt *RollbackTx) Create(transaction *DbTransaction) error {
+	var err error
+	if rt.ID, err = GetNextID(transaction, (*rt).TableName()); err != nil {
+		return err
+	}
 	return GetDB(transaction).Create(rt).Error
 }
 

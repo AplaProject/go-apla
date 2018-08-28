@@ -18,6 +18,7 @@ package script
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 
@@ -66,6 +67,24 @@ func lenArray(par []interface{}) int64 {
 func Money(v interface{}) (ret decimal.Decimal) {
 	ret, _ = ValueToDecimal(v)
 	return ret
+}
+
+func outMap(v map[string]interface{}) string {
+	keys := make([]string, 0)
+	for key := range v {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	values := make([]string, 0, len(keys))
+	for _, key := range keys {
+		switch val := v[key].(type) {
+		case map[string]interface{}:
+			values = append(values, fmt.Sprintf(`"%v":%v`, key, outMap(val)))
+		default:
+			values = append(values, fmt.Sprintf(`"%v":%v`, key, val))
+		}
+	}
+	return `{` + strings.Join(values, ` `) + `}`
 }
 
 func TestVMCompile(t *testing.T) {
@@ -427,11 +446,119 @@ func TestVMCompile(t *testing.T) {
 				func result() string {
 					return Sprintf("ok=%d", long())
 					}`, `result`, `strconv.ParseInt: parsing "99999999999999999999": value out of range 99999999999999999999 [Ln:2 Col:34]`},
+		{`func result() string {
+			var i, result int
+			
+			if true {
+				if false {
+					result = 99
+				} else {
+					result = 5
+				}
+			}
+			if i == 1 {
+				result = 20
+			} elif i> 0 {
+				result = 30
+			} 
+			elif i == 0 
+			{
+				result = result + 50
+				if true {
+					i=10
+				}
+			} elif i==10 {
+				Println("3")
+				result = 0
+				i=33
+			} elif false {
+				Println("4")
+				result = 1
+			} 
+			else 
+			{
+				Println("5")
+				result = 2
+			}
+			if i == 4 {
+				result = result
+			} elif i == 20 {
+				result = 22
+			} else {
+				result = result + 23
+				i = 11
+			}
+			if i == 11 {
+				result = result + 7
+			} else {
+				result = 0
+			}
+			if result == 85 {
+				if false {
+					result = 1
+				} elif 0 {
+					result = 5
+				} elif 1 {
+					result = result + 10
+				}
+			}
+			if result == 10 {
+				result = 11
+			} elif result == 95 {
+				result = result + 1
+				if false {
+					result = 0
+				} elif true {
+					result = result + 4
+				}
+			}
+			return Sprintf("%d", result)
+		}
+		`, `result`, `100`},
+		{`func initerr string {
+			var my map
+			return {qqq
+		`, `initerr`, `unclosed map initialization`},
+		{`func initmap string {
+			var my, sub map
+			var list array
+			var i int
+			i = 256
+			var s string
+			$ext = "Ooops"
+			s = "Spain"
+			my = {conditions: "$Conditions"}
+			list = [0, i, {"item": i}, [$ext]]
+			sub = {"name": "John", "lastname": "Smith", myarr: []}
+			my = {qqq: 10, "22": "MY STRING", /* comment*/ "float": 1.2, "ext": $ext,
+			"in": true, "var": i, sub: sub, "Company": {"Name": "Ltd", Country: s, 
+				Arr: [s, 20, "finish"]}}
+			return outMap(my) + Sprintf("%v", list)
+		}`, `initmap`, `{"22":MY STRING "Company":{"Arr":[Spain 20 finish] "Country":Spain "Name":Ltd} "ext":Ooops "float":1.2 "in":true "qqq":10 "sub":{"lastname":Smith "myarr":[] "name":John} "var":256}[0 256 map[item:256] [Ooops]]`},
+		{`func test() string {
+			var where map
+			where["name"] = {"$in": "menus_names"}
+			return Sprintf("%v", where)
+		 }`, `test`, `map[name:map[$in:menus_names]]`},
+		{`contract TestCyr {
+			data {}
+			conditions { }
+			action {
+			   //тест
+			   var a map
+			   a["тест"] = "тест"
+			   $result = a["тест"]
+			}
+		}
+		func result() string {
+			var par map
+			return CallContract("TestCyr", par) 
+		}`, `result`, `тест`},
 	}
 	vm := NewVM()
 	vm.Extern = true
 	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
-		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray,
+		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray, "outMap": outMap,
 		"str": str, "Money": Money, "Replace": strings.Replace}, nil})
 
 	for ikey, item := range test {

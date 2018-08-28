@@ -42,8 +42,9 @@ import (
 )
 
 const (
-	jwtPrefix = "Bearer "
-	jwtExpire = 36000 // By default, seconds
+	jwtPrefix    = "Bearer "
+	jwtExpire    = 36000  // By default, seconds
+	multipartBuf = 100000 // the buffer size for ParseMultipartForm
 )
 
 type apiData struct {
@@ -163,6 +164,7 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 // DefaultHandler is a common handle function for api requests
 func DefaultHandler(method, pattern string, params map[string]int, handlers ...apiHandle) hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
+		r.ParseMultipartForm(multipartBuf)
 		counterName := statsd.APIRouteCounterName(method, pattern)
 		statsd.Client.Inc(counterName+statsd.Count, 1, 1.0)
 		startTime := time.Now()
@@ -289,9 +291,7 @@ func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (in
 		}
 	}
 	prefix := converter.Int64ToStr(ecosystemID)
-	// if data.vde {
-	// 	prefix += `_vde`
-	// }
+
 	return ecosystemID, prefix, nil
 }
 

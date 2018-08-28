@@ -1,14 +1,13 @@
 package cmd
 
 import (
-	"errors"
 	"io/ioutil"
 	"path/filepath"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/tcpserver"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/network"
+	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -17,8 +16,6 @@ import (
 var (
 	addrsForStopping        []string
 	stopNetworkCertFilepath string
-
-	errNotAccepted = errors.New("Not accepted")
 )
 
 // stopNetworkCmd represents the stopNetworkCmd command
@@ -33,13 +30,13 @@ var stopNetworkCmd = &cobra.Command{
 			log.WithFields(log.Fields{"error": err, "type": consts.IOError, "filepath": fp}).Fatal("Reading cert data")
 		}
 
-		req := &tcpserver.StopNetworkRequest{
+		req := &network.StopNetworkRequest{
 			Data: stopNetworkCert,
 		}
 
 		errCount := 0
 		for _, addr := range addrsForStopping {
-			if err := sendStopNetworkCert(addr, req); err != nil {
+			if err := tcpclient.SendStopNetwork(addr, req); err != nil {
 				log.WithFields(log.Fields{"error": err, "type": consts.NetworkError, "addr": addr}).Errorf("Sending request")
 				errCount++
 				continue
@@ -53,33 +50,6 @@ var stopNetworkCmd = &cobra.Command{
 			"failed":     errCount,
 		}).Info("Complete")
 	},
-}
-
-func sendStopNetworkCert(addr string, req *tcpserver.StopNetworkRequest) error {
-	conn, err := utils.TCPConn(addr)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
-	if err = tcpserver.SendRequestType(tcpserver.RequestTypeStopNetwork, conn); err != nil {
-		return err
-	}
-
-	if err = tcpserver.SendRequest(req, conn); err != nil {
-		return err
-	}
-
-	res := &tcpserver.StopNetworkResponse{}
-	if err = tcpserver.ReadRequest(res, conn); err != nil {
-		return err
-	}
-
-	if len(res.Hash) != consts.HashSize {
-		return errNotAccepted
-	}
-
-	return nil
 }
 
 func init() {

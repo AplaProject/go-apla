@@ -7,7 +7,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 
@@ -27,10 +29,13 @@ const (
 	dropOwnedTemplate  = `DROP OWNED BY %s CASCADE`
 	dropDBRoleTemplate = `DROP ROLE IF EXISTS %s`
 	commandTemplate    = `%s start --config=%s`
+
+	alreadyExistsErrorTemplate = `vde '%s' already exists`
 )
 
 var (
-	errWrongMode = errors.New("node must be running as VDEMaster")
+	errWrongMode        = errors.New("node must be running as VDEMaster")
+	errIncorrectVDEName = errors.New("the name cannot begit with a number and must contain alphabetical symbols and numbers")
 )
 
 // VDEManager struct
@@ -59,6 +64,23 @@ func prepareWorkDir() (string, error) {
 
 // CreateVDE creates one instance of VDE
 func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) error {
+	if err := checkVDEName(name); err != nil {
+		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Error("on check VDE name")
+		return errIncorrectVDEName
+	}
+
+	var err error
+	var cancelChain []func()
+
+	defer func() {
+		if err == nil {
+			return
+		}
+
+		for _, cancelFunc := range cancelChain {
+			cancelFunc()
+		}
+	}()
 
 	config := ChildVDEConfig{
 		Executable:     mgr.execPath,
@@ -68,6 +90,8 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 		DBPassword:     dbPassword,
 		ConfigFileName: consts.DefaultConfigFile,
 		HTTPPort:       port,
+		LogTo:          fmt.Sprintf("%s_%s", name, conf.Config.Log.LogTo),
+		LogLevel:       conf.Config.Log.LogLevel,
 	}
 
 	if mgr.processes == nil {
@@ -75,28 +99,43 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 		return errWrongMode
 	}
 
-	if err := mgr.createVDEDB(name, dbUser, dbPassword); err != nil {
+	if err = mgr.createVDEDB(name, dbUser, dbPassword); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on creating VDE DB")
+		return fmt.Errorf(alreadyExistsErrorTemplate, name)
+	}
+
+	cancelChain = append(cancelChain, func() {
+		dropDb(name, dbUser)
+	})
+
+	dirPath := path.Join(mgr.childConfigsPath, name)
+	if directoryExists(dirPath) {
+		err = fmt.Errorf(alreadyExistsErrorTemplate, name)
+		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err, "dirPath": dirPath}).Error("on check directory")
 		return err
 	}
 
-	if err := mgr.initVDEDir(name); err != nil {
+	if err = mgr.initVDEDir(name); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "DirName": name, "error": err}).Error("on init VDE dir")
 		return err
 	}
 
+	cancelChain = append(cancelChain, func() {
+		dropVDEDir(mgr.childConfigsPath, name)
+	})
+
 	cmd := config.configCommand()
-	if err := cmd.Run(); err != nil {
+	if err = cmd.Run(); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "args": cmd.Args}).Error("on run config command")
 		return err
 	}
 
-	if err := config.generateKeysCommand().Run(); err != nil {
+	if err = config.generateKeysCommand().Run(); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "args": cmd.Args}).Error("on run generateKeys command")
 		return err
 	}
 
-	if err := config.initDBCommand().Run(); err != nil {
+	if err = config.initDBCommand().Run(); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "args": cmd.Args}).Error("on run initDB command")
 		return err
 	}
@@ -129,6 +168,26 @@ func (mgr *VDEManager) ListProcess() (map[string]string, error) {
 	return list, nil
 }
 
+func (mgr *VDEManager) ListProcessWithPorts() (map[string]string, error) {
+	list, err := mgr.ListProcess()
+	if err != nil {
+		return list, err
+	}
+
+	for name, status := range list {
+		path := path.Join(mgr.childConfigsPath, name, consts.DefaultConfigFile)
+		c := &conf.GlobalConfig{}
+		if err := conf.LoadConfigToVar(path, c); err != nil {
+			log.WithFields(log.Fields{"type": "dbError", "error": err, "path": path}).Warn("on loading child VDE config")
+			continue
+		}
+
+		list[name] = fmt.Sprintf("%s %d", status, c.HTTP.Port)
+	}
+
+	return list, err
+}
+
 // DeleteVDE stop VDE process and remove VDE folder
 func (mgr *VDEManager) DeleteVDE(name string) error {
 
@@ -138,24 +197,17 @@ func (mgr *VDEManager) DeleteVDE(name string) error {
 	}
 
 	mgr.StopVDE(name)
-
+	mgr.processes.Remove(name)
 	vdeDir := path.Join(mgr.childConfigsPath, name)
 	vdeConfigPath := filepath.Join(vdeDir, consts.DefaultConfigFile)
 	vdeConfig, err := conf.GetConfigFromPath(vdeConfigPath)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Errorf("Getting config from path %s", vdeConfigPath)
-		return err
+		return fmt.Errorf(`VDE '%s' is not exists`, name)
 	}
 
 	time.Sleep(1 * time.Second)
-	if err := model.DropDatabase(vdeConfig.DB.Name); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Deleting vde db")
-		return err
-	}
-
-	dropVDERoleQuery := fmt.Sprintf(dropDBRoleTemplate, vdeConfig.DB.User)
-	if err := model.DBConn.Exec(dropVDERoleQuery).Error; err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Deleting vde db user")
+	if err := dropDb(vdeConfig.DB.Name, vdeConfig.DB.User); err != nil {
 		return err
 	}
 
@@ -228,6 +280,11 @@ func (mgr *VDEManager) createVDEDB(vdeName, login, pass string) error {
 
 	if err := model.DBConn.Exec(fmt.Sprintf(createDBTemplate, vdeName, login)).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE DB")
+
+		if err := model.GetDB(nil).Exec(fmt.Sprintf(dropDBRoleTemplate, login)).Error; err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "role": login}).Error("on deleting vde role")
+			return err
+		}
 		return err
 	}
 
@@ -287,4 +344,59 @@ func InitVDEManager() {
 			proc.Start(true)
 		}
 	}
+}
+
+func dropDb(name, role string) error {
+	if err := model.DropDatabase(name); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "db_name": name}).Error("Deleting vde db")
+		return err
+	}
+
+	if err := model.GetDB(nil).Exec(fmt.Sprintf(dropDBRoleTemplate, role)).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "role": role}).Error("on deleting vde role")
+	}
+	return nil
+}
+
+func dropVDEDir(configsPath, vdeName string) error {
+	path := path.Join(configsPath, vdeName)
+	if directoryExists(path) {
+		os.RemoveAll(path)
+	}
+
+	log.WithFields(log.Fields{"path": path}).Error("droping dir is not exists")
+	return nil
+}
+
+func directoryExists(path string) bool {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func checkVDEName(name string) error {
+
+	name = strings.ToLower(name)
+
+	for i, c := range name {
+		if unicode.IsDigit(c) && i == 0 {
+			return fmt.Errorf("the name cannot begin with a number")
+		}
+		if !unicode.IsDigit(c) && !unicode.Is(unicode.Latin, c) {
+			return fmt.Errorf("Incorrect symbol")
+		}
+	}
+
+	return nil
+}
+
+func (mgr *VDEManager) configByName(name string) (*conf.GlobalConfig, error) {
+	path := path.Join(mgr.childConfigsPath)
+	c := &conf.GlobalConfig{}
+	err := conf.LoadConfigToVar(path, c)
+	return c, err
 }

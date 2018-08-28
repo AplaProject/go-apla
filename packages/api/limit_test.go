@@ -43,7 +43,7 @@ func TestLimit(t *testing.T) {
 		conditions {
 		}
 		action {
-		   DBInsert("tbl` + rnd + `", "name, block", $Num, $block) 
+		   DBInsert("tbl` + rnd + `", {name: $Num, block: $block}) 
 		}
 	}`}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))

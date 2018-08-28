@@ -58,6 +58,7 @@ const (
 	isRPar   = 0x2901 // )
 	isComma  = 0x2c01 // ,
 	isDot    = 0x2e01 // .
+	isColon  = 0x3a01 // :
 	isEq     = 0x3d01 // =
 	isLCurly = 0x7b01 // {
 	isRCurly = 0x7d01 // }
@@ -90,6 +91,7 @@ const (
 	keyFunc
 	keyReturn
 	keyIf
+	keyElif
 	keyElse
 	keyWhile
 	keyTrue
@@ -117,8 +119,9 @@ const (
 var (
 	// The list of key words
 	keywords = map[string]uint32{`contract`: keyContract, `func`: keyFunc, `return`: keyReturn,
-		`if`: keyIf, `else`: keyElse, msgError: keyError, msgWarning: keyWarning, msgInfo: keyInfo,
-		`while`: keyWhile, `data`: keyTX, `settings`: keySettings, `nil`: keyNil, `action`: keyAction, `conditions`: keyCond,
+		`if`: keyIf, `elif`: keyElif, `else`: keyElse, msgError: keyError, msgWarning: keyWarning,
+		msgInfo: keyInfo, `while`: keyWhile, `data`: keyTX, `settings`: keySettings, `nil`: keyNil,
+		`action`: keyAction, `conditions`: keyCond,
 		`true`: keyTrue, `false`: keyFalse, `break`: keyBreak, `continue`: keyContinue,
 		`var`: keyVar, `...`: keyTail}
 	// list of available types
@@ -141,6 +144,12 @@ type Lexem struct {
 // GetLogger returns logger
 func (l Lexem) GetLogger() *log.Entry {
 	return log.WithFields(log.Fields{"lex_type": l.Type, "lex_line": l.Line, "lex_column": l.Column})
+}
+
+type ifBuf struct {
+	count int
+	pair  int
+	stop  bool
 }
 
 // Lexems is a slice of lexems
@@ -177,6 +186,7 @@ func lexParser(input []rune) (Lexems, error) {
 	length = uint32(len(input)) + 1
 	line = 1
 	skip := false
+	ifbuf := make([]ifBuf, 0)
 	for off < length {
 		// Here we go through the symbols one by one
 		if off == length-1 {
@@ -206,6 +216,18 @@ func lexParser(input []rune) (Lexems, error) {
 			if (flags & lexfNext) != 0 {
 				right++
 			}
+			if len(ifbuf) > 0 && ifbuf[len(ifbuf)-1].stop && lexID != lexNewLine {
+				name := string(input[lexOff:right])
+				if name != `else` && name != `elif` {
+					for i := 0; i < ifbuf[len(ifbuf)-1].count; i++ {
+						lexems = append(lexems, &Lexem{lexSys | (uint32('}') << 8),
+							uint32('}'), line, lexOff - offline + 1})
+					}
+					ifbuf = ifbuf[:len(ifbuf)-1]
+				} else {
+					ifbuf[len(ifbuf)-1].stop = false
+				}
+			}
 			var value interface{}
 			switch lexID {
 			case lexNewLine:
@@ -217,11 +239,23 @@ func lexParser(input []rune) (Lexems, error) {
 				ch := uint32(input[lexOff])
 				lexID |= ch << 8
 				value = ch
+				if len(ifbuf) > 0 {
+					if ch == '{' {
+						ifbuf[len(ifbuf)-1].pair++
+					}
+					if ch == '}' {
+						ifbuf[len(ifbuf)-1].pair--
+						if ifbuf[len(ifbuf)-1].pair == 0 {
+							ifbuf[len(ifbuf)-1].stop = true
+						}
+					}
+				}
 			case lexString, lexComment:
 				value = string(input[lexOff+1 : right-1])
 				if lexID == lexString && skip {
 					skip = false
 					value = strings.Replace(value.(string), `\"`, `"`, -1)
+					value = strings.Replace(value.(string), `\t`, "\t", -1)
 					value = strings.Replace(strings.Replace(value.(string), `\r`, "\r", -1), `\n`, "\n", -1)
 				}
 				for i, ch := range value.(string) {
@@ -255,6 +289,19 @@ func lexParser(input []rune) (Lexems, error) {
 					value = name[1:]
 				} else if keyID, ok := keywords[name]; ok {
 					switch keyID {
+					case keyIf:
+						ifbuf = append(ifbuf, ifBuf{})
+						lexID = lexKeyword | (keyID << 8)
+						value = keyID
+					case keyElif:
+						if len(ifbuf) > 0 {
+							lexems = append(lexems, &Lexem{lexKeyword | (keyElse << 8),
+								uint32(keyElse), line, lexOff - offline + 1},
+								&Lexem{lexSys | ('{' << 8), uint32('{'), line, lexOff - offline + 1})
+							lexID = lexKeyword | (keyIf << 8)
+							value = uint32(keyIf)
+							ifbuf[len(ifbuf)-1].count++
+						}
 					case keyAction, keyCond:
 						if len(lexems) > 0 {
 							lexf := *lexems[len(lexems)-1]

@@ -31,7 +31,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
@@ -52,8 +51,6 @@ var (
 	CancelFunc context.CancelFunc
 	// DaemonsCount is number of daemons
 	DaemonsCount int
-
-	ErrNodesUnavailable = errors.New("All nodes unvailabale")
 )
 
 // GetHTTPTextAnswer returns HTTP answer as a string
@@ -229,6 +226,16 @@ func TypeInt(txType string) int64 {
 	return 0
 }
 
+// GetCurrentDir returns the current directory
+func GetCurrentDir() string {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warning("getting current dir")
+		return "."
+	}
+	return dir
+}
+
 // TCPConn connects to the address
 func TCPConn(Addr string) (net.Conn, error) {
 	conn, err := net.DialTimeout("tcp", Addr, consts.TCPConnTimeout)
@@ -239,16 +246,6 @@ func TCPConn(Addr string) (net.Conn, error) {
 	conn.SetReadDeadline(time.Now().Add(consts.READ_TIMEOUT * time.Second))
 	conn.SetWriteDeadline(time.Now().Add(consts.WRITE_TIMEOUT * time.Second))
 	return conn, nil
-}
-
-// GetCurrentDir returns the current directory
-func GetCurrentDir() string {
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warning("getting current dir")
-		return "."
-	}
-	return dir
 }
 
 // GetBlocksBody is retrieving `blocksCount` blocks bodies starting with blockID and puts them in the channel
@@ -378,91 +375,6 @@ func GetNodeKeys() (string, string, error) {
 	return string(nprivkey), hex.EncodeToString(npubkey), nil
 }
 
-// best host is a host with the biggest last block ID
-func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (string, int64, error) {
-	maxBlockID := int64(-1)
-	var bestHost string
-
-	type blockAndHost struct {
-		host    string
-		blockID int64
-		err     error
-	}
-	c := make(chan blockAndHost, len(hosts))
-
-	ShuffleSlice(hosts)
-
-	var wg sync.WaitGroup
-	for _, h := range hosts {
-		if ctx.Err() != nil {
-			logger.WithFields(log.Fields{"error": ctx.Err(), "type": consts.ContextError}).Error("context error")
-			return "", maxBlockID, ctx.Err()
-		}
-
-		wg.Add(1)
-
-		go func(host string) {
-			blockID, err := GetHostBlockID(host, logger)
-			wg.Done()
-
-			c <- blockAndHost{
-				host:    host,
-				blockID: blockID,
-				err:     err,
-			}
-		}(GetHostPort(h))
-	}
-	wg.Wait()
-
-	var errCount int
-	for i := 0; i < len(hosts); i++ {
-		bl := <-c
-
-		if bl.err != nil {
-			errCount++
-			continue
-		}
-
-		// If blockID is maximal then the current host is the best
-		if bl.blockID > maxBlockID {
-			maxBlockID = bl.blockID
-			bestHost = bl.host
-		}
-	}
-
-	if errCount == len(hosts) {
-		return "", 0, ErrNodesUnavailable
-	}
-
-	return bestHost, maxBlockID, nil
-}
-
-func GetHostBlockID(host string, logger *log.Entry) (int64, error) {
-	conn, err := TCPConn(host)
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Debug("error connecting to host")
-		return 0, err
-	}
-	defer conn.Close()
-
-	// get max block request
-	_, err = conn.Write(converter.DecToBin(consts.DATA_TYPE_MAX_BLOCK_ID, 2))
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("writing max block id to host")
-		return 0, err
-	}
-
-	// response
-	blockIDBin := make([]byte, 4)
-	_, err = conn.Read(blockIDBin)
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("reading max block id from host")
-		return 0, err
-	}
-
-	return converter.BinToDec(blockIDBin), nil
-}
-
 func GetHostPort(h string) string {
 	if strings.Contains(h, ":") {
 		return h
@@ -495,7 +407,7 @@ func LockOrDie(dir string) *flock.Flock {
 }
 
 func ShuffleSlice(slice []string) {
-	for i, _ := range slice {
+	for i := range slice {
 		j := rand.Intn(i + 1)
 		slice[i], slice[j] = slice[j], slice[i]
 	}
@@ -514,4 +426,13 @@ func MakeDirectory(dir string) error {
 		return err
 	}
 	return nil
+}
+
+func StringInSlice(slice []string, v string) bool {
+	for _, item := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
 }

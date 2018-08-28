@@ -58,4 +58,7 @@ const (
 	VDEManagerError          = "VDEManagerError"
 	QueueError               = "QueueError"
 	LevelDBError             = "LevelDBError"
+	TCPClientError           = "TCPClientError"
+	BadTxError               = "BadTxError"
+	TimeCalcError            = "BlockTimeCounterError"
 )

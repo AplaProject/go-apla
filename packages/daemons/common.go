@@ -112,7 +112,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.
 }
 
 // StartDaemons starts daemons
-func StartDaemons() {
+func StartDaemons(ctx context.Context) {
 	go WaitStopTime()
 
 	daemonsTable := make(map[string]string)
@@ -126,9 +126,9 @@ func StartDaemons() {
 		}
 	}()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	utils.CancelFunc = cancel
-	utils.ReturnCh = make(chan string)
+	// ctx, cancel := context.WithCancel(context.Background())
+	// utils.CancelFunc = cancel
+	// utils.ReturnCh = make(chan string)
 
 	daemonsToStart := getDaemonsToStart()
 	if conf.Config.TestRollBack {

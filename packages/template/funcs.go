@@ -33,6 +33,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/language"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -47,12 +48,12 @@ type Composite struct {
 var (
 	funcs = make(map[string]tplFunc)
 	tails = make(map[string]forTails)
-	modes = [][]rune{{'(', ')'}, {'{', '}'}}
+	modes = [][]rune{{'(', ')'}, {'{', '}'}, {'[', ']'}}
 )
 
 func init() {
 	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
-	funcs[`AddToolButton`] = tplFunc{defaultTag, defaultTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
+	funcs[`AddToolButton`] = tplFunc{defaultTailTag, defaultTailTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
 	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
 	funcs[`AppParam`] = tplFunc{appparTag, defaultTag, `apppar`, `Name,App,Index,Source`}
 	funcs[`Calculate`] = tplFunc{calculateTag, defaultTag, `calculate`, `Exp,Type,Prec`}
@@ -63,10 +64,9 @@ func init() {
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
-	funcs[`GetContractHistory`] = tplFunc{getContractHistoryTag, defaultTag, `getcontracthistory`, `Source,Id`}
-	funcs[`GetMenuHistory`] = tplFunc{getMenuHistoryTag, defaultTag, `getmenuhistory`, `Source,Id`}
-	funcs[`GetBlockHistory`] = tplFunc{getBlockHistoryTag, defaultTag, `getblockhistory`, `Source,Id`}
-	funcs[`GetPageHistory`] = tplFunc{getPageHistoryTag, defaultTag, `getpagehistory`, `Source,Id`}
+	funcs[`GetHistory`] = tplFunc{getHistoryTag, defaultTag, `gethistory`,
+		`Source,Name,Id,RollbackId`}
+	funcs[`Hint`] = tplFunc{defaultTag, defaultTag, `hint`, `Icon,Title,Text`}
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
 	funcs[`JsonToSource`] = tplFunc{jsontosourceTag, defaultTag, `jsontosource`, `Source,Data`}
@@ -107,6 +107,9 @@ func init() {
 	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID"}
 	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
 
+	tails[`addtoolbutton`] = forTails{map[string]tailInfo{
+		`Popup`: {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
+	}}
 	tails[`button`] = forTails{map[string]tailInfo{
 		`Alert`:             {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
 		`Popup`:             {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
@@ -173,7 +176,8 @@ func init() {
 		`Validate`: {tplFunc{validateTag, validateFull, `validate`, `*`}, false},
 	}}
 	tails[`binary`] = forTails{map[string]tailInfo{
-		`ById`: {tplFunc{tailTag, defaultTailFull, `id`, `id`}, false},
+		`ById`:      {tplFunc{tailTag, defaultTailFull, `id`, `id`}, false},
+		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `ecosystem`}, false},
 	}}
 }
 
@@ -274,8 +278,18 @@ func forlistTag(par parFunc) (ret string) {
 				}
 			}
 		}
-		body := macroReplace((*par.Pars)[`Data`], &vals)
-		process(body, &root, par.Workspace)
+		for key, item := range vals {
+			(*par.Workspace.Vars)[key] = item
+		}
+		process((*par.Pars)[`Data`], &root, par.Workspace)
+		for _, item := range root.Children {
+			if item.Tag == `text` {
+				item.Text = macroReplace(item.Text, par.Workspace.Vars)
+			}
+		}
+		for key := range vals {
+			delete(*par.Workspace.Vars, key)
+		}
 	}
 	par.Node.Children = root.Children
 	par.Owner.Children = append(par.Owner.Children, par.Node)
@@ -339,9 +353,7 @@ func ecosysparTag(par parFunc) string {
 		return ``
 	}
 	prefix := (*par.Workspace.Vars)[`ecosystem_id`]
-	if par.Workspace.SmartContract.VDE {
-		prefix += `_vde`
-	}
+
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(prefix)
 	parameterName := macro((*par.Pars)[`Name`], par.Workspace.Vars)
@@ -514,11 +526,12 @@ func dataTag(par parFunc) string {
 
 func dbfindTag(par parFunc) string {
 	var (
-		fields string
-		state  int64
-		err    error
-		perm   map[string]string
-		offset string
+		inColumns interface{}
+		columns   []string
+		state     int64
+		err       error
+		perm      map[string]string
+		offset    string
 
 		cutoffColumns   = make(map[string]bool)
 		extendedColumns = make(map[string]string)
@@ -534,21 +547,44 @@ func dbfindTag(par parFunc) string {
 	limit := 25
 
 	if par.Node.Attr[`columns`] != nil {
-		fields = converter.Escape(par.Node.Attr[`columns`].(string))
+		fields := par.Node.Attr[`columns`].(string)
+		if strings.HasPrefix(fields, `[`) {
+			inColumns, _ = parseObject([]rune(fields))
+		} else {
+			inColumns = fields
+		}
 	}
-	if len(fields) == 0 {
-		fields = `*`
+	columns, err = smart.GetColumns(inColumns)
+	if err != nil {
+		return err.Error()
 	}
-	fields = strings.ToLower(fields)
 	if par.Node.Attr[`where`] != nil {
-		where = smart.PrepareWhere(` where ` +
-			converter.Escape(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
+		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
+		if strings.HasPrefix(where, `{`) {
+			inWhere, _ := parseObject([]rune(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
+			where, err = smart.GetWhere(inWhere.(map[string]interface{}))
+			if err != nil {
+				return err.Error()
+			}
+		} else if len(where) > 0 {
+			return errWhere.Error()
+		}
 	}
 	if par.Node.Attr[`whereid`] != nil {
-		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
+		where = fmt.Sprintf(` id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
 	}
 	if par.Node.Attr[`order`] != nil {
-		order = ` order by ` + converter.EscapeName(macro(par.Node.Attr[`order`].(string), par.Workspace.Vars))
+		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
+		if strings.HasPrefix(order, `[`) || strings.HasPrefix(order, `{`) {
+			inColumns, _ = parseObject([]rune(order))
+		} else {
+			inColumns = order
+		}
+		order, err = smart.GetOrder(inColumns)
+		if err != nil {
+			return err.Error()
+		}
+		order = ` order by ` + order
 	}
 	if par.Node.Attr[`limit`] != nil {
 		limit = converter.StrToInt(par.Node.Attr[`limit`].(string))
@@ -588,25 +624,23 @@ func dbfindTag(par parFunc) string {
 	}
 	columnNames := make([]string, 0)
 
-	if fields != "*" {
-		if !strings.Contains(fields, "id") {
-			fields += ",id"
-		}
-		columnNames = strings.Split(fields, ",")
-		fields = smart.PrepareColumns(fields)
-		queryColumns = strings.Split(fields, ",")
-	} else {
+	perm, err = sc.AccessTablePerm(tblname, `read`)
+	if err != nil || sc.AccessColumns(tblname, &columns, false) != nil {
+		return `Access denied`
+	}
+
+	if utils.StringInSlice(columns, `*`) {
 		for _, col := range rows {
 			queryColumns = append(queryColumns, col["column_name"])
 			columnNames = append(columnNames, col["column_name"])
 		}
-	}
-
-	if sc.VDE {
-		perm, err = sc.AccessTablePerm(tblname, `read`)
-		if err != nil || sc.AccessColumns(tblname, &queryColumns, false) != nil {
-			return `Access denied`
+	} else {
+		if !utils.StringInSlice(columns, `id`) {
+			columns = append(columns, `id`)
 		}
+		columnNames = make([]string, len(columns))
+		copy(columnNames, columns)
+		queryColumns = strings.Split(smart.PrepareColumns(columns), ",")
 	}
 
 	for i, col := range queryColumns {
@@ -623,7 +657,11 @@ func dbfindTag(par parFunc) string {
 			break
 		}
 	}
-	fields = strings.Join(queryColumns, ", ")
+	for i, field := range queryColumns {
+		if !strings.ContainsAny(field, `:.>"`) {
+			queryColumns[i] = `"` + field + `"`
+		}
+	}
 	for i, key := range columnNames {
 		if strings.Contains(key, `->`) {
 			columnNames[i] = strings.Replace(key, `->`, `.`, -1)
@@ -632,7 +670,7 @@ func dbfindTag(par parFunc) string {
 	}
 	if par.Node.Attr[`countvar`] != nil {
 		var count int64
-		err = model.GetDB(nil).Table(tblname).Where(strings.Replace(where, `where`, ``, 1)).Count(&count).Error
+		err = model.GetDB(nil).Table(tblname).Where(where).Count(&count).Error
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table in DBFind")
 		}
@@ -641,7 +679,11 @@ func dbfindTag(par parFunc) string {
 		(*par.Workspace.Vars)[par.Node.Attr[`countvar`].(string)] = countStr
 		delete(par.Node.Attr, `countvar`)
 	}
-	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order+offset, limit)
+	if len(where) > 0 {
+		where = ` where ` + where
+	}
+	list, err := model.GetAll(`select `+strings.Join(queryColumns, `, `)+` from "`+tblname+`"`+
+		where+order+offset, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
@@ -723,7 +765,7 @@ func dbfindTag(par parFunc) string {
 		}
 		data = append(data, row)
 	}
-	if sc.VDE && perm != nil && len(perm[`filter`]) > 0 {
+	if perm != nil && len(perm[`filter`]) > 0 {
 		result := make([]interface{}, len(data))
 		for i, item := range data {
 			row := make(map[string]string)
@@ -1010,6 +1052,7 @@ func dateTimeTag(par parFunc) string {
 	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
+	value := datetime
 	defTime := `1970-01-01T00:00:00`
 	lenTime := len(datetime)
 	if lenTime < len(defTime) {
@@ -1017,7 +1060,12 @@ func dateTimeTag(par parFunc) string {
 	}
 	itime, err := time.Parse(`2006-01-02T15:04:05`, strings.Replace(datetime[:19], ` `, `T`, -1))
 	if err != nil {
-		return err.Error()
+		unix := converter.StrToInt64(value)
+		if unix > 0 {
+			itime = time.Unix(unix, 0)
+		} else {
+			return err.Error()
+		}
 	}
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
@@ -1179,14 +1227,13 @@ func imageTag(par parFunc) string {
 
 func binaryTag(par parFunc) string {
 	var ecosystemID string
+
+	defaultTail(par, `binary`)
 	if par.Node.Attr[`ecosystem`] != nil {
 		ecosystemID = par.Node.Attr[`ecosystem`].(string)
 	} else {
 		ecosystemID = (*par.Workspace.Vars)[`ecosystem_id`]
 	}
-
-	defaultTail(par, `binary`)
-
 	binary := &model.Binary{}
 	binary.SetTablePrefix(ecosystemID)
 
@@ -1233,11 +1280,18 @@ func columntypeTag(par parFunc) string {
 	return ``
 }
 
-func getHistoryTag(par parFunc, table string) string {
+func getHistoryTag(par parFunc) string {
 	setAllAttr(par)
-
-	list, err := smart.GetHistory(nil, converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]),
-		table, converter.StrToInt64(macro((*par.Pars)[`Id`], par.Workspace.Vars)))
+	var rollID int64
+	if len((*par.Pars)["RollbackId"]) > 0 {
+		rollID = converter.StrToInt64(macro((*par.Pars)[`RollbackId`], par.Workspace.Vars))
+	}
+	if len((*par.Pars)["Name"]) == 0 {
+		return ``
+	}
+	table := macro((*par.Pars)["Name"], par.Workspace.Vars)
+	list, err := smart.GetHistoryRaw(nil, converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]),
+		table, converter.StrToInt64(macro((*par.Pars)[`Id`], par.Workspace.Vars)), rollID)
 	if err != nil {
 		return err.Error()
 	}
@@ -1270,20 +1324,4 @@ func getHistoryTag(par parFunc, table string) string {
 	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
 	return ``
-}
-
-func getContractHistoryTag(par parFunc) string {
-	return getHistoryTag(par, `contracts`)
-}
-
-func getBlockHistoryTag(par parFunc) string {
-	return getHistoryTag(par, `blocks`)
-}
-
-func getMenuHistoryTag(par parFunc) string {
-	return getHistoryTag(par, `menu`)
-}
-
-func getPageHistoryTag(par parFunc) string {
-	return getHistoryTag(par, `pages`)
 }

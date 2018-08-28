@@ -10,7 +10,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 )
 
 var updatingEndWhilePaused = make(chan struct{})
@@ -28,11 +28,11 @@ func NewNodeRelevanceService(availableBlockchainGap int64, checkingInterval time
 }
 
 // Run is starting node monitoring
-func (n *NodeRelevanceService) Run() {
+func (n *NodeRelevanceService) Run(ctx context.Context) {
 	go func() {
 		log.Info("Node relevance monitoring started")
 		for {
-			relevance, err := n.checkNodeRelevance()
+			relevance, err := n.checkNodeRelevance(ctx)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.BCRelevanceError, "err": err}).Error("checking blockchain relevance")
 				return
@@ -64,7 +64,7 @@ func NodeDoneUpdatingBlockchain() {
 	}()
 }
 
-func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
+func (n *NodeRelevanceService) checkNodeRelevance(ctx context.Context) (relevant bool, err error) {
 	curBlock, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "err": err}).Error("retrieving last block from db")
@@ -81,11 +81,9 @@ func (n *NodeRelevanceService) checkNodeRelevance() (relevant bool, err error) {
 		return true, nil
 	}
 
-	ctx, _ := context.WithCancel(context.Background())
-	_, maxBlockID, err := utils.ChooseBestHost(ctx, remoteHosts, &log.Entry{Logger: &log.Logger{}})
+	_, maxBlockID, err := tcpclient.HostWithMaxBlock(ctx, remoteHosts)
 	if err != nil {
-		if err == utils.ErrNodesUnavailable {
-			log.WithFields(log.Fields{"hosts": remoteHosts}).Info("can't connect to others, stopping node relevance")
+		if err == tcpclient.ErrNodesUnavailable {
 			return false, nil
 		}
 		return false, errors.Wrapf(err, "choosing best host")

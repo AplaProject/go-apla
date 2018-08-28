@@ -21,7 +21,7 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "0.1.6b13"
+const VERSION = "0.9.4"
 
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
@@ -93,6 +93,8 @@ const AvailableBCGap = 4
 
 const DefaultNodesConnectDelay = 6
 
+const MaxTXAttempt = 10
+
 const (
 	TxTypeFirstBlock  = 1
 	TxTypeStopNetwork = 2
@@ -109,6 +111,9 @@ var TxTypes = map[int]string{
 
 // ApiPath is the beginning of the api url
 var ApiPath = `/api/v2/`
+
+// BuildInfo should be defined through -ldflags
+var BuildInfo string
 
 // DefaultConfigFile name of config file (toml format)
 const DefaultConfigFile = "config.toml"

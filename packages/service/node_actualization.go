@@ -11,7 +11,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 )
 
 // DefaultBlockchainGap is default value for the number of lagging blocks
@@ -28,11 +28,16 @@ func NewNodeActualizer(availableBlockchainGap int64) NodeActualizer {
 }
 
 // Run is starting node monitoring
-func (n *NodeActualizer) Run() {
+func (n *NodeActualizer) Run(ctx context.Context) {
 	go func() {
 		log.Info("Node Actualizer monitoring starting")
 		for {
-			actual, err := n.checkBlockchainActuality()
+			if ctx.Err() != nil {
+				log.WithFields(log.Fields{"error": ctx.Err(), "type": consts.ContextError}).Error("context error")
+				return
+			}
+
+			actual, err := n.checkBlockchainActuality(ctx)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.BCActualizationError, "err": err}).Error("checking blockchain actuality")
 				return
@@ -48,20 +53,20 @@ func (n *NodeActualizer) Run() {
 				n.resumeNodeActivity()
 			}
 
-			time.Sleep(time.Minute * 5)
+			time.Sleep(time.Second * 5)
 		}
 	}()
 }
 
-func (n *NodeActualizer) checkBlockchainActuality() (bool, error) {
+func (n *NodeActualizer) checkBlockchainActuality(ctx context.Context) (bool, error) {
 	block, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		return false, err
 	}
 
 	remoteHosts := syspar.GetRemoteHosts()
-	ctx, _ := context.WithCancel(context.Background())
-	_, maxBlockID, err := utils.ChooseBestHost(ctx, remoteHosts, &log.Entry{Logger: &log.Logger{}})
+
+	_, maxBlockID, err := tcpclient.HostWithMaxBlock(ctx, remoteHosts)
 	if err != nil {
 		return false, errors.Wrapf(err, "choosing best host")
 	}

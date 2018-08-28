@@ -105,6 +105,18 @@ func IncrementTxAttemptCount(hash []byte) error {
 	return SetTransaction(hash, tx)
 }
 
+func DecrementTxAttemptCount(hash []byte) error {
+	tx, found, err := GetTransaction(hash)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return nil
+	}
+	tx.Attempts -= 1
+	return SetTransaction(hash, tx)
+}
+
 // BuildTransaction creates transaction
 func BuildTransaction(smartTx tx.SmartContract, privKey, pubKey string, params ...string) error {
 	signPrms := []string{smartTx.ForSign()}

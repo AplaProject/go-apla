@@ -1,0 +1,146 @@
+// +prop AppID = 1
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract ImportUpload {
+    data {
+        input_file string "file"
+    }
+    func ReplaceValue(s string) string {
+        s = Replace(s, "#ecosystem_id#", "#IMPORT_ECOSYSTEM_ID#")
+        s = Replace(s, "#key_id#", "#IMPORT_KEY_ID#")
+        s = Replace(s, "#isMobile#", "#IMPORT_ISMOBILE#")
+        s = Replace(s, "#role_id#", "#IMPORT_ROLE_ID#")
+        s = Replace(s, "#ecosystem_name#", "#IMPORT_ECOSYSTEM_NAME#")
+        s = Replace(s, "#app_id#", "#IMPORT_APP_ID#")
+        return s
+    }
+
+    conditions {
+        $input_file = BytesToString($input_file)
+        $input_file = ReplaceValue($input_file)
+        $limit = 5 // data piece size of import
+
+        // init buffer_data, cleaning old buffer
+        var initJson map
+        $import_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import"}).One("id")
+        if $import_id {
+            $import_id = Int($import_id)
+            DBUpdate("buffer_data", $import_id, {"value": initJson})
+        } else {
+            $import_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import",
+                 "value": initJson})
+        }
+
+        $info_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import_info"}).One("id")
+        if $info_id {
+            $info_id = Int($info_id)
+            DBUpdate("buffer_data", $info_id, {"value": initJson})
+        } else {
+            $info_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import_info",
+            "value": initJson})
+        }
+    }
+
+    action {
+        var input map
+        input = JSONDecode($input_file)
+        var arr_data array
+        arr_data = input["data"]
+
+        var pages_arr, blocks_arr, menu_arr, parameters_arr, languages_arr, contracts_arr, tables_arr array
+
+        // import info
+        var i int
+        while i<Len(arr_data){
+            var tmp_object map
+            tmp_object = arr_data[i]
+
+            if tmp_object["Type"] == "pages" {
+                pages_arr = Append(pages_arr, Str(tmp_object["Name"]))
+            }
+            if tmp_object["Type"] == "blocks" {
+                blocks_arr = Append(blocks_arr, Str(tmp_object["Name"]))
+            }
+            if tmp_object["Type"] == "menu" {
+                menu_arr = Append(menu_arr, Str(tmp_object["Name"]))
+            }
+            if tmp_object["Type"] == "app_params" {
+                parameters_arr = Append(parameters_arr, Str(tmp_object["Name"]))
+            }
+            if tmp_object["Type"] == "languages" {
+                languages_arr = Append(languages_arr, Str(tmp_object["Name"]))
+            }
+            if tmp_object["Type"] == "contracts" {
+                contracts_arr = Append(contracts_arr, Str(tmp_object["Name"]))
+            }
+            if tmp_object["Type"] == "tables" {
+                tables_arr = Append(tables_arr, Str(tmp_object["Name"]))
+            }
+
+            i = i + 1
+        }
+
+        var info_map map
+        info_map["app_name"] = input["name"]
+        info_map["pages"] = Join(pages_arr, ", ")
+        info_map["pages_count"] = Len(pages_arr)
+        info_map["blocks"] = Join(blocks_arr, ", ")
+        info_map["blocks_count"] = Len(blocks_arr)
+        info_map["menu"] = Join(menu_arr, ", ")
+        info_map["menu_count"] = Len(menu_arr)
+        info_map["parameters"] = Join(parameters_arr, ", ")
+        info_map["parameters_count"] = Len(parameters_arr)
+        info_map["languages"] = Join(languages_arr, ", ")
+        info_map["languages_count"] = Len(languages_arr)
+        info_map["contracts"] = Join(contracts_arr, ", ")
+        info_map["contracts_count"] = Len(contracts_arr)
+        info_map["tables"] = Join(tables_arr, ", ")
+        info_map["tables_count"] = Len(tables_arr)
+
+        if 0 == Len(pages_arr) + Len(blocks_arr) + Len(menu_arr) + Len(parameters_arr) + Len(languages_arr) + Len(contracts_arr) + Len(tables_arr) {
+            warning "Invalid or empty import file"
+        }
+
+        // import data
+        // the contracts is imported in one piece, the rest is cut under the $limit, a crutch to bypass the error when you import dependent contracts in different pieces
+        i=0
+        var sliced contracts array, arr_data_len int
+        arr_data_len = Len(arr_data)
+        while i <arr_data_len{
+            var part array, l int, tmp map
+            while l < $limit && (i+l < arr_data_len) {
+                tmp = arr_data[i+l]
+                if tmp["Type"] == "contracts" {
+                    contracts = Append(contracts, tmp)
+                }else{
+                    part = Append(part, tmp)
+                }
+                l=l+1
+            }
+            var batch map
+            batch["Data"] = JSONEncode(part)
+            sliced = Append(sliced, batch)
+            i=i+$limit
+        }
+        if Len(contracts) > 0{
+            var batch map
+            batch["Data"] = JSONEncode(contracts)
+            sliced = Append(sliced, batch)
+        }
+        input["data"] = sliced
+
+        // storing
+        DBUpdate("buffer_data", $import_id, {"value": input})
+        DBUpdate("buffer_data", $info_id, {"value": info_map})
+
+        var app_id int
+        var ival string
+        ival =  Str(input["name"])
+        app_id = DBFind("applications").Columns("id").Where({name:ival}).One("id")
+
+        if !app_id {
+            var val string
+            val = Str(input["name"])
+            DBInsert("applications", {"name": val, "conditions": "true"})
+        }
+    }
+}

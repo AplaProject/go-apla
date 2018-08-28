@@ -19,7 +19,6 @@ package smart
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -29,6 +28,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -42,11 +43,10 @@ type Contract struct {
 	Name          string
 	Called        uint32
 	FreeRequest   bool
-	TxPrice       int64   // custom price for citizens
 	TxGovAccount  int64   // state wallet
 	EGSRate       float64 // money/EGS rate
 	TableAccounts string
-	StackCont     []string // Stack of called contracts
+	StackCont     []interface{} // Stack of called contracts
 	Extend        *map[string]interface{}
 	Block         *script.Block
 }
@@ -61,25 +61,17 @@ const (
 	// CallRollback is a flag for calling rollback function of the contract
 	CallRollback = 0x08
 
+	// MaxPrice is a maximal value that price function can return
 	MaxPrice = 100000000000000000
+
+	CallDelayedContract = "@1CallDelayedContract"
+	NewUserContract     = "@1NewUser"
+	NewBadBlockContract = "@1NewBadBlock"
 )
 
 var (
 	smartVM   *script.VM
 	smartTest = make(map[string]string)
-
-	ErrCurrentBalance = errors.New(`current balance is not enough`)
-	ErrDeletedKey     = errors.New(`The key is deleted`)
-	ErrDiffKeys       = errors.New(`Contract and user public keys are different`)
-	ErrEmptyPublicKey = errors.New(`empty public key`)
-	ErrFounderAccount = errors.New(`Unknown founder account`)
-	ErrFuelRate       = errors.New(`Fuel rate must be greater than 0`)
-	ErrIncorrectSign  = errors.New(`incorrect sign`)
-	ErrInvalidValue   = errors.New(`Invalid value`)
-	ErrUnknownNodeID  = errors.New(`Unknown node id`)
-	ErrWrongPriceFunc = errors.New(`Wrong type of price function`)
-	ErrNegPrice       = errors.New(`Price value is negative`)
-	ErrMaxPrice       = errors.New(fmt.Sprintf(`Price value is more than %d`, MaxPrice))
 )
 
 func testValue(name string, v ...interface{}) {
@@ -290,9 +282,8 @@ func ActivateContract(tblid, state int64, active bool) {
 
 // SetContractWallet changes WalletID of the contract in smartVM
 func SetContractWallet(sc *SmartContract, tblid, state int64, wallet int64) error {
-	if sc.TxContract.Name != `@1EditContract` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("SetContractWallet can be only called from @1EditContract")
-		return fmt.Errorf(`SetContractWallet can be only called from @1EditContract`)
+	if err := validateAccess(`SetContractWallet`, sc, nEditContract); err != nil {
+		return err
 	}
 	for i, item := range smartVM.Block.Children {
 		if item != nil && item.Type == script.ObjContract {
@@ -332,8 +323,7 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 func LoadContracts(transaction *model.DbTransaction) error {
 	ecosystemsIds, err := model.GetAllSystemStatesIDs()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting ids from ecosystems")
-		return err
+		return logErrorDB(err, "selecting ids from ecosystems")
 	}
 
 	defer ExternOff()
@@ -353,9 +343,9 @@ func LoadContracts(transaction *model.DbTransaction) error {
 }
 
 func LoadSysFuncs(vm *script.VM, state int) error {
-	code := `func DBFind(table string).Columns(columns string).Where(where string, params ...)
+	code := `func DBFind(table string).Columns(columns string).Where(where map)
 	.WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
-   return DBSelect(table, columns, id, order, offset, limit, ecosystem, where, params)
+   return DBSelect(table, columns, id, order, offset, limit, ecosystem, where)
 }
 
 func One(list array, name string) string {
@@ -403,11 +393,11 @@ func Row(list array) map {
    return ret
 }
 
-func DBRow(table string).Columns(columns string).Where(where string, params ...)
+func DBRow(table string).Columns(columns string).Where(where map)
    .WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
    
    var result array
-   result = DBFind(table).Columns(columns).Where(where, params...).WhereId(id).Order(order).Ecosystem(ecosystem)
+   result = DBFind(table).Columns(columns).Where(where).WhereId(id).Order(order).Ecosystem(ecosystem)
 
    var row map
    if Len(result) > 0 {
@@ -438,15 +428,13 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
 	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting all transactions from contracts")
-		return err
+		return logErrorDB(err, "selecting all transactions from contracts")
 	}
 	state := uint32(converter.StrToInt64(prefix))
 	LoadSysFuncs(smartVM, int(state))
 	for _, item := range contracts {
 		list, err := script.ContractsList(item[`value`])
 		if err != nil {
-			log.WithFields(log.Fields{"contract": item["name"], "error": err}).Error("Getting ContractsList")
 			return err
 		}
 		names := strings.Join(list, `,`)
@@ -458,12 +446,10 @@ func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 			TokenID:  converter.StrToInt64(item[`token_id`]),
 		}
 		if err = Compile(item[`value`], &owner); err != nil {
-			log.WithFields(log.Fields{"type": consts.EvalError, "names": names, "error": err}).Error("Load Contract")
-		} else {
-			log.WithFields(log.Fields{"contract_name": names, "contract_id": item["id"], "contract_active": item["active"]}).Info("OK Loading Contract")
+			logErrorValue(err, consts.EvalError, "Load Contract", names)
 		}
 	}
-	LoadVDEContracts(transaction, prefix)
+
 	return
 }
 
@@ -492,7 +478,6 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	for _, item := range contracts {
 		list, err := script.ContractsList(item[`value`])
 		if err != nil {
-			log.WithFields(log.Fields{"error": err}).Error("Getting ContractsList")
 			return err
 		}
 		names := strings.Join(list, `,`)
@@ -505,9 +490,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 		}
 
 		if err = vmCompile(vm, item[`value`], &owner); err != nil {
-			log.WithFields(log.Fields{"names": names, "error": err}).Error("Load VDE Contract")
-		} else {
-			log.WithFields(log.Fields{"names": names, "contract_id": item["id"]}).Info("OK Load VDE Contract")
+			logErrorValue(err, consts.EvalError, "Load VDE Contract", names)
 		}
 	}
 
@@ -542,6 +525,7 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`original_contract`: ``,
 		`this_contract`:     ``,
 		`role_id`:           head.RoleID,
+		`guest_key`:         vde.GuestKey,
 	}
 
 	for key, val := range sc.TxData {
@@ -555,10 +539,6 @@ func PrefixName(table string) (prefix, name string) {
 	name = table
 	if off := strings.IndexByte(table, '_'); off > 0 && table[0] >= '0' && table[0] <= '9' {
 		prefix = table[:off]
-		if strings.HasPrefix(table[off+1:], `vde_`) {
-			prefix += `_vde`
-			off += 4
-		}
 		name = table[off+1:]
 	}
 	return
@@ -587,9 +567,9 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 		tablePermission map[string]string
 	)
 	logger := sc.GetLogger()
-
+	isRead := action == `read`
 	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
-		if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
+		if isRead || sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return tablePermission, nil
 		}
 		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
@@ -600,7 +580,10 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 		logger.WithFields(log.Fields{"table": table, "error": err, "type": consts.DBError}).Error("checking custom table")
 		return tablePermission, err
 	} else if !isCustom {
-		return tablePermission, fmt.Errorf(table + ` is not a custom table`)
+		if isRead {
+			return tablePermission, nil
+		}
+		return tablePermission, fmt.Errorf(eNotCustomTable, table)
 	}
 
 	prefix, name := PrefixName(table)
@@ -635,18 +618,11 @@ func (sc *SmartContract) AccessTable(table, action string) error {
 
 func getPermColumns(input string) (perm permColumn, err error) {
 	if strings.HasPrefix(input, `{`) {
-		if err = json.Unmarshal([]byte(input), &perm); err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "source": input}).Error("on perm columns")
-		}
+		err = unmarshalJSON([]byte(input), &perm, `on perm columns`)
 	} else {
 		perm.Update = input
 	}
 	return
-}
-
-type colAccess struct {
-	ok       bool
-	original string
 }
 
 // AccessColumns checks access rights to the columns
@@ -673,65 +649,80 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 		return err
 	}
 	if !found {
+		if !update {
+			return nil
+		}
 		return fmt.Errorf(eTableNotFound, table)
 	}
 	var cols map[string]string
-	// Every item of checkColumns has 'ok' boolean value. If it equals false then the key-column
-	// doesn't have read/update access rights.
-	checkColumns := make(map[string]colAccess)
 	err = json.Unmarshal([]byte(tables.Columns), &cols)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("getting table columns")
 		return err
 	}
+	colNames := make([]string, 0, len(*columns))
 	for _, col := range *columns {
-		colname := converter.Sanitize(col, `*->`)
+		if col == `*` {
+			for column := range cols {
+				colNames = append(colNames, column)
+			}
+			continue
+		}
+		colNames = append(colNames, col)
+	}
+
+	colList := make([]string, len(colNames))
+	for i, col := range colNames {
+		colname := converter.Sanitize(col, `->`)
 		if strings.Contains(colname, `->`) {
 			colname = colname[:strings.Index(colname, `->`)]
 		}
-		if !update && colname == `*` {
-			for column := range cols {
-				checkColumns[column] = colAccess{true, column}
-			}
-			break
-		}
-		checkColumns[colname] = colAccess{true, colname}
+		colList[i] = colname
 	}
-	_, isall := checkColumns[`*`]
-	for column, cond := range cols {
-		if ca, ok := checkColumns[column]; (!ok || !ca.ok) && !isall {
+	checked := make(map[string]bool)
+	var notaccess bool
+	for i, name := range colList {
+		if status, ok := checked[name]; ok {
+			if !status {
+				colList[i] = ``
+			}
 			continue
 		}
-		perm, err := getPermColumns(cond)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting access columns")
-			return err
-		}
-		if update {
-			cond = perm.Update
-		} else {
-			cond = perm.Read
-		}
+		cond := cols[name]
 		if len(cond) > 0 {
-			ret, err := sc.EvalIf(cond)
+			perm, err := getPermColumns(cond)
 			if err != nil {
-				logger.WithFields(log.Fields{"condition": cond, "column": column,
-					"type": consts.EvalError}).Error("evaluating condition")
+				logger.WithFields(log.Fields{"type": consts.InvalidObject, "error": err}).Error("getting access columns")
 				return err
 			}
-			if !ret {
-				if update {
-					return errAccessDenied
+			if update {
+				cond = perm.Update
+			} else {
+				cond = perm.Read
+			}
+			if len(cond) > 0 {
+				ret, err := sc.EvalIf(cond)
+				if err != nil {
+					logger.WithFields(log.Fields{"condition": cond, "column": name,
+						"type": consts.EvalError}).Error("evaluating condition")
+					return err
 				}
-				checkColumns[column] = colAccess{false, ``}
+				checked[name] = ret
+				if !ret {
+					if update {
+						return errAccessDenied
+					}
+					colList[i] = ``
+					notaccess = true
+				}
 			}
 		}
 	}
-	if !update {
+	if !update && notaccess {
 		retColumn := make([]string, 0)
-		for key, val := range checkColumns {
-			if val.ok && key != `*` {
-				retColumn = append(retColumn, val.original)
+		for i, val := range colList {
+			if val != `` {
+				retColumn = append(retColumn, colNames[i])
 			}
 		}
 		if len(retColumn) == 0 {
@@ -746,9 +737,6 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 func (sc *SmartContract) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameter{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if sc.VDE {
-		prefix += `_vde`
-	}
 
 	sp.SetTablePrefix(prefix)
 	_, err := sp.Get(sc.DbTransaction, condition)
@@ -768,7 +756,7 @@ func (sc *SmartContract) AccessRights(condition string, iscondition bool) error 
 			return errAccessDenied
 		}
 	} else {
-		return fmt.Errorf(`There is not %s in parameters`, condition)
+		return fmt.Errorf(eNotCondition, condition)
 	}
 	return nil
 }
@@ -802,6 +790,99 @@ func (sc *SmartContract) GetContractLimit() (ret int64) {
 		sc.TxCost = script.CostDefault // fuel
 	}
 	return sc.TxCost
+}
+
+func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.Key,
+	fromID, toID int64) error {
+	logger := sc.GetLogger()
+
+	apl := sc.TxUsedCost.Mul(fuelRate)
+
+	wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
+	if ierr != nil {
+		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": ierr, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
+		return ierr
+	}
+	if wltAmount.Cmp(apl) < 0 {
+		apl = wltAmount
+	}
+
+	commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
+	walletTable := model.KeyTableName(sc.TxSmart.TokenEcosystem)
+	historyTable := model.HistoryTableName(sc.TxSmart.TokenEcosystem)
+	comment := fmt.Sprintf("Commission for execution of %s contract", sc.TxContract.Name)
+	fromIDString := converter.Int64ToStr(fromID)
+
+	payCommission := func(toID string, sum decimal.Decimal) error {
+		_, _, err := sc.update(
+			[]string{"+amount"}, []interface{}{sum}, walletTable, "id", toID)
+		if err != nil {
+			return err
+		}
+
+		_, _, err = sc.insert(
+			[]string{"sender_id", "recipient_id", "amount", "comment", "block_id", "txhash"},
+			[]interface{}{fromIDString, toID, sum, comment, sc.BlockData.BlockID, sc.TxHash},
+			historyTable)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	if err := payCommission(converter.Int64ToStr(toID), apl.Sub(commission)); err != nil {
+		if err != errUpdNotExistRecord {
+			return err
+		}
+		apl = commission
+	}
+
+	if err := payCommission(syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem), commission); err != nil {
+		if err != errUpdNotExistRecord {
+			return err
+		}
+		apl = apl.Sub(commission)
+	}
+
+	if _, _, ierr := sc.update([]string{`-amount`}, []interface{}{apl}, walletTable, `id`,
+		fromIDString); ierr != nil {
+		return errCommission
+	}
+	return nil
+}
+
+func (sc *SmartContract) GetSignedBy(public []byte) (int64, error) {
+	signedBy := sc.TxSmart.KeyID
+	if sc.TxSmart.SignedBy != 0 {
+		var isNode bool
+		signedBy = sc.TxSmart.SignedBy
+		fullNodes := syspar.GetNodes()
+		if sc.TxContract.Name != CallDelayedContract && sc.TxContract.Name != NewUserContract &&
+			sc.TxContract.Name != NewBadBlockContract {
+			return 0, errDelayedContract
+		}
+		if len(fullNodes) > 0 {
+			for _, node := range fullNodes {
+				if crypto.Address(node.PublicKey) == signedBy {
+					isNode = true
+					break
+				}
+			}
+		} else {
+			_, NodePublicKey, err := utils.GetNodeKeys()
+			if err != nil {
+				return 0, err
+			}
+			isNode = PubToID(NodePublicKey) == signedBy
+		}
+		if !isNode {
+			return 0, errDelayedContract
+		}
+	} else if len(public) > 0 && sc.TxSmart.KeyID != crypto.Address(public) {
+		return 0, errDiffKeys
+	}
+	return signedBy, nil
 }
 
 // CallContract calls the contract functions according to the specified flags
@@ -838,9 +919,9 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		wallet := &model.Key{}
 		wallet.SetTablePrefix(sc.TxSmart.EcosystemID)
-		signedBy := sc.TxSmart.KeyID
-		if sc.TxSmart.SignedBy != 0 {
-			signedBy = sc.TxSmart.SignedBy
+		signedBy, err := sc.GetSignedBy(public)
+		if err != nil {
+			return retError(err)
 		}
 		_, err = wallet.Get(signedBy)
 		if err != nil {
@@ -848,7 +929,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			return retError(err)
 		}
 		if wallet.Deleted == 1 {
-			return retError(ErrDeletedKey)
+			return retError(errDeletedKey)
 		}
 		if len(wallet.PublicKey) > 0 {
 			public = wallet.PublicKey
@@ -857,13 +938,13 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			node := syspar.GetNode(sc.TxSmart.KeyID)
 			if node == nil {
 				logger.WithFields(log.Fields{"user_id": sc.TxSmart.KeyID, "type": consts.NotFound}).Error("unknown node id")
-				return retError(ErrUnknownNodeID)
+				return retError(errUnknownNodeID)
 			}
 			public = node.PublicKey
 		}
 		if len(public) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty public key")
-			return retError(ErrEmptyPublicKey)
+			return retError(errEmptyPublicKey)
 		}
 		sc.PublicKeys = append(sc.PublicKeys, public)
 
@@ -875,7 +956,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		if !CheckSignResult {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
-			return retError(ErrIncorrectSign)
+			return retError(errIncorrectSign)
 		}
 		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
 			if sc.TxSmart.TokenEcosystem == 0 {
@@ -888,7 +969,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			}
 			if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 				logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("Fuel rate must be greater than 0")
-				return retError(ErrFuelRate)
+				return retError(errFuelRate)
 			}
 			var payOver decimal.Decimal
 			if len(sc.TxSmart.PayOver) > 0 {
@@ -914,20 +995,37 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
 			if found, err := payWallet.Get(fromID); err != nil || !found {
 				if !found {
-					return retError(ErrCurrentBalance)
+					return retError(errCurrentBalance)
 				}
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 				return retError(err)
 			}
 			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
-				return retError(ErrDiffKeys)
+				return retError(errDiffKeys)
 			}
-			var amount decimal.Decimal
-			amount, err = decimal.NewFromString(payWallet.Amount)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
-				return retError(err)
+			var amount, maxpay decimal.Decimal
+			if len(payWallet.Amount) > 0 {
+				amount, err = decimal.NewFromString(payWallet.Amount)
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
+					return retError(err)
+				}
+			} else {
+				amount = decimal.New(0, 0)
 			}
+			if len(payWallet.Maxpay) > 0 {
+				maxpay, err = decimal.NewFromString(payWallet.Maxpay)
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Maxpay}).Error("converting pay wallet maxpay from string to decimal")
+					return retError(err)
+				}
+			} else {
+				maxpay = decimal.New(0, 0)
+			}
+			if maxpay.GreaterThan(decimal.New(0, 0)) && maxpay.LessThan(amount) {
+				amount = maxpay
+			}
+
 			if cprice := sc.TxContract.GetFunc(`price`); cprice != nil {
 				var ret []interface{}
 				if ret, err = VMRun(sc.VM, cprice, nil, sc.TxContract.Extend); err != nil {
@@ -937,39 +1035,49 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 					case `int64`:
 						price = ret[0].(int64)
 						if price > MaxPrice {
-							return retError(ErrMaxPrice)
+							return retError(errMaxPrice)
 						}
 						if price < 0 {
-							return retError(ErrNegPrice)
+							return retError(errNegPrice)
 						}
 					case script.Decimal:
 						if ret[0].(decimal.Decimal).GreaterThan(decimal.New(MaxPrice, 0)) {
-							return retError(ErrMaxPrice)
+							return retError(errMaxPrice)
 						}
 						if ret[0].(decimal.Decimal).LessThan(decimal.New(0, 0)) {
-							return retError(ErrNegPrice)
+							return retError(errNegPrice)
 						}
 						price = converter.StrToInt64(ret[0].(decimal.Decimal).String())
 					default:
 						logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong result type of price function")
-						return retError(ErrWrongPriceFunc)
+						return retError(errWrongPriceFunc)
 					}
 				} else {
 					logger.WithFields(log.Fields{"type": consts.TypeError}).Error("Wrong type of price function")
-					return retError(ErrWrongPriceFunc)
+					return retError(errWrongPriceFunc)
 				}
 			}
 			sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Params)) / 1024
-			if amount.Cmp(decimal.New(sizeFuel+price, 0).Mul(fuelRate)) <= 0 {
+			priceCost := decimal.New(price, 0)
+			if amount.LessThanOrEqual(priceCost.Mul(fuelRate)) {
 				logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")
-				return retError(ErrCurrentBalance)
+				return retError(errCurrentBalance)
+			}
+			maxCost := amount.Div(fuelRate).Floor()
+			fullCost := decimal.New((*sc.TxContract.Extend)[`txcost`].(int64), 0).Add(priceCost)
+			if maxCost.LessThan(fullCost) {
+				(*sc.TxContract.Extend)[`txcost`] = converter.StrToInt64(maxCost.String()) - price
 			}
 		}
 	}
-	before := (*sc.TxContract.Extend)[`txcost`].(int64) + price
+	before := (*sc.TxContract.Extend)[`txcost`].(int64)
 
 	// Payment for the size
 	(*sc.TxContract.Extend)[`txcost`] = (*sc.TxContract.Extend)[`txcost`].(int64) - sizeFuel
+	if (*sc.TxContract.Extend)[`txcost`].(int64) <= 0 {
+		logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough for payment")
+		return retError(errCurrentBalance)
+	}
 
 	_, nameContract := script.ParseContract(sc.TxContract.Name)
 	(*sc.TxContract.Extend)[`original_contract`] = nameContract
@@ -985,14 +1093,13 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			sc.TxContract.Called = 1 << i
 			_, err = VMRun(sc.VM, cfunc, nil, sc.TxContract.Extend)
 			if err != nil {
-				before -= price
+				price = 0
 				break
 			}
 		}
 	}
-	sc.TxFuel = before - (*sc.TxContract.Extend)[`txcost`].(int64) - price
-	sc.TxUsedCost = decimal.New(before-(*sc.TxContract.Extend)[`txcost`].(int64), 0)
-	sc.TxContract.TxPrice = price
+	sc.TxFuel = before - (*sc.TxContract.Extend)[`txcost`].(int64)
+	sc.TxUsedCost = decimal.New(sc.TxFuel+price, 0)
 	if (*sc.TxContract.Extend)[`result`] != nil {
 		result = fmt.Sprint((*sc.TxContract.Extend)[`result`])
 		if len(result) > 255 {
@@ -1001,64 +1108,9 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	}
 
 	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
-		apl := sc.TxUsedCost.Mul(fuelRate)
-
-		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
-		if ierr != nil {
-			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": ierr, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
-			return retError(ierr)
+		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
+			err = ierr
 		}
-		if wltAmount.Cmp(apl) < 0 {
-			apl = wltAmount
-		}
-
-		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
-		walletTable := model.KeyTableName(sc.TxSmart.TokenEcosystem)
-		historyTable := model.HistoryTableName(sc.TxSmart.TokenEcosystem)
-		comment := fmt.Sprintf("Commission for execution of %s contract", sc.TxContract.Name)
-		fromIDString := converter.Int64ToStr(fromID)
-
-		payCommission := func(toID string, sum decimal.Decimal) error {
-			_, _, err := sc.selectiveLoggingAndUpd(
-				[]string{"+amount"}, []interface{}{sum}, walletTable,
-				[]string{"id"}, []string{toID},
-				true, true,
-			)
-			if err != nil {
-				return err
-			}
-
-			_, _, err = sc.selectiveLoggingAndUpd(
-				[]string{"sender_id", "recipient_id", "amount", "comment", "block_id", "txhash"},
-				[]interface{}{fromIDString, toID, sum, comment, sc.BlockData.BlockID, sc.TxHash},
-				historyTable, nil, nil, true, false,
-			)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		}
-
-		if err := payCommission(converter.Int64ToStr(toID), apl.Sub(commission)); err != nil {
-			if err != errUpdNotExistRecord {
-				return retError(err)
-			}
-			apl = commission
-		}
-
-		if err := payCommission(syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem), commission); err != nil {
-			if err != errUpdNotExistRecord {
-				return retError(err)
-			}
-			apl = apl.Sub(commission)
-		}
-
-		if _, _, ierr := sc.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{apl}, walletTable, []string{`id`},
-			[]string{fromIDString}, true, true); ierr != nil {
-			return retError(errCommission)
-		}
-		logger.WithFields(log.Fields{"commission": commission}).Debug("Paid commission")
 	}
 	if err != nil {
 		return retError(err)

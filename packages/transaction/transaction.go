@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -45,6 +46,7 @@ type Transaction struct {
 	TxHeader      *tx.Header
 	tx            custom.TransactionInterface
 	DbTransaction *model.DbTransaction
+	Rand          *rand.Rand
 	SysUpdate     bool
 
 	SmartContract smart.SmartContract
