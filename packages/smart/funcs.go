@@ -1451,7 +1451,19 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	if err != nil {
 		return
 	}
-
+	if real := model.RealName(tblname); strings.HasPrefix(real, `1_`) {
+		if _, ok := model.FirstEcosystemTables[real[2:]]; ok {
+			var sp model.StateParameter
+			sp.SetTablePrefix(`1`)
+			_, err := sp.Get(sc.DbTransaction, `founder_account`)
+			if err != nil {
+				return logErrorDB(err, "getting founder")
+			}
+			if sp.Value != converter.Int64ToStr(sc.TxSmart.KeyID) {
+				return errAccessDenied
+			}
+		}
+	}
 	err = model.AlterTableAddColumn(sc.DbTransaction, tblname, name, sqlColType)
 	if err != nil {
 		return logErrorDB(err, "adding column to the table")
