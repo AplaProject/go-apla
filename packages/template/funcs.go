@@ -864,9 +864,16 @@ func tailTag(par parFunc) string {
 
 func includeTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Workspace.Vars)[`_include`]) < 5 {
+		var ecosystem int64
 		bi := &model.BlockInterface{}
-		bi.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
-		found, err := bi.Get(macro((*par.Pars)[`Name`], par.Workspace.Vars))
+		name := macro((*par.Pars)[`Name`], par.Workspace.Vars)
+		ecosystem, name = converter.ParseName(name)
+		prefix := (*par.Workspace.Vars)[`ecosystem_id`]
+		if ecosystem != 0 {
+			prefix = converter.Int64ToStr(ecosystem)
+		}
+		bi.SetTablePrefix(prefix)
+		found, err := bi.Get(name)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by name")
 			return err.Error()
