@@ -55,7 +55,7 @@ func init() {
 	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
 	funcs[`AddToolButton`] = tplFunc{defaultTailTag, defaultTailTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
 	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
-	funcs[`AppParam`] = tplFunc{appparTag, defaultTag, `apppar`, `Name,App,Index,Source`}
+	funcs[`AppParam`] = tplFunc{appparTag, defaultTag, `apppar`, `Name,App,Index,Source,Ecosystem`}
 	funcs[`Calculate`] = tplFunc{calculateTag, defaultTag, `calculate`, `Exp,Type,Prec`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
 	funcs[`Code`] = tplFunc{defaultTag, defaultTag, `code`, `Text`}
@@ -375,8 +375,12 @@ func appparTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) == 0 || len((*par.Pars)[`App`]) == 0 {
 		return ``
 	}
+	ecosystem := (*par.Workspace.Vars)[`ecosystem_id`]
+	if len((*par.Pars)[`Ecosystem`]) != 0 {
+		ecosystem = (*par.Pars)[`Ecosystem`]
+	}
 	ap := &model.AppParam{}
-	ap.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
+	ap.SetTablePrefix(ecosystem)
 	_, err := ap.Get(nil, converter.StrToInt64(macro((*par.Pars)[`App`], par.Workspace.Vars)),
 		macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	if err != nil {
