@@ -118,6 +118,7 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`DBFind(@1pages).Where({id:1}).Columns("id,name")`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","admin_index"]],"name":"@1pages","types":["text","text"],"where":"{id:1}"}}]`},
 	{`DBFind(keys).Where("id='#key_id#'").Columns("amount").Vars(amount)`, `[{"tag":"text","text":"Where has wrong format"}]`},
 	{`P(Guest = #guest_key#)`, `[{"tag":"p","children":[{"tag":"text","text":"Guest = 4544233900443112470"}]}]`},
 	{`SetVar(val, 123456789)Money(#val#)`, `[{"tag":"text","text":"0.000000000123456789"}]`},
