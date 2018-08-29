@@ -1103,9 +1103,9 @@ func EcosysParam(sc *SmartContract, name string) string {
 }
 
 // AppParam returns the value of the specified app parameter for the ecosystem
-func AppParam(sc *SmartContract, app int64, name string) (string, error) {
+func AppParam(sc *SmartContract, app int64, name string, ecosystem int64) (string, error) {
 	ap := &model.AppParam{}
-	ap.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	ap.SetTablePrefix(converter.Int64ToStr(ecosystem))
 	_, err := ap.Get(sc.DbTransaction, app, name)
 	if err != nil {
 		return ``, logErrorDB(err, "getting app param")
