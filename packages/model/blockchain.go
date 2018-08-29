@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 // Block is model
 type Block struct {
@@ -44,12 +46,16 @@ func (b *Block) GetMaxForeignBlock(keyId int64) (bool, error) {
 func GetBlockchain(startBlockID int64, endblockID int64, order ordering) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
+
+	orderStr := "id " + string(order)
+	query := DBConn.Model(&Block{}).Order(orderStr)
 	if endblockID > 0 {
-		err = DBConn.Model(&Block{}).Order("id "+order).Where("id > ? AND id <= ?", startBlockID, endblockID).Find(&blockchain).Error
+		query = query.Where("id > ? AND id <= ?", startBlockID, endblockID).Find(&blockchain)
 	} else {
-		err = DBConn.Model(&Block{}).Order("id "+order).Where("id > ?", startBlockID).Find(&blockchain).Error
+		query = query.Where("id > ?", startBlockID).Find(&blockchain)
 	}
-	if err != nil {
+
+	if query.Error != nil {
 		return nil, err
 	}
 	return *blockchain, nil
