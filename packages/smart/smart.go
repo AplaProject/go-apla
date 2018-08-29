@@ -331,8 +331,8 @@ func LoadContracts(transaction *model.DbTransaction) error {
 
 func LoadSysFuncs(vm *script.VM, state int) error {
 	code := `func DBFind(table string).Columns(columns string).Where(where map)
-	.WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
-   return DBSelect(table, columns, id, order, offset, limit, ecosystem, where)
+	.WhereId(id int).Order(order string).Limit(limit int).Offset(offset int) array {
+   return DBSelect(table, columns, id, order, offset, limit, where)
 }
 
 func One(list array, name string) string {
@@ -381,10 +381,10 @@ func Row(list array) map {
 }
 
 func DBRow(table string).Columns(columns string).Where(where map)
-   .WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
+   .WhereId(id int).Order(order string) map {
    
    var result array
-   result = DBFind(table).Columns(columns).Where(where).WhereId(id).Order(order).Ecosystem(ecosystem)
+   result = DBFind(table).Columns(columns).Where(where).WhereId(id).Order(order)
 
    var row map
    if Len(result) > 0 {
@@ -554,7 +554,7 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 	)
 	logger := sc.GetLogger()
 	isRead := action == `read`
-	if model.RealName(table) == `1_parameters` || model.RealName(table) == `1_app_params` {
+	if GetTableName(sc, table) == `1_parameters` || GetTableName(sc, table) == `1_app_params` {
 		if isRead || sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return tablePermission, nil
 		}
@@ -617,7 +617,7 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 	if sc.FullAccess {
 		return nil
 	}
-	if model.RealName(table) == `1_parameters` || model.RealName(table) == `1_app_params` {
+	if GetTableName(sc, table) == `1_parameters` || GetTableName(sc, table) == `1_app_params` {
 		if update {
 			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 				return nil
@@ -1042,7 +1042,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 		return retError(errCurrentBalance)
 	}
 
-	_, nameContract := script.ParseContract(sc.TxContract.Name)
+	_, nameContract := converter.ParseName(sc.TxContract.Name)
 	(*sc.TxContract.Extend)[`original_contract`] = nameContract
 	(*sc.TxContract.Extend)[`this_contract`] = nameContract
 

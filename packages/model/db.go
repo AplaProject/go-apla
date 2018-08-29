@@ -8,7 +8,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration"
 	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
@@ -51,32 +50,6 @@ var (
 		`app_params`:         true,
 	}
 )
-
-func RealNameEcosystem(tableName string) (name string, ecosystem int64, unique bool) {
-	var quote, ok bool
-	name = tableName
-	if name[0] == '"' {
-		name = strings.Trim(name, `"`)
-		quote = true
-	}
-	start := strings.IndexByte(name, '_')
-	if start > 0 && start < len(name)-1 {
-		if unique, ok = FirstEcosystemTables[name[start+1:]]; ok {
-			if ecosystem = converter.StrToInt64(name[:start]); ecosystem > 0 {
-				name = `1_` + name[start+1:]
-			}
-		}
-	}
-	if quote {
-		name = `"` + name + `"`
-	}
-	return
-}
-
-func RealName(tableName string) string {
-	tableName, _, _ = RealNameEcosystem(tableName)
-	return tableName
-}
 
 func isFound(db *gorm.DB) (bool, error) {
 	if db.RecordNotFound() {
@@ -182,11 +155,7 @@ func DropTables() error {
 // GetRecordsCountTx is counting all records of table in transaction
 func GetRecordsCountTx(db *DbTransaction, tableName string) (int64, error) {
 	var count int64
-	realName, ecosysID, _ := RealNameEcosystem(tableName)
-	dbQuery := GetDB(db).Table(realName)
-	if ecosysID != 0 {
-		dbQuery = dbQuery.Where(`ecosystem = ?`, ecosysID)
-	}
+	dbQuery := GetDB(db).Table(tableName)
 	err := dbQuery.Count(&count).Error
 	return count, err
 }
@@ -276,24 +245,24 @@ func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
 
 // AlterTableAddColumn is adding column to table
 func AlterTableAddColumn(transaction *DbTransaction, tableName, columnName, columnType string) error {
-	return GetDB(transaction).Exec(`ALTER TABLE "` + RealName(tableName) + `" ADD COLUMN "` + columnName + `" ` + columnType).Error
+	return GetDB(transaction).Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN "` + columnName + `" ` + columnType).Error
 }
 
 // AlterTableDropColumn is dropping column from table
 func AlterTableDropColumn(transaction *DbTransaction, tableName, columnName string) error {
-	return GetDB(transaction).Exec(`ALTER TABLE "` + RealName(tableName) + `" DROP COLUMN "` + columnName + `"`).Error
+	return GetDB(transaction).Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN "` + columnName + `"`).Error
 }
 
 // CreateIndex is creating index on table column
 func CreateIndex(transaction *DbTransaction, indexName, tableName, onColumn string) error {
-	return GetDB(transaction).Exec(`CREATE INDEX "` + indexName + `_index" ON "` + RealName(tableName) + `" (` + onColumn + `)`).Error
+	return GetDB(transaction).Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
 }
 
 // GetColumnDataTypeCharMaxLength is returns max length of table column
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
 	return GetOneRow(`select data_type,character_maximum_length from
 			 information_schema.columns where table_name = ? AND column_name = ?`,
-		RealName(tableName), columnName).String()
+		tableName, columnName).String()
 }
 
 // GetAllColumnTypes returns column types for table
@@ -301,7 +270,7 @@ func GetAllColumnTypes(tblname string) ([]map[string]string, error) {
 	return GetAll(`SELECT column_name, data_type
 		FROM information_schema.columns
 		WHERE table_name = ?
-		ORDER BY ordinal_position ASC`, -1, RealName(tblname))
+		ORDER BY ordinal_position ASC`, -1, tblname)
 }
 
 // GetColumnType is returns type of column
@@ -392,7 +361,7 @@ func GetList(query string, args ...interface{}) *ListResult {
 // GetNextID returns next ID of table
 func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	var id int64
-	rows, err := GetDB(transaction).Raw(`select id from "` + RealName(table) + `" order by id desc limit 1`).Rows()
+	rows, err := GetDB(transaction).Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting next id from table")
 		return 0, err

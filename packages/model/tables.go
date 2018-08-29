@@ -118,6 +118,6 @@ func (t *Table) GetAll(prefix string) ([]Table, error) {
 
 // GetRowConditionsByTableNameAndID returns value of `conditions` field for table row by id
 func GetRowConditionsByTableNameAndID(tblname string, id int64) (string, error) {
-	sql := "SELECT conditions FROM " + RealName(tblname) + " WHERE id = ? LIMIT 1"
+	sql := "SELECT conditions FROM " + tblname + " WHERE id = ? LIMIT 1"
 	return Single(sql, id).String()
 }
