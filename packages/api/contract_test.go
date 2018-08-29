@@ -1390,3 +1390,25 @@ func TestLoopCondExt(t *testing.T) {
 		return
 	}
 }
+
+func TestBlockTransactions(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract ` + rnd + `1 {
+		conditions {
+	    
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	var ret getContractResult
+	require.NoError(t, sendGet(`contract/`+rnd+`1`, nil, &ret))
+
+	var result map[int64][]TxInfo
+	require.NoError(t, sendGet(`blocks?block_id=1&count=10`, nil, &result))
+
+	fmt.Printf("%+v", result)
+}
