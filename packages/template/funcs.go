@@ -143,17 +143,16 @@ func init() {
 		`Custom`: {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
 	}}
 	tails[`dbfind`] = forTails{map[string]tailInfo{
-		`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
-		`Count`:     {tplFunc{tailTag, defaultTailFull, `count`, `CountVar`}, false},
-		`Where`:     {tplFunc{tailTag, defaultTailFull, `where`, `Where`}, false},
-		`WhereId`:   {tplFunc{tailTag, defaultTailFull, `whereid`, `WhereId`}, false},
-		`Order`:     {tplFunc{tailTag, defaultTailFull, `order`, `Order`}, false},
-		`Limit`:     {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
-		`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
-		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
-		`Custom`:    {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
-		`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
-		`Cutoff`:    {tplFunc{tailTag, defaultTailFull, `cutoff`, `Cutoff`}, false},
+		`Columns`: {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
+		`Count`:   {tplFunc{tailTag, defaultTailFull, `count`, `CountVar`}, false},
+		`Where`:   {tplFunc{tailTag, defaultTailFull, `where`, `Where`}, false},
+		`WhereId`: {tplFunc{tailTag, defaultTailFull, `whereid`, `WhereId`}, false},
+		`Order`:   {tplFunc{tailTag, defaultTailFull, `order`, `Order`}, false},
+		`Limit`:   {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
+		`Offset`:  {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
+		`Custom`:  {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
+		`Vars`:    {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
+		`Cutoff`:  {tplFunc{tailTag, defaultTailFull, `cutoff`, `Cutoff`}, false},
 	}}
 	tails[`p`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -600,11 +599,7 @@ func dbfindTag(par parFunc) string {
 		prefix = par.Node.Attr[`prefix`].(string)
 		limit = 1
 	}
-	if par.Node.Attr[`ecosystem`] != nil {
-		state = converter.StrToInt64(par.Node.Attr[`ecosystem`].(string))
-	} else {
-		state = converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])
-	}
+	state = converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])
 	if par.Node.Attr["cutoff"] != nil {
 		for _, v := range strings.Split(par.Node.Attr["cutoff"].(string), ",") {
 			cutoffColumns[v] = true
@@ -612,8 +607,8 @@ func dbfindTag(par parFunc) string {
 	}
 
 	sc := par.Workspace.SmartContract
-	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName(macro((*par.Pars)[`Name`], par.Workspace.Vars)), `"`), state)
-	realTable, ecosysID, unique := model.RealNameEcosystem(tblname)
+	tblname := converter.ParseTable(strings.Trim(macro((*par.Pars)[`Name`], par.Workspace.Vars), `"`), state)
+
 	rows, err := model.GetAllColumnTypes(tblname)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column types from db")
@@ -628,17 +623,6 @@ func dbfindTag(par parFunc) string {
 	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil || sc.AccessColumns(tblname, &columns, false) != nil {
 		return `Access denied`
-	}
-	if ecosysID != 0 {
-		tblname = realTable
-		if !unique || par.Node.Attr[`whereid`] == nil {
-			ecosysWhere := fmt.Sprintf(`ecosystem='%d'`, ecosysID)
-			if len(where) > 0 {
-				where = ecosysWhere + ` AND ` + where
-			} else {
-				where = ecosysWhere
-			}
-		}
 	}
 	if utils.StringInSlice(columns, `*`) {
 		for _, col := range rows {
@@ -1302,9 +1286,7 @@ func columntypeTag(par parFunc) string {
 	if len((*par.Pars)["Table"]) > 0 && len((*par.Pars)["Column"]) > 0 {
 		tableName := macro((*par.Pars)[`Table`], par.Workspace.Vars)
 		columnName := macro((*par.Pars)[`Column`], par.Workspace.Vars)
-		tblname := smart.GetTableName(par.Workspace.SmartContract,
-			strings.Trim(converter.EscapeName(tableName), `"`),
-			converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]))
+		tblname := smart.GetTableName(par.Workspace.SmartContract, tableName)
 		colType, err := model.GetColumnType(tblname, columnName)
 		if err == nil {
 			return colType

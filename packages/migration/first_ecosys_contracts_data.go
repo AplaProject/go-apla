@@ -727,7 +727,7 @@ VALUES
 		Reason string
 	}
 	action {
-        DBInsert("@1_bad_blocks", {producer_node_id: $ProducerNodeID,consumer_node_id: $ConsumerNodeID,
+        DBInsert("@1bad_blocks", {producer_node_id: $ProducerNodeID,consumer_node_id: $ConsumerNodeID,
             block_id: $BlockID, "timestamp block_time": $Timestamp, reason: $Reason})
 	}
 }

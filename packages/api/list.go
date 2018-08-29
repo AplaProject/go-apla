@@ -19,7 +19,6 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -36,13 +35,13 @@ type listResult struct {
 func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	var limit int
 
-	table := converter.EscapeName(getPrefix(data) + `_` + data.params[`name`].(string))
+	table := converter.ParseTable(data.params[`name`].(string), data.ecosystemId)
 	cols := `*`
 	if len(data.params[`columns`].(string)) > 0 {
 		cols = `id,` + converter.EscapeName(data.params[`columns`].(string))
 	}
 
-	count, err := model.GetRecordsCountTx(nil, strings.Trim(table, `"`))
+	count, err := model.GetRecordsCountTx(nil, table)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
 		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
@@ -53,15 +52,9 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Ent
 	} else {
 		limit = 25
 	}
-	realName, ecosysID, _ := model.RealNameEcosystem(table)
 	var query string
-	if ecosysID == 0 {
-		query = fmt.Sprintf(`select %s from %s order by id desc offset %d `, cols, realName,
-			data.params[`offset`].(int64))
-	} else {
-		query = fmt.Sprintf(`select %s from %s where ecosystem='%d' order by id desc offset %d `,
-			cols, realName, ecosysID, data.params[`offset`].(int64))
-	}
+	query = fmt.Sprintf(`select %s from "%s" order by id desc offset %d `, cols, table,
+		data.params[`offset`].(int64))
 	list, err := model.GetAll(query, limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")

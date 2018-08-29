@@ -24,7 +24,7 @@ func (b *Binary) SetTablePrefix(prefix string) {
 
 // SetTableName sets name of table
 func (b *Binary) SetTableName(tableName string) {
-	_, ecosystem, _ := RealNameEcosystem(tableName)
+	ecosystem, _ := converter.ParseName(tableName)
 	b.ecosystem = ecosystem
 }
 
