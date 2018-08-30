@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 
 	log "github.com/sirupsen/logrus"
@@ -93,6 +94,12 @@ type FieldInfo struct {
 	Name string
 	Type reflect.Type
 	Tags string
+}
+
+var ContractPrices = map[string]string{
+	`@1NewTable`: `table_price`, `@1NewContract`: `contract_price`,
+	`@1NewEcosystem`: `ecosystem_price`, `@1NewMenu`: `menu_price`,
+	`@1NewPage`: `page_price`, `@1NewColumn`: `column_price`,
 }
 
 // ContainsTag returns whether the tag is contained in this field
@@ -287,6 +294,15 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		}
 	}
 	rt.cost -= CostContract
+	if priceName, ok := ContractPrices[name]; ok {
+		price := syspar.SysInt64(priceName)
+		if price > 0 {
+			rt.cost -= price
+		}
+		if rt.cost < 0 {
+			rt.cost = 0
+		}
+	}
 
 	var stack Stacker
 	if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
@@ -302,7 +318,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 			return nil, err
 		}
 	}
-	for _, method := range []string{`init`, `conditions`, `action`} {
+	for _, method := range []string{`conditions`, `action`} {
 		if block, ok := (*cblock).Objects[method]; ok && block.Type == ObjFunc {
 			rtemp := rt.vm.RunInit(rt.cost)
 			(*rt.extend)[`parent`] = parent
