@@ -437,12 +437,12 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 
 	sc.Rollback = false
 	sc.FullAccess = true
-	if _, _, err = DBInsert(sc, `@`+idStr+"pages", map[string]interface{}{"ecosystem": idStr,
+	if _, _, err = DBInsert(sc, `@1pages`, map[string]interface{}{"ecosystem": idStr,
 		"name": "default_page", "value": SysParamString("default_ecosystem_page"),
 		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`}); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
-	if _, _, err = DBInsert(sc, `@`+idStr+"menu", map[string]interface{}{"ecosystem": idStr,
+	if _, _, err = DBInsert(sc, `@menu`, map[string]interface{}{"ecosystem": idStr,
 		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("MainCondition")`}); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
@@ -459,7 +459,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if Len(ret) > 0 {
 		pub = ret[0].(map[string]interface{})[`pub`].(string)
 	}
-	if _, _, err := DBInsert(sc, `@`+idStr+"keys",
+	if _, _, err := DBInsert(sc, `@1keys`,
 		map[string]interface{}{"id": wallet, "pub": pub, "ecosystem": idStr}); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
