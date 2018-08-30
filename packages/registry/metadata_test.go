@@ -52,7 +52,8 @@ func TestMetadataTx_RW(t *testing.T) {
 		{
 			testname: "insert-good",
 			registry: types.Registry{
-				Name: "key",
+				Name:      "key",
+				Ecosystem: &types.Ecosystem{ID: 1},
 			},
 			pkValue: "1",
 			value: testModel{
@@ -67,7 +68,8 @@ func TestMetadataTx_RW(t *testing.T) {
 		{
 			testname: "insert-bad-1",
 			registry: types.Registry{
-				Name: "key",
+				Name:      "key",
+				Ecosystem: &types.Ecosystem{ID: 1},
 			},
 			pkValue: "1",
 			value:   make(chan int),
@@ -104,16 +106,16 @@ func TestMetadataTx_RW(t *testing.T) {
 	}
 }
 
-func TestMetadataTx_benchmark(t *testing.T) {
+func BenchmarkMetadataTx(b *testing.B) {
 	rollbacks := false
 	persist := false
 	db, err := newKvDB(persist)
-	require.Nil(t, err)
+	require.Nil(b, err)
 	fmt.Println("Database persistence:", persist)
 	fmt.Println("Rollbacks:", persist)
 
 	storage, err := registry.NewMetadataStorage(db, nil, rollbacks)
-	require.Nil(t, err)
+	require.Nil(b, err)
 
 	metadataTx := storage.Begin()
 	type key struct {
@@ -126,7 +128,8 @@ func TestMetadataTx_benchmark(t *testing.T) {
 	}
 
 	reg := types.Registry{
-		Name: "key",
+		Name:      "key",
+		Ecosystem: &types.Ecosystem{ID: 1},
 	}
 
 	count := 100000
@@ -151,9 +154,9 @@ func TestMetadataTx_benchmark(t *testing.T) {
 			err = nil
 		}
 
-		require.Nil(t, err)
+		require.Nil(b, err)
 	}
-	require.Nil(t, metadataTx.Commit())
+	require.Nil(b, metadataTx.Commit())
 	fmt.Println("Inserted", count, "keys:", time.Since(insertStart))
 
 	indexStart := time.Now()
@@ -161,7 +164,7 @@ func TestMetadataTx_benchmark(t *testing.T) {
 	metadataTx.AddIndex(types.Index{Name: "test", Registry: &types.Registry{Name: "key"}, SortFn: func(a, b string) bool {
 		return gjson.Get(a, "amount").Less(gjson.Get(b, "amount"), false)
 	}})
-	require.Nil(t, metadataTx.Commit())
+	require.Nil(b, metadataTx.Commit())
 	fmt.Println("Creating and fill 'amount' index by", count, "keys:", time.Since(indexStart))
 
 	readonlyTx := storage.Reader()
@@ -169,9 +172,9 @@ func TestMetadataTx_benchmark(t *testing.T) {
 	ecosystem := 666
 	ecosystems := make(map[int]struct{})
 	walkingStart := time.Now()
-	require.Nil(t, readonlyTx.Walk(&reg, "test", func(jsonRow string) bool {
+	require.Nil(b, readonlyTx.Walk(&reg, "test", func(jsonRow string) bool {
 		k := key{}
-		require.Nil(t, json.Unmarshal([]byte(jsonRow), &k))
+		require.Nil(b, json.Unmarshal([]byte(jsonRow), &k))
 		if k.Ecosystem == ecosystem && topAmount < k.Amount {
 			topAmount = k.Amount
 		}
@@ -199,8 +202,8 @@ func TestMetadataTx_benchmark(t *testing.T) {
 			},
 		)
 
-		require.Nil(t, err)
+		require.Nil(b, err)
 	}
-	require.Nil(t, writeTx.Commit())
+	require.Nil(b, writeTx.Commit())
 	fmt.Println("Inserted", count, "more keys ( with indexes ):", time.Since(secondWriting))
 }

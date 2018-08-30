@@ -5,7 +5,8 @@ import (
 )
 
 type Registry struct {
-	Name string // ex table Name
+	Name      string // ex table Name
+	Ecosystem *Ecosystem
 }
 
 type MetadataRegistryReader interface {
@@ -17,7 +18,7 @@ type MetadataRegistryWriter interface {
 	Insert(registry *Registry, pkValue string, value interface{}) error
 	Update(registry *Registry, pkValue string, newValue interface{}) error
 
-	AddIndex(index Index)
+	AddIndex(indexes ...Index) error
 
 	driver.Tx
 

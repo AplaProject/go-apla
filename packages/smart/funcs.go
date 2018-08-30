@@ -1295,7 +1295,7 @@ func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
 	}
 
 	// TODO remove old version
-	err = sc.MetaDb.Insert(&types.Registry{Name: "key"},
+	err = sc.MetaDb.Insert(&types.Registry{Name: "key", Ecosystem: &types.Ecosystem{ID: uint64(sc.TxSmart.EcosystemID)}},
 		strconv.FormatInt(id, 10),
 		model.KeySchema{ID: id, Amount: amount},
 	)

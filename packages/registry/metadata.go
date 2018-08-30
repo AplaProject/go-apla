@@ -15,10 +15,11 @@ import (
 	"github.com/yddmat/memdb"
 )
 
-const keyConvention = "%s.%s"
+const keyConvention = "%s.%d.%s"
 
 var (
 	ErrUnknownContext   = errors.New("unknown writing operation context (block o/or hash empty)")
+	ErrWrongRegistry    = errors.New("wrong registry")
 	ErrRollbackDisabled = errors.New("rollback is disabled")
 )
 
@@ -41,7 +42,10 @@ func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value inte
 		return errors.Wrapf(err, "marshalling struct to json")
 	}
 
-	key := fmt.Sprintf(keyConvention, registry.Name, pkValue)
+	key, err := m.formatKey(registry, pkValue)
+	if err != nil {
+		return err
+	}
 
 	err = m.tx.Set(key, string(jsonValue))
 	if err != nil {
@@ -73,7 +77,10 @@ func (m *metadataTx) Update(registry *types.Registry, pkValue string, newValue i
 		return errors.Wrapf(err, "marshalling struct to json")
 	}
 
-	key := fmt.Sprintf(keyConvention, registry.Name, pkValue)
+	key, err := m.formatKey(registry, pkValue)
+	if err != nil {
+		return err
+	}
 
 	old, err := m.tx.Update(key, string(jsonValue))
 	if err != nil {
@@ -104,7 +111,10 @@ func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface
 	}
 	defer m.endRead()
 
-	key := fmt.Sprintf(keyConvention, registry.Name, pkValue)
+	key, err := m.formatKey(registry, pkValue)
+	if err != nil {
+		return err
+	}
 
 	value, err := m.tx.Get(key)
 	if err != nil {
@@ -161,8 +171,13 @@ func (m *metadataTx) SetBlockHash(blockHash []byte) {
 	m.stateMu.Unlock()
 }
 
-func (m *metadataTx) AddIndex(index types.Index) {
-	m.tx.AddIndex(index)
+func (m *metadataTx) AddIndex(indexes ...types.Index) error {
+
+	m.tx.Ascend("ecosystem.name", func(key, value string) bool {
+		return true
+	})
+
+	return m.tx.AddIndex(indexes...)
 }
 
 func (m *metadataTx) refreshTx() error {
@@ -179,6 +194,14 @@ func (m *metadataTx) refreshTx() error {
 	m.tx = m.db.Begin(false)
 
 	return nil
+}
+
+func (m *metadataTx) formatKey(reg *types.Registry, pk string) (string, error) {
+	if reg.Ecosystem == nil {
+		return "", ErrWrongRegistry
+	}
+
+	return fmt.Sprintf(keyConvention, reg.Name, reg.Ecosystem.ID, pk), nil
 }
 
 func (m *metadataTx) endRead() error {
@@ -199,16 +222,23 @@ type metadataStorage struct {
 }
 
 func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool) (types.MetadataRegistryStorage, error) {
+	ms := &metadataStorage{
+		db:       db,
+		rollback: rollback,
+	}
+
 	if indexes != nil {
-		if err := db.Begin(true).AddIndex(indexes...); err != nil {
+		writer := ms.Begin()
+		if err := writer.AddIndex(indexes...); err != nil {
+			return nil, err
+		}
+
+		if err := writer.Commit(); err != nil {
 			return nil, err
 		}
 	}
 
-	return &metadataStorage{
-		db:       db,
-		rollback: rollback,
-	}, nil
+	return ms, nil
 }
 
 func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
