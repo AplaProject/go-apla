@@ -476,7 +476,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		pars["wallet_id"] = recipient
 	}
 	if len(pars) > 0 {
-		if _, err := DBUpdate(sc, "contracts", id, pars); err != nil {
+		if _, err := DBUpdate(sc, "@1contracts", id, pars); err != nil {
 			return err
 		}
 		if !sc.VDE {

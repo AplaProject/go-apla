@@ -346,8 +346,7 @@ func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) 
 	if err := validateAccess(`EditLanguage`, sc, nEditLang, nEditLangJoint, nImport); err != nil {
 		return err
 	}
-	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if _, err := DBUpdate(sc, `@`+idStr+"languages", id,
+	if _, err := DBUpdate(sc, `@1languages`, id,
 		map[string]interface{}{"name": name, "res": trans, "app_id": appID}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return err
