@@ -205,6 +205,7 @@ VALUES
         Id int
         Value string "optional"
         Conditions string "optional"
+        Confirmation string "optional"
         WalletId string "optional"
     }
     func onlyConditions() bool {
@@ -763,6 +764,7 @@ VALUES
         ApplicationId int
         Value string
         Conditions string
+        Confirmation string "optional"
         Wallet string "optional"
         TokenEcosystem int "optional"
     }

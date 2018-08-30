@@ -41,7 +41,7 @@ contract NewContract {
     }
 
     action {
-        $result = CreateContract($contract_name, $Value, $Conditions, #Confirmation, $walletContract, $TokenEcosystem, $ApplicationId)
+        $result = CreateContract($contract_name, $Value, $Conditions, $Confirmation, $walletContract, $TokenEcosystem, $ApplicationId)
     }
     func price() int {
         return SysParamInt("contract_price")
