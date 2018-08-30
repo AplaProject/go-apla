@@ -16,7 +16,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	log "github.com/sirupsen/logrus"
 )
@@ -206,8 +205,7 @@ func prepareFullBlockRequest(block *blockchain.Block, trs []*tx.SmartContract, n
 	buf.Write(converter.DecToBin(nodeID, 8))
 	buf.WriteByte(noBlockFlag)
 	if noBlockFlag == 0 {
-		nodePrivKey, _, err := utils.GetNodeKeys()
-		b, err := block.Marshal(nodePrivKey)
+		b, err := block.Marshal()
 		if err != nil {
 			return nil, err
 		}

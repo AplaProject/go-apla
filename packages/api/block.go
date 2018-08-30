@@ -43,7 +43,8 @@ type getBlockInfoResult struct {
 
 func getBlockInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	blockHash := converter.HexToBin(data.params["hash"].(string))
-	block, found, err := blockchain.GetBlock(blockHash)
+	block := &blockchain.Block{}
+	found, err := block.Get(blockHash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
 		return errorAPI(w, err, http.StatusInternalServerError)

@@ -11,7 +11,8 @@ import (
 
 // GetBlockDataFromBlockChain is retrieving block data from blockchain
 func GetBlockDataFromBlockChain(hash []byte) (*blockchain.BlockHeader, error) {
-	block, found, err := blockchain.GetBlock(hash)
+	block := &blockchain.Block{}
+	found, err := block.Get(hash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting block by hash")
 		return nil, utils.ErrInfo(err)

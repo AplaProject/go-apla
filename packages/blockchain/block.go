@@ -7,6 +7,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/syndtr/goleveldb/leveldb"
 
 	log "github.com/sirupsen/logrus"
@@ -126,13 +127,17 @@ func (b *Block) GetSign(key string) ([]byte, error) {
 	return signed, nil
 }
 
-func (b *Block) Marshal(key string) ([]byte, error) {
+func (b *Block) Marshal() ([]byte, error) {
 	mrklRoot, err := b.GetMrklRoot()
-	sign, err := b.GetSign(key)
+	NodePrivateKey, _, err := utils.GetNodeKeys()
 	if err != nil {
 		return nil, err
 	}
 	b.MrklRoot = mrklRoot
+	sign, err := b.GetSign(NodePrivateKey)
+	if err != nil {
+		return nil, err
+	}
 	b.Sign = sign
 	if res, err := msgpack.Marshal(b); err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.MarshallingError}).Error("marshalling block")
@@ -150,26 +155,25 @@ func (b *Block) Unmarshal(bt []byte) error {
 	return nil
 }
 
-func GetBlock(hash []byte) (*Block, bool, error) {
+func (b *Block) Get(hash []byte) (bool, error) {
 	val, err := db.Get([]byte(blockPrefix+string(hash)), nil)
 	if err == leveldb.ErrNotFound {
-		return nil, false, nil
+		return false, nil
 	}
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("getting block")
-		return nil, false, err
+		return false, err
 	}
-	block := &Block{}
-	if err := block.Unmarshal(val); err != nil {
+	if err := b.Unmarshal(val); err != nil {
 		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling transaction")
-		return nil, true, err
+		return true, err
 	}
-	return block, true, nil
+	return true, nil
 }
 
-func InsertBlock(hash []byte, block *Block, key string) error {
-	prevHash := block.PrevHash
-	val, err := block.Marshal(key)
+func (b *Block) Insert(hash []byte) error {
+	prevHash := b.PrevHash
+	val, err := b.Marshal()
 	if err != nil {
 		return err
 	}
@@ -178,7 +182,7 @@ func InsertBlock(hash []byte, block *Block, key string) error {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("inserting block")
 		return err
 	}
-	if block.Header.BlockID == 1 {
+	if b.Header.BlockID == 1 {
 		if err := db.Put([]byte(firstBlockKey), []byte(blockPrefix+string(hash)), nil); err != nil {
 			log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("updating first block key")
 			return err
@@ -188,7 +192,8 @@ func InsertBlock(hash []byte, block *Block, key string) error {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("updating last block key")
 		return err
 	}
-	prevBlock, found, err := GetBlock(prevHash)
+	prevBlock := &Block{}
+	found, err := prevBlock.Get(prevHash)
 	if err != nil {
 		return err
 	}
@@ -196,7 +201,7 @@ func InsertBlock(hash []byte, block *Block, key string) error {
 		return nil
 	}
 	prevBlock.NextHash = hash
-	prevBlockVal, err := prevBlock.Marshal(key)
+	prevBlockVal, err := prevBlock.Marshal()
 	if err != nil {
 		return err
 	}
@@ -218,7 +223,8 @@ func GetFirstBlock() (*Block, []byte, bool, error) {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("getting first block key")
 		return nil, nil, false, err
 	}
-	block, found, err := GetBlock([]byte(blockPrefix + string(hash)))
+	block := &Block{}
+	found, err := block.Get([]byte(blockPrefix + string(hash)))
 	return block, hash, found, err
 }
 
@@ -228,7 +234,8 @@ func GetLastBlock() (*Block, []byte, bool, error) {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("getting last block key")
 		return nil, nil, false, err
 	}
-	block, found, err := GetBlock([]byte(blockPrefix + string(hash)))
+	block := &Block{}
+	found, err := block.Get([]byte(blockPrefix + string(hash)))
 	return block, hash, found, err
 }
 
@@ -240,7 +247,8 @@ func GetNBlocksFrom(hash []byte, n, ordering int) ([]*BlockWithHash, error) {
 	if n < 1 {
 		return result, nil
 	}
-	lastBlock, found, err := GetBlock(hash)
+	lastBlock := &Block{}
+	found, err := lastBlock.Get(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +267,8 @@ func GetNBlocksFrom(hash []byte, n, ordering int) ([]*BlockWithHash, error) {
 		return result, nil
 	}
 	for i := n - 1; i > 0; i-- {
-		block, found, err := GetBlock(nextHash)
+		block := &Block{}
+		found, err := block.Get(nextHash)
 		if err != nil {
 			return nil, err
 		}

@@ -136,7 +136,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		Transactions: trs,
 	}
 
-	blockBin, err := bBlock.Marshal(NodePrivateKey)
+	blockBin, err := bBlock.Marshal()
 	if err != nil {
 		return err
 	}

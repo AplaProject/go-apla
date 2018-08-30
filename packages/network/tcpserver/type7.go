@@ -22,7 +22,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/network"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -56,12 +55,8 @@ func Type7(request *network.GetBodiesRequest, w net.Conn) error {
 		return err
 	}
 
-	nodePrivateKey, _, err := utils.GetNodeKeys()
-	if err != nil {
-		return err
-	}
 	for _, b := range blocks {
-		data, err := b.Block.Marshal(nodePrivateKey)
+		data, err := b.Block.Marshal()
 		if err != nil {
 			return err
 		}

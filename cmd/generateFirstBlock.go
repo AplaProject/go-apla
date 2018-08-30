@@ -87,7 +87,7 @@ var generateFirstBlockCmd = &cobra.Command{
 			Transactions: [][]byte{tx},
 		}
 
-		blockBytes, err := block.Marshal("")
+		blockBytes, err := block.Marshal()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block marshalling")
 			return

@@ -54,16 +54,11 @@ func (b *PlayableBlock) PlaySafe() error {
 	}
 
 	err = b.Play(dbTransaction)
-	NodePrivateKey, _, err := utils.GetNodeKeys()
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
 		transactions := [][]byte{}
 		for _, tr := range doneTx {
 			transactions = append(transactions, tr.TxFullData)
-		}
-		if err != nil || len(NodePrivateKey) < 1 {
-			log.WithFields(log.Fields{"type": consts.NodePrivateKeyFilename, "error": err}).Error("reading node private key")
-			return err
 		}
 		bBlock := &blockchain.Block{
 			Header:       &b.Header,
@@ -71,10 +66,7 @@ func (b *PlayableBlock) PlaySafe() error {
 			PrevHash:     b.PrevHash,
 		}
 		mrklRoot, err := bBlock.GetMrklRoot()
-		if err != nil {
-			return err
-		}
-		bData, err := bBlock.Marshal(NodePrivateKey)
+		bData, err := bBlock.Marshal()
 		if err != nil {
 			return err
 		}
@@ -100,7 +92,8 @@ func (b *PlayableBlock) PlaySafe() error {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("double hashing block data")
 		return err
 	}
-	if err := blockchain.InsertBlock(blockHash, b.ToBlockchainBlock(), NodePrivateKey); err != nil {
+	bBlock := b.ToBlockchainBlock()
+	if err := bBlock.Insert(blockHash); err != nil {
 		dbTransaction.Rollback()
 		return err
 	}

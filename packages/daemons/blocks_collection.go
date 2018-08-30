@@ -177,7 +177,8 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	count = 0
 	blockHash := curBlock.NextHash
 	curBlockID := curBlock.Header.BlockID + 1
-	_, found, err = blockchain.GetBlock(curBlock.NextHash)
+	block := &blockchain.Block{}
+	found, err = block.Get(curBlock.NextHash)
 	if err != nil {
 		return err
 	}
@@ -437,11 +438,8 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 			return err
 		}
 		// insert new blocks into blockchain
-		nodePrivKey, _, err := utils.GetNodeKeys()
-		if err != nil {
-			return err
-		}
-		if err := blockchain.InsertBlock(b.Hash, b.ToBlockchainBlock(), nodePrivKey); err != nil {
+		bBlock := b.ToBlockchainBlock()
+		if err := bBlock.Insert(b.Hash); err != nil {
 			dbTransaction.Rollback()
 			return err
 		}
