@@ -69,8 +69,8 @@ func init() {
 	funcs[`Hint`] = tplFunc{defaultTag, defaultTag, `hint`, `Icon,Title,Text`}
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
-	funcs[`JsonToSource`] = tplFunc{jsontosourceTag, defaultTag, `jsontosource`, `Source,Data`}
-	funcs[`ArrayToSource`] = tplFunc{arraytosourceTag, defaultTag, `arraytosource`, `Source,Data`}
+	funcs[`JsonToSource`] = tplFunc{jsontosourceTag, defaultTag, `jsontosource`, `Source,Data,Prefix`}
+	funcs[`ArrayToSource`] = tplFunc{arraytosourceTag, defaultTag, `arraytosource`, `Source,Data,Prefix`}
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
@@ -1123,9 +1123,12 @@ func (s byFirst) Less(i, j int) bool {
 
 func jsontosourceTag(par parFunc) string {
 	setAllAttr(par)
-
+	var prefix string
+	if par.Node.Attr[`prefix`] != nil {
+		prefix = par.Node.Attr[`prefix`].(string) + `_`
+	}
 	data := make([][]string, 0, 16)
-	cols := []string{`key`, `value`}
+	cols := []string{prefix + `key`, prefix + `value`}
 	types := []string{`text`, `text`}
 	var out map[string]interface{}
 	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
@@ -1135,7 +1138,22 @@ func jsontosourceTag(par parFunc) string {
 		if item == nil {
 			item = ``
 		}
-		data = append(data, []string{key, fmt.Sprint(item)})
+		var value string
+		switch v := item.(type) {
+		case map[string]interface{}:
+			var keys, values []string
+			for k := range v {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			for _, k := range keys {
+				values = append(values, fmt.Sprintf(`%q:%q`, k, v[k]))
+			}
+			value = `{` + strings.Join(values, ",\r\n") + `}`
+		default:
+			value = fmt.Sprint(item)
+		}
+		data = append(data, []string{key, value})
 	}
 	sort.Sort(byFirst(data))
 	setAllAttr(par)
@@ -1150,8 +1168,13 @@ func jsontosourceTag(par parFunc) string {
 func arraytosourceTag(par parFunc) string {
 	setAllAttr(par)
 
+	var prefix string
+	if par.Node.Attr[`prefix`] != nil {
+		prefix = par.Node.Attr[`prefix`].(string) + `_`
+	}
+
 	data := make([][]string, 0, 16)
-	cols := []string{`key`, `value`}
+	cols := []string{prefix + `key`, prefix + `value`}
 	types := []string{`text`, `text`}
 	var out []json.RawMessage
 	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
