@@ -32,7 +32,7 @@ const BlocksPerRequest = 5
 // Type7 writes the body of the specified block
 // blocksCollection and queue_parser_blocks daemons send the request through p.GetBlocks()
 func Type7(request *network.GetBodiesRequest, w net.Conn) error {
-	var blocks []*blockchain.Block
+	var blocks []*blockchain.BlockWithHash
 	var err error
 	order := 1
 	if request.ReverseOrder {
@@ -61,7 +61,7 @@ func Type7(request *network.GetBodiesRequest, w net.Conn) error {
 		return err
 	}
 	for _, b := range blocks {
-		data, err := b.Marshal(nodePrivateKey)
+		data, err := b.Block.Marshal(nodePrivateKey)
 		if err != nil {
 			return err
 		}

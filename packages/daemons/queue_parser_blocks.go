@@ -45,7 +45,7 @@ func QueueParserBlocks(ctx context.Context, d *daemon) error {
 	DBLock()
 	defer DBUnlock()
 
-	infoBlock, found, err := blockchain.GetLastBlock()
+	infoBlock, _, found, err := blockchain.GetLastBlock()
 	if !found {
 		return nil
 	}

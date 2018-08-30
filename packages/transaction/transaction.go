@@ -56,10 +56,10 @@ type Transaction struct {
 func (t Transaction) GetLogger() *log.Entry {
 	logger := log.WithFields(log.Fields{"tx_type": t.TxType, "tx_time": t.TxTime, "tx_wallet_id": t.TxKeyID})
 	if t.BlockData != nil {
-		logger = logger.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_hash": t.BlockData.Hash, "block_version": t.BlockData.Version})
+		logger = logger.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_version": t.BlockData.Version})
 	}
 	if t.PrevBlock != nil {
-		logger = logger.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_hash": t.BlockData.Hash, "block_version": t.BlockData.Version})
+		logger = logger.WithFields(log.Fields{"block_id": t.BlockData.BlockID, "block_time": t.BlockData.Time, "block_wallet_id": t.BlockData.KeyID, "block_state_id": t.BlockData.EcosystemID, "block_version": t.BlockData.Version})
 	}
 	return logger
 }
@@ -122,7 +122,7 @@ func IsContractTransaction(txType int) bool {
 func (t *Transaction) parseFromStruct(buf *bytes.Buffer, txType int64) error {
 	t.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
 	input := buf.Bytes()
-	if err := converter.BinUnmarshal(&input, t.TxPtr); err != nil {
+	if err := msgpack.Unmarshal(input[1:], t.TxPtr); err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError, "tx_type": int(txType)}).Error("getting parser for tx type")
 		return err
 	}
@@ -368,13 +368,7 @@ func CleanCache() {
 
 // GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
 func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, keyID int64) {
-	tmp := binaryBlock[:]
 	txType = converter.BinToDecBytesShift(&binaryBlock, 1)
-	if consts.IsStruct(int(txType)) {
-		var txHead consts.TxHeader
-		converter.BinUnmarshal(&tmp, &txHead)
-		keyID = txHead.KeyID
-	}
 	return
 }
 

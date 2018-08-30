@@ -16,7 +16,7 @@ type getMaxBlockIDResult struct {
 }
 
 func getMaxBlockID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	block, found, err := blockchain.GetLastBlock()
+	block, hash, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max block")
 		return errorAPI(w, err, http.StatusInternalServerError)
@@ -27,7 +27,7 @@ func getMaxBlockID(w http.ResponseWriter, r *http.Request, data *apiData, logger
 	}
 	data.result = &getMaxBlockIDResult{
 		MaxBlockID: block.Header.BlockID,
-		Hash:       string(converter.BinToHex(block.Header.Hash)),
+		Hash:       string(converter.BinToHex(hash)),
 	}
 	return nil
 }
@@ -52,6 +52,6 @@ func getBlockInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 		log.WithFields(log.Fields{"type": consts.NotFound, "hash": blockHash}).Error("block with hash not found")
 		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
-	data.result = &getBlockInfoResult{Hash: block.Header.Hash, EcosystemID: block.Header.EcosystemID, KeyID: block.Header.KeyID, Time: block.Header.Time, RollbacksHash: block.Header.RollbacksHash}
+	data.result = &getBlockInfoResult{Hash: blockHash, EcosystemID: block.Header.EcosystemID, KeyID: block.Header.KeyID, Time: block.Header.Time, RollbacksHash: block.Header.RollbacksHash}
 	return nil
 }

@@ -88,7 +88,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 
 	done := time.After(endTime.Sub(time.Now()))
-	prevBlock, found, err := blockchain.GetLastBlock()
+	prevBlock, _, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting previous block")
 		return err

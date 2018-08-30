@@ -124,7 +124,7 @@ func (btc *BlockTimeCalculator) countBlockTime(blockTime time.Time) (blockGenera
 
 func BuildBlockTimeCalculator(transaction *model.DbTransaction) (BlockTimeCalculator, error) {
 	var btc BlockTimeCalculator
-	firstBlock, found, err := blockchain.GetFirstBlock()
+	firstBlock, _, found, err := blockchain.GetFirstBlock()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
 		return btc, err

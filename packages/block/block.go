@@ -24,6 +24,8 @@ import (
 type PlayableBlock struct {
 	Header       blockchain.BlockHeader
 	PrevHeader   *blockchain.BlockHeader
+	Hash         []byte
+	PrevHash     []byte
 	MrklRoot     []byte
 	BinData      []byte
 	Transactions []*transaction.Transaction
@@ -39,7 +41,7 @@ func (b PlayableBlock) String() string {
 // GetLogger is returns logger
 func (b PlayableBlock) GetLogger() *log.Entry {
 	return log.WithFields(log.Fields{"block_id": b.Header.BlockID, "block_time": b.Header.Time, "block_wallet_id": b.Header.KeyID,
-		"block_state_id": b.Header.EcosystemID, "block_hash": b.Header.Hash, "block_version": b.Header.Version})
+		"block_state_id": b.Header.EcosystemID, "block_version": b.Header.Version})
 }
 
 // PlayBlockSafe is inserting block safely
@@ -66,7 +68,7 @@ func (b *PlayableBlock) PlaySafe() error {
 		bBlock := &blockchain.Block{
 			Header:       &b.Header,
 			Transactions: transactions,
-			PrevHash:     b.PrevHeader.Hash,
+			PrevHash:     b.PrevHash,
 		}
 		mrklRoot, err := bBlock.GetMrklRoot()
 		if err != nil {
@@ -93,7 +95,12 @@ func (b *PlayableBlock) PlaySafe() error {
 		return err
 	}
 
-	if err := blockchain.InsertBlock(b.Header.Hash, b.ToBlockchainBlock(), NodePrivateKey); err != nil {
+	blockHash, err := crypto.DoubleHash(b.BinData)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("double hashing block data")
+		return err
+	}
+	if err := blockchain.InsertBlock(blockHash, b.ToBlockchainBlock(), NodePrivateKey); err != nil {
 		dbTransaction.Rollback()
 		return err
 	}
@@ -116,7 +123,7 @@ func (b *PlayableBlock) readPreviousBlockFromBlockchainTable() error {
 	}
 
 	var err error
-	b.PrevHeader, err = GetBlockDataFromBlockChain(b.Header.Hash)
+	b.PrevHeader, err = GetBlockDataFromBlockChain(b.Hash)
 	if err != nil {
 		return utils.ErrInfo(fmt.Errorf("can't get block %d", b.Header.BlockID-1))
 	}
@@ -296,7 +303,7 @@ func (b *PlayableBlock) CheckHash() (bool, error) {
 		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, b.ForSign(), b.Header.Sign, true)
 		if err != nil {
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
-			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHeader.Hash))
+			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHash))
 		}
 
 		return resultCheckSign, nil
@@ -307,14 +314,14 @@ func (b *PlayableBlock) CheckHash() (bool, error) {
 
 func (b PlayableBlock) ForSha() string {
 	return fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d",
-		b.Header.BlockID, b.PrevHeader.Hash, b.MrklRoot, b.Header.Time,
+		b.Header.BlockID, b.PrevHash, b.MrklRoot, b.Header.Time,
 		b.Header.EcosystemID, b.Header.KeyID, b.Header.NodePosition)
 }
 
 // ForSign from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
 func (b PlayableBlock) ForSign() string {
 	return fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
-		b.Header.BlockID, b.PrevHeader.Hash, b.Header.Time, b.Header.EcosystemID,
+		b.Header.BlockID, b.PrevHash, b.Header.Time, b.Header.EcosystemID,
 		b.Header.KeyID, b.Header.NodePosition, b.MrklRoot)
 }
 
@@ -346,7 +353,15 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Pla
 	}
 
 	blockModel := &blockchain.Block{}
-	block, err := FromBlockchainBlock(blockModel)
+	if err := blockModel.Unmarshal(data); err != nil {
+		return nil, err
+	}
+	hash, err := crypto.DoubleHash(data)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("Hashing block data")
+		return nil, err
+	}
+	block, err := FromBlockchainBlock(blockModel, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +374,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Pla
 	return block, nil
 }
 
-func FromBlockchainBlock(b *blockchain.Block) (*PlayableBlock, error) {
+func FromBlockchainBlock(b *blockchain.Block, hash []byte) (*PlayableBlock, error) {
 	transactions := make([]*transaction.Transaction, 0)
 	for _, tx := range b.Transactions {
 		bufTransaction := bytes.NewBuffer(tx)
@@ -376,6 +391,8 @@ func FromBlockchainBlock(b *blockchain.Block) (*PlayableBlock, error) {
 	return &PlayableBlock{
 		Header:       *b.Header,
 		Transactions: transactions,
+		Hash:         hash,
+		PrevHash:     b.PrevHash,
 		MrklRoot:     b.MrklRoot,
 	}, nil
 }
@@ -383,7 +400,7 @@ func FromBlockchainBlock(b *blockchain.Block) (*PlayableBlock, error) {
 func (b *PlayableBlock) ToBlockchainBlock() *blockchain.Block {
 	blockchainBlock := &blockchain.Block{
 		Header:   &b.Header,
-		PrevHash: b.PrevHeader.Hash,
+		PrevHash: b.PrevHash,
 	}
 	txs := [][]byte{}
 	for _, tx := range b.Transactions {

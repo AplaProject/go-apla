@@ -111,7 +111,7 @@ func Type1(rw io.ReadWriter) error {
 }
 
 func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
-	lastBlock, found, err := blockchain.GetLastBlock()
+	lastBlock, _, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur block ID")
 		return utils.ErrInfo(err)

@@ -28,7 +28,7 @@ import (
 // Type10 sends the last block ID
 // blocksCollection daemon sends this request
 func Type10() (*network.MaxBlockResponse, error) {
-	lastBlock, found, err := blockchain.GetLastBlock()
+	lastBlock, _, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur blockID")
 		return nil, utils.ErrInfo(err)

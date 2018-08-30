@@ -81,6 +81,7 @@ var generateFirstBlockCmd = &cobra.Command{
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block body bin marshalling")
 			return
 		}
+		tx = append([]byte{consts.TxTypeFirstBlock}, tx...)
 		block := blockchain.Block{
 			Header:       header,
 			Transactions: [][]byte{tx},

@@ -28,12 +28,12 @@ import (
 // The request is sent by 'confirmations' daemon
 func Type4(r *network.ConfirmRequest) (*network.ConfirmResponse, error) {
 	resp := &network.ConfirmResponse{}
-	block, found, err := blockchain.GetBlock(r.BlockHash)
+	_, found, err := blockchain.GetBlock(r.BlockHash)
 	if err != nil || !found {
 		hash := [32]byte{}
 		resp.Hash = hash[:]
 	} else {
-		resp.Hash = block.Header.Hash // can we send binary data ?
+		resp.Hash = r.BlockHash // can we send binary data ?
 	}
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_hash": r.BlockHash}).Error("Getting block")

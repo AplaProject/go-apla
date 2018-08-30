@@ -30,7 +30,7 @@ func QueueParserTx(ctx context.Context, d *daemon) error {
 	DBLock()
 	defer DBUnlock()
 
-	_, found, err := blockchain.GetLastBlock()
+	_, _, found, err := blockchain.GetLastBlock()
 	if err != nil {
 		return err
 	}

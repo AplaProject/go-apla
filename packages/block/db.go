@@ -24,7 +24,7 @@ func GetBlockDataFromBlockChain(hash []byte) (*blockchain.BlockHeader, error) {
 
 // GetDataFromFirstBlock returns data of first block
 func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
-	bBlock, found, err := blockchain.GetFirstBlock()
+	bBlock, _, found, err := blockchain.GetFirstBlock()
 	if !found {
 		return
 	}

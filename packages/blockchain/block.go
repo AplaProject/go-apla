@@ -26,7 +26,6 @@ type BlockHeader struct {
 	KeyID         int64
 	NodePosition  int64
 	Sign          []byte
-	Hash          []byte
 	RollbacksHash []byte
 	Version       int
 }
@@ -89,6 +88,11 @@ type Block struct {
 	NextHash      []byte
 	RollbacksHash []byte
 	Sign          []byte
+}
+
+type BlockWithHash struct {
+	*Block
+	Hash []byte
 }
 
 func (b *Block) GetMrklRoot() ([]byte, error) {
@@ -174,6 +178,16 @@ func InsertBlock(hash []byte, block *Block, key string) error {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("inserting block")
 		return err
 	}
+	if block.Header.BlockID == 1 {
+		if err := db.Put([]byte(firstBlockKey), []byte(blockPrefix+string(hash)), nil); err != nil {
+			log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("updating first block key")
+			return err
+		}
+	}
+	if err := db.Put([]byte(lastBlockKey), []byte(blockPrefix+string(hash)), nil); err != nil {
+		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("updating last block key")
+		return err
+	}
 	prevBlock, found, err := GetBlock(prevHash)
 	if err != nil {
 		return err
@@ -190,16 +204,6 @@ func InsertBlock(hash []byte, block *Block, key string) error {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("inserting block")
 		return err
 	}
-	if block.Header.BlockID == 1 {
-		if err := db.Put([]byte(firstBlockKey), hash, nil); err != nil {
-			log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("updating first block key")
-			return err
-		}
-	}
-	if err := db.Put([]byte(lastBlockKey), hash, nil); err != nil {
-		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("updating last block key")
-		return err
-	}
 
 	return nil
 }
@@ -208,19 +212,31 @@ func DeleteBlock(blockHash []byte) error {
 	return db.Delete([]byte(blockPrefix+string(blockHash)), nil)
 }
 
-func GetFirstBlock() (*Block, bool, error) {
-	return GetBlock([]byte(firstBlockKey))
+func GetFirstBlock() (*Block, []byte, bool, error) {
+	hash, err := db.Get([]byte(firstBlockKey), nil)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("getting first block key")
+		return nil, nil, false, err
+	}
+	block, found, err := GetBlock([]byte(blockPrefix + string(hash)))
+	return block, hash, found, err
 }
 
-func GetLastBlock() (*Block, bool, error) {
-	return GetBlock([]byte(lastBlockKey))
+func GetLastBlock() (*Block, []byte, bool, error) {
+	hash, err := db.Get([]byte(lastBlockKey), nil)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("getting last block key")
+		return nil, nil, false, err
+	}
+	block, found, err := GetBlock([]byte(blockPrefix + string(hash)))
+	return block, hash, found, err
 }
 
-func GetNBlocksFrom(hash []byte, n, ordering int) ([]*Block, error) {
+func GetNBlocksFrom(hash []byte, n, ordering int) ([]*BlockWithHash, error) {
 	if ordering == 0 {
 		return nil, errors.New("ordering must be positive or negative, not 0")
 	}
-	result := []*Block{}
+	result := []*BlockWithHash{}
 	if n < 1 {
 		return result, nil
 	}
@@ -231,7 +247,7 @@ func GetNBlocksFrom(hash []byte, n, ordering int) ([]*Block, error) {
 	if !found {
 		return nil, err
 	}
-	result = append(result, lastBlock)
+	result = append(result, &BlockWithHash{Block: lastBlock, Hash: hash})
 	var nextHash []byte
 	if ordering < 0 {
 		nextHash = lastBlock.PrevHash
@@ -250,7 +266,7 @@ func GetNBlocksFrom(hash []byte, n, ordering int) ([]*Block, error) {
 		if !found {
 			return result, nil
 		}
-		result = append(result, block)
+		result = append(result, &BlockWithHash{Block: block, Hash: nextHash})
 		if ordering < 0 {
 			nextHash = block.PrevHash
 		} else if ordering > 0 {
@@ -263,11 +279,11 @@ func GetNBlocksFrom(hash []byte, n, ordering int) ([]*Block, error) {
 	return result, nil
 }
 
-func GetFirstNBlocks(n int) ([]*Block, error) {
+func GetFirstNBlocks(n int) ([]*BlockWithHash, error) {
 	return GetNBlocksFrom([]byte(firstBlockKey), n, 1)
 }
 
-func GetLastNBlocks(n int) ([]*Block, error) {
+func GetLastNBlocks(n int) ([]*BlockWithHash, error) {
 	return GetNBlocksFrom([]byte(lastBlockKey), n, -1)
 }
 
@@ -277,8 +293,8 @@ func GetMaxForeignBlock(keyID int64) (*Block, bool, error) {
 		return nil, false, err
 	}
 	for _, b := range blocks {
-		if b.Header.KeyID != keyID {
-			return b, true, nil
+		if b.Block.Header.KeyID != keyID {
+			return b.Block, true, nil
 		}
 	}
 	return nil, false, nil

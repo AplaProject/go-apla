@@ -39,12 +39,11 @@ func ToBlockID(blockHash []byte, dbTransaction *model.DbTransaction, logger *log
 		}
 		for _, block := range blocks {
 			// roll back our blocks to the block blockID
-			err = RollbackBlock(block, true)
+			err = RollbackBlock(block.Block, block.Hash, true)
 			if err != nil {
 				return err
 			}
 		}
-		blocks = blocks[:0]
 	}
 
 	return nil

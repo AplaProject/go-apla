@@ -44,25 +44,25 @@ func Confirmations(ctx context.Context, d *daemon) error {
 		d.sleepTime = 10 * time.Second
 	}
 
-	hashes, err := blockchain.GetUnconfirmedBlocks(consts.MIN_CONFIRMED_NODES)
+	blocks, err := blockchain.GetUnconfirmedBlocks(consts.MIN_CONFIRMED_NODES)
 	if err != nil {
 		return err
 	}
-	if len(hashes) == 0 {
+	if len(blocks) == 0 {
 		return nil
 	}
 
-	return confirmationsBlocks(ctx, d, hashes)
+	return confirmationsBlocks(ctx, d, blocks)
 }
 
-func confirmationsBlocks(ctx context.Context, d *daemon, blocks []*blockchain.Block) error {
+func confirmationsBlocks(ctx context.Context, d *daemon, blocks []*blockchain.BlockWithHash) error {
 	for _, block := range blocks {
 		if err := ctx.Err(); err != nil {
 			d.logger.WithFields(log.Fields{"type": consts.ContextError, "error": err}).Error("error in context")
 			return err
 		}
 
-		hashStr := string(converter.BinToHex(block.Header.Hash))
+		hashStr := string(converter.BinToHex(block.Hash))
 		d.logger.WithFields(log.Fields{"hash": hashStr}).Debug("checking hash")
 
 		hosts, err := service.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
@@ -78,9 +78,9 @@ func confirmationsBlocks(ctx context.Context, d *daemon, blocks []*blockchain.Bl
 				continue
 			}
 
-			d.logger.WithFields(log.Fields{"host": host, "block_hash": block.Header.Hash}).Debug("checking block id confirmed at node")
+			d.logger.WithFields(log.Fields{"host": host, "block_hash": block.Hash}).Debug("checking block id confirmed at node")
 			go func() {
-				IsReachable(host, block.Header.Hash, ch, d.logger)
+				IsReachable(host, block.Hash, ch, d.logger)
 			}()
 		}
 		var answer string
@@ -94,11 +94,11 @@ func confirmationsBlocks(ctx context.Context, d *daemon, blocks []*blockchain.Bl
 			}
 		}
 		confirmation := &blockchain.Confirmation{}
-		confirmation.BlockID = block.Header.BlockID
+		confirmation.BlockID = block.Block.Header.BlockID
 		confirmation.Good = st1
 		confirmation.Bad = st0
 		confirmation.Time = time.Now().Unix()
-		if err = blockchain.InsertConfirmation(block.Header.Hash, confirmation); err != nil {
+		if err = confirmation.Insert(block.Hash); err != nil {
 			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving confirmation")
 			return err
 		}
