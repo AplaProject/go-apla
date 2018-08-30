@@ -23,49 +23,8 @@ VALUES
 		}
 	}
 	action {
-		DBUpdate("contracts", $Id, "active", 1)
+		DBUpdate("contracts", $Id, {"active": 1})
 		Activate($Id, $ecosystem_id)
-	}
-	func rollback() {
-		Deactivate($Id, $ecosystem_id)
-	}
-
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'AppendMenu', 'contract AppendMenu {
-	data {
-		Id     int
-		Value      string
-	}
-	conditions {
-		ConditionById("menu", false)
-	}
-	action {
-		var row map
-		row = DBRow("menu").Columns("value").WhereId($Id)
-		DBUpdate("menu", $Id, "value", row["value"] + "\r\n" + $Value)
-	}
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'AppendPage', 'contract AppendPage {
-	data {
-		Id         int
-		Value      string
-	}
-	conditions {
-		RowConditions("pages", $Id, false)
-	}
-	action {
-		var value string
-		var row map
-		row = DBRow("pages").Columns("value").WhereId($Id)
-		value = row["value"]
-		if Contains(value, "PageEnd:") {
-			value = Replace(value, "PageEnd:", $Value) + "\r\nPageEnd:"
-		} else {
-			value = value + "\r\n" + $Value
-		}
-		DBUpdate("pages", $Id, "value",  value )
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -75,7 +34,8 @@ VALUES
 	}
 	conditions {
 		var rows array
-		rows = DBFind("delayed_contracts").Where("id = ? and deleted = false", $Id)
+		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: "false"} )
+
 		if !Len(rows) {
 			error Sprintf("Delayed contract %%d does not exist", $Id)
 		}
@@ -99,8 +59,7 @@ VALUES
 		if limit == 0 || limit > counter {
 			block_id = block_id + Int($cur["every_block"])
 		}
-
-		DBUpdate("delayed_contracts", $Id, "counter,block_id", counter, block_id)
+		DBUpdate("delayed_contracts", $Id, {"counter": counter, "block_id": block_id})
 
 		var params map
 		CallContract($cur["contract"], params)
@@ -131,31 +90,10 @@ VALUES
 		}
 	}
 	action {
-		DBUpdate("contracts", $Id, "active", 0)
+		DBUpdate("contracts", $Id, {"active": 0})
 		Deactivate($Id, $ecosystem_id)
 	}
-	func rollback() {
-		Activate($Id, $ecosystem_id)
-	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'DelApplication', 'contract DelApplication {
-        data {
-            ApplicationId int
-            Value int "optional"
-        }
-    
-        conditions {
-            if $Value < 0 || $Value > 1 {
-                error "Incorrect value"
-            }
-            RowConditions("applications", $ApplicationId, false)
-        }
-    
-        action {
-            DBUpdate("applications", $ApplicationId, "deleted", $Value)
-        }
-    }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditAppParam', 'contract EditAppParam {
     data {
@@ -175,17 +113,15 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("app_params", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("app_params", $Id, pars)
         }
     }
 }
@@ -207,13 +143,12 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Conditions {
-            pars[0] = "conditions"
-            vals[0] = $Conditions
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("applications", $ApplicationId, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("applications", $ApplicationId, pars)
         }
     }
 }
@@ -236,17 +171,15 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("blocks", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("blocks", $Id, pars)
         }
     }
 }
@@ -306,60 +239,6 @@ VALUES
     action {
         UpdateContract($Id, $Value, $Conditions, $Confirmation, $WalletId, $recipient, $cur["active"], $cur["token_id"])
     }
-    func rollback() {
-        RollbackEditContract()
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'EditDelayedContract', 'contract EditDelayedContract {
-	data {
-		Id int
-		Contract string
-		EveryBlock int
-		Conditions string
-		BlockID int "optional"
-		Limit int "optional"
-		Deleted int "optional"
-	}
-	conditions {
-		ConditionById("delayed_contracts", true)
-
-		if !HasPrefix($Contract, "@") {
-			$Contract = "@" + Str($ecosystem_id) + $Contract
-		}
-
-		if GetContractByName($Contract) == 0 {
-			error Sprintf("Unknown contract %%s", $Contract)
-		}
-
-		if $BlockID == 0 {
-			$BlockID = $block + $EveryBlock
-		}
-
-		if $BlockID <= $block {
-			error "The blockID must be greater than the current blockID"
-		}
-	}
-	action {
-		DBUpdate("delayed_contracts", $Id, "contract,key_id,block_id,every_block,counter,limit,deleted,conditions", $Contract, $key_id, $BlockID, $EveryBlock, 0, $Limit, $Deleted, $Conditions)
-	}
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'EditEcosystemName', 'contract EditEcosystemName {
-	data {
-		EcosystemID int
-		NewName string
-	}
-	conditions {
-		var rows array
-		rows = DBFind("@1_ecosystems").Where("id = ?", $EcosystemID)
-		if !Len(rows) {
-			error Sprintf("Ecosystem %%d does not exist", $EcosystemID)
-		}
-	}
-	action {
-		EditEcosysName($EcosystemID, $NewName)
-	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'EditLang', 'contract EditLang {
@@ -370,45 +249,11 @@ VALUES
 
     conditions {
         EvalCondition("parameters", "changing_language", "value")
-        $lang = DBFind("languages").Where("id=?", $Id).Row()
+        $lang = DBFind("languages").Where({id: $Id}).Row()
     }
 
     action {
         EditLanguage($Id, $lang["name"], $Trans, Int($lang["app_id"]))
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'EditLangJoint', 'contract EditLangJoint {
-    data {
-        Id int
-        ValueArr array
-        LocaleArr array
-    }
-
-    conditions {
-        var i int
-        while i < Len($LocaleArr) {
-            if Size($LocaleArr[i]) == 0 {
-                info("Locale is empty")
-            }
-            if Size($ValueArr[i]) == 0 {
-                info("Value is empty")
-            }
-            i = i + 1
-        }
-    }
-
-    action {
-        var i int
-        var Trans map
-        while i < Len($LocaleArr) {
-            Trans[$LocaleArr[i]] = $ValueArr[i]
-            i = i + 1
-        }
-        var params map
-        params["Id"] = $Id 
-        params["Trans"] = JSONEncode(Trans)
-        CallContract("EditLang", params)
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -431,21 +276,18 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Title {
-            pars = Append(pars, "title")
-            vals = Append(vals, $Title)
+            pars["title"] = $Title
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
-        if Len(vals) > 0 {
-            DBUpdate("menu", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("menu", $Id, pars)
         }            
     }
 }
@@ -485,128 +327,28 @@ VALUES
     }
 
     action {
-        var pars, vals array
+        var pars map
         if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
+            pars["value"] = $Value
         }
         if $Menu {
-            pars = Append(pars, "menu")
-            vals = Append(vals, $Menu)
+            pars["menu"] = $Menu
         }
         if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
+            pars["conditions"] = $Conditions
         }
         if $ValidateCount {
-            pars = Append(pars, "validate_count")
-            vals = Append(vals, $ValidateCount)
+            pars["validate_count"] = $ValidateCount
         }
         if $ValidateMode {
             if $ValidateMode != "1" {
                 $ValidateMode = "0"
             }
-            pars = Append(pars, "validate_mode")
-            vals = Append(vals, $ValidateMode)
+            pars["validate_mode"] = $ValidateMode
         }
-        if Len(vals) > 0 {
-            DBUpdate("pages", $Id, Join(pars, ","), vals...)
+        if pars {
+            DBUpdate("pages", $Id, pars)
         }
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'EditParameter', 'contract EditParameter {
-    data {
-        Id int
-        Value string "optional"
-        Conditions string "optional"
-    }
-    func onlyConditions() bool {
-        return $Conditions && !$Value
-    }
-
-    conditions {
-        RowConditions("parameters", $Id, onlyConditions())
-        if $Conditions {
-            ValidateCondition($Conditions, $ecosystem_id)
-        }
-    }
-
-    action {
-        var pars, vals array
-        if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
-        }
-        if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
-        }
-        if Len(vals) > 0 {
-            DBUpdate("parameters", $Id, Join(pars, ","), vals...)
-        }
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'EditSign', 'contract EditSign {
-    data {
-        Id int
-        Value string "optional"
-        Conditions string "optional"
-    }
-    func onlyConditions() bool {
-        return $Conditions && false
-    }
-
-    conditions {
-        RowConditions("signatures", $Id, onlyConditions())
-        if $Conditions {
-            ValidateCondition($Conditions, $ecosystem_id)
-        }
-    }
-    action {
-        var pars, vals array
-        if $Value {
-            pars[0] = "value"
-            vals[0] = $Value
-        }
-        if $Conditions {
-            pars = Append(pars, "conditions")
-            vals = Append(vals, $Conditions)
-        }
-        if Len(vals) > 0 {
-            DBUpdate("signatures", $Id, Join(pars, ","), vals...)
-        }
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'EditSignJoint', 'contract EditSignJoint {
-    data {
-        Id int
-        Title string
-        Parameter string
-        Conditions string
-    }
-
-    conditions {
-        if !$Title {
-            info("Title is empty")
-        }
-        if !$Parameter {
-            info("Parameter is empty")
-        }
-    }
-
-    action {
-        var Value map
-        Value["title"] = $Title 
-        Value["params"] = $Parameter
-
-        var params map
-        params["Id"] = $Id 
-        params["Value"] = JSONEncode(Value)
-        params["Conditions"] = $Conditions
-        CallContract("EditSign", params)
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -646,215 +388,6 @@ VALUES
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'Export', 'contract Export {
-    data {}
-
-    func escapeSpecials(s string) string {
-        s = Replace(s, ` + "`" + `\` + "`" + `, ` + "`" + `\\` + "`" + `)
-        s = Replace(s, ` + "`" + `	` + "`" + `, ` + "`" + `\t` + "`" + `)
-        s = Replace(s, "\n", ` + "`" + `\n` + "`" + `)
-        s = Replace(s, "\r", ` + "`" + `\r` + "`" + `)
-        s = Replace(s, ` + "`" + `"` + "`" + `, ` + "`" + `\"` + "`" + `)
-        if s == "0"{
-            s = ""
-        }
-        return s
-    }
-
-    func AssignAll(app_name string, resources string) string {
-        return Sprintf(` + "`" + `{
-            "name": "%%v",
-            "data": [
-                %%v
-            ]
-        }` + "`" + `, app_name, resources)
-    }
-
-    func serializeItem(item map, type string) string {
-        var s string
-        s = Sprintf(
-            ` + "`" + `{
-                "Type": "%%v",
-                "Name": "%%v",
-                "Value": "%%v",
-                "Conditions": "%%v",
-                "Menu": "%%v",
-                "Title": "%%v",
-                "Trans": "%%v",
-                "Columns": "%%v",
-                "Permissions": "%%v"
-            }` + "`" + `, type, escapeSpecials(Str(item["name"])), escapeSpecials(Str(item["value"])), escapeSpecials(Str(item["conditions"])), escapeSpecials(Str(item["menu"])), escapeSpecials(Str(item["title"])), escapeSpecials(Str(item["res"])), escapeSpecials(Str(item["columns"])), escapeSpecials(Str(item["permissions"]))
-        )
-        return s
-    }
-
-    func getTypeForColumns(table_name string, columnsJSON string) string {
-        var colsMap map, result columns array
-        colsMap = JSONDecode(columnsJSON)
-        columns = GetMapKeys(colsMap)
-        var i int
-        while i < Len(columns){
-            if Size(columns[i]) > 0 {
-                var col map
-                col["name"] = columns[i]
-                col["conditions"] = colsMap[col["name"]]
-                col["type"] = GetColumnType(table_name, col["name"])
-                result = Append(result, col)
-            }
-            i = i + 1
-        }
-        return JSONEncode(result)
-    }
-
-    func exportTable(type string, result array) array {
-        var items array, limit offset int
-        limit = 250
-        while true{
-            var rows array, where string
-            if type == "menu" {
-                if Len($menus_names) > 0 {
-                    where = Sprintf("name in (%%v)", Join($menus_names, ","))
-                }
-            }else{
-                where = Sprintf("app_id=%%v", $ApplicationID)
-            }
-            if where {
-                rows = DBFind(type).Limit(limit).Offset(offset).Where(where)
-            }
-            if Len(rows) > 0{
-                var i int
-                while i<Len(rows){
-                    items = Append(items, rows[i])
-                    i=i+1
-                }
-            }else{
-                break
-            }
-            offset = offset+limit
-        }
-        var i int, item map
-        while i < Len(items) {
-            item = items[i]
-            if type == "tables" {
-                var table map
-                table["name"] = item["name"]
-                table["permissions"] = item["permissions"]
-                table["conditions"] = item["conditions"]
-                table["columns"] = getTypeForColumns(item["name"], item["columns"])
-                item = table
-            }
-            result = Append(result, serializeItem(item, type))
-            if type == "pages" {
-                $menus_names = Append($menus_names, Sprintf("''%%v''", item["menu"]))
-            }
-            i = i + 1
-        }
-        return result
-    }
-
-    conditions {
-        var buffer_map map
-        buffer_map = DBFind("buffer_data").Columns("id,value->app_id,value->app_name").Where("member_id=$ and key=$", $key_id, "export").Row()
-        if !buffer_map{
-            warning "Application not found"
-        }
-        $ApplicationID = Int(buffer_map["value.app_id"])
-        $ApplicationName = Str(buffer_map["value.app_name"])
-
-        var menus_names array
-        $menus_names = menus_names
-    }
-
-    action {
-        var exportJSON string, items array
-        items = exportTable("pages", items)
-        items = exportTable("contracts", items)
-        items = exportTable("blocks", items)
-        items = exportTable("languages", items)
-        items = exportTable("app_params", items)
-        items = exportTable("tables", items)
-        items = exportTable("menu", items)
-
-        exportJSON = AssignAll($ApplicationName, Join(items, ",\r\n"))
-        UploadBinary("Name,Data,ApplicationId,DataMimeType", "export", exportJSON, 1, "application/json")
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'ExportNewApp', 'contract ExportNewApp {
-    data {
-        ApplicationId int
-    }
-
-    conditions {
-        $app_map = DBFind("applications").Columns("id,name").Where("id=$", $ApplicationId).Row()
-        if !$app_map{
-            warning "Application not found"
-        }
-    }
-
-    action {
-
-        //=====================================================================================================
-        //------------------------------------Menu search------------------------------------------------------
-        var i int
-        var pages_array array
-        var menu_name_array array
-        var menu_id_array array
-
-        i = 0
-        var pages_ret array
-        pages_ret = DBFind("pages").Where("app_id=?", $ApplicationId)
-        while i < Len(pages_ret) {
-            var page_map map
-            page_map = pages_ret[i]
-
-            pages_array = Append(pages_array, Sprintf("''%%v''", Str(page_map["menu"])))
-            i = i + 1
-        }
-
-        if Len(pages_array) > 0 {
-            var where_for_menu string
-            where_for_menu = Sprintf("name in (%%v)", Join(pages_array, ","))
-
-            i = 0
-            var menu_ret array
-            menu_ret = DBFind("menu").Where(where_for_menu)
-            while i < Len(menu_ret) {
-                var menu_map map
-                menu_map = menu_ret[i]
-
-                menu_name_array = Append(menu_name_array, Str(menu_map["name"]))
-                menu_id_array = Append(menu_id_array, Str(menu_map["id"]))
-                i = i + 1
-            }
-        }
-
-        //=====================================================================================================
-        //------------------------------------Creating settings------------------------------------------------
-
-        var value map
-        value["app_id"] = Str($ApplicationId)
-        value["app_name"] = Str($app_map["name"])
-
-        if Len(menu_name_array) > 0 {
-            value["menu_id"] = Str(Join(menu_id_array, ", "))
-            value["menu_name"] = Str(Join(menu_name_array, ", "))
-            value["count_menu"] = Str(Len(menu_name_array))
-        } else {
-            value["menu_id"] = "0"
-            value["menu_name"] = ""
-            value["count_menu"] = "0"
-        }
-
-        $buffer_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "export").One("id")
-        if !$buffer_id {
-            DBInsert("buffer_data", "member_id,key,value", $key_id, "export", value)
-        } else {
-            DBUpdate("buffer_data", Int($buffer_id), "value", value)
-        }
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'Import', 'contract Import {
     data {
         Data string
@@ -874,10 +407,14 @@ VALUES
 
         $ApplicationId = 0
         var app_map map
-        app_map = DBFind("buffer_data").Columns("value->app_name").Where("key=''import_info'' and member_id=$", $key_id).Row()
+        app_map = DBFind("buffer_data").Columns("value->app_name").Where({key: "import_info",
+          member_id: $key_id}).Row()
+
         if app_map{
             var app_id int
-            app_id = DBFind("applications").Columns("id").Where("name=$", Str(app_map["value.app_name"])).One("id")
+            var ival string
+            ival = Str(app_map["value.app_name"])
+            app_id = DBFind("applications").Columns("id").Where({name: ival}).One("id")
             if app_id {
                 $ApplicationId = Int(app_id)
             }
@@ -915,7 +452,7 @@ VALUES
 
                 // Println(Sprintf("import %%v: %%v", $Type, cdata["Name"]))
 
-                item = DBFind($Type).Where("name=?", $Name).Row()
+                item = DBFind($Type).Where({name: $Name}).Row()
                 var contractName string
                 if item {
                     contractName = editors[$Type]
@@ -970,20 +507,22 @@ VALUES
 
         // init buffer_data, cleaning old buffer
         var initJson map
-        $import_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "import").One("id")
+        $import_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import"}).One("id")
         if $import_id {
             $import_id = Int($import_id)
-            DBUpdate("buffer_data", $import_id, "value", initJson)
+            DBUpdate("buffer_data", $import_id, {"value": initJson})
         } else {
-            $import_id = DBInsert("buffer_data", "member_id,key,value", $key_id, "import", initJson)
+            $import_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import",
+                 "value": initJson})
         }
 
-        $info_id = DBFind("buffer_data").Where("member_id=$ and key=$", $key_id, "import_info").One("id")
+        $info_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import_info"}).One("id")
         if $info_id {
             $info_id = Int($info_id)
-            DBUpdate("buffer_data", $info_id, "value", initJson)
+            DBUpdate("buffer_data", $info_id, {"value": initJson})
         } else {
-            $info_id = DBInsert("buffer_data", "member_id,key,value", $key_id, "import_info", initJson)
+            $info_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import_info",
+            "value": initJson})
         }
     }
 
@@ -1076,14 +615,18 @@ VALUES
         input["data"] = sliced
 
         // storing
-        DBUpdate("buffer_data", $import_id, "value", input)
-        DBUpdate("buffer_data", $info_id, "value", info_map)
+        DBUpdate("buffer_data", $import_id, {"value": input})
+        DBUpdate("buffer_data", $info_id, {"value": info_map})
 
         var app_id int
-        app_id = DBFind("applications").Columns("id").Where("name=$", Str(input["name"])).One("id")
+        var ival string
+        ival =  Str(input["name"])
+        app_id = DBFind("applications").Columns("id").Where({name:ival}).One("id")
 
         if !app_id {
-            DBInsert("applications", "name,conditions", Str(input["name"]), "true")
+            var val string
+            val = Str(input["name"])
+            DBInsert("applications", {"name": val, "conditions": "true"})
         }
     }
 }
@@ -1115,14 +658,14 @@ VALUES
 		}
 	}
 	action {
-		DBUpdate("keys", $key_id,"-amount", $amount)
+		DBUpdate("keys", $key_id, {"-amount": $amount})
 		if DBFind("keys").Columns("id").WhereId($recipient).One("id") == nil {
-			DBInsert("keys", "id,amount",  $recipient, $amount)
+			DBInsert("keys", {id: $recipient,amount: $amount})
 		} else {
-			DBUpdate("keys", $recipient,"+amount", $amount)
+			DBUpdate("keys", $recipient, {"+amount": $amount})
 		}
-		DBInsert("history", "sender_id,recipient_id,amount,comment,block_id,txhash",
-				$key_id, $recipient, $amount, $Comment, $block, $txhash)
+        DBInsert("history", {sender_id: $key_id,recipient_id: $recipient,
+             amount:$amount,comment: $Comment,block_id: $block,txhash: $txhash})
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -1141,13 +684,14 @@ VALUES
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("app_params").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("app_params").Columns("id").Where({"name":$Name}).One("id") {
             warning Sprintf( "Application parameter %%s already exists", $Name)
         }
     }
 
     action {
-        DBInsert("app_params", "app_id,name,value,conditions", $ApplicationId, $Name, $Value, $Conditions)
+        DBInsert("app_params", {app_id: $ApplicationId, name: $Name, value: $Value,
+              conditions: $Conditions})
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -1164,13 +708,13 @@ VALUES
             warning "Application name missing"
         }
 
-        if DBFind("applications").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("applications").Columns("id").Where({name:$Name}).One("id") {
             warning Sprintf( "Application %%s already exists", $Name)
         }
     }
 
     action {
-        $result = DBInsert("applications", "name,conditions", $Name, $Conditions)
+        $result = DBInsert("applications", {name: $Name,conditions: $Conditions})
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -1183,7 +727,8 @@ VALUES
 		Reason string
 	}
 	action {
-		DBInsert("@1_bad_blocks", "producer_node_id,consumer_node_id,block_id,timestamp block_time,reason", $ProducerNodeID, $ConsumerNodeID, $BlockID, $Timestamp, $Reason)
+        DBInsert("@1_bad_blocks", {producer_node_id: $ProducerNodeID,consumer_node_id: $ConsumerNodeID,
+            block_id: $BlockID, "timestamp block_time": $Timestamp, reason: $Reason})
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -1202,34 +747,14 @@ VALUES
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("blocks").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("blocks").Columns("id").Where({name:$Name}).One("id") {
             warning Sprintf( "Block %%s already exists", $Name)
         }
     }
 
     action {
-        DBInsert("blocks", "name,value,conditions,app_id", $Name, $Value, $Conditions, $ApplicationId)
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'NewColumn', 'contract NewColumn {
-    data {
-        TableName string
-        Name string
-        Type string
-        Permissions string
-    }
-    conditions {
-        ColumnCondition($TableName, $Name, $Type, $Permissions)
-    }
-    action {
-        CreateColumn($TableName, $Name, $Type, $Permissions)
-    }
-    func rollback() {
-        RollbackColumn($TableName, $Name)
-    }
-    func price() int {
-        return SysParamInt("column_price")
+        DBInsert("blocks", {name: $Name, value: $Value, conditions: $Conditions,
+              app_id: $ApplicationId})
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -1275,59 +800,9 @@ VALUES
     action {
         $result = CreateContract($contract_name, $Value, $Conditions, $Confirmation, $walletContract, $TokenEcosystem, $ApplicationId)
     }
-    func rollback() {
-        RollbackNewContract($Value)
-    }
     func price() int {
         return SysParamInt("contract_price")
     }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'NewDelayedContract', 'contract NewDelayedContract {
-	data {
-		Contract string
-		EveryBlock int
-		Conditions string
-		BlockID int "optional"
-		Limit int "optional"
-	}
-	conditions {
-		ValidateCondition($Conditions, $ecosystem_id)
-
-		if !HasPrefix($Contract, "@") {
-			$Contract = "@" + Str($ecosystem_id) + $Contract
-		}
-
-		if GetContractByName($Contract) == 0 {
-			error Sprintf("Unknown contract %%s", $Contract)
-		}
-
-		if $BlockID == 0 {
-			$BlockID = $block + $EveryBlock
-		}
-
-		if $BlockID <= $block {
-			error "The blockID must be greater than the current blockID"
-		}
-	}
-	action {
-		DBInsert("delayed_contracts", "contract,key_id,block_id,every_block,limit,conditions", $Contract, $key_id, $BlockID, $EveryBlock, $Limit, $Conditions)
-	}
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'NewEcosystem', 'contract NewEcosystem {
-	data {
-		Name  string
-	}
-	action {
-		$result = CreateEcosystem($key_id, $Name)
-	}
-	func price() int {
-		return  SysParamInt("ecosystem_price")
-	}
-	func rollback() {
-		RollbackEcosystem()
-	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewLang', 'contract NewLang {
@@ -1342,7 +817,7 @@ VALUES
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("languages").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("languages").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf( "Language resource %%s already exists", $Name)
         }
 
@@ -1351,42 +826,6 @@ VALUES
 
     action {
         CreateLanguage($Name, $Trans, $ApplicationId)
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'NewLangJoint', 'contract NewLangJoint {
-    data {
-        ApplicationId int
-        Name string
-        ValueArr array
-        LocaleArr array
-    }
-
-    conditions {
-        var i int
-        while i < Len($LocaleArr) {
-            if Size($LocaleArr[i]) == 0 {
-                info("Locale is empty")
-            }
-            if Size($ValueArr[i]) == 0 {
-                info("Value is empty")
-            }
-            i = i + 1
-        }
-    }
-
-    action {
-        var i int
-        var Trans map
-        while i < Len($LocaleArr) {
-            Trans[$LocaleArr[i]] = $ValueArr[i]
-            i = i + 1
-        }
-        var params map
-        params["ApplicationId"] = $ApplicationId 
-        params["Name"] = $Name
-        params["Trans"] = JSONEncode(Trans)
-        CallContract("NewLang", params)
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -1401,13 +840,13 @@ VALUES
     conditions {
         ValidateCondition($Conditions,$ecosystem_id)
 
-        if DBFind("menu").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("menu").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf( "Menu %%s already exists", $Name)
         }
     }
 
     action {
-        DBInsert("menu", "name,value,title,conditions", $Name, $Value, $Title, $Conditions)
+        DBInsert("menu", {name:$Name,value: $Value, title: $Title, conditions: $Conditions})
     }
     func price() int {
         return SysParamInt("menu_price")
@@ -1446,7 +885,7 @@ VALUES
             warning "Application id cannot equal 0"
         }
 
-        if DBFind("pages").Columns("id").Where("name = ?", $Name).One("id") {
+        if DBFind("pages").Columns("id").Where({name: $Name}).One("id") {
             warning Sprintf( "Page %%s already exists", $Name)
         }
 
@@ -1460,91 +899,13 @@ VALUES
     }
 
     action {
-        DBInsert("pages", "name,value,menu,validate_count,validate_mode,conditions,app_id", $Name, $Value, $Menu, $ValidateCount, $ValidateMode, $Conditions, $ApplicationId)
+        DBInsert("pages", {name: $Name,value: $Value, menu: $Menu,
+             validate_count:$ValidateCount,validate_mode: $ValidateMode,
+             conditions: $Conditions,app_id: $ApplicationId})
     }
     func price() int {
         return SysParamInt("page_price")
     }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'NewParameter', 'contract NewParameter {
-    data {
-        Name string
-        Value string
-        Conditions string
-    }
-    
-    conditions {
-        ValidateCondition($Conditions, $ecosystem_id)
-        
-        if DBFind("parameters").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf("Parameter %%s already exists", $Name)
-        }
-    }
-    
-    action {
-        DBInsert("parameters", "name,value,conditions", $Name, $Value, $Conditions)
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'NewSign', 'contract NewSign {
-    data {
-        Name string
-        Value string
-        Conditions string
-    }
-    conditions {
-        ValidateCondition($Conditions, $ecosystem_id)
-
-        if DBFind("signatures").Columns("id").Where("name = ?", $Name).One("id") {
-            warning Sprintf("The signature %%s already exists", $Name)
-        }
-    }
-    action {
-        DBInsert("signatures", "name,value,conditions", $Name, $Value, $Conditions)  
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'NewSignJoint', 'contract NewSignJoint {
-        data {
-            Name string
-            Title string
-            ParamArr array
-            ValueArr array
-            Conditions string
-        }
-    
-        conditions {
-            var i int
-            while i < Len($ParamArr) {
-                if Size($ParamArr[i]) == 0 {
-                    info("Parameter is empty")
-                }
-                if Size($ValueArr[i]) == 0 {
-                    info("Value is empty")
-                }
-                i = i + 1
-            }
-        }
-    
-        action {
-            var par_arr array
-    
-            var i int
-            while i < Len($ParamArr) {
-                var par_map map
-                par_map["name"] = $ParamArr[i]
-                par_map["text"] = $ValueArr[i]
-                par_arr = Append(par_arr, JSONEncode(par_map))
-                i = i + 1
-            }
-    
-            var params map
-            params["Name"] = $Name 
-            params["Value"] = Sprintf(` + "`" + `{"title":"%%v","params":[%%v]}` + "`" + `, $Title, Join(par_arr, ","))
-            params["Conditions"] = $Conditions
-            CallContract("NewSign", params)
-        }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'NewTable', 'contract NewTable {
@@ -1564,61 +925,8 @@ VALUES
     action {
         CreateTable($Name, $Columns, $Permissions, $ApplicationId)
     }
-    func rollback() {
-        RollbackTable($Name)
-    }
     func price() int {
         return SysParamInt("table_price")
-    }
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'NewTableJoint', 'contract NewTableJoint {
-    data {
-        ApplicationId int
-        Name string
-        ColumnsArr array
-        TypesArr array
-        InsertPerm string
-        UpdatePerm string
-        NewColumnPerm string
-    }
-
-    conditions {
-        var i int
-        while i < Len($ColumnsArr) {
-            if Size($ColumnsArr[i]) == 0 {
-                info("Columns is empty")
-            }
-            if Size($TypesArr[i]) == 0 {
-                info("Type is empty")
-            }
-            i = i + 1
-        }
-    }
-
-    action {
-        var i int
-        var col_arr array
-        while i < Len($ColumnsArr) {
-            var col_map map
-            col_map["name"] = $ColumnsArr[i]
-            col_map["type"] = $TypesArr[i]
-            col_map["conditions"] = "true"
-            col_arr[i] = JSONEncode(col_map)
-            i = i + 1
-        }
-
-        var Permissions map
-        Permissions["insert"] = $InsertPerm 
-        Permissions["update"] = $UpdatePerm
-        Permissions["new_column"] = $NewColumnPerm
-
-        var params map
-        params["ApplicationId"] = $ApplicationId 
-        params["Name"] = $Name
-        params["Columns"] = JSONEncode(col_arr)
-        params["Permissions"] = JSONEncode(Permissions)
-        CallContract("NewTable", params)
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
@@ -1674,40 +982,27 @@ VALUES
 		var i, id int
 		var v map
 		while (i < Len(values)) {
-			v = values[i]
-			id = Int(DBFind("metrics").Columns("id").Where("time = ? AND key = ? AND metric = ?", v["time"], v["key"], v["metric"]).One("id"))
+            var inmap map
+
+            v = values[i]
+            inmap["time"] = v["time"]
+            inmap["key"] = v["key"]
+            inmap["metric"] = v["metric"]
+            
+            id = Int(DBFind("metrics").Columns("id").Where(inmap).One("id"))
+            var ival int
 			if id != 0 {
-				DBUpdate("metrics", id, "value", Int(v["value"]))
+                ival = Int(v["value"])
+				DBUpdate("metrics", id, {"value": ival})
 			} else {
-				DBInsert("metrics", "time,key,metric,value", v["time"], v["key"], v["metric"], Int(v["value"]))
+                inmap["value"] = Int(v["value"])
+				DBInsert("metrics", inmap )
 			}
 			i = i + 1
 		}
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'UpdateSysParam', 'contract UpdateSysParam {
-    data {
-        Name string
-        Value string
-        Conditions string "optional"
-    }
-
-    conditions {
-        if GetContractByName($Name){
-            var params map
-            params["Value"] = $Value
-            CallContract($Name, params)
-        } else {
-            warning "System parameter not found"
-        }
-    }
-
-    action {
-        DBUpdateSysParam($Name, $Value, $Conditions)
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
 	(next_id('1_contracts'), 'UploadBinary', 'contract UploadBinary {
     data {
         ApplicationId int
@@ -1717,7 +1012,8 @@ VALUES
     }
 
     conditions {
-        $Id = Int(DBFind("binaries").Columns("id").Where("app_id = ? AND member_id = ? AND name = ?", $ApplicationId, $key_id, $Name).One("id"))
+        $Id = Int(DBFind("binaries").Columns("id").Where({app_id: $ApplicationId,
+            member_id: $key_id, name: $Name}).One("id"))
 
         if $Id == 0 {
             if $ApplicationId == 0 {
@@ -1734,998 +1030,14 @@ VALUES
         }
 
         if $Id != 0 {
-            DBUpdate("binaries", $Id, "data,hash,mime_type", $Data, hash, $DataMimeType)
+            DBUpdate("binaries", $Id, {"data": $Data,"hash": hash,"mime_type": $DataMimeType})
         } else {
-            $Id = DBInsert("binaries", "app_id,member_id,name,data,hash,mime_type", $ApplicationId, $key_id, $Name, $Data, hash, $DataMimeType)
+            $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
+               "name": $Name,"data": $Data,"hash": hash, "mime_type": $DataMimeType})
         }
 
         $result = $Id
-}
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'block_reward', 'contract block_reward {
-      data {
-          Value string
-      }
-  
-      conditions {
-          if Size($Value) == 0 {
-              warning "Value was not received"
-          }
-          if Int($Value) < 3 || Int($Value) > 9999 {
-              warning "Value must be between 3 and 9999"
-          }
-      }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'blockchain_url', 'contract blockchain_url {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if !(HasPrefix($Value, "http://") || HasPrefix($Value, "https://")) {
-        warning "URL ivalid (not found protocol)"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'column_price', 'contract column_price {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'commission_size', 'contract commission_size {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'commission_wallet', 'contract commission_wallet {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'contract_price', 'contract contract_price {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'default_ecosystem_contract', 'contract default_ecosystem_contract {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'default_ecosystem_menu', 'contract default_ecosystem_menu {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-    }
-  }
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'default_ecosystem_page', 'contract default_ecosystem_page {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'ecosystem_price', 'contract ecosystem_price {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_activate', 'contract extend_cost_activate {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_address_to_id', 'contract extend_cost_address_to_id {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_column_condition', 'contract extend_cost_column_condition {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_compile_contract', 'contract extend_cost_compile_contract {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_contains', 'contract extend_cost_contains {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_contracts_list', 'contract extend_cost_contracts_list {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_create_column', 'contract extend_cost_create_column {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_create_ecosystem', 'contract extend_cost_create_ecosystem {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_create_table', 'contract extend_cost_create_table {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_deactivate', 'contract extend_cost_deactivate {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_ecosys_param', 'contract extend_cost_ecosys_param {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_eval', 'contract extend_cost_eval {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_eval_condition', 'contract extend_cost_eval_condition {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_flush_contract', 'contract extend_cost_flush_contract {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_has_prefix', 'contract extend_cost_has_prefix {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_id_to_address', 'contract extend_cost_id_to_address {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_is_object', 'contract extend_cost_is_object {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_join', 'contract extend_cost_join {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_json_to_map', 'contract extend_cost_json_to_map {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_len', 'contract extend_cost_len {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_new_state', 'contract extend_cost_new_state {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_perm_column', 'contract extend_cost_perm_column {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_perm_table', 'contract extend_cost_perm_table {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_pub_to_id', 'contract extend_cost_pub_to_id {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_replace', 'contract extend_cost_replace {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_sha256', 'contract extend_cost_sha256 {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_size', 'contract extend_cost_size {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_substr', 'contract extend_cost_substr {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_sys_fuel', 'contract extend_cost_sys_fuel {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_sys_param_int', 'contract extend_cost_sys_param_int {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_sys_param_string', 'contract extend_cost_sys_param_string {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_table_conditions', 'contract extend_cost_table_conditions {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_update_lang', 'contract extend_cost_update_lang {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'extend_cost_validate_condition', 'contract extend_cost_validate_condition {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'fuel_rate', 'contract fuel_rate {
-    data {
-      Value string
-    }
-  
-    conditions {
-      $Value = TrimSpace($Value)
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      // [["x1","number"]]
-      if !(HasPrefix($Value, "[") && "]" == Substr($Value, Size($Value)-1, 1)){
-        warning "Invalid value"
-      }
-      var rates newRate array
-      rates = JSONDecode($Value)
-      if Len(rates) > 1{
-        warning "Invalid size array"
-      }
-      newRate = rates[0]
-      if Len(newRate) != 2{
-        warning "Invalid size new rate array"
-      }
-      if newRate[0] != 1 {
-        warning "Invalid ecosystem number"
-      }
-      if Int(newRate[1]) <= 0 {
-        warning "Invalid fuel value"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'full_nodes', 'contract full_nodes {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-  
-      var full_nodes_arr array
-      full_nodes_arr = JSONDecode($Value)
-  
-      var len_arr int
-      len_arr = Len(full_nodes_arr)
-  
-      if len_arr == 0 {
-          warning "Wrong array structure"
-      }
-  
-      var i int
-      while(i < len_arr){
-          var node_map map 
-          node_map = full_nodes_arr[i]
-  
-          var public_key string
-          var tcp_address string
-          var api_address string
-          var key_id string
-  
-          public_key = node_map["public_key"]
-          tcp_address = node_map["tcp_address"]
-          api_address = node_map["api_address"]
-          key_id = node_map["key_id"]
-  
-          if Size(public_key) == 0 {
-              warning "Public key was not received"
-          }
-          if Size(tcp_address) == 0 {
-              warning "TCP address was not received"
-          }
-          if Size(api_address) == 0 {
-              warning "API address was not received"
-          }
-          if Size(key_id) == 0 {
-              warning "Key ID was not received"
-          }
-  
-          i = i + 1
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'gap_between_blocks', 'contract gap_between_blocks {
-      data {
-          Value string
-      }
-  
-      conditions {
-          if Size($Value) == 0 {
-              warning "Value was not received"
-          }
-          if Int($Value) <= 0 || Int($Value) >= 86400 {
-              warning "Value must be between 1 and 86399"
-          }
-      }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'max_block_generation_time', 'contract max_block_generation_time {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'max_block_size', 'contract max_block_size {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'max_block_user_tx', 'contract max_block_user_tx {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'max_columns', 'contract max_columns {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'max_forsign_size', 'contract max_forsign_size {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'max_fuel_block', 'contract max_fuel_block {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'max_fuel_tx', 'contract max_fuel_tx {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'max_indexes', 'contract max_indexes {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'max_tx_count', 'contract max_tx_count {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'max_tx_size', 'contract max_tx_size {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'menu_price', 'contract menu_price {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'new_version_url', 'contract new_version_url {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'number_of_nodes', 'contract number_of_nodes {
-      data {
-          Value string
-      }
-  
-      conditions {
-          if Size($Value) == 0 {
-              warning "Value was not received"
-          }
-          if Int($Value) < 1 || Int($Value) > 999 {
-              warning "Value must be between 1 and 999"
-          }
-      }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'page_price', 'contract page_price {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
-    }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'rb_blocks_1', 'contract rb_blocks_1 {
-      data {
-          Value string
-      }
-  
-      conditions {
-          if Size($Value) == 0 {
-              warning "Value was not received"
-          }
-          if Int($Value) < 1 || Int($Value) > 999 {
-              warning "Value must be between 1 and 999"
-          }
-      }
-}
-', 'ContractConditions("MainCondition")', 2, %[1]d),
-	(next_id('1_contracts'), 'table_price', 'contract table_price {
-    data {
-      Value string
-    }
-  
-    conditions {
-      if Size($Value) == 0 {
-        warning "Value was not received"
-      }
-      if Int($Value) <= 0 {
-        warning "Value must be greater than zero"
-      }
     }
 }
-', 'ContractConditions("MainCondition")', 2, %[1]d);
+', 'ContractConditions("MainCondition")', 1, %[1]d);
 `

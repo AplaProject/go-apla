@@ -60,6 +60,8 @@ var (
 	ErrLimitSkip = errors.New(`skip tx`)
 	// ErrLimitStop returns when the generation of the block should be stopped
 	ErrLimitStop = errors.New(`stop generating block`)
+	// ErrLimitTime returns when the time limit exceeded
+	ErrLimitTime = errors.New(`Time limit exceeded`)
 )
 
 // NewLimits initializes Limits structure.

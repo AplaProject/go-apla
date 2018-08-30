@@ -251,6 +251,9 @@ func Int(v interface{}) (int64, error) {
 
 // Str converts the value to a string
 func Str(v interface{}) (ret string) {
+	if v == nil {
+		return
+	}
 	switch val := v.(type) {
 	case float64:
 		ret = fmt.Sprintf(`%f`, val)
@@ -329,8 +332,10 @@ func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int6
 		return 0, err
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if _, id, err = DBInsert(sc, `@`+idStr+"_languages", "name,res,app_id", name, trans, appID); err != nil {
-		return 0, logErrorDB(err, "inserting new language")
+	if _, id, err = DBInsert(sc, `@`+idStr+"_languages",
+		map[string]interface{}{"name": name, "res": trans, "app_id": appID}); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
+		return 0, err
 	}
 	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
 	return id, nil
@@ -342,8 +347,10 @@ func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) 
 		return err
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if _, err := DBUpdate(sc, `@`+idStr+"_languages", id, "name,res,app_id", name, trans, appID); err != nil {
-		return logErrorDB(err, "inserting new language")
+	if _, err := DBUpdate(sc, `@`+idStr+"_languages", id,
+		map[string]interface{}{"name": name, "res": trans, "app_id": appID}); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
+		return err
 	}
 	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
 	return nil
@@ -364,8 +371,7 @@ func GetContractByName(sc *SmartContract, name string) int64 {
 
 // GetContractById returns the name of the contract with this id
 func GetContractById(sc *SmartContract, id int64) string {
-	_, ret, err := DBSelect(sc, "contracts", "value", id, `id`, 0, 1,
-		0, ``, []interface{}{})
+	_, ret, err := DBSelect(sc, "contracts", "value", id, `id`, 0, 1, 0, nil)
 	if err != nil || len(ret) != 1 {
 		logErrorDB(err, "getting contract name")
 		return ``
@@ -430,12 +436,13 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 
 	sc.Rollback = false
 	sc.FullAccess = true
-	if _, _, err = DBInsert(sc, `@`+idStr+"_pages", "id,name,value,menu,conditions", "1", "default_page",
-		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`); err != nil {
+	if _, _, err = DBInsert(sc, `@`+idStr+"_pages", map[string]interface{}{"id": "1",
+		"name": "default_page", "value": SysParamString("default_ecosystem_page"),
+		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`}); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
-	if _, _, err = DBInsert(sc, `@`+idStr+"_menu", "id,name,value,title,conditions", "1", "default_menu",
-		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`); err != nil {
+	if _, _, err = DBInsert(sc, `@`+idStr+"_menu", map[string]interface{}{"id": "1",
+		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("MainCondition")`}); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
 
@@ -443,7 +450,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		ret []interface{}
 		pub string
 	)
-	_, ret, err = DBSelect(sc, "@1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
+	_, ret, err = DBSelect(sc, "@1_keys", "pub", wallet, `id`, 0, 1, 0, nil)
 	if err != nil {
 		return 0, logErrorDB(err, "getting pub key")
 	}
@@ -451,7 +458,8 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if Len(ret) > 0 {
 		pub = ret[0].(map[string]interface{})[`pub`].(string)
 	}
-	if _, _, err := DBInsert(sc, `@`+idStr+"_keys", "id,pub", wallet, pub); err != nil {
+	if _, _, err := DBInsert(sc, `@`+idStr+"_keys",
+		map[string]interface{}{"id": wallet, "pub": pub}); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
 
@@ -459,10 +467,17 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	// because of we need to know which ecosystem to rollback.
 	// All tables will be deleted so it's no need to rollback data from tables
 	sc.Rollback = true
-	if _, _, err := DBInsert(sc, "@1_ecosystems", "id,name", id, name); err != nil {
+	if _, _, err := DBInsert(sc, "@1_ecosystems", map[string]interface{}{
+		"id":   id,
+		"name": name,
+	}); err != nil {
 		return 0, logErrorDB(err, "insert new ecosystem to stat table")
 	}
-
+	if !sc.VDE {
+		if err := SysRollback(sc, SysRollData{Type: "NewEcosystem"}); err != nil {
+			return 0, err
+		}
+	}
 	return id, err
 }
 
@@ -472,159 +487,8 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 		return err
 	}
 
-	_, err := DBUpdate(sc, "@1_ecosystems", sysID, "name", newName)
+	_, err := DBUpdate(sc, "@1_ecosystems", sysID, map[string]interface{}{"name": newName})
 	return err
-}
-
-// RollbackEcosystem is rolling back ecosystem
-func RollbackEcosystem(sc *SmartContract) error {
-	if err := validateAccess(`RollbackEcosystem`, sc, nNewEcosystem); err != nil {
-		return err
-	}
-
-	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, "1_ecosystems")
-	if err != nil {
-		return logErrorDB(err, "getting rollback tx")
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("system states in rollback table")
-		// if there is not such hash then NewEcosystem was faulty. Do nothing.
-		return nil
-	}
-	lastID, err := model.GetNextID(sc.DbTransaction, "1_ecosystems")
-	if err != nil {
-		return logErrorDB(err, "getting next id")
-	}
-	lastID--
-	if converter.StrToInt64(rollbackTx.TableID) != lastID {
-		err = fmt.Errorf(eIncorrectEcosys, rollbackTx.TableID, lastID)
-		return logErrorShort(err, consts.InvalidObject)
-	}
-
-	if model.IsTable(fmt.Sprintf(`%s_tables`, rollbackTx.TableID)) {
-		// Drop all _local_ tables
-		table := &model.Table{}
-		prefix := fmt.Sprintf(`%s`, rollbackTx.TableID)
-		table.SetTablePrefix(prefix)
-		list, err := table.GetAll(prefix)
-		if err != nil {
-			return err
-		}
-		for _, item := range list {
-			err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", prefix, item.Name))
-			if err != nil {
-				return err
-			}
-		}
-		for _, name := range []string{`tables`, `parameters`} {
-			err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", prefix, name))
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	rbTables := []string{
-		`menu`,
-		`pages`,
-		`languages`,
-		`signatures`,
-		`tables`,
-		`contracts`,
-		`parameters`,
-		`blocks`,
-		`history`,
-		`keys`,
-		`sections`,
-		`members`,
-		`roles`,
-		`roles_participants`,
-		`notifications`,
-		`applications`,
-		`binaries`,
-		`app_params`,
-	}
-
-	if rollbackTx.TableID == "1" {
-		rbTables = append(rbTables, `node_ban_logs`, `bad_blocks`, `system_parameters`, `ecosystems`)
-	}
-
-	for _, name := range rbTables {
-		err = model.DropTable(sc.DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
-		if err != nil {
-			return logErrorDB(err, "dropping table")
-		}
-	}
-	rollbackTxToDel := &model.RollbackTx{TxHash: sc.TxHash, NameTable: "1_ecosystems"}
-	err = rollbackTxToDel.DeleteByHashAndTableName(sc.DbTransaction)
-	if err != nil {
-		return logErrorDB(err, "deleting rollback tx by hash and table name")
-	}
-
-	ecosysToDel := &model.Ecosystem{ID: lastID}
-	return ecosysToDel.Delete(sc.DbTransaction)
-}
-
-// RollbackTable is rolling back table
-func RollbackTable(sc *SmartContract, name string) error {
-	if err := validateAccess(`RollbackTable`, sc, nNewTable); err != nil {
-		return err
-	}
-	name = strings.ToLower(name)
-	tableName := getDefTableName(sc, name)
-	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, tableName)
-	if err != nil {
-		return logErrorDB(err, "getting rollback table")
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("table record in rollback table")
-		// if there is not such hash then NewTable was faulty. Do nothing.
-		return nil
-	}
-	err = rollbackTx.DeleteByHashAndTableName(sc.DbTransaction)
-	if err != nil {
-		return logErrorDB(err, "deleting record from rollback table")
-	}
-
-	err = model.DropTable(sc.DbTransaction, tableName)
-	if err != nil {
-		return logErrorDB(err, "dropping table")
-	}
-	t := model.Table{}
-	t.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
-	found, err = t.Get(sc.DbTransaction, name)
-	if err != nil {
-		return logErrorDB(err, "getting table info")
-	}
-	if found {
-		if err = t.Delete(sc.DbTransaction); err != nil {
-			return logErrorDB(err, "deleting table")
-		}
-	} else {
-		logError(err, consts.NotFound, "not found table info")
-	}
-	return nil
-}
-
-// RollbackColumn is rolling back column
-func RollbackColumn(sc *SmartContract, tableName, name string) error {
-	if err := validateAccess(`RollbackColumn`, sc, nNewColumn); err != nil {
-		return err
-	}
-	name = converter.EscapeSQL(strings.ToLower(name))
-	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.EcosystemID))
-	if err != nil {
-		return logErrorDB(err, "getting column from rollback table")
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("column record in rollback table")
-		// if there is not such hash then NewColumn was faulty. Do nothing.
-		return nil
-	}
-	return model.AlterTableDropColumn(getDefTableName(sc, tableName), name)
 }
 
 // Size returns the length of the string
@@ -646,19 +510,31 @@ func Substr(s string, off int64, slen int64) string {
 
 // Activate sets Active status of the contract in smartVM
 func Activate(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`Activate`, sc, nActivateContract, nDeactivateContract); err != nil {
+	if err := validateAccess(`Activate`, sc, nActivateContract); err != nil {
 		return err
 	}
 	ActivateContract(tblid, state, true)
+	if !sc.VDE {
+		if err := SysRollback(sc, SysRollData{Type: "ActivateContract",
+			EcosystemID: state, ID: tblid}); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 // Deactivate sets Active status of the contract in smartVM
 func Deactivate(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`Deactivate`, sc, nActivateContract, nDeactivateContract); err != nil {
+	if err := validateAccess(`Deactivate`, sc, nDeactivateContract); err != nil {
 		return err
 	}
 	ActivateContract(tblid, state, false)
+	if !sc.VDE {
+		if err := SysRollback(sc, SysRollData{Type: "DeactivateContract",
+			EcosystemID: state, ID: tblid}); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -704,23 +580,6 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	return nil
 }
 
-// RollbackContract performs rollback for the contract
-func RollbackContract(sc *SmartContract, name string) error {
-	if err := validateAccess(`RollbackContract`, sc, nNewContract, nImport); err != nil {
-		return err
-	}
-
-	if c := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID)); c != nil {
-		id := c.Block.Info.(*script.ContractInfo).ID
-		if int(id) < len(sc.VM.Children) {
-			sc.VM.Children = sc.VM.Children[:id]
-		}
-		delete(sc.VM.Objects, c.Name)
-	}
-
-	return nil
-}
-
 // DBSelectMetrics returns list of metrics by name and time interval
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
 	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc)
@@ -740,81 +599,44 @@ func DBCollectMetrics() []interface{} {
 	return c.Values()
 }
 
-// RollbackEditContract rollbacks the contract
-func RollbackEditContract(sc *SmartContract) error {
-	if err := validateAccess(`RollbackEditContract`, sc, nEditContract); err != nil {
-		return err
-	}
-	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_contracts", sc.TxSmart.EcosystemID))
-	if err != nil {
-		return logErrorDB(err, "getting contract from rollback table")
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("contract record in rollback table")
-		// if there is not such hash then EditContract was faulty. Do nothing.
-		return nil
-	}
-	var fields map[string]string
-	if err = unmarshalJSON([]byte(rollbackTx.Data), &fields, `contract values`); err != nil {
-		return err
-	}
-	if len(fields["value"]) > 0 {
-		var owner *script.OwnerInfo
-		for i, item := range smartVM.Block.Children {
-			if item != nil && item.Type == script.ObjContract {
-				cinfo := item.Info.(*script.ContractInfo)
-				if cinfo.Owner.TableID == converter.StrToInt64(rollbackTx.TableID) &&
-					cinfo.Owner.StateID == uint32(sc.TxSmart.EcosystemID) {
-					owner = smartVM.Children[i].Info.(*script.ContractInfo).Owner
-					break
-				}
-			}
-		}
-		if owner == nil {
-			return logError(errContractNotFound, consts.VMError, "getting existing contract")
-		}
-		wallet := owner.WalletID
-		if len(fields["wallet_id"]) > 0 {
-			wallet = converter.StrToInt64(fields["wallet_id"])
-		}
-		root, err := CompileContract(sc, fields["value"], int64(owner.StateID), wallet, owner.TokenID)
-		if err != nil {
-			return logError(err, consts.VMError, "compiling contract")
-		}
-		err = FlushContract(sc, root, owner.TableID, owner.Active)
-		if err != nil {
-			return logError(err, consts.VMError, "flushing contract")
-		}
-	} else if len(fields["wallet_id"]) > 0 {
-		return SetContractWallet(sc, converter.StrToInt64(rollbackTx.TableID), sc.TxSmart.EcosystemID,
-			converter.StrToInt64(fields["wallet_id"]))
-	}
-	return nil
-}
-
 // JSONDecode converts json string to object
 func JSONDecode(input string) (ret interface{}, err error) {
 	err = unmarshalJSON([]byte(input), &ret, "unmarshalling json")
 	return
 }
 
-// JSONEncode converts object to json string
-func JSONEncode(input interface{}) (string, error) {
+// JSONEncodeIdent converts object to json string
+func JSONEncodeIndent(input interface{}, indent string) (string, error) {
 	rv := reflect.ValueOf(input)
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
 	}
-
 	if rv.Kind() == reflect.Struct {
 		return "", logErrorfShort(eTypeJSON, input, consts.TypeError)
 	}
-
-	b, err := marshalJSON(input, `marshalling json`)
-	if err != nil {
-		return "", err
+	var (
+		b   []byte
+		err error
+	)
+	if len(indent) == 0 {
+		b, err = json.Marshal(input)
+	} else {
+		b, err = json.MarshalIndent(input, ``, indent)
 	}
-	return string(b), nil
+	if err != nil {
+		return ``, logError(err, consts.JSONMarshallError, `marshalling json`)
+	}
+	out := string(b)
+	out = strings.Replace(out, `\u003c`, `<`, -1)
+	out = strings.Replace(out, `\u003e`, `>`, -1)
+	out = strings.Replace(out, `\u0026`, `&`, -1)
+
+	return out, nil
+}
+
+// JSONEncode converts object to json string
+func JSONEncode(input interface{}) (string, error) {
+	return JSONEncodeIndent(input, ``)
 }
 
 // Append syn for golang 'append' function
