@@ -153,9 +153,12 @@ func DropTables() error {
 }
 
 // GetRecordsCountTx is counting all records of table in transaction
-func GetRecordsCountTx(db *DbTransaction, tableName string) (int64, error) {
+func GetRecordsCountTx(db *DbTransaction, tableName, where string) (int64, error) {
 	var count int64
 	dbQuery := GetDB(db).Table(tableName)
+	if len(where) > 0 {
+		dbQuery = dbQuery.Where(where)
+	}
 	err := dbQuery.Count(&count).Error
 	return count, err
 }

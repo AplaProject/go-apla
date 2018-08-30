@@ -35,13 +35,20 @@ type listResult struct {
 func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	var limit int
 
-	table := converter.ParseTable(data.params[`name`].(string), data.ecosystemId)
+	var where string
+	tblname := data.params[`name`].(string)
+	if model.FirstEcosystemTables[tblname] {
+		tblname = `1_` + tblname
+		where = fmt.Sprintf(`ecosystem='%d'`, data.ecosystemId)
+	} else {
+		tblname = converter.ParseTable(tblname, data.ecosystemId)
+	}
 	cols := `*`
 	if len(data.params[`columns`].(string)) > 0 {
 		cols = `id,` + converter.EscapeName(data.params[`columns`].(string))
 	}
 
-	count, err := model.GetRecordsCountTx(nil, table)
+	count, err := model.GetRecordsCountTx(nil, tblname, where)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
 		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
@@ -52,9 +59,12 @@ func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Ent
 	} else {
 		limit = 25
 	}
+	if len(where) > 0 {
+		where = `where ` + where
+	}
 	var query string
-	query = fmt.Sprintf(`select %s from "%s" order by id desc offset %d `, cols, table,
-		data.params[`offset`].(int64))
+	query = fmt.Sprintf(`select %s from "%s" %s order by id desc offset %d `, cols, tblname,
+		where, data.params[`offset`].(int64))
 	list, err := model.GetAll(query, limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")

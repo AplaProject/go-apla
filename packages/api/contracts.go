@@ -39,7 +39,7 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 
 	table := `1_contracts`
 
-	count, err := model.GetRecordsCountTx(nil, table)
+	count, err := model.GetRecordsCountTx(nil, table, ``)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
