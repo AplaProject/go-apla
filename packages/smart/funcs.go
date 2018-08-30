@@ -512,13 +512,14 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	if err != nil {
 		return 0, err
 	}
-	_, id, err = DBInsert(sc, "contracts", map[string]interface{}{
+	_, id, err = DBInsert(sc, "@1contracts", map[string]interface{}{
 		"name":       name,
 		"value":      value,
 		"conditions": conditions,
 		"wallet_id":  walletID,
 		"token_id":   tokenEcosystem,
 		"app_id":     appID,
+		"ecosystem":  sc.TxSmart.EcosystemID,
 	})
 	if err != nil {
 		return 0, err
@@ -1744,7 +1745,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 
 				_, _, err = DBInsert(
 					smartContract,
-					"notifications",
+					"@1notifications",
 					map[string]interface{}{
 						"recipient->member_id": fullNode.KeyID,
 						"notification->type":   model.NotificationTypeSingle,

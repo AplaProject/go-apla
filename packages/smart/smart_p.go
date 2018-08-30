@@ -332,7 +332,7 @@ func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int6
 		return 0, err
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if _, id, err = DBInsert(sc, `@`+idStr+"languages", map[string]interface{}{"name": name,
+	if _, id, err = DBInsert(sc, `@1languages`, map[string]interface{}{"name": name,
 		"ecosystem": idStr, "res": trans, "app_id": appID}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return 0, err
@@ -442,7 +442,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`}); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
-	if _, _, err = DBInsert(sc, `@menu`, map[string]interface{}{"ecosystem": idStr,
+	if _, _, err = DBInsert(sc, `@1menu`, map[string]interface{}{"ecosystem": idStr,
 		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("MainCondition")`}); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
