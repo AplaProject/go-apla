@@ -35,10 +35,16 @@ func row(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entr
 	if len(data.params[`columns`].(string)) > 0 {
 		cols = converter.EscapeName(data.params[`columns`].(string))
 	}
-	table := converter.ParseTable(data.params[`name`].(string), data.ecosystemId)
+	var table string
+	name := data.params[`name`].(string)
+	if model.FirstEcosystemTables[name] {
+		table = `1_` + name
+	} else {
+		table = converter.ParseTable(name, data.ecosystemId)
+	}
 	row, err := model.GetOneRow(`SELECT `+cols+` FROM "`+table+`" WHERE id = ?`, data.params[`id`].(string)).String()
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": data.params["name"].(string), "id": data.params["id"].(string)}).Error("getting one row")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": name, "id": data.params["id"].(string)}).Error("getting one row")
 		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)
 	}
 
