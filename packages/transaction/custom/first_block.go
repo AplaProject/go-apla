@@ -19,6 +19,7 @@ package custom
 import (
 	"errors"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -26,7 +27,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -116,6 +116,6 @@ func (t *FirstBlockTransaction) Rollback() error {
 }
 
 // Header is returns first block header
-func (t FirstBlockTransaction) Header() *tx.Header {
+func (t FirstBlockTransaction) Header() *blockchain.TxHeader {
 	return nil
 }

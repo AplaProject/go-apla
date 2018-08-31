@@ -152,7 +152,8 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 	for _, hash := range hashes {
 		// check if we have such a transaction
 		// check log_transaction
-		_, found, err := blockchain.GetTransaction(hash)
+		tx := &blockchain.Transaction{}
+		found, err := tx.Get(hash)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err, "txHash": hash}).Error("Getting log tx count")
 			return nil, utils.ErrInfo(err)

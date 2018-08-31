@@ -41,9 +41,9 @@ type Transaction struct {
 	TxUsedCost    decimal.Decimal // Used cost of CPU resources
 	TxPtr         interface{}     // Pointer to the corresponding struct in consts/struct.go
 	TxData        map[string]interface{}
-	TxSmart       *tx.SmartContract
+	TxSmart       *blockchain.Transaction
 	TxContract    *smart.Contract
-	TxHeader      *tx.Header
+	TxHeader      *blockchain.TxHeader
 	tx            custom.TransactionInterface
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand
@@ -220,20 +220,20 @@ func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[stri
 }
 
 func (t *Transaction) parseFromContract(buf *bytes.Buffer) error {
-	smartTx := tx.SmartContract{}
+	smartTx := blockchain.Transaction{}
 	if err := msgpack.Unmarshal(buf.Bytes(), &smartTx); err != nil {
 		log.WithFields(log.Fields{"tx_hash": t.TxHash, "error": err, "type": consts.UnmarshallingError}).Error("unmarshalling smart tx msgpack")
 		return err
 	}
 	t.TxPtr = nil
 	t.TxSmart = &smartTx
-	t.TxTime = smartTx.Time
-	t.TxKeyID = smartTx.KeyID
+	t.TxTime = smartTx.Header.Time
+	t.TxKeyID = smartTx.Header.KeyID
 
-	contract := smart.GetContractByID(int32(smartTx.Type))
+	contract := smart.GetContractByID(int32(smartTx.Header.Type))
 	if contract == nil {
-		log.WithFields(log.Fields{"contract_type": smartTx.Type, "type": consts.NotFound}).Error("unknown contract")
-		return fmt.Errorf(`unknown contract %d`, smartTx.Type)
+		log.WithFields(log.Fields{"contract_type": smartTx.Header.Type, "type": consts.NotFound}).Error("unknown contract")
+		return fmt.Errorf(`unknown contract %d`, smartTx.Header.Type)
 	}
 	forsign := []string{smartTx.ForSign()}
 
@@ -253,7 +253,7 @@ func (t *Transaction) parseFromContract(buf *bytes.Buffer) error {
 }
 
 // CheckTransaction is checking transaction
-func CheckTransaction(data []byte) (*tx.Header, error) {
+func CheckTransaction(data []byte) (*blockchain.TxHeader, error) {
 	trBuff := bytes.NewBuffer(data)
 	t, err := UnmarshallTransaction(trBuff)
 	if err != nil {
@@ -312,7 +312,7 @@ func (t *Transaction) Play() (string, error) {
 func (t *Transaction) AccessRights(condition string, iscondition bool) error {
 	logger := t.GetLogger()
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(converter.Int64ToStr(t.TxSmart.EcosystemID))
+	sp.SetTablePrefix(converter.Int64ToStr(t.TxSmart.Header.EcosystemID))
 	_, err := sp.Get(t.DbTransaction, condition)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting state parameter by name transaction")

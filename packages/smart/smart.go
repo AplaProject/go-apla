@@ -501,17 +501,17 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 	var block, blockTime, blockKeyID int64
 
 	head := sc.TxSmart
-	keyID := int64(head.KeyID)
+	keyID := int64(head.Header.KeyID)
 	if sc.BlockData != nil {
 		block = sc.BlockData.BlockID
 		blockKeyID = sc.BlockData.KeyID
 		blockTime = sc.BlockData.Time
 	}
 	extend := map[string]interface{}{
-		`type`:              head.Type,
-		`time`:              head.Time,
-		`ecosystem_id`:      head.EcosystemID,
-		`node_position`:     head.NodePosition,
+		`type`:              head.Header.Type,
+		`time`:              head.Header.Time,
+		`ecosystem_id`:      head.Header.EcosystemID,
+		`node_position`:     head.Header.NodePosition,
 		`block`:             block,
 		`key_id`:            keyID,
 		`block_key_id`:      blockKeyID,
@@ -524,7 +524,7 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`block_time`:        blockTime,
 		`original_contract`: ``,
 		`this_contract`:     ``,
-		`role_id`:           head.RoleID,
+		`role_id`:           head.Header.RoleID,
 		`guest_key`:         vde.GuestKey,
 	}
 
@@ -569,7 +569,7 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 	logger := sc.GetLogger()
 	isRead := action == `read`
 	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
-		if isRead || sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
+		if isRead || sc.TxSmart.Header.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return tablePermission, nil
 		}
 		logger.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
@@ -633,7 +633,7 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 	}
 	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
 		if update {
-			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
+			if sc.TxSmart.Header.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 				return nil
 			}
 			return errAccessDenied
@@ -736,7 +736,7 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 // AccessRights checks the access right by executing the condition value
 func (sc *SmartContract) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameter{}
-	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	prefix := converter.Int64ToStr(sc.TxSmart.Header.EcosystemID)
 
 	sp.SetTablePrefix(prefix)
 	_, err := sp.Get(sc.DbTransaction, condition)
@@ -763,13 +763,13 @@ func (sc *SmartContract) AccessRights(condition string, iscondition bool) error 
 
 // EvalIf counts and returns the logical value of the specified expression
 func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
-	time := sc.TxSmart.Time
+	time := sc.TxSmart.Header.Time
 	blockTime := int64(0)
 	if sc.BlockData != nil {
 		blockTime = sc.BlockData.Time
 	}
-	return VMEvalIf(sc.VM, conditions, uint32(sc.TxSmart.EcosystemID), &map[string]interface{}{`ecosystem_id`: sc.TxSmart.EcosystemID,
-		`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``,
+	return VMEvalIf(sc.VM, conditions, uint32(sc.TxSmart.Header.EcosystemID), &map[string]interface{}{`ecosystem_id`: sc.TxSmart.Header.EcosystemID,
+		`key_id`: sc.TxSmart.Header.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``,
 		`block_time`: blockTime, `time`: time})
 }
 
@@ -853,7 +853,7 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 }
 
 func (sc *SmartContract) GetSignedBy(public []byte) (int64, error) {
-	signedBy := sc.TxSmart.KeyID
+	signedBy := sc.TxSmart.Header.KeyID
 	if sc.TxSmart.SignedBy != 0 {
 		var isNode bool
 		signedBy = sc.TxSmart.SignedBy
@@ -879,7 +879,7 @@ func (sc *SmartContract) GetSignedBy(public []byte) (int64, error) {
 		if !isNode {
 			return 0, errDelayedContract
 		}
-	} else if len(public) > 0 && sc.TxSmart.KeyID != crypto.Address(public) {
+	} else if len(public) > 0 && sc.TxSmart.Header.KeyID != crypto.Address(public) {
 		return 0, errDiffKeys
 	}
 	return signedBy, nil
@@ -912,13 +912,13 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 {
 		if !sc.VDE {
 			toID = sc.BlockData.KeyID
-			fromID = sc.TxSmart.KeyID
+			fromID = sc.TxSmart.Header.KeyID
 		}
-		if len(sc.TxSmart.PublicKey) > 0 && string(sc.TxSmart.PublicKey) != `null` {
-			public = sc.TxSmart.PublicKey
+		if len(sc.TxSmart.Header.PublicKey) > 0 && string(sc.TxSmart.Header.PublicKey) != `null` {
+			public = sc.TxSmart.Header.PublicKey
 		}
 		wallet := &model.Key{}
-		wallet.SetTablePrefix(sc.TxSmart.EcosystemID)
+		wallet.SetTablePrefix(sc.TxSmart.Header.EcosystemID)
 		signedBy, err := sc.GetSignedBy(public)
 		if err != nil {
 			return retError(err)
@@ -934,10 +934,10 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		if len(wallet.PublicKey) > 0 {
 			public = wallet.PublicKey
 		}
-		if sc.TxSmart.Type == 258 { // UpdFullNodes
-			node := syspar.GetNode(sc.TxSmart.KeyID)
+		if sc.TxSmart.Header.Type == 258 { // UpdFullNodes
+			node := syspar.GetNode(sc.TxSmart.Header.KeyID)
 			if node == nil {
-				logger.WithFields(log.Fields{"user_id": sc.TxSmart.KeyID, "type": consts.NotFound}).Error("unknown node id")
+				logger.WithFields(log.Fields{"user_id": sc.TxSmart.Header.KeyID, "type": consts.NotFound}).Error("unknown node id")
 				return retError(errUnknownNodeID)
 			}
 			public = node.PublicKey
@@ -949,7 +949,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		sc.PublicKeys = append(sc.PublicKeys, public)
 
 		var CheckSignResult bool
-		CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.BinSignatures, false)
+		CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.Header.BinSignatures, false)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("checking tx data sign")
 			return retError(err)
@@ -958,7 +958,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 			return retError(errIncorrectSign)
 		}
-		if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+		if sc.TxSmart.Header.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
 			if sc.TxSmart.TokenEcosystem == 0 {
 				sc.TxSmart.TokenEcosystem = 1
 			}
@@ -1000,7 +1000,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 				return retError(err)
 			}
-			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
+			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.Header.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
 				return retError(errDiffKeys)
 			}
 			var amount, maxpay decimal.Decimal
@@ -1107,7 +1107,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 	}
 
-	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.Header.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
 		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
 			err = ierr
 		}

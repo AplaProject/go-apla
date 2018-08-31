@@ -774,12 +774,12 @@ func dbfindTag(par parFunc) string {
 			}
 			result[i] = reflect.ValueOf(row).Interface()
 		}
-		fltResult, err := smart.VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
+		fltResult, err := smart.VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.Header.EcosystemID),
 			&map[string]interface{}{
 				`data`:         result,
-				`ecosystem_id`: sc.TxSmart.EcosystemID,
-				`key_id`:       sc.TxSmart.KeyID, `sc`: sc,
-				`block_time`: 0, `time`: sc.TxSmart.Time})
+				`ecosystem_id`: sc.TxSmart.Header.EcosystemID,
+				`key_id`:       sc.TxSmart.Header.KeyID, `sc`: sc,
+				`block_time`: 0, `time`: sc.TxSmart.Header.Time})
 		if err != nil || !fltResult {
 			return `Access denied`
 		}

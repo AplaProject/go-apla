@@ -16,7 +16,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -24,7 +23,7 @@ var (
 	ErrNodesUnavailable = errors.New("All nodes unvailabale")
 )
 
-func SendTransactionsToHost(host string, txes []*tx.SmartContract) error {
+func SendTransactionsToHost(host string, txes []*blockchain.Transaction) error {
 	packet, err := prepareTxPacket(txes)
 	if err != nil {
 		return err
@@ -48,7 +47,7 @@ func sendRawTransacitionsToHost(host string, packet []byte) error {
 	return nil
 }
 
-func SendTransacitionsToAll(ctx context.Context, hosts []string, txes []*tx.SmartContract) error {
+func SendTransacitionsToAll(ctx context.Context, hosts []string, txes []*blockchain.Transaction) error {
 	if len(hosts) == 0 || len(txes) == 0 {
 		return nil
 	}
@@ -85,7 +84,7 @@ func SendTransacitionsToAll(ctx context.Context, hosts []string, txes []*tx.Smar
 	return nil
 }
 
-func SendFullBlockToAll(ctx context.Context, hosts []string, block *blockchain.Block, txes []*tx.SmartContract, nodeID int64) error {
+func SendFullBlockToAll(ctx context.Context, hosts []string, block *blockchain.Block, txes []*blockchain.Transaction, nodeID int64) error {
 	if len(hosts) == 0 {
 		return nil
 	}
@@ -181,7 +180,7 @@ func sendFullBlockRequest(con net.Conn, data []byte) (response []byte, err error
 	return sendRequiredTransactions(con)
 }
 
-func prepareTxPacket(txes []*tx.SmartContract) ([]byte, error) {
+func prepareTxPacket(txes []*blockchain.Transaction) ([]byte, error) {
 	// form packet to send
 	var buf bytes.Buffer
 	for _, tr := range txes {
@@ -195,7 +194,7 @@ func prepareTxPacket(txes []*tx.SmartContract) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func prepareFullBlockRequest(block *blockchain.Block, trs []*tx.SmartContract, nodeID int64) ([]byte, error) {
+func prepareFullBlockRequest(block *blockchain.Block, trs []*blockchain.Transaction, nodeID int64) ([]byte, error) {
 	var noBlockFlag byte
 	if block == nil {
 		noBlockFlag = 1

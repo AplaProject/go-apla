@@ -168,7 +168,7 @@ func (bl *txUserLimit) check(t *transaction.Transaction, mode int) error {
 		count int
 		ok    bool
 	)
-	keyID := t.TxSmart.KeyID
+	keyID := t.TxSmart.Header.KeyID
 	if count, ok = bl.TxUsers[keyID]; ok {
 		if count+1 > bl.Limit {
 			if mode == letPreprocess {
@@ -196,8 +196,8 @@ func (bl *txUserEcosysLimit) init(b *PlayableBlock) {
 }
 
 func (bl *txUserEcosysLimit) check(t *transaction.Transaction, mode int) error {
-	keyID := t.TxSmart.KeyID
-	ecosystemID := t.TxSmart.EcosystemID
+	keyID := t.TxSmart.Header.KeyID
+	ecosystemID := t.TxSmart.Header.EcosystemID
 	if val, ok := bl.TxEcosys[ecosystemID]; ok {
 		if user, ok := val.TxUsers[keyID]; ok {
 			if user+1 > val.Limit {

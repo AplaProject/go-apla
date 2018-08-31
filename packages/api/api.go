@@ -30,6 +30,7 @@ import (
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -38,7 +39,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 )
 
 const (
@@ -137,12 +137,12 @@ func getPrefix(data *apiData) (prefix string) {
 	return
 }
 
-func getSignHeader(txName string, data *apiData) tx.Header {
-	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
+func getSignHeader(txName string, data *apiData) blockchain.TxHeader {
+	return blockchain.TxHeader{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
 		EcosystemID: data.ecosystemId, KeyID: data.keyId, NetworkID: consts.NETWORK_ID}
 }
 
-func getHeader(txName string, data *apiData) (tx.Header, error) {
+func getHeader(txName string, data *apiData) (blockchain.TxHeader, error) {
 	publicKey := []byte("null")
 	if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
 		publicKey = data.params[`pubkey`].([]byte)
@@ -154,9 +154,9 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 	signature := data.params[`signature`].([]byte)
 	if len(signature) == 0 {
 		log.WithFields(log.Fields{"type": consts.EmptyObject, "params": data.params}).Error("signature is empty")
-		return tx.Header{}, fmt.Errorf("signature is empty")
+		return blockchain.TxHeader{}, fmt.Errorf("signature is empty")
 	}
-	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
+	return blockchain.TxHeader{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
 		EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
 		BinSignatures: converter.EncodeLengthPlusData(signature), NetworkID: consts.NETWORK_ID}, nil
 }

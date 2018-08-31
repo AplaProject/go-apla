@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -85,7 +86,7 @@ func (h *contractHandlers) prepareMultipleContract(w http.ResponseWriter, r *htt
 	forSigns := []string{}
 	limitForsign := syspar.GetMaxForsignSize()
 	for _, c := range requests.Contracts {
-		var smartTx tx.SmartContract
+		var smartTx blockchain.Transaction
 		contract, parerr, err := validateSmartContractJSON(r, data, c.Contract, c.Params)
 		if err != nil {
 			if strings.HasPrefix(err.Error(), `E_`) {
@@ -102,7 +103,7 @@ func (h *contractHandlers) prepareMultipleContract(w http.ResponseWriter, r *htt
 		}
 
 		smartTx.RequestID = req.ID
-		smartTx.Header = tx.Header{
+		smartTx.Header = blockchain.TxHeader{
 			Type:        int(info.ID),
 			Time:        req.Time.Unix(),
 			EcosystemID: data.ecosystemId,
@@ -141,7 +142,7 @@ func (h *contractHandlers) prepareMultipleContract(w http.ResponseWriter, r *htt
 func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var (
 		result  prepareResult
-		smartTx tx.SmartContract
+		smartTx blockchain.Transaction
 	)
 
 	contract, parerr, err := validateSmartContract(r, data, &result, data.params["name"].(string))
@@ -162,7 +163,7 @@ func (h *contractHandlers) prepareContract(w http.ResponseWriter, r *http.Reques
 	req := h.requests.NewRequest(contract.Name)
 
 	smartTx.RequestID = req.ID
-	smartTx.Header = tx.Header{
+	smartTx.Header = blockchain.TxHeader{
 		Type:        int(info.ID),
 		Time:        req.Time.Unix(),
 		EcosystemID: data.ecosystemId,

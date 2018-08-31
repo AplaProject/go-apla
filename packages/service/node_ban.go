@@ -13,7 +13,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -148,8 +147,8 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 	contract := smart.VMGetContract(vm, "NewBadBlock", 1)
 	info := contract.Block.Info.(*script.ContractInfo)
 
-	err = blockchain.BuildTransaction(tx.SmartContract{
-		Header: tx.Header{
+	err = blockchain.BuildTransaction(blockchain.Transaction{
+		Header: blockchain.TxHeader{
 			Type:        int(info.ID),
 			Time:        time.Now().Unix(),
 			EcosystemID: 1,

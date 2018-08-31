@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -12,10 +13,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
-	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const (
@@ -52,8 +51,8 @@ func (dtx *DelayedTx) createTx(delayedContractID, keyID int64) error {
 
 	params := map[string]string{"Id": converter.Int64ToStr(delayedContractID)}
 
-	smartTx := tx.SmartContract{
-		Header: tx.Header{
+	smartTx := blockchain.Transaction{
+		Header: blockchain.TxHeader{
 			Type:        int(info.ID),
 			Time:        time.Now().Unix(),
 			EcosystemID: firstEcosystemID,
@@ -72,14 +71,14 @@ func (dtx *DelayedTx) createTx(delayedContractID, keyID int64) error {
 		dtx.logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
 		return err
 	}
-	smartTx.BinSignatures = converter.EncodeLengthPlusData(signature)
+	smartTx.Header.BinSignatures = converter.EncodeLengthPlusData(signature)
 
-	if smartTx.PublicKey, err = hex.DecodeString(dtx.publicKey); err != nil {
+	if smartTx.Header.PublicKey, err = hex.DecodeString(dtx.publicKey); err != nil {
 		dtx.logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
 		return err
 	}
 
-	data, err := msgpack.Marshal(smartTx)
+	data, err := smartTx.Marshal()
 	if err != nil {
 		dtx.logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
 		return err

@@ -47,7 +47,7 @@ func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx 
 		return errors.New(errStr)
 	}
 
-	if err := blockchain.SetTransactionBinary(hash, binaryTx); err != nil {
+	if err := blockchain.InsertTransactionBinary(hash, binaryTx); err != nil {
 		return err
 	}
 	return nil

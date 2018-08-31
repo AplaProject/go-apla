@@ -70,9 +70,9 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 		return err
 	}
 
-	sc.TxContract = smart.VMGetContractByID(smart.GetVM(), int32(sc.TxSmart.Type))
+	sc.TxContract = smart.VMGetContractByID(smart.GetVM(), int32(sc.TxSmart.Header.Type))
 	if sc.TxContract == nil {
-		return fmt.Errorf(`unknown contract %d`, sc.TxSmart.Type)
+		return fmt.Errorf(`unknown contract %d`, sc.TxSmart.Header.Type)
 	}
 	forsign := sc.TxSmart.ForSign()
 

@@ -38,7 +38,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -130,8 +129,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		hexPubKey := hex.EncodeToString(pubkey)
 		params := map[string]string{"NewPubkey": hexPubKey}
 		contract := smart.GetContract("NewUser", 1)
-		sc := tx.SmartContract{
-			Header: tx.Header{
+		sc := blockchain.Transaction{
+			Header: blockchain.TxHeader{
 				Type:        int(contract.Block.Info.(*script.ContractInfo).ID),
 				Time:        time.Now().Unix(),
 				EcosystemID: 1,
@@ -154,9 +153,9 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 				return err
 			}
 
-			sc.BinSignatures = converter.EncodeLengthPlusData(signature)
+			sc.Header.BinSignatures = converter.EncodeLengthPlusData(signature)
 
-			if sc.PublicKey, err = hex.DecodeString(NodePublicKey); err != nil {
+			if sc.Header.PublicKey, err = hex.DecodeString(NodePublicKey); err != nil {
 				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
 				return err
 			}

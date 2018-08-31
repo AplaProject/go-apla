@@ -26,6 +26,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -250,8 +251,8 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting signature from hex")
 			return err
 		}
-		toSerialize := tx.SmartContract{
-			Header: tx.Header{
+		toSerialize := blockchain.Transaction{
+			Header: blockchain.TxHeader{
 				Type:          int(info.ID),
 				Time:          converter.StrToInt64(multiRequest.Time),
 				EcosystemID:   data.ecosystemId,
@@ -271,7 +272,7 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 			SignedBy:       signedBy,
 			Params:         c.Params,
 		}
-		serializedData, err := msgpack.Marshal(toSerialize)
+		serializedData, err := toSerialize.Marshal()
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
 			return errorAPI(w, err, http.StatusInternalServerError)
@@ -290,7 +291,6 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var (
 		hash, publicKey []byte
-		toSerialize     interface{}
 		requestID       = data.ParamString("request_id")
 	)
 
@@ -327,8 +327,8 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signature is empty")
 		return errorAPI(w, `E_EMPTYSIGN`, http.StatusBadRequest)
 	}
-	toSerialize = tx.SmartContract{
-		Header: tx.Header{
+	toSerialize := blockchain.Transaction{
+		Header: blockchain.TxHeader{
 			Type:          int(info.ID),
 			Time:          converter.StrToInt64(data.params[`time`].(string)),
 			EcosystemID:   data.ecosystemId,
@@ -345,7 +345,7 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		SignedBy:       signedBy,
 		Params:         req.AllValues(),
 	}
-	serializedData, err := msgpack.Marshal(toSerialize)
+	serializedData, err := toSerialize.Marshal()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
 		return errorAPI(w, err, http.StatusInternalServerError)

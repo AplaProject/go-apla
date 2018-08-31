@@ -27,7 +27,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/service"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
@@ -61,14 +60,14 @@ func Disseminator(ctx context.Context, d *daemon) error {
 func sendTransactions(ctx context.Context, logger *log.Entry) error {
 	// get unsent transactions
 	// form packet to send
-	var txs []*tx.SmartContract
+	var txs []*blockchain.Transaction
 	for queue.SendTxQueue.Length() > 0 {
 		item, err := queue.SendTxQueue.Dequeue()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("peeking item from sendTx queue")
 			return err
 		}
-		sc := &tx.SmartContract{}
+		sc := &blockchain.Transaction{}
 		if err := sc.Unmarshal(item.Value); err != nil {
 			return err
 		}
@@ -99,14 +98,14 @@ func sendBlockWithTxHashes(ctx context.Context, fullNodeID int64, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling blockchain block")
 	}
 
-	var trs []*tx.SmartContract
+	var trs []*blockchain.Transaction
 	for queue.SendTxQueue.Length() > 0 {
 		txItem, err := queue.SendTxQueue.Dequeue()
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("getting unsent blocks")
 			return err
 		}
-		tr := &tx.SmartContract{}
+		tr := &blockchain.Transaction{}
 		if err := msgpack.Unmarshal(txItem.Value, tr); err != nil {
 			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling transaction")
 			return err

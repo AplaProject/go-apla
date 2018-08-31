@@ -322,7 +322,7 @@ func HexToBytes(hexdata string) ([]byte, error) {
 
 // LangRes returns the language resource
 func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
-	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), int(appID), lang, sc.VDE)
+	ret, _ := language.LangText(idRes, int(sc.TxSmart.Header.EcosystemID), int(appID), lang, sc.VDE)
 	return ret
 }
 
@@ -331,13 +331,13 @@ func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int6
 	if err := validateAccess(`CreateLanguage`, sc, nNewLang, nNewLangJoint, nImport); err != nil {
 		return 0, err
 	}
-	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	idStr := converter.Int64ToStr(sc.TxSmart.Header.EcosystemID)
 	if _, id, err = DBInsert(sc, `@`+idStr+"_languages",
 		map[string]interface{}{"name": name, "res": trans, "app_id": appID}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return 0, err
 	}
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
+	language.UpdateLang(int(sc.TxSmart.Header.EcosystemID), int(appID), name, trans, sc.VDE)
 	return id, nil
 }
 
@@ -346,19 +346,19 @@ func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) 
 	if err := validateAccess(`EditLanguage`, sc, nEditLang, nEditLangJoint, nImport); err != nil {
 		return err
 	}
-	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	idStr := converter.Int64ToStr(sc.TxSmart.Header.EcosystemID)
 	if _, err := DBUpdate(sc, `@`+idStr+"_languages", id,
 		map[string]interface{}{"name": name, "res": trans, "app_id": appID}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return err
 	}
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
+	language.UpdateLang(int(sc.TxSmart.Header.EcosystemID), int(appID), name, trans, sc.VDE)
 	return nil
 }
 
 // GetContractByName returns id of the contract with this name
 func GetContractByName(sc *SmartContract, name string) int64 {
-	contract := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID))
+	contract := VMGetContract(sc.VM, name, uint32(sc.TxSmart.Header.EcosystemID))
 	if contract == nil {
 		return 0
 	}
@@ -604,7 +604,7 @@ func RollbackTable(sc *SmartContract, name string) error {
 		return logErrorDB(err, "dropping table")
 	}
 	t := model.Table{}
-	t.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	t.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.Header.EcosystemID))
 	found, err = t.Get(sc.DbTransaction, name)
 	if err != nil {
 		return logErrorDB(err, "getting table info")
@@ -626,7 +626,7 @@ func RollbackColumn(sc *SmartContract, tableName, name string) error {
 	}
 	name = converter.EscapeSQL(strings.ToLower(name))
 	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.EcosystemID))
+	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_tables", sc.TxSmart.Header.EcosystemID))
 	if err != nil {
 		return logErrorDB(err, "getting column from rollback table")
 	}
@@ -721,7 +721,7 @@ func RollbackContract(sc *SmartContract, name string) error {
 		return err
 	}
 
-	if c := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID)); c != nil {
+	if c := VMGetContract(sc.VM, name, uint32(sc.TxSmart.Header.EcosystemID)); c != nil {
 		id := c.Block.Info.(*script.ContractInfo).ID
 		if int(id) < len(sc.VM.Children) {
 			sc.VM.Children = sc.VM.Children[:id]
@@ -757,7 +757,7 @@ func RollbackEditContract(sc *SmartContract) error {
 		return err
 	}
 	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_contracts", sc.TxSmart.EcosystemID))
+	found, err := rollbackTx.Get(sc.DbTransaction, sc.TxHash, fmt.Sprintf("%d_contracts", sc.TxSmart.Header.EcosystemID))
 	if err != nil {
 		return logErrorDB(err, "getting contract from rollback table")
 	}
@@ -776,7 +776,7 @@ func RollbackEditContract(sc *SmartContract) error {
 			if item != nil && item.Type == script.ObjContract {
 				cinfo := item.Info.(*script.ContractInfo)
 				if cinfo.Owner.TableID == converter.StrToInt64(rollbackTx.TableID) &&
-					cinfo.Owner.StateID == uint32(sc.TxSmart.EcosystemID) {
+					cinfo.Owner.StateID == uint32(sc.TxSmart.Header.EcosystemID) {
 					owner = smartVM.Children[i].Info.(*script.ContractInfo).Owner
 					break
 				}
@@ -798,7 +798,7 @@ func RollbackEditContract(sc *SmartContract) error {
 			return logError(err, consts.VMError, "flushing contract")
 		}
 	} else if len(fields["wallet_id"]) > 0 {
-		return SetContractWallet(sc, converter.StrToInt64(rollbackTx.TableID), sc.TxSmart.EcosystemID,
+		return SetContractWallet(sc, converter.StrToInt64(rollbackTx.TableID), sc.TxSmart.Header.EcosystemID,
 			converter.StrToInt64(fields["wallet_id"]))
 	}
 	return nil
