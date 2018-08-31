@@ -9,6 +9,8 @@ contract RunVDE {
 		}
 	
 		action {
-			StartVDE($VDEName)
+            $VDEName = ToLower($VDEName)
+            StartVDE($VDEName)
+            $result = "VDE " + $VDEName + " running"
 		}
-	}
+}

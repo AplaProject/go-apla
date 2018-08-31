@@ -6,6 +6,6 @@ contract ListVDE {
 		conditions {}
 	
 		action {
-			return GetVDEList()
+			$result = GetVDEList()
 		}
 	}
