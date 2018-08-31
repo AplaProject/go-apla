@@ -7,7 +7,6 @@ import (
 // GetEcosystemScript returns script to create ecosystem
 func GetEcosystemScript() string {
 	scripts := []string{
-		schemaEcosystem,
 		blocksDataSQL,
 		contractsDataSQL,
 		menuDataSQL,
@@ -42,15 +41,3 @@ func GetCommonEcosystemScript() string {
 	}
 	return strings.Join(scripts, "\r\n")
 }
-
-// SchemaEcosystem contains SQL queries for creating ecosystem
-var schemaEcosystem = `		
-
-		DROP TABLE IF EXISTS "%[1]d_signatures"; CREATE TABLE "%[1]d_signatures" (
-			"id" bigint  NOT NULL DEFAULT '0',
-			"name" character varying(100) NOT NULL DEFAULT '',
-			"value" jsonb,
-			"conditions" text NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
-`

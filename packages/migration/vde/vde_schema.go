@@ -22,15 +22,6 @@ func GetVDEScript() string {
 
 var schemaVDE = `
 	
-	  DROP TABLE IF EXISTS "%[1]d_signatures"; CREATE TABLE "%[1]d_signatures" (
-		  "id" bigint  NOT NULL DEFAULT '0',
-		  "name" character varying(100) NOT NULL DEFAULT '',
-		  "value" jsonb,
-		  "conditions" text NOT NULL DEFAULT ''
-	  );
-	  ALTER TABLE ONLY "%[1]d_signatures" ADD CONSTRAINT "%[1]d_signatures_pkey" PRIMARY KEY (name);
-	  
-	    
 	  DROP TABLE IF EXISTS "%[1]d_cron";
 	  CREATE TABLE "%[1]d_cron" (
 		  "id"        bigint NOT NULL DEFAULT '0',

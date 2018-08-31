@@ -39,13 +39,6 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions", "ec
 "value": "ContractConditions(\"MainCondition\")",
 "conditions": "ContractConditions(\"MainCondition\")"
 	}', 'ContractAccess("EditTable")', '%[1]d'),
-	(next_id('1_tables'), 'signatures', 
-	'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", 
-	  "new_column": "ContractConditions(\"MainCondition\")"}',
-	'{"name": "ContractConditions(\"MainCondition\")",
-"value": "ContractConditions(\"MainCondition\")",
-"conditions": "ContractConditions(\"MainCondition\")"
-	}', 'ContractAccess("EditTable")', '%[1]d'),
 	(next_id('1_tables'), 'cron',
 	  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
 		"new_column": "ContractConditions(\"MainCondition\")"}',
