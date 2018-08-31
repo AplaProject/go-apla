@@ -39,7 +39,9 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 
 	table := `1_contracts`
 
-	count, err := model.GetRecordsCountTx(nil, table, ``)
+	where := fmt.Sprintf(`ecosystem='%d'`, data.ecosystemId)
+
+	count, err := model.GetRecordsCountTx(nil, table, where)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
@@ -50,7 +52,7 @@ func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 	} else {
 		limit = 25
 	}
-	list, err := model.GetAll(fmt.Sprintf(`select * from "%s" order by id desc offset %d `, table, data.params[`offset`].(int64)), limit)
+	list, err := model.GetAll(fmt.Sprintf(`select * from "%s" where %s order by id desc offset %d `, table, where, data.params[`offset`].(int64)), limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)

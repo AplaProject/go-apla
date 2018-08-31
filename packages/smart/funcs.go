@@ -604,7 +604,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return fmt.Errorf(eLatin, name)
 	}
 
-	if name[0] >= '0' && name[0] >= '9' {
+	if (name[0] >= '0' && name[0] <= '9') || name[0] == '@' {
 		return errTableName
 	}
 
