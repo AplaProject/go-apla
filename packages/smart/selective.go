@@ -46,16 +46,46 @@ func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) erro
 	return nil
 }
 
+func getParam(fields []string, name string) int {
+	for i, v := range fields {
+		if strings.ToLower(v) == name {
+			return i
+		}
+	}
+	return -1
+}
+
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
 	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
 	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
 	var (
-		tableID         string
-		err             error
-		cost            int64
-		rollbackInfoStr string
+		tableID               string
+		err                   error
+		cost                  int64
+		rollbackInfoStr       string
+		isKeyTable            bool
+		keyEcosystem, keyName string
 	)
 	logger := sc.GetLogger()
+
+	if under := strings.IndexByte(table, '_'); under > 0 {
+		keyName = table[under+1:]
+		if v, ok := model.FirstEcosystemTables[keyName]; ok && !v {
+			isKeyTable = true
+			keyEcosystem = table[:under]
+			table = `1_` + keyName
+
+			if isEcosystem := getParam(fields, `ecosystem`); isEcosystem >= 0 && len(ivalues) > isEcosystem &&
+				converter.StrToInt64(fmt.Sprint(ivalues[isEcosystem])) > 0 {
+				if whereFields == nil {
+					keyEcosystem = fmt.Sprint(ivalues[isEcosystem])
+				}
+			} else {
+				fields = append(fields, "ecosystem")
+				ivalues = append(ivalues, keyEcosystem)
+			}
+		}
+	}
 
 	if generalRollback && sc.BlockData == nil {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Block is undefined")
@@ -96,7 +126,6 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			addSQLFields += `"` + field + `",`
 		}
 	}
-
 	addSQLWhere := ""
 
 	if whereFields != nil && whereValues != nil {
@@ -105,6 +134,11 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 				addSQLWhere += whereFields[i] + "= " + escapeSingleQuotes(whereValues[i]) + " AND "
 			} else {
 				addSQLWhere += whereFields[i] + "= '" + escapeSingleQuotes(whereValues[i]) + "' AND "
+			}
+		}
+		if isKeyTable {
+			if isEcosystem := getParam(whereFields, `ecosystem`); isEcosystem < 0 {
+				addSQLWhere += fmt.Sprintf("ecosystem = '%s' AND ", keyEcosystem)
 			}
 		}
 	}
@@ -130,9 +164,12 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 	jsonFields := make(map[string]map[string]string)
 	if whereFields != nil && len(logData) > 0 {
+		if isKeyTable {
+			keyEcosystem = logData["ecosystem"]
+		}
 		rollbackInfo := make(map[string]string)
 		for k, v := range logData {
-			if k == `id` {
+			if k == `id` || (isKeyTable && k == "ecosystem") {
 				continue
 			}
 			if converter.IsByteColumn(table, k) && v != "" {
@@ -156,6 +193,9 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		rollbackInfoStr = string(jsonRollbackInfo)
 		addSQLUpdate := ""
 		for i := 0; i < len(fields); i++ {
+			if isKeyTable && fields[i] == "ecosystem" {
+				continue
+			}
 			if converter.IsByteColumn(table, fields[i]) && len(values[i]) != 0 {
 				addSQLUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if fields[i][:1] == "+" {
@@ -297,6 +337,9 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	if generalRollback {
+		if isKeyTable {
+			table = keyEcosystem + `_` + keyName
+		}
 		if err = addRollback(sc, table, tableID, rollbackInfoStr); err != nil {
 			return 0, tableID, err
 		}
