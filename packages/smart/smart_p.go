@@ -433,8 +433,12 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if err := LoadContract(sc.DbTransaction, idStr); err != nil {
 		return 0, err
 	}
+	if !sc.VDE {
+		if err := SysRollback(sc, SysRollData{Type: "NewEcosystem", ID: id}); err != nil {
+			return 0, err
+		}
+	}
 
-	sc.Rollback = false
 	sc.FullAccess = true
 	if _, _, err = DBInsert(sc, `@1pages`, map[string]interface{}{"ecosystem": idStr,
 		"name": "default_page", "value": SysParamString("default_ecosystem_page"),
@@ -466,17 +470,11 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	sc.FullAccess = false
 	// because of we need to know which ecosystem to rollback.
 	// All tables will be deleted so it's no need to rollback data from tables
-	sc.Rollback = true
 	if _, _, err := DBInsert(sc, "@1ecosystems", map[string]interface{}{
 		"id":   id,
 		"name": name,
 	}); err != nil {
 		return 0, logErrorDB(err, "insert new ecosystem to stat table")
-	}
-	if !sc.VDE {
-		if err := SysRollback(sc, SysRollData{Type: "NewEcosystem"}); err != nil {
-			return 0, err
-		}
 	}
 	return id, err
 }

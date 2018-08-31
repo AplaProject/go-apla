@@ -476,13 +476,13 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		pars["wallet_id"] = recipient
 	}
 	if len(pars) > 0 {
-		if _, err := DBUpdate(sc, "@1contracts", id, pars); err != nil {
-			return err
-		}
 		if !sc.VDE {
 			if err := SysRollback(sc, SysRollData{Type: "EditContract", ID: id}); err != nil {
 				return err
 			}
+		}
+		if _, err := DBUpdate(sc, "@1contracts", id, pars); err != nil {
+			return err
 		}
 	}
 	if len(value) > 0 {
@@ -631,23 +631,12 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return err
 	}
 	prefix, name := PrefixName(tableName)
-	id, err := model.GetNextID(sc.DbTransaction, `1_tables`)
-	if err != nil {
-		return logErrorDB(err, "getting next ID")
-	}
 
-	t := &model.Table{
-		ID:          id,
-		Name:        name,
-		Columns:     string(colout),
-		Permissions: string(permout),
-		Conditions:  `ContractAccess("@1EditTable")`,
-		AppID:       applicationID,
-	}
-	t.SetTablePrefix(prefix)
-	err = t.Create(sc.DbTransaction)
+	_, _, err = sc.insert([]string{`name`, `columns`, `permissions`, `conditions`, `app_id`,
+		`ecosystem`}, []interface{}{name, string(colout), string(permout),
+		`ContractAccess("@1EditTable")`, applicationID, prefix}, `1_tables`)
 	if err != nil {
-		return logErrorDB(err, "insert vde table info")
+		return logErrorDB(err, "insert table info")
 	}
 	if !sc.VDE {
 		if err = SysRollback(sc, SysRollData{Type: "NewTable", TableName: tableName}); err != nil {
@@ -1428,6 +1417,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	tblname := GetTableName(sc, tableName)
 
 	sqlColType, err = columnType(colType)
+
 	if err != nil {
 		return
 	}
@@ -1437,10 +1427,13 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	}
 
 	type cols struct {
+		ID      int64
 		Columns string
 	}
 	temp := &cols{}
-	err = model.DBConn.Table(`1_tables`).Where("name = ?", tableName).Select("columns").Find(temp).Error
+	err = model.GetDB(sc.DbTransaction).Table(`1_tables`).Where("name = ? and ecosystem = ?",
+		tableName, sc.TxSmart.EcosystemID).Select("id,columns").Find(temp).Error
+
 	if err != nil {
 		return
 	}
@@ -1454,7 +1447,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		return
 	}
 	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
-		`1_tables`, `name`, tableName)
+		`1_tables`, `id`, temp.ID)
 	if !sc.VDE {
 		return SysRollback(sc, SysRollData{Type: "NewColumn", TableName: tblname, Data: name})
 	}

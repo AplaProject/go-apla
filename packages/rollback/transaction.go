@@ -78,15 +78,15 @@ func rollbackTransaction(txHash []byte, dbTransaction *model.DbTransaction, logg
 			}
 			switch sysData.Type {
 			case "NewTable":
-				smart.SysRollbackTable(dbTransaction, txHash, sysData, tx["table_id"])
+				smart.SysRollbackTable(dbTransaction, sysData)
 			case "NewColumn":
-				smart.SysRollbackColumn(dbTransaction, sysData, tx["table_id"])
+				smart.SysRollbackColumn(dbTransaction, sysData)
 			case "NewContract":
 				smart.SysRollbackNewContract(sysData, tx["table_id"])
 			case "EditContract":
-				smart.SysRollbackEditContract(dbTransaction, txHash, tx["table_id"])
+				smart.SysRollbackEditContract(dbTransaction, sysData, tx["table_id"])
 			case "NewEcosystem":
-				smart.SysRollbackEcosystem(dbTransaction, txHash)
+				smart.SysRollbackEcosystem(dbTransaction, sysData)
 			case "ActivateContract":
 				smart.SysRollbackActivate(sysData)
 			case "DeactivateContract":
