@@ -200,7 +200,9 @@ func SysRollbackEcosystem(DbTransaction *model.DbTransaction, sysData SysRollDat
 			}
 		}
 	} else {
-
+		if err := SysRollbackContract(`MainCondition`, sysData.ID); err != nil {
+			return err
+		}
 	}
 	return nil
 }
