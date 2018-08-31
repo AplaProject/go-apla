@@ -795,7 +795,6 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 
 	commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
 	walletTable := model.KeyTableName(sc.TxSmart.TokenEcosystem)
-	historyTable := model.HistoryTableName(sc.TxSmart.TokenEcosystem)
 	comment := fmt.Sprintf("Commission for execution of %s contract", sc.TxContract.Name)
 	fromIDString := converter.Int64ToStr(fromID)
 
@@ -807,9 +806,10 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 		}
 
 		_, _, err = sc.insert(
-			[]string{"sender_id", "recipient_id", "amount", "comment", "block_id", "txhash"},
-			[]interface{}{fromIDString, toID, sum, comment, sc.BlockData.BlockID, sc.TxHash},
-			historyTable)
+			[]string{"sender_id", "recipient_id", "amount", "comment", "block_id", "txhash",
+				"ecosystem"},
+			[]interface{}{fromIDString, toID, sum, comment, sc.BlockData.BlockID, sc.TxHash, sc.TxSmart.TokenEcosystem},
+			`1_history`)
 		if err != nil {
 			return err
 		}

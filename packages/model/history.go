@@ -2,14 +2,11 @@ package model
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/shopspring/decimal"
 )
-
-const historyTableSuffix = "_history"
 
 var errLowBalance = errors.New("not enough APL on the balance")
 
@@ -91,9 +88,4 @@ func GetExcessTokenMovementQtyPerBlock(tx *DbTransaction, blockID int64) (excess
 		Scan(&excess).Error
 
 	return excess, err
-}
-
-// HistoryTableName returns name of history table
-func HistoryTableName(prefix int64) string {
-	return fmt.Sprintf("%d%s", prefix, historyTableSuffix)
 }
