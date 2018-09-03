@@ -26,23 +26,19 @@ import (
 
 // ToBlockID rollbacks blocks till blockID
 func ToBlockID(blockHash []byte, dbTransaction *model.DbTransaction, logger *log.Entry) error {
-	limit := 1000
-	// roll back our blocks
-	for {
-		blocks, err := blockchain.GetNBlocksFrom(blockHash, limit, 1)
+	blocks, err := blockchain.DeleteBlocksFrom(blockHash)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting blocks")
+		return err
+	}
+	if len(blocks) == 0 {
+		return nil
+	}
+	for _, block := range blocks {
+		// roll back our blocks to the block blockID
+		err = RollbackBlock(block.Block, block.Hash)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting blocks")
 			return err
-		}
-		if len(blocks) == 0 {
-			break
-		}
-		for _, block := range blocks {
-			// roll back our blocks to the block blockID
-			err = RollbackBlock(block.Block, block.Hash, true)
-			if err != nil {
-				return err
-			}
 		}
 	}
 

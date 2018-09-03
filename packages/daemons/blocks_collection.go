@@ -315,13 +315,13 @@ func GetBlocks(ctx context.Context, blockHash []byte, host string) error {
 
 	// we have the slice of blocks for applying
 	// first of all we should rollback old blocks
-	myRollbackBlocks, err := blockchain.GetNBlocksFrom(blockHash, -1, 0)
+	myRollbackBlocks, err := blockchain.DeleteBlocksFrom(blockHash)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting rollback blocks from blockID")
 		return utils.ErrInfo(err)
 	}
 	for _, block := range myRollbackBlocks {
-		err := rollback.RollbackBlock(block.Block, block.Hash, false)
+		err := rollback.RollbackBlock(block.Block, block.Hash)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -431,12 +431,6 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 	// If all right we can delete old blockchain and write new
 	for i := len(blocks) - 1; i >= 0; i-- {
 		b := blocks[i]
-		// Delete old blocks from blockchain
-		err = blockchain.DeleteBlock(b.Hash)
-		if err != nil {
-			dbTransaction.Rollback()
-			return err
-		}
 		// insert new blocks into blockchain
 		bBlock := b.ToBlockchainBlock()
 		if err := bBlock.Insert(b.Hash); err != nil {

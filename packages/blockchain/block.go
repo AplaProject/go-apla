@@ -14,9 +14,18 @@ import (
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
-const blockPrefix = "block-"
 const firstBlockKey = "first_block"
 const lastBlockKey = "last_block"
+
+func prefixFunc(prefix string) func([]byte) []byte {
+	return func(hash []byte) []byte {
+		return []byte(prefix + string(hash))
+	}
+}
+
+var blockPrefix func([]byte) []byte = prefixFunc("block-")
+var nextBlockHashPrefix func([]byte) []byte = prefixFunc("next_block_hash-")
+
 const lastNBlocksCount = 5
 
 // BlockData is a structure of the block's header
@@ -29,6 +38,26 @@ type BlockHeader struct {
 	Sign          []byte
 	RollbacksHash []byte
 	Version       int
+}
+
+func GetNextBlockHash(hash []byte) ([]byte, bool, error) {
+	val, err := db.Get(blockPrefix(hash), nil)
+	if err == leveldb.ErrNotFound {
+		return nil, false, nil
+	}
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("getting next block hash")
+		return nil, false, err
+	}
+	return val, true, nil
+}
+
+func SetNextBlockHash(hash, nextBlockHash []byte) error {
+	return db.Put(nextBlockHashPrefix(hash), nextBlockHash, nil)
+}
+
+func DelNextBlockHash(hash []byte) error {
+	return db.Delete(nextBlockHashPrefix(hash), nil)
 }
 
 func (b BlockHeader) String() string {
@@ -156,7 +185,7 @@ func (b *Block) Unmarshal(bt []byte) error {
 }
 
 func (b *Block) Get(hash []byte) (bool, error) {
-	val, err := db.Get([]byte(blockPrefix+string(hash)), nil)
+	val, err := db.Get(blockPrefix(hash), nil)
 	if err == leveldb.ErrNotFound {
 		return false, nil
 	}
@@ -177,44 +206,50 @@ func (b *Block) Insert(hash []byte) error {
 	if err != nil {
 		return err
 	}
-	err = db.Put([]byte(blockPrefix+string(hash)), val, nil)
+	err = db.Put(blockPrefix(hash), val, nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("inserting block")
 		return err
 	}
 	if b.Header.BlockID == 1 {
-		if err := db.Put([]byte(firstBlockKey), []byte(blockPrefix+string(hash)), nil); err != nil {
+		if err := db.Put([]byte(firstBlockKey), hash, nil); err != nil {
 			log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("updating first block key")
 			return err
 		}
 	}
-	if err := db.Put([]byte(lastBlockKey), []byte(blockPrefix+string(hash)), nil); err != nil {
+	if err := db.Put([]byte(lastBlockKey), hash, nil); err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("updating last block key")
 		return err
 	}
-	prevBlock := &Block{}
-	found, err := prevBlock.Get(prevHash)
-	if err != nil {
-		return err
-	}
-	if !found {
-		return nil
-	}
-	prevBlock.NextHash = hash
-	prevBlockVal, err := prevBlock.Marshal()
-	if err != nil {
-		return err
-	}
-	if err := db.Put([]byte(blockPrefix+string(prevHash)), prevBlockVal, nil); err != nil {
-		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("inserting block")
-		return err
+	if b.Header.BlockID != 1 {
+		if err := SetNextBlockHash(prevHash, hash); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func DeleteBlock(blockHash []byte) error {
-	return db.Delete([]byte(blockPrefix+string(blockHash)), nil)
+func DeleteBlocksFrom(blockHash []byte) ([]*BlockWithHash, error) {
+	blocks, err := GetNBlocksFrom(blockHash, -1, -1)
+	if err != nil {
+		return nil, err
+	}
+	for _, b := range blocks {
+		if err := db.Delete(blockPrefix(b.Hash), nil); err != nil {
+			log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("deleting block")
+			return nil, err
+		}
+		if err := db.Delete(nextBlockHashPrefix(b.Hash), nil); err != nil {
+			log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("deleting next block hash prefix")
+			return nil, err
+		}
+	}
+	if err := db.Put([]byte(lastBlockKey), blockHash, nil); err != nil {
+		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("updating last block key")
+		return nil, err
+	}
+	return blocks, nil
 }
 
 func GetFirstBlock() (*Block, []byte, bool, error) {
@@ -224,7 +259,7 @@ func GetFirstBlock() (*Block, []byte, bool, error) {
 		return nil, nil, false, err
 	}
 	block := &Block{}
-	found, err := block.Get([]byte(blockPrefix + string(hash)))
+	found, err := block.Get(hash)
 	return block, hash, found, err
 }
 
@@ -235,7 +270,7 @@ func GetLastBlock() (*Block, []byte, bool, error) {
 		return nil, nil, false, err
 	}
 	block := &Block{}
-	found, err := block.Get([]byte(blockPrefix + string(hash)))
+	found, err := block.Get(hash)
 	return block, hash, found, err
 }
 
@@ -261,28 +296,53 @@ func GetNBlocksFrom(hash []byte, n, ordering int) ([]*BlockWithHash, error) {
 		nextHash = lastBlock.PrevHash
 	}
 	if ordering > 0 {
-		nextHash = lastBlock.NextHash
-	}
-	if len(nextHash) == 0 {
-		return result, nil
-	}
-	for i := n - 1; i > 0; i-- {
-		block := &Block{}
-		found, err := block.Get(nextHash)
+		nextHash, found, err = GetNextBlockHash(hash)
 		if err != nil {
 			return nil, err
 		}
-		if !found {
-			return result, nil
+	}
+	if !found {
+		return result, nil
+	}
+	if n > 0 {
+		for i := n - 1; i > 0; i-- {
+			block := &Block{}
+			found, err := block.Get(nextHash)
+			if err != nil {
+				return nil, err
+			}
+			if !found {
+				return result, nil
+			}
+			result = append(result, &BlockWithHash{Block: block, Hash: nextHash})
+			if ordering < 0 {
+				nextHash = block.PrevHash
+			} else if ordering > 0 {
+				nextHash, found, err = GetNextBlockHash(nextHash)
+			}
+			if !found {
+				return result, nil
+			}
 		}
-		result = append(result, &BlockWithHash{Block: block, Hash: nextHash})
-		if ordering < 0 {
-			nextHash = block.PrevHash
-		} else if ordering > 0 {
-			nextHash = block.NextHash
-		}
-		if len(nextHash) == 0 {
-			return result, nil
+	} else {
+		for len(nextHash) != 0 {
+			block := &Block{}
+			found, err := block.Get(nextHash)
+			if err != nil {
+				return nil, err
+			}
+			if !found {
+				return result, nil
+			}
+			result = append(result, &BlockWithHash{Block: block, Hash: nextHash})
+			if ordering < 0 {
+				nextHash = block.PrevHash
+			} else if ordering > 0 {
+				nextHash, found, err = GetNextBlockHash(nextHash)
+			}
+			if !found {
+				return result, nil
+			}
 		}
 	}
 	return result, nil

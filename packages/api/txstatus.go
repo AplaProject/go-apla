@@ -45,7 +45,7 @@ func getTxStatus(hash string, w http.ResponseWriter, logger *log.Entry) (*txstat
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding tx hash from hex")
 		return nil, errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
 	}
-	tx := &blockchain.Transaction{}
+	tx := &blockchain.TxStatus{}
 	found, err := tx.Get(converter.HexToBin(hash))
 	if err != nil {
 		return nil, errorAPI(w, err, http.StatusInternalServerError)
@@ -54,15 +54,18 @@ func getTxStatus(hash string, w http.ResponseWriter, logger *log.Entry) (*txstat
 		logger.WithFields(log.Fields{"type": consts.NotFound, "key": []byte(converter.HexToBin(hash))}).Error("getting transaction status by hash")
 		return nil, errorAPI(w, `E_HASHNOTFOUND`, http.StatusBadRequest)
 	}
-	if tx.Header.BlockID > 0 {
-		status.BlockID = converter.Int64ToStr(tx.Header.BlockID)
-		status.Result = tx.Header.Error
-	} else if len(tx.Header.Error) > 0 {
-		if err := json.Unmarshal([]byte(tx.Header.Error), &status.Message); err != nil {
-			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": tx.Header.Error, "error": err}).Warn("unmarshalling txstatus error")
+	if err != nil {
+		return nil, errorAPI(w, err, http.StatusInternalServerError)
+	}
+	if tx.BlockID > 0 {
+		status.BlockID = converter.Int64ToStr(tx.BlockID)
+		status.Result = tx.Error
+	} else if len(tx.Error) > 0 {
+		if err := json.Unmarshal([]byte(tx.Error), &status.Message); err != nil {
+			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": tx.Error, "error": err}).Warn("unmarshalling txstatus error")
 			status.Message = &txstatusError{
 				Type:  "txError",
-				Error: tx.Header.Error,
+				Error: tx.Error,
 			}
 		}
 	}

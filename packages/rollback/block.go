@@ -29,7 +29,7 @@ import (
 )
 
 // BlockRollback is blocking rollback
-func RollbackBlock(blockModel *blockchain.Block, hash []byte, deleteBlock bool) error {
+func RollbackBlock(blockModel *blockchain.Block, hash []byte) error {
 	b, err := block.FromBlockchainBlock(blockModel, hash)
 	if err != nil {
 		return err
@@ -42,12 +42,6 @@ func RollbackBlock(blockModel *blockchain.Block, hash []byte, deleteBlock bool) 
 	}
 
 	err = rollbackBlock(dbTransaction, b)
-
-	if deleteBlock {
-		if err := blockchain.DeleteBlock(hash); err != nil {
-			return err
-		}
-	}
 
 	if err != nil {
 		dbTransaction.Rollback()
