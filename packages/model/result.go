@@ -14,9 +14,9 @@ type SingleResult struct {
 }
 
 // Single is retrieving single result
-func Single(query string, args ...interface{}) *SingleResult {
+func Single(transaction *DbTransaction, query string, args ...interface{}) *SingleResult {
 	var result []byte
-	err := DBConn.Raw(query, args...).Row().Scan(&result)
+	err := GetDB(transaction).Raw(query, args...).Row().Scan(&result)
 	switch {
 	case err == sql.ErrNoRows:
 		return &SingleResult{[]byte(""), nil}

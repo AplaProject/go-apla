@@ -504,8 +504,10 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	}
 	var id int64
 	var err error
-
-	if GetContractByName(sc, name) != 0 {
+	isExists := GetContractByName(sc, name)
+	if isExists != 0 {
+		log.WithFields(log.Fields{"type": consts.ContractError, "name": name,
+			"tableId": isExists}).Error("create existing contract")
 		return 0, fmt.Errorf(eContractExist, name)
 	}
 	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, walletID, tokenEcosystem)
@@ -1361,7 +1363,8 @@ func AllowChangeCondition(sc *SmartContract, tblname string) error {
 
 // RowConditions checks conditions for table row by id
 func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bool) error {
-	condition, err := model.GetRowConditionsByTableNameAndID(GetTableName(sc, tblname), id)
+	condition, err := model.GetRowConditionsByTableNameAndID(sc.DbTransaction,
+		GetTableName(sc, tblname), id)
 	if err != nil {
 		return logErrorDB(err, "executing row condition query")
 	}

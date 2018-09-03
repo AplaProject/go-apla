@@ -1003,6 +1003,26 @@ VALUES
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+	(next_id('1_contracts'), 'UpdateSysParam', 'contract UpdateSysParam {
+     data {
+        Name string
+        Value string
+        Conditions string "optional"
+     }
+     conditions {
+         if GetContractByName($Name){
+             var params map
+             params["Value"] = $Value
+             CallContract($Name, params)
+        } else {
+            warning "System parameter not found"
+         }
+     }
+     action {
+         DBUpdateSysParam($Name, $Value, $Conditions)
+     }
+}
+', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
 	(next_id('1_contracts'), 'UploadBinary', 'contract UploadBinary {
     data {
         ApplicationId int
@@ -1038,6 +1058,59 @@ VALUES
 
         $result = $Id
     }
+}
+', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+	(next_id('1_contracts'), 'full_nodes', 'contract full_nodes {
+  data {
+    Value string
+  }
+
+  conditions {
+    if Size($Value) == 0 {
+      warning "Value was not received"
+    }
+
+    var full_nodes_arr array
+    full_nodes_arr = JSONDecode($Value)
+
+    var len_arr int
+    len_arr = Len(full_nodes_arr)
+
+    if len_arr == 0 {
+        warning "Wrong array structure"
+    }
+
+    var i int
+    while(i < len_arr){
+        var node_map map 
+        node_map = full_nodes_arr[i]
+
+        var public_key string
+        var tcp_address string
+        var api_address string
+        var key_id string
+
+        public_key = node_map["public_key"]
+        tcp_address = node_map["tcp_address"]
+        api_address = node_map["api_address"]
+        key_id = node_map["key_id"]
+
+        if Size(public_key) == 0 {
+            warning "Public key was not received"
+        }
+        if Size(tcp_address) == 0 {
+            warning "TCP address was not received"
+        }
+        if Size(api_address) == 0 {
+            warning "API address was not received"
+        }
+        if Size(key_id) == 0 {
+            warning "Key ID was not received"
+        }
+
+        i = i + 1
+    }
+  }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d, '1');
 `
