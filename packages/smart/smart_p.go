@@ -388,7 +388,7 @@ func GetContractById(sc *SmartContract, id int64) string {
 func EvalCondition(sc *SmartContract, table, name, condfield string) error {
 	tableName := converter.ParseTable(table, sc.TxSmart.EcosystemID)
 	query := `SELECT ` + converter.EscapeName(condfield) + ` FROM "` + tableName + `" WHERE name = ? and ecosystem = ?`
-	conditions, err := model.Single(query, name, sc.TxSmart.EcosystemID).String()
+	conditions, err := model.Single(sc.DbTransaction, query, name, sc.TxSmart.EcosystemID).String()
 	if err != nil {
 		return logErrorDB(err, "executing single query")
 	}
