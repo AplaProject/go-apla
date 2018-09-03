@@ -46,7 +46,6 @@ func (n *Notification) TableName() string {
 // GetNotificationsCount returns all unclosed notifications by users and ecosystem through role_id
 // if userIDs is nil or empty then filter will be skipped
 func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
-
 	result := make([]map[string]string, 0, 16)
 	for _, userID := range userIDs {
 		roles, err := GetMemberRoles(nil, ecosystemID, userID)
