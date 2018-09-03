@@ -1,20 +1,45 @@
 package vde
 
-var menuDataSQL = `INSERT INTO "%[1]d_menu" (id, name, value, conditions) VALUES
-(2, 'admin_menu', 'MenuItem(Title:"Application", Page:apps_list, Icon:"icon-folder")
-MenuItem(Title:"Ecosystem parameters", Page:params_list, Icon:"icon-settings")
-MenuItem(Title:"Menu", Page:menus_list, Icon:"icon-list")
-MenuItem(Title:"Confirmations", Page:confirmations, Icon:"icon-check")
-MenuItem(Title:"Import", Page:import_upload, Icon:"icon-cloud-upload")
-MenuItem(Title:"Export", Page:export_resources, Icon:"icon-cloud-download")
-MenuGroup(Title:"Resources", Icon:"icon-share"){
-	MenuItem(Title:"Pages", Page:app_pages, Icon:"icon-screen-desktop")
-	MenuItem(Title:"Blocks", Page:app_blocks, Icon:"icon-grid")
-	MenuItem(Title:"Tables", Page:app_tables, Icon:"icon-docs")
-	MenuItem(Title:"Contracts", Page:app_contracts, Icon:"icon-briefcase")
-	MenuItem(Title:"Application parameters", Page:app_params, Icon:"icon-wrench")
-	MenuItem(Title:"Language resources", Page:app_langres, Icon:"icon-globe")
-	MenuItem(Title:"Binary data", Page:app_binary, Icon:"icon-layers")
-}
-MenuItem(Title:"Dashboard", Page:admin_dashboard, Icon:"icon-wrench")', 'ContractConditions("MainCondition")');
-`
+var menuDataSQL = `
+INSERT INTO "1_menu" ("id","name","title","value","conditions","ecosystem") VALUES(next_id('1_menu'),'admin_menu','Admin menu','MenuItem(
+    Icon: "icon-screen-desktop",
+    Page: "interface",
+    Vde: "true",
+    Title: "Interface"
+)
+MenuItem(
+    Icon: "icon-docs",
+    Page: "tables",
+    Vde: "true",
+    Title: "Tables"
+)
+MenuItem(
+    Icon: "icon-briefcase",
+    Page: "contracts",
+    Vde: "true",
+    Title: "Smart Contracts"
+)
+MenuItem(
+    Icon: "icon-settings",
+    Page: "parameters",
+    Vde: "true",
+    Title: "Ecosystem parameters"
+)
+MenuItem(
+    Icon: "icon-globe",
+    Page: "languages",
+    Vde: "true",
+    Title: "Language resources"
+)
+MenuItem(
+    Icon: "icon-cloud-upload",
+    Page: "import",
+    Vde: "true",
+    Title: "Import"
+)
+MenuItem(
+    Icon: "icon-cloud-download",
+    Page: "export",
+    Vde: "true",
+    Title: "Export"
+)','true','%[1]d');`
