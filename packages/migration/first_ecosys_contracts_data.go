@@ -805,6 +805,15 @@ VALUES
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+	(next_id('1_contracts'), 'NewEcosystem', 'contract NewEcosystem {
+	data {
+		Name  string
+	}
+	action {
+		$result = CreateEcosystem($key_id, $Name)
+	}
+}
+', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
 	(next_id('1_contracts'), 'NewLang', 'contract NewLang {
     data {
         ApplicationId int

@@ -377,7 +377,7 @@ func appparTag(par parFunc) string {
 	}
 	ecosystem := (*par.Workspace.Vars)[`ecosystem_id`]
 	if len((*par.Pars)[`Ecosystem`]) != 0 {
-		ecosystem = (*par.Pars)[`Ecosystem`]
+		ecosystem = macro((*par.Pars)[`Ecosystem`], par.Workspace.Vars)
 	}
 	ap := &model.AppParam{}
 	ap.SetTablePrefix(ecosystem)
