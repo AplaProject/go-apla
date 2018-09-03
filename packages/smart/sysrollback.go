@@ -136,8 +136,8 @@ func SysSetContractWallet(tblid, state int64, wallet int64) error {
 func SysRollbackEditContract(transaction *model.DbTransaction, sysData SysRollData,
 	EcosystemID string) error {
 
-	query := fmt.Sprintf(`select * from 1_contracts where id=?`, sysData.ID)
-	fields, err := model.GetOneRowTransaction(transaction, query).String()
+	fields, err := model.GetOneRowTransaction(transaction, `select * from "1_contracts" where id=?`,
+		sysData.ID).String()
 	if err != nil {
 		return err
 	}
