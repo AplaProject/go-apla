@@ -15,7 +15,7 @@ import (
 	"github.com/yddmat/memdb"
 )
 
-const keyConvention = "%s.%d.%s"
+const keyConvention = "%s.%s.%s"
 
 var (
 	ErrUnknownContext   = errors.New("unknown writing operation context (block o/or hash empty)")
@@ -30,6 +30,7 @@ type metadataTx struct {
 	durable bool
 
 	rollback *metadataRollback
+	indexer  *indexer
 
 	currentBlockHash []byte
 	currentTxHash    []byte
@@ -49,7 +50,7 @@ func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value inte
 
 	err = m.tx.Set(key, string(jsonValue))
 	if err != nil {
-		return errors.Wrapf(err, "inserting Value %s to %s registry", value, registry.Name)
+		return errors.Wrapf(err, "inserting value %s to %s registry", value, registry.Name)
 	}
 
 	if m.rollback != nil {
@@ -84,7 +85,7 @@ func (m *metadataTx) Update(registry *types.Registry, pkValue string, newValue i
 
 	old, err := m.tx.Update(key, string(jsonValue))
 	if err != nil {
-		return errors.Wrapf(err, "inserting Value %s to %s registry", pkValue, registry.Name)
+		return errors.Wrapf(err, "inserting value %s to %s registry", pkValue, registry.Name)
 	}
 
 	m.stateMu.RLock()
@@ -123,13 +124,13 @@ func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface
 
 	err = json.Unmarshal([]byte(value), out)
 	if err != nil {
-		return errors.Wrapf(err, "unmarshalling Value %s to struct", value)
+		return errors.Wrapf(err, "unmarshalling value %s to struct", value)
 	}
 
 	return nil
 }
 
-func (m *metadataTx) Walk(registry *types.Registry, index string, fn func(value string) bool) error {
+func (m *metadataTx) Walk(registry *types.Registry, field string, fn func(value string) bool) error {
 	err := m.refreshTx()
 	if err != nil {
 		return err
@@ -138,7 +139,7 @@ func (m *metadataTx) Walk(registry *types.Registry, index string, fn func(value 
 
 	prefix := fmt.Sprintf("%s.*", registry.Name)
 
-	return m.tx.Ascend(index, func(key, value string) bool {
+	return m.tx.Ascend(m.indexer.formatIndexName(registry, field), func(key, value string) bool {
 		if match.Match(key, prefix) {
 			return fn(value)
 		}
@@ -172,12 +173,17 @@ func (m *metadataTx) SetBlockHash(blockHash []byte) {
 }
 
 func (m *metadataTx) AddIndex(indexes ...types.Index) error {
+	return m.addIndex(false, indexes...)
+}
 
-	m.tx.Ascend("ecosystem.name", func(key, value string) bool {
-		return true
-	})
+func (m *metadataTx) addIndex(init bool, indexes ...types.Index) error {
+	if init {
+		if err := m.indexer.init(indexes); err != nil {
+			return err
+		}
+	}
 
-	return m.tx.AddIndex(indexes...)
+	return m.indexer.addIndexes(indexes...)
 }
 
 func (m *metadataTx) refreshTx() error {
@@ -197,11 +203,15 @@ func (m *metadataTx) refreshTx() error {
 }
 
 func (m *metadataTx) formatKey(reg *types.Registry, pk string) (string, error) {
+	if reg.Name == "ecosystem" {
+		return fmt.Sprintf("%s.%s", reg.Name, pk), nil
+	}
+
 	if reg.Ecosystem == nil {
 		return "", ErrWrongRegistry
 	}
 
-	return fmt.Sprintf(keyConvention, reg.Name, reg.Ecosystem.ID, pk), nil
+	return fmt.Sprintf(keyConvention, reg.Name, reg.Ecosystem.Name, pk), nil
 }
 
 func (m *metadataTx) endRead() error {
@@ -227,23 +237,19 @@ func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool) (t
 		rollback: rollback,
 	}
 
-	if indexes != nil {
-		writer := ms.Begin()
-		if err := writer.AddIndex(indexes...); err != nil {
-			return nil, err
-		}
-
-		if err := writer.Commit(); err != nil {
-			return nil, err
-		}
+	mtx := ms.Begin()
+	tx := mtx.(*metadataTx)
+	if err := tx.addIndex(true, indexes...); err != nil {
+		return nil, err
 	}
+	mtx.Commit()
 
 	return ms, nil
 }
 
 func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
 	databaseTx := m.db.Begin(true)
-	tx := &metadataTx{tx: databaseTx, durable: true}
+	tx := &metadataTx{tx: databaseTx, durable: true, indexer: &indexer{tx: databaseTx}}
 
 	if m.rollback {
 		tx.rollback = &metadataRollback{tx: databaseTx, txCounter: make(map[string]uint64)}

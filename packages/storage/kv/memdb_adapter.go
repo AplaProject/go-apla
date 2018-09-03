@@ -1,10 +1,6 @@
 package kv
 
 import (
-	"fmt"
-
-	"github.com/GenesisKernel/go-genesis/packages/types"
-	"github.com/pkg/errors"
 	"github.com/yddmat/memdb"
 )
 
@@ -20,19 +16,18 @@ type TransactionAdapter struct {
 	memdb.Transaction
 }
 
-func (tx *TransactionAdapter) AddIndex(indexes ...types.Index) error {
+func (tx *TransactionAdapter) AddIndex(indexes ...Index) error {
 	idxes := make([]*memdb.Index, 0)
-	for _, idx := range indexes {
-		if idx.Registry == nil {
-			return errors.New("empty registry")
-		}
 
+	for _, idx := range indexes {
 		memdbIndex := memdb.NewIndex(
 			idx.Name,
-			fmt.Sprintf("%s.*", idx.Registry.Name),
+			idx.Pattern,
 			idx.SortFn,
 		)
+
 		idxes = append(idxes, memdbIndex)
 	}
+
 	return tx.Transaction.AddIndex(idxes...)
 }

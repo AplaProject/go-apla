@@ -11,7 +11,7 @@ type Registry struct {
 
 type MetadataRegistryReader interface {
 	Get(registry *Registry, pkValue string, out interface{}) error
-	Walk(registry *Registry, index string, fn func(jsonRow string) bool) error
+	Walk(registry *Registry, field string, fn func(jsonRow string) bool) error
 }
 
 type MetadataRegistryWriter interface {
@@ -42,8 +42,8 @@ type MetadataRegistryStorage interface {
 }
 
 type Index struct {
-	Name     string
 	Registry *Registry
+	Field    string
 	SortFn   func(a, b string) bool
 }
 

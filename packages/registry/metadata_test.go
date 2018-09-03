@@ -1,4 +1,4 @@
-package registry_test
+package registry
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/registry"
+	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/stretchr/testify/assert"
@@ -53,7 +53,7 @@ func TestMetadataTx_RW(t *testing.T) {
 			testname: "insert-good",
 			registry: types.Registry{
 				Name:      "key",
-				Ecosystem: &types.Ecosystem{ID: 1},
+				Ecosystem: &types.Ecosystem{Name: "abc"},
 			},
 			pkValue: "1",
 			value: testModel{
@@ -69,7 +69,7 @@ func TestMetadataTx_RW(t *testing.T) {
 			testname: "insert-bad-1",
 			registry: types.Registry{
 				Name:      "key",
-				Ecosystem: &types.Ecosystem{ID: 1},
+				Ecosystem: &types.Ecosystem{Name: "abc"},
 			},
 			pkValue: "1",
 			value:   make(chan int),
@@ -82,7 +82,9 @@ func TestMetadataTx_RW(t *testing.T) {
 		db, err := newKvDB(false)
 		require.Nil(t, err)
 
-		reg, err := registry.NewMetadataStorage(db, nil, true)
+		reg, err := NewMetadataStorage(db, []types.Index{
+			{Field: "name", Registry: &types.Registry{Name: "ecosystem"}},
+		}, true)
 		require.Nil(t, err)
 
 		metadataTx := reg.Begin()
@@ -114,96 +116,69 @@ func BenchmarkMetadataTx(b *testing.B) {
 	fmt.Println("Database persistence:", persist)
 	fmt.Println("Rollbacks:", persist)
 
-	storage, err := registry.NewMetadataStorage(db, nil, rollbacks)
+	storage, err := NewMetadataStorage(db, []types.Index{
+		{
+			Field:    "name",
+			Registry: &types.Registry{Name: "ecosystem"},
+			SortFn: func(a, b string) bool {
+				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)
+			},
+		},
+	}, rollbacks)
 	require.Nil(b, err)
 
 	metadataTx := storage.Begin()
-	type key struct {
-		ID        int64
-		PublicKey []byte
-		Amount    int64
-		Deleted   bool
-		Blocked   bool
-		Ecosystem int
-	}
 
-	reg := types.Registry{
-		Name:      "key",
-		Ecosystem: &types.Ecosystem{ID: 1},
+	ecosystems := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "k"}
+	for _, ecosystem := range ecosystems {
+		err = metadataTx.Insert(&types.Registry{
+			Name: "ecosystem",
+		}, ecosystem, model.Ecosystem{Name: ecosystem})
+		require.Nil(b, err)
 	}
-
 	count := 100000
 
 	insertStart := time.Now()
 	for i := 0; i < count; i++ {
+		ecosystem := ecosystems[rand.Intn(9)]
+		reg := types.Registry{
+			Name:      "key",
+			Ecosystem: &types.Ecosystem{Name: ecosystem},
+		}
+
 		id := rand.Int63()
 		err := metadataTx.Insert(
 			&reg,
 			strconv.FormatInt(id, 10),
-			key{
+			model.KeySchema{
 				ID:        id,
 				PublicKey: make([]byte, 64),
 				Amount:    rand.Int63(),
-				Ecosystem: rand.Intn(10000),
 			},
 		)
-
-		if err != nil {
-			metadataTx.Commit()
-			metadataTx = storage.Begin()
-			err = nil
-		}
-
 		require.Nil(b, err)
 	}
 	require.Nil(b, metadataTx.Commit())
 	fmt.Println("Inserted", count, "keys:", time.Since(insertStart))
 
-	indexStart := time.Now()
 	metadataTx = storage.Begin()
-	metadataTx.AddIndex(types.Index{Name: "test", Registry: &types.Registry{Name: "key"}, SortFn: func(a, b string) bool {
-		return gjson.Get(a, "amount").Less(gjson.Get(b, "amount"), false)
-	}})
-	require.Nil(b, metadataTx.Commit())
+
+	indexStart := time.Now()
+	require.Nil(b, metadataTx.AddIndex(types.Index{
+		Registry: &types.Registry{Name: "key"},
+		Field:    "amount",
+		SortFn: func(a, b string) bool {
+			return gjson.Get(b, "amount").Less(gjson.Get(a, "amount"), false)
+		}},
+	))
 	fmt.Println("Creating and fill 'amount' index by", count, "keys:", time.Since(indexStart))
 
-	readonlyTx := storage.Reader()
-	var topAmount int64
-	ecosystem := 666
-	ecosystems := make(map[int]struct{})
-	walkingStart := time.Now()
-	require.Nil(b, readonlyTx.Walk(&reg, "test", func(jsonRow string) bool {
-		k := key{}
+	require.Nil(b, metadataTx.Walk(&types.Registry{
+		Name:      "key",
+		Ecosystem: &types.Ecosystem{Name: "e"},
+	}, "amount", func(jsonRow string) bool {
+		k := model.KeySchema{}
 		require.Nil(b, json.Unmarshal([]byte(jsonRow), &k))
-		if k.Ecosystem == ecosystem && topAmount < k.Amount {
-			topAmount = k.Amount
-		}
-
-		ecosystems[k.Ecosystem] = struct{}{}
-		return true
+		return false
 	}))
-
-	fmt.Println("Finded top amount of", count, "keys (", len(ecosystems), "ecosystems ):", time.Since(walkingStart))
-
-	secondWriting := time.Now()
-	writeTx := storage.Begin()
-	writeTx.SetBlockHash([]byte("123"))
-	writeTx.SetTxHash([]byte("321"))
-	// Insert more values
-	for i := -count; i < 0; i++ {
-		id := rand.Int63()
-		err := writeTx.Insert(
-			&reg,
-			strconv.FormatInt(id, 10),
-			key{
-				ID:        id,
-				PublicKey: make([]byte, 64),
-				Amount:    rand.Int63(),
-			},
-		)
-
-		require.Nil(b, err)
-	}
-	require.Nil(b, writeTx.Commit())
-	fmt.Println("Inserted", count, "more keys ( with indexes ):", time.Since(secondWriting))
 }

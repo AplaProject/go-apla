@@ -24,7 +24,7 @@ type state struct {
 	RegistryName string `json:"r"`
 	Value        string `json:"v"`
 	Key          string `json:"k"`
-	Ecosystem    uint64 `json:"e"`
+	Ecosystem    string `json:"e"`
 }
 
 type metadataRollback struct {
@@ -42,7 +42,7 @@ func (mr *metadataRollback) saveState(block, tx []byte, registry *types.Registry
 	counter := mr.txCounter[key]
 	counter++
 
-	s := state{Counter: counter, RegistryName: registry.Name, Key: pk, Ecosystem: registry.Ecosystem.ID, Value: value}
+	s := state{Counter: counter, RegistryName: registry.Name, Key: pk, Ecosystem: registry.Ecosystem.Name, Value: value}
 	jstate, err := json.Marshal(s)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (mr *metadataRollback) saveState(block, tx []byte, registry *types.Registry
 func (mr *metadataRollback) rollbackState(block []byte) error {
 	txses := make([]state, 0)
 	var err error
-	mr.tx.Ascend("rollback", func(key, value string) bool {
+	mr.tx.Ascend("rollback_tx", func(key, value string) bool {
 		if match.Match(key, fmt.Sprintf(searchPrefix, string(block), "*", "*")) {
 			state := state{}
 			err = json.Unmarshal([]byte(value), &state)
