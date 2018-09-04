@@ -217,7 +217,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("updating transaction status block id")
 			return err
 		}
-		if err := transaction.InsertInLogTx(t.DbTransaction, t.TxFullData, t.TxTime); err != nil {
+		if err := transaction.InsertInLogTx(t, b.Header.BlockID); err != nil {
 			return utils.ErrInfo(err)
 		}
 	}
