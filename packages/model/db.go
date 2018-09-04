@@ -339,7 +339,7 @@ func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	var id int64
 	rows, err := GetDB(transaction).Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting next id from table")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("selecting next id from table")
 		return 0, err
 	}
 	rows.Next()
