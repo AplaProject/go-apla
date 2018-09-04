@@ -61,7 +61,7 @@ func init() {
 	funcs[`Code`] = tplFunc{defaultTag, defaultTag, `code`, `Text`}
 	funcs[`CodeAsIs`] = tplFunc{defaultTag, defaultTag, `code`, `#Text`}
 	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format`}
-	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
+	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source,Ecosystem`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
 	funcs[`GetHistory`] = tplFunc{getHistoryTag, defaultTag, `gethistory`,
@@ -351,10 +351,12 @@ func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
 	}
-	prefix := (*par.Workspace.Vars)[`ecosystem_id`]
-
+	ecosystem := (*par.Workspace.Vars)[`ecosystem_id`]
+	if len((*par.Pars)[`Ecosystem`]) != 0 {
+		ecosystem = macro((*par.Pars)[`Ecosystem`], par.Workspace.Vars)
+	}
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(prefix)
+	sp.SetTablePrefix(ecosystem)
 	parameterName := macro((*par.Pars)[`Name`], par.Workspace.Vars)
 	_, err := sp.Get(nil, parameterName)
 	if err != nil {
