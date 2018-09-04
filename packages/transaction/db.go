@@ -14,14 +14,9 @@ import (
 var ErrDuplicatedTx = errors.New("Duplicated transaction")
 
 // InsertInLogTx is inserting tx in log
-func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64) error {
-	txHash, err := crypto.Hash(binaryTx)
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("hashing binary tx")
-	}
-	ltx := &model.LogTransaction{Hash: txHash, Time: time}
-	err = ltx.Create(transaction)
-	if err != nil {
+func InsertInLogTx(t *Transaction, blockID int64) error {
+	ltx := &model.LogTransaction{Hash: t.TxHash, Block: blockID}
+	if err := ltx.Create(t.DbTransaction); err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("insert logged transaction")
 		return utils.ErrInfo(err)
 	}
