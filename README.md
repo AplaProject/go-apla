@@ -45,7 +45,7 @@ Genesis Blockchain Platform consists of two main components:
 
   Contains:
   - Centrifugo notification service
-  - Go-Genesis kernel service (includes Apla TCP and API servers)
+  - Go-Genesis kernel service (includes Genesis TCP and API servers)
   - PostgreSQL database
   
 - Frontend
@@ -620,7 +620,7 @@ You can set your own "secret", but also you must change it in node configuration
 
 After that, go-genesis.exe file will appear in go-genesis directory.
 
-Usage and flags of go-apla.exe file are described in [documentation](http://genesiskernel.readthedocs.io/en/latest/).
+Usage and flags of go-genesis.exe file are described in [documentation](http://genesiskernel.readthedocs.io/en/latest/).
 
 3) Create Node 1 config.toml configuration file. All used network settings (IP-adresses and ports) are described in [Overview](#overview).
 
@@ -697,7 +697,7 @@ For each other node deployment you should repeat the following steps:
 - Install Backend Software Prerequisites
 - Install PostgreSQL
 - Install Centrifugo 
-- Install Go-Apla
+- Install Go-Genesis
 
 #### Other Nodes Configuration
 
@@ -841,7 +841,7 @@ Now, all nodes are connected to each other.
 
 ## ***Frontend Install*** <a name="frontend-install"></a>
 
-Molis client is the frontend for Apla Blockchain Platform.
+Molis client is the frontend for Genesis Blockchain Platform.
 
 First, to work with the system, you must build Molis client, then you can deploy it to your users.
 
@@ -877,7 +877,7 @@ sudo apt install -y nodejs
 1) Download Yarn version 1.7.0 from [GitHub](https://github.com/yarnpkg/yarn/releases) or via command line:
 
 ```bash
-$ cd /opt/apla &&  wget https://github.com/yarnpkg/yarn/releases/download/v1.7.0/yarn_1.7.0_all.deb
+$ cd /opt/genesis &&  wget https://github.com/yarnpkg/yarn/releases/download/v1.7.0/yarn_1.7.0_all.deb
 ```
 
 2) Install Yarn:
@@ -894,7 +894,7 @@ $ sudo dpkg -i yarn_1.7.0_all.deb && rm yarn_1.7.0_all.deb
 git clone https://github.com/GenesisKernel/genesis-front.git
 ```
 
-2) Install Apla-Front dependencies via Yarn:
+2) Install Molis dependencies via Yarn:
 
 ```bash
 cd genesis-front/ && yarn install
@@ -931,7 +931,7 @@ All used network settings (IP-adresses and ports) are described in [Overview](#o
 3) Build the desktop app with Yarn:
 
 ```bash
-$ cd /opt/apla/apla-front && yarn build-desktop
+$ cd /opt/genesis/genesis-front && yarn build-desktop
 ```
 
 4) Then desktop app must be packed to the AppImage:
@@ -951,7 +951,7 @@ After that, your application will be ready to use, but its connection settings c
 2) Build the web app:
 
 ```bash
-$ cd /opt/apla/apla-front/ && yarn build
+$ cd /opt/genesis/genesis-front/ && yarn build
 ```
 
 After building, redistributable files will be placed to the '/build' directory. You can serve it with any web-server of your choice. Settings.json file must be also placed there. Note that you do not need to build your application again if your connection settings will change. Instead, edit the settings.json file and restart web-server.
@@ -997,7 +997,7 @@ After this, your Molis Web App will be available at: ``http://localhost:5000``
 
 #### Build Molis Desktop App
 
-1) Create a settings.json file in apla-front/public directory, which contains connections information about full nodes.
+1) Create a settings.json file in genesis-front/public directory, which contains connections information about full nodes.
 
 2) Edit settings.json file in any text editor and add the required settings in this format:
 
