@@ -68,11 +68,12 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	)
 	logger := sc.GetLogger()
 
-	if under := strings.IndexByte(table, '_'); under > 0 {
-		keyName = table[under+1:]
+	idNames := strings.SplitN(table, `_`, 2)
+	if len(idNames) == 2 {
+		keyName = idNames[1]
 		if v, ok := model.FirstEcosystemTables[keyName]; ok && !v {
 			isKeyTable = true
-			keyEcosystem = table[:under]
+			keyEcosystem = idNames[0]
 			table = `1_` + keyName
 
 			if isEcosystem := getParam(fields, `ecosystem`); isEcosystem >= 0 && len(ivalues) > isEcosystem &&
@@ -138,7 +139,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		}
 		if isKeyTable {
 			if isEcosystem := getParam(whereFields, `ecosystem`); isEcosystem < 0 {
-				addSQLWhere += fmt.Sprintf("ecosystem = '%s' AND ", keyEcosystem)
+				addSQLWhere += fmt.Sprintf("ecosystem = '%d' AND ", converter.StrToInt64(keyEcosystem))
 			}
 		}
 	}
