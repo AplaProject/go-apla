@@ -263,6 +263,7 @@ func (t *Transaction) parseFromContract(buf *bytes.Buffer) error {
 	t.TxSmart = &smartTx
 	t.TxTime = smartTx.Time
 	t.TxKeyID = smartTx.KeyID
+	t.TxType = int64(smartTx.Type)
 
 	contract := smart.GetContractByID(int32(smartTx.Type))
 	if contract == nil {
