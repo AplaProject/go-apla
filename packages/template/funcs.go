@@ -1024,6 +1024,7 @@ func dateTimeTag(par parFunc) string {
 	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
+	value := datetime
 	defTime := `1970-01-01T00:00:00`
 	lenTime := len(datetime)
 	if lenTime < len(defTime) {
@@ -1031,7 +1032,12 @@ func dateTimeTag(par parFunc) string {
 	}
 	itime, err := time.Parse(`2006-01-02T15:04:05`, strings.Replace(datetime[:19], ` `, `T`, -1))
 	if err != nil {
-		return err.Error()
+		unix := converter.StrToInt64(value)
+		if unix > 0 {
+			itime = time.Unix(unix, 0)
+		} else {
+			return err.Error()
+		}
 	}
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
