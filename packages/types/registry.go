@@ -4,9 +4,17 @@ import (
 	"database/sql/driver"
 )
 
+type RegistryType int8
+
+const (
+	RegistryTypeDefault RegistryType = iota
+	RegistryTypePrimary
+)
+
 type Registry struct {
 	Name      string // ex table Name
 	Ecosystem *Ecosystem
+	Type      RegistryType
 }
 
 type MetadataRegistryReader interface {
@@ -14,16 +22,18 @@ type MetadataRegistryReader interface {
 	Walk(registry *Registry, field string, fn func(jsonRow string) bool) error
 }
 
+type BlockchainContext interface {
+	GetBlockHash() []byte
+	GetTransactionHash() []byte
+}
+
 type MetadataRegistryWriter interface {
-	Insert(registry *Registry, pkValue string, value interface{}) error
-	Update(registry *Registry, pkValue string, newValue interface{}) error
+	Insert(ctx BlockchainContext, registry *Registry, pkValue string, value interface{}) error
+	Update(ctx BlockchainContext, registry *Registry, pkValue string, newValue interface{}) error
 
 	AddIndex(indexes ...Index) error
 
 	driver.Tx
-
-	SetTxHash(txHash []byte)
-	SetBlockHash(blockHash []byte)
 }
 
 type MetadataRegistryReaderWriter interface {
@@ -33,11 +43,12 @@ type MetadataRegistryReaderWriter interface {
 
 // MetadataRegistryStorage provides a read or read-write transactions for metadata registry
 type MetadataRegistryStorage interface {
+	MetadataRegistryReader
+
 	// Write/Read transaction. Must be closed by calling Commit() or Rollback() when done.
 	Begin() MetadataRegistryReaderWriter
-	// Multiple read-only transactions can be opened even while write transaction is running
-	Reader() MetadataRegistryReader
 
+	// Rollback is rollback all block transactions
 	Rollback(block []byte) error
 }
 

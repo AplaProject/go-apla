@@ -24,7 +24,7 @@ type teststruct struct {
 
 func TestMetadataRollbackSaveState(t *testing.T) {
 	txMock := &kv.MockTransaction{}
-	mr := metadataRollback{tx: txMock, txCounter: make(map[string]uint64)}
+	mr := metadataRollback{tx: txMock, counter: counter{txCounter: make(map[string]uint64)}}
 
 	registry := &types.Registry{
 		Name:      "keys",
@@ -38,7 +38,8 @@ func TestMetadataRollbackSaveState(t *testing.T) {
 	require.Nil(t, err)
 	txMock.On("Set", fmt.Sprintf(writePrefix, string(block), 1, string(tx)), string(jstate)).Return(nil)
 	require.Nil(t, mr.saveState(block, tx, registry, "1", ""))
-	require.Equal(t, mr.txCounter[string(block)], uint64(1))
+	fmt.Println(mr.counter.txCounter[string(block)])
+	require.Equal(t, mr.counter.txCounter[string(block)], uint64(1))
 
 	structValue := teststruct{
 		Key:    666,
@@ -52,14 +53,14 @@ func TestMetadataRollbackSaveState(t *testing.T) {
 	require.Nil(t, err)
 	txMock.On("Set", fmt.Sprintf(writePrefix, string(block), 2, string(tx)), string(jstate)).Return(nil)
 	require.Nil(t, mr.saveState(block, tx, registry, "2", string(jsonValue)))
-	require.Equal(t, mr.txCounter[string(block)], uint64(2))
+	require.Equal(t, mr.counter.txCounter[string(block)], uint64(2))
 
 	s = state{Counter: 3, RegistryName: registry.Name, Ecosystem: registry.Ecosystem.Name, Value: "", Key: "3"}
 	jstate, err = json.Marshal(s)
 	require.Nil(t, err)
 	txMock.On("Set", fmt.Sprintf(writePrefix, string(block), 3, string(tx)), string(jstate)).Return(errors.New("testerr"))
 	require.Error(t, mr.saveState(block, tx, registry, "3", ""))
-	require.Equal(t, mr.txCounter[string(block)], uint64(2))
+	require.Equal(t, mr.counter.txCounter[string(block)], uint64(2))
 }
 
 func TestMetadataRollbackSaveRollback(t *testing.T) {
@@ -68,7 +69,7 @@ func TestMetadataRollbackSaveRollback(t *testing.T) {
 	db := kv.DatabaseAdapter{Database: *mDb}
 
 	dbTx := db.Begin(true)
-	mr := metadataRollback{tx: dbTx, txCounter: make(map[string]uint64)}
+	mr := metadataRollback{tx: dbTx, counter: counter{txCounter: make(map[string]uint64)}}
 
 	registry := &types.Registry{
 		Name:      "key",
@@ -124,7 +125,7 @@ func TestMetadataRollbackSaveRollback(t *testing.T) {
 		Pattern: fmt.Sprintf(searchPrefix, "*", "*", "*"),
 	})
 
-	mr = metadataRollback{tx: dbTx, txCounter: make(map[string]uint64)}
+	mr = metadataRollback{tx: dbTx, counter: counter{txCounter: make(map[string]uint64)}}
 	require.Nil(t, mr.rollbackState(block))
 
 	// We are checking that all values are now at the previous state

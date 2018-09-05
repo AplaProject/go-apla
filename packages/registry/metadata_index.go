@@ -11,26 +11,23 @@ import (
 )
 
 var ErrEcosystemIndexNotFound = errors.New("main index (ecosystem) not found")
-var ErrCreteIndexes = errors.New("cant create indexes")
+var ErrCreateIndexes = errors.New("cant create indexes")
 
 type indexer struct {
 	tx kv.Transaction
 }
 
-func (i *indexer) init(indexes []types.Index) error {
+func (i *indexer) initPrimaryIndex(indexes []types.Index) error {
 	var found bool
 	for _, index := range indexes {
 		if index.Registry == nil {
 			return ErrWrongRegistry
 		}
 
-		if index.Registry.Name == "ecosystem" && index.Field == "name" {
-			if err := i.tx.AddIndex(kv.Index{
-				Name:    i.formatIndexName(index.Registry, index.Field),
-				SortFn:  index.SortFn,
-				Pattern: i.formatIndexPattern(index.Registry),
-			}); err != nil {
-				return errors.New("cant init ecosystem index")
+		if index.Registry.Type == types.RegistryTypePrimary {
+			err := i.createIndex(index)
+			if err != nil {
+				return errors.New("cant init primary index")
 			}
 
 			found = true
@@ -45,58 +42,95 @@ func (i *indexer) init(indexes []types.Index) error {
 	return nil
 }
 
-func (i *indexer) addIndexes(indexes ...types.Index) error {
+func (i *indexer) AddIndexes(init bool, indexes ...types.Index) error {
+	if init {
+		if err := i.initPrimaryIndex(indexes); err != nil {
+			return err
+		}
+	}
+
 	ecosystems := make([]string, 0)
-	i.tx.Ascend(i.formatIndexName(&types.Registry{Name: "ecosystem"}, "name"), func(key, value string) bool {
+	var err error
+	i.tx.Ascend(i.formatIndexName(&types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary}, "name"), func(key, value string) bool {
 		e := &model.Ecosystem{}
-		json.Unmarshal([]byte(value), e)
+		if err = json.Unmarshal([]byte(value), e); err != nil {
+			return false
+		}
 		ecosystems = append(ecosystems, e.Name)
 		return true
 	})
 
-	kvIndexes := make([]kv.Index, 0)
+	if err != nil {
+		return errors.Wrapf(err, "retrieving all primary entities")
+	}
+
+	prepeared := make([]types.Index, 0)
 	for _, index := range indexes {
-		if index.Registry.Name == "ecosystem" && index.Field == "name" {
+		if index.Registry == nil {
+			return ErrWrongRegistry
+		}
+
+		if index.Registry.Type != types.RegistryTypeDefault {
 			continue
 		}
 
 		for _, ecosystem := range ecosystems {
-			if index.Registry == nil {
-				return ErrWrongRegistry
-			}
-
 			if index.Field == "" {
 				return errors.New("unknown field")
 			}
 
-			index.Registry.Ecosystem = &types.Ecosystem{Name: ecosystem}
-			kvIndexes = append(kvIndexes, kv.Index{
-				Name:    i.formatIndexName(index.Registry, index.Field),
-				SortFn:  index.SortFn,
-				Pattern: i.formatIndexPattern(index.Registry),
+			r := *index.Registry
+			r.Ecosystem = &types.Ecosystem{Name: ecosystem}
+			prepeared = append(prepeared, types.Index{
+				Registry: &r,
+				Field:    index.Field,
+				SortFn:   index.SortFn,
 			})
 		}
 	}
 
-	if err := i.tx.AddIndex(kvIndexes...); err != nil {
-		return ErrCreteIndexes
+	for _, p := range prepeared {
+		fmt.Println(p.Registry.Ecosystem.Name)
+	}
+
+	if err := i.createIndex(prepeared...); err != nil {
+		return ErrCreateIndexes
 	}
 
 	return nil
 }
 
+func (i *indexer) createIndex(indexes ...types.Index) error {
+	kvIndexes := make([]kv.Index, 0)
+	for _, index := range indexes {
+		kvIndexes = append(kvIndexes, kv.Index{
+			Name:    i.formatIndexName(index.Registry, index.Field),
+			SortFn:  index.SortFn,
+			Pattern: i.formatIndexPattern(index.Registry),
+		})
+	}
+
+	return i.tx.AddIndex(kvIndexes...)
+}
+
 func (i *indexer) formatIndexPattern(reg *types.Registry) string {
-	if reg.Name == "ecosystem" {
+	switch reg.Type {
+	case types.RegistryTypeDefault:
+		return fmt.Sprintf("%s.%s.*", reg.Name, reg.Ecosystem.Name)
+	case types.RegistryTypePrimary:
 		return fmt.Sprintf("%s.*", reg.Name)
 	}
 
-	return fmt.Sprintf("%s.%s.*", reg.Name, reg.Ecosystem.Name)
+	panic("unknown registry")
 }
 
 func (i *indexer) formatIndexName(reg *types.Registry, field string) string {
-	if reg.Name == "ecosystem" && field == "name" {
+	switch reg.Type {
+	case types.RegistryTypeDefault:
+		return fmt.Sprintf("%s.%s.%s", reg.Name, field, reg.Ecosystem.Name)
+	case types.RegistryTypePrimary:
 		return fmt.Sprintf("%s.%s", reg.Name, field)
 	}
 
-	return fmt.Sprintf("%s.%s.%s", reg.Name, field, reg.Ecosystem.Name)
+	panic("unknown registry")
 }

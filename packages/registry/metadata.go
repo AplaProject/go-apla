@@ -4,15 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"sync"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/match"
-	"github.com/yddmat/memdb"
 )
 
 const keyConvention = "%s.%s.%s"
@@ -25,25 +22,19 @@ var (
 
 // metadataTx must be closed by calling Commit() or Rollback() when done
 type metadataTx struct {
-	db      kv.Database
-	tx      kv.Transaction
-	durable bool
+	db kv.Database
+	tx kv.Transaction
 
 	rollback *metadataRollback
 	indexer  *indexer
-
-	currentBlockHash []byte
-	currentTxHash    []byte
-	stateMu          sync.RWMutex
 }
 
-func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value interface{}) error {
-	jsonValue, err := json.Marshal(value)
-	if err != nil {
-		return errors.Wrapf(err, "marshalling struct to json")
+func (m *metadataTx) Insert(ctx types.BlockchainContext, registry *types.Registry, pkValue string, value interface{}) error {
+	if m.rollback != nil && (len(ctx.GetBlockHash()) == 0 || len(ctx.GetTransactionHash()) == 0) {
+		return ErrUnknownContext
 	}
 
-	key, err := m.formatKey(registry, pkValue)
+	key, jsonValue, err := m.prepareValue(registry, pkValue, value)
 	if err != nil {
 		return err
 	}
@@ -54,16 +45,7 @@ func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value inte
 	}
 
 	if m.rollback != nil {
-		m.stateMu.RLock()
-		block := m.currentBlockHash
-		tx := m.currentTxHash
-		m.stateMu.RUnlock()
-
-		if len(block) == 0 || len(tx) == 0 {
-			return ErrUnknownContext
-		}
-
-		err = m.rollback.saveState(block, tx, registry, pkValue, "")
+		err = m.rollback.saveState(ctx.GetBlockHash(), ctx.GetTransactionHash(), registry, pkValue, "")
 		if err != nil {
 			return errors.Wrapf(err, "saving rollback info")
 		}
@@ -72,13 +54,12 @@ func (m *metadataTx) Insert(registry *types.Registry, pkValue string, value inte
 	return nil
 }
 
-func (m *metadataTx) Update(registry *types.Registry, pkValue string, newValue interface{}) error {
-	jsonValue, err := json.Marshal(newValue)
-	if err != nil {
-		return errors.Wrapf(err, "marshalling struct to json")
+func (m *metadataTx) Update(ctx types.BlockchainContext, registry *types.Registry, pkValue string, newValue interface{}) error {
+	if m.rollback != nil && (len(ctx.GetBlockHash()) == 0 || len(ctx.GetTransactionHash()) == 0) {
+		return ErrUnknownContext
 	}
 
-	key, err := m.formatKey(registry, pkValue)
+	key, jsonValue, err := m.prepareValue(registry, pkValue, newValue)
 	if err != nil {
 		return err
 	}
@@ -88,30 +69,17 @@ func (m *metadataTx) Update(registry *types.Registry, pkValue string, newValue i
 		return errors.Wrapf(err, "inserting value %s to %s registry", pkValue, registry.Name)
 	}
 
-	m.stateMu.RLock()
-	block := m.currentBlockHash
-	tx := m.currentTxHash
-	m.stateMu.RUnlock()
-
-	if len(block) == 0 || len(tx) == 0 {
-		return ErrUnknownContext
-	}
-
-	err = m.rollback.saveState(block, tx, registry, pkValue, old)
-	if err != nil {
-		return errors.Wrapf(err, "saving rollback info")
+	if m.rollback != nil {
+		err = m.rollback.saveState(ctx.GetBlockHash(), ctx.GetTransactionHash(), registry, pkValue, old)
+		if err != nil {
+			return errors.Wrapf(err, "saving rollback info")
+		}
 	}
 
 	return nil
 }
 
 func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface{}) error {
-	err := m.refreshTx()
-	if err != nil {
-		return err
-	}
-	defer m.endRead()
-
 	key, err := m.formatKey(registry, pkValue)
 	if err != nil {
 		return err
@@ -131,12 +99,6 @@ func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface
 }
 
 func (m *metadataTx) Walk(registry *types.Registry, field string, fn func(value string) bool) error {
-	err := m.refreshTx()
-	if err != nil {
-		return err
-	}
-	defer m.endRead()
-
 	prefix := fmt.Sprintf("%s.*", registry.Name)
 
 	return m.tx.Ascend(m.indexer.formatIndexName(registry, field), func(key, value string) bool {
@@ -149,57 +111,45 @@ func (m *metadataTx) Walk(registry *types.Registry, field string, fn func(value 
 }
 
 func (m *metadataTx) Rollback() error {
-	tx := m.tx
-	m.tx = nil
-	return tx.Rollback()
+	err := m.tx.Rollback()
+	if err != nil {
+		return err
+	}
+
+	m.closeTx()
+	return nil
 }
 
 func (m *metadataTx) Commit() error {
 	err := m.tx.Commit()
-	m.tx = nil
-	return err
-}
+	if err != nil {
+		return err
+	}
 
-func (m *metadataTx) SetTxHash(txHash []byte) {
-	m.stateMu.Lock()
-	m.currentTxHash = txHash
-	m.stateMu.Unlock()
-}
-
-func (m *metadataTx) SetBlockHash(blockHash []byte) {
-	m.stateMu.Lock()
-	m.currentBlockHash = blockHash
-	m.stateMu.Unlock()
+	m.closeTx()
+	return nil
 }
 
 func (m *metadataTx) AddIndex(indexes ...types.Index) error {
-	return m.addIndex(false, indexes...)
+	return m.indexer.AddIndexes(false, indexes...)
 }
 
-func (m *metadataTx) addIndex(init bool, indexes ...types.Index) error {
-	if init {
-		if err := m.indexer.init(indexes); err != nil {
-			return err
-		}
-	}
-
-	return m.indexer.addIndexes(indexes...)
+func (m *metadataTx) closeTx() {
+	m.tx = nil
 }
 
-func (m *metadataTx) refreshTx() error {
-	if m.durable {
-		if m.tx == nil {
-			return memdb.ErrTxClosed
-		}
-
-		return nil
+func (m *metadataTx) prepareValue(registry *types.Registry, pkValue string, newValue interface{}) (string, string, error) {
+	jsonValue, err := json.Marshal(newValue)
+	if err != nil {
+		return "", "", errors.Wrapf(err, "marshalling struct to json")
 	}
 
-	// Non-durable transaction can only be readable. All writable transaction called directly from Begin()
-	// and must be committed/rollback manually. So here we create readonly tx without providing any choice
-	m.tx = m.db.Begin(false)
+	key, err := m.formatKey(registry, pkValue)
+	if err != nil {
+		return "", "", err
+	}
 
-	return nil
+	return key, string(jsonValue), nil
 }
 
 func (m *metadataTx) formatKey(reg *types.Registry, pk string) (string, error) {
@@ -212,18 +162,6 @@ func (m *metadataTx) formatKey(reg *types.Registry, pk string) (string, error) {
 	}
 
 	return fmt.Sprintf(keyConvention, reg.Name, reg.Ecosystem.Name, pk), nil
-}
-
-func (m *metadataTx) endRead() error {
-	if !m.durable {
-		if err := m.tx.Commit(); err != nil {
-			return errors.Wrapf(err, "ending read transaction")
-		}
-
-		m.tx = nil
-	}
-
-	return nil
 }
 
 type metadataStorage struct {
@@ -239,7 +177,7 @@ func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool) (t
 
 	mtx := ms.Begin()
 	tx := mtx.(*metadataTx)
-	if err := tx.addIndex(true, indexes...); err != nil {
+	if err := tx.indexer.AddIndexes(true, indexes...); err != nil {
 		return nil, err
 	}
 	mtx.Commit()
@@ -249,13 +187,25 @@ func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool) (t
 
 func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
 	databaseTx := m.db.Begin(true)
-	tx := &metadataTx{tx: databaseTx, durable: true, indexer: &indexer{tx: databaseTx}}
+	tx := &metadataTx{tx: databaseTx, indexer: &indexer{tx: databaseTx}}
 
 	if m.rollback {
-		tx.rollback = &metadataRollback{tx: databaseTx, txCounter: make(map[string]uint64)}
+		tx.rollback = &metadataRollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
 	}
 
 	return tx
+}
+
+func (m *metadataStorage) Walk(registry *types.Registry, field string, fn func(value string) bool) error {
+	tx := &metadataTx{tx: m.db.Begin(false)}
+	defer tx.Rollback()
+	return tx.Walk(registry, field, fn)
+}
+
+func (m *metadataStorage) Get(registry *types.Registry, pkValue string, out interface{}) error {
+	tx := &metadataTx{tx: m.db.Begin(false)}
+	defer tx.Rollback()
+	return tx.Get(registry, pkValue, out)
 }
 
 func (m *metadataStorage) Rollback(block []byte) error {
@@ -264,7 +214,7 @@ func (m *metadataStorage) Rollback(block []byte) error {
 	}
 
 	databaseTx := m.db.Begin(true)
-	rollback := &metadataRollback{tx: databaseTx, txCounter: make(map[string]uint64)}
+	rollback := &metadataRollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
 
 	err := rollback.rollbackState(block)
 	if err != nil {

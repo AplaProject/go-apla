@@ -4,7 +4,7 @@ const ecosysTable = "1_ecosystems"
 
 // Ecosystem is model
 type Ecosystem struct {
-	ID       int64  `gorm:"primary_key;not null"`
+	ID       int64  `json:"id"`
 	Name     string `json:"name"`
 	IsValued bool
 }

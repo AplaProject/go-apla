@@ -46,7 +46,7 @@ func TestMetadataIndex(t *testing.T) {
 		},
 		{
 			Field:    "name",
-			Registry: &types.Registry{Name: "ecosystem"},
+			Registry: &types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
 			SortFn: func(a, b string) bool {
 				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)
 			},

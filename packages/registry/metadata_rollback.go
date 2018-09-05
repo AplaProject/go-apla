@@ -1,12 +1,10 @@
 package registry
 
 import (
-	"fmt"
-	"sync"
-
 	"encoding/json"
-
+	"fmt"
 	"sort"
+	"sync"
 
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
@@ -27,34 +25,49 @@ type state struct {
 	Ecosystem    string `json:"e"`
 }
 
-type metadataRollback struct {
-	tx kv.Transaction
-
+type counter struct {
 	txCounter map[string]uint64
 	mu        sync.Mutex
 }
 
+func (c *counter) increment(key string) uint64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.txCounter[key]++
+	return c.txCounter[key]
+}
+
+func (c *counter) decrement(key string) uint64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.txCounter[key]--
+	return c.txCounter[key]
+}
+
+type metadataRollback struct {
+	tx      kv.Transaction
+	counter counter
+}
+
 func (mr *metadataRollback) saveState(block, tx []byte, registry *types.Registry, pk, value string) error {
 	key := string(block)
-	mr.mu.Lock()
-	defer mr.mu.Unlock()
 
-	counter := mr.txCounter[key]
-	counter++
+	counter := mr.counter.increment(key)
 
 	s := state{Counter: counter, RegistryName: registry.Name, Key: pk, Ecosystem: registry.Ecosystem.Name, Value: value}
 	jstate, err := json.Marshal(s)
 	if err != nil {
+		mr.counter.decrement(key)
 		return err
 	}
 
 	kk := fmt.Sprintf(writePrefix, string(block), counter, string(tx))
 	err = mr.tx.Set(kk, string(jstate))
 	if err != nil {
+		mr.counter.decrement(key)
 		return err
 	}
 
-	mr.txCounter[key] = counter
 	return nil
 }
 

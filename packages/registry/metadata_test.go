@@ -83,16 +83,14 @@ func TestMetadataTx_RW(t *testing.T) {
 		require.Nil(t, err)
 
 		reg, err := NewMetadataStorage(db, []types.Index{
-			{Field: "name", Registry: &types.Registry{Name: "ecosystem"}},
-		}, true)
+			{Field: "name", Registry: &types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary}},
+		}, false)
 		require.Nil(t, err)
 
 		metadataTx := reg.Begin()
-		metadataTx.SetBlockHash([]byte("123"))
-		metadataTx.SetTxHash([]byte("321"))
 		require.Nil(t, err, c.testname)
 
-		err = metadataTx.Insert(&c.registry, c.pkValue, c.value)
+		err = metadataTx.Insert(nil, &c.registry, c.pkValue, c.value)
 		if c.err {
 			assert.Error(t, err)
 			continue
@@ -131,7 +129,7 @@ func BenchmarkMetadataTx(b *testing.B) {
 
 	ecosystems := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "k"}
 	for _, ecosystem := range ecosystems {
-		err = metadataTx.Insert(&types.Registry{
+		err = metadataTx.Insert(nil, &types.Registry{
 			Name: "ecosystem",
 		}, ecosystem, model.Ecosystem{Name: ecosystem})
 		require.Nil(b, err)
@@ -148,6 +146,7 @@ func BenchmarkMetadataTx(b *testing.B) {
 
 		id := rand.Int63()
 		err := metadataTx.Insert(
+			nil,
 			&reg,
 			strconv.FormatInt(id, 10),
 			model.KeySchema{
