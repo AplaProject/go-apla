@@ -85,6 +85,8 @@ var (
 	errValues            = errors.New(`Values are undefined`)
 	errWrongPriceFunc    = errors.New(`Wrong type of price function`)
 	errWrongSignature    = errors.New(`wrong signature`)
+	errParseTransaction  = errors.New(`parse transaction`)
+	errInputSlice        = errors.New(`input slice is short`)
 
 	errMaxPrice = fmt.Errorf(`Price value is more than %d`, MaxPrice)
 )
