@@ -170,8 +170,8 @@ VALUES
             $result = "VDE " + $VDEName + " stopped"
 		}
 }
-', 'ContractConditions("MainCondition")', 1),
-	(next_id('%[1]d_contracts'), 'UpdateMetrics', 'contract UpdateMetrics {
+', 'ContractConditions("MainCondition")', 1, '%[1]d'),
+	(next_id('1_contracts'), 'UpdateMetrics', 'contract UpdateMetrics {
 	conditions {
 		ContractConditions("MainCondition")
 	}
@@ -201,5 +201,42 @@ VALUES
 			i = i + 1
 		}
 	}
+', 'ContractConditions("MainCondition")', 1, '%[1]d'),
+	(next_id('1_contracts'), 'UploadBinary', 'contract UploadBinary {
+    data {
+        ApplicationId int
+        Name string
+        Data bytes "file"
+        DataMimeType string "optional"
+    }
+
+    conditions {
+        $Id = Int(DBFind("binaries").Columns("id").Where({app_id: $ApplicationId,
+            member_id: $key_id, name: $Name}).One("id"))
+
+        if $Id == 0 {
+            if $ApplicationId == 0 {
+                warning "Application id cannot equal 0"
+            }
+        }
+    }
+    action {
+        var hash string
+        hash = Hash($Data)
+
+        if $DataMimeType == "" {
+            $DataMimeType = "application/octet-stream"
+        }
+
+        if $Id != 0 {
+            DBUpdate("binaries", $Id, {"data": $Data,"hash": hash,"mime_type": $DataMimeType})
+        } else {
+            $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
+               "name": $Name,"data": $Data,"hash": hash, "mime_type": $DataMimeType})
+        }
+
+        $result = $Id
+    }
+}
 ', 'ContractConditions("MainCondition")', 1, '%[1]d');
 `
