@@ -164,7 +164,7 @@ func getBlocksDetailedInfo(w http.ResponseWriter, r *http.Request, data *apiData
 
 	blocksCount := data.params["count"].(int64)
 
-	blocks, err := model.GetBlockchain(startBlockID, startBlockID+blocksCount)
+	blocks, err := model.GetBlockchain(startBlockID, startBlockID+blocksCount, model.OrderASC)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting blocks range")
 		return errorAPI(w, err, http.StatusInternalServerError)
