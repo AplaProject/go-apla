@@ -1023,7 +1023,7 @@ VALUES
     }
     action {
         var hash string
-        hash = MD5($Data)
+        hash = Hash($Data)
 
         if $DataMimeType == "" {
             $DataMimeType = "application/octet-stream"
