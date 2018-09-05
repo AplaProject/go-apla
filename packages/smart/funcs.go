@@ -53,6 +53,7 @@ import (
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const (
@@ -74,6 +75,12 @@ type permTable struct {
 type permColumn struct {
 	Update string `json:"update"`
 	Read   string `json:"read,omitempty"`
+}
+
+type TxInfo struct {
+	Block    string                 `json:"block"`
+	Contract string                 `json:"contract"`
+	Params   map[string]interface{} `json:"params,omitempty"`
 }
 
 // SmartContract is storing smart contract data
@@ -160,6 +167,7 @@ var (
 		"TableConditions":              100,
 		"ValidateCondition":            30,
 		"ValidateEditContractNewValue": 10,
+		"TransactionInfo":              100,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -280,6 +288,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UnixDateTime":                 UnixDateTime,
 		"UpdateNotifications":          UpdateNotifications,
 		"UpdateRolesNotifications":     UpdateRolesNotifications,
+		"TransactionInfo":              TransactionInfo,
 	}
 
 	switch vt {
@@ -2063,4 +2072,77 @@ func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
 		}
 	}
 	notificator.UpdateRolesNotifications(ecosystemID, rolesList)
+}
+
+func TransactionInfo(sc *SmartContract, txHash string) (string, error) {
+	var out []byte
+	hash, err := hex.DecodeString(txHash)
+	if err != nil {
+		return ``, err
+	}
+	ltx := &model.LogTransaction{Hash: hash}
+	found, err := ltx.GetByHash(hash)
+	if err != nil {
+		return ``, err
+	}
+	if !found {
+		return ``, nil
+	}
+	var blockOwner model.Block
+	var data TxInfo
+	found, err = blockOwner.Get(ltx.Block)
+	if err != nil {
+		return ``, err
+	}
+	if !found {
+		return ``, nil
+	}
+	data.Block = converter.Int64ToStr(ltx.Block)
+	blockBuffer := bytes.NewBuffer(blockOwner.Data)
+	_, err = utils.ParseBlockHeader(blockBuffer, blockOwner.ID != 1)
+	if err != nil {
+		return ``, err
+	}
+	for blockBuffer.Len() > 0 {
+		transactionSize, err := converter.DecodeLengthBuf(blockBuffer)
+		if err != nil {
+			return ``, err
+		}
+		if blockBuffer.Len() < int(transactionSize) || transactionSize == 0 {
+			return ``, errParseTransaction
+		}
+		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
+		if bufTransaction.Len() == 0 {
+			return ``, errParseTransaction
+		}
+		txhash, err := crypto.Hash(bufTransaction.Bytes())
+		if err != nil {
+			return ``, err
+		}
+		if bytes.Equal(txhash, hash) {
+			if int64(bufTransaction.Bytes()[0]) > 127 {
+				bufTransaction.Next(1)
+				smartTx := tx.SmartContract{}
+				if err := msgpack.Unmarshal(bufTransaction.Bytes(), &smartTx); err != nil {
+					return ``, err
+				}
+				contract := GetContractByID(int32(smartTx.Type))
+				if contract == nil {
+					return ``, errParseTransaction
+				}
+				data.Contract = contract.Name
+				txInfo := contract.Block.Info.(*script.ContractInfo).Tx
+				if txInfo != nil {
+					if data.Params, err = FillTxData(*txInfo, smartTx.Data, nil); err != nil {
+						return ``, err
+					}
+				}
+			} else {
+				return ``, nil
+			}
+			break
+		}
+	}
+	out, err = json.Marshal(data)
+	return string(out), err
 }

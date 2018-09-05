@@ -88,6 +88,8 @@ var (
 	errWrongPriceFunc     = errors.New(`Wrong type of price function`)
 	errWrongSignature     = errors.New(`wrong signature`)
 	errIncorrectParameter = errors.New(`Incorrect parameter of the condition function`)
+	errParseTransaction   = errors.New(`parse transaction`)
+	errInputSlice         = errors.New(`input slice is short`)
 
 	errMaxPrice = fmt.Errorf(`Price value is more than %d`, MaxPrice)
 )
