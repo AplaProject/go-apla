@@ -19,11 +19,12 @@ package smart
 import "errors"
 
 const (
-	eTableNotFound    = `Table %s has not been found`
-	eContractLoop     = `There is loop in %s contract`
-	eContractExist    = `Contract %s already exists`
-	eContractNotFound = `Contract %s has not been found`
-	eLatin            = `Name %s must only contain latin, digit and '_', '-' characters`
+	eTableNotFound       = `Table %s has not been found`
+	eContractLoop        = `There is loop in %s contract`
+	eContractExist       = `Contract %s already exists`
+	eContractNotFound    = `Contract %s has not been found`
+	eLatin               = `Name %s must only contain latin, digit and '_', '-' characters`
+	eConditionNotAllowed = `Condition %s is not allowed`
 )
 
 var (
