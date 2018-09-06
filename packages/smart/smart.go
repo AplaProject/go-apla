@@ -948,7 +948,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 		return retError(errIncorrectSign)
 	}
-	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !syspar.IsPrivateBlockchain() {
 		if sc.TxSmart.TokenEcosystem == 0 {
 			sc.TxSmart.TokenEcosystem = 1
 		}
@@ -1072,7 +1072,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 		}
 	}
 
-	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !syspar.IsPrivateBlockchain() {
 		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
 			err = ierr
 		}
