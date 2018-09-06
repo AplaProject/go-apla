@@ -22,30 +22,31 @@ import (
 )
 
 const (
-	eContractLoop       = `There is loop in %s contract`
-	eContractExist      = `Contract %s already exists`
-	eContractNotFound   = `Contract %s has not been found`
-	eLatin              = `Name %s must only contain latin, digit and '_', '-' characters`
-	eAccessContract     = `%s can be only called from %s`
-	eColumnExist        = `column %s exists`
-	eColumnNotExist     = `column %s doesn't exist`
-	eColumnType         = `Type '%s' of columns is not supported`
-	eContractCondition  = `There is not conditions in contract %s`
-	eNotCustomTable     = `%s is not a custom table`
-	eEmptyCond          = `%v condition is empty`
-	eIncorrectEcosys    = `Incorrect ecosystem id %s != %d`
-	eIncorrectSignature = `incorrect signature %s`
-	eItemNotFound       = `Item %d has not been found`
-	eManyColumns        = `Too many columns. Limit is %d`
-	eNotCondition       = `There is not %s in parameters`
-	eParamNotFound      = `Parameter %s has not been found`
-	eRecordNotFound     = `Record %s has not been found`
-	eTableExists        = `table %s exists`
-	eTableNotFound      = `Table %s has not been found`
-	eTypeJSON           = `Type %T doesn't support json marshalling`
-	eUnknownContract    = `Unknown contract %s`
-	eUnsupportedType    = "Unsupported type %T"
-	eWrongRandom        = `Wrong random parameters %d %d`
+	eContractLoop        = `There is loop in %s contract`
+	eContractExist       = `Contract %s already exists`
+	eContractNotFound    = `Contract %s has not been found`
+	eLatin               = `Name %s must only contain latin, digit and '_', '-' characters`
+	eAccessContract      = `%s can be only called from %s`
+	eColumnExist         = `column %s exists`
+	eColumnNotExist      = `column %s doesn't exist`
+	eColumnType          = `Type '%s' of columns is not supported`
+	eContractCondition   = `There is not conditions in contract %s`
+	eNotCustomTable      = `%s is not a custom table`
+	eEmptyCond           = `%v condition is empty`
+	eIncorrectEcosys     = `Incorrect ecosystem id %s != %d`
+	eIncorrectSignature  = `incorrect signature %s`
+	eItemNotFound        = `Item %d has not been found`
+	eManyColumns         = `Too many columns. Limit is %d`
+	eNotCondition        = `There is not %s in parameters`
+	eParamNotFound       = `Parameter %s has not been found`
+	eRecordNotFound      = `Record %s has not been found`
+	eTableExists         = `table %s exists`
+	eTableNotFound       = `Table %s has not been found`
+	eTypeJSON            = `Type %T doesn't support json marshalling`
+	eUnknownContract     = `Unknown contract %s`
+	eUnsupportedType     = "Unsupported type %T"
+	eWrongRandom         = `Wrong random parameters %d %d`
+	eConditionNotAllowed = `Condition %s is not allowed`
 )
 
 var (
