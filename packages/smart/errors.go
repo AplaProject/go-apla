@@ -38,4 +38,5 @@ var (
 	errWrongColumn            = errors.New(`Column name cannot begin with digit`)
 	errNotFound               = errors.New(`Record has not been found`)
 	errNow                    = errors.New(`It is prohibited to use NOW() or current time functions`)
+	errIncorrectParameter     = errors.New(`Incorrect parameter of the condition function`)
 )

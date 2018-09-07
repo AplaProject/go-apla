@@ -158,7 +158,8 @@ func getContractList(src string) (list []string) {
 
 func VMCompileEval(vm *script.VM, src string, prefix uint32) error {
 	var ok bool
-	allowed := []string{`0`, `1`, `true`, `false`, `ContractConditions\(.*\)`, `ContractAccess\(.*\)`}
+	allowed := []string{`0`, `1`, `true`, `false`, `ContractConditions\(\s*\".*\"\s*\)`,
+		`ContractAccess\(\s*\".*\"\s*\)`}
 	for _, v := range allowed {
 		re := regexp.MustCompile(`^` + v + `$`)
 		if re.Match([]byte(src)) {
@@ -173,8 +174,12 @@ func VMCompileEval(vm *script.VM, src string, prefix uint32) error {
 	if err != nil {
 		return err
 	}
+	re := regexp.MustCompile(`^@?[\d\w\_]+$`)
 	for _, item := range getContractList(src) {
-		if len(item) == 0 || VMGetContract(vm, item, prefix) == nil {
+		if len(item) == 0 || !re.Match([]byte(item)) {
+			return errIncorrectParameter
+		}
+		if VMGetContract(vm, item, prefix) == nil {
 			return fmt.Errorf(eContractNotFound, item)
 		}
 	}
