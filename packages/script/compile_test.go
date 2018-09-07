@@ -104,7 +104,6 @@ func TestVMCompile(t *testing.T) {
 			return CallContract("@22sets", par) + "=" + sets()
 		}
 		`, `result`, `Name parameter=Name parameter`},
-
 		{`func proc(par string) string {
 					return par + "proc"
 					}
@@ -180,7 +179,7 @@ func TestVMCompile(t *testing.T) {
 								//@26empty("test",10)
 								empty("toempty", 10)
 								Println( "mytest", $parent)
-								return "OK"
+								return "OK INIT"
 							}
 						}
 						contract empty {
@@ -193,7 +192,7 @@ func TestVMCompile(t *testing.T) {
 								}
 							}
 						}
-						`, `mytest.init`, `OK`},
+						`, `mytest.init`, `OK INIT`},
 		{`func line_test string {
 						return "Start " +
 						Sprintf( "My String %s %d %d",
@@ -566,14 +565,37 @@ func TestVMCompile(t *testing.T) {
 			return MainCond
 		}
 		`, `result`, `unknown variable MainCond`},
+		{`func myFunc(my string) string {
+			return Sprintf("writable: %s", my)
+		}
+		contract mySet {
+			conditions {
+				myFunc("test")		
+		contract myExec {
+			conditions {
+				mySet()
+			}
+			action {
+				mySet()
+				$result = "OK"
+			}
+		}
+		func result() string {
+			myExec()
+			return "COND"
+		}`, `result`, `'conditions' cannot call contracts or functions which can modify the blockchain database.`},
 	}
 	vm := NewVM()
 	vm.Extern = true
 	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
 		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray, "outMap": outMap,
-		"str": str, "Money": Money, "Replace": strings.Replace}, nil})
+		"str": str, "Money": Money, "Replace": strings.Replace}, nil,
+		map[string]struct{}{"Sprintf": {}}})
 
 	for ikey, item := range test {
+		if ikey > 100 {
+			break
+		}
 		source := []rune(item.Input)
 		if err := vm.Compile(source, &OwnerInfo{StateID: uint32(ikey) + 22, Active: true, TableID: 1}); err != nil {
 			if err.Error() != item.Output {
@@ -600,6 +622,7 @@ func TestVMCompile(t *testing.T) {
 
 		}
 	}
+	t.Error(`OK`)
 }
 
 func TestContractList(t *testing.T) {

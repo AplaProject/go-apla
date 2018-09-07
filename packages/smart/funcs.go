@@ -318,8 +318,30 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 	}
 
 	vmExtend(vm, &script.ExtendData{Objects: f, AutoPars: map[string]string{
-		`*smart.SmartContract`: `sc`,
-	}})
+		`*smart.SmartContract`: `sc`},
+		WriteFuncs: map[string]struct{}{
+			"CreateColumn":     {},
+			"CreateTable":      {},
+			"DBInsert":         {},
+			"DBUpdate":         {},
+			"DBUpdateSysParam": {},
+			"DBUpdateExt":      {},
+			"CreateEcosystem":  {},
+			"CreateContract":   {},
+			"UpdateContract":   {},
+			"CreateLanguage":   {},
+			"EditLanguage":     {},
+			"Activate":         {},
+			"Deactivate":       {},
+			"EditEcosysName":   {},
+			"SetPubKey":        {},
+			"NewMoney":         {},
+			"UpdateNodesBan":   {},
+			"UpdateCron":       {},
+			"CreateVDE":        {},
+			"DeleteVDE":        {},
+		},
+	})
 }
 
 func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {

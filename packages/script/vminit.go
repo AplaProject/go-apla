@@ -87,6 +87,7 @@ type ExtFuncInfo struct {
 	Auto     []string
 	Variadic bool
 	Func     interface{}
+	CanWrite bool // If the function can update DB
 }
 
 // FieldInfo describes the field of the data structure
@@ -115,6 +116,7 @@ type ContractInfo struct {
 	Used     map[string]bool // Called contracts
 	Tx       *[]*FieldInfo
 	Settings map[string]interface{}
+	CanWrite bool // If the function can update DB
 }
 
 // FuncNameCmd for cmdFuncName
@@ -137,6 +139,7 @@ type FuncInfo struct {
 	Names    *map[string]FuncName
 	Variadic bool
 	ID       uint32
+	CanWrite bool // If the function can update DB
 }
 
 // VarInfo contains the variable information
@@ -193,8 +196,9 @@ type VM struct {
 
 // ExtendData is used for the definition of the extended functions and variables
 type ExtendData struct {
-	Objects  map[string]interface{}
-	AutoPars map[string]string
+	Objects    map[string]interface{}
+	AutoPars   map[string]string
+	WriteFuncs map[string]struct{}
 }
 
 // Stacker represents interface for working with call stack
@@ -367,6 +371,7 @@ func NewVM() *VM {
 		map[string]string{
 			`*script.RunTime`: `rt`,
 		},
+		map[string]struct{}{"CallContract": {}},
 	})
 	vm.logger = log.WithFields(log.Fields{"extern": vm.Extern, "vm_block_type": vm.Block.Type})
 	return &vm
@@ -378,9 +383,10 @@ func (vm *VM) Extend(ext *ExtendData) {
 		fobj := reflect.ValueOf(item).Type()
 		switch fobj.Kind() {
 		case reflect.Func:
+			_, canWrite := ext.WriteFuncs[key]
 			data := ExtFuncInfo{key, make([]reflect.Type, fobj.NumIn()),
 				make([]reflect.Type, fobj.NumOut()), make([]string, fobj.NumIn()),
-				fobj.IsVariadic(), item}
+				fobj.IsVariadic(), item, canWrite}
 			for i := 0; i < fobj.NumIn(); i++ {
 				if isauto, ok := ext.AutoPars[fobj.In(i).String()]; ok {
 					data.Auto[i] = isauto
