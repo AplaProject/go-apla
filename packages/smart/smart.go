@@ -136,6 +136,9 @@ func getContractList(src string) (list []string) {
 
 func VMCompileEval(vm *script.VM, src string, prefix uint32) error {
 	var ok bool
+	if len(src) == 0 {
+		return nil
+	}
 	allowed := []string{`0`, `1`, `true`, `false`, `ContractConditions\(\s*\".*\"\s*\)`,
 		`ContractAccess\(\s*\".*\"\s*\)`}
 	for _, v := range allowed {
