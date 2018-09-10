@@ -160,9 +160,6 @@ func VMCompileEval(vm *script.VM, src string, prefix uint32) error {
 		if len(item) == 0 || !re.Match([]byte(item)) {
 			return errIncorrectParameter
 		}
-		if VMGetContract(vm, item, prefix) == nil {
-			return fmt.Errorf(eContractNotFound, item)
-		}
 	}
 	return nil
 }
