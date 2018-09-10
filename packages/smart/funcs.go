@@ -2074,7 +2074,7 @@ func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
 	notificator.UpdateRolesNotifications(ecosystemID, rolesList)
 }
 
-func TransactionInfo(sc *SmartContract, txHash string) (string, error) {
+func TransactionInfo(txHash string) (string, error) {
 	var out []byte
 	hash, err := hex.DecodeString(txHash)
 	if err != nil {
