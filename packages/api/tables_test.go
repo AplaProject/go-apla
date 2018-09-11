@@ -313,7 +313,7 @@ func TestTableDesc(t *testing.T) {
 
 	_, msg, err := postTxResult(name, &url.Values{})
 	assert.NoError(t, err)
-	if msg != `new testadmin_index` {
+	if msg != `new testdefault_page` {
 		t.Errorf(`wrong msg %s`, msg)
 	}
 

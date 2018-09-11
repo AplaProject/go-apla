@@ -92,6 +92,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Block is undefined")
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
+
 	for i, v := range ivalues {
 		switch v.(type) {
 		case string:
@@ -127,6 +128,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			addSQLFields += `"` + field + `",`
 		}
 	}
+
 	addSQLWhere := ""
 
 	if whereFields != nil && whereValues != nil {

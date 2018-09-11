@@ -42,6 +42,9 @@ type vdeCreateResult struct {
 }
 
 func vdeCreate(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, data.ecosystemId)) {
+		return errorAPI(w, `E_VDECREATED`, http.StatusBadRequest)
+	}
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
 	if _, err := sp.Get(nil, `founder_account`); err != nil {

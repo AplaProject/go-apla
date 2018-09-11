@@ -630,6 +630,7 @@ func dbfindTag(par parFunc) string {
 	if err != nil || sc.AccessColumns(tblname, &columns, false) != nil {
 		return `Access denied`
 	}
+
 	if utils.StringInSlice(columns, `*`) {
 		for _, col := range rows {
 			queryColumns = append(queryColumns, col["column_name"])
