@@ -285,7 +285,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
-			"hash" varchar(32) NOT NULL DEFAULT '',
+			"hash" varchar(64) NOT NULL DEFAULT '',
 			"mime_type" varchar(255) NOT NULL DEFAULT '',
 			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
