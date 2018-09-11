@@ -570,7 +570,12 @@ func TestVMCompile(t *testing.T) {
 		}
 		contract mySet {
 			conditions {
-				myFunc("test")		
+				myFunc("test")	
+			}
+			action {
+				myFunc("test")	
+			}
+		}	
 		contract myExec {
 			conditions {
 				mySet()
