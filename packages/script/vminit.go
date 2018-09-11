@@ -64,7 +64,7 @@ const (
 	// CostExtend is the cost of the extend function calling
 	CostExtend = 10
 	// CostDefault is the default maximum cost of F
-	CostDefault = int64(10000000)
+	CostDefault = int64(20000000)
 
 	// VMTypeSmart is smart vm type
 	VMTypeSmart VMType = 1

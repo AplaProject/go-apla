@@ -68,4 +68,5 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('65','node_ban_time','86400000','true'),
 	('66','local_node_ban_time','1800000','true'),
 	('67','max_forsign_size', '1000000', 'true');
+	('68','cost_default', '20000000', 'true');
 `
