@@ -1268,4 +1268,5 @@ VALUES
     }
   }
 }
-', 'ContractConditions("MainCondition")', 1, '%[1]d');`
+', 'ContractConditions("MainCondition")', 1, '%[1]d');
+`
