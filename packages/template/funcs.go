@@ -318,9 +318,8 @@ func paramToSource(par parFunc, val string) string {
 	cols := []string{`id`, `name`}
 	types := []string{`text`, `text`}
 	for key, item := range strings.Split(val, `,`) {
-		item, _ = language.LangText(item, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
-			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
-			(*par.Workspace.Vars)[`lang`], par.Workspace.SmartContract.VDE)
+		item, _ = language.LangText(item,
+			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]), (*par.Workspace.Vars)[`lang`])
 		data = append(data, []string{converter.IntToStr(key + 1), item})
 	}
 	node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
@@ -340,9 +339,7 @@ func paramToIndex(par parFunc, val string) (ret string) {
 	if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 		ret, _ = language.LangText(alist[ind-1],
 			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
-			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
-			(*par.Workspace.Vars)[`lang`],
-			par.Workspace.SmartContract.VDE)
+			(*par.Workspace.Vars)[`lang`])
 	}
 	return
 }
@@ -405,9 +402,7 @@ func langresTag(par parFunc) string {
 		lang = (*par.Workspace.Vars)[`lang`]
 	}
 	ret, _ := language.LangText((*par.Pars)[`Name`],
-		int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
-		converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
-		lang, par.Workspace.SmartContract.VDE)
+		int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])), lang)
 	return ret
 }
 
@@ -1079,9 +1074,7 @@ func dateTimeTag(par parFunc) string {
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
 		format, _ = language.LangText(`timeformat`,
-			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
-			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
-			(*par.Workspace.Vars)[`lang`], par.Workspace.SmartContract.VDE)
+			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]), (*par.Workspace.Vars)[`lang`])
 		if format == `timeformat` {
 			format = `2006-01-02 15:04:05`
 		}

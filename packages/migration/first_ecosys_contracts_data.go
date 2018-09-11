@@ -253,7 +253,7 @@ VALUES
     }
 
     action {
-        EditLanguage($Id, $lang["name"], $Trans, Int($lang["app_id"]))
+        EditLanguage($Id, $lang["name"], $Trans)
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
@@ -834,7 +834,7 @@ VALUES
     }
 
     action {
-        CreateLanguage($Name, $Trans, $ApplicationId)
+        CreateLanguage($Name, $Trans)
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),

@@ -127,7 +127,6 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		"name" character varying(100) NOT NULL DEFAULT '',
 		"res" text NOT NULL DEFAULT '',
 		"conditions" text NOT NULL DEFAULT '',
-		"app_id" bigint NOT NULL DEFAULT '1',
 		"ecosystem" bigint NOT NULL DEFAULT '1'
 	  );
 	  ALTER TABLE ONLY "1_languages" ADD CONSTRAINT "1_languages_pkey" PRIMARY KEY (id);

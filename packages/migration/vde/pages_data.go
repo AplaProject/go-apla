@@ -375,7 +375,7 @@ If(#buffer_value_app_id# > 0){
 		Include(pager_header)
 		SetVar(admin_page, app_langres)
 		Include(admin_link)
-		DBFind(languages, src_languages).Limit(#pager_limit#).Order(#sort_name#).Offset(#pager_offset#).Where("app_id=#buffer_value_app_id#")
+		DBFind(languages, src_languages).Limit(#pager_limit#).Order(#sort_name#).Offset(#pager_offset#)
 		Form(panel panel-primary){
 			Div(panel-body){
 				Div(row){

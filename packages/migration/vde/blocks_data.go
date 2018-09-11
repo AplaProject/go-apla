@@ -66,7 +66,7 @@ If(#buffer_value_app_id# > 0){
 	DBFind(pages, src_pages).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_pages)
 	DBFind(blocks, src_blocks).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_blocks)
 	DBFind(app_params, src_parameters).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_parameters)
-	DBFind(languages, src_languages).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_languages)
+	DBFind(languages, src_languages).Limit(250).Order("name").Count(count_languages)
 	DBFind(contracts, src_contracts).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_contracts)
 	DBFind(tables, src_tables).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_tables)
 }

@@ -8,7 +8,6 @@ import (
 type Language struct {
 	ecosystem  int64
 	ID         int64  `gorm:"primary_key;not null"`
-	AppID      int64  `gorm:"column:app_id;not null"`
 	Name       string `gorm:"not null;size:100"`
 	Res        string `gorm:"type:jsonb(PostgreSQL)"`
 	Conditions string `gorm:"not null"`
@@ -40,6 +39,5 @@ func (l *Language) ToMap() map[string]string {
 	result["name"] = l.Name
 	result["res"] = l.Res
 	result["conditions"] = l.Conditions
-	result["app_id"] = converter.Int64ToStr(l.AppID)
 	return result
 }

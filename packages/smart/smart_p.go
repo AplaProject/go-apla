@@ -321,37 +321,37 @@ func HexToBytes(hexdata string) ([]byte, error) {
 }
 
 // LangRes returns the language resource
-func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
-	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), int(appID), lang, sc.VDE)
+func LangRes(sc *SmartContract, idRes, lang string) string {
+	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang)
 	return ret
 }
 
 // NewLang creates new language
-func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int64, err error) {
+func CreateLanguage(sc *SmartContract, name, trans string) (id int64, err error) {
 	if err := validateAccess(`CreateLanguage`, sc, nNewLang, nNewLangJoint, nImport); err != nil {
 		return 0, err
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	if _, id, err = DBInsert(sc, `@1languages`, map[string]interface{}{"name": name,
-		"ecosystem": idStr, "res": trans, "app_id": appID}); err != nil {
+		"ecosystem": idStr, "res": trans}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return 0, err
 	}
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans)
 	return id, nil
 }
 
 // EditLanguage edits language
-func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) error {
+func EditLanguage(sc *SmartContract, id int64, name, trans string) error {
 	if err := validateAccess(`EditLanguage`, sc, nEditLang, nEditLangJoint, nImport); err != nil {
 		return err
 	}
 	if _, err := DBUpdate(sc, `@1languages`, id,
-		map[string]interface{}{"name": name, "res": trans, "app_id": appID}); err != nil {
+		map[string]interface{}{"name": name, "res": trans}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return err
 	}
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans)
 	return nil
 }
 
