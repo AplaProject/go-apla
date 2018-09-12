@@ -61,9 +61,9 @@ func TestLang(t *testing.T) {
 			"NewPage",
 			url.Values{
 				"Name":          {name},
-				"Value":         {fmt.Sprintf("Span($%s$)", name)},
+				"Value":         {fmt.Sprintf("Span($@1%s$)", name)},
 				"Menu":          {"default_menu"},
-				"Conditions":    {"ContractConditions(`MainCondition`)"},
+				"Conditions":    {`ContractConditions("MainCondition")`},
 				"ApplicationId": {"1"},
 			},
 			"",
@@ -89,7 +89,7 @@ func TestLang(t *testing.T) {
 				"template": {
 					fmt.Sprintf(`Div(){
 						Button(Body: $%[1]s$ $,  Page:test).Alert(Text: $%[1]s$, ConfirmButton: $confirm$, CancelButton: $cancel$)
-						Button(Body: LangRes(%[1]s) LangRes, PageParams: "test", ).Alert(Text: $%[1]s$, CancelButton: $cancel$)
+						Button(Body: LangRes(@1%[1]s) LangRes, PageParams: "test", ).Alert(Text: $%[1]s$, CancelButton: $cancel$)
 					}`, utfName),
 				},
 				"app_id": {"1"},

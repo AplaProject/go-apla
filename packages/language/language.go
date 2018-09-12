@@ -24,6 +24,7 @@ import (
 	"strconv"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	log "github.com/sirupsen/logrus"
@@ -116,6 +117,14 @@ func loadLang(state int) error {
 // if it is found. Search goes according to the languages specified in 'accept'
 func LangText(in string, state int, accept string) (string, bool) {
 	if strings.IndexByte(in, ' ') >= 0 || state == 0 {
+		return in, false
+	}
+	ecosystem, name := converter.ParseName(in)
+	if ecosystem != 0 {
+		state = int(ecosystem)
+		in = name
+	}
+	if state == 0 {
 		return in, false
 	}
 	if _, ok := lang[state]; !ok {
