@@ -21,7 +21,7 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "0.9.6"
+const VERSION = "0.9.7"
 
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
@@ -111,6 +111,9 @@ var TxTypes = map[int]string{
 
 // ApiPath is the beginning of the api url
 var ApiPath = `/api/v2/`
+
+// BuildInfo should be defined through -ldflags
+var BuildInfo string
 
 // DefaultConfigFile name of config file (toml format)
 const DefaultConfigFile = "config.toml"
