@@ -63,8 +63,6 @@ const (
 	CostContract = 100
 	// CostExtend is the cost of the extend function calling
 	CostExtend = 10
-	// CostDefault is the default maximum cost of F
-	CostDefault = int64(20000000)
 
 	// VMTypeSmart is smart vm type
 	VMTypeSmart VMType = 1
@@ -455,8 +453,15 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 	}
 	switch obj.Type {
 	case ObjFunc:
-		rt := vm.RunInit(CostDefault)
+		var cost int64
+		if v, ok := (*extend)[`txcost`]; ok {
+			cost = v.(int64)
+		} else {
+			cost = syspar.GetMaxCost()
+		}
+		rt := vm.RunInit(cost)
 		ret, err = rt.Run(obj.Value.(*Block), params, extend)
+		(*extend)[`txcost`] = rt.Cost()
 	case ObjExtFunc:
 		finfo := obj.Value.(ExtFuncInfo)
 		foo := reflect.ValueOf(finfo.Func)

@@ -80,6 +80,9 @@ const (
 	LocalNodeBanTime = `local_node_ban_time`
 	// CommissionSize is the value of the commission
 	CommissionSize = `commission_size`
+
+	// CostDefault is the default maximum cost of F
+	CostDefault = int64(20000000)
 )
 
 var (
@@ -477,4 +480,12 @@ func GetFirstBlockData() (*consts.FirstBlock, error) {
 	}
 
 	return firstBlockData, nil
+}
+
+func GetMaxCost() int64 {
+	cost := GetMaxTxFuel()
+	if cost == 0 {
+		cost = CostDefault
+	}
+	return cost
 }

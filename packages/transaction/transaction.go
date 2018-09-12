@@ -292,6 +292,7 @@ func (t *Transaction) CallContract() (resultContract string, err error) {
 		Rand:          t.Rand,
 	}
 	resultContract, err = sc.CallContract()
+	t.TxFuel = sc.TxFuel
 	t.SysUpdate = sc.SysUpdate
 	return
 }
