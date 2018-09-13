@@ -1166,8 +1166,17 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 	if err != nil {
 		return err
 	}
+	tbl := &model.Table{}
+	tbl.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	found, err := tbl.ExistsByName(sc.DbTransaction, strings.ToLower(name))
+	if err != nil {
+		return err
+	}
+	if !found {
+		return fmt.Errorf(eTableNotFound, name)
+	}
 	_, _, err = sc.update([]string{`permissions`}, []interface{}{string(permout)},
-		GetTableName(sc, `tables`), `name`, strings.ToLower(name))
+		`1_tables`, `id`, tbl.ID)
 	return err
 }
 
