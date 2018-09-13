@@ -25,7 +25,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
-	"github.com/GenesisKernel/go-genesis/packages/service"
+	"github.com/GenesisKernel/go-genesis/packages/nodeban"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -65,7 +65,7 @@ func confirmationsBlocks(ctx context.Context, d *daemon, blocks []*blockchain.Bl
 		hashStr := string(converter.BinToHex(block.Hash))
 		d.logger.WithFields(log.Fields{"hash": hashStr}).Debug("checking hash")
 
-		hosts, err := service.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
+		hosts, err := nodeban.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
 		if err != nil {
 			return err
 		}

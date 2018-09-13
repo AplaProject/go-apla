@@ -22,8 +22,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/transaction"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -65,20 +63,6 @@ func rollbackBlock(dbTransaction *model.DbTransaction, block *block.PlayableBloc
 			}
 			if err := rollbackTransaction(t.TxHash, t.DbTransaction, logger); err != nil {
 				return err
-			}
-		} else {
-			MethodName := consts.TxTypes[int(t.TxType)]
-			txParser, err := transaction.GetTransaction(t, MethodName)
-			if err != nil {
-				return utils.ErrInfo(err)
-			}
-			result := txParser.Init()
-			if _, ok := result.(error); ok {
-				return utils.ErrInfo(result.(error))
-			}
-			result = txParser.Rollback()
-			if _, ok := result.(error); ok {
-				return utils.ErrInfo(result.(error))
 			}
 		}
 	}

@@ -74,6 +74,7 @@ var (
 		"Activate":          "extend_cost_activate",
 		"Deactivate":        "extend_cost_deactivate",
 		"CreateEcosystem":   "extend_cost_create_ecosystem",
+		"StopNetwork":       "extend_cost_stop_network",
 		"TableConditions":   "extend_cost_table_conditions",
 		"CreateTable":       "extend_cost_create_table",
 		"PermTable":         "extend_cost_perm_table",

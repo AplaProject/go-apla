@@ -17,7 +17,6 @@
 package daemons
 
 import (
-	"bytes"
 	"context"
 	"time"
 
@@ -26,7 +25,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/protocols"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
@@ -151,24 +149,18 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	return nil
 }
 
-func processTransactions(logger *log.Entry, done <-chan time.Time) ([][]byte, error) {
-	p := new(transaction.Transaction)
-
+func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*blockchain.Transaction, error) {
 	// verify transactions
-	err := transaction.ProcessTransactionsQueue(p.DbTransaction)
+	err := transaction.ProcessTransactionsQueue()
 	if err != nil {
 		return nil, err
 	}
 
-	var trs [][]byte
-	for queue.ProcessTxQueue.Length() > 0 {
-		if item, err := queue.ProcessTxQueue.Dequeue(); err != nil {
-			logger.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("getting all unused transactions")
-			return nil, err
-		} else {
-			trs = append(trs, item.Value)
-		}
-	}
+	var trs []*blockchain.Transaction
+	queue.ProcessTxQueue.ProcessItems(func(tx *blockchain.Transaction) error {
+		trs = append(trs, tx)
+		return nil
+	})
 
 	limits := block.NewLimits(nil)
 
@@ -177,12 +169,12 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([][]byte, er
 		msg  string
 	}
 
-	processBadTx := func(dbTx *model.DbTransaction) chan badTxStruct {
+	processBadTx := func() chan badTxStruct {
 		ch := make(chan badTxStruct)
 
 		go func() {
 			for badTxItem := range ch {
-				transaction.MarkTransactionBad(p.DbTransaction, badTxItem.hash, badTxItem.msg)
+				blockchain.SetTransactionError(badTxItem.hash, badTxItem.msg)
 			}
 		}()
 
@@ -200,7 +192,7 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([][]byte, er
 		return ch
 	}
 
-	txBadChan := processBadTx(p.DbTransaction)
+	txBadChan := processBadTx()
 	attemptCountChan := processIncAttemptCnt()
 
 	defer func() {
@@ -209,14 +201,13 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([][]byte, er
 	}()
 
 	// Checks preprocessing count limits
-	txList := make([][]byte, 0, len(trs))
+	txList := make([]*blockchain.Transaction, 0, len(trs))
 	for i, txItem := range trs {
 		select {
 		case <-done:
 			return txList, err
 		default:
-			bufTransaction := bytes.NewBuffer(txItem)
-			p, err := transaction.UnmarshallTransaction(bufTransaction)
+			p, err := transaction.FromBlockchainTransaction(txItem)
 			if err != nil {
 				if p != nil {
 					txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}

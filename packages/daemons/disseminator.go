@@ -25,11 +25,10 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/nodeban"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
-	"github.com/GenesisKernel/go-genesis/packages/service"
 
 	log "github.com/sirupsen/logrus"
-	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // Disseminator is send to all nodes from nodes_connections the following data
@@ -61,20 +60,12 @@ func sendTransactions(ctx context.Context, logger *log.Entry) error {
 	// get unsent transactions
 	// form packet to send
 	var txs []*blockchain.Transaction
-	for queue.SendTxQueue.Length() > 0 {
-		item, err := queue.SendTxQueue.Dequeue()
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("peeking item from sendTx queue")
-			return err
-		}
-		sc := &blockchain.Transaction{}
-		if err := sc.Unmarshal(item.Value); err != nil {
-			return err
-		}
-		txs = append(txs, sc)
-	}
+	queue.SendTxQueue.ProcessItems(func(tx *blockchain.Transaction) error {
+		txs = append(txs, tx)
+		return nil
+	})
 
-	hosts, err := service.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
+	hosts, err := nodeban.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
 		return err
@@ -89,37 +80,23 @@ func sendTransactions(ctx context.Context, logger *log.Entry) error {
 
 // send block and transactions hashes
 func sendBlockWithTxHashes(ctx context.Context, fullNodeID int64, logger *log.Entry) error {
-	blockItem, err := queue.SendBlockQueue.Dequeue()
+	block, err := queue.SendBlockQueue.Dequeue()
 	if err != nil {
 		return err
 	}
-	block := &blockchain.Block{}
-	if err := block.Unmarshal(blockItem.Value); err != nil {
-		logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling blockchain block")
-	}
 
 	var trs []*blockchain.Transaction
-	for queue.SendTxQueue.Length() > 0 {
-		txItem, err := queue.SendTxQueue.Dequeue()
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("getting unsent blocks")
-			return err
-		}
-		tr := &blockchain.Transaction{}
-		if err := msgpack.Unmarshal(txItem.Value, tr); err != nil {
-			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling transaction")
-			return err
-		}
-		trs = append(trs, tr)
-
-	}
+	queue.SendTxQueue.ProcessItems(func(tx *blockchain.Transaction) error {
+		trs = append(trs, tx)
+		return nil
+	})
 	if len(trs) == 0 && block == nil {
 		// it's nothing to send
 		logger.Debug("nothing to send")
 		return nil
 	}
 
-	hosts, err := service.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
+	hosts, err := nodeban.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
 		return err

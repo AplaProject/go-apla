@@ -23,6 +23,7 @@ import (
 	"encoding/pem"
 	"io"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -57,8 +58,12 @@ func Type2(rw io.ReadWriter) (*network.DisTrResponse, error) {
 		log.WithFields(log.Fields{"type": consts.ProtocolError, "len": len(binaryData), "should_be_equal": 5}).Error("binary data slice has incorrect length")
 		return nil, utils.ErrInfo("len(binaryData) < 5")
 	}
+	tx := &blockchain.Transaction{}
+	if err := tx.Unmarshal(decryptedBinData); err != nil {
+		return nil, err
+	}
 
-	if _, err := queue.ValidateTxQueue.Enqueue(decryptedBinData); err != nil {
+	if err := queue.ValidateTxQueue.Enqueue(tx); err != nil {
 		log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("enqueueing in validation queue")
 		return nil, utils.ErrInfo(err)
 	}

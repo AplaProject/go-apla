@@ -1,7 +1,6 @@
 package transaction
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -11,7 +10,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
@@ -67,14 +65,8 @@ func (t Transaction) GetLogger() *log.Entry {
 var txCache = &transactionCache{cache: make(map[string]*Transaction)}
 
 // UnmarshallTransaction is unmarshalling transaction
-func UnmarshallTransaction(buffer *bytes.Buffer) (*Transaction, error) {
-	if buffer.Len() == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty transaction buffer")
-		return nil, fmt.Errorf("empty transaction buffer")
-	}
-
-	hash, err := crypto.Hash(buffer.Bytes())
-	// or DoubleHash ?
+func FromBlockchainTransaction(tx *blockchain.Transaction) (*Transaction, error) {
+	hash, err := tx.Hash()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing transaction")
 		return nil, err
@@ -83,66 +75,33 @@ func UnmarshallTransaction(buffer *bytes.Buffer) (*Transaction, error) {
 	if t, ok := txCache.Get(string(hash)); ok {
 		return t, nil
 	}
+	bytes, err := tx.Marshal()
+	if err != nil {
+		return nil, err
+	}
 
 	t := new(Transaction)
 	t.TxHash = hash
 	t.TxUsedCost = decimal.New(0, 0)
-	t.TxFullData = buffer.Bytes()
+	t.TxFullData = bytes
 
-	txType := int64(buffer.Bytes()[0])
-
-	// smart contract transaction
-	if IsContractTransaction(int(txType)) {
-		// skip byte with transaction type
-		buffer.Next(1)
-		t.TxBinaryData = buffer.Bytes()
-		if err := t.parseFromContract(buffer); err != nil {
-			return nil, err
-		}
-
-		// struct transaction (only first block transaction for now)
-	} else if consts.IsStruct(int(txType)) {
-		t.TxBinaryData = buffer.Bytes()
-		if err := t.parseFromStruct(buffer, txType); err != nil {
-			return t, err
-		}
-
-		// all other transactions
+	// skip byte with transaction type
+	t.TxBinaryData = bytes
+	if err := t.parseFromContract(tx); err != nil {
+		return nil, err
 	}
+
 	txCache.Set(t)
 
 	return t, nil
 }
 
-// IsContractTransaction checks txType
-func IsContractTransaction(txType int) bool {
-	return txType > 127
-}
-
-func (t *Transaction) parseFromStruct(buf *bytes.Buffer, txType int64) error {
-	t.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
-	input := buf.Bytes()
-	if err := msgpack.Unmarshal(input[1:], t.TxPtr); err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError, "tx_type": int(txType)}).Error("getting parser for tx type")
-		return err
+func (t *Transaction) ToBlockchainTransaction() (*blockchain.Transaction, error) {
+	tx := &blockchain.Transaction{}
+	if err := tx.Unmarshal(t.TxFullData); err != nil {
+		return nil, err
 	}
-	head := consts.Header(t.TxPtr)
-	t.TxKeyID = head.KeyID
-	t.TxTime = int64(head.Time)
-	t.TxType = txType
-
-	trParser, err := GetTransaction(t, consts.TxTypes[int(txType)])
-	if err != nil {
-		return err
-	}
-	t.tx = trParser
-
-	err = trParser.Validate()
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
-
-	return nil
+	return tx, nil
 }
 
 func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[string]string, forsign []string) error {
@@ -219,14 +178,9 @@ func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[stri
 	return nil
 }
 
-func (t *Transaction) parseFromContract(buf *bytes.Buffer) error {
-	smartTx := blockchain.Transaction{}
-	if err := msgpack.Unmarshal(buf.Bytes(), &smartTx); err != nil {
-		log.WithFields(log.Fields{"tx_hash": t.TxHash, "error": err, "type": consts.UnmarshallingError}).Error("unmarshalling smart tx msgpack")
-		return err
-	}
+func (t *Transaction) parseFromContract(smartTx *blockchain.Transaction) error {
 	t.TxPtr = nil
-	t.TxSmart = &smartTx
+	t.TxSmart = smartTx
 	t.TxTime = smartTx.Header.Time
 	t.TxKeyID = smartTx.Header.KeyID
 
@@ -253,19 +207,18 @@ func (t *Transaction) parseFromContract(buf *bytes.Buffer) error {
 }
 
 // CheckTransaction is checking transaction
-func CheckTransaction(data []byte) (*blockchain.TxHeader, error) {
-	trBuff := bytes.NewBuffer(data)
-	t, err := UnmarshallTransaction(trBuff)
+func CheckTransaction(bTx *blockchain.Transaction) error {
+	t, err := FromBlockchainTransaction(bTx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = t.Check(time.Now().Unix())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return t.TxHeader, nil
+	return nil
 }
 
 func (t *Transaction) Check(checkTime int64) error {
@@ -295,17 +248,8 @@ func (t *Transaction) Check(checkTime int64) error {
 }
 
 func (t *Transaction) Play() (string, error) {
-	// smart-contract
-	if t.TxContract != nil {
-		// check that there are enough money in CallContract
-		return t.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
-	}
-
-	if t.tx == nil {
-		return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", t.TxType))
-	}
-
-	return "", t.tx.Action()
+	// check that there are enough money in CallContract
+	return t.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
 }
 
 // AccessRights checks the access right by executing the condition value
@@ -364,21 +308,4 @@ func (t *Transaction) CallContract(flags int) (resultContract string, err error)
 // CleanCache cleans cache of transaction parsers
 func CleanCache() {
 	txCache.Clean()
-}
-
-// GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
-func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, keyID int64) {
-	txType = converter.BinToDecBytesShift(&binaryBlock, 1)
-	return
-}
-
-func GetTransaction(t *Transaction, txType string) (custom.TransactionInterface, error) {
-	switch txType {
-	case consts.TxTypeParserFirstBlock:
-		return &custom.FirstBlockTransaction{t.GetLogger(), t.DbTransaction, t.TxPtr}, nil
-	case consts.TxTypeParserStopNetwork:
-		return &custom.StopNetworkTransaction{t.GetLogger(), t.TxPtr, nil}, nil
-	}
-	log.WithFields(log.Fields{"tx_type": txType, "type": consts.UnknownObject}).Error("unknown txType")
-	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }

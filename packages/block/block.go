@@ -56,9 +56,13 @@ func (b *PlayableBlock) PlaySafe() error {
 	err = b.Play(dbTransaction)
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
-		transactions := [][]byte{}
+		transactions := []*blockchain.Transaction{}
 		for _, tr := range doneTx {
-			transactions = append(transactions, tr.TxFullData)
+			bTx, err := tr.ToBlockchainTransaction()
+			if err != nil {
+				return err
+			}
+			transactions = append(transactions, bTx)
 		}
 		bBlock := &blockchain.Block{
 			Header:       &b.Header,
@@ -82,7 +86,15 @@ func (b *PlayableBlock) PlaySafe() error {
 			if err == ErrLimitStop {
 				err = ErrLimitTime
 			}
-			transaction.MarkTransactionBad(nil, b.Transactions[0].TxHash, err.Error())
+			bTx, err := b.Transactions[0].ToBlockchainTransaction()
+			if err != nil {
+				return err
+			}
+			hash, err := bTx.Hash()
+			if err != nil {
+				return err
+			}
+			blockchain.SetTransactionError(hash, err.Error())
 		}
 		return err
 	}
@@ -92,7 +104,10 @@ func (b *PlayableBlock) PlaySafe() error {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("double hashing block data")
 		return err
 	}
-	bBlock := b.ToBlockchainBlock()
+	bBlock, err := b.ToBlockchainBlock()
+	if err != nil {
+		return err
+	}
 	if err := bBlock.Insert(blockHash); err != nil {
 		dbTransaction.Rollback()
 		return err
@@ -175,7 +190,15 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction) error {
 				break
 			}
 			// skip this transaction
-			transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
+			bTx, err := t.ToBlockchainTransaction()
+			if err != nil {
+				return err
+			}
+			hash, err := bTx.Hash()
+			if err != nil {
+				return err
+			}
+			blockchain.SetTransactionError(hash, err.Error())
 			if t.SysUpdate {
 				if err = syspar.SysUpdate(t.DbTransaction); err != nil {
 					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
@@ -370,11 +393,10 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Pla
 func FromBlockchainBlock(b *blockchain.Block, hash []byte) (*PlayableBlock, error) {
 	transactions := make([]*transaction.Transaction, 0)
 	for _, tx := range b.Transactions {
-		bufTransaction := bytes.NewBuffer(tx)
-		t, err := transaction.UnmarshallTransaction(bufTransaction)
+		t, err := transaction.FromBlockchainTransaction(tx)
 		if err != nil {
 			if t != nil && t.TxHash != nil {
-				transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
+				blockchain.SetTransactionError(t.TxHash, err.Error())
 			}
 			return nil, fmt.Errorf("parse transaction error(%s)", err)
 		}
@@ -390,15 +412,18 @@ func FromBlockchainBlock(b *blockchain.Block, hash []byte) (*PlayableBlock, erro
 	}, nil
 }
 
-func (b *PlayableBlock) ToBlockchainBlock() *blockchain.Block {
-	blockchainBlock := &blockchain.Block{
-		Header:   &b.Header,
-		PrevHash: b.PrevHash,
-	}
-	txs := [][]byte{}
+func (b *PlayableBlock) ToBlockchainBlock() (*blockchain.Block, error) {
+	txs := []*blockchain.Transaction{}
 	for _, tx := range b.Transactions {
-		txs = append(txs, tx.TxFullData)
+		bTx, err := tx.ToBlockchainTransaction()
+		if err != nil {
+			return nil, err
+		}
+		txs = append(txs, bTx)
 	}
-	blockchainBlock.Transactions = txs
-	return blockchainBlock
+	return &blockchain.Block{
+		Header:       &b.Header,
+		PrevHash:     b.PrevHash,
+		Transactions: txs,
+	}, nil
 }

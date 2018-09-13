@@ -987,6 +987,19 @@ VALUES
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
+	(next_id('1_contracts'), 'StopNetwork', 'contract StopNetwork {
+    data {
+        Cert string
+    }
+
+    conditions {
+    }
+
+    action {
+        StopNet(Cert)
+    }
+}
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'UpdateMetrics', 'contract UpdateMetrics {
 	conditions {
 		ContractConditions("MainCondition")

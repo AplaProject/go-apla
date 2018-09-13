@@ -3,7 +3,6 @@ package daemonsctl
 import (
 	"context"
 
-	"github.com/GenesisKernel/go-genesis/packages/block"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
@@ -27,9 +26,6 @@ func RunAllDaemons(ctx context.Context) error {
 			return err
 		}
 
-		if data, ok := block.GetDataFromFirstBlock(); ok {
-			syspar.SetFirstBlockData(data)
-		}
 	} else {
 		err := syspar.SysUpdate(nil)
 		if err != nil {

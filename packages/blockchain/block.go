@@ -112,7 +112,7 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 
 type Block struct {
 	Header        *BlockHeader
-	Transactions  [][]byte
+	Transactions  []*Transaction
 	MrklRoot      []byte
 	PrevHash      []byte
 	NextHash      []byte
@@ -128,7 +128,7 @@ type BlockWithHash struct {
 func (b *Block) GetMrklRoot() ([]byte, error) {
 	var mrklArray [][]byte
 	for _, tr := range b.Transactions {
-		doubleHash, err := crypto.DoubleHash(tr)
+		doubleHash, err := tr.Hash()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("double hashing transaction")
 			return nil, err

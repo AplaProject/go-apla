@@ -37,6 +37,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/nodeban"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/service"
@@ -286,7 +287,7 @@ func Start() {
 			na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
 			na.Run(ctx)
 
-			err = service.InitNodesBanService()
+			err = nodeban.InitNodesBanService()
 			if err != nil {
 				log.WithError(err).Fatal("Can't init ban service")
 			}

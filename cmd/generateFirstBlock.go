@@ -9,9 +9,9 @@ import (
 
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
 
 	log "github.com/sirupsen/logrus"
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
@@ -27,14 +27,16 @@ var generateFirstBlockCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		now := time.Now().Unix()
 
-		header := &blockchain.BlockHeader{
-			BlockID:      1,
-			Time:         now,
-			EcosystemID:  0,
-			KeyID:        conf.Config.KeyID,
-			NodePosition: 0,
-			Version:      consts.BLOCK_VERSION,
-		}
+		/*
+			header := &blockchain.BlockHeader{
+				BlockID:      1,
+				Time:         now,
+				EcosystemID:  0,
+				KeyID:        conf.Config.KeyID,
+				NodePosition: 0,
+				Version:      consts.BLOCK_VERSION,
+			}
+		*/
 
 		decodeKeyFile := func(kName string) []byte {
 			filepath := filepath.Join(conf.Config.KeysDir, kName)
@@ -81,19 +83,16 @@ var generateFirstBlockCmd = &cobra.Command{
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block body bin marshalling")
 			return
 		}
-		tx = append([]byte{consts.TxTypeFirstBlock}, tx...)
-		block := blockchain.Block{
-			Header:       header,
-			Transactions: [][]byte{tx},
-		}
-
-		blockBytes, err := block.Marshal()
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block marshalling")
+		if _, err := smart.CallContract("InitFirstEcosystem", 1, map[string]string{"Data": string(tx)}, []string{string(tx)}); err != nil {
+			log.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Fatal("first block contract execution")
 			return
 		}
 
-		ioutil.WriteFile(conf.Config.FirstBlockPath, blockBytes, 0644)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block body bin marshalling")
+			return
+		}
+
 		log.Info("first block generated")
 	},
 }

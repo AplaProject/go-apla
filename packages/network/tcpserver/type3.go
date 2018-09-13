@@ -3,18 +3,14 @@ package tcpserver
 import (
 	"errors"
 	"net"
-	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/network"
-	"github.com/GenesisKernel/go-genesis/packages/queue"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
-	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 var errStopCertAlreadyUsed = errors.New("Stop certificate is already used")
@@ -57,31 +53,9 @@ func processStopNetwork(b []byte) ([]byte, error) {
 		log.WithFields(log.Fields{"error": err, "type": consts.InvalidObject}).Error("validating cert")
 		return nil, err
 	}
-
-	var data []byte
-	data, err = msgpack.Marshal(
-		&consts.StopNetwork{
-			TxHeader: consts.TxHeader{
-				Type:  consts.TxTypeStopNetwork,
-				Time:  uint32(time.Now().Unix()),
-				KeyID: conf.Config.KeyID,
-			},
-			StopNetworkCert: b,
-		},
-	)
+	hash, err := smart.CallContract("StopNetwork", 1, map[string]string{"Cert": string(b)}, []string{string(b)})
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.MarshallingError}).Error("binary marshaling")
-		return nil, err
-	}
-
-	hash, err := crypto.DoubleHash(data)
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("hashing data")
-		return nil, err
-	}
-
-	if _, err := queue.ValidateTxQueue.Enqueue(data); err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("inserting tx to database")
+		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 		return nil, err
 	}
 

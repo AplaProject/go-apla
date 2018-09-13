@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration"
 	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
@@ -189,12 +189,16 @@ func GetColumnCount(tableName string) (int64, error) {
 }
 
 // SendTx is creates transaction
-func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
-	if _, err := queue.ValidateTxQueue.Enqueue(data); err != nil {
+func SendTx(tx *blockchain.Transaction) ([]byte, error) {
+	hash, err := tx.Hash()
+	if err != nil {
+		return nil, err
+	}
+	if err := queue.ValidateTxQueue.Enqueue(tx); err != nil {
 		log.WithFields(log.Fields{"type": consts.QueueError, "err": err}).Error("enqueueing transaction in validation queue")
 		return nil, err
 	}
-	return crypto.Hash(data)
+	return hash, nil
 }
 
 // AlterTableAddColumn is adding column to table
@@ -346,8 +350,7 @@ func GetColumnByID(table, column, id string) (result string, err error) {
 }
 
 // InitDB drop all tables and exec db schema
-func InitDB(cfg conf.DBConfig) error {
-
+func InitDB(cfg conf.DBConfig, keyID int64) error {
 	err := GormInit(cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name)
 	if err != nil || DBConn == nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("initializing DB")
@@ -373,6 +376,12 @@ func InitDB(cfg conf.DBConfig) error {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE schema")
 			return err
 		}
+	}
+
+	err = ExecSchemaEcosystem(nil, 1, keyID, ``, keyID)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
+		return err
 	}
 
 	return nil

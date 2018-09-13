@@ -59,15 +59,10 @@ func (t *FirstBlockTransaction) Action() error {
 	logger := t.Logger
 	data := t.Data.(*consts.FirstBlock)
 	keyID := crypto.Address(data.PublicKey)
-	err := model.ExecSchemaEcosystem(nil, firstEcosystemID, keyID, ``, keyID)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
-		return utils.ErrInfo(err)
-	}
 
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(converter.IntToStr(firstEcosystemID))
-	_, err = sp.Get(nil, model.ParamMoneyDigit)
+	_, err := sp.Get(nil, model.ParamMoneyDigit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
 		return err

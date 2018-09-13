@@ -1,4 +1,4 @@
-package service
+package nodeban
 
 import (
 	"sync"
@@ -6,11 +6,9 @@ import (
 
 	"strconv"
 
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/pkg/errors"
@@ -114,7 +112,7 @@ func (nbs *NodesBanService) localBan(node syspar.FullNode) {
 }
 
 func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, blockTime int64, reason string) error {
-	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
+	NodePrivateKey, _, err := utils.GetNodeKeys()
 	if err != nil || len(NodePrivateKey) < 1 {
 		if err == nil {
 			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
@@ -143,28 +141,8 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 		"Timestamp":      strconv.FormatInt(blockTime, 10),
 		"Reason":         reason,
 	}
-	vm := smart.GetVM()
-	contract := smart.VMGetContract(vm, "NewBadBlock", 1)
-	info := contract.Block.Info.(*script.ContractInfo)
-
-	err = blockchain.BuildTransaction(blockchain.Transaction{
-		Header: blockchain.TxHeader{
-			Type:        int(info.ID),
-			Time:        time.Now().Unix(),
-			EcosystemID: 1,
-			KeyID:       conf.Config.KeyID,
-		},
-		SignedBy: smart.PubToID(NodePublicKey),
-		Params:   params,
-	},
-		NodePrivateKey,
-		NodePublicKey,
-		strconv.FormatInt(producer.KeyID, 10),
-		strconv.FormatInt(currentNode.KeyID, 10),
-		strconv.FormatInt(blockId, 10),
-		strconv.FormatInt(blockTime, 10),
-		reason,
-	)
+	forSign := []string{strconv.FormatInt(producer.KeyID, 10), strconv.FormatInt(currentNode.KeyID, 10), strconv.FormatInt(blockId, 10), strconv.FormatInt(blockTime, 10), reason}
+	_, err = smart.CallContract("NewBadBlock", 1, params, forSign)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 		return err

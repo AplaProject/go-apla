@@ -20,8 +20,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
+	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -75,4 +81,40 @@ func validateAccess(funcName string, sc *SmartContract, contracts ...string) err
 		return logError(err, consts.IncorrectCallingContract, err.Error())
 	}
 	return nil
+}
+
+func CallContract(contractName string, ecosystemID int64, params map[string]string, paramsForSign []string) ([]byte, error) {
+	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
+	if err != nil {
+		return nil, err
+	}
+	vm := GetVM()
+	contract := VMGetContract(vm, contractName, uint32(ecosystemID))
+	info := contract.Block.Info.(*script.ContractInfo)
+
+	smartTx, err := blockchain.BuildTransaction(blockchain.Transaction{
+		Header: blockchain.TxHeader{
+			Type:        int(info.ID),
+			Time:        time.Now().Unix(),
+			EcosystemID: ecosystemID,
+			KeyID:       conf.Config.KeyID,
+		},
+		SignedBy: PubToID(NodePublicKey),
+		Params:   params,
+	},
+		NodePrivateKey,
+		NodePublicKey,
+		paramsForSign...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	hash, err := smartTx.Hash()
+	if err != nil {
+		return nil, err
+	}
+	if err := queue.ValidateTxQueue.Enqueue(smartTx); err != nil {
+		return nil, err
+	}
+	return hash, nil
 }

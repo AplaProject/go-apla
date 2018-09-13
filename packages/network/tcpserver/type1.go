@@ -29,7 +29,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/service"
+	"github.com/GenesisKernel/go-genesis/packages/nodeban"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -64,7 +64,7 @@ func Type1(rw io.ReadWriter) error {
 	log.Debug("fullNodeID", fullNodeID)
 
 	n := syspar.GetNode(fullNodeID)
-	if n != nil && service.GetNodesBanService().IsBanned(*n) {
+	if n != nil && nodeban.GetNodesBanService().IsBanned(*n) {
 		return nil
 	}
 
@@ -131,7 +131,8 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 
 	// we accept only new blocks
 	if newBlockID >= lastBlock.Header.BlockID {
-		if _, err := queue.ValidateBlockQueue.Enqueue(blockHash); err != nil {
+		qb := &queue.QueueBlock{BlockHash: blockHash, BlockID: newBlockID, FullNodeID: fullNodeID}
+		if err := queue.ValidateBlockQueue.Enqueue(qb); err != nil {
 			log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("Creating QueueBlock")
 			return nil
 		}
@@ -209,9 +210,14 @@ func saveNewTransactions(r *network.DisRequest) error {
 			log.WithFields(log.Fields{"type": consts.ParameterExceeded, "len": len(txBinData), "size": syspar.GetMaxTxSize()}).Error("len of tx data exceeds max size")
 			return utils.ErrInfo("len(txBinData) > max_tx_size")
 		}
+		tx := &blockchain.Transaction{}
+		if err := tx.Unmarshal(txBinData); err != nil {
+			return err
+		}
 
-		if _, err := queue.ValidateTxQueue.Enqueue(txBinData); err != nil {
+		if err := queue.ValidateTxQueue.Enqueue(tx); err != nil {
 			log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("enqueueing tx into validate tx queue")
+			return err
 		}
 	}
 

@@ -171,7 +171,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			}
 			data.result = ret
 		} else {
-			err = blockchain.BuildTransaction(sc, NodePrivateKey, NodePublicKey, hexPubKey)
+			_, err = smart.CallContract("NewUser", 1, params, []string{hexPubKey})
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 			}

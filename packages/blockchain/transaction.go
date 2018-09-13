@@ -147,34 +147,17 @@ func (t *Transaction) Get(hash []byte) (bool, error) {
 	return true, nil
 }
 
-func (t *Transaction) Insert(hash []byte) error {
+func (t *Transaction) Insert() error {
+	hash, err := t.Hash()
+	if err != nil {
+		return err
+	}
 	val, err := t.Marshal()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling transaction")
 		return err
 	}
 	err = db.Put(txPrefix(hash), val, nil)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("inserting transaction")
-		return err
-	}
-	return nil
-}
-
-func GetTransactionBinary(hash []byte) ([]byte, bool, error) {
-	val, err := db.Get(txPrefix(hash), nil)
-	if err == leveldb.ErrNotFound {
-		return nil, false, nil
-	}
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("getting transaction")
-		return nil, false, err
-	}
-	return val, true, nil
-}
-
-func InsertTransactionBinary(hash, tx []byte) error {
-	err := db.Put(txPrefix(hash), tx, nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("inserting transaction")
 		return err
@@ -225,7 +208,7 @@ func DecrementTxAttemptCount(hash []byte) error {
 }
 
 // BuildTransaction creates transaction
-func BuildTransaction(smartTx Transaction, privKey, pubKey string, params ...string) error {
+func BuildTransaction(smartTx Transaction, privKey, pubKey string, params ...string) (*Transaction, error) {
 	signPrms := []string{smartTx.ForSign()}
 	signPrms = append(signPrms, params...)
 	signature, err := crypto.Sign(
@@ -234,18 +217,14 @@ func BuildTransaction(smartTx Transaction, privKey, pubKey string, params ...str
 	)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
-		return err
+		return nil, err
 	}
 	smartTx.Header.BinSignatures = converter.EncodeLengthPlusData(signature)
 
 	if smartTx.Header.PublicKey, err = hex.DecodeString(pubKey); err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
-		return err
-	}
-	hash, err := smartTx.Hash()
-	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return smartTx.Insert(hash)
+	return &smartTx, err
 }

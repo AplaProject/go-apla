@@ -251,7 +251,7 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("converting signature from hex")
 			return err
 		}
-		toSerialize := blockchain.Transaction{
+		toSerialize := &blockchain.Transaction{
 			Header: blockchain.TxHeader{
 				Type:          int(info.ID),
 				Time:          converter.StrToInt64(multiRequest.Time),
@@ -269,13 +269,7 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 			SignedBy:       signedBy,
 			Params:         c.Params,
 		}
-		serializedData, err := toSerialize.Marshal()
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-			return errorAPI(w, err, http.StatusInternalServerError)
-		}
-		if hash, err := model.SendTx(int64(info.ID), data.keyId,
-			append([]byte{128}, serializedData...)); err != nil {
+		if hash, err := model.SendTx(toSerialize); err != nil {
 			return errorAPI(w, err, http.StatusInternalServerError)
 		} else {
 			hashes = append(hashes, hex.EncodeToString(hash))
@@ -342,12 +336,12 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		SignedBy:       signedBy,
 		Params:         req.AllValues(),
 	}
-	serializedData, err := toSerialize.Marshal()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-		return errorAPI(w, err, http.StatusInternalServerError)
-	}
 	if data.vde {
+		serializedData, err := toSerialize.Marshal()
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
+			return errorAPI(w, err, http.StatusInternalServerError)
+		}
 		ret, err := VDEContract(serializedData, data)
 		if err != nil {
 			return errorAPI(w, err, http.StatusInternalServerError)
@@ -355,8 +349,7 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		data.result = ret
 		return nil
 	}
-	if hash, err = model.SendTx(int64(info.ID), data.keyId,
-		append([]byte{128}, serializedData...)); err != nil {
+	if hash, err = model.SendTx(&toSerialize); err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	data.result = &contractResult{Hash: hex.EncodeToString(hash)}

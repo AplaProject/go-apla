@@ -47,11 +47,14 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/scheduler"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/service"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 	"github.com/satori/go.uuid"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
+	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const (
@@ -129,6 +132,7 @@ var (
 		"ContractConditions":           50,
 		"ContractName":                 10,
 		"CreateColumn":                 50,
+		"StopNet":                      100,
 		"CreateTable":                  100,
 		"CreateLanguage":               50,
 		"EditLanguage":                 50,
@@ -199,6 +203,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"ContractName":                 contractName,
 		"ValidateEditContractNewValue": ValidateEditContractNewValue,
 		"CreateColumn":                 CreateColumn,
+		"StopNet":                      StopNetwork,
+		"FirstBlock":                   FirstBlock,
 		"CreateTable":                  CreateTable,
 		"DBInsert":                     DBInsert,
 		"DBSelect":                     DBSelect,
@@ -481,6 +487,80 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 			return err
 		}
 	}
+	return nil
+}
+
+func StopNetwork(sc *SmartContract, stopNetworkCert string) error {
+	cert, err := utils.ParseCert([]byte(stopNetworkCert))
+	if err != nil {
+		return err
+	}
+
+	fbdata, err := syspar.GetFirstBlockData()
+	if err != nil {
+		return err
+	}
+
+	if err = cert.Validate(fbdata.StopNetworkCertBundle); err != nil {
+		return err
+	}
+
+	if cert.EqualBytes(consts.UsedStopNetworkCerts...) {
+		return nil
+	}
+
+	// Set the node in a pause state
+	service.PauseNodeActivity(service.PauseTypeStopingNetwork)
+
+	return nil
+}
+
+func FirstBlock(sc *SmartContract, data string) error {
+	fbData := &consts.FirstBlock{}
+	if err := msgpack.Unmarshal([]byte(data), fbData); err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("json unmarshal error")
+		return err
+	}
+	keyID := crypto.Address(fbData.PublicKey)
+
+	sp := &model.StateParameter{}
+	sp.SetTablePrefix("1")
+	_, err := sp.Get(nil, model.ParamMoneyDigit)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
+		return err
+	}
+	amount := decimal.New(consts.FounderAmount, int32(converter.StrToInt64(sp.Value))).String()
+
+	commission := &model.SystemParameter{Name: `commission_wallet`}
+	if err := commission.SaveArray([][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
+		return err
+	}
+	if err := syspar.SysUpdate(nil); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
+		return err
+	}
+
+	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
+		keyID, fbData.PublicKey, amount).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return err
+	}
+	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_pages" (id,name,menu,value,conditions) values('1', 'default_page',
+		  'default_menu', ?, 'ContractAccess("@1EditPage")')`, syspar.SysString(`default_ecosystem_page`)).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return err
+	}
+	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_menu" (id,name,value,title,conditions) values('1', 'default_menu', ?, ?, 'ContractAccess("@1EditMenu")')`,
+		syspar.SysString(`default_ecosystem_menu`), `default`).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default menu")
+		return err
+	}
+	syspar.SetFirstBlockData(fbData)
 	return nil
 }
 

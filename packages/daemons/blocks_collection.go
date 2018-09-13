@@ -33,6 +33,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/nodeban"
 	"github.com/GenesisKernel/go-genesis/packages/rollback"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
@@ -276,7 +277,7 @@ func banNode(host string, block *block.PlayableBlock, err error) {
 		return
 	}
 
-	err = service.GetNodesBanService().RegisterBadBlock(n, blockId, blockTime, reason)
+	err = nodeban.GetNodesBanService().RegisterBadBlock(n, blockId, blockTime, reason)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "node": n.KeyID, "block": blockId}).Error("registering bad block from node")
 	}
@@ -285,7 +286,7 @@ func banNode(host string, block *block.PlayableBlock, err error) {
 // GetHostWithMaxID returns host with maxBlockID
 func getHostWithMaxID(ctx context.Context, logger *log.Entry) (host string, maxBlockID int64, err error) {
 
-	nbs := service.GetNodesBanService()
+	nbs := nodeban.GetNodesBanService()
 	hosts, err := nbs.FilterBannedHosts(syspar.GetRemoteHosts())
 	if err != nil {
 		logger.WithFields(log.Fields{"error": err}).Error("on filtering banned hosts")
@@ -432,7 +433,10 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 	for i := len(blocks) - 1; i >= 0; i-- {
 		b := blocks[i]
 		// insert new blocks into blockchain
-		bBlock := b.ToBlockchainBlock()
+		bBlock, err := b.ToBlockchainBlock()
+		if err != nil {
+			return err
+		}
 		if err := bBlock.Insert(b.Hash); err != nil {
 			dbTransaction.Rollback()
 			return err

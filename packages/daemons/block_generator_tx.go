@@ -51,7 +51,7 @@ func (dtx *DelayedTx) createTx(delayedContractID, keyID int64) error {
 
 	params := map[string]string{"Id": converter.Int64ToStr(delayedContractID)}
 
-	smartTx := blockchain.Transaction{
+	smartTx := &blockchain.Transaction{
 		Header: blockchain.TxHeader{
 			Type:        int(info.ID),
 			Time:        time.Now().Unix(),
@@ -78,14 +78,7 @@ func (dtx *DelayedTx) createTx(delayedContractID, keyID int64) error {
 		return err
 	}
 
-	data, err := smartTx.Marshal()
-	if err != nil {
-		dtx.logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-		return err
-	}
-	data = append([]byte{128}, data...)
-
-	if _, err := queue.ValidateTxQueue.Enqueue(data); err != nil {
+	if err := queue.ValidateTxQueue.Enqueue(smartTx); err != nil {
 		log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("calculating hash of smart contract")
 		return err
 	}
