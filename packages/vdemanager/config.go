@@ -20,6 +20,8 @@ type ChildVDEConfig struct {
 	DBUser         string
 	DBPassword     string
 	ConfigFileName string
+	LogTo          string
+	LogLevel       string
 	HTTPPort       int
 }
 
@@ -34,6 +36,8 @@ func (c ChildVDEConfig) configCommand() *exec.Cmd {
 		fmt.Sprintf("--httpPort=%d", c.HTTPPort),
 		fmt.Sprintf("--dataDir=%s", c.Directory),
 		fmt.Sprintf("--keysDir=%s", c.Directory),
+		fmt.Sprintf("--logTo=%s", c.LogTo),
+		fmt.Sprintf("--logLevel=%s", c.LogLevel),
 		"--runMode=VDE",
 	}
 

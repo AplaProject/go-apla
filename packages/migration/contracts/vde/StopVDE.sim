@@ -13,4 +13,4 @@ contract StopVDE {
             StopVDEProcess($VDEName)
             $result = "VDE " + $VDEName + " stopped"
 		}
-	}
+}

@@ -58,6 +58,7 @@ const (
 	isRPar   = 0x2901 // )
 	isComma  = 0x2c01 // ,
 	isDot    = 0x2e01 // .
+	isColon  = 0x3a01 // :
 	isEq     = 0x3d01 // =
 	isLCurly = 0x7b01 // {
 	isRCurly = 0x7d01 // }
@@ -254,6 +255,7 @@ func lexParser(input []rune) (Lexems, error) {
 				if lexID == lexString && skip {
 					skip = false
 					value = strings.Replace(value.(string), `\"`, `"`, -1)
+					value = strings.Replace(value.(string), `\t`, "\t", -1)
 					value = strings.Replace(strings.Replace(value.(string), `\r`, "\r", -1), `\n`, "\n", -1)
 				}
 				for i, ch := range value.(string) {

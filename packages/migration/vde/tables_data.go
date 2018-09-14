@@ -154,17 +154,21 @@ var tablesDataSQL = `INSERT INTO "%[1]d_tables" ("id", "name", "permissions","co
 			"value": "ContractConditions(\"MainCondition\")",
 			"conditions": "ContractConditions(\"MainCondition\")"}',
 		'ContractAccess("@1EditTable")'),
+		('18', 'cron',
+	  '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
+		"new_column": "ContractConditions(\"MainCondition\")"}',
+	  '{"owner": "ContractConditions(\"MainCondition\")",
+	  "cron": "ContractConditions(\"MainCondition\")",
+	  "contract": "ContractConditions(\"MainCondition\")",
+	  "counter": "ContractConditions(\"MainCondition\")",
+	  "till": "ContractConditions(\"MainCondition\")",
+		"conditions": "ContractConditions(\"MainCondition\")"
+	  }', 'ContractConditions("MainCondition")'),
 	('19', 'buffer_data',
 		'{"insert":"true","update":"ContractConditions(\"MainCondition\")",
 			"new_column":"ContractConditions(\"MainCondition\")"}',
 		'{"key": "false",
 			"value": "true",
 			"member_id": "false"}',
-		'ContractConditions("MainCondition")'),
-		(
-			'20',
-			'system_parameters',
-			'{"insert": "false", "update": "ContractAccess(\"1@UpdateSysParam\")","new_column": "ContractConditions(\"MainCondition\")"}',
-			'{"value": "ContractConditions(\"MainCondition\")"}',
-			'ContractConditions("MainCondition")');
+		'ContractConditions("MainCondition")');
 `

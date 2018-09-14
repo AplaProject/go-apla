@@ -13,4 +13,4 @@ contract RunVDE {
             StartVDE($VDEName)
             $result = "VDE " + $VDEName + " running"
 		}
-	}
+}

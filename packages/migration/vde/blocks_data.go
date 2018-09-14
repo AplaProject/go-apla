@@ -13,12 +13,10 @@ var blocksDataSQL = `INSERT INTO "%[1]d_blocks" (id, name, value, conditions) VA
 	SetVar(sort, "1")
 	SetVar(sort_name, "id asc") 
 }
-
 If(Or(#width#==12,#width#==6,#width#==4)){
 }.Else{
 	SetVar(width, "12")
 }
-
 Form(){
 	Div(clearfix){
 		Div(pull-left){
@@ -64,7 +62,6 @@ Form(){
 	}
 }', 'ContractConditions("MainCondition")'),
 		(2, 'export_info', 'DBFind(Name: buffer_data, Source: src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
-
 If(#buffer_value_app_id# > 0){
 	DBFind(pages, src_pages).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_pages)
 	DBFind(blocks, src_blocks).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_blocks)
@@ -73,7 +70,6 @@ If(#buffer_value_app_id# > 0){
 	DBFind(contracts, src_contracts).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_contracts)
 	DBFind(tables, src_tables).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_tables)
 }
-
 Div(panel panel-primary){
 	If(#buffer_value_app_id# > 0){
 		Div(panel-heading, "Export - #buffer_value_app_name#")
@@ -269,7 +265,6 @@ Div(panel panel-primary){
 		(3, 'export_link', 'If(And(#res_type#!="pages",#res_type#!="blocks",#res_type#!="menu",#res_type#!="parameters",#res_type#!="languages",#res_type#!="contracts",#res_type#!="tables")){
 	SetVar(res_type, "pages")
 }
-
 Div(breadcrumb){
 	If(#res_type#=="pages"){
 		Span(Class: text-muted, Body: "Pages")
@@ -319,20 +314,17 @@ SetVar(previous_page, Calculate(Exp: #current_page# - 1, Type: int))
 SetVar(next_page, Calculate(Exp: #current_page# + 1, Type: int))
 SetVar(count_div_limit_int, Calculate(Exp: (#records_count# / #pager_limit#), Type: int))
 SetVar(remainder, Calculate(Exp: (#records_count# / #pager_limit#) - #count_div_limit_int#, Type: float))
-
 If(#remainder# != 0){
 	SetVar(last_page, Calculate(Exp: #count_div_limit_int# + 1, Type: int))
 }.Else{
 	SetVar(last_page, #count_div_limit_int#)
 }
-
 SetVar(last_page_plus_one, Calculate(Exp: #last_page# + 1, Type: int))
 SetVar(delta_last_page, Calculate(Exp: #last_page# - #current_page#))
 SetVar(range_l, Calculate(Exp: #current_page# - 4, Type: int))
 SetVar(range_r, Calculate(Exp: #current_page# + 6, Type: int))
 SetVar(range_l_max, Calculate(Exp: #last_page# - #pager_limit#, Type: int))
 SetVar(pager_limit_plus_one, Calculate(Exp: #pager_limit# + 1, Type: int))
-
 If(#current_page# < 5){
 	If(#last_page# >= 10){
 		Range(src_pages, 1, 11)
@@ -348,7 +340,6 @@ If(#current_page# < 5){
 }.Else{
 	Range(src_pages, #range_l#, #range_r#)
 }
-
 Div(){
 	Span(){
 		If(#current_page# == 1){

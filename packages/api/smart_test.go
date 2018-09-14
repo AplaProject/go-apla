@@ -63,7 +63,7 @@ func TestUpperName(t *testing.T) {
 		conditions {
 		}
 		action {
-		   DBInsert("testTable` + rnd + `", "num, text", "fgdgf", "124234") 
+		   DBInsert("testTable` + rnd + `", {num: "fgdgf", text: "124234"}) 
 		}
 	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
@@ -134,6 +134,26 @@ func TestMoneyTransfer(t *testing.T) {
 		t.Error(err)
 		return
 	}
+}
+
+func TestRoleAccess(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`page`)
+	menu := `government`
+	value := `P(test,test paragraph)`
+
+	form := url.Values{"Name": {name}, "Value": {value}, "Menu": {menu}, "ApplicationId": {`1`},
+		"Conditions": {`RoleAccess(10,1)`}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	var ret listResult
+	assert.NoError(t, sendGet(`list/pages`, nil, &ret))
+	id := ret.Count
+	form = url.Values{"Id": {id}, "Value": {"Div(){Ooops}"}, "Conditions": {`RoleAccess(2)`}}
+	assert.NoError(t, postTx(`EditPage`, &form))
+	form = url.Values{"Id": {id}, "Value": {"Div(){Update}"}}
+	assert.EqualError(t, postTx(`EditPage`, &form), `{"type":"panic","error":"Access denied"}`)
 }
 
 func TestPage(t *testing.T) {
@@ -304,8 +324,8 @@ func TestNewTable(t *testing.T) {
 
 	form = url.Values{`Value`: {`contract sub` + name + ` {
 		action {
-			DBInsert("1_` + name + `", "name", "ok")
-			DBUpdate("1_` + name + `", 1, "name", "test value" )
+			DBInsert("1_` + name + `", {"name": "ok"})
+			DBUpdate("1_` + name + `", 1, {"name": "test value"} )
 			$result = DBFind("1_` + name + `").Columns("name").WhereId(1).One("name")
 		}
 	}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
@@ -469,7 +489,7 @@ func TestHelper_InsertNodeKey(t *testing.T) {
 			}
 			conditions {}
 			action {
-				DBInsert("keys", "id,pub,amount", $KeyID, $PubKey, "100000000000000000000")
+				DBInsert("keys", {id: $KeyID, pub: $PubKey,amount: "100000000000000000000"})
 			}
 		}`},
 		`ApplicationId`: {`1`},

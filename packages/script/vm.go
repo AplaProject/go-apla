@@ -70,6 +70,7 @@ var sysVars = map[string]struct{}{
 	`txcost`:            {},
 	`txhash`:            {},
 	`role_id`:           {},
+	`guest_key`:         {},
 }
 
 var ErrMemoryLimit = errors.New("Memory limit exceeded")
@@ -221,7 +222,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 				pars[count-i] = reflect.ValueOf(rt.stack[size-i+auto])
 			}
 			if !pars[count-i].IsValid() {
-				pars[count-i] = reflect.Zero(reflect.TypeOf(int64(0)))
+				pars[count-i] = reflect.Zero(reflect.TypeOf(string(``)))
 			}
 		}
 		if i > 0 {
@@ -464,6 +465,56 @@ func SetVMError(eType string, eText interface{}) error {
 		out = []byte(`{"type": "panic", "error": "marshalling VMError"}`)
 	}
 	return fmt.Errorf(string(out))
+}
+
+func (rt *RunTime) getResultValue(item mapItem) (value interface{}, err error) {
+	switch item.Type {
+	case mapConst:
+		value = item.Value
+	case mapExtend:
+		value = (*rt.extend)[item.Value.(string)]
+	case mapVar:
+		ivar := item.Value.(*VarInfo)
+		var i int
+		for i = len(rt.blocks) - 1; i >= 0; i-- {
+			if ivar.Owner == rt.blocks[i].Block {
+				value = rt.vars[rt.blocks[i].Offset+ivar.Obj.Value.(int)]
+				break
+			}
+		}
+		if i < 0 {
+			err = fmt.Errorf(eWrongVar, ivar.Obj.Value)
+		}
+	case mapMap:
+		value, err = rt.getResultMap(item.Value.(map[string]mapItem))
+	case mapArray:
+		value, err = rt.getResultArray(item.Value.([]mapItem))
+	}
+	return
+}
+
+func (rt *RunTime) getResultArray(cmd []mapItem) ([]interface{}, error) {
+	initArr := make([]interface{}, 0)
+	for _, val := range cmd {
+		value, err := rt.getResultValue(val)
+		if err != nil {
+			return nil, err
+		}
+		initArr = append(initArr, value)
+	}
+	return initArr, nil
+}
+
+func (rt *RunTime) getResultMap(cmd map[string]mapItem) (map[string]interface{}, error) {
+	initMap := make(map[string]interface{})
+	for key, val := range cmd {
+		value, err := rt.getResultValue(val)
+		if err != nil {
+			return nil, err
+		}
+		initMap[key] = value
+	}
+	return initMap, nil
 }
 
 // RunCode executes Block
@@ -1108,6 +1159,18 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			if cmd.Cmd == cmdNotGreat {
 				bin = !bin.(bool)
 			}
+		case cmdArrayInit:
+			initArray, err := rt.getResultArray(cmd.Value.([]mapItem))
+			if err != nil {
+				return 0, err
+			}
+			rt.stack = append(rt.stack, initArray)
+		case cmdMapInit:
+			initMap, err := rt.getResultMap(cmd.Value.(map[string]mapItem))
+			if err != nil {
+				return 0, err
+			}
+			rt.stack = append(rt.stack, initMap)
 		default:
 			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_cmd": cmd.Cmd}).Error("Unknown command")
 			err = fmt.Errorf(`Unknown command %d`, cmd.Cmd)

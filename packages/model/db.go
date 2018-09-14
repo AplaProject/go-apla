@@ -160,7 +160,12 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 
 // ExecSchemaLocalData is executing schema with local data
 func ExecSchemaLocalData(id int, wallet int64) error {
-	return DBConn.Exec(fmt.Sprintf(vde.GetVDEScript(), id, wallet)).Error
+	if err := DBConn.Exec(fmt.Sprintf(vde.GetVDEScript(), id, wallet)).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing vde script")
+		return err
+	}
+
+	return nil
 }
 
 // ExecSchema is executing schema
@@ -224,8 +229,8 @@ func AlterTableAddColumn(transaction *DbTransaction, tableName, columnName, colu
 }
 
 // AlterTableDropColumn is dropping column from table
-func AlterTableDropColumn(tableName, columnName string) error {
-	return DBConn.Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN "` + columnName + `"`).Error
+func AlterTableDropColumn(transaction *DbTransaction, tableName, columnName string) error {
+	return GetDB(transaction).Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN "` + columnName + `"`).Error
 }
 
 // CreateIndex is creating index on table column
@@ -338,7 +343,7 @@ func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	var id int64
 	rows, err := GetDB(transaction).Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting next id from table")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("selecting next id from table")
 		return 0, err
 	}
 	rows.Next()

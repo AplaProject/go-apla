@@ -119,6 +119,12 @@ func UpdateNotifications(ecosystemID int64, users []int64) {
 	}
 }
 
+// UpdateRolesNotifications send stats about unreaded messages to centrifugo for ecosystem
+func UpdateRolesNotifications(ecosystemID int64, roles []int64) {
+	members, _ := model.GetRoleMembers(nil, ecosystemID, roles)
+	UpdateNotifications(ecosystemID, members)
+}
+
 func getEcosystemNotificationStats(ecosystemID int64, users []int64) (map[int64]*[]notificationRecord, error) {
 	result, err := model.GetNotificationsCount(ecosystemID, users)
 	if err != nil {

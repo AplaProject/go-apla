@@ -12,7 +12,6 @@ If(GetVar(block)){
 }.Else{
 	SetTitle(Dashboard)
 	DBFind(buffer_data).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
-
 	Data(tables, "Table,Cols,Page"){
 		contracts,"id,app_id,name,active",editor
 		pages,"id,app_id,name",editor
@@ -174,19 +173,14 @@ If(GetVar(block)){
 	(3, 'app_binary', 'DBFind(buffer_data, src_buffer).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 If(#buffer_value_app_id# > 0){
 	DBFind(applications, src_app).Where("id=#buffer_value_app_id#").Vars("application")
-
 	Div(content-wrapper){
 		SetTitle("Binary data": #application_name#)
 		AddToolButton(Title: "Upload binary", Page: app_upload_binary, Icon: icon-plus, PageParams: "application_id=#application_id#")
-
 		SetVar(pager_table, binaries).(pager_where, "app_id=#buffer_value_app_id#").(pager_page, app_binary).(pager_limit, 50)
 		Include(pager_header)
-
 		SetVar(admin_page, app_binary)
 		Include(admin_link)
-
 		DBFind(binaries, src_binparameters).Limit(#pager_limit#).Order(#sort_name#).Offset(#pager_offset#).Where("app_id=#buffer_value_app_id#")
-
 		Form(panel panel-primary){
 			Div(panel-body){
 				Div(row){
@@ -225,19 +219,14 @@ If(#buffer_value_app_id# > 0){
 	(4, 'app_blocks', 'DBFind(buffer_data, src_buffer).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 If(#buffer_value_app_id# > 0){
 	DBFind(applications, src_app).Where("id=#buffer_value_app_id#").Vars("application")
-
 	Div(content-wrapper){
 		SetTitle("Blocks": #application_name#)
 		AddToolButton(Title: "Create", Page: editor, Icon: icon-plus, PageParams: "create=block,appId=#buffer_value_app_id#")
-
 		SetVar(pager_table, blocks).(pager_where, "app_id=#buffer_value_app_id#").(pager_page, app_blocks).(pager_limit, 50)
 		Include(pager_header)
-
 		SetVar(admin_page, app_blocks)
 		Include(admin_link)
-
 		DBFind(blocks, src_blocks).Limit(#pager_limit#).Order(#sort_name#).Offset(#pager_offset#).Where("app_id=#buffer_value_app_id#")
-
 		Form(panel panel-primary){
 			Div(panel-body){
 				Div(row){
@@ -275,19 +264,14 @@ If(#buffer_value_app_id# > 0){
 	(5, 'app_contracts', 'DBFind(buffer_data, src_buffer).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 If(#buffer_value_app_id# > 0){
 	DBFind(applications, src_app).Where("id=#buffer_value_app_id#").Vars("application")
-
 	Div(content-wrapper){
 		SetTitle("Contracts": #application_name#)
 		AddToolButton(Title: "Create", Page: editor, Icon: icon-plus, PageParams: "create=contract,appId=#buffer_value_app_id#")
-
 		SetVar(pager_table, contracts).(pager_where, "app_id=#buffer_value_app_id#").(pager_page, app_contracts).(pager_limit, 50)
 		Include(pager_header)
-
 		SetVar(admin_page, app_contracts)
 		Include(admin_link)
-
 		DBFind(contracts, src_contracts).Limit(#pager_limit#).Order(#sort_name#).Offset(#pager_offset#).Where("app_id=#buffer_value_app_id#")
-
 		Form(panel panel-primary){
 			Div(panel-body){
 				Div(row){
@@ -384,19 +368,14 @@ If(#buffer_value_app_id# > 0){
 	(7, 'app_langres', 'DBFind(buffer_data, src_buffer).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 If(#buffer_value_app_id# > 0){
 	DBFind(applications, src_app).Where("id=#buffer_value_app_id#").Vars("application")
-
 	Div(content-wrapper){
 		SetTitle("Language resources": #application_name#)
 		AddToolButton(Title: "Create", Page: langres_add, Icon: icon-plus, PageParams: "application_id=#application_id#")
-
 		SetVar(pager_table, languages).(pager_where, "app_id=#buffer_value_app_id#").(pager_page, app_langres).(pager_limit, 50)
 		Include(pager_header)
-
 		SetVar(admin_page, app_langres)
 		Include(admin_link)
-
 		DBFind(languages, src_languages).Limit(#pager_limit#).Order(#sort_name#).Offset(#pager_offset#).Where("app_id=#buffer_value_app_id#")
-
 		Form(panel panel-primary){
 			Div(panel-body){
 				Div(row){
@@ -425,19 +404,14 @@ If(#buffer_value_app_id# > 0){
 	(8, 'app_pages', 'DBFind(buffer_data, src_buffer).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 If(#buffer_value_app_id# > 0){
 	DBFind(applications, src_app).Where("id=#buffer_value_app_id#").Vars("application")
-
 	Div(content-wrapper){
 		SetTitle("Pages": #application_name#)
 		AddToolButton(Title: "Create", Page: editor, Icon: icon-plus, PageParams: "create=page,appId=#buffer_value_app_id#")
-
 		SetVar(pager_table, pages).(pager_where, "app_id=#buffer_value_app_id#").(pager_page, app_pages).(pager_limit, 50)
 		Include(pager_header)
-
 		SetVar(admin_page, app_pages)
 		Include(admin_link)
-
 		DBFind(pages, src_pages).Limit(#pager_limit#).Order(#sort_name#).Offset(#pager_offset#).Where("app_id=#buffer_value_app_id#")
-
 		Form(panel panel-primary){
 			Div(panel-body){
 				Div(row){
@@ -475,19 +449,14 @@ If(#buffer_value_app_id# > 0){
 	(9, 'app_params', 'DBFind(buffer_data, src_buffer).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 If(#buffer_value_app_id# > 0){
 	DBFind(applications, src_app).Where("id=#buffer_value_app_id#").Vars("application")
-
 	Div(content-wrapper){
 		SetTitle("Application parameters": #application_name#)
 		AddToolButton(Title: "Create", Page: app_params_edit, Icon: icon-plus, PageParams: "application_id=#application_id#,create=create")
-
 		SetVar(pager_table, app_params).(pager_where, "app_id=#buffer_value_app_id#").(pager_page, app_params).(pager_limit, 50)
 		Include(pager_header)
-
 		SetVar(admin_page, app_params)
 		Include(admin_link)
-
 		DBFind(app_params, src_appparameters).Limit(#pager_limit#).Order(#sort_name#).Offset(#pager_offset#).Where("app_id=#buffer_value_app_id#")
-
 		Form(panel panel-primary){
 			Div(panel-body){
 				Div(row){
@@ -532,7 +501,6 @@ If(#buffer_value_app_id# > 0){
 		Span(/).Style(margin-right: 10px; margin-left: 10px;)
 		Span(Class: text-muted, Body: #param_name#)
 	}
-
 	Form(){
 		Div(form-group){
 			Label("Name")
@@ -569,19 +537,14 @@ If(#buffer_value_app_id# > 0){
 	(11, 'app_tables', 'DBFind(buffer_data, src_buffer).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 If(#buffer_value_app_id# > 0){
 	DBFind(applications, src_app).Where("id=#buffer_value_app_id#").Vars("application")
-
 	Div(content-wrapper){
 		SetTitle("Tables": #application_name#)
 		AddToolButton(Title: "Create", Page: table_create, Icon: icon-plus, PageParams: "application_id=#application_id#")
-
 		SetVar(pager_table, tables).(pager_where, "app_id=#buffer_value_app_id#").(pager_page, app_tables).(pager_limit, 50)
 		Include(pager_header)
-
 		SetVar(admin_page, app_tables)
 		Include(admin_link)
-
 		DBFind(tables, src_tables).Limit(#pager_limit#).Order(#sort_name#).Offset(#pager_offset#).Where("app_id=#buffer_value_app_id#")
-
 		Form(panel panel-primary){
 			Div(panel-body){
 				Div(row){
@@ -715,7 +678,6 @@ If(#buffer_value_app_id# > 0){
 		}.Custom(custom_actions){
 			Button(Class: btn btn-link, Body: Em(Class: fa fa-edit), Page: app_edit, PageParams: "id=#id#")
 		}
-
 		Table(Source: src_applications, Columns: "ID=id,Name=name,Conditions=conditions,Selected=custom_check,=custom_actions").Style(
 			tbody > tr:nth-of-type(odd) {
 				background-color: #fafbfc;
@@ -754,7 +716,6 @@ If(#buffer_value_app_id# > 0){
 			Span("Add column", text-muted)
 		}
 	}
-
 	Form(panel panel-default){
 		Div(panel-body){
 			Div(form-group){
@@ -796,7 +757,6 @@ If(#buffer_value_app_id# > 0){
 			Span("Edit column", text-muted)
 		}
 	}
-
 	DBFind(tables, src_mem).Columns("id,name,columns,conditions").Vars(pre).WhereId(#tabl_id#)
 	JsonToSource(src_columns, #pre_columns#)
 	Form(panel panel-default){
@@ -861,7 +821,6 @@ If(#buffer_value_app_id# > 0){
 	Div(breadcrumb){
 		Span(Class: text-muted, Body: "This section is used to manage contracts with confirmation")
 	}
-
 	DBFind(signatures, src_sign).Limit(250).Order("id").Columns("id,name,value->params,value->title,conditions").Custom(custom_title){
 		Span(#value.title#)
 	}.Custom(custom_params){
@@ -869,7 +828,6 @@ If(#buffer_value_app_id# > 0){
 	}.Custom(action){
 		Span(LinkPage(Body: Em(Class: fa fa-edit), Class: text-primary h4, Page: confirmations_edit, PageParams: "sign_id=#id#"))
 	}
-
 	Table(Source:src_sign, Columns:"Contract=name,Title=custom_title,Params=custom_params,Conditions=conditions,=action").Style(
 	tbody > tr:nth-of-type(odd) {
 		background-color: #fafbfc; 
@@ -901,7 +859,6 @@ If(#buffer_value_app_id# > 0){
 		Span(/).Style(margin-right: 10px; margin-left: 10px;)
 		Span(Class: text-muted, Body: "Edit")
 	}
-
 	Form(){
 		DBFind(signatures, src_signatures).Columns("name,conditions,value->title,value->params").Vars(pre).WhereId(#sign_id#)
 		Div(form-group){
@@ -932,7 +889,6 @@ If(#buffer_value_app_id# > 0){
 		Span(/).Style(margin-right: 10px; margin-left: 10px;)
 		Span(Class: text-muted, Body: "Create")
 	}
-
 	Form(panel panel-default){
 		Div(panel-body){
 			Div(form-group){
@@ -998,12 +954,10 @@ If(#buffer_value_app_id# > 0){
 	Div(breadcrumb){
 		Span(Class: text-muted, Body: "Payload was formed. You can download it now")
 	}
-
 	DBFind(binaries, src_binaries).Where("name=''export'' and member_id=#key_id# and app_id=1").Custom(app_name){
 		DBFind(Name: buffer_data, Source: src_buffer).Columns("value->app_name").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 		Span(#buffer_value_app_name#)
 	}
-
 	Table(Source: src_binaries, "Applications=app_name,=data").Style(
 		tbody > tr:nth-of-type(odd) {
 			background-color: #fafbfc;
@@ -1034,10 +988,8 @@ If(#buffer_value_app_id# > 0){
 	Div(breadcrumb){
 		Span(Class: text-muted, Body: "Select the application which do you want to export and proceed to the payload generation process.")
 	}
-
 	Include(export_link)
 	DBFind(buffer_data, src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
-
 	If(#buffer_value_app_id# > 0){
 		If(#res_type#=="pages"){
 			DBFind(pages, src).Custom(cbox){
@@ -1075,7 +1027,6 @@ If(#buffer_value_app_id# > 0){
 			}.Where("app_id = #buffer_value_app_id#").Order("id")
 		}
 	}
-
 	Div(row){
 		Div(col-md-9 col-md-offset-0){
 			Table(src, "ID=id,Name=name,=cbox").Style(
@@ -1113,7 +1064,6 @@ If(#buffer_value_app_id# > 0){
 	(21, 'import_app', 'Div(content-wrapper){
 	DBFind(buffer_data, src_buffer).Columns("id,value->name,value->data").Where("key=''import'' and member_id=#key_id#").Vars(hash00001)
 	DBFind(buffer_data, src_buffer).Columns("value->app_name,value->pages,value->pages_count,value->blocks,value->blocks_count,value->menu,value->menu_count,value->parameters,value->parameters_count,value->languages,value->languages_count,value->contracts,value->contracts_count,value->tables,value->tables_count").Where("key=''import_info'' and member_id=#key_id#").Vars(hash00002)
-
 	SetTitle("Import - #hash00002_value_app_name#")
 	Data(data_info, "hash00003_name,hash00003_count,hash00003_info"){
 		Pages,"#hash00002_value_pages_count#","#hash00002_value_pages#"
@@ -1127,7 +1077,6 @@ If(#buffer_value_app_id# > 0){
 	Div(breadcrumb){
 		Span(Class: text-muted, Body: "Your data that you can import")
 	}
-
 	Div(panel panel-primary){
 		ForList(data_info){
 			Div(list-group-item){
@@ -1193,7 +1142,6 @@ Div(content-wrapper){
 		Span(/).Style(margin-right: 10px; margin-left: 10px;)
 		Span(Class: text-muted, Body: "Create")
 	}
-
 	Form(panel panel-default){
 		Div(panel-body){
 			Div(row){
@@ -1276,7 +1224,6 @@ Div(content-wrapper){
 					Label(Class: text-muted, Body: "Action")
 				}
 			}
-
 			JsonToSource(pv, #pre_res#)
 			ForList(Source: pv, Index:s_ind){
 				SetVar(max_sec, #s_ind#)
@@ -1290,7 +1237,6 @@ Div(content-wrapper){
 			
 			SetVar(next_sec, Calculate(Exp:#cs#+1, Type: int))
 			SetVar(data_sec, Calculate(Exp:#cs#-#max_sec#, Type: int))
-
 			ForList(Source: pv, Index:s_ind){
 				If(#s_ind#>#cs#){
 				}.Else{
@@ -1342,12 +1288,10 @@ Div(content-wrapper){
 	Div(breadcrumb){
 		Span(Class: text-muted, Body: "This section is used to manage the menu")
 	}
-
 	DBFind(menu, src_menus).Limit(250).Order("id").Custom(action){
 		Span(LinkPage(Body: Em(Class: fa fa-cogs), Class: text-primary h4, Page: properties_edit, PageParams: "edit_property_id=#id#,type=menu")).Style(margin-right: 20px;)
 		Span(LinkPage(Body: Em(Class: fa fa-edit), Class: text-primary h4, Page: editor, PageParams: "open=menu,name=#name#"))
 	}
-
 	Table(src_menus, "ID=id,Name=name,Title=title,Conditions=conditions,=action").Style(
 	tbody > tr:nth-of-type(odd) {
 		background-color: #fafbfc; 
@@ -1383,7 +1327,6 @@ Div(content-wrapper){
 			SetVar(param_name, "New")
 		}
 	}
-
 	SetTitle("Ecosystem parameters")
 	Div(Class: breadcrumb){
 		LinkPage("Ecosystem parameters", params_list)
@@ -1431,11 +1374,9 @@ Div(content-wrapper){
 	Div(breadcrumb){
 		Span(Class: text-muted, Body: "This section is used to configure stored reusable parameters")
 	}
-
 	DBFind(parameters, src_appparameters).Order("id").Custom(custom_actions){
 		LinkPage(Body: Em(Class: fa fa-edit), Class: text-primary h4, Page: params_edit, PageParams: "id=#id#")
 	}
-
 	Table(src_appparameters, "ID=id,Name=name,Value=value,Conditions=conditions,=custom_actions").Style(
 		tbody > tr:nth-of-type(odd) {
 			background-color: #fafbfc;
@@ -1569,7 +1510,6 @@ Div(content-wrapper){
 			Span("Create", text-muted)
 		}
 	}
-
 	Data(src_type,"type,name"){
 		text,"Text"
 		number,"Number"
@@ -1670,7 +1610,6 @@ Div(content-wrapper){
 			Span("Edit", text-muted)
 		}
 	}
-
 	Form(){
 		Div(panel panel-default){
 			Div(panel-body){
@@ -1779,7 +1718,6 @@ Div(content-wrapper){
 }', 'admin_menu', 'ContractAccess("@1EditPage")'),
 	(31, 'table_view', 'Div(content-wrapper){
 	DBFind(tables).WhereId(#tabl_id#).Columns("id,name").Vars(pre)
-
 	SetTitle("Tables")
 	Div(breadcrumb){
 		LinkPage("Tables", app_tables)
@@ -1788,7 +1726,6 @@ Div(content-wrapper){
 		Span(/).Style(margin-right: 10px; margin-left: 10px;)
 		LinkPage(Body:"Edit", Page: table_edit, PageParams: "tabl_id=#tabl_id#")
 	}
-
 	DBFind(#pre_name#).Count(count)
 	If(#page#>0){
 		SetVar(prev_page,Calculate(#page#-1)
@@ -1846,7 +1783,6 @@ ForList(notifications_members){
 		}
 	}
 }
-
 DBFind(Name: notifications, Source: notifications_roles).Columns("id,page_name,notification->icon,notification->header,notification->body,recipient->role_id").Where("closed=0 and notification->type='2' and (date_start_processing is null or processing_info->member_id='#key_id#')")
 ForList(notifications_roles){
 	DBFind(Name: roles_participants, Source: src_roles).Columns("id").Where("member->member_id='#key_id#' and role->id='#recipient.role_id#' and deleted=0").Vars(prefix)

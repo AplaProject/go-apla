@@ -43,30 +43,30 @@ func TestRead(t *testing.T) {
 
 	contList := []string{`contract %s {
 		action {
-			DBInsert("%[1]s", "my,amount", "Alex", 100 )
-			DBInsert("%[1]s", "my,amount", "Alex 2", 13300 )
-			DBInsert("%[1]s", "my,amount", "Mike", 0 )
-			DBInsert("%[1]s", "my,amount", "Mike 2", 25500 )
-			DBInsert("%[1]s", "my,amount", "John Mike", 0 )
-			DBInsert("%[1]s", "my,amount", "Serena Martin", 777 )
+			DBInsert("%[1]s", {my: "Alex",amount: 100})
+			DBInsert("%[1]s", {my: "Alex 2",amount: 13300})
+			DBInsert("%[1]s", {my: "Mike",amount: 0})
+			DBInsert("%[1]s", {my: "Mike 2",amount: 25500})
+			DBInsert("%[1]s", {my: "John Mike", amount: 0})
+			DBInsert("%[1]s", {my: "Serena Martin",amount:777})
 		}
 	}`,
 		`contract Get%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Where("id>= ? and id<= ?", 2, 5)
+			row = DBFind("%[1]s").Where({id:[{&gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`contract GetOK%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Columns("my,amount").Where("id>= ? and id<= ?", 2, 5)
+			row = DBFind("%[1]s").Columns("my,amount").Where({id:[{&gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`contract GetData%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Columns("active").Where("id>= ? and id<= ?", 2, 5)
+			row = DBFind("%[1]s").Columns("active").Where({id:[{&gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`func ReadFilter%s bool {

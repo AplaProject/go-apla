@@ -33,4 +33,4 @@ contract NewVDE {
             CreateVDE($VDEName, $DBUser, $DBPassword, $VDEAPIPort)
             $result = "VDE " + $VDEName + " created"
 		}
-	}
+}
