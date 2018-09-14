@@ -228,7 +228,7 @@ func (t *Transaction) Check(checkTime int64, checkForDupTr bool) error {
 	return nil
 }
 
-func (t *Transaction) Play() (string, error) {
+func (t *Transaction) Play() (string, []smart.FlushInfo, error) {
 	// smart-contract
 	if t.TxContract != nil {
 		// check that there are enough money in CallContract
@@ -236,10 +236,10 @@ func (t *Transaction) Play() (string, error) {
 	}
 
 	if t.tx == nil {
-		return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", t.TxType))
+		return "", nil, utils.ErrInfo(fmt.Errorf("can't find parser for %d", t.TxType))
 	}
 
-	return "", t.tx.Action()
+	return "", nil, t.tx.Action()
 }
 
 // AccessRights checks the access right by executing the condition value
@@ -274,7 +274,7 @@ func (t *Transaction) AccessRights(condition string, iscondition bool) error {
 }
 
 // CallContract calls the contract functions according to the specified flags
-func (t *Transaction) CallContract() (resultContract string, err error) {
+func (t *Transaction) CallContract() (resultContract string, flushRollback []smart.FlushInfo, err error) {
 	sc := smart.SmartContract{
 		VDE:           false,
 		Rollback:      true,
@@ -293,6 +293,10 @@ func (t *Transaction) CallContract() (resultContract string, err error) {
 	}
 	resultContract, err = sc.CallContract()
 	t.SysUpdate = sc.SysUpdate
+	if sc.FlushRollback != nil {
+		flushRollback = make([]smart.FlushInfo, len(sc.FlushRollback))
+		copy(flushRollback, sc.FlushRollback)
+	}
 	return
 }
 
