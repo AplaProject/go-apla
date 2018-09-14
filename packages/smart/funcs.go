@@ -168,6 +168,8 @@ var (
 		"ValidateCondition":            30,
 		"ValidateEditContractNewValue": 10,
 		"TransactionInfo":              100,
+		"DeleteTable":                  100,
+		"DeleteColumn":                 100,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -289,6 +291,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UpdateNotifications":          UpdateNotifications,
 		"UpdateRolesNotifications":     UpdateRolesNotifications,
 		"TransactionInfo":              TransactionInfo,
+		"DeleteTable":                  DeleteTable,
+		"DeleteColumn":                 DeleteColumn,
 	}
 
 	switch vt {
@@ -2145,4 +2149,76 @@ func TransactionInfo(txHash string) (string, error) {
 	}
 	out, err = json.Marshal(data)
 	return string(out), err
+}
+
+func DeleteColumn(sc *SmartContract, tableName, name string) (err error) {
+	var (
+		count int64
+	)
+	if err = validateAccess(`DeleteColumn`, sc, nDeleteColumn); err != nil {
+		return
+	}
+	name = converter.EscapeSQL(strings.ToLower(name))
+	tableName = strings.ToLower(tableName)
+	tblname := getDefTableName(sc, tableName)
+
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
+	if err != nil {
+		return
+	}
+	if count > 0 {
+		return fmt.Errorf(eTableNotEmpty, tblname)
+	}
+
+	if !sc.VDE {
+		return SysRollback(sc, SysRollData{Type: "DeleteColumn", TableName: tblname, Data: name})
+	}
+	return
+}
+
+func DeleteTable(sc *SmartContract, tableName string) (err error) {
+	var (
+		count int64
+	)
+	if err = validateAccess(`DeleteTable`, sc, nDeleteTable); err != nil {
+		return
+	}
+	tableName = strings.ToLower(tableName)
+	tblname := getDefTableName(sc, tableName)
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
+	if err != nil {
+		return
+	}
+	if count > 0 {
+		return fmt.Errorf(eTableNotEmpty, tblname)
+	}
+
+	t := model.Table{}
+	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	t.SetTablePrefix(prefix)
+	TableName := tblname
+	if strings.HasPrefix(TableName, prefix) {
+		TableName = TableName[len(prefix)+1:]
+	}
+	found, err := t.Get(sc.DbTransaction, TableName)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
+		return err
+	}
+	if found {
+		err = t.Delete(sc.DbTransaction)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
+			return err
+		}
+	} else {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
+	}
+	if err = model.DropTable(sc.DbTransaction, tblname); err != nil {
+		return
+	}
+	if !sc.VDE {
+		return SysRollback(sc, SysRollData{Type: "DeleteTable", TableName: tblname})
+	}
+	return
 }

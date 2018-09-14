@@ -47,6 +47,7 @@ const (
 	eUnsupportedType     = "Unsupported type %T"
 	eWrongRandom         = `Wrong random parameters %d %d`
 	eConditionNotAllowed = `Condition %s is not allowed`
+	eTableNotEmpty       = `Table %s is not empty`
 )
 
 var (
