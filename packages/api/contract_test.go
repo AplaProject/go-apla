@@ -1412,3 +1412,58 @@ func TestBlockTransactions(t *testing.T) {
 
 	fmt.Printf("%+v", result)
 }
+
+func TestCost(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`cnt`)
+
+	form := url.Values{`Value`: {`contract ` + name + `1 {
+		func my() {
+			var i int
+			while i < 1000 {
+				i = i + 1
+			}
+		}
+		conditions {
+			var i int
+			while i < 1000 {
+				i = i + 1
+			}
+		}
+		action {
+			var i int
+			while i < 10000 {
+				i = i + 1
+			}
+			my()
+			$result = "OK"
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	form = url.Values{`Value`: {`contract ` + name + `2 {
+		conditions {
+			var i int
+			while i < 1000 {
+				i = i + 1
+			}
+		}
+		action {
+			var i int
+			while i < 10000 {
+				i = i + 1
+			}
+			` + name + `1()
+			$result = "OK"
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	require.NoError(t, postTx(name+`1`, &url.Values{}))
+	require.NoError(t, postTx(name+`2`, &url.Values{}))
+	t.Error(`OK`)
+
+}
