@@ -68,7 +68,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
 "ecosystem": "false"}', 'ContractAccess("@1EditTable")', '%[1]d'),
 	(next_id('1_tables'), 'members', 
 		'{"insert":"ContractAccess(\"@1ProfileEdit\")","update":"true","new_column":"ContractConditions(\"MainCondition\")"}',
-		'{"image_id":"ContractAccess(\"@1ProfileEditAvatar\")","member_info":"ContractAccess(\"@1ProfileEdit\")","member_name":"false", "ecosystem": "false"}', 
+		'{"image_id":"ContractAccess(\"@1ProfileEdit\")","member_info":"ContractAccess(\"@1ProfileEdit\")","member_name":"false", "ecosystem": "false"}', 
 		'ContractConditions("MainCondition")', '%[1]d'),
 	(next_id('1_tables'), 'roles',
 		'{"insert":"ContractAccess(\"@1RolesCreate\",\"@1RolesInstall\")",
