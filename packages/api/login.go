@@ -35,6 +35,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -171,12 +172,14 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			}
 			data.result = ret
 		} else {
-			_, err = smart.CallContract("NewUser", 1, params, []string{hexPubKey})
+			smartTx, err := smart.CallContract("NewUser", 1, params, []string{hexPubKey})
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+				return errorAPI(w, err, http.StatusInternalServerError)
+			}
+			if err := queue.ValidateTxQueue.Enqueue(smartTx); err != nil {
+				return errorAPI(w, err, http.StatusInternalServerError)
 			}
 		}
-
 	}
 
 	if ecosystemID > 1 && len(pubkey) == 0 {

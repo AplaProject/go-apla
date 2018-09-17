@@ -9,6 +9,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/pkg/errors"
@@ -142,9 +143,12 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 		"Reason":         reason,
 	}
 	forSign := []string{strconv.FormatInt(producer.KeyID, 10), strconv.FormatInt(currentNode.KeyID, 10), strconv.FormatInt(blockId, 10), strconv.FormatInt(blockTime, 10), reason}
-	_, err = smart.CallContract("NewBadBlock", 1, params, forSign)
+	smartTx, err := smart.CallContract("NewBadBlock", 1, params, forSign)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+		return err
+	}
+	if err := queue.ValidateTxQueue.Enqueue(smartTx); err != nil {
 		return err
 	}
 

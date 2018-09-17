@@ -9,8 +9,10 @@ import (
 
 	"path/filepath"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
 	log "github.com/sirupsen/logrus"
@@ -27,16 +29,14 @@ var generateFirstBlockCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		now := time.Now().Unix()
 
-		/*
-			header := &blockchain.BlockHeader{
-				BlockID:      1,
-				Time:         now,
-				EcosystemID:  0,
-				KeyID:        conf.Config.KeyID,
-				NodePosition: 0,
-				Version:      consts.BLOCK_VERSION,
-			}
-		*/
+		header := &blockchain.BlockHeader{
+			BlockID:      1,
+			Time:         now,
+			EcosystemID:  0,
+			KeyID:        conf.Config.KeyID,
+			NodePosition: 0,
+			Version:      consts.BLOCK_VERSION,
+		}
 
 		decodeKeyFile := func(kName string) []byte {
 			filepath := filepath.Join(conf.Config.KeysDir, kName)
@@ -83,8 +83,20 @@ var generateFirstBlockCmd = &cobra.Command{
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block body bin marshalling")
 			return
 		}
-		if _, err := smart.CallContract("InitFirstEcosystem", 1, map[string]string{"Data": string(tx)}, []string{string(tx)}); err != nil {
+
+		smartTx, err := smart.CallContract("InitFirstEcosystem", 1, map[string]string{"Data": string(tx)}, []string{string(tx)})
+		if err != nil {
 			log.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Fatal("first block contract execution")
+			return
+		}
+
+		block := &blockchain.Block{
+			Header:       header,
+			Transactions: []*blockchain.Transaction{smartTx},
+		}
+
+		if err := queue.ProcessBlockQueue.Enqueue(block); err != nil {
+			log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Fatal("enqueue first block")
 			return
 		}
 

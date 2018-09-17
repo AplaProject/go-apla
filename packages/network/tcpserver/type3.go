@@ -7,6 +7,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/network"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -53,9 +54,16 @@ func processStopNetwork(b []byte) ([]byte, error) {
 		log.WithFields(log.Fields{"error": err, "type": consts.InvalidObject}).Error("validating cert")
 		return nil, err
 	}
-	hash, err := smart.CallContract("StopNetwork", 1, map[string]string{"Cert": string(b)}, []string{string(b)})
+	smartTx, err := smart.CallContract("StopNetwork", 1, map[string]string{"Cert": string(b)}, []string{string(b)})
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+		return nil, err
+	}
+	hash, err := smartTx.Hash()
+	if err != nil {
+		return nil, err
+	}
+	if err := queue.ValidateTxQueue.Enqueue(smartTx); err != nil {
 		return nil, err
 	}
 

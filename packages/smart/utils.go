@@ -25,7 +25,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -83,7 +82,7 @@ func validateAccess(funcName string, sc *SmartContract, contracts ...string) err
 	return nil
 }
 
-func CallContract(contractName string, ecosystemID int64, params map[string]string, paramsForSign []string) ([]byte, error) {
+func CallContract(contractName string, ecosystemID int64, params map[string]string, paramsForSign []string) (*blockchain.Transaction, error) {
 	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
 	if err != nil {
 		return nil, err
@@ -109,12 +108,5 @@ func CallContract(contractName string, ecosystemID int64, params map[string]stri
 	if err != nil {
 		return nil, err
 	}
-	hash, err := smartTx.Hash()
-	if err != nil {
-		return nil, err
-	}
-	if err := queue.ValidateTxQueue.Enqueue(smartTx); err != nil {
-		return nil, err
-	}
-	return hash, nil
+	return smartTx, nil
 }

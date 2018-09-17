@@ -176,10 +176,9 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	d.logger.Infof("starting downloading blocks from %d to %d (%d) \n", curBlock.Header.BlockID, maxBlockID, maxBlockID-curBlock.Header.BlockID)
 
 	count = 0
-	blockHash := curBlock.NextHash
 	curBlockID := curBlock.Header.BlockID + 1
-	block := &blockchain.Block{}
-	found, err = block.Get(curBlock.NextHash)
+	nextBlock, found, err := blockchain.GetNextBlock(curBlockHash)
+	blockHash := nextBlock.Hash
 	if err != nil {
 		return err
 	}

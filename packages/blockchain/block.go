@@ -115,7 +115,6 @@ type Block struct {
 	Transactions  []*Transaction
 	MrklRoot      []byte
 	PrevHash      []byte
-	NextHash      []byte
 	RollbacksHash []byte
 	Sign          []byte
 }
@@ -198,6 +197,25 @@ func (b *Block) Get(hash []byte) (bool, error) {
 		return true, err
 	}
 	return true, nil
+}
+
+func GetNextBlock(hash []byte) (*BlockWithHash, bool, error) {
+	nextHash, found, err := GetNextBlockHash(hash)
+	if err != nil {
+		return nil, false, err
+	}
+	if !found {
+		return nil, false, nil
+	}
+	b := &Block{}
+	found, err = b.Get(nextHash)
+	if err != nil {
+		return nil, false, err
+	}
+	if !found {
+		return nil, false, nil
+	}
+	return &BlockWithHash{Hash: nextHash, Block: b}, true, nil
 }
 
 func (b *Block) Insert(hash []byte) error {
