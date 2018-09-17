@@ -398,6 +398,19 @@ VALUES
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
+	(next_id('1_contracts'), 'FirstBlock', 'contract InitFirstEcosystem {
+    data {
+        Data string
+    }
+
+    conditions {
+    }
+
+    action {
+        FirstBlock($Data)
+    }
+}
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'Import', 'contract Import {
     data {
         Data string
@@ -996,7 +1009,7 @@ VALUES
     }
 
     action {
-        StopNet(Cert)
+        StopNet($Cert)
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),

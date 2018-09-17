@@ -12,6 +12,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
@@ -81,6 +82,21 @@ var generateFirstBlockCmd = &cobra.Command{
 
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block body bin marshalling")
+			return
+		}
+		dbCfg := conf.Config.DB
+		err = model.GormInit(dbCfg.Host, dbCfg.Port, dbCfg.User, dbCfg.Password, dbCfg.Name)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"db_user": dbCfg.User, "db_password": dbCfg.Password, "db_name": dbCfg.Name, "type": consts.DBError,
+			}).Error("can't init gorm")
+			return
+		}
+		err = queue.Init()
+		if err != nil {
+			return
+		}
+		if err := smart.LoadContract(nil, "1"); err != nil {
 			return
 		}
 

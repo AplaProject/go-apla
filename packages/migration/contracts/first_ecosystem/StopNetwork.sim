@@ -9,6 +9,6 @@ contract StopNetwork {
     }
 
     action {
-        StopNet(Cert)
+        StopNet($Cert)
     }
 }

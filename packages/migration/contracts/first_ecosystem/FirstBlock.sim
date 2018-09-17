@@ -9,6 +9,6 @@ contract InitFirstEcosystem {
     }
 
     action {
-        FirstBlock(Data)
+        FirstBlock($Data)
     }
 }
