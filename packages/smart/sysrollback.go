@@ -294,3 +294,23 @@ func SysRollbackDeactivate(sysData SysRollData) error {
 	ActivateContract(sysData.ID, sysData.EcosystemID, true)
 	return nil
 }
+
+// SysRollbackDeleteColumn is rolling back delete column
+func SysRollbackDeleteColumn(DbTransaction *model.DbTransaction, sysData SysRollData) error {
+	var (
+		data map[string]string
+	)
+	err := unmarshalJSON([]byte(sysData.Data), &data, `rollback delete to json`)
+	if err != nil {
+		return err
+	}
+	sqlColType, err := columnType(data["type"])
+	if err != nil {
+		return err
+	}
+	err = model.AlterTableAddColumn(DbTransaction, sysData.TableName, data["name"], sqlColType)
+	if err != nil {
+		return logErrorDB(err, "adding column to the table")
+	}
+	return nil
+}

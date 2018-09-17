@@ -83,6 +83,11 @@ type TxInfo struct {
 	Params   map[string]interface{} `json:"params,omitempty"`
 }
 
+type TableInfo struct {
+	Columns map[string]string
+	Table   *model.Table
+}
+
 // SmartContract is storing smart contract data
 type SmartContract struct {
 	VDE           bool
@@ -168,8 +173,8 @@ var (
 		"ValidateCondition":            30,
 		"ValidateEditContractNewValue": 10,
 		"TransactionInfo":              100,
-		"DeleteTable":                  100,
-		"DeleteColumn":                 100,
+		"DelTable":                     100,
+		"DelColumn":                    100,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -291,8 +296,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UpdateNotifications":          UpdateNotifications,
 		"UpdateRolesNotifications":     UpdateRolesNotifications,
 		"TransactionInfo":              TransactionInfo,
-		"DeleteTable":                  DeleteTable,
-		"DeleteColumn":                 DeleteColumn,
+		"DelTable":                     DelTable,
+		"DelColumn":                    DelColumn,
 	}
 
 	switch vt {
@@ -2151,11 +2156,12 @@ func TransactionInfo(txHash string) (string, error) {
 	return string(out), err
 }
 
-func DeleteColumn(sc *SmartContract, tableName, name string) (err error) {
+func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 	var (
-		count int64
+		count   int64
+		permout []byte
 	)
-	if err = validateAccess(`DeleteColumn`, sc, nDeleteColumn); err != nil {
+	if err = validateAccess(`DelColumn`, sc, nDeleteColumn); err != nil {
 		return
 	}
 	name = converter.EscapeSQL(strings.ToLower(name))
@@ -2169,18 +2175,57 @@ func DeleteColumn(sc *SmartContract, tableName, name string) (err error) {
 	if count > 0 {
 		return fmt.Errorf(eTableNotEmpty, tblname)
 	}
-
+	colType, err := model.GetColumnType(tblname, name)
+	if err != nil {
+		return err
+	}
+	if err = model.AlterTableDropColumn(sc.DbTransaction, tblname, name); err != nil {
+		return
+	}
+	t := model.Table{}
+	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	t.SetTablePrefix(prefix)
+	TableName := tblname
+	if strings.HasPrefix(TableName, prefix) {
+		TableName = TableName[len(prefix)+1:]
+	}
+	found, err := t.Get(sc.DbTransaction, TableName)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
+		return fmt.Errorf(eTableNotFound, TableName)
+	}
+	var perm map[string]string
+	if err = unmarshalJSON([]byte(t.Columns), &perm, `columns from the table`); err != nil {
+		return err
+	}
+	delete(perm, name)
+	permout, err = marshalJSON(perm, `permissions to json`)
+	if err != nil {
+		return
+	}
+	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
+		`1_tables`, `id`, t.ID)
 	if !sc.VDE {
-		return SysRollback(sc, SysRollData{Type: "DeleteColumn", TableName: tblname, Data: name})
+		data := map[string]string{"name": name, "type": colType}
+		out, err := marshalJSON(data, `marshalling column info`)
+		if err != nil {
+			return err
+		}
+		return SysRollback(sc, SysRollData{Type: "DeleteColumn", TableName: tblname,
+			Data: string(out)})
 	}
 	return
 }
 
-func DeleteTable(sc *SmartContract, tableName string) (err error) {
+func DelTable(sc *SmartContract, tableName string) (err error) {
 	var (
 		count int64
 	)
-	if err = validateAccess(`DeleteTable`, sc, nDeleteTable); err != nil {
+	if err = validateAccess(`DelTable`, sc, nDeleteTable); err != nil {
 		return
 	}
 	tableName = strings.ToLower(tableName)
@@ -2218,7 +2263,25 @@ func DeleteTable(sc *SmartContract, tableName string) (err error) {
 		return
 	}
 	if !sc.VDE {
-		return SysRollback(sc, SysRollData{Type: "DeleteTable", TableName: tblname})
+		var (
+			out []byte
+		)
+		cols, err := model.GetAllColumnTypes(tblname)
+		if err != nil {
+			return err
+		}
+		tinfo := TableInfo{Table: &t, Columns: make(map[string]string)}
+		for _, item := range cols {
+			if item["column_name"] == `id` {
+				continue
+			}
+			tinfo.Columns[item["column_name"]] = model.DataTypeToColumnType(item["data_type"])
+		}
+		out, err = marshalJSON(tinfo, `marshalling table info`)
+		if err != nil {
+			return err
+		}
+		return SysRollback(sc, SysRollData{Type: "DeleteTable", TableName: tblname, Data: string(out)})
 	}
 	return
 }
