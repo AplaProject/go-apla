@@ -95,9 +95,8 @@ type FieldInfo struct {
 }
 
 var ContractPrices = map[string]string{
-	`@1NewTable`: `table_price`, `@1NewContract`: `contract_price`,
-	`@1NewEcosystem`: `ecosystem_price`, `@1NewMenu`: `menu_price`,
-	`@1NewPage`: `page_price`, `@1NewColumn`: `column_price`,
+	`@1NewContract`: `price_create_contract`,
+	`@1NewMenu`:     `price_create_menu`, `@1NewPage`: `price_create_page`,
 }
 
 // ContainsTag returns whether the tag is contained in this field
