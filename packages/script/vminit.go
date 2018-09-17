@@ -94,11 +94,6 @@ type FieldInfo struct {
 	Tags string
 }
 
-var ContractPrices = map[string]string{
-	`@1NewContract`: `price_create_contract`,
-	`@1NewMenu`:     `price_create_menu`, `@1NewPage`: `price_create_page`,
-}
-
 // ContainsTag returns whether the tag is contained in this field
 func (fi *FieldInfo) ContainsTag(tag string) bool {
 	return strings.Contains(fi.Tags, tag)
@@ -291,15 +286,6 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		}
 	}
 	rt.cost -= CostContract
-	if priceName, ok := ContractPrices[name]; ok {
-		price := syspar.SysInt64(priceName)
-		if price > 0 {
-			rt.cost -= price
-		}
-		if rt.cost < 0 {
-			rt.cost = 0
-		}
-	}
 
 	var stack Stacker
 	if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
