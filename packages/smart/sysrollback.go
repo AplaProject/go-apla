@@ -314,3 +314,30 @@ func SysRollbackDeleteColumn(DbTransaction *model.DbTransaction, sysData SysRoll
 	}
 	return nil
 }
+
+// SysRollbackDeleteTable is rolling back delete table
+func SysRollbackDeleteTable(DbTransaction *model.DbTransaction, sysData SysRollData) error {
+	var (
+		data    TableInfo
+		colsSQL string
+	)
+	err := unmarshalJSON([]byte(sysData.Data), &data, `rollback delete table to json`)
+	if err != nil {
+		return err
+	}
+	for key, item := range data.Columns {
+		colsSQL += `"` + key + `" ` + typeToPSQL[item] + " ,\n"
+	}
+	err = model.CreateTable(DbTransaction, sysData.TableName, strings.TrimRight(colsSQL, ",\n"))
+	if err != nil {
+		return logErrorDB(err, "creating tables")
+	}
+
+	prefix, _ := PrefixName(sysData.TableName)
+	data.Table.SetTablePrefix(prefix)
+	err = data.Table.Create(DbTransaction)
+	if err != nil {
+		return logErrorDB(err, "insert table info")
+	}
+	return nil
+}
