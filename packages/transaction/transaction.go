@@ -14,6 +14,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
@@ -212,6 +213,21 @@ func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params []interf
 			v = val
 			isforv = true
 			forv = strings.Join(list, ",")
+		case script.File:
+			var val map[interface{}]interface{}
+			if val, ok = params[index].(map[interface{}]interface{}); !ok {
+				return fmt.Errorf("Incorrect type file")
+			}
+
+			file := types.File{
+				"Name":     val["Name"].(string),
+				"MimeType": val["MimeType"].(string),
+				"Body":     val["Body"].([]byte),
+			}
+
+			v = file
+			isforv = true
+			forv = "file"
 		}
 
 		if _, ok = t.TxData[fitem.Name]; !ok {
