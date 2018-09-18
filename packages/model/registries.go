@@ -3,7 +3,7 @@ package model
 import "github.com/GenesisKernel/go-genesis/packages/types"
 
 var registries = []interface{}{
-	KeySchema{},
+	KeySchema{}, Ecosystem{},
 }
 
 func GetIndexes() []types.Index {

@@ -3,6 +3,7 @@ package registry
 import (
 	"testing"
 
+	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,7 @@ func TestMetadataIndex(t *testing.T) {
 	require.Nil(t, tx.Set("role.ccc.user", "{\"name\":\"user\"}"))
 	require.Nil(t, tx.Set("role.ccc.moderator", "{\"name\":\"moderator\"}"))
 	require.Nil(t, tx.Set("role.bbb.admin", "{\"name\":\"admin\"}"))
+	require.Nil(t, tx.Set("role.ddd.admin", "{\"name\":\"dddadmin\"}"))
 
 	require.Nil(t, tx.Set("ecosystem.aaa", "{\"name\":\"aaa\"}"))
 	require.Nil(t, tx.Set("ecosystem.bbb", "{\"name\":\"bbb\"}"))
@@ -82,4 +84,21 @@ func TestMetadataIndex(t *testing.T) {
 		"bbb": {"{\"name\":\"admin\"}"},
 		"ccc": {"{\"name\":\"admin\"}", "{\"name\":\"moderator\"}", "{\"name\":\"user\"}"},
 	}, roles)
+
+	require.Error(t, mtx.Walk(&types.Registry{Name: "role", Ecosystem: &types.Ecosystem{Name: "ddd"}}, "name", func(jsonRow string) bool {
+		return true
+	}))
+
+	assert.Nil(t, mtx.Insert(nil, &types.Registry{
+		Name:      "ecosystem",
+		Ecosystem: &types.Ecosystem{Name: "ecosystem"},
+	}, "ddd", model.Ecosystem{Name: "ddd"}))
+
+	dddRoles := make([]string, 0)
+	require.Nil(t, mtx.Walk(&types.Registry{Name: "role", Ecosystem: &types.Ecosystem{Name: "ddd"}}, "name", func(jsonRow string) bool {
+		dddRoles = append(dddRoles, jsonRow)
+		return true
+	}))
+
+	assert.Equal(t, []string{"{\"name\":\"dddadmin\"}"}, dddRoles)
 }

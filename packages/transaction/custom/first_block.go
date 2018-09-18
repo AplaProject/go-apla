@@ -28,6 +28,9 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
+	"strconv"
+
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -38,6 +41,7 @@ const firstEcosystemID = 1
 type FirstBlockTransaction struct {
 	Logger        *log.Entry
 	DbTransaction *model.DbTransaction
+	MetaDb        types.MetadataRegistryWriter
 	Data          interface{}
 }
 
@@ -84,12 +88,17 @@ func (t *FirstBlockTransaction) Action() error {
 		return utils.ErrInfo(err)
 	}
 
-	err = model.GetDB(t.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
-		keyID, data.PublicKey, amount).Error
+	err = t.MetaDb.Insert(
+		nil, // TODO
+		&types.Registry{Name: "key", Ecosystem: &types.Ecosystem{"1"}},
+		strconv.FormatInt(keyID, 10),
+		model.KeySchema{ID: keyID, PublicKey: data.PublicKey, Amount: amount},
+	)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return utils.ErrInfo(err)
 	}
+
 	err = model.GetDB(t.DbTransaction).Exec(`insert into "1_pages" (id,name,menu,value,conditions) values('1', 'default_page',
 		  'default_menu', ?, 'ContractAccess("@1EditPage")')`, syspar.SysString(`default_ecosystem_page`)).Error
 	if err != nil {

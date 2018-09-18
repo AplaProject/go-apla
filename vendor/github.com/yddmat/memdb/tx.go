@@ -154,6 +154,10 @@ func (tx *Transaction) AddIndex(indexes ...*Index) error {
 	return nil
 }
 
+func (tx *Transaction) RemoveIndex(name string) error {
+	return tx.newIndexes.RemoveIndex(name)
+}
+
 func (tx *Transaction) Ascend(index string, iterator func(key, value string) bool) error {
 	tx.mu.RLock()
 	defer tx.mu.RUnlock()

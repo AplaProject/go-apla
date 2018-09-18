@@ -319,7 +319,7 @@ func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, keyID int64) {
 func GetTransaction(t *Transaction, txType string) (custom.TransactionInterface, error) {
 	switch txType {
 	case consts.TxTypeParserFirstBlock:
-		return &custom.FirstBlockTransaction{t.GetLogger(), t.DbTransaction, t.TxPtr}, nil
+		return &custom.FirstBlockTransaction{t.GetLogger(), t.DbTransaction, t.MetaDb, t.TxPtr}, nil
 	case consts.TxTypeParserStopNetwork:
 		return &custom.StopNetworkTransaction{t.GetLogger(), t.TxPtr, nil}, nil
 	}

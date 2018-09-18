@@ -31,8 +31,6 @@ type MetadataRegistryWriter interface {
 	Insert(ctx BlockchainContext, registry *Registry, pkValue string, value interface{}) error
 	Update(ctx BlockchainContext, registry *Registry, pkValue string, newValue interface{}) error
 
-	AddIndex(indexes ...Index) error
-
 	driver.Tx
 }
 

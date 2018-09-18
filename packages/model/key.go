@@ -8,11 +8,11 @@ import (
 // Key is model
 // TODO rename to Key
 type KeySchema struct {
-	ID        int64
-	PublicKey []byte
-	Amount    int64 `json:"amount"`
-	Deleted   int64
-	Blocked   int64
+	ID        int64  `json:"id"`
+	PublicKey []byte `json:"public_key"`
+	Amount    string `json:"amount"`
+	Deleted   bool   `json:"deleted"`
+	Blocked   bool   `json:"blocked"`
 }
 
 func (ks KeySchema) Name() string {

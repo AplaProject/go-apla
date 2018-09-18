@@ -84,6 +84,10 @@ func (idxer *Indexes) GetIndex(name string) *Index {
 	return nil
 }
 
+func (idxer *Indexes) Has(name string) bool {
+	return idxer.GetIndex(name) != nil
+}
+
 // TODO rename to ReplaceOrInsert
 func (idxer *Indexes) Insert(item *item, to ...string) {
 	for _, index := range idxer.storage {

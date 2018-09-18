@@ -34,6 +34,9 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/metric"
 
+	"strconv"
+
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -425,7 +428,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, logErrorDB(err, "generating next ecosystem id")
 	}
 
-	if err = model.ExecSchemaEcosystem(sc.DbTransaction, int(id), wallet, name, converter.StrToInt64(sp.Value)); err != nil {
+	if err = model.ExecSchemaEcosystem(sc.DbTransaction, nil, int(id), wallet, name, converter.StrToInt64(sp.Value)); err != nil {
 		return 0, logErrorDB(err, "executing ecosystem schema")
 	}
 
@@ -473,6 +476,19 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}); err != nil {
 		return 0, logErrorDB(err, "insert new ecosystem to stat table")
 	}
+
+	if err := sc.MetaDb.Insert(
+		nil, // TODO
+		&types.Registry{Name: "ecosystems", Type: types.RegistryTypePrimary},
+		strconv.FormatInt(id, 10),
+		model.Ecosystem{
+			ID:   id,
+			Name: name,
+		},
+	); err != nil {
+		return 0, logErrorDB(err, "insert new ecosystem to metadb")
+	}
+
 	if !sc.VDE {
 		if err := SysRollback(sc, SysRollData{Type: "NewEcosystem"}); err != nil {
 			return 0, err
@@ -488,6 +504,18 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 	}
 
 	_, err := DBUpdate(sc, "@1_ecosystems", sysID, map[string]interface{}{"name": newName})
+	if err := sc.MetaDb.Update(
+		nil, // TODO
+		&types.Registry{Name: "ecosystems", Type: types.RegistryTypePrimary},
+		strconv.FormatInt(sysID, 10),
+		model.Ecosystem{
+			ID:   id,
+			Name: name,
+		},
+	); err != nil {
+		return 0, logErrorDB(err, "insert new ecosystem to metadb")
+	}
+
 	return err
 }
 

@@ -144,7 +144,6 @@ func (b *Block) Play(dbTransaction *model.DbTransaction, metaDb types.MetadataRe
 	}
 
 	limits := NewLimits(b)
-	metaDb.SetBlockHash(b.Header.Hash)
 
 	txHashes := make([][]byte, 0, len(b.Transactions))
 	for _, btx := range b.Transactions {
@@ -163,8 +162,8 @@ func (b *Block) Play(dbTransaction *model.DbTransaction, metaDb types.MetadataRe
 			err error
 		)
 		t.DbTransaction = dbTransaction
-		metaDb.SetTxHash(t.TxHash)
 		t.MetaDb = metaDb
+
 		t.Rand = randBlock
 
 		model.IncrementTxAttemptCount(dbTransaction, t.TxHash)

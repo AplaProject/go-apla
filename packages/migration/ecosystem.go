@@ -2,7 +2,15 @@ package migration
 
 import (
 	"strings"
+
+	"github.com/GenesisKernel/go-genesis/packages/types"
 )
+
+type Row struct {
+	Registry   *types.Registry
+	PrimaryKey string
+	Data       interface{}
+}
 
 // GetEcosystemScript returns script to create ecosystem
 func GetEcosystemScript() string {
@@ -34,6 +42,10 @@ func GetFirstEcosystemScript() string {
 	}
 
 	return strings.Join(scripts, "\r\n")
+}
+
+func GetNewFirstEcosystemData() []Row {
+	return firstEcosystemData
 }
 
 // SchemaEcosystem contains SQL queries for creating ecosystem

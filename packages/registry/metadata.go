@@ -9,13 +9,12 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/tidwall/match"
 )
 
 const keyConvention = "%s.%s.%s"
 
 var (
-	ErrUnknownContext   = errors.New("unknown writing operation context (block o/or hash empty)")
+	ErrUnknownContext   = errors.New("unknown writing operation context")
 	ErrWrongRegistry    = errors.New("wrong registry")
 	ErrRollbackDisabled = errors.New("rollback is disabled")
 )
@@ -42,6 +41,13 @@ func (m *metadataTx) Insert(ctx types.BlockchainContext, registry *types.Registr
 	err = m.tx.Set(key, string(jsonValue))
 	if err != nil {
 		return errors.Wrapf(err, "inserting value %s to %s registry", value, registry.Name)
+	}
+
+	if registry.Name == "ecosystem" {
+		err := m.indexer.AddPrimaryValue(m.tx, pkValue)
+		if err != nil {
+			return err
+		}
 	}
 
 	if m.rollback != nil {
@@ -99,14 +105,8 @@ func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface
 }
 
 func (m *metadataTx) Walk(registry *types.Registry, field string, fn func(value string) bool) error {
-	prefix := fmt.Sprintf("%s.*", registry.Name)
-
 	return m.tx.Ascend(m.indexer.formatIndexName(registry, field), func(key, value string) bool {
-		if match.Match(key, prefix) {
-			return fn(value)
-		}
-
-		return true
+		return fn(value)
 	})
 }
 
@@ -128,10 +128,6 @@ func (m *metadataTx) Commit() error {
 
 	m.closeTx()
 	return nil
-}
-
-func (m *metadataTx) AddIndex(indexes ...types.Index) error {
-	return m.indexer.AddIndexes(false, indexes...)
 }
 
 func (m *metadataTx) closeTx() {
@@ -165,29 +161,34 @@ func (m *metadataTx) formatKey(reg *types.Registry, pk string) (string, error) {
 }
 
 type metadataStorage struct {
-	db       kv.Database
+	db      kv.Database
+	indexer *indexer
+
 	rollback bool
 }
 
 func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool) (types.MetadataRegistryStorage, error) {
 	ms := &metadataStorage{
 		db:       db,
+		indexer:  newIndexer(indexes),
 		rollback: rollback,
 	}
 
-	mtx := ms.Begin()
-	tx := mtx.(*metadataTx)
-	if err := tx.indexer.AddIndexes(true, indexes...); err != nil {
+	kvTx := db.Begin(true)
+	if err := ms.indexer.init(kvTx); err != nil {
 		return nil, err
 	}
-	mtx.Commit()
+
+	if err := kvTx.Commit(); err != nil {
+		return nil, err
+	}
 
 	return ms, nil
 }
 
 func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
 	databaseTx := m.db.Begin(true)
-	tx := &metadataTx{tx: databaseTx, indexer: &indexer{tx: databaseTx}}
+	tx := &metadataTx{tx: databaseTx, indexer: m.indexer}
 
 	if m.rollback {
 		tx.rollback = &metadataRollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}

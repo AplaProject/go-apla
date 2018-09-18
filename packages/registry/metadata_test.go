@@ -1,7 +1,6 @@
 package registry
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -112,12 +111,19 @@ func BenchmarkMetadataTx(b *testing.B) {
 	db, err := newKvDB(persist)
 	require.Nil(b, err)
 	fmt.Println("Database persistence:", persist)
-	fmt.Println("Rollbacks:", persist)
+	fmt.Println("Rollbacks:", rollbacks)
 
 	storage, err := NewMetadataStorage(db, []types.Index{
 		{
+			Registry: &types.Registry{Name: "key"},
+			Field:    "amount",
+			SortFn: func(a, b string) bool {
+				return gjson.Get(b, "amount").Less(gjson.Get(a, "amount"), false)
+			},
+		},
+		{
 			Field:    "name",
-			Registry: &types.Registry{Name: "ecosystem"},
+			Registry: &types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
 			SortFn: func(a, b string) bool {
 				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)
 			},
@@ -134,9 +140,10 @@ func BenchmarkMetadataTx(b *testing.B) {
 		}, ecosystem, model.Ecosystem{Name: ecosystem})
 		require.Nil(b, err)
 	}
-	count := 100000
+	count := 30000
 
 	insertStart := time.Now()
+	ids := make(map[int64]string, 0)
 	for i := 0; i < count; i++ {
 		ecosystem := ecosystems[rand.Intn(9)]
 		reg := types.Registry{
@@ -145,39 +152,52 @@ func BenchmarkMetadataTx(b *testing.B) {
 		}
 
 		id := rand.Int63()
+		strId := strconv.FormatInt(id, 10)
 		err := metadataTx.Insert(
 			nil,
 			&reg,
-			strconv.FormatInt(id, 10),
+			strId,
 			model.KeySchema{
 				ID:        id,
 				PublicKey: make([]byte, 64),
 				Amount:    rand.Int63(),
 			},
 		)
+
+		ids[id] = ecosystem
 		require.Nil(b, err)
 	}
 	require.Nil(b, metadataTx.Commit())
 	fmt.Println("Inserted", count, "keys:", time.Since(insertStart))
 
 	metadataTx = storage.Begin()
+	updStart := time.Now()
+	for id, ecosys := range ids {
+		metadataTx.Update(
+			nil,
+			&types.Registry{
+				Name:      "key",
+				Ecosystem: &types.Ecosystem{Name: ecosys},
+			},
+			strconv.FormatInt(id, 10),
+			model.KeySchema{
+				ID:     id,
+				Amount: 0,
+			},
+		)
+	}
 
-	indexStart := time.Now()
-	require.Nil(b, metadataTx.AddIndex(types.Index{
-		Registry: &types.Registry{Name: "key"},
-		Field:    "amount",
-		SortFn: func(a, b string) bool {
-			return gjson.Get(b, "amount").Less(gjson.Get(a, "amount"), false)
-		}},
-	))
-	fmt.Println("Creating and fill 'amount' index by", count, "keys:", time.Since(indexStart))
+	metadataTx.Commit()
+	fmt.Println("Updated", count, "keys:", time.Since(updStart))
 
-	require.Nil(b, metadataTx.Walk(&types.Registry{
-		Name:      "key",
-		Ecosystem: &types.Ecosystem{Name: "e"},
-	}, "amount", func(jsonRow string) bool {
-		k := model.KeySchema{}
-		require.Nil(b, json.Unmarshal([]byte(jsonRow), &k))
-		return false
-	}))
+	//require.Nil(b, metadataTx.Walk(&types.Registry{
+	//	Name:      "key",
+	//	Ecosystem: &types.Ecosystem{Name: "e"},
+	//}, "amount", func(jsonRow string) bool {
+	//	k := model.KeySchema{}
+	//	require.Nil(b, json.Unmarshal([]byte(jsonRow), &k))
+	//	return true
+	//}))
+
+	os.Exit(1)
 }

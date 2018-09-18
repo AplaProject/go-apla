@@ -1,12 +1,17 @@
 package model
 
+import (
+	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/tidwall/gjson"
+)
+
 const ecosysTable = "1_ecosystems"
 
 // Ecosystem is model
 type Ecosystem struct {
 	ID       int64  `json:"id"`
 	Name     string `json:"name"`
-	IsValued bool
+	IsValued bool   `json:"is_valued"`
 }
 
 // TableName returns name of table
@@ -43,4 +48,16 @@ func (sys *Ecosystem) Get(id int64) (bool, error) {
 // Delete is deleting record
 func (sys *Ecosystem) Delete(transaction *DbTransaction) error {
 	return GetDB(transaction).Delete(sys).Error
+}
+
+func (sys Ecosystem) GetIndexes() []types.Index {
+	return []types.Index{
+		{
+			Field:    "name",
+			Registry: &types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
+			SortFn: func(a, b string) bool {
+				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)
+			},
+		},
+	}
 }

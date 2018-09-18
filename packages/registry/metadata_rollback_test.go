@@ -38,7 +38,6 @@ func TestMetadataRollbackSaveState(t *testing.T) {
 	require.Nil(t, err)
 	txMock.On("Set", fmt.Sprintf(writePrefix, string(block), 1, string(tx)), string(jstate)).Return(nil)
 	require.Nil(t, mr.saveState(block, tx, registry, "1", ""))
-	fmt.Println(mr.counter.txCounter[string(block)])
 	require.Equal(t, mr.counter.txCounter[string(block)], uint64(1))
 
 	structValue := teststruct{

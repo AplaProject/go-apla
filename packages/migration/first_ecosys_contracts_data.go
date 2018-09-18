@@ -648,22 +648,26 @@ VALUES
 			error "Amount must be greater then zero"
 		}
 
-        var row map
+        var key map
         var req money
-		row = DBRow("keys").Columns("amount").WhereId($key_id)
-        total = Money(row["amount"])
+		key = GetKey($key_id)
+        total = Money($key["amount"])
         req = $amount + Money(100000000000000000) 
         if req > total {
 			error Sprintf("Money is not enough. You have got %%v but you should reserve %%v", total, req)
 		}
 	}
 	action {
-		DBUpdate("keys", $key_id, {"-amount": $amount})
-		if DBFind("keys").Columns("id").WhereId($recipient).One("id") == nil {
-			DBInsert("keys", {id: $recipient,amount: $amount})
+		EditKey($key_id, $key["amount"]-$amount)
+
+		var recipientKey map
+		$recipientKey = GetKey($recipient)
+		if $recipientKey == nil {
+			CreateKey($recipient, $amount, "")
 		} else {
-			DBUpdate("keys", $recipient, {"+amount": $amount})
+			UpdateKey($recipient, $recipientKey["amount"]+$amount)
 		}
+
         DBInsert("history", {sender_id: $key_id,recipient_id: $recipient,
              amount:$amount,comment: $Comment,block_id: $block,txhash: $txhash})
 	}
