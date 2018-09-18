@@ -18,7 +18,7 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
 		(next_id('1_tables'),
 			'ecosystems',
 			'{"insert": "true", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}',
-			'{"name": "ContractConditions(\"MainCondition\")"}',
+			'{"name": "ContractConditions(\"MainCondition\")", "is_valued": "ContractConditions(\"MainCondition\")"}',
 			'ContractConditions("MainCondition")'
 		),
 		(next_id('1_tables'),

@@ -1020,16 +1020,16 @@ VALUES
         Conditions string "optional"
      }
      conditions {
-         if GetContractByName($Name){
-             var params map
-             params["Value"] = $Value
-             CallContract($Name, params)
-        } else {
+         if !GetContractByName($Name){
             warning "System parameter not found"
          }
      }
      action {
-         DBUpdateSysParam($Name, $Value, $Conditions)
+        var params map
+        params["Value"] = $Value
+        CallContract($Name, params)
+        
+        DBUpdateSysParam($Name, $Value, $Conditions)
      }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
