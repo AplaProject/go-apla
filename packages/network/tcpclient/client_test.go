@@ -76,6 +76,8 @@ func BenchmarkGetBlockBodies(t *testing.B) {
 	fmt.Println(lenCounter)
 }
 
+//100000	     17333 ns/op	     576 B/op	      19 allocs/op
+
 func BenchmarkGetBlockBodiesWithBuffer(t *testing.B) {
 	ctx := context.Background()
 	var bts []byte

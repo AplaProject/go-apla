@@ -3,6 +3,7 @@ package network
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -105,9 +106,10 @@ type BodyResponse struct {
 }
 
 func (resp *BodyResponse) Read(r io.Reader, buf []byte) error {
+	fmt.Println(cap(buf))
 	slice, err := readSliceToBuf(r, buf)
 	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Error("on reading GetBodyResponse")
+		log.WithFields(log.Fields{"error": err}).Error("on reading BodyResponse")
 		return err
 	}
 
@@ -293,7 +295,8 @@ func readSliceToBuf(r io.Reader, buf []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	if len(buf) < int(size) {
+	if cap(buf) < int(size) {
+		// fmt.Println(cap(buf), size)
 		buf = make([]byte, size)
 	}
 

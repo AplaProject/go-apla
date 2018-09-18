@@ -26,6 +26,7 @@ func (bbf BytesPull) getBytes() []byte {
 	select {
 	case slice, ok := <-bbf.pull:
 		if ok {
+			// fmt.Println("buf exists cap", cap(slice))
 			return slice
 		}
 	default:
