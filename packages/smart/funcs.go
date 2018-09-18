@@ -358,6 +358,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 			"UpdateCron":       {},
 			"CreateVDE":        {},
 			"DeleteVDE":        {},
+			"DelColumn":        {},
+			"DelTable":         {},
 		},
 	})
 }
@@ -2183,9 +2185,6 @@ func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 		count   int64
 		permout []byte
 	)
-	if err = validateAccess(`DelColumn`, sc, nDeleteColumn); err != nil {
-		return
-	}
 	name = converter.EscapeSQL(strings.ToLower(name))
 	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
@@ -2247,9 +2246,6 @@ func DelTable(sc *SmartContract, tableName string) (err error) {
 	var (
 		count int64
 	)
-	if err = validateAccess(`DelTable`, sc, nDeleteTable); err != nil {
-		return
-	}
 	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
 	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)

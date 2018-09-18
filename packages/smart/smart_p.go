@@ -104,8 +104,6 @@ const (
 	nNewTable           = "NewTable"
 	nNewTableJoint      = "NewTableJoint"
 	nNewUser            = "NewUser"
-	nDeleteColumn       = "DeleteColumn"
-	nDeleteTable        = "DeleteTable"
 )
 
 //SignRes contains the data of the signature
