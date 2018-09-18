@@ -17,6 +17,7 @@
 package api
 
 import (
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"net/http"
@@ -24,7 +25,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	hr "github.com/julienschmidt/httprouter"
@@ -53,8 +53,7 @@ func dataHandler() hr.Handle {
 			return
 		}
 
-		hash, _ := crypto.Hash([]byte(data))
-		if fmt.Sprintf(`%x`, hash) != strings.ToLower(ps.ByName(`hash`)) {
+		if fmt.Sprintf(`%x`, md5.Sum([]byte(data))) != strings.ToLower(ps.ByName(`hash`)) {
 			log.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
 			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 			return
@@ -84,7 +83,7 @@ func binary(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 		return
 	}
 
-	if bin.Hash != strings.ToLower(ps.ByName("hash")) {
+	if fmt.Sprintf(`%x`, md5.Sum(bin.Data)) != strings.ToLower(ps.ByName("hash")) {
 		log.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
 		errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 		return
