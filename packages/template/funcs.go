@@ -106,6 +106,7 @@ func init() {
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
 	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID"}
 	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
+	funcs[`TransactionInfo`] = tplFunc{txinfoTag, defaultTag, `txinfo`, `Hash`}
 
 	tails[`addtoolbutton`] = forTails{map[string]tailInfo{
 		`Popup`: {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
@@ -443,6 +444,18 @@ func defaultTailFull(par parFunc) string {
 	setAllAttr(par)
 	par.Owner.Tail = append(par.Owner.Tail, par.Node)
 	return ``
+}
+
+func txinfoTag(par parFunc) (out string) {
+	setAllAttr(par)
+	if par.Node.Attr[`hash`] != nil {
+		var err error
+		out, err = smart.TransactionInfo(par.Node.Attr[`hash`].(string))
+		if err != nil {
+			out = err.Error()
+		}
+	}
+	return
 }
 
 func dataTag(par parFunc) string {

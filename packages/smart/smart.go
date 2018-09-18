@@ -177,20 +177,18 @@ func vmExtend(vm *script.VM, ext *script.ExtendData) {
 }
 
 func VMRun(vm *script.VM, block *script.Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
-	var extcost int64
-	cost := script.CostDefault
+	var cost int64
 	if ecost, ok := (*extend)[`txcost`]; ok {
 		cost = ecost.(int64)
+	} else {
+		cost = syspar.GetMaxCost()
 	}
 	rt := vm.RunInit(cost)
 	ret, err = rt.Run(block, params, extend)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("running block in smart vm")
 	}
-	if ecost, ok := (*extend)[`txcost`]; ok && cost > ecost.(int64) {
-		extcost = cost - ecost.(int64)
-	}
-	(*extend)[`txcost`] = rt.Cost() - extcost
+	(*extend)[`txcost`] = rt.Cost()
 	return
 }
 
@@ -803,18 +801,10 @@ func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
 // GetContractLimit returns the default maximal cost of contract
 func (sc *SmartContract) GetContractLimit() (ret int64) {
 	// default maximum cost of F
-	if !sc.VDE {
-		if len(sc.TxSmart.MaxSum) > 0 {
-			sc.TxCost = converter.StrToInt64(sc.TxSmart.MaxSum)
-		} else {
-			cost := EcosysParam(sc, `max_sum`)
-			if len(cost) > 0 {
-				sc.TxCost = converter.StrToInt64(cost)
-			}
-		}
-	}
-	if sc.TxCost == 0 {
-		sc.TxCost = script.CostDefault // fuel
+	if len(sc.TxSmart.MaxSum) > 0 {
+		sc.TxCost = converter.StrToInt64(sc.TxSmart.MaxSum)
+	} else {
+		sc.TxCost = syspar.GetMaxCost()
 	}
 	return sc.TxCost
 }
@@ -999,14 +989,6 @@ func (sc *SmartContract) CallContract() (string, error) {
 			return retError(errFuelRate)
 		}
 		var payOver decimal.Decimal
-		if len(sc.TxSmart.PayOver) > 0 {
-			payOver, err = decimal.NewFromString(sc.TxSmart.PayOver)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
-				return retError(err)
-			}
-			fuelRate = fuelRate.Add(payOver)
-		}
 		isActive := sc.TxContract.Block.Info.(*script.ContractInfo).Owner.Active
 		if isActive {
 			fromID = sc.TxContract.Block.Info.(*script.ContractInfo).Owner.WalletID

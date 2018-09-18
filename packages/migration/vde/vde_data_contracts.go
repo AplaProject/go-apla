@@ -530,6 +530,10 @@ VALUES
         $input_file = BytesToString($input_file)
         $input_file = ReplaceValue($input_file)
         $limit = 5 // data piece size of import
+    }
+
+    action {
+        var input map
 
         // init buffer_data, cleaning old buffer
         var initJson map
@@ -550,10 +554,7 @@ VALUES
             $info_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import_info",
             "value": initJson})
         }
-    }
 
-    action {
-        var input map
         input = JSONDecode($input_file)
         var arr_data array
         arr_data = input["data"]
