@@ -83,6 +83,13 @@ type TxInfo struct {
 	Params   map[string]interface{} `json:"params,omitempty"`
 }
 
+type FlushInfo struct {
+	ID   uint32        // id
+	Prev *script.Block // previous item, nil if the new item has been appended
+	Info *script.ObjInfo
+	Name string // the name
+}
+
 // SmartContract is storing smart contract data
 type SmartContract struct {
 	VDE           bool
@@ -102,6 +109,7 @@ type SmartContract struct {
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand
+	FlushRollback []FlushInfo
 }
 
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
@@ -1166,6 +1174,31 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = id
 			root.Children[i].Info.(*script.ContractInfo).Owner.Active = active
 		}
+	}
+	for key, item := range root.Objects {
+		if cur, ok := sc.VM.Objects[key]; ok {
+			var id uint32
+			switch item.Type {
+			case script.ObjContract:
+				id = cur.Value.(*script.Block).Info.(*script.ContractInfo).ID
+			case script.ObjFunc:
+				id = cur.Value.(*script.Block).Info.(*script.FuncInfo).ID
+			}
+			sc.FlushRollback = append(sc.FlushRollback, FlushInfo{
+				ID:   id,
+				Prev: sc.VM.Children[id],
+				Info: cur,
+				Name: key,
+			})
+		} else {
+			sc.FlushRollback = append(sc.FlushRollback, FlushInfo{
+				ID:   uint32(len(sc.VM.Children)),
+				Prev: nil,
+				Info: nil,
+				Name: key,
+			})
+		}
+
 	}
 	VMFlushBlock(sc.VM, root)
 	return nil
