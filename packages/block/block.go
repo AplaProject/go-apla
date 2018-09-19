@@ -190,12 +190,12 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction) error {
 				break
 			}
 			// skip this transaction
-			bTx, err := t.ToBlockchainTransaction()
-			if err != nil {
+			bTx, err2 := t.ToBlockchainTransaction()
+			if err2 != nil {
 				return err
 			}
-			hash, err := bTx.Hash()
-			if err != nil {
+			hash, err2 := bTx.Hash()
+			if err2 != nil {
 				return err
 			}
 			blockchain.SetTransactionError(hash, err.Error())

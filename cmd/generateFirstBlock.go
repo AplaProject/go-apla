@@ -9,8 +9,10 @@ import (
 
 	"path/filepath"
 
+	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
@@ -96,7 +98,15 @@ var generateFirstBlockCmd = &cobra.Command{
 		if err != nil {
 			return
 		}
+		if err := syspar.SysUpdate(nil); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
+			return
+		}
 		if err := smart.LoadContract(nil, "1"); err != nil {
+			return
+		}
+		if err := blockchain.Init("blockchain"); err != nil {
+			log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("can't create blockchain db")
 			return
 		}
 
@@ -106,18 +116,18 @@ var generateFirstBlockCmd = &cobra.Command{
 			return
 		}
 
-		block := &blockchain.Block{
+		b := &blockchain.Block{
 			Header:       header,
 			Transactions: []*blockchain.Transaction{smartTx},
 		}
-
-		if err := queue.ProcessBlockQueue.Enqueue(block); err != nil {
-			log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Fatal("enqueue first block")
+		blockBin, err := b.Marshal()
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block marshalling")
 			return
 		}
-
+		err = block.InsertBlockWOForks(blockBin, true, false)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block body bin marshalling")
+			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Fatal("inserting first block")
 			return
 		}
 
