@@ -11,7 +11,7 @@ type SmartContract struct {
 	PayOver        string
 	SignedBy       int64
 	Data           []byte // TODO: deprecated
-	Params         []interface{}
+	Params         map[string]interface{}
 }
 
 // ForSign is converting SmartContract to string

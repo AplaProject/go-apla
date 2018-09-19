@@ -17,12 +17,14 @@
 package api
 
 import (
+	"bytes"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/transaction"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -44,11 +46,20 @@ func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading multipart file")
 		return err
 	}
-	if hash, err := model.SendTx(1, data.keyId, txData); err != nil {
+
+	rtx := &transaction.RawTransaction{}
+	if err = rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
+		return errorAPI(w, err, http.StatusInternalServerError)
+	}
+
+	if err = model.SendTx(rtx, data.keyId); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
 		return errorAPI(w, err, http.StatusInternalServerError)
-	} else {
-		data.result = sendTxResult{Hash: string(converter.BinToHex(hash))}
 	}
+
+	data.result = sendTxResult{
+		Hash: string(converter.BinToHex(rtx.Hash)),
+	}
+
 	return nil
 }

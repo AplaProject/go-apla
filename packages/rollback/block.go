@@ -109,7 +109,7 @@ func rollbackBlock(dbTransaction *model.DbTransaction, block *block.Block) error
 				return err
 			}
 		} else {
-			MethodName := consts.TxTypes[int(t.TxType)]
+			MethodName := consts.TxTypes[t.TxType]
 			txParser, err := transaction.GetTransaction(t, MethodName)
 			if err != nil {
 				return utils.ErrInfo(err)

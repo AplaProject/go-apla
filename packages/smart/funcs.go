@@ -90,6 +90,7 @@ type SmartContract struct {
 	BlockData     *utils.BlockData
 	Loop          map[string]bool
 	TxHash        []byte
+	TxSignature   []byte
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand

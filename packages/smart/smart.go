@@ -880,9 +880,9 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		sc.PublicKeys = append(sc.PublicKeys, public)
 
 		var CheckSignResult bool
-		CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.BinSignatures, false)
+		CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxHash, sc.TxSignature, false)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "forsign": sc.TxData[`forsign`].(string)}).Error("checking tx data sign")
+			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "hash": string(sc.TxHash)}).Error("checking tx data sign")
 			return retError(err)
 		}
 		if !CheckSignResult {

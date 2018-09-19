@@ -23,6 +23,66 @@ import (
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
+type RawTransaction struct {
+	txType    int64
+	hash      []byte
+	data      []byte
+	payload   []byte
+	signature []byte
+}
+
+func (rtx *RawTransaction) Unmarshall(buffer *bytes.Buffer) error {
+	if buffer.Len() == 0 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty transaction buffer")
+		return fmt.Errorf("empty transaction buffer")
+	}
+
+	rtx.data = buffer.Bytes()
+
+	b, err := buffer.ReadByte()
+	if err != nil {
+		return err
+	}
+	rtx.txType = int64(b)
+
+	if IsContractTransaction(rtx.txType) {
+		if err = converter.BinUnmarshalBuff(buffer, &rtx.payload); err != nil {
+			return err
+		}
+		rtx.signature = buffer.Bytes()
+	} else {
+		buffer.UnreadByte()
+		rtx.payload = buffer.Bytes()
+	}
+
+	if rtx.hash, err = crypto.DoubleHash(rtx.payload); err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing transaction")
+		return err
+	}
+
+	return nil
+}
+
+func (rtx *RawTransaction) Type() int64 {
+	return rtx.txType
+}
+
+func (rtx *RawTransaction) Hash() []byte {
+	return rtx.hash
+}
+
+func (rtx *RawTransaction) Bytes() []byte {
+	return rtx.data
+}
+
+func (rtx *RawTransaction) Payload() []byte {
+	return rtx.payload
+}
+
+func (rtx *RawTransaction) Signature() []byte {
+	return rtx.signature
+}
+
 // Transaction is a structure for parsing transactions
 type Transaction struct {
 	BlockData  *utils.BlockData
@@ -32,6 +92,7 @@ type Transaction struct {
 	TxBinaryData  []byte // transaction binary data
 	TxFullData    []byte // full transaction, with type and data
 	TxHash        []byte
+	TxSignature   []byte
 	TxKeyID       int64
 	TxTime        int64
 	TxType        int64
@@ -67,42 +128,32 @@ var txCache = &transactionCache{cache: make(map[string]*Transaction)}
 
 // UnmarshallTransaction is unmarshalling transaction
 func UnmarshallTransaction(buffer *bytes.Buffer) (*Transaction, error) {
-	if buffer.Len() == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty transaction buffer")
-		return nil, fmt.Errorf("empty transaction buffer")
-	}
-
-	hash, err := crypto.Hash(buffer.Bytes())
-	// or DoubleHash ?
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing transaction")
+	rtx := &RawTransaction{}
+	if err := rtx.Unmarshall(buffer); err != nil {
 		return nil, err
 	}
 
-	if t, ok := txCache.Get(string(hash)); ok {
+	if t, ok := txCache.Get(string(rtx.Hash())); ok {
 		return t, nil
 	}
 
 	t := new(Transaction)
-	t.TxHash = hash
+	t.TxFullData = rtx.Bytes()
+	t.TxType = rtx.Type()
+	t.TxHash = rtx.Hash()
+	t.TxBinaryData = rtx.Payload()
 	t.TxUsedCost = decimal.New(0, 0)
-	t.TxFullData = buffer.Bytes()
-
-	txType := int64(buffer.Bytes()[0])
 
 	// smart contract transaction
-	if IsContractTransaction(int(txType)) {
+	if IsContractTransaction(rtx.Type()) {
+		t.TxSignature = rtx.Signature()
 		// skip byte with transaction type
-		buffer.Next(1)
-		t.TxBinaryData = buffer.Bytes()
-		if err := t.parseFromContract(buffer); err != nil {
+		if err := t.parseFromContract(); err != nil {
 			return nil, err
 		}
-
 		// struct transaction (only first block transaction for now)
-	} else if consts.IsStruct(int(txType)) {
-		t.TxBinaryData = buffer.Bytes()
-		if err := t.parseFromStruct(buffer, txType); err != nil {
+	} else if consts.IsStruct(rtx.Type()) {
+		if err := t.parseFromStruct(); err != nil {
 			return t, err
 		}
 
@@ -114,23 +165,21 @@ func UnmarshallTransaction(buffer *bytes.Buffer) (*Transaction, error) {
 }
 
 // IsContractTransaction checks txType
-func IsContractTransaction(txType int) bool {
+func IsContractTransaction(txType int64) bool {
 	return txType > 127
 }
 
-func (t *Transaction) parseFromStruct(buf *bytes.Buffer, txType int64) error {
-	t.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
-	input := buf.Bytes()
-	if err := converter.BinUnmarshal(&input, t.TxPtr); err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError, "tx_type": int(txType)}).Error("getting parser for tx type")
+func (t *Transaction) parseFromStruct() error {
+	t.TxPtr = consts.MakeStruct(consts.TxTypes[t.TxType])
+	if err := converter.BinUnmarshal(&t.TxBinaryData, t.TxPtr); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError, "tx_type": t.TxType}).Error("getting parser for tx type")
 		return err
 	}
 	head := consts.Header(t.TxPtr)
 	t.TxKeyID = head.KeyID
 	t.TxTime = int64(head.Time)
-	t.TxType = txType
 
-	trParser, err := GetTransaction(t, consts.TxTypes[int(txType)])
+	trParser, err := GetTransaction(t, consts.TxTypes[t.TxType])
 	if err != nil {
 		return err
 	}
@@ -144,18 +193,19 @@ func (t *Transaction) parseFromStruct(buf *bytes.Buffer, txType int64) error {
 	return nil
 }
 
-func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params []interface{}, forsign []string) error {
+func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}, forsign []string) error {
 	if len(params) != len(fieldInfos) {
 		return fmt.Errorf("Invalid number of parameters")
 	}
 
-	for index, fitem := range fieldInfos {
+	for _, fitem := range fieldInfos {
 		var err error
 		var v interface{}
 		var ok bool
 		var forv string
 		var isforv bool
 
+		index := fitem.Name
 		switch fitem.Type.String() {
 		case `bool`:
 			if v, ok = params[index].(bool); !ok {
@@ -245,9 +295,9 @@ func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params []interf
 	return nil
 }
 
-func (t *Transaction) parseFromContract(buf *bytes.Buffer) error {
+func (t *Transaction) parseFromContract() error {
 	smartTx := tx.SmartContract{}
-	if err := msgpack.Unmarshal(buf.Bytes(), &smartTx); err != nil {
+	if err := msgpack.Unmarshal(t.TxBinaryData, &smartTx); err != nil {
 		log.WithFields(log.Fields{"tx_hash": t.TxHash, "error": err, "type": consts.UnmarshallingError}).Error("unmarshalling smart tx msgpack")
 		return err
 	}
@@ -385,6 +435,7 @@ func (t *Transaction) CallContract(flags int) (resultContract string, err error)
 		TxUsedCost:    t.TxUsedCost,
 		BlockData:     t.BlockData,
 		TxHash:        t.TxHash,
+		TxSignature:   t.TxSignature,
 		PublicKeys:    t.PublicKeys,
 		DbTransaction: t.DbTransaction,
 		Rand:          t.Rand,
@@ -403,7 +454,7 @@ func CleanCache() {
 func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, keyID int64) {
 	tmp := binaryBlock[:]
 	txType = converter.BinToDecBytesShift(&binaryBlock, 1)
-	if consts.IsStruct(int(txType)) {
+	if consts.IsStruct(txType) {
 		var txHead consts.TxHeader
 		converter.BinUnmarshal(&tmp, &txHead)
 		keyID = txHead.KeyID

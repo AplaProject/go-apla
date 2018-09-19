@@ -35,7 +35,7 @@ func Sign(privateKey string, data string) ([]byte, error) {
 }
 
 // CheckSign is checking sign
-func CheckSign(public []byte, data string, signature []byte) (bool, error) {
+func CheckSign(public, data, signature []byte) (bool, error) {
 	if len(public) == 0 {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(ErrCheckingSignEmpty.Error())
 	}
@@ -89,7 +89,7 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 }
 
 // CheckECDSA checks if forSign has been signed with corresponding to public the private key
-func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
+func checkECDSA(public, data, signature []byte) (bool, error) {
 	if len(data) == 0 {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Error("data is empty")
 		return false, fmt.Errorf("invalid parameters len(data) == 0")
@@ -111,7 +111,7 @@ func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(ErrUnsupportedCurveSize.Error())
 	}
 
-	hash, err := Hash([]byte(data))
+	hash, err := Hash(data)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Error(ErrHashing.Error())
 	}

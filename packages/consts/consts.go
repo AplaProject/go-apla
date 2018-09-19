@@ -104,7 +104,7 @@ const (
 )
 
 // TxTypes is the list of the embedded transactions
-var TxTypes = map[int]string{
+var TxTypes = map[int64]string{
 	TxTypeFirstBlock:  TxTypeParserFirstBlock,
 	TxTypeStopNetwork: TxTypeParserStopNetwork,
 }

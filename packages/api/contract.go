@@ -275,17 +275,17 @@ func (c *contractHandlers) contractMulti(w http.ResponseWriter, r *http.Request,
 			SignedBy:       signedBy,
 			Data:           idata,
 		}
-		serializedData, err := msgpack.Marshal(toSerialize)
+		_, err = msgpack.Marshal(toSerialize)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
 			return errorAPI(w, err, http.StatusInternalServerError)
 		}
-		if hash, err := model.SendTx(int64(info.ID), data.keyId,
-			append([]byte{128}, serializedData...)); err != nil {
-			return errorAPI(w, err, http.StatusInternalServerError)
-		} else {
-			hashes = append(hashes, hex.EncodeToString(hash))
-		}
+		// if hash, err := model.SendTx(int64(info.ID), data.keyId,
+		// 	append([]byte{128}, serializedData...)); err != nil {
+		// 	return errorAPI(w, err, http.StatusInternalServerError)
+		// } else {
+		// 	hashes = append(hashes, hex.EncodeToString(hash))
+		// }
 	}
 	data.result = &contractMultiResult{Hashes: hashes}
 	return nil
@@ -369,10 +369,10 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		data.result = ret
 		return nil
 	}
-	if hash, err = model.SendTx(int64(info.ID), data.keyId,
-		append([]byte{128}, serializedData...)); err != nil {
-		return errorAPI(w, err, http.StatusInternalServerError)
-	}
+	// if hash, err = model.SendTx(int64(info.ID), data.keyId,
+	// 	append([]byte{128}, serializedData...)); err != nil {
+	// 	return errorAPI(w, err, http.StatusInternalServerError)
+	// }
 	data.result = &contractResult{Hash: hex.EncodeToString(hash)}
 	return nil
 }

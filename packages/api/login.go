@@ -209,7 +209,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 
-	verify, err := crypto.CheckSign(pubkey, nonceSalt+msg, data.params[`signature`].([]byte))
+	verify, err := crypto.CheckSign(pubkey, []byte(nonceSalt+msg), data.params[`signature`].([]byte))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("checking signature")
 		return errorAPI(w, err, http.StatusBadRequest)
