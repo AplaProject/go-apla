@@ -48,6 +48,7 @@ const (
 	eWrongRandom         = `Wrong random parameters %d %d`
 	eConditionNotAllowed = `Condition %s is not allowed`
 	eTableNotEmpty       = `Table %s is not empty`
+	eColumnNotDeleted    = `Column %s cannot be deleted`
 )
 
 var (

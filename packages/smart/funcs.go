@@ -2222,20 +2222,6 @@ func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
 
-	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
-	if err != nil {
-		return
-	}
-	if count > 0 {
-		return fmt.Errorf(eTableNotEmpty, tblname)
-	}
-	colType, err := model.GetColumnType(tblname, name)
-	if err != nil {
-		return err
-	}
-	if err = model.AlterTableDropColumn(sc.DbTransaction, tblname, name); err != nil {
-		return
-	}
 	t := model.Table{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	t.SetTablePrefix(prefix)
@@ -2250,15 +2236,35 @@ func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 	}
 	if !found {
 		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
-		return fmt.Errorf(eTableNotFound, TableName)
+		return fmt.Errorf(eTableNotFound, tblname)
+	}
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
+	if err != nil {
+		return
+	}
+	if count > 0 {
+		return fmt.Errorf(eTableNotEmpty, tblname)
+	}
+	colType, err := model.GetColumnType(tblname, name)
+	if err != nil {
+		return err
+	}
+	if len(colType) == 0 {
+		return fmt.Errorf(eColumnNotExist, name)
 	}
 	var perm map[string]string
 	if err = unmarshalJSON([]byte(t.Columns), &perm, `columns from the table`); err != nil {
 		return err
 	}
+	if _, ok := perm[name]; !ok {
+		return fmt.Errorf(eColumnNotDeleted, name)
+	}
 	delete(perm, name)
 	permout, err = marshalJSON(perm, `permissions to json`)
 	if err != nil {
+		return
+	}
+	if err = model.AlterTableDropColumn(sc.DbTransaction, tblname, name); err != nil {
 		return
 	}
 	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
@@ -2281,13 +2287,6 @@ func DelTable(sc *SmartContract, tableName string) (err error) {
 	)
 	tableName = strings.ToLower(tableName)
 	tblname := getDefTableName(sc, tableName)
-	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
-	if err != nil {
-		return
-	}
-	if count > 0 {
-		return fmt.Errorf(eTableNotEmpty, tblname)
-	}
 
 	t := model.Table{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
@@ -2301,15 +2300,23 @@ func DelTable(sc *SmartContract, tableName string) (err error) {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
 		return err
 	}
-	if found {
-		err = t.Delete(sc.DbTransaction)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
-			return err
-		}
-	} else {
+	if !found {
 		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
+		return fmt.Errorf(eTableNotFound, tblname)
 	}
+
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
+	if err != nil {
+		return
+	}
+	if count > 0 {
+		return fmt.Errorf(eTableNotEmpty, tblname)
+	}
+	if err = t.Delete(sc.DbTransaction); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
+		return err
+	}
+
 	if err = model.DropTable(sc.DbTransaction, tblname); err != nil {
 		return
 	}
