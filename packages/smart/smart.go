@@ -64,14 +64,17 @@ const (
 	// MaxPrice is a maximal value that price function can return
 	MaxPrice = 100000000000000000
 
-	CallDelayedContract = "@1CallDelayedContract"
-	NewUserContract     = "@1NewUser"
-	NewBadBlockContract = "@1NewBadBlock"
+	CallDelayedContract        = "@1CallDelayedContract"
+	NewUserContract            = "@1NewUser"
+	NewBadBlockContract        = "@1NewBadBlock"
+	InitFirstEcosystemContract = "@1InitFirstEcosystem"
+	StopNetworkContract        = "@1StopNetwork"
 )
 
 var (
-	smartVM   *script.VM
-	smartTest = make(map[string]string)
+	smartVM       *script.VM
+	smartTest     = make(map[string]string)
+	freeContracts = make(map[string]struct{})
 )
 
 func testValue(name string, v ...interface{}) {
@@ -109,6 +112,10 @@ func newVM() *script.VM {
 
 func init() {
 	smartVM = newVM()
+	freeContracts = map[string]struct{}{
+		InitFirstEcosystemContract: struct{}{},
+		StopNetworkContract:        struct{}{},
+	}
 }
 
 // GetVM is returning smart vm
@@ -859,7 +866,8 @@ func (sc *SmartContract) GetSignedBy(public []byte) (int64, error) {
 		signedBy = sc.TxSmart.SignedBy
 		fullNodes := syspar.GetNodes()
 		if sc.TxContract.Name != CallDelayedContract && sc.TxContract.Name != NewUserContract &&
-			sc.TxContract.Name != NewBadBlockContract {
+			sc.TxContract.Name != NewBadBlockContract && sc.TxContract.Name != InitFirstEcosystemContract &&
+			sc.TxContract.Name != StopNetworkContract {
 			return 0, errDelayedContract
 		}
 		if len(fullNodes) > 0 {
@@ -905,7 +913,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 		return ``, err
 	}
-
+	_, isFree := freeContracts[sc.TxContract.Name]
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
 	sc.AppendStack(sc.TxContract.Name)
 	sc.VM = GetVM()
@@ -958,7 +966,7 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 			logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 			return retError(errIncorrectSign)
 		}
-		if sc.TxSmart.Header.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+		if sc.TxSmart.Header.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() && !isFree {
 			if sc.TxSmart.TokenEcosystem == 0 {
 				sc.TxSmart.TokenEcosystem = 1
 			}
@@ -997,8 +1005,10 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 				if !found {
 					return retError(errCurrentBalance)
 				}
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
-				return retError(err)
+				if err != nil {
+					logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
+					return retError(err)
+				}
 			}
 			if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.Header.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
 				return retError(errDiffKeys)
@@ -1107,7 +1117,8 @@ func (sc *SmartContract) CallContract(flags int) (string, error) {
 		}
 	}
 
-	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.Header.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+	if (flags&CallRollback) == 0 && (flags&CallAction) != 0 && sc.TxSmart.Header.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() &&
+		!isFree {
 		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
 			err = ierr
 		}
