@@ -91,6 +91,10 @@ func rollbackTransaction(txHash []byte, dbTransaction *model.DbTransaction, logg
 				smart.SysRollbackActivate(sysData)
 			case "DeactivateContract":
 				smart.SysRollbackDeactivate(sysData)
+			case "DeleteColumn":
+				smart.SysRollbackDeleteColumn(dbTransaction, sysData)
+			case "DeleteTable":
+				smart.SysRollbackDeleteTable(dbTransaction, sysData)
 			}
 			continue
 		}
