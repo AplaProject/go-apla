@@ -83,6 +83,9 @@ const (
 	CommissionSize = `commission_size`
 	// PrivateBlockchain is value defining blockchain mode
 	PrivateBlockchain = `private_blockchain`
+
+	// CostDefault is the default maximum cost of F
+	CostDefault = int64(20000000)
 )
 
 var (
@@ -490,4 +493,12 @@ func IsPrivateBlockchain() bool {
 		return true
 	}
 	return res
+}
+
+func GetMaxCost() int64 {
+	cost := GetMaxTxFuel()
+	if cost == 0 {
+		cost = CostDefault
+	}
+	return cost
 }
