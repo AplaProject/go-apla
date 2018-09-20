@@ -44,7 +44,7 @@ func (b *Binary) Get(appID, memberID int64, name string) (bool, error) {
 
 // Link returns link to binary data
 func (b *Binary) Link() string {
-	return fmt.Sprintf(`/data/%d_%s/%d/%s/%s`, b.ecosystem, b.TableName(), b.ID, "data", b.Hash)
+	return fmt.Sprintf(`/data/%s/%d/%s/%s`, b.TableName(), b.ID, "data", b.Hash)
 }
 
 // GetByID is retrieving model from db by id
