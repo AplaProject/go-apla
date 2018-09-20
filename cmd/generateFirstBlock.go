@@ -115,6 +115,15 @@ var generateFirstBlockCmd = &cobra.Command{
 			log.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Fatal("first block contract execution")
 			return
 		}
+		_, found, err := blockchain.GetFirstBlock()
+		if err != nil {
+			return
+		}
+
+		if found {
+			log.WithFields(log.Fields{"type": consts.DuplicateObject}).Info("first block already exists")
+			return
+		}
 
 		b := &blockchain.Block{
 			Header:       header,

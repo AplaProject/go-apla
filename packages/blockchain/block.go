@@ -270,15 +270,18 @@ func DeleteBlocksFrom(blockHash []byte) ([]*BlockWithHash, error) {
 	return blocks, nil
 }
 
-func GetFirstBlock() (*Block, []byte, bool, error) {
+func GetFirstBlock() (*BlockWithHash, bool, error) {
 	hash, err := db.Get([]byte(firstBlockKey), nil)
+	if err == leveldb.ErrNotFound {
+		return nil, false, nil
+	}
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("getting first block key")
-		return nil, nil, false, err
+		return nil, false, err
 	}
 	block := &Block{}
 	found, err := block.Get(hash)
-	return block, hash, found, err
+	return &BlockWithHash{Block: block, Hash: hash}, found, err
 }
 
 func GetLastBlock() (*Block, []byte, bool, error) {
