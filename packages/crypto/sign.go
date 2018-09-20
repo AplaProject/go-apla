@@ -22,7 +22,7 @@ const (
 )
 
 // Sign in signing data with private key
-func Sign(privateKey string, data string) ([]byte, error) {
+func Sign(privateKey, data []byte) ([]byte, error) {
 	if len(data) == 0 {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Debug(ErrSigningEmpty.Error())
 	}
@@ -32,6 +32,16 @@ func Sign(privateKey string, data string) ([]byte, error) {
 	default:
 		return nil, ErrUnknownProvider
 	}
+}
+
+func SignString(privateKeyHex, data string) ([]byte, error) {
+	privateKey, err := hex.DecodeString(privateKeyHex)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		return nil, err
+	}
+
+	return Sign(privateKey, []byte(data))
 }
 
 // CheckSign is checking sign
@@ -56,7 +66,7 @@ func JSSignToBytes(in string) ([]byte, error) {
 	return append(converter.FillLeft(r.Bytes()), converter.FillLeft(s.Bytes())...), nil
 }
 
-func signECDSA(privateKey string, data string) (ret []byte, err error) {
+func signECDSA(privateKey, data []byte) (ret []byte, err error) {
 	var pubkeyCurve elliptic.Curve
 
 	switch ellipticSize {
@@ -66,17 +76,12 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Fatal(ErrUnsupportedCurveSize.Error())
 	}
 
-	b, err := hex.DecodeString(privateKey)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
-		return
-	}
-	bi := new(big.Int).SetBytes(b)
+	bi := new(big.Int).SetBytes(privateKey)
 	priv := new(ecdsa.PrivateKey)
 	priv.PublicKey.Curve = pubkeyCurve
 	priv.D = bi
 
-	signhash, err := Hash([]byte(data))
+	signhash, err := Hash(data)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError}).Fatal(ErrHashing.Error())
 	}

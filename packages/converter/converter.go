@@ -160,7 +160,13 @@ func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
 		log.WithFields(log.Fields{"data_length": buf.Len(), "length": int(length), "type": consts.UnmarshallingError}).Error("length of data is smaller then encoded length")
 		return 0, fmt.Errorf(`input slice has small size`)
 	}
-	return int(binary.BigEndian.Uint64(append(make([]byte, 8-length), buf.Next(int(length))...))), nil
+
+	n := int(binary.BigEndian.Uint64(append(make([]byte, 8-length), buf.Next(int(length))...)))
+	if n < 0 {
+		return 0, fmt.Errorf(`input slice has negative size`)
+	}
+
+	return n, nil
 }
 
 // BinMarshal converts v parameter to []byte slice.

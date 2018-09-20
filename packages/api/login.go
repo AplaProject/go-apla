@@ -18,14 +18,12 @@ package api
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
-	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -117,21 +115,16 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
 			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 		}
-		NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
-		if err != nil || len(NodePrivateKey) < 1 {
+
+		nodePrivateKey, err := utils.GetNodePrivateKey()
+		if err != nil || len(nodePrivateKey) < 1 {
 			if err == nil {
 				log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
 			}
 			return err
 		}
 
-		pubkey = data.params[`pubkey`].([]byte)
-		hexPubKey := hex.EncodeToString(pubkey)
-		params := converter.EncodeLength(int64(len(hexPubKey)))
-		params = append(params, hexPubKey...)
-
 		contract := smart.GetContract("NewUser", 1)
-
 		sc := tx.SmartContract{
 			Header: tx.Header{
 				Type:        int(contract.Block.Info.(*script.ContractInfo).ID),
@@ -139,47 +132,45 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 				EcosystemID: 1,
 				KeyID:       conf.Config.KeyID,
 				NetworkID:   consts.NETWORK_ID,
-				PublicKey:   pubkey,
 			},
-			SignedBy: smart.PubToID(NodePublicKey),
-			Data:     params,
+			Params: map[string]interface{}{
+				"NewPubkey": hex.EncodeToString(data.params[`pubkey`].([]byte)),
+			},
 		}
 
 		if conf.Config.IsSupportingVDE() {
+			// signPrms := []string{sc.ForSign()}
+			// signPrms = append(signPrms, hexPubKey)
+			// signData := strings.Join(signPrms, ",")
+			// signature, err := crypto.SignString(NodePrivateKey, signData)
+			// if err != nil {
+			// 	log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
+			// 	return err
+			// }
 
-			signPrms := []string{sc.ForSign()}
-			signPrms = append(signPrms, hexPubKey)
-			signData := strings.Join(signPrms, ",")
-			signature, err := crypto.Sign(NodePrivateKey, signData)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
-				return err
-			}
+			// sc.BinSignatures = converter.EncodeLengthPlusData(signature)
 
-			sc.BinSignatures = converter.EncodeLengthPlusData(signature)
+			// if sc.PublicKey, err = hex.DecodeString(NodePublicKey); err != nil {
+			// 	log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
+			// 	return err
+			// }
 
-			if sc.PublicKey, err = hex.DecodeString(NodePublicKey); err != nil {
-				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
-				return err
-			}
-
-			serializedContract, err := msgpack.Marshal(sc)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-				return errorAPI(w, err, http.StatusInternalServerError)
-			}
-			ret, err := VDEContract(serializedContract, data)
-			if err != nil {
-				return errorAPI(w, err, http.StatusInternalServerError)
-			}
-			data.result = ret
+			// serializedContract, err := msgpack.Marshal(sc)
+			// if err != nil {
+			// 	logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
+			// 	return errorAPI(w, err, http.StatusInternalServerError)
+			// }
+			// ret, err := VDEContract(serializedContract, data)
+			// if err != nil {
+			// 	return errorAPI(w, err, http.StatusInternalServerError)
+			// }
+			// data.result = ret
 		} else {
-			err = tx.BuildTransaction(sc, NodePrivateKey, NodePublicKey, hexPubKey)
+			err = tx.BuildTransaction(sc, nodePrivateKey)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 			}
 		}
-
 	}
 
 	if ecosystemID > 1 && len(pubkey) == 0 {

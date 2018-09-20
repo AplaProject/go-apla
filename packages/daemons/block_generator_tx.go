@@ -64,7 +64,7 @@ func (dtx *DelayedTx) createTx(delayedContactID, keyID int64) error {
 		Data:     params,
 	}
 
-	signature, err := crypto.Sign(
+	signature, err := crypto.SignString(
 		dtx.privateKey,
 		fmt.Sprintf("%s,%d", smartTx.ForSign(), delayedContactID),
 	)

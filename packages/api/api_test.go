@@ -139,7 +139,7 @@ func keyLogin(state int64) (err error) {
 
 	var pub string
 
-	sign, err = crypto.Sign(string(key), nonceSalt+ret.UID)
+	sign, err = crypto.SignString(string(key), nonceSalt+ret.UID)
 	if err != nil {
 		return
 	}
@@ -168,7 +168,7 @@ func keyLogin(state int64) (err error) {
 }
 
 func getSign(forSign string) (string, error) {
-	sign, err := crypto.Sign(gPrivate, forSign)
+	sign, err := crypto.SignString(gPrivate, forSign)
 	if err != nil {
 		return ``, err
 	}

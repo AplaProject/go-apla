@@ -400,6 +400,20 @@ func GetNodeKeys() (string, string, error) {
 	return string(nprivkey), hex.EncodeToString(npubkey), nil
 }
 
+func GetNodePrivateKey() ([]byte, error) {
+	data, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
+		return nil, err
+	}
+	privateKey, err := hex.DecodeString(string(data))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		return nil, err
+	}
+	return privateKey, nil
+}
+
 func GetHostPort(h string) string {
 	if strings.Contains(h, ":") {
 		return h

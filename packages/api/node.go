@@ -52,7 +52,7 @@ func (h *contractHandlers) nodeContract(w http.ResponseWriter, r *http.Request, 
 	}
 	result := prepareData.result.(prepareResult)
 
-	signature, err := crypto.Sign(NodePrivateKey, result.ForSign)
+	signature, err := crypto.SignString(NodePrivateKey, result.ForSign)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
 		return err
