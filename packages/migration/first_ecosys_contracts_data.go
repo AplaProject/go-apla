@@ -398,7 +398,7 @@ VALUES
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'FirstBlock', 'contract InitFirstEcosystem {
+	(next_id('1_contracts'), 'FirstBlock', 'contract FirstBlock {
     data {
         Data string
     }
@@ -407,7 +407,7 @@ VALUES
     }
 
     action {
-        FirstBlock($Data)
+        InitFirstEcosystem($Data)
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),

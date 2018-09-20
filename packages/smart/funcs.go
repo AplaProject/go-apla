@@ -204,7 +204,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"ValidateEditContractNewValue": ValidateEditContractNewValue,
 		"CreateColumn":                 CreateColumn,
 		"StopNet":                      StopNetwork,
-		"FirstBlock":                   FirstBlock,
+		"InitFirstEcosystem":           InitFirstEcosystem,
 		"CreateTable":                  CreateTable,
 		"DBInsert":                     DBInsert,
 		"DBSelect":                     DBSelect,
@@ -515,7 +515,7 @@ func StopNetwork(sc *SmartContract, stopNetworkCert string) error {
 	return nil
 }
 
-func FirstBlock(sc *SmartContract, data string) error {
+func InitFirstEcosystem(sc *SmartContract, data string) error {
 	fbData := &consts.FirstBlock{}
 	if err := msgpack.Unmarshal([]byte(data), fbData); err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("json unmarshal error")

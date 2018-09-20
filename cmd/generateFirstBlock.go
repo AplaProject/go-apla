@@ -110,7 +110,7 @@ var generateFirstBlockCmd = &cobra.Command{
 			return
 		}
 
-		smartTx, err := smart.CallContract("InitFirstEcosystem", 1, map[string]string{"Data": string(tx)}, []string{string(tx)})
+		smartTx, err := smart.CallContract("FirstBlock", 1, map[string]string{"Data": string(tx)}, []string{string(tx)})
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Fatal("first block contract execution")
 			return

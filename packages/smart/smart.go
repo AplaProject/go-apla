@@ -64,11 +64,11 @@ const (
 	// MaxPrice is a maximal value that price function can return
 	MaxPrice = 100000000000000000
 
-	CallDelayedContract        = "@1CallDelayedContract"
-	NewUserContract            = "@1NewUser"
-	NewBadBlockContract        = "@1NewBadBlock"
-	InitFirstEcosystemContract = "@1InitFirstEcosystem"
-	StopNetworkContract        = "@1StopNetwork"
+	CallDelayedContract = "@1CallDelayedContract"
+	NewUserContract     = "@1NewUser"
+	NewBadBlockContract = "@1NewBadBlock"
+	FirstBlockContract  = "@1FirstBlock"
+	StopNetworkContract = "@1StopNetwork"
 )
 
 var (
@@ -113,8 +113,8 @@ func newVM() *script.VM {
 func init() {
 	smartVM = newVM()
 	freeContracts = map[string]struct{}{
-		InitFirstEcosystemContract: struct{}{},
-		StopNetworkContract:        struct{}{},
+		FirstBlockContract:  struct{}{},
+		StopNetworkContract: struct{}{},
 	}
 }
 
@@ -866,7 +866,7 @@ func (sc *SmartContract) GetSignedBy(public []byte) (int64, error) {
 		signedBy = sc.TxSmart.SignedBy
 		fullNodes := syspar.GetNodes()
 		if sc.TxContract.Name != CallDelayedContract && sc.TxContract.Name != NewUserContract &&
-			sc.TxContract.Name != NewBadBlockContract && sc.TxContract.Name != InitFirstEcosystemContract &&
+			sc.TxContract.Name != NewBadBlockContract && sc.TxContract.Name != FirstBlockContract &&
 			sc.TxContract.Name != StopNetworkContract {
 			return 0, errDelayedContract
 		}

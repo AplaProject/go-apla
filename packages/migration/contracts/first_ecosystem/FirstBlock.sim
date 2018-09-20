@@ -1,6 +1,6 @@
 // +prop AppID = 1
 // +prop Conditions = 'ContractConditions("MainCondition")'
-contract InitFirstEcosystem {
+contract FirstBlock {
     data {
         Data string
     }
@@ -9,6 +9,6 @@ contract InitFirstEcosystem {
     }
 
     action {
-        FirstBlock($Data)
+        InitFirstEcosystem($Data)
     }
 }
