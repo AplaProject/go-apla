@@ -251,6 +251,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Int":                          Int,
 		"Len":                          Len,
 		"Money":                        Money,
+		"FormatMoney":                  FormatMoney,
 		"PermColumn":                   PermColumn,
 		"PermTable":                    PermTable,
 		"Random":                       Random,
@@ -2342,4 +2343,38 @@ func DelTable(sc *SmartContract, tableName string) (err error) {
 		return SysRollback(sc, SysRollData{Type: "DeleteTable", TableName: tblname, Data: string(out)})
 	}
 	return
+}
+
+func FormatMoney(sc *SmartContract, exp string, digit int64) (string, error) {
+	var (
+		cents int64
+	)
+	if len(exp) == 0 {
+		return `0`, nil
+	}
+	if strings.IndexByte(exp, '.') >= 0 {
+		return ``, errInvalidValue
+	}
+	if digit > 0 {
+		cents = digit
+	} else {
+		sp := &model.StateParameter{}
+		sp.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+		_, err := sp.Get(sc.DbTransaction, `money_digit`)
+		if err != nil {
+			return ``, logErrorDB(err, "getting money_digit param")
+		}
+		cents = converter.StrToInt64(sp.Value)
+	}
+	if len(exp) > consts.MoneyLength {
+		return ``, errInvalidValue
+	}
+	if cents != 0 {
+		retDec, err := decimal.NewFromString(exp)
+		if err != nil {
+			return ``, logError(err, consts.ConversionError, "converting money")
+		}
+		exp = retDec.Shift(int32(-cents)).String()
+	}
+	return exp, nil
 }
