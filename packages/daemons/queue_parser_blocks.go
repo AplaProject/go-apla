@@ -49,10 +49,12 @@ func QueueParserBlocks(ctx context.Context, d *daemon) error {
 	if !found {
 		return nil
 	}
-	queueBlock, err := queue.ValidateBlockQueue.Dequeue()
+	queueBlock, isEmpty, err := queue.ValidateBlockQueue.Dequeue()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("getting block from validate queue")
 		return err
+	}
+	if isEmpty {
+		return nil
 	}
 	// check if the block gets in the rollback_blocks_1 limit
 	if queueBlock.BlockID > infoBlock.Header.BlockID+syspar.GetRbBlocks1() {

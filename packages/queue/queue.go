@@ -16,17 +16,20 @@ type TransactionQueue struct {
 	prefix []byte
 }
 
-func (tq *TransactionQueue) Dequeue() (*blockchain.Transaction, error) {
+func (tq *TransactionQueue) Dequeue() (*blockchain.Transaction, bool, error) {
 	item, err := queue.Dequeue(tq.prefix)
+	if err == goque.ErrEmpty {
+		return nil, true, nil
+	}
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("dequeuing item from queue")
-		return nil, err
+		return nil, false, err
 	}
 	tx := &blockchain.Transaction{}
 	if err := tx.Unmarshal(item.Value); err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return tx, nil
+	return tx, false, nil
 }
 
 func (tq *TransactionQueue) Enqueue(tx *blockchain.Transaction) error {
@@ -45,6 +48,9 @@ func (tq *TransactionQueue) Enqueue(tx *blockchain.Transaction) error {
 func (tq *TransactionQueue) ProcessItems(processF func(tx *blockchain.Transaction) error) error {
 	if queue.Length() > 0 {
 		item, err := queue.Peek(tq.prefix)
+		if err == goque.ErrEmpty {
+			return nil
+		}
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("peeking tx from queue")
 			return err
@@ -58,6 +64,9 @@ func (tq *TransactionQueue) ProcessItems(processF func(tx *blockchain.Transactio
 			return err
 		}
 		_, err = queue.Dequeue(tq.prefix)
+		if err == goque.ErrEmpty {
+			return nil
+		}
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("dequeueing tx from queue")
 			return err
@@ -70,17 +79,20 @@ type BlockQueue struct {
 	prefix []byte
 }
 
-func (bq *BlockQueue) Dequeue() (*blockchain.Block, error) {
+func (bq *BlockQueue) Dequeue() (*blockchain.Block, bool, error) {
 	item, err := queue.Dequeue(bq.prefix)
+	if err == goque.ErrEmpty {
+		return nil, true, nil
+	}
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("dequeuing item from queue")
-		return nil, err
+		return nil, false, err
 	}
 	b := &blockchain.Block{}
 	if err := b.Unmarshal(item.Value); err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return b, nil
+	return b, false, nil
 }
 
 func (bq *BlockQueue) Enqueue(b *blockchain.Block) error {
@@ -99,6 +111,9 @@ func (bq *BlockQueue) Enqueue(b *blockchain.Block) error {
 func (bq *BlockQueue) ProcessItems(processF func(tx *blockchain.Block) error) error {
 	if queue.Length() > 0 {
 		item, err := queue.Peek(bq.prefix)
+		if err == goque.ErrEmpty {
+			return nil
+		}
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("peeking tx from queue")
 			return err
@@ -112,6 +127,9 @@ func (bq *BlockQueue) ProcessItems(processF func(tx *blockchain.Block) error) er
 			return err
 		}
 		_, err = queue.Dequeue(bq.prefix)
+		if err == goque.ErrEmpty {
+			return nil
+		}
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("dequeueing tx from queue")
 			return err
@@ -138,17 +156,20 @@ type QueueBlockQueue struct {
 	prefix []byte
 }
 
-func (bq *QueueBlockQueue) Dequeue() (*QueueBlock, error) {
+func (bq *QueueBlockQueue) Dequeue() (*QueueBlock, bool, error) {
 	item, err := queue.Dequeue(bq.prefix)
+	if err == goque.ErrEmpty {
+		return nil, true, nil
+	}
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("dequeuing item from queue")
-		return nil, err
+		return nil, false, err
 	}
 	b := &QueueBlock{}
 	if err := b.Unmarshal(item.Value); err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return b, nil
+	return b, false, nil
 }
 
 func (bq *QueueBlockQueue) Enqueue(b *QueueBlock) error {
@@ -167,6 +188,9 @@ func (bq *QueueBlockQueue) Enqueue(b *QueueBlock) error {
 func (bq *QueueBlockQueue) ProcessItems(processF func(tx *QueueBlock) error) error {
 	if queue.Length() > 0 {
 		item, err := queue.Peek(bq.prefix)
+		if err == goque.ErrEmpty {
+			return nil
+		}
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("peeking tx from queue")
 			return err
@@ -180,6 +204,9 @@ func (bq *QueueBlockQueue) ProcessItems(processF func(tx *QueueBlock) error) err
 			return err
 		}
 		_, err = queue.Dequeue(bq.prefix)
+		if err == goque.ErrEmpty {
+			return nil
+		}
 		if err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("dequeueing tx from queue")
 			return err

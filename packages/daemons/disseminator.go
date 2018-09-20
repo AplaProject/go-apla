@@ -80,9 +80,12 @@ func sendTransactions(ctx context.Context, logger *log.Entry) error {
 
 // send block and transactions hashes
 func sendBlockWithTxHashes(ctx context.Context, fullNodeID int64, logger *log.Entry) error {
-	block, err := queue.SendBlockQueue.Dequeue()
+	block, isEmpty, err := queue.SendBlockQueue.Dequeue()
 	if err != nil {
 		return err
+	}
+	if isEmpty {
+		return nil
 	}
 
 	var trs []*blockchain.Transaction
