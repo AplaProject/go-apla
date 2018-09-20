@@ -53,6 +53,7 @@ import (
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const (
@@ -76,6 +77,24 @@ type permColumn struct {
 	Read   string `json:"read,omitempty"`
 }
 
+type TxInfo struct {
+	Block    string                 `json:"block"`
+	Contract string                 `json:"contract"`
+	Params   map[string]interface{} `json:"params,omitempty"`
+}
+
+type TableInfo struct {
+	Columns map[string]string
+	Table   *model.Table
+}
+
+type FlushInfo struct {
+	ID   uint32        // id
+	Prev *script.Block // previous item, nil if the new item has been appended
+	Info *script.ObjInfo
+	Name string // the name
+}
+
 // SmartContract is storing smart contract data
 type SmartContract struct {
 	VDE           bool
@@ -95,6 +114,7 @@ type SmartContract struct {
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand
+	FlushRollback []FlushInfo
 }
 
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
@@ -160,6 +180,9 @@ var (
 		"TableConditions":              100,
 		"ValidateCondition":            30,
 		"ValidateEditContractNewValue": 10,
+		"TransactionInfo":              100,
+		"DelTable":                     100,
+		"DelColumn":                    100,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -280,6 +303,9 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UnixDateTime":                 UnixDateTime,
 		"UpdateNotifications":          UpdateNotifications,
 		"UpdateRolesNotifications":     UpdateRolesNotifications,
+		"TransactionInfo":              TransactionInfo,
+		"DelTable":                     DelTable,
+		"DelColumn":                    DelColumn,
 	}
 
 	switch vt {
@@ -318,8 +344,32 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 	}
 
 	vmExtend(vm, &script.ExtendData{Objects: f, AutoPars: map[string]string{
-		`*smart.SmartContract`: `sc`,
-	}})
+		`*smart.SmartContract`: `sc`},
+		WriteFuncs: map[string]struct{}{
+			"CreateColumn":     {},
+			"CreateTable":      {},
+			"DBInsert":         {},
+			"DBUpdate":         {},
+			"DBUpdateSysParam": {},
+			"DBUpdateExt":      {},
+			"CreateEcosystem":  {},
+			"CreateContract":   {},
+			"UpdateContract":   {},
+			"CreateLanguage":   {},
+			"EditLanguage":     {},
+			"Activate":         {},
+			"Deactivate":       {},
+			"EditEcosysName":   {},
+			"SetPubKey":        {},
+			"NewMoney":         {},
+			"UpdateNodesBan":   {},
+			"UpdateCron":       {},
+			"CreateVDE":        {},
+			"DeleteVDE":        {},
+			"DelColumn":        {},
+			"DelTable":         {},
+		},
+	})
 }
 
 func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
@@ -1151,6 +1201,31 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = id
 			root.Children[i].Info.(*script.ContractInfo).Owner.Active = active
 		}
+	}
+	for key, item := range root.Objects {
+		if cur, ok := sc.VM.Objects[key]; ok {
+			var id uint32
+			switch item.Type {
+			case script.ObjContract:
+				id = cur.Value.(*script.Block).Info.(*script.ContractInfo).ID
+			case script.ObjFunc:
+				id = cur.Value.(*script.Block).Info.(*script.FuncInfo).ID
+			}
+			sc.FlushRollback = append(sc.FlushRollback, FlushInfo{
+				ID:   id,
+				Prev: sc.VM.Children[id],
+				Info: cur,
+				Name: key,
+			})
+		} else {
+			sc.FlushRollback = append(sc.FlushRollback, FlushInfo{
+				ID:   uint32(len(sc.VM.Children)),
+				Prev: nil,
+				Info: nil,
+				Name: key,
+			})
+		}
+
 	}
 	VMFlushBlock(sc.VM, root)
 	return nil
@@ -2063,4 +2138,208 @@ func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
 		}
 	}
 	notificator.UpdateRolesNotifications(ecosystemID, rolesList)
+}
+
+func TransactionInfo(txHash string) (string, error) {
+	var out []byte
+	hash, err := hex.DecodeString(txHash)
+	if err != nil {
+		return ``, err
+	}
+	ltx := &model.LogTransaction{Hash: hash}
+	found, err := ltx.GetByHash(hash)
+	if err != nil {
+		return ``, err
+	}
+	if !found {
+		return ``, nil
+	}
+	var blockOwner model.Block
+	var data TxInfo
+	found, err = blockOwner.Get(ltx.Block)
+	if err != nil {
+		return ``, err
+	}
+	if !found {
+		return ``, nil
+	}
+	data.Block = converter.Int64ToStr(ltx.Block)
+	blockBuffer := bytes.NewBuffer(blockOwner.Data)
+	_, err = utils.ParseBlockHeader(blockBuffer, blockOwner.ID != 1)
+	if err != nil {
+		return ``, err
+	}
+	for blockBuffer.Len() > 0 {
+		transactionSize, err := converter.DecodeLengthBuf(blockBuffer)
+		if err != nil {
+			return ``, err
+		}
+		if blockBuffer.Len() < int(transactionSize) || transactionSize == 0 {
+			return ``, errParseTransaction
+		}
+		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
+		if bufTransaction.Len() == 0 {
+			return ``, errParseTransaction
+		}
+		txhash, err := crypto.Hash(bufTransaction.Bytes())
+		if err != nil {
+			return ``, err
+		}
+		if bytes.Equal(txhash, hash) {
+			if int64(bufTransaction.Bytes()[0]) > 127 {
+				bufTransaction.Next(1)
+				smartTx := tx.SmartContract{}
+				if err := msgpack.Unmarshal(bufTransaction.Bytes(), &smartTx); err != nil {
+					return ``, err
+				}
+				contract := GetContractByID(int32(smartTx.Type))
+				if contract == nil {
+					return ``, errParseTransaction
+				}
+				data.Contract = contract.Name
+				txInfo := contract.Block.Info.(*script.ContractInfo).Tx
+				if txInfo != nil {
+					if data.Params, err = FillTxData(*txInfo, smartTx.Data, nil); err != nil {
+						return ``, err
+					}
+				}
+			} else {
+				return ``, nil
+			}
+			break
+		}
+	}
+	out, err = json.Marshal(data)
+	return string(out), err
+}
+
+func DelColumn(sc *SmartContract, tableName, name string) (err error) {
+	var (
+		count   int64
+		permout []byte
+	)
+	name = converter.EscapeSQL(strings.ToLower(name))
+	tableName = strings.ToLower(tableName)
+	tblname := getDefTableName(sc, tableName)
+
+	t := model.Table{}
+	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	t.SetTablePrefix(prefix)
+	TableName := tblname
+	if strings.HasPrefix(TableName, prefix) {
+		TableName = TableName[len(prefix)+1:]
+	}
+	found, err := t.Get(sc.DbTransaction, TableName)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
+		return fmt.Errorf(eTableNotFound, tblname)
+	}
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
+	if err != nil {
+		return
+	}
+	if count > 0 {
+		return fmt.Errorf(eTableNotEmpty, tblname)
+	}
+	colType, err := model.GetColumnType(tblname, name)
+	if err != nil {
+		return err
+	}
+	if len(colType) == 0 {
+		return fmt.Errorf(eColumnNotExist, name)
+	}
+	var perm map[string]string
+	if err = unmarshalJSON([]byte(t.Columns), &perm, `columns from the table`); err != nil {
+		return err
+	}
+	if _, ok := perm[name]; !ok {
+		return fmt.Errorf(eColumnNotDeleted, name)
+	}
+	delete(perm, name)
+	permout, err = marshalJSON(perm, `permissions to json`)
+	if err != nil {
+		return
+	}
+	if err = model.AlterTableDropColumn(sc.DbTransaction, tblname, name); err != nil {
+		return
+	}
+	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
+		`1_tables`, `id`, t.ID)
+	if !sc.VDE {
+		data := map[string]string{"name": name, "type": colType}
+		out, err := marshalJSON(data, `marshalling column info`)
+		if err != nil {
+			return err
+		}
+		return SysRollback(sc, SysRollData{Type: "DeleteColumn", TableName: tblname,
+			Data: string(out)})
+	}
+	return
+}
+
+func DelTable(sc *SmartContract, tableName string) (err error) {
+	var (
+		count int64
+	)
+	tableName = strings.ToLower(tableName)
+	tblname := getDefTableName(sc, tableName)
+
+	t := model.Table{}
+	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	t.SetTablePrefix(prefix)
+	TableName := tblname
+	if strings.HasPrefix(TableName, prefix) {
+		TableName = TableName[len(prefix)+1:]
+	}
+	found, err := t.Get(sc.DbTransaction, TableName)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
+		return fmt.Errorf(eTableNotFound, tblname)
+	}
+
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
+	if err != nil {
+		return
+	}
+	if count > 0 {
+		return fmt.Errorf(eTableNotEmpty, tblname)
+	}
+	if err = t.Delete(sc.DbTransaction); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
+		return err
+	}
+
+	if err = model.DropTable(sc.DbTransaction, tblname); err != nil {
+		return
+	}
+	if !sc.VDE {
+		var (
+			out []byte
+		)
+		cols, err := model.GetAllColumnTypes(tblname)
+		if err != nil {
+			return err
+		}
+		tinfo := TableInfo{Table: &t, Columns: make(map[string]string)}
+		for _, item := range cols {
+			if item["column_name"] == `id` {
+				continue
+			}
+			tinfo.Columns[item["column_name"]] = model.DataTypeToColumnType(item["data_type"])
+		}
+		out, err = marshalJSON(tinfo, `marshalling table info`)
+		if err != nil {
+			return err
+		}
+		return SysRollback(sc, SysRollData{Type: "DeleteTable", TableName: tblname, Data: string(out)})
+	}
+	return
 }

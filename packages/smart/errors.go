@@ -47,6 +47,8 @@ const (
 	eUnsupportedType     = "Unsupported type %T"
 	eWrongRandom         = `Wrong random parameters %d %d`
 	eConditionNotAllowed = `Condition %s is not allowed`
+	eTableNotEmpty       = `Table %s is not empty`
+	eColumnNotDeleted    = `Column %s cannot be deleted`
 )
 
 var (
@@ -88,6 +90,8 @@ var (
 	errWrongPriceFunc     = errors.New(`Wrong type of price function`)
 	errWrongSignature     = errors.New(`wrong signature`)
 	errIncorrectParameter = errors.New(`Incorrect parameter of the condition function`)
+	errParseTransaction   = errors.New(`parse transaction`)
+	errInputSlice         = errors.New(`input slice is short`)
 
 	errMaxPrice = fmt.Errorf(`Price value is more than %d`, MaxPrice)
 )
