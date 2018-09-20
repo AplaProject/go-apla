@@ -249,6 +249,27 @@ func GetAllColumnTypes(tblname string) ([]map[string]string, error) {
 		ORDER BY ordinal_position ASC`, -1, tblname)
 }
 
+func DataTypeToColumnType(dataType string) string {
+	var itype string
+	switch {
+	case dataType == "character varying":
+		itype = `varchar`
+	case dataType == `bigint`:
+		itype = "number"
+	case dataType == `jsonb`:
+		itype = "json"
+	case strings.HasPrefix(dataType, `timestamp`):
+		itype = "datetime"
+	case strings.HasPrefix(dataType, `numeric`):
+		itype = "money"
+	case strings.HasPrefix(dataType, `double`):
+		itype = "double"
+	default:
+		itype = dataType
+	}
+	return itype
+}
+
 // GetColumnType is returns type of column
 func GetColumnType(tblname, column string) (itype string, err error) {
 	coltype, err := GetColumnDataTypeCharMaxLength(tblname, column)
@@ -256,22 +277,7 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 		return
 	}
 	if dataType, ok := coltype["data_type"]; ok {
-		switch {
-		case dataType == "character varying":
-			itype = `varchar`
-		case dataType == `bigint`:
-			itype = "number"
-		case dataType == `jsonb`:
-			itype = "json"
-		case strings.HasPrefix(dataType, `timestamp`):
-			itype = "datetime"
-		case strings.HasPrefix(dataType, `numeric`):
-			itype = "money"
-		case strings.HasPrefix(dataType, `double`):
-			itype = "double"
-		default:
-			itype = dataType
-		}
+		itype = DataTypeToColumnType(dataType)
 	}
 	return
 }
