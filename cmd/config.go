@@ -15,6 +15,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 )
 
+var privateBlockchain = true
+
 // configCmd represents the config command
 var configCmd = &cobra.Command{
 	Use:   "config",
@@ -150,4 +152,6 @@ func init() {
 	viper.BindPFlag("TempDir", configCmd.Flags().Lookup("tempDir"))
 	viper.BindPFlag("NodesAddr", configCmd.Flags().Lookup("nodesAddr"))
 	viper.BindPFlag("VDEMode", configCmd.Flags().Lookup("vdeMode"))
+
+	generateFirstBlockCmd.Flags().BoolVar(&privateBlockchain, "private", true, "if true - all transactions will be free")
 }

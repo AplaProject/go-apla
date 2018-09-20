@@ -26,14 +26,14 @@ var generateFirstBlockCmd = &cobra.Command{
 	PreRun: loadConfigWKey,
 	Run: func(cmd *cobra.Command, args []string) {
 		now := time.Now().Unix()
-
 		header := &utils.BlockData{
-			BlockID:      1,
-			Time:         now,
-			EcosystemID:  0,
-			KeyID:        conf.Config.KeyID,
-			NodePosition: 0,
-			Version:      consts.BLOCK_VERSION,
+			BlockID:           1,
+			Time:              now,
+			EcosystemID:       0,
+			KeyID:             conf.Config.KeyID,
+			NodePosition:      0,
+			Version:           consts.BLOCK_VERSION,
+			PrivateBlockchain: privateBlockchain,
 		}
 
 		decodeKeyFile := func(kName string) []byte {

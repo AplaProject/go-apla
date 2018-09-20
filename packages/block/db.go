@@ -184,5 +184,13 @@ func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 		return
 	}
 
+	sysParam := &model.SystemParameter{}
+	sysParam.Name = "private_blockchain"
+	if pb.Header.PrivateBlockchain {
+		sysParam.Update("1")
+	} else {
+		sysParam.Update("0")
+	}
+
 	return
 }

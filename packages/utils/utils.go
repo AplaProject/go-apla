@@ -48,14 +48,15 @@ import (
 
 // BlockData is a structure of the block's header
 type BlockData struct {
-	BlockID      int64
-	Time         int64
-	EcosystemID  int64
-	KeyID        int64
-	NodePosition int64
-	Sign         []byte
-	Hash         []byte
-	Version      int
+	BlockID           int64
+	Time              int64
+	EcosystemID       int64
+	KeyID             int64
+	NodePosition      int64
+	Sign              []byte
+	Hash              []byte
+	Version           int
+	PrivateBlockchain bool
 }
 
 func (b BlockData) String() string {
@@ -72,6 +73,10 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer, checkMaxSize bool) (BlockData, 
 		return BlockData{}, fmt.Errorf("bad binary block length")
 	}
 
+	private := binaryBlock.Next(1)
+	if bytes.Compare(private, []byte{1}) == 0 {
+		block.PrivateBlockchain = true
+	}
 	blockVersion := int(converter.BinToDec(binaryBlock.Next(2)))
 
 	if checkMaxSize && int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {

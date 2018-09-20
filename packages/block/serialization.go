@@ -48,6 +48,11 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 
 	var buf bytes.Buffer
 	// fill header
+	if header.PrivateBlockchain {
+		buf.Write(converter.DecToBin(1, 1))
+	} else {
+		buf.Write(converter.DecToBin(0, 1))
+	}
 	buf.Write(converter.DecToBin(header.Version, 2))
 	buf.Write(converter.DecToBin(header.BlockID, 4))
 	buf.Write(converter.DecToBin(header.Time, 4))
@@ -55,6 +60,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	buf.Write(converter.EncodeLenInt64InPlace(header.KeyID))
 	buf.Write(converter.DecToBin(header.NodePosition, 1))
 	buf.Write(converter.EncodeLengthPlusData(signed))
+
 	// data
 	buf.Write(blockDataTx)
 
