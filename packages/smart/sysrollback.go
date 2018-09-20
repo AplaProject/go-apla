@@ -18,6 +18,7 @@ package smart
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"

@@ -2213,8 +2213,7 @@ func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 		permout []byte
 	)
 	name = converter.EscapeSQL(strings.ToLower(name))
-	tableName = strings.ToLower(tableName)
-	tblname := getDefTableName(sc, tableName)
+	tblname := GetTableName(sc, strings.ToLower(tableName))
 
 	t := model.Table{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
@@ -2232,7 +2231,7 @@ func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
 		return fmt.Errorf(eTableNotFound, tblname)
 	}
-	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname, ``)
 	if err != nil {
 		return
 	}
@@ -2279,8 +2278,7 @@ func DelTable(sc *SmartContract, tableName string) (err error) {
 	var (
 		count int64
 	)
-	tableName = strings.ToLower(tableName)
-	tblname := getDefTableName(sc, tableName)
+	tblname := GetTableName(sc, strings.ToLower(tableName))
 
 	t := model.Table{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
@@ -2299,7 +2297,7 @@ func DelTable(sc *SmartContract, tableName string) (err error) {
 		return fmt.Errorf(eTableNotFound, tblname)
 	}
 
-	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname, ``)
 	if err != nil {
 		return
 	}
