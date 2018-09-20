@@ -58,7 +58,7 @@ func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 	}
 
 	data.result = sendTxResult{
-		Hash: string(converter.BinToHex(rtx.Hash)),
+		Hash: string(converter.BinToHex(rtx.Hash())),
 	}
 
 	return nil
